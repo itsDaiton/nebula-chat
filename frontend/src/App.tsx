@@ -1,12 +1,8 @@
-import { Box, Button } from "@chakra-ui/react";
-import { BaseContainer } from "./components/base/BaseContainer";
+import { RouterProvider } from "./RouterProvider";
+import "./App.css";
 
 function App() {
-  return (
-    <BaseContainer>
-      <Button colorScheme="teal">Hello World</Button>
-    </BaseContainer>
-  );
+  return <RouterProvider />;
 }
 
 export default App;
