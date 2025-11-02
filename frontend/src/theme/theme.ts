@@ -10,13 +10,13 @@ const config = defineConfig({
           },
           subtle: {
             value: {
-              _light: "gray.50",
+              _light: "#F8F8F8",
               _dark: "rgb(21,21,21)",
             },
           },
           muted: {
             value: {
-              _light: "gray.100",
+              _light: "#F8F8F8",
               _dark: "rgb(21,21,21)",
             },
           },
@@ -29,17 +29,17 @@ const config = defineConfig({
         },
         fg: {
           default: {
-            value: { _light: "gray.900", _dark: "#FFFFFF" },
+            value: { _light: "#1A1A1A", _dark: "#FFFFFF" },
           },
           soft: {
             value: {
-              _light: "gray.700",
+              _light: "#4A4A4A",
               _dark: "#CCCCCC",
             },
           },
           muted: {
             value: {
-              _light: "gray.600",
+              _light: "#737373",
               _dark: "#A1A1A1",
             },
           },
@@ -47,16 +47,16 @@ const config = defineConfig({
         border: {
           default: {
             value: {
-              _light: "gray.200",
+              _light: "#E8E8E8",
               _dark: "rgb(31,31,31)",
             },
           },
           emphasized: {
-            value: { _light: "gray.300", _dark: "rgb(41,41,41)" },
+            value: { _light: "#E8E8E8", _dark: "rgb(41,41,41)" },
           },
           inner: {
             value: {
-              _light: "gray.200",
+              _light: "#E8E8E8",
               _dark: "rgb(21,21,21)",
             },
           },

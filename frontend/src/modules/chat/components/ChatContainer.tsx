@@ -23,11 +23,11 @@ export const ChatContainer = () => {
       maxW="1000px"
       mx="auto"
       bg="bg.default"
-      borderWidth="1.5px"
+      borderWidth={{ base: "1px", _dark: "1.5px" }}
       borderColor="border.default"
       borderRadius="lg"
       position="relative"
-      boxShadow="none"
+      boxShadow={{ base: "sm", _dark: "none" }}
     >
       <Box
         flex="1"
@@ -61,7 +61,7 @@ export const ChatContainer = () => {
         bottom="0"
         left="0"
         right="0"
-        borderTop="1.5px"
+        borderTop={{ base: "1px", _dark: "1.5px" }}
         borderColor="border.default"
       >
         <ChatInput onSendMessage={sendMessage} isLoading={isLoading} />

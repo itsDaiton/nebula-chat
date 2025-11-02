@@ -1,4 +1,4 @@
-import { Box, Input, Button, Flex, Icon } from "@chakra-ui/react";
+import { Box, Textarea, Button, Flex, Icon } from "@chakra-ui/react";
 import { useState, useRef, useEffect } from "react";
 import { ChatInputProps } from "../types/types";
 import { IoSendSharp } from "react-icons/io5";
@@ -9,14 +9,25 @@ export const ChatInput = ({
   autoFocus = true,
 }: ChatInputProps) => {
   const [message, setMessage] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const resetTextarea = () => {
+    if (inputRef.current) {
+      inputRef.current.style.height = "52px";
+    }
+  };
+
+  const handleMessageSend = () => {
+    onSendMessage(message);
+    setMessage("");
+    resetTextarea();
+  };
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === "Enter" && message.trim() && !isLoading) {
         e.preventDefault();
-        onSendMessage(message);
-        setMessage("");
+        handleMessageSend();
         return;
       }
       if (
@@ -46,21 +57,39 @@ export const ChatInput = ({
     inputRef.current?.focus();
   }, []);
 
+  useEffect(() => {
+    const textarea = inputRef.current;
+    if (!textarea) return;
+
+    const adjustHeight = () => {
+      textarea.style.height = "auto";
+      const newHeight = Math.min(textarea.scrollHeight, 200);
+      textarea.style.height = `${newHeight}px`;
+
+      // Only show scrollbar if we've reached max height
+      textarea.style.overflowY = newHeight === 200 ? "auto" : "hidden";
+    };
+
+    textarea.addEventListener("input", adjustHeight);
+    return () => textarea.removeEventListener("input", adjustHeight);
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim()) {
-      onSendMessage(message);
-      setMessage("");
+      handleMessageSend();
     }
   };
 
   return (
     <Box as="form" onSubmit={handleSubmit} p={4}>
       <Flex position="relative" alignItems="center">
-        <Input
+        <Textarea
           ref={inputRef}
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+            setMessage(e.target.value)
+          }
           autoFocus
           placeholder="Ask me anything..."
           size="lg"
@@ -68,10 +97,30 @@ export const ChatInput = ({
           disabled={isLoading}
           bg="bg.input"
           borderRadius="lg"
-          borderColor="border.emphasized"
-          borderWidth="1.5px"
+          borderColor="border.default"
+          borderWidth={{ base: "1px", _dark: "1.5px" }}
           color="fg.soft"
           transition="all 0.2s"
+          resize="none"
+          minH="52px"
+          maxH="200px"
+          overflow="hidden"
+          rows={1}
+          css={{
+            "&::-webkit-scrollbar": {
+              width: "4px",
+            },
+            "&::-webkit-scrollbar-track": {
+              background: "transparent",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              background: "var(--chakra-colors-border-default)",
+              borderRadius: "4px",
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              background: "var(--chakra-colors-border-emphasized)",
+            },
+          }}
           _hover={{
             borderColor: "border.emphasized",
           }}
@@ -115,7 +164,7 @@ export const ChatInput = ({
         >
           <Icon
             as={IoSendSharp}
-            transform="rotate(-45deg) translateY(1px)"
+            transform="rotate(-50deg) translateY(1px)"
             boxSize="18px"
           />
         </Button>
