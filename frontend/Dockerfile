@@ -1,8 +1,8 @@
 FROM node:20.19.5 as build
-WORKDIR /app
-COPY package*.json ./
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
 RUN npm ci
-COPY . .
+COPY frontend ./
 RUN npm run build
 
 FROM nginx:alpine
