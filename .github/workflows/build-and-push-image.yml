@@ -25,5 +25,5 @@ jobs:
           IMAGE_NAME=nebulachat-frontend
           ACR_NAME=nebulachatregistry
           IMAGE_TAG=${{ github.sha }}
-          docker build -t $ACR_NAME.azurecr.io/$IMAGE_NAME:$IMAGE_TAG .
+          docker build -t $ACR_NAME.azurecr.io/$IMAGE_NAME:$IMAGE_TAG ./frontend
           docker push $ACR_NAME.azurecr.io/$IMAGE_NAME:$IMAGE_TAG
