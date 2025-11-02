@@ -10,7 +10,7 @@ export const Header = () => {
       p={4}
       textAlign="center"
     >
-      Sample Header
+      Nebula Chat
     </Box>
   );
 };

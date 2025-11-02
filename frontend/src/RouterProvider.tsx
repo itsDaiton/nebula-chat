@@ -1,7 +1,7 @@
 import { Route, Routes } from "react-router";
 import { route } from "./routes";
-import { ChatPage } from "./pages/ChatPage";
-import { AuthPage } from "./pages/AuthPage";
+import { ChatPage } from "./modules/chat/ChatPage";
+import { AuthPage } from "./modules/auth/AuthPage";
 
 export const RouterProvider = () => {
   return (
