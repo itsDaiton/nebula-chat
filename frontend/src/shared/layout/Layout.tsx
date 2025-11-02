@@ -6,10 +6,8 @@ import { LayoutProps } from "@/shared/types/types";
 export const Layout = ({ children }: LayoutProps) => {
   return (
     <Flex direction="column" minHeight="100vh">
-      <Box as="header">
-        <Header />
-      </Box>
-      <Box as="main" flex="1">
+      <Header />
+      <Box as="main" flex="1" mt="20">
         <Page>{children}</Page>
       </Box>
     </Flex>

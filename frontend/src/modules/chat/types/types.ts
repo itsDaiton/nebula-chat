@@ -14,4 +14,5 @@ export interface ChatMessageProps {
 export interface ChatInputProps {
   onSendMessage: (message: string) => void;
   isLoading?: boolean;
+  autoFocus?: boolean;
 }

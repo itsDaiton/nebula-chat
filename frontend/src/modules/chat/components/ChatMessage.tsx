@@ -1,6 +1,7 @@
 import { Box, Text, Flex, Circle, Icon } from "@chakra-ui/react";
 import { ChatMessageProps } from "../types/types";
-import { IoSparkles, IoPersonCircle } from "react-icons/io5";
+import { IoSparkles } from "react-icons/io5";
+import { LuUser } from "react-icons/lu";
 
 export const ChatMessage = ({ message }: ChatMessageProps) => {
   const isUser = message.type === "user";
@@ -8,31 +9,32 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
   return (
     <Flex
       direction={isUser ? "row-reverse" : "row"}
-      gap={3}
+      gap={4}
       mb={6}
-      align="start"
+      align="center"
     >
       <Circle
-        size="8"
-        bg="white"
-        color="black"
+        size="10"
+        bg={isUser ? "gray.50" : "white"}
+        color="gray.700"
         borderWidth="1px"
-        borderColor="gray.900"
+        borderColor="gray.200"
         display="flex"
         alignItems="center"
         justifyContent="center"
+        flexShrink={0}
       >
-        <Icon as={isUser ? IoPersonCircle : IoSparkles} boxSize="3.5" />
+        <Icon as={isUser ? LuUser : IoSparkles} boxSize="5" />
       </Circle>
       <Box
         maxW="70%"
-        bg="white"
-        color="gray.900"
-        borderRadius="md"
+        bg={isUser ? "gray.50" : "white"}
+        color="gray.700"
+        borderRadius="lg"
         px={4}
         py={3}
         borderWidth="1px"
-        borderColor="gray.900"
+        borderColor="gray.200"
       >
         <Text fontSize="sm">{message.content}</Text>
       </Box>
