@@ -13,23 +13,28 @@ export const ChatInput = ({
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement ||
-        e.ctrlKey ||
-        e.metaKey
-      ) {
+      if (e.key === "Enter" && message.trim() && !isLoading) {
+        e.preventDefault();
+        onSendMessage(message);
+        setMessage("");
         return;
       }
-
-      if (e.key.length === 1) {
+      if (
+        !(
+          e.target instanceof HTMLInputElement ||
+          e.target instanceof HTMLTextAreaElement
+        ) &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        e.key.length === 1
+      ) {
         inputRef.current?.focus();
       }
     };
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, []);
+  }, [message, isLoading, onSendMessage]);
 
   useEffect(() => {
     if (!isLoading) {
