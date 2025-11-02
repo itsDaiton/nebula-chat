@@ -6,41 +6,59 @@ const config = defineConfig({
       colors: {
         bg: {
           default: {
-            value: { _light: "white", _dark: "hsl(240 10% 3.9%)" },
+            value: { _light: "white", _dark: "rgb(10,10,10)" },
           },
           subtle: {
             value: {
-              _light: "hsl(240 4.8% 95.9%)",
-              _dark: "hsl(240 3.7% 15.9%)",
+              _light: "gray.50",
+              _dark: "rgb(21,21,21)",
             },
           },
           muted: {
             value: {
-              _light: "hsl(240 5.9% 90%)",
-              _dark: "hsl(240 5.2% 33.9%)",
+              _light: "gray.100",
+              _dark: "rgb(21,21,21)",
+            },
+          },
+          input: {
+            value: {
+              _light: "white",
+              _dark: "rgb(21,21,21)",
             },
           },
         },
         fg: {
           default: {
-            value: { _light: "hsl(240 10% 3.9%)", _dark: "white" },
+            value: { _light: "gray.900", _dark: "#FFFFFF" },
+          },
+          soft: {
+            value: {
+              _light: "gray.700",
+              _dark: "#CCCCCC",
+            },
           },
           muted: {
             value: {
-              _light: "hsl(240 3.8% 46.1%)",
-              _dark: "hsl(240 5% 64.9%)",
+              _light: "gray.600",
+              _dark: "#A1A1A1",
             },
           },
         },
         border: {
           default: {
             value: {
-              _light: "hsl(240 5.9% 90%)",
-              _dark: "hsl(240 3.7% 15.9%)",
+              _light: "gray.200",
+              _dark: "rgb(31,31,31)",
             },
           },
           emphasized: {
-            value: { _light: "hsl(240 5.9% 10%)", _dark: "hsl(240 5% 64.9%)" },
+            value: { _light: "gray.300", _dark: "rgb(41,41,41)" },
+          },
+          inner: {
+            value: {
+              _light: "gray.200",
+              _dark: "rgb(21,21,21)",
+            },
           },
         },
       },

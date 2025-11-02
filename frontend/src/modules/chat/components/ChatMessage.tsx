@@ -15,10 +15,10 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
     >
       <Circle
         size="10"
-        bg={isUser ? "gray.50" : "white"}
-        color="gray.700"
-        borderWidth="1px"
-        borderColor="gray.200"
+        bg={isUser ? "bg.subtle" : "bg.input"}
+        color="fg.soft"
+        borderWidth="1.5px"
+        borderColor="border.emphasized"
         display="flex"
         alignItems="center"
         justifyContent="center"
@@ -28,13 +28,13 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
       </Circle>
       <Box
         maxW="70%"
-        bg={isUser ? "gray.50" : "white"}
-        color="gray.700"
+        bg={isUser ? "bg.subtle" : "bg.input"}
+        color="fg.soft"
         borderRadius="lg"
         px={4}
         py={3}
-        borderWidth="1px"
-        borderColor="gray.200"
+        borderWidth="1.5px"
+        borderColor="border.emphasized"
       >
         <Text fontSize="sm">{message.content}</Text>
       </Box>

@@ -5,9 +5,9 @@ import {
 } from "../components/ui/color-mode";
 
 export const Header = () => {
-  const bg = useColorModeValue("white", "gray.800");
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  const textColor = useColorModeValue("gray.900", "white");
+  const bg = useColorModeValue("white", "bg.default");
+  const borderColor = useColorModeValue("gray.200", "border.default");
+  const textColor = useColorModeValue("gray.900", "fg.default");
 
   return (
     <Box
@@ -17,7 +17,7 @@ export const Header = () => {
       left={0}
       right={0}
       bg={bg}
-      borderBottom="1px solid"
+      borderBottom="1.5px solid"
       borderColor={borderColor}
       zIndex={1000}
       py={2}

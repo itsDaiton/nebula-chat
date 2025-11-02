@@ -61,23 +61,29 @@ export const ChatInput = ({
           size="lg"
           pr="44px"
           disabled={isLoading}
-          bg="white"
+          bg="bg.input"
           borderRadius="lg"
-          borderColor="gray.200"
+          borderColor="border.emphasized"
+          borderWidth="1.5px"
+          color="fg.soft"
           transition="all 0.2s"
           _hover={{
-            borderColor: "gray.300",
+            borderColor: "border.emphasized",
           }}
           _focus={{
-            borderColor: "gray.300",
-            boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.05)",
+            borderColor: "border.emphasized",
+            boxShadow: "0 0 0 1px var(--chakra-colors-border-emphasized)",
             outline: "none",
             ring: "0",
             ringOffset: "0",
           }}
           _disabled={{
-            bg: "gray.50",
+            bg: "bg.subtle",
             cursor: "not-allowed",
+            opacity: 0.7,
+          }}
+          _placeholder={{
+            color: "fg.muted",
           }}
         />
         <Button
@@ -88,7 +94,7 @@ export const ChatInput = ({
           transform="translateY(-50%)"
           aria-label="Send message"
           variant="ghost"
-          color="gray.600"
+          color="fg.soft"
           loading={isLoading}
           minW="auto"
           height="40px"
@@ -97,18 +103,15 @@ export const ChatInput = ({
           display="flex"
           alignItems="center"
           justifyContent="center"
-          _hover={{ color: "gray.900" }}
-          _active={{ color: "gray.700" }}
-          _disabled={{ color: "gray.400" }}
+          _hover={{ color: "fg.default" }}
+          _active={{ color: "fg.soft" }}
+          _disabled={{ opacity: 0.4 }}
           disabled={!message.trim() || isLoading}
         >
           <Icon
             as={IoSendSharp}
-            transform="rotate(-45deg)"
-            position="relative"
-            top="1px"
-            right="-1px"
-            boxSize="20px"
+            transform="rotate(-45deg) translateY(1px)"
+            boxSize="18px"
           />
         </Button>
       </Flex>
