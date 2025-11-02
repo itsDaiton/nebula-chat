@@ -2,6 +2,49 @@ import { defineConfig, createSystem, defaultConfig } from "@chakra-ui/react";
 
 const config = defineConfig({
   theme: {
+    semanticTokens: {
+      colors: {
+        bg: {
+          default: {
+            value: { _light: "white", _dark: "hsl(240 10% 3.9%)" },
+          },
+          subtle: {
+            value: {
+              _light: "hsl(240 4.8% 95.9%)",
+              _dark: "hsl(240 3.7% 15.9%)",
+            },
+          },
+          muted: {
+            value: {
+              _light: "hsl(240 5.9% 90%)",
+              _dark: "hsl(240 5.2% 33.9%)",
+            },
+          },
+        },
+        fg: {
+          default: {
+            value: { _light: "hsl(240 10% 3.9%)", _dark: "white" },
+          },
+          muted: {
+            value: {
+              _light: "hsl(240 3.8% 46.1%)",
+              _dark: "hsl(240 5% 64.9%)",
+            },
+          },
+        },
+        border: {
+          default: {
+            value: {
+              _light: "hsl(240 5.9% 90%)",
+              _dark: "hsl(240 3.7% 15.9%)",
+            },
+          },
+          emphasized: {
+            value: { _light: "hsl(240 5.9% 10%)", _dark: "hsl(240 5% 64.9%)" },
+          },
+        },
+      },
+    },
     tokens: {
       colors: {
         gray: {
@@ -38,21 +81,37 @@ const config = defineConfig({
           justifyContent: "center",
           fontWeight: "500",
           borderRadius: "md",
+          transition: "colors 0.2s ease",
         },
         variants: {
           solid: {
             base: {
-              bg: "{colors.gray.900}",
-              color: "white",
-              _hover: { bg: "{colors.gray.800}" },
-              _active: { bg: "{colors.gray.700}" },
+              bg: "{colors.fg.default}",
+              color: "{colors.bg.default}",
+              _hover: {
+                opacity: 0.9,
+              },
+              _active: {
+                opacity: 0.8,
+              },
             },
           },
           outline: {
             base: {
               borderWidth: "1px",
-              borderColor: "{colors.gray.200}",
-              _hover: { bg: "{colors.gray.50}" },
+              borderColor: "{colors.border.default}",
+              color: "{colors.fg.default}",
+              _hover: {
+                bg: "{colors.bg.subtle}",
+              },
+            },
+          },
+          ghost: {
+            base: {
+              color: "{colors.fg.muted}",
+              _hover: {
+                bg: "{colors.bg.subtle}",
+              },
             },
           },
         },
@@ -61,11 +120,14 @@ const config = defineConfig({
         base: {
           borderRadius: "md",
           borderWidth: "1px",
-          borderColor: "gray.200",
-          _hover: { borderColor: "gray.300" },
+          bg: "{colors.bg.default}",
+          borderColor: "{colors.border.default}",
+          color: "{colors.fg.default}",
+          _placeholder: { color: "{colors.fg.muted}" },
+          _hover: { borderColor: "{colors.border.emphasized}" },
           _focus: {
-            borderColor: "gray.900",
-            boxShadow: "0 0 0 1px {colors.gray.900}",
+            borderColor: "{colors.border.emphasized}",
+            boxShadow: "0 0 0 1px {colors.border.emphasized}",
           },
         },
       },
@@ -74,8 +136,10 @@ const config = defineConfig({
   globalCss: {
     "html, body": {
       fontFamily: "{fonts.body}",
-      color: "{colors.gray.900}",
-      bg: "white",
+      color: "{colors.fg.default}",
+      bg: "{colors.bg.default}",
+      transitionProperty: "background-color, border-color, color, fill, stroke",
+      transitionDuration: "normal",
     },
   },
 });
