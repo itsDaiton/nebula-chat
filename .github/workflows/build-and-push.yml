@@ -1,0 +1,29 @@
+name: Deploy to Azure Container Registry
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Log in to Azure Container Registry
+        run: |
+          az acr login --name nebulachatregistry
+
+      - name: Build and push image to ACR
+        run: |
+          IMAGE_NAME=nebulachat-frontend
+          ACR_NAME=nebulachatregistry
+          IMAGE_TAG=${{ github.sha }}
+          docker build -t $ACR_NAME.azurecr.io/$IMAGE_NAME:$IMAGE_TAG ./frontend
+          docker push $ACR_NAME.azurecr.io/$IMAGE_NAME:$IMAGE_TAG
