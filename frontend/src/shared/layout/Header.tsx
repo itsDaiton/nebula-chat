@@ -1,4 +1,12 @@
-import { Box, Flex, Text, IconButton, Button } from "@chakra-ui/react";
+import {
+  Box,
+  Flex,
+  Text,
+  IconButton,
+  Button,
+  Image,
+  Icon,
+} from "@chakra-ui/react";
 import {
   ColorModeButton,
   useColorModeValue,
@@ -6,6 +14,7 @@ import {
 import { useResetChat } from "../hooks/useResetChat";
 import { useEffect } from "react";
 import { LuSettings } from "react-icons/lu";
+import { TbGalaxy } from "react-icons/tb";
 
 export const Header = () => {
   const resetChat = useResetChat();
@@ -54,18 +63,21 @@ export const Header = () => {
         alignItems="center"
         justifyContent="space-between"
       >
-        <Text
-          pl={2}
-          fontSize="3xl"
-          fontWeight="bold"
-          color={textColor}
-          letterSpacing="-0.03em"
-          cursor="pointer"
-          transition="opacity 0.2s"
-          onClick={resetChat}
-        >
-          nebula chat
-        </Text>
+        <Box display="flex" alignItems="center">
+          <Icon as={TbGalaxy} boxSize={12} />
+          <Text
+            pl={2}
+            fontSize="3xl"
+            fontWeight="bold"
+            color={textColor}
+            letterSpacing="-0.03em"
+            cursor="pointer"
+            transition="opacity 0.2s"
+            onClick={resetChat}
+          >
+            nebula chat
+          </Text>
+        </Box>
         <Flex gap={2} alignItems="center">
           <ColorModeButton />
           <Box position="relative">
