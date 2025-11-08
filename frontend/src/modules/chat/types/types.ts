@@ -5,6 +5,8 @@ export interface ChatMessage {
   content: string;
   type: MessageType;
   timestamp: Date;
+  isLoading?: boolean;
+  isThinking?: boolean;
 }
 
 export interface ChatMessageProps {

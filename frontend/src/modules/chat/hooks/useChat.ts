@@ -1,13 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router";
+import { route } from "@/routes";
 import { ChatMessage } from "../types/types";
 
 export const useChat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { id: chatId } = useParams();
+
+  useEffect(() => {
+    if (!chatId) {
+      setMessages([]);
+    }
+  }, [chatId]);
 
   const sendMessage = async (content: string) => {
+    if (!chatId) {
+      const newChatId = crypto.randomUUID();
+      navigate(route.chat.conversation(newChatId));
+    }
     const newUserMessage: ChatMessage = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       content,
       type: "user",
       timestamp: new Date(),
@@ -17,16 +31,42 @@ export const useChat = () => {
     setIsLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const messageId = crypto.randomUUID();
 
-      const botResponse: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        content: "This is a simulated bot response.",
+      const thinkingMessage: ChatMessage = {
+        id: messageId,
+        content: "",
         type: "bot",
         timestamp: new Date(),
+        isThinking: true,
       };
+      setMessages((prev) => [...prev, thinkingMessage]);
 
-      setMessages((prev) => [...prev, botResponse]);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === messageId
+            ? { ...msg, isThinking: false, isLoading: true }
+            : msg,
+        ),
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === messageId
+            ? {
+                ...msg,
+                content:
+                  "This is a simulated bot response. After integrating with a real backend, this will be replaced with actual responses. Have a great day!",
+                isLoading: false,
+                isThinking: false,
+              }
+            : msg,
+        ),
+      );
     } catch (error) {
       console.error("Error getting bot response:", error);
     } finally {

@@ -3,8 +3,10 @@ import {
   ColorModeButton,
   useColorModeValue,
 } from "../components/ui/color-mode";
+import { useResetChat } from "../hooks/useResetChat";
 
 export const Header = () => {
+  const resetChat = useResetChat();
   const bg = useColorModeValue("white", "bg.default");
   const borderColor = useColorModeValue("gray.200", "border.default");
   const textColor = useColorModeValue("gray.900", "fg.default");
@@ -35,6 +37,9 @@ export const Header = () => {
           fontWeight="bold"
           color={textColor}
           letterSpacing="-0.03em"
+          cursor="pointer"
+          transition="opacity 0.2s"
+          onClick={resetChat}
         >
           nebula chat
         </Text>

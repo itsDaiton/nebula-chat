@@ -51,9 +51,35 @@ export const ChatContainer = () => {
           },
         }}
       >
-        {messages.map((message) => (
-          <ChatMessage key={message.id} message={message} />
-        ))}
+        {messages.length === 0 ? (
+          <Flex
+            direction="column"
+            align="center"
+            justify="center"
+            h="100%"
+            textAlign="center"
+            color="fg.muted"
+            gap={4}
+          >
+            <Box
+              fontSize="2xl"
+              fontWeight="medium"
+              color="fg.default"
+              maxW="600px"
+            >
+              Welcome to Nebula Chat! 👋
+            </Box>
+            <Box fontSize="md" maxW="600px" lineHeight="tall">
+              I'm your AI assistant, ready to help you with any questions or
+              tasks you might have. Feel free to start a conversation by typing
+              a message below!
+            </Box>
+          </Flex>
+        ) : (
+          messages.map((message) => (
+            <ChatMessage key={message.id} message={message} />
+          ))
+        )}
         <div ref={messagesEndRef} style={{ height: "0px" }} />
       </Box>
       <Box

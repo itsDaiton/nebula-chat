@@ -1,12 +1,21 @@
-import { Box, Text, Flex, Circle, Icon } from "@chakra-ui/react";
+import { Box, Text, Flex, Circle, Icon, Spinner } from "@chakra-ui/react";
+import { keyframes } from "@emotion/react";
 import { ChatMessageProps } from "../types/types";
 import { IoSparkles } from "react-icons/io5";
 import { LuUser } from "react-icons/lu";
 import { useEffect, useRef, useState } from "react";
 
+const cursorBlink = keyframes`
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+`;
+
 export const ChatMessage = ({ message }: ChatMessageProps) => {
   const isUser = message.type === "user";
   const [isMultiLine, setIsMultiLine] = useState(false);
+  const [displayText, setDisplayText] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -16,6 +25,34 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
       setIsMultiLine(height > lineHeight * 1.5);
     }
   }, [message.content]);
+
+  useEffect(() => {
+    if (!isUser && !message.isLoading) {
+      setDisplayText("");
+      setIsGenerating(true);
+
+      let currentIndex = 0;
+      const text = message.content || "";
+
+      const interval = setInterval(() => {
+        if (currentIndex < text.length) {
+          setDisplayText(text.slice(0, currentIndex + 1));
+          currentIndex++;
+        } else {
+          clearInterval(interval);
+          setIsGenerating(false);
+        }
+      }, 30);
+
+      return () => {
+        clearInterval(interval);
+        setIsGenerating(false);
+      };
+    } else {
+      setDisplayText(message.content || "");
+      setIsGenerating(false);
+    }
+  }, [message.content, isUser, message.isLoading]);
 
   return (
     <Flex
@@ -35,22 +72,52 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
         justifyContent="center"
         flexShrink={0}
       >
-        <Icon as={isUser ? LuUser : IoSparkles} boxSize="5" />
+        <Icon
+          as={isUser ? LuUser : IoSparkles}
+          boxSize="5"
+          position="relative"
+          left="0.5px"
+          top="0.5px"
+        />
       </Circle>
-      <Box
-        maxW="70%"
-        bg={isUser ? "bg.subtle" : "bg.input"}
-        color="fg.soft"
-        borderRadius="lg"
-        px={4}
-        py={3}
-        borderWidth={{ base: "1px", _dark: "1.5px" }}
-        borderColor="border.default"
-      >
-        <Text ref={textRef} fontSize="sm">
-          {message.content}
-        </Text>
-      </Box>
+      {!isUser && message.isThinking ? null : !isUser && message.isLoading ? (
+        <Spinner size="md" color="fg.soft" />
+      ) : (
+        <Box
+          maxW="70%"
+          bg={isUser ? "bg.subtle" : "bg.input"}
+          color="fg.soft"
+          borderRadius="lg"
+          px={4}
+          py={3}
+          borderWidth={{ base: "1px", _dark: "1.5px" }}
+          borderColor="border.default"
+        >
+          <Box position="relative" display="inline">
+            <Text
+              ref={textRef}
+              fontSize="sm"
+              whiteSpace="pre-wrap"
+              as="span"
+              display="inline"
+            >
+              {displayText}
+              {!isUser && isGenerating && (
+                <Box
+                  as="span"
+                  display="inline-block"
+                  w="2px"
+                  h="1.2em"
+                  bg="fg.soft"
+                  ml="1px"
+                  verticalAlign="middle"
+                  animation={`${cursorBlink} 1s infinite`}
+                />
+              )}
+            </Text>
+          </Box>
+        </Box>
+      )}
     </Flex>
   );
 };
