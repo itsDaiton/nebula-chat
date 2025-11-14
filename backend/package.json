@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec \"ts-node --transpile-only src/server.ts\"",
     "build": "tsc",
-    "start": "node ./dist/backend/src/server.js"
+    "start": "node ./dist/backend/src/server.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",
