@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "rootDir": "..",
+    "rootDir": "src",
+    "outDir": "dist",
     "paths": {
       "@backend/*": ["./src/*"]
     },
@@ -17,7 +18,7 @@
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "skipLibCheck": true,
+    "skipLibCheck": true
   },
   "exclude": ["node_modules", "tmp", "dist", "**/*.spec.ts", "**/*.test.ts"],
   "include": ["src/**/*.ts"]

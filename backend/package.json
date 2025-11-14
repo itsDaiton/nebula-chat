@@ -1,11 +1,11 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "dist/backend/src/server.js",
+  "main": "dist/src/server.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec \"ts-node --transpile-only src/server.ts\"",
     "build": "tsc",
-    "start": "node ./dist/backend/src/server.ts"
+    "start": "node dist/server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
