@@ -6,10 +6,12 @@
     "backend"
   ],
   "scripts": {
-    "lint": "eslint --ext .js,.ts,.jsx,.tsx --report-unused-disable-directives --max-warnings=0 .",
-    "lint:fix": "eslint --ext .js,.ts,.jsx,.tsx --report-unused-disable-directives --max-warnings=0 . --fix",
     "backend": "npm --prefix backend",
-    "frontend": "npm --prefix frontend"
+    "frontend": "npm --prefix frontend",
+    "lint": "eslint --report-unused-disable-directives --max-warnings=0 .",
+    "lint:fix": "eslint --report-unused-disable-directives --max-warnings=0 . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "lodash": "^4.17.21"

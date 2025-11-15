@@ -1,0 +1,11 @@
+node_modules
+dist
+build
+coverage
+.vscode
+*.min.js
+frontend/build
+backend/dist
+*.log
+*.lock
+*.env
