@@ -1,4 +1,4 @@
-export type MessageType = "user" | "bot";
+export type MessageType = 'user' | 'bot';
 
 export interface ChatMessage {
   id: string;

@@ -1,6 +1,6 @@
-import { RouterProvider } from "./RouterProvider";
-import { ThemeProvider } from "./theme/ThemeProvider";
-import "./App.css";
+import { RouterProvider } from './RouterProvider';
+import { ThemeProvider } from './theme/ThemeProvider';
+import './App.css';
 
 function App() {
   return (
