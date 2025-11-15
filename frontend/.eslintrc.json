@@ -1,9 +1,0 @@
-{
-  "extends": ["../.eslintrc.cjs"],
-  "overrides": [
-    {
-      "files": ["*.ts", "*.tsx"],
-      "rules": {}
-    }
-  ]
-}

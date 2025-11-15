@@ -1,5 +1,0 @@
-/.git
-.eslintrc.cjs
-build
-dist
-node_modules
