@@ -10,6 +10,10 @@ export async function generateResponse(
   message: ChatRequestBody['message'],
   model: ChatRequestBody['model'],
 ): Promise<string> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('Missing API key for OpenAI inference.');
+  }
+
   try {
     const data = await client.chat.completions.create({
       model,
@@ -24,8 +28,6 @@ export async function generateResponse(
 
     return response;
   } catch (error) {
-    const err =
-      error instanceof Error ? error.message : 'Unknown error occurred while generating response.';
-    throw new Error(err);
+    throw error;
   }
 }
