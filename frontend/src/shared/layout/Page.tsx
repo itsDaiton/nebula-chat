@@ -1,5 +1,7 @@
-import { forwardRef, Ref } from "react";
-import { Container, ContainerProps } from "@chakra-ui/react";
+import type { Ref } from "react";
+import { forwardRef } from "react";
+import type { ContainerProps } from "@chakra-ui/react";
+import { Container } from "@chakra-ui/react";
 import { useColorModeValue } from "../components/ui/color-mode";
 
 export const Page = forwardRef(function Page(

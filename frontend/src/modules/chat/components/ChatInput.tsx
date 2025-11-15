@@ -1,27 +1,26 @@
 import { Box, Textarea, Button, Flex, Icon } from "@chakra-ui/react";
-import { useState, useRef, useEffect } from "react";
-import { ChatInputProps } from "../types/types";
+import { useState, useRef, useEffect, useCallback } from "react";
+import type { ChatInputProps } from "../types/types";
 import { IoSendSharp } from "react-icons/io5";
 
 export const ChatInput = ({
   onSendMessage,
   isLoading = false,
-  autoFocus = true,
 }: ChatInputProps) => {
   const [message, setMessage] = useState("");
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const resetTextarea = () => {
+  const resetTextarea = useCallback(() => {
     if (inputRef.current) {
       inputRef.current.style.height = "52px";
     }
-  };
+  }, []);
 
-  const handleMessageSend = () => {
+  const handleMessageSend = useCallback(() => {
     onSendMessage(message);
     setMessage("");
     resetTextarea();
-  };
+  }, [onSendMessage, message, resetTextarea]);
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -45,7 +44,7 @@ export const ChatInput = ({
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [message, isLoading, onSendMessage]);
+  }, [message, isLoading, onSendMessage, handleMessageSend]);
 
   useEffect(() => {
     if (!isLoading) {

@@ -49,7 +49,7 @@ export default [
       "promise/no-return-wrap": "error",
       "promise/no-nesting": "warn",
       "promise/no-new-statics": "error",
-      "@typescript-eslint/explicit-function-return-type": "warn",
+      "@typescript-eslint/explicit-function-return-type": "off",
       "@typescript-eslint/consistent-type-imports": [
         "error",
         { prefer: "type-imports" },

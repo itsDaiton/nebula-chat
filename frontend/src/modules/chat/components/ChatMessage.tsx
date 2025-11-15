@@ -1,6 +1,6 @@
 import { Box, Text, Flex, Circle, Icon, Spinner } from "@chakra-ui/react";
 import { keyframes } from "@emotion/react";
-import { ChatMessageProps } from "../types/types";
+import type { ChatMessageProps } from "../types/types";
 import { IoSparkles } from "react-icons/io5";
 import { LuUser } from "react-icons/lu";
 import { useEffect, useRef, useState } from "react";

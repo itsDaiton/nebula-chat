@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import { route } from "@/routes";
-import { ChatMessage } from "../types/types";
+import type { ChatMessage } from "../types/types";
 
 export const useChat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -18,7 +18,7 @@ export const useChat = () => {
   const sendMessage = async (content: string) => {
     if (!chatId) {
       const newChatId = crypto.randomUUID();
-      navigate(route.chat.conversation(newChatId));
+      void navigate(route.chat.conversation(newChatId));
     }
     const newUserMessage: ChatMessage = {
       id: crypto.randomUUID(),
@@ -68,6 +68,7 @@ export const useChat = () => {
         ),
       );
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error getting bot response:", error);
     } finally {
       setIsLoading(false);

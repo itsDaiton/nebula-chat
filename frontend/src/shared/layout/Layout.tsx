@@ -1,7 +1,7 @@
 import { Box, Flex } from "@chakra-ui/react";
 import { Header } from "./Header";
 import { Page } from "./Page";
-import { LayoutProps } from "@/shared/types/types";
+import type { LayoutProps } from "@/shared/types/types";
 import { useColorModeValue } from "../components/ui/color-mode";
 
 export const Layout = ({ children }: LayoutProps) => {

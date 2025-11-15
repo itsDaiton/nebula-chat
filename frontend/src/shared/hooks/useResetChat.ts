@@ -5,7 +5,7 @@ export const useResetChat = () => {
   const navigate = useNavigate();
 
   const resetChat = () => {
-    navigate(route.chat.root());
+    void navigate(route.chat.root());
   };
 
   return resetChat;

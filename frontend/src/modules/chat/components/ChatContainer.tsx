@@ -16,6 +16,10 @@ export const ChatContainer = () => {
     scrollToBottom();
   }, [messages]);
 
+  const handleSendMessage = (message: string) => {
+    sendMessage(message).catch(() => {});
+  };
+
   return (
     <Flex
       direction="column"
@@ -90,7 +94,7 @@ export const ChatContainer = () => {
         borderTop={{ base: "1px", _dark: "1.5px" }}
         borderColor="border.default"
       >
-        <ChatInput onSendMessage={sendMessage} isLoading={isLoading} />
+        <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
       </Box>
     </Flex>
   );
