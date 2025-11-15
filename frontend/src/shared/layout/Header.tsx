@@ -1,45 +1,34 @@
-import {
-  Box,
-  Flex,
-  Text,
-  IconButton,
-  Button,
-  Image,
-  Icon,
-} from "@chakra-ui/react";
-import {
-  ColorModeButton,
-  useColorModeValue,
-} from "../components/ui/color-mode";
-import { useResetChat } from "../hooks/useResetChat";
-import { useEffect } from "react";
-import { LuSettings } from "react-icons/lu";
-import { TbGalaxy } from "react-icons/tb";
+import { Box, Flex, Text, IconButton, Button, Icon } from '@chakra-ui/react';
+import { ColorModeButton, useColorModeValue } from '../components/ui/color-mode';
+import { useResetChat } from '../hooks/useResetChat';
+import { useEffect } from 'react';
+import { LuSettings } from 'react-icons/lu';
+import { TbGalaxy } from 'react-icons/tb';
 
 export const Header = () => {
   const resetChat = useResetChat();
-  const bg = useColorModeValue("white", "bg.default");
-  const borderColor = useColorModeValue("gray.200", "border.default");
-  const textColor = useColorModeValue("gray.900", "fg.default");
+  const bg = useColorModeValue('white', 'bg.default');
+  const borderColor = useColorModeValue('gray.200', 'border.default');
+  const textColor = useColorModeValue('gray.900', 'fg.default');
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      const menu = document.getElementById("settings-menu");
+      const menu = document.getElementById('settings-menu');
       const button = event.target as HTMLElement;
 
       if (
         menu &&
-        menu.style.display === "block" &&
+        menu.style.display === 'block' &&
         !menu.contains(button) &&
-        !button.closest("button")
+        !button.closest('button')
       ) {
-        menu.style.display = "none";
+        menu.style.display = 'none';
       }
     };
 
-    document.addEventListener("click", handleClickOutside);
+    document.addEventListener('click', handleClickOutside);
     return () => {
-      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener('click', handleClickOutside);
     };
   }, []);
 
@@ -56,13 +45,7 @@ export const Header = () => {
       zIndex={1000}
       py={2}
     >
-      <Flex
-        w="full"
-        h="16"
-        px={4}
-        alignItems="center"
-        justifyContent="space-between"
-      >
+      <Flex w="full" h="16" px={4} alignItems="center" justifyContent="space-between">
         <Box display="flex" alignItems="center">
           <Icon as={TbGalaxy} boxSize={12} />
           <Text
@@ -87,10 +70,10 @@ export const Header = () => {
               variant="ghost"
               size="md"
               onClick={() => {
-                const menu = document.getElementById("settings-menu");
+                const menu = document.getElementById('settings-menu');
                 if (menu) {
-                  const isShown = menu.style.display === "block";
-                  menu.style.display = isShown ? "none" : "block";
+                  const isShown = menu.style.display === 'block';
+                  menu.style.display = isShown ? 'none' : 'block';
                 }
               }}
             />
@@ -108,22 +91,10 @@ export const Header = () => {
               display="none"
               zIndex={1001}
             >
-              <Button
-                variant="ghost"
-                size="md"
-                w="full"
-                justifyContent="flex-start"
-                py={2}
-              >
+              <Button variant="ghost" size="md" w="full" justifyContent="flex-start" py={2}>
                 Button 1
               </Button>
-              <Button
-                variant="ghost"
-                size="md"
-                w="full"
-                justifyContent="flex-start"
-                py={2}
-              >
+              <Button variant="ghost" size="md" w="full" justifyContent="flex-start" py={2}>
                 Button 2
               </Button>
             </Box>

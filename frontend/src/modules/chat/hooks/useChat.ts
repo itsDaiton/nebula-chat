@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router";
-import { route } from "@/routes";
-import { ChatMessage } from "../types/types";
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router';
+import { route } from '@/routes';
+import type { ChatMessage } from '../types/types';
 
 export const useChat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -18,12 +18,12 @@ export const useChat = () => {
   const sendMessage = async (content: string) => {
     if (!chatId) {
       const newChatId = crypto.randomUUID();
-      navigate(route.chat.conversation(newChatId));
+      void navigate(route.chat.conversation(newChatId));
     }
     const newUserMessage: ChatMessage = {
       id: crypto.randomUUID(),
       content,
-      type: "user",
+      type: 'user',
       timestamp: new Date(),
     };
 
@@ -35,8 +35,8 @@ export const useChat = () => {
 
       const thinkingMessage: ChatMessage = {
         id: messageId,
-        content: "",
-        type: "bot",
+        content: '',
+        type: 'bot',
         timestamp: new Date(),
         isThinking: true,
       };
@@ -46,9 +46,7 @@ export const useChat = () => {
 
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.id === messageId
-            ? { ...msg, isThinking: false, isLoading: true }
-            : msg,
+          msg.id === messageId ? { ...msg, isThinking: false, isLoading: true } : msg,
         ),
       );
 
@@ -60,7 +58,7 @@ export const useChat = () => {
             ? {
                 ...msg,
                 content:
-                  "This is a simulated bot response. After integrating with a real backend, this will be replaced with actual responses. Have a great day!",
+                  'This is a simulated bot response. After integrating with a real backend, this will be replaced with actual responses. Have a great day!',
                 isLoading: false,
                 isThinking: false,
               }
@@ -68,7 +66,8 @@ export const useChat = () => {
         ),
       );
     } catch (error) {
-      console.error("Error getting bot response:", error);
+      // eslint-disable-next-line no-console
+      console.error('Error getting bot response:', error);
     } finally {
       setIsLoading(false);
     }

@@ -6,6 +6,8 @@
       "@backend/*": ["./src/*"]
     },
     "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "esModuleInterop": true,
     "target": "esnext",
     "sourceMap": true,
     "declaration": true,
@@ -14,10 +16,12 @@
     "exactOptionalPropertyTypes": true,
     "strict": true,
     "verbatimModuleSyntax": false,
-    "isolatedModules": true,
+    "isolatedModules": false,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitOverride": true
   },
   "exclude": ["node_modules", "tmp", "dist", "**/*.spec.ts", "**/*.test.ts"],
   "include": ["src/**/*.ts"]

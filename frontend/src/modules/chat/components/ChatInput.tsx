@@ -1,40 +1,33 @@
-import { Box, Textarea, Button, Flex, Icon } from "@chakra-ui/react";
-import { useState, useRef, useEffect } from "react";
-import { ChatInputProps } from "../types/types";
-import { IoSendSharp } from "react-icons/io5";
+import { Box, Textarea, Button, Flex, Icon } from '@chakra-ui/react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import type { ChatInputProps } from '../types/types';
+import { IoSendSharp } from 'react-icons/io5';
 
-export const ChatInput = ({
-  onSendMessage,
-  isLoading = false,
-  autoFocus = true,
-}: ChatInputProps) => {
-  const [message, setMessage] = useState("");
+export const ChatInput = ({ onSendMessage, isLoading = false }: ChatInputProps) => {
+  const [message, setMessage] = useState('');
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const resetTextarea = () => {
+  const resetTextarea = useCallback(() => {
     if (inputRef.current) {
-      inputRef.current.style.height = "52px";
+      inputRef.current.style.height = '52px';
     }
-  };
+  }, []);
 
-  const handleMessageSend = () => {
+  const handleMessageSend = useCallback(() => {
     onSendMessage(message);
-    setMessage("");
+    setMessage('');
     resetTextarea();
-  };
+  }, [onSendMessage, message, resetTextarea]);
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && message.trim() && !isLoading) {
+      if (e.key === 'Enter' && message.trim() && !isLoading) {
         e.preventDefault();
         handleMessageSend();
         return;
       }
       if (
-        !(
-          e.target instanceof HTMLInputElement ||
-          e.target instanceof HTMLTextAreaElement
-        ) &&
+        !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) &&
         !e.ctrlKey &&
         !e.metaKey &&
         e.key.length === 1
@@ -43,9 +36,9 @@ export const ChatInput = ({
       }
     };
 
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [message, isLoading, onSendMessage]);
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [message, isLoading, onSendMessage, handleMessageSend]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -62,16 +55,16 @@ export const ChatInput = ({
     if (!textarea) return;
 
     const adjustHeight = () => {
-      textarea.style.height = "auto";
+      textarea.style.height = 'auto';
       const newHeight = Math.min(textarea.scrollHeight, 200);
       textarea.style.height = `${newHeight}px`;
 
       // Only show scrollbar if we've reached max height
-      textarea.style.overflowY = newHeight === 200 ? "auto" : "hidden";
+      textarea.style.overflowY = newHeight === 200 ? 'auto' : 'hidden';
     };
 
-    textarea.addEventListener("input", adjustHeight);
-    return () => textarea.removeEventListener("input", adjustHeight);
+    textarea.addEventListener('input', adjustHeight);
+    return () => textarea.removeEventListener('input', adjustHeight);
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -87,9 +80,7 @@ export const ChatInput = ({
         <Textarea
           ref={inputRef}
           value={message}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-            setMessage(e.target.value)
-          }
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMessage(e.target.value)}
           autoFocus
           placeholder="Ask me anything..."
           size="lg"
@@ -98,7 +89,7 @@ export const ChatInput = ({
           bg="bg.input"
           borderRadius="lg"
           borderColor="border.default"
-          borderWidth={{ base: "1px", _dark: "1.5px" }}
+          borderWidth={{ base: '1px', _dark: '1.5px' }}
           color="fg.soft"
           transition="all 0.2s"
           resize="none"
@@ -107,37 +98,37 @@ export const ChatInput = ({
           overflow="hidden"
           rows={1}
           css={{
-            "&::-webkit-scrollbar": {
-              width: "4px",
+            '&::-webkit-scrollbar': {
+              width: '4px',
             },
-            "&::-webkit-scrollbar-track": {
-              background: "transparent",
+            '&::-webkit-scrollbar-track': {
+              background: 'transparent',
             },
-            "&::-webkit-scrollbar-thumb": {
-              background: "var(--chakra-colors-border-default)",
-              borderRadius: "4px",
+            '&::-webkit-scrollbar-thumb': {
+              background: 'var(--chakra-colors-border-default)',
+              borderRadius: '4px',
             },
-            "&::-webkit-scrollbar-thumb:hover": {
-              background: "var(--chakra-colors-border-emphasized)",
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: 'var(--chakra-colors-border-emphasized)',
             },
           }}
           _hover={{
-            borderColor: "border.emphasized",
+            borderColor: 'border.emphasized',
           }}
           _focus={{
-            borderColor: "border.emphasized",
-            boxShadow: "0 0 0 1px var(--chakra-colors-border-emphasized)",
-            outline: "none",
-            ring: "0",
-            ringOffset: "0",
+            borderColor: 'border.emphasized',
+            boxShadow: '0 0 0 1px var(--chakra-colors-border-emphasized)',
+            outline: 'none',
+            ring: '0',
+            ringOffset: '0',
           }}
           _disabled={{
-            bg: "bg.subtle",
-            cursor: "not-allowed",
+            bg: 'bg.subtle',
+            cursor: 'not-allowed',
             opacity: 0.7,
           }}
           _placeholder={{
-            color: "fg.muted",
+            color: 'fg.muted',
           }}
         />
         <Button
@@ -157,16 +148,12 @@ export const ChatInput = ({
           display="flex"
           alignItems="center"
           justifyContent="center"
-          _hover={{ color: "fg.default" }}
-          _active={{ color: "fg.soft" }}
+          _hover={{ color: 'fg.default' }}
+          _active={{ color: 'fg.soft' }}
           _disabled={{ opacity: 0.4 }}
           disabled={!message.trim() || isLoading}
         >
-          <Icon
-            as={IoSendSharp}
-            transform="rotate(-50deg) translateY(1px)"
-            boxSize="18px"
-          />
+          <Icon as={IoSendSharp} transform="rotate(-50deg) translateY(1px)" boxSize="18px" />
         </Button>
       </Flex>
     </Box>
