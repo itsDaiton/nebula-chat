@@ -5,7 +5,8 @@ coverage
 .vscode
 *.min.js
 frontend/build
-backend/
+backend/dist
+backend/node_modules
 
 *.log
 *.lock
@@ -14,6 +15,5 @@ backend/
 .github/
 **/.github/**
 *.yml
+
 package.json
-frontend/package.json
-backend/package.json

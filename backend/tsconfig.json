@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "rootDir": "src",
     "outDir": "dist",
     "paths": {
-      "@backend/*": ["./src/*"]
+      "@backend/*": ["src/*"]
     },
     "module": "nodenext",
     "moduleResolution": "nodenext",

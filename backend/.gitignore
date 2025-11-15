@@ -6,3 +6,7 @@ npm-debug.log
 !/tmp/restart.txt
 
 /.env.local
+/.env.development
+/.env.test
+/.env.production
+/.env
