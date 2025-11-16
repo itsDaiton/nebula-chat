@@ -1,11 +1,11 @@
 import 'dotenv/config';
-import type { ChatRequestBody } from '@backend/types/chat.types';
+import type { ChatHistoryRequestBody } from '@backend/types/chat.types';
 import { createClient } from '@backend/utils/chat.utils';
 import type OpenAI from 'openai';
 
 export async function generateResponseStream(
-  message: ChatRequestBody['message'],
-  model: ChatRequestBody['model'],
+  messages: ChatHistoryRequestBody['messages'],
+  model: ChatHistoryRequestBody['model'],
   onToken: (token: string) => void,
 ): Promise<void> {
   const client: OpenAI = createClient();
@@ -13,17 +13,18 @@ export async function generateResponseStream(
   try {
     const stream = await client.chat.completions.create({
       model,
-      messages: [{ role: 'user', content: message }],
+      messages,
       stream: true,
     });
 
     for await (const chunk of stream) {
-      const token = chunk.choices?.[0]?.delta?.content;
-      if (token) {
-        onToken(token);
+      const delta = chunk.choices?.[0]?.delta?.content;
+      if (typeof delta === 'string' && delta.length > 0) {
+        onToken(delta);
       }
     }
   } catch (error) {
-    throw error;
+    const err = error instanceof Error ? error : new Error('Unknown error.');
+    throw err;
   }
 }

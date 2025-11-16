@@ -15,23 +15,23 @@ export async function sendMessageStream(req: Request, res: Response) {
     return res.status(400).json(errorResponse);
   }
 
-  const { message, model } = validation.data;
+  const { messages, model } = validation.data;
 
   setHeaders(res, req.headers.origin);
   res.flushHeaders();
 
   try {
-    await generateResponseStream(message, model, (token) => {
-      res.write(`data: ${token}\n\n`);
+    await generateResponseStream(messages, model, (token) => {
+      res.write(`event: token\n`);
+      res.write(`data: ${JSON.stringify({ token })}\n\n`);
     });
     res.write('event: end\n');
     res.write('data: end\n\n');
     res.end();
   } catch (error) {
+    const err = error instanceof Error ? error : new Error('Unknown error.');
     res.write('event: error\n');
-    res.write(
-      `data: ${JSON.stringify(error instanceof Error ? error.message : 'Unknown error')}\n\n`,
-    );
+    res.write(`data: ${JSON.stringify(err.message)}\n\n`);
     res.end();
   }
 }
