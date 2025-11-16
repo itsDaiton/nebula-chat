@@ -1,15 +1,24 @@
-export interface ChatRequestBody {
-  message: string;
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
+export interface ChatHistoryRequestBody {
   model: string;
+  messages: ChatMessage[];
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
+export type ChatRequestBody = ChatHistoryRequestBody;
+
+export interface ChatErrorResponse {
+  success: false;
+  error: string;
 }
 
-export type ChatResponseBody = ApiResponse<string>;
+export interface ChatSuccessResponse<T = unknown> {
+  success: true;
+  data: T;
+}
 
 export type ValidationResult =
   | { valid: false; error: string }

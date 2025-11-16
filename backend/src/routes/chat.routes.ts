@@ -1,8 +1,8 @@
-import { sendMessage } from '@backend/controllers/chat.controller';
+import { sendMessageStream } from '@backend/controllers/chat.controller';
 import { Router } from 'express';
 
 const chatRoutes = Router();
 
-chatRoutes.post('/message', sendMessage);
+chatRoutes.post('/message', sendMessageStream);
 
 export { chatRoutes };

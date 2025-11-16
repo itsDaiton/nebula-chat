@@ -1,30 +1,46 @@
-import type { ValidationResult } from '@backend/types/chat.types';
-import { validModels } from '@backend/utils/models';
+import { CHAT_ERRORS } from '@backend/errors/chat.errors';
+import type { ChatMessage, ValidationResult } from '@backend/types/chat.types';
+import { validModels } from '@backend/utils/chat.utils';
 
 export function validateChatRequest(body: unknown): ValidationResult {
   if (!body || typeof body !== 'object') {
-    return { valid: false, error: 'Request body must be an object' };
+    return { valid: false, error: CHAT_ERRORS.INVALID_REQUEST_BODY };
   }
 
-  const message = (body as any).message;
-  const model = (body as any).model;
-
-  if (typeof message !== 'string' || message.trim() === '') {
-    return { valid: false, error: '`message` must be a non-empty string.' };
-  }
+  const { messages, model } = body as any;
 
   if (typeof model !== 'string' || model.trim() === '') {
-    return { valid: false, error: '`model` must be a string.' };
+    return { valid: false, error: CHAT_ERRORS.INVALID_MODEL_FORMAT };
   }
 
   if (!validModels.includes(model)) {
-    return { valid: false, error: `\`model\` must be supported.` };
+    return { valid: false, error: CHAT_ERRORS.INVALID_MODEL };
+  }
+
+  if (!Array.isArray(messages)) {
+    return { valid: false, error: CHAT_ERRORS.INVALID_MESSAGES };
+  }
+
+  for (const msg of messages) {
+    if (!msg || typeof msg !== 'object') {
+      return { valid: false, error: CHAT_ERRORS.INVALID_MESSAGE_OBJECT };
+    }
+
+    const { role, content } = msg as ChatMessage;
+
+    if (!['user', 'assistant', 'system'].includes(role)) {
+      return { valid: false, error: CHAT_ERRORS.INVALID_ROLE };
+    }
+
+    if (typeof content !== 'string' || content.trim() === '') {
+      return { valid: false, error: CHAT_ERRORS.INVALID_CONTENT };
+    }
   }
 
   return {
     valid: true,
     data: {
-      message,
+      messages,
       model,
     },
   };
