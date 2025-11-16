@@ -1,11 +1,12 @@
 import { Box, Flex } from '@chakra-ui/react';
-import { ChatMessage } from './ChatMessage';
+import type { ChatMessage } from '../types/types'; // Ensure correct type is imported
 import { ChatInput } from './ChatInput';
-import { useChat } from '../hooks/useChat';
+import { useChatStream } from '../hooks/useChatStream';
 import { useEffect, useRef } from 'react';
+import { ChatMessage as ChatMessageComponent } from './ChatMessage';
 
 export const ChatContainer = () => {
-  const { messages, isLoading, sendMessage } = useChat();
+  const { history, isStreaming, streamMessage, setHistory } = useChatStream();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -14,10 +15,28 @@ export const ChatContainer = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [history]);
 
-  const handleSendMessage = (message: string) => {
-    sendMessage(message).catch(() => {});
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('Chat History:', history);
+  }, [history]);
+
+  const handleSendMessage = async (message: string) => {
+    const newUserMessage: ChatMessage = {
+      role: 'user',
+      content: message,
+    };
+
+    const updatedMessages = [...history, newUserMessage];
+    setHistory(updatedMessages);
+
+    try {
+      await streamMessage({ messages: updatedMessages, model: 'gpt-4o-mini' });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Streaming error:', err);
+    }
   };
 
   return (
@@ -55,7 +74,7 @@ export const ChatContainer = () => {
           },
         }}
       >
-        {messages.length === 0 ? (
+        {history.length === 0 ? (
           <Flex
             direction="column"
             align="center"
@@ -74,7 +93,7 @@ export const ChatContainer = () => {
             </Box>
           </Flex>
         ) : (
-          messages.map((message) => <ChatMessage key={message.id} message={message} />)
+          history.map((message) => <ChatMessageComponent key={message.content} message={message} />)
         )}
         <div ref={messagesEndRef} style={{ height: '0px' }} />
       </Box>
@@ -86,7 +105,10 @@ export const ChatContainer = () => {
         borderTop={{ base: '1px', _dark: '1.5px' }}
         borderColor="border.default"
       >
-        <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+        <ChatInput
+          onSendMessage={(message) => void handleSendMessage(message)}
+          isLoading={isStreaming}
+        />
       </Box>
     </Flex>
   );

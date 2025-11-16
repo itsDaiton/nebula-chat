@@ -1,12 +1,8 @@
 export type MessageType = 'user' | 'bot';
 
 export interface ChatMessage {
-  id: string;
+  role: 'user' | 'assistant' | 'system';
   content: string;
-  type: MessageType;
-  timestamp: Date;
-  isLoading?: boolean;
-  isThinking?: boolean;
 }
 
 export interface ChatMessageProps {
@@ -17,4 +13,14 @@ export interface ChatInputProps {
   onSendMessage: (message: string) => void;
   isLoading?: boolean;
   autoFocus?: boolean;
+}
+
+export interface ChatStreamOptions {
+  message: string;
+  model: string;
+}
+
+export interface ChatHistoryStreamOptions {
+  model: string;
+  messages: ChatMessage[];
 }
