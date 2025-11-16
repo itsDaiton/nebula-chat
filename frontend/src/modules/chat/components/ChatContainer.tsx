@@ -6,7 +6,7 @@ import { useEffect, useRef } from 'react';
 import { ChatMessage as ChatMessageComponent } from './ChatMessage';
 
 export const ChatContainer = () => {
-  const { history, isStreaming, streamMessage, setHistory } = useChatStream();
+  const { history, isStreaming, streamMessage, setHistory, usage } = useChatStream();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -14,12 +14,18 @@ export const ChatContainer = () => {
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [history]);
+    if (usage) {
+      // eslint-disable-next-line no-console
+      console.log('Token Usage:', {
+        prompt: usage.promptTokens,
+        completion: usage.completionTokens,
+        total: usage.totalTokens,
+      });
+    }
+  }, [usage]);
 
   useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log('Chat History:', history);
+    scrollToBottom();
   }, [history]);
 
   const handleSendMessage = async (message: string) => {

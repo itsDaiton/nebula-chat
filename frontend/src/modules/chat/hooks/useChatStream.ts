@@ -5,6 +5,11 @@ export function useChatStream() {
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [usage, setUsage] = useState<{
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  } | null>(null);
 
   const abortController = useRef<AbortController | null>(null);
 
@@ -17,6 +22,7 @@ export function useChatStream() {
   const streamMessage = useCallback(async ({ model, messages }: ChatHistoryStreamOptions) => {
     setIsStreaming(true);
     setError(null);
+    setUsage(null);
 
     setHistory([...messages, { role: 'assistant', content: '' }]);
 
@@ -42,6 +48,7 @@ export function useChatStream() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let buffer = '';
+      let currentEvent: 'token' | 'usage' | null = null;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -52,7 +59,14 @@ export function useChatStream() {
         buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (line.startsWith('event: token')) continue;
+          if (line.startsWith('event: token')) {
+            currentEvent = 'token';
+            continue;
+          }
+          if (line.startsWith('event: usage')) {
+            currentEvent = 'usage';
+            continue;
+          }
 
           if (line.startsWith('data: ')) {
             const raw = line.replace('data: ', '').trim();
@@ -63,21 +77,30 @@ export function useChatStream() {
               return;
             }
 
-            let parsed;
+            let parsed: any;
             try {
               parsed = JSON.parse(raw);
             } catch {
               continue;
             }
 
-            const token = parsed.token;
-            if (typeof token === 'string') {
+            if (currentEvent === 'usage') {
+              setUsage({
+                promptTokens: parsed.promptTokens,
+                completionTokens: parsed.completionTokens,
+                totalTokens: parsed.totalTokens,
+              });
+              currentEvent = null;
+              continue;
+            }
+
+            if (currentEvent === 'token' && typeof parsed.token === 'string') {
               setHistory((prev) => {
                 const updated = [...prev];
                 const last = updated[updated.length - 1];
                 updated[updated.length - 1] = {
                   ...last,
-                  content: last.content + token,
+                  content: last.content + parsed.token,
                 };
                 return updated;
               });
@@ -106,6 +129,7 @@ export function useChatStream() {
     history,
     isStreaming,
     error,
+    usage,
     streamMessage,
     abort,
     setHistory,
