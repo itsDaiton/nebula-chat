@@ -1,9 +1,9 @@
 import type { ValidationResult } from '@backend/types/chat.types';
-import { validModels } from '@backend/utils/models';
+import { validModels } from '@backend/utils/chat.utils';
 
 export function validateChatRequest(body: unknown): ValidationResult {
   if (!body || typeof body !== 'object') {
-    return { valid: false, error: 'Request body must be an object' };
+    return { valid: false, error: 'Request body must be an object.' };
   }
 
   const message = (body as any).message;
@@ -18,7 +18,7 @@ export function validateChatRequest(body: unknown): ValidationResult {
   }
 
   if (!validModels.includes(model)) {
-    return { valid: false, error: `\`model\` must be supported.` };
+    return { valid: false, error: '`model` must be supported.' };
   }
 
   return {

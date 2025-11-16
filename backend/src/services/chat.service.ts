@@ -1,32 +1,28 @@
 import 'dotenv/config';
-import OpenAI from 'openai';
 import type { ChatRequestBody } from '@backend/types/chat.types';
+import { createClient } from '@backend/utils/chat.utils';
+import type OpenAI from 'openai';
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-export async function generateResponse(
+export async function generateResponseStream(
   message: ChatRequestBody['message'],
   model: ChatRequestBody['model'],
-): Promise<string> {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('Missing API key for OpenAI inference.');
-  }
+  onToken: (token: string) => void,
+): Promise<void> {
+  const client: OpenAI = createClient();
 
   try {
-    const data = await client.chat.completions.create({
+    const stream = await client.chat.completions.create({
       model,
       messages: [{ role: 'user', content: message }],
+      stream: true,
     });
 
-    const response = data.choices?.[0]?.message?.content;
-
-    if (!response || typeof response !== 'string') {
-      throw new Error('Invalid response from OpenAI API.');
+    for await (const chunk of stream) {
+      const token = chunk.choices?.[0]?.delta?.content;
+      if (token) {
+        onToken(token);
+      }
     }
-
-    return response;
   } catch (error) {
     throw error;
   }

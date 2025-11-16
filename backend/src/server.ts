@@ -3,13 +3,15 @@ import type { Request, Response } from 'express';
 import express from 'express';
 import cors from 'cors';
 import { chatRoutes } from './routes/chat.routes';
+import { checkOrigin, corsConfig } from './configs/cors.config';
 
 const app: express.Express = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL ?? '*',
+    origin: checkOrigin,
+    ...corsConfig,
   }),
 );
 app.use(express.json());

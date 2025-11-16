@@ -3,13 +3,17 @@ export interface ChatRequestBody {
   model: string;
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
+export interface ChatErrorResponse {
+  success: false;
+  error: string;
 }
 
-export type ChatResponseBody = ApiResponse<string>;
+export interface ChatSuccessResponse<T = unknown> {
+  success: true;
+  data: T;
+}
+
+export type ChatResponse<T = unknown> = ChatErrorResponse | ChatSuccessResponse<T>;
 
 export type ValidationResult =
   | { valid: false; error: string }
