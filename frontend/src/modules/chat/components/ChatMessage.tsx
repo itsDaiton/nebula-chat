@@ -3,13 +3,6 @@ import type { ChatMessageProps } from '../types/types';
 import { IoSparkles } from 'react-icons/io5';
 import { LuUser } from 'react-icons/lu';
 import { useEffect, useRef, useState } from 'react';
-import { keyframes } from '@emotion/react'; // Add missing keyframes import
-
-const cursorBlink = keyframes`
-  0% { opacity: 1; }
-  50% { opacity: 0; }
-  100% { opacity: 1; }
-`;
 
 export const ChatMessage = ({ message }: ChatMessageProps) => {
   const isUser = message.role === 'user';
@@ -63,18 +56,6 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
         <Box position="relative" display="inline">
           <Text ref={textRef} fontSize="sm" whiteSpace="pre-wrap" as="span" display="inline">
             {message.content}
-            {!isUser && message.role === 'assistant' && (
-              <Box
-                as="span"
-                display="inline-block"
-                w="2px"
-                h="1.2em"
-                bg="fg.soft"
-                ml="1px"
-                verticalAlign="middle"
-                animation={`${cursorBlink} 1s infinite`}
-              />
-            )}
           </Text>
         </Box>
       </Box>
