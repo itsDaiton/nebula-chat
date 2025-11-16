@@ -21,10 +21,18 @@ export async function sendMessageStream(req: Request, res: Response) {
   res.flushHeaders();
 
   try {
-    await generateResponseStream(messages, model, (token) => {
-      res.write(`event: token\n`);
-      res.write(`data: ${JSON.stringify({ token })}\n\n`);
-    });
+    await generateResponseStream(
+      messages,
+      model,
+      (token) => {
+        res.write(`event: token\n`);
+        res.write(`data: ${JSON.stringify({ token })}\n\n`);
+      },
+      (usageData) => {
+        res.write(`event: usage\n`);
+        res.write(`data: ${JSON.stringify(usageData)}\n\n`);
+      },
+    );
     res.write('event: end\n');
     res.write('data: end\n\n');
     res.end();
