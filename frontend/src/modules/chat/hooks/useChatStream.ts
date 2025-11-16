@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import type { ChatHistoryStreamOptions, ChatMessage } from '../types/types';
+import { SERVER_CONFIG } from '../../../shared/config/serverConfig';
 
 export function useChatStream() {
   const [history, setHistory] = useState<ChatMessage[]>([]);
@@ -30,7 +31,7 @@ export function useChatStream() {
     abortController.current = controller;
 
     try {
-      const response = await fetch('http://localhost:3000/api/chat/message', {
+      const response = await fetch(SERVER_CONFIG.getApiEndpoint('/api/chat/message'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages, model }),
