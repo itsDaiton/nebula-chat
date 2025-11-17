@@ -6,7 +6,7 @@ export const conversationController = {
   async create(req: Request, res: Response, next: NextFunction) {
     try {
       const { title } = req.body;
-      if (!title) {
+      if (!title || !title.trim()) {
         return res.status(400).json({ error: CONVERSATION_ERRORS.INVALID_TITLE });
       }
       const conversation = await conversationService.createConversation(title);

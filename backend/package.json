@@ -15,6 +15,7 @@
     "openai": "^6.9.0"
   },
   "devDependencies": {
+    "@prisma/client": "^6.19.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "@types/node": "^24.10.1",

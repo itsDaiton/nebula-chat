@@ -9,7 +9,7 @@ export const messageController = {
       if (!conversationId) {
         return res.status(400).json({ error: MESSAGE_ERRORS.INVALID_CONVERSATION_ID });
       }
-      if (!content) {
+      if (!content || !content.trim()) {
         return res.status(400).json({ error: MESSAGE_ERRORS.INVALID_CONTENT });
       }
       if (!role || !['user', 'assistant', 'system'].includes(role)) {

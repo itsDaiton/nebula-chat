@@ -23,4 +23,6 @@ model Message {
   tokens         Int?
   createdAt      DateTime     @default(now())
   conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  @@index([conversationId])
 }
