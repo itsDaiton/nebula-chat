@@ -37,9 +37,6 @@ jobs:
       - name: Validate Prisma schema
         run: npm --prefix backend run prisma:validate
 
-      - name: Generate Prisma client
-        run: npm --prefix backend run prisma:generate
-
       - name: Install frontend dependencies
         run: npm --prefix frontend install
 
