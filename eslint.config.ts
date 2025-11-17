@@ -18,6 +18,8 @@ export default [
       'eslint.config.ts',
       'vite.config.*',
       'frontend/vite.config.*',
+      'backend/src/generated/**',
+      'backend/prisma/**',
     ],
   },
   {
