@@ -7,6 +7,8 @@ coverage
 frontend/build
 backend/dist
 backend/node_modules
+backend/src/generated
+backend/prisma/migrations
 
 *.log
 *.lock
