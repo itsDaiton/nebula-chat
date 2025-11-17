@@ -24,6 +24,13 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitOverride": true
   },
-  "exclude": ["node_modules", "tmp", "dist", "src/generated/**", "prisma/migrations/**", "src/prisma.ts"],
+  "exclude": [
+    "node_modules",
+    "tmp",
+    "dist",
+    "src/generated/**",
+    "prisma/migrations/**",
+    "src/prisma.ts"
+  ],
   "include": ["src/**/*.ts", "prisma.config.ts"]
 }
