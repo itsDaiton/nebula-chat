@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "rootDir": "src",
+    "rootDir": ".",
     "outDir": "dist",
     "paths": {
       "@backend/*": ["src/*"]
@@ -25,5 +25,5 @@
     "noImplicitOverride": true
   },
   "exclude": ["node_modules", "tmp", "dist", "**/*.spec.ts", "**/*.test.ts"],
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "prisma.config.ts"]
 }
