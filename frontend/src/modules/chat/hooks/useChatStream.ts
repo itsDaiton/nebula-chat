@@ -31,7 +31,7 @@ export function useChatStream() {
     abortController.current = controller;
 
     try {
-      const response = await fetch(SERVER_CONFIG.getApiEndpoint('/api/chat/message'), {
+      const response = await fetch(SERVER_CONFIG.getApiEndpoint('/api/chat/stream'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages, model }),

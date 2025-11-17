@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "rootDir": "src",
+    "rootDir": ".",
     "outDir": "dist",
     "paths": {
       "@backend/*": ["src/*"]
     },
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    "module": "commonjs",
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "target": "esnext",
     "sourceMap": true,
@@ -24,6 +24,6 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitOverride": true
   },
-  "exclude": ["node_modules", "tmp", "dist", "**/*.spec.ts", "**/*.test.ts"],
-  "include": ["src/**/*.ts"]
+  "exclude": ["node_modules", "tmp", "dist"],
+  "include": ["src/**/*.ts", "prisma.config.ts"]
 }

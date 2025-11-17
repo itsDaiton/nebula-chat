@@ -3,6 +3,6 @@ import { Router } from 'express';
 
 const chatRoutes = Router();
 
-chatRoutes.post('/message', sendMessageStream);
+chatRoutes.post('/stream', sendMessageStream);
 
 export { chatRoutes };
