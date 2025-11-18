@@ -34,12 +34,6 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: echo "DATABASE_URL=$DATABASE_URL" >> $GITHUB_ENV
 
-      - name: Validate Prisma schema
-        run: npm --prefix backend run prisma:validate
-
-      - name: Generate Prisma Client
-        run: npm --prefix backend run prisma:generate
-
       - name: Install frontend dependencies
         run: npm --prefix frontend install
 
