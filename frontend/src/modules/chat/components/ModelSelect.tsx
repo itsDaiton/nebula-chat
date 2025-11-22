@@ -51,20 +51,20 @@ export const ModelSelect = ({
           bg: 'transparent',
         }}
       >
-        <Select.ValueText />
+        <Select.ValueText />{' '}
+        <Select.IndicatorGroup>
+          <Icon
+            as={IoChevronDown}
+            boxSize="16px"
+            color="fg.muted"
+            transform={isSelectOpen ? 'rotate(180deg)' : 'rotate(0deg)'}
+            transition="transform 0.2s"
+          />
+        </Select.IndicatorGroup>
       </Select.Trigger>
-      <Select.IndicatorGroup>
-        <Icon
-          as={IoChevronDown}
-          boxSize="16px"
-          color="fg.muted"
-          transform={isSelectOpen ? 'rotate(180deg)' : 'rotate(0deg)'}
-          transition="transform 0.2s"
-        />
-      </Select.IndicatorGroup>
     </Select.Control>
     <Select.Positioner>
-      <Select.Content bg="bg.input" borderColor="border.default">
+      <Select.Content bg="bg.input" borderColor="border.default" gapY={1}>
         {modelOptions.items.map((item) => (
           <Select.Item key={item.value} item={item}>
             {item.label}
