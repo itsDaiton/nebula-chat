@@ -8,5 +8,5 @@ export const useResetChat = () => {
     void navigate(route.chat.root());
   };
 
-  return resetChat;
+  return { resetChat };
 };

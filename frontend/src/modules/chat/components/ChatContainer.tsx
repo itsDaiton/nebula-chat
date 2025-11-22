@@ -6,7 +6,7 @@ import { ChatMessage } from './ChatMessage';
 import { useHandleSendMessage } from '../hooks/useHandleSendMessage';
 import { useModel } from '../hooks/useModel';
 import { chatScrollBar } from '@/shared/components/scrollbar';
-import { resources } from '@/resource';
+import { resources } from '@/resources';
 import { ChatStreaming } from './ChatStreaming';
 import { ChatContainerBox } from './ChatContainerBox';
 
