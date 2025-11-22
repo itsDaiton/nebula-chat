@@ -23,7 +23,7 @@ export const ChatContainer = () => {
 
   return (
     <ChatContainerBox>
-      <Box flex="1" overflowY="auto" p={4} mb="70px" css={chatScrollBar}>
+      <Box flex="1" overflowY="auto" p={4} mb="120px" css={chatScrollBar}>
         {history.length === 0 ? (
           <Flex
             direction="column"
