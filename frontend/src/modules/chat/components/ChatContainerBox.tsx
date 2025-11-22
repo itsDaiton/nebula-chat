@@ -8,6 +8,7 @@ export const ChatContainerBox = ({ children }: { children: React.ReactNode }) =>
     maxW="1000px"
     mx="auto"
     bg="bg.default"
+    borderColor={'border.default'}
     borderWidth={'1px'}
     borderRadius="lg"
     position="relative"
