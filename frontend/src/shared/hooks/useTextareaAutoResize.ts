@@ -1,5 +1,7 @@
 import { useLayoutEffect } from 'react';
 
+const MAX_TEXTAREA_HEIGHT = 200;
+
 export const useTextareaAutoResize = (textareaRef: React.RefObject<HTMLTextAreaElement>) => {
   useLayoutEffect(() => {
     const textarea = textareaRef.current;
@@ -7,8 +9,8 @@ export const useTextareaAutoResize = (textareaRef: React.RefObject<HTMLTextAreaE
 
     const adjustHeight = () => {
       textarea.style.height = 'auto';
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
-      textarea.style.overflowY = textarea.scrollHeight > 200 ? 'auto' : 'hidden';
+      textarea.style.height = `${Math.min(textarea.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`;
+      textarea.style.overflowY = textarea.scrollHeight > MAX_TEXTAREA_HEIGHT ? 'auto' : 'hidden';
     };
 
     adjustHeight();

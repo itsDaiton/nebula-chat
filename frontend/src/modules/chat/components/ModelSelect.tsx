@@ -18,7 +18,7 @@ export const ModelSelect = ({
   <Select.Root
     collection={modelOptions}
     value={[selectedModel]}
-    onValueChange={(details) => onModelChange(details.value[0])}
+    onValueChange={(details) => details.value[0] && onModelChange(details.value[0])}
     onOpenChange={(details) => setIsSelectOpen(details.open)}
     positioning={{ placement: 'top', flip: false }}
     size="sm"

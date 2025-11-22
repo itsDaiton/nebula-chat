@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 
+const MULTILINE_THRESHOLD = 1.5;
+const DEFAULT_LINE_HEIGHT_THRESHOLD = 1.2;
+
 export const useMultiLine = (content: string) => {
   const [isMultiLine, setIsMultiLine] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
@@ -11,11 +14,11 @@ export const useMultiLine = (content: string) => {
     let lineHeight = parseInt(styles.lineHeight);
     if (isNaN(lineHeight)) {
       const fontSize = parseFloat(styles.fontSize);
-      lineHeight = fontSize * 1.2;
+      lineHeight = fontSize * DEFAULT_LINE_HEIGHT_THRESHOLD;
     }
 
     const height = textRef.current.getBoundingClientRect().height;
-    setIsMultiLine(height > lineHeight * 1.5);
+    setIsMultiLine(height > lineHeight * MULTILINE_THRESHOLD);
   }, [content]);
 
   return {
