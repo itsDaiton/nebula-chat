@@ -1,82 +1,53 @@
-import { Box, Textarea, Button, Flex, Icon } from '@chakra-ui/react';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { Box, Textarea, Flex } from '@chakra-ui/react';
+import { useMessageHandler } from '../hooks/useMessageHandler';
+import { useKeyboardHandler } from '../hooks/useKeyboardHandler';
+import { useTextareaAutoResize } from '../hooks/useTextareaAutoResize';
+import { useModelSelector } from '../hooks/useModelSelector';
 import type { ChatInputProps } from '../types/types';
-import { IoSendSharp } from 'react-icons/io5';
+import { ModelSelect } from './ModelSelect';
+import { SendButton } from './SendButton';
 
-export const ChatInput = ({ onSendMessage, isLoading = false }: ChatInputProps) => {
-  const [message, setMessage] = useState('');
-  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+export const ChatInput = ({
+  onSendMessage,
+  isLoading = false,
+  selectedModel,
+  onModelChange,
+}: ChatInputProps) => {
+  const { message, setMessage, handleSubmit, handleMessageSend } = useMessageHandler({
+    onSendMessage,
+    isLoading,
+  });
 
-  const resetTextarea = useCallback(() => {
-    if (inputRef.current) {
-      inputRef.current.style.height = '52px';
-    }
-  }, []);
+  const { inputRef } = useKeyboardHandler({
+    message,
+    isLoading,
+    handleMessageSend,
+  });
 
-  const handleMessageSend = useCallback(() => {
-    onSendMessage(message);
-    setMessage('');
-    resetTextarea();
-  }, [onSendMessage, message, resetTextarea]);
+  useTextareaAutoResize(inputRef as React.RefObject<HTMLTextAreaElement>);
 
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && message.trim() && !isLoading) {
-        e.preventDefault();
-        handleMessageSend();
-        return;
-      }
-      if (
-        !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) &&
-        !e.ctrlKey &&
-        !e.metaKey &&
-        e.key.length === 1
-      ) {
-        inputRef.current?.focus();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [message, isLoading, onSendMessage, handleMessageSend]);
-
-  useEffect(() => {
-    if (!isLoading) {
-      inputRef.current?.focus();
-    }
-  }, [isLoading]);
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    const textarea = inputRef.current;
-    if (!textarea) return;
-
-    const adjustHeight = () => {
-      textarea.style.height = 'auto';
-      const newHeight = Math.min(textarea.scrollHeight, 200);
-      textarea.style.height = `${newHeight}px`;
-
-      // Only show scrollbar if we've reached max height
-      textarea.style.overflowY = newHeight === 200 ? 'auto' : 'hidden';
-    };
-
-    textarea.addEventListener('input', adjustHeight);
-    return () => textarea.removeEventListener('input', adjustHeight);
-  }, []);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (message.trim()) {
-      handleMessageSend();
-    }
-  };
+  const { triggerWidth, isSelectOpen, setIsSelectOpen, measureRef } = useModelSelector({
+    selectedModel,
+    onModelChange,
+  });
 
   return (
     <Box as="form" onSubmit={handleSubmit} p={4}>
-      <Flex position="relative" alignItems="center">
+      <Box
+        position="relative"
+        bg="bg.input"
+        borderRadius="lg"
+        borderColor="border.default"
+        borderWidth={{ base: '1px', _dark: '1.5px' }}
+        transition="all 0.2s"
+        _hover={{
+          borderColor: 'border.emphasized',
+        }}
+        _focusWithin={{
+          borderColor: 'border.emphasized',
+          boxShadow: '0 0 0 1px var(--chakra-colors-border-emphasized)',
+        }}
+      >
         <Textarea
           ref={inputRef}
           value={message}
@@ -84,16 +55,15 @@ export const ChatInput = ({ onSendMessage, isLoading = false }: ChatInputProps) 
           autoFocus
           placeholder="Ask me anything..."
           size="lg"
-          pr="44px"
+          px={4}
+          py={3}
+          pb={1}
           disabled={isLoading}
-          bg="bg.input"
-          borderRadius="lg"
-          borderColor="border.default"
-          borderWidth={{ base: '1px', _dark: '1.5px' }}
+          bg="transparent"
+          border="none"
           color="fg.soft"
-          transition="all 0.2s"
           resize="none"
-          minH="52px"
+          minH="auto"
           maxH="200px"
           overflow="hidden"
           rows={1}
@@ -112,18 +82,11 @@ export const ChatInput = ({ onSendMessage, isLoading = false }: ChatInputProps) 
               background: 'var(--chakra-colors-border-emphasized)',
             },
           }}
-          _hover={{
-            borderColor: 'border.emphasized',
-          }}
           _focus={{
-            borderColor: 'border.emphasized',
-            boxShadow: '0 0 0 1px var(--chakra-colors-border-emphasized)',
             outline: 'none',
-            ring: '0',
-            ringOffset: '0',
+            boxShadow: 'none',
           }}
           _disabled={{
-            bg: 'bg.subtle',
             cursor: 'not-allowed',
             opacity: 0.7,
           }}
@@ -131,31 +94,28 @@ export const ChatInput = ({ onSendMessage, isLoading = false }: ChatInputProps) 
             color: 'fg.muted',
           }}
         />
-        <Button
-          type="submit"
-          position="absolute"
-          right={2}
-          top="50%"
-          transform="translateY(-50%)"
-          aria-label="Send message"
-          variant="ghost"
-          color="fg.soft"
-          loading={isLoading}
-          minW="auto"
-          height="40px"
-          width="40px"
-          p={0}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          _hover={{ color: 'fg.default' }}
-          _active={{ color: 'fg.soft' }}
-          _disabled={{ opacity: 0.4 }}
-          disabled={!message.trim() || isLoading}
-        >
-          <Icon as={IoSendSharp} transform="rotate(-50deg) translateY(1px)" boxSize="18px" />
-        </Button>
-      </Flex>
+        <Flex align="center" justify="flex-end" gap={2} px={2} pb={2} minH="40px">
+          <ModelSelect
+            selectedModel={selectedModel}
+            onModelChange={onModelChange}
+            isSelectOpen={isSelectOpen}
+            setIsSelectOpen={setIsSelectOpen}
+            triggerWidth={triggerWidth}
+          />
+          <Box
+            as="span"
+            ref={measureRef}
+            position="absolute"
+            visibility="hidden"
+            whiteSpace="nowrap"
+            fontSize="sm"
+            fontWeight={500}
+            pointerEvents="none"
+            left="-9999px"
+          />
+          <SendButton isLoading={isLoading} message={message} />
+        </Flex>
+      </Box>
     </Box>
   );
 };

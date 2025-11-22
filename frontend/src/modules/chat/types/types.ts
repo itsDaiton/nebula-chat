@@ -13,6 +13,8 @@ export interface ChatInputProps {
   onSendMessage: (message: string) => void;
   isLoading?: boolean;
   autoFocus?: boolean;
+  selectedModel: string;
+  onModelChange: (model: string) => void;
 }
 
 export interface ChatStreamOptions {
@@ -23,4 +25,10 @@ export interface ChatStreamOptions {
 export interface ChatHistoryStreamOptions {
   model: string;
   messages: ChatMessage[];
+}
+
+export interface UseKeyboardHandlerProps {
+  message: string;
+  isLoading: boolean;
+  handleMessageSend: () => void;
 }

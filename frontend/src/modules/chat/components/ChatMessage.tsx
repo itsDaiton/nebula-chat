@@ -2,20 +2,12 @@ import { Box, Text, Flex, Circle, Icon } from '@chakra-ui/react';
 import type { ChatMessageProps } from '../types/types';
 import { IoSparkles } from 'react-icons/io5';
 import { LuUser } from 'react-icons/lu';
-import { useEffect, useRef, useState } from 'react';
+import { useMultiLine } from '../hooks/useMultiLine';
+import { useIsUser } from '../utils/chatUtils';
 
 export const ChatMessage = ({ message }: ChatMessageProps) => {
-  const isUser = message.role === 'user';
-  const [isMultiLine, setIsMultiLine] = useState(false);
-  const textRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (textRef.current) {
-      const lineHeight = parseInt(getComputedStyle(textRef.current).lineHeight);
-      const height = textRef.current.offsetHeight;
-      setIsMultiLine(height > lineHeight * 1.5);
-    }
-  }, [message.content]);
+  const isUser = useIsUser(message.role);
+  const { isMultiLine, textRef } = useMultiLine(message.content);
 
   return (
     <Flex
@@ -54,7 +46,7 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
         borderColor="border.default"
       >
         <Box position="relative" display="inline">
-          <Text ref={textRef} fontSize="sm" whiteSpace="pre-wrap" as="span" display="inline">
+          <Text fontSize="sm" whiteSpace="pre-wrap" as="span" display="inline" ref={textRef}>
             {message.content}
           </Text>
         </Box>

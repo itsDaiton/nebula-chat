@@ -2,12 +2,13 @@ import { Box, Flex, Spinner, Circle, Icon } from '@chakra-ui/react';
 import type { ChatMessage } from '../types/types'; // Ensure correct type is imported
 import { ChatInput } from './ChatInput';
 import { useChatStream } from '../hooks/useChatStream';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChatMessage as ChatMessageComponent } from './ChatMessage';
 import { IoSparkles } from 'react-icons/io5';
 
 export const ChatContainer = () => {
   const { history, isStreaming, streamMessage, setHistory, usage } = useChatStream();
+  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -39,7 +40,7 @@ export const ChatContainer = () => {
     setHistory(updatedMessages);
 
     try {
-      await streamMessage({ messages: updatedMessages, model: 'gpt-4o-mini' });
+      await streamMessage({ messages: updatedMessages, model: selectedModel });
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Streaming error:', err);
@@ -166,6 +167,8 @@ export const ChatContainer = () => {
         <ChatInput
           onSendMessage={(message) => void handleSendMessage(message)}
           isLoading={isStreaming}
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
         />
       </Box>
     </Flex>
