@@ -6,3 +6,10 @@ export interface LayoutProps {
 }
 
 export interface NebulaButtonProps extends ButtonProps {}
+
+export interface NebulaMenuItemProps {
+  id: number;
+  value: string;
+  label: string;
+  onClick?: () => void;
+}
