@@ -32,3 +32,14 @@ export interface UseKeyboardHandlerProps {
   isLoading: boolean;
   handleMessageSend: () => void;
 }
+
+export interface UseMessageHandlerProps {
+  onSendMessage: (message: string) => void;
+  isLoading: boolean;
+}
+
+export interface UseHandleSendMessageProps {
+  history: ChatMessage[];
+  setHistory: (messages: ChatMessage[]) => void;
+  streamMessage: (params: { messages: ChatMessage[]; model: string }) => Promise<void>;
+}

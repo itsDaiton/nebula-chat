@@ -1,11 +1,13 @@
-import { Box, Textarea, Flex } from '@chakra-ui/react';
+import { Box, Flex } from '@chakra-ui/react';
 import { useMessageHandler } from '../hooks/useMessageHandler';
 import { useKeyboardHandler } from '../hooks/useKeyboardHandler';
-import { useTextareaAutoResize } from '../hooks/useTextareaAutoResize';
 import { useModelSelector } from '../hooks/useModelSelector';
 import type { ChatInputProps } from '../types/types';
 import { ModelSelect } from './ModelSelect';
 import { SendButton } from './SendButton';
+import { useTextareaAutoResize } from '@/shared/hooks/useTextareaAutoResize';
+import { chatScrollBar } from '@/shared/components/scrollbar';
+import { ChatInputArea } from './ChatInputArea';
 
 export const ChatInput = ({
   onSendMessage,
@@ -26,9 +28,8 @@ export const ChatInput = ({
 
   useTextareaAutoResize(inputRef as React.RefObject<HTMLTextAreaElement>);
 
-  const { triggerWidth, isSelectOpen, setIsSelectOpen, measureRef } = useModelSelector({
+  const { triggerWidth, isSelectOpen, setIsSelectOpen } = useModelSelector({
     selectedModel,
-    onModelChange,
   });
 
   return (
@@ -48,51 +49,12 @@ export const ChatInput = ({
           boxShadow: '0 0 0 1px var(--chakra-colors-border-emphasized)',
         }}
       >
-        <Textarea
-          ref={inputRef}
-          value={message}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMessage(e.target.value)}
-          autoFocus
-          placeholder="Ask me anything..."
-          size="lg"
-          px={4}
-          py={3}
-          pb={1}
-          disabled={isLoading}
-          bg="transparent"
-          border="none"
-          color="fg.soft"
-          resize="none"
-          minH="auto"
-          maxH="200px"
-          overflow="hidden"
-          rows={1}
-          css={{
-            '&::-webkit-scrollbar': {
-              width: '4px',
-            },
-            '&::-webkit-scrollbar-track': {
-              background: 'transparent',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: 'var(--chakra-colors-border-default)',
-              borderRadius: '4px',
-            },
-            '&::-webkit-scrollbar-thumb:hover': {
-              background: 'var(--chakra-colors-border-emphasized)',
-            },
-          }}
-          _focus={{
-            outline: 'none',
-            boxShadow: 'none',
-          }}
-          _disabled={{
-            cursor: 'not-allowed',
-            opacity: 0.7,
-          }}
-          _placeholder={{
-            color: 'fg.muted',
-          }}
+        <ChatInputArea
+          inputRef={inputRef}
+          message={message}
+          setMessage={setMessage}
+          isLoading={isLoading}
+          chatScrollBar={chatScrollBar}
         />
         <Flex align="center" justify="flex-end" gap={2} px={2} pb={2} minH="40px">
           <ModelSelect
@@ -101,17 +63,6 @@ export const ChatInput = ({
             isSelectOpen={isSelectOpen}
             setIsSelectOpen={setIsSelectOpen}
             triggerWidth={triggerWidth}
-          />
-          <Box
-            as="span"
-            ref={measureRef}
-            position="absolute"
-            visibility="hidden"
-            whiteSpace="nowrap"
-            fontSize="sm"
-            fontWeight={500}
-            pointerEvents="none"
-            left="-9999px"
           />
           <SendButton isLoading={isLoading} message={message} />
         </Flex>

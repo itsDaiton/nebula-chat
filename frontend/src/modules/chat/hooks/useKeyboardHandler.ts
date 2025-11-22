@@ -1,22 +1,6 @@
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import type { UseKeyboardHandlerProps } from '../types/types';
-
-const useEventListener = <T extends Event>(
-  eventName: string,
-  handler: (event: T) => void,
-  element: EventTarget = window,
-) => {
-  useEffect(() => {
-    const eventHandler = (event: Event) => handler(event as T);
-
-    if (!element?.addEventListener) return;
-
-    element.addEventListener(eventName, eventHandler);
-    return () => {
-      element.removeEventListener(eventName, eventHandler);
-    };
-  }, [eventName, handler, element]);
-};
+import { useEventListener } from '@/shared/hooks/useEventListener';
 
 export const useKeyboardHandler = ({
   message,
@@ -26,14 +10,14 @@ export const useKeyboardHandler = ({
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEventListener<KeyboardEvent>('keydown', (e) => {
+    const isPrintableKey = e.key.length === 1 && !e.ctrlKey && !e.metaKey;
+
     if (e.key === 'Enter' && message.trim() && !isLoading) {
       e.preventDefault();
       handleMessageSend();
     } else if (
-      !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) &&
-      !e.ctrlKey &&
-      !e.metaKey &&
-      e.key.length === 1
+      isPrintableKey &&
+      !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
     ) {
       inputRef.current?.focus();
     }

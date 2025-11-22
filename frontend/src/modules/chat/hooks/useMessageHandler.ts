@@ -1,27 +1,19 @@
 import { useState, useCallback } from 'react';
-
-interface UseMessageHandlerProps {
-  onSendMessage: (message: string) => void;
-  isLoading: boolean;
-}
+import type { UseMessageHandlerProps } from '../types/types';
 
 export const useMessageHandler = ({ onSendMessage, isLoading }: UseMessageHandlerProps) => {
   const [message, setMessage] = useState('');
-
-  const resetTextarea = useCallback(() => {
-    const textarea = document.querySelector('textarea');
-    if (textarea) {
-      textarea.style.height = 'auto';
-    }
-  }, []);
 
   const handleMessageSend = useCallback(() => {
     if (message.trim()) {
       onSendMessage(message);
       setMessage('');
-      resetTextarea();
+      const textarea = document.querySelector('textarea');
+      if (textarea) {
+        textarea.style.height = 'auto';
+      }
     }
-  }, [message, onSendMessage, resetTextarea]);
+  }, [message, onSendMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
