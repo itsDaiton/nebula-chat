@@ -137,3 +137,21 @@ export const getCacheStats = () => {
     },
   };
 };
+
+export const clearCache = () => {
+  cache.clear();
+  cacheStats.hits = 0;
+  cacheStats.misses = 0;
+  cacheStats.expired = 0;
+  cacheStats.evictions = 0;
+  cacheStats.sets = 0;
+  cacheStats.lastEvictedKey = null;
+  cacheStats.lastSetKey = null;
+  cacheStats.lastHitKey = null;
+};
+
+export const getRecentKeys = (limit: number = 20) => {
+  const keys = Array.from(cache.keys());
+  const recent = keys.slice(-limit).reverse();
+  return recent;
+};
