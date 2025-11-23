@@ -1,0 +1,10 @@
+import { useEffect } from 'react';
+import { scrollToBottom } from '@/shared/utils/scrollUtils';
+
+export const useAutoScroll = (ref: React.RefObject<HTMLDivElement | null>, dependencies: any[]) => {
+  useEffect(() => {
+    if (ref.current) {
+      scrollToBottom(ref);
+    }
+  }, [ref, dependencies]);
+};
