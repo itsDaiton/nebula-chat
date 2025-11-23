@@ -1,4 +1,4 @@
-import type { CacheEntry } from '@backend/types/chace.types';
+import type { CacheEntry } from '@backend/types/cache.types';
 
 const cache = new Map<string, CacheEntry>();
 
@@ -11,6 +11,9 @@ const cacheStats = {
   expired: 0,
   evictions: 0,
   sets: 0,
+  lastEvictedKey: null as string | null,
+  lastSetKey: null as string | null,
+  lastHitKey: null as string | null,
 };
 
 const markAsUsed = (key: string, entry: CacheEntry) => {
@@ -23,6 +26,7 @@ const evictLeastRecentlyUsed = () => {
   if (oldestKey !== undefined) {
     cache.delete(oldestKey);
     cacheStats.evictions++;
+    cacheStats.lastEvictedKey = oldestKey;
   }
 };
 
@@ -38,6 +42,7 @@ export const getFromCache = (key: string): string | undefined => {
     return undefined;
   }
   cacheStats.hits++;
+  cacheStats.lastHitKey = key;
   markAsUsed(key, entry);
   return entry.value;
 };
@@ -50,6 +55,7 @@ export const saveToCache = (key: string, value: string, ttlMs: number = DEFAULT_
   if (cache.has(key)) {
     markAsUsed(key, entry);
     cacheStats.sets++;
+    cacheStats.lastSetKey = key;
     return;
   }
   if (cache.size >= MAX_ITEMS) {
@@ -57,6 +63,7 @@ export const saveToCache = (key: string, value: string, ttlMs: number = DEFAULT_
   }
   cache.set(key, entry);
   cacheStats.sets++;
+  cacheStats.lastSetKey = key;
 };
 
 export const generateKey = (data: any): string => JSON.stringify(data);
@@ -76,23 +83,57 @@ setInterval(
 
 export const getCacheStats = () => {
   const now = Date.now();
-  let expiredCount = 0;
   let activeCount = 0;
+  let expiredCount = 0;
+
+  let ttlSum = 0;
+  let ttlCount = 0;
+
+  let oldestTTL = Infinity;
+  let newestTTL = -Infinity;
 
   for (const [, entry] of cache.entries()) {
-    if (now > entry.expiresAt) {
+    const remaining = entry.expiresAt - now;
+
+    if (remaining <= 0) {
       expiredCount++;
-    } else {
-      activeCount++;
+      continue;
+    }
+    activeCount++;
+    ttlSum += remaining;
+    ttlCount++;
+
+    if (remaining < oldestTTL) {
+      oldestTTL = remaining;
+    }
+
+    if (remaining > newestTTL) {
+      newestTTL = remaining;
     }
   }
 
+  const totalRequests = cacheStats.hits + cacheStats.misses;
+  const hitRate = totalRequests > 0 ? cacheStats.hits / totalRequests : 0;
+  const missRate = totalRequests > 0 ? cacheStats.misses / totalRequests : 0;
+  const expiredRate = totalRequests > 0 ? cacheStats.expired / totalRequests : 0;
+  const averageTTLremaining = ttlCount > 0 ? Math.round(ttlSum / ttlCount) : 0;
+  const isHealty = hitRate > 0.25 || cache.size < 50;
+
   return {
     size: cache.size,
-    activeCount,
-    expiredCount,
+    activeItems: activeCount,
+    expiredItems: expiredCount,
     maxItems: MAX_ITEMS,
-    defaultTTLms: DEFAULT_TTL_MS,
-    stats: { ...cacheStats },
+    defaultTtlsMs: DEFAULT_TTL_MS,
+    stats: {
+      ...cacheStats,
+      hitRate,
+      missRate,
+      expiredRate,
+      averageTTLremaining,
+      oldestTTL: oldestTTL === Infinity ? 0 : oldestTTL,
+      newestTTL: newestTTL === -Infinity ? 0 : newestTTL,
+      isHealty,
+    },
   };
 };

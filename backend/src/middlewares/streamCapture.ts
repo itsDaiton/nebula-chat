@@ -16,9 +16,18 @@ export function streamCapture(req: Request, res: Response, next: NextFunction) {
 
   res.on('finish', () => {
     if (full.trim() !== '') {
+      const filtered = full
+        .split('\n')
+        .filter((line) => {
+          if (line.startsWith('event: usage')) return false;
+          if (line.includes('\"promptTokens\"')) return false;
+          return true;
+        })
+        .join('\n');
+
       //eslint-disable-next-line no-console
       console.log('Saving to cache');
-      saveToCache(key, full);
+      saveToCache(key, filtered);
     }
   });
 
