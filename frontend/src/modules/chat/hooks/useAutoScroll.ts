@@ -6,5 +6,6 @@ export const useAutoScroll = (ref: React.RefObject<HTMLDivElement | null>, depen
     if (ref.current) {
       scrollToBottom(ref);
     }
-  }, [ref, dependencies]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ref, ...dependencies]);
 };

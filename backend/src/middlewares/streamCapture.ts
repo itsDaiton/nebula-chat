@@ -10,7 +10,10 @@ export function streamCapture(req: Request, res: Response, next: NextFunction) {
   res.write = (chunk: any, ...args: unknown[]) => {
     try {
       full += typeof chunk === 'string' ? chunk : chunk.toString();
-    } catch {}
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Error capturing stream chunk:', err);
+    }
     return originalWrite(chunk, ...(args as any));
   };
 

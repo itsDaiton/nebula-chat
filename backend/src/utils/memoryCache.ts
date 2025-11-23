@@ -123,14 +123,14 @@ export const getCacheStats = () => {
   const missRate = totalRequests > 0 ? cacheStats.misses / totalRequests : 0;
   const expiredRate = totalRequests > 0 ? cacheStats.expired / totalRequests : 0;
   const averageTTLremaining = ttlCount > 0 ? Math.round(ttlSum / ttlCount) : 0;
-  const isHealty = hitRate > 0.25 || cache.size < 50;
+  const isHealthy = hitRate > 0.25 || cache.size < 50;
 
   return {
     size: cache.size,
     activeItems: activeCount,
     expiredItems: expiredCount,
     maxItems: MAX_ITEMS,
-    defaultTtlsMs: DEFAULT_TTL_MS,
+    defaultTtlMs: DEFAULT_TTL_MS,
     stats: {
       ...cacheStats,
       hitRate,
@@ -139,7 +139,7 @@ export const getCacheStats = () => {
       averageTTLremaining,
       oldestTTL: oldestTTL === Infinity ? 0 : oldestTTL,
       newestTTL: newestTTL === -Infinity ? 0 : newestTTL,
-      isHealty,
+      isHealty: isHealthy,
     },
   };
 };

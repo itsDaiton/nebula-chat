@@ -19,7 +19,7 @@ cacheRoutes.delete('/clear', (req, res) => {
 });
 
 cacheRoutes.get('/keys', (req, res) => {
-  const limit = Number(req.query.limit) || 20;
+  const limit = Math.max(1, Math.min(Number(req.query.limit) || 20, 1000));
   const keys = getRecentKeys(limit);
   res.json({
     success: true,

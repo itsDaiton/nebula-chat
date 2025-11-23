@@ -6,7 +6,7 @@ import { chatRoutes } from './routes/chat.routes';
 import { checkOrigin, corsConfig } from './configs/cors.config';
 import { conversationRoutes } from './routes/conversation.routes';
 import { messageRoutes } from './routes/message.routes';
-import { cacheRoutes } from './routes/chace.routes';
+import { cacheRoutes } from './routes/cache.routes';
 
 const app: express.Express = express();
 const PORT = process.env.PORT || 3000;
