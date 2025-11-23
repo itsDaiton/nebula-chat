@@ -6,19 +6,19 @@ export const SendButton = ({ isLoading, message }: { isLoading: boolean; message
     type="submit"
     aria-label="Send message"
     variant="solid"
-    bg="black"
-    color="white"
+    bg="fg.default"
+    color="bg.default"
     boxSize={10}
     loading={isLoading}
     _hover={{
-      bg: 'gray.800',
+      bg: 'fg.soft',
     }}
     _active={{
-      bg: 'gray.900',
+      bg: 'fg.muted',
     }}
     _disabled={{
       opacity: 0.4,
-      bg: 'gray.600',
+      bg: 'gray.500',
     }}
     disabled={!message.trim() || isLoading}
   >
