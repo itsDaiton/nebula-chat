@@ -1,21 +1,13 @@
 import { setHeaders } from '@backend/configs/headers.config';
 import { generateResponseStream } from '@backend/services/chat.service';
-import { validateChatRequest } from '@backend/validators/chat.validator';
-import type { ChatErrorResponse } from '@backend/types/chat.types';
+import type { ChatMessage } from '@backend/types/chat.types';
 import type { Request, Response } from 'express';
 
 export async function sendMessageStream(req: Request, res: Response) {
-  const validation = validateChatRequest(req.body);
-
-  if (!validation.valid) {
-    const errorResponse: ChatErrorResponse = {
-      success: false,
-      error: validation.error,
-    };
-    return res.status(400).json(errorResponse);
-  }
-
-  const { messages, model } = validation.data;
+  const { messages, model } = req.body as {
+    messages: ChatMessage[];
+    model: string;
+  };
 
   setHeaders(res, req.headers.origin);
   res.flushHeaders();
