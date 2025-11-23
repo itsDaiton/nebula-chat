@@ -16,7 +16,7 @@ app.use(
     ...corsConfig,
   }),
 );
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 app.use('/api/chat', chatRoutes);
 app.use('/api/conversations', conversationRoutes);
@@ -24,6 +24,9 @@ app.use('/api/messages', messageRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Backend running...');
+});
+app.get('/health', (req: Request, res: Response) => {
+  res.json({ ok: true });
 });
 
 app.listen(PORT, () => {
