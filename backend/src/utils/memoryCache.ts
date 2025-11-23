@@ -1,4 +1,5 @@
 import type { CacheEntry } from '@backend/types/cache.types';
+import type { ChatHistoryRequestBody } from '@backend/types/chat.types';
 
 const cache = new Map<string, CacheEntry>();
 
@@ -66,7 +67,12 @@ export const saveToCache = (key: string, value: string, ttlMs: number = DEFAULT_
   cacheStats.lastSetKey = key;
 };
 
-export const generateKey = (data: any): string => JSON.stringify(data);
+export const generateKey = (data: ChatHistoryRequestBody): string => {
+  const model = data.model;
+  const lastUserMessage = [...data.messages].reverse().find((msg) => msg.role === 'user');
+  const prompt = lastUserMessage?.content || '';
+  return JSON.stringify({ model, prompt });
+};
 
 setInterval(
   () => {
