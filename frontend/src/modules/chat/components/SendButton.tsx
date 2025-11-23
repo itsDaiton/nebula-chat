@@ -18,7 +18,10 @@ export const SendButton = ({ isLoading, message }: { isLoading: boolean; message
     }}
     _disabled={{
       opacity: 0.4,
-      bg: 'gray.500',
+      bg: {
+        base: 'gray.500',
+        _dark: 'gray.300',
+      },
     }}
     disabled={!message.trim() || isLoading}
   >
