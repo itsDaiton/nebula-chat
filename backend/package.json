@@ -1,20 +1,21 @@
 {
   "name": "backend",
   "version": "1.0.0",
+  "type": "module",
   "main": "dist/src/server.js",
   "scripts": {
-    "dev": "nodemon --watch src --ext ts --exec \"ts-node --transpile-only -r tsconfig-paths/register src/server.ts\"",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc && tsc-alias",
-    "start": "node dist/server.js",
+    "start": "tsx watch --inspect src/server.ts",
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
-    "prisma:validate": "prisma validate",
-    "postinstall": "prisma generate"
+    "prisma:validate": "prisma validate"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.0.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
@@ -23,15 +24,16 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@prisma/client": "^6.19.0",
+    "@prisma/client": "^7.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "@types/node": "^24.10.1",
     "nodemon": "^3.1.10",
-    "prisma": "^6.19.0",
+    "prisma": "^7.0.0",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.16",
     "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
 }
