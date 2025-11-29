@@ -18,10 +18,10 @@ app.use(express.json({ limit: '10mb' }));
 
 registerRoutes(app);
 
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (_req: Request, res: Response) => {
   res.send('Backend running...');
 });
-app.get('/health', (req: Request, res: Response) => {
+app.get('/health', (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 

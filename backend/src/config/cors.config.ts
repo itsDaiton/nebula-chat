@@ -1,9 +1,7 @@
 import 'dotenv/config';
 
-const envOrigins = [process.env.CLIENT_URL, process.env.DEV_CLIENT_URL].filter(Boolean) as string[];
-
 export const corsConfig = {
-  allowedOrigins: envOrigins,
+  allowedOrigins: [process.env.CLIENT_URL],
   allowedMethods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
   credentials: true,
