@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { generateKey, saveToCache } from '../utils/memoryCache';
+import { generateKey, saveToCache } from '../shared/utils/memoryCache';
 
 export function streamCapture(req: Request, res: Response, next: NextFunction) {
   const key = generateKey(req.body);

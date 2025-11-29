@@ -1,6 +1,6 @@
-import { setHeaders } from '@backend/configs/headers.config';
-import { generateResponseStream } from '@backend/services/chat.service';
-import type { ChatMessage } from '@backend/types/chat.types';
+import { setHeaders } from '@backend/config/headers.config';
+import { generateResponseStream } from '@backend/modules/chat/chat.service';
+import type { ChatMessage } from '@backend/modules/chat/chat.types';
 import type { Request, Response } from 'express';
 
 export async function sendMessageStream(req: Request, res: Response) {

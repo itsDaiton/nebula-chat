@@ -1,5 +1,5 @@
-import { MESSAGE_ERRORS } from '@backend/errors/message.errors';
-import { messageService } from '@backend/services/message.service';
+import { MESSAGE_ERRORS } from '@backend/shared/errors/message.errors';
+import { messageService } from '@backend/modules/message/message.service';
 import type { NextFunction, Request, Response } from 'express';
 
 export const messageController = {

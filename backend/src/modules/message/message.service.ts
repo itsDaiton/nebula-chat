@@ -1,5 +1,5 @@
-import { messageRepository } from '@backend/repositories/message.repository';
-import type { CreateMessageDTO } from '@backend/types/message.types';
+import { messageRepository } from '@backend/modules/message/message.repository';
+import type { CreateMessageDTO } from '@backend/modules/message/message.types';
 
 export const messageService = {
   createMessage(data: CreateMessageDTO) {

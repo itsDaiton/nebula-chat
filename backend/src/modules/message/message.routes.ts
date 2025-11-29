@@ -1,4 +1,4 @@
-import { messageController } from '@backend/controllers/message.controller';
+import { messageController } from '@backend/modules/message/message.controller';
 import { Router } from 'express';
 
 const messageRoutes = Router();

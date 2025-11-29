@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import type { ChatHistoryRequestBody } from '@backend/types/chat.types';
-import { createClient } from '@backend/utils/chat.utils';
+import type { ChatHistoryRequestBody } from '@backend/modules/chat/chat.types';
+import { createClient } from '@backend/shared/utils/chat.utils';
 import type OpenAI from 'openai';
 
 export async function generateResponseStream(

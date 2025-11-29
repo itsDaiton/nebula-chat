@@ -1,5 +1,5 @@
 import { prisma } from '@backend/prisma';
-import type { CreateConversationDTO } from '@backend/types/conversation.types';
+import type { CreateConversationDTO } from '@backend/modules/conversation/conversation.types';
 
 export const conversationRepository = {
   create({ title }: CreateConversationDTO) {

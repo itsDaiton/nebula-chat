@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import { generateKey, getFromCache } from '../utils/memoryCache';
-import { setCacheHeaders } from '@backend/configs/headers.config';
+import { generateKey, getFromCache } from '../shared/utils/memoryCache';
+import { setCacheHeaders } from '@backend/config/headers.config';
 
 export const cacheCheck = (req: Request, res: Response, next: NextFunction) => {
   const key = generateKey(req.body);

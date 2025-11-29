@@ -1,4 +1,4 @@
-import { conversationRepository } from '@backend/repositories/conversation.repository';
+import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
 
 export const conversationService = {
   createConversation(title: string) {

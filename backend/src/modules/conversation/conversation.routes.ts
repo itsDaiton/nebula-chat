@@ -1,4 +1,4 @@
-import { conversationController } from '@backend/controllers/conversation.controller';
+import { conversationController } from '@backend/modules/conversation/conversation.controller';
 import { Router } from 'express';
 
 const conversationRoutes = Router();

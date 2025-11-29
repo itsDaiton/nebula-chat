@@ -1,6 +1,6 @@
-import { CHAT_ERRORS } from '@backend/errors/chat.errors';
-import type { ChatMessage, ValidationResult } from '@backend/types/chat.types';
-import { validModels } from '@backend/utils/chat.utils';
+import { CHAT_ERRORS } from '@backend/shared/errors/chat.errors';
+import type { ChatMessage, ValidationResult } from '@backend/modules/chat/chat.types';
+import { validModels } from '@backend/shared/utils/chat.utils';
 
 export function validateChatRequest(body: unknown): ValidationResult {
   if (!body || typeof body !== 'object') {

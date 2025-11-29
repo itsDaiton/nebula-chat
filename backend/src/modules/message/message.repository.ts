@@ -1,5 +1,5 @@
 import { prisma } from '@backend/prisma';
-import type { CreateMessageDTO } from '@backend/types/message.types';
+import type { CreateMessageDTO } from '@backend/modules/message/message.types';
 
 export const messageRepository = {
   create({ conversationId, content, role, tokens }: CreateMessageDTO) {

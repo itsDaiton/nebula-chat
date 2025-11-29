@@ -19,7 +19,8 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-rate-limit": "^8.2.1",
-    "openai": "^6.9.0"
+    "openai": "^6.9.0",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@prisma/client": "^6.19.0",

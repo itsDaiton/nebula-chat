@@ -2,10 +2,10 @@ import 'dotenv/config';
 import type { Request, Response } from 'express';
 import express from 'express';
 import cors from 'cors';
-import { chatRoutes } from './routes/chat.routes';
-import { checkOrigin, corsConfig } from './configs/cors.config';
-import { conversationRoutes } from './routes/conversation.routes';
-import { messageRoutes } from './routes/message.routes';
+import { chatRoutes } from './modules/chat/chat.routes';
+import { checkOrigin, corsConfig } from './config/cors.config';
+import { conversationRoutes } from './modules/conversation/conversation.routes';
+import { messageRoutes } from './modules/message/message.routes';
 import { cacheRoutes } from './routes/cache.routes';
 
 const app: express.Express = express();

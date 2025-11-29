@@ -1,6 +1,6 @@
-import { CHAT_ERRORS } from '@backend/errors/chat.errors';
-import type { ChatErrorResponse } from '@backend/types/chat.types';
-import { validateChatRequest } from '@backend/validators/chat.validator';
+import { CHAT_ERRORS } from '@backend/shared/errors/chat.errors';
+import type { ChatErrorResponse } from '@backend/modules/chat/chat.types';
+import { validateChatRequest } from '@backend/modules/chat/chat.validator';
 import type { Request, Response, NextFunction } from 'express';
 
 export const validateChat = (req: Request, res: Response, next: NextFunction) => {

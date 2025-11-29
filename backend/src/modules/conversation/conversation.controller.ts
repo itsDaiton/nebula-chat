@@ -1,5 +1,5 @@
-import { CONVERSATION_ERRORS } from '@backend/errors/conversation.errors';
-import { conversationService } from '@backend/services/conversation.service';
+import { CONVERSATION_ERRORS } from '@backend/shared/errors/conversation.errors';
+import { conversationService } from '@backend/modules/conversation/conversation.service';
 import type { Request, Response, NextFunction } from 'express';
 
 export const conversationController = {

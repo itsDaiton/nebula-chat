@@ -1,5 +1,5 @@
-import type { CacheEntry } from '@backend/types/cache.types';
-import type { ChatHistoryRequestBody } from '@backend/types/chat.types';
+import type { CacheEntry } from '@backend/shared/types/cache.types';
+import type { ChatHistoryRequestBody } from '@backend/modules/chat/chat.types';
 
 const cache = new Map<string, CacheEntry>();
 
