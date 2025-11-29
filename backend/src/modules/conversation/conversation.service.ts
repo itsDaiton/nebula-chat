@@ -1,8 +1,9 @@
 import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
+import type { CreateConversationDTO } from './conversation.types';
 
 export const conversationService = {
-  createConversation(title: string) {
-    return conversationRepository.create({ title });
+  createConversation(data: CreateConversationDTO) {
+    return conversationRepository.create(data);
   },
   getConversation(conversationId: string) {
     return conversationRepository.findById({ conversationId });

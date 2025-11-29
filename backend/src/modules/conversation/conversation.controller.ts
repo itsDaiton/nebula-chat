@@ -1,30 +1,21 @@
-import { CONVERSATION_ERRORS } from '@backend/shared/errors/conversation.errors';
 import { conversationService } from '@backend/modules/conversation/conversation.service';
 import type { Request, Response, NextFunction } from 'express';
+import type { CreateConversationDTO, GetConversationParams } from './conversation.types';
 
 export const conversationController = {
   async create(req: Request, res: Response, next: NextFunction) {
     try {
-      const { title } = req.body;
-      if (!title || !title.trim()) {
-        return res.status(400).json({ error: CONVERSATION_ERRORS.INVALID_TITLE });
-      }
-      const conversation = await conversationService.createConversation(title);
+      const input = req.body as CreateConversationDTO;
+      const conversation = await conversationService.createConversation(input);
       return res.status(201).json(conversation);
     } catch (error) {
       next(error);
     }
   },
-  async get(req: Request, res: Response, next: NextFunction) {
+  async get(req: Request<GetConversationParams>, res: Response, next: NextFunction) {
     try {
       const { conversationId } = req.params;
-      if (!conversationId) {
-        return res.status(400).json({ error: CONVERSATION_ERRORS.INVALID_CONVERSATION_ID });
-      }
       const conversation = await conversationService.getConversation(conversationId);
-      if (!conversation) {
-        return res.status(404).json({ error: CONVERSATION_ERRORS.INVALID_CONVERSATION });
-      }
       return res.status(200).json(conversation);
     } catch (error) {
       next(error);

@@ -1,10 +1,20 @@
+import { validate } from '@backend/middleware/validate';
 import { conversationController } from '@backend/modules/conversation/conversation.controller';
 import { Router } from 'express';
+import { createConversationSchema, getConversationSchema } from './conversation.validation';
 
 const conversationRoutes = Router();
 
-conversationRoutes.post('/', conversationController.create);
+conversationRoutes.post(
+  '/',
+  validate({ body: createConversationSchema }),
+  conversationController.create,
+);
+conversationRoutes.get(
+  '/:conversationId',
+  validate({ params: getConversationSchema }),
+  conversationController.get,
+);
 conversationRoutes.get('/', conversationController.getAll);
-conversationRoutes.get('/:conversationId', conversationController.get);
 
 export { conversationRoutes };
