@@ -25,5 +25,5 @@
     "noImplicitOverride": true
   },
   "exclude": ["node_modules", "tmp", "dist"],
-  "include": ["src/**/*.ts", "prisma/generated/prisma/**/*.ts"]
+  "include": ["src/**/*.ts", "prisma/generated/prisma/**/*.ts", "prisma.config.ts"]
 }
