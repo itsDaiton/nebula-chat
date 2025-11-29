@@ -1,4 +1,4 @@
-import { clearCache, getCacheStats, getRecentKeys } from '@backend/utils/memoryCache';
+import { clearCache, getCacheStats, getRecentKeys } from '@backend/shared/utils/memoryCache';
 import { Router } from 'express';
 
 const cacheRoutes = Router();
