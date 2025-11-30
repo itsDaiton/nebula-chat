@@ -1,33 +1,32 @@
 import 'dotenv/config';
-import type { ChatHistoryRequestBody } from '@backend/modules/chat/chat.types';
-import { createClient } from '@backend/shared/utils/chat.utils';
+import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
+import { createClient } from '@backend/modules/chat/chat.utils';
 import type OpenAI from 'openai';
 
-export async function generateResponseStream(
-  messages: ChatHistoryRequestBody['messages'],
-  model: ChatHistoryRequestBody['model'],
-  onToken: (token: string) => void,
-  onUsage: (usageData: {
-    promptTokens: number;
-    completionTokens: number;
-    totalTokens: number;
-  }) => void,
-): Promise<void> {
-  const client: OpenAI = createClient();
+export const chatService = {
+  async streamResponse(
+    data: CreateChatStreamDTO,
+    onToken: (token: string) => void,
+    onUsage: (usageData: {
+      promptTokens: number;
+      completionTokens: number;
+      totalTokens: number;
+    }) => void,
+  ) {
+    const client = createClient();
 
-  try {
-    const stream = (await client.chat.completions.create({
-      model,
-      messages,
+    const stream = await client.chat.completions.create({
+      model: data.model,
+      messages: data.messages,
       stream: true,
       stream_options: {
         include_usage: true,
       },
-    })) as AsyncIterable<OpenAI.Chat.ChatCompletionChunk>;
+    });
 
-    for await (const chunk of stream) {
+    for await (const chunk of stream as AsyncIterable<OpenAI.Chat.ChatCompletionChunk>) {
       const delta = chunk.choices?.[0]?.delta?.content;
-      if (typeof delta === 'string' && delta.length > 0) {
+      if (typeof delta === 'string') {
         onToken(delta);
       }
       if (chunk.usage) {
@@ -38,8 +37,5 @@ export async function generateResponseStream(
         });
       }
     }
-  } catch (error) {
-    const err = error instanceof Error ? error : new Error('Unknown error.');
-    throw err;
-  }
-}
+  },
+};

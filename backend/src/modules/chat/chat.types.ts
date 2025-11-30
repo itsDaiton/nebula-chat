@@ -1,25 +1,10 @@
-export interface ChatMessage {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
+import type { z } from 'zod';
+import type { createChatStreamSchema } from './chat.validation';
+
+export type CreateChatStreamDTO = z.infer<typeof createChatStreamSchema>;
+
+export interface UsageData {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
 }
-
-export interface ChatHistoryRequestBody {
-  model: string;
-  messages: ChatMessage[];
-}
-
-export type ChatRequestBody = ChatHistoryRequestBody;
-
-export interface ChatErrorResponse {
-  success: false;
-  error: string;
-}
-
-export interface ChatSuccessResponse<T = unknown> {
-  success: true;
-  data: T;
-}
-
-export type ValidationResult =
-  | { valid: false; error: string }
-  | { valid: true; data: ChatRequestBody };

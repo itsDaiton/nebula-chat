@@ -1,16 +1,16 @@
-import { clearCache, getCacheStats, getRecentKeys } from '@backend/shared/utils/memoryCache';
+import { clearCache, getCacheStats, getRecentKeys } from '@backend/cache/cache';
 import { Router } from 'express';
 
 const cacheRoutes = Router();
 
-cacheRoutes.get('/stats', (req, res) => {
+cacheRoutes.get('/stats', (_req, res) => {
   res.json({
     success: true,
     stats: getCacheStats(),
   });
 });
 
-cacheRoutes.delete('/clear', (req, res) => {
+cacheRoutes.delete('/clear', (_req, res) => {
   clearCache();
   res.json({
     success: true,

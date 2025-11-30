@@ -1,5 +1,5 @@
-import type { CacheEntry } from '@backend/shared/types/cache.types';
-import type { ChatHistoryRequestBody } from '@backend/modules/chat/chat.types';
+import type { CachedStreamData, CacheEntry } from '@backend/cache/cache.types';
+import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 
 const cache = new Map<string, CacheEntry>();
 
@@ -48,9 +48,18 @@ export const getFromCache = (key: string): string | undefined => {
   return entry.value;
 };
 
-export const saveToCache = (key: string, value: string, ttlMs: number = DEFAULT_TTL_MS): void => {
+export const saveToCache = (
+  key: string,
+  value: string,
+  usageData?: any,
+  ttlMs: number = DEFAULT_TTL_MS,
+): void => {
+  const cachedData: CachedStreamData = {
+    tokens: value,
+    usageData,
+  };
   const entry = {
-    value,
+    value: JSON.stringify(cachedData),
     expiresAt: Date.now() + ttlMs,
   };
   if (cache.has(key)) {
@@ -67,7 +76,7 @@ export const saveToCache = (key: string, value: string, ttlMs: number = DEFAULT_
   cacheStats.lastSetKey = key;
 };
 
-export const generateKey = (data: ChatHistoryRequestBody): string => {
+export const generateKey = (data: CreateChatStreamDTO): string => {
   const model = data.model;
   const lastUserMessage = [...data.messages].reverse().find((msg) => msg.role === 'user');
   const prompt = lastUserMessage?.content || '';

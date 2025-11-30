@@ -1,12 +1,20 @@
-import { sendMessageStream } from '@backend/modules/chat/chat.controller';
 import { cacheCheck } from '@backend/middleware/cacheCheck';
 import { rateLimiter } from '@backend/middleware/rateLimiter';
 import { streamCapture } from '@backend/middleware/streamCapture';
-import { validateChat } from '@backend/middleware/validateChat';
+import { validate } from '@backend/middleware/validate';
 import { Router } from 'express';
+import { createChatStreamSchema } from './chat.validation';
+import { chatController } from './chat.controller';
 
 const chatRoutes = Router();
 
-chatRoutes.post('/stream', rateLimiter, validateChat, cacheCheck, streamCapture, sendMessageStream);
+chatRoutes.post(
+  '/stream',
+  rateLimiter,
+  validate({ body: createChatStreamSchema }),
+  cacheCheck,
+  streamCapture,
+  chatController.streamMessage,
+);
 
 export { chatRoutes };

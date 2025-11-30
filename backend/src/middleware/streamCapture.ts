@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import { generateKey, saveToCache } from '../shared/utils/memoryCache';
+import { generateKey, saveToCache } from '../cache/cache';
+import { streamFormatter } from '@backend/modules/chat/chat.utils';
 
 export function streamCapture(req: Request, res: Response, next: NextFunction) {
   const key = generateKey(req.body);
@@ -19,18 +20,21 @@ export function streamCapture(req: Request, res: Response, next: NextFunction) {
 
   res.on('finish', () => {
     if (full.trim() !== '') {
+      const usageData = streamFormatter.extractUsageFromStream(full);
       const filtered = full
         .split('\n')
         .filter((line) => {
           if (line.startsWith('event: usage')) return false;
+          if (line.startsWith('event: end')) return false;
           if (line.includes('\"promptTokens\"')) return false;
+          if (line === 'data: end') return false;
           return true;
         })
         .join('\n');
 
       //eslint-disable-next-line no-console
       console.log('Saving to cache');
-      saveToCache(key, filtered);
+      saveToCache(key, filtered, usageData);
     }
   });
 

@@ -1,6 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
-import { generateKey, getFromCache } from '../shared/utils/memoryCache';
+import { generateKey, getFromCache } from '../cache/cache';
 import { setCacheHeaders } from '@backend/config/headers.config';
+import type { CachedStreamData } from '@backend/cache/cache.types';
+import { streamFormatter } from '@backend/modules/chat/chat.utils';
 
 export const cacheCheck = (req: Request, res: Response, next: NextFunction) => {
   const key = generateKey(req.body);
@@ -14,16 +16,21 @@ export const cacheCheck = (req: Request, res: Response, next: NextFunction) => {
   setCacheHeaders(res, req.headers.origin);
   res.flushHeaders();
 
-  res.write(`event: cache-hit\n`);
-  res.write(`data: true\n\n`);
+  streamFormatter.writeCacheHit(res);
 
-  res.write(cachedResponse);
+  try {
+    const cachedData: CachedStreamData = JSON.parse(cachedResponse);
+    res.write(cachedData.tokens.trimEnd());
+    res.write('\n\n');
+    streamFormatter.writeUsage(res, {
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+    });
+  } catch {
+    res.write(cachedResponse);
+  }
 
-  res.write(`event: usage\n`);
-  res.write(`data: {"promptTokens":0,"completionTokens":0,"totalTokens":0}\n\n`);
-
-  res.write(`event: end\n`);
-  res.write(`data: end\n\n`);
-
+  streamFormatter.writeEnd(res);
   return res.end();
 };
