@@ -1,15 +1,15 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "rootDir": "src",
+    "rootDir": ".",
     "outDir": "dist",
     "paths": {
       "@backend/*": ["src/*"]
     },
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
-    "target": "esnext",
+    "target": "es2023",
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
@@ -25,5 +25,5 @@
     "noImplicitOverride": true
   },
   "exclude": ["node_modules", "tmp", "dist"],
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "prisma/generated/prisma/**/*.ts", "prisma.config.ts"]
 }

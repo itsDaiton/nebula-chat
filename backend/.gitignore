@@ -10,4 +10,5 @@ npm-debug.log
 /.env.test
 /.env.production
 /.env
-/src/generated/prisma
+
+/prisma/generated/

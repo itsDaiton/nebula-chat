@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,6 +39,9 @@ jobs:
 
       - name: Run format check
         run: npm run format:check
+
+      - name: Prisma generate
+        run: npm --prefix backend run prisma:generate
 
       - name: TypeScript check (backend)
         run: npm --prefix backend run typecheck
