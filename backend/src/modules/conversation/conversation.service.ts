@@ -1,12 +1,17 @@
 import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
+import { NotFoundError } from '@backend/errors/AppError';
 import type { CreateConversationDTO } from './conversation.types';
 
 export const conversationService = {
   async createConversation(data: CreateConversationDTO) {
     return conversationRepository.create(data);
   },
-  getConversation(conversationId: string) {
-    return conversationRepository.findById({ conversationId });
+  async getConversation(conversationId: string) {
+    const conversation = await conversationRepository.findById({ conversationId });
+    if (!conversation) {
+      throw new NotFoundError('Conversation', conversationId);
+    }
+    return conversation;
   },
   async getAllConversations() {
     return conversationRepository.findAll();

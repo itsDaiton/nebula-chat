@@ -2,6 +2,7 @@ import 'dotenv/config';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { createClient } from '@backend/modules/chat/chat.utils';
 import type OpenAI from 'openai';
+import { MissingConfigurationError, ClientInitializationError } from '@backend/errors/AppError';
 
 export const chatService = {
   async streamResponse(
@@ -13,7 +14,15 @@ export const chatService = {
       totalTokens: number;
     }) => void,
   ) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new MissingConfigurationError('OpenAI API key');
+    }
+
     const client = createClient();
+
+    if (!client) {
+      throw new ClientInitializationError('OpenAI');
+    }
 
     const stream = await client.chat.completions.create({
       model: data.model,

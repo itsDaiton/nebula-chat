@@ -1,10 +1,19 @@
 import type { NextFunction, Request, Response } from 'express';
 import { Prisma } from 'prisma/generated/prisma/client';
+import { AppError } from '@backend/errors/AppError';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const errorHandler = (err: any, req: Request, res: Response, _next: NextFunction) => {
   // eslint-disable-next-line no-console
   console.error('Error:', err);
+
+  if (err instanceof AppError) {
+    return res.status(err.status).json({
+      success: false,
+      error: err.error,
+      message: err.message,
+    });
+  }
 
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     return res.status(400).json({
