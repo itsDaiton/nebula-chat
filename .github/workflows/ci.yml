@@ -38,6 +38,9 @@ jobs:
       - name: Run format check
         run: npm run format:check
 
+      - name: Prisma generate
+        run: npm --prefix backend run prisma:generate
+
       - name: TypeScript check (backend)
         run: npm --prefix backend run typecheck
 
