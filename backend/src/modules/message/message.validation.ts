@@ -6,3 +6,7 @@ export const createMessageSchema = z.object({
   content: z.string().min(1),
   tokens: z.number().optional(),
 });
+
+export const getMessagesSchema = z.object({
+  messageId: z.uuid(),
+});

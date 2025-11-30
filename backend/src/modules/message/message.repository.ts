@@ -1,5 +1,5 @@
 import { prisma } from '@backend/prisma';
-import type { CreateMessageDTO } from '@backend/modules/message/message.types';
+import type { CreateMessageDTO, GetMessageParams } from '@backend/modules/message/message.types';
 
 export const messageRepository = {
   create({ conversationId, content, role, tokens }: CreateMessageDTO) {
@@ -12,9 +12,14 @@ export const messageRepository = {
       },
     });
   },
-  findById({ messageId }: { messageId: string }) {
+  findById({ messageId }: GetMessageParams) {
     return prisma.message.findUnique({
       where: { id: messageId },
+    });
+  },
+  findAll() {
+    return prisma.message.findMany({
+      orderBy: { createdAt: 'desc' },
     });
   },
 };
