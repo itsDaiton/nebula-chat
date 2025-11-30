@@ -2,13 +2,13 @@ import { conversationRepository } from '@backend/modules/conversation/conversati
 import type { CreateConversationDTO } from './conversation.types';
 
 export const conversationService = {
-  createConversation(data: CreateConversationDTO) {
+  async createConversation(data: CreateConversationDTO) {
     return conversationRepository.create(data);
   },
   getConversation(conversationId: string) {
     return conversationRepository.findById({ conversationId });
   },
-  getAllConversations() {
+  async getAllConversations() {
     return conversationRepository.findAll();
   },
 };

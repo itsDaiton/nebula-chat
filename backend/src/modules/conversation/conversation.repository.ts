@@ -1,5 +1,8 @@
 import { prisma } from '@backend/prisma';
-import type { CreateConversationDTO } from '@backend/modules/conversation/conversation.types';
+import type {
+  CreateConversationDTO,
+  GetConversationParams,
+} from '@backend/modules/conversation/conversation.types';
 
 export const conversationRepository = {
   create({ title }: CreateConversationDTO) {
@@ -7,7 +10,7 @@ export const conversationRepository = {
       data: { title },
     });
   },
-  findById({ conversationId }: { conversationId: string }) {
+  findById({ conversationId }: GetConversationParams) {
     return prisma.conversation.findUnique({
       where: { id: conversationId },
       include: { messages: true },

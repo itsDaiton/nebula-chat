@@ -1,11 +1,11 @@
 import { conversationService } from '@backend/modules/conversation/conversation.service';
 import type { Request, Response, NextFunction } from 'express';
-import type { CreateConversationDTO, GetConversationParams } from './conversation.types';
+import type { GetConversationParams } from './conversation.types';
 
 export const conversationController = {
   async create(req: Request, res: Response, next: NextFunction) {
     try {
-      const input = req.body as CreateConversationDTO;
+      const input = req.body;
       const conversation = await conversationService.createConversation(input);
       return res.status(201).json(conversation);
     } catch (error) {
