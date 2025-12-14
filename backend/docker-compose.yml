@@ -19,7 +19,6 @@ services:
   redis:
     image: redis:7
     container_name: redis
-    # Set REDIS_PASSWORD in .env, then use: REDIS_URL=redis://:${REDIS_PASSWORD}@localhost:6380
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     ports:
