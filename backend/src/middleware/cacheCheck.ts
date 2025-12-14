@@ -1,25 +1,23 @@
 import type { Request, Response, NextFunction } from 'express';
-import { generateKey, getFromCache } from '../cache/cache';
+import { cacheService } from '@backend/cache/cache.service';
 import { setCacheHeaders } from '@backend/config/headers.config';
-import type { CachedStreamData } from '@backend/cache/cache.types';
 import { streamFormatter } from '@backend/modules/chat/chat.utils';
 
-export const cacheCheck = (req: Request, res: Response, next: NextFunction) => {
-  const key = generateKey(req.body);
-  const cachedResponse = getFromCache(key);
-  if (!cachedResponse) {
-    return next();
-  }
-  //eslint-disable-next-line no-console
-  console.log('Cache hit');
-
-  setCacheHeaders(res, req.headers.origin);
-  res.flushHeaders();
-
-  streamFormatter.writeCacheHit(res);
-
+export const cacheCheck = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const cachedData: CachedStreamData = JSON.parse(cachedResponse);
+    const key = cacheService.generateKey(req.body);
+    const cachedData = await cacheService.getFromCache(key);
+
+    if (!cachedData) {
+      return next();
+    }
+    //eslint-disable-next-line no-console
+    console.log('Cache hit');
+
+    setCacheHeaders(res, req.headers.origin);
+    res.flushHeaders();
+
+    streamFormatter.writeCacheHit(res);
     res.write(cachedData.tokens.trimEnd());
     res.write('\n\n');
     streamFormatter.writeUsage(res, {
@@ -27,10 +25,11 @@ export const cacheCheck = (req: Request, res: Response, next: NextFunction) => {
       completionTokens: 0,
       totalTokens: 0,
     });
-  } catch {
-    res.write(cachedResponse);
+    streamFormatter.writeEnd(res);
+    return res.end();
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Cache check error (fail-open):', error);
+    return next();
   }
-
-  streamFormatter.writeEnd(res);
-  return res.end();
 };

@@ -1,9 +1,9 @@
 import type { Request, Response, NextFunction } from 'express';
-import { generateKey, saveToCache } from '../cache/cache';
+import { cacheService } from '@backend/cache/cache.service';
 import { streamFormatter } from '@backend/modules/chat/chat.utils';
 
 export function streamCapture(req: Request, res: Response, next: NextFunction) {
-  const key = generateKey(req.body);
+  const key = cacheService.generateKey(req.body);
 
   let full = '';
   const originalWrite = res.write.bind(res);
@@ -34,9 +34,11 @@ export function streamCapture(req: Request, res: Response, next: NextFunction) {
 
       //eslint-disable-next-line no-console
       console.log('Saving to cache');
-      saveToCache(key, filtered, usageData);
+      cacheService.saveToCache(key, filtered, usageData).catch((error) => {
+        // eslint-disable-next-line no-console
+        console.error('Error saving to cache (fail-open):', error);
+      });
     }
   });
-
   next();
 }

@@ -51,3 +51,15 @@ export class APIError extends AppError {
     super(message, status, 'APIError');
   }
 }
+
+export class RedisConnectionError extends AppError {
+  constructor(message: string = 'Failed to connect to Redis') {
+    super(message, 500, 'RedisConnectionError');
+  }
+}
+
+export class RedisCacheError extends AppError {
+  constructor(message: string = 'Redis cache operation failed') {
+    super(message, 500, 'RedisCacheError');
+  }
+}
