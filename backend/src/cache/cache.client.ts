@@ -7,11 +7,11 @@ let redisClient: RedisClientType | null = null;
 let isConnected = false;
 
 const REDIS_URL = process.env.REDIS_URL;
-if (!REDIS_URL) {
-  throw new RedisConnectionError('REDIS_URL is not defined in environment variables');
-}
 
 export const createRedisClient = async (): Promise<RedisClientType> => {
+  if (!REDIS_URL) {
+    throw new RedisConnectionError('REDIS_URL is not defined in environment variables');
+  }
   if (redisClient && isConnected) {
     return redisClient;
   }
@@ -24,7 +24,7 @@ export const createRedisClient = async (): Promise<RedisClientType> => {
           if (retries > cacheConfig.maxConnections) {
             // eslint-disable-next-line no-console
             console.error('Redis: Max reconnection attempts reached');
-            return new Error('Max reconnection attempts reached');
+            return false;
           }
           return Math.min(retries * 100, 3000);
         },

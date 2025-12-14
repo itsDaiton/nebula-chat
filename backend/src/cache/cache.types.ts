@@ -39,6 +39,6 @@ export interface CacheStats {
     averageTTLremaining: number;
     oldestTTL: number;
     newestTTL: number;
-    isHealty: boolean;
+    isHealthy: boolean;
   };
 }

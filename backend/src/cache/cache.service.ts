@@ -155,7 +155,7 @@ async function getCacheStats(): Promise<CacheStats> {
         averageTTLremaining: 0,
         oldestTTL: 0,
         newestTTL: 0,
-        isHealty: isHealthy,
+        isHealthy,
       },
     };
   } catch (error) {
@@ -182,7 +182,7 @@ async function getCacheStats(): Promise<CacheStats> {
         averageTTLremaining: 0,
         oldestTTL: 0,
         newestTTL: 0,
-        isHealty: false,
+        isHealthy: false,
       },
     };
   }
