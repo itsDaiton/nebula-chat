@@ -11,4 +11,5 @@ export const createChatStreamSchema = z.object({
   model: z.string().refine((msg) => validModels.includes(msg), {
     message: 'Invalid model specified.',
   }),
+  conversationId: z.string().min(1).optional(),
 });

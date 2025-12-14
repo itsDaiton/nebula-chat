@@ -25,6 +25,7 @@ export interface ChatStreamOptions {
 export interface ChatHistoryStreamOptions {
   model: string;
   messages: ChatMessage[];
+  conversationId?: string;
 }
 
 export interface UseKeyboardHandlerProps {
