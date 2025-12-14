@@ -132,7 +132,7 @@ export function useChatStream() {
         abortController.current = null;
       }
     },
-    [],
+    [conversationId],
   );
 
   return {
