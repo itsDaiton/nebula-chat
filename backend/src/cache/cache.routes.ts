@@ -6,5 +6,6 @@ const cacheRoutes = Router();
 cacheRoutes.get('/stats', cacheController.getStats);
 cacheRoutes.delete('/clear', cacheController.clear);
 cacheRoutes.get('/keys', cacheController.getKeys);
+cacheRoutes.get('/health', cacheController.healthCheck);
 
 export { cacheRoutes };

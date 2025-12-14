@@ -218,6 +218,10 @@ async function getRecentKeys(limit: number = 20): Promise<string[]> {
   }
 }
 
+async function healthCheck(): Promise<{ status: 'ok' }> {
+  return { status: 'ok' };
+}
+
 async function closeCache(): Promise<void> {
   await closeRedisClient();
   redisClient = null;
@@ -230,5 +234,6 @@ export const cacheService = {
   getCacheStats,
   clearCache,
   getRecentKeys,
+  healthCheck,
   closeCache,
 };

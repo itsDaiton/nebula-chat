@@ -37,4 +37,12 @@ export const cacheController = {
       next(error);
     }
   },
+  async healthCheck(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const health = await cacheService.healthCheck();
+      return res.status(200).json(health);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
