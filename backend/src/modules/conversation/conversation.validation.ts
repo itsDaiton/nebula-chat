@@ -17,7 +17,7 @@ export const conversationResponseSchema = z
   .object({
     id: z.uuid(),
     title: z.string(),
-    createdAt: z.date(),
+    createdAt: z.iso.datetime(),
   })
   .openapi('Conversation');
 

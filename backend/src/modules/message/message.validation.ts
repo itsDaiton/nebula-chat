@@ -25,7 +25,7 @@ export const messageResponseSchema = z
     content: z.string(),
     role: z.string(),
     tokens: z.number().nullable(),
-    createdAt: z.date(),
+    createdAt: z.iso.datetime(),
   })
   .openapi('Message');
 

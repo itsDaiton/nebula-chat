@@ -6,7 +6,7 @@ export function registerChatRoutes() {
   registry.registerPath({
     method: 'post',
     path: '/api/chat/stream',
-    description: 'Stream a chat completion response from a AI model',
+    description: 'Stream a chat completion response from an AI model',
     summary: 'Stream chat completion',
     tags: ['Chat'],
     request: {
