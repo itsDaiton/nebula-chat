@@ -1,3 +1,14 @@
+import type { z } from 'zod';
+import type {
+  cacheStatsResponseSchema,
+  cacheKeysResponseSchema,
+  cacheClearResponseSchema,
+  cacheHealthResponseSchema,
+  redisStatsSchema,
+  baseRedisStatsSchema,
+  cacheStatsSchema,
+} from './cache.validation';
+
 export interface CachedStreamData {
   tokens: string;
   usageData?: {
@@ -6,39 +17,11 @@ export interface CachedStreamData {
     totalTokens: number;
   };
 }
+export type BaseRedisStats = z.infer<typeof baseRedisStatsSchema>;
+export type RedisStats = z.infer<typeof redisStatsSchema>;
+export type CacheStats = z.infer<typeof cacheStatsSchema>;
 
-export interface RedisStats {
-  hits: number;
-  misses: number;
-  expired: number;
-  evictions: number;
-  sets: number;
-  lastEvictedKey: string | null;
-  lastSetKey: string | null;
-  lastHitKey: string | null;
-}
-
-export interface CacheStats {
-  size: number;
-  activeItems: number;
-  expiredItems: number;
-  maxItems: number;
-  defaultTtlMs: number;
-  stats: {
-    hits: number;
-    misses: number;
-    expired: number;
-    evictions: number;
-    sets: number;
-    lastEvictedKey: string | null;
-    lastSetKey: string | null;
-    lastHitKey: string | null;
-    hitRate: number;
-    missRate: number;
-    expiredRate: number;
-    averageTTLremaining: number;
-    oldestTTL: number;
-    newestTTL: number;
-    isHealthy: boolean;
-  };
-}
+export type CacheStatsResponse = z.infer<typeof cacheStatsResponseSchema>;
+export type CacheKeysResponse = z.infer<typeof cacheKeysResponseSchema>;
+export type CacheClearResponse = z.infer<typeof cacheClearResponseSchema>;
+export type CacheHealthResponse = z.infer<typeof cacheHealthResponseSchema>;

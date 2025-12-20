@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import type { RedisClientType } from 'redis';
-import type { CachedStreamData, CacheStats, RedisStats } from '@backend/cache/cache.types';
+import type { CachedStreamData, BaseRedisStats, CacheStats } from '@backend/cache/cache.types';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { createRedisClient, isRedisConnected, closeRedisClient } from '@backend/cache/cache.client';
 import { RedisCacheError } from '@backend/errors/AppError';
@@ -15,7 +15,7 @@ async function ensureConnection(): Promise<RedisClientType> {
   return redisClient;
 }
 
-async function parseCacheStats(): Promise<RedisStats> {
+async function parseCacheStats(): Promise<BaseRedisStats> {
   try {
     const client = await ensureConnection();
     const stats = await client.get(cacheConfig.statsKey);
@@ -40,7 +40,7 @@ async function parseCacheStats(): Promise<RedisStats> {
   };
 }
 
-async function updateStats(updates: Partial<RedisStats>): Promise<void> {
+async function updateStats(updates: Partial<BaseRedisStats>): Promise<void> {
   try {
     const client = await ensureConnection();
     const stats = await parseCacheStats();
