@@ -20,7 +20,6 @@ export const errorHandler = (err: any, req: Request, res: Response, _next: NextF
       success: false,
       error: 'PrismaClientKnownRequestError',
       message: err.message,
-      code: err.code,
     });
   }
 
@@ -29,7 +28,6 @@ export const errorHandler = (err: any, req: Request, res: Response, _next: NextF
       success: false,
       error: err.error || 'Error',
       message: err.message || 'An error occurred',
-      details: err.details || undefined,
     });
   }
 
