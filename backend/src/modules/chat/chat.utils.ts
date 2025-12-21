@@ -21,6 +21,22 @@ export const validModels: string[] = [
 ];
 
 export const streamFormatter = {
+  writeConversationCreated(res: Response, conversationId: string): void {
+    res.write(`event: conversation-created\n`);
+    res.write(`data: ${JSON.stringify({ conversationId })}\n\n`);
+  },
+  writeUserMessageCreated(res: Response, messageId: string): void {
+    res.write(`event: user-message-created\n`);
+    res.write(`data: ${JSON.stringify({ messageId })}\n\n`);
+  },
+  writeAssistantMessageCreated(res: Response, messageId: string): void {
+    res.write(`event: assistant-message-created\n`);
+    res.write(`data: ${JSON.stringify({ messageId })}\n\n`);
+  },
+  writeError(res: Response, error: string): void {
+    res.write(`event: error\n`);
+    res.write(`data: ${JSON.stringify({ error })}\n\n`);
+  },
   writeToken(res: Response, token: string): void {
     res.write(`event: token\n`);
     res.write(`data: ${JSON.stringify({ token })}\n\n`);

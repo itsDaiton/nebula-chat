@@ -3,11 +3,17 @@ import { z } from 'zod';
 
 extendZodWithOpenApi(z);
 
+const tokenUsageSchema = z.object({
+  promptTokens: z.number(),
+  completionTokens: z.number(),
+  totalTokens: z.number(),
+});
+
 export const createMessageSchema = z.object({
   conversationId: z.uuid(),
   role: z.enum(['user', 'assistant', 'system']),
   content: z.string().min(1),
-  tokens: z.number().optional(),
+  tokens: tokenUsageSchema.optional(),
 });
 
 export const getMessagesSchema = z
@@ -24,7 +30,13 @@ export const messageResponseSchema = z
     conversationId: z.uuid(),
     content: z.string(),
     role: z.string(),
-    tokens: z.number().nullable(),
+    tokens: z
+      .object({
+        promptTokens: z.number(),
+        completionTokens: z.number(),
+        totalTokens: z.number(),
+      })
+      .nullable(),
     createdAt: z.iso.datetime(),
   })
   .openapi('Message');
