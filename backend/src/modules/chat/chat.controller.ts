@@ -14,6 +14,7 @@ export const chatController = {
 
       await chatService.streamResponse(input, {
         onConversationCreated: (conversationId) => {
+          req.body.conversationId = conversationId;
           streamFormatter.writeConversationCreated(res, conversationId);
         },
         onUserMessageCreated: (messageId) => {

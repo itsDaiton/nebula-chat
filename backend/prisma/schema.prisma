@@ -19,7 +19,7 @@ model Message {
   conversationId String
   content        String
   role           String
-  model          String
+  model          String?
   tokens         Json?
   createdAt      DateTime     @default(now())
   conversation   Conversation @relation(fields: [conversationId], references: [id])
