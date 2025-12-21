@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 export const corsConfig = {
-  allowedOrigins: [process.env.CLIENT_URL],
+  allowedOrigins: [process.env.CLIENT_URL, process.env.SERVER_URL].filter(Boolean) as string[],
   allowedMethods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
   credentials: true,
@@ -15,6 +15,12 @@ export const checkOrigin = (
   if (!origin) {
     return callback(null, true);
   }
+
+  const serverUrl = process.env.SERVER_URL;
+  if (serverUrl && origin === serverUrl) {
+    return callback(null, true);
+  }
+
   if (corsConfig.allowedOrigins.includes(origin)) {
     return callback(null, true);
   }
