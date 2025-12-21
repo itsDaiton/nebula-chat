@@ -42,5 +42,5 @@ export interface UseMessageHandlerProps {
 export interface UseHandleSendMessageProps {
   history: ChatMessage[];
   setHistory: (messages: ChatMessage[]) => void;
-  streamMessage: (params: { messages: ChatMessage[]; model: string }) => Promise<void>;
+  streamMessage: (params: ChatHistoryStreamOptions) => Promise<void>;
 }
