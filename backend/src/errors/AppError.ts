@@ -46,6 +46,12 @@ export class ClientInitializationError extends AppError {
   }
 }
 
+export class PayloadTooLargeError extends AppError {
+  constructor(message: string) {
+    super(message, 413, 'PayloadTooLarge');
+  }
+}
+
 export class APIError extends AppError {
   constructor(message: string, status: number = 500) {
     super(message, status, 'APIError');

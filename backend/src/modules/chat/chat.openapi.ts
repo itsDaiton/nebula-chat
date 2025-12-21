@@ -43,6 +43,15 @@ export function registerChatRoutes() {
           },
         },
       },
+      413: {
+        description:
+          'Payload too large - user message exceeds token limit or conversation context exceeds limit',
+        content: {
+          'application/json': {
+            schema: errorResponseSchema,
+          },
+        },
+      },
       429: {
         description: 'Rate limit exceeded',
         content: {

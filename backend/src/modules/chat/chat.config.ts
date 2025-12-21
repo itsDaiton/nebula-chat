@@ -1,5 +1,11 @@
 export const chatConfig = {
   maxHistoryMessages: 20,
+  tokenLimits: {
+    maxPromptTokens: 2000,
+    maxCompletionTokens: 1000,
+    maxContextTokens: 10000,
+  },
+  tokenizer: 'gpt-5',
   validModels: [
     'gpt-4.1',
     'gpt-4.1-mini',

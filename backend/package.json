@@ -23,6 +23,7 @@
     "openai": "^6.9.0",
     "redis": "^5.10.0",
     "swagger-ui-express": "^5.0.1",
+    "tiktoken": "^1.0.22",
     "zod": "^4.1.13"
   },
   "devDependencies": {

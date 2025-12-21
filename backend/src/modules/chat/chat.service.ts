@@ -5,10 +5,12 @@ import type { CreateChatStreamDTO, StreamCallbacks } from '@backend/modules/chat
 import { messageService } from '@backend/modules/message/message.service';
 import { createClient } from '@backend/modules/chat/chat.utils';
 import { chatConfig } from '@backend/modules/chat/chat.config';
+import { validateTokenLimit, calculateContextTokens } from '@backend/modules/chat/chat.tokenizer';
 import {
   MissingConfigurationError,
   ClientInitializationError,
   NotFoundError,
+  PayloadTooLargeError,
 } from '@backend/errors/AppError';
 
 export const chatService = {
@@ -29,6 +31,22 @@ export const chatService = {
     let assistantMessageId: string | undefined;
 
     try {
+      const lastUserMessage = data.messages[data.messages.length - 1];
+      if (!lastUserMessage) {
+        throw new NotFoundError('No messages provided');
+      }
+
+      const userMessageValidation = validateTokenLimit(
+        lastUserMessage.content,
+        chatConfig.tokenLimits.maxPromptTokens,
+      );
+
+      if (!userMessageValidation.isValid) {
+        throw new PayloadTooLargeError(
+          `User message exceeds token limit. Message has ~${userMessageValidation.tokens} tokens, maximum allowed is ${chatConfig.tokenLimits.maxPromptTokens} tokens.`,
+        );
+      }
+
       const result = await prisma.$transaction(async (tx) => {
         let convId = conversationId;
 
@@ -49,10 +67,6 @@ export const chatService = {
           isNewConversation = true;
         }
 
-        const lastUserMessage = data.messages[data.messages.length - 1];
-        if (!lastUserMessage) {
-          throw new NotFoundError('No messages provided');
-        }
         const userMessage = await tx.message.create({
           data: {
             conversationId: convId,
@@ -85,10 +99,17 @@ export const chatService = {
         select: {
           role: true,
           content: true,
+          tokens: true,
         },
       });
 
-      // Reverse to get chronological order (oldest to newest)
+      const contextTokens = calculateContextTokens(conversationHistory);
+      if (contextTokens > chatConfig.tokenLimits.maxContextTokens) {
+        throw new PayloadTooLargeError(
+          `Conversation context exceeds token limit. Context has ${contextTokens} tokens, maximum allowed is ${chatConfig.tokenLimits.maxContextTokens} tokens. Consider starting a new conversation.`,
+        );
+      }
+
       const messagesWithContext = conversationHistory.reverse().map((msg) => ({
         role: msg.role as 'user' | 'assistant' | 'system',
         content: msg.content,
@@ -108,6 +129,7 @@ export const chatService = {
         stream_options: {
           include_usage: true,
         },
+        max_completion_tokens: chatConfig.tokenLimits.maxCompletionTokens,
       });
 
       for await (const chunk of stream as AsyncIterable<OpenAI.Chat.ChatCompletionChunk>) {
