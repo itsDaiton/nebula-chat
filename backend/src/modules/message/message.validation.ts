@@ -30,13 +30,7 @@ export const messageResponseSchema = z
     conversationId: z.uuid(),
     content: z.string(),
     role: z.string(),
-    tokens: z
-      .object({
-        promptTokens: z.number(),
-        completionTokens: z.number(),
-        totalTokens: z.number(),
-      })
-      .nullable(),
+    tokens: tokenUsageSchema.nullable(),
     createdAt: z.iso.datetime(),
   })
   .openapi('Message');

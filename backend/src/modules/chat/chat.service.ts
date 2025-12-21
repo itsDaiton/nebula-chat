@@ -40,10 +40,7 @@ export const chatService = {
         throw new BadRequestError(`Expected one message, received ${data.messages.length}.`);
       }
 
-      const userMessage = data.messages[0];
-      if (!userMessage) {
-        throw new BadRequestError('No message provided');
-      }
+      const userMessage = data.messages[0]!;
 
       if (userMessage.role !== 'user') {
         throw new BadRequestError(
@@ -62,6 +59,51 @@ export const chatService = {
         );
       }
 
+      // Pre-validate context tokens BEFORE persisting to avoid orphaned messages
+      // Fetch existing conversation history to calculate what the total context would be
+      const tempConversationId = conversationId;
+
+      // If no conversation ID, we need to create one temporarily to fetch history
+      // But since it's a new conversation, history will be empty anyway
+      if (tempConversationId) {
+        const existingConversation = await prisma.conversation.findUnique({
+          where: { id: tempConversationId },
+        });
+        if (!existingConversation) {
+          throw new NotFoundError('Conversation', tempConversationId);
+        }
+
+        const limit =
+          chatConfig.maxHistoryMessages > 0 && isFinite(chatConfig.maxHistoryMessages)
+            ? chatConfig.maxHistoryMessages
+            : undefined;
+
+        const existingHistory = await prisma.message.findMany({
+          where: { conversationId: tempConversationId },
+          orderBy: { createdAt: 'desc' },
+          ...(limit !== undefined && { take: limit }),
+          select: {
+            role: true,
+            content: true,
+            tokens: true,
+          },
+        });
+
+        const systemPrompt = getSystemPrompt();
+        const existingHistoryTokens = calculateContextTokens(existingHistory);
+        const systemPromptTokens = countTokens(systemPrompt);
+        const newUserMessageTokens = userMessageValidation.tokens;
+        const messageOverhead = 4;
+        const projectedTotalTokens =
+          existingHistoryTokens + systemPromptTokens + newUserMessageTokens + messageOverhead;
+
+        if (projectedTotalTokens > chatConfig.tokenLimits.maxContextTokens) {
+          throw new PayloadTooLargeError(
+            `Adding this message would exceed context token limit. Projected context: ${projectedTotalTokens} tokens, maximum allowed: ${chatConfig.tokenLimits.maxContextTokens} tokens. Consider starting a new conversation.`,
+          );
+        }
+      }
+
       const result = await prisma.$transaction(async (tx) => {
         let convId = conversationId;
 
@@ -73,8 +115,7 @@ export const chatService = {
             throw new NotFoundError('Conversation', convId);
           }
         } else {
-          const firstUserMessage = data.messages.find((m) => m.role === 'user');
-          const title = firstUserMessage?.content.slice(0, 50) || 'New Chat';
+          const title = userMessage.content.slice(0, 50) || 'New Chat';
           const newConversation = await tx.conversation.create({
             data: { title },
           });
@@ -119,15 +160,6 @@ export const chatService = {
       });
 
       const systemPrompt = getSystemPrompt();
-      const historyTokens = calculateContextTokens(conversationHistory);
-      const systemPromptTokens = countTokens(systemPrompt);
-      const totalContextTokens = historyTokens + systemPromptTokens;
-
-      if (totalContextTokens > chatConfig.tokenLimits.maxContextTokens) {
-        throw new PayloadTooLargeError(
-          `Conversation context exceeds token limit. Context has ${totalContextTokens} tokens, maximum allowed is ${chatConfig.tokenLimits.maxContextTokens} tokens.`,
-        );
-      }
 
       const messagesWithContext = conversationHistory.reverse().map((msg) => ({
         role: msg.role as 'user' | 'assistant' | 'system',
@@ -146,41 +178,77 @@ export const chatService = {
         totalTokens: number;
       } | null = null;
 
-      const stream = await client.chat.completions.create({
-        model: data.model,
-        messages: messagesWithSystem,
-        stream: true,
-        stream_options: {
-          include_usage: true,
-        },
-        max_completion_tokens: chatConfig.tokenLimits.maxCompletionTokens,
-      });
+      try {
+        const stream = await client.chat.completions.create({
+          model: data.model,
+          messages: messagesWithSystem,
+          stream: true,
+          stream_options: {
+            include_usage: true,
+          },
+          max_completion_tokens: chatConfig.tokenLimits.maxCompletionTokens,
+        });
 
-      for await (const chunk of stream as AsyncIterable<OpenAI.Chat.ChatCompletionChunk>) {
-        const delta = chunk.choices?.[0]?.delta?.content;
-        if (typeof delta === 'string') {
-          fullResponse += delta;
-          callbacks.onToken(delta);
+        for await (const chunk of stream as AsyncIterable<OpenAI.Chat.ChatCompletionChunk>) {
+          const delta = chunk.choices?.[0]?.delta?.content;
+          if (typeof delta === 'string') {
+            fullResponse += delta;
+            callbacks.onToken(delta);
+          }
+          if (chunk.usage) {
+            usageData = {
+              promptTokens: chunk.usage.prompt_tokens,
+              completionTokens: chunk.usage.completion_tokens,
+              totalTokens: chunk.usage.total_tokens,
+            };
+            callbacks.onUsage(usageData);
+          }
         }
-        if (chunk.usage) {
-          usageData = {
-            promptTokens: chunk.usage.prompt_tokens,
-            completionTokens: chunk.usage.completion_tokens,
-            totalTokens: chunk.usage.total_tokens,
-          };
-          callbacks.onUsage(usageData);
+
+        if (!fullResponse || fullResponse.trim().length === 0) {
+          const emptyResponseMessage = 'The assistant did not generate a response.';
+          const errorAssistantMessage = await messageService.createMessage({
+            conversationId,
+            role: 'assistant',
+            content: emptyResponseMessage,
+            tokens: usageData || undefined,
+          });
+          assistantMessageId = errorAssistantMessage.id;
+
+          callbacks.onError(emptyResponseMessage);
+          callbacks.onAssistantMessageCreated(assistantMessageId);
+
+          throw new Error('Stream completed without generating any content');
         }
+
+        const assistantMessage = await messageService.createMessage({
+          conversationId,
+          role: 'assistant',
+          content: fullResponse,
+          tokens: usageData || undefined,
+        });
+        assistantMessageId = assistantMessage.id;
+
+        callbacks.onAssistantMessageCreated(assistantMessageId);
+      } catch (streamError) {
+        const errorMessage =
+          streamError instanceof Error
+            ? `Stream error: ${streamError.message}`
+            : 'Unexpected stream error occurred';
+
+        const errorAssistantMessage = await messageService.createMessage({
+          conversationId,
+          role: 'assistant',
+          content: errorMessage,
+          tokens: undefined,
+        });
+        assistantMessageId = errorAssistantMessage.id;
+
+        callbacks.onError(errorMessage);
+        callbacks.onAssistantMessageCreated(assistantMessageId);
+
+        throw streamError;
       }
-
-      const assistantMessage = await messageService.createMessage({
-        conversationId,
-        role: 'assistant',
-        content: fullResponse,
-        tokens: usageData || undefined,
-      });
-      assistantMessageId = assistantMessage.id;
-
-      callbacks.onAssistantMessageCreated(assistantMessageId);
 
       return {
         conversationId,
@@ -189,7 +257,7 @@ export const chatService = {
       };
     } catch (error) {
       callbacks.onError(error instanceof Error ? error.message : 'Unknown error occurred');
-      throw error;
+      return;
     }
   },
 };
