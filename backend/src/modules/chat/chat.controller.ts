@@ -14,7 +14,6 @@ export const chatController = {
 
       await chatService.streamResponse(input, {
         onConversationCreated: (conversationId) => {
-          // Store the conversation ID on the request for cache key generation
           req.body.conversationId = conversationId;
           streamFormatter.writeConversationCreated(res, conversationId);
         },

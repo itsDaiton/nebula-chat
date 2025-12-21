@@ -30,7 +30,6 @@ export function streamCapture(req: Request, res: Response, next: NextFunction) {
         })
         .join('\n');
 
-      // Regenerate cache key with the actual conversation ID (in case it was created during the request)
       const finalKey = cacheService.generateKey(req.body);
 
       //eslint-disable-next-line no-console
