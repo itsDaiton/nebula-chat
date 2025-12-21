@@ -128,7 +128,7 @@ export const chatService = {
             conversationId: convId,
             role: userMessage.role,
             content: userMessage.content,
-            model: data.model,
+            model: null,
           },
         });
         return {

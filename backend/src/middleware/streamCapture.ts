@@ -3,8 +3,6 @@ import { cacheService } from '@backend/cache/cache.service';
 import { streamFormatter } from '@backend/modules/chat/chat.utils';
 
 export function streamCapture(req: Request, res: Response, next: NextFunction) {
-  const key = cacheService.generateKey(req.body);
-
   let full = '';
   const originalWrite = res.write.bind(res);
 
@@ -32,9 +30,12 @@ export function streamCapture(req: Request, res: Response, next: NextFunction) {
         })
         .join('\n');
 
+      // Regenerate cache key with the actual conversation ID (in case it was created during the request)
+      const finalKey = cacheService.generateKey(req.body);
+
       //eslint-disable-next-line no-console
       console.log('Saving to cache');
-      cacheService.saveToCache(key, filtered, usageData).catch((error) => {
+      cacheService.saveToCache(finalKey, filtered, usageData).catch((error) => {
         // eslint-disable-next-line no-console
         console.error('Error saving to cache (fail-open):', error);
       });
