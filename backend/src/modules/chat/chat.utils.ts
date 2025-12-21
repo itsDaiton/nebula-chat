@@ -10,16 +10,6 @@ export const createClient: () => OpenAI = () => {
   return client;
 };
 
-export const validModels: string[] = [
-  'gpt-4.1',
-  'gpt-4.1-mini',
-  'gpt-4o',
-  'gpt-4o-mini',
-  'gpt-5.1',
-  'gpt-5',
-  'gpt-5-mini',
-];
-
 export const streamFormatter = {
   writeConversationCreated(res: Response, conversationId: string): void {
     res.write(`event: conversation-created\n`);

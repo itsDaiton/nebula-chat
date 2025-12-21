@@ -4,6 +4,7 @@ import type OpenAI from 'openai';
 import type { CreateChatStreamDTO, StreamCallbacks } from '@backend/modules/chat/chat.types';
 import { messageService } from '@backend/modules/message/message.service';
 import { createClient } from '@backend/modules/chat/chat.utils';
+import { chatConfig } from '@backend/modules/chat/chat.config';
 import {
   MissingConfigurationError,
   ClientInitializationError,
@@ -72,16 +73,23 @@ export const chatService = {
       }
       callbacks.onUserMessageCreated(userMessageId);
 
+      const limit =
+        chatConfig.maxHistoryMessages > 0 && isFinite(chatConfig.maxHistoryMessages)
+          ? chatConfig.maxHistoryMessages
+          : undefined;
+
       const conversationHistory = await prisma.message.findMany({
         where: { conversationId },
-        orderBy: { createdAt: 'asc' },
+        orderBy: { createdAt: 'desc' },
+        ...(limit !== undefined && { take: limit }),
         select: {
           role: true,
           content: true,
         },
       });
 
-      const messagesWithContext = conversationHistory.map((msg) => ({
+      // Reverse to get chronological order (oldest to newest)
+      const messagesWithContext = conversationHistory.reverse().map((msg) => ({
         role: msg.role as 'user' | 'assistant' | 'system',
         content: msg.content,
       }));

@@ -1,5 +1,5 @@
-import { validModels } from '@backend/modules/chat/chat.utils';
 import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
+import { chatConfig } from './chat.config';
 import { z } from 'zod';
 
 extendZodWithOpenApi(z);
@@ -11,7 +11,7 @@ const chatMessageSchema = z.object({
 
 export const createChatStreamSchema = z.object({
   messages: z.array(chatMessageSchema).min(1),
-  model: z.string().refine((msg) => validModels.includes(msg), {
+  model: z.string().refine((msg) => chatConfig.validModels.includes(msg), {
     message: 'Invalid model specified.',
   }),
   conversationId: z.string().min(1).optional(),
