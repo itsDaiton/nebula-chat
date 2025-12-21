@@ -3,14 +3,19 @@ import { prisma } from '@backend/prisma';
 import type OpenAI from 'openai';
 import type { CreateChatStreamDTO, StreamCallbacks } from '@backend/modules/chat/chat.types';
 import { messageService } from '@backend/modules/message/message.service';
-import { createClient } from '@backend/modules/chat/chat.utils';
+import { createClient, getSystemPrompt } from '@backend/modules/chat/chat.utils';
 import { chatConfig } from '@backend/modules/chat/chat.config';
-import { validateTokenLimit, calculateContextTokens } from '@backend/modules/chat/chat.tokenizer';
+import {
+  validateTokenLimit,
+  calculateContextTokens,
+  countTokens,
+} from '@backend/modules/chat/chat.tokenizer';
 import {
   MissingConfigurationError,
   ClientInitializationError,
   NotFoundError,
   PayloadTooLargeError,
+  BadRequestError,
 } from '@backend/errors/AppError';
 
 export const chatService = {
@@ -31,19 +36,29 @@ export const chatService = {
     let assistantMessageId: string | undefined;
 
     try {
-      const lastUserMessage = data.messages[data.messages.length - 1];
-      if (!lastUserMessage) {
-        throw new NotFoundError('No messages provided');
+      if (data.messages.length !== 1) {
+        throw new BadRequestError(`Expected one message, received ${data.messages.length}.`);
+      }
+
+      const userMessage = data.messages[0];
+      if (!userMessage) {
+        throw new BadRequestError('No message provided');
+      }
+
+      if (userMessage.role !== 'user') {
+        throw new BadRequestError(
+          `Expected message with role 'user', received '${userMessage.role}'. Only user messages can be sent.`,
+        );
       }
 
       const userMessageValidation = validateTokenLimit(
-        lastUserMessage.content,
+        userMessage.content,
         chatConfig.tokenLimits.maxPromptTokens,
       );
 
       if (!userMessageValidation.isValid) {
         throw new PayloadTooLargeError(
-          `User message exceeds token limit. Message has ~${userMessageValidation.tokens} tokens, maximum allowed is ${chatConfig.tokenLimits.maxPromptTokens} tokens.`,
+          `User message exceeds token limit. Message has ${userMessageValidation.tokens} tokens, maximum allowed is ${chatConfig.tokenLimits.maxPromptTokens} tokens.`,
         );
       }
 
@@ -67,16 +82,16 @@ export const chatService = {
           isNewConversation = true;
         }
 
-        const userMessage = await tx.message.create({
+        const newUserMessage = await tx.message.create({
           data: {
             conversationId: convId,
-            role: lastUserMessage.role,
-            content: lastUserMessage.content,
+            role: userMessage.role,
+            content: userMessage.content,
           },
         });
         return {
           conversationId: convId,
-          userMessageId: userMessage.id,
+          userMessageId: newUserMessage.id,
         };
       });
 
@@ -103,10 +118,14 @@ export const chatService = {
         },
       });
 
-      const contextTokens = calculateContextTokens(conversationHistory);
-      if (contextTokens > chatConfig.tokenLimits.maxContextTokens) {
+      const systemPrompt = getSystemPrompt();
+      const historyTokens = calculateContextTokens(conversationHistory);
+      const systemPromptTokens = countTokens(systemPrompt);
+      const totalContextTokens = historyTokens + systemPromptTokens;
+
+      if (totalContextTokens > chatConfig.tokenLimits.maxContextTokens) {
         throw new PayloadTooLargeError(
-          `Conversation context exceeds token limit. Context has ${contextTokens} tokens, maximum allowed is ${chatConfig.tokenLimits.maxContextTokens} tokens. Consider starting a new conversation.`,
+          `Conversation context exceeds token limit. Context has ${totalContextTokens} tokens, maximum allowed is ${chatConfig.tokenLimits.maxContextTokens} tokens.`,
         );
       }
 
@@ -114,6 +133,11 @@ export const chatService = {
         role: msg.role as 'user' | 'assistant' | 'system',
         content: msg.content,
       }));
+
+      const messagesWithSystem = [
+        { role: 'system' as const, content: systemPrompt },
+        ...messagesWithContext,
+      ];
 
       let fullResponse = '';
       let usageData: {
@@ -124,7 +148,7 @@ export const chatService = {
 
       const stream = await client.chat.completions.create({
         model: data.model,
-        messages: messagesWithContext,
+        messages: messagesWithSystem,
         stream: true,
         stream_options: {
           include_usage: true,

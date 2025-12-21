@@ -2,6 +2,8 @@ import 'dotenv/config';
 import OpenAI from 'openai';
 import type { Response } from 'express';
 import type { UsageData } from './chat.types';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 export const createClient: () => OpenAI = () => {
   const client = new OpenAI({
@@ -9,6 +11,16 @@ export const createClient: () => OpenAI = () => {
   });
   return client;
 };
+
+let cachedSystemPrompt: string | null = null;
+
+export function getSystemPrompt(): string {
+  if (!cachedSystemPrompt) {
+    const promptPath = join(__dirname, '../../../prompts/system.md');
+    cachedSystemPrompt = readFileSync(promptPath, 'utf-8').trim();
+  }
+  return cachedSystemPrompt;
+}
 
 export const streamFormatter = {
   writeConversationCreated(res: Response, conversationId: string): void {
