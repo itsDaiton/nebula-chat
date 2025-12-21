@@ -1,7 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import type { ChatHistoryStreamOptions, ChatMessage } from '../types/types';
 import { SERVER_CONFIG } from '../../../shared/config/serverConfig';
-import { v4 as uuidv4 } from 'uuid';
 
 export function useChatStream() {
   const [history, setHistory] = useState<ChatMessage[]>([]);
@@ -12,7 +11,7 @@ export function useChatStream() {
     completionTokens: number;
     totalTokens: number;
   } | null>(null);
-  const [conversationId] = useState<string>(() => uuidv4());
+  const [conversationId, setConversationId] = useState<string | undefined>(undefined);
 
   const abortController = useRef<AbortController | null>(null);
 
@@ -34,14 +33,22 @@ export function useChatStream() {
       abortController.current = controller;
 
       try {
+        const newUserMessage = messages[messages.length - 1];
+
+        const requestBody: any = {
+          messages: [newUserMessage],
+          model,
+        };
+
+        // Only include conversationId if it exists (after first message)
+        if (customConversationId || conversationId) {
+          requestBody.conversationId = customConversationId || conversationId;
+        }
+
         const response = await fetch(SERVER_CONFIG.getApiEndpoint('/api/chat/stream'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages,
-            model,
-            conversationId: customConversationId || conversationId,
-          }),
+          body: JSON.stringify(requestBody),
           signal: controller.signal,
         });
 
@@ -56,7 +63,14 @@ export function useChatStream() {
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
-        let currentEvent: 'token' | 'usage' | null = null;
+        let currentEvent:
+          | 'token'
+          | 'usage'
+          | 'error'
+          | 'conversation-created'
+          | 'user-message-created'
+          | 'assistant-message-created'
+          | null = null;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -67,12 +81,28 @@ export function useChatStream() {
           buffer = lines.pop() || '';
 
           for (const line of lines) {
+            if (line.startsWith('event: conversation-created')) {
+              currentEvent = 'conversation-created';
+              continue;
+            }
+            if (line.startsWith('event: user-message-created')) {
+              currentEvent = 'user-message-created';
+              continue;
+            }
+            if (line.startsWith('event: assistant-message-created')) {
+              currentEvent = 'assistant-message-created';
+              continue;
+            }
             if (line.startsWith('event: token')) {
               currentEvent = 'token';
               continue;
             }
             if (line.startsWith('event: usage')) {
               currentEvent = 'usage';
+              continue;
+            }
+            if (line.startsWith('event: error')) {
+              currentEvent = 'error';
               continue;
             }
 
@@ -92,6 +122,32 @@ export function useChatStream() {
                 continue;
               }
 
+              if (currentEvent === 'conversation-created') {
+                if (parsed.conversationId) {
+                  setConversationId(parsed.conversationId);
+                }
+                currentEvent = null;
+                continue;
+              }
+
+              if (currentEvent === 'user-message-created') {
+                currentEvent = null;
+                continue;
+              }
+
+              if (currentEvent === 'assistant-message-created') {
+                currentEvent = null;
+                continue;
+              }
+
+              if (currentEvent === 'error') {
+                const errorMsg = parsed.error || 'An error occurred during streaming.';
+                setError(errorMsg);
+                setIsStreaming(false);
+                abortController.current = null;
+                return;
+              }
+
               if (currentEvent === 'usage') {
                 setUsage({
                   promptTokens: parsed.promptTokens,
@@ -106,20 +162,17 @@ export function useChatStream() {
                 setHistory((prev) => {
                   const updated = [...prev];
                   const last = updated[updated.length - 1];
+                  if (!last || last.role !== 'assistant') {
+                    return prev;
+                  }
                   updated[updated.length - 1] = {
                     ...last,
                     content: last.content + parsed.token,
                   };
                   return updated;
                 });
+                currentEvent = null;
               }
-            }
-
-            if (line.startsWith('event: error')) {
-              setError('An error occurred during streaming.');
-              setIsStreaming(false);
-              abortController.current = null;
-              return;
             }
           }
         }

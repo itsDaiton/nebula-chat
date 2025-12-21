@@ -2,6 +2,8 @@ import 'dotenv/config';
 import OpenAI from 'openai';
 import type { Response } from 'express';
 import type { UsageData } from './chat.types';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 export const createClient: () => OpenAI = () => {
   const client = new OpenAI({
@@ -10,17 +12,33 @@ export const createClient: () => OpenAI = () => {
   return client;
 };
 
-export const validModels: string[] = [
-  'gpt-4.1',
-  'gpt-4.1-mini',
-  'gpt-4o',
-  'gpt-4o-mini',
-  'gpt-5.1',
-  'gpt-5',
-  'gpt-5-mini',
-];
+let cachedSystemPrompt: string | null = null;
+
+export function getSystemPrompt(): string {
+  if (!cachedSystemPrompt) {
+    const promptPath = join(__dirname, '../../../prompts/system.md');
+    cachedSystemPrompt = readFileSync(promptPath, 'utf-8').trim();
+  }
+  return cachedSystemPrompt;
+}
 
 export const streamFormatter = {
+  writeConversationCreated(res: Response, conversationId: string): void {
+    res.write(`event: conversation-created\n`);
+    res.write(`data: ${JSON.stringify({ conversationId })}\n\n`);
+  },
+  writeUserMessageCreated(res: Response, messageId: string): void {
+    res.write(`event: user-message-created\n`);
+    res.write(`data: ${JSON.stringify({ messageId })}\n\n`);
+  },
+  writeAssistantMessageCreated(res: Response, messageId: string): void {
+    res.write(`event: assistant-message-created\n`);
+    res.write(`data: ${JSON.stringify({ messageId })}\n\n`);
+  },
+  writeError(res: Response, error: string): void {
+    res.write(`event: error\n`);
+    res.write(`data: ${JSON.stringify({ error })}\n\n`);
+  },
   writeToken(res: Response, token: string): void {
     res.write(`event: token\n`);
     res.write(`data: ${JSON.stringify({ token })}\n\n`);

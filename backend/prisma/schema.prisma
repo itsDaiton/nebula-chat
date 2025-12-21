@@ -19,7 +19,8 @@ model Message {
   conversationId String
   content        String
   role           String
-  tokens         Int?
+  model          String
+  tokens         Json?
   createdAt      DateTime     @default(now())
   conversation   Conversation @relation(fields: [conversationId], references: [id])
 

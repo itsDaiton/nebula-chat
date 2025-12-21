@@ -6,7 +6,7 @@ export function registerChatRoutes() {
   registry.registerPath({
     method: 'post',
     path: '/api/chat/stream',
-    description: 'Stream a chat completion response from an AI model',
+    description: `Stream a chat completion response from an AI model with automatic conversation and message persistence.`,
     summary: 'Stream chat completion',
     tags: ['Chat'],
     request: {
@@ -20,7 +20,7 @@ export function registerChatRoutes() {
     },
     responses: {
       200: {
-        description: 'Successful streaming response',
+        description: 'Successful streaming response with Server-Sent Events',
         content: {
           'text/event-stream': {
             schema: chatStreamResponseSchema,
@@ -29,6 +29,23 @@ export function registerChatRoutes() {
       },
       400: {
         description: 'Invalid request body or validation error',
+        content: {
+          'application/json': {
+            schema: errorResponseSchema,
+          },
+        },
+      },
+      404: {
+        description: 'Conversation not found (if conversationId provided)',
+        content: {
+          'application/json': {
+            schema: errorResponseSchema,
+          },
+        },
+      },
+      413: {
+        description:
+          'Payload too large - user message exceeds token limit or conversation context exceeds limit',
         content: {
           'application/json': {
             schema: errorResponseSchema,

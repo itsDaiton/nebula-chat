@@ -12,15 +12,27 @@ export const chatController = {
       setHeaders(res, req.headers.origin);
       res.flushHeaders();
 
-      await chatService.streamResponse(
-        input,
-        (token) => {
+      await chatService.streamResponse(input, {
+        onConversationCreated: (conversationId) => {
+          streamFormatter.writeConversationCreated(res, conversationId);
+        },
+        onUserMessageCreated: (messageId) => {
+          streamFormatter.writeUserMessageCreated(res, messageId);
+        },
+        onToken: (token) => {
           streamFormatter.writeToken(res, token);
         },
-        (usageData) => {
+        onUsage: (usageData) => {
           streamFormatter.writeUsage(res, usageData);
         },
-      );
+        onAssistantMessageCreated: (messageId) => {
+          streamFormatter.writeAssistantMessageCreated(res, messageId);
+        },
+        onError: (error) => {
+          streamFormatter.writeError(res, error);
+        },
+      });
+
       streamFormatter.writeEnd(res);
       res.end();
     } catch (error) {
