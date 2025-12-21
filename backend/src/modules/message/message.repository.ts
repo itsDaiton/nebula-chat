@@ -8,7 +8,7 @@ export const messageRepository = {
         conversationId,
         content,
         role,
-        tokens: tokens ?? null,
+        ...(tokens !== undefined && { tokens }),
       },
     });
   },
