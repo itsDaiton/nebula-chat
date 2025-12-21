@@ -128,6 +128,7 @@ export const chatService = {
             conversationId: convId,
             role: userMessage.role,
             content: userMessage.content,
+            model: data.model,
           },
         });
         return {
@@ -211,6 +212,7 @@ export const chatService = {
             conversationId,
             role: 'assistant',
             content: emptyResponseMessage,
+            model: data.model,
             tokens: usageData || undefined,
           });
           assistantMessageId = errorAssistantMessage.id;
@@ -225,6 +227,7 @@ export const chatService = {
           conversationId,
           role: 'assistant',
           content: fullResponse,
+          model: data.model,
           tokens: usageData || undefined,
         });
         assistantMessageId = assistantMessage.id;
@@ -240,6 +243,7 @@ export const chatService = {
           conversationId,
           role: 'assistant',
           content: errorMessage,
+          model: data.model,
           tokens: undefined,
         });
         assistantMessageId = errorAssistantMessage.id;

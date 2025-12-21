@@ -13,6 +13,7 @@ export const createMessageSchema = z.object({
   conversationId: z.uuid(),
   role: z.enum(['user', 'assistant', 'system']),
   content: z.string().min(1),
+  model: z.string(),
   tokens: tokenUsageSchema.optional(),
 });
 
@@ -30,6 +31,7 @@ export const messageResponseSchema = z
     conversationId: z.uuid(),
     content: z.string(),
     role: z.string(),
+    model: z.string(),
     tokens: tokenUsageSchema.nullable(),
     createdAt: z.iso.datetime(),
   })
