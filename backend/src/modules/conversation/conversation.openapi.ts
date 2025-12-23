@@ -3,8 +3,9 @@ import { errorResponseSchema } from '@backend/openapi/schemas';
 import {
   createConversationSchema,
   conversationResponseSchema,
-  conversationsArraySchema,
   getConversationSchema,
+  paginatedConversationsResponseSchema,
+  getConversationsQuerySchema,
 } from './conversation.validation';
 
 export function registerConversationRoutes() {
@@ -97,15 +98,19 @@ export function registerConversationRoutes() {
   registry.registerPath({
     method: 'get',
     path: '/api/conversations',
-    description: 'Retrieve all conversations',
-    summary: 'List all conversations',
+    description:
+      'Retrieve conversations with cursor-based pagination. Returns up to 20 conversations by default.',
+    summary: 'List conversations',
     tags: ['Conversations'],
+    request: {
+      query: getConversationsQuerySchema,
+    },
     responses: {
       200: {
-        description: 'List of conversations',
+        description: 'Paginated list of conversations',
         content: {
           'application/json': {
-            schema: conversationsArraySchema,
+            schema: paginatedConversationsResponseSchema,
           },
         },
       },

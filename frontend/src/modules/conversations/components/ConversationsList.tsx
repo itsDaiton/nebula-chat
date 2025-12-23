@@ -10,11 +10,19 @@ import { FiEdit, FiSearch } from 'react-icons/fi';
 import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
 import { useNavigate } from 'react-router';
 import { route } from '@/routes';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 
 export const ConversationsList = () => {
-  const { conversations, isLoading, error } = useConversationsContext();
+  const { conversations, isLoading, isLoadingMore, error, hasMore, loadMore } =
+    useConversationsContext();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const navigate = useNavigate();
+
+  const observerTarget = useInfiniteScroll({
+    hasMore,
+    isLoading: isLoadingMore,
+    onLoadMore: loadMore,
+  });
 
   useKeyboardShortcut('k', () => setIsSearchOpen(true), { ctrl: true });
 
@@ -115,6 +123,15 @@ export const ConversationsList = () => {
                 onClick={handleConversationClick}
               />
             ))}
+            <div ref={observerTarget} style={{ height: '20px' }} />
+            {isLoadingMore && (
+              <Flex justify="center" align="center" direction="column" py={3}>
+                <Spinner size="sm" color="fg.muted" />
+                <Text mt={2} fontSize="sm" color="fg.muted">
+                  {resources.conversations.loadingMore}
+                </Text>
+              </Flex>
+            )}
           </Flex>
         )}
       </Box>

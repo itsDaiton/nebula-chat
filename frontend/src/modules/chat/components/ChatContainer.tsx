@@ -97,12 +97,25 @@ export const ChatContainer = () => {
             color="fg.muted"
             gap={4}
           >
-            <Box fontSize="2xl" fontWeight="medium" color="fg.default" maxW="600px">
-              {resources.chat.welcomeMessage}
-            </Box>
-            <Box fontSize="md" maxW="600px" lineHeight="tall">
-              {resources.chat.welcomeIntro}
-            </Box>
+            {conversationId ? (
+              <>
+                <Box fontSize="2xl" fontWeight="medium" color="fg.default" maxW="600px">
+                  {resources.chat.emptyConversation}
+                </Box>
+                <Box fontSize="md" maxW="600px" lineHeight="tall">
+                  {resources.chat.emptyConversationHint}
+                </Box>
+              </>
+            ) : (
+              <>
+                <Box fontSize="2xl" fontWeight="medium" color="fg.default" maxW="600px">
+                  {resources.chat.welcomeMessage}
+                </Box>
+                <Box fontSize="md" maxW="600px" lineHeight="tall">
+                  {resources.chat.welcomeIntro}
+                </Box>
+              </>
+            )}
           </Flex>
         ) : (
           <>

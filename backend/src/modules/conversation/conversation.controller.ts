@@ -23,8 +23,12 @@ export const conversationController = {
   },
   async getAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const conversations = await conversationService.getAllConversations();
-      return res.status(200).json(conversations);
+      const { limit, cursor } = req.query;
+      const result = await conversationService.getAllConversations(
+        limit as unknown as number,
+        cursor as string | undefined,
+      );
+      return res.status(200).json(result);
     } catch (error) {
       next(error);
     }
