@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { SERVER_CONFIG } from '@/shared/config/serverConfig';
 import type { Conversation } from '../types/types';
+import { handleHttpError, handleNetworkError } from '../utils/errorHandler';
 
 interface ConversationsContextValue {
   conversations: Conversation[];
@@ -25,13 +26,17 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       const response = await fetch(SERVER_CONFIG.getApiEndpoint('/api/conversations'));
 
       if (!response.ok) {
-        throw new Error('Failed to fetch conversations');
+        await handleHttpError(response);
       }
 
       const data = await response.json();
       setConversations(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error occurred');
+      try {
+        handleNetworkError(err);
+      } catch (handledError) {
+        setError(handledError instanceof Error ? handledError.message : 'Unknown error occurred');
+      }
     } finally {
       if (showLoading) {
         setIsLoading(false);

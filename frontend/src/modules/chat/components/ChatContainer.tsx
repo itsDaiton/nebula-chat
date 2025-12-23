@@ -27,8 +27,8 @@ export const ChatContainer = () => {
 
   useEffect(() => {
     if (conversation && conversation.messages) {
-      // Only load conversation if it's different from the currently loaded one
-      if (loadedConversationId.current !== conversation.id) {
+      const isDifferentConversation = loadedConversationId.current !== conversation.id;
+      if (isDifferentConversation) {
         const messages = conversation.messages.map((msg) => ({
           role: msg.role,
           content: msg.content,
@@ -37,12 +37,12 @@ export const ChatContainer = () => {
         setConversationId(conversation.id);
         loadedConversationId.current = conversation.id;
       }
-    } else if (!conversationId) {
+    } else if (!conversationId && !isStreaming && loadedConversationId.current !== null) {
       setHistory([]);
       setConversationId(undefined);
       loadedConversationId.current = null;
     }
-  }, [conversation, conversationId, setHistory, setConversationId]);
+  }, [conversation, conversationId, isStreaming, setHistory, setConversationId]);
 
   const { handleSendMessage } = useHandleSendMessage({
     history,

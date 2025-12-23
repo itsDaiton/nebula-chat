@@ -32,6 +32,7 @@ export function useChatStream() {
       setIsStreaming(true);
       setError(null);
       setUsage(null);
+      pendingNavigationId.current = null;
 
       setHistory([...messages, { role: 'assistant', content: '' }]);
 
@@ -46,7 +47,6 @@ export function useChatStream() {
           model,
         };
 
-        // Only include conversationId if it exists (after first message)
         if (customConversationId || conversationId) {
           requestBody.conversationId = customConversationId || conversationId;
         }
@@ -118,7 +118,6 @@ export function useChatStream() {
               if (raw === 'end') {
                 setIsStreaming(false);
                 abortController.current = null;
-                // Navigate after stream completes if we have a pending conversation
                 if (pendingNavigationId.current) {
                   void navigate(route.chat.conversation(pendingNavigationId.current), {
                     replace: true,
@@ -138,9 +137,11 @@ export function useChatStream() {
 
               if (currentEvent === 'conversation-created') {
                 if (parsed.conversationId) {
+                  const isNewConversation = !conversationId;
                   setConversationId(parsed.conversationId);
-                  // Store the ID to navigate after stream completes
-                  pendingNavigationId.current = parsed.conversationId;
+                  if (isNewConversation) {
+                    pendingNavigationId.current = parsed.conversationId;
+                  }
                 }
                 currentEvent = null;
                 continue;
