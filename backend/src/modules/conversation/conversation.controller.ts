@@ -23,9 +23,11 @@ export const conversationController = {
   },
   async getAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
-      const cursor = req.query.cursor as string | undefined;
-      const result = await conversationService.getAllConversations(limit, cursor);
+      const { limit, cursor } = req.query;
+      const result = await conversationService.getAllConversations(
+        limit as unknown as number,
+        cursor as string | undefined,
+      );
       return res.status(200).json(result);
     } catch (error) {
       next(error);

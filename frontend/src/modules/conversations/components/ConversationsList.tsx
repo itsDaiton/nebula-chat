@@ -125,8 +125,11 @@ export const ConversationsList = () => {
             ))}
             <div ref={observerTarget} style={{ height: '20px' }} />
             {isLoadingMore && (
-              <Flex justify="center" py={3}>
+              <Flex justify="center" align="center" direction="column" py={3}>
                 <Spinner size="sm" color="fg.muted" />
+                <Text mt={2} fontSize="sm" color="fg.muted">
+                  {resources.conversations.loadingMore}
+                </Text>
               </Flex>
             )}
           </Flex>

@@ -72,6 +72,7 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
   }, [hasMore, isLoadingMore, nextCursor]);
 
   const refetch = useCallback(async () => {
+    setIsLoadingMore(false);
     await fetchConversations(false);
   }, [fetchConversations]);
 
