@@ -12,5 +12,9 @@ export const resources = {
     emptyHint: 'Start a new chat to create your first conversation',
     searchPlaceholder: 'Search chats...',
     noResults: 'No chats found',
+    single: {
+      loading: 'Loading conversation...',
+      error: 'Error loading conversation',
+    },
   },
 };

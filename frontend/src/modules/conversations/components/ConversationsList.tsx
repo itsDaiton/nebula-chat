@@ -1,5 +1,5 @@
 import { Box, Flex, Text, Spinner } from '@chakra-ui/react';
-import { useConversations } from '../hooks/useConversations';
+import { useConversationsContext } from '../context/ConversationsContext';
 import { ConversationListItem } from './ConversationListItem';
 import { ConversationsSearch } from './ConversationsSearch';
 import { ConversationActionButton } from './ConversationActionButton';
@@ -8,19 +8,22 @@ import { resources } from '@/resources';
 import { useState } from 'react';
 import { FiEdit, FiSearch } from 'react-icons/fi';
 import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
+import { useNavigate } from 'react-router';
+import { route } from '@/routes';
 
 export const ConversationsList = () => {
-  const { conversations, isLoading, error } = useConversations();
+  const { conversations, isLoading, error } = useConversationsContext();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const navigate = useNavigate();
 
   useKeyboardShortcut('k', () => setIsSearchOpen(true), { ctrl: true });
 
   const handleCreateNewChat = () => {
-    // TODO: Create new chat - to be implemented in next PR
+    void navigate(route.chat.root());
   };
 
-  const handleConversationClick = () => {
-    // TODO: Navigate to conversation route - to be implemented in next PR
+  const handleConversationClick = (conversationId: string) => {
+    void navigate(route.chat.conversation(conversationId));
     setIsSearchOpen(false);
   };
 
@@ -109,7 +112,7 @@ export const ConversationsList = () => {
               <ConversationListItem
                 key={conversation.id}
                 conversation={conversation}
-                onClick={() => alert(conversation.id)}
+                onClick={handleConversationClick}
               />
             ))}
           </Flex>

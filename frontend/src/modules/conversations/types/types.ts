@@ -6,6 +6,15 @@ export interface Conversation {
   createdAt: string;
 }
 
+export interface ConversationWithMessages extends Conversation {
+  messages: Array<{
+    id: string;
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    createdAt: string;
+  }>;
+}
+
 export interface ConversationListItemProps {
   conversation: Conversation;
   onClick: (id: string) => void;

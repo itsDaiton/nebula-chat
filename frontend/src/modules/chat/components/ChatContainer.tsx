@@ -1,7 +1,7 @@
-import { Box, Flex } from '@chakra-ui/react';
+import { Box, Flex, Spinner, Text } from '@chakra-ui/react';
 import { ChatInput } from './ChatInput';
 import { useChatStream } from '../hooks/useChatStream';
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { ChatMessage } from './ChatMessage';
 import { useHandleSendMessage } from '../hooks/useHandleSendMessage';
 import { useModel } from '../hooks/useModel';
@@ -10,11 +10,39 @@ import { resources } from '@/resources';
 import { ChatStreaming } from './ChatStreaming';
 import { ChatContainerBox } from './ChatContainerBox';
 import { useAutoScroll } from '../../../shared/hooks/useAutoScroll';
+import { useParams } from 'react-router';
+import { useConversation } from '@/modules/conversations/hooks/useConversation';
 
 export const ChatContainer = () => {
-  const { history, isStreaming, streamMessage, setHistory } = useChatStream();
+  const { id: conversationId } = useParams<{ id: string }>();
+  const {
+    conversation,
+    isLoading: isLoadingConversation,
+    error: conversationError,
+  } = useConversation(conversationId);
+  const { history, isStreaming, streamMessage, setHistory, setConversationId } = useChatStream();
   const { selectedModel, setSelectedModel } = useModel();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const loadedConversationId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (conversation && conversation.messages) {
+      // Only load conversation if it's different from the currently loaded one
+      if (loadedConversationId.current !== conversation.id) {
+        const messages = conversation.messages.map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        }));
+        setHistory(messages);
+        setConversationId(conversation.id);
+        loadedConversationId.current = conversation.id;
+      }
+    } else if (!conversationId) {
+      setHistory([]);
+      setConversationId(undefined);
+      loadedConversationId.current = null;
+    }
+  }, [conversation, conversationId, setHistory, setConversationId]);
 
   const { handleSendMessage } = useHandleSendMessage({
     history,
@@ -23,6 +51,38 @@ export const ChatContainer = () => {
   });
 
   useAutoScroll(messagesEndRef, [history, isStreaming]);
+
+  if (conversationId && isLoadingConversation) {
+    return (
+      <ChatContainerBox>
+        <Flex h="100%" align="center" justify="center">
+          <Flex direction="column" align="center" gap={2}>
+            <Spinner size="lg" color="fg.muted" />
+            <Text fontSize="sm" color="fg.muted">
+              {resources.conversations.single.loading}
+            </Text>
+          </Flex>
+        </Flex>
+      </ChatContainerBox>
+    );
+  }
+
+  if (conversationId && conversationError) {
+    return (
+      <ChatContainerBox>
+        <Flex h="100%" align="center" justify="center">
+          <Flex direction="column" align="center" gap={2} maxW="400px" textAlign="center">
+            <Text fontSize="md" fontWeight="medium" color="red.500">
+              {resources.conversations.single.error}
+            </Text>
+            <Text fontSize="sm" color="fg.muted">
+              {conversationError}
+            </Text>
+          </Flex>
+        </Flex>
+      </ChatContainerBox>
+    );
+  }
 
   return (
     <ChatContainerBox>
