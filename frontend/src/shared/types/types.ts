@@ -5,6 +5,10 @@ export interface LayoutProps {
   children: ReactNode;
 }
 
+export interface SidePanelProps {
+  children?: ReactNode;
+}
+
 export interface NebulaButtonProps extends ButtonProps {}
 
 export interface NebulaMenuItemProps {

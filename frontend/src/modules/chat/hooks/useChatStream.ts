@@ -1,6 +1,9 @@
 import { useCallback, useRef, useState } from 'react';
 import type { ChatHistoryStreamOptions, ChatMessage } from '../types/types';
 import { SERVER_CONFIG } from '../../../shared/config/serverConfig';
+import { useNavigate } from 'react-router';
+import { route } from '@/routes';
+import { useConversationsContext } from '@/modules/conversations/context/ConversationsContext';
 
 export function useChatStream() {
   const [history, setHistory] = useState<ChatMessage[]>([]);
@@ -12,8 +15,11 @@ export function useChatStream() {
     totalTokens: number;
   } | null>(null);
   const [conversationId, setConversationId] = useState<string | undefined>(undefined);
+  const navigate = useNavigate();
+  const { refetch: refetchConversations } = useConversationsContext();
 
   const abortController = useRef<AbortController | null>(null);
+  const pendingNavigationId = useRef<string | null>(null);
 
   const abort = useCallback(() => {
     abortController.current?.abort();
@@ -26,6 +32,7 @@ export function useChatStream() {
       setIsStreaming(true);
       setError(null);
       setUsage(null);
+      pendingNavigationId.current = null;
 
       setHistory([...messages, { role: 'assistant', content: '' }]);
 
@@ -40,7 +47,6 @@ export function useChatStream() {
           model,
         };
 
-        // Only include conversationId if it exists (after first message)
         if (customConversationId || conversationId) {
           requestBody.conversationId = customConversationId || conversationId;
         }
@@ -112,6 +118,13 @@ export function useChatStream() {
               if (raw === 'end') {
                 setIsStreaming(false);
                 abortController.current = null;
+                if (pendingNavigationId.current) {
+                  void navigate(route.chat.conversation(pendingNavigationId.current), {
+                    replace: true,
+                  });
+                  void refetchConversations();
+                  pendingNavigationId.current = null;
+                }
                 return;
               }
 
@@ -124,7 +137,11 @@ export function useChatStream() {
 
               if (currentEvent === 'conversation-created') {
                 if (parsed.conversationId) {
+                  const isNewConversation = !conversationId;
                   setConversationId(parsed.conversationId);
+                  if (isNewConversation) {
+                    pendingNavigationId.current = parsed.conversationId;
+                  }
                 }
                 currentEvent = null;
                 continue;
@@ -185,7 +202,7 @@ export function useChatStream() {
         abortController.current = null;
       }
     },
-    [conversationId],
+    [conversationId, navigate, refetchConversations],
   );
 
   return {
@@ -195,6 +212,7 @@ export function useChatStream() {
     usage,
     streamMessage,
     abort,
+    setConversationId,
     setHistory,
     conversationId,
   };
