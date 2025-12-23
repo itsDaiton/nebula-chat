@@ -1,5 +1,6 @@
 import { Flex } from '@chakra-ui/react';
 import type { SidePanelProps } from '../types/types';
+import { chatScrollBar } from '@/shared/components/scrollbar';
 
 export const SidePanel = ({ children }: SidePanelProps) => (
   <Flex
@@ -11,6 +12,8 @@ export const SidePanel = ({ children }: SidePanelProps) => (
     borderWidth="1px"
     borderRadius="lg"
     boxShadow="none"
+    overflowY="auto"
+    css={chatScrollBar}
   >
     {children}
   </Flex>

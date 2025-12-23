@@ -4,6 +4,7 @@ export const chatScrollBar = {
   },
   '&::-webkit-scrollbar-track': {
     background: 'transparent',
+    margin: '8px 0',
   },
   '&::-webkit-scrollbar-thumb': {
     background: 'var(--chakra-colors-border-default)',

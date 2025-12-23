@@ -1,14 +1,28 @@
 import { Box, Flex, Text, Spinner } from '@chakra-ui/react';
 import { useConversations } from '../hooks/useConversations';
 import { ConversationListItem } from './ConversationListItem';
-import { chatScrollBar } from '@/shared/components/scrollbar';
+import { ConversationsSearch } from './ConversationsSearch';
+import { ConversationActionButton } from './ConversationActionButton';
 import { SidePanel } from '@/shared/layout/SidePanel';
 import { resources } from '@/resources';
+import { useState } from 'react';
+import { FiEdit, FiSearch } from 'react-icons/fi';
+import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
 
 export const ConversationsList = () => {
   const { conversations, isLoading, error } = useConversations();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // TODO: Navigate to conversation route - to be implemented
+  useKeyboardShortcut('k', () => setIsSearchOpen(true), { ctrl: true });
+
+  const handleCreateNewChat = () => {
+    // TODO: Create new chat - to be implemented in next PR
+  };
+
+  const handleConversationClick = () => {
+    // TODO: Navigate to conversation route - to be implemented in next PR
+    setIsSearchOpen(false);
+  };
 
   if (isLoading) {
     return (
@@ -39,19 +53,47 @@ export const ConversationsList = () => {
 
   return (
     <SidePanel>
-      <Box p={4} borderBottom="1px" borderColor="border.default">
-        <Text fontSize="lg" fontWeight="semibold" color="fg.default">
-          {resources.conversations.title}
+      {isSearchOpen && (
+        <ConversationsSearch
+          conversations={conversations}
+          onConversationClick={handleConversationClick}
+          onClose={() => setIsSearchOpen(false)}
+        />
+      )}
+      <Flex
+        direction="column"
+        gap={2}
+        p={3}
+        borderBottom="1px"
+        borderColor="border.default"
+        position="sticky"
+        top={0}
+        bg="bg.default"
+        zIndex={1}
+      >
+        <ConversationActionButton
+          icon={<FiEdit />}
+          label="New Chat"
+          onClick={handleCreateNewChat}
+        />
+        <ConversationActionButton
+          icon={<FiSearch />}
+          label="Search chats"
+          onClick={() => setIsSearchOpen(!isSearchOpen)}
+        />
+      </Flex>
+      <Box px={3} py={2}>
+        <Text fontSize="sm" fontWeight="medium" color="fg.muted" pl={2}>
+          Chats
         </Text>
       </Box>
-
-      <Box flex="1" overflowY="auto" p={2} css={chatScrollBar}>
+      <Box px={2} pb={2}>
         {conversations.length === 0 ? (
           <Flex
             direction="column"
             align="center"
             justify="center"
-            h="100%"
+            minH="200px"
             textAlign="center"
             color="fg.muted"
             px={4}
