@@ -9,7 +9,7 @@ import { chatScrollBar } from '@/shared/components/scrollbar';
 import { resources } from '@/resources';
 import { ChatStreaming } from './ChatStreaming';
 import { ChatContainerBox } from './ChatContainerBox';
-import { useAutoScroll } from '../hooks/useAutoScroll';
+import { useAutoScroll } from '../../../shared/hooks/useAutoScroll';
 
 export const ChatContainer = () => {
   const { history, isStreaming, streamMessage, setHistory } = useChatStream();

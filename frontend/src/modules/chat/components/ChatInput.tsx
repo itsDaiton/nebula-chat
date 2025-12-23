@@ -1,6 +1,5 @@
 import { Box, Flex } from '@chakra-ui/react';
 import { useMessageHandler } from '../hooks/useMessageHandler';
-import { useKeyboardHandler } from '../hooks/useKeyboardHandler';
 import { useModelSelector } from '../hooks/useModelSelector';
 import type { ChatInputProps } from '../types/types';
 import { ModelSelect } from './ModelSelect';
@@ -8,6 +7,7 @@ import { SendButton } from './SendButton';
 import { useTextareaAutoResize } from '@/shared/hooks/useTextareaAutoResize';
 import { chatScrollBar } from '@/shared/components/scrollbar';
 import { ChatInputArea } from './ChatInputArea';
+import { useKeyboardHandler } from '@/shared/hooks/useKeyboardHandler';
 
 export const ChatInput = ({
   onSendMessage,

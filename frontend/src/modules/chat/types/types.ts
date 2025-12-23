@@ -1,5 +1,3 @@
-export type MessageType = 'user' | 'bot';
-
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -15,11 +13,6 @@ export interface ChatInputProps {
   autoFocus?: boolean;
   selectedModel: string;
   onModelChange: (model: string) => void;
-}
-
-export interface ChatStreamOptions {
-  message: string;
-  model: string;
 }
 
 export interface ChatHistoryStreamOptions {
