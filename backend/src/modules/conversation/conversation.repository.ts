@@ -16,14 +16,29 @@ export const conversationRepository = {
       include: { messages: true },
     });
   },
-  findAll() {
-    return prisma.conversation.findMany({
+  async findAll(limit = 20, cursor?: string) {
+    const conversations = await prisma.conversation.findMany({
+      take: limit + 1,
+      ...(cursor && {
+        cursor: { id: cursor },
+        skip: 1,
+      }),
       orderBy: { createdAt: 'desc' },
-      include: {
-        messages: {
-          orderBy: { createdAt: 'asc' },
-        },
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
       },
     });
+
+    const hasMore = conversations.length > limit;
+    const items = hasMore ? conversations.slice(0, -1) : conversations;
+    const nextCursor = hasMore ? items[items.length - 1]?.id : null;
+
+    return {
+      conversations: items,
+      nextCursor,
+      hasMore,
+    };
   },
 };

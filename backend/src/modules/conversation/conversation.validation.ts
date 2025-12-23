@@ -22,3 +22,22 @@ export const conversationResponseSchema = z
   .openapi('Conversation');
 
 export const conversationsArraySchema = z.array(conversationResponseSchema);
+
+export const getConversationsQuerySchema = z
+  .object({
+    limit: z.coerce.number().int().positive().max(100).optional().default(20),
+    cursor: z.uuid().optional(),
+  })
+  .openapi({
+    param: {
+      name: 'limit',
+      in: 'query',
+      description: 'Number of conversations to fetch',
+    },
+  });
+
+export const paginatedConversationsResponseSchema = z.object({
+  conversations: conversationsArraySchema,
+  nextCursor: z.uuid().nullable(),
+  hasMore: z.boolean(),
+});

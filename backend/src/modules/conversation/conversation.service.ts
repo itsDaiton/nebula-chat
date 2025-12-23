@@ -13,7 +13,7 @@ export const conversationService = {
     }
     return conversation;
   },
-  async getAllConversations() {
-    return conversationRepository.findAll();
+  async getAllConversations(limit = 20, cursor?: string) {
+    return conversationRepository.findAll(limit, cursor);
   },
 };

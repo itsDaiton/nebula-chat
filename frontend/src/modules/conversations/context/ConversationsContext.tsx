@@ -1,21 +1,17 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { SERVER_CONFIG } from '@/shared/config/serverConfig';
-import type { Conversation } from '../types/types';
+import type { Conversation, ConversationsContextValue } from '../types/types';
 import { handleHttpError, handleNetworkError } from '../utils/errorHandler';
-
-interface ConversationsContextValue {
-  conversations: Conversation[];
-  isLoading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-}
 
 const ConversationsContext = createContext<ConversationsContextValue | undefined>(undefined);
 
 export function ConversationsProvider({ children }: { children: ReactNode }) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
   const fetchConversations = useCallback(async (showLoading = true) => {
     if (showLoading) {
@@ -23,14 +19,16 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     }
     setError(null);
     try {
-      const response = await fetch(SERVER_CONFIG.getApiEndpoint('/api/conversations'));
+      const response = await fetch(SERVER_CONFIG.getApiEndpoint('/api/conversations?limit=20'));
 
       if (!response.ok) {
         await handleHttpError(response);
       }
 
       const data = await response.json();
-      setConversations(data);
+      setConversations(data.conversations);
+      setNextCursor(data.nextCursor);
+      setHasMore(data.hasMore);
     } catch (err) {
       try {
         handleNetworkError(err);
@@ -44,13 +42,41 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const loadMore = useCallback(async () => {
+    if (!hasMore || isLoadingMore || !nextCursor) return;
+
+    setIsLoadingMore(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        SERVER_CONFIG.getApiEndpoint(`/api/conversations?limit=20&cursor=${nextCursor}`),
+      );
+
+      if (!response.ok) {
+        await handleHttpError(response);
+      }
+
+      const data = await response.json();
+      setConversations((prev) => [...prev, ...data.conversations]);
+      setNextCursor(data.nextCursor);
+      setHasMore(data.hasMore);
+    } catch (err) {
+      try {
+        handleNetworkError(err);
+      } catch (handledError) {
+        setError(handledError instanceof Error ? handledError.message : 'Unknown error occurred');
+      }
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [hasMore, isLoadingMore, nextCursor]);
+
   const refetch = useCallback(async () => {
-    // Refetch without showing loading state
     await fetchConversations(false);
   }, [fetchConversations]);
 
   useEffect(() => {
-    void fetchConversations(true); // Show loading on initial fetch
+    void fetchConversations(true);
   }, [fetchConversations]);
 
   return (
@@ -58,7 +84,10 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       value={{
         conversations,
         isLoading,
+        isLoadingMore,
         error,
+        hasMore,
+        loadMore,
         refetch,
       }}
     >

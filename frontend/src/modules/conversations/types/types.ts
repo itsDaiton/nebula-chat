@@ -31,3 +31,13 @@ export interface ConversationActionButtonProps {
   label: string;
   onClick: () => void;
 }
+
+export interface ConversationsContextValue {
+  conversations: Conversation[];
+  isLoading: boolean;
+  isLoadingMore: boolean;
+  error: string | null;
+  hasMore: boolean;
+  loadMore: () => Promise<void>;
+  refetch: () => Promise<void>;
+}
