@@ -1,13 +1,20 @@
-import { Box, Flex, Text, Icon } from '@chakra-ui/react';
+import { Box, Flex, Text, Icon, IconButton } from '@chakra-ui/react';
 import { ColorModeButton } from '../components/ui/color-mode';
 import { useResetChat } from '../hooks/useResetChat';
 import { TbGalaxy } from 'react-icons/tb';
+import { HiMenuAlt2 } from 'react-icons/hi';
 import { NebulaMenu } from '../components/navigation/NebulaMenu';
 import { menuItems } from '../utils/menuUtils';
 import { resources } from '@/resources';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
-export const Header = () => {
+interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
+export const Header = ({ onMenuClick }: HeaderProps) => {
   const { resetChat } = useResetChat();
+  const { isMobile } = useResponsiveLayout();
 
   return (
     <Box
@@ -22,16 +29,22 @@ export const Header = () => {
       py={2}
     >
       <Flex w="full" h="16" px={4} alignItems="center" justifyContent="space-between">
-        <Box display="flex" alignItems="center">
-          <Icon as={TbGalaxy} boxSize={12} />
+        <Box display="flex" alignItems="center" gap={2}>
+          {isMobile && onMenuClick && (
+            <IconButton aria-label="Open menu" onClick={onMenuClick} variant="ghost" size="lg">
+              <HiMenuAlt2 size={24} />
+            </IconButton>
+          )}
+          <Icon as={TbGalaxy} boxSize={{ base: 10, md: 12 }} />
           <Text
             pl={2}
-            fontSize="3xl"
+            fontSize={{ base: '2xl', md: '3xl' }}
             fontWeight="bold"
             letterSpacing="-0.03em"
             cursor="pointer"
             transition="opacity 0.2s"
             onClick={resetChat}
+            display={{ base: 'none', sm: 'block' }}
           >
             {resources.chat.appName}
           </Text>

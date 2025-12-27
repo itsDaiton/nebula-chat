@@ -11,8 +11,17 @@ import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
 import { useNavigate } from 'react-router';
 import { route } from '@/routes';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { chatScrollBar } from '@/shared/components/scrollbar';
 
-export const ConversationsList = () => {
+interface ConversationsListProps {
+  onNavigate?: () => void;
+  inDrawer?: boolean;
+}
+
+export const ConversationsList = ({
+  onNavigate,
+  inDrawer = false,
+}: ConversationsListProps = {}) => {
   const { conversations, isLoading, isLoadingMore, error, hasMore, loadMore } =
     useConversationsContext();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -28,42 +37,44 @@ export const ConversationsList = () => {
 
   const handleCreateNewChat = () => {
     void navigate(route.chat.root());
+    onNavigate?.();
   };
 
   const handleConversationClick = (conversationId: string) => {
     void navigate(route.chat.conversation(conversationId));
     setIsSearchOpen(false);
+    onNavigate?.();
   };
 
+  const loadingContent = (
+    <Flex h="100%" align="center" justify="center" p={4}>
+      <Flex direction="column" align="center">
+        <Spinner size="md" color="fg.muted" />
+        <Text mt={2} fontSize="sm" color="fg.muted">
+          {resources.conversations.loading}
+        </Text>
+      </Flex>
+    </Flex>
+  );
+
   if (isLoading) {
-    return (
-      <SidePanel>
-        <Flex h="100%" align="center" justify="center" p={4}>
-          <Flex direction="column" align="center">
-            <Spinner size="md" color="fg.muted" />
-            <Text mt={2} fontSize="sm" color="fg.muted">
-              {resources.conversations.loading}
-            </Text>
-          </Flex>
-        </Flex>
-      </SidePanel>
-    );
+    return inDrawer ? loadingContent : <SidePanel>{loadingContent}</SidePanel>;
   }
+
+  const errorContent = (
+    <Flex h="100%" align="center" justify="center" p={4}>
+      <Text fontSize="sm" color="red.500">
+        {error}
+      </Text>
+    </Flex>
+  );
 
   if (error) {
-    return (
-      <SidePanel>
-        <Flex h="100%" align="center" justify="center" p={4}>
-          <Text fontSize="sm" color="red.500">
-            {error}
-          </Text>
-        </Flex>
-      </SidePanel>
-    );
+    return inDrawer ? errorContent : <SidePanel>{errorContent}</SidePanel>;
   }
 
-  return (
-    <SidePanel>
+  const content = (
+    <>
       {isSearchOpen && (
         <ConversationsSearch
           conversations={conversations}
@@ -135,6 +146,16 @@ export const ConversationsList = () => {
           </Flex>
         )}
       </Box>
-    </SidePanel>
+    </>
   );
+
+  if (inDrawer) {
+    return (
+      <Flex direction="column" h="100%" bg="bg.default" overflowY="auto" css={chatScrollBar}>
+        {content}
+      </Flex>
+    );
+  }
+
+  return <SidePanel>{content}</SidePanel>;
 };
