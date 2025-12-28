@@ -11,7 +11,6 @@ export const Layout = ({ children }: LayoutProps) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { showSidePanels, showRightPanel } = useResponsiveLayout();
 
-  const handleDrawerClose = () => setIsDrawerOpen(false);
   const handleDrawerOpen = () => setIsDrawerOpen(true);
 
   return (
@@ -28,11 +27,7 @@ export const Layout = ({ children }: LayoutProps) => {
       >
         {showSidePanels && <ConversationsList />}
         {!showSidePanels && (
-          <ConversationDrawer
-            isDrawerOpen={isDrawerOpen}
-            setIsDrawerOpen={setIsDrawerOpen}
-            handleDrawerClose={handleDrawerClose}
-          />
+          <ConversationDrawer isDrawerOpen={isDrawerOpen} setIsDrawerOpen={setIsDrawerOpen} />
         )}
         <Box
           flex={{ base: '1', lg: '0 0 calc(75% - 16px)', xl: '0 0 calc(60% - 32px)' }}

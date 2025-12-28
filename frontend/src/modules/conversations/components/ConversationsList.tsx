@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Box, Flex, Text, Spinner } from '@chakra-ui/react';
+import { toaster } from '@/shared/components/ui/toaster';
 import { useConversationsContext } from '../context/ConversationsContext';
 import { ConversationListItem } from './ConversationListItem';
 import { ConversationsSearch } from './ConversationsSearch';
@@ -51,7 +52,12 @@ export const ConversationsList = ({
         break;
       case 'files':
       case 'aiStudio':
-        alert('coming soon');
+        toaster.create({
+          title: 'Coming Soon',
+          description: 'This section is currently under development.',
+          type: 'info',
+          duration: 3000,
+        });
         break;
     }
   };

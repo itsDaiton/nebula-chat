@@ -28,9 +28,14 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
       <Flex w="full" h="16" px={4} alignItems="center" justifyContent="space-between">
         <Box display="flex" alignItems="center" gap={2}>
           {isMobile && onMenuClick && (
-            <Icon as={HiMenuAlt2} boxSize={{ base: 8, md: 10 }} onClick={onMenuClick} />
+            <Icon
+              as={HiMenuAlt2}
+              boxSize={{ base: 6, md: 8 }}
+              onClick={onMenuClick}
+              aria-label="Menu"
+            />
           )}
-          <Icon as={TbGalaxy} boxSize={{ base: 10, md: 12 }} />
+          <Icon as={TbGalaxy} boxSize={{ base: 10, md: 12 }} aria-label="Nebula Chat Icon" />
           <Text
             pl={2}
             fontSize={{ base: '2xl', md: '3xl' }}
