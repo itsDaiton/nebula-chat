@@ -13,6 +13,10 @@ export interface HeaderProps {
   onMenuClick?: () => void;
 }
 
+export interface MarkdownContentProps {
+  content: string;
+}
+
 export interface NebulaButtonProps extends ButtonProps {}
 
 export interface NebulaMenuItemProps {

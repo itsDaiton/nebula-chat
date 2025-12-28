@@ -25,7 +25,7 @@ export const ConversationsSearch = ({
         right="0"
         bottom="0"
         bg="blackAlpha.600"
-        zIndex="1000"
+        zIndex="modal"
         onClick={onClose}
       />
       <Flex
@@ -33,7 +33,7 @@ export const ConversationsSearch = ({
         top="50%"
         left="50%"
         transform="translate(-50%, -50%)"
-        zIndex="1001"
+        zIndex="modal"
         w="600px"
         maxW="90vw"
         maxH="600px"

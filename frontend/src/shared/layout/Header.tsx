@@ -26,7 +26,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
       py={2}
     >
       <Flex w="full" h="16" px={4} alignItems="center" justifyContent="space-between">
-        <Box display="flex" alignItems="center" gap={2}>
+        <Box display="flex" alignItems="center" gap={{ base: 4, md: 2 }}>
           {isMobile && onMenuClick && (
             <Icon
               as={HiMenuAlt2}

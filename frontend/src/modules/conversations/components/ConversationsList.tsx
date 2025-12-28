@@ -16,18 +16,27 @@ import type { NavigationAction } from '@/shared/types/types';
 import { navigationActions } from '../utils/navigationActions';
 
 interface ConversationsListProps {
-  onNavigate?: () => void;
+  onClose?: () => void;
   inDrawer?: boolean;
+  toggleSearch?: () => void;
+  closeSearch?: () => void;
 }
 
 export const ConversationsList = ({
-  onNavigate,
+  onClose,
   inDrawer = false,
+  toggleSearch: externalToggleSearch,
+  closeSearch: externalCloseSearch,
 }: ConversationsListProps = {}) => {
   const { conversations, isLoading, isLoadingMore, error, hasMore, loadMore } =
     useConversationsContext();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [internalIsSearchOpen, setInternalIsSearchOpen] = useState(false);
   const navigate = useNavigate();
+
+  const isSearchOpen = inDrawer ? false : internalIsSearchOpen;
+  const closeSearch = inDrawer
+    ? (externalCloseSearch ?? (() => {}))
+    : () => setInternalIsSearchOpen(false);
 
   const observerTarget = useInfiniteScroll({
     hasMore,
@@ -35,11 +44,22 @@ export const ConversationsList = ({
     onLoadMore: loadMore,
   });
 
-  useKeyboardShortcut('k', () => setIsSearchOpen(true), { ctrl: true });
+  useKeyboardShortcut(
+    'k',
+    () => {
+      if (inDrawer && externalToggleSearch) {
+        externalToggleSearch();
+      } else {
+        setInternalIsSearchOpen(true);
+      }
+    },
+    { ctrl: true },
+  );
 
   const handleCreateNewChat = () => {
     void navigate(route.chat.root());
-    onNavigate?.();
+    closeSearch();
+    onClose?.();
   };
 
   const handleActionClick = (action: NavigationAction['action']) => {
@@ -48,10 +68,17 @@ export const ConversationsList = ({
         handleCreateNewChat();
         break;
       case 'search':
-        setIsSearchOpen(!isSearchOpen);
+        if (inDrawer) {
+          onClose?.();
+          externalToggleSearch?.();
+        } else {
+          setInternalIsSearchOpen((prev) => !prev);
+        }
         break;
       case 'files':
       case 'aiStudio':
+        closeSearch();
+        onClose?.();
         toaster.create({
           title: 'Coming Soon',
           description: 'This section is currently under development.',
@@ -64,8 +91,8 @@ export const ConversationsList = ({
 
   const handleConversationClick = (conversationId: string) => {
     void navigate(route.chat.conversation(conversationId));
-    setIsSearchOpen(false);
-    onNavigate?.();
+    closeSearch();
+    onClose?.();
   };
 
   const loadingContent = (
@@ -101,7 +128,7 @@ export const ConversationsList = ({
         <ConversationsSearch
           conversations={conversations}
           onConversationClick={handleConversationClick}
-          onClose={() => setIsSearchOpen(false)}
+          onClose={closeSearch}
         />
       )}
       <Flex
