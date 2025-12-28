@@ -1,17 +1,18 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Box, Flex, Text, Spinner } from '@chakra-ui/react';
 import { useConversationsContext } from '../context/ConversationsContext';
 import { ConversationListItem } from './ConversationListItem';
 import { ConversationsSearch } from './ConversationsSearch';
-import { ConversationActionButton } from './ConversationActionButton';
 import { SidePanel } from '@/shared/layout/SidePanel';
 import { resources } from '@/resources';
-import { useState } from 'react';
-import { FiEdit, FiSearch } from 'react-icons/fi';
 import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
-import { useNavigate } from 'react-router';
 import { route } from '@/routes';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { chatScrollBar } from '@/shared/components/scrollbar';
+import { BadgeActionButton } from '@/shared/components/navigation/BadgeActionButton';
+import type { NavigationAction } from '@/shared/types/types';
+import { navigationActions } from '../utils/navigationActions';
 
 interface ConversationsListProps {
   onNavigate?: () => void;
@@ -38,6 +39,21 @@ export const ConversationsList = ({
   const handleCreateNewChat = () => {
     void navigate(route.chat.root());
     onNavigate?.();
+  };
+
+  const handleActionClick = (action: NavigationAction['action']) => {
+    switch (action) {
+      case 'newChat':
+        handleCreateNewChat();
+        break;
+      case 'search':
+        setIsSearchOpen(!isSearchOpen);
+        break;
+      case 'files':
+      case 'aiStudio':
+        alert('coming soon');
+        break;
+    }
   };
 
   const handleConversationClick = (conversationId: string) => {
@@ -93,20 +109,19 @@ export const ConversationsList = ({
         bg="bg.default"
         zIndex={1}
       >
-        <ConversationActionButton
-          icon={<FiEdit />}
-          label="New Chat"
-          onClick={handleCreateNewChat}
-        />
-        <ConversationActionButton
-          icon={<FiSearch />}
-          label="Search chats"
-          onClick={() => setIsSearchOpen(!isSearchOpen)}
-        />
+        {navigationActions.map((action) => (
+          <BadgeActionButton
+            key={action.id}
+            icon={action.icon}
+            label={action.label}
+            onClick={() => handleActionClick(action.action)}
+            badge={action.badge}
+          />
+        ))}
       </Flex>
       <Box px={3} py={2}>
         <Text fontSize="sm" fontWeight="medium" color="fg.muted" pl={2}>
-          Chats
+          Chat History
         </Text>
       </Box>
       <Box px={2} pb={2}>

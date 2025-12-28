@@ -1,5 +1,6 @@
 import type { ButtonProps } from '@chakra-ui/react';
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
+import type { BadgeActionButton } from '../components/navigation/BadgeActionButton';
 
 export interface LayoutProps {
   children: ReactNode;
@@ -20,4 +21,23 @@ export interface NebulaMenuItemProps {
   value: string;
   label: string;
   onClick?: () => void;
+}
+
+export interface NavigationAction {
+  id: string;
+  icon: ReactElement;
+  label: string;
+  badge?: React.ComponentProps<typeof BadgeActionButton>['badge'];
+  action: 'newChat' | 'search' | 'files' | 'aiStudio';
+}
+
+export interface BadgeActionButtonProps {
+  icon: ReactElement;
+  label: string;
+  onClick: () => void;
+  badge?: {
+    text: string;
+    colorPalette?: string;
+    variant?: 'solid' | 'subtle' | 'outline' | 'surface' | 'plain';
+  };
 }
