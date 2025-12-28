@@ -1,18 +1,29 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Box, Flex, Text, Spinner } from '@chakra-ui/react';
+import { toaster } from '@/shared/components/ui/toaster';
 import { useConversationsContext } from '../context/ConversationsContext';
 import { ConversationListItem } from './ConversationListItem';
 import { ConversationsSearch } from './ConversationsSearch';
-import { ConversationActionButton } from './ConversationActionButton';
 import { SidePanel } from '@/shared/layout/SidePanel';
 import { resources } from '@/resources';
-import { useState } from 'react';
-import { FiEdit, FiSearch } from 'react-icons/fi';
 import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
-import { useNavigate } from 'react-router';
 import { route } from '@/routes';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { chatScrollBar } from '@/shared/components/scrollbar';
+import { BadgeActionButton } from '@/shared/components/navigation/BadgeActionButton';
+import type { NavigationAction } from '@/shared/types/types';
+import { navigationActions } from '../utils/navigationActions';
 
-export const ConversationsList = () => {
+interface ConversationsListProps {
+  onNavigate?: () => void;
+  inDrawer?: boolean;
+}
+
+export const ConversationsList = ({
+  onNavigate,
+  inDrawer = false,
+}: ConversationsListProps = {}) => {
   const { conversations, isLoading, isLoadingMore, error, hasMore, loadMore } =
     useConversationsContext();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -28,42 +39,64 @@ export const ConversationsList = () => {
 
   const handleCreateNewChat = () => {
     void navigate(route.chat.root());
+    onNavigate?.();
+  };
+
+  const handleActionClick = (action: NavigationAction['action']) => {
+    switch (action) {
+      case 'newChat':
+        handleCreateNewChat();
+        break;
+      case 'search':
+        setIsSearchOpen(!isSearchOpen);
+        break;
+      case 'files':
+      case 'aiStudio':
+        toaster.create({
+          title: 'Coming Soon',
+          description: 'This section is currently under development.',
+          type: 'info',
+          duration: 3000,
+        });
+        break;
+    }
   };
 
   const handleConversationClick = (conversationId: string) => {
     void navigate(route.chat.conversation(conversationId));
     setIsSearchOpen(false);
+    onNavigate?.();
   };
 
+  const loadingContent = (
+    <Flex h="100%" align="center" justify="center" p={4}>
+      <Flex direction="column" align="center">
+        <Spinner size="md" color="fg.muted" />
+        <Text mt={2} fontSize="sm" color="fg.muted">
+          {resources.conversations.loading}
+        </Text>
+      </Flex>
+    </Flex>
+  );
+
   if (isLoading) {
-    return (
-      <SidePanel>
-        <Flex h="100%" align="center" justify="center" p={4}>
-          <Flex direction="column" align="center">
-            <Spinner size="md" color="fg.muted" />
-            <Text mt={2} fontSize="sm" color="fg.muted">
-              {resources.conversations.loading}
-            </Text>
-          </Flex>
-        </Flex>
-      </SidePanel>
-    );
+    return inDrawer ? loadingContent : <SidePanel>{loadingContent}</SidePanel>;
   }
+
+  const errorContent = (
+    <Flex h="100%" align="center" justify="center" p={4}>
+      <Text fontSize="sm" color="red.500">
+        {error}
+      </Text>
+    </Flex>
+  );
 
   if (error) {
-    return (
-      <SidePanel>
-        <Flex h="100%" align="center" justify="center" p={4}>
-          <Text fontSize="sm" color="red.500">
-            {error}
-          </Text>
-        </Flex>
-      </SidePanel>
-    );
+    return inDrawer ? errorContent : <SidePanel>{errorContent}</SidePanel>;
   }
 
-  return (
-    <SidePanel>
+  const content = (
+    <>
       {isSearchOpen && (
         <ConversationsSearch
           conversations={conversations}
@@ -82,20 +115,19 @@ export const ConversationsList = () => {
         bg="bg.default"
         zIndex={1}
       >
-        <ConversationActionButton
-          icon={<FiEdit />}
-          label="New Chat"
-          onClick={handleCreateNewChat}
-        />
-        <ConversationActionButton
-          icon={<FiSearch />}
-          label="Search chats"
-          onClick={() => setIsSearchOpen(!isSearchOpen)}
-        />
+        {navigationActions.map((action) => (
+          <BadgeActionButton
+            key={action.id}
+            icon={action.icon}
+            label={action.label}
+            onClick={() => handleActionClick(action.action)}
+            badge={action.badge}
+          />
+        ))}
       </Flex>
       <Box px={3} py={2}>
         <Text fontSize="sm" fontWeight="medium" color="fg.muted" pl={2}>
-          Chats
+          Chat History
         </Text>
       </Box>
       <Box px={2} pb={2}>
@@ -135,6 +167,16 @@ export const ConversationsList = () => {
           </Flex>
         )}
       </Box>
-    </SidePanel>
+    </>
   );
+
+  if (inDrawer) {
+    return (
+      <Flex direction="column" h="100%" bg="bg.default" overflowY="auto" css={chatScrollBar}>
+        {content}
+      </Flex>
+    );
+  }
+
+  return <SidePanel>{content}</SidePanel>;
 };

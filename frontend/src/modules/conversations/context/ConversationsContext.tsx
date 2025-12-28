@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { SERVER_CONFIG } from '@/shared/config/serverConfig';
 import type { Conversation, ConversationsContextValue } from '../types/types';
-import { handleHttpError, handleNetworkError } from '../utils/errorHandler';
+import { handleHttpError, handleNetworkError } from '../../../shared/utils/errorHandler';
 
 const ConversationsContext = createContext<ConversationsContextValue | undefined>(undefined);
 

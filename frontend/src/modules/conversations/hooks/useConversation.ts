@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SERVER_CONFIG } from '@/shared/config/serverConfig';
 import type { ConversationWithMessages } from '../types/types';
-import { handleHttpError, handleNetworkError } from '../utils/errorHandler';
+import { handleHttpError, handleNetworkError } from '../../../shared/utils/errorHandler';
 
 export function useConversation(conversationId: string | null | undefined) {
   const [conversation, setConversation] = useState<ConversationWithMessages | null>(null);
