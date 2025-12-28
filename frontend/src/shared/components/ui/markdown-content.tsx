@@ -6,6 +6,7 @@ import { Prose } from './prose';
 import { shikiAdapter } from './code-block-adapter';
 import { useColorMode } from './color-mode';
 import type { MarkdownContentProps } from '@/shared/types/types';
+import { isSafeUrl } from '@/shared/utils/urlUtils';
 
 export const MarkdownContent = memo(({ content }: MarkdownContentProps) => {
   const { colorMode } = useColorMode();
@@ -74,8 +75,15 @@ export const MarkdownContent = memo(({ content }: MarkdownContentProps) => {
               );
             },
             a({ href, children }) {
+              const safeHref = isSafeUrl(href) ? href : undefined;
+
               return (
-                <a href={href} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={safeHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={!safeHref ? { pointerEvents: 'none', opacity: 0.5 } : undefined}
+                >
                   {children}
                 </a>
               );

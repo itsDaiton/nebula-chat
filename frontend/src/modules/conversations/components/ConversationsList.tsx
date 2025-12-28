@@ -70,9 +70,7 @@ export const ConversationsList = ({
       case 'search':
         if (inDrawer) {
           onClose?.();
-          setTimeout(() => {
-            externalToggleSearch?.();
-          }, 0);
+          externalToggleSearch?.();
         } else {
           setInternalIsSearchOpen((prev) => !prev);
         }
