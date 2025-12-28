@@ -1,5 +1,6 @@
 import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
 import { z } from 'zod';
+import { paginationConfig } from '@backend/config/pagination.config';
 
 extendZodWithOpenApi(z);
 
@@ -28,14 +29,14 @@ export const getConversationsQuerySchema = z.object({
     .number()
     .int()
     .positive()
-    .max(100)
+    .max(paginationConfig.maxLimit)
     .optional()
-    .default(20)
+    .default(paginationConfig.defaultLimit)
     .openapi({
       param: {
         name: 'limit',
         in: 'query',
-        description: 'Number of conversations to fetch (1-100, default 20)',
+        description: `Number of conversations to fetch (1-${paginationConfig.maxLimit}, default ${paginationConfig.defaultLimit})`,
       },
     }),
   cursor: z

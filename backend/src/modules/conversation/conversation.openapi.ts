@@ -99,7 +99,7 @@ export function registerConversationRoutes() {
     method: 'get',
     path: '/api/conversations',
     description:
-      'Retrieve conversations with cursor-based pagination. Returns up to 20 conversations by default.',
+      'Retrieve conversations with cursor-based pagination. Returns up to 10 conversations by default.',
     summary: 'List conversations',
     tags: ['Conversations'],
     request: {

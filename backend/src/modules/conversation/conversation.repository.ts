@@ -1,4 +1,5 @@
 import { prisma } from '@backend/prisma';
+import { paginationConfig } from '@backend/config/pagination.config';
 import type {
   CreateConversationDTO,
   GetConversationParams,
@@ -16,7 +17,7 @@ export const conversationRepository = {
       include: { messages: true },
     });
   },
-  async findAll(limit = 20, cursor?: string) {
+  async findAll(limit = paginationConfig.defaultLimit, cursor?: string) {
     const conversations = await prisma.conversation.findMany({
       take: limit + 1,
       ...(cursor && {
