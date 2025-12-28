@@ -18,7 +18,7 @@ export const ConversationDrawer = ({
   >
     <Drawer.Backdrop />
     <Drawer.Positioner>
-      <Drawer.Content bg="bg.default">
+      <Drawer.Content bg="bg.default" maxW={{ base: '75vw', sm: '320px' }}>
         <Drawer.Body p={0}>
           <ConversationsList onNavigate={handleDrawerClose} inDrawer />
         </Drawer.Body>

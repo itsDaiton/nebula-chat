@@ -35,8 +35,8 @@ export const Layout = ({ children }: LayoutProps) => {
           />
         )}
         <Box
-          flex={{ base: '1', lg: '0 0 calc(60% - 32px)', xl: '0 0 calc(60% - 32px)' }}
-          maxW={{ base: '100%', lg: 'calc(60% - 32px)' }}
+          flex={{ base: '1', lg: '0 0 calc(75% - 16px)', xl: '0 0 calc(60% - 32px)' }}
+          maxW={{ base: '100%', lg: 'calc(75% - 16px)', xl: 'calc(60% - 32px)' }}
           w="100%"
         >
           {children}

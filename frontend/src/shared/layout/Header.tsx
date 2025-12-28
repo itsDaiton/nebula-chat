@@ -1,4 +1,4 @@
-import { Box, Flex, Text, Icon, IconButton } from '@chakra-ui/react';
+import { Box, Flex, Text, Icon } from '@chakra-ui/react';
 import { ColorModeButton } from '../components/ui/color-mode';
 import { useResetChat } from '../hooks/useResetChat';
 import { TbGalaxy } from 'react-icons/tb';
@@ -7,10 +7,7 @@ import { NebulaMenu } from '../components/navigation/NebulaMenu';
 import { menuItems } from '../utils/menuUtils';
 import { resources } from '@/resources';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
-
-interface HeaderProps {
-  onMenuClick?: () => void;
-}
+import type { HeaderProps } from '../types/types';
 
 export const Header = ({ onMenuClick }: HeaderProps) => {
   const { resetChat } = useResetChat();
@@ -31,9 +28,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
       <Flex w="full" h="16" px={4} alignItems="center" justifyContent="space-between">
         <Box display="flex" alignItems="center" gap={2}>
           {isMobile && onMenuClick && (
-            <IconButton aria-label="Open menu" onClick={onMenuClick} variant="ghost" size="lg">
-              <HiMenuAlt2 size={24} />
-            </IconButton>
+            <Icon as={HiMenuAlt2} boxSize={{ base: 8, md: 10 }} onClick={onMenuClick} />
           )}
           <Icon as={TbGalaxy} boxSize={{ base: 10, md: 12 }} />
           <Text

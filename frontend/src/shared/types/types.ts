@@ -9,6 +9,10 @@ export interface SidePanelProps {
   children?: ReactNode;
 }
 
+export interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
 export interface NebulaButtonProps extends ButtonProps {}
 
 export interface NebulaMenuItemProps {

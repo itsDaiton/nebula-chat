@@ -14,7 +14,7 @@ export const SidePanel = ({ children }: SidePanelProps) => (
     boxShadow="none"
     overflowY="auto"
     css={chatScrollBar}
-    display={{ base: 'none', xl: 'flex' }}
+    display={{ base: 'none', lg: 'flex' }}
   >
     {children}
   </Flex>
