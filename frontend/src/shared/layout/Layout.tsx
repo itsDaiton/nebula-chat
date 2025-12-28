@@ -36,9 +36,9 @@ export const Layout = ({ children }: LayoutProps) => {
       <Flex
         as="main"
         flex="1"
-        mt="20"
+        mt={{ base: '16', lg: '20' }}
         gap={{ base: 0, lg: 4 }}
-        pt={{ base: 4, lg: 6 }}
+        pt={{ base: 6, lg: 6 }}
         px={{ base: 4, lg: 0 }}
         justifyContent="center"
       >
