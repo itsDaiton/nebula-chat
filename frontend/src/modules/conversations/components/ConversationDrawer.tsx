@@ -3,14 +3,18 @@ import { ConversationsList } from './ConversationsList';
 
 export const ConversationDrawer = ({
   isDrawerOpen,
-  setIsDrawerOpen,
+  closeDrawer,
+  toggleSearch,
+  closeSearch,
 }: {
   isDrawerOpen: boolean;
-  setIsDrawerOpen: (open: boolean) => void;
+  closeDrawer: () => void;
+  toggleSearch: () => void;
+  closeSearch: () => void;
 }) => (
   <Drawer.Root
     open={isDrawerOpen}
-    onOpenChange={(event) => setIsDrawerOpen(event.open)}
+    onOpenChange={(event) => !event.open && closeDrawer()}
     placement="start"
     size="sm"
     aria-label="Menu"
@@ -19,7 +23,12 @@ export const ConversationDrawer = ({
     <Drawer.Positioner>
       <Drawer.Content bg="bg.default" maxW={{ base: '75vw', sm: '320px' }}>
         <Drawer.Body p={0}>
-          <ConversationsList onNavigate={() => setIsDrawerOpen(false)} inDrawer />
+          <ConversationsList
+            onClose={closeDrawer}
+            inDrawer
+            toggleSearch={toggleSearch}
+            closeSearch={closeSearch}
+          />
         </Drawer.Body>
       </Drawer.Content>
     </Drawer.Positioner>

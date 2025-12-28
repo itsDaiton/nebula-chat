@@ -3,19 +3,36 @@ import { Header } from './Header';
 import { ConversationsList } from '@/modules/conversations/components/ConversationsList';
 import { SidePanel } from './SidePanel';
 import type { LayoutProps } from '@/shared/types/types';
-import { useState } from 'react';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { ConversationDrawer } from '@/modules/conversations/components/ConversationDrawer';
+import { useDrawer } from '../hooks/useDrawer';
+import { ConversationsSearch } from '@/modules/conversations/components/ConversationsSearch';
+import { useConversationsContext } from '@/modules/conversations/context/ConversationsContext';
+import { useNavigate } from 'react-router';
+import { route } from '@/routes';
 
 export const Layout = ({ children }: LayoutProps) => {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const { isDrawerOpen, openDrawer, closeDrawer, isSearchOpen, toggleSearch, closeSearch } =
+    useDrawer();
   const { showSidePanels, showRightPanel } = useResponsiveLayout();
+  const { conversations } = useConversationsContext();
+  const navigate = useNavigate();
 
-  const handleDrawerOpen = () => setIsDrawerOpen(true);
+  const handleConversationClick = (conversationId: string) => {
+    void navigate(route.chat.conversation(conversationId));
+    closeSearch();
+  };
 
   return (
     <Flex direction="column" minHeight="100vh">
-      <Header onMenuClick={handleDrawerOpen} />
+      <Header onMenuClick={openDrawer} />
+      {!showSidePanels && isSearchOpen && (
+        <ConversationsSearch
+          conversations={conversations}
+          onConversationClick={handleConversationClick}
+          onClose={closeSearch}
+        />
+      )}
       <Flex
         as="main"
         flex="1"
@@ -27,7 +44,12 @@ export const Layout = ({ children }: LayoutProps) => {
       >
         {showSidePanels && <ConversationsList />}
         {!showSidePanels && (
-          <ConversationDrawer isDrawerOpen={isDrawerOpen} setIsDrawerOpen={setIsDrawerOpen} />
+          <ConversationDrawer
+            isDrawerOpen={isDrawerOpen}
+            closeDrawer={closeDrawer}
+            toggleSearch={toggleSearch}
+            closeSearch={closeSearch}
+          />
         )}
         <Box
           flex={{ base: '1', lg: '0 0 calc(75% - 16px)', xl: '0 0 calc(60% - 32px)' }}
