@@ -1,5 +1,6 @@
 import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
 import { NotFoundError } from '@backend/errors/AppError';
+import { paginationConfig } from '@backend/config/pagination.config';
 import type { CreateConversationDTO } from './conversation.types';
 
 export const conversationService = {
@@ -13,7 +14,7 @@ export const conversationService = {
     }
     return conversation;
   },
-  async getAllConversations(limit = 20, cursor?: string) {
+  async getAllConversations(limit = paginationConfig.defaultLimit, cursor?: string) {
     return conversationRepository.findAll(limit, cursor);
   },
 };
