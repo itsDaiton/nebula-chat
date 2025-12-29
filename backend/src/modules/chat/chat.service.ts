@@ -18,6 +18,51 @@ import {
   BadRequestError,
 } from '@backend/errors/AppError';
 
+export async function createUserMessage(
+  conversationId: string | undefined,
+  userMessageContent: string,
+  userMessageRole: string,
+) {
+  let isNewConversation = false;
+
+  const result = await prisma.$transaction(async (tx) => {
+    let convId = conversationId;
+
+    if (convId) {
+      const existingConversation = await tx.conversation.findUnique({
+        where: { id: convId },
+      });
+      if (!existingConversation) {
+        throw new NotFoundError('Conversation', convId);
+      }
+    } else {
+      const title = userMessageContent.slice(0, 50) || 'New Chat';
+      const newConversation = await tx.conversation.create({
+        data: { title },
+      });
+      convId = newConversation.id;
+      isNewConversation = true;
+    }
+
+    const newUserMessage = await tx.message.create({
+      data: {
+        conversationId: convId,
+        role: userMessageRole,
+        content: userMessageContent,
+        model: null,
+      },
+    });
+
+    return {
+      conversationId: convId,
+      userMessageId: newUserMessage.id,
+      isNewConversation,
+    };
+  });
+
+  return result;
+}
+
 export const chatService = {
   async streamResponse(data: CreateChatStreamDTO, callbacks: StreamCallbacks) {
     if (!process.env.OPENAI_API_KEY) {
@@ -59,12 +104,8 @@ export const chatService = {
         );
       }
 
-      // Pre-validate context tokens BEFORE persisting to avoid orphaned messages
-      // Fetch existing conversation history to calculate what the total context would be
       const tempConversationId = conversationId;
 
-      // If no conversation ID, we need to create one temporarily to fetch history
-      // But since it's a new conversation, history will be empty anyway
       if (tempConversationId) {
         const existingConversation = await prisma.conversation.findUnique({
           where: { id: tempConversationId },
@@ -104,41 +145,12 @@ export const chatService = {
         }
       }
 
-      const result = await prisma.$transaction(async (tx) => {
-        let convId = conversationId;
-
-        if (convId) {
-          const existingConversation = await tx.conversation.findUnique({
-            where: { id: convId },
-          });
-          if (!existingConversation) {
-            throw new NotFoundError('Conversation', convId);
-          }
-        } else {
-          const title = userMessage.content.slice(0, 50) || 'New Chat';
-          const newConversation = await tx.conversation.create({
-            data: { title },
-          });
-          convId = newConversation.id;
-          isNewConversation = true;
-        }
-
-        const newUserMessage = await tx.message.create({
-          data: {
-            conversationId: convId,
-            role: userMessage.role,
-            content: userMessage.content,
-            model: null,
-          },
-        });
-        return {
-          conversationId: convId,
-          userMessageId: newUserMessage.id,
-        };
-      });
+      const result = await createUserMessage(conversationId, userMessage.content, userMessage.role);
 
       conversationId = result.conversationId;
       userMessageId = result.userMessageId;
+      isNewConversation = result.isNewConversation;
+
       if (isNewConversation) {
         callbacks.onConversationCreated(conversationId);
       }
@@ -220,7 +232,7 @@ export const chatService = {
           callbacks.onError(emptyResponseMessage);
           callbacks.onAssistantMessageCreated(assistantMessageId);
 
-          return; // Exit early instead of throwing to avoid duplicate message creation
+          return;
         }
 
         const assistantMessage = await messageService.createMessage({
