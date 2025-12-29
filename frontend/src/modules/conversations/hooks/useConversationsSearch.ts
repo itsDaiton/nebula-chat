@@ -11,6 +11,7 @@ export function useConversationsSearch(localConversations: Conversation[]) {
   const [error, setError] = useState<string | null>(null);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const isLoading = searchQuery.trim() !== debouncedSearchQuery.trim() || isSearching;
 
   useEffect(() => {
     const searchConversations = async () => {
@@ -56,7 +57,7 @@ export function useConversationsSearch(localConversations: Conversation[]) {
     searchQuery,
     setSearchQuery,
     filteredConversations,
-    isSearching,
+    isSearching: isLoading,
     error,
   };
 }

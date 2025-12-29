@@ -37,3 +37,7 @@ export interface UseHandleSendMessageProps {
   setHistory: (messages: ChatMessage[]) => void;
   streamMessage: (params: ChatHistoryStreamOptions) => Promise<void>;
 }
+
+export interface ChatMessageSkeletonProps {
+  isUser?: boolean;
+}

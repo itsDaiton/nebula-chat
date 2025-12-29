@@ -31,7 +31,7 @@ export const MarkdownContent = memo(({ content }: MarkdownContentProps) => {
                       code={codeString}
                       language={language}
                       size="md"
-                      meta={{ showLineNumbers: true, colorScheme: colorMode }}
+                      meta={{ colorScheme: colorMode }}
                     >
                       <CodeBlock.Header>
                         <CodeBlock.Title>{language}</CodeBlock.Title>

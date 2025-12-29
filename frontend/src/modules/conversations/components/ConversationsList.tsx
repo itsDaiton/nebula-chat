@@ -14,6 +14,7 @@ import { chatScrollBar } from '@/shared/components/scrollbar';
 import { BadgeActionButton } from '@/shared/components/navigation/BadgeActionButton';
 import type { NavigationAction } from '@/shared/types/types';
 import { navigationActions } from '../utils/navigationActions';
+import { ConversationSkeletons } from './ConversationSkeletons';
 
 interface ConversationsListProps {
   onClose?: () => void;
@@ -95,30 +96,21 @@ export const ConversationsList = ({
     onClose?.();
   };
 
-  const loadingContent = (
-    <Flex h="100%" align="center" justify="center" p={4}>
-      <Flex direction="column" align="center">
-        <Spinner size="md" color="fg.muted" />
-        <Text mt={2} fontSize="sm" color="fg.muted">
-          {resources.conversations.loading}
+  if (error) {
+    const errorContent = (
+      <Flex h="100%" align="center" justify="center" p={4}>
+        <Text
+          fontSize="sm"
+          color="red.500"
+          wordBreak="break-word"
+          overflowWrap="break-word"
+          maxW="100%"
+          textAlign="center"
+        >
+          {error}
         </Text>
       </Flex>
-    </Flex>
-  );
-
-  if (isLoading) {
-    return inDrawer ? loadingContent : <SidePanel>{loadingContent}</SidePanel>;
-  }
-
-  const errorContent = (
-    <Flex h="100%" align="center" justify="center" p={4}>
-      <Text fontSize="sm" color="red.500">
-        {error}
-      </Text>
-    </Flex>
-  );
-
-  if (error) {
+    );
     return inDrawer ? errorContent : <SidePanel>{errorContent}</SidePanel>;
   }
 
@@ -158,7 +150,9 @@ export const ConversationsList = ({
         </Text>
       </Box>
       <Box px={2} pb={2}>
-        {conversations.length === 0 ? (
+        {isLoading ? (
+          <ConversationSkeletons />
+        ) : conversations.length === 0 ? (
           <Flex
             direction="column"
             align="center"

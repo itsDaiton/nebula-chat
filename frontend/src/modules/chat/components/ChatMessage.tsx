@@ -1,10 +1,11 @@
 import { Box, Flex } from '@chakra-ui/react';
+import { memo } from 'react';
 import type { ChatMessageProps } from '../types/types';
 import { useIsUser } from '../utils/chatUtils';
 import { ChatIcon } from './ChatIcon';
 import { MarkdownContent } from '@/shared/components/ui/markdown-content';
 
-export const ChatMessage = ({ message }: ChatMessageProps) => {
+export const ChatMessage = memo(({ message }: ChatMessageProps) => {
   const isUser = useIsUser(message.role);
 
   return (
@@ -24,4 +25,6 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
       </Box>
     </Flex>
   );
-};
+});
+
+ChatMessage.displayName = 'ChatMessage';

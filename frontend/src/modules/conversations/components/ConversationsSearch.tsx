@@ -1,4 +1,4 @@
-import { Box, Flex, Input, InputGroup, Portal, Spinner, Text } from '@chakra-ui/react';
+import { Box, Flex, Input, InputGroup, Portal, Text } from '@chakra-ui/react';
 import { useEffect } from 'react';
 import type { ConversationsSearchProps } from '../types/types';
 import { ConversationListItem } from './ConversationListItem';
@@ -7,6 +7,7 @@ import { useConversationsSearch } from '../hooks/useConversationsSearch';
 import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
 import { useSearchState } from '@/shared/context/SearchStateContext';
 import { resources } from '@/resources';
+import { ConversationSkeletons } from './ConversationSkeletons';
 
 export const ConversationsSearch = ({
   conversations,
@@ -75,12 +76,7 @@ export const ConversationsSearch = ({
                 </Text>
               </Box>
             ) : isSearching ? (
-              <Flex py={8} justify="center" align="center" direction="column" gap={2}>
-                <Spinner size="md" color="fg.muted" />
-                <Text fontSize="sm" color="fg.muted">
-                  Searching...
-                </Text>
-              </Flex>
+              <ConversationSkeletons count={3} />
             ) : filteredConversations.length > 0 ? (
               filteredConversations.map((conversation) => (
                 <ConversationListItem
