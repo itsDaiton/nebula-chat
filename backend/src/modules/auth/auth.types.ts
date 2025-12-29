@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { sessionTokenSchema } from './auth.validation';
+import type { sessionTokenHeaderSchema } from './auth.validation';
 
 export interface AuthTokenPayload {
   type: 'nebula-session';
@@ -13,4 +13,4 @@ export interface SessionTokenResponse {
   tokenType: string;
 }
 
-export type SessionTokenRequest = z.infer<typeof sessionTokenSchema>;
+export type SessionTokenRequest = z.infer<typeof sessionTokenHeaderSchema>;
