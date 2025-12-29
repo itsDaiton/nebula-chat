@@ -12,7 +12,6 @@ export const authService = {
   signToken(): string {
     const payload: AuthTokenPayload = {
       type: 'nebula-session',
-      iat: Math.floor(Date.now() / 1000),
     };
 
     return jwt.sign(payload, API_SECRET, {

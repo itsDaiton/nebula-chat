@@ -3,7 +3,7 @@ import type { sessionTokenSchema } from './auth.validation';
 
 export interface AuthTokenPayload {
   type: 'nebula-session';
-  iat: number;
+  iat?: number;
   exp?: number;
 }
 

@@ -21,14 +21,14 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
     }
 
     const parts = authHeader.split(' ');
-    if (parts.length !== 2 || parts[0] !== authConfig.tokenType) {
+    if (parts.length !== 2) {
       throw new UnauthorizedError(
         `Invalid Authorization header format. Expected: ${authConfig.tokenType} <token>`,
       );
     }
 
     const token = parts[1];
-    if (!token) {
+    if (!token || token.trim().length === 0) {
       throw new UnauthorizedError('Missing token');
     }
 
@@ -36,8 +36,12 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
       const payload = authService.verifyToken(token);
       req.authPayload = payload;
       next();
-    } catch {
-      throw new UnauthorizedError('Token verification failed');
+    } catch (err) {
+      if (err instanceof UnauthorizedError) {
+        throw err;
+      }
+      const message = err instanceof Error ? err.message : 'Token verification failed';
+      throw new UnauthorizedError(message);
     }
   } catch (error) {
     next(error);

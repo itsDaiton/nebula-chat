@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import { timingSafeEqual } from 'crypto';
 import { UnauthorizedError } from '@backend/errors/AppError';
 import type { SessionTokenResponse } from './auth.types';
 import { authService } from './auth.service';
@@ -15,11 +16,12 @@ export const authController = {
     try {
       const bootstrapSecret = req.headers['x-nebula-bootstrap'] as string;
 
-      if (!bootstrapSecret) {
-        throw new UnauthorizedError('Missing bootstrap secret');
-      }
+      // Use constant-time comparison to prevent timing attacks
+      const isValidSecret =
+        bootstrapSecret.length === BOOTSTRAP_SECRET.length &&
+        timingSafeEqual(Buffer.from(bootstrapSecret), Buffer.from(BOOTSTRAP_SECRET));
 
-      if (bootstrapSecret !== BOOTSTRAP_SECRET) {
+      if (!isValidSecret) {
         throw new UnauthorizedError('Invalid bootstrap secret');
       }
 

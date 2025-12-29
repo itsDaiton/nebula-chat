@@ -2,9 +2,19 @@ import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 
 export const validate =
-  (schemas: { body?: z.ZodType; params?: z.ZodType; query?: z.ZodType }) =>
+  (schemas: { body?: z.ZodType; params?: z.ZodType; query?: z.ZodType; headers?: z.ZodType }) =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
+      if (schemas.headers) {
+        const result = schemas.headers.safeParse(req.headers);
+        if (!result.success) {
+          return res.status(400).json({
+            error: 'Validation error',
+            where: 'headers',
+            details: z.treeifyError(result.error),
+          });
+        }
+      }
       if (schemas.body) {
         const result = schemas.body.safeParse(req.body);
         if (!result.success) {

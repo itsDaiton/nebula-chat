@@ -3,10 +3,9 @@ import { z } from 'zod';
 
 extendZodWithOpenApi(z);
 
-export const sessionTokenSchema = z.object({
-  headers: z.object({
-    'x-nebula-bootstrap': z.string().min(1, 'Bootstrap secret is required'),
-  }),
+// Schema for validating the bootstrap secret header in session token creation endpoint
+export const sessionTokenHeaderSchema = z.object({
+  'x-nebula-bootstrap': z.string().min(1, 'Bootstrap secret is required'),
 });
 
 export const sessionTokenResponseSchema = z.object({
