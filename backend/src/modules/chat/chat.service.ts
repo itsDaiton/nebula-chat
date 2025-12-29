@@ -220,7 +220,7 @@ export const chatService = {
           callbacks.onError(emptyResponseMessage);
           callbacks.onAssistantMessageCreated(assistantMessageId);
 
-          throw new Error('Stream completed without generating any content');
+          return; // Exit early instead of throwing to avoid duplicate message creation
         }
 
         const assistantMessage = await messageService.createMessage({
