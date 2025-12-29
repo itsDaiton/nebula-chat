@@ -4,7 +4,7 @@ import { setCacheHeaders } from '@backend/config/headers.config';
 import { streamFormatter } from '@backend/modules/chat/chat.utils';
 import { prisma } from '@backend/prisma';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
-import { createUserMessage } from '@backend/modules/chat/chat.service';
+import { createUserMessage, validateChatRequest } from '@backend/modules/chat/chat.service';
 
 export const cacheCheck = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -25,6 +25,8 @@ export const cacheCheck = async (req: Request, res: Response, next: NextFunction
       return next();
     }
 
+    await validateChatRequest(conversationId, userMessage);
+
     const cachedTokens = cachedData.tokens;
     const lines = cachedTokens.split('\n');
     let assistantContent = '';
@@ -37,7 +39,10 @@ export const cacheCheck = async (req: Request, res: Response, next: NextFunction
           if (data.token) {
             assistantContent += data.token;
           }
-        } catch {}
+        } catch {
+          // eslint-disable-next-line no-console
+          console.log('Redis: Failed to parse cached token line');
+        }
       }
     }
 

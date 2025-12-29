@@ -63,6 +63,67 @@ export async function createUserMessage(
   return result;
 }
 
+export async function validateChatRequest(
+  conversationId: string | undefined,
+  userMessage: { role: string; content: string },
+) {
+  if (userMessage.role !== 'user') {
+    throw new BadRequestError(
+      `Expected message with role 'user', received '${userMessage.role}'. Only user messages can be sent.`,
+    );
+  }
+
+  const userMessageValidation = validateTokenLimit(
+    userMessage.content,
+    chatConfig.tokenLimits.maxPromptTokens,
+  );
+
+  if (!userMessageValidation.isValid) {
+    throw new PayloadTooLargeError(
+      `User message exceeds token limit. Message has ${userMessageValidation.tokens} tokens, maximum allowed is ${chatConfig.tokenLimits.maxPromptTokens} tokens.`,
+    );
+  }
+
+  if (conversationId) {
+    const existingConversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+    });
+    if (!existingConversation) {
+      throw new NotFoundError('Conversation', conversationId);
+    }
+
+    const limit =
+      chatConfig.maxHistoryMessages > 0 && isFinite(chatConfig.maxHistoryMessages)
+        ? chatConfig.maxHistoryMessages
+        : undefined;
+
+    const existingHistory = await prisma.message.findMany({
+      where: { conversationId },
+      orderBy: { createdAt: 'desc' },
+      ...(limit !== undefined && { take: limit }),
+      select: {
+        role: true,
+        content: true,
+        tokens: true,
+      },
+    });
+
+    const systemPrompt = getSystemPrompt();
+    const existingHistoryTokens = calculateContextTokens(existingHistory);
+    const systemPromptTokens = countTokens(systemPrompt);
+    const newUserMessageTokens = userMessageValidation.tokens;
+    const messageOverhead = 4;
+    const projectedTotalTokens =
+      existingHistoryTokens + systemPromptTokens + newUserMessageTokens + messageOverhead;
+
+    if (projectedTotalTokens > chatConfig.tokenLimits.maxContextTokens) {
+      throw new PayloadTooLargeError(
+        `Adding this message would exceed context token limit. Projected context: ${projectedTotalTokens} tokens, maximum allowed: ${chatConfig.tokenLimits.maxContextTokens} tokens. Consider starting a new conversation.`,
+      );
+    }
+  }
+}
+
 export const chatService = {
   async streamResponse(data: CreateChatStreamDTO, callbacks: StreamCallbacks) {
     if (!process.env.OPENAI_API_KEY) {
@@ -87,63 +148,8 @@ export const chatService = {
 
       const userMessage = data.messages[0]!;
 
-      if (userMessage.role !== 'user') {
-        throw new BadRequestError(
-          `Expected message with role 'user', received '${userMessage.role}'. Only user messages can be sent.`,
-        );
-      }
-
-      const userMessageValidation = validateTokenLimit(
-        userMessage.content,
-        chatConfig.tokenLimits.maxPromptTokens,
-      );
-
-      if (!userMessageValidation.isValid) {
-        throw new PayloadTooLargeError(
-          `User message exceeds token limit. Message has ${userMessageValidation.tokens} tokens, maximum allowed is ${chatConfig.tokenLimits.maxPromptTokens} tokens.`,
-        );
-      }
-
-      const tempConversationId = conversationId;
-
-      if (tempConversationId) {
-        const existingConversation = await prisma.conversation.findUnique({
-          where: { id: tempConversationId },
-        });
-        if (!existingConversation) {
-          throw new NotFoundError('Conversation', tempConversationId);
-        }
-
-        const limit =
-          chatConfig.maxHistoryMessages > 0 && isFinite(chatConfig.maxHistoryMessages)
-            ? chatConfig.maxHistoryMessages
-            : undefined;
-
-        const existingHistory = await prisma.message.findMany({
-          where: { conversationId: tempConversationId },
-          orderBy: { createdAt: 'desc' },
-          ...(limit !== undefined && { take: limit }),
-          select: {
-            role: true,
-            content: true,
-            tokens: true,
-          },
-        });
-
-        const systemPrompt = getSystemPrompt();
-        const existingHistoryTokens = calculateContextTokens(existingHistory);
-        const systemPromptTokens = countTokens(systemPrompt);
-        const newUserMessageTokens = userMessageValidation.tokens;
-        const messageOverhead = 4;
-        const projectedTotalTokens =
-          existingHistoryTokens + systemPromptTokens + newUserMessageTokens + messageOverhead;
-
-        if (projectedTotalTokens > chatConfig.tokenLimits.maxContextTokens) {
-          throw new PayloadTooLargeError(
-            `Adding this message would exceed context token limit. Projected context: ${projectedTotalTokens} tokens, maximum allowed: ${chatConfig.tokenLimits.maxContextTokens} tokens. Consider starting a new conversation.`,
-          );
-        }
-      }
+      // Validate user message and conversation
+      await validateChatRequest(conversationId, userMessage);
 
       const result = await createUserMessage(conversationId, userMessage.content, userMessage.role);
 
@@ -232,7 +238,7 @@ export const chatService = {
           callbacks.onError(emptyResponseMessage);
           callbacks.onAssistantMessageCreated(assistantMessageId);
 
-          return;
+          throw new Error(emptyResponseMessage);
         }
 
         const assistantMessage = await messageService.createMessage({
