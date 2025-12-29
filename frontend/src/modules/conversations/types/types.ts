@@ -33,3 +33,7 @@ export interface ConversationsContextValue {
   loadMore: () => Promise<void>;
   refetch: () => Promise<void>;
 }
+
+export interface ConversationListSkeletonsProps {
+  count?: number;
+}

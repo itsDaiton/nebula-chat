@@ -160,6 +160,17 @@ export function useChatStream() {
               if (currentEvent === 'error') {
                 const errorMsg = parsed.error || 'An error occurred during streaming.';
                 setError(errorMsg);
+                setHistory((prev) => {
+                  const updated = [...prev];
+                  const last = updated[updated.length - 1];
+                  if (last && last.role === 'assistant') {
+                    updated[updated.length - 1] = {
+                      ...last,
+                      content: errorMsg,
+                    };
+                  }
+                  return updated;
+                });
                 setIsStreaming(false);
                 abortController.current = null;
                 return;

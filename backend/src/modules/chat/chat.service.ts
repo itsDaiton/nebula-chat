@@ -18,6 +18,112 @@ import {
   BadRequestError,
 } from '@backend/errors/AppError';
 
+export async function createUserMessage(
+  conversationId: string | undefined,
+  userMessageContent: string,
+  userMessageRole: string,
+) {
+  let isNewConversation = false;
+
+  const result = await prisma.$transaction(async (tx) => {
+    let convId = conversationId;
+
+    if (convId) {
+      const existingConversation = await tx.conversation.findUnique({
+        where: { id: convId },
+      });
+      if (!existingConversation) {
+        throw new NotFoundError('Conversation', convId);
+      }
+    } else {
+      const title = userMessageContent.slice(0, 50) || 'New Chat';
+      const newConversation = await tx.conversation.create({
+        data: { title },
+      });
+      convId = newConversation.id;
+      isNewConversation = true;
+    }
+
+    const newUserMessage = await tx.message.create({
+      data: {
+        conversationId: convId,
+        role: userMessageRole,
+        content: userMessageContent,
+        model: null,
+      },
+    });
+
+    return {
+      conversationId: convId,
+      userMessageId: newUserMessage.id,
+      isNewConversation,
+    };
+  });
+
+  return result;
+}
+
+export async function validateChatRequest(
+  conversationId: string | undefined,
+  userMessage: { role: string; content: string },
+) {
+  if (userMessage.role !== 'user') {
+    throw new BadRequestError(
+      `Expected message with role 'user', received '${userMessage.role}'. Only user messages can be sent.`,
+    );
+  }
+
+  const userMessageValidation = validateTokenLimit(
+    userMessage.content,
+    chatConfig.tokenLimits.maxPromptTokens,
+  );
+
+  if (!userMessageValidation.isValid) {
+    throw new PayloadTooLargeError(
+      `User message exceeds token limit. Message has ${userMessageValidation.tokens} tokens, maximum allowed is ${chatConfig.tokenLimits.maxPromptTokens} tokens.`,
+    );
+  }
+
+  if (conversationId) {
+    const existingConversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+    });
+    if (!existingConversation) {
+      throw new NotFoundError('Conversation', conversationId);
+    }
+
+    const limit =
+      chatConfig.maxHistoryMessages > 0 && isFinite(chatConfig.maxHistoryMessages)
+        ? chatConfig.maxHistoryMessages
+        : undefined;
+
+    const existingHistory = await prisma.message.findMany({
+      where: { conversationId },
+      orderBy: { createdAt: 'desc' },
+      ...(limit !== undefined && { take: limit }),
+      select: {
+        role: true,
+        content: true,
+        tokens: true,
+      },
+    });
+
+    const systemPrompt = getSystemPrompt();
+    const existingHistoryTokens = calculateContextTokens(existingHistory);
+    const systemPromptTokens = countTokens(systemPrompt);
+    const newUserMessageTokens = userMessageValidation.tokens;
+    const messageOverhead = 4;
+    const projectedTotalTokens =
+      existingHistoryTokens + systemPromptTokens + newUserMessageTokens + messageOverhead;
+
+    if (projectedTotalTokens > chatConfig.tokenLimits.maxContextTokens) {
+      throw new PayloadTooLargeError(
+        `Adding this message would exceed context token limit. Projected context: ${projectedTotalTokens} tokens, maximum allowed: ${chatConfig.tokenLimits.maxContextTokens} tokens. Consider starting a new conversation.`,
+      );
+    }
+  }
+}
+
 export const chatService = {
   async streamResponse(data: CreateChatStreamDTO, callbacks: StreamCallbacks) {
     if (!process.env.OPENAI_API_KEY) {
@@ -42,103 +148,15 @@ export const chatService = {
 
       const userMessage = data.messages[0]!;
 
-      if (userMessage.role !== 'user') {
-        throw new BadRequestError(
-          `Expected message with role 'user', received '${userMessage.role}'. Only user messages can be sent.`,
-        );
-      }
+      // Validate user message and conversation
+      await validateChatRequest(conversationId, userMessage);
 
-      const userMessageValidation = validateTokenLimit(
-        userMessage.content,
-        chatConfig.tokenLimits.maxPromptTokens,
-      );
-
-      if (!userMessageValidation.isValid) {
-        throw new PayloadTooLargeError(
-          `User message exceeds token limit. Message has ${userMessageValidation.tokens} tokens, maximum allowed is ${chatConfig.tokenLimits.maxPromptTokens} tokens.`,
-        );
-      }
-
-      // Pre-validate context tokens BEFORE persisting to avoid orphaned messages
-      // Fetch existing conversation history to calculate what the total context would be
-      const tempConversationId = conversationId;
-
-      // If no conversation ID, we need to create one temporarily to fetch history
-      // But since it's a new conversation, history will be empty anyway
-      if (tempConversationId) {
-        const existingConversation = await prisma.conversation.findUnique({
-          where: { id: tempConversationId },
-        });
-        if (!existingConversation) {
-          throw new NotFoundError('Conversation', tempConversationId);
-        }
-
-        const limit =
-          chatConfig.maxHistoryMessages > 0 && isFinite(chatConfig.maxHistoryMessages)
-            ? chatConfig.maxHistoryMessages
-            : undefined;
-
-        const existingHistory = await prisma.message.findMany({
-          where: { conversationId: tempConversationId },
-          orderBy: { createdAt: 'desc' },
-          ...(limit !== undefined && { take: limit }),
-          select: {
-            role: true,
-            content: true,
-            tokens: true,
-          },
-        });
-
-        const systemPrompt = getSystemPrompt();
-        const existingHistoryTokens = calculateContextTokens(existingHistory);
-        const systemPromptTokens = countTokens(systemPrompt);
-        const newUserMessageTokens = userMessageValidation.tokens;
-        const messageOverhead = 4;
-        const projectedTotalTokens =
-          existingHistoryTokens + systemPromptTokens + newUserMessageTokens + messageOverhead;
-
-        if (projectedTotalTokens > chatConfig.tokenLimits.maxContextTokens) {
-          throw new PayloadTooLargeError(
-            `Adding this message would exceed context token limit. Projected context: ${projectedTotalTokens} tokens, maximum allowed: ${chatConfig.tokenLimits.maxContextTokens} tokens. Consider starting a new conversation.`,
-          );
-        }
-      }
-
-      const result = await prisma.$transaction(async (tx) => {
-        let convId = conversationId;
-
-        if (convId) {
-          const existingConversation = await tx.conversation.findUnique({
-            where: { id: convId },
-          });
-          if (!existingConversation) {
-            throw new NotFoundError('Conversation', convId);
-          }
-        } else {
-          const title = userMessage.content.slice(0, 50) || 'New Chat';
-          const newConversation = await tx.conversation.create({
-            data: { title },
-          });
-          convId = newConversation.id;
-          isNewConversation = true;
-        }
-
-        const newUserMessage = await tx.message.create({
-          data: {
-            conversationId: convId,
-            role: userMessage.role,
-            content: userMessage.content,
-            model: null,
-          },
-        });
-        return {
-          conversationId: convId,
-          userMessageId: newUserMessage.id,
-        };
-      });
+      const result = await createUserMessage(conversationId, userMessage.content, userMessage.role);
 
       conversationId = result.conversationId;
       userMessageId = result.userMessageId;
+      isNewConversation = result.isNewConversation;
+
       if (isNewConversation) {
         callbacks.onConversationCreated(conversationId);
       }
@@ -220,7 +238,7 @@ export const chatService = {
           callbacks.onError(emptyResponseMessage);
           callbacks.onAssistantMessageCreated(assistantMessageId);
 
-          throw new Error('Stream completed without generating any content');
+          throw new Error(emptyResponseMessage);
         }
 
         const assistantMessage = await messageService.createMessage({

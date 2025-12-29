@@ -33,4 +33,13 @@ export const conversationController = {
       next(error);
     }
   },
+  async search(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { q } = req.query;
+      const conversations = await conversationService.searchConversations(q as string);
+      return res.status(200).json(conversations);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
