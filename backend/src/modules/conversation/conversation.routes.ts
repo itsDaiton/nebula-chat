@@ -5,6 +5,7 @@ import {
   createConversationSchema,
   getConversationSchema,
   getConversationsQuerySchema,
+  searchConversationsQuerySchema,
 } from './conversation.validation';
 
 const conversationRoutes = Router();
@@ -13,6 +14,11 @@ conversationRoutes.post(
   '/',
   validate({ body: createConversationSchema }),
   conversationController.create,
+);
+conversationRoutes.get(
+  '/search',
+  validate({ query: searchConversationsQuerySchema }),
+  conversationController.search,
 );
 conversationRoutes.get(
   '/:conversationId',

@@ -42,4 +42,21 @@ export const conversationRepository = {
       hasMore,
     };
   },
+  async search(query: string, limit = paginationConfig.maxLimit) {
+    return prisma.conversation.findMany({
+      where: {
+        title: {
+          contains: query,
+          mode: 'insensitive',
+        },
+      },
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+      },
+    });
+  },
 };

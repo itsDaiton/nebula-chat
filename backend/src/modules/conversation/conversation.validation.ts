@@ -24,6 +24,19 @@ export const conversationResponseSchema = z
 
 export const conversationsArraySchema = z.array(conversationResponseSchema);
 
+export const searchConversationsQuerySchema = z.object({
+  q: z
+    .string()
+    .min(1)
+    .openapi({
+      param: {
+        name: 'q',
+        in: 'query',
+        description: 'Search query to filter conversations by title',
+      },
+    }),
+});
+
 export const getConversationsQuerySchema = z.object({
   limit: z.coerce
     .number()

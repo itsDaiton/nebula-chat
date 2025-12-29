@@ -3,9 +3,11 @@ import { errorResponseSchema } from '@backend/openapi/schemas';
 import {
   createConversationSchema,
   conversationResponseSchema,
+  conversationsArraySchema,
   getConversationSchema,
   paginatedConversationsResponseSchema,
   getConversationsQuerySchema,
+  searchConversationsQuerySchema,
 } from './conversation.validation';
 
 export function registerConversationRoutes() {
@@ -111,6 +113,43 @@ export function registerConversationRoutes() {
         content: {
           'application/json': {
             schema: paginatedConversationsResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: errorResponseSchema,
+          },
+        },
+      },
+    },
+  });
+  registry.registerPath({
+    method: 'get',
+    path: '/api/conversations/search',
+    description:
+      'Search conversations by title. Returns matching conversations ordered by creation date.',
+    summary: 'Search conversations',
+    tags: ['Conversations'],
+    request: {
+      query: searchConversationsQuerySchema,
+    },
+    responses: {
+      200: {
+        description: 'List of conversations matching the search query',
+        content: {
+          'application/json': {
+            schema: conversationsArraySchema,
+          },
+        },
+      },
+      400: {
+        description: 'Invalid search query',
+        content: {
+          'application/json': {
+            schema: errorResponseSchema,
           },
         },
       },

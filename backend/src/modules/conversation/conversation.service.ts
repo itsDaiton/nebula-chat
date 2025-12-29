@@ -17,4 +17,7 @@ export const conversationService = {
   async getAllConversations(limit = paginationConfig.defaultLimit, cursor?: string) {
     return conversationRepository.findAll(limit, cursor);
   },
+  async searchConversations(query: string) {
+    return conversationRepository.search(query);
+  },
 };
