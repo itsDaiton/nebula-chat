@@ -1,9 +1,11 @@
-import { Box, Flex, Input, InputGroup, Portal } from '@chakra-ui/react';
+import { Box, Flex, Input, InputGroup, Portal, Spinner, Text } from '@chakra-ui/react';
+import { useEffect } from 'react';
 import type { ConversationsSearchProps } from '../types/types';
 import { ConversationListItem } from './ConversationListItem';
 import { chatScrollBar } from '@/shared/components/scrollbar';
 import { useConversationsSearch } from '../hooks/useConversationsSearch';
 import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
+import { useSearchState } from '@/shared/context/SearchStateContext';
 import { resources } from '@/resources';
 
 export const ConversationsSearch = ({
@@ -11,8 +13,14 @@ export const ConversationsSearch = ({
   onConversationClick,
   onClose,
 }: ConversationsSearchProps) => {
-  const { searchQuery, setSearchQuery, filteredConversations } =
+  const { searchQuery, setSearchQuery, filteredConversations, isSearching, error } =
     useConversationsSearch(conversations);
+  const { setIsSearchOpen } = useSearchState();
+
+  useEffect(() => {
+    setIsSearchOpen(true);
+    return () => setIsSearchOpen(false);
+  }, [setIsSearchOpen]);
 
   useEscapeKey(onClose);
 
@@ -53,13 +61,27 @@ export const ConversationsSearch = ({
               onChange={(e) => setSearchQuery(e.target.value)}
               autoFocus
               size="md"
+              borderColor="border.default"
             />
           </InputGroup>
         </Box>
 
         <Box flex="1" overflowY="auto" px={4} pb={4} css={chatScrollBar}>
           <Flex direction="column" gap={1}>
-            {filteredConversations.length > 0 ? (
+            {error ? (
+              <Box py={8} textAlign="center">
+                <Text fontSize="sm" color="red.500">
+                  {error}
+                </Text>
+              </Box>
+            ) : isSearching ? (
+              <Flex py={8} justify="center" align="center" direction="column" gap={2}>
+                <Spinner size="md" color="fg.muted" />
+                <Text fontSize="sm" color="fg.muted">
+                  Searching...
+                </Text>
+              </Flex>
+            ) : filteredConversations.length > 0 ? (
               filteredConversations.map((conversation) => (
                 <ConversationListItem
                   key={conversation.id}
@@ -67,9 +89,13 @@ export const ConversationsSearch = ({
                   onClick={onConversationClick}
                 />
               ))
-            ) : (
+            ) : searchQuery.trim() ? (
               <Box py={8} textAlign="center" color="fg.muted">
                 {resources.conversations.noResults}
+              </Box>
+            ) : (
+              <Box py={8} textAlign="center" color="fg.muted" fontSize="sm">
+                Start typing to search all conversations
               </Box>
             )}
           </Flex>

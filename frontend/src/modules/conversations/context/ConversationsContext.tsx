@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { SERVER_CONFIG } from '@/shared/config/serverConfig';
+import { paginationConfig } from '@/shared/config/paginationConfig';
 import type { Conversation, ConversationsContextValue } from '../types/types';
 import { handleHttpError, handleNetworkError } from '../../../shared/utils/errorHandler';
 
@@ -19,7 +20,9 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     }
     setError(null);
     try {
-      const response = await fetch(SERVER_CONFIG.getApiEndpoint('/api/conversations?limit=20'));
+      const response = await fetch(
+        SERVER_CONFIG.getApiEndpoint(`/api/conversations?limit=${paginationConfig.defaultLimit}`),
+      );
 
       if (!response.ok) {
         await handleHttpError(response);
@@ -49,7 +52,9 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const response = await fetch(
-        SERVER_CONFIG.getApiEndpoint(`/api/conversations?limit=20&cursor=${nextCursor}`),
+        SERVER_CONFIG.getApiEndpoint(
+          `/api/conversations?limit=${paginationConfig.defaultLimit}&cursor=${nextCursor}`,
+        ),
       );
 
       if (!response.ok) {
