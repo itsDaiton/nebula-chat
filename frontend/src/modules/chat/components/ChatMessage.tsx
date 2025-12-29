@@ -12,8 +12,12 @@ export const ChatMessage = memo(({ message }: ChatMessageProps) => {
     <Flex direction={isUser ? 'row-reverse' : 'row'} gap={4} mb={6} align="flex-start">
       <ChatIcon isUser={isUser} />
       <Box
-        maxW="70%"
-        bg={isUser ? 'bg.subtle' : 'bg.input'}
+        maxW={{ base: '100%', md: '70%' }}
+        bg={
+          isUser
+            ? { base: 'bg.subtle', _dark: 'bg.muted' }
+            : { base: 'bg.input', _dark: 'bg.subtle' }
+        }
         color="fg.soft"
         borderRadius="lg"
         px={4}
