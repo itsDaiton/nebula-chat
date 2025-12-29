@@ -3,7 +3,7 @@ import 'dotenv/config';
 export const corsConfig = {
   allowedOrigins: [process.env.CLIENT_URL, process.env.SERVER_URL].filter(Boolean) as string[],
   allowedMethods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type'],
+  allowedHeaders: ['Content-Type', 'x-nebula-bootstrap'],
   credentials: true,
   maxAge: 86400,
 };
