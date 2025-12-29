@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { rateLimiter } from '@backend/middleware/rateLimiter';
+import { authRateLimiter } from '@backend/middleware/rateLimiter';
 import { authController } from './auth.controller';
 
 const authRoutes = Router();
 
-authRoutes.post('/session', rateLimiter, authController.createSession);
+authRoutes.post('/session', authRateLimiter, authController.createSession);
 
 export { authRoutes };

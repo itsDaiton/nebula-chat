@@ -1,12 +1,25 @@
 import rateLimit from 'express-rate-limit';
 
-export const rateLimiter = rateLimit({
+const authRateLimiter = rateLimit({
   windowMs: 10 * 1000,
-  max: 10,
+  max: 5,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     success: false,
-    error: 'Too many requests, please try again later.',
+    error: 'Too many session requests, please try again later.',
   },
 });
+
+const chatRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Rate limit exceeded for chat messages, please try again later.',
+  },
+});
+
+export { authRateLimiter, chatRateLimiter };

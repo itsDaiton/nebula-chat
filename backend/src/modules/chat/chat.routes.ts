@@ -1,5 +1,5 @@
 import { cacheCheck } from '@backend/middleware/cacheCheck';
-import { rateLimiter } from '@backend/middleware/rateLimiter';
+import { chatRateLimiter } from '@backend/middleware/rateLimiter';
 import { streamCapture } from '@backend/middleware/streamCapture';
 import { validate } from '@backend/middleware/validate';
 import { Router } from 'express';
@@ -10,7 +10,7 @@ const chatRoutes = Router();
 
 chatRoutes.post(
   '/stream',
-  rateLimiter,
+  chatRateLimiter,
   validate({ body: createChatStreamSchema }),
   cacheCheck,
   streamCapture,
