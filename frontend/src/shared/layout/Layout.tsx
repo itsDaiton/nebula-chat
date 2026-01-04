@@ -26,7 +26,7 @@ export const Layout = ({ children }: LayoutProps) => {
   };
 
   return (
-    <Flex direction="column" h={viewportHeight} style={{ height: viewportHeight }}>
+    <Flex direction="column" style={{ height: viewportHeight }}>
       <Header onMenuClick={openDrawer} />
       {!showSidePanels && isSearchOpen && (
         <ConversationsSearch
