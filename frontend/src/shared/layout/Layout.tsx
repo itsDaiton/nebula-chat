@@ -10,6 +10,7 @@ import { ConversationsSearch } from '@/modules/conversations/components/Conversa
 import { useConversationsContext } from '@/modules/conversations/context/ConversationsContext';
 import { useNavigate } from 'react-router';
 import { route } from '@/routes';
+import { useViewportHeight } from '../hooks/useViewportHeight';
 
 export const Layout = ({ children }: LayoutProps) => {
   const { isDrawerOpen, openDrawer, closeDrawer, isSearchOpen, toggleSearch, closeSearch } =
@@ -17,6 +18,7 @@ export const Layout = ({ children }: LayoutProps) => {
   const { showSidePanels, showRightPanel } = useResponsiveLayout();
   const { conversations } = useConversationsContext();
   const navigate = useNavigate();
+  const viewportHeight = useViewportHeight();
 
   const handleConversationClick = (conversationId: string) => {
     void navigate(route.chat.conversation(conversationId));
@@ -24,7 +26,7 @@ export const Layout = ({ children }: LayoutProps) => {
   };
 
   return (
-    <Flex direction="column" minHeight="100vh">
+    <Flex direction="column" style={{ height: viewportHeight }}>
       <Header onMenuClick={openDrawer} />
       {!showSidePanels && isSearchOpen && (
         <ConversationsSearch
@@ -36,11 +38,12 @@ export const Layout = ({ children }: LayoutProps) => {
       <Flex
         as="main"
         flex="1"
-        mt={{ base: '16', lg: '20' }}
+        mt={{ base: '64px', lg: '80px' }}
         gap={{ base: 0, lg: 4 }}
-        pt={{ base: 6, lg: 6 }}
+        pt={{ base: 8, lg: 6 }}
         px={{ base: 4, lg: 0 }}
         justifyContent="center"
+        overflow="hidden"
       >
         {showSidePanels && <ConversationsList />}
         {!showSidePanels && (

@@ -24,6 +24,8 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
       borderColor={'border.default'}
       zIndex={1000}
       py={2}
+      bg="bg.default"
+      w="100%"
     >
       <Flex w="full" h="16" px={4} alignItems="center" justifyContent="space-between">
         <Box display="flex" alignItems="center" gap={{ base: 4, md: 2 }}>

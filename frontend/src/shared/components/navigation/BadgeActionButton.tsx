@@ -11,6 +11,7 @@ export const BadgeActionButton = ({ icon, label, onClick, badge }: BadgeActionBu
     justifyContent="flex-start"
     _hover={{ bg: 'bg.muted' }}
     transition="background 0.2s"
+    tabIndex={-1}
   >
     <Flex align="center" gap={2}>
       {icon}
