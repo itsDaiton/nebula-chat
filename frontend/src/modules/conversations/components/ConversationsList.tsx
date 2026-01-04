@@ -176,7 +176,7 @@ export const ConversationsList = ({
                 onClick={handleConversationClick}
               />
             ))}
-            <div ref={observerTarget} style={{ height: '20px' }} />
+            <div ref={observerTarget} style={{ height: '0px' }} />
             {isLoadingMore && (
               <Flex justify="center" align="center" direction="column" py={3}>
                 <Spinner size="sm" color="fg.muted" />

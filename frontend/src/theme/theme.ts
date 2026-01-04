@@ -130,6 +130,12 @@ const config = defineConfig({
               _hover: {
                 bg: '{colors.bg.subtle}',
               },
+              _active: {
+                bg: '{colors.bg.default}',
+              },
+              _focus: {
+                outline: 'none',
+              },
             },
           },
         },

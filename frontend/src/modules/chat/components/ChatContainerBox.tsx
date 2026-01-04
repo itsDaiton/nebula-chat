@@ -12,6 +12,7 @@ export const ChatContainerBox = ({ children }: { children: React.ReactNode }) =>
     borderRadius="lg"
     position="relative"
     boxShadow="none"
+    overflow="hidden"
   >
     {children}
   </Flex>
