@@ -78,4 +78,4 @@ Errors use a custom `AppError` class. Path aliases use `@backend/*` mapping to `
 ## Code Style
 - ESLint with TypeScript strict rules, React hooks validation, and import sorting — enforced with zero warnings tolerance.
 - Prettier: single quotes, semicolons, trailing commas, 100-char print width, 2-space indent.
-- Backend uses `@backend/*` path aliases. Frontend has its own `tsconfig.json` targeting ES2023.
+- Backend uses `@backend/*` path aliases. Frontend has its own `tsconfig.json` targeting ESNext.
