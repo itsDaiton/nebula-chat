@@ -1,7 +1,7 @@
 version: 2
 
 updates:
-  # Root package
+  # Root package (pnpm — Dependabot uses "npm" ecosystem for pnpm)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
