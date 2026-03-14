@@ -1,4 +1,4 @@
-import { createHash } from 'crypto';
+import { createHash } from 'node:crypto';
 import type { RedisClientType } from 'redis';
 import type { CachedStreamData, BaseRedisStats, CacheStats } from '@backend/cache/cache.types';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
