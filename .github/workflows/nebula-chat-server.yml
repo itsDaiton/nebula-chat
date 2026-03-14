@@ -3,26 +3,36 @@ name: nebula-chat-server
 on:
   push:
     branches: [main]
-    paths:
-      - 'backend/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'eslint.config.ts'
-      - 'prettier.config.cjs'
-      - '.github/workflows/nebula-chat-server.yml'
   pull_request:
     branches: [main]
-    paths:
-      - 'backend/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'eslint.config.ts'
-      - 'prettier.config.cjs'
-      - '.github/workflows/nebula-chat-server.yml'
 
 jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Filter paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'backend/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'eslint.config.ts'
+              - 'prettier.config.cjs'
+              - '.github/workflows/nebula-chat-server.yml'
+
   build:
     name: Build nebula-chat-server
+    needs: changes
+    if: needs.changes.outputs.src == 'true'
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -59,3 +69,17 @@ jobs:
 
       - name: Build
         run: pnpm --filter nebula-chat-server run build
+
+  result:
+    name: nebula-chat-server result
+    if: always()
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          result="${{ needs.build.result }}"
+          if [[ $result == "success" || $result == "skipped" ]]; then
+            exit 0
+          else
+            exit 1
+          fi

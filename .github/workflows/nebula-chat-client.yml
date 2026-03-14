@@ -3,26 +3,36 @@ name: nebula-chat-client
 on:
   push:
     branches: [main]
-    paths:
-      - 'frontend/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'eslint.config.ts'
-      - 'prettier.config.cjs'
-      - '.github/workflows/nebula-chat-client.yml'
   pull_request:
     branches: [main]
-    paths:
-      - 'frontend/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'eslint.config.ts'
-      - 'prettier.config.cjs'
-      - '.github/workflows/nebula-chat-client.yml'
 
 jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Filter paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'frontend/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'eslint.config.ts'
+              - 'prettier.config.cjs'
+              - '.github/workflows/nebula-chat-client.yml'
+
   build:
     name: Build nebula-chat-client
+    needs: changes
+    if: needs.changes.outputs.src == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -54,3 +64,17 @@ jobs:
 
       - name: Build
         run: pnpm --filter nebula-chat-client run build
+
+  result:
+    name: nebula-chat-client result
+    if: always()
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          result="${{ needs.build.result }}"
+          if [[ $result == "success" || $result == "skipped" ]]; then
+            exit 0
+          else
+            exit 1
+          fi
