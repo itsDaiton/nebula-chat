@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.2.0...nebula-chat-server-v1.2.1) (2026-03-14)
+
+
+### Bug Fixes
+
+* prisma config pipeline error ([#90](https://github.com/itsDaiton/nebula-chat/issues/90)) ([c2895a7](https://github.com/itsDaiton/nebula-chat/commit/c2895a712a2fd2255b8e63df33da015441faa473))
+
 ## [1.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.1.0...nebula-chat-server-v1.2.0) (2026-03-14)
 
 
