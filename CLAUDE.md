@@ -59,7 +59,7 @@ Express 5 REST API with:
 - **PostgreSQL + Prisma**: Two models — `Conversation` (1:many) `Message`. Schema at `prisma/schema.prisma`.
 - **Redis**: Caches chat responses. Cache middleware is layered onto routes.
 - **OpenAI**: Streaming completions. Token counting via `tiktoken` to manage context window. Key logic in `src/modules/chat/`.
-- **Rate limiting**: `express-rate-limit` middleware applied globally.
+- **Rate limiting**: `express-rate-limit` middleware applied to the chat streaming route.
 - **OpenAPI docs**: Auto-generated from Zod schemas, served at `/docs` (Swagger UI) and `/openapi.json`.
 
 Route structure: `/api/chat`, `/api/conversations`, `/api/messages`, `/api/cache`, `/health`.
