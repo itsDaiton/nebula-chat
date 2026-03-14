@@ -8,7 +8,7 @@ import {
   searchConversationsQuerySchema,
 } from './conversation.validation';
 
-const conversationRoutes = Router();
+const conversationRoutes: Router = Router();
 
 conversationRoutes.post(
   '/',

@@ -1,9 +1,10 @@
 import 'dotenv/config';
 import { OpenAPIRegistry, OpenApiGeneratorV3 } from '@asteasolutions/zod-to-openapi';
+import type { OpenAPIObject } from 'openapi3-ts/oas30';
 
 export const registry = new OpenAPIRegistry();
 
-export function generateOpenAPIDocument() {
+export function generateOpenAPIDocument(): OpenAPIObject {
   const generator = new OpenApiGeneratorV3(registry.definitions);
 
   return generator.generateDocument({
