@@ -13,6 +13,17 @@
   ],
   "language": "en",
   "noConfigSearch": true,
-  "words": ["eslintcache", "megalinter", "oxsecurity", "stefanzweifel", "venv"],
+  "words": [
+    "appendonly",
+    "eslintcache",
+    "healthcheck",
+    "isready",
+    "megalinter",
+    "oxsecurity",
+    "pgdata",
+    "requirepass",
+    "stefanzweifel",
+    "venv"
+  ],
   "version": "0.2"
 }
