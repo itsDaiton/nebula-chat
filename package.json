@@ -3,11 +3,10 @@
   "name": "nebula-chat",
   "packageManager": "pnpm@10.26.2",
   "engines": {
-    "npm": "please-use-pnpm",
-    "yarn": "please-use-pnpm",
     "pnpm": ">=10"
   },
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "backend": "pnpm --filter backend",
     "frontend": "pnpm --filter frontend",
     "lint": "eslint --report-unused-disable-directives --max-warnings=0 .",
