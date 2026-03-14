@@ -3,7 +3,8 @@
   "packages": {
     ".": {
       "release-type": "node",
-      "include-component-in-tag": false
+      "component": "nebula-chat",
+      "include-component-in-tag": true
     },
     "frontend": {
       "release-type": "node",
