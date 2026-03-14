@@ -24,16 +24,6 @@ jobs:
 
       - name: Enable auto-merge on release PR
         if: ${{ steps.release.outputs.pr }}
-        run: gh pr merge --auto --squash "${{ steps.release.outputs.pr }}"
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_PAT }}
-
-      - name: Disable Copilot code review on release PR
-        if: ${{ steps.release.outputs.pr }}
-        run: |
-          gh api \
-            --method DELETE \
-            /repos/${{ github.repository }}/pulls/${{ steps.release.outputs.pr }}/requested_reviewers \
-            -f "reviewers[]=copilot[bot]" || true
+        run: gh pr merge --auto --squash "${{ fromJson(steps.release.outputs.pr).number }}"
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_PAT }}
