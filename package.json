@@ -1,13 +1,15 @@
 {
   "private": true,
   "name": "nebula-chat",
-  "workspaces": [
-    "frontend",
-    "backend"
-  ],
+  "packageManager": "pnpm@10.26.2",
+  "engines": {
+    "npm": "please-use-pnpm",
+    "yarn": "please-use-pnpm",
+    "pnpm": ">=10"
+  },
   "scripts": {
-    "backend": "npm --prefix backend",
-    "frontend": "npm --prefix frontend",
+    "backend": "pnpm --filter backend",
+    "frontend": "pnpm --filter frontend",
     "lint": "eslint --report-unused-disable-directives --max-warnings=0 .",
     "lint:fix": "eslint --report-unused-disable-directives --max-warnings=0 . --fix",
     "format": "prettier --write .",
