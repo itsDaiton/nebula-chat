@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.2.0...nebula-chat-client-v1.2.1) (2026-03-14)
+
+
+### Bug Fixes
+
+* prisma config and bump vite to v8 ([#92](https://github.com/itsDaiton/nebula-chat/issues/92)) ([50cbde9](https://github.com/itsDaiton/nebula-chat/commit/50cbde97c9aac1952d623070b986b9d03ee045bb))
+
 ## [1.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.1.0...nebula-chat-client-v1.2.0) (2026-03-14)
 
 
