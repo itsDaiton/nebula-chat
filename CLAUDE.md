@@ -42,7 +42,7 @@ cd backend && docker-compose up  # Start PostgreSQL (port 5332) + Redis (port 63
 
 ## Architecture
 
-This is a TypeScript monorepo with three packages: `frontend`, `backend`, and `shared`.
+This is a TypeScript monorepo with two packages: `frontend` and `backend`.
 
 ### Frontend (`/frontend`)
 React 19 SPA built with Vite and Chakra UI. State is managed through React Context providers defined in `src/App.tsx`:
