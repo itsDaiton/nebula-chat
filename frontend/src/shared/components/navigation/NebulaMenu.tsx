@@ -5,7 +5,9 @@ import { LuSettings } from 'react-icons/lu';
 export const NebulaMenu = ({ items }: { items: NebulaMenuItemProps[] }) => (
   <Menu.Root>
     <Menu.Trigger asChild>
-      <IconButton aria-label="Settings" children={<LuSettings />} variant="ghost" size="md" />
+      <IconButton aria-label="Settings" variant="ghost" size="md">
+        <LuSettings />
+      </IconButton>
     </Menu.Trigger>
     <Portal>
       <Menu.Positioner>

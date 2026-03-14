@@ -24,7 +24,7 @@ export const ChatMessageSkeleton = ({ isUser = false }: ChatMessageSkeletonProps
 export const ChatMessagesSkeletons = ({ count = 3 }: { count?: number }) => (
   <>
     {Array.from({ length: count }).map((_, index) => (
-      <ChatMessageSkeleton key={index} isUser={index % 2 === 0} />
+      <ChatMessageSkeleton key={count} isUser={index % 2 === 0} />
     ))}
   </>
 );

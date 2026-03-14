@@ -69,27 +69,28 @@ export const ConversationsSearch = ({
 
         <Box flex="1" overflowY="auto" px={4} pb={4} css={chatScrollBar}>
           <Flex direction="column" gap={1}>
-            {error ? (
+            {error && (
               <Box py={8} textAlign="center">
                 <Text fontSize="sm" color="red.500">
                   {error}
                 </Text>
               </Box>
-            ) : isSearching ? (
-              <ConversationSkeletons count={3} />
-            ) : filteredConversations.length > 0 ? (
+            )}
+            {!error && isSearching && <ConversationSkeletons count={3} />}
+            {!error && !isSearching && filteredConversations.length > 0 &&
               filteredConversations.map((conversation) => (
                 <ConversationListItem
                   key={conversation.id}
                   conversation={conversation}
                   onClick={onConversationClick}
                 />
-              ))
-            ) : searchQuery.trim() ? (
+              ))}
+            {!error && !isSearching && filteredConversations.length === 0 && searchQuery.trim() && (
               <Box py={8} textAlign="center" color="fg.muted">
                 {resources.conversations.noResults}
               </Box>
-            ) : (
+            )}
+            {!error && !isSearching && filteredConversations.length === 0 && !searchQuery.trim() && (
               <Box py={8} textAlign="center" color="fg.muted" fontSize="sm">
                 Start typing to search all conversations
               </Box>

@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 export const useEventListener = <T extends Event>(
   eventName: string,
   handler: (event: T) => void,
-  element: EventTarget = window,
+  element: EventTarget = globalThis,
 ) => {
   useEffect(() => {
     if (!element?.addEventListener) return;
