@@ -6,13 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Root (monorepo)
 ```bash
-npm install           # Install all workspace dependencies
-npm run lint          # ESLint (strict, max-warnings=0)
-npm run lint:fix      # Auto-fix linting issues
-npm run format        # Prettier format all files
-npm run format:check  # Check formatting compliance
-npm run frontend <cmd>  # Run frontend npm script (e.g. npm run frontend dev)
-npm run backend <cmd>   # Run backend npm script (e.g. npm run backend dev)
+npm install                 # Install all workspace dependencies
+npm run lint                # ESLint (strict, max-warnings=0)
+npm run lint:fix            # Auto-fix linting issues
+npm run format              # Prettier format all files
+npm run format:check        # Check formatting compliance
+npm --prefix frontend run <cmd>  # Run frontend npm script (e.g. npm --prefix frontend run dev)
+npm --prefix backend run <cmd>   # Run backend npm script (e.g. npm --prefix backend run dev)
 ```
 
 ### Frontend (`/frontend`)
