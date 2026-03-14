@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.1.0...nebula-chat-server-v1.2.0) (2026-03-14)
+
+
+### Features
+
+* add MegaLinter ([#84](https://github.com/itsDaiton/nebula-chat/issues/84)) ([8d51698](https://github.com/itsDaiton/nebula-chat/commit/8d51698dca699812068b05ee1e915c74edd8bfed))
+
 ## [1.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.0.0...nebula-chat-server-v1.1.0) (2026-03-14)
 
 

@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "nebula-chat",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "packageManager": "pnpm@10.26.2",
   "engines": {
     "node": ">=20",
@@ -20,7 +20,11 @@
     "lodash": "^4.17.21"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@prisma/engines", "esbuild", "prisma"]
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "esbuild",
+      "prisma"
+    ]
   },
   "devDependencies": {
     "@types/express": "^5.0.5",
