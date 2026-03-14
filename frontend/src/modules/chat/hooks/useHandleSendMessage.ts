@@ -9,6 +9,7 @@ export const useHandleSendMessage = ({
   const handleSendMessage = useCallback(
     async (message: string, selectedModel: string) => {
       const newUserMessage: ChatMessage = {
+        id: crypto.randomUUID(),
         role: 'user',
         content: message,
       };

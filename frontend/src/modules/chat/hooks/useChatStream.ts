@@ -34,13 +34,13 @@ export function useChatStream() {
       setUsage(null);
       pendingNavigationId.current = null;
 
-      setHistory([...messages, { role: 'assistant', content: '' }]);
+      setHistory([...messages, { id: crypto.randomUUID(), role: 'assistant', content: '' }]);
 
       const controller = new AbortController();
       abortController.current = controller;
 
       try {
-        const newUserMessage = messages[messages.length - 1];
+        const newUserMessage = messages.at(-1);
 
         const requestBody: any = {
           messages: [newUserMessage],
@@ -162,8 +162,8 @@ export function useChatStream() {
                 setError(errorMsg);
                 setHistory((prev) => {
                   const updated = [...prev];
-                  const last = updated[updated.length - 1];
-                  if (last && last.role === 'assistant') {
+                  const last = updated.at(-1);
+                  if (last?.role === 'assistant') {
                     updated[updated.length - 1] = {
                       ...last,
                       content: errorMsg,
@@ -189,8 +189,8 @@ export function useChatStream() {
               if (currentEvent === 'token' && typeof parsed.token === 'string') {
                 setHistory((prev) => {
                   const updated = [...prev];
-                  const last = updated[updated.length - 1];
-                  if (!last || last.role !== 'assistant') {
+                  const last = updated.at(-1);
+                  if (last?.role !== 'assistant') {
                     return prev;
                   }
                   updated[updated.length - 1] = {
