@@ -19,3 +19,7 @@ backend/prisma/migrations
 *.yml
 
 package.json
+
+# pnpm
+pnpm-lock.yaml
+pnpm-workspace.yaml
