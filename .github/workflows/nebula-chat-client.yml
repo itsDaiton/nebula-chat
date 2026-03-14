@@ -1,4 +1,4 @@
-name: Build nebula-chat-client
+name: nebula-chat-client
 
 on:
   push:
@@ -22,7 +22,7 @@ on:
 
 jobs:
   build:
-    name: Lint, typecheck & build (client)
+    name: Build nebula-chat-client
     runs-on: ubuntu-latest
 
     steps:

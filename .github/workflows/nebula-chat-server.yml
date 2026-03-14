@@ -1,4 +1,4 @@
-name: Build nebula-chat-server
+name: nebula-chat-server
 
 on:
   push:
@@ -22,7 +22,7 @@ on:
 
 jobs:
   build:
-    name: Lint, typecheck & build (server)
+    name: Build nebula-chat-server
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
