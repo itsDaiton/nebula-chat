@@ -6,7 +6,7 @@ import { Router } from 'express';
 import { createChatStreamSchema } from './chat.validation';
 import { chatController } from './chat.controller';
 
-const chatRoutes = Router();
+const chatRoutes: Router = Router();
 
 chatRoutes.post(
   '/stream',

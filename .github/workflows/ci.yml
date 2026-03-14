@@ -15,42 +15,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.2
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20.19.5
-          cache: "npm"
-          cache-dependency-path: |
-            package-lock.json
-            backend/package-lock.json
-            frontend/package-lock.json
+          cache: "pnpm"
 
       - name: Install dependencies
-        run: npm install
-
-      - name: Install backend dependencies
-        run: npm --prefix backend install
-
-      - name: Install frontend dependencies
-        run: npm --prefix frontend install
+        run: pnpm install
 
       - name: Run lint
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Run format check
-        run: npm run format:check
+        run: pnpm run format:check
 
       - name: Prisma generate
-        run: npm --prefix backend run prisma:generate
+        run: pnpm --filter backend run prisma:generate
 
       - name: TypeScript check (backend)
-        run: npm --prefix backend run typecheck
+        run: pnpm --filter backend run typecheck
 
       - name: TypeScript check (frontend)
-        run: npm --prefix frontend run typecheck
+        run: pnpm --filter frontend run typecheck
 
       - name: Build backend
-        run: npm --prefix backend run build
+        run: pnpm --filter backend run build
 
       - name: Build frontend
-        run: npm --prefix frontend run build
+        run: pnpm --filter frontend run build

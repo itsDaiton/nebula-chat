@@ -1,13 +1,14 @@
 {
   "private": true,
   "name": "nebula-chat",
-  "workspaces": [
-    "frontend",
-    "backend"
-  ],
+  "packageManager": "pnpm@10.26.2",
+  "engines": {
+    "pnpm": ">=10"
+  },
   "scripts": {
-    "backend": "npm --prefix backend",
-    "frontend": "npm --prefix frontend",
+    "preinstall": "npx only-allow pnpm",
+    "backend": "pnpm --filter backend",
+    "frontend": "pnpm --filter frontend",
     "lint": "eslint --report-unused-disable-directives --max-warnings=0 .",
     "lint:fix": "eslint --report-unused-disable-directives --max-warnings=0 . --fix",
     "format": "prettier --write .",
@@ -15,6 +16,9 @@
   },
   "dependencies": {
     "lodash": "^4.17.21"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@prisma/engines", "esbuild", "prisma"]
   },
   "devDependencies": {
     "@types/express": "^5.0.5",

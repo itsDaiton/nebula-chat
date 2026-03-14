@@ -1,4 +1,5 @@
 import { generateOpenAPIDocument } from '@backend/config/openapi.config';
+import type { OpenAPIObject } from 'openapi3-ts/oas30';
 import { registerCacheRoutes } from '@backend/cache/cache.openapi';
 import { registerChatRoutes } from '@backend/modules/chat/chat.openapi';
 import { registerConversationRoutes } from '@backend/modules/conversation/conversation.openapi';
@@ -13,4 +14,4 @@ function initializeOpenAPI() {
   return generateOpenAPIDocument();
 }
 
-export const openApiDocument = initializeOpenAPI();
+export const openApiDocument: OpenAPIObject = initializeOpenAPI();

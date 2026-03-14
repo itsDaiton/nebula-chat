@@ -7,35 +7,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Root (monorepo)
 
 ```bash
-npm install                 # Install all workspace dependencies
-npm run lint                # ESLint (strict, max-warnings=0)
-npm run lint:fix            # Auto-fix linting issues
-npm run format              # Prettier format all files
-npm run format:check        # Check formatting compliance
-npm --prefix frontend run <cmd>  # Run frontend npm script (e.g. npm --prefix frontend run dev)
-npm --prefix backend run <cmd>   # Run backend npm script (e.g. npm --prefix backend run dev)
+pnpm install                      # Install all workspace dependencies
+pnpm run lint                     # ESLint (strict, max-warnings=0)
+pnpm run lint:fix                 # Auto-fix linting issues
+pnpm run format                   # Prettier format all files
+pnpm run format:check             # Check formatting compliance
+pnpm --filter frontend run <cmd>  # Run frontend script (e.g. pnpm --filter frontend run dev)
+pnpm --filter backend run <cmd>   # Run backend script (e.g. pnpm --filter backend run dev)
 ```
 
 ### Frontend (`/frontend`)
 
 ```bash
-npm run dev        # Vite dev server on localhost:5173
-npm run build      # tsc + Vite build → /frontend/build
-npm run typecheck  # tsc --noEmit
+pnpm dev        # Vite dev server on localhost:5173
+pnpm build      # tsc + Vite build → /frontend/build
+pnpm typecheck  # tsc --noEmit
 ```
 
 ### Backend (`/backend`)
 
 ```bash
-npm run dev              # tsx watch mode (auto-restart)
-npm run build            # prisma generate + tsc + path alias resolution
-npm run start            # node dist/src/server.js (production)
-npm run typecheck        # tsc --noEmit
+pnpm dev              # tsx watch mode (auto-restart)
+pnpm build            # prisma generate + tsc + path alias resolution
+pnpm start            # node dist/src/server.js (production)
+pnpm typecheck        # tsc --noEmit
 
-npm run prisma:migrate   # Create and run migrations
-npm run prisma:deploy    # Deploy migrations (production)
-npm run prisma:generate  # Regenerate Prisma Client
-npm run prisma:studio    # Open Prisma Studio
+pnpm prisma:migrate   # Create and run migrations
+pnpm prisma:deploy    # Deploy migrations (production)
+pnpm prisma:generate  # Regenerate Prisma Client
+pnpm prisma:studio    # Open Prisma Studio
 ```
 
 ### Local infrastructure
