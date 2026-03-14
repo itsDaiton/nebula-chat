@@ -8,6 +8,7 @@ export const allowedLangs = [
   'bash',
   'shell',
   'json',
+  'jsonc',
   'html',
   'css',
   'sql',
