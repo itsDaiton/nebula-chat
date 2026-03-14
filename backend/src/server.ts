@@ -1,4 +1,6 @@
 import 'dotenv/config';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import type { Request, Response } from 'express';
 import express from 'express';
 import cors from 'cors';
@@ -7,6 +9,10 @@ import { checkOrigin, corsConfig } from './config/cors.config';
 import { registerRoutes } from './routes';
 import { errorHandler } from './middleware/errorHandler';
 import { openApiDocument } from './openapi';
+
+const { version } = JSON.parse(readFileSync(join(__dirname, '../../package.json'), 'utf-8')) as {
+  version: string;
+};
 
 const app: express.Express = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +37,9 @@ app.get('/', (_req: Request, res: Response) => {
 });
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ ok: true });
+});
+app.get('/api/version', (_req: Request, res: Response) => {
+  res.json({ version });
 });
 
 app.use(errorHandler);
