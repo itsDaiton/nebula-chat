@@ -6,11 +6,13 @@
     "**/.pnpm-lock.json",
     ".vscode",
     "megalinter",
+    "megalinter-reports/",
     "package-lock.json",
+    "pnpm-lock.yaml",
     "report"
   ],
   "language": "en",
   "noConfigSearch": true,
-  "words": ["megalinter", "oxsecurity"],
+  "words": ["eslintcache", "megalinter", "oxsecurity", "stefanzweifel", "venv"],
   "version": "0.2"
 }

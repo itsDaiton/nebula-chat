@@ -3,6 +3,7 @@
   "name": "nebula-chat",
   "packageManager": "pnpm@10.26.2",
   "engines": {
+    "node": ">=20",
     "pnpm": ">=10"
   },
   "scripts": {
