@@ -31,31 +31,24 @@ jobs:
     name: Build nebula-chat-client
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: 10.26.2
-      - uses: actions/setup-node@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20.19.5
           cache: 'pnpm'
-      - run: pnpm install
-      - run: pnpm exec eslint --report-unused-disable-directives --max-warnings=0 frontend/
-      - run: pnpm exec prettier --check frontend/
-      - run: pnpm --filter nebula-chat-client run typecheck
-      - run: pnpm --filter nebula-chat-client run build
-
-  # Required if this is a protected branch check
-  status-check:
-    needs: [changes, build]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          if [[ "${{ needs.changes.outputs.relevant }}" == "false" ]]; then
-            echo "Skipped — no relevant changes."
-          elif [[ "${{ needs.build.result }}" == "success" ]]; then
-            echo "Build passed."
-          else
-            echo "Build failed." && exit 1
-          fi
+      - name: Install dependencies
+        run: pnpm install
+      - name: Lint
+        run: pnpm exec eslint --report-unused-disable-directives --max-warnings=0 frontend/
+      - name: Format check
+        run: pnpm exec prettier --check frontend/
+      - name: TypeScript check
+        run: pnpm --filter nebula-chat-client run typecheck
+      - name: Build
+        run: pnpm --filter nebula-chat-client run build
