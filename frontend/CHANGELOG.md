@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.2.1...nebula-chat-client-v1.3.0) (2026-03-14)
+
+
+### Features
+
+* **ci:** add sonar and fix issues ([#101](https://github.com/itsDaiton/nebula-chat/issues/101)) ([5e138b4](https://github.com/itsDaiton/nebula-chat/commit/5e138b4bf06b16681e6caf163e02e0a0c1fcf7b3))
+
 ## [1.2.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.2.0...nebula-chat-client-v1.2.1) (2026-03-14)
 
 
