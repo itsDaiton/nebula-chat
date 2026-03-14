@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { execSync } from 'child_process';
 import type { Request, Response } from 'express';
 import express from 'express';
 import cors from 'cors';
@@ -7,6 +8,23 @@ import { checkOrigin, corsConfig } from './config/cors.config';
 import { registerRoutes } from './routes';
 import { errorHandler } from './middleware/errorHandler';
 import { openApiDocument } from './openapi';
+
+function resolveVersion(): string {
+  try {
+    return execSync('git describe --exact-match --tags HEAD', { stdio: 'pipe' })
+      .toString()
+      .trim()
+      .replace(/^v/, '');
+  } catch {
+    try {
+      return execSync('git rev-parse --short HEAD', { stdio: 'pipe' }).toString().trim();
+    } catch {
+      return 'unknown';
+    }
+  }
+}
+
+const version = resolveVersion();
 
 const app: express.Express = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +49,9 @@ app.get('/', (_req: Request, res: Response) => {
 });
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ ok: true });
+});
+app.get('/api/version', (_req: Request, res: Response) => {
+  res.json({ version });
 });
 
 app.use(errorHandler);
