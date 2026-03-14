@@ -16,7 +16,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: googleapis/release-please-action@v4
+        id: release
         with:
           token: ${{ secrets.RELEASE_PLEASE_PAT }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      - name: Enable auto-merge on release PR
+        if: ${{ steps.release.outputs.pr }}
+        run: gh pr merge --auto --squash "${{ steps.release.outputs.pr }}"
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_PAT }}
+
+      - name: Disable Copilot code review on release PR
+        if: ${{ steps.release.outputs.pr }}
+        run: |
+          gh api \
+            --method DELETE \
+            /repos/${{ github.repository }}/pulls/${{ steps.release.outputs.pr }}/requested_reviewers \
+            -f "reviewers[]=copilot[bot]" || true
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_PAT }}
