@@ -1,4 +1,12 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  type ReactNode,
+} from 'react';
 import { SERVER_CONFIG } from '@/shared/config/serverConfig';
 import { paginationConfig } from '@/shared/config/paginationConfig';
 import type { Conversation, ConversationsContextValue } from '../types/types';
@@ -6,7 +14,7 @@ import { handleHttpError, handleNetworkError } from '../../../shared/utils/error
 
 const ConversationsContext = createContext<ConversationsContextValue | undefined>(undefined);
 
-export function ConversationsProvider({ children }: { children: ReactNode }) {
+export function ConversationsProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -82,23 +90,16 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
   }, [fetchConversations]);
 
   useEffect(() => {
-    void fetchConversations(true);
+    fetchConversations(true).catch(() => {});
   }, [fetchConversations]);
 
+  const contextValue = useMemo(
+    () => ({ conversations, isLoading, isLoadingMore, error, hasMore, loadMore, refetch }),
+    [conversations, isLoading, isLoadingMore, error, hasMore, loadMore, refetch],
+  );
+
   return (
-    <ConversationsContext.Provider
-      value={{
-        conversations,
-        isLoading,
-        isLoadingMore,
-        error,
-        hasMore,
-        loadMore,
-        refetch,
-      }}
-    >
-      {children}
-    </ConversationsContext.Provider>
+    <ConversationsContext.Provider value={contextValue}>{children}</ConversationsContext.Provider>
   );
 }
 

@@ -11,9 +11,9 @@ export const useMultiLine = (content: string) => {
     if (!textRef.current) return;
 
     const styles = getComputedStyle(textRef.current);
-    let lineHeight = parseInt(styles.lineHeight);
-    if (isNaN(lineHeight)) {
-      const fontSize = parseFloat(styles.fontSize);
+    let lineHeight = Number.parseInt(styles.lineHeight);
+    if (Number.isNaN(lineHeight)) {
+      const fontSize = Number.parseFloat(styles.fontSize);
       lineHeight = fontSize * DEFAULT_LINE_HEIGHT_THRESHOLD;
     }
 

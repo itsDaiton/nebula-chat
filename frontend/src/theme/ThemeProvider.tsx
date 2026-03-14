@@ -7,7 +7,7 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
-export function ThemeProvider({ children }: ThemeProviderProps) {
+export function ThemeProvider({ children }: Readonly<ThemeProviderProps>) {
   return (
     <ChakraProvider value={system}>
       <ColorModeProvider defaultTheme="system" enableSystem>

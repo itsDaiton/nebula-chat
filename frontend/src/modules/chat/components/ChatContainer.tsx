@@ -40,8 +40,9 @@ export const ChatContainer = () => {
   }, [conversationId, isStreaming, setHistory, setConversationId]);
 
   useEffect(() => {
-    if (conversation && conversation.messages && conversation.id === conversationId) {
+    if (conversation?.messages && conversation.id === conversationId) {
       const messages = conversation.messages.map((msg) => ({
+        id: msg.id,
         role: msg.role,
         content: msg.content,
       }));
@@ -147,11 +148,11 @@ export const ChatContainer = () => {
               ) {
                 return null;
               }
-              return <ChatMessage key={index} message={message} />;
+              return <ChatMessage key={message.id} message={message} />;
             })}
-            {isStreaming &&
-              history[history.length - 1]?.role === 'assistant' &&
-              !history[history.length - 1]?.content && <ChatStreaming />}
+            {isStreaming && history.at(-1)?.role === 'assistant' && !history.at(-1)?.content && (
+              <ChatStreaming />
+            )}
           </>
         )}
         <div ref={messagesEndRef} style={{ height: '0px' }} />

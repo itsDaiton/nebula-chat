@@ -24,7 +24,7 @@ export function streamCapture(req: Request, res: Response, next: NextFunction) {
         .filter((line) => {
           if (line.startsWith('event: usage')) return false;
           if (line.startsWith('event: end')) return false;
-          if (line.includes('\"promptTokens\"')) return false;
+          if (line.includes('"promptTokens"')) return false;
           if (line === 'data: end') return false;
           return true;
         })

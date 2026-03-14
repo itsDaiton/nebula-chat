@@ -1,7 +1,11 @@
 import 'dotenv/config';
 import { prisma } from '@backend/prisma';
 import type OpenAI from 'openai';
-import type { CreateChatStreamDTO, StreamCallbacks } from '@backend/modules/chat/chat.types';
+import type {
+  CreateChatStreamDTO,
+  StreamCallbacks,
+  UsageData,
+} from '@backend/modules/chat/chat.types';
 import { messageService } from '@backend/modules/message/message.service';
 import { createClient, getSystemPrompt } from '@backend/modules/chat/chat.utils';
 import { chatConfig } from '@backend/modules/chat/chat.config';
@@ -93,7 +97,7 @@ export async function validateChatRequest(
     }
 
     const limit =
-      chatConfig.maxHistoryMessages > 0 && isFinite(chatConfig.maxHistoryMessages)
+      chatConfig.maxHistoryMessages > 0 && Number.isFinite(chatConfig.maxHistoryMessages)
         ? chatConfig.maxHistoryMessages
         : undefined;
 
@@ -124,6 +128,95 @@ export async function validateChatRequest(
   }
 }
 
+async function processOpenAIStream(
+  stream: AsyncIterable<OpenAI.Chat.ChatCompletionChunk>,
+  callbacks: Pick<StreamCallbacks, 'onToken' | 'onUsage'>,
+): Promise<{ fullResponse: string; usageData: UsageData | null }> {
+  let fullResponse = '';
+  let usageData: UsageData | null = null;
+
+  for await (const chunk of stream) {
+    const delta = chunk.choices?.[0]?.delta?.content;
+    if (typeof delta === 'string') {
+      fullResponse += delta;
+      callbacks.onToken(delta);
+    }
+    if (chunk.usage) {
+      usageData = {
+        promptTokens: chunk.usage.prompt_tokens,
+        completionTokens: chunk.usage.completion_tokens,
+        totalTokens: chunk.usage.total_tokens,
+      };
+      callbacks.onUsage(usageData);
+    }
+  }
+
+  return { fullResponse, usageData };
+}
+
+async function executeStreamRequest(
+  client: OpenAI,
+  data: CreateChatStreamDTO,
+  messages: OpenAI.Chat.ChatCompletionMessageParam[],
+  conversationId: string,
+  callbacks: StreamCallbacks,
+): Promise<string> {
+  try {
+    const stream = await client.chat.completions.create({
+      model: data.model,
+      messages,
+      stream: true,
+      stream_options: { include_usage: true },
+      max_completion_tokens: chatConfig.tokenLimits.maxCompletionTokens,
+    });
+
+    const { fullResponse, usageData } = await processOpenAIStream(
+      stream as AsyncIterable<OpenAI.Chat.ChatCompletionChunk>,
+      callbacks,
+    );
+
+    if (!fullResponse || fullResponse.trim().length === 0) {
+      const emptyResponseMessage = 'The assistant did not generate a response.';
+      const errorMsg = await messageService.createMessage({
+        conversationId,
+        role: 'assistant',
+        content: emptyResponseMessage,
+        model: data.model,
+        tokens: usageData ?? undefined,
+      });
+      callbacks.onError(emptyResponseMessage);
+      callbacks.onAssistantMessageCreated(errorMsg.id);
+      throw new Error(emptyResponseMessage);
+    }
+
+    const assistantMessage = await messageService.createMessage({
+      conversationId,
+      role: 'assistant',
+      content: fullResponse,
+      model: data.model,
+      tokens: usageData ?? undefined,
+    });
+    callbacks.onAssistantMessageCreated(assistantMessage.id);
+    return assistantMessage.id;
+  } catch (streamError) {
+    const errorMessage =
+      streamError instanceof Error
+        ? `Stream error: ${streamError.message}`
+        : 'Unexpected stream error occurred';
+
+    const errorMsg = await messageService.createMessage({
+      conversationId,
+      role: 'assistant',
+      content: errorMessage,
+      model: data.model,
+      tokens: undefined,
+    });
+    callbacks.onError(errorMessage);
+    callbacks.onAssistantMessageCreated(errorMsg.id);
+    throw streamError;
+  }
+}
+
 export const chatService = {
   async streamResponse(data: CreateChatStreamDTO, callbacks: StreamCallbacks) {
     if (!process.env.OPENAI_API_KEY) {
@@ -137,7 +230,6 @@ export const chatService = {
     }
 
     let conversationId = data.conversationId;
-    let isNewConversation = false;
     let userMessageId: string | undefined;
     let assistantMessageId: string | undefined;
 
@@ -148,22 +240,19 @@ export const chatService = {
 
       const userMessage = data.messages[0]!;
 
-      // Validate user message and conversation
       await validateChatRequest(conversationId, userMessage);
 
       const result = await createUserMessage(conversationId, userMessage.content, userMessage.role);
-
       conversationId = result.conversationId;
       userMessageId = result.userMessageId;
-      isNewConversation = result.isNewConversation;
 
-      if (isNewConversation) {
+      if (result.isNewConversation) {
         callbacks.onConversationCreated(conversationId);
       }
       callbacks.onUserMessageCreated(userMessageId);
 
       const limit =
-        chatConfig.maxHistoryMessages > 0 && isFinite(chatConfig.maxHistoryMessages)
+        chatConfig.maxHistoryMessages > 0 && Number.isFinite(chatConfig.maxHistoryMessages)
           ? chatConfig.maxHistoryMessages
           : undefined;
 
@@ -171,112 +260,27 @@ export const chatService = {
         where: { conversationId },
         orderBy: { createdAt: 'desc' },
         ...(limit !== undefined && { take: limit }),
-        select: {
-          role: true,
-          content: true,
-          tokens: true,
-        },
+        select: { role: true, content: true, tokens: true },
       });
 
       const systemPrompt = getSystemPrompt();
-
-      const messagesWithContext = conversationHistory.reverse().map((msg) => ({
-        role: msg.role as 'user' | 'assistant' | 'system',
-        content: msg.content,
-      }));
-
-      const messagesWithSystem = [
-        { role: 'system' as const, content: systemPrompt },
-        ...messagesWithContext,
+      const messagesWithSystem: OpenAI.Chat.ChatCompletionMessageParam[] = [
+        { role: 'system', content: systemPrompt },
+        ...conversationHistory.toReversed().map((msg) => ({
+          role: msg.role as 'user' | 'assistant' | 'system',
+          content: msg.content,
+        })),
       ];
 
-      let fullResponse = '';
-      let usageData: {
-        promptTokens: number;
-        completionTokens: number;
-        totalTokens: number;
-      } | null = null;
-
-      try {
-        const stream = await client.chat.completions.create({
-          model: data.model,
-          messages: messagesWithSystem,
-          stream: true,
-          stream_options: {
-            include_usage: true,
-          },
-          max_completion_tokens: chatConfig.tokenLimits.maxCompletionTokens,
-        });
-
-        for await (const chunk of stream as AsyncIterable<OpenAI.Chat.ChatCompletionChunk>) {
-          const delta = chunk.choices?.[0]?.delta?.content;
-          if (typeof delta === 'string') {
-            fullResponse += delta;
-            callbacks.onToken(delta);
-          }
-          if (chunk.usage) {
-            usageData = {
-              promptTokens: chunk.usage.prompt_tokens,
-              completionTokens: chunk.usage.completion_tokens,
-              totalTokens: chunk.usage.total_tokens,
-            };
-            callbacks.onUsage(usageData);
-          }
-        }
-
-        if (!fullResponse || fullResponse.trim().length === 0) {
-          const emptyResponseMessage = 'The assistant did not generate a response.';
-          const errorAssistantMessage = await messageService.createMessage({
-            conversationId,
-            role: 'assistant',
-            content: emptyResponseMessage,
-            model: data.model,
-            tokens: usageData || undefined,
-          });
-          assistantMessageId = errorAssistantMessage.id;
-
-          callbacks.onError(emptyResponseMessage);
-          callbacks.onAssistantMessageCreated(assistantMessageId);
-
-          throw new Error(emptyResponseMessage);
-        }
-
-        const assistantMessage = await messageService.createMessage({
-          conversationId,
-          role: 'assistant',
-          content: fullResponse,
-          model: data.model,
-          tokens: usageData || undefined,
-        });
-        assistantMessageId = assistantMessage.id;
-
-        callbacks.onAssistantMessageCreated(assistantMessageId);
-      } catch (streamError) {
-        const errorMessage =
-          streamError instanceof Error
-            ? `Stream error: ${streamError.message}`
-            : 'Unexpected stream error occurred';
-
-        const errorAssistantMessage = await messageService.createMessage({
-          conversationId,
-          role: 'assistant',
-          content: errorMessage,
-          model: data.model,
-          tokens: undefined,
-        });
-        assistantMessageId = errorAssistantMessage.id;
-
-        callbacks.onError(errorMessage);
-        callbacks.onAssistantMessageCreated(assistantMessageId);
-
-        throw streamError;
-      }
-
-      return {
+      assistantMessageId = await executeStreamRequest(
+        client,
+        data,
+        messagesWithSystem,
         conversationId,
-        userMessageId,
-        assistantMessageId,
-      };
+        callbacks,
+      );
+
+      return { conversationId, userMessageId, assistantMessageId };
     } catch (error) {
       callbacks.onError(error instanceof Error ? error.message : 'Unknown error occurred');
       return;

@@ -150,9 +150,8 @@ export const ConversationsList = ({
         </Text>
       </Box>
       <Box px={2} pb={2}>
-        {isLoading ? (
-          <ConversationSkeletons />
-        ) : conversations.length === 0 ? (
+        {isLoading && <ConversationSkeletons />}
+        {!isLoading && conversations.length === 0 && (
           <Flex
             direction="column"
             align="center"
@@ -167,7 +166,8 @@ export const ConversationsList = ({
               {resources.conversations.emptyHint}
             </Text>
           </Flex>
-        ) : (
+        )}
+        {!isLoading && conversations.length > 0 && (
           <Flex direction="column" gap={1}>
             {conversations.map((conversation) => (
               <ConversationListItem
