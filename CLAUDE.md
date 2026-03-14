@@ -74,7 +74,6 @@ Errors use a custom `AppError` class. Path aliases use `@backend/*` mapping to `
 | `DATABASE_URL` | backend `.env` |
 | `REDIS_URL`, `REDIS_PASSWORD` | backend `.env` |
 | `CLIENT_URL`, `SERVER_URL` | backend `.env` (CORS) |
-| `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` | backend `.env` |
 
 ## Code Style
 - ESLint with TypeScript strict rules, React hooks validation, and import sorting — enforced with zero warnings tolerance.
