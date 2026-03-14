@@ -1,0 +1,61 @@
+name: nebula-chat-server
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'eslint.config.ts'
+      - 'prettier.config.cjs'
+      - '.github/workflows/nebula-chat-server.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'eslint.config.ts'
+      - 'prettier.config.cjs'
+      - '.github/workflows/nebula-chat-server.yml'
+
+jobs:
+  build:
+    name: Build nebula-chat-server
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.5
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Lint
+        run: pnpm exec eslint --report-unused-disable-directives --max-warnings=0 backend/
+
+      - name: Format check
+        run: pnpm exec prettier --check backend/
+
+      - name: Prisma generate
+        run: pnpm --filter nebula-chat-server run prisma:generate
+
+      - name: TypeScript check
+        run: pnpm --filter nebula-chat-server run typecheck
+
+      - name: Build
+        run: pnpm --filter nebula-chat-server run build
