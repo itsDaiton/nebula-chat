@@ -7,8 +7,8 @@
   },
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "backend": "pnpm --filter backend",
-    "frontend": "pnpm --filter frontend",
+    "backend": "pnpm --filter nebula-chat-server",
+    "frontend": "pnpm --filter nebula-chat-client",
     "lint": "eslint --report-unused-disable-directives --max-warnings=0 .",
     "lint:fix": "eslint --report-unused-disable-directives --max-warnings=0 . --fix",
     "format": "prettier --write .",

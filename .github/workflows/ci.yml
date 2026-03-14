@@ -36,16 +36,16 @@ jobs:
         run: pnpm run format:check
 
       - name: Prisma generate
-        run: pnpm --filter backend run prisma:generate
+        run: pnpm --filter nebula-chat-server run prisma:generate
 
       - name: TypeScript check (backend)
-        run: pnpm --filter backend run typecheck
+        run: pnpm --filter nebula-chat-server run typecheck
 
       - name: TypeScript check (frontend)
-        run: pnpm --filter frontend run typecheck
+        run: pnpm --filter nebula-chat-client run typecheck
 
       - name: Build backend
-        run: pnpm --filter backend run build
+        run: pnpm --filter nebula-chat-server run build
 
       - name: Build frontend
-        run: pnpm --filter frontend run build
+        run: pnpm --filter nebula-chat-client run build

@@ -29,7 +29,7 @@ Conventions for AI agents (Claude Code, Copilot, etc.) working in this repositor
 ## Code Quality
 
 - After every code change, always run `pnpm run lint:fix` and `pnpm run format` from the repo root. This is mandatory, not optional.
-- Also run `pnpm typecheck` in the relevant package (`pnpm --filter frontend run typecheck` or `pnpm --filter backend run typecheck`) and fix all errors before committing.
+- Also run `pnpm typecheck` in the relevant package (`pnpm --filter nebula-chat-client run typecheck` or `pnpm --filter nebula-chat-server run typecheck`) and fix all errors before committing.
 - Do not disable ESLint rules with inline comments (`// eslint-disable`) unless there is a compelling reason, and document why.
 
 ## Making Changes

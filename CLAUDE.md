@@ -12,8 +12,8 @@ pnpm run lint                     # ESLint (strict, max-warnings=0)
 pnpm run lint:fix                 # Auto-fix linting issues
 pnpm run format                   # Prettier format all files
 pnpm run format:check             # Check formatting compliance
-pnpm --filter frontend run <cmd>  # Run frontend script (e.g. pnpm --filter frontend run dev)
-pnpm --filter backend run <cmd>   # Run backend script (e.g. pnpm --filter backend run dev)
+pnpm --filter nebula-chat-client run <cmd>  # Run frontend script (e.g. pnpm --filter nebula-chat-client run dev)
+pnpm --filter nebula-chat-server run <cmd>  # Run backend script (e.g. pnpm --filter nebula-chat-server run dev)
 ```
 
 ### Frontend (`/frontend`)
