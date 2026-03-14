@@ -1,7 +1,11 @@
 import 'dotenv/config';
 import { prisma } from '@backend/prisma';
 import type OpenAI from 'openai';
-import type { CreateChatStreamDTO, StreamCallbacks, UsageData } from '@backend/modules/chat/chat.types';
+import type {
+  CreateChatStreamDTO,
+  StreamCallbacks,
+  UsageData,
+} from '@backend/modules/chat/chat.types';
 import { messageService } from '@backend/modules/message/message.service';
 import { createClient, getSystemPrompt } from '@backend/modules/chat/chat.utils';
 import { chatConfig } from '@backend/modules/chat/chat.config';

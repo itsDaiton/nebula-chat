@@ -77,7 +77,9 @@ export const ConversationsSearch = ({
               </Box>
             )}
             {!error && isSearching && <ConversationSkeletons count={3} />}
-            {!error && !isSearching && filteredConversations.length > 0 &&
+            {!error &&
+              !isSearching &&
+              filteredConversations.length > 0 &&
               filteredConversations.map((conversation) => (
                 <ConversationListItem
                   key={conversation.id}
@@ -90,11 +92,14 @@ export const ConversationsSearch = ({
                 {resources.conversations.noResults}
               </Box>
             )}
-            {!error && !isSearching && filteredConversations.length === 0 && !searchQuery.trim() && (
-              <Box py={8} textAlign="center" color="fg.muted" fontSize="sm">
-                Start typing to search all conversations
-              </Box>
-            )}
+            {!error &&
+              !isSearching &&
+              filteredConversations.length === 0 &&
+              !searchQuery.trim() && (
+                <Box py={8} textAlign="center" color="fg.muted" fontSize="sm">
+                  Start typing to search all conversations
+                </Box>
+              )}
           </Flex>
         </Box>
       </Flex>
