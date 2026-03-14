@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Root (monorepo)
+
 ```bash
 npm install                 # Install all workspace dependencies
 npm run lint                # ESLint (strict, max-warnings=0)
@@ -16,6 +17,7 @@ npm --prefix backend run <cmd>   # Run backend npm script (e.g. npm --prefix bac
 ```
 
 ### Frontend (`/frontend`)
+
 ```bash
 npm run dev        # Vite dev server on localhost:5173
 npm run build      # tsc + Vite build → /frontend/build
@@ -23,6 +25,7 @@ npm run typecheck  # tsc --noEmit
 ```
 
 ### Backend (`/backend`)
+
 ```bash
 npm run dev              # tsx watch mode (auto-restart)
 npm run build            # prisma generate + tsc + path alias resolution
@@ -36,6 +39,7 @@ npm run prisma:studio    # Open Prisma Studio
 ```
 
 ### Local infrastructure
+
 ```bash
 cd backend && docker-compose up  # Start PostgreSQL (port 5332) + Redis (port 6380)
 ```
@@ -45,7 +49,9 @@ cd backend && docker-compose up  # Start PostgreSQL (port 5332) + Redis (port 63
 This is a TypeScript monorepo with two packages: `frontend` and `backend`.
 
 ### Frontend (`/frontend`)
+
 React 19 SPA built with Vite and Chakra UI. State is managed through React Context providers defined in `src/App.tsx`:
+
 - `ThemeProvider` (Next Themes)
 - `SearchStateProvider`
 - `ConversationsProvider`
@@ -55,7 +61,9 @@ Feature code lives in `src/modules/` (chat, conversations, auth). Shared UI comp
 Chat responses are streamed from the backend and rendered using `react-markdown` + `shiki` for syntax highlighting.
 
 ### Backend (`/backend`)
+
 Express 5 REST API with:
+
 - **PostgreSQL + Prisma**: Two models — `Conversation` (1:many) `Message`. Schema at `prisma/schema.prisma`.
 - **Redis**: Caches chat responses. Cache middleware is layered onto routes.
 - **OpenAI**: Streaming completions. Token counting via `tiktoken` to manage context window. Key logic in `src/modules/chat/`.
@@ -67,15 +75,17 @@ Route structure: `/api/chat`, `/api/conversations`, `/api/messages`, `/api/cache
 Errors use a custom `AppError` class. Path aliases use `@backend/*` mapping to `src/*`.
 
 ### Key environment variables
-| Variable | Where |
-|---|---|
-| `VITE_API_URL` | frontend `.env` |
-| `OPENAI_API_KEY` | backend `.env` |
-| `DATABASE_URL` | backend `.env` |
-| `REDIS_URL`, `REDIS_PASSWORD` | backend `.env` |
-| `CLIENT_URL`, `SERVER_URL` | backend `.env` (CORS) |
+
+| Variable                      | Where                 |
+| ----------------------------- | --------------------- |
+| `VITE_API_URL`                | frontend `.env`       |
+| `OPENAI_API_KEY`              | backend `.env`        |
+| `DATABASE_URL`                | backend `.env`        |
+| `REDIS_URL`, `REDIS_PASSWORD` | backend `.env`        |
+| `CLIENT_URL`, `SERVER_URL`    | backend `.env` (CORS) |
 
 ## Code Style
+
 - ESLint with TypeScript strict rules, React hooks validation, and import sorting — enforced with zero warnings tolerance.
 - Prettier: single quotes, semicolons, trailing commas, 100-char print width, 2-space indent.
 - Backend uses `@backend/*` path aliases. Frontend has its own `tsconfig.json` targeting ESNext.
