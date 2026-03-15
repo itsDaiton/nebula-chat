@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.3.1...nebula-chat-v1.4.0) (2026-03-15)
+
+
+### Features
+
+* add deployment workflows ([#105](https://github.com/itsDaiton/nebula-chat/issues/105)) ([0345ad8](https://github.com/itsDaiton/nebula-chat/commit/0345ad89bcab419c5bf5e49eb094c706ffbf33e1))
+* make deploy workflows manually runnable ([ec7d02a](https://github.com/itsDaiton/nebula-chat/commit/ec7d02ae0a4969102637728308142d79dfa4e271))
+
 ## [1.3.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.3.0...nebula-chat-v1.3.1) (2026-03-15)
 
 
