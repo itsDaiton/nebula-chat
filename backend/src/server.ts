@@ -11,6 +11,8 @@ import { openApiDocument } from './openapi';
 const app: express.Express = express();
 const PORT = process.env.PORT || 3000;
 
+app.set('trust proxy', true); // Enable if behind a proxy
+
 app.use(
   cors({
     origin: checkOrigin,
