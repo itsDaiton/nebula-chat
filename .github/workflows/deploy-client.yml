@@ -1,0 +1,13 @@
+name: Deploy nebula-chat-client
+
+on:
+  push:
+    tags: ['nebula-chat-client-v*']
+
+jobs:
+  deploy:
+    name: Deploy nebula-chat-client
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        run: curl -fSs --retry 3 -X POST "${{ secrets.RENDER_CLIENT_DEPLOY_HOOK }}"
