@@ -4,6 +4,8 @@ on:
   push:
     tags: ['nebula-chat-client-v*']
 
+permissions: {}
+
 jobs:
   deploy:
     name: Deploy nebula-chat-client
