@@ -22,3 +22,7 @@ yarn-error.log*
 # Claude
 .claude
 megalinter-reports/
+
+# Sonar
+.sonar
+.sonarlint
