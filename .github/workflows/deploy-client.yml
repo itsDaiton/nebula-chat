@@ -3,6 +3,7 @@ name: Deploy nebula-chat-client
 on:
   push:
     tags: ['nebula-chat-client-v*']
+  workflow_dispatch:
 
 permissions: {}
 
