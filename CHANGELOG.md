@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.4.0...nebula-chat-v1.4.1) (2026-03-15)
+
+
+### Bug Fixes
+
+* **server:** enable trust proxy setting for express app ([#107](https://github.com/itsDaiton/nebula-chat/issues/107)) ([0ce6bce](https://github.com/itsDaiton/nebula-chat/commit/0ce6bce7002bb9e06830477b9cc54e48efc367bf))
+
 ## [1.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.3.1...nebula-chat-v1.4.0) (2026-03-15)
 
 
