@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { useSearchStore } from '../stores/useSearchStore';
 
 interface SearchStateContextValue {
   isSearchOpen: boolean;
@@ -8,9 +9,12 @@ interface SearchStateContextValue {
 const SearchStateContext = createContext<SearchStateContextValue | undefined>(undefined);
 
 export function SearchStateProvider({ children }: Readonly<{ children: ReactNode }>) {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { isSearchOpen, setIsSearchOpen } = useSearchStore();
 
-  const contextValue = useMemo(() => ({ isSearchOpen, setIsSearchOpen }), [isSearchOpen]);
+  const contextValue = useMemo(
+    () => ({ isSearchOpen, setIsSearchOpen }),
+    [isSearchOpen, setIsSearchOpen],
+  );
 
   return <SearchStateContext.Provider value={contextValue}>{children}</SearchStateContext.Provider>;
 }

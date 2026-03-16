@@ -1,20 +1,24 @@
-import { useCallback, useRef, useState } from 'react';
-import type { ChatHistoryStreamOptions, ChatMessage } from '../types/types';
+import { useCallback, useRef } from 'react';
+import type { ChatHistoryStreamOptions } from '../types/types';
 import { SERVER_CONFIG } from '../../../shared/config/serverConfig';
 import { useNavigate } from 'react-router';
 import { route } from '@/routes';
 import { useConversationsContext } from '@/modules/conversations/context/ConversationsContext';
+import { useChatStore } from '../stores/useChatStore';
 
 export function useChatStream() {
-  const [history, setHistory] = useState<ChatMessage[]>([]);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [usage, setUsage] = useState<{
-    promptTokens: number;
-    completionTokens: number;
-    totalTokens: number;
-  } | null>(null);
-  const [conversationId, setConversationId] = useState<string | undefined>(undefined);
+  const {
+    history,
+    isStreaming,
+    error,
+    usage,
+    conversationId,
+    setHistory,
+    setIsStreaming,
+    setError,
+    setUsage,
+    setConversationId,
+  } = useChatStore();
   const navigate = useNavigate();
   const { refetch: refetchConversations } = useConversationsContext();
 
@@ -25,7 +29,7 @@ export function useChatStream() {
     abortController.current?.abort();
     abortController.current = null;
     setIsStreaming(false);
-  }, []);
+  }, [setIsStreaming]);
 
   const streamMessage = useCallback(
     async ({ model, messages, conversationId: customConversationId }: ChatHistoryStreamOptions) => {
@@ -213,7 +217,16 @@ export function useChatStream() {
         abortController.current = null;
       }
     },
-    [conversationId, navigate, refetchConversations],
+    [
+      conversationId,
+      navigate,
+      refetchConversations,
+      setConversationId,
+      setError,
+      setHistory,
+      setIsStreaming,
+      setUsage,
+    ],
   );
 
   return {

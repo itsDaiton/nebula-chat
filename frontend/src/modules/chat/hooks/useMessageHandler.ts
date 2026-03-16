@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import type { UseMessageHandlerProps } from '../types/types';
+import { useChatStore } from '../stores/useChatStore';
 
 export const useMessageHandler = ({ onSendMessage, isLoading }: UseMessageHandlerProps) => {
-  const [message, setMessage] = useState('');
+  const { message, setMessage } = useChatStore();
 
   const handleMessageSend = useCallback(() => {
     if (message.trim()) {
@@ -13,7 +14,7 @@ export const useMessageHandler = ({ onSendMessage, isLoading }: UseMessageHandle
         textarea.style.height = 'auto';
       }
     }
-  }, [message, onSendMessage]);
+  }, [message, onSendMessage, setMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
