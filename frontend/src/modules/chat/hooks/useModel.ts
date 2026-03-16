@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { useChatStore } from '../stores/useChatStore';
+import { useModelStore } from '../stores/useModelStore';
 
 export const useModel = (initialModel: string = 'gpt-4o-mini') => {
-  const { selectedModel, setSelectedModel } = useChatStore();
+  const { selectedModel, setSelectedModel } = useModelStore();
   useEffect(() => {
     if (!selectedModel) {
       setSelectedModel(initialModel);

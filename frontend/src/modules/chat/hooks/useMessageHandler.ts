@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import type { UseMessageHandlerProps } from '../types/types';
-import { useChatStore } from '../stores/useChatStore';
+import { useMessageStore } from '../stores/useMessageStore';
 
 export const useMessageHandler = ({ onSendMessage, isLoading }: UseMessageHandlerProps) => {
-  const { message, setMessage } = useChatStore();
+  const { message, setMessage } = useMessageStore();
 
   const handleMessageSend = useCallback(() => {
     if (message.trim()) {

@@ -1,12 +1,12 @@
 import { useLayoutEffect } from 'react';
 import { modelOptions } from '../utils/chatUtils';
-import { useChatStore } from '../stores/useChatStore';
+import { useModelSelectorStore } from '../stores/useModelSelectorStore';
 
 const MIN_TRIGGER_WIDTH = 120;
 const PADDING_WIDTH = 48;
 
 export const useModelSelector = ({ selectedModel }: { selectedModel: string }) => {
-  const { triggerWidth, isSelectOpen, setIsSelectOpen, setTriggerWidth } = useChatStore();
+  const { triggerWidth, isSelectOpen, setIsSelectOpen, setTriggerWidth } = useModelSelectorStore();
 
   useLayoutEffect(() => {
     const label = modelOptions.items.find((i) => i.value === selectedModel)?.label || '';

@@ -1,13 +1,13 @@
 import { useCallback } from 'react';
 import type { ChatMessage, UseHandleSendMessageProps } from '../types/types';
-import { useChatStore } from '../stores/useChatStore';
+import { useChatStreamStore } from '../stores/useChatStreamStore';
 
 export const useHandleSendMessage = ({
   history,
   setHistory,
   streamMessage,
 }: UseHandleSendMessageProps) => {
-  const { setIsStreaming } = useChatStore();
+  const { setIsStreaming } = useChatStreamStore();
   const handleSendMessage = useCallback(
     async (message: string, selectedModel: string) => {
       const newUserMessage: ChatMessage = {

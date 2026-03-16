@@ -4,7 +4,7 @@ import { SERVER_CONFIG } from '../../../shared/config/serverConfig';
 import { useNavigate } from 'react-router';
 import { route } from '@/routes';
 import { useConversationsContext } from '@/modules/conversations/context/ConversationsContext';
-import { useChatStore } from '../stores/useChatStore';
+import { useChatStreamStore } from '../stores/useChatStreamStore';
 
 export function useChatStream() {
   const {
@@ -18,7 +18,7 @@ export function useChatStream() {
     setError,
     setUsage,
     setConversationId,
-  } = useChatStore();
+  } = useChatStreamStore();
   const navigate = useNavigate();
   const { refetch: refetchConversations } = useConversationsContext();
 
