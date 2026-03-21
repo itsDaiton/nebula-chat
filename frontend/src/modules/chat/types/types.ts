@@ -75,7 +75,6 @@ type Usage = {
 export type ChatStreamState = {
   history: ChatMessage[];
   isStreaming: boolean;
-  isSyncing: boolean;
   error: string | null;
   usage: Usage;
   conversationId?: string;

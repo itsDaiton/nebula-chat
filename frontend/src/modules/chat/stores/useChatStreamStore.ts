@@ -4,7 +4,6 @@ import type { ChatStreamState } from '@/modules/chat/types/types';
 export const useChatStreamStore = create<ChatStreamState>((set) => ({
   history: [],
   isStreaming: false,
-  isSyncing: false,
   error: null,
   usage: null,
   conversationId: undefined,

@@ -3,14 +3,13 @@ import type { ChatHistoryStreamOptions } from '@/modules/chat/types/types';
 import { SERVER_CONFIG } from '@/shared/config/serverConfig';
 import { useNavigate } from 'react-router';
 import { route } from '@/routing/routes';
-import { useConversationsContext } from '@/modules/conversations/context/ConversationsContext';
+import { useConversationsStore } from '@/modules/conversations/stores/useConversationsStore';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 
 export const useChatStream = () => {
   const {
     history,
     isStreaming,
-    isSyncing,
     error,
     usage,
     conversationId,
@@ -21,7 +20,7 @@ export const useChatStream = () => {
     setConversationId,
   } = useChatStreamStore();
   const navigate = useNavigate();
-  const { refetch: refetchConversations } = useConversationsContext();
+  const refetchConversations = useConversationsStore((state) => state.refetch);
 
   const abortController = useRef<AbortController | null>(null);
   const pendingNavigationId = useRef<string | null>(null);
@@ -233,7 +232,6 @@ export const useChatStream = () => {
   return {
     history,
     isStreaming,
-    isSyncing,
     error,
     usage,
     streamMessage,

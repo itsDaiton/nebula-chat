@@ -15,12 +15,18 @@ import { resources } from '@/resources';
 export const ChatContainer = () => {
   const { id: conversationId } = useParams<{ id: string }>();
   const { error: conversationError } = useConversation(conversationId);
-  const { history, isStreaming, isSyncing, streamMessage, setHistory } = useChatStream();
+  const {
+    history,
+    isStreaming,
+    streamMessage,
+    setHistory,
+    conversationId: chatConversationId,
+  } = useChatStream();
   const { selectedModel, setSelectedModel } = useModel();
 
   const { handleSendMessage } = useHandleSendMessage({ history, setHistory, streamMessage });
 
-  if (conversationId && isSyncing) {
+  if (conversationId && conversationId !== chatConversationId) {
     return (
       <ChatContainerBox>
         <Box flex="1" overflowY="auto" p={4} mb="120px" css={chatScrollBar}>

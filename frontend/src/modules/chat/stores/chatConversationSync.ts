@@ -9,7 +9,7 @@ useConversationStore.subscribe((state, prevState) => {
 
   if (state.isLoading && state.conversationId !== prevState.conversationId && !isStreaming) {
     syncedConversationId = null;
-    useChatStreamStore.setState({ history: [], isSyncing: true });
+    useChatStreamStore.setState({ history: [] });
     return;
   }
 
@@ -20,7 +20,6 @@ useConversationStore.subscribe((state, prevState) => {
       useChatStreamStore.setState({
         history: mapConversationMessages(state.conversation.messages),
         conversationId: id,
-        isSyncing: false,
       });
     }
     return;
@@ -28,6 +27,6 @@ useConversationStore.subscribe((state, prevState) => {
 
   if (!state.conversationId && prevState.conversationId && !isStreaming) {
     syncedConversationId = null;
-    useChatStreamStore.setState({ history: [], conversationId: undefined, isSyncing: false });
+    useChatStreamStore.setState({ history: [], conversationId: undefined });
   }
 });
