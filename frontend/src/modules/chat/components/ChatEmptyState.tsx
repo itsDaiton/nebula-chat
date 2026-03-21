@@ -1,6 +1,6 @@
 import { Box, Flex } from '@chakra-ui/react';
 import { resources } from '@/resources';
-import type { ChatEmptyStateProps } from '../types/types';
+import type { ChatEmptyStateProps } from '@/modules/chat/types/types';
 
 export const ChatEmptyState = ({ conversationId }: ChatEmptyStateProps) => (
   <Flex

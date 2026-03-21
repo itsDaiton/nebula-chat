@@ -4,7 +4,7 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prose } from '@/shared/components/ui/prose';
 import { shikiAdapter } from '@/shared/components/ui/code-block-adapter';
-import { useColorMode } from '@/shared/components/ui/color-mode';
+import { useColorMode } from '@/theme/hooks/useColorMode';
 import type { MarkdownContentProps } from '@/shared/types/types';
 import { isSafeUrl } from '@/shared/utils/urlUtils';
 import type { Components, ExtraProps } from 'react-markdown';

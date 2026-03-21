@@ -1,10 +1,5 @@
 import { create } from 'zustand';
-import type { Dispatch, SetStateAction } from 'react';
-
-interface ModelState {
-  selectedModel: string;
-  setSelectedModel: Dispatch<SetStateAction<string>>;
-}
+import type { ModelState } from '@/modules/chat/types/types';
 
 export const useModelStore = create<ModelState>((set) => ({
   selectedModel: 'gpt-4o-mini',

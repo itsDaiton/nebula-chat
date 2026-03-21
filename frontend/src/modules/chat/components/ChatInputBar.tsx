@@ -1,6 +1,6 @@
 import { Box } from '@chakra-ui/react';
-import { ChatInput } from './ChatInput';
-import type { ChatInputBarProps } from '../types/types';
+import { ChatInput } from '@/modules/chat/components/ChatInput';
+import type { ChatInputBarProps } from '@/modules/chat/types/types';
 
 export const ChatInputBar = ({ onSend, isLoading, selectedModel, onModelChange }: ChatInputBarProps) => (
   <Box

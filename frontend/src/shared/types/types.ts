@@ -1,4 +1,5 @@
-import type { ButtonProps } from '@chakra-ui/react';
+import type { ButtonProps, IconButtonProps } from '@chakra-ui/react';
+import type { ThemeProviderProps } from 'next-themes';
 import type { ReactElement, ReactNode } from 'react';
 
 export type LayoutProps = {
@@ -16,6 +17,18 @@ export type HeaderProps = {
 export type MarkdownContentProps = {
   content: string;
 };
+
+export type ColorMode = 'light' | 'dark';
+
+export type UseColorModeReturn = {
+  colorMode: ColorMode;
+  setColorMode: (colorMode: ColorMode) => void;
+  toggleColorMode: () => void;
+};
+
+export type ColorModeProviderProps = ThemeProviderProps;
+
+export type ColorModeButtonProps = Omit<IconButtonProps, 'aria-label'>;
 
 export type NebulaButtonProps = ButtonProps;
 

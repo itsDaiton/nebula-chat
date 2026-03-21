@@ -1,5 +1,5 @@
 import { Drawer } from '@chakra-ui/react';
-import { ConversationsList } from './ConversationsList';
+import { ConversationsList } from '@/modules/conversations/components/ConversationsList';
 
 export const ConversationDrawer = ({
   isDrawerOpen,
