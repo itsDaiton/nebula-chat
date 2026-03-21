@@ -56,3 +56,10 @@ export type UseInfiniteScrollOptions = {
   onLoadMore: () => void | Promise<void>;
   threshold?: number;
 };
+
+export type ConversationsListProps = {
+  onClose?: () => void;
+  inDrawer?: boolean;
+  toggleSearch?: () => void;
+  closeSearch?: () => void;
+};

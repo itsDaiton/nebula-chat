@@ -1,25 +1,5 @@
 import { create } from 'zustand';
-import type { Dispatch, SetStateAction } from 'react';
-import type { ChatMessage } from '../types/types';
-
-type Usage = {
-  promptTokens: number;
-  completionTokens: number;
-  totalTokens: number;
-} | null;
-
-interface ChatStreamState {
-  history: ChatMessage[];
-  isStreaming: boolean;
-  error: string | null;
-  usage: Usage;
-  conversationId?: string;
-  setHistory: Dispatch<SetStateAction<ChatMessage[]>>;
-  setIsStreaming: (isStreaming: boolean) => void;
-  setError: (error: string | null) => void;
-  setUsage: (usage: Usage) => void;
-  setConversationId: (id: string | undefined) => void;
-}
+import type { ChatStreamState } from '@/modules/chat/types/types';
 
 export const useChatStreamStore = create<ChatStreamState>((set) => ({
   history: [],

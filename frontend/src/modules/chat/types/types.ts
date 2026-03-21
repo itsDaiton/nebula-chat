@@ -99,3 +99,10 @@ export type MessageState = {
   message: string;
   setMessage: Dispatch<SetStateAction<string>>;
 };
+
+export type ModelSelectorState = {
+  isSelectOpen: boolean;
+  triggerWidth: number;
+  setIsSelectOpen: (isOpen: boolean) => void;
+  setTriggerWidth: (width: number) => void;
+};

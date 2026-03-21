@@ -1,27 +1,21 @@
 import { useNavigate } from 'react-router';
 import { Box, Flex, Text, Spinner } from '@chakra-ui/react';
 import { toaster } from '@/shared/components/ui/toaster';
-import { useConversationsContext } from '../context/ConversationsContext';
-import { ConversationListItem } from './ConversationListItem';
-import { ConversationsSearch } from './ConversationsSearch';
+import { useConversationsContext } from '@/modules/conversations/context/ConversationsContext';
+import { ConversationListItem } from '@/modules/conversations/components/ConversationListItem';
+import { ConversationsSearch } from '@/modules/conversations/components/ConversationsSearch';
 import { SidePanel } from '@/shared/components/layout/SidePanel';
 import { resources } from '@/resources';
 import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
 import { useSearchStore } from '@/shared/stores/useSearchStore';
 import { route } from '@/routes';
-import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { useInfiniteScroll } from '@/modules/conversations/hooks/useInfiniteScroll';
 import { chatScrollBar } from '@/shared/components/scrollbar';
 import { BadgeActionButton } from '@/shared/components/navigation/BadgeActionButton';
 import type { NavigationAction } from '@/shared/types/types';
-import { navigationActions } from '../utils/navigationActions';
-import { ConversationSkeletons } from './ConversationSkeletons';
-
-interface ConversationsListProps {
-  onClose?: () => void;
-  inDrawer?: boolean;
-  toggleSearch?: () => void;
-  closeSearch?: () => void;
-}
+import { navigationActions } from '@/modules/conversations/utils/navigationActions';
+import { ConversationSkeletons } from '@/modules/conversations/components/ConversationSkeletons';
+import type { ConversationsListProps } from '@/modules/conversations/types/types';
 
 export const ConversationsList = ({
   onClose,
