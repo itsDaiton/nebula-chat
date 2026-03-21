@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useModelStore } from '../stores/useModelStore';
 
-export const useModel = (initialModel: string = 'gpt-4o-mini') => {
-  const [selectedModel, setSelectedModel] = useState(initialModel);
-
+export const useModel = () => {
+  const { selectedModel, setSelectedModel } = useModelStore();
   return { selectedModel, setSelectedModel };
 };

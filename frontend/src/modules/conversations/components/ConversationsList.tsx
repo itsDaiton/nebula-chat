@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Box, Flex, Text, Spinner } from '@chakra-ui/react';
 import { toaster } from '@/shared/components/ui/toaster';
@@ -8,6 +7,7 @@ import { ConversationsSearch } from './ConversationsSearch';
 import { SidePanel } from '@/shared/layout/SidePanel';
 import { resources } from '@/resources';
 import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
+import { useSearchStore } from '@/shared/stores/useSearchStore';
 import { route } from '@/routes';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { chatScrollBar } from '@/shared/components/scrollbar';
@@ -31,13 +31,16 @@ export const ConversationsList = ({
 }: ConversationsListProps = {}) => {
   const { conversations, isLoading, isLoadingMore, error, hasMore, loadMore } =
     useConversationsContext();
-  const [internalIsSearchOpen, setInternalIsSearchOpen] = useState(false);
+  const {
+    isSearchOpen: storeIsSearchOpen,
+    openSearch,
+    closeSearch: storeCloseSearch,
+    toggleSearch,
+  } = useSearchStore();
   const navigate = useNavigate();
 
-  const isSearchOpen = inDrawer ? false : internalIsSearchOpen;
-  const closeSearch = inDrawer
-    ? (externalCloseSearch ?? (() => {}))
-    : () => setInternalIsSearchOpen(false);
+  const isSearchOpen = inDrawer ? false : storeIsSearchOpen;
+  const closeSearch = inDrawer ? (externalCloseSearch ?? (() => {})) : storeCloseSearch;
 
   const observerTarget = useInfiniteScroll({
     hasMore,
@@ -51,7 +54,7 @@ export const ConversationsList = ({
       if (inDrawer && externalToggleSearch) {
         externalToggleSearch();
       } else {
-        setInternalIsSearchOpen(true);
+        openSearch();
       }
     },
     { ctrl: true },
@@ -73,7 +76,7 @@ export const ConversationsList = ({
           onClose?.();
           externalToggleSearch?.();
         } else {
-          setInternalIsSearchOpen((prev) => !prev);
+          toggleSearch();
         }
         break;
       case 'files':

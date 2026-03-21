@@ -5,7 +5,7 @@ import { ConversationListItem } from './ConversationListItem';
 import { chatScrollBar } from '@/shared/components/scrollbar';
 import { useConversationsSearch } from '../hooks/useConversationsSearch';
 import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
-import { useSearchState } from '@/shared/context/SearchStateContext';
+import { useSearchStore } from '@/shared/stores/useSearchStore';
 import { resources } from '@/resources';
 import { ConversationSkeletons } from './ConversationSkeletons';
 
@@ -16,7 +16,7 @@ export const ConversationsSearch = ({
 }: ConversationsSearchProps) => {
   const { searchQuery, setSearchQuery, filteredConversations, isSearching, error } =
     useConversationsSearch(conversations);
-  const { setIsSearchOpen } = useSearchState();
+  const { setIsSearchOpen } = useSearchStore();
 
   useEffect(() => {
     setIsSearchOpen(true);

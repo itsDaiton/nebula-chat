@@ -1,32 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useDrawerStore } from '../stores/useDrawerStore';
+import { useSearchStore } from '../stores/useSearchStore';
 
 export const useDrawer = () => {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-
-  const openDrawer = useCallback(() => {
-    setIsDrawerOpen(true);
-  }, []);
-
-  const closeDrawer = useCallback(() => {
-    setIsDrawerOpen(false);
-  }, []);
-
-  const toggleDrawer = useCallback(() => {
-    setIsDrawerOpen((prev) => !prev);
-  }, []);
-
-  const openSearch = useCallback(() => {
-    setIsSearchOpen(true);
-  }, []);
-
-  const closeSearch = useCallback(() => {
-    setIsSearchOpen(false);
-  }, []);
-
-  const toggleSearch = useCallback(() => {
-    setIsSearchOpen((prev) => !prev);
-  }, []);
+  const { isDrawerOpen, openDrawer, closeDrawer, toggleDrawer } = useDrawerStore();
+  const { isSearchOpen, openSearch, closeSearch, toggleSearch } = useSearchStore();
 
   return {
     isDrawerOpen,

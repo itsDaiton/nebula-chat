@@ -1,7 +1,7 @@
 import { useCallback, useRef } from 'react';
 import type { UseKeyboardHandlerProps } from '../../modules/chat/types/types';
 import { useEventListener } from '@/shared/hooks/useEventListener';
-import { useSearchState } from '@/shared/context/SearchStateContext';
+import { useSearchStore } from '@/shared/stores/useSearchStore';
 
 export const useKeyboardHandler = ({
   message,
@@ -9,7 +9,7 @@ export const useKeyboardHandler = ({
   handleMessageSend,
 }: UseKeyboardHandlerProps) => {
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const { isSearchOpen } = useSearchState();
+  const { isSearchOpen } = useSearchStore();
 
   const keyboardHandler = useCallback(
     (e: KeyboardEvent) => {

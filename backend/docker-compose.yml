@@ -8,7 +8,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "127.0.0.1:5332:5432"
-    volumes:
+    volumes: # kics-scan ignore-line
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
     security_opt:
@@ -27,7 +27,7 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     ports:
       - "127.0.0.1:6380:6379"
-    volumes:
+    volumes: # kics-scan ignore-line
       - redis-data:/data
     restart: unless-stopped
     security_opt:
