@@ -7,7 +7,7 @@ import {
   messagesArraySchema,
 } from './message.validation';
 
-export function registerMessageRoutes() {
+export const registerMessageRoutes = () => {
   registry.registerPath({
     method: 'post',
     path: '/api/messages',
@@ -119,4 +119,4 @@ export function registerMessageRoutes() {
       },
     },
   });
-}
+};

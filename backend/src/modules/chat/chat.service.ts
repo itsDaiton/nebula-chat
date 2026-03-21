@@ -22,11 +22,11 @@ import {
   BadRequestError,
 } from '@backend/errors/AppError';
 
-export async function createUserMessage(
+export const createUserMessage = async (
   conversationId: string | undefined,
   userMessageContent: string,
   userMessageRole: string,
-) {
+) => {
   let isNewConversation = false;
 
   const result = await prisma.$transaction(async (tx) => {
@@ -65,12 +65,12 @@ export async function createUserMessage(
   });
 
   return result;
-}
+};
 
-export async function validateChatRequest(
+export const validateChatRequest = async (
   conversationId: string | undefined,
   userMessage: { role: string; content: string },
-) {
+) => {
   if (userMessage.role !== 'user') {
     throw new BadRequestError(
       `Expected message with role 'user', received '${userMessage.role}'. Only user messages can be sent.`,
@@ -126,12 +126,12 @@ export async function validateChatRequest(
       );
     }
   }
-}
+};
 
-async function processOpenAIStream(
+const processOpenAIStream = async (
   stream: AsyncIterable<OpenAI.Chat.ChatCompletionChunk>,
   callbacks: Pick<StreamCallbacks, 'onToken' | 'onUsage'>,
-): Promise<{ fullResponse: string; usageData: UsageData | null }> {
+): Promise<{ fullResponse: string; usageData: UsageData | null }> => {
   let fullResponse = '';
   let usageData: UsageData | null = null;
 
@@ -152,15 +152,15 @@ async function processOpenAIStream(
   }
 
   return { fullResponse, usageData };
-}
+};
 
-async function executeStreamRequest(
+const executeStreamRequest = async (
   client: OpenAI,
   data: CreateChatStreamDTO,
   messages: OpenAI.Chat.ChatCompletionMessageParam[],
   conversationId: string,
   callbacks: StreamCallbacks,
-): Promise<string> {
+): Promise<string> => {
   try {
     const stream = await client.chat.completions.create({
       model: data.model,
@@ -215,7 +215,7 @@ async function executeStreamRequest(
     callbacks.onAssistantMessageCreated(errorMsg.id);
     throw streamError;
   }
-}
+};
 
 export const chatService = {
   async streamResponse(data: CreateChatStreamDTO, callbacks: StreamCallbacks) {

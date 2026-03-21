@@ -2,7 +2,7 @@ import { registry } from '@backend/config/openapi.config';
 import { chatStreamResponseSchema, createChatStreamSchema } from './chat.validation';
 import { errorResponseSchema } from '@backend/openapi/schemas';
 
-export function registerChatRoutes() {
+export const registerChatRoutes = () => {
   registry.registerPath({
     method: 'post',
     path: '/api/chat/stream',
@@ -70,4 +70,4 @@ export function registerChatRoutes() {
       },
     },
   });
-}
+};

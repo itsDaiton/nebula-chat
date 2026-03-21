@@ -11,9 +11,7 @@ export const createClient: () => OpenAI = () => {
   return client;
 };
 
-export function getSystemPrompt(): string {
-  return SYSTEM_PROMPT;
-}
+export const getSystemPrompt = (): string => SYSTEM_PROMPT;
 
 export const streamFormatter = {
   writeConversationCreated(res: Response, conversationId: string): void {

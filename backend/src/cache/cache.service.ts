@@ -8,14 +8,14 @@ import { cacheConfig } from './cache.config';
 
 let redisClient: RedisClientType | null = null;
 
-async function ensureConnection(): Promise<RedisClientType> {
+const ensureConnection = async (): Promise<RedisClientType> => {
   if (!redisClient || !isRedisConnected()) {
     redisClient = await createRedisClient();
   }
   return redisClient;
-}
+};
 
-async function parseCacheStats(): Promise<BaseRedisStats> {
+const parseCacheStats = async (): Promise<BaseRedisStats> => {
   try {
     const client = await ensureConnection();
     const stats = await client.get(cacheConfig.statsKey);
@@ -38,9 +38,9 @@ async function parseCacheStats(): Promise<BaseRedisStats> {
     lastSetKey: null,
     lastHitKey: null,
   };
-}
+};
 
-async function updateStats(updates: Partial<BaseRedisStats>): Promise<void> {
+const updateStats = async (updates: Partial<BaseRedisStats>): Promise<void> => {
   try {
     const client = await ensureConnection();
     const stats = await parseCacheStats();
@@ -50,9 +50,9 @@ async function updateStats(updates: Partial<BaseRedisStats>): Promise<void> {
     // eslint-disable-next-line no-console
     console.error('Error updating stats:', error);
   }
-}
+};
 
-async function getFromCache(key: string): Promise<CachedStreamData | null> {
+const getFromCache = async (key: string): Promise<CachedStreamData | null> => {
   try {
     const client = await ensureConnection();
     const value = await client.get(key);
@@ -75,14 +75,14 @@ async function getFromCache(key: string): Promise<CachedStreamData | null> {
     await updateStats({ misses: (await parseCacheStats()).misses + 1 });
     return null;
   }
-}
+};
 
-async function saveToCache(
+const saveToCache = async (
   key: string,
   value: string,
   usageData?: any,
   ttlMs: number = cacheConfig.defaultTTL,
-): Promise<void> {
+): Promise<void> => {
   try {
     const client = await ensureConnection();
     const cachedData: CachedStreamData = {
@@ -116,9 +116,9 @@ async function saveToCache(
     // eslint-disable-next-line no-console
     console.error('Redis SET error (fail-open):', error);
   }
-}
+};
 
-function generateKey(data: CreateChatStreamDTO): string {
+const generateKey = (data: CreateChatStreamDTO): string => {
   const model = data.model;
   const conversationId = data.conversationId || 'default';
   const lastUserMessage = [...data.messages].reverse().find((msg) => msg.role === 'user');
@@ -127,9 +127,9 @@ function generateKey(data: CreateChatStreamDTO): string {
   const promptHash = createHash('sha256').update(prompt).digest('hex').substring(0, 16);
 
   return `conversation:${conversationId}:model:${model}:prompt:${promptHash}`;
-}
+};
 
-async function getCacheStats(): Promise<CacheStats> {
+const getCacheStats = async (): Promise<CacheStats> => {
   try {
     const client = await ensureConnection();
     const stats = await parseCacheStats();
@@ -186,9 +186,9 @@ async function getCacheStats(): Promise<CacheStats> {
       },
     };
   }
-}
+};
 
-async function clearCache(): Promise<void> {
+const clearCache = async (): Promise<void> => {
   try {
     const client = await ensureConnection();
     const keys = await client.lRange(cacheConfig.keysList, 0, -1);
@@ -205,9 +205,9 @@ async function clearCache(): Promise<void> {
     console.error('Redis CLEAR error:', error);
     throw new RedisCacheError(`Failed to clear cache: ${error}`);
   }
-}
+};
 
-async function getRecentKeys(limit: number = 20): Promise<string[]> {
+const getRecentKeys = async (limit: number = 20): Promise<string[]> => {
   try {
     const client = await ensureConnection();
     return await client.lRange(cacheConfig.keysList, 0, limit - 1);
@@ -216,16 +216,14 @@ async function getRecentKeys(limit: number = 20): Promise<string[]> {
     console.error('Redis GET_KEYS error (fail-open):', error);
     return [];
   }
-}
+};
 
-async function healthCheck(): Promise<{ status: 'ok' }> {
-  return { status: 'ok' };
-}
+const healthCheck = async (): Promise<{ status: 'ok' }> => ({ status: 'ok' });
 
-async function closeCache(): Promise<void> {
+const closeCache = async (): Promise<void> => {
   await closeRedisClient();
   redisClient = null;
-}
+};
 
 export const cacheService = {
   getFromCache,

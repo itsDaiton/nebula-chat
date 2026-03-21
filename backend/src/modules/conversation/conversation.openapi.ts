@@ -10,7 +10,7 @@ import {
   searchConversationsQuerySchema,
 } from './conversation.validation';
 
-export function registerConversationRoutes() {
+export const registerConversationRoutes = () => {
   registry.registerPath({
     method: 'post',
     path: '/api/conversations',
@@ -163,4 +163,4 @@ export function registerConversationRoutes() {
       },
     },
   });
-}
+};

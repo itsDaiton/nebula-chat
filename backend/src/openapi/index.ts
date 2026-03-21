@@ -5,13 +5,13 @@ import { registerChatRoutes } from '@backend/modules/chat/chat.openapi';
 import { registerConversationRoutes } from '@backend/modules/conversation/conversation.openapi';
 import { registerMessageRoutes } from '@backend/modules/message/message.openapi';
 
-function initializeOpenAPI() {
+const initializeOpenAPI = () => {
   registerChatRoutes();
   registerConversationRoutes();
   registerMessageRoutes();
   registerCacheRoutes();
 
   return generateOpenAPIDocument();
-}
+};
 
 export const openApiDocument: OpenAPIObject = initializeOpenAPI();
