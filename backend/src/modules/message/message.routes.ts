@@ -1,7 +1,7 @@
 import { validate } from '@backend/middleware/validate';
 import { messageController } from '@backend/modules/message/message.controller';
 import { Router } from 'express';
-import { createMessageSchema, getMessagesSchema } from './message.validation';
+import { createMessageSchema, getMessagesSchema } from '@backend/modules/message/message.validation';
 
 const messageRoutes: Router = Router();
 
