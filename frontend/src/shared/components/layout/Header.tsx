@@ -1,5 +1,5 @@
 import { Box, Flex, Text, Icon } from '@chakra-ui/react';
-import { ColorModeButton } from '@/shared/components/ui/color-mode';
+import { ColorModeButton } from '@/theme/ColorModeButton';
 import { useResetChat } from '@/shared/hooks/useResetChat';
 import { TbGalaxy } from 'react-icons/tb';
 import { HiMenuAlt2 } from 'react-icons/hi';

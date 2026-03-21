@@ -53,12 +53,14 @@ export default [
       'promise/no-new-statics': 'error',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
+      '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
       '@typescript-eslint/no-shadow': 'error',
       '@typescript-eslint/return-await': 'error',
       'no-param-reassign': 'error',
       'prefer-const': 'error',
       'prefer-template': 'error',
       'object-shorthand': 'error',
+      'func-style': ['error', 'expression'],
       'arrow-body-style': ['error', 'as-needed'],
       ...prettierConfig.rules,
     },
@@ -83,6 +85,17 @@ export default [
       },
     },
     rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^\\.+\\/',
+              message: 'Use @/ absolute path imports instead of relative paths.',
+            },
+          ],
+        },
+      ],
       'react/jsx-uses-react': 'off',
       'react/react-in-jsx-scope': 'off',
       'react/self-closing-comp': 'error',

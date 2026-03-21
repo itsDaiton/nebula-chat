@@ -227,23 +227,28 @@ navigate(route.chat.conversation(id)); // /c/:id
 
 ### Imports
 
-Always use the `@/` path alias — never relative paths (`./`, `../../`, etc.). `@/` maps to `frontend/src/`.
+Always use the `@/` path alias — never relative paths (`./`, `../../`, etc.). `@/` maps to `frontend/src/`. This applies to **every** import in every file — components, hooks, utils, and types — regardless of how close the files are to each other.
+
+**Check every import in every file you touch.** If a relative path exists anywhere in a file you modify, fix it.
 
 ```ts
 // correct
 import { useSearchStore } from '@/shared/stores/useSearchStore';
 import type { Conversation } from '@/modules/conversations/types/types';
+import { ChatInput } from '@/modules/chat/components/ChatInput';
+import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 
-// wrong
+// wrong — no relative paths, ever
 import { useSearchStore } from '../../shared/stores/useSearchStore';
 import type { Conversation } from '../types/types';
+import { ChatInput } from './ChatInput';
 ```
 
 ---
 
 ### TypeScript Types
 
-- Use `type` — never `interface`.
+- Use `type` — never `interface`. This applies everywhere: `types/types.ts`, hooks, components, utils — no exceptions.
 
 ```ts
 // correct
@@ -252,7 +257,7 @@ type ConversationWithMessages = {
   messages: Message[];
 };
 
-// wrong
+// wrong — anywhere in the codebase
 interface ConversationWithMessages { ... }
 ```
 
@@ -261,6 +266,24 @@ interface ConversationWithMessages { ... }
 
 ```ts
 import type { ChatMessage } from '@/modules/chat/types/types';
+```
+
+### Modern TypeScript / ES Style
+
+- **Never use `'use client'`** — this is a Vite/React SPA, not Next.js. The directive has no effect and must never appear in any file.
+
+- Always use `const` arrow functions — never `function` declarations. This applies to hooks, utils, helpers, and components.
+
+```ts
+// correct
+export const useMyHook = () => { ... };
+export const formatDate = (date: string): string => { ... };
+export const MyComponent = () => <div />;
+
+// wrong
+export function useMyHook() { ... }
+export function formatDate(date: string): string { ... }
+function MyComponent() { ... }
 ```
 
 ---

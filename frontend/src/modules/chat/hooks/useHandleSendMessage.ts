@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { ChatMessage, UseHandleSendMessageProps } from '../types/types';
+import type { ChatMessage, UseHandleSendMessageProps } from '@/modules/chat/types/types';
 
 export const useHandleSendMessage = ({
   history,

@@ -1,7 +1,7 @@
 import type { Conversation } from '@/modules/conversations/types/types';
 import { useConversationsSearchStore } from '@/modules/conversations/stores/useConversationsSearchStore';
 
-export function useConversationsSearch(localConversations: Conversation[]) {
+export const useConversationsSearch = (localConversations: Conversation[]) => {
   const { searchQuery, setSearchQuery, debouncedQuery, searchResults, isSearching, error } =
     useConversationsSearchStore();
 
@@ -15,4 +15,4 @@ export function useConversationsSearch(localConversations: Conversation[]) {
     isSearching: isPending || isSearching,
     error,
   };
-}
+};

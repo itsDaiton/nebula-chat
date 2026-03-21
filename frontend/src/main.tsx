@@ -1,8 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Provider } from '@/shared/components/ui/provider.tsx';
+import { Provider } from '@/shared/components/ui/provider';
 import { BrowserRouter } from 'react-router';
-import App from './App.tsx';
+import App from '@/App';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

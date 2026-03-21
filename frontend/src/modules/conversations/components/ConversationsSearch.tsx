@@ -1,11 +1,11 @@
 import { Box, Flex, Input, InputGroup, Portal, Text } from '@chakra-ui/react';
-import type { ConversationsSearchProps } from '../types/types';
-import { ConversationListItem } from './ConversationListItem';
+import type { ConversationsSearchProps } from '@/modules/conversations/types/types';
+import { ConversationListItem } from '@/modules/conversations/components/ConversationListItem';
 import { chatScrollBar } from '@/shared/components/scrollbar';
-import { useConversationsSearch } from '../hooks/useConversationsSearch';
+import { useConversationsSearch } from '@/modules/conversations/hooks/useConversationsSearch';
 import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
 import { resources } from '@/resources';
-import { ConversationSkeletons } from './ConversationSkeletons';
+import { ConversationSkeletons } from '@/modules/conversations/components/ConversationSkeletons';
 
 export const ConversationsSearch = ({
   conversations,

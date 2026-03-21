@@ -3,10 +3,10 @@ import type { ConversationsContextValue } from '@/modules/conversations/types/ty
 
 export const ConversationsContext = createContext<ConversationsContextValue | undefined>(undefined);
 
-export function useConversationsContext() {
+export const useConversationsContext = () => {
   const context = useContext(ConversationsContext);
   if (!context) {
     throw new Error('useConversationsContext must be used within ConversationsProvider');
   }
   return context;
-}
+};
