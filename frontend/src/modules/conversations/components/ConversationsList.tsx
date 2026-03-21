@@ -8,7 +8,7 @@ import { SidePanel } from '@/shared/components/layout/SidePanel';
 import { resources } from '@/resources';
 import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
 import { useSearchStore } from '@/shared/stores/useSearchStore';
-import { route } from '@/routes';
+import { route } from '@/routing/routes';
 import { useInfiniteScroll } from '@/modules/conversations/hooks/useInfiniteScroll';
 import { chatScrollBar } from '@/shared/components/scrollbar';
 import { BadgeActionButton } from '@/shared/components/navigation/BadgeActionButton';

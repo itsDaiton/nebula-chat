@@ -1,4 +1,4 @@
-import { RouterProvider } from '@/RouterProvider';
+import { RouterProvider } from '@/routing/RouterProvider';
 import { ThemeProvider } from '@/theme/providers/ThemeProvider';
 import { ConversationsProvider } from '@/modules/conversations/providers/ConversationsProvider';
 import { Toaster } from '@/shared/components/ui/toaster';

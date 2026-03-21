@@ -2,7 +2,7 @@ import { useCallback, useRef } from 'react';
 import type { ChatHistoryStreamOptions } from '@/modules/chat/types/types';
 import { SERVER_CONFIG } from '@/shared/config/serverConfig';
 import { useNavigate } from 'react-router';
-import { route } from '@/routes';
+import { route } from '@/routing/routes';
 import { useConversationsContext } from '@/modules/conversations/context/ConversationsContext';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 

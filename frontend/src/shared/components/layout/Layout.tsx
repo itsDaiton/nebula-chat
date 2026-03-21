@@ -9,7 +9,7 @@ import { useDrawer } from '@/shared/hooks/useDrawer';
 import { ConversationsSearch } from '@/modules/conversations/components/ConversationsSearch';
 import { useConversationsContext } from '@/modules/conversations/context/ConversationsContext';
 import { useNavigate } from 'react-router';
-import { route } from '@/routes';
+import { route } from '@/routing/routes';
 import { useViewportHeight } from '@/shared/hooks/useViewportHeight';
 
 export const Layout = ({ children }: LayoutProps) => {

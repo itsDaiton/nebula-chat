@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router';
-import { route } from '@/routes';
+import { route } from '@/routing/routes';
 
 export const useResetChat = () => {
   const navigate = useNavigate();
