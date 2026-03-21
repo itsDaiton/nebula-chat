@@ -14,7 +14,8 @@ export const useMultiLineStore = create<MultiLineState>((set) => ({
 
   removeEntry: (content) =>
     set((state) => {
-      const { [content]: _removed, ...rest } = state.multiLineMap;
+      const rest = { ...state.multiLineMap };
+      delete rest[content];
       return { multiLineMap: rest };
     }),
 }));
