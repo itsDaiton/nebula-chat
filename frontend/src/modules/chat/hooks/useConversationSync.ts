@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { mapConversationMessages } from '@/modules/chat/utils/chatUtils';
+import { mapConversationMessages } from '@/modules/chat/utils/mapConversationMessages';
 import type { UseConversationSyncParams } from '@/modules/chat/types/types';
 
 export const useConversationSync = ({

@@ -1,5 +1,5 @@
 import { Box, Flex, Skeleton } from '@chakra-ui/react';
-import type { ChatMessageSkeletonProps } from '../types/types';
+import type { ChatMessageSkeletonProps } from '@/modules/chat/types/types';
 
 export const ChatMessageSkeleton = ({ isUser = false }: ChatMessageSkeletonProps) => (
   <Flex direction={isUser ? 'row-reverse' : 'row'} gap={4} mb={6} align="flex-start">
@@ -19,12 +19,4 @@ export const ChatMessageSkeleton = ({ isUser = false }: ChatMessageSkeletonProps
       <Skeleton height="16px" width="85%" />
     </Box>
   </Flex>
-);
-
-export const ChatMessagesSkeletons = ({ count = 3 }: { count?: number }) => (
-  <>
-    {Array.from({ length: count }).map((_, index) => (
-      <ChatMessageSkeleton key={count} isUser={index % 2 === 0} />
-    ))}
-  </>
 );

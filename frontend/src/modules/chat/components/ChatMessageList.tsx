@@ -1,6 +1,6 @@
-import { ChatMessage } from './ChatMessage';
-import { ChatStreaming } from './ChatStreaming';
-import type { ChatMessageListProps } from '../types/types';
+import { ChatMessage } from '@/modules/chat/components/ChatMessage';
+import { ChatStreaming } from '@/modules/chat/components/ChatStreaming';
+import type { ChatMessageListProps } from '@/modules/chat/types/types';
 
 export const ChatMessageList = ({ history, isStreaming }: ChatMessageListProps) => (
   <>

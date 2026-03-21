@@ -1,7 +1,7 @@
 import { Box, Flex, Text } from '@chakra-ui/react';
 import { useParams } from 'react-router';
 import { ChatContainerBox } from '@/modules/chat/components/ChatContainerBox';
-import { ChatMessagesSkeletons } from '@/modules/chat/components/ChatMessageSkeleton';
+import { ChatMessagesSkeletons } from '@/modules/chat/components/ChatMessagesSkeletons';
 import { ChatInputBar } from '@/modules/chat/components/ChatInputBar';
 import { ChatEmptyState } from '@/modules/chat/components/ChatEmptyState';
 import { ChatMessageList } from '@/modules/chat/components/ChatMessageList';

@@ -1,23 +1,20 @@
 import { Box, Flex } from '@chakra-ui/react';
 import { memo } from 'react';
-import type { ChatMessageProps } from '../types/types';
-import { useIsUser } from '../utils/chatUtils';
-import { ChatIcon } from './ChatIcon';
+import type { ChatMessageProps } from '@/modules/chat/types/types';
+import { getMessageBg } from '@/modules/chat/utils/getMessageBg';
+import { isUser } from '@/modules/chat/utils/isUser';
+import { ChatIcon } from '@/modules/chat/components/ChatIcon';
 import { MarkdownContent } from '@/shared/components/ui/markdown-content';
 
 export const ChatMessage = memo(({ message }: ChatMessageProps) => {
-  const isUser = useIsUser(message.role);
+  const isUserMessage = isUser(message.role);
 
   return (
-    <Flex direction={isUser ? 'row-reverse' : 'row'} gap={4} mb={6} align="flex-start">
-      <ChatIcon isUser={isUser} />
+    <Flex direction={isUserMessage ? 'row-reverse' : 'row'} gap={4} mb={6} align="flex-start">
+      <ChatIcon isUser={isUserMessage} />
       <Box
         maxW={{ base: '100%', md: '70%' }}
-        bg={
-          isUser
-            ? { base: 'bg.subtle', _dark: 'bg.muted' }
-            : { base: 'bg.input', _dark: 'bg.subtle' }
-        }
+        bg={getMessageBg(isUserMessage)}
         color="fg.soft"
         borderRadius="lg"
         px={4}
