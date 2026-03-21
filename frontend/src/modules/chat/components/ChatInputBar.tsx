@@ -2,7 +2,12 @@ import { Box } from '@chakra-ui/react';
 import { ChatInput } from '@/modules/chat/components/ChatInput';
 import type { ChatInputBarProps } from '@/modules/chat/types/types';
 
-export const ChatInputBar = ({ onSend, isLoading, selectedModel, onModelChange }: ChatInputBarProps) => (
+export const ChatInputBar = ({
+  onSend,
+  isLoading,
+  selectedModel,
+  onModelChange,
+}: ChatInputBarProps) => (
   <Box
     position="absolute"
     bottom="0"
