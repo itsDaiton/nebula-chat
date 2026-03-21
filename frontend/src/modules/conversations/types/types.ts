@@ -14,6 +14,7 @@ export type ConversationsState = {
   fetchConversations: (showLoading?: boolean) => Promise<void>;
   loadMore: () => Promise<void>;
   refetch: () => Promise<void>;
+  prependConversation: (conversation: Conversation) => void;
 };
 
 export type ConversationWithMessages = Conversation & {

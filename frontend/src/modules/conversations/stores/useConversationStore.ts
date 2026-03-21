@@ -20,6 +20,8 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
   error: null,
 
   fetchConversation: async (id: string) => {
+    const { conversationId: currentId, isLoading } = get();
+    if (currentId === id && isLoading) return;
     set({ conversationId: id, isLoading: true, error: null });
     try {
       const response = await fetch(SERVER_CONFIG.getApiEndpoint(`/api/conversations/${id}`));

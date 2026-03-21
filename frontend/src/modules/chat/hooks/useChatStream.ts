@@ -21,6 +21,7 @@ export const useChatStream = () => {
   } = useChatStreamStore();
   const navigate = useNavigate();
   const refetchConversations = useConversationsStore((state) => state.refetch);
+  const prependConversation = useConversationsStore((state) => state.prependConversation);
 
   const abortController = useRef<AbortController | null>(null);
   const pendingNavigationId = useRef<string | null>(null);
@@ -145,6 +146,11 @@ export const useChatStream = () => {
                   setConversationId(parsed.conversationId);
                   if (isNewConversation) {
                     pendingNavigationId.current = parsed.conversationId;
+                    prependConversation({
+                      id: parsed.conversationId,
+                      title: 'New conversation',
+                      createdAt: new Date().toISOString(),
+                    });
                   }
                 }
                 currentEvent = null;
@@ -220,6 +226,7 @@ export const useChatStream = () => {
     [
       conversationId,
       navigate,
+      prependConversation,
       refetchConversations,
       setConversationId,
       setError,

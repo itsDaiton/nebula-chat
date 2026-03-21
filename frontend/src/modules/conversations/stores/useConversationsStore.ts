@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { SERVER_CONFIG } from '@/shared/config/serverConfig';
 import { paginationConfig } from '@/shared/config/paginationConfig';
-import type { ConversationsState } from '@/modules/conversations/types/types';
+import type { Conversation, ConversationsState } from '@/modules/conversations/types/types';
 import { handleHttpError, handleNetworkError } from '@/shared/utils/errorHandler';
 
 export const useConversationsStore = create<ConversationsState>((set, get) => ({
@@ -78,6 +78,14 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
   refetch: async () => {
     set({ isLoadingMore: false });
     await get().fetchConversations(false);
+  },
+  prependConversation: (conversation: Conversation) => {
+    set((state) => ({
+      conversations: [
+        conversation,
+        ...state.conversations.filter((c) => c.id !== conversation.id),
+      ],
+    }));
   },
 }));
 

@@ -14,7 +14,8 @@ import { resources } from '@/resources';
 
 export const ChatContainer = () => {
   const { id: conversationId } = useParams<{ id: string }>();
-  const { error: conversationError } = useConversation(conversationId);
+  const { error: conversationError, isLoading: isConversationLoading } =
+    useConversation(conversationId);
   const {
     history,
     isStreaming,
@@ -26,7 +27,7 @@ export const ChatContainer = () => {
 
   const { handleSendMessage } = useHandleSendMessage({ history, setHistory, streamMessage });
 
-  if (conversationId && conversationId !== chatConversationId) {
+  if (conversationId && isConversationLoading && chatConversationId !== conversationId) {
     return (
       <ChatContainerBox>
         <Box flex="1" overflowY="auto" p={4} mb="120px" css={chatScrollBar}>

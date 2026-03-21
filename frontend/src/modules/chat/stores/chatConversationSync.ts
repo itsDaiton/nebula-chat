@@ -9,12 +9,6 @@ useConversationStore.subscribe((state, prevState) => {
 
   if (state.isLoading && state.conversationId !== prevState.conversationId && !isStreaming) {
     syncedConversationId = null;
-    // Only wipe history if the stream store isn't already showing this conversation
-    // (e.g. after streaming creates a new conversation — history is already correct)
-    const { conversationId: chatConvId } = useChatStreamStore.getState();
-    if (chatConvId !== state.conversationId) {
-      useChatStreamStore.setState({ history: [] });
-    }
     return;
   }
 
