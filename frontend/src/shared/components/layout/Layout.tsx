@@ -3,20 +3,24 @@ import { Header } from './Header';
 import { ConversationsList } from '@/modules/conversations/components/ConversationsList';
 import { SidePanel } from './SidePanel';
 import type { LayoutProps } from '@/shared/types/types';
-import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { ConversationDrawer } from '@/modules/conversations/components/ConversationDrawer';
-import { useDrawer } from '../hooks/useDrawer';
+import { useDrawer } from '../../hooks/useDrawer';
 import { ConversationsSearch } from '@/modules/conversations/components/ConversationsSearch';
 import { useConversationsContext } from '@/modules/conversations/context/ConversationsContext';
 import { useNavigate } from 'react-router';
 import { route } from '@/routes';
-import { useViewportHeight } from '../hooks/useViewportHeight';
+import { useViewportHeight } from '../../hooks/useViewportHeight';
 
 export const Layout = ({ children }: LayoutProps) => {
   const { isDrawerOpen, openDrawer, closeDrawer, isSearchOpen, toggleSearch, closeSearch } =
     useDrawer();
   const { showSidePanels, showRightPanel } = useResponsiveLayout();
   const { conversations } = useConversationsContext();
+
+  if (showSidePanels && isSearchOpen) {
+    closeSearch();
+  }
   const navigate = useNavigate();
   const viewportHeight = useViewportHeight();
 

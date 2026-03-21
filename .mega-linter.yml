@@ -18,9 +18,6 @@ DISABLE:
   - COPYPASTE # Uncomment to disable checks of excessive copy-pastes
   - SPELL # Uncomment to disable checks of spelling mistakes
 
-DISABLE_LINTERS:
-  - TYPESCRIPT_TS_STANDARD # Project uses ESLint; ts-standard requires a root tsconfig.json
-
 SHOW_ELAPSED_TIME: true
 
 # Uncomment if you want MegaLinter to detect errors but not block CI to pass

@@ -42,3 +42,19 @@ export interface UseHandleSendMessageProps {
 export interface ChatMessageSkeletonProps {
   isUser?: boolean;
 }
+
+export type ChatInputBarProps = {
+  onSend: (message: string) => void;
+  isLoading: boolean;
+  selectedModel: string;
+  onModelChange: (model: string) => void;
+};
+
+export type ChatEmptyStateProps = {
+  conversationId: string | undefined;
+};
+
+export type ChatMessageListProps = {
+  history: ChatMessage[];
+  isStreaming: boolean;
+};

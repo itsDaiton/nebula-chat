@@ -46,3 +46,10 @@ export interface BadgeActionButtonProps {
   onClick: () => void;
   badge?: BadgeConfig;
 }
+
+export type SearchState = {
+  isSearchOpen: boolean;
+  openSearch: () => void;
+  closeSearch: () => void;
+  toggleSearch: () => void;
+};

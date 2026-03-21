@@ -1,5 +1,5 @@
 import { Flex } from '@chakra-ui/react';
-import type { SidePanelProps } from '../types/types';
+import type { SidePanelProps } from '@/shared/types/types';
 import { chatScrollBar } from '@/shared/components/scrollbar';
 
 export const SidePanel = ({ children }: SidePanelProps) => (

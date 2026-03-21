@@ -1,11 +1,9 @@
 import { Box, Flex, Input, InputGroup, Portal, Text } from '@chakra-ui/react';
-import { useEffect } from 'react';
 import type { ConversationsSearchProps } from '../types/types';
 import { ConversationListItem } from './ConversationListItem';
 import { chatScrollBar } from '@/shared/components/scrollbar';
 import { useConversationsSearch } from '../hooks/useConversationsSearch';
 import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
-import { useSearchStore } from '@/shared/stores/useSearchStore';
 import { resources } from '@/resources';
 import { ConversationSkeletons } from './ConversationSkeletons';
 
@@ -16,12 +14,6 @@ export const ConversationsSearch = ({
 }: ConversationsSearchProps) => {
   const { searchQuery, setSearchQuery, filteredConversations, isSearching, error } =
     useConversationsSearch(conversations);
-  const { setIsSearchOpen } = useSearchStore();
-
-  useEffect(() => {
-    setIsSearchOpen(true);
-    return () => setIsSearchOpen(false);
-  }, [setIsSearchOpen]);
 
   useEscapeKey(onClose);
 

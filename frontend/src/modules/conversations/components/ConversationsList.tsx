@@ -4,7 +4,7 @@ import { toaster } from '@/shared/components/ui/toaster';
 import { useConversationsContext } from '../context/ConversationsContext';
 import { ConversationListItem } from './ConversationListItem';
 import { ConversationsSearch } from './ConversationsSearch';
-import { SidePanel } from '@/shared/layout/SidePanel';
+import { SidePanel } from '@/shared/components/layout/SidePanel';
 import { resources } from '@/resources';
 import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
 import { useSearchStore } from '@/shared/stores/useSearchStore';

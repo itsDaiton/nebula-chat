@@ -1,34 +1,20 @@
-import { useEffect } from 'react';
-import { useViewportStore } from '../stores/useViewportStore';
+import { useSyncExternalStore } from 'react';
 
-export const useViewportHeight = () => {
-  const { viewportHeight, setViewportHeight } = useViewportStore();
+function getViewportHeight() {
+  if (window.visualViewport) {
+    return `${window.visualViewport.height}px`;
+  }
+  return `${window.innerHeight}px`;
+}
 
-  useEffect(() => {
-    const updateHeight = () => {
-      if (window.visualViewport) {
-        const height = window.visualViewport.height;
-        setViewportHeight(`${height}px`);
-      } else {
-        setViewportHeight(`${window.innerHeight}px`);
-      }
-    };
-
-    updateHeight();
-
-    window.addEventListener('resize', updateHeight);
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', updateHeight);
-    }
-
-    return () => {
-      window.removeEventListener('resize', updateHeight);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', updateHeight);
-      }
-    };
-  }, [setViewportHeight]);
-
-  return viewportHeight;
+const subscribeToViewportHeight = (callback: () => void) => {
+  window.addEventListener('resize', callback);
+  window.visualViewport?.addEventListener('resize', callback);
+  return () => {
+    window.removeEventListener('resize', callback);
+    window.visualViewport?.removeEventListener('resize', callback);
+  };
 };
+
+export const useViewportHeight = () =>
+  useSyncExternalStore(subscribeToViewportHeight, getViewportHeight, () => '100dvh');

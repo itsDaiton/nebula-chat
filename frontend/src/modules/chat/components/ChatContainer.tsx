@@ -1,18 +1,17 @@
 import { Box, Flex, Text } from '@chakra-ui/react';
-import { ChatInput } from './ChatInput';
-import { useChatStream } from '../hooks/useChatStream';
-import { useRef, useEffect, startTransition } from 'react';
-import { ChatMessage } from './ChatMessage';
+import { useParams } from 'react-router';
+import { ChatContainerBox } from './ChatContainerBox';
 import { ChatMessagesSkeletons } from './ChatMessageSkeleton';
+import { ChatInputBar } from './ChatInputBar';
+import { ChatEmptyState } from './ChatEmptyState';
+import { ChatMessageList } from './ChatMessageList';
+import { useChatStream } from '../hooks/useChatStream';
 import { useHandleSendMessage } from '../hooks/useHandleSendMessage';
 import { useModel } from '../hooks/useModel';
+import { useConversationSync } from '../hooks/useConversationSync';
+import { useConversation } from '@/modules/conversations/hooks/useConversation';
 import { chatScrollBar } from '@/shared/components/scrollbar';
 import { resources } from '@/resources';
-import { ChatStreaming } from './ChatStreaming';
-import { ChatContainerBox } from './ChatContainerBox';
-import { useAutoScroll } from '../../../shared/hooks/useAutoScroll';
-import { useParams } from 'react-router';
-import { useConversation } from '@/modules/conversations/hooks/useConversation';
 
 export const ChatContainer = () => {
   const { id: conversationId } = useParams<{ id: string }>();
@@ -23,44 +22,17 @@ export const ChatContainer = () => {
   } = useConversation(conversationId);
   const { history, isStreaming, streamMessage, setHistory, setConversationId } = useChatStream();
   const { selectedModel, setSelectedModel } = useModel();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const loadedConversationId = useRef<string | null>(null);
 
-  const isLoadingDifferentConversation =
-    conversationId && (isLoadingConversation || conversationId !== loadedConversationId.current);
-
-  useEffect(() => {
-    if (conversationId && conversationId !== loadedConversationId.current) {
-      setHistory([]);
-    } else if (!conversationId && !isStreaming) {
-      setHistory([]);
-      setConversationId(undefined);
-      loadedConversationId.current = null;
-    }
-  }, [conversationId, isStreaming, setHistory, setConversationId]);
-
-  useEffect(() => {
-    if (conversation?.messages && conversation.id === conversationId) {
-      const messages = conversation.messages.map((msg) => ({
-        id: msg.id,
-        role: msg.role,
-        content: msg.content,
-      }));
-      startTransition(() => {
-        setHistory(messages);
-        setConversationId(conversation.id);
-        loadedConversationId.current = conversation.id;
-      });
-    }
-  }, [conversation, conversationId, setHistory, setConversationId]);
-
-  const { handleSendMessage } = useHandleSendMessage({
-    history,
+  const { isLoadingDifferentConversation } = useConversationSync({
+    conversationId,
+    conversation,
+    isLoadingConversation,
+    isStreaming,
     setHistory,
-    streamMessage,
+    setConversationId,
   });
 
-  useAutoScroll(messagesEndRef, [history, isStreaming]);
+  const { handleSendMessage } = useHandleSendMessage({ history, setHistory, streamMessage });
 
   if (isLoadingDifferentConversation) {
     return (
@@ -68,21 +40,12 @@ export const ChatContainer = () => {
         <Box flex="1" overflowY="auto" p={4} mb="120px" css={chatScrollBar}>
           <ChatMessagesSkeletons count={5} />
         </Box>
-        <Box
-          position="absolute"
-          bottom="0"
-          left="0"
-          right="0"
-          borderTop={{ base: '1px', _dark: '1.5px' }}
-          borderColor="border.default"
-        >
-          <ChatInput
-            onSendMessage={(message) => void handleSendMessage(message, selectedModel)}
-            isLoading={false}
-            selectedModel={selectedModel}
-            onModelChange={setSelectedModel}
-          />
-        </Box>
+        <ChatInputBar
+          onSend={(msg) => void handleSendMessage(msg, selectedModel)}
+          isLoading={false}
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+        />
       </ChatContainerBox>
     );
   }
@@ -108,70 +71,22 @@ export const ChatContainer = () => {
     <ChatContainerBox>
       <Box flex="1" overflowY="auto" p={4} mb="120px" css={chatScrollBar}>
         {history.length === 0 ? (
-          <Flex
-            direction="column"
-            align="center"
-            justify="center"
-            h="100%"
-            textAlign="center"
-            color="fg.muted"
-            gap={4}
-          >
-            {conversationId ? (
-              <>
-                <Box fontSize="2xl" fontWeight="medium" color="fg.default" maxW="600px">
-                  {resources.chat.emptyConversation}
-                </Box>
-                <Box fontSize="md" maxW="600px" lineHeight="tall">
-                  {resources.chat.emptyConversationHint}
-                </Box>
-              </>
-            ) : (
-              <>
-                <Box fontSize="2xl" fontWeight="medium" color="fg.default" maxW="600px">
-                  {resources.chat.welcomeMessage}
-                </Box>
-                <Box fontSize="md" maxW="600px" lineHeight="tall">
-                  {resources.chat.welcomeIntro}
-                </Box>
-              </>
-            )}
-          </Flex>
+          <ChatEmptyState conversationId={conversationId} />
         ) : (
-          <>
-            {history.map((message, index) => {
-              if (
-                isStreaming &&
-                index === history.length - 1 &&
-                message.role === 'assistant' &&
-                !message.content
-              ) {
-                return null;
-              }
-              return <ChatMessage key={message.id} message={message} />;
-            })}
-            {isStreaming && history.at(-1)?.role === 'assistant' && !history.at(-1)?.content && (
-              <ChatStreaming />
-            )}
-          </>
+          <ChatMessageList history={history} isStreaming={isStreaming} />
         )}
-        <div ref={messagesEndRef} style={{ height: '0px' }} />
-      </Box>
-      <Box
-        position="absolute"
-        bottom="0"
-        left="0"
-        right="0"
-        borderTop={{ base: '1px', _dark: '1.5px' }}
-        borderColor="border.default"
-      >
-        <ChatInput
-          onSendMessage={(message) => void handleSendMessage(message, selectedModel)}
-          isLoading={isStreaming}
-          selectedModel={selectedModel}
-          onModelChange={setSelectedModel}
+        <div
+          key={`scroll-${history.length}-${String(isStreaming)}`}
+          ref={(node) => node?.scrollIntoView({ behavior: 'smooth' })}
+          style={{ height: '0px' }}
         />
       </Box>
+      <ChatInputBar
+        onSend={(msg) => void handleSendMessage(msg, selectedModel)}
+        isLoading={isStreaming}
+        selectedModel={selectedModel}
+        onModelChange={setSelectedModel}
+      />
     </ChatContainerBox>
   );
 };

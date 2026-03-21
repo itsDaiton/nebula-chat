@@ -1,20 +1,8 @@
 import { create } from 'zustand';
 import { SERVER_CONFIG } from '@/shared/config/serverConfig';
 import { paginationConfig } from '@/shared/config/paginationConfig';
-import type { Conversation } from '../types/types';
+import type { ConversationsState } from '@/modules/conversations/types/types';
 import { handleHttpError, handleNetworkError } from '@/shared/utils/errorHandler';
-
-interface ConversationsState {
-  conversations: Conversation[];
-  isLoading: boolean;
-  isLoadingMore: boolean;
-  error: string | null;
-  nextCursor: string | null;
-  hasMore: boolean;
-  fetchConversations: (showLoading?: boolean) => Promise<void>;
-  loadMore: () => Promise<void>;
-  refetch: () => Promise<void>;
-}
 
 export const useConversationsStore = create<ConversationsState>((set, get) => ({
   conversations: [],
@@ -92,3 +80,5 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
     await get().fetchConversations(false);
   },
 }));
+
+void useConversationsStore.getState().fetchConversations(true);

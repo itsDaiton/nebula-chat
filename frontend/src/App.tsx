@@ -1,7 +1,7 @@
-import { RouterProvider } from './RouterProvider';
-import { ThemeProvider } from './theme/ThemeProvider';
-import { ConversationsProvider } from './modules/conversations/context/ConversationsContext';
-import { Toaster } from './shared/components/ui/toaster';
+import { RouterProvider } from '@/RouterProvider';
+import { ThemeProvider } from '@/theme/ThemeProvider';
+import { ConversationsProvider } from '@/modules/conversations/providers/ConversationsProvider';
+import { Toaster } from '@/shared/components/ui/toaster';
 import './App.css';
 
 function App() {
