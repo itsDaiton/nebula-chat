@@ -90,7 +90,7 @@ export default [
         {
           patterns: [
             {
-              regex: '^\\.+\\/',
+              regex: String.raw`^\.+\/`,
               message: 'Use @/ absolute path imports instead of relative paths.',
             },
           ],
