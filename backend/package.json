@@ -14,7 +14,7 @@
     "prisma:validate": "prisma validate"
   },
   "dependencies": {
-    "@asteasolutions/zod-to-openapi": "^8.4.3",
+    "@asteasolutions/zod-to-openapi": "^8.5.0",
     "@prisma/adapter-pg": "^7.5.0",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
