@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Box, Flex, Text } from '@chakra-ui/react';
 import { useParams } from 'react-router';
 import { ChatContainerBox } from '@/modules/chat/components/ChatContainerBox';
@@ -19,13 +20,22 @@ export const ChatContainer = () => {
   const {
     history,
     isStreaming,
+    isPostStreamNavigation,
     streamMessage,
-    setHistory,
+    clearPostStream,
     conversationId: chatConversationId,
   } = useChatStream();
   const { selectedModel, setSelectedModel } = useModel();
 
-  const { handleSendMessage } = useHandleSendMessage({ history, setHistory, streamMessage });
+  const { handleSendMessage } = useHandleSendMessage({ history, streamMessage });
+
+  // Once the navigation has rendered (conversationId from URL params is set),
+  // it's safe to clear the streaming state without causing an empty-state flicker.
+  useEffect(() => {
+    if (isPostStreamNavigation && conversationId) {
+      clearPostStream();
+    }
+  }, [conversationId, isPostStreamNavigation, clearPostStream]);
 
   if (conversationId && isConversationLoading && chatConversationId !== conversationId) {
     return (

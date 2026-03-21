@@ -3,7 +3,6 @@ import type { ChatMessage, UseHandleSendMessageProps } from '@/modules/chat/type
 
 export const useHandleSendMessage = ({
   history,
-  setHistory,
   streamMessage,
 }: UseHandleSendMessageProps) => {
   const handleSendMessage = useCallback(
@@ -15,7 +14,6 @@ export const useHandleSendMessage = ({
       };
 
       const updatedMessages = [...history, newUserMessage];
-      setHistory(updatedMessages);
 
       try {
         await streamMessage({ messages: updatedMessages, model: selectedModel });
@@ -24,7 +22,7 @@ export const useHandleSendMessage = ({
         console.error('Streaming error:', err);
       }
     },
-    [history, setHistory, streamMessage],
+    [history, streamMessage],
   );
 
   return { handleSendMessage };

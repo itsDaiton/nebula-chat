@@ -37,7 +37,6 @@ export type UseMessageHandlerProps = {
 
 export type UseHandleSendMessageProps = {
   history: ChatMessage[];
-  setHistory: (messages: ChatMessage[]) => void;
   streamMessage: (params: ChatHistoryStreamOptions) => Promise<void>;
 };
 
@@ -75,11 +74,13 @@ type Usage = {
 export type ChatStreamState = {
   history: ChatMessage[];
   isStreaming: boolean;
+  isPostStreamNavigation: boolean;
   error: string | null;
   usage: Usage;
   conversationId?: string;
   setHistory: Dispatch<SetStateAction<ChatMessage[]>>;
   setIsStreaming: (isStreaming: boolean) => void;
+  setIsPostStreamNavigation: (v: boolean) => void;
   setError: (error: string | null) => void;
   setUsage: (usage: Usage) => void;
   setConversationId: (id: string | undefined) => void;

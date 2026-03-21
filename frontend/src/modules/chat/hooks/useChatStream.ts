@@ -10,11 +10,13 @@ export const useChatStream = () => {
   const {
     history,
     isStreaming,
+    isPostStreamNavigation,
     error,
     usage,
     conversationId,
     setHistory,
     setIsStreaming,
+    setIsPostStreamNavigation,
     setError,
     setUsage,
     setConversationId,
@@ -26,6 +28,12 @@ export const useChatStream = () => {
   const abortController = useRef<AbortController | null>(null);
   const pendingNavigationId = useRef<string | null>(null);
 
+  // Keep conversationId in a ref so streamMessage doesn't need it as a useCallback dep.
+  // Without this, every setConversationId call (fired mid-stream on conversation-created)
+  // would recreate streamMessage → handleSendMessage → re-render the entire ChatContainer.
+  const conversationIdRef = useRef(conversationId);
+  conversationIdRef.current = conversationId;
+
   const abort = useCallback(() => {
     abortController.current?.abort();
     abortController.current = null;
@@ -34,34 +42,39 @@ export const useChatStream = () => {
 
   const streamMessage = useCallback(
     async ({ model, messages, conversationId: customConversationId }: ChatHistoryStreamOptions) => {
-      setIsStreaming(true);
-      setError(null);
-      setUsage(null);
       pendingNavigationId.current = null;
-
-      setHistory([...messages, { id: crypto.randomUUID(), role: 'assistant', content: '' }]);
 
       const controller = new AbortController();
       abortController.current = controller;
 
+      // Build the request body synchronously before any state updates.
+      const newUserMessage = messages.at(-1);
+      const requestBody: any = { messages: [newUserMessage], model };
+      const activeConversationId = customConversationId ?? conversationIdRef.current;
+      if (activeConversationId) {
+        requestBody.conversationId = activeConversationId;
+      }
+
+      // Start the fetch BEFORE the state update. useChatStreamStore.setState uses
+      // useSyncExternalStore which can trigger synchronous renders — doing it before
+      // fetch() would delay the HTTP request by the cost of that render pass.
+      const responseFetch = fetch(SERVER_CONFIG.getApiEndpoint('/api/chat/stream'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      });
+
+      // Now update UI state. The network request is already in flight.
+      useChatStreamStore.setState({
+        isStreaming: true,
+        error: null,
+        usage: null,
+        history: [...messages, { id: crypto.randomUUID(), role: 'assistant', content: '' }],
+      });
+
       try {
-        const newUserMessage = messages.at(-1);
-
-        const requestBody: any = {
-          messages: [newUserMessage],
-          model,
-        };
-
-        if (customConversationId || conversationId) {
-          requestBody.conversationId = customConversationId || conversationId;
-        }
-
-        const response = await fetch(SERVER_CONFIG.getApiEndpoint('/api/chat/stream'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody),
-          signal: controller.signal,
-        });
+        const response = await responseFetch;
 
         if (!response.ok) {
           throw new Error(`Error: ${response.status} ${response.statusText}`);
@@ -121,14 +134,22 @@ export const useChatStream = () => {
               const raw = line.replace('data: ', '').trim();
 
               if (raw === 'end') {
-                setIsStreaming(false);
                 abortController.current = null;
                 if (pendingNavigationId.current) {
-                  void navigate(route.chat.conversation(pendingNavigationId.current), {
-                    replace: true,
-                  });
-                  void refetchConversations();
+                  const navId = pendingNavigationId.current;
                   pendingNavigationId.current = null;
+                  // Signal that we're in the post-stream navigation window.
+                  // isStreaming intentionally stays true here — a useEffect in ChatContainer
+                  // will call clearPostStream() once conversationId from useParams is set,
+                  // guaranteeing isStreaming goes false only after the navigation has rendered.
+                  // (requestAnimationFrame was unreliable: it could fire before React processed
+                  // the navigation render, leaving a frame with isStreaming=false + no conversationId
+                  // → empty state flicker.)
+                  setIsPostStreamNavigation(true);
+                  void navigate(route.chat.conversation(navId), { replace: true });
+                  void refetchConversations();
+                } else {
+                  setIsStreaming(false);
                 }
                 return;
               }
@@ -142,13 +163,13 @@ export const useChatStream = () => {
 
               if (currentEvent === 'conversation-created') {
                 if (parsed.conversationId) {
-                  const isNewConversation = !conversationId;
+                  const isNewConversation = !conversationIdRef.current;
                   setConversationId(parsed.conversationId);
                   if (isNewConversation) {
                     pendingNavigationId.current = parsed.conversationId;
                     prependConversation({
                       id: parsed.conversationId,
-                      title: 'New conversation',
+                      title: '...',
                       createdAt: new Date().toISOString(),
                     });
                   }
@@ -224,25 +245,33 @@ export const useChatStream = () => {
       }
     },
     [
-      conversationId,
       navigate,
       prependConversation,
       refetchConversations,
       setConversationId,
       setError,
       setHistory,
+      setIsPostStreamNavigation,
       setIsStreaming,
       setUsage,
     ],
   );
 
+  // Atomically clears both isStreaming and isPostStreamNavigation in one setState call
+  // so ChatContainer sees a consistent state in a single render.
+  const clearPostStream = useCallback(() => {
+    useChatStreamStore.setState({ isStreaming: false, isPostStreamNavigation: false });
+  }, []);
+
   return {
     history,
     isStreaming,
+    isPostStreamNavigation,
     error,
     usage,
     streamMessage,
     abort,
+    clearPostStream,
     setConversationId,
     setHistory,
     conversationId,
