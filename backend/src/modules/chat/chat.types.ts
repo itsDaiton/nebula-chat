@@ -7,7 +7,7 @@ export type UsageData = {
   promptTokens: number;
   completionTokens: number;
   totalTokens: number;
-}
+};
 
 export type StreamCallbacks = {
   onConversationCreated: (conversationId: string) => void;
@@ -16,4 +16,4 @@ export type StreamCallbacks = {
   onUsage: (usageData: UsageData) => void;
   onAssistantMessageCreated: (messageId: string) => void;
   onError: (error: string) => void;
-}
+};

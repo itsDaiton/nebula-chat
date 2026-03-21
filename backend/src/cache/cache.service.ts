@@ -40,7 +40,9 @@ const parseCacheStats = async (): Promise<BaseRedisStats> => {
   };
 };
 
-const updateStats = async (updater: (stats: BaseRedisStats) => Partial<BaseRedisStats>): Promise<void> => {
+const updateStats = async (
+  updater: (stats: BaseRedisStats) => Partial<BaseRedisStats>,
+): Promise<void> => {
   try {
     const client = await ensureConnection();
     const stats = await parseCacheStats();

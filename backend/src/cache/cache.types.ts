@@ -16,7 +16,7 @@ export type CachedStreamData = {
     completionTokens: number;
     totalTokens: number;
   };
-}
+};
 export type BaseRedisStats = z.infer<typeof baseRedisStatsSchema>;
 export type RedisStats = z.infer<typeof redisStatsSchema>;
 export type CacheStats = z.infer<typeof cacheStatsSchema>;

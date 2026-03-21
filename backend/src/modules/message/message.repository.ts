@@ -24,7 +24,10 @@ export const messageRepository = {
       orderBy: { createdAt: 'desc' },
     });
   },
-  createTx(tx: Prisma.TransactionClient, data: Omit<CreateMessageDTO, 'tokens'> & { tokens?: CreateMessageDTO['tokens'] }) {
+  createTx(
+    tx: Prisma.TransactionClient,
+    data: Omit<CreateMessageDTO, 'tokens'> & { tokens?: CreateMessageDTO['tokens'] },
+  ) {
     const { conversationId, content, role, model, tokens } = data;
     return tx.message.create({
       data: {
