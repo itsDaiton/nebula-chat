@@ -1,7 +1,5 @@
 import { createListCollection } from '@chakra-ui/react';
 
-export const useIsUser = (role: string) => role === 'user';
-
 export const modelOptions = createListCollection({
   items: [
     { label: 'GPT-4.1', value: 'gpt-4.1' },

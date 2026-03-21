@@ -162,8 +162,6 @@ const config = defineConfig({
       fontFamily: '{fonts.body}',
       color: '{colors.fg.default}',
       bg: '{colors.bg.default}',
-      transitionProperty: 'background-color, border-color, color, fill, stroke',
-      transitionDuration: 'normal',
     },
   },
 });

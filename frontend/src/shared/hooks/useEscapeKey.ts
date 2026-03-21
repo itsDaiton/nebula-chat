@@ -1,14 +1,14 @@
-import { useEffect } from 'react';
+import { useCallback, useRef } from 'react';
+import { useEventListener } from '@/shared/hooks/useEventListener';
 
-export function useEscapeKey(onEscape: () => void) {
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onEscape();
-      }
-    };
+export const useEscapeKey = (onEscape: () => void) => {
+  const onEscapeRef = useRef(onEscape);
+  onEscapeRef.current = onEscape;
 
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [onEscape]);
-}
+  useEventListener<KeyboardEvent>(
+    'keydown',
+    useCallback((event: KeyboardEvent) => {
+      if (event.key === 'Escape') onEscapeRef.current();
+    }, []),
+  );
+};

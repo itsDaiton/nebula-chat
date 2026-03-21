@@ -9,7 +9,7 @@ export class HttpError extends Error {
   }
 }
 
-export async function handleHttpError(response: Response): Promise<never> {
+export const handleHttpError = async (response: Response): Promise<never> => {
   const { status, statusText } = response;
 
   let errorMessage: string;
@@ -22,9 +22,9 @@ export async function handleHttpError(response: Response): Promise<never> {
   }
 
   throw new HttpError(errorMessage, status, statusText);
-}
+};
 
-export function handleNetworkError(error: unknown): never {
+export const handleNetworkError = (error: unknown): never => {
   if (error instanceof HttpError) {
     throw error;
   }
@@ -40,4 +40,4 @@ export function handleNetworkError(error: unknown): never {
   }
 
   throw new Error('An unknown error occurred. Please try again.');
-}
+};

@@ -145,7 +145,9 @@ frontend/src/
 │       ├── types/types.ts         # All conversation types
 │       ├── utils/navigationActions.tsx
 │       ├── context/
-│       │   └── ConversationsContext.tsx   # Init effect only — state is in the store
+│       │   └── ConversationsContext.tsx   # createContext + useConversationsContext hook only
+│       ├── providers/
+│       │   └── ConversationsProvider.tsx  # Provider component — reads store, supplies context value
 │       ├── stores/
 │       │   └── useConversationsStore.ts
 │       ├── hooks/
@@ -225,23 +227,28 @@ navigate(route.chat.conversation(id)); // /c/:id
 
 ### Imports
 
-Always use the `@/` path alias — never relative paths (`./`, `../../`, etc.). `@/` maps to `frontend/src/`.
+Always use the `@/` path alias — never relative paths (`./`, `../../`, etc.). `@/` maps to `frontend/src/`. This applies to **every** import in every file — components, hooks, utils, and types — regardless of how close the files are to each other.
+
+**Check every import in every file you touch.** If a relative path exists anywhere in a file you modify, fix it.
 
 ```ts
 // correct
 import { useSearchStore } from '@/shared/stores/useSearchStore';
 import type { Conversation } from '@/modules/conversations/types/types';
+import { ChatInput } from '@/modules/chat/components/ChatInput';
+import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 
-// wrong
+// wrong — no relative paths, ever
 import { useSearchStore } from '../../shared/stores/useSearchStore';
 import type { Conversation } from '../types/types';
+import { ChatInput } from './ChatInput';
 ```
 
 ---
 
 ### TypeScript Types
 
-- Use `type` — never `interface`.
+- Use `type` — never `interface`. This applies everywhere: `types/types.ts`, hooks, components, utils — no exceptions.
 
 ```ts
 // correct
@@ -250,7 +257,7 @@ type ConversationWithMessages = {
   messages: Message[];
 };
 
-// wrong
+// wrong — anywhere in the codebase
 interface ConversationWithMessages { ... }
 ```
 
@@ -261,13 +268,33 @@ interface ConversationWithMessages { ... }
 import type { ChatMessage } from '@/modules/chat/types/types';
 ```
 
+### Modern TypeScript / ES Style
+
+- **Never use `'use client'`** — this is a Vite/React SPA, not Next.js. The directive has no effect and must never appear in any file.
+
+- Always use `const` arrow functions — never `function` declarations. This applies to hooks, utils, helpers, and components.
+
+```ts
+// correct
+export const useMyHook = () => { ... };
+export const formatDate = (date: string): string => { ... };
+export const MyComponent = () => <div />;
+
+// wrong
+export function useMyHook() { ... }
+export function formatDate(date: string): string { ... }
+function MyComponent() { ... }
+```
+
 ---
 
 ### State Management — Zustand
 
 All client state is managed with [Zustand](https://zustand.docs.pmnd.rs/). React Context is **not** used for state.
 
-#### When to use Zustand vs `useState`
+#### Never use `useState`
+
+**Never use `useState`.** All state lives in Zustand stores. There is no scenario where `useState` is the right choice.
 
 | Scenario                                                       | Use                                                         |
 | -------------------------------------------------------------- | ----------------------------------------------------------- |
@@ -276,7 +303,8 @@ All client state is managed with [Zustand](https://zustand.docs.pmnd.rs/). React
 | API-fetching state (loading, data, error)                      | Zustand store                                               |
 | DOM measurements shared across instances (e.g. `useMultiLine`) | Zustand store keyed by content                              |
 | Debounce timers                                                | Module-level variable alongside the store — not React state |
-| Truly isolated, non-shared local state                         | `useState` acceptable as a last resort                      |
+| Tracking a previous value across renders                       | `useRef` — not state                                        |
+| Any other "local" state                                        | Zustand store in the owning module                          |
 
 #### Folder rules
 
@@ -318,7 +346,12 @@ Store types that are referenced outside the store file must live in `/types/type
 
 #### React Context
 
-Context is **not** used for shared state. The one remaining provider is `ConversationsProvider`, which exists solely to trigger `fetchConversations` on app startup — it does not hold its own state. All components subscribe to `useConversationsStore` directly.
+Context is **not** used for shared state. When a context is needed, split it across two files:
+
+- **`context/<Name>Context.tsx`** — `createContext` + the typed `use<Name>Context()` hook. No JSX, no store imports.
+- **`providers/<Name>Provider.tsx`** — the provider component. Reads from Zustand stores, memoizes the value, renders `<Context.Provider>`.
+
+The one existing provider is `ConversationsProvider`, which wraps the app to supply context values from `useConversationsStore`. It does not hold its own state. The initial fetch is triggered at module-level store initialization. All components subscribe to `useConversationsStore` directly.
 
 #### Existing stores
 
@@ -341,6 +374,7 @@ Context is **not** used for shared state. The one remaining provider is `Convers
 ### Components
 
 - Components live in `modules/<module>/components/` or `shared/components/`.
+- **One component per file.** Never define multiple components, hooks, or significant logic in a single file. No co-located sub-components, no local helper components at the bottom of a file — every component gets its own file.
 - Components read from stores and hooks — they do not own significant state themselves.
 - Use Chakra UI primitives. Custom UI wrappers live in `shared/components/ui/`.
 - Responsive layout decisions (`isMobile`, `showSidePanels`) come from `useResponsiveLayout`.
@@ -375,7 +409,24 @@ export const useDrawer = () => {
 };
 ```
 
-Utility hooks that are inherently parameterised per call-site (`useDebounce`, `useEventListener`, `useAutoScroll`) may use `useState`/`useRef` — they cannot be singleton stores.
+Utility hooks that are inherently parameterised per call-site (`useDebounce`, `useEventListener`) may use `useRef` — they cannot be singleton stores.
+
+---
+
+### `useEffect` rules
+
+**Never use `useEffect`.** Reference: [You Might Not Need an Effect](https://react.dev/learn/you-might-not-need-an-effect)
+
+| Pattern                            | Wrong                            | Right                                                                             |
+| ---------------------------------- | -------------------------------- | --------------------------------------------------------------------------------- |
+| Derived / computed state           | `useEffect` → `setState`         | Compute inline during render or `useMemo`                                         |
+| Syncing state on prop/route change | `useEffect` → Zustand `set`      | Render-time `useRef` guard (see `useConversation.ts`)                             |
+| Initialising data on mount         | `useEffect(() => fetch(), [])`   | Module-level store init (see `useConversationsStore.ts`)                          |
+| Reading a browser API value        | `useEffect` + `useState`         | `useSyncExternalStore` (see `useViewportHeight.ts`)                               |
+| DOM measurement after mount        | `useRef` + `useEffect`           | Callback ref — `ref={useCallback((node) => { ... }, [])}` (see `useMultiLine.ts`) |
+| Registering a DOM event listener   | `useEffect` + `addEventListener` | `useEventListener` via `useSyncExternalStore` subscribe lifecycle                 |
+
+No hook or component in the codebase may import or call `useEffect`.
 
 ---
 

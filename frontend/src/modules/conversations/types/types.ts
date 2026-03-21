@@ -4,6 +4,19 @@ export type Conversation = {
   createdAt: string;
 };
 
+export type ConversationsState = {
+  conversations: Conversation[];
+  isLoading: boolean;
+  isLoadingMore: boolean;
+  error: string | null;
+  nextCursor: string | null;
+  hasMore: boolean;
+  fetchConversations: (showLoading?: boolean) => Promise<void>;
+  loadMore: () => Promise<void>;
+  refetch: () => Promise<void>;
+  prependConversation: (conversation: Conversation) => void;
+};
+
 export type ConversationWithMessages = Conversation & {
   messages: Array<{
     id: string;
@@ -36,4 +49,18 @@ export type ConversationsContextValue = {
 
 export type ConversationListSkeletonsProps = {
   count?: number;
+};
+
+export type UseInfiniteScrollOptions = {
+  hasMore: boolean;
+  isLoading: boolean;
+  onLoadMore: () => void | Promise<void>;
+  threshold?: number;
+};
+
+export type ConversationsListProps = {
+  onClose?: () => void;
+  inDrawer?: boolean;
+  toggleSearch?: () => void;
+  closeSearch?: () => void;
 };

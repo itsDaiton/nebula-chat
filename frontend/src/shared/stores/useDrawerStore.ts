@@ -1,11 +1,5 @@
 import { create } from 'zustand';
-
-interface DrawerState {
-  isDrawerOpen: boolean;
-  openDrawer: () => void;
-  closeDrawer: () => void;
-  toggleDrawer: () => void;
-}
+import type { DrawerState } from '@/shared/types/types';
 
 export const useDrawerStore = create<DrawerState>((set) => ({
   isDrawerOpen: false,

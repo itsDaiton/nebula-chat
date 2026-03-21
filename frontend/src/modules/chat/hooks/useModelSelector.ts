@@ -1,6 +1,6 @@
 import { useLayoutEffect } from 'react';
-import { modelOptions } from '../utils/chatUtils';
-import { useModelSelectorStore } from '../stores/useModelSelectorStore';
+import { modelOptions } from '@/modules/chat/utils/modelOptions';
+import { useModelSelectorStore } from '@/modules/chat/stores/useModelSelectorStore';
 
 const MIN_TRIGGER_WIDTH = 120;
 const PADDING_WIDTH = 48;

@@ -1,5 +1,5 @@
 import { Box, Text } from '@chakra-ui/react';
-import type { ConversationListItemProps } from '../types/types';
+import type { ConversationListItemProps } from '@/modules/conversations/types/types';
 import { formatDate } from '@/shared/utils/formatDate';
 
 export const ConversationListItem = ({ conversation, onClick }: ConversationListItemProps) => (

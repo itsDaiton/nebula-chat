@@ -1,6 +1,6 @@
 import { Box, Flex, Text, Button } from '@chakra-ui/react';
 import { useNavigate } from 'react-router';
-import { route } from '@/routes';
+import { route } from '@/routing/routes';
 import { resources } from '@/resources';
 
 export const NotFound = () => {

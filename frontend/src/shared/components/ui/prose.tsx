@@ -1,16 +1,15 @@
-'use client';
-
 import { chakra } from '@chakra-ui/react';
 
 const TRAILING_PSEUDO_REGEX = /(::?[\w-]+(?:\([^)]*\))?)+$/;
 const EXCLUDE_CLASSNAME = '.not-prose';
-function inWhere<T extends string>(selector: T): T {
+
+const inWhere = <T extends string>(selector: T): T => {
   const rebuiltSelector = selector.startsWith('& ') ? selector.slice(2) : selector;
   const match = selector.match(TRAILING_PSEUDO_REGEX);
   const pseudo = match ? match[0] : '';
   const base = match ? selector.slice(0, -match[0].length) : rebuiltSelector;
   return `& :where(${base}):not(${EXCLUDE_CLASSNAME}, ${EXCLUDE_CLASSNAME} *)${pseudo}` as T;
-}
+};
 
 export const Prose = chakra('div', {
   base: {

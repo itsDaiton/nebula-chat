@@ -1,5 +1,5 @@
 import { Icon, Select } from '@chakra-ui/react';
-import { modelOptions } from '../utils/chatUtils';
+import { modelOptions } from '@/modules/chat/utils/modelOptions';
 import { IoChevronDown } from 'react-icons/io5';
 
 export const ModelSelect = ({

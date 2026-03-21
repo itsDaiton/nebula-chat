@@ -1,18 +1,20 @@
-import { RouterProvider } from './RouterProvider';
-import { ThemeProvider } from './theme/ThemeProvider';
-import { ConversationsProvider } from './modules/conversations/context/ConversationsContext';
-import { Toaster } from './shared/components/ui/toaster';
-import './App.css';
+import { CodeBlock } from '@chakra-ui/react';
+import { RouterProvider } from '@/routing/RouterProvider';
+import { ThemeProvider } from '@/theme/providers/ThemeProvider';
+import { ConversationsProvider } from '@/modules/conversations/providers/ConversationsProvider';
+import { Toaster } from '@/shared/components/ui/toaster';
+import { shikiAdapter } from '@/shared/components/ui/code-block-adapter';
+import '@/App.css';
 
-function App() {
-  return (
-    <ThemeProvider>
+const App = () => (
+  <ThemeProvider>
+    <CodeBlock.AdapterProvider value={shikiAdapter}>
       <ConversationsProvider>
         <RouterProvider />
         <Toaster />
       </ConversationsProvider>
-    </ThemeProvider>
-  );
-}
+    </CodeBlock.AdapterProvider>
+  </ThemeProvider>
+);
 
 export default App;

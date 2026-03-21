@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
-import type { UseMessageHandlerProps } from '../types/types';
-import { useMessageStore } from '../stores/useMessageStore';
+import type { ComponentProps } from 'react';
+import type { UseMessageHandlerProps } from '@/modules/chat/types/types';
+import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
 
 export const useMessageHandler = ({ onSendMessage, isLoading }: UseMessageHandlerProps) => {
   const { message, setMessage } = useMessageStore();
@@ -16,7 +17,7 @@ export const useMessageHandler = ({ onSendMessage, isLoading }: UseMessageHandle
     }
   }, [message, onSendMessage, setMessage]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit: NonNullable<ComponentProps<'form'>['onSubmit']> = (e) => {
     e.preventDefault();
     if (!isLoading) {
       handleMessageSend();

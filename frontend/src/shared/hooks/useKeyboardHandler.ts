@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import type { UseKeyboardHandlerProps } from '../../modules/chat/types/types';
+import type { UseKeyboardHandlerProps } from '@/modules/chat/types/types';
 import { useEventListener } from '@/shared/hooks/useEventListener';
 import { useSearchStore } from '@/shared/stores/useSearchStore';
 

@@ -1,16 +1,20 @@
-import { useEffect } from 'react';
+import { useCallback, useRef, useSyncExternalStore } from 'react';
 
 export const useEventListener = <T extends Event>(
   eventName: string,
   handler: (event: T) => void,
   element: EventTarget = globalThis,
 ) => {
-  useEffect(() => {
-    if (!element?.addEventListener) return;
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
 
-    element.addEventListener(eventName, handler as EventListener);
-    return () => {
-      element.removeEventListener(eventName, handler as EventListener);
-    };
-  }, [eventName, handler, element]);
+  useSyncExternalStore(
+    useCallback(() => {
+      if (!element?.addEventListener) return () => {};
+      const wrappedHandler = (event: Event) => handlerRef.current(event as T);
+      element.addEventListener(eventName, wrappedHandler);
+      return () => element.removeEventListener(eventName, wrappedHandler);
+    }, [element, eventName]),
+    () => null,
+  );
 };

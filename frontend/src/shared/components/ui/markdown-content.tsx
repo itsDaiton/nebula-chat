@@ -2,9 +2,8 @@ import { memo } from 'react';
 import { CodeBlock, IconButton, Box } from '@chakra-ui/react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Prose } from './prose';
-import { shikiAdapter } from './code-block-adapter';
-import { useColorMode } from './color-mode';
+import { Prose } from '@/shared/components/ui/prose';
+import { useColorMode } from '@/theme/hooks/useColorMode';
 import type { MarkdownContentProps } from '@/shared/types/types';
 import { isSafeUrl } from '@/shared/utils/urlUtils';
 import type { Components, ExtraProps } from 'react-markdown';
@@ -102,13 +101,11 @@ const markdownComponents: Components = {
 };
 
 export const MarkdownContent = memo(({ content }: MarkdownContentProps) => (
-  <CodeBlock.AdapterProvider value={shikiAdapter}>
-    <Prose maxWidth="none">
-      <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-        {content}
-      </Markdown>
-    </Prose>
-  </CodeBlock.AdapterProvider>
+  <Prose maxWidth="none">
+    <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+      {content}
+    </Markdown>
+  </Prose>
 ));
 
 MarkdownContent.displayName = 'MarkdownContent';

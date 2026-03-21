@@ -1,11 +1,5 @@
 import { create } from 'zustand';
-
-interface ModelSelectorState {
-  isSelectOpen: boolean;
-  triggerWidth: number;
-  setIsSelectOpen: (isOpen: boolean) => void;
-  setTriggerWidth: (width: number) => void;
-}
+import type { ModelSelectorState } from '@/modules/chat/types/types';
 
 export const useModelSelectorStore = create<ModelSelectorState>((set) => ({
   isSelectOpen: false,

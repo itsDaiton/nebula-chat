@@ -1,4 +1,4 @@
-import { useModelStore } from '../stores/useModelStore';
+import { useModelStore } from '@/modules/chat/stores/useModelStore';
 
 export const useModel = () => {
   const { selectedModel, setSelectedModel } = useModelStore();

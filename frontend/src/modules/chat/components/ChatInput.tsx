@@ -1,12 +1,12 @@
-import { Box, Flex } from '@chakra-ui/react';
-import { useMessageHandler } from '../hooks/useMessageHandler';
-import { useModelSelector } from '../hooks/useModelSelector';
-import type { ChatInputProps } from '../types/types';
-import { ModelSelect } from './ModelSelect';
-import { SendButton } from './SendButton';
+import { Box, Flex, chakra } from '@chakra-ui/react';
+import { useMessageHandler } from '@/modules/chat/hooks/useMessageHandler';
+import { useModelSelector } from '@/modules/chat/hooks/useModelSelector';
+import type { ChatInputProps } from '@/modules/chat/types/types';
+import { ModelSelect } from '@/modules/chat/components/ModelSelect';
+import { SendButton } from '@/modules/chat/components/SendButton';
 import { useTextareaAutoResize } from '@/shared/hooks/useTextareaAutoResize';
 import { chatScrollBar } from '@/shared/components/scrollbar';
-import { ChatInputArea } from './ChatInputArea';
+import { ChatInputArea } from '@/modules/chat/components/ChatInputArea';
 import { useKeyboardHandler } from '@/shared/hooks/useKeyboardHandler';
 
 export const ChatInput = ({
@@ -33,7 +33,7 @@ export const ChatInput = ({
   });
 
   return (
-    <Box as="form" onSubmit={handleSubmit} p={4}>
+    <chakra.form onSubmit={handleSubmit} p={4}>
       <Box
         position="relative"
         bg="bg.input"
@@ -67,6 +67,6 @@ export const ChatInput = ({
           <SendButton isLoading={isLoading} message={message} />
         </Flex>
       </Box>
-    </Box>
+    </chakra.form>
   );
 };

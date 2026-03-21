@@ -1,8 +1,8 @@
 import { Route, Routes } from 'react-router';
-import { route } from './routes';
-import { ChatPage } from './modules/chat/ChatPage';
-import { AuthPage } from './modules/auth/AuthPage';
-import { NotFound } from './shared/pages/NotFound';
+import { route } from '@/routing/routes';
+import { ChatPage } from '@/modules/chat/ChatPage';
+import { AuthPage } from '@/modules/auth/AuthPage';
+import { NotFound } from '@/shared/pages/NotFound';
 
 export const RouterProvider = () => (
   <Routes>

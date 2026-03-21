@@ -1,48 +1,80 @@
-import type { ButtonProps } from '@chakra-ui/react';
+import type { ButtonProps, IconButtonProps } from '@chakra-ui/react';
+import type { ThemeProviderProps } from 'next-themes';
 import type { ReactElement, ReactNode } from 'react';
 
-export interface LayoutProps {
+export type LayoutProps = {
   children: ReactNode;
-}
+};
 
-export interface SidePanelProps {
+export type SidePanelProps = {
   children?: ReactNode;
-}
+};
 
-export interface HeaderProps {
+export type HeaderProps = {
   onMenuClick?: () => void;
-}
+};
 
-export interface MarkdownContentProps {
+export type MarkdownContentProps = {
   content: string;
-}
+};
 
-export interface NebulaButtonProps extends ButtonProps {}
+export type ColorMode = 'light' | 'dark';
 
-export interface NebulaMenuItemProps {
+export type UseColorModeReturn = {
+  colorMode: ColorMode;
+  setColorMode: (colorMode: ColorMode) => void;
+  toggleColorMode: () => void;
+};
+
+export type ColorModeProviderProps = ThemeProviderProps;
+
+export type ColorModeButtonProps = Omit<IconButtonProps, 'aria-label'>;
+
+export type NebulaButtonProps = ButtonProps;
+
+export type NebulaMenuItemProps = {
   id: number;
   value: string;
   label: string;
   onClick?: () => void;
-}
+};
 
-export interface BadgeConfig {
+export type BadgeConfig = {
   text: string;
   colorPalette?: string;
   variant?: 'solid' | 'subtle' | 'outline' | 'surface' | 'plain';
-}
+};
 
-export interface NavigationAction {
+export type NavigationAction = {
   id: string;
   icon: ReactElement;
   label: string;
   badge?: BadgeConfig;
   action: 'newChat' | 'search' | 'files' | 'aiStudio';
-}
+};
 
-export interface BadgeActionButtonProps {
+export type BadgeActionButtonProps = {
   icon: ReactElement;
   label: string;
   onClick: () => void;
   badge?: BadgeConfig;
-}
+};
+
+export type SearchState = {
+  isSearchOpen: boolean;
+  openSearch: () => void;
+  closeSearch: () => void;
+  toggleSearch: () => void;
+};
+
+export type ViewportState = {
+  viewportHeight: string;
+  setViewportHeight: (height: string) => void;
+};
+
+export type DrawerState = {
+  isDrawerOpen: boolean;
+  openDrawer: () => void;
+  closeDrawer: () => void;
+  toggleDrawer: () => void;
+};

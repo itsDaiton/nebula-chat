@@ -1,17 +1,18 @@
 import { useEffect } from 'react';
 import { useConversationStore } from '@/modules/conversations/stores/useConversationStore';
 
-export function useConversation(conversationId: string | null | undefined) {
+export const useConversation = (conversationId: string | null | undefined) => {
   const { conversation, isLoading, error, fetchConversation, refetch, clear } =
     useConversationStore();
 
+  // keeping this useEffect for now; we will replace API fetching with tanstack-query soon
   useEffect(() => {
-    if (!conversationId) {
+    if (conversationId) {
+      void fetchConversation(conversationId);
+    } else {
       clear();
-      return;
     }
-    void fetchConversation(conversationId);
   }, [conversationId, fetchConversation, clear]);
 
   return { conversation, isLoading, error, refetch };
-}
+};

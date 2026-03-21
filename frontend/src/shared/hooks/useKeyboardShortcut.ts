@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useCallback, useRef } from 'react';
+import { useEventListener } from '@/shared/hooks/useEventListener';
 
-export function useKeyboardShortcut(
+export const useKeyboardShortcut = (
   key: string,
   callback: () => void,
   options?: {
@@ -8,22 +9,26 @@ export function useKeyboardShortcut(
     shift?: boolean;
     alt?: boolean;
   },
-) {
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const isModifier = event.ctrlKey || event.metaKey;
+) => {
+  const callbackRef = useRef(callback);
+  callbackRef.current = callback;
 
-      const ctrlMatch = options?.ctrl ? isModifier : !event.ctrlKey && !event.metaKey;
-      const shiftMatch = options?.shift ? event.shiftKey : !event.shiftKey;
-      const altMatch = options?.alt ? event.altKey : !event.altKey;
+  useEventListener<KeyboardEvent>(
+    'keydown',
+    useCallback(
+      (event: KeyboardEvent) => {
+        const isModifier = event.ctrlKey || event.metaKey;
+        const ctrlMatch = options?.ctrl ? isModifier : !event.ctrlKey && !event.metaKey;
+        const shiftMatch = options?.shift ? event.shiftKey : !event.shiftKey;
+        const altMatch = options?.alt ? event.altKey : !event.altKey;
 
-      if (event.key.toLowerCase() === key.toLowerCase() && ctrlMatch && shiftMatch && altMatch) {
-        event.preventDefault();
-        callback();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [key, callback, options]);
-}
+        if (event.key.toLowerCase() === key.toLowerCase() && ctrlMatch && shiftMatch && altMatch) {
+          event.preventDefault();
+          callbackRef.current();
+        }
+      },
+      [key, options?.ctrl, options?.shift, options?.alt],
+    ),
+    document,
+  );
+};

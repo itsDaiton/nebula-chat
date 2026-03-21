@@ -1,6 +1,6 @@
 import { Box, Skeleton, Flex } from '@chakra-ui/react';
 import { paginationConfig } from '@/shared/config/paginationConfig';
-import type { ConversationListSkeletonsProps } from '../types/types';
+import type { ConversationListSkeletonsProps } from '@/modules/conversations/types/types';
 
 export const ConversationSkeletons = ({
   count = paginationConfig.defaultLimit,

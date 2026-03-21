@@ -1,11 +1,7 @@
 import { useCallback } from 'react';
-import type { ChatMessage, UseHandleSendMessageProps } from '../types/types';
+import type { ChatMessage, UseHandleSendMessageProps } from '@/modules/chat/types/types';
 
-export const useHandleSendMessage = ({
-  history,
-  setHistory,
-  streamMessage,
-}: UseHandleSendMessageProps) => {
+export const useHandleSendMessage = ({ history, streamMessage }: UseHandleSendMessageProps) => {
   const handleSendMessage = useCallback(
     async (message: string, selectedModel: string) => {
       const newUserMessage: ChatMessage = {
@@ -15,7 +11,6 @@ export const useHandleSendMessage = ({
       };
 
       const updatedMessages = [...history, newUserMessage];
-      setHistory(updatedMessages);
 
       try {
         await streamMessage({ messages: updatedMessages, model: selectedModel });
@@ -24,7 +19,7 @@ export const useHandleSendMessage = ({
         console.error('Streaming error:', err);
       }
     },
-    [history, setHistory, streamMessage],
+    [history, streamMessage],
   );
 
   return { handleSendMessage };
