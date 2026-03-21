@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.4.0...nebula-chat-server-v1.4.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* **backend:** harden Express trust proxy config for IP rate limiting ([#112](https://github.com/itsDaiton/nebula-chat/issues/112)) ([fc9f015](https://github.com/itsDaiton/nebula-chat/commit/fc9f01510ab33c45636448a55f0e0e422c630dce))
+
 ## [1.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.3.2...nebula-chat-server-v1.4.0) (2026-03-21)
 
 
