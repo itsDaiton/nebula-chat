@@ -50,13 +50,12 @@ This is a TypeScript monorepo with two packages: `frontend` and `backend`.
 
 ### Frontend (`/frontend`)
 
-React 19 SPA built with Vite and Chakra UI. State is managed through React Context providers defined in `src/App.tsx`:
+React 19 SPA built with Vite and Chakra UI. State is managed with **Zustand** stores (see `AGENTS.md` for conventions). `src/App.tsx` mounts two providers:
 
 - `ThemeProvider` (Next Themes)
-- `SearchStateProvider`
-- `ConversationsProvider`
+- `ConversationsProvider` — triggers the initial conversations fetch; state lives in `useConversationsStore`
 
-Feature code lives in `src/modules/` (chat, conversations, auth). Shared UI components, layouts, and contexts are in `src/shared/`. The API base URL is configured via `VITE_API_URL`.
+Feature code lives in `src/modules/` (chat, conversations, auth). Shared UI components, layouts, and stores are in `src/shared/`. The API base URL is configured via `VITE_API_URL`.
 
 Chat responses are streamed from the backend and rendered using `react-markdown` + `shiki` for syntax highlighting.
 
