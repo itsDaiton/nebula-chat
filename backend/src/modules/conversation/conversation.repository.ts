@@ -1,4 +1,5 @@
 import { prisma } from '@backend/prisma';
+import type { Prisma } from 'prisma/generated/prisma/client';
 import { paginationConfig } from '@backend/config/pagination.config';
 import type {
   CreateConversationDTO,
@@ -41,6 +42,15 @@ export const conversationRepository = {
       nextCursor,
       hasMore,
     };
+  },
+  findByIdSimple(id: string) {
+    return prisma.conversation.findUnique({ where: { id } });
+  },
+  findByIdTx(tx: Prisma.TransactionClient, id: string) {
+    return tx.conversation.findUnique({ where: { id } });
+  },
+  createTx(tx: Prisma.TransactionClient, title: string) {
+    return tx.conversation.create({ data: { title } });
   },
   async search(query: string, limit = paginationConfig.maxLimit) {
     return prisma.conversation.findMany({

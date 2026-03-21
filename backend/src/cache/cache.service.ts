@@ -1,21 +1,21 @@
 import { createHash } from 'node:crypto';
 import type { RedisClientType } from 'redis';
 import type { CachedStreamData, BaseRedisStats, CacheStats } from '@backend/cache/cache.types';
-import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
+import type { CreateChatStreamDTO, UsageData } from '@backend/modules/chat/chat.types';
 import { createRedisClient, isRedisConnected, closeRedisClient } from '@backend/cache/cache.client';
 import { RedisCacheError } from '@backend/errors/AppError';
-import { cacheConfig } from './cache.config';
+import { cacheConfig } from '@backend/cache/cache.config';
 
 let redisClient: RedisClientType | null = null;
 
-async function ensureConnection(): Promise<RedisClientType> {
+const ensureConnection = async (): Promise<RedisClientType> => {
   if (!redisClient || !isRedisConnected()) {
     redisClient = await createRedisClient();
   }
   return redisClient;
-}
+};
 
-async function parseCacheStats(): Promise<BaseRedisStats> {
+const parseCacheStats = async (): Promise<BaseRedisStats> => {
   try {
     const client = await ensureConnection();
     const stats = await client.get(cacheConfig.statsKey);
@@ -38,87 +38,88 @@ async function parseCacheStats(): Promise<BaseRedisStats> {
     lastSetKey: null,
     lastHitKey: null,
   };
-}
+};
 
-async function updateStats(updates: Partial<BaseRedisStats>): Promise<void> {
+const updateStats = async (
+  updater: (stats: BaseRedisStats) => Partial<BaseRedisStats>,
+): Promise<void> => {
   try {
     const client = await ensureConnection();
     const stats = await parseCacheStats();
-    const updatedStats = { ...stats, ...updates };
+    const updatedStats = { ...stats, ...updater(stats) };
     await client.set(cacheConfig.statsKey, JSON.stringify(updatedStats));
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Error updating stats:', error);
   }
-}
+};
 
-async function getFromCache(key: string): Promise<CachedStreamData | null> {
+const getFromCache = async (key: string): Promise<CachedStreamData | null> => {
   try {
     const client = await ensureConnection();
     const value = await client.get(key);
 
     if (!value) {
-      await updateStats({ misses: (await parseCacheStats()).misses + 1 });
+      await updateStats((s) => ({ misses: s.misses + 1 }));
       return null;
     }
 
     const parsed: CachedStreamData = JSON.parse(value);
-    await updateStats({
-      hits: (await parseCacheStats()).hits + 1,
-      lastHitKey: key,
-    });
+    await updateStats((s) => ({ hits: s.hits + 1, lastHitKey: key }));
 
     return parsed;
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Redis GET error (fail-open):', error);
-    await updateStats({ misses: (await parseCacheStats()).misses + 1 });
+    await updateStats((s) => ({ misses: s.misses + 1 }));
     return null;
   }
-}
+};
 
-async function saveToCache(
+const saveToCache = async (
   key: string,
   value: string,
-  usageData?: any,
+  usageData?: UsageData,
   ttlMs: number = cacheConfig.defaultTTL,
-): Promise<void> {
+): Promise<void> => {
   try {
     const client = await ensureConnection();
     const cachedData: CachedStreamData = {
       tokens: value,
-      usageData,
+      ...(usageData !== undefined && { usageData }),
     };
 
     const serialized = JSON.stringify(cachedData);
     await client.setEx(key, Math.floor(ttlMs / 1000), serialized);
 
     await client.lPush(cacheConfig.keysList, key);
-    await client.lTrim(cacheConfig.keysList, 0, cacheConfig.maxItems - 1);
 
-    const size = await client.lLen(cacheConfig.keysList);
-    if (size > cacheConfig.maxItems) {
+    let evictions = 0;
+    let lastEvictedKey: string | null = null;
+    let size = await client.lLen(cacheConfig.keysList);
+    while (size > cacheConfig.maxItems) {
       const oldestKey = await client.rPop(cacheConfig.keysList);
-      if (oldestKey) {
-        await client.del(oldestKey);
-        await updateStats({
-          evictions: (await parseCacheStats()).evictions + 1,
-          lastEvictedKey: oldestKey,
-        });
-      }
+      if (!oldestKey) break;
+      await client.del(oldestKey);
+      evictions++;
+      lastEvictedKey = oldestKey;
+      size--;
+    }
+    if (evictions > 0 && lastEvictedKey !== null) {
+      await updateStats((s) => ({
+        evictions: s.evictions + evictions,
+        lastEvictedKey,
+      }));
     }
 
-    await updateStats({
-      sets: (await parseCacheStats()).sets + 1,
-      lastSetKey: key,
-    });
+    await updateStats((s) => ({ sets: s.sets + 1, lastSetKey: key }));
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Redis SET error (fail-open):', error);
   }
-}
+};
 
-function generateKey(data: CreateChatStreamDTO): string {
+const generateKey = (data: CreateChatStreamDTO): string => {
   const model = data.model;
   const conversationId = data.conversationId || 'default';
   const lastUserMessage = [...data.messages].reverse().find((msg) => msg.role === 'user');
@@ -127,9 +128,9 @@ function generateKey(data: CreateChatStreamDTO): string {
   const promptHash = createHash('sha256').update(prompt).digest('hex').substring(0, 16);
 
   return `conversation:${conversationId}:model:${model}:prompt:${promptHash}`;
-}
+};
 
-async function getCacheStats(): Promise<CacheStats> {
+const getCacheStats = async (): Promise<CacheStats> => {
   try {
     const client = await ensureConnection();
     const stats = await parseCacheStats();
@@ -186,9 +187,9 @@ async function getCacheStats(): Promise<CacheStats> {
       },
     };
   }
-}
+};
 
-async function clearCache(): Promise<void> {
+const clearCache = async (): Promise<void> => {
   try {
     const client = await ensureConnection();
     const keys = await client.lRange(cacheConfig.keysList, 0, -1);
@@ -205,9 +206,9 @@ async function clearCache(): Promise<void> {
     console.error('Redis CLEAR error:', error);
     throw new RedisCacheError(`Failed to clear cache: ${error}`);
   }
-}
+};
 
-async function getRecentKeys(limit: number = 20): Promise<string[]> {
+const getRecentKeys = async (limit: number = 20): Promise<string[]> => {
   try {
     const client = await ensureConnection();
     return await client.lRange(cacheConfig.keysList, 0, limit - 1);
@@ -216,16 +217,14 @@ async function getRecentKeys(limit: number = 20): Promise<string[]> {
     console.error('Redis GET_KEYS error (fail-open):', error);
     return [];
   }
-}
+};
 
-async function healthCheck(): Promise<{ status: 'ok' }> {
-  return { status: 'ok' };
-}
+const healthCheck = async (): Promise<{ status: 'ok' }> => ({ status: 'ok' });
 
-async function closeCache(): Promise<void> {
+const closeCache = async (): Promise<void> => {
   await closeRedisClient();
   redisClient = null;
-}
+};
 
 export const cacheService = {
   getFromCache,

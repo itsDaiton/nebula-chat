@@ -4,7 +4,7 @@ import type { OpenAPIObject } from 'openapi3-ts/oas30';
 
 export const registry = new OpenAPIRegistry();
 
-export function generateOpenAPIDocument(): OpenAPIObject {
+export const generateOpenAPIDocument = (): OpenAPIObject => {
   const generator = new OpenApiGeneratorV3(registry.definitions);
 
   return generator.generateDocument({
@@ -20,4 +20,4 @@ export function generateOpenAPIDocument(): OpenAPIObject {
       },
     ],
   });
-}
+};

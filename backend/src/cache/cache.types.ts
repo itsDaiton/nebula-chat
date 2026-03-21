@@ -9,14 +9,14 @@ import type {
   cacheStatsSchema,
 } from './cache.validation';
 
-export interface CachedStreamData {
+export type CachedStreamData = {
   tokens: string;
   usageData?: {
     promptTokens: number;
     completionTokens: number;
     totalTokens: number;
   };
-}
+};
 export type BaseRedisStats = z.infer<typeof baseRedisStatsSchema>;
 export type RedisStats = z.infer<typeof redisStatsSchema>;
 export type CacheStats = z.infer<typeof cacheStatsSchema>;

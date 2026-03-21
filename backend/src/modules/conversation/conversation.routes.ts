@@ -6,7 +6,7 @@ import {
   getConversationSchema,
   getConversationsQuerySchema,
   searchConversationsQuerySchema,
-} from './conversation.validation';
+} from '@backend/modules/conversation/conversation.validation';
 
 const conversationRoutes: Router = Router();
 

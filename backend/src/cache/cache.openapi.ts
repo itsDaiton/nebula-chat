@@ -7,7 +7,7 @@ import {
   cacheHealthResponseSchema,
 } from './cache.validation';
 
-export function registerCacheRoutes() {
+export const registerCacheRoutes = () => {
   registry.registerPath({
     method: 'get',
     path: '/api/cache/stats',
@@ -108,4 +108,4 @@ export function registerCacheRoutes() {
       },
     },
   });
-}
+};

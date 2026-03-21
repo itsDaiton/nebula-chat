@@ -7,6 +7,9 @@ import type {
   UsageData,
 } from '@backend/modules/chat/chat.types';
 import { messageService } from '@backend/modules/message/message.service';
+import { messageRepository } from '@backend/modules/message/message.repository';
+import type { CreateMessageDTO } from '@backend/modules/message/message.types';
+import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
 import { createClient, getSystemPrompt } from '@backend/modules/chat/chat.utils';
 import { chatConfig } from '@backend/modules/chat/chat.config';
 import {
@@ -22,39 +25,33 @@ import {
   BadRequestError,
 } from '@backend/errors/AppError';
 
-export async function createUserMessage(
+export const createUserMessage = async (
   conversationId: string | undefined,
   userMessageContent: string,
-  userMessageRole: string,
-) {
+  userMessageRole: CreateMessageDTO['role'],
+) => {
   let isNewConversation = false;
 
   const result = await prisma.$transaction(async (tx) => {
     let convId = conversationId;
 
     if (convId) {
-      const existingConversation = await tx.conversation.findUnique({
-        where: { id: convId },
-      });
+      const existingConversation = await conversationRepository.findByIdTx(tx, convId);
       if (!existingConversation) {
         throw new NotFoundError('Conversation', convId);
       }
     } else {
       const title = userMessageContent.slice(0, 50) || 'New Chat';
-      const newConversation = await tx.conversation.create({
-        data: { title },
-      });
+      const newConversation = await conversationRepository.createTx(tx, title);
       convId = newConversation.id;
       isNewConversation = true;
     }
 
-    const newUserMessage = await tx.message.create({
-      data: {
-        conversationId: convId,
-        role: userMessageRole,
-        content: userMessageContent,
-        model: null,
-      },
+    const newUserMessage = await messageRepository.createTx(tx, {
+      conversationId: convId,
+      role: userMessageRole,
+      content: userMessageContent,
+      model: null,
     });
 
     return {
@@ -65,12 +62,12 @@ export async function createUserMessage(
   });
 
   return result;
-}
+};
 
-export async function validateChatRequest(
+export const validateChatRequest = async (
   conversationId: string | undefined,
   userMessage: { role: string; content: string },
-) {
+) => {
   if (userMessage.role !== 'user') {
     throw new BadRequestError(
       `Expected message with role 'user', received '${userMessage.role}'. Only user messages can be sent.`,
@@ -89,9 +86,7 @@ export async function validateChatRequest(
   }
 
   if (conversationId) {
-    const existingConversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
-    });
+    const existingConversation = await conversationRepository.findByIdSimple(conversationId);
     if (!existingConversation) {
       throw new NotFoundError('Conversation', conversationId);
     }
@@ -101,16 +96,7 @@ export async function validateChatRequest(
         ? chatConfig.maxHistoryMessages
         : undefined;
 
-    const existingHistory = await prisma.message.findMany({
-      where: { conversationId },
-      orderBy: { createdAt: 'desc' },
-      ...(limit !== undefined && { take: limit }),
-      select: {
-        role: true,
-        content: true,
-        tokens: true,
-      },
-    });
+    const existingHistory = await messageRepository.findByConversationId(conversationId, limit);
 
     const systemPrompt = getSystemPrompt();
     const existingHistoryTokens = calculateContextTokens(existingHistory);
@@ -126,12 +112,12 @@ export async function validateChatRequest(
       );
     }
   }
-}
+};
 
-async function processOpenAIStream(
+const processOpenAIStream = async (
   stream: AsyncIterable<OpenAI.Chat.ChatCompletionChunk>,
   callbacks: Pick<StreamCallbacks, 'onToken' | 'onUsage'>,
-): Promise<{ fullResponse: string; usageData: UsageData | null }> {
+): Promise<{ fullResponse: string; usageData: UsageData | null }> => {
   let fullResponse = '';
   let usageData: UsageData | null = null;
 
@@ -152,15 +138,15 @@ async function processOpenAIStream(
   }
 
   return { fullResponse, usageData };
-}
+};
 
-async function executeStreamRequest(
+const executeStreamRequest = async (
   client: OpenAI,
   data: CreateChatStreamDTO,
   messages: OpenAI.Chat.ChatCompletionMessageParam[],
   conversationId: string,
   callbacks: StreamCallbacks,
-): Promise<string> {
+): Promise<string> => {
   try {
     const stream = await client.chat.completions.create({
       model: data.model,
@@ -184,7 +170,6 @@ async function executeStreamRequest(
         model: data.model,
         tokens: usageData ?? undefined,
       });
-      callbacks.onError(emptyResponseMessage);
       callbacks.onAssistantMessageCreated(errorMsg.id);
       throw new Error(emptyResponseMessage);
     }
@@ -199,23 +184,9 @@ async function executeStreamRequest(
     callbacks.onAssistantMessageCreated(assistantMessage.id);
     return assistantMessage.id;
   } catch (streamError) {
-    const errorMessage =
-      streamError instanceof Error
-        ? `Stream error: ${streamError.message}`
-        : 'Unexpected stream error occurred';
-
-    const errorMsg = await messageService.createMessage({
-      conversationId,
-      role: 'assistant',
-      content: errorMessage,
-      model: data.model,
-      tokens: undefined,
-    });
-    callbacks.onError(errorMessage);
-    callbacks.onAssistantMessageCreated(errorMsg.id);
     throw streamError;
   }
-}
+};
 
 export const chatService = {
   async streamResponse(data: CreateChatStreamDTO, callbacks: StreamCallbacks) {
@@ -256,12 +227,10 @@ export const chatService = {
           ? chatConfig.maxHistoryMessages
           : undefined;
 
-      const conversationHistory = await prisma.message.findMany({
-        where: { conversationId },
-        orderBy: { createdAt: 'desc' },
-        ...(limit !== undefined && { take: limit }),
-        select: { role: true, content: true, tokens: true },
-      });
+      const conversationHistory = await messageRepository.findByConversationId(
+        conversationId,
+        limit,
+      );
 
       const systemPrompt = getSystemPrompt();
       const messagesWithSystem: OpenAI.Chat.ChatCompletionMessageParam[] = [
