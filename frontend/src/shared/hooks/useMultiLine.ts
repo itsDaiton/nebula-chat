@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useMultiLineStore } from '@/shared/stores/useMultiLineStore';
 
 const MULTILINE_THRESHOLD = 1.5;
 const DEFAULT_LINE_HEIGHT_THRESHOLD = 1.2;
 
 export const useMultiLine = (content: string) => {
-  const [isMultiLine, setIsMultiLine] = useState(false);
+  const { multiLineMap, setIsMultiLine, removeEntry } = useMultiLineStore();
   const textRef = useRef<HTMLDivElement>(null);
+  const isMultiLine = multiLineMap[content] ?? false;
 
   useEffect(() => {
     if (!textRef.current) return;
@@ -18,11 +20,12 @@ export const useMultiLine = (content: string) => {
     }
 
     const height = textRef.current.getBoundingClientRect().height;
-    setIsMultiLine(height > lineHeight * MULTILINE_THRESHOLD);
-  }, [content]);
+    setIsMultiLine(content, height > lineHeight * MULTILINE_THRESHOLD);
 
-  return {
-    isMultiLine,
-    textRef,
-  };
+    return () => {
+      removeEntry(content);
+    };
+  }, [content, setIsMultiLine, removeEntry]);
+
+  return { isMultiLine, textRef };
 };

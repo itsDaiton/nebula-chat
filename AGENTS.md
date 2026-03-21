@@ -273,9 +273,10 @@ All client state is managed with [Zustand](https://zustand.docs.pmnd.rs/). React
 |---|---|
 | State shared across two or more components | Zustand store |
 | Global UI state (drawer, search overlay, viewport height) | Zustand store |
-| Per-instance DOM measurement via a `ref` (e.g. `useMultiLine`) | `useState` acceptable |
-| Parameterised utility hooks (e.g. `useDebounce`) | `useState` acceptable |
-| API-fetching state local to one component | `useState` until migrated |
+| API-fetching state (loading, data, error) | Zustand store |
+| DOM measurements shared across instances (e.g. `useMultiLine`) | Zustand store keyed by content |
+| Debounce timers | Module-level variable alongside the store — not React state |
+| Truly isolated, non-shared local state | `useState` acceptable as a last resort |
 
 #### Folder rules
 
@@ -324,6 +325,8 @@ Context is **not** used for shared state. The one remaining provider is `Convers
 | Store | Location | Owns |
 |---|---|---|
 | `useConversationsStore` | `modules/conversations/stores/` | Conversations list, pagination, fetch, load-more |
+| `useConversationStore` | `modules/conversations/stores/` | Single active conversation, loading, error, refetch |
+| `useConversationsSearchStore` | `modules/conversations/stores/` | Search query, debounced query, results, loading, error |
 | `useChatStreamStore` | `modules/chat/stores/` | Chat history, streaming flag, token usage, conversation ID |
 | `useMessageStore` | `modules/chat/stores/` | Current message input value |
 | `useModelStore` | `modules/chat/stores/` | Selected AI model |
@@ -331,6 +334,7 @@ Context is **not** used for shared state. The one remaining provider is `Convers
 | `useSearchStore` | `shared/stores/` | Search overlay open/closed |
 | `useDrawerStore` | `shared/stores/` | Mobile drawer open/closed |
 | `useViewportStore` | `shared/stores/` | Viewport height string (updated on resize) |
+| `useMultiLineStore` | `shared/stores/` | Per-content multi-line detection map (`Record<string, boolean>`) |
 
 ---
 

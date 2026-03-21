@@ -1,30 +1,30 @@
-export interface Conversation {
+export type Conversation = {
   id: string;
   title: string;
   createdAt: string;
-}
+};
 
-export interface ConversationWithMessages extends Conversation {
+export type ConversationWithMessages = Conversation & {
   messages: Array<{
     id: string;
     role: 'user' | 'assistant' | 'system';
     content: string;
     createdAt: string;
   }>;
-}
+};
 
-export interface ConversationListItemProps {
+export type ConversationListItemProps = {
   conversation: Conversation;
   onClick: (id: string) => void;
-}
+};
 
-export interface ConversationsSearchProps {
+export type ConversationsSearchProps = {
   conversations: Conversation[];
   onConversationClick: (id: string) => void;
   onClose: () => void;
-}
+};
 
-export interface ConversationsContextValue {
+export type ConversationsContextValue = {
   conversations: Conversation[];
   isLoading: boolean;
   isLoadingMore: boolean;
@@ -32,8 +32,8 @@ export interface ConversationsContextValue {
   hasMore: boolean;
   loadMore: () => Promise<void>;
   refetch: () => Promise<void>;
-}
+};
 
-export interface ConversationListSkeletonsProps {
+export type ConversationListSkeletonsProps = {
   count?: number;
-}
+};
