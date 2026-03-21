@@ -31,7 +31,12 @@ export const ConversationsList = ({
 }: ConversationsListProps = {}) => {
   const { conversations, isLoading, isLoadingMore, error, hasMore, loadMore } =
     useConversationsContext();
-  const { isSearchOpen: storeIsSearchOpen, openSearch, closeSearch: storeCloseSearch, toggleSearch } = useSearchStore();
+  const {
+    isSearchOpen: storeIsSearchOpen,
+    openSearch,
+    closeSearch: storeCloseSearch,
+    toggleSearch,
+  } = useSearchStore();
   const navigate = useNavigate();
 
   const isSearchOpen = inDrawer ? false : storeIsSearchOpen;

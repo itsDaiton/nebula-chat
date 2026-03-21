@@ -215,8 +215,8 @@ Routes are defined in `routes.ts` as typed helpers and consumed through React Ro
 ```ts
 import { route } from '@/routes';
 
-navigate(route.chat.root());                   // /
-navigate(route.chat.conversation(id));         // /c/:id
+navigate(route.chat.root()); // /
+navigate(route.chat.conversation(id)); // /c/:id
 ```
 
 `RouterProvider.tsx` sets up the React Router instance. Route components live in `modules/*/` as `*Page.tsx` files.
@@ -269,14 +269,14 @@ All client state is managed with [Zustand](https://zustand.docs.pmnd.rs/). React
 
 #### When to use Zustand vs `useState`
 
-| Scenario | Use |
-|---|---|
-| State shared across two or more components | Zustand store |
-| Global UI state (drawer, search overlay, viewport height) | Zustand store |
-| API-fetching state (loading, data, error) | Zustand store |
-| DOM measurements shared across instances (e.g. `useMultiLine`) | Zustand store keyed by content |
-| Debounce timers | Module-level variable alongside the store — not React state |
-| Truly isolated, non-shared local state | `useState` acceptable as a last resort |
+| Scenario                                                       | Use                                                         |
+| -------------------------------------------------------------- | ----------------------------------------------------------- |
+| State shared across two or more components                     | Zustand store                                               |
+| Global UI state (drawer, search overlay, viewport height)      | Zustand store                                               |
+| API-fetching state (loading, data, error)                      | Zustand store                                               |
+| DOM measurements shared across instances (e.g. `useMultiLine`) | Zustand store keyed by content                              |
+| Debounce timers                                                | Module-level variable alongside the store — not React state |
+| Truly isolated, non-shared local state                         | `useState` acceptable as a last resort                      |
 
 #### Folder rules
 
@@ -292,8 +292,8 @@ Define state and named actions together in a single `create()` call. Prefer acti
 // correct — expressive actions
 export const useSearchStore = create<SearchState>((set) => ({
   isSearchOpen: false,
-  openSearch:   () => set({ isSearchOpen: true }),
-  closeSearch:  () => set({ isSearchOpen: false }),
+  openSearch: () => set({ isSearchOpen: true }),
+  closeSearch: () => set({ isSearchOpen: false }),
   toggleSearch: () => set((state) => ({ isSearchOpen: !state.isSearchOpen })),
 }));
 
@@ -322,19 +322,19 @@ Context is **not** used for shared state. The one remaining provider is `Convers
 
 #### Existing stores
 
-| Store | Location | Owns |
-|---|---|---|
-| `useConversationsStore` | `modules/conversations/stores/` | Conversations list, pagination, fetch, load-more |
-| `useConversationStore` | `modules/conversations/stores/` | Single active conversation, loading, error, refetch |
-| `useConversationsSearchStore` | `modules/conversations/stores/` | Search query, debounced query, results, loading, error |
-| `useChatStreamStore` | `modules/chat/stores/` | Chat history, streaming flag, token usage, conversation ID |
-| `useMessageStore` | `modules/chat/stores/` | Current message input value |
-| `useModelStore` | `modules/chat/stores/` | Selected AI model |
-| `useModelSelectorStore` | `modules/chat/stores/` | Model dropdown open state and trigger width |
-| `useSearchStore` | `shared/stores/` | Search overlay open/closed |
-| `useDrawerStore` | `shared/stores/` | Mobile drawer open/closed |
-| `useViewportStore` | `shared/stores/` | Viewport height string (updated on resize) |
-| `useMultiLineStore` | `shared/stores/` | Per-content multi-line detection map (`Record<string, boolean>`) |
+| Store                         | Location                        | Owns                                                             |
+| ----------------------------- | ------------------------------- | ---------------------------------------------------------------- |
+| `useConversationsStore`       | `modules/conversations/stores/` | Conversations list, pagination, fetch, load-more                 |
+| `useConversationStore`        | `modules/conversations/stores/` | Single active conversation, loading, error, refetch              |
+| `useConversationsSearchStore` | `modules/conversations/stores/` | Search query, debounced query, results, loading, error           |
+| `useChatStreamStore`          | `modules/chat/stores/`          | Chat history, streaming flag, token usage, conversation ID       |
+| `useMessageStore`             | `modules/chat/stores/`          | Current message input value                                      |
+| `useModelStore`               | `modules/chat/stores/`          | Selected AI model                                                |
+| `useModelSelectorStore`       | `modules/chat/stores/`          | Model dropdown open state and trigger width                      |
+| `useSearchStore`              | `shared/stores/`                | Search overlay open/closed                                       |
+| `useDrawerStore`              | `shared/stores/`                | Mobile drawer open/closed                                        |
+| `useViewportStore`            | `shared/stores/`                | Viewport height string (updated on resize)                       |
+| `useMultiLineStore`           | `shared/stores/`                | Per-content multi-line detection map (`Record<string, boolean>`) |
 
 ---
 
@@ -357,7 +357,16 @@ Hooks in `/hooks/` are thin wrappers that read from one or more stores and compo
 export const useDrawer = () => {
   const { isDrawerOpen, openDrawer, closeDrawer, toggleDrawer } = useDrawerStore();
   const { isSearchOpen, openSearch, closeSearch, toggleSearch } = useSearchStore();
-  return { isDrawerOpen, openDrawer, closeDrawer, toggleDrawer, isSearchOpen, openSearch, closeSearch, toggleSearch };
+  return {
+    isDrawerOpen,
+    openDrawer,
+    closeDrawer,
+    toggleDrawer,
+    isSearchOpen,
+    openSearch,
+    closeSearch,
+    toggleSearch,
+  };
 };
 
 // wrong — re-introduces local state that belongs in a store
@@ -466,16 +475,16 @@ New modules must be mounted in `routes/index.ts` and registered in `openapi/inde
 
 All errors extend `AppError` from `errors/AppError.ts`. Use the subclass that matches the situation:
 
-| Class | HTTP status | When to use |
-|---|---|---|
-| `NotFoundError` | 404 | Resource not found by ID |
-| `BadRequestError` | 400 | Invalid input not caught by Zod |
-| `UnauthorizedError` | 401 | Not authenticated |
-| `ForbiddenError` | 403 | Authenticated but not allowed |
-| `PayloadTooLargeError` | 413 | Message exceeds token limit |
-| `MissingConfigurationError` | 500 | Required env var not set |
-| `RedisConnectionError` / `RedisCacheError` | 500 | Redis failures (usually fail-open) |
-| `APIError` | configurable | External API errors |
+| Class                                      | HTTP status  | When to use                        |
+| ------------------------------------------ | ------------ | ---------------------------------- |
+| `NotFoundError`                            | 404          | Resource not found by ID           |
+| `BadRequestError`                          | 400          | Invalid input not caught by Zod    |
+| `UnauthorizedError`                        | 401          | Not authenticated                  |
+| `ForbiddenError`                           | 403          | Authenticated but not allowed      |
+| `PayloadTooLargeError`                     | 413          | Message exceeds token limit        |
+| `MissingConfigurationError`                | 500          | Required env var not set           |
+| `RedisConnectionError` / `RedisCacheError` | 500          | Redis failures (usually fail-open) |
+| `APIError`                                 | configurable | External API errors                |
 
 Throw from service layer; the global `errorHandler` middleware in `server.ts` catches everything and returns:
 
@@ -493,7 +502,14 @@ Use the `validate()` middleware from `middleware/validate.ts` with a Zod schema 
 
 ```ts
 // chat.routes.ts
-router.post('/stream', rateLimiter, validate(chatStreamSchema), cacheCheck, streamCapture, controller.streamMessage);
+router.post(
+  '/stream',
+  rateLimiter,
+  validate(chatStreamSchema),
+  cacheCheck,
+  streamCapture,
+  controller.streamMessage,
+);
 ```
 
 `validate()` checks body, params, and query. On failure it returns 400 with a structured error tree via `z.treeifyError()`. Define schemas in the module's `*.validation.ts` file using the OpenAPI-extended Zod registry:
@@ -502,12 +518,13 @@ router.post('/stream', rateLimiter, validate(chatStreamSchema), cacheCheck, stre
 import { z } from 'zod';
 import { registry } from '@backend/openapi';
 
-export const chatStreamSchema = registry.register('ChatStreamRequest',
+export const chatStreamSchema = registry.register(
+  'ChatStreamRequest',
   z.object({
     messages: z.array(messageSchema).min(1),
     model: z.string(),
     conversationId: z.string().uuid().optional(),
-  })
+  }),
 );
 ```
 
@@ -540,6 +557,7 @@ model Message {
 ```
 
 **Rules:**
+
 - All Prisma calls go in `*.repository.ts` files — never in services or controllers.
 - The Prisma singleton lives in `src/prisma.ts`. Always import from there.
 - After changing the schema run `pnpm prisma:migrate` in dev or `pnpm prisma:deploy` in prod, then `pnpm prisma:generate`.
@@ -555,6 +573,7 @@ The cache is a Redis-backed SSE stream store keyed by conversation + model + pro
 **Key format:** `conversation:{conversationId}:model:{model}:prompt:{sha256(prompt)[0:16]}`
 
 **Flow:**
+
 1. `cacheCheck` middleware runs before the controller. If a key exists it replays the cached token stream and returns — OpenAI is never called.
 2. `streamCapture` middleware wraps `res.write()` after a real OpenAI call. When the response ends it saves the full SSE stream to Redis.
 3. Max 1,000 cache entries. On overflow the oldest key (FIFO tracked in a Redis list) is evicted.
@@ -588,17 +607,18 @@ POST /api/chat/stream
 
 **SSE event types emitted to the client:**
 
-| Event | Data |
-|---|---|
-| `conversation-created` | `{ conversationId }` |
-| `user-message-created` | `{ messageId }` |
-| `token` | `{ token }` — one per streamed chunk |
-| `usage` | `{ promptTokens, completionTokens, totalTokens }` |
-| `assistant-message-created` | `{ messageId }` |
-| `end` | `"end"` |
-| `error` | `{ error }` |
+| Event                       | Data                                              |
+| --------------------------- | ------------------------------------------------- |
+| `conversation-created`      | `{ conversationId }`                              |
+| `user-message-created`      | `{ messageId }`                                   |
+| `token`                     | `{ token }` — one per streamed chunk              |
+| `usage`                     | `{ promptTokens, completionTokens, totalTokens }` |
+| `assistant-message-created` | `{ messageId }`                                   |
+| `end`                       | `"end"`                                           |
+| `error`                     | `{ error }`                                       |
 
 Token limits are configured in `chat.config.ts`:
+
 - Max prompt tokens: **2 000**
 - Max completion tokens: **1 000**
 - Max context window: **10 000**
@@ -634,21 +654,21 @@ Never use relative paths in the backend. Aliases are configured in `tsconfig.jso
 
 ### Frontend (`frontend/.env`)
 
-| Variable | Purpose |
-|---|---|
+| Variable       | Purpose                                                    |
+| -------------- | ---------------------------------------------------------- |
 | `VITE_API_URL` | Base URL of the backend API (e.g. `http://localhost:3000`) |
 
 ### Backend (`backend/.env`)
 
-| Variable | Purpose |
-|---|---|
-| `OPENAI_API_KEY` | OpenAI API key |
-| `DATABASE_URL` | PostgreSQL connection string |
-| `REDIS_URL` | Redis connection (e.g. `redis://localhost:6380`) |
-| `REDIS_PASSWORD` | Redis password (if set) |
-| `CLIENT_URL` | Frontend origin for CORS (e.g. `http://localhost:5173`) |
-| `SERVER_URL` | Backend public URL (used in OpenAPI docs) |
-| `PORT` | Port to listen on (default `3000`) |
+| Variable         | Purpose                                                 |
+| ---------------- | ------------------------------------------------------- |
+| `OPENAI_API_KEY` | OpenAI API key                                          |
+| `DATABASE_URL`   | PostgreSQL connection string                            |
+| `REDIS_URL`      | Redis connection (e.g. `redis://localhost:6380`)        |
+| `REDIS_PASSWORD` | Redis password (if set)                                 |
+| `CLIENT_URL`     | Frontend origin for CORS (e.g. `http://localhost:5173`) |
+| `SERVER_URL`     | Backend public URL (used in OpenAPI docs)               |
+| `PORT`           | Port to listen on (default `3000`)                      |
 
 ---
 

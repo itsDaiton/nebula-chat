@@ -42,9 +42,7 @@ export const useConversationsSearchStore = create<ConversationsSearchState>((set
     set({ isSearching: true, error: null });
     try {
       const response = await fetch(
-        SERVER_CONFIG.getApiEndpoint(
-          `/api/conversations/search?q=${encodeURIComponent(query)}`,
-        ),
+        SERVER_CONFIG.getApiEndpoint(`/api/conversations/search?q=${encodeURIComponent(query)}`),
       );
       if (!response.ok) {
         await handleHttpError(response);
@@ -67,6 +65,12 @@ export const useConversationsSearchStore = create<ConversationsSearchState>((set
       clearTimeout(debounceTimer);
       debounceTimer = null;
     }
-    set({ searchQuery: '', debouncedQuery: '', searchResults: [], error: null, isSearching: false });
+    set({
+      searchQuery: '',
+      debouncedQuery: '',
+      searchResults: [],
+      error: null,
+      isSearching: false,
+    });
   },
 }));
