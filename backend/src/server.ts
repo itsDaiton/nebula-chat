@@ -7,11 +7,12 @@ import { checkOrigin, corsConfig } from './config/cors.config';
 import { registerRoutes } from './routes';
 import { errorHandler } from './middleware/errorHandler';
 import { openApiDocument } from './openapi';
+import { resolveTrustProxy } from '@backend/utils/trustProxy';
 
 const app: express.Express = express();
 const PORT = process.env.PORT || 3000;
 
-app.set('trust proxy', true); // Enable if behind a proxy
+app.set('trust proxy', resolveTrustProxy());
 
 app.use(
   cors({
