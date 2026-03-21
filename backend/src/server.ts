@@ -11,6 +11,14 @@ import { openApiDocument } from './openapi';
 const app: express.Express = express();
 const PORT = process.env.PORT || 3000;
 
+/**
+ * Maps TRUST_PROXY to a safe Express trust proxy value that remains compatible
+ * with express-rate-limit:
+ * - unset / "0" / "false" => false
+ * - "true" => 1
+ * - positive integer string => that hop count
+ * - all other strings => pass through to Express (subnet/IP list support)
+ */
 const resolveTrustProxy = (): boolean | number | string => {
   const trustProxy = process.env.TRUST_PROXY?.trim();
   if (!trustProxy || trustProxy === '0' || trustProxy.toLowerCase() === 'false') {
@@ -22,7 +30,7 @@ const resolveTrustProxy = (): boolean | number | string => {
   }
 
   const proxyHops = Number.parseInt(trustProxy, 10);
-  if (Number.isInteger(proxyHops) && proxyHops > 0) {
+  if (!Number.isNaN(proxyHops) && proxyHops > 0) {
     return proxyHops;
   }
 
