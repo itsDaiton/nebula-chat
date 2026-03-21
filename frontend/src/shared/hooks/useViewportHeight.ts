@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useViewportStore } from '../stores/useViewportStore';
 
 export const useViewportHeight = () => {
-  const [viewportHeight, setViewportHeight] = useState<string>('100dvh');
+  const { viewportHeight, setViewportHeight } = useViewportStore();
 
   useEffect(() => {
     const updateHeight = () => {
@@ -27,7 +28,7 @@ export const useViewportHeight = () => {
         window.visualViewport.removeEventListener('resize', updateHeight);
       }
     };
-  }, []);
+  }, [setViewportHeight]);
 
   return viewportHeight;
 };
