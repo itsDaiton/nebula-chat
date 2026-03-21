@@ -81,10 +81,7 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
   },
   prependConversation: (conversation: Conversation) => {
     set((state) => ({
-      conversations: [
-        conversation,
-        ...state.conversations.filter((c) => c.id !== conversation.id),
-      ],
+      conversations: [conversation, ...state.conversations.filter((c) => c.id !== conversation.id)],
     }));
   },
 }));

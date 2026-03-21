@@ -1,10 +1,7 @@
 import { useCallback } from 'react';
 import type { ChatMessage, UseHandleSendMessageProps } from '@/modules/chat/types/types';
 
-export const useHandleSendMessage = ({
-  history,
-  streamMessage,
-}: UseHandleSendMessageProps) => {
+export const useHandleSendMessage = ({ history, streamMessage }: UseHandleSendMessageProps) => {
   const handleSendMessage = useCallback(
     async (message: string, selectedModel: string) => {
       const newUserMessage: ChatMessage = {
