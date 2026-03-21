@@ -1,4 +1,3 @@
-import type { ConversationWithMessages } from '@/modules/conversations/types/types';
 import type { Dispatch, SetStateAction } from 'react';
 
 export type ChatMessage = {
@@ -62,15 +61,6 @@ export type ChatMessageListProps = {
   isStreaming: boolean;
 };
 
-export type UseConversationSyncParams = {
-  conversationId: string | undefined;
-  conversation: ConversationWithMessages | null;
-  isLoadingConversation: boolean;
-  isStreaming: boolean;
-  setHistory: (messages: ChatMessage[]) => void;
-  setConversationId: (id: string | undefined) => void;
-};
-
 export type ModelState = {
   selectedModel: string;
   setSelectedModel: Dispatch<SetStateAction<string>>;
@@ -85,6 +75,7 @@ type Usage = {
 export type ChatStreamState = {
   history: ChatMessage[];
   isStreaming: boolean;
+  isSyncing: boolean;
   error: string | null;
   usage: Usage;
   conversationId?: string;

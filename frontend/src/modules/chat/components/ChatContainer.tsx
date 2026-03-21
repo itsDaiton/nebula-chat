@@ -8,33 +8,19 @@ import { ChatMessageList } from '@/modules/chat/components/ChatMessageList';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useHandleSendMessage } from '@/modules/chat/hooks/useHandleSendMessage';
 import { useModel } from '@/modules/chat/hooks/useModel';
-import { useConversationSync } from '@/modules/chat/hooks/useConversationSync';
 import { useConversation } from '@/modules/conversations/hooks/useConversation';
 import { chatScrollBar } from '@/shared/components/scrollbar';
 import { resources } from '@/resources';
 
 export const ChatContainer = () => {
   const { id: conversationId } = useParams<{ id: string }>();
-  const {
-    conversation,
-    isLoading: isLoadingConversation,
-    error: conversationError,
-  } = useConversation(conversationId);
-  const { history, isStreaming, streamMessage, setHistory, setConversationId } = useChatStream();
+  const { error: conversationError } = useConversation(conversationId);
+  const { history, isStreaming, isSyncing, streamMessage, setHistory } = useChatStream();
   const { selectedModel, setSelectedModel } = useModel();
-
-  const { isLoadingDifferentConversation } = useConversationSync({
-    conversationId,
-    conversation,
-    isLoadingConversation,
-    isStreaming,
-    setHistory,
-    setConversationId,
-  });
 
   const { handleSendMessage } = useHandleSendMessage({ history, setHistory, streamMessage });
 
-  if (isLoadingDifferentConversation) {
+  if (conversationId && isSyncing) {
     return (
       <ChatContainerBox>
         <Box flex="1" overflowY="auto" p={4} mb="120px" css={chatScrollBar}>

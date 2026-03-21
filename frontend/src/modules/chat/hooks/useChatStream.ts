@@ -10,6 +10,7 @@ export const useChatStream = () => {
   const {
     history,
     isStreaming,
+    isSyncing,
     error,
     usage,
     conversationId,
@@ -232,6 +233,7 @@ export const useChatStream = () => {
   return {
     history,
     isStreaming,
+    isSyncing,
     error,
     usage,
     streamMessage,

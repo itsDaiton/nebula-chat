@@ -8,11 +8,13 @@ export const useConversation = (conversationId: string | null | undefined) => {
   const prevIdRef = useRef<string | null | undefined>(undefined);
   if (prevIdRef.current !== conversationId) {
     prevIdRef.current = conversationId;
-    if (conversationId) {
-      void fetchConversation(conversationId);
-    } else {
-      clear();
-    }
+    queueMicrotask(() => {
+      if (conversationId) {
+        void fetchConversation(conversationId);
+      } else {
+        clear();
+      }
+    });
   }
 
   return { conversation, isLoading, error, refetch };
