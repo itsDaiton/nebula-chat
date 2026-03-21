@@ -94,13 +94,22 @@ const saveToCache = async (
 
     await client.lPush(cacheConfig.keysList, key);
 
-    const size = await client.lLen(cacheConfig.keysList);
-    if (size > cacheConfig.maxItems) {
+    let evictions = 0;
+    let lastEvictedKey: string | null = null;
+    let size = await client.lLen(cacheConfig.keysList);
+    while (size > cacheConfig.maxItems) {
       const oldestKey = await client.rPop(cacheConfig.keysList);
-      if (oldestKey) {
-        await client.del(oldestKey);
-        await updateStats((s) => ({ evictions: s.evictions + 1, lastEvictedKey: oldestKey }));
-      }
+      if (!oldestKey) break;
+      await client.del(oldestKey);
+      evictions++;
+      lastEvictedKey = oldestKey;
+      size--;
+    }
+    if (evictions > 0 && lastEvictedKey !== null) {
+      await updateStats((s) => ({
+        evictions: s.evictions + evictions,
+        lastEvictedKey,
+      }));
     }
 
     await updateStats((s) => ({ sets: s.sets + 1, lastSetKey: key }));
