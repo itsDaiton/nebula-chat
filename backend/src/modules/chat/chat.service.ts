@@ -8,6 +8,7 @@ import type {
 } from '@backend/modules/chat/chat.types';
 import { messageService } from '@backend/modules/message/message.service';
 import { messageRepository } from '@backend/modules/message/message.repository';
+import type { CreateMessageDTO } from '@backend/modules/message/message.types';
 import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
 import { createClient, getSystemPrompt } from '@backend/modules/chat/chat.utils';
 import { chatConfig } from '@backend/modules/chat/chat.config';
@@ -27,7 +28,7 @@ import {
 export const createUserMessage = async (
   conversationId: string | undefined,
   userMessageContent: string,
-  userMessageRole: string,
+  userMessageRole: CreateMessageDTO['role'],
 ) => {
   let isNewConversation = false;
 
@@ -48,7 +49,7 @@ export const createUserMessage = async (
 
     const newUserMessage = await messageRepository.createTx(tx, {
       conversationId: convId,
-      role: userMessageRole as 'user' | 'assistant' | 'system',
+      role: userMessageRole,
       content: userMessageContent,
       model: null,
     });
