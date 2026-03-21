@@ -62,10 +62,10 @@ export const ChatContainer = () => {
   return (
     <ChatContainerBox>
       <Box flex="1" overflowY="auto" p={4} mb="120px" css={chatScrollBar}>
-        {history.length === 0 ? (
-          <ChatEmptyState conversationId={conversationId} />
-        ) : (
+        {(conversationId || isStreaming) && history.length > 0 ? (
           <ChatMessageList history={history} isStreaming={isStreaming} />
+        ) : (
+          <ChatEmptyState conversationId={conversationId} />
         )}
         <div
           key={`scroll-${history.length}-${String(isStreaming)}`}
