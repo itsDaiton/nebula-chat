@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.3.1...nebula-chat-client-v1.4.0) (2026-03-21)
+
+
+### Features
+
+* **client:** add zustand state management ([#110](https://github.com/itsDaiton/nebula-chat/issues/110)) ([5e708bc](https://github.com/itsDaiton/nebula-chat/commit/5e708bc3e50d97791808b2f1b8325e6fb0e17597))
+
 ## [1.3.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.3.0...nebula-chat-client-v1.3.1) (2026-03-15)
 
 
