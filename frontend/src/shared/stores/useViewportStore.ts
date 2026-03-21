@@ -1,9 +1,5 @@
 import { create } from 'zustand';
-
-interface ViewportState {
-  viewportHeight: string;
-  setViewportHeight: (height: string) => void;
-}
+import type { ViewportState } from '@/shared/types/types';
 
 export const useViewportStore = create<ViewportState>((set) => ({
   viewportHeight: '100dvh',

@@ -1,5 +1,5 @@
-import { useDrawerStore } from '../stores/useDrawerStore';
-import { useSearchStore } from '../stores/useSearchStore';
+import { useDrawerStore } from '@/shared/stores/useDrawerStore';
+import { useSearchStore } from '@/shared/stores/useSearchStore';
 
 export const useDrawer = () => {
   const { isDrawerOpen, openDrawer, closeDrawer, toggleDrawer } = useDrawerStore();

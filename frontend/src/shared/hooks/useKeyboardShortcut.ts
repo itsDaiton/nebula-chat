@@ -1,7 +1,7 @@
 import { useCallback, useRef } from 'react';
-import { useEventListener } from './useEventListener';
+import { useEventListener } from '@/shared/hooks/useEventListener';
 
-export function useKeyboardShortcut(
+export const useKeyboardShortcut = (
   key: string,
   callback: () => void,
   options?: {
@@ -9,7 +9,7 @@ export function useKeyboardShortcut(
     shift?: boolean;
     alt?: boolean;
   },
-) {
+) => {
   const callbackRef = useRef(callback);
   callbackRef.current = callback;
 
@@ -31,4 +31,4 @@ export function useKeyboardShortcut(
     ),
     document,
   );
-}
+};

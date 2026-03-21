@@ -1,12 +1,12 @@
 import { useCallback, useRef } from 'react';
 import type { UseInfiniteScrollOptions } from '@/modules/conversations/types/types';
 
-export function useInfiniteScroll({
+export const useInfiniteScroll = ({
   hasMore,
   isLoading,
   onLoadMore,
   threshold = 0.5,
-}: UseInfiniteScrollOptions) {
+}: UseInfiniteScrollOptions) => {
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   const observerTarget = useCallback(
@@ -32,4 +32,4 @@ export function useInfiniteScroll({
   );
 
   return observerTarget;
-}
+};

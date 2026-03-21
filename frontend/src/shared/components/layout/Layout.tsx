@@ -1,16 +1,16 @@
 import { Box, Flex } from '@chakra-ui/react';
-import { Header } from './Header';
+import { Header } from '@/shared/components/layout/Header';
 import { ConversationsList } from '@/modules/conversations/components/ConversationsList';
-import { SidePanel } from './SidePanel';
+import { SidePanel } from '@/shared/components/layout/SidePanel';
 import type { LayoutProps } from '@/shared/types/types';
-import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
 import { ConversationDrawer } from '@/modules/conversations/components/ConversationDrawer';
-import { useDrawer } from '../../hooks/useDrawer';
+import { useDrawer } from '@/shared/hooks/useDrawer';
 import { ConversationsSearch } from '@/modules/conversations/components/ConversationsSearch';
 import { useConversationsContext } from '@/modules/conversations/context/ConversationsContext';
 import { useNavigate } from 'react-router';
 import { route } from '@/routes';
-import { useViewportHeight } from '../../hooks/useViewportHeight';
+import { useViewportHeight } from '@/shared/hooks/useViewportHeight';
 
 export const Layout = ({ children }: LayoutProps) => {
   const { isDrawerOpen, openDrawer, closeDrawer, isSearchOpen, toggleSearch, closeSearch } =

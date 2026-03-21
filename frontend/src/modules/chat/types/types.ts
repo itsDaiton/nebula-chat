@@ -1,47 +1,49 @@
-export interface ChatMessage {
+import type { ConversationWithMessages } from '@/modules/conversations/types/types';
+
+export type ChatMessage = {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
-}
+};
 
-export interface ChatMessageProps {
+export type ChatMessageProps = {
   message: ChatMessage;
-}
+};
 
-export interface ChatInputProps {
+export type ChatInputProps = {
   onSendMessage: (message: string) => void;
   isLoading?: boolean;
   autoFocus?: boolean;
   selectedModel: string;
   onModelChange: (model: string) => void;
-}
+};
 
-export interface ChatHistoryStreamOptions {
+export type ChatHistoryStreamOptions = {
   model: string;
   messages: ChatMessage[];
   conversationId?: string;
-}
+};
 
-export interface UseKeyboardHandlerProps {
+export type UseKeyboardHandlerProps = {
   message: string;
   isLoading: boolean;
   handleMessageSend: () => void;
-}
+};
 
-export interface UseMessageHandlerProps {
+export type UseMessageHandlerProps = {
   onSendMessage: (message: string) => void;
   isLoading: boolean;
-}
+};
 
-export interface UseHandleSendMessageProps {
+export type UseHandleSendMessageProps = {
   history: ChatMessage[];
   setHistory: (messages: ChatMessage[]) => void;
   streamMessage: (params: ChatHistoryStreamOptions) => Promise<void>;
-}
+};
 
-export interface ChatMessageSkeletonProps {
+export type ChatMessageSkeletonProps = {
   isUser?: boolean;
-}
+};
 
 export type ChatInputBarProps = {
   onSend: (message: string) => void;
@@ -57,4 +59,13 @@ export type ChatEmptyStateProps = {
 export type ChatMessageListProps = {
   history: ChatMessage[];
   isStreaming: boolean;
+};
+
+export type UseConversationSyncParams = {
+  conversationId: string | undefined;
+  conversation: ConversationWithMessages | null;
+  isLoadingConversation: boolean;
+  isStreaming: boolean;
+  setHistory: (messages: ChatMessage[]) => void;
+  setConversationId: (id: string | undefined) => void;
 };

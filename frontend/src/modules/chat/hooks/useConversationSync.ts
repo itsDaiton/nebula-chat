@@ -1,25 +1,15 @@
 import { useRef } from 'react';
-import type { ConversationWithMessages } from '@/modules/conversations/types/types';
-import type { ChatMessage } from '../types/types';
-import { mapConversationMessages } from '../utils/chatUtils';
+import { mapConversationMessages } from '@/modules/chat/utils/chatUtils';
+import type { UseConversationSyncParams } from '@/modules/chat/types/types';
 
-interface UseConversationSyncParams {
-  conversationId: string | undefined;
-  conversation: ConversationWithMessages | null;
-  isLoadingConversation: boolean;
-  isStreaming: boolean;
-  setHistory: (messages: ChatMessage[]) => void;
-  setConversationId: (id: string | undefined) => void;
-}
-
-export function useConversationSync({
+export const useConversationSync = ({
   conversationId,
   conversation,
   isLoadingConversation,
   isStreaming,
   setHistory,
   setConversationId,
-}: UseConversationSyncParams) {
+}: UseConversationSyncParams) => {
   const loadedConversationId = useRef<string | null>(null);
   const clearedForConversationId = useRef<string | undefined>(undefined);
 
@@ -37,11 +27,9 @@ export function useConversationSync({
     conversationId !== loadedConversationId.current &&
     conversationId !== clearedForConversationId.current
   ) {
-    // Navigated to a different conversation — clear stale history while the new one loads.
     clearedForConversationId.current = conversationId;
     setHistory([]);
   } else if (!conversationId && !isStreaming && loadedConversationId.current !== null) {
-    // Navigated back to the new-chat root — reset everything.
     loadedConversationId.current = null;
     clearedForConversationId.current = undefined;
     setHistory([]);
@@ -50,6 +38,7 @@ export function useConversationSync({
 
   return {
     isLoadingDifferentConversation:
-      !!conversationId && (isLoadingConversation || conversationId !== loadedConversationId.current),
+      !!conversationId &&
+      (isLoadingConversation || conversationId !== loadedConversationId.current),
   };
-}
+};

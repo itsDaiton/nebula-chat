@@ -1,7 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { useEventListener } from '@/shared/hooks/useEventListener';
 
-export function useEscapeKey(onEscape: () => void) {
+export const useEscapeKey = (onEscape: () => void) => {
   const onEscapeRef = useRef(onEscape);
   onEscapeRef.current = onEscape;
 
@@ -11,4 +11,4 @@ export function useEscapeKey(onEscape: () => void) {
       if (event.key === 'Escape') onEscapeRef.current();
     }, []),
   );
-}
+};

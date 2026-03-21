@@ -1,11 +1,11 @@
 import { useSyncExternalStore } from 'react';
 
-function getViewportHeight() {
+const getViewportHeight = () => {
   if (window.visualViewport) {
     return `${window.visualViewport.height}px`;
   }
   return `${window.innerHeight}px`;
-}
+};
 
 const subscribeToViewportHeight = (callback: () => void) => {
   window.addEventListener('resize', callback);

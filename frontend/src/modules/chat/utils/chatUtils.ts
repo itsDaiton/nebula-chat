@@ -1,14 +1,12 @@
 import { createListCollection } from '@chakra-ui/react';
 import type { ConversationWithMessages } from '@/modules/conversations/types/types';
-import type { ChatMessage } from '../types/types';
+import type { ChatMessage } from '@/modules/chat/types/types';
 
 export const useIsUser = (role: string) => role === 'user';
 
-export function mapConversationMessages(
+export const mapConversationMessages = (
   messages: ConversationWithMessages['messages'],
-): ChatMessage[] {
-  return messages.map(({ id, role, content }) => ({ id, role, content }));
-}
+): ChatMessage[] => messages.map(({ id, role, content }) => ({ id, role, content }));
 
 export const modelOptions = createListCollection({
   items: [

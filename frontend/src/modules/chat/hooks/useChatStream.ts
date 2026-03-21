@@ -1,12 +1,12 @@
 import { useCallback, useRef } from 'react';
-import type { ChatHistoryStreamOptions } from '../types/types';
-import { SERVER_CONFIG } from '../../../shared/config/serverConfig';
+import type { ChatHistoryStreamOptions } from '@/modules/chat/types/types';
+import { SERVER_CONFIG } from '@/shared/config/serverConfig';
 import { useNavigate } from 'react-router';
 import { route } from '@/routes';
 import { useConversationsContext } from '@/modules/conversations/context/ConversationsContext';
-import { useChatStreamStore } from '../stores/useChatStreamStore';
+import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 
-export function useChatStream() {
+export const useChatStream = () => {
   const {
     history,
     isStreaming,
@@ -240,4 +240,4 @@ export function useChatStream() {
     setHistory,
     conversationId,
   };
-}
+};

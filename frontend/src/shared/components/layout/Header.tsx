@@ -1,13 +1,13 @@
 import { Box, Flex, Text, Icon } from '@chakra-ui/react';
-import { ColorModeButton } from '../ui/color-mode';
-import { useResetChat } from '../../hooks/useResetChat';
+import { ColorModeButton } from '@/shared/components/ui/color-mode';
+import { useResetChat } from '@/shared/hooks/useResetChat';
 import { TbGalaxy } from 'react-icons/tb';
 import { HiMenuAlt2 } from 'react-icons/hi';
-import { NebulaMenu } from '../navigation/NebulaMenu';
-import { menuItems } from '../../utils/menuUtils';
+import { NebulaMenu } from '@/shared/components/navigation/NebulaMenu';
+import { menuItems } from '@/shared/utils/menuUtils';
 import { resources } from '@/resources';
-import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
-import type { HeaderProps } from '../../types/types';
+import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
+import type { HeaderProps } from '@/shared/types/types';
 
 export const Header = ({ onMenuClick }: HeaderProps) => {
   const { resetChat } = useResetChat();
