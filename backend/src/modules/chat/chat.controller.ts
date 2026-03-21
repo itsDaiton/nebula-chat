@@ -1,8 +1,8 @@
 import { setHeaders } from '@backend/config/headers.config';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import type { NextFunction, Request, Response } from 'express';
-import { chatService } from './chat.service';
-import { streamFormatter } from './chat.utils';
+import { chatService } from '@backend/modules/chat/chat.service';
+import { streamFormatter } from '@backend/modules/chat/chat.utils';
 
 export const chatController = {
   async streamMessage(req: Request, res: Response, next: NextFunction) {

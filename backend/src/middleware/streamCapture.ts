@@ -34,7 +34,7 @@ export const streamCapture = (req: Request, res: Response, next: NextFunction) =
 
       //eslint-disable-next-line no-console
       console.log('Redis: Saving to cache');
-      cacheService.saveToCache(finalKey, filtered, usageData).catch((error) => {
+      cacheService.saveToCache(finalKey, filtered, usageData ?? undefined).catch((error) => {
         // eslint-disable-next-line no-console
         console.error('Error saving to cache (fail-open):', error);
       });

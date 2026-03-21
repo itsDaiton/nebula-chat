@@ -3,8 +3,8 @@ import { rateLimiter } from '@backend/middleware/rateLimiter';
 import { streamCapture } from '@backend/middleware/streamCapture';
 import { validate } from '@backend/middleware/validate';
 import { Router } from 'express';
-import { createChatStreamSchema } from './chat.validation';
-import { chatController } from './chat.controller';
+import { createChatStreamSchema } from '@backend/modules/chat/chat.validation';
+import { chatController } from '@backend/modules/chat/chat.controller';
 
 const chatRoutes: Router = Router();
 

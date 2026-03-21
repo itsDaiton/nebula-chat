@@ -1,7 +1,7 @@
 import { createClient } from 'redis';
 import type { RedisClientType } from 'redis';
 import { RedisConnectionError } from '@backend/errors/AppError';
-import { cacheConfig } from './cache.config';
+import { cacheConfig } from '@backend/cache/cache.config';
 
 let redisClient: RedisClientType | null = null;
 let isConnected = false;

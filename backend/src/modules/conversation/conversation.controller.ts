@@ -1,6 +1,6 @@
 import { conversationService } from '@backend/modules/conversation/conversation.service';
 import type { Request, Response, NextFunction } from 'express';
-import type { GetConversationParams } from './conversation.types';
+import type { GetConversationParams } from '@backend/modules/conversation/conversation.types';
 
 export const conversationController = {
   async create(req: Request, res: Response, next: NextFunction) {

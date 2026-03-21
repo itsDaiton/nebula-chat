@@ -7,6 +7,8 @@ import type {
   UsageData,
 } from '@backend/modules/chat/chat.types';
 import { messageService } from '@backend/modules/message/message.service';
+import { messageRepository } from '@backend/modules/message/message.repository';
+import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
 import { createClient, getSystemPrompt } from '@backend/modules/chat/chat.utils';
 import { chatConfig } from '@backend/modules/chat/chat.config';
 import {
@@ -33,28 +35,22 @@ export const createUserMessage = async (
     let convId = conversationId;
 
     if (convId) {
-      const existingConversation = await tx.conversation.findUnique({
-        where: { id: convId },
-      });
+      const existingConversation = await conversationRepository.findByIdTx(tx, convId);
       if (!existingConversation) {
         throw new NotFoundError('Conversation', convId);
       }
     } else {
       const title = userMessageContent.slice(0, 50) || 'New Chat';
-      const newConversation = await tx.conversation.create({
-        data: { title },
-      });
+      const newConversation = await conversationRepository.createTx(tx, title);
       convId = newConversation.id;
       isNewConversation = true;
     }
 
-    const newUserMessage = await tx.message.create({
-      data: {
-        conversationId: convId,
-        role: userMessageRole,
-        content: userMessageContent,
-        model: null,
-      },
+    const newUserMessage = await messageRepository.createTx(tx, {
+      conversationId: convId,
+      role: userMessageRole as 'user' | 'assistant' | 'system',
+      content: userMessageContent,
+      model: null,
     });
 
     return {
@@ -89,9 +85,7 @@ export const validateChatRequest = async (
   }
 
   if (conversationId) {
-    const existingConversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
-    });
+    const existingConversation = await conversationRepository.findByIdSimple(conversationId);
     if (!existingConversation) {
       throw new NotFoundError('Conversation', conversationId);
     }
@@ -101,16 +95,7 @@ export const validateChatRequest = async (
         ? chatConfig.maxHistoryMessages
         : undefined;
 
-    const existingHistory = await prisma.message.findMany({
-      where: { conversationId },
-      orderBy: { createdAt: 'desc' },
-      ...(limit !== undefined && { take: limit }),
-      select: {
-        role: true,
-        content: true,
-        tokens: true,
-      },
-    });
+    const existingHistory = await messageRepository.findByConversationId(conversationId, limit);
 
     const systemPrompt = getSystemPrompt();
     const existingHistoryTokens = calculateContextTokens(existingHistory);
@@ -184,7 +169,6 @@ const executeStreamRequest = async (
         model: data.model,
         tokens: usageData ?? undefined,
       });
-      callbacks.onError(emptyResponseMessage);
       callbacks.onAssistantMessageCreated(errorMsg.id);
       throw new Error(emptyResponseMessage);
     }
@@ -199,20 +183,6 @@ const executeStreamRequest = async (
     callbacks.onAssistantMessageCreated(assistantMessage.id);
     return assistantMessage.id;
   } catch (streamError) {
-    const errorMessage =
-      streamError instanceof Error
-        ? `Stream error: ${streamError.message}`
-        : 'Unexpected stream error occurred';
-
-    const errorMsg = await messageService.createMessage({
-      conversationId,
-      role: 'assistant',
-      content: errorMessage,
-      model: data.model,
-      tokens: undefined,
-    });
-    callbacks.onError(errorMessage);
-    callbacks.onAssistantMessageCreated(errorMsg.id);
     throw streamError;
   }
 };
@@ -256,12 +226,10 @@ export const chatService = {
           ? chatConfig.maxHistoryMessages
           : undefined;
 
-      const conversationHistory = await prisma.message.findMany({
-        where: { conversationId },
-        orderBy: { createdAt: 'desc' },
-        ...(limit !== undefined && { take: limit }),
-        select: { role: true, content: true, tokens: true },
-      });
+      const conversationHistory = await messageRepository.findByConversationId(
+        conversationId,
+        limit,
+      );
 
       const systemPrompt = getSystemPrompt();
       const messagesWithSystem: OpenAI.Chat.ChatCompletionMessageParam[] = [

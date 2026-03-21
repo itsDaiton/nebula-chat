@@ -1,6 +1,6 @@
 import { cacheService } from '@backend/cache/cache.service';
 import type { Request, Response, NextFunction } from 'express';
-import { cacheConfig } from './cache.config';
+import { cacheConfig } from '@backend/cache/cache.config';
 
 export const cacheController = {
   async getStats(_req: Request, res: Response, next: NextFunction) {

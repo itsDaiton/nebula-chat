@@ -2,9 +2,9 @@ import type { Request, Response, NextFunction } from 'express';
 import { cacheService } from '@backend/cache/cache.service';
 import { setCacheHeaders } from '@backend/config/headers.config';
 import { streamFormatter } from '@backend/modules/chat/chat.utils';
-import { prisma } from '@backend/prisma';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { createUserMessage, validateChatRequest } from '@backend/modules/chat/chat.service';
+import { messageService } from '@backend/modules/message/message.service';
 
 export const cacheCheck = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -52,18 +52,12 @@ export const cacheCheck = async (req: Request, res: Response, next: NextFunction
       userMessage.role,
     );
 
-    const assistantMessage = await prisma.message.create({
-      data: {
-        conversationId: userMessageResult.conversationId,
-        role: 'assistant',
-        content: assistantContent,
-        model: input.model,
-        tokens: {
-          promptTokens: 0,
-          completionTokens: 0,
-          totalTokens: 0,
-        },
-      },
+    const assistantMessage = await messageService.createMessage({
+      conversationId: userMessageResult.conversationId,
+      role: 'assistant',
+      content: assistantContent,
+      model: input.model,
+      ...(cachedData.usageData !== undefined && { tokens: cachedData.usageData }),
     });
 
     const {
@@ -92,12 +86,14 @@ export const cacheCheck = async (req: Request, res: Response, next: NextFunction
     res.write(cachedData.tokens.trimEnd());
     res.write('\n\n');
 
-    // Send usage with 0 tokens
-    streamFormatter.writeUsage(res, {
-      promptTokens: 0,
-      completionTokens: 0,
-      totalTokens: 0,
-    });
+    streamFormatter.writeUsage(
+      res,
+      cachedData.usageData ?? {
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+      },
+    );
 
     // Send assistant message created event
     streamFormatter.writeAssistantMessageCreated(res, assistantMessageId);

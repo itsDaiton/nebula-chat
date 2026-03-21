@@ -1,6 +1,6 @@
 import { encoding_for_model } from 'tiktoken';
 import type { TiktokenModel } from 'tiktoken';
-import { chatConfig } from './chat.config';
+import { chatConfig } from '@backend/modules/chat/chat.config';
 
 let encoder: ReturnType<typeof encoding_for_model> | null = null;
 

@@ -1,7 +1,7 @@
 import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
 import { NotFoundError } from '@backend/errors/AppError';
 import { paginationConfig } from '@backend/config/pagination.config';
-import type { CreateConversationDTO } from './conversation.types';
+import type { CreateConversationDTO } from '@backend/modules/conversation/conversation.types';
 
 export const conversationService = {
   async createConversation(data: CreateConversationDTO) {
