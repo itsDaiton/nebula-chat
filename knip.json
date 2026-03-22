@@ -1,0 +1,11 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    "frontend": {
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "backend": {
+      "project": ["src/**/*.ts"]
+    }
+  }
+}
