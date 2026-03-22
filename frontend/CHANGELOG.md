@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.5.1...nebula-chat-client-v1.6.0) (2026-03-22)
+
+
+### Features
+
+* **client:** sidebar enhancements ([#130](https://github.com/itsDaiton/nebula-chat/issues/130)) ([eba434e](https://github.com/itsDaiton/nebula-chat/commit/eba434e35fbfe4fa6976ccbc767901513884b582))
+
 ## [1.5.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.5.0...nebula-chat-client-v1.5.1) (2026-03-22)
 
 
