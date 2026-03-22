@@ -11,7 +11,7 @@ const baseRedisStatsSchema = z.object({
   lastHitKey: z.string().nullable(),
 });
 
-export const redisStatsSchema = baseRedisStatsSchema.extend({
+const redisStatsSchema = baseRedisStatsSchema.extend({
   hitRate: z.number(),
   missRate: z.number(),
   expiredRate: z.number(),

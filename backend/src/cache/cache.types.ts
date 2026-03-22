@@ -1,13 +1,5 @@
 import type { z } from 'zod';
-import type {
-  cacheStatsResponseSchema,
-  cacheKeysResponseSchema,
-  cacheClearResponseSchema,
-  cacheHealthResponseSchema,
-  redisStatsSchema,
-  baseRedisStatsSchema,
-  cacheStatsSchema,
-} from './cache.validation';
+import type { baseRedisStatsSchema, cacheStatsSchema } from './cache.validation';
 
 export type CachedStreamData = {
   tokens: string;
@@ -18,10 +10,4 @@ export type CachedStreamData = {
   };
 };
 export type BaseRedisStats = z.infer<typeof baseRedisStatsSchema>;
-export type RedisStats = z.infer<typeof redisStatsSchema>;
 export type CacheStats = z.infer<typeof cacheStatsSchema>;
-
-export type CacheStatsResponse = z.infer<typeof cacheStatsResponseSchema>;
-export type CacheKeysResponse = z.infer<typeof cacheKeysResponseSchema>;
-export type CacheClearResponse = z.infer<typeof cacheClearResponseSchema>;
-export type CacheHealthResponse = z.infer<typeof cacheHealthResponseSchema>;

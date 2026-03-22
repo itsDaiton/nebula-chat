@@ -1,4 +1,4 @@
-import type { ButtonProps, IconButtonProps } from '@chakra-ui/react';
+import type { ButtonProps } from '@chakra-ui/react';
 import type { ThemeProviderProps } from 'next-themes';
 import type { ReactElement, ReactNode } from 'react';
 
@@ -27,8 +27,6 @@ export type UseColorModeReturn = {
 };
 
 export type ColorModeProviderProps = ThemeProviderProps;
-
-export type ColorModeButtonProps = Omit<IconButtonProps, 'aria-label'>;
 
 export type NebulaButtonProps = ButtonProps;
 
@@ -65,11 +63,6 @@ export type SearchState = {
   openSearch: () => void;
   closeSearch: () => void;
   toggleSearch: () => void;
-};
-
-export type ViewportState = {
-  viewportHeight: string;
-  setViewportHeight: (height: string) => void;
 };
 
 export type DrawerState = {

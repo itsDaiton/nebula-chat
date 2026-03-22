@@ -67,8 +67,6 @@ export const createRedisClient = async (): Promise<RedisClientType> => {
   }
 };
 
-export const getRedisClient = (): RedisClientType | null => redisClient;
-
 export const isRedisConnected = (): boolean => isConnected;
 
 export const closeRedisClient = async (): Promise<void> => {
