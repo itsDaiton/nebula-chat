@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.6.0...nebula-chat-v1.7.0) (2026-03-22)
+
+
+### Features
+
+* add knip package ([#127](https://github.com/itsDaiton/nebula-chat/issues/127)) ([49b5114](https://github.com/itsDaiton/nebula-chat/commit/49b511417e38daeffbabf739578f5321d6ba8c25))
+
+
+### Bug Fixes
+
+* knip code cleanup ([#129](https://github.com/itsDaiton/nebula-chat/issues/129)) ([e8f3a8a](https://github.com/itsDaiton/nebula-chat/commit/e8f3a8a5fecb69242ce107eea4cdfa9ba765fd55))
+
 ## [1.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.5.1...nebula-chat-v1.6.0) (2026-03-22)
 
 
