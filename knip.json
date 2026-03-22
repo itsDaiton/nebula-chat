@@ -1,5 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreDependencies": ["@prisma/client"],
   "workspaces": {
     "frontend": {
       "project": ["src/**/*.{ts,tsx}"]
