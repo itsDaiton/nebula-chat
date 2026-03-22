@@ -9,17 +9,21 @@ export const useTextareaAutoResize = (textareaRef: React.RefObject<HTMLTextAreaE
 
     const adjustHeight = () => {
       textarea.style.height = 'auto';
-      textarea.style.height = `${Math.min(textarea.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`;
-      textarea.style.overflowY = textarea.scrollHeight > MAX_TEXTAREA_HEIGHT ? 'auto' : 'hidden';
+      const scrollHeight = textarea.scrollHeight;
+
+      textarea.style.height = '';
+      const minHeight = textarea.offsetHeight;
+
+      const newHeight = Math.min(Math.max(scrollHeight, minHeight), MAX_TEXTAREA_HEIGHT);
+      textarea.style.height = `${newHeight}px`;
+      textarea.style.overflowY = scrollHeight > MAX_TEXTAREA_HEIGHT ? 'auto' : 'hidden';
     };
 
     adjustHeight();
-
-    const observer = new ResizeObserver(adjustHeight);
-    observer.observe(textarea);
+    textarea.addEventListener('input', adjustHeight);
 
     return () => {
-      observer.disconnect();
+      textarea.removeEventListener('input', adjustHeight);
     };
   }, [textareaRef]);
 };

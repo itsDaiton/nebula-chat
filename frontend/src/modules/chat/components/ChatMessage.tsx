@@ -5,15 +5,18 @@ import { getMessageBg } from '@/modules/chat/utils/getMessageBg';
 import { isUser } from '@/modules/chat/utils/isUser';
 import { ChatIcon } from '@/modules/chat/components/ChatIcon';
 import { MarkdownContent } from '@/shared/components/ui/markdown-content';
+import { useMultiLine } from '@/shared/hooks/useMultiLine';
 
 export const ChatMessage = memo(({ message }: ChatMessageProps) => {
   const isUserMessage = isUser(message.role);
+  const { isMultiLine, textRef } = useMultiLine(message.content);
 
   return (
     <Flex direction={isUserMessage ? 'row-reverse' : 'row'} gap={4} mb={6} align="flex-start">
       <ChatIcon isUser={isUserMessage} />
       <Box
-        maxW={{ base: '100%', md: '70%' }}
+        ref={isUserMessage ? textRef : undefined}
+        maxW={isUserMessage && !isMultiLine ? 'fit-content' : { base: '100%', md: '70%' }}
         bg={getMessageBg(isUserMessage)}
         color="fg.soft"
         borderRadius="lg"
