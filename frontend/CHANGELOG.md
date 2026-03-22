@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.4.0...nebula-chat-client-v1.5.0) (2026-03-22)
+
+
+### Features
+
+* **client:** add versioning plugin to generate public/version.json ([#125](https://github.com/itsDaiton/nebula-chat/issues/125)) ([40b53b3](https://github.com/itsDaiton/nebula-chat/commit/40b53b3e82523e39267c254eeb89b41212d69f6f))
+
 ## [1.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.3.1...nebula-chat-client-v1.4.0) (2026-03-21)
 
 

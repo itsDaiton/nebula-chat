@@ -1,6 +1,6 @@
 {
   "name": "nebula-chat-server",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "main": "dist/src/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
