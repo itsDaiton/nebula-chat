@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.4.2...nebula-chat-server-v1.4.3) (2026-03-22)
+
+
+### Bug Fixes
+
+* knip code cleanup ([#129](https://github.com/itsDaiton/nebula-chat/issues/129)) ([e8f3a8a](https://github.com/itsDaiton/nebula-chat/commit/e8f3a8a5fecb69242ce107eea4cdfa9ba765fd55))
+
 ## [1.4.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.4.1...nebula-chat-server-v1.4.2) (2026-03-22)
 
 
