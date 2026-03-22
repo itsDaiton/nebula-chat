@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Box, Flex } from '@chakra-ui/react';
 import { Header } from '@/shared/components/layout/Header';
 import { ConversationsList } from '@/modules/conversations/components/ConversationsList';
@@ -18,9 +19,13 @@ export const Layout = ({ children }: LayoutProps) => {
   const { showSidePanels, showRightPanel } = useResponsiveLayout();
   const { conversations } = useConversationsContext();
 
-  if (showSidePanels && isSearchOpen) {
-    closeSearch();
-  }
+  useEffect(() => {
+    if (showSidePanels && isSearchOpen) {
+      closeSearch();
+    }
+    // Only run when layout switches to desktop — not on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showSidePanels]);
   const navigate = useNavigate();
   const viewportHeight = useViewportHeight();
 
