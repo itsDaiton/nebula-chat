@@ -15,6 +15,7 @@ export const resources = {
     emptyHint: 'Start a new chat to create your first conversation',
     searchPlaceholder: 'Search chats...',
     noResults: 'No chats found',
+    searchHint: 'Start typing to search all conversations',
     single: {
       loading: 'Loading conversation...',
       error: 'Error loading conversation',
@@ -25,5 +26,12 @@ export const resources = {
     title: 'Page Not Found',
     message: "The page you're looking for doesn't exist or has been moved.",
     action: 'Go Home',
+  },
+  sidebar: {
+    newChat: 'New chat',
+    searchChats: 'Search chats',
+    files: 'Files',
+    aiStudio: 'AI Studio',
+    conversations: 'Recent conversations',
   },
 };
