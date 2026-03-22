@@ -60,6 +60,8 @@ export const ConversationsList = ({
     onClose?.();
   };
 
+  useKeyboardShortcut('e', handleCreateNewChat, { ctrl: true });
+
   const handleActionClick = (action: NavigationAction['action']) => {
     switch (action) {
       case 'newChat':
@@ -138,6 +140,7 @@ export const ConversationsList = ({
             label={action.label}
             onClick={() => handleActionClick(action.action)}
             badge={action.badge}
+            shortcut={action.shortcut}
           />
         ))}
       </Flex>

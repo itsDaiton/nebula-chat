@@ -43,12 +43,20 @@ export type BadgeConfig = {
   variant?: 'solid' | 'subtle' | 'outline' | 'surface' | 'plain';
 };
 
+export type ShortcutConfig = {
+  key: string;
+  ctrl?: boolean;
+  shift?: boolean;
+  alt?: boolean;
+};
+
 export type NavigationAction = {
   id: string;
   icon: ReactElement;
   label: string;
   badge?: BadgeConfig;
   action: 'newChat' | 'search' | 'files' | 'aiStudio';
+  shortcut?: ShortcutConfig;
 };
 
 export type BadgeActionButtonProps = {
@@ -56,6 +64,7 @@ export type BadgeActionButtonProps = {
   label: string;
   onClick: () => void;
   badge?: BadgeConfig;
+  shortcut?: ShortcutConfig;
 };
 
 export type SearchState = {
@@ -71,3 +80,5 @@ export type DrawerState = {
   closeDrawer: () => void;
   toggleDrawer: () => void;
 };
+
+export type OS = 'mac' | 'windows';

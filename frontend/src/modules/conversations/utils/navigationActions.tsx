@@ -9,12 +9,14 @@ export const navigationActions: NavigationAction[] = [
     icon: <FiEdit />,
     label: 'New Chat',
     action: 'newChat',
+    shortcut: { key: 'E', ctrl: true },
   },
   {
     id: 'search',
     icon: <FiSearch />,
     label: 'Search chats',
     action: 'search',
+    shortcut: { key: 'K', ctrl: true },
   },
   {
     id: 'files',
