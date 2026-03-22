@@ -26,4 +26,11 @@ export const resources = {
     message: "The page you're looking for doesn't exist or has been moved.",
     action: 'Go Home',
   },
+  sidebar: {
+    newChat: 'New chat',
+    searchChats: 'Search chats',
+    files: 'Files',
+    aiStudio: 'AI Studio',
+    conversations: 'Recent conversations',
+  },
 };
