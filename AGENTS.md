@@ -201,7 +201,7 @@ frontend/src/
     │       └── ...
     └── utils/
         ├── errorHandler.ts        # handleHttpError, handleNetworkError
-        ├── formatDate.ts
+        ├── dateUtils.ts
         ├── scrollUtils.ts
         ├── menuUtils.ts
         ├── urlUtils.ts
@@ -378,7 +378,7 @@ The one existing provider is `ConversationsProvider`, which wraps the app to sup
 - Components read from stores and hooks — they do not own significant state themselves.
 - Use Chakra UI primitives. Custom UI wrappers live in `shared/components/ui/`.
 - Responsive layout decisions (`isMobile`, `showSidePanels`) come from `useResponsiveLayout`.
-- String literals shown in the UI live in `resources.ts` — do not hardcode UI strings inside components.
+- **All static text must live in `resources.ts`.** If it is a string shown in the UI — button labels, placeholders, error messages, hints, empty states, tooltips — it goes in `resources.ts`. Never hardcode UI strings inline in components or utilities.
 
 ---
 

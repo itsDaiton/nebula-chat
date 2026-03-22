@@ -89,7 +89,7 @@ export const ConversationsSearch = ({
               filteredConversations.length === 0 &&
               !searchQuery.trim() && (
                 <Box py={8} textAlign="center" color="fg.muted" fontSize="sm">
-                  Start typing to search all conversations
+                  {resources.conversations.searchHint}
                 </Box>
               )}
           </Flex>

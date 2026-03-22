@@ -15,6 +15,7 @@ export const resources = {
     emptyHint: 'Start a new chat to create your first conversation',
     searchPlaceholder: 'Search chats...',
     noResults: 'No chats found',
+    searchHint: 'Start typing to search all conversations',
     single: {
       loading: 'Loading conversation...',
       error: 'Error loading conversation',
