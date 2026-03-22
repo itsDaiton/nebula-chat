@@ -16,7 +16,7 @@ export default defineConfig({
   base: '/',
   plugins: [react(), versionPlugin()],
   resolve: {
-    tsconfigPaths: true,
+    alias: { '@': resolve(__dirname, 'src') },
   },
   build: {
     outDir: 'build',
