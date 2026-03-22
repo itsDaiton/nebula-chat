@@ -31,8 +31,8 @@ nebula-chat/
 2. Create environment files:
 
    ```bash
-   cp /home/runner/work/nebula-chat/nebula-chat/backend/.env.example /home/runner/work/nebula-chat/nebula-chat/backend/.env
-   cp /home/runner/work/nebula-chat/nebula-chat/frontend/.env.example /home/runner/work/nebula-chat/nebula-chat/frontend/.env
+   cp backend/.env.example backend/.env
+   cp frontend/.env.example frontend/.env
    ```
 
 3. Fill required values:
@@ -43,20 +43,19 @@ nebula-chat/
 4. Start local infrastructure:
 
    ```bash
-   cd /home/runner/work/nebula-chat/nebula-chat/backend && docker-compose up -d
+   cd backend && docker-compose up -d
    ```
 
 5. Run DB migrations:
 
    ```bash
-   cd /home/runner/work/nebula-chat/nebula-chat
+   cd ..
    pnpm --filter nebula-chat-server run prisma:migrate
    ```
 
 6. Start backend and frontend (in separate terminals):
 
    ```bash
-   cd /home/runner/work/nebula-chat/nebula-chat
    pnpm --filter nebula-chat-server run dev
    pnpm --filter nebula-chat-client run dev
    ```

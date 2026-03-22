@@ -20,14 +20,13 @@ It is responsible for:
 1. Install dependencies from monorepo root:
 
    ```bash
-   cd /home/runner/work/nebula-chat/nebula-chat
    pnpm install
    ```
 
 2. Create backend env file:
 
    ```bash
-   cp /home/runner/work/nebula-chat/nebula-chat/backend/.env.example /home/runner/work/nebula-chat/nebula-chat/backend/.env
+   cp backend/.env.example backend/.env
    ```
 
 3. Configure required variables in `backend/.env`:
@@ -40,21 +39,20 @@ It is responsible for:
 4. Start local PostgreSQL + Redis:
 
    ```bash
-   cd /home/runner/work/nebula-chat/nebula-chat/backend
+   cd backend
    docker-compose up -d
    ```
 
 5. Run Prisma migrations:
 
    ```bash
-   cd /home/runner/work/nebula-chat/nebula-chat
+   cd ..
    pnpm --filter nebula-chat-server run prisma:migrate
    ```
 
 6. Start backend in watch mode:
 
    ```bash
-   cd /home/runner/work/nebula-chat/nebula-chat
    pnpm --filter nebula-chat-server run dev
    ```
 

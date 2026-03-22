@@ -17,14 +17,13 @@ It provides:
 1. Install dependencies from the monorepo root:
 
    ```bash
-   cd /home/runner/work/nebula-chat/nebula-chat
    pnpm install
    ```
 
 2. Create frontend env file:
 
    ```bash
-   cp /home/runner/work/nebula-chat/nebula-chat/frontend/.env.example /home/runner/work/nebula-chat/nebula-chat/frontend/.env
+   cp frontend/.env.example frontend/.env
    ```
 
 3. Set `VITE_API_URL` in `frontend/.env`:
@@ -36,7 +35,6 @@ It provides:
 4. Start the app:
 
    ```bash
-   cd /home/runner/work/nebula-chat/nebula-chat
    pnpm --filter nebula-chat-client run dev
    ```
 
