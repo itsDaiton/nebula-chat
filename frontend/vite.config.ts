@@ -10,7 +10,10 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const versionPlugin = () => ({
   name: 'version-json',
   buildStart() {
-    writeFileSync(resolve(__dirname, 'public/version.json'), JSON.stringify({ version: pkg.version }));
+    writeFileSync(
+      resolve(__dirname, 'public/version.json'),
+      JSON.stringify({ version: pkg.version }),
+    );
   },
 });
 
