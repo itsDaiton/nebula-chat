@@ -28,10 +28,9 @@ export const ChatInputArea = ({
     border="none"
     color="fg.soft"
     resize="none"
-    minH="auto"
     maxH="200px"
     overflow="hidden"
-    rows={1}
+    rows={2}
     css={chatScrollBar}
     _focus={{
       outline: 'none',

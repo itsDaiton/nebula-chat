@@ -4,5 +4,3 @@ export const SERVER_CONFIG = {
   BASE_URL,
   getApiEndpoint: (path: string): string => `${SERVER_CONFIG.BASE_URL}${path}`,
 };
-
-export default SERVER_CONFIG;

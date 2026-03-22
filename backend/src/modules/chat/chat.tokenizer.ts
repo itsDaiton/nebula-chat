@@ -41,10 +41,3 @@ export const calculateContextTokens = (
   const baseOverhead = 3;
   return totalTokens + messageOverhead + baseOverhead;
 };
-
-export const cleanupEncoder = () => {
-  if (encoder) {
-    encoder.free();
-    encoder = null;
-  }
-};

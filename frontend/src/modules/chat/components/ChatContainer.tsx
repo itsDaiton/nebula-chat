@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Box, Flex, Text } from '@chakra-ui/react';
 import { useParams } from 'react-router';
 import { ChatContainerBox } from '@/modules/chat/components/ChatContainerBox';
@@ -11,6 +11,7 @@ import { useHandleSendMessage } from '@/modules/chat/hooks/useHandleSendMessage'
 import { useModel } from '@/modules/chat/hooks/useModel';
 import { useConversation } from '@/modules/conversations/hooks/useConversation';
 import { chatScrollBar } from '@/shared/components/scrollbar';
+import { scrollToBottom } from '@/shared/utils/scrollUtils';
 import { resources } from '@/resources';
 
 export const ChatContainer = () => {
@@ -28,6 +29,7 @@ export const ChatContainer = () => {
   const { selectedModel, setSelectedModel } = useModel();
 
   const { handleSendMessage } = useHandleSendMessage({ history, streamMessage });
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // Once the navigation has rendered (conversationId from URL params is set),
   // it's safe to clear the streaming state without causing an empty-state flicker.
@@ -36,6 +38,10 @@ export const ChatContainer = () => {
       clearPostStream();
     }
   }, [conversationId, isPostStreamNavigation, clearPostStream]);
+
+  useEffect(() => {
+    scrollToBottom(scrollRef);
+  }, [history.length, isStreaming]);
 
   if (conversationId && isConversationLoading && chatConversationId !== conversationId) {
     return (
@@ -78,11 +84,7 @@ export const ChatContainer = () => {
         ) : (
           <ChatEmptyState conversationId={conversationId} />
         )}
-        <div
-          key={`scroll-${history.length}-${String(isStreaming)}`}
-          ref={(node) => node?.scrollIntoView({ behavior: 'smooth' })}
-          style={{ height: '0px' }}
-        />
+        <div ref={scrollRef} style={{ height: '0px' }} />
       </Box>
       <ChatInputBar
         onSend={(msg) => void handleSendMessage(msg, selectedModel)}

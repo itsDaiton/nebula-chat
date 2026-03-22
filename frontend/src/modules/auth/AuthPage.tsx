@@ -1,1 +1,3 @@
-export const AuthPage = () => <div>Auth Page</div>;
+import { Page } from '@/shared/components/layout/Page';
+
+export const AuthPage = () => <Page>Auth Page</Page>;
