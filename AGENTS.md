@@ -689,7 +689,7 @@ The generated spec is served at `/openapi.json`; Swagger UI at `/docs`.
 To export the spec as a static file (no server required), run:
 
 ```bash
-pnpm run generate:openapi  # writes openapi/openapi.yaml to repo root
+pnpm --filter nebula-chat-server run generate:openapi  # writes openapi/openapi.yaml to repo root
 ```
 
 The script lives at `backend/src/scripts/generate-openapi.ts`.

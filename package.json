@@ -15,8 +15,7 @@
     "lint:fix": "eslint --report-unused-disable-directives --max-warnings=0 . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "knip": "knip",
-    "generate:openapi": "pnpm --filter nebula-chat-server run generate:openapi"
+    "knip": "knip"
   },
   "dependencies": {
     "only-allow": "^1.2.2"
