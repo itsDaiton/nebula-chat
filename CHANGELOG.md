@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.8.0...nebula-chat-v1.8.1) (2026-03-29)
+
+
+### Bug Fixes
+
+* update dependabot configuration for npm packages ([#145](https://github.com/itsDaiton/nebula-chat/issues/145)) ([c4ccea1](https://github.com/itsDaiton/nebula-chat/commit/c4ccea1790722c96e17bc3905dfebba88e435d51))
+
 ## [1.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.7.0...nebula-chat-v1.8.0) (2026-03-22)
 
 
