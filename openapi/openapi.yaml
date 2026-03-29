@@ -3,11 +3,37 @@ info:
   title: Nebula Chat API
   version: 1.0.0
   description: REST API for Nebula Chat
+  contact:
+    name: Nebula Chat
 servers:
   - url: http://localhost:3000
+tags:
+  - name: Chat
+    description: Chat streaming endpoints
+  - name: Conversations
+    description: Conversation management
+  - name: Messages
+    description: Message management
+  - name: Cache
+    description: Cache inspection and management
 components:
   schemas:
-    Chat Stream:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum:
+            - false
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - success
+        - error
+        - message
+    ChatStream:
       type: object
       properties:
         event:
@@ -77,6 +103,7 @@ components:
 paths:
   /api/chat/stream:
     post:
+      operationId: streamChat
       description: >-
         Stream a chat completion response from an AI model with automatic
         conversation and message persistence.
@@ -121,45 +148,19 @@ paths:
           content:
             text/event-stream:
               schema:
-                $ref: '#/components/schemas/Chat Stream'
+                $ref: '#/components/schemas/ChatStream'
         '400':
           description: Invalid request body or validation error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Conversation not found (if conversationId provided)
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
         '413':
           description: >-
             Payload too large - user message exceeds token limit or conversation
@@ -167,60 +168,22 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
         '429':
           description: Rate limit exceeded
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
   /api/conversations:
     post:
+      operationId: createConversation
       description: Create a new conversation with a title
       summary: Create conversation
       tags:
@@ -248,40 +211,15 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
     get:
+      operationId: listConversations
       description: >-
         Retrieve conversations with cursor-based pagination. Returns up to 10
         conversations by default.
@@ -333,99 +271,10 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-  /api/conversations/{conversationId}:
-    get:
-      description: Retrieve a specific conversation by ID
-      summary: Get conversation by ID
-      tags:
-        - Conversations
-      parameters:
-        - schema:
-            type: string
-            format: uuid
-          required: true
-          name: conversationId
-          in: path
-      responses:
-        '200':
-          description: Conversation retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Conversation'
-        '400':
-          description: Invalid conversation ID format
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-        '404':
-          description: Conversation not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
   /api/conversations/search:
     get:
+      operationId: searchConversations
       description: >-
         Search conversations by title. Returns matching conversations ordered by
         creation date.
@@ -454,41 +303,55 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/conversations/{conversationId}:
+    get:
+      operationId: getConversation
+      description: Retrieve a specific conversation by ID
+      summary: Get conversation by ID
+      tags:
+        - Conversations
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+          required: true
+          name: conversationId
+          in: path
+      responses:
+        '200':
+          description: Conversation retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: Invalid conversation ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/messages:
     post:
+      operationId: createMessage
       description: Create a new message in a conversation
       summary: Create message
       tags:
@@ -544,40 +407,15 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
     get:
+      operationId: listMessages
       description: Retrieve all messages across all conversations
       summary: List all messages
       tags:
@@ -596,22 +434,10 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
   /api/messages/{messageId}:
     get:
+      operationId: getMessage
       description: Retrieve a specific message by ID
       summary: Get message by ID
       tags:
@@ -635,60 +461,22 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Message not found
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
   /api/cache/stats:
     get:
+      operationId: getCacheStats
       description: Get cache statistics including hit/miss rates and performance metrics
       summary: Get cache statistics
       tags:
@@ -783,22 +571,10 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
   /api/cache/keys:
     get:
+      operationId: getCacheKeys
       description: Get list of recent cache keys
       summary: Get cache keys
       tags:
@@ -828,22 +604,10 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
   /api/cache/clear:
     delete:
+      operationId: clearCache
       description: Clear all cached data
       summary: Clear cache
       tags:
@@ -868,22 +632,10 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'
   /api/cache/health:
     get:
+      operationId: getCacheHealth
       description: Check cache system health status
       summary: Cache health check
       tags:
@@ -907,17 +659,4 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
+                $ref: '#/components/schemas/ErrorResponse'

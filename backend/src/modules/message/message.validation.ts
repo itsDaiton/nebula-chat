@@ -1,7 +1,4 @@
-import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
 import { z } from 'zod';
-
-extendZodWithOpenApi(z);
 
 const tokenUsageSchema = z.object({
   promptTokens: z.number(),

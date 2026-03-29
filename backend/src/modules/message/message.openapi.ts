@@ -11,6 +11,7 @@ export const registerMessageRoutes = () => {
   registry.registerPath({
     method: 'post',
     path: '/api/messages',
+    operationId: 'createMessage',
     description: 'Create a new message in a conversation',
     summary: 'Create message',
     tags: ['Messages'],
@@ -53,6 +54,7 @@ export const registerMessageRoutes = () => {
   registry.registerPath({
     method: 'get',
     path: '/api/messages/{messageId}',
+    operationId: 'getMessage',
     description: 'Retrieve a specific message by ID',
     summary: 'Get message by ID',
     tags: ['Messages'],
@@ -97,6 +99,7 @@ export const registerMessageRoutes = () => {
   registry.registerPath({
     method: 'get',
     path: '/api/messages',
+    operationId: 'listMessages',
     description: 'Retrieve all messages across all conversations',
     summary: 'List all messages',
     tags: ['Messages'],

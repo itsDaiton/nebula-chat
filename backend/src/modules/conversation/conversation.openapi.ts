@@ -14,6 +14,7 @@ export const registerConversationRoutes = () => {
   registry.registerPath({
     method: 'post',
     path: '/api/conversations',
+    operationId: 'createConversation',
     description: 'Create a new conversation with a title',
     summary: 'Create conversation',
     tags: ['Conversations'],
@@ -55,7 +56,46 @@ export const registerConversationRoutes = () => {
   });
   registry.registerPath({
     method: 'get',
+    path: '/api/conversations/search',
+    operationId: 'searchConversations',
+    description:
+      'Search conversations by title. Returns matching conversations ordered by creation date.',
+    summary: 'Search conversations',
+    tags: ['Conversations'],
+    request: {
+      query: searchConversationsQuerySchema,
+    },
+    responses: {
+      200: {
+        description: 'List of conversations matching the search query',
+        content: {
+          'application/json': {
+            schema: conversationsArraySchema,
+          },
+        },
+      },
+      400: {
+        description: 'Invalid search query',
+        content: {
+          'application/json': {
+            schema: errorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: errorResponseSchema,
+          },
+        },
+      },
+    },
+  });
+  registry.registerPath({
+    method: 'get',
     path: '/api/conversations/{conversationId}',
+    operationId: 'getConversation',
     description: 'Retrieve a specific conversation by ID',
     summary: 'Get conversation by ID',
     tags: ['Conversations'],
@@ -100,6 +140,7 @@ export const registerConversationRoutes = () => {
   registry.registerPath({
     method: 'get',
     path: '/api/conversations',
+    operationId: 'listConversations',
     description:
       'Retrieve conversations with cursor-based pagination. Returns up to 10 conversations by default.',
     summary: 'List conversations',
@@ -113,43 +154,6 @@ export const registerConversationRoutes = () => {
         content: {
           'application/json': {
             schema: paginatedConversationsResponseSchema,
-          },
-        },
-      },
-      500: {
-        description: 'Internal server error',
-        content: {
-          'application/json': {
-            schema: errorResponseSchema,
-          },
-        },
-      },
-    },
-  });
-  registry.registerPath({
-    method: 'get',
-    path: '/api/conversations/search',
-    description:
-      'Search conversations by title. Returns matching conversations ordered by creation date.',
-    summary: 'Search conversations',
-    tags: ['Conversations'],
-    request: {
-      query: searchConversationsQuerySchema,
-    },
-    responses: {
-      200: {
-        description: 'List of conversations matching the search query',
-        content: {
-          'application/json': {
-            schema: conversationsArraySchema,
-          },
-        },
-      },
-      400: {
-        description: 'Invalid search query',
-        content: {
-          'application/json': {
-            schema: errorResponseSchema,
           },
         },
       },
