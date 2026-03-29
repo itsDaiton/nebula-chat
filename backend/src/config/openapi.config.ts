@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import {
   extendZodWithOpenApi,
   OpenAPIRegistry,
@@ -26,7 +25,7 @@ export const generateOpenAPIDocument = (): OpenAPIObject => {
     },
     servers: [
       {
-        url: process.env.SERVER_URL || `http://localhost:${process.env.PORT || 3000}`,
+        url: process.env.SERVER_URL ?? '/',
       },
     ],
     tags: [

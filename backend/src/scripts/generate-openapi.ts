@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { mkdirSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 import { dump } from 'js-yaml';
