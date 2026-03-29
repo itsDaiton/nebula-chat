@@ -13,6 +13,17 @@
     "backend": {
       "release-type": "node",
       "include-component-in-tag": true
+    },
+    "openapi": {
+      "release-type": "node",
+      "include-component-in-tag": true,
+      "extra-files": [
+        {
+          "type": "yaml",
+          "path": "openapi.yaml",
+          "jsonpath": "$.info.version"
+        }
+      ]
     }
   }
 }

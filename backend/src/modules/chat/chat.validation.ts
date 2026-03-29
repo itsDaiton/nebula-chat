@@ -1,8 +1,5 @@
-import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
 import { chatConfig } from '@backend/modules/chat/chat.config';
 import { z } from 'zod';
-
-extendZodWithOpenApi(z);
 
 const chatMessageSchema = z.object({
   role: z.enum(['user', 'assistant', 'system']),
@@ -22,4 +19,4 @@ export const chatStreamResponseSchema = z
     event: z.string(),
     data: z.string(),
   })
-  .openapi('Chat Stream');
+  .openapi('ChatStream');

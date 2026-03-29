@@ -11,6 +11,7 @@ export const registerCacheRoutes = () => {
   registry.registerPath({
     method: 'get',
     path: '/api/cache/stats',
+    operationId: 'getCacheStats',
     description: 'Get cache statistics including hit/miss rates and performance metrics',
     summary: 'Get cache statistics',
     tags: ['Cache'],
@@ -36,6 +37,7 @@ export const registerCacheRoutes = () => {
   registry.registerPath({
     method: 'get',
     path: '/api/cache/keys',
+    operationId: 'getCacheKeys',
     description: 'Get list of recent cache keys',
     summary: 'Get cache keys',
     tags: ['Cache'],
@@ -61,6 +63,7 @@ export const registerCacheRoutes = () => {
   registry.registerPath({
     method: 'delete',
     path: '/api/cache/clear',
+    operationId: 'clearCache',
     description: 'Clear all cached data',
     summary: 'Clear cache',
     tags: ['Cache'],
@@ -86,6 +89,7 @@ export const registerCacheRoutes = () => {
   registry.registerPath({
     method: 'get',
     path: '/api/cache/health',
+    operationId: 'getCacheHealth',
     description: 'Check cache system health status',
     summary: 'Cache health check',
     tags: ['Cache'],

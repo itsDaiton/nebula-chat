@@ -6,6 +6,7 @@ export const registerChatRoutes = () => {
   registry.registerPath({
     method: 'post',
     path: '/api/chat/stream',
+    operationId: 'streamChat',
     description: `Stream a chat completion response from an AI model with automatic conversation and message persistence.`,
     summary: 'Stream chat completion',
     tags: ['Chat'],

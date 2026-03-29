@@ -686,6 +686,16 @@ Every route is documented automatically. When adding a new route:
 
 The generated spec is served at `/openapi.json`; Swagger UI at `/docs`.
 
+To export the spec as a static file (no server required), run:
+
+```bash
+pnpm --filter nebula-chat-server run generate:openapi  # writes openapi/openapi.yaml to repo root
+```
+
+The script lives at `backend/src/scripts/generate-openapi.ts`.
+
+**Rule:** After every change to the backend, agents must re-run this script to keep `openapi/openapi.yaml` in sync with the current API state. Always commit the updated `openapi/openapi.yaml` alongside backend changes.
+
 ---
 
 ### Backend Path Aliases

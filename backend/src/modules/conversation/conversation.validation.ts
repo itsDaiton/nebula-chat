@@ -1,8 +1,5 @@
-import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
 import { z } from 'zod';
 import { paginationConfig } from '@backend/config/pagination.config';
-
-extendZodWithOpenApi(z);
 
 export const createConversationSchema = z.object({
   title: z.string().min(1),
