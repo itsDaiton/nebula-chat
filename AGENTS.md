@@ -694,6 +694,8 @@ pnpm --filter nebula-chat-server run generate:openapi  # writes openapi/openapi.
 
 The script lives at `backend/src/scripts/generate-openapi.ts`.
 
+**Rule:** After every change to the backend, agents must re-run this script to keep `openapi/openapi.yaml` in sync with the current API state. Always commit the updated `openapi/openapi.yaml` alongside backend changes.
+
 ---
 
 ### Backend Path Aliases
