@@ -5,6 +5,7 @@ import {
 } from '@asteasolutions/zod-to-openapi';
 import type { OpenAPIObject } from 'openapi3-ts/oas30';
 import { z } from 'zod';
+import { version } from '../../../openapi/package.json';
 
 extendZodWithOpenApi(z);
 
@@ -17,7 +18,7 @@ export const generateOpenAPIDocument = (): OpenAPIObject => {
     openapi: '3.0.0',
     info: {
       title: 'Nebula Chat API',
-      version: '1.0.0',
+      version,
       description: 'REST API for Nebula Chat',
       contact: {
         name: 'Nebula Chat',
