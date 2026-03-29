@@ -686,6 +686,14 @@ Every route is documented automatically. When adding a new route:
 
 The generated spec is served at `/openapi.json`; Swagger UI at `/docs`.
 
+To export the spec as a static file (no server required), run:
+
+```bash
+pnpm run generate:openapi  # writes openapi/openapi.yaml to repo root
+```
+
+The script lives at `backend/src/scripts/generate-openapi.ts`.
+
 ---
 
 ### Backend Path Aliases

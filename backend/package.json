@@ -11,10 +11,12 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
-    "prisma:validate": "prisma validate"
+    "prisma:validate": "prisma validate",
+    "generate:openapi": "tsx src/scripts/generate-openapi.ts"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^8.5.0",
+    "js-yaml": "^4.1.0",
     "@prisma/adapter-pg": "^7.5.0",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
@@ -30,6 +32,7 @@
   "devDependencies": {
     "@prisma/client": "^7.5.0",
     "@types/cors": "^2.8.19",
+    "@types/js-yaml": "^4.0.9",
     "@types/express": "^5.0.6",
     "@types/node": "^25.5.0",
     "@types/swagger-ui-express": "^4.1.8",
