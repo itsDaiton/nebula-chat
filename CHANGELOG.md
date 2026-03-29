@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.8.1...nebula-chat-v1.9.0) (2026-03-29)
+
+
+### Features
+
+* **backend:** add generate:openapi script ([#151](https://github.com/itsDaiton/nebula-chat/issues/151)) ([d525167](https://github.com/itsDaiton/nebula-chat/commit/d52516785ce575328616ad8fdf266c26dca13d99))
+
 ## [1.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.8.0...nebula-chat-v1.8.1) (2026-03-29)
 
 
