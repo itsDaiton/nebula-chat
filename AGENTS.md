@@ -14,6 +14,7 @@ Covers the full monorepo — where things live, how they are built, and how to a
    - [Directory Layout](#frontend-directory-layout)
    - [Routing](#routing)
    - [Imports](#imports)
+   - [No `index.ts` barrels](#no-indexts-barrels)
    - [TypeScript Types](#typescript-types)
    - [State Management — Zustand](#state-management--zustand)
    - [Components](#components)
@@ -243,6 +244,28 @@ import { useSearchStore } from '../../shared/stores/useSearchStore';
 import type { Conversation } from '../types/types';
 import { ChatInput } from './ChatInput';
 ```
+
+---
+
+### No `index.ts` barrels
+
+Never use `index.ts` files for re-exports. Each module, component, hook, util, or type must be imported directly from the file that defines it — no barrel files anywhere in the repo (frontend, backend, or `libs/*`).
+
+This keeps imports explicit, avoids circular-dependency traps, and prevents the tree-shaking and IDE-performance issues barrel files are known for.
+
+```ts
+// correct — import from the defining file
+import { axiosClient } from '@nebula-chat/api/client';
+import { queryClient } from '@nebula-chat/api/query-client';
+import { ChatInput } from '@/modules/chat/components/ChatInput';
+
+// wrong — never re-export through an index.ts
+// libs/api/src/index.ts
+export * from './client';
+export * from './queryClient';
+```
+
+The only `index.ts` files tolerated are those emitted by code generators (e.g. Orval output). Do not hand-author or hand-edit them.
 
 ---
 
@@ -695,6 +718,14 @@ pnpm --filter nebula-chat-server run generate:openapi  # writes openapi/openapi.
 The script lives at `backend/src/scripts/generate-openapi.ts`.
 
 **Rule:** After every change to the backend, agents must re-run this script to keep `openapi/openapi.yaml` in sync with the current API state. Always commit the updated `openapi/openapi.yaml` alongside backend changes.
+
+**Rule (API client regeneration):** Whenever `openapi/openapi.yaml` changes — whether you edited the backend and regenerated it, or the file changed for any other reason — agents must immediately regenerate the typed frontend API client at `libs/api/src/generated/`:
+
+```bash
+pnpm --filter nebula-chat-client run generate:api
+```
+
+The generator is Orval, configured at `libs/api/orval.config.ts`, driven by `openapi/openapi.yaml`, and using the axios mutator at `libs/api/src/client.ts`. Regenerated files in `libs/api/src/generated/` must be committed in the same PR as the backend/OpenAPI change — never ship an API change with a stale client. Do not hand-edit anything under `libs/api/src/generated/`; always regenerate.
 
 ---
 
