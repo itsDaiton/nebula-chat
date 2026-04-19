@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.13.0...nebula-chat-v1.13.1) (2026-04-19)
+
+
+### Bug Fixes
+
+* **ci:** enable release-please auto-merge in manifest mode ([#180](https://github.com/itsDaiton/nebula-chat/issues/180)) ([d5e14d4](https://github.com/itsDaiton/nebula-chat/commit/d5e14d4cffa906536859501a9cd981e9897f6a2d))
+
 ## [1.13.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.12.0...nebula-chat-v1.13.0) (2026-04-19)
 
 
