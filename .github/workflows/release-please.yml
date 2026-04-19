@@ -23,7 +23,20 @@ jobs:
           manifest-file: .release-please-manifest.json
 
       - name: Enable auto-merge on release PR
-        if: ${{ steps.release.outputs.pr_number }}
-        run: gh pr merge --auto --squash ${{ steps.release.outputs.pr_number }}
+        if: ${{ steps.release.outputs.prs_created == 'true' }}
+        run: |
+          prs='${{ steps.release.outputs.prs }}'
+          if [ -z "$prs" ] || [ "$prs" = "[]" ]; then
+            pr='${{ steps.release.outputs.pr }}'
+            if [ -n "$pr" ] && [ "$pr" != "null" ]; then
+              prs="[$pr]"
+            fi
+          fi
+
+          echo "$prs" | jq -r '.[] | .number' | while read -r pr_number; do
+            if [ -n "$pr_number" ]; then
+              gh pr merge --auto --squash "$pr_number"
+            fi
+          done
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_PAT }}
