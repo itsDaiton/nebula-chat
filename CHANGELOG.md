@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.10.0...nebula-chat-v1.11.0) (2026-04-19)
+
+
+### Features
+
+* update workflow names for clarity ([#171](https://github.com/itsDaiton/nebula-chat/issues/171)) ([964e193](https://github.com/itsDaiton/nebula-chat/commit/964e1939797db0e7556cf66a5fda87229457c029))
+
 ## [1.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.9.0...nebula-chat-v1.10.0) (2026-04-19)
 
 
