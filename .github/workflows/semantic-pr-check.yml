@@ -10,7 +10,7 @@ permissions:
   pull-requests: read
 
 env:
-  SEMANTIC_REGEX: ^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([[:alnum:]_.\/-]+\))?!?:.+
+  SEMANTIC_REGEX: ^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([[:alnum:]_.\/-]+\))?!?:[[:space:]].+
 
 jobs:
   pr-title:
@@ -47,15 +47,12 @@ jobs:
               continue
             fi
 
-            if [[ "$MESSAGE" =~ ^Merge[[:space:]] ]]; then
-              continue
-            fi
-
             if ! [[ "$MESSAGE" =~ $SEMANTIC_REGEX ]]; then
               echo "Non-semantic commit message: $MESSAGE"
+              echo "Expected format: type(scope): description"
               INVALID=1
             fi
-          done < <(git log --format=%s "$BASE_SHA..$HEAD_SHA")
+          done < <(git log --no-merges --format=%s "$BASE_SHA..$HEAD_SHA")
 
           if [[ "$INVALID" -ne 0 ]]; then
             echo "One or more commit messages are not semantic."
