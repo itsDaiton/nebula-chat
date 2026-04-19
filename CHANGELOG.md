@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.11.0...nebula-chat-v1.12.0) (2026-04-19)
+
+
+### Features
+
+* add docs for new backend migration ([#178](https://github.com/itsDaiton/nebula-chat/issues/178)) ([1f5e4fd](https://github.com/itsDaiton/nebula-chat/commit/1f5e4fd73af4a950f3d2bbbfeb022d45bd7d4c99))
+
 ## [1.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.10.0...nebula-chat-v1.11.0) (2026-04-19)
 
 
