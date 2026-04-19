@@ -4,6 +4,10 @@ export default defineConfig({
   nebulaChat: {
     input: {
       target: '../../openapi/openapi.yaml',
+      filters: {
+        mode: 'exclude',
+        tags: ['Chat'],
+      },
     },
     output: {
       mode: 'tags-split',
