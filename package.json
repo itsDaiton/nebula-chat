@@ -22,6 +22,7 @@
   },
   "pnpm": {
     "overrides": {
+      "hono": "4.12.14",
       "path-to-regexp": "8.4.0"
     },
     "onlyBuiltDependencies": [
