@@ -24,9 +24,17 @@ block() {
   exit 2
 }
 
+# Block `rm` with an rf-flag ONLY when the target is a standalone dangerous token:
+#   /, ~, ~/, $HOME, $HOME/, ., ./, .., ../, *, /*, ./*, ~/*, $HOME/*
+# "Standalone" means the target ends at end-of-string, whitespace, or a shell
+# separator (; & |). Deeper paths like `rm -rf node_modules`, `rm -rf /tmp/cache`,
+# `rm -rf ./dist`, `rm -rf $HOME/Downloads` are intentionally NOT matched.
+rm_danger_re='(^|[[:space:]]|;|&|\|)rm[[:space:]]+(-[^[:space:]=]+[[:space:]]+)*-([^[:space:]=]*[rR][^[:space:]=]*[fF]|[^[:space:]=]*[fF][^[:space:]=]*[rR])[^[:space:]=]*([[:space:]]+-[^[:space:]=]+)*[[:space:]]+(/|~|~/|\$HOME|\$HOME/|\.|\./|\.\.|\.\./|\*|/\*|\./\*|~/\*|\$HOME/\*)([[:space:]]|$|;|&|\|)'
+if [[ "$cmd" =~ $rm_danger_re ]]; then
+  block "rm -rf of root/home/working-tree (target was /, ~, \$HOME, ., ./, .., ../, *, /*, ./*, ~/*, or \$HOME/*)"
+fi
+
 case "$cmd" in
-  *"rm -rf /"*|*"rm -rf ~"*|*"rm -rf \$HOME"*) block "rm -rf of root/home directory" ;;
-  *"rm -rf ."*|*"rm -rf ./"*|*"rm -rf *"*)      block "rm -rf of working tree" ;;
   *"git push"*"--force"*|*"git push"*"-f "*)   block "git push with force options (all force pushes are blocked)" ;;
   *"git reset --hard"*)                          block "git reset --hard (destructive)" ;;
   *"git clean -fd"*|*"git clean -fdx"*)         block "git clean -fd (destructive)" ;;
