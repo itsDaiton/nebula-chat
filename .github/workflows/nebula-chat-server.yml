@@ -1,4 +1,4 @@
-name: nebula-chat-server
+name: Build nebula-chat-server
 
 on:
   push:
