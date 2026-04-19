@@ -2,10 +2,10 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreDependencies": ["@prisma/client"],
   "workspaces": {
-    "frontend": {
+    "apps/nebula-chat-client": {
       "project": ["src/**/*.{ts,tsx}"]
     },
-    "backend": {
+    "apps/nebula-chat-server": {
       "project": ["src/**/*.ts"]
     }
   }

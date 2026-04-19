@@ -26,10 +26,10 @@ It is responsible for:
 2. Create backend env file:
 
    ```bash
-   cp backend/.env.example backend/.env
+   cp apps/nebula-chat-server/.env.example apps/nebula-chat-server/.env
    ```
 
-3. Configure required variables in `backend/.env`:
+3. Configure required variables in `apps/nebula-chat-server/.env`:
    - `OPENAI_API_KEY`
    - `SERVER_URL` (for local use: `http://localhost:3000`)
    - `CLIENT_URL` (for local use: `http://localhost:5173`)
@@ -39,14 +39,14 @@ It is responsible for:
 4. Start local PostgreSQL + Redis:
 
    ```bash
-   cd backend
+   cd apps/nebula-chat-server
    docker-compose up -d
    ```
 
 5. Run Prisma migrations:
 
    ```bash
-   cd ..
+   cd ../..
    pnpm --filter nebula-chat-server run prisma:migrate
    ```
 

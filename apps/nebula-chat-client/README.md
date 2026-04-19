@@ -23,10 +23,10 @@ It provides:
 2. Create frontend env file:
 
    ```bash
-   cp frontend/.env.example frontend/.env
+   cp apps/nebula-chat-client/.env.example apps/nebula-chat-client/.env
    ```
 
-3. Set `VITE_API_URL` in `frontend/.env`:
+3. Set `VITE_API_URL` in `apps/nebula-chat-client/.env`:
 
    ```env
    VITE_API_URL=http://localhost:3000

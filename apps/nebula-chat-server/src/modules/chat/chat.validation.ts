@@ -1,3 +1,4 @@
+import '@backend/config/openapi.config';
 import { chatConfig } from '@backend/modules/chat/chat.config';
 import { z } from 'zod';
 

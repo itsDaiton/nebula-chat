@@ -1,3 +1,4 @@
+import '@backend/config/openapi.config';
 import { z } from 'zod';
 
 const tokenUsageSchema = z.object({

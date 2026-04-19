@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { dump } from 'js-yaml';
 import { openApiDocument } from '@backend/openapi';
 
-const outputDir = resolve(process.cwd(), '../openapi');
+const outputDir = resolve(process.cwd(), '../../openapi');
 const outputPath = resolve(outputDir, 'openapi.yaml');
 
 mkdirSync(outputDir, { recursive: true });

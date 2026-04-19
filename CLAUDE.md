@@ -16,15 +16,15 @@ pnpm --filter nebula-chat-client run <cmd>  # Run frontend script (e.g. pnpm --f
 pnpm --filter nebula-chat-server run <cmd>  # Run backend script (e.g. pnpm --filter nebula-chat-server run dev)
 ```
 
-### Frontend (`/frontend`)
+### Frontend (`/apps/nebula-chat-client`)
 
 ```bash
 pnpm dev        # Vite dev server on localhost:5173
-pnpm build      # tsc + Vite build → /frontend/build
+pnpm build      # tsc + Vite build → /apps/nebula-chat-client/build
 pnpm typecheck  # tsc --noEmit
 ```
 
-### Backend (`/backend`)
+### Backend (`/apps/nebula-chat-server`)
 
 ```bash
 pnpm dev              # tsx watch mode (auto-restart)
@@ -41,14 +41,14 @@ pnpm prisma:studio    # Open Prisma Studio
 ### Local infrastructure
 
 ```bash
-cd backend && docker-compose up  # Start PostgreSQL (port 5332) + Redis (port 6380)
+cd apps/nebula-chat-server && docker-compose up  # Start PostgreSQL (port 5332) + Redis (port 6380)
 ```
 
 ## Architecture
 
-This is a TypeScript monorepo with two packages: `frontend` and `backend`.
+This is a TypeScript monorepo with two packages under `apps/`: `nebula-chat-client` (frontend) and `nebula-chat-server` (backend).
 
-### Frontend (`/frontend`)
+### Frontend (`/apps/nebula-chat-client`)
 
 React 19 SPA built with Vite and Chakra UI. State is managed with **Zustand** stores (see `AGENTS.md` for conventions). `src/App.tsx` mounts two providers:
 
@@ -59,7 +59,7 @@ Feature code lives in `src/modules/` (chat, conversations, auth). Shared UI comp
 
 Chat responses are streamed from the backend and rendered using `react-markdown` + `shiki` for syntax highlighting.
 
-### Backend (`/backend`)
+### Backend (`/apps/nebula-chat-server`)
 
 Express 5 REST API with:
 
@@ -75,13 +75,13 @@ Errors use a custom `AppError` class. Path aliases use `@backend/*` mapping to `
 
 ### Key environment variables
 
-| Variable                      | Where                 |
-| ----------------------------- | --------------------- |
-| `VITE_API_URL`                | frontend `.env`       |
-| `OPENAI_API_KEY`              | backend `.env`        |
-| `DATABASE_URL`                | backend `.env`        |
-| `REDIS_URL`, `REDIS_PASSWORD` | backend `.env`        |
-| `CLIENT_URL`, `SERVER_URL`    | backend `.env` (CORS) |
+| Variable                      | Where                                  |
+| ----------------------------- | -------------------------------------- |
+| `VITE_API_URL`                | `apps/nebula-chat-client/.env`         |
+| `OPENAI_API_KEY`              | `apps/nebula-chat-server/.env`         |
+| `DATABASE_URL`                | `apps/nebula-chat-server/.env`         |
+| `REDIS_URL`, `REDIS_PASSWORD` | `apps/nebula-chat-server/.env`         |
+| `CLIENT_URL`, `SERVER_URL`    | `apps/nebula-chat-server/.env` (CORS)  |
 
 ## Code Style
 
