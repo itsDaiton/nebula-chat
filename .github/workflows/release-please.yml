@@ -35,7 +35,7 @@ jobs:
 
           echo "$prs" | jq -r '.[] | .number' | while read -r pr_number; do
             if [ -n "$pr_number" ]; then
-              gh pr merge --auto --squash "$pr_number"
+              gh pr merge --repo "${{ github.repository }}" --auto --squash "$pr_number"
             fi
           done
         env:
