@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.9.0...nebula-chat-v1.10.0) (2026-04-19)
+
+
+### Features
+
+* **api:** api layer lib ([#166](https://github.com/itsDaiton/nebula-chat/issues/166)) ([c776fc9](https://github.com/itsDaiton/nebula-chat/commit/c776fc9cb4c2d9aba9730291eceb394d8ad433a4))
+
 ## [1.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.8.1...nebula-chat-v1.9.0) (2026-03-29)
 
 
