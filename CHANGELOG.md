@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.14.0...nebula-chat-v1.14.1) (2026-04-19)
+
+
+### Bug Fixes
+
+* **security:** patch hono CVE with pinned override ([#190](https://github.com/itsDaiton/nebula-chat/issues/190)) ([114e35c](https://github.com/itsDaiton/nebula-chat/commit/114e35c4050f8dcbb657ff12e3c5bb604ffa5925))
+
 ## [1.14.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.13.2...nebula-chat-v1.14.0) (2026-04-19)
 
 
