@@ -88,3 +88,17 @@ Errors use a custom `AppError` class. Path aliases use `@backend/*` mapping to `
 - ESLint with TypeScript strict rules, React hooks validation, and import sorting — enforced with zero warnings tolerance.
 - Prettier: single quotes, semicolons, trailing commas, 100-char print width, 2-space indent.
 - Backend uses `@backend/*` path aliases. Frontend has its own `tsconfig.json` targeting ESNext.
+
+## Shipping (branch + PR) — applies to every agent
+
+This rule applies to **every** build/write agent in `.claude/agents/`. Read-only agents (e.g. `code-reviewer`, `security-auditor`) do not open PRs but may comment on existing ones via `gh`.
+
+- **Never commit to `main`.** If currently on `main`, create a feature branch before the first edit: `git checkout -b <type>/<kebab-slug>`.
+- **Reuse the active feature branch** if one is already checked out (e.g. `adr-author` opened it) — don't fork a parallel branch for the same unit of work.
+- **Branch naming** uses Conventional Commits types as prefix: `feat/...`, `fix/...`, `refactor/...`, `chore/...`, `docs/...`, `test/...`. Architectural migration branches include the ticket: `feat/m-<n>-<slug>`.
+- **Commit in logical chunks** using Conventional Commits (`feat(<scope>): ...`, `fix(<scope>): ...`). Never bundle unrelated changes.
+- **Publish the branch** with `git push -u origin <branch>` on first push.
+- **Open a PR early** via `gh pr create --draft` as soon as the branch has one pushed commit, so review and CI can run incrementally. Title = primary Conventional Commit header. Body must include: one-line summary, test plan checklist, and a link to the ADR (`docs/adr/NNNN-*.md`) backing the change.
+- **Flip out of draft** (`gh pr ready`) only once the agent's Verification section passes locally.
+- **Never merge your own PR** unless the user explicitly asks. Never `git push --force` (blocked by the pre-bash hook for shared refs anyway). Never use `--no-verify`.
+- **Read-only agents** that need to leave findings on a PR use `gh pr comment` or `gh pr review`; they never push commits.
