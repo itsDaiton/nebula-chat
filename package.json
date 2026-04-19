@@ -22,7 +22,8 @@
   },
   "pnpm": {
     "overrides": {
-      "path-to-regexp": "8.4.0"
+      "path-to-regexp": "8.4.0",
+      "@hono/node-server": "1.19.13"
     },
     "onlyBuiltDependencies": [
       "@prisma/engines",
