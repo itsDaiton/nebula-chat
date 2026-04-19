@@ -10,7 +10,7 @@ It is responsible for:
 
 ## Prerequisites
 
-- Node.js `22.22.1` (repo `.nvmrc`)
+- Node.js `24.14.1` (repo `.nvmrc`)
 - pnpm `>=10`
 - Docker (recommended for local PostgreSQL + Redis)
 - OpenAI API key

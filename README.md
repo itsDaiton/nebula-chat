@@ -16,7 +16,7 @@ nebula-chat/
 
 ## Prerequisites
 
-- Node.js `22.22.1` (see `.nvmrc`)
+- Node.js `24.14.1` (see `.nvmrc`)
 - pnpm `>=10`
 - Docker (recommended for local PostgreSQL + Redis)
 - OpenAI API key
