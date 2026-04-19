@@ -5,7 +5,7 @@ import {
 } from '@asteasolutions/zod-to-openapi';
 import type { OpenAPIObject } from 'openapi3-ts/oas30';
 import { z } from 'zod';
-import { version } from '../../../openapi/package.json';
+import { version } from '../../../../openapi/package.json';
 
 extendZodWithOpenApi(z);
 

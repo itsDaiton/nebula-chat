@@ -83,11 +83,12 @@ Do not disable ESLint rules with inline `// eslint-disable` comments unless abso
 
 ```
 nebula-chat/
-├── frontend/          # React SPA (nebula-chat-client)
-├── backend/           # Express API (nebula-chat-server)
-├── CLAUDE.md          # Claude Code instructions
-├── AGENTS.md          # This file
-├── package.json       # Root workspace (pnpm)
+├── apps/
+│   ├── nebula-chat-client/   # React SPA (frontend)
+│   └── nebula-chat-server/   # Express API (backend)
+├── CLAUDE.md                 # Claude Code instructions
+├── AGENTS.md                 # This file
+├── package.json              # Root workspace (pnpm)
 └── pnpm-workspace.yaml
 ```
 
@@ -105,7 +106,7 @@ pnpm --filter nebula-chat-server run dev
 ### Frontend Directory Layout
 
 ```
-frontend/src/
+apps/nebula-chat-client/src/
 ├── App.tsx                        # Root — mounts providers and router
 ├── main.tsx                       # Vite entry point
 ├── RouterProvider.tsx             # React Router setup
@@ -228,7 +229,7 @@ navigate(route.chat.conversation(id)); // /c/:id
 
 ### Imports
 
-Always use the `@/` path alias — never relative paths (`./`, `../../`, etc.). `@/` maps to `frontend/src/`. This applies to **every** import in every file — components, hooks, utils, and types — regardless of how close the files are to each other.
+Always use the `@/` path alias — never relative paths (`./`, `../../`, etc.). `@/` maps to `apps/nebula-chat-client/src/`. This applies to **every** import in every file — components, hooks, utils, and types — regardless of how close the files are to each other.
 
 **Check every import in every file you touch.** If a relative path exists anywhere in a file you modify, fix it.
 
@@ -260,7 +261,7 @@ import { queryClient } from '@/libs/api/queryClient';
 import { ChatInput } from '@/modules/chat/components/ChatInput';
 
 // wrong — never re-export through an index.ts
-// frontend/src/libs/api/index.ts
+// apps/nebula-chat-client/src/libs/api/index.ts
 export * from './client';
 export * from './queryClient';
 ```
@@ -466,7 +467,7 @@ No hook or component in the codebase may import or call `useEffect`.
 ### Backend Directory Layout
 
 ```
-backend/src/
+apps/nebula-chat-server/src/
 ├── server.ts                      # Express app bootstrap
 ├── prisma.ts                      # Prisma client singleton
 ├── config/
@@ -715,17 +716,17 @@ To export the spec as a static file (no server required), run:
 pnpm --filter nebula-chat-server run generate:openapi  # writes openapi/openapi.yaml to repo root
 ```
 
-The script lives at `backend/src/scripts/generate-openapi.ts`.
+The script lives at `apps/nebula-chat-server/src/scripts/generate-openapi.ts`.
 
 **Rule:** After every change to the backend, agents must re-run this script to keep `openapi/openapi.yaml` in sync with the current API state. Always commit the updated `openapi/openapi.yaml` alongside backend changes.
 
-**Rule (API client regeneration):** Whenever `openapi/openapi.yaml` changes — whether you edited the backend and regenerated it, or the file changed for any other reason — agents must immediately regenerate the typed frontend API client at `frontend/src/libs/api/generated/`:
+**Rule (API client regeneration):** Whenever `openapi/openapi.yaml` changes — whether you edited the backend and regenerated it, or the file changed for any other reason — agents must immediately regenerate the typed frontend API client at `apps/nebula-chat-client/src/libs/api/generated/`:
 
 ```bash
 pnpm --filter nebula-chat-client run generate:api
 ```
 
-The generator is Orval, configured at `frontend/orval.config.ts`, driven by `openapi/openapi.yaml`, and using the axios mutator at `frontend/src/libs/api/client.ts`. Regenerated files in `frontend/src/libs/api/generated/` must be committed in the same PR as the backend/OpenAPI change — never ship an API change with a stale client. Do not hand-edit anything under `frontend/src/libs/api/generated/`; always regenerate.
+The generator is Orval, configured at `apps/nebula-chat-client/orval.config.ts`, driven by `openapi/openapi.yaml`, and using the axios mutator at `apps/nebula-chat-client/src/libs/api/client.ts`. Regenerated files in `apps/nebula-chat-client/src/libs/api/generated/` must be committed in the same PR as the backend/OpenAPI change — never ship an API change with a stale client. Do not hand-edit anything under `apps/nebula-chat-client/src/libs/api/generated/`; always regenerate.
 
 ---
 
@@ -744,13 +745,13 @@ Never use relative paths in the backend. Aliases are configured in `tsconfig.jso
 
 ## Environment Variables
 
-### Frontend (`frontend/.env`)
+### Frontend (`apps/nebula-chat-client/.env`)
 
 | Variable       | Purpose                                                    |
 | -------------- | ---------------------------------------------------------- |
 | `VITE_API_URL` | Base URL of the backend API (e.g. `http://localhost:3000`) |
 
-### Backend (`backend/.env`)
+### Backend (`apps/nebula-chat-server/.env`)
 
 | Variable         | Purpose                                                 |
 | ---------------- | ------------------------------------------------------- |
@@ -771,7 +772,7 @@ Never use relative paths in the backend. Aliases are configured in `tsconfig.jso
 pnpm install
 
 # 2. Start infrastructure (PostgreSQL on :5332, Redis on :6380)
-cd backend && docker-compose up -d
+cd apps/nebula-chat-server && docker-compose up -d
 
 # 3. Run DB migrations
 pnpm --filter nebula-chat-server run prisma:migrate

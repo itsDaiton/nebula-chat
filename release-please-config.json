@@ -6,11 +6,11 @@
       "component": "nebula-chat",
       "include-component-in-tag": true
     },
-    "frontend": {
+    "apps/nebula-chat-client": {
       "release-type": "node",
       "include-component-in-tag": true
     },
-    "backend": {
+    "apps/nebula-chat-server": {
       "release-type": "node",
       "include-component-in-tag": true
     },

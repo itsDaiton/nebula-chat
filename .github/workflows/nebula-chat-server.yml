@@ -21,7 +21,7 @@ jobs:
         with:
           filters: |
             relevant:
-              - 'backend/**'
+              - 'apps/nebula-chat-server/**'
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'eslint.config.ts'
@@ -53,9 +53,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --ignore-scripts
       - name: Lint
-        run: pnpm exec eslint --report-unused-disable-directives --max-warnings=0 backend/
+        run: pnpm exec eslint --report-unused-disable-directives --max-warnings=0 apps/nebula-chat-server/
       - name: Format check
-        run: pnpm exec prettier --check backend/
+        run: pnpm exec prettier --check apps/nebula-chat-server/
       - name: Prisma generate
         run: pnpm --filter nebula-chat-server run prisma:generate
       - name: TypeScript check

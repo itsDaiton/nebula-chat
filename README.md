@@ -9,8 +9,9 @@ Redis.
 
 ```text
 nebula-chat/
-├── frontend/   # React + Vite client (nebula-chat-client)
-└── backend/    # Express + Prisma API (nebula-chat-server)
+└── apps/
+    ├── nebula-chat-client/   # React + Vite client
+    └── nebula-chat-server/   # Express + Prisma API
 ```
 
 ## Prerequisites
@@ -31,25 +32,26 @@ nebula-chat/
 2. Create environment files:
 
    ```bash
-   cp backend/.env.example backend/.env
-   cp frontend/.env.example frontend/.env
+   cp apps/nebula-chat-server/.env.example apps/nebula-chat-server/.env
+   cp apps/nebula-chat-client/.env.example apps/nebula-chat-client/.env
    ```
 
 3. Fill required values:
-   - `backend/.env`: at least `OPENAI_API_KEY`, `SERVER_URL`, `CLIENT_URL`, and local DB/Redis
-     values.
-   - `frontend/.env`: `VITE_API_URL` (usually `http://localhost:3000` in local development).
+   - `apps/nebula-chat-server/.env`: at least `OPENAI_API_KEY`, `SERVER_URL`, `CLIENT_URL`, and
+     local DB/Redis values.
+   - `apps/nebula-chat-client/.env`: `VITE_API_URL` (usually `http://localhost:3000` in local
+     development).
 
 4. Start local infrastructure:
 
    ```bash
-   cd backend && docker-compose up -d
+   cd apps/nebula-chat-server && docker-compose up -d
    ```
 
 5. Run DB migrations:
 
    ```bash
-   cd ..
+   cd ../..
    pnpm --filter nebula-chat-server run prisma:migrate
    ```
 

@@ -3,7 +3,7 @@ import { defineConfig } from 'orval';
 export default defineConfig({
   nebulaChat: {
     input: {
-      target: '../openapi/openapi.yaml',
+      target: '../../openapi/openapi.yaml',
       filters: {
         mode: 'exclude',
         tags: ['Chat'],

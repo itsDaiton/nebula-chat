@@ -17,11 +17,11 @@ export default [
       '**/.turbo/**',
       'eslint.config.ts',
       'vite.config.*',
-      'frontend/vite.config.*',
-      'frontend/orval.config.*',
-      'backend/src/generated/**',
-      'backend/prisma/**',
-      'frontend/src/libs/api/generated/**',
+      'apps/nebula-chat-client/vite.config.*',
+      'apps/nebula-chat-client/orval.config.*',
+      'apps/nebula-chat-server/src/generated/**',
+      'apps/nebula-chat-server/prisma/**',
+      'apps/nebula-chat-client/src/libs/api/generated/**',
     ],
   },
   {
@@ -68,11 +68,11 @@ export default [
     },
   },
   {
-    files: ['frontend/**/*.{ts,tsx,js,jsx}'],
+    files: ['apps/nebula-chat-client/**/*.{ts,tsx,js,jsx}'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: './frontend/tsconfig.app.json',
+        project: './apps/nebula-chat-client/tsconfig.app.json',
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -109,11 +109,11 @@ export default [
     },
   },
   {
-    files: ['backend/**/*.{ts,js}'],
+    files: ['apps/nebula-chat-server/**/*.{ts,js}'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: './backend/tsconfig.json',
+        project: './apps/nebula-chat-server/tsconfig.json',
         tsconfigRootDir: import.meta.dirname,
       },
     },
