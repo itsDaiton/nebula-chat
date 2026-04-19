@@ -88,3 +88,16 @@ Errors use a custom `AppError` class. Path aliases use `@backend/*` mapping to `
 - ESLint with TypeScript strict rules, React hooks validation, and import sorting — enforced with zero warnings tolerance.
 - Prettier: single quotes, semicolons, trailing commas, 100-char print width, 2-space indent.
 - Backend uses `@backend/*` path aliases. Frontend has its own `tsconfig.json` targeting ESNext.
+
+## Shipping (branch + PR) — applies to every agent
+
+This rule applies to **every** build/write agent in `.claude/agents/`. Read-only agents (e.g. `code-reviewer`, `security-auditor`) do not open PRs but may comment on existing ones via `gh`. For Git workflow, **follow `AGENTS.md` as the source of truth**; the guidance below is intended to stay consistent with it, not override it.
+
+- **Never commit to `main`.** If currently on `main`, create a feature branch before the first edit: `git checkout -b <type>/<kebab-slug>`.
+- **Reuse the active feature branch** if one is already checked out (e.g. `adr-author` opened it) — don't fork a parallel branch for the same unit of work.
+- **Branch naming** uses the `AGENTS.md`-approved prefixes: `feat/...`, `fix/...`, `refactor/...`, `chore/...`. Architectural migration branches include the ticket: `feat/m-<n>-<slug>`.
+- **Commit in logical chunks** using Conventional Commits (`feat(<scope>): ...`, `fix(<scope>): ...`). Never bundle unrelated changes.
+- **Publish the branch** with `git push -u origin <branch>` on first push.
+- **Open a PR when the work is complete**, consistent with `AGENTS.md`. Use `gh pr create` with the primary Conventional Commit header as the title. The body must include: one-line summary, test plan checklist, and a link to the ADR (`docs/adr/NNNN-*.md`) backing the change.
+- **Never merge your own PR** unless the user explicitly asks. Never `git push --force` (blocked by the pre-bash hook for shared refs anyway). Never use `--no-verify`.
+- **Read-only agents** that need to leave findings on a PR use `gh pr comment` or `gh pr review`; they never push commits.

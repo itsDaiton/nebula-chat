@@ -17,10 +17,12 @@ yarn-error.log*
 .idea
 *.iml
 
+# ESLint
 .eslintcache
 
 # Claude
-.claude
+.claude/settings.local.json
+**/.claude/settings.local.json
 megalinter-reports/
 
 # Sonar
