@@ -7,9 +7,14 @@
  */
 import { useMutation, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
+  QueryClient,
   QueryFunction,
   QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
@@ -89,15 +94,18 @@ export type CreateMessageMutationError = ErrorType<ErrorResponse>;
 /**
  * @summary Create message
  */
-export const useCreateMessage = <TError = ErrorType<ErrorResponse>, TContext = unknown>(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createMessage>>,
-    TError,
-    { data: BodyType<CreateMessageBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseMutationResult<
+export const useCreateMessage = <TError = ErrorType<ErrorResponse>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createMessage>>,
+      TError,
+      { data: BodyType<CreateMessageBody> },
+      TContext
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof createMessage>>,
   TError,
   { data: BodyType<CreateMessageBody> },
@@ -105,7 +113,7 @@ export const useCreateMessage = <TError = ErrorType<ErrorResponse>, TContext = u
 > => {
   const mutationOptions = getCreateMessageMutationOptions(options);
 
-  return useMutation(mutationOptions);
+  return useMutation(mutationOptions, queryClient);
 };
 /**
  * Retrieve all messages across all conversations
@@ -126,7 +134,7 @@ export const getListMessagesQueryOptions = <
   TData = Awaited<ReturnType<typeof listMessages>>,
   TError = ErrorType<ErrorResponse>,
 >(options?: {
-  query?: UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>;
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
   request?: SecondParameter<typeof axiosClient>;
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
@@ -140,12 +148,58 @@ export const getListMessagesQueryOptions = <
     Awaited<ReturnType<typeof listMessages>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type ListMessagesQueryResult = NonNullable<Awaited<ReturnType<typeof listMessages>>>;
 export type ListMessagesQueryError = ErrorType<ErrorResponse>;
 
+export function useListMessages<
+  TData = Awaited<ReturnType<typeof listMessages>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMessages>>,
+          TError,
+          Awaited<ReturnType<typeof listMessages>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMessages<
+  TData = Awaited<ReturnType<typeof listMessages>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMessages>>,
+          TError,
+          Awaited<ReturnType<typeof listMessages>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMessages<
+  TData = Awaited<ReturnType<typeof listMessages>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary List all messages
  */
@@ -153,13 +207,18 @@ export type ListMessagesQueryError = ErrorType<ErrorResponse>;
 export function useListMessages<
   TData = Awaited<ReturnType<typeof listMessages>>,
   TError = ErrorType<ErrorResponse>,
->(options?: {
-  query?: UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getListMessagesQueryOptions(options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   query.queryKey = queryOptions.queryKey;
 
@@ -170,7 +229,7 @@ export const getListMessagesSuspenseQueryOptions = <
   TData = Awaited<ReturnType<typeof listMessages>>,
   TError = ErrorType<ErrorResponse>,
 >(options?: {
-  query?: UseSuspenseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>;
+  query?: Partial<UseSuspenseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
   request?: SecondParameter<typeof axiosClient>;
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
@@ -184,12 +243,48 @@ export const getListMessagesSuspenseQueryOptions = <
     Awaited<ReturnType<typeof listMessages>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type ListMessagesSuspenseQueryResult = NonNullable<Awaited<ReturnType<typeof listMessages>>>;
 export type ListMessagesSuspenseQueryError = ErrorType<ErrorResponse>;
 
+export function useListMessagesSuspense<
+  TData = Awaited<ReturnType<typeof listMessages>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMessagesSuspense<
+  TData = Awaited<ReturnType<typeof listMessages>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMessagesSuspense<
+  TData = Awaited<ReturnType<typeof listMessages>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary List all messages
  */
@@ -197,15 +292,21 @@ export type ListMessagesSuspenseQueryError = ErrorType<ErrorResponse>;
 export function useListMessagesSuspense<
   TData = Awaited<ReturnType<typeof listMessages>>,
   TError = ErrorType<ErrorResponse>,
->(options?: {
-  query?: UseSuspenseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseSuspenseQueryResult<TData, TError> & { queryKey: QueryKey } {
+>(
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getListMessagesSuspenseQueryOptions(options);
 
-  const query = useSuspenseQuery(queryOptions) as UseSuspenseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useSuspenseQuery(queryOptions, queryClient) as UseSuspenseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   query.queryKey = queryOptions.queryKey;
 
@@ -237,7 +338,7 @@ export const getGetMessageQueryOptions = <
 >(
   messageId: string,
   options?: {
-    query?: UseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>;
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>>;
     request?: SecondParameter<typeof axiosClient>;
   },
 ) => {
@@ -252,12 +353,61 @@ export const getGetMessageQueryOptions = <
     Awaited<ReturnType<typeof getMessage>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type GetMessageQueryResult = NonNullable<Awaited<ReturnType<typeof getMessage>>>;
 export type GetMessageQueryError = ErrorType<ErrorResponse>;
 
+export function useGetMessage<
+  TData = Awaited<ReturnType<typeof getMessage>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  messageId: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMessage>>,
+          TError,
+          Awaited<ReturnType<typeof getMessage>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMessage<
+  TData = Awaited<ReturnType<typeof getMessage>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  messageId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMessage>>,
+          TError,
+          Awaited<ReturnType<typeof getMessage>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMessage<
+  TData = Awaited<ReturnType<typeof getMessage>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  messageId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get message by ID
  */
@@ -268,13 +418,16 @@ export function useGetMessage<
 >(
   messageId: string,
   options?: {
-    query?: UseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>;
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>>;
     request?: SecondParameter<typeof axiosClient>;
   },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetMessageQueryOptions(messageId, options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   query.queryKey = queryOptions.queryKey;
 
@@ -287,7 +440,7 @@ export const getGetMessageSuspenseQueryOptions = <
 >(
   messageId: string,
   options?: {
-    query?: UseSuspenseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>;
+    query?: Partial<UseSuspenseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>>;
     request?: SecondParameter<typeof axiosClient>;
   },
 ) => {
@@ -302,12 +455,45 @@ export const getGetMessageSuspenseQueryOptions = <
     Awaited<ReturnType<typeof getMessage>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type GetMessageSuspenseQueryResult = NonNullable<Awaited<ReturnType<typeof getMessage>>>;
 export type GetMessageSuspenseQueryError = ErrorType<ErrorResponse>;
 
+export function useGetMessageSuspense<
+  TData = Awaited<ReturnType<typeof getMessage>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  messageId: string,
+  options: {
+    query: Partial<UseSuspenseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMessageSuspense<
+  TData = Awaited<ReturnType<typeof getMessage>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  messageId: string,
+  options?: {
+    query?: Partial<UseSuspenseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMessageSuspense<
+  TData = Awaited<ReturnType<typeof getMessage>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  messageId: string,
+  options?: {
+    query?: Partial<UseSuspenseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get message by ID
  */
@@ -318,15 +504,17 @@ export function useGetMessageSuspense<
 >(
   messageId: string,
   options?: {
-    query?: UseSuspenseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>;
+    query?: Partial<UseSuspenseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>>;
     request?: SecondParameter<typeof axiosClient>;
   },
-): UseSuspenseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetMessageSuspenseQueryOptions(messageId, options);
 
-  const query = useSuspenseQuery(queryOptions) as UseSuspenseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useSuspenseQuery(queryOptions, queryClient) as UseSuspenseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   query.queryKey = queryOptions.queryKey;
 

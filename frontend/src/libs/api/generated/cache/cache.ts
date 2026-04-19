@@ -7,9 +7,14 @@
  */
 import { useMutation, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
+  QueryClient,
   QueryFunction,
   QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
@@ -50,7 +55,7 @@ export const getGetCacheStatsQueryOptions = <
   TData = Awaited<ReturnType<typeof getCacheStats>>,
   TError = ErrorType<ErrorResponse>,
 >(options?: {
-  query?: UseQueryOptions<Awaited<ReturnType<typeof getCacheStats>>, TError, TData>;
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCacheStats>>, TError, TData>>;
   request?: SecondParameter<typeof axiosClient>;
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
@@ -64,12 +69,58 @@ export const getGetCacheStatsQueryOptions = <
     Awaited<ReturnType<typeof getCacheStats>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type GetCacheStatsQueryResult = NonNullable<Awaited<ReturnType<typeof getCacheStats>>>;
 export type GetCacheStatsQueryError = ErrorType<ErrorResponse>;
 
+export function useGetCacheStats<
+  TData = Awaited<ReturnType<typeof getCacheStats>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCacheStats>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCacheStats>>,
+          TError,
+          Awaited<ReturnType<typeof getCacheStats>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCacheStats<
+  TData = Awaited<ReturnType<typeof getCacheStats>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCacheStats>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCacheStats>>,
+          TError,
+          Awaited<ReturnType<typeof getCacheStats>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCacheStats<
+  TData = Awaited<ReturnType<typeof getCacheStats>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCacheStats>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get cache statistics
  */
@@ -77,13 +128,18 @@ export type GetCacheStatsQueryError = ErrorType<ErrorResponse>;
 export function useGetCacheStats<
   TData = Awaited<ReturnType<typeof getCacheStats>>,
   TError = ErrorType<ErrorResponse>,
->(options?: {
-  query?: UseQueryOptions<Awaited<ReturnType<typeof getCacheStats>>, TError, TData>;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCacheStats>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetCacheStatsQueryOptions(options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   query.queryKey = queryOptions.queryKey;
 
@@ -94,7 +150,9 @@ export const getGetCacheStatsSuspenseQueryOptions = <
   TData = Awaited<ReturnType<typeof getCacheStats>>,
   TError = ErrorType<ErrorResponse>,
 >(options?: {
-  query?: UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheStats>>, TError, TData>;
+  query?: Partial<
+    UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheStats>>, TError, TData>
+  >;
   request?: SecondParameter<typeof axiosClient>;
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
@@ -108,7 +166,7 @@ export const getGetCacheStatsSuspenseQueryOptions = <
     Awaited<ReturnType<typeof getCacheStats>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type GetCacheStatsSuspenseQueryResult = NonNullable<
@@ -116,6 +174,42 @@ export type GetCacheStatsSuspenseQueryResult = NonNullable<
 >;
 export type GetCacheStatsSuspenseQueryError = ErrorType<ErrorResponse>;
 
+export function useGetCacheStatsSuspense<
+  TData = Awaited<ReturnType<typeof getCacheStats>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheStats>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCacheStatsSuspense<
+  TData = Awaited<ReturnType<typeof getCacheStats>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheStats>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCacheStatsSuspense<
+  TData = Awaited<ReturnType<typeof getCacheStats>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheStats>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get cache statistics
  */
@@ -123,15 +217,21 @@ export type GetCacheStatsSuspenseQueryError = ErrorType<ErrorResponse>;
 export function useGetCacheStatsSuspense<
   TData = Awaited<ReturnType<typeof getCacheStats>>,
   TError = ErrorType<ErrorResponse>,
->(options?: {
-  query?: UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheStats>>, TError, TData>;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseSuspenseQueryResult<TData, TError> & { queryKey: QueryKey } {
+>(
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheStats>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetCacheStatsSuspenseQueryOptions(options);
 
-  const query = useSuspenseQuery(queryOptions) as UseSuspenseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useSuspenseQuery(queryOptions, queryClient) as UseSuspenseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   query.queryKey = queryOptions.queryKey;
 
@@ -157,7 +257,7 @@ export const getGetCacheKeysQueryOptions = <
   TData = Awaited<ReturnType<typeof getCacheKeys>>,
   TError = ErrorType<ErrorResponse>,
 >(options?: {
-  query?: UseQueryOptions<Awaited<ReturnType<typeof getCacheKeys>>, TError, TData>;
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCacheKeys>>, TError, TData>>;
   request?: SecondParameter<typeof axiosClient>;
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
@@ -171,12 +271,58 @@ export const getGetCacheKeysQueryOptions = <
     Awaited<ReturnType<typeof getCacheKeys>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type GetCacheKeysQueryResult = NonNullable<Awaited<ReturnType<typeof getCacheKeys>>>;
 export type GetCacheKeysQueryError = ErrorType<ErrorResponse>;
 
+export function useGetCacheKeys<
+  TData = Awaited<ReturnType<typeof getCacheKeys>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCacheKeys>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCacheKeys>>,
+          TError,
+          Awaited<ReturnType<typeof getCacheKeys>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCacheKeys<
+  TData = Awaited<ReturnType<typeof getCacheKeys>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCacheKeys>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCacheKeys>>,
+          TError,
+          Awaited<ReturnType<typeof getCacheKeys>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCacheKeys<
+  TData = Awaited<ReturnType<typeof getCacheKeys>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCacheKeys>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get cache keys
  */
@@ -184,13 +330,18 @@ export type GetCacheKeysQueryError = ErrorType<ErrorResponse>;
 export function useGetCacheKeys<
   TData = Awaited<ReturnType<typeof getCacheKeys>>,
   TError = ErrorType<ErrorResponse>,
->(options?: {
-  query?: UseQueryOptions<Awaited<ReturnType<typeof getCacheKeys>>, TError, TData>;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCacheKeys>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetCacheKeysQueryOptions(options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   query.queryKey = queryOptions.queryKey;
 
@@ -201,7 +352,7 @@ export const getGetCacheKeysSuspenseQueryOptions = <
   TData = Awaited<ReturnType<typeof getCacheKeys>>,
   TError = ErrorType<ErrorResponse>,
 >(options?: {
-  query?: UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheKeys>>, TError, TData>;
+  query?: Partial<UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheKeys>>, TError, TData>>;
   request?: SecondParameter<typeof axiosClient>;
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
@@ -215,12 +366,48 @@ export const getGetCacheKeysSuspenseQueryOptions = <
     Awaited<ReturnType<typeof getCacheKeys>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type GetCacheKeysSuspenseQueryResult = NonNullable<Awaited<ReturnType<typeof getCacheKeys>>>;
 export type GetCacheKeysSuspenseQueryError = ErrorType<ErrorResponse>;
 
+export function useGetCacheKeysSuspense<
+  TData = Awaited<ReturnType<typeof getCacheKeys>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheKeys>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCacheKeysSuspense<
+  TData = Awaited<ReturnType<typeof getCacheKeys>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheKeys>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCacheKeysSuspense<
+  TData = Awaited<ReturnType<typeof getCacheKeys>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheKeys>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get cache keys
  */
@@ -228,15 +415,21 @@ export type GetCacheKeysSuspenseQueryError = ErrorType<ErrorResponse>;
 export function useGetCacheKeysSuspense<
   TData = Awaited<ReturnType<typeof getCacheKeys>>,
   TError = ErrorType<ErrorResponse>,
->(options?: {
-  query?: UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheKeys>>, TError, TData>;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseSuspenseQueryResult<TData, TError> & { queryKey: QueryKey } {
+>(
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheKeys>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetCacheKeysSuspenseQueryOptions(options);
 
-  const query = useSuspenseQuery(queryOptions) as UseSuspenseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useSuspenseQuery(queryOptions, queryClient) as UseSuspenseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   query.queryKey = queryOptions.queryKey;
 
@@ -279,13 +472,16 @@ export type ClearCacheMutationError = ErrorType<ErrorResponse>;
 /**
  * @summary Clear cache
  */
-export const useClearCache = <TError = ErrorType<ErrorResponse>, TContext = unknown>(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof clearCache>>, TError, void, TContext>;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseMutationResult<Awaited<ReturnType<typeof clearCache>>, TError, void, TContext> => {
+export const useClearCache = <TError = ErrorType<ErrorResponse>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof clearCache>>, TError, void, TContext>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof clearCache>>, TError, void, TContext> => {
   const mutationOptions = getClearCacheMutationOptions(options);
 
-  return useMutation(mutationOptions);
+  return useMutation(mutationOptions, queryClient);
 };
 /**
  * Check cache system health status
@@ -309,7 +505,7 @@ export const getGetCacheHealthQueryOptions = <
   TData = Awaited<ReturnType<typeof getCacheHealth>>,
   TError = ErrorType<ErrorResponse>,
 >(options?: {
-  query?: UseQueryOptions<Awaited<ReturnType<typeof getCacheHealth>>, TError, TData>;
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCacheHealth>>, TError, TData>>;
   request?: SecondParameter<typeof axiosClient>;
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
@@ -323,12 +519,58 @@ export const getGetCacheHealthQueryOptions = <
     Awaited<ReturnType<typeof getCacheHealth>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type GetCacheHealthQueryResult = NonNullable<Awaited<ReturnType<typeof getCacheHealth>>>;
 export type GetCacheHealthQueryError = ErrorType<ErrorResponse>;
 
+export function useGetCacheHealth<
+  TData = Awaited<ReturnType<typeof getCacheHealth>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCacheHealth>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCacheHealth>>,
+          TError,
+          Awaited<ReturnType<typeof getCacheHealth>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCacheHealth<
+  TData = Awaited<ReturnType<typeof getCacheHealth>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCacheHealth>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCacheHealth>>,
+          TError,
+          Awaited<ReturnType<typeof getCacheHealth>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCacheHealth<
+  TData = Awaited<ReturnType<typeof getCacheHealth>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCacheHealth>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Cache health check
  */
@@ -336,13 +578,18 @@ export type GetCacheHealthQueryError = ErrorType<ErrorResponse>;
 export function useGetCacheHealth<
   TData = Awaited<ReturnType<typeof getCacheHealth>>,
   TError = ErrorType<ErrorResponse>,
->(options?: {
-  query?: UseQueryOptions<Awaited<ReturnType<typeof getCacheHealth>>, TError, TData>;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCacheHealth>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetCacheHealthQueryOptions(options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   query.queryKey = queryOptions.queryKey;
 
@@ -353,7 +600,9 @@ export const getGetCacheHealthSuspenseQueryOptions = <
   TData = Awaited<ReturnType<typeof getCacheHealth>>,
   TError = ErrorType<ErrorResponse>,
 >(options?: {
-  query?: UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheHealth>>, TError, TData>;
+  query?: Partial<
+    UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheHealth>>, TError, TData>
+  >;
   request?: SecondParameter<typeof axiosClient>;
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
@@ -367,7 +616,7 @@ export const getGetCacheHealthSuspenseQueryOptions = <
     Awaited<ReturnType<typeof getCacheHealth>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type GetCacheHealthSuspenseQueryResult = NonNullable<
@@ -375,6 +624,42 @@ export type GetCacheHealthSuspenseQueryResult = NonNullable<
 >;
 export type GetCacheHealthSuspenseQueryError = ErrorType<ErrorResponse>;
 
+export function useGetCacheHealthSuspense<
+  TData = Awaited<ReturnType<typeof getCacheHealth>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheHealth>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCacheHealthSuspense<
+  TData = Awaited<ReturnType<typeof getCacheHealth>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheHealth>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCacheHealthSuspense<
+  TData = Awaited<ReturnType<typeof getCacheHealth>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheHealth>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Cache health check
  */
@@ -382,15 +667,21 @@ export type GetCacheHealthSuspenseQueryError = ErrorType<ErrorResponse>;
 export function useGetCacheHealthSuspense<
   TData = Awaited<ReturnType<typeof getCacheHealth>>,
   TError = ErrorType<ErrorResponse>,
->(options?: {
-  query?: UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheHealth>>, TError, TData>;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseSuspenseQueryResult<TData, TError> & { queryKey: QueryKey } {
+>(
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getCacheHealth>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetCacheHealthSuspenseQueryOptions(options);
 
-  const query = useSuspenseQuery(queryOptions) as UseSuspenseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useSuspenseQuery(queryOptions, queryClient) as UseSuspenseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   query.queryKey = queryOptions.queryKey;
 

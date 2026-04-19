@@ -3,7 +3,7 @@ import { defineConfig } from 'orval';
 export default defineConfig({
   nebulaChat: {
     input: {
-      target: '../../openapi/openapi.yaml',
+      target: '../openapi/openapi.yaml',
       filters: {
         mode: 'exclude',
         tags: ['Chat'],
@@ -11,8 +11,8 @@ export default defineConfig({
     },
     output: {
       mode: 'tags-split',
-      target: './src/generated/endpoints.ts',
-      schemas: './src/generated/model',
+      target: './src/libs/api/generated/endpoints.ts',
+      schemas: './src/libs/api/generated/model',
       client: 'react-query',
       httpClient: 'axios',
       clean: true,
@@ -20,7 +20,7 @@ export default defineConfig({
       indexFiles: true,
       override: {
         mutator: {
-          path: './src/client.ts',
+          path: './src/libs/api/client.ts',
           name: 'axiosClient',
         },
         query: {

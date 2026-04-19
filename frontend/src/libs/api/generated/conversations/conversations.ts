@@ -7,9 +7,14 @@
  */
 import { useMutation, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
+  QueryClient,
   QueryFunction,
   QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
@@ -98,18 +103,18 @@ export type CreateConversationMutationError = ErrorType<ErrorResponse>;
 /**
  * @summary Create conversation
  */
-export const useCreateConversation = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createConversation>>,
-    TError,
-    { data: BodyType<CreateConversationBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseMutationResult<
+export const useCreateConversation = <TError = ErrorType<ErrorResponse>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createConversation>>,
+      TError,
+      { data: BodyType<CreateConversationBody> },
+      TContext
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof createConversation>>,
   TError,
   { data: BodyType<CreateConversationBody> },
@@ -117,7 +122,7 @@ export const useCreateConversation = <
 > => {
   const mutationOptions = getCreateConversationMutationOptions(options);
 
-  return useMutation(mutationOptions);
+  return useMutation(mutationOptions, queryClient);
 };
 /**
  * Retrieve conversations with cursor-based pagination. Returns up to 10 conversations by default.
@@ -144,7 +149,7 @@ export const getListConversationsQueryOptions = <
 >(
   params?: ListConversationsParams,
   options?: {
-    query?: UseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>;
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>>;
     request?: SecondParameter<typeof axiosClient>;
   },
 ) => {
@@ -159,7 +164,7 @@ export const getListConversationsQueryOptions = <
     Awaited<ReturnType<typeof listConversations>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type ListConversationsQueryResult = NonNullable<
@@ -167,6 +172,55 @@ export type ListConversationsQueryResult = NonNullable<
 >;
 export type ListConversationsQueryError = ErrorType<ErrorResponse>;
 
+export function useListConversations<
+  TData = Awaited<ReturnType<typeof listConversations>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params: undefined | ListConversationsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConversations>>,
+          TError,
+          Awaited<ReturnType<typeof listConversations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListConversations<
+  TData = Awaited<ReturnType<typeof listConversations>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params?: ListConversationsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConversations>>,
+          TError,
+          Awaited<ReturnType<typeof listConversations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListConversations<
+  TData = Awaited<ReturnType<typeof listConversations>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params?: ListConversationsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary List conversations
  */
@@ -177,13 +231,16 @@ export function useListConversations<
 >(
   params?: ListConversationsParams,
   options?: {
-    query?: UseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>;
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>>;
     request?: SecondParameter<typeof axiosClient>;
   },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getListConversationsQueryOptions(params, options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   query.queryKey = queryOptions.queryKey;
 
@@ -196,7 +253,9 @@ export const getListConversationsSuspenseQueryOptions = <
 >(
   params?: ListConversationsParams,
   options?: {
-    query?: UseSuspenseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>;
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>
+    >;
     request?: SecondParameter<typeof axiosClient>;
   },
 ) => {
@@ -211,7 +270,7 @@ export const getListConversationsSuspenseQueryOptions = <
     Awaited<ReturnType<typeof listConversations>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type ListConversationsSuspenseQueryResult = NonNullable<
@@ -219,6 +278,45 @@ export type ListConversationsSuspenseQueryResult = NonNullable<
 >;
 export type ListConversationsSuspenseQueryError = ErrorType<ErrorResponse>;
 
+export function useListConversationsSuspense<
+  TData = Awaited<ReturnType<typeof listConversations>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params: undefined | ListConversationsParams,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListConversationsSuspense<
+  TData = Awaited<ReturnType<typeof listConversations>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params?: ListConversationsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListConversationsSuspense<
+  TData = Awaited<ReturnType<typeof listConversations>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params?: ListConversationsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary List conversations
  */
@@ -229,15 +327,19 @@ export function useListConversationsSuspense<
 >(
   params?: ListConversationsParams,
   options?: {
-    query?: UseSuspenseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>;
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>
+    >;
     request?: SecondParameter<typeof axiosClient>;
   },
-): UseSuspenseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getListConversationsSuspenseQueryOptions(params, options);
 
-  const query = useSuspenseQuery(queryOptions) as UseSuspenseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useSuspenseQuery(queryOptions, queryClient) as UseSuspenseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   query.queryKey = queryOptions.queryKey;
 
@@ -269,7 +371,9 @@ export const getSearchConversationsQueryOptions = <
 >(
   params: SearchConversationsParams,
   options?: {
-    query?: UseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>;
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>
+    >;
     request?: SecondParameter<typeof axiosClient>;
   },
 ) => {
@@ -284,7 +388,7 @@ export const getSearchConversationsQueryOptions = <
     Awaited<ReturnType<typeof searchConversations>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type SearchConversationsQueryResult = NonNullable<
@@ -292,6 +396,61 @@ export type SearchConversationsQueryResult = NonNullable<
 >;
 export type SearchConversationsQueryError = ErrorType<ErrorResponse>;
 
+export function useSearchConversations<
+  TData = Awaited<ReturnType<typeof searchConversations>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params: SearchConversationsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchConversations>>,
+          TError,
+          Awaited<ReturnType<typeof searchConversations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchConversations<
+  TData = Awaited<ReturnType<typeof searchConversations>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params: SearchConversationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchConversations>>,
+          TError,
+          Awaited<ReturnType<typeof searchConversations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchConversations<
+  TData = Awaited<ReturnType<typeof searchConversations>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params: SearchConversationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Search conversations
  */
@@ -302,13 +461,18 @@ export function useSearchConversations<
 >(
   params: SearchConversationsParams,
   options?: {
-    query?: UseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>;
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>
+    >;
     request?: SecondParameter<typeof axiosClient>;
   },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getSearchConversationsQueryOptions(params, options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   query.queryKey = queryOptions.queryKey;
 
@@ -321,7 +485,9 @@ export const getSearchConversationsSuspenseQueryOptions = <
 >(
   params: SearchConversationsParams,
   options?: {
-    query?: UseSuspenseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>;
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>
+    >;
     request?: SecondParameter<typeof axiosClient>;
   },
 ) => {
@@ -336,7 +502,7 @@ export const getSearchConversationsSuspenseQueryOptions = <
     Awaited<ReturnType<typeof searchConversations>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type SearchConversationsSuspenseQueryResult = NonNullable<
@@ -344,6 +510,45 @@ export type SearchConversationsSuspenseQueryResult = NonNullable<
 >;
 export type SearchConversationsSuspenseQueryError = ErrorType<ErrorResponse>;
 
+export function useSearchConversationsSuspense<
+  TData = Awaited<ReturnType<typeof searchConversations>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params: SearchConversationsParams,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchConversationsSuspense<
+  TData = Awaited<ReturnType<typeof searchConversations>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params: SearchConversationsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchConversationsSuspense<
+  TData = Awaited<ReturnType<typeof searchConversations>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params: SearchConversationsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Search conversations
  */
@@ -354,15 +559,19 @@ export function useSearchConversationsSuspense<
 >(
   params: SearchConversationsParams,
   options?: {
-    query?: UseSuspenseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>;
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>
+    >;
     request?: SecondParameter<typeof axiosClient>;
   },
-): UseSuspenseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getSearchConversationsSuspenseQueryOptions(params, options);
 
-  const query = useSuspenseQuery(queryOptions) as UseSuspenseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useSuspenseQuery(queryOptions, queryClient) as UseSuspenseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   query.queryKey = queryOptions.queryKey;
 
@@ -394,7 +603,7 @@ export const getGetConversationQueryOptions = <
 >(
   conversationId: string,
   options?: {
-    query?: UseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>;
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>>;
     request?: SecondParameter<typeof axiosClient>;
   },
 ) => {
@@ -409,12 +618,61 @@ export const getGetConversationQueryOptions = <
     Awaited<ReturnType<typeof getConversation>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type GetConversationQueryResult = NonNullable<Awaited<ReturnType<typeof getConversation>>>;
 export type GetConversationQueryError = ErrorType<ErrorResponse>;
 
+export function useGetConversation<
+  TData = Awaited<ReturnType<typeof getConversation>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  conversationId: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConversation>>,
+          TError,
+          Awaited<ReturnType<typeof getConversation>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetConversation<
+  TData = Awaited<ReturnType<typeof getConversation>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  conversationId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConversation>>,
+          TError,
+          Awaited<ReturnType<typeof getConversation>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetConversation<
+  TData = Awaited<ReturnType<typeof getConversation>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  conversationId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get conversation by ID
  */
@@ -425,13 +683,16 @@ export function useGetConversation<
 >(
   conversationId: string,
   options?: {
-    query?: UseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>;
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>>;
     request?: SecondParameter<typeof axiosClient>;
   },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetConversationQueryOptions(conversationId, options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   query.queryKey = queryOptions.queryKey;
 
@@ -444,7 +705,9 @@ export const getGetConversationSuspenseQueryOptions = <
 >(
   conversationId: string,
   options?: {
-    query?: UseSuspenseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>;
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>
+    >;
     request?: SecondParameter<typeof axiosClient>;
   },
 ) => {
@@ -459,7 +722,7 @@ export const getGetConversationSuspenseQueryOptions = <
     Awaited<ReturnType<typeof getConversation>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type GetConversationSuspenseQueryResult = NonNullable<
@@ -467,6 +730,45 @@ export type GetConversationSuspenseQueryResult = NonNullable<
 >;
 export type GetConversationSuspenseQueryError = ErrorType<ErrorResponse>;
 
+export function useGetConversationSuspense<
+  TData = Awaited<ReturnType<typeof getConversation>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  conversationId: string,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetConversationSuspense<
+  TData = Awaited<ReturnType<typeof getConversation>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  conversationId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetConversationSuspense<
+  TData = Awaited<ReturnType<typeof getConversation>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  conversationId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get conversation by ID
  */
@@ -477,15 +779,19 @@ export function useGetConversationSuspense<
 >(
   conversationId: string,
   options?: {
-    query?: UseSuspenseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>;
+    query?: Partial<
+      UseSuspenseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>
+    >;
     request?: SecondParameter<typeof axiosClient>;
   },
-): UseSuspenseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetConversationSuspenseQueryOptions(conversationId, options);
 
-  const query = useSuspenseQuery(queryOptions) as UseSuspenseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useSuspenseQuery(queryOptions, queryClient) as UseSuspenseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   query.queryKey = queryOptions.queryKey;
 
