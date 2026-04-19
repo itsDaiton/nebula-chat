@@ -2,13 +2,13 @@
 
 ## Ticket metadata
 
-| Field | Value |
-|-------|-------|
-| **ID** | M-2 |
-| **Package** | `libs/db` → published as `@nebula-chat/db` |
-| **Depends on** | Nothing — fully independent lib ticket |
-| **Blocks** | Nothing (apps/server consumes it, but can use Prisma temporarily) |
-| **Standalone** | Yes |
+| Field          | Value                                                             |
+| -------------- | ----------------------------------------------------------------- |
+| **ID**         | M-2                                                               |
+| **Package**    | `libs/db` → published as `@nebula-chat/db`                        |
+| **Depends on** | Nothing — fully independent lib ticket                            |
+| **Blocks**     | Nothing (apps/server consumes it, but can use Prisma temporarily) |
+| **Standalone** | Yes                                                               |
 
 ## Objective
 
@@ -102,15 +102,7 @@ export default defineConfig({
 ### File: `libs/db/src/schema.ts`
 
 ```ts
-import {
-  pgTable,
-  uuid,
-  text,
-  timestamp,
-  integer,
-  boolean,
-  index,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, integer, boolean, index } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -135,7 +127,7 @@ export const conversations = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (t) => [index('conv_user_idx').on(t.userId)]
+  (t) => [index('conv_user_idx').on(t.userId)],
 );
 
 export const messages = pgTable(
@@ -151,7 +143,7 @@ export const messages = pgTable(
     cached: boolean('cached').default(false),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
-  (t) => [index('msg_conv_idx').on(t.conversationId)]
+  (t) => [index('msg_conv_idx').on(t.conversationId)],
 );
 ```
 
@@ -295,7 +287,7 @@ After this ticket is complete and all Prisma usage is replaced:
 pnpm dev:docker
 
 # Set DATABASE_URL for the db package
-export DATABASE_URL=postgresql://nebula:nebula@localhost:5432/nebula_dev
+export DATABASE_URL=<your_database_url>
 
 # Push schema directly (dev only — no migration files needed initially)
 pnpm --filter @nebula-chat/db db:push
