@@ -27,7 +27,7 @@ block() {
 case "$cmd" in
   *"rm -rf /"*|*"rm -rf ~"*|*"rm -rf \$HOME"*) block "rm -rf of root/home directory" ;;
   *"rm -rf ."*|*"rm -rf ./"*|*"rm -rf *"*)      block "rm -rf of working tree" ;;
-  *"git push"*"--force"*|*"git push"*"-f "*)   block "git push --force (use --force-with-lease after confirmation)" ;;
+  *"git push"*"--force"*|*"git push"*"-f "*)   block "git push with force options (all force pushes are blocked)" ;;
   *"git reset --hard"*)                          block "git reset --hard (destructive)" ;;
   *"git clean -fd"*|*"git clean -fdx"*)         block "git clean -fd (destructive)" ;;
   *"prisma migrate reset"*)                     block "prisma migrate reset (drops dev DB)" ;;
