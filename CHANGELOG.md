@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.13.1...nebula-chat-v1.13.2) (2026-04-19)
+
+
+### Bug Fixes
+
+* **ci:** set explicit repo context for release-please auto-merge ([#186](https://github.com/itsDaiton/nebula-chat/issues/186)) ([e56c532](https://github.com/itsDaiton/nebula-chat/commit/e56c532015c3bd9fc31a86ae348e3f8ca3db3555))
+
 ## [1.13.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.13.0...nebula-chat-v1.13.1) (2026-04-19)
 
 
