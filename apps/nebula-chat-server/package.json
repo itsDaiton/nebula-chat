@@ -30,7 +30,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@prisma/client": "^7.5.0",
+    "@prisma/client": "^7.7.0",
     "@types/cors": "^2.8.19",
     "@types/js-yaml": "^4.0.9",
     "@types/express": "^5.0.6",
