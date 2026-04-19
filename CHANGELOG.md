@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.14.2...nebula-chat-v1.14.3) (2026-04-19)
+
+
+### Bug Fixes
+
+* **deps:** patch @hono/node-server to 1.19.13 ([#191](https://github.com/itsDaiton/nebula-chat/issues/191)) ([5a8d10b](https://github.com/itsDaiton/nebula-chat/commit/5a8d10beaa0214d3585870a7958db7eadd83593e))
+
 ## [1.14.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.14.1...nebula-chat-v1.14.2) (2026-04-19)
 
 
