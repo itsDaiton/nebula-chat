@@ -18,7 +18,7 @@ Create a migration from the current `schema.prisma` diff.
 1. Read `apps/nebula-chat-server/prisma/schema.prisma` to confirm the pending diff.
 2. Run:
    ```
-   pnpm --filter nebula-chat-server prisma:migrate dev --name $ARGUMENTS
+   pnpm --filter nebula-chat-server prisma:migrate --name $ARGUMENTS
    ```
 3. Read the newly generated file in `apps/nebula-chat-server/prisma/migrations/<timestamp>_$ARGUMENTS/migration.sql` and confirm it matches intent.
 4. Run `pnpm --filter nebula-chat-server prisma:generate` to refresh Prisma Client.
