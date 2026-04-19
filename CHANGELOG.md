@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.14.1...nebula-chat-v1.14.2) (2026-04-19)
+
+
+### Bug Fixes
+
+* **security:** force lodash to 4.18.1 to remediate template CVE ([#192](https://github.com/itsDaiton/nebula-chat/issues/192)) ([3d29de4](https://github.com/itsDaiton/nebula-chat/commit/3d29de4ba5f878b8705ab03e04314d4af78b0522))
+
 ## [1.14.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.14.0...nebula-chat-v1.14.1) (2026-04-19)
 
 
