@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # PostToolUse hook: auto-lint:fix files changed since last commit.
 # Scope: .ts/.tsx/.js/.jsx only. Silent on success; prints errors on failure.
-# Non-blocking: always exits 0 so Claude Code keeps working; surfaces output via stderr.
+# Non-blocking: always exits 0 so Claude Code keeps working; prints eslint output on failure and sends the summary line to stderr.
 
 set -u
 
