@@ -29,7 +29,7 @@ block() {
 # "Standalone" means the target ends at end-of-string, whitespace, or a shell
 # separator (; & |). Deeper paths like `rm -rf node_modules`, `rm -rf /tmp/cache`,
 # `rm -rf ./dist`, `rm -rf $HOME/Downloads` are intentionally NOT matched.
-rm_danger_re='(^|[[:space:]]|;|&|\|)rm[[:space:]]+(-[^[:space:]=]+[[:space:]]+)*-([^[:space:]=]*[rR][^[:space:]=]*[fF]|[^[:space:]=]*[fF][^[:space:]=]*[rR])[^[:space:]=]*([[:space:]]+-[^[:space:]=]+)*[[:space:]]+(/|~|~/|\$HOME|\$HOME/|\.|\./|\.\.|\.\./|\*|/\*|\./\*|~/\*|\$HOME/\*)([[:space:]]|$|;|&|\|)'
+rm_danger_re='(^|[[:space:]]|;|&|\|)rm[[:space:]]+(-[^[:space:]=]+[[:space:]]+)*-([^[:space:]=]*[rR][^[:space:]=]*[fF]|[^[:space:]=]*[fF][^[:space:]=]*[rR])[^[:space:]=]*([[:space:]]+-[^[:space:]=]+)*[[:space:]]+(/|~|~/|[$]HOME|[$]HOME/|\.|\./|\.\.|\.\./|\*|/\*|\./\*|~/\*|[$]HOME/\*)([[:space:]]|$|;|&|\|)'
 if [[ "$cmd" =~ $rm_danger_re ]]; then
   block "rm -rf of root/home/working-tree (target was /, ~, \$HOME, ., ./, .., ../, *, /*, ./*, ~/*, or \$HOME/*)"
 fi
@@ -37,7 +37,8 @@ fi
 case "$cmd" in
   *"git push"*"--force"*|*"git push"*"-f "*)   block "git push with force options (all force pushes are blocked)" ;;
   *"git reset --hard"*)                          block "git reset --hard (destructive)" ;;
-  *"git clean -fd"*|*"git clean -fdx"*)         block "git clean -fd (destructive)" ;;
+  *"git clean -fdx"*)                          block "git clean -fd (destructive)" ;;
+  *"git clean -fd"*)                           block "git clean -fd (destructive)" ;;
   *"prisma migrate reset"*)                     block "prisma migrate reset (drops dev DB)" ;;
   *"DROP TABLE"*|*"DROP DATABASE"*|*"TRUNCATE"*) block "destructive SQL statement" ;;
   *"docker-compose down -v"*|*"docker compose down -v"*) block "docker-compose down -v (deletes volumes)" ;;
