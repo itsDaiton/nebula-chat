@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.13.2...nebula-chat-v1.14.0) (2026-04-19)
+
+
+### Features
+
+* **claude:** setup agentic workspace ([#185](https://github.com/itsDaiton/nebula-chat/issues/185)) ([24f8866](https://github.com/itsDaiton/nebula-chat/commit/24f8866773f0bec284887f38f0778f9decc70eab))
+
 ## [1.13.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.13.1...nebula-chat-v1.13.2) (2026-04-19)
 
 
