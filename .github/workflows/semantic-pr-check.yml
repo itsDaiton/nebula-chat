@@ -9,6 +9,9 @@ permissions:
   contents: read
   pull-requests: read
 
+env:
+  SEMANTIC_REGEX: ^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([[:alnum:]_.\/-]+\))?!?:.+
+
 jobs:
   pr-title:
     name: Validate PR title
@@ -18,8 +21,7 @@ jobs:
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          REGEX='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([[:alnum:]_.\/-]+\))?!?: .+'
-          if ! [[ "$PR_TITLE" =~ $REGEX ]]; then
+          if ! [[ "$PR_TITLE" =~ $SEMANTIC_REGEX ]]; then
             echo "PR title is not semantic: $PR_TITLE"
             echo "Expected format: type(scope): description"
             exit 1
@@ -38,7 +40,6 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          REGEX='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([[:alnum:]_.\/-]+\))?!?: .+'
           INVALID=0
 
           while IFS= read -r MESSAGE; do
@@ -46,11 +47,11 @@ jobs:
               continue
             fi
 
-            if [[ "$MESSAGE" =~ ^Merge\  ]]; then
+            if [[ "$MESSAGE" =~ ^Merge[[:space:]] ]]; then
               continue
             fi
 
-            if ! [[ "$MESSAGE" =~ $REGEX ]]; then
+            if ! [[ "$MESSAGE" =~ $SEMANTIC_REGEX ]]; then
               echo "Non-semantic commit message: $MESSAGE"
               INVALID=1
             fi
