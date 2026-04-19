@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.13.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.12.0...nebula-chat-v1.13.0) (2026-04-19)
+
+
+### Features
+
+* Add Claude Code GitHub Workflow ([#181](https://github.com/itsDaiton/nebula-chat/issues/181)) ([997c9e3](https://github.com/itsDaiton/nebula-chat/commit/997c9e37f0483bce70788cb590292a6b42ecfee0))
+
+
+### Bug Fixes
+
+* **deps:** remediate Trivy lockfile CVEs by pinning path-to-regexp to 8.4.0 ([#182](https://github.com/itsDaiton/nebula-chat/issues/182)) ([ef35436](https://github.com/itsDaiton/nebula-chat/commit/ef354367720268af49521135ff3ca1b7876dd547))
+
 ## [1.12.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.11.0...nebula-chat-v1.12.0) (2026-04-19)
 
 
