@@ -10,7 +10,7 @@ permissions:
   pull-requests: read
 
 env:
-  SEMANTIC_REGEX: ^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([[:alnum:]_.\/-]+\))?!?:[[:space:]].+
+  SEMANTIC_REGEX: ^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([[:alnum:]_.\/-]+\))?!?: .+\S
 
 jobs:
   pr-title:
@@ -23,7 +23,8 @@ jobs:
         run: |
           if ! [[ "$PR_TITLE" =~ $SEMANTIC_REGEX ]]; then
             echo "PR title is not semantic: $PR_TITLE"
-            echo "Expected format: type(scope): description"
+            echo "Expected format: type(scope): description or type: description"
+            echo "Examples: feat(chat): add stream retry, fix: handle empty prompt"
             exit 1
           fi
 
@@ -49,7 +50,8 @@ jobs:
 
             if ! [[ "$MESSAGE" =~ $SEMANTIC_REGEX ]]; then
               echo "Non-semantic commit message: $MESSAGE"
-              echo "Expected format: type(scope): description"
+              echo "Expected format: type(scope): description or type: description"
+              echo "Examples: feat(chat): add stream retry, fix: handle empty prompt"
               INVALID=1
             fi
           done < <(git log --no-merges --format=%s "$BASE_SHA..$HEAD_SHA")
