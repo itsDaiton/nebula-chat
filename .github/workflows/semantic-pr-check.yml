@@ -1,0 +1,62 @@
+name: Semantic PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  pr-title:
+    name: Validate PR title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check semantic PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          REGEX='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([[:alnum:]_.\/-]+\))?!?: .+'
+          if ! [[ "$PR_TITLE" =~ $REGEX ]]; then
+            echo "PR title is not semantic: $PR_TITLE"
+            echo "Expected format: type(scope): description"
+            exit 1
+          fi
+
+  commit-messages:
+    name: Validate commit messages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+      - name: Check semantic commit messages
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          REGEX='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([[:alnum:]_.\/-]+\))?!?: .+'
+          INVALID=0
+
+          while IFS= read -r MESSAGE; do
+            if [[ -z "$MESSAGE" ]]; then
+              continue
+            fi
+
+            if [[ "$MESSAGE" =~ ^Merge\  ]]; then
+              continue
+            fi
+
+            if ! [[ "$MESSAGE" =~ $REGEX ]]; then
+              echo "Non-semantic commit message: $MESSAGE"
+              INVALID=1
+            fi
+          done < <(git log --format=%s "$BASE_SHA..$HEAD_SHA")
+
+          if [[ "$INVALID" -ne 0 ]]; then
+            echo "One or more commit messages are not semantic."
+            exit 1
+          fi
