@@ -64,7 +64,7 @@ jobs:
           args: >
             -Dsonar.projectKey=itsDaiton_nebula-chat-client
             -Dsonar.organization=itsdaiton
-            -Dsonar.projectName=Nebula Chat Client
+            -Dsonar.projectName=Nebula-Chat-Client
             -Dsonar.sources=src
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/generated/**
             -Dsonar.sourceEncoding=UTF-8
