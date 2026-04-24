@@ -3,9 +3,16 @@ import {
   OpenAPIRegistry,
   OpenApiGeneratorV3,
 } from '@asteasolutions/zod-to-openapi';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { OpenAPIObject } from 'openapi3-ts/oas30';
 import { z } from 'zod';
-import { version } from '../../../../openapi/package.json';
+
+const openapiPackageJsonPath = resolve(process.cwd(), '../../openapi/package.json');
+const openapiPackageJson = JSON.parse(readFileSync(openapiPackageJsonPath, 'utf8')) as {
+  version: string;
+};
+const { version } = openapiPackageJson;
 
 extendZodWithOpenApi(z);
 
