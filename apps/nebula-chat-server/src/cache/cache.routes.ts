@@ -1,11 +1,11 @@
+import type { FastifyPluginAsync } from 'fastify';
 import { cacheController } from '@backend/cache/cache.controller';
-import { Router } from 'express';
 
-const cacheRoutes: Router = Router();
+const cacheRoutes: FastifyPluginAsync = async (app) => {
+  app.get('/stats', cacheController.getStats);
+  app.delete('/clear', cacheController.clear);
+  app.get('/keys', cacheController.getKeys);
+  app.get('/health', cacheController.healthCheck);
+};
 
-cacheRoutes.get('/stats', cacheController.getStats);
-cacheRoutes.delete('/clear', cacheController.clear);
-cacheRoutes.get('/keys', cacheController.getKeys);
-cacheRoutes.get('/health', cacheController.healthCheck);
-
-export { cacheRoutes };
+export default cacheRoutes;
