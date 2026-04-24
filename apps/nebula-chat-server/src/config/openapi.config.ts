@@ -5,7 +5,6 @@ import {
 } from '@asteasolutions/zod-to-openapi';
 import type { OpenAPIObject } from 'openapi3-ts/oas30';
 import { z } from 'zod';
-import { env } from '@backend/env';
 import { version } from '../../../../openapi/package.json';
 
 extendZodWithOpenApi(z);
@@ -27,7 +26,7 @@ export const generateOpenAPIDocument = (): OpenAPIObject => {
     },
     servers: [
       {
-        url: env.SERVER_URL ?? '/',
+        url: process.env.SERVER_URL ?? '/',
       },
     ],
     tags: [

@@ -6,6 +6,8 @@ import { streamFormatter } from '@backend/modules/chat/chat.utils';
 
 export const chatController = {
   async streamMessage(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+    if (reply.raw.writableEnded) return;
+
     const input = req.body as CreateChatStreamDTO;
 
     reply.hijack();

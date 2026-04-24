@@ -7,16 +7,15 @@ import swaggerUi from '@fastify/swagger-ui';
 import underPressure from '@fastify/under-pressure';
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
-import { Prisma } from '../prisma/generated/prisma/client';
 import { closeRedisClient } from '@backend/cache/cache.client';
 import { checkOrigin } from '@backend/config/cors.config';
 import { AppError } from '@backend/errors/AppError';
+import { Prisma, prisma } from '@backend/prisma';
 import cacheRoutes from '@backend/cache/cache.routes';
 import chatRoutes from '@backend/modules/chat/chat.routes';
 import conversationRoutes from '@backend/modules/conversation/conversation.routes';
 import messageRoutes from '@backend/modules/message/message.routes';
 import { openApiDocument } from '@backend/openapi';
-import { prisma } from '@backend/prisma';
 import { resolveTrustProxy } from '@backend/utils/trustProxy';
 
 export const buildApp = async (): Promise<FastifyInstance> => {
