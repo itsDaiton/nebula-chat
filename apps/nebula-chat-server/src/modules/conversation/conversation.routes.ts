@@ -1,6 +1,6 @@
+import type { FastifyPluginAsync } from 'fastify';
 import { validate } from '@backend/middleware/validate';
 import { conversationController } from '@backend/modules/conversation/conversation.controller';
-import { Router } from 'express';
 import {
   createConversationSchema,
   getConversationSchema,
@@ -8,27 +8,26 @@ import {
   searchConversationsQuerySchema,
 } from '@backend/modules/conversation/conversation.validation';
 
-const conversationRoutes: Router = Router();
+const conversationRoutes: FastifyPluginAsync = async (app) => {
+  app.post('/', {
+    preValidation: validate({ body: createConversationSchema }),
+    handler: conversationController.create,
+  });
 
-conversationRoutes.post(
-  '/',
-  validate({ body: createConversationSchema }),
-  conversationController.create,
-);
-conversationRoutes.get(
-  '/search',
-  validate({ query: searchConversationsQuerySchema }),
-  conversationController.search,
-);
-conversationRoutes.get(
-  '/:conversationId',
-  validate({ params: getConversationSchema }),
-  conversationController.get,
-);
-conversationRoutes.get(
-  '/',
-  validate({ query: getConversationsQuerySchema }),
-  conversationController.getAll,
-);
+  app.get('/search', {
+    preValidation: validate({ query: searchConversationsQuerySchema }),
+    handler: conversationController.search,
+  });
 
-export { conversationRoutes };
+  app.get('/:conversationId', {
+    preValidation: validate({ params: getConversationSchema }),
+    handler: conversationController.get,
+  });
+
+  app.get('/', {
+    preValidation: validate({ query: getConversationsQuerySchema }),
+    handler: conversationController.getAll,
+  });
+};
+
+export default conversationRoutes;
