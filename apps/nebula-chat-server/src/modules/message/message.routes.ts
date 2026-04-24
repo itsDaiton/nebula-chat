@@ -1,15 +1,23 @@
+import type { FastifyPluginAsync } from 'fastify';
 import { validate } from '@backend/middleware/validate';
 import { messageController } from '@backend/modules/message/message.controller';
-import { Router } from 'express';
 import {
   createMessageSchema,
   getMessagesSchema,
 } from '@backend/modules/message/message.validation';
 
-const messageRoutes: Router = Router();
+const messageRoutes: FastifyPluginAsync = async (app) => {
+  app.post('/', {
+    preValidation: validate({ body: createMessageSchema }),
+    handler: messageController.create,
+  });
 
-messageRoutes.post('/', validate({ body: createMessageSchema }), messageController.create);
-messageRoutes.get('/:messageId', validate({ params: getMessagesSchema }), messageController.get);
-messageRoutes.get('/', messageController.getAll);
+  app.get('/:messageId', {
+    preValidation: validate({ params: getMessagesSchema }),
+    handler: messageController.get,
+  });
 
-export { messageRoutes };
+  app.get('/', { handler: messageController.getAll });
+};
+
+export default messageRoutes;
