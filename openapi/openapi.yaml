@@ -6,7 +6,7 @@ info:
   contact:
     name: Nebula Chat
 servers:
-  - url: /
+  - url: http://localhost:3000
 tags:
   - name: Chat
     description: Chat streaming endpoints
