@@ -1,50 +1,49 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { FastifyReply, FastifyRequest, preValidationHookHandler } from 'fastify';
 import { z } from 'zod';
 
+type ValidationSchemas = {
+  body?: z.ZodType;
+  params?: z.ZodType;
+  query?: z.ZodType;
+};
+
 export const validate =
-  (schemas: { body?: z.ZodType; params?: z.ZodType; query?: z.ZodType }) =>
-  (req: Request, res: Response, next: NextFunction) => {
-    try {
-      if (schemas.body) {
-        const result = schemas.body.safeParse(req.body);
-        if (!result.success) {
-          return res.status(400).json({
-            error: 'Validation error',
-            where: 'body',
-            details: z.treeifyError(result.error),
-          });
-        }
-        req.body = result.data as any;
+  (schemas: ValidationSchemas): preValidationHookHandler =>
+  async (req: FastifyRequest, reply: FastifyReply) => {
+    const errors: Record<string, unknown> = {};
+
+    if (schemas.body) {
+      const result = schemas.body.safeParse(req.body);
+      if (result.success) {
+        req.body = result.data;
+      } else {
+        errors.body = z.treeifyError(result.error);
       }
-      if (schemas.params) {
-        const result = schemas.params.safeParse(req.params);
-        if (!result.success) {
-          return res.status(400).json({
-            error: 'Validation error',
-            where: 'params',
-            details: z.treeifyError(result.error),
-          });
-        }
-        req.params = result.data as any;
+    }
+
+    if (schemas.params) {
+      const result = schemas.params.safeParse(req.params);
+      if (result.success) {
+        req.params = result.data;
+      } else {
+        errors.params = z.treeifyError(result.error);
       }
-      if (schemas.query) {
-        const result = schemas.query.safeParse(req.query);
-        if (!result.success) {
-          return res.status(400).json({
-            error: 'Validation error',
-            where: 'query',
-            details: z.treeifyError(result.error),
-          });
-        }
-        Object.defineProperty(req, 'query', {
-          value: result.data,
-          writable: true,
-          enumerable: true,
-          configurable: true,
-        });
+    }
+
+    if (schemas.query) {
+      const result = schemas.query.safeParse(req.query);
+      if (result.success) {
+        req.query = result.data;
+      } else {
+        errors.query = z.treeifyError(result.error);
       }
-      next();
-    } catch (error) {
-      next(error);
+    }
+
+    if (Object.keys(errors).length > 0) {
+      await reply.status(400).send({
+        success: false,
+        error: 'ValidationError',
+        details: errors,
+      });
     }
   };
