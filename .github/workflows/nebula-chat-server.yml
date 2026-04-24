@@ -62,3 +62,22 @@ jobs:
         run: pnpm --filter nebula-chat-server run typecheck
       - name: Build
         run: pnpm --filter nebula-chat-server run build
+      - name: SonarQube Scan (Server)
+        uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
+        with:
+          projectBaseDir: apps/nebula-chat-server
+          args: >
+            -Dsonar.projectKey=itsDaiton_nebula-chat-server
+            -Dsonar.organization=itsdaiton
+            -Dsonar.projectName=nebula-chat-server
+            -Dsonar.sources=src
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/generated/**
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.coverage.exclusions=**/*
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: SonarQube Quality Gate (Server)
+        uses: SonarSource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
