@@ -17,17 +17,17 @@ export const ConversationsSearch = ({
     useConversationsSearch(conversations);
   const clearResults = useConversationsSearchStore((state) => state.clearResults);
 
-  const handleClose = () => {
+  const closeAndClearResults = () => {
     clearResults();
     onClose();
   };
 
-  const handleConversationClick = (conversationId: string) => {
+  const selectConversationAndClearResults = (conversationId: string) => {
     clearResults();
     onConversationClick(conversationId);
   };
 
-  useEscapeKey(handleClose);
+  useEscapeKey(closeAndClearResults);
 
   return (
     <Portal>
@@ -39,7 +39,7 @@ export const ConversationsSearch = ({
         bottom="0"
         bg="blackAlpha.600"
         zIndex="modal"
-        onClick={handleClose}
+        onClick={closeAndClearResults}
       />
       <Flex
         position="fixed"
@@ -88,9 +88,9 @@ export const ConversationsSearch = ({
                 <ConversationListItem
                   key={conversation.id}
                   conversation={conversation}
-                  onClick={handleConversationClick}
-                />
-              ))}
+                    onClick={selectConversationAndClearResults}
+                  />
+                ))}
             {!error && !isSearching && filteredConversations.length === 0 && searchQuery.trim() && (
               <Box py={8} textAlign="center" color="fg.muted">
                 {resources.conversations.noResults}
