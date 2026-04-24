@@ -1,6 +1,6 @@
 # ADR-0002: Adopt Fastify as the HTTP Framework
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-04-24
 - **Deciders:** @itsDaiton
 
@@ -57,4 +57,12 @@ Only these two alternatives were seriously evaluated. Fastify is the explicit ta
 
 ## Verification
 
-_To be filled after implementation by `docs-curator`._
+Implementation verified on branch `feat/m-1-fastify` (2026-04-24):
+
+- `pnpm --filter nebula-chat-server run typecheck` — passes (zero errors).
+- `pnpm --filter nebula-chat-server run build` — passes; `dist/src/server.js` produced without running `prisma generate`.
+- `pnpm lint` + `pnpm format:check` — pass at repo root (zero warnings).
+- `pnpm --filter nebula-chat-server run generate:openapi` — OpenAPI spec regenerated; only `servers[0].url` changed (env-dependent), no route or schema regressions.
+- `pnpm --filter nebula-chat-client run typecheck` — passes after Orval client regeneration.
+- Static confirmation: all four route prefixes (`/api/chat`, `/api/conversations`, `/api/messages`, `/api/cache`) registered in `buildApp()` with the same paths and HTTP methods as before.
+- Deviation: `@prisma/adapter-pg` retained; Prisma 7 typed API requires it. Will be removed in M-2 (Drizzle migration).

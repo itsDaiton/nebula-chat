@@ -28,7 +28,7 @@ pnpm typecheck  # tsc --noEmit
 
 ```bash
 pnpm dev              # tsx watch mode (auto-restart)
-pnpm build            # prisma generate + tsc + path alias resolution
+pnpm build            # tsc + path alias resolution
 pnpm start            # node dist/src/server.js (production)
 pnpm typecheck        # tsc --noEmit
 
@@ -61,13 +61,14 @@ Chat responses are streamed from the backend and rendered using `react-markdown`
 
 ### Backend (`/apps/nebula-chat-server`)
 
-Express 5 REST API with:
+Fastify 5 REST API with:
 
 - **PostgreSQL + Prisma**: Two models — `Conversation` (1:many) `Message`. Schema at `prisma/schema.prisma`.
-- **Redis**: Caches chat responses. Cache middleware is layered onto routes.
+- **Redis**: Caches chat responses. Cache hooks are layered onto routes.
 - **OpenAI**: Streaming completions. Token counting via `tiktoken` to manage context window. Key logic in `src/modules/chat/`.
-- **Rate limiting**: `express-rate-limit` middleware applied to the chat streaming route.
-- **OpenAPI docs**: Auto-generated from Zod schemas, served at `/docs` (Swagger UI) and `/openapi.json`.
+- **Rate limiting**: `@fastify/rate-limit` plugin, opt-in per route (applied to `POST /api/chat/stream`).
+- **OpenAPI docs**: Auto-generated from Zod schemas, served at `/docs` (Swagger UI via `@fastify/swagger-ui`) and `/openapi.json`.
+- **Env validation**: `src/env.ts` Zod-parses `process.env` at startup — missing/invalid vars cause a hard failure before any listener is bound.
 
 Route structure: `/api/chat`, `/api/conversations`, `/api/messages`, `/api/cache`, `/health`.
 

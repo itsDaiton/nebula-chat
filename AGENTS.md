@@ -85,7 +85,7 @@ Do not disable ESLint rules with inline `// eslint-disable` comments unless abso
 nebula-chat/
 ├── apps/
 │   ├── nebula-chat-client/   # React SPA (frontend)
-│   └── nebula-chat-server/   # Express API (backend)
+│   └── nebula-chat-server/   # Fastify API (backend)
 ├── CLAUDE.md                 # Claude Code instructions
 ├── AGENTS.md                 # This file
 ├── package.json              # Root workspace (pnpm)
@@ -468,31 +468,28 @@ No hook or component in the codebase may import or call `useEffect`.
 
 ```
 apps/nebula-chat-server/src/
-├── server.ts                      # Express app bootstrap
+├── server.ts                      # buildApp() factory (Fastify instance) + entry point
+├── env.ts                         # Zod-validated env schema — single source for all process.env reads
 ├── prisma.ts                      # Prisma client singleton
 ├── config/
 │   ├── cors.config.ts             # Allowed origins, CORS options
-│   ├── headers.config.ts          # SSE + cache response headers
+│   ├── headers.config.ts          # SSE + cache response headers (uses http.ServerResponse)
 │   ├── openapi.config.ts          # OpenAPI generator setup
 │   └── pagination.config.ts       # Default/max page limits
 ├── errors/
 │   └── AppError.ts                # Error class hierarchy
 ├── middleware/
-│   ├── errorHandler.ts            # Global error handler (last middleware)
-│   ├── validate.ts                # Zod schema validation middleware
-│   ├── rateLimiter.ts             # 10 req/min on /api/chat/stream
-│   ├── cacheCheck.ts              # Redis cache hit — bypass OpenAI
-│   └── streamCapture.ts           # Intercept stream to save to Redis
+│   └── validate.ts                # Zod preValidation hook factory
 ├── modules/
 │   ├── chat/
 │   │   ├── chat.types.ts
 │   │   ├── chat.validation.ts     # Zod request schemas
 │   │   ├── chat.config.ts         # Token limits, model allowlist
 │   │   ├── chat.tokenizer.ts      # tiktoken token counting/validation
-│   │   ├── chat.utils.ts          # OpenAI client, SSE event formatting
+│   │   ├── chat.utils.ts          # OpenAI client, SSE event formatting (uses http.ServerResponse)
 │   │   ├── chat.service.ts        # Streaming orchestration
 │   │   ├── chat.controller.ts
-│   │   ├── chat.routes.ts         # rateLimiter → validate → cacheCheck → streamCapture → controller
+│   │   ├── chat.routes.ts         # FastifyPluginAsync; inline cacheCheckHook + streamCaptureHook
 │   │   └── chat.openapi.ts
 │   ├── conversation/
 │   │   ├── conversation.types.ts
@@ -519,11 +516,9 @@ apps/nebula-chat-server/src/
 │   ├── cache.controller.ts
 │   ├── cache.routes.ts
 │   └── cache.openapi.ts
-├── openapi/
-│   ├── index.ts                   # Aggregates all module specs
-│   └── schemas.ts                 # Shared OpenAPI schemas (error shape, etc.)
-└── routes/
-    └── index.ts                   # Mounts all routers under /api/*
+└── openapi/
+    ├── index.ts                   # Aggregates all module specs
+    └── schemas.ts                 # Shared OpenAPI schemas (error shape, etc.)
 ```
 
 ---
@@ -538,11 +533,11 @@ Every feature module follows this strict layering. Add files in this order when 
 3. <module>.repository.ts   — Raw Prisma queries; no business logic (omit if no DB access)
 4. <module>.service.ts      — Business logic; calls repository; never touches req/res
 5. <module>.controller.ts   — Calls service; builds HTTP response; minimal logic
-6. <module>.routes.ts       — Express router; applies middleware chain
+6. <module>.routes.ts       — FastifyPluginAsync default export; applies hook chain
 7. <module>.openapi.ts      — Registers routes in the OpenAPI registry
 ```
 
-New modules must be mounted in `routes/index.ts` and registered in `openapi/index.ts`.
+New modules must be mounted in `buildApp()` via `app.register(plugin, { prefix: '/api/<module>' })` and registered in `openapi/index.ts`.
 
 ---
 
@@ -561,7 +556,7 @@ All errors extend `AppError` from `errors/AppError.ts`. Use the subclass that ma
 | `RedisConnectionError` / `RedisCacheError` | 500          | Redis failures (usually fail-open) |
 | `APIError`                                 | configurable | External API errors                |
 
-Throw from service layer; the global `errorHandler` middleware in `server.ts` catches everything and returns:
+Throw from service layer; the `setErrorHandler` hook registered in `buildApp()` catches everything and returns:
 
 ```json
 { "success": false, "error": "NotFound", "message": "Conversation ... not found" }
@@ -573,18 +568,16 @@ Never return raw error objects to the client. Never throw from controllers — l
 
 ### Validation
 
-Use the `validate()` middleware from `middleware/validate.ts` with a Zod schema on every route that accepts input:
+Use the `validate()` hook factory from `middleware/validate.ts` with a Zod schema on every route that accepts input:
 
 ```ts
-// chat.routes.ts
-router.post(
-  '/stream',
-  rateLimiter,
-  validate(chatStreamSchema),
-  cacheCheck,
-  streamCapture,
-  controller.streamMessage,
-);
+// chat.routes.ts (FastifyPluginAsync)
+app.post('/stream', {
+  config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
+  preValidation: validate(chatStreamSchema),
+  preHandler: [cacheCheckHook, streamCaptureHook],
+  handler: controller.streamMessage,
+});
 ```
 
 `validate()` checks body, params, and query. On failure it returns 400 with a structured error tree via `z.treeifyError()`. Define schemas in the module's `*.validation.ts` file using the OpenAPI-extended Zod registry:
@@ -649,8 +642,8 @@ The cache is a Redis-backed SSE stream store keyed by conversation + model + pro
 
 **Flow:**
 
-1. `cacheCheck` middleware runs before the controller. If a key exists it replays the cached token stream and returns — OpenAI is never called.
-2. `streamCapture` middleware wraps `res.write()` after a real OpenAI call. When the response ends it saves the full SSE stream to Redis.
+1. `cacheCheckHook` preHandler runs before the controller. If a key exists it replays the cached token stream and returns — OpenAI is never called.
+2. `streamCaptureHook` preHandler monkey-patches `reply.raw.write` after a real OpenAI call. When the response ends it saves the full SSE stream to Redis.
 3. Max 1,000 cache entries. On overflow the oldest key (FIFO tracked in a Redis list) is evicted.
 4. TTL: 600,000 ms (10 minutes).
 5. **Fail-open:** all Redis errors are caught; the app continues without caching.
@@ -665,19 +658,19 @@ The chat route is the most complex part of the backend. End-to-end flow:
 
 ```
 POST /api/chat/stream
-  → rateLimiter          (10 req / 60 s per IP)
-  → validate(schema)     (Zod)
-  → cacheCheck           (Redis hit → replay stream, done)
-  → streamCapture        (wraps res.write to capture output)
+  → @fastify/rate-limit   (10 req / 60 s per IP, opt-in via route config)
+  → validate preValidation hook (Zod)
+  → cacheCheckHook preHandler  (Redis hit → replay stream via reply.hijack() + reply.raw, done)
+  → streamCaptureHook preHandler (monkey-patches reply.raw.write to capture output)
   → chatController.streamMessage
       → chat.service
           1. Validate token budget (tiktoken — max 2 000 prompt, 10 000 context)
           2. Fetch conversation history (last 20 messages)
           3. prisma.$transaction — create user message + conversation if new
           4. Call OpenAI streaming completions
-          5. Pipe tokens to client as SSE events
+          5. Pipe tokens to client as SSE events via reply.hijack() + reply.raw.write/reply.raw.end
           6. On stream end — persist assistant message + token usage
-      → streamCapture saves output to Redis
+      → streamCaptureHook saves captured output to Redis
 ```
 
 **SSE event types emitted to the client:**
@@ -762,6 +755,8 @@ Never use relative paths in the backend. Aliases are configured in `tsconfig.jso
 | `CLIENT_URL`     | Frontend origin for CORS (e.g. `http://localhost:5173`) |
 | `SERVER_URL`     | Backend public URL (used in OpenAPI docs)               |
 | `PORT`           | Port to listen on (default `3000`)                      |
+
+> **`env.ts` rule:** All env vars are Zod-validated in `src/env.ts` and fail loudly at startup before any listener is bound. Never read `process.env.*` directly anywhere in the backend — always import from `@backend/env`.
 
 ---
 
