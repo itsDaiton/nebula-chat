@@ -85,8 +85,22 @@ jobs:
           SONAR_HOST_URL: https://sonarcloud.io
         run: |
           set -euo pipefail
-          response="$(curl -fsSL -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/issues/search?componentKeys=itsDaiton_nebula-chat-client&resolved=false&ps=1")"
-          open_issues="$(printf '%s' "${response}" | python -c 'import json, sys; print(json.load(sys.stdin).get("total", 0))')"
+          response_file="$(mktemp)"
+          trap 'rm -f "${response_file}"' EXIT
+          status_code="$(curl -sSL -H "Authorization: Bearer ${SONAR_TOKEN}" -w '%{http_code}' -o "${response_file}" "${SONAR_HOST_URL}/api/issues/search?componentKeys=itsDaiton_nebula-chat-client&resolved=false&ps=1")"
+          if [ "${status_code}" != '200' ]; then
+            echo "Failed to load SonarQube issues for Nebula Chat Client (HTTP ${status_code})."
+            echo 'Verify SONAR_TOKEN is configured and SonarCloud is reachable.'
+            cat "${response_file}"
+            exit 1
+          fi
+          open_issues="$(jq -r '.total // empty' "${response_file}")"
+          if ! [[ "${open_issues}" =~ ^[0-9]+$ ]]; then
+            echo 'SonarQube API response did not include a numeric "total" field.'
+            echo "Received value: '${open_issues}'"
+            cat "${response_file}"
+            exit 1
+          fi
           echo "open_issues=${open_issues}" >> "${GITHUB_OUTPUT}"
       - name: Quality Gate passed for Nebula Chat Client
         if: ${{ steps.client_quality_gate.outputs.quality-gate-status == 'PASSED' && steps.client_open_issues.outputs.open_issues == '0' }}
