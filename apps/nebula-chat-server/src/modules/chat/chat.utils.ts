@@ -1,12 +1,12 @@
-import 'dotenv/config';
 import OpenAI from 'openai';
-import type { Response } from 'express';
+import type { ServerResponse } from 'node:http';
+import { env } from '@backend/env';
 import type { UsageData } from './chat.types';
 import { SYSTEM_PROMPT } from 'prompts/prompt';
 
 export const createClient: () => OpenAI = () => {
   const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: env.OPENAI_API_KEY,
   });
   return client;
 };
@@ -14,35 +14,35 @@ export const createClient: () => OpenAI = () => {
 export const getSystemPrompt = (): string => SYSTEM_PROMPT;
 
 export const streamFormatter = {
-  writeConversationCreated(res: Response, conversationId: string): void {
+  writeConversationCreated(res: ServerResponse, conversationId: string): void {
     res.write(`event: conversation-created\n`);
     res.write(`data: ${JSON.stringify({ conversationId })}\n\n`);
   },
-  writeUserMessageCreated(res: Response, messageId: string): void {
+  writeUserMessageCreated(res: ServerResponse, messageId: string): void {
     res.write(`event: user-message-created\n`);
     res.write(`data: ${JSON.stringify({ messageId })}\n\n`);
   },
-  writeAssistantMessageCreated(res: Response, messageId: string): void {
+  writeAssistantMessageCreated(res: ServerResponse, messageId: string): void {
     res.write(`event: assistant-message-created\n`);
     res.write(`data: ${JSON.stringify({ messageId })}\n\n`);
   },
-  writeError(res: Response, error: string): void {
+  writeError(res: ServerResponse, error: string): void {
     res.write(`event: error\n`);
     res.write(`data: ${JSON.stringify({ error })}\n\n`);
   },
-  writeToken(res: Response, token: string): void {
+  writeToken(res: ServerResponse, token: string): void {
     res.write(`event: token\n`);
     res.write(`data: ${JSON.stringify({ token })}\n\n`);
   },
-  writeUsage(res: Response, usageData: UsageData): void {
+  writeUsage(res: ServerResponse, usageData: UsageData): void {
     res.write(`event: usage\n`);
     res.write(`data: ${JSON.stringify(usageData)}\n\n`);
   },
-  writeEnd(res: Response): void {
+  writeEnd(res: ServerResponse): void {
     res.write('event: end\n');
     res.write('data: end\n\n');
   },
-  writeCacheHit(res: Response): void {
+  writeCacheHit(res: ServerResponse): void {
     res.write(`event: cache-hit\n`);
     res.write(`data: true\n\n`);
   },

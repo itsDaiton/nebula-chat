@@ -1,24 +1,21 @@
 import { createClient } from 'redis';
 import type { RedisClientType } from 'redis';
+import { env } from '@backend/env';
 import { RedisConnectionError } from '@backend/errors/AppError';
 import { cacheConfig } from '@backend/cache/cache.config';
 
 let redisClient: RedisClientType | null = null;
 let isConnected = false;
 
-const REDIS_URL = process.env.REDIS_URL;
-
 export const createRedisClient = async (): Promise<RedisClientType> => {
-  if (!REDIS_URL) {
-    throw new RedisConnectionError('REDIS_URL is not defined in environment variables');
-  }
   if (redisClient && isConnected) {
     return redisClient;
   }
 
   try {
     const client = createClient({
-      url: REDIS_URL,
+      url: env.REDIS_URL,
+      ...(env.REDIS_PASSWORD ? { password: env.REDIS_PASSWORD } : {}),
       socket: {
         reconnectStrategy: (retries: number) => {
           if (retries > cacheConfig.maxConnections) {

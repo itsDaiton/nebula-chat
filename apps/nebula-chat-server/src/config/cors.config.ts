@@ -1,28 +1,23 @@
-import 'dotenv/config';
+import { env } from '@backend/env';
 
 export const corsConfig = {
-  allowedOrigins: [process.env.CLIENT_URL, process.env.SERVER_URL].filter(Boolean) as string[],
+  allowedOrigins: [env.CLIENT_URL, env.SERVER_URL].filter(
+    (value): value is string => Boolean(value),
+  ),
   allowedMethods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
   credentials: true,
   maxAge: 86400,
 };
 
-export const checkOrigin = (
-  origin: string | undefined,
-  callback: (err: Error | null, allow?: boolean) => void,
-) => {
+export const checkOrigin = (origin: string | undefined): boolean => {
   if (!origin) {
-    return callback(null, true);
+    return true;
   }
 
-  const serverUrl = process.env.SERVER_URL;
-  if (serverUrl && origin === serverUrl) {
-    return callback(null, true);
+  if (env.SERVER_URL && origin === env.SERVER_URL) {
+    return true;
   }
 
-  if (corsConfig.allowedOrigins.includes(origin)) {
-    return callback(null, true);
-  }
-  callback(new Error(`Origin ${origin} not allowed by CORS.`));
+  return corsConfig.allowedOrigins.includes(origin);
 };

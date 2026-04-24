@@ -1,5 +1,7 @@
+import { env } from '@backend/env';
+
 export const resolveTrustProxy = (): boolean | number | string => {
-  const trustProxy = process.env.TRUST_PROXY?.trim();
+  const trustProxy = env.TRUST_PROXY?.trim();
   if (!trustProxy || trustProxy === '0' || trustProxy.toLowerCase() === 'false') {
     return false;
   }
