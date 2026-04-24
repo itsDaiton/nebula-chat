@@ -88,9 +88,9 @@ export const ConversationsSearch = ({
                 <ConversationListItem
                   key={conversation.id}
                   conversation={conversation}
-                    onClick={selectConversationAndClearResults}
-                  />
-                ))}
+                  onClick={selectConversationAndClearResults}
+                />
+              ))}
             {!error && !isSearching && filteredConversations.length === 0 && searchQuery.trim() && (
               <Box py={8} textAlign="center" color="fg.muted">
                 {resources.conversations.noResults}
