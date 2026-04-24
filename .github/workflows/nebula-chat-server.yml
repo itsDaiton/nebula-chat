@@ -62,22 +62,44 @@ jobs:
         run: pnpm --filter nebula-chat-server run typecheck
       - name: Build
         run: pnpm --filter nebula-chat-server run build
-      - name: SonarQube Scan (Server)
+      - name: SonarQube Scan for Nebula Chat Server
         uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
         with:
           projectBaseDir: apps/nebula-chat-server
           args: >
             -Dsonar.projectKey=itsDaiton_nebula-chat-server
             -Dsonar.organization=itsdaiton
-            -Dsonar.projectName=nebula-chat-server
+            -Dsonar.projectName=Nebula Chat Server
             -Dsonar.sources=src
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/generated/**
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.coverage.exclusions=**/*
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      - name: SonarQube Quality Gate (Server)
+      - name: Evaluate SonarQube quality gate for Nebula Chat Server
+        id: server_quality_gate
         uses: SonarSource/sonarqube-quality-gate-action@cf038b0e0cdecfa9e56c198bbb7d21d751d62c3b # v1.2.0
+        continue-on-error: true
         timeout-minutes: 10
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Load open SonarQube issues for Nebula Chat Server
+        id: server_open_issues
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+        run: |
+          set -euo pipefail
+          response="$(curl -fsSL -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/issues/search?componentKeys=itsDaiton_nebula-chat-server&resolved=false&ps=1")"
+          open_issues="$(printf '%s' "${response}" | python -c 'import json, sys; print(json.load(sys.stdin).get("total", 0))')"
+          echo "open_issues=${open_issues}" >> "${GITHUB_OUTPUT}"
+      - name: Quality Gate passed for Nebula Chat Server
+        if: ${{ steps.server_quality_gate.outputs.quality-gate-status == 'PASSED' && steps.server_open_issues.outputs.open_issues == '0' }}
+        run: |
+          echo 'Quality gate passed and no open SonarQube issues were found for Nebula Chat Server.'
+      - name: Quality Gate failed for Nebula Chat Server
+        if: ${{ steps.server_quality_gate.outputs.quality-gate-status != 'PASSED' || steps.server_open_issues.outputs.open_issues != '0' }}
+        run: |
+          echo "quality-gate-status=${{ steps.server_quality_gate.outputs.quality-gate-status }}"
+          echo "open-issues=${{ steps.server_open_issues.outputs.open_issues }}"
+          exit 1
