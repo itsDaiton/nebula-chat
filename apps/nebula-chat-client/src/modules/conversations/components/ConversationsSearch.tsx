@@ -3,7 +3,6 @@ import type { ConversationsSearchProps } from '@/modules/conversations/types/typ
 import { ConversationListItem } from '@/modules/conversations/components/ConversationListItem';
 import { chatScrollBar } from '@/shared/components/scrollbar';
 import { useConversationsSearch } from '@/modules/conversations/hooks/useConversationsSearch';
-import { useConversationsSearchStore } from '@/modules/conversations/stores/useConversationsSearchStore';
 import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
 import { resources } from '@/resources';
 import { ConversationSkeletons } from '@/modules/conversations/components/ConversationSkeletons';
@@ -13,19 +12,19 @@ export const ConversationsSearch = ({
   onConversationClick,
   onClose,
 }: ConversationsSearchProps) => {
-  const { searchQuery, setSearchQuery, filteredConversations, isSearching, error } =
-    useConversationsSearch(conversations);
-  const clearResults = useConversationsSearchStore((state) => state.clearResults);
-
-  const closeAndClearResults = () => {
-    clearResults();
-    onClose();
-  };
-
-  const selectConversationAndClearResults = (conversationId: string) => {
-    clearResults();
-    onConversationClick(conversationId);
-  };
+  const {
+    searchQuery,
+    setSearchQuery,
+    filteredConversations,
+    isSearching,
+    error,
+    closeAndClearResults,
+    selectConversationAndClearResults,
+  } = useConversationsSearch({
+    localConversations: conversations,
+    onClose,
+    onConversationClick,
+  });
 
   useEscapeKey(closeAndClearResults);
 
