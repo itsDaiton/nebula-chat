@@ -2,7 +2,7 @@ import type {
   FastifyPluginAsync,
   FastifyReply,
   FastifyRequest,
-  preHandlerHookHandler,
+  preHandlerAsyncHookHandler,
 } from 'fastify';
 import { cacheService } from '@backend/cache/cache.service';
 import { setCacheHeaders } from '@backend/config/headers.config';
@@ -14,7 +14,7 @@ import { streamFormatter } from '@backend/modules/chat/chat.utils';
 import { createChatStreamSchema } from '@backend/modules/chat/chat.validation';
 import { messageService } from '@backend/modules/message/message.service';
 
-const cacheCheckHook: preHandlerHookHandler = async (
+const cacheCheckHook: preHandlerAsyncHookHandler = async (
   req: FastifyRequest,
   reply: FastifyReply,
 ) => {
@@ -112,7 +112,7 @@ const cacheCheckHook: preHandlerHookHandler = async (
   }
 };
 
-const streamCaptureHook: preHandlerHookHandler = async (
+const streamCaptureHook: preHandlerAsyncHookHandler = async (
   req: FastifyRequest,
   reply: FastifyReply,
 ) => {

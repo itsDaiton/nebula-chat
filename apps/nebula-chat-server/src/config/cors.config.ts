@@ -1,8 +1,8 @@
 import { env } from '@backend/env';
 
 export const corsConfig = {
-  allowedOrigins: [env.CLIENT_URL, env.SERVER_URL].filter(
-    (value): value is string => Boolean(value),
+  allowedOrigins: [env.CLIENT_URL, env.SERVER_URL].filter((value): value is string =>
+    Boolean(value),
   ),
   allowedMethods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],

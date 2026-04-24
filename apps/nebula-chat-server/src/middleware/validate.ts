@@ -1,4 +1,4 @@
-import type { FastifyReply, FastifyRequest, preValidationHookHandler } from 'fastify';
+import type { FastifyReply, FastifyRequest, preValidationAsyncHookHandler } from 'fastify';
 import { z } from 'zod';
 
 type ValidationSchemas = {
@@ -8,7 +8,7 @@ type ValidationSchemas = {
 };
 
 export const validate =
-  (schemas: ValidationSchemas): preValidationHookHandler =>
+  (schemas: ValidationSchemas): preValidationAsyncHookHandler =>
   async (req: FastifyRequest, reply: FastifyReply) => {
     const errors: Record<string, unknown> = {};
 

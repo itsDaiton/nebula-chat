@@ -17,6 +17,7 @@
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^8.5.0",
     "@fastify/cors": "^10.0.2",
+    "@prisma/adapter-pg": "^7.5.0",
     "@fastify/rate-limit": "^10.2.2",
     "@fastify/sensible": "^6.0.0",
     "@fastify/swagger": "^9.5.0",

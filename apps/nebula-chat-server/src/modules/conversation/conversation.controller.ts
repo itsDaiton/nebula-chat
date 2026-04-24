@@ -15,25 +15,16 @@ type SearchConversationsQuery = {
 };
 
 export const conversationController = {
-  async create(
-    req: FastifyRequest<{ Body: CreateConversationDTO }>,
-    reply: FastifyReply,
-  ) {
+  async create(req: FastifyRequest<{ Body: CreateConversationDTO }>, reply: FastifyReply) {
     const conversation = await conversationService.createConversation(req.body);
     return reply.status(201).send(conversation);
   },
-  async get(
-    req: FastifyRequest<{ Params: GetConversationParams }>,
-    reply: FastifyReply,
-  ) {
+  async get(req: FastifyRequest<{ Params: GetConversationParams }>, reply: FastifyReply) {
     const { conversationId } = req.params;
     const conversation = await conversationService.getConversation(conversationId);
     return reply.status(200).send(conversation);
   },
-  async getAll(
-    req: FastifyRequest<{ Querystring: GetConversationsQuery }>,
-    reply: FastifyReply,
-  ) {
+  async getAll(req: FastifyRequest<{ Querystring: GetConversationsQuery }>, reply: FastifyReply) {
     const { limit, cursor } = req.query;
     const result = await conversationService.getAllConversations(limit, cursor);
     return reply.status(200).send(result);
