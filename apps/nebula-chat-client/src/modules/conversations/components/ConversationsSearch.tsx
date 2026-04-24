@@ -3,6 +3,7 @@ import type { ConversationsSearchProps } from '@/modules/conversations/types/typ
 import { ConversationListItem } from '@/modules/conversations/components/ConversationListItem';
 import { chatScrollBar } from '@/shared/components/scrollbar';
 import { useConversationsSearch } from '@/modules/conversations/hooks/useConversationsSearch';
+import { useConversationsSearchStore } from '@/modules/conversations/stores/useConversationsSearchStore';
 import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
 import { resources } from '@/resources';
 import { ConversationSkeletons } from '@/modules/conversations/components/ConversationSkeletons';
@@ -14,8 +15,19 @@ export const ConversationsSearch = ({
 }: ConversationsSearchProps) => {
   const { searchQuery, setSearchQuery, filteredConversations, isSearching, error } =
     useConversationsSearch(conversations);
+  const clearResults = useConversationsSearchStore((state) => state.clearResults);
 
-  useEscapeKey(onClose);
+  const handleClose = () => {
+    clearResults();
+    onClose();
+  };
+
+  const handleConversationClick = (conversationId: string) => {
+    clearResults();
+    onConversationClick(conversationId);
+  };
+
+  useEscapeKey(handleClose);
 
   return (
     <Portal>
@@ -27,7 +39,7 @@ export const ConversationsSearch = ({
         bottom="0"
         bg="blackAlpha.600"
         zIndex="modal"
-        onClick={onClose}
+        onClick={handleClose}
       />
       <Flex
         position="fixed"
@@ -76,7 +88,7 @@ export const ConversationsSearch = ({
                 <ConversationListItem
                   key={conversation.id}
                   conversation={conversation}
-                  onClick={onConversationClick}
+                  onClick={handleConversationClick}
                 />
               ))}
             {!error && !isSearching && filteredConversations.length === 0 && searchQuery.trim() && (
