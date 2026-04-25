@@ -57,6 +57,22 @@ jobs:
         run: pnpm --filter nebula-chat-client run typecheck
       - name: Build
         run: pnpm --filter nebula-chat-client run build
+
+  sonar:
+    needs:
+      - changes
+      - build
+    if: needs.changes.outputs.relevant == 'true'
+    name: SonarQube nebula-chat-client
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - name: SonarQube Scan for Nebula Chat Client
         uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
         with:
@@ -70,107 +86,12 @@ jobs:
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.coverage.exclusions=**/*
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: Evaluate SonarQube quality gate for Nebula Chat Client
+        uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
+        with:
+          scanMetadataReportFile: apps/nebula-chat-client/.scannerwork/report-task.txt
+          pollingTimeoutSec: 300
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io
-          SONAR_PROJECT_KEY: itsDaiton_nebula-chat-client
-          REPORT_TASK_FILE: apps/nebula-chat-client/.scannerwork/report-task.txt
-          SONAR_QUALITY_GATE_TIMEOUT_SECONDS: '300'
-        run: |
-          set -euo pipefail
-
-          if [ ! -f "${REPORT_TASK_FILE}" ]; then
-            echo "Sonar scanner report file not found: ${REPORT_TASK_FILE}"
-            exit 1
-          fi
-
-          ce_task_url="$(grep '^ceTaskUrl=' "${REPORT_TASK_FILE}" | cut -d= -f2-)"
-          if [ -z "${ce_task_url}" ]; then
-            echo 'Unable to read ceTaskUrl from Sonar scanner report file.'
-            cat "${REPORT_TASK_FILE}"
-            exit 1
-          fi
-
-          ce_response_file="$(mktemp)"
-          quality_gate_response_file="$(mktemp)"
-          issues_response_file="$(mktemp)"
-          trap 'rm -f "${ce_response_file}" "${quality_gate_response_file}" "${issues_response_file}"' EXIT
-
-          analysis_id=''
-          task_status=''
-          poll_interval_seconds=5
-          # Ceiling division so partial intervals still count as one polling attempt.
-          max_attempts=$(((SONAR_QUALITY_GATE_TIMEOUT_SECONDS + poll_interval_seconds - 1) / poll_interval_seconds))
-          if [ "${max_attempts}" -lt 1 ]; then
-            echo 'SONAR_QUALITY_GATE_TIMEOUT_SECONDS must be at least 5 seconds.'
-            exit 1
-          fi
-
-          for _ in $(seq 1 "${max_attempts}"); do
-            ce_status_code="$(curl -sSL -H "Authorization: Bearer ${SONAR_TOKEN}" -w '%{http_code}' -o "${ce_response_file}" "${ce_task_url}")"
-            if [ "${ce_status_code}" != '200' ]; then
-              echo "Failed to load SonarQube compute engine task (HTTP ${ce_status_code})."
-              cat "${ce_response_file}"
-              exit 1
-            fi
-
-            task_status="$(jq -r '.task.status // empty' "${ce_response_file}")"
-            analysis_id="$(jq -r '.task.analysisId // empty' "${ce_response_file}")"
-
-            if [ "${task_status}" = 'PENDING' ] || [ "${task_status}" = 'IN_PROGRESS' ]; then
-              sleep "${poll_interval_seconds}"
-              continue
-            fi
-
-            break
-          done
-
-          if [ "${task_status}" != 'SUCCESS' ]; then
-            echo "SonarQube compute engine task did not succeed. Status: ${task_status:-unknown}"
-            cat "${ce_response_file}"
-            exit 1
-          fi
-
-          if [ -z "${analysis_id}" ]; then
-            echo 'SonarQube compute engine task succeeded but analysisId is missing.'
-            cat "${ce_response_file}"
-            exit 1
-          fi
-
-          quality_gate_status_code="$(curl -sSL -H "Authorization: Bearer ${SONAR_TOKEN}" -w '%{http_code}' -o "${quality_gate_response_file}" "${SONAR_HOST_URL}/api/qualitygates/project_status?analysisId=${analysis_id}")"
-          if [ "${quality_gate_status_code}" != '200' ]; then
-            echo "Failed to load SonarQube quality gate status (HTTP ${quality_gate_status_code})."
-            cat "${quality_gate_response_file}"
-            exit 1
-          fi
-
-          quality_gate_status="$(jq -r '.projectStatus.status // empty' "${quality_gate_response_file}")"
-          if [ -z "${quality_gate_status}" ]; then
-            echo 'SonarQube quality gate response did not include a status.'
-            cat "${quality_gate_response_file}"
-            exit 1
-          fi
-
-          issues_status_code="$(curl -sSL -H "Authorization: Bearer ${SONAR_TOKEN}" -w '%{http_code}' -o "${issues_response_file}" "${SONAR_HOST_URL}/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&resolved=false&ps=1")"
-          if [ "${issues_status_code}" != '200' ]; then
-            echo "Failed to load SonarQube issues for Nebula Chat Client (HTTP ${issues_status_code})."
-            cat "${issues_response_file}"
-            exit 1
-          fi
-
-          open_issues="$(jq -r '.total // empty' "${issues_response_file}")"
-          if ! [[ "${open_issues}" =~ ^[0-9]+$ ]]; then
-            echo 'SonarQube issues response did not include a numeric "total" field.'
-            echo "Received value: '${open_issues}'"
-            cat "${issues_response_file}"
-            exit 1
-          fi
-
-          echo "quality-gate-status=${quality_gate_status}"
-          echo "open-issues=${open_issues}"
-
-          if [ "${quality_gate_status}" != 'PASSED' ] || [ "${open_issues}" != '0' ]; then
-            exit 1
-          fi
