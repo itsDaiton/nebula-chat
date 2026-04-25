@@ -15,11 +15,11 @@ const chatRoutes: FastifyPluginAsyncZod = async (app) => {
       operationId: 'streamChat',
       body: createChatStreamSchema,
       response: {
-        400: errorResponseSchema,
-        404: errorResponseSchema,
-        413: errorResponseSchema,
-        429: errorResponseSchema,
-        500: errorResponseSchema,
+        400: errorResponseSchema.describe('Invalid request body or validation error'),
+        404: errorResponseSchema.describe('Conversation not found'),
+        413: errorResponseSchema.describe('Message or context exceeds token limit'),
+        429: errorResponseSchema.describe('Rate limit exceeded'),
+        500: errorResponseSchema.describe('Internal server error'),
       },
     },
     config: {

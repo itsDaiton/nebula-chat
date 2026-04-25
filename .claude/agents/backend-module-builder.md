@@ -34,6 +34,7 @@ Feature-module builder. Every backend module must follow the layered file conven
 3. Create or modify the 6 files in order: `.types.ts`, `.validation.ts`, `.repository.ts`, `.service.ts`, `.controller.ts`, `.routes.ts`.
 4. In `.routes.ts`: use `FastifyPluginAsyncZod`, add a `schema:` block with `body`/`params`/`querystring`, `response` (success + error codes), `description`, `summary`, `tags`, and `operationId`.
 5. Import the `errorResponseSchema` from `@backend/errors/error.schema` for error response schemas.
+   - Every entry in `response:` **must** call `.describe('...')` on the Zod schema (e.g. `conversationResponseSchema.describe('Conversation created successfully')`). Without it `@fastify/swagger` emits "Default Response" in the spec.
 6. Mount the new router in `apps/nebula-chat-server/src/app.ts` via `app.register(plugin, { prefix: '/api/<module>' })`.
 7. Hand off to `api-contract-keeper` for OpenAPI regeneration.
 

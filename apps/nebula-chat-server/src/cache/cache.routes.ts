@@ -16,8 +16,8 @@ const cacheRoutes: FastifyPluginAsyncZod = async (app) => {
       tags: ['Cache'],
       operationId: 'getCacheStats',
       response: {
-        200: cacheStatsResponseSchema,
-        500: errorResponseSchema,
+        200: cacheStatsResponseSchema.describe('Cache statistics retrieved successfully'),
+        500: errorResponseSchema.describe('Internal server error'),
       },
     },
     handler: cacheController.getStats,
@@ -30,8 +30,8 @@ const cacheRoutes: FastifyPluginAsyncZod = async (app) => {
       tags: ['Cache'],
       operationId: 'clearCache',
       response: {
-        200: cacheClearResponseSchema,
-        500: errorResponseSchema,
+        200: cacheClearResponseSchema.describe('Cache cleared successfully'),
+        500: errorResponseSchema.describe('Internal server error'),
       },
     },
     handler: cacheController.clear,
@@ -44,8 +44,8 @@ const cacheRoutes: FastifyPluginAsyncZod = async (app) => {
       tags: ['Cache'],
       operationId: 'getCacheKeys',
       response: {
-        200: cacheKeysResponseSchema,
-        500: errorResponseSchema,
+        200: cacheKeysResponseSchema.describe('Cache keys retrieved successfully'),
+        500: errorResponseSchema.describe('Internal server error'),
       },
     },
     handler: cacheController.getKeys,
@@ -58,8 +58,8 @@ const cacheRoutes: FastifyPluginAsyncZod = async (app) => {
       tags: ['Cache'],
       operationId: 'getCacheHealth',
       response: {
-        200: cacheHealthResponseSchema,
-        500: errorResponseSchema,
+        200: cacheHealthResponseSchema.describe('Cache is healthy'),
+        500: errorResponseSchema.describe('Internal server error'),
       },
     },
     handler: cacheController.healthCheck,

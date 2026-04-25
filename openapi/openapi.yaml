@@ -5,118 +5,71 @@ info:
   description: REST API for Nebula Chat
   contact:
     name: Nebula Chat
-servers:
-  - url: /
-tags:
-  - name: Chat
-    description: Chat streaming endpoints
-  - name: Conversations
-    description: Conversation management
-  - name: Messages
-    description: Message management
-  - name: Cache
-    description: Cache inspection and management
 components:
-  schemas:
-    ErrorResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          enum:
-            - false
-        error:
-          type: string
-        message:
-          type: string
-      required:
-        - success
-        - error
-        - message
-    ChatStream:
-      type: object
-      properties:
-        event:
-          type: string
-        data:
-          type: string
-      required:
-        - event
-        - data
-    Conversation:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        title:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-      required:
-        - id
-        - title
-        - createdAt
-    Message:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        conversationId:
-          type: string
-          format: uuid
-        content:
-          type: string
-        role:
-          type: string
-        model:
-          type: string
-          nullable: true
-        tokens:
-          type: object
-          nullable: true
-          properties:
-            promptTokens:
-              type: number
-            completionTokens:
-              type: number
-            totalTokens:
-              type: number
-          required:
-            - promptTokens
-            - completionTokens
-            - totalTokens
-        createdAt:
-          type: string
-          format: date-time
-      required:
-        - id
-        - conversationId
-        - content
-        - role
-        - model
-        - tokens
-        - createdAt
-  parameters: {}
+  schemas: {}
 paths:
+  /:
+    get:
+      summary: API root
+      tags:
+        - Health
+      description: Welcome endpoint — confirms the API is reachable.
+      responses:
+        "200":
+          description: API is reachable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+                description: API is reachable
+  /health:
+    get:
+      summary: Health check
+      tags:
+        - Health
+      description: Returns server liveness status and current UTC timestamp.
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - ok
+                  timestamp:
+                    type: string
+                required:
+                  - status
+                  - timestamp
+                additionalProperties: false
+                description: Server is healthy
   /api/chat/stream:
     post:
       operationId: streamChat
-      description: >-
-        Stream a chat completion response from an AI model with automatic
-        conversation and message persistence.
       summary: Stream chat completion
       tags:
         - Chat
+      description: Stream a chat completion response from an AI model with automatic
+        conversation and message persistence.
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
               properties:
                 messages:
+                  minItems: 1
                   type: array
                   items:
                     type: object
@@ -133,62 +86,130 @@ paths:
                     required:
                       - role
                       - content
-                  minItems: 1
                 model:
                   type: string
                 conversationId:
                   type: string
                   format: uuid
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
               required:
                 - messages
                 - model
       responses:
-        '200':
-          description: Successful streaming response with Server-Sent Events
-          content:
-            text/event-stream:
-              schema:
-                $ref: '#/components/schemas/ChatStream'
-        '400':
+        "400":
           description: Invalid request body or validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Conversation not found (if conversationId provided)
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Invalid request body or validation error
+        "404":
+          description: Conversation not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '413':
-          description: >-
-            Payload too large - user message exceeds token limit or conversation
-            context exceeds limit
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Conversation not found
+        "413":
+          description: Message or context exceeds token limit
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '429':
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Message or context exceeds token limit
+        "429":
           description: Rate limit exceeded
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Rate limit exceeded
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /api/conversations:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Internal server error
+  /api/conversations/:
     post:
       operationId: createConversation
-      description: Create a new conversation with a title
       summary: Create conversation
       tags:
         - Conversations
+      description: Create a new conversation with a title
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -200,52 +221,98 @@ paths:
               required:
                 - title
       responses:
-        '201':
+        "201":
           description: Conversation created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Conversation'
-        '400':
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  title:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                required:
+                  - id
+                  - title
+                  - createdAt
+                additionalProperties: false
+                description: Conversation created successfully
+        "400":
           description: Invalid request body
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Invalid request body
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Internal server error
     get:
       operationId: listConversations
-      description: >-
-        Retrieve conversations with cursor-based pagination. Returns up to 10
-        conversations by default.
       summary: List conversations
       tags:
         - Conversations
+      description: Retrieve conversations with cursor-based pagination. Returns up to
+        10 conversations by default.
       parameters:
         - schema:
+            default: 10
             type: integer
-            minimum: 0
             exclusiveMinimum: true
             maximum: 100
-            default: 10
-          required: false
-          name: limit
           in: query
+          name: limit
+          required: false
           description: Number of conversations to fetch (1-100, default 10)
         - schema:
             type: string
             format: uuid
-          required: false
-          name: cursor
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
+          name: cursor
+          required: false
           description: Pagination cursor for fetching the next page of conversations
       responses:
-        '200':
+        "200":
           description: Paginated list of conversations
           content:
             application/json:
@@ -255,108 +322,252 @@ paths:
                   conversations:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Conversation'
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                        title:
+                          type: string
+                        createdAt:
+                          type: string
+                          format: date-time
+                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                      required:
+                        - id
+                        - title
+                        - createdAt
+                      additionalProperties: false
                   nextCursor:
-                    type: string
                     nullable: true
+                    type: string
                     format: uuid
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                   hasMore:
                     type: boolean
                 required:
                   - conversations
                   - nextCursor
                   - hasMore
-        '500':
+                additionalProperties: false
+                description: Paginated list of conversations
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Internal server error
   /api/conversations/search:
     get:
       operationId: searchConversations
-      description: >-
-        Search conversations by title. Returns matching conversations ordered by
-        creation date.
       summary: Search conversations
       tags:
         - Conversations
+      description: Search conversations by title. Returns matching conversations
+        ordered by creation date.
       parameters:
         - schema:
             type: string
             minLength: 1
-          required: true
-          name: q
           in: query
+          name: q
+          required: true
           description: Search query to filter conversations by title
       responses:
-        '200':
-          description: List of conversations matching the search query
+        "200":
+          description: Matching conversations
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Conversation'
-        '400':
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    title:
+                      type: string
+                    createdAt:
+                      type: string
+                      format: date-time
+                      pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                  required:
+                    - id
+                    - title
+                    - createdAt
+                  additionalProperties: false
+                description: Matching conversations
+        "400":
           description: Invalid search query
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Invalid search query
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Internal server error
   /api/conversations/{conversationId}:
     get:
       operationId: getConversation
-      description: Retrieve a specific conversation by ID
       summary: Get conversation by ID
       tags:
         - Conversations
+      description: Retrieve a specific conversation by ID
       parameters:
         - schema:
             type: string
             format: uuid
-          required: true
-          name: conversationId
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
+          name: conversationId
+          required: true
       responses:
-        '200':
+        "200":
           description: Conversation retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Conversation'
-        '400':
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  title:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                required:
+                  - id
+                  - title
+                  - createdAt
+                additionalProperties: false
+                description: Conversation retrieved successfully
+        "400":
           description: Invalid conversation ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Invalid conversation ID format
+        "404":
           description: Conversation not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Conversation not found
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /api/messages:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Internal server error
+  /api/messages/:
     post:
       operationId: createMessage
-      description: Create a new message in a conversation
       summary: Create message
       tags:
         - Messages
+      description: Create a new message in a conversation
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -365,6 +576,7 @@ paths:
                 conversationId:
                   type: string
                   format: uuid
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                 role:
                   type: string
                   enum:
@@ -375,8 +587,8 @@ paths:
                   type: string
                   minLength: 1
                 model:
-                  type: string
                   nullable: true
+                  type: string
                 tokens:
                   type: object
                   properties:
@@ -396,93 +608,319 @@ paths:
                 - content
                 - model
       responses:
-        '201':
+        "201":
           description: Message created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '400':
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  conversationId:
+                    type: string
+                    format: uuid
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  content:
+                    type: string
+                  role:
+                    type: string
+                  model:
+                    nullable: true
+                    type: string
+                  tokens:
+                    nullable: true
+                    type: object
+                    properties:
+                      promptTokens:
+                        type: number
+                      completionTokens:
+                        type: number
+                      totalTokens:
+                        type: number
+                    required:
+                      - promptTokens
+                      - completionTokens
+                      - totalTokens
+                    additionalProperties: false
+                  createdAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                required:
+                  - id
+                  - conversationId
+                  - content
+                  - role
+                  - model
+                  - tokens
+                  - createdAt
+                additionalProperties: false
+                description: Message created successfully
+        "400":
           description: Invalid request body
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Invalid request body
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Internal server error
     get:
       operationId: listMessages
-      description: Retrieve all messages across all conversations
       summary: List all messages
       tags:
         - Messages
+      description: Retrieve all messages across all conversations
       responses:
-        '200':
+        "200":
           description: List of messages
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Message'
-        '500':
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    conversationId:
+                      type: string
+                      format: uuid
+                      pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    content:
+                      type: string
+                    role:
+                      type: string
+                    model:
+                      nullable: true
+                      type: string
+                    tokens:
+                      nullable: true
+                      type: object
+                      properties:
+                        promptTokens:
+                          type: number
+                        completionTokens:
+                          type: number
+                        totalTokens:
+                          type: number
+                      required:
+                        - promptTokens
+                        - completionTokens
+                        - totalTokens
+                      additionalProperties: false
+                    createdAt:
+                      type: string
+                      format: date-time
+                      pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                  required:
+                    - id
+                    - conversationId
+                    - content
+                    - role
+                    - model
+                    - tokens
+                    - createdAt
+                  additionalProperties: false
+                description: List of messages
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Internal server error
   /api/messages/{messageId}:
     get:
       operationId: getMessage
-      description: Retrieve a specific message by ID
       summary: Get message by ID
       tags:
         - Messages
+      description: Retrieve a specific message by ID
       parameters:
         - schema:
             type: string
             format: uuid
-          required: true
-          name: messageId
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
+          name: messageId
+          required: true
       responses:
-        '200':
+        "200":
           description: Message retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '400':
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  conversationId:
+                    type: string
+                    format: uuid
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  content:
+                    type: string
+                  role:
+                    type: string
+                  model:
+                    nullable: true
+                    type: string
+                  tokens:
+                    nullable: true
+                    type: object
+                    properties:
+                      promptTokens:
+                        type: number
+                      completionTokens:
+                        type: number
+                      totalTokens:
+                        type: number
+                    required:
+                      - promptTokens
+                      - completionTokens
+                      - totalTokens
+                    additionalProperties: false
+                  createdAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                required:
+                  - id
+                  - conversationId
+                  - content
+                  - role
+                  - model
+                  - tokens
+                  - createdAt
+                additionalProperties: false
+                description: Message retrieved successfully
+        "400":
           description: Invalid message ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Invalid message ID format
+        "404":
           description: Message not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Message not found
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Internal server error
   /api/cache/stats:
     get:
       operationId: getCacheStats
-      description: Get cache statistics including hit/miss rates and performance metrics
       summary: Get cache statistics
       tags:
         - Cache
+      description: Get cache statistics including hit/miss rates and performance metrics
       responses:
-        '200':
+        "200":
           description: Cache statistics retrieved successfully
           content:
             application/json:
@@ -518,14 +956,14 @@ paths:
                           sets:
                             type: number
                           lastEvictedKey:
-                            type: string
                             nullable: true
+                            type: string
                           lastSetKey:
-                            type: string
                             nullable: true
+                            type: string
                           lastHitKey:
-                            type: string
                             nullable: true
+                            type: string
                           hitRate:
                             type: number
                           missRate:
@@ -556,6 +994,7 @@ paths:
                           - oldestTTL
                           - newestTTL
                           - isHealthy
+                        additionalProperties: false
                     required:
                       - size
                       - activeItems
@@ -563,24 +1002,87 @@ paths:
                       - maxItems
                       - defaultTtlMs
                       - stats
+                    additionalProperties: false
                 required:
                   - success
                   - stats
-        '500':
+                additionalProperties: false
+                description: Cache statistics retrieved successfully
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Internal server error
+  /api/cache/clear:
+    delete:
+      operationId: clearCache
+      summary: Clear cache
+      tags:
+        - Cache
+      description: Clear all cached data
+      responses:
+        "200":
+          description: Cache cleared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                required:
+                  - success
+                  - message
+                additionalProperties: false
+                description: Cache cleared successfully
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Internal server error
   /api/cache/keys:
     get:
       operationId: getCacheKeys
-      description: Get list of recent cache keys
       summary: Get cache keys
       tags:
         - Cache
+      description: Get list of recent cache keys
       responses:
-        '200':
+        "200":
           description: Cache keys retrieved successfully
           content:
             application/json:
@@ -599,22 +1101,10 @@ paths:
                   - success
                   - count
                   - keys
-        '500':
+                additionalProperties: false
+                description: Cache keys retrieved successfully
+        "500":
           description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /api/cache/clear:
-    delete:
-      operationId: clearCache
-      description: Clear all cached data
-      summary: Clear cache
-      tags:
-        - Cache
-      responses:
-        '200':
-          description: Cache cleared successfully
           content:
             application/json:
               schema:
@@ -622,27 +1112,28 @@ paths:
                 properties:
                   success:
                     type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
                   message:
                     type: string
                 required:
                   - success
+                  - error
                   - message
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                additionalProperties: false
+                description: Internal server error
   /api/cache/health:
     get:
       operationId: getCacheHealth
-      description: Check cache system health status
       summary: Cache health check
       tags:
         - Cache
+      description: Check cache system health status
       responses:
-        '200':
-          description: Cache health status
+        "200":
+          description: Cache is healthy
           content:
             application/json:
               schema:
@@ -654,9 +1145,39 @@ paths:
                       - ok
                 required:
                   - status
-        '500':
+                additionalProperties: false
+                description: Cache is healthy
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Internal server error
+servers:
+  - url: http://localhost:3000
+tags:
+  - name: Health
+    description: Liveness and readiness probes
+  - name: Chat
+    description: Chat streaming endpoints
+  - name: Conversations
+    description: Conversation management
+  - name: Messages
+    description: Message management
+  - name: Cache
+    description: Cache inspection and management

@@ -578,15 +578,28 @@ const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
       operationId: 'createConversation',
       body: createConversationSchema,
       response: {
-        201: conversationResponseSchema,
-        400: errorResponseSchema,
-        500: errorResponseSchema,
+        201: conversationResponseSchema.describe('Conversation created successfully'),
+        400: errorResponseSchema.describe('Invalid request body'),
+        500: errorResponseSchema.describe('Internal server error'),
       },
     },
     handler: conversationController.create,
   });
 };
 ```
+
+**Rule — every response entry must have `.describe('...')`:** `@fastify/swagger` emits "Default Response" for any response schema that has no description. Always call `.describe('...')` on the Zod schema at the point it is used in the `response:` block (not in the validation file — the description is route-contextual). This applies to success and error responses alike:
+
+```ts
+response: {
+  201: conversationResponseSchema.describe('Conversation created successfully'),
+  400: errorResponseSchema.describe('Invalid request body'),
+  404: errorResponseSchema.describe('Conversation not found'),
+  500: errorResponseSchema.describe('Internal server error'),
+},
+```
+
+**Rule — every route needs a `schema:` block.** Routes without one produce "Default Response" entries. Use `{ schema: { hide: true } }` to explicitly exclude infrastructure routes (e.g. `/openapi.json`) from the spec rather than leaving them undocumented.
 
 On validation failure the error is routed through `setErrorHandler`. Use `hasZodFastifySchemaValidationErrors(err)` (exported from `fastify-type-provider-zod`) in the error handler to detect and format these. Define schemas in `*.validation.ts` using plain Zod — no registry extensions needed. Use `.describe()` to add field-level descriptions for Swagger docs:
 
