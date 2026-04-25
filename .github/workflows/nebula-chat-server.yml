@@ -135,7 +135,7 @@ jobs:
             const status = process.env.QUALITY_GATE_STATUS || 'UNKNOWN';
             const icon = status === 'PASSED' ? '✅' : status === 'FAILED' ? '❌' : '⚠️';
             const statusText = status === 'PASSED' ? 'passed' : status === 'FAILED' ? 'failed' : status.toLowerCase();
-            const statusTitle = status === 'PASSED' ? 'Quality Gate passed' : status === 'FAILED' ? 'Quality Gate failed' : `Quality Gate ${statusText}`;
+            const statusTitle = status === 'PASSED' ? 'Quality Gate passed for nebula-chat-server' : status === 'FAILED' ? 'Quality Gate failed for nebula-chat-server' : `Quality Gate ${statusText} for nebula-chat-server`;
             const badgeName = status === 'PASSED' ? 'qg-passed-20px.png' : status === 'FAILED' ? 'qg-failed-20px.png' : 'qg-passed-20px.png';
             const reportPath = 'apps/nebula-chat-server/.scannerwork/report-task.txt';
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
@@ -143,6 +143,9 @@ jobs:
             const projectKey = 'itsDaiton_nebula-chat-server';
             const prNumber = context.issue.number;
             const sonarToken = process.env.SONAR_TOKEN || '';
+            const sonarAuth = sonarToken
+              ? `Basic ${Buffer.from(`${sonarToken}:`).toString('base64')}`
+              : '';
 
             const badgeBaseUrl = 'https://sonarsource.github.io/sonarcloud-github-static-resources/v2';
             const statusIconPassed = `${badgeBaseUrl}/common/passed-16px.png`;
@@ -160,7 +163,7 @@ jobs:
               try {
                 const response = await fetch(url, {
                   headers: {
-                    Authorization: `Bearer ${sonarToken}`,
+                    Authorization: sonarAuth,
                   },
                 });
                 if (!response.ok) {
@@ -188,19 +191,21 @@ jobs:
             const [newIssuesData, acceptedIssuesData, hotspotsData, measuresData] = await Promise.all([
               fetchJson(`https://sonarcloud.io/api/issues/search?componentKeys=${projectKey}&pullRequest=${prNumber}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true&ps=1`),
               fetchJson(`https://sonarcloud.io/api/issues/search?componentKeys=${projectKey}&pullRequest=${prNumber}&issueStatuses=ACCEPTED&ps=1`),
-              fetchJson(`https://sonarcloud.io/api/issues/search?componentKeys=${projectKey}&pullRequest=${prNumber}&types=SECURITY_HOTSPOT&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true&ps=1`),
-              fetchJson(`https://sonarcloud.io/api/measures/component?component=${projectKey}&pullRequest=${prNumber}&metricKeys=new_coverage,new_duplicated_lines_density`),
+              fetchJson(`https://sonarcloud.io/api/hotspots/search?projectKey=${projectKey}&pullRequest=${prNumber}&ps=1`),
+              fetchJson(`https://sonarcloud.io/api/qualitygates/project_status?projectKey=${projectKey}&pullRequest=${prNumber}`),
             ]);
 
             const newIssuesCount = typeof newIssuesData?.total === 'number' ? newIssuesData.total : NaN;
             const acceptedIssuesCount = typeof acceptedIssuesData?.total === 'number' ? acceptedIssuesData.total : NaN;
             const hotspotCount = typeof hotspotsData?.total === 'number' ? hotspotsData.total : NaN;
 
-            const measures = Array.isArray(measuresData?.component?.measures)
-              ? measuresData.component.measures
+            const conditions = Array.isArray(measuresData?.projectStatus?.conditions)
+              ? measuresData.projectStatus.conditions
               : [];
-            const getMeasureValue = (metricKey) =>
-              measures.find((measure) => measure.metric === metricKey)?.value;
+            const getMeasureValue = (metricKey) => {
+              const condition = conditions.find((item) => item.metricKey === metricKey);
+              return condition?.actualValue ?? condition?.value;
+            };
 
             const coverageText = formatPercent(getMeasureValue('new_coverage'));
             const duplicationText = formatPercent(getMeasureValue('new_duplicated_lines_density'));
