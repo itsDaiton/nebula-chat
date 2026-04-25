@@ -2,12 +2,12 @@
 
 ## Ticket metadata
 
-| Field | Value |
-|-------|-------|
-| **ID** | M-7 |
-| **Scope** | `apps/server` only |
-| **Depends on** | M-1 (Fastify), M-3 (LangChain lib recommended) |
-| **Blocks** | Nothing |
+| Field          | Value                                                 |
+| -------------- | ----------------------------------------------------- |
+| **ID**         | M-7                                                   |
+| **Scope**      | `apps/server` only                                    |
+| **Depends on** | M-1 (Fastify), M-3 (LangChain lib recommended)        |
+| **Blocks**     | Nothing                                               |
 | **Standalone** | Partial — works without M-3 using direct OpenAI calls |
 
 ## Objective
@@ -98,9 +98,9 @@ const worker = new Worker<LLMJobData, LLMJobResult>(
 
     const chain = buildChatChain({ apiKey: env.OPENAI_API_KEY, model });
 
-    const history = messages.slice(0, -1).map((m) =>
-      m.role === 'user' ? new HumanMessage(m.content) : new AIMessage(m.content)
-    );
+    const history = messages
+      .slice(0, -1)
+      .map((m) => (m.role === 'user' ? new HumanMessage(m.content) : new AIMessage(m.content)));
     const input = messages.at(-1)!.content;
 
     const response = await chain.invoke({ history, input });
@@ -110,7 +110,7 @@ const worker = new Worker<LLMJobData, LLMJobResult>(
   {
     connection: { url: env.REDIS_URL },
     concurrency: 5,
-  }
+  },
 );
 
 worker.on('completed', (job, result) => {
@@ -149,5 +149,5 @@ export default fp(async (app) => {
 ```
 
 ---
----
 
+---

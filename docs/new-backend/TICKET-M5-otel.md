@@ -2,13 +2,13 @@
 
 ## Ticket metadata
 
-| Field | Value |
-|-------|-------|
-| **ID** | M-5 |
-| **Package** | `libs/otel` → published as `@nebula-chat/otel` |
-| **Depends on** | Nothing — fully independent lib ticket |
-| **Blocks** | Nothing |
-| **Standalone** | Yes |
+| Field          | Value                                          |
+| -------------- | ---------------------------------------------- |
+| **ID**         | M-5                                            |
+| **Package**    | `libs/otel` → published as `@nebula-chat/otel` |
+| **Depends on** | Nothing — fully independent lib ticket         |
+| **Blocks**     | Nothing                                        |
+| **Standalone** | Yes                                            |
 
 ## Objective
 
@@ -147,5 +147,5 @@ await app.register(fastifyLoggerPlugin);
 ```
 
 ---
----
 
+---

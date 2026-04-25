@@ -2,13 +2,13 @@
 
 ## Ticket metadata
 
-| Field | Value |
-|-------|-------|
-| **ID** | M-1 |
-| **Depends on** | Nothing — implement first |
-| **Blocks** | M-6, M-7, M-8, M-9, M-10 (all app tickets require Fastify) |
-| **Standalone** | Yes |
-| **Scope** | `apps/server` only |
+| Field          | Value                                                      |
+| -------------- | ---------------------------------------------------------- |
+| **ID**         | M-1                                                        |
+| **Depends on** | Nothing — implement first                                  |
+| **Blocks**     | M-6, M-7, M-8, M-9, M-10 (all app tickets require Fastify) |
+| **Standalone** | Yes                                                        |
+| **Scope**      | `apps/server` only                                         |
 
 ## Objective
 
@@ -116,9 +116,10 @@ import { env } from './env';
 
 export async function buildApp() {
   const app = Fastify({
-    logger: env.NODE_ENV === 'development'
-      ? { transport: { target: 'pino-pretty', options: { colorize: true } } }
-      : true,
+    logger:
+      env.NODE_ENV === 'development'
+        ? { transport: { target: 'pino-pretty', options: { colorize: true } } }
+        : true,
   });
 
   // Core plugins
@@ -218,17 +219,17 @@ await app.register(import('./modules/chat/chat.routes'), { prefix: '/api/chat' }
 
 ### Express → Fastify concept mapping
 
-| Express | Fastify equivalent |
-|---------|-------------------|
-| `app.use(cors())` | `app.register(cors, options)` |
-| `app.use(express.json())` | Built-in — no setup needed |
-| `app.use(rateLimit())` | `app.register(rateLimit, options)` |
-| `router.get('/path', handler)` | `app.get('/path', { schema }, handler)` |
-| `req.params`, `req.query`, `req.body` | Same — `req.params`, `req.query`, `req.body` |
-| `res.json(data)` | `reply.send(data)` |
-| `res.status(404).json(...)` | `reply.status(404).send(...)` |
-| `next(error)` | `throw error` or `reply.internalServerError()` (via `@fastify/sensible`) |
-| `app.use('/prefix', router)` | `app.register(plugin, { prefix: '/prefix' })` |
+| Express                               | Fastify equivalent                                                       |
+| ------------------------------------- | ------------------------------------------------------------------------ |
+| `app.use(cors())`                     | `app.register(cors, options)`                                            |
+| `app.use(express.json())`             | Built-in — no setup needed                                               |
+| `app.use(rateLimit())`                | `app.register(rateLimit, options)`                                       |
+| `router.get('/path', handler)`        | `app.get('/path', { schema }, handler)`                                  |
+| `req.params`, `req.query`, `req.body` | Same — `req.params`, `req.query`, `req.body`                             |
+| `res.json(data)`                      | `reply.send(data)`                                                       |
+| `res.status(404).json(...)`           | `reply.status(404).send(...)`                                            |
+| `next(error)`                         | `throw error` or `reply.internalServerError()` (via `@fastify/sensible`) |
+| `app.use('/prefix', router)`          | `app.register(plugin, { prefix: '/prefix' })`                            |
 
 ---
 

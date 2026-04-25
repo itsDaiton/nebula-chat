@@ -2,13 +2,13 @@
 
 ## Ticket metadata
 
-| Field | Value |
-|-------|-------|
-| **ID** | M-6 |
-| **Scope** | `apps/server` only |
+| Field          | Value                        |
+| -------------- | ---------------------------- |
+| **ID**         | M-6                          |
+| **Scope**      | `apps/server` only           |
 | **Depends on** | M-1 (Fastify must be set up) |
-| **Blocks** | Nothing |
-| **Standalone** | No — requires M-1 |
+| **Blocks**     | Nothing                      |
+| **Standalone** | No — requires M-1            |
 
 ## Objective
 
@@ -82,7 +82,7 @@ import argon2 from 'argon2';
 export async function hashPassword(password: string): Promise<string> {
   return argon2.hash(password, {
     type: argon2.argon2id,
-    memoryCost: 65536,  // 64 MB
+    memoryCost: 65536, // 64 MB
     timeCost: 3,
     parallelism: 1,
   });
@@ -114,5 +114,5 @@ JWT_REFRESH_SECRET: z.string().min(32),
 ```
 
 ---
----
 
+---

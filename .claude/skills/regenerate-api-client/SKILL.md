@@ -9,6 +9,7 @@ allowed-tools: Bash, Read
 Syncs the backend↔frontend contract. Both artifacts must be committed together.
 
 ## Steps
+
 1. From repo root, regenerate the backend spec:
    ```
    pnpm --filter nebula-chat-server run generate:openapi
@@ -25,5 +26,6 @@ Syncs the backend↔frontend contract. Both artifacts must be committed together
 5. Report the paths of the changed artifacts and any typecheck failures.
 
 ## Anti-goals
+
 - Do NOT hand-edit `openapi.yaml` or any Orval-generated file.
 - Do NOT split the two regens across separate commits/PRs.

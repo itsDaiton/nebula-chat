@@ -76,13 +76,13 @@ Errors use a custom `AppError` class. Path aliases use `@backend/*` mapping to `
 
 ### Key environment variables
 
-| Variable                      | Where                                  |
-| ----------------------------- | -------------------------------------- |
-| `VITE_API_URL`                | `apps/nebula-chat-client/.env`         |
-| `OPENAI_API_KEY`              | `apps/nebula-chat-server/.env`         |
-| `DATABASE_URL`                | `apps/nebula-chat-server/.env`         |
-| `REDIS_URL`, `REDIS_PASSWORD` | `apps/nebula-chat-server/.env`         |
-| `CLIENT_URL`, `SERVER_URL`    | `apps/nebula-chat-server/.env` (CORS)  |
+| Variable                      | Where                                 |
+| ----------------------------- | ------------------------------------- |
+| `VITE_API_URL`                | `apps/nebula-chat-client/.env`        |
+| `OPENAI_API_KEY`              | `apps/nebula-chat-server/.env`        |
+| `DATABASE_URL`                | `apps/nebula-chat-server/.env`        |
+| `REDIS_URL`, `REDIS_PASSWORD` | `apps/nebula-chat-server/.env`        |
+| `CLIENT_URL`, `SERVER_URL`    | `apps/nebula-chat-server/.env` (CORS) |
 
 ## Code Style
 

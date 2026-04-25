@@ -2,7 +2,7 @@
 name: backend-module-scaffold
 description: Scaffold the 7 layered files for a new backend module following the strict convention (types → validation → repository → service → controller → routes → openapi). Use when adding a new feature module under apps/nebula-chat-server/src/modules/.
 allowed-tools: Read, Write
-argument-hint: "<module-name>"
+argument-hint: '<module-name>'
 ---
 
 # Backend Module Scaffold
@@ -10,6 +10,7 @@ argument-hint: "<module-name>"
 Creates all 7 layered files for a new module and registers it.
 
 ## Preconditions
+
 - `$ARGUMENTS` is the module name in kebab-case (e.g. `user-profile`) and singular.
 - An ADR in `docs/adr/` covers the new module.
 - Read an existing module (e.g. `apps/nebula-chat-server/src/modules/conversation/`) as the live reference.
@@ -37,6 +38,7 @@ Under `apps/nebula-chat-server/src/modules/$ARGUMENTS/`:
 - Ask `test-strategist` to add at least one happy-path integration test.
 
 ## Anti-goals
+
 - No Prisma outside `.repository.ts`.
 - No bare `Error` throws — use `AppError` subclasses.
 - No relative imports — `@backend/*` only.
