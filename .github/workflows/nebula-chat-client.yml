@@ -72,43 +72,96 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: Evaluate SonarQube quality gate for Nebula Chat Client
-        id: client_quality_gate
-        uses: SonarSource/sonarqube-quality-gate-action@cf038b0e0cdecfa9e56c198bbb7d21d751d62c3b # v1.2.0
-        continue-on-error: true
-        timeout-minutes: 10
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      - name: Load open SonarQube issues for Nebula Chat Client
-        id: client_open_issues
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
+          SONAR_PROJECT_KEY: itsDaiton_nebula-chat-client
+          REPORT_TASK_FILE: apps/nebula-chat-client/.scannerwork/report-task.txt
         run: |
           set -euo pipefail
-          response_file="$(mktemp)"
-          trap 'rm -f "${response_file}"' EXIT
-          status_code="$(curl -sSL -H "Authorization: Bearer ${SONAR_TOKEN}" -w '%{http_code}' -o "${response_file}" "${SONAR_HOST_URL}/api/issues/search?componentKeys=itsDaiton_nebula-chat-client&resolved=false&ps=1")"
-          if [ "${status_code}" != '200' ]; then
-            echo "Failed to load SonarQube issues for Nebula Chat Client (HTTP ${status_code})."
-            echo 'Verify SONAR_TOKEN is configured and SonarCloud is reachable.'
-            cat "${response_file}"
+
+          if [ ! -f "${REPORT_TASK_FILE}" ]; then
+            echo "Sonar scanner report file not found: ${REPORT_TASK_FILE}"
             exit 1
           fi
-          open_issues="$(jq -r '.total // empty' "${response_file}")"
+
+          ce_task_url="$(grep '^ceTaskUrl=' "${REPORT_TASK_FILE}" | cut -d= -f2-)"
+          if [ -z "${ce_task_url}" ]; then
+            echo 'Unable to read ceTaskUrl from Sonar scanner report file.'
+            cat "${REPORT_TASK_FILE}"
+            exit 1
+          fi
+
+          ce_response_file="$(mktemp)"
+          quality_gate_response_file="$(mktemp)"
+          issues_response_file="$(mktemp)"
+          trap 'rm -f "${ce_response_file}" "${quality_gate_response_file}" "${issues_response_file}"' EXIT
+
+          analysis_id=''
+          task_status=''
+          for _ in $(seq 1 60); do
+            ce_status_code="$(curl -sSL -H "Authorization: Bearer ${SONAR_TOKEN}" -w '%{http_code}' -o "${ce_response_file}" "${ce_task_url}")"
+            if [ "${ce_status_code}" != '200' ]; then
+              echo "Failed to load SonarQube compute engine task (HTTP ${ce_status_code})."
+              cat "${ce_response_file}"
+              exit 1
+            fi
+
+            task_status="$(jq -r '.task.status // empty' "${ce_response_file}")"
+            analysis_id="$(jq -r '.task.analysisId // empty' "${ce_response_file}")"
+
+            if [ "${task_status}" = 'PENDING' ] || [ "${task_status}" = 'IN_PROGRESS' ]; then
+              sleep 5
+              continue
+            fi
+
+            break
+          done
+
+          if [ "${task_status}" != 'SUCCESS' ]; then
+            echo "SonarQube compute engine task did not succeed. Status: ${task_status:-unknown}"
+            cat "${ce_response_file}"
+            exit 1
+          fi
+
+          if [ -z "${analysis_id}" ]; then
+            echo 'SonarQube compute engine task succeeded but analysisId is missing.'
+            cat "${ce_response_file}"
+            exit 1
+          fi
+
+          quality_gate_status_code="$(curl -sSL -H "Authorization: Bearer ${SONAR_TOKEN}" -w '%{http_code}' -o "${quality_gate_response_file}" "${SONAR_HOST_URL}/api/qualitygates/project_status?analysisId=${analysis_id}")"
+          if [ "${quality_gate_status_code}" != '200' ]; then
+            echo "Failed to load SonarQube quality gate status (HTTP ${quality_gate_status_code})."
+            cat "${quality_gate_response_file}"
+            exit 1
+          fi
+
+          quality_gate_status="$(jq -r '.projectStatus.status // empty' "${quality_gate_response_file}")"
+          if [ -z "${quality_gate_status}" ]; then
+            echo 'SonarQube quality gate response did not include a status.'
+            cat "${quality_gate_response_file}"
+            exit 1
+          fi
+
+          issues_status_code="$(curl -sSL -H "Authorization: Bearer ${SONAR_TOKEN}" -w '%{http_code}' -o "${issues_response_file}" "${SONAR_HOST_URL}/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&resolved=false&ps=1")"
+          if [ "${issues_status_code}" != '200' ]; then
+            echo "Failed to load SonarQube issues for Nebula Chat Client (HTTP ${issues_status_code})."
+            cat "${issues_response_file}"
+            exit 1
+          fi
+
+          open_issues="$(jq -r '.total // empty' "${issues_response_file}")"
           if ! [[ "${open_issues}" =~ ^[0-9]+$ ]]; then
-            echo 'SonarQube API response did not include a numeric "total" field.'
+            echo 'SonarQube issues response did not include a numeric "total" field.'
             echo "Received value: '${open_issues}'"
-            cat "${response_file}"
+            cat "${issues_response_file}"
             exit 1
           fi
-          echo "open_issues=${open_issues}" >> "${GITHUB_OUTPUT}"
-      - name: Quality Gate passed for Nebula Chat Client
-        if: ${{ steps.client_quality_gate.outputs.quality-gate-status == 'PASSED' && steps.client_open_issues.outputs.open_issues == '0' }}
-        run: |
-          echo 'Quality gate passed and no open SonarQube issues were found for Nebula Chat Client.'
-      - name: Quality Gate failed for Nebula Chat Client
-        if: ${{ steps.client_quality_gate.outputs.quality-gate-status != 'PASSED' || steps.client_open_issues.outputs.open_issues != '0' }}
-        run: |
-          echo "quality-gate-status=${{ steps.client_quality_gate.outputs.quality-gate-status }}"
-          echo "open-issues=${{ steps.client_open_issues.outputs.open_issues }}"
-          exit 1
+
+          echo "quality-gate-status=${quality_gate_status}"
+          echo "open-issues=${open_issues}"
+
+          if [ "${quality_gate_status}" != 'PASSED' ] || [ "${open_issues}" != '0' ]; then
+            exit 1
+          fi
