@@ -477,7 +477,8 @@ apps/nebula-chat-server/src/
 │   ├── openapi.config.ts          # OpenAPI generator setup
 │   └── pagination.config.ts       # Default/max page limits
 ├── errors/
-│   └── AppError.ts                # Error class hierarchy
+│   ├── AppError.ts                # Error class hierarchy
+│   └── error.handler.ts           # Fastify setErrorHandler callback (AppError, Prisma, fallback)
 ├── middleware/
 │   └── validate.ts                # Zod preValidation hook factory
 ├── modules/
@@ -556,7 +557,7 @@ All errors extend `AppError` from `errors/AppError.ts`. Use the subclass that ma
 | `RedisConnectionError` / `RedisCacheError` | 500          | Redis failures (usually fail-open) |
 | `APIError`                                 | configurable | External API errors                |
 
-Throw from service layer; the `setErrorHandler` hook registered in `buildApp()` catches everything and returns:
+Throw from service layer; the `errorHandler` exported from `errors/error.handler.ts` and registered in `buildApp()` catches everything and returns:
 
 ```json
 { "success": false, "error": "NotFound", "message": "Conversation ... not found" }

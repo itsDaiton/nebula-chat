@@ -9,8 +9,8 @@ import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { closeRedisClient } from '@backend/cache/cache.client';
 import { corsOptions } from '@backend/config/cors.config';
-import { AppError } from '@backend/errors/AppError';
-import { Prisma, prisma } from '@backend/prisma';
+import { errorHandler } from '@backend/errors/error.handler';
+import { prisma } from '@backend/prisma';
 import cacheRoutes from '@backend/cache/cache.routes';
 import chatRoutes from '@backend/modules/chat/chat.routes';
 import conversationRoutes from '@backend/modules/conversation/conversation.routes';
@@ -56,46 +56,7 @@ export const buildApp = async (): Promise<FastifyInstance> => {
   await app.register(messageRoutes, { prefix: '/api/messages' });
   await app.register(cacheRoutes, { prefix: '/api/cache' });
 
-  app.setErrorHandler((err, _req, reply) => {
-    reply.log.error(err);
-
-    if (err instanceof AppError) {
-      return reply.status(err.status).send({
-        success: false,
-        error: err.error,
-        message: err.message,
-      });
-    }
-
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
-      return reply.status(400).send({
-        success: false,
-        error: 'PrismaClientKnownRequestError',
-        message: err.message,
-      });
-    }
-
-    const status =
-      typeof (err as { statusCode?: number }).statusCode === 'number'
-        ? (err as { statusCode: number }).statusCode
-        : typeof (err as { status?: number }).status === 'number'
-          ? (err as { status: number }).status
-          : 500;
-
-    const error =
-      (err as { error?: string }).error ?? (err as { name?: string }).name ?? 'InternalServerError';
-
-    const message =
-      typeof (err as { message?: unknown }).message === 'string'
-        ? (err as { message: string }).message
-        : 'An internal server error occurred';
-
-    return reply.status(status).send({
-      success: false,
-      error,
-      message,
-    });
-  });
+  app.setErrorHandler(errorHandler);
 
   app.addHook('onClose', async () => {
     try {
