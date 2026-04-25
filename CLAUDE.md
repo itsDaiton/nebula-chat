@@ -31,6 +31,7 @@ pnpm dev              # tsx watch mode (auto-restart)
 pnpm build            # tsc + path alias resolution
 pnpm start            # node dist/src/server.js (production)
 pnpm typecheck        # tsc --noEmit
+pnpm generate:openapi # Regenerate openapi/openapi.yaml from live route schemas
 
 pnpm prisma:migrate   # Create and run migrations
 pnpm prisma:deploy    # Deploy migrations (production)
@@ -67,10 +68,11 @@ Fastify 5 REST API with:
 - **Redis**: Caches chat responses. Cache hooks are layered onto routes.
 - **OpenAI**: Streaming completions. Token counting via `tiktoken` to manage context window. Key logic in `src/modules/chat/`.
 - **Rate limiting**: `@fastify/rate-limit` plugin, opt-in per route (applied to `POST /api/chat/stream`).
-- **OpenAPI docs**: Auto-generated from Zod schemas, served at `/docs` (Swagger UI via `@fastify/swagger-ui`) and `/openapi.json`.
+- **OpenAPI docs**: Generated dynamically by `@fastify/swagger` via `fastify-type-provider-zod`. Route `schema:` blocks are the single source of truth — no separate registry or `*.openapi.ts` files. Swagger UI at `/docs`, raw spec at `/openapi.json`. Export with `pnpm generate:openapi` (writes `openapi/openapi.yaml`).
+- **Validation**: `fastify-type-provider-zod` wires Zod into Fastify's native type-provider (`validatorCompiler` / `serializerCompiler`). Schemas go in `schema:` on routes using `FastifyPluginAsyncZod`. No manual `validate()` middleware.
 - **Env validation**: `src/env.ts` Zod-parses `process.env` at startup — missing/invalid vars cause a hard failure before any listener is bound.
 
-Route structure: `/api/chat`, `/api/conversations`, `/api/messages`, `/api/cache`, `/health`.
+`src/app.ts` exports `buildApp()`; `src/server.ts` is a thin entry point that calls it. Route structure: `/api/chat`, `/api/conversations`, `/api/messages`, `/api/cache`, `/health`.
 
 Errors use a custom `AppError` class. Path aliases use `@backend/*` mapping to `src/*`.
 

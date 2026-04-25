@@ -468,77 +468,68 @@ No hook or component in the codebase may import or call `useEffect`.
 
 ```
 apps/nebula-chat-server/src/
-├── server.ts                      # buildApp() factory (Fastify instance) + entry point
+├── app.ts                         # buildApp() factory — registers plugins, routes, compilers
+├── server.ts                      # Thin entry point — calls buildApp() then app.listen()
 ├── env.ts                         # Zod-validated env schema — single source for all process.env reads
 ├── prisma.ts                      # Prisma client singleton
 ├── config/
 │   ├── cors.config.ts             # Allowed origins, CORS options
 │   ├── headers.config.ts          # SSE + cache response headers (uses http.ServerResponse)
-│   ├── openapi.config.ts          # OpenAPI generator setup
 │   └── pagination.config.ts       # Default/max page limits
 ├── errors/
 │   ├── AppError.ts                # Error class hierarchy
-│   └── error.handler.ts           # Fastify setErrorHandler callback (AppError, Prisma, fallback)
-├── middleware/
-│   └── validate.ts                # Zod preValidation hook factory
+│   ├── error.handler.ts           # Fastify setErrorHandler callback (Zod, AppError, Prisma, fallback)
+│   └── error.schema.ts            # Shared Zod errorResponseSchema (used in route response schemas)
 ├── modules/
 │   ├── chat/
 │   │   ├── chat.types.ts
-│   │   ├── chat.validation.ts     # Zod request schemas
+│   │   ├── chat.validation.ts     # Zod request/response schemas
 │   │   ├── chat.config.ts         # Token limits, model allowlist
 │   │   ├── chat.tokenizer.ts      # tiktoken token counting/validation
 │   │   ├── chat.utils.ts          # OpenAI client, SSE event formatting (uses http.ServerResponse)
 │   │   ├── chat.service.ts        # Streaming orchestration
 │   │   ├── chat.controller.ts
-│   │   ├── chat.routes.ts         # FastifyPluginAsync; inline cacheCheckHook + streamCaptureHook
-│   │   └── chat.openapi.ts
+│   │   └── chat.routes.ts         # FastifyPluginAsyncZod; schema blocks + hook chain
 │   ├── conversation/
 │   │   ├── conversation.types.ts
 │   │   ├── conversation.validation.ts
 │   │   ├── conversation.repository.ts   # All Prisma queries
 │   │   ├── conversation.service.ts
 │   │   ├── conversation.controller.ts
-│   │   ├── conversation.routes.ts
-│   │   └── conversation.openapi.ts
+│   │   └── conversation.routes.ts
 │   └── message/
 │       ├── message.types.ts
 │       ├── message.validation.ts
 │       ├── message.repository.ts
 │       ├── message.service.ts
 │       ├── message.controller.ts
-│       ├── message.routes.ts
-│       └── message.openapi.ts
-├── cache/                         # Redis-backed cache as its own module
-│   ├── cache.types.ts
-│   ├── cache.config.ts            # Key format, TTL (600 000 ms), max items (1000)
-│   ├── cache.client.ts            # Redis connection
-│   ├── cache.service.ts           # get, set, stats, eviction
-│   ├── cache.validation.ts
-│   ├── cache.controller.ts
-│   ├── cache.routes.ts
-│   └── cache.openapi.ts
-└── openapi/
-    ├── index.ts                   # Aggregates all module specs
-    └── schemas.ts                 # Shared OpenAPI schemas (error shape, etc.)
+│       └── message.routes.ts
+└── cache/                         # Redis-backed cache as its own module
+    ├── cache.types.ts
+    ├── cache.config.ts            # Key format, TTL (600 000 ms), max items (1000)
+    ├── cache.client.ts            # Redis connection
+    ├── cache.service.ts           # get, set, stats, eviction
+    ├── cache.validation.ts
+    ├── cache.controller.ts
+    └── cache.routes.ts
 ```
 
 ---
 
 ### Module Pattern
 
-Every feature module follows this strict layering. Add files in this order when creating a new module:
+Every feature module follows this strict 6-layer convention. Add files in this order when creating a new module:
 
 ```
 1. <module>.types.ts        — TypeScript types / DTOs (no logic)
-2. <module>.validation.ts   — Zod schemas for request body/params/query + OpenAPI extensions
+2. <module>.validation.ts   — Zod schemas for request body/params/query/response
 3. <module>.repository.ts   — Raw Prisma queries; no business logic (omit if no DB access)
 4. <module>.service.ts      — Business logic; calls repository; never touches req/res
 5. <module>.controller.ts   — Calls service; builds HTTP response; minimal logic
-6. <module>.routes.ts       — FastifyPluginAsync default export; applies hook chain
-7. <module>.openapi.ts      — Registers routes in the OpenAPI registry
+6. <module>.routes.ts       — FastifyPluginAsyncZod default export; schema blocks + hook chain
 ```
 
-New modules must be mounted in `buildApp()` via `app.register(plugin, { prefix: '/api/<module>' })` and registered in `openapi/index.ts`.
+New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(plugin, { prefix: '/api/<module>' })`. No separate OpenAPI registry step — the `schema:` block on each route is the single source of truth for both validation and documentation.
 
 ---
 
@@ -569,32 +560,46 @@ Never return raw error objects to the client. Never throw from controllers — l
 
 ### Validation
 
-Use the `validate()` hook factory from `middleware/validate.ts` with a Zod schema on every route that accepts input:
+Validation is handled by Fastify's native schema layer via `fastify-type-provider-zod`. Define Zod schemas in the module's `*.validation.ts` file, then reference them in the `schema:` block of the corresponding route. Use `FastifyPluginAsyncZod` (not `FastifyPluginAsync`) so TypeScript infers request types from the schemas:
 
 ```ts
-// chat.routes.ts (FastifyPluginAsync)
-app.post('/stream', {
-  config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
-  preValidation: validate(chatStreamSchema),
-  preHandler: [cacheCheckHook, streamCaptureHook],
-  handler: controller.streamMessage,
-});
+// conversation.routes.ts
+import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
+import { errorResponseSchema } from '@backend/errors/error.schema';
+import { conversationController } from '@backend/modules/conversation/conversation.controller';
+import { createConversationSchema, conversationResponseSchema } from './conversation.validation';
+
+const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
+  app.post('/', {
+    schema: {
+      description: 'Create a new conversation with a title',
+      summary: 'Create conversation',
+      tags: ['Conversations'],
+      operationId: 'createConversation',
+      body: createConversationSchema,
+      response: {
+        201: conversationResponseSchema,
+        400: errorResponseSchema,
+        500: errorResponseSchema,
+      },
+    },
+    handler: conversationController.create,
+  });
+};
 ```
 
-`validate()` checks body, params, and query. On failure it returns 400 with a structured error tree via `z.treeifyError()`. Define schemas in the module's `*.validation.ts` file using the OpenAPI-extended Zod registry:
+On validation failure the error is routed through `setErrorHandler`. Use `hasZodFastifySchemaValidationErrors(err)` (exported from `fastify-type-provider-zod`) in the error handler to detect and format these. Define schemas in `*.validation.ts` using plain Zod — no registry extensions needed. Use `.describe()` to add field-level descriptions for Swagger docs:
 
 ```ts
+// conversation.validation.ts
 import { z } from 'zod';
-import { registry } from '@backend/openapi';
 
-export const chatStreamSchema = registry.register(
-  'ChatStreamRequest',
-  z.object({
-    messages: z.array(messageSchema).min(1),
-    model: z.string(),
-    conversationId: z.string().uuid().optional(),
-  }),
-);
+export const getConversationsQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(50).optional().default(10)
+    .describe('Number of conversations to fetch (1-50, default 10)'),
+  cursor: z.uuid().optional()
+    .describe('Pagination cursor for the next page'),
+});
 ```
 
 ---
@@ -659,9 +664,9 @@ The chat route is the most complex part of the backend. End-to-end flow:
 
 ```
 POST /api/chat/stream
-  → @fastify/rate-limit   (10 req / 60 s per IP, opt-in via route config)
-  → validate preValidation hook (Zod)
-  → cacheCheckHook preHandler  (Redis hit → replay stream via reply.hijack() + reply.raw, done)
+  → @fastify/rate-limit         (10 req / 60 s per IP, opt-in via route config)
+  → Zod body validation         (schema: { body: createChatStreamSchema } — native Fastify)
+  → cacheCheckHook preHandler   (Redis hit → replay stream via reply.hijack() + reply.raw, done)
   → streamCaptureHook preHandler (monkey-patches reply.raw.write to capture output)
   → chatController.streamMessage
       → chat.service
@@ -696,21 +701,21 @@ Token limits are configured in `chat.config.ts`:
 
 ### OpenAPI Docs
 
-Every route is documented automatically. When adding a new route:
+OpenAPI documentation is generated dynamically by `@fastify/swagger` in dynamic mode, driven by `fastify-type-provider-zod`. There is no separate registry or `*.openapi.ts` file. The `schema:` block on each route is the single source of truth:
 
-1. Define the request/response Zod schemas in `*.validation.ts` using the shared `registry`.
-2. Register the route in `*.openapi.ts` with `registry.registerPath()`.
-3. Import and call your `register*` function from `openapi/index.ts`.
+- `body`, `params`, `querystring` — Zod schemas for request validation and request docs
+- `response` — Zod schemas per status code for response serialization and response docs
+- `description`, `summary`, `tags`, `operationId` — OpenAPI metadata, inline on the route
 
 The generated spec is served at `/openapi.json`; Swagger UI at `/docs`.
 
-To export the spec as a static file (no server required), run:
+To export the spec as a static YAML file for the frontend Orval client, run:
 
 ```bash
 pnpm --filter nebula-chat-server run generate:openapi  # writes openapi/openapi.yaml to repo root
 ```
 
-The script lives at `apps/nebula-chat-server/src/scripts/generate-openapi.ts`.
+The script (`src/scripts/generate-openapi.ts`) calls `buildApp()` → `app.ready()` → `app.swagger({ yaml: true })` and writes the result. It requires a full `.env` file since `buildApp()` parses env vars at startup.
 
 **Rule:** After every change to the backend, agents must re-run this script to keep `openapi/openapi.yaml` in sync with the current API state. Always commit the updated `openapi/openapi.yaml` alongside backend changes.
 
