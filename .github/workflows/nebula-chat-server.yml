@@ -139,7 +139,10 @@ jobs:
             const badgeName = status === 'PASSED' ? 'qg-passed-20px.png' : status === 'FAILED' ? 'qg-failed-20px.png' : 'qg-passed-20px.png';
             const reportPath = 'apps/nebula-chat-server/.scannerwork/report-task.txt';
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const timestampUtc = new Date().toISOString();
+            const timestampDisplay = new Date().toLocaleString('en-US', {
+              dateStyle: 'medium',
+              timeStyle: 'medium',
+            });
             const projectKey = 'itsDaiton_nebula-chat-server';
             const prNumber = context.issue.number;
             const sonarToken = process.env.SONAR_TOKEN || '';
@@ -175,10 +178,10 @@ jobs:
               }
             };
 
-            const formatCount = (value) => (Number.isFinite(value) ? `${value}` : 'n/a');
+            const formatCount = (value) => (Number.isFinite(value) ? `${value}` : '0');
             const formatPercent = (value) => {
               const numeric = Number(value);
-              return Number.isFinite(numeric) ? `${numeric.toFixed(1)}%` : 'n/a';
+              return Number.isFinite(numeric) ? `${numeric.toFixed(1)}%` : '0.0%';
             };
 
             let dashboardUrl = '';
@@ -228,7 +231,7 @@ jobs:
               '',
               `[See analysis details on SonarQube Cloud](${dashboardUrl || runUrl})`,
               '',
-              `_${icon} App: nebula-chat-server | Updated (UTC): ${timestampUtc} | [Workflow run](${runUrl})_`,
+              `_${icon} App: nebula-chat-server | Updated: ${timestampDisplay} | [Workflow run](${runUrl})_`,
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({
