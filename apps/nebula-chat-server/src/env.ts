@@ -4,8 +4,8 @@ import { z } from 'zod';
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(3000),
-  DATABASE_URL: z.string().url(),
-  REDIS_URL: z.string().url(),
+  DATABASE_URL: z.url(),
+  REDIS_URL: z.url(),
   REDIS_PASSWORD: z.string().optional(),
   OPENAI_API_KEY: z.string().min(1),
   CLIENT_URL: z.string().default('http://localhost:5173'),
