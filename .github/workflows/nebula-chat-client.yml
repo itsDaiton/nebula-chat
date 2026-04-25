@@ -128,6 +128,7 @@ jobs:
             const marker = '<!-- sonar-quality-gate:nebula-chat-client -->';
             const status = process.env.QUALITY_GATE_STATUS || 'UNKNOWN';
             const icon = status === 'PASSED' ? '✅' : status === 'FAILED' ? '❌' : '⚠️';
+            const statusText = status === 'PASSED' ? 'passed' : status === 'FAILED' ? 'failed' : status.toLowerCase();
             const reportPath = 'apps/nebula-chat-client/.scannerwork/report-task.txt';
 
             let dashboardUrl = '';
@@ -139,9 +140,16 @@ jobs:
 
             const body = [
               marker,
-              `### ${icon} Sonar Quality Gate for nebula-chat-client: ${status}`,
+              `### ${icon} Quality Gate ${statusText} (nebula-chat-client)`,
+              '',
+              'Issues',
+              dashboardUrl
+                ? `- [See analysis details on SonarQube Cloud](${dashboardUrl})`
+                : '- Dashboard unavailable',
+              '',
+              'Measures',
+              `- Quality Gate: ${status}`,
               '- Project key: itsDaiton_nebula-chat-client',
-              dashboardUrl ? `- Dashboard: ${dashboardUrl}` : '- Dashboard: unavailable',
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({
