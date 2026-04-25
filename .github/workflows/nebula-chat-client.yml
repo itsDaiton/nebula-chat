@@ -100,7 +100,8 @@ jobs:
 
           analysis_id=''
           task_status=''
-          max_attempts=$(((SONAR_QUALITY_GATE_TIMEOUT_SECONDS + 4) / 5))
+          poll_interval_seconds=5
+          max_attempts=$(((SONAR_QUALITY_GATE_TIMEOUT_SECONDS + poll_interval_seconds - 1) / poll_interval_seconds))
           if [ "${max_attempts}" -lt 1 ]; then
             echo 'SONAR_QUALITY_GATE_TIMEOUT_SECONDS must be at least 5 seconds.'
             exit 1
@@ -118,7 +119,7 @@ jobs:
             analysis_id="$(jq -r '.task.analysisId // empty' "${ce_response_file}")"
 
             if [ "${task_status}" = 'PENDING' ] || [ "${task_status}" = 'IN_PROGRESS' ]; then
-              sleep 5
+              sleep "${poll_interval_seconds}"
               continue
             fi
 
