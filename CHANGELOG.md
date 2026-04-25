@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.14.5...nebula-chat-v1.15.0) (2026-04-25)
+
+
+### Features
+
+* **ci:** move sonar to app-based scans ([#197](https://github.com/itsDaiton/nebula-chat/issues/197)) ([623ce31](https://github.com/itsDaiton/nebula-chat/commit/623ce314aa54a2759c2e03504871ab18c1044293))
+
 ## [1.14.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.14.4...nebula-chat-v1.14.5) (2026-04-25)
 
 
