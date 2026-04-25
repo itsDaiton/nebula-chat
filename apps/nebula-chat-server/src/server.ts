@@ -8,7 +8,7 @@ import underPressure from '@fastify/under-pressure';
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { closeRedisClient } from '@backend/cache/cache.client';
-import { checkOrigin } from '@backend/config/cors.config';
+import { corsOptions } from '@backend/config/cors.config';
 import { AppError } from '@backend/errors/AppError';
 import { Prisma, prisma } from '@backend/prisma';
 import cacheRoutes from '@backend/cache/cache.routes';
@@ -29,15 +29,7 @@ export const buildApp = async (): Promise<FastifyInstance> => {
 
   await app.register(sensible);
 
-  await app.register(cors, {
-    origin: (origin, cb) => {
-      cb(null, checkOrigin(origin));
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type'],
-    maxAge: 86400,
-  });
+  await app.register(cors, corsOptions);
 
   await app.register(rateLimit, { global: false });
 
