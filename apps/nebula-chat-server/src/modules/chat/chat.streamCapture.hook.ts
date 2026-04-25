@@ -13,7 +13,7 @@ export const streamCaptureHook: preHandlerAsyncHookHandler = async (
 
   let full = '';
   const raw = reply.raw;
-  const originalWrite = raw.write.bind(raw) as typeof raw.write;
+  const originalWrite = raw.write.bind(raw);
 
   raw.write = ((chunk: Parameters<typeof raw.write>[0], ...args: unknown[]) => {
     try {

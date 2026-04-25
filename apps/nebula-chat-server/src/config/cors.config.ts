@@ -1,10 +1,12 @@
 import { env } from '@backend/env';
 
-const allowedOrigins = [env.CLIENT_URL, env.SERVER_URL].filter((v): v is string => Boolean(v));
+const allowedOrigins = new Set(
+  [env.CLIENT_URL, env.SERVER_URL].filter((v): v is string => Boolean(v)),
+);
 
 export const corsOptions = {
   origin: (origin: string | undefined, cb: (err: Error | null, allow: boolean) => void): void => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.has(origin)) {
       cb(null, true);
     } else {
       cb(null, false);
