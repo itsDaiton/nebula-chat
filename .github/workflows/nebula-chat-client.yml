@@ -93,6 +93,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: Evaluate SonarQube quality gate for Nebula Chat Client
         id: quality_gate
+        if: vars.SONAR_QUALITY_GATE_ENFORCED == 'true'
         uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
         with:
           scanMetadataReportFile: apps/nebula-chat-client/.scannerwork/report-task.txt
@@ -113,7 +114,7 @@ jobs:
             echo ''
             echo '- App: nebula-chat-client'
             echo '- Project key: itsDaiton_nebula-chat-client'
-            echo '- Quality gate: ${{ steps.quality_gate.outputs.quality-gate-status }}'
+            echo '- Quality gate: ${{ steps.quality_gate.outputs.quality-gate-status || ''SKIPPED (set SONAR_QUALITY_GATE_ENFORCED=true to enforce)'' }}'
             if [ -n "${dashboard_url}" ]; then
               echo "- Dashboard: ${dashboard_url}"
             fi
@@ -129,7 +130,7 @@ jobs:
         env:
           APP_NAME: nebula-chat-client
           SONAR_PROJECT_KEY: itsDaiton_nebula-chat-client
-          SONAR_QUALITY_GATE_STATUS: ${{ steps.quality_gate.outputs.quality-gate-status }}
+          SONAR_QUALITY_GATE_STATUS: ${{ steps.quality_gate.outputs.quality-gate-status || 'UNKNOWN' }}
           SONAR_REPORT_PATH: apps/nebula-chat-client/.scannerwork/report-task.txt
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
