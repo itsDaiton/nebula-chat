@@ -100,7 +100,7 @@ jobs:
 
           analysis_id=''
           task_status=''
-          max_attempts=$((SONAR_QUALITY_GATE_TIMEOUT_SECONDS / 5))
+          max_attempts=$(((SONAR_QUALITY_GATE_TIMEOUT_SECONDS + 4) / 5))
           if [ "${max_attempts}" -lt 1 ]; then
             echo 'SONAR_QUALITY_GATE_TIMEOUT_SECONDS must be at least 5 seconds.'
             exit 1
