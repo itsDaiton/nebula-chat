@@ -31,7 +31,7 @@ jobs:
 
   build:
     needs: changes
-    if: needs.changes.outputs.relevant == 'true'
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.relevant == 'true'
     name: build-server
     runs-on: ubuntu-latest
     permissions:
@@ -68,7 +68,7 @@ jobs:
     needs:
       - changes
       - build
-    if: needs.changes.outputs.relevant == 'true'
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.relevant == 'true'
     name: sonar-server
     runs-on: ubuntu-latest
     permissions:
