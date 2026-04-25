@@ -17,28 +17,28 @@
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^8.5.0",
     "js-yaml": "^4.1.0",
-    "@prisma/adapter-pg": "^7.5.0",
+    "@prisma/adapter-pg": "^7.8.0",
     "cors": "^2.8.6",
-    "dotenv": "^17.4.0",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "express-rate-limit": "^8.3.1",
-    "openai": "^6.32.0",
+    "express-rate-limit": "^8.4.1",
+    "openai": "^6.34.0",
     "openapi3-ts": "^4.5.0",
-    "redis": "^5.11.0",
+    "redis": "^5.12.1",
     "swagger-ui-express": "^5.0.1",
     "tiktoken": "^1.0.22",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@prisma/client": "^7.5.0",
+    "@prisma/client": "^7.8.0",
     "@types/cors": "^2.8.19",
     "@types/js-yaml": "^4.0.9",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.6.0",
     "@types/swagger-ui-express": "^4.1.8",
-    "prisma": "^7.5.0",
+    "prisma": "^7.8.0",
     "tsc-alias": "^1.8.16",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }
