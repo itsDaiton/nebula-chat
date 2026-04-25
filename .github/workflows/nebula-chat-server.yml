@@ -7,6 +7,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  SONAR_QUALITY_GATE_ENFORCED: ${{ vars.SONAR_QUALITY_GATE_ENFORCED }}
+
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -98,7 +101,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: Evaluate SonarQube quality gate for Nebula Chat Server
         id: quality_gate
-        if: vars.SONAR_QUALITY_GATE_ENFORCED == 'true'
+        if: env.SONAR_QUALITY_GATE_ENFORCED == 'true'
         uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
         with:
           scanMetadataReportFile: apps/nebula-chat-server/.scannerwork/report-task.txt
@@ -119,7 +122,7 @@ jobs:
             echo ''
             echo '- App: nebula-chat-server'
             echo '- Project key: itsDaiton_nebula-chat-server'
-            echo '- Quality gate: ${{ steps.quality_gate.outputs.quality-gate-status || ''SKIPPED (set SONAR_QUALITY_GATE_ENFORCED=true to enforce)'' }}'
+            echo '- Quality gate: ${{ steps.quality_gate.outputs.quality-gate-status || 'SKIPPED (set SONAR_QUALITY_GATE_ENFORCED=true to enforce)' }}'
             if [ -n "${dashboard_url}" ]; then
               echo "- Dashboard: ${dashboard_url}"
             fi
