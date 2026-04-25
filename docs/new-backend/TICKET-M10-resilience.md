@@ -2,13 +2,13 @@
 
 ## Ticket metadata
 
-| Field | Value |
-|-------|-------|
-| **ID** | M-10 |
-| **Scope** | `libs/langchain` (add to existing lib) or `apps/server` |
-| **Depends on** | M-3 (LangChain lib) |
-| **Blocks** | Nothing |
-| **Standalone** | No — wraps existing LLM calls |
+| Field          | Value                                                   |
+| -------------- | ------------------------------------------------------- |
+| **ID**         | M-10                                                    |
+| **Scope**      | `libs/langchain` (add to existing lib) or `apps/server` |
+| **Depends on** | M-3 (LangChain lib)                                     |
+| **Blocks**     | Nothing                                                 |
+| **Standalone** | No — wraps existing LLM calls                           |
 
 ## Objective
 
@@ -80,9 +80,7 @@ import { llmPolicy, BrokenCircuitError } from '@nebula-chat/langchain';
 
 // In a route handler or service:
 try {
-  const response = await llmPolicy.execute(() =>
-    chain.invoke({ history, input })
-  );
+  const response = await llmPolicy.execute(() => chain.invoke({ history, input }));
   return reply.send({ content: response });
 } catch (err) {
   if (err instanceof BrokenCircuitError) {
@@ -98,3 +96,4 @@ try {
 
 ```ts
 CIRCUIT_BREAKER_THRESHOLD: z.string().default('5').transform(Number),
+```

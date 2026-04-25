@@ -1,6 +1,5 @@
-import '@backend/config/openapi.config';
-import { chatConfig } from '@backend/modules/chat/chat.config';
 import { z } from 'zod';
+import { chatConfig } from '@backend/modules/chat/chat.config';
 
 const chatMessageSchema = z.object({
   role: z.enum(['user', 'assistant', 'system']),
@@ -15,9 +14,7 @@ export const createChatStreamSchema = z.object({
   conversationId: z.uuid().optional(),
 });
 
-export const chatStreamResponseSchema = z
-  .object({
-    event: z.string(),
-    data: z.string(),
-  })
-  .openapi('ChatStream');
+export const chatStreamResponseSchema = z.object({
+  event: z.string(),
+  data: z.string(),
+});

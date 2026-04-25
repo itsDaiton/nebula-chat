@@ -2,13 +2,13 @@
 
 ## Ticket metadata
 
-| Field | Value |
-|-------|-------|
-| **ID** | M-4 |
-| **Package** | `libs/cache` → published as `@nebula-chat/cache` |
-| **Depends on** | Nothing — fully independent lib ticket |
-| **Blocks** | Nothing |
-| **Standalone** | Yes |
+| Field          | Value                                            |
+| -------------- | ------------------------------------------------ |
+| **ID**         | M-4                                              |
+| **Package**    | `libs/cache` → published as `@nebula-chat/cache` |
+| **Depends on** | Nothing — fully independent lib ticket           |
+| **Blocks**     | Nothing                                          |
+| **Standalone** | Yes                                              |
 
 ## Objective
 
@@ -193,15 +193,12 @@ export interface LLMCacheParams {
  * Same inputs always produce the same hash → cache hit.
  */
 export function hashLLMParams(params: LLMCacheParams): string {
-  return createHash('sha256')
-    .update(JSON.stringify(params))
-    .digest('hex')
-    .slice(0, 16);
+  return createHash('sha256').update(JSON.stringify(params)).digest('hex').slice(0, 16);
 }
 
 export async function getCachedLLMResponse(
   cache: TwoTierCache,
-  params: LLMCacheParams
+  params: LLMCacheParams,
 ): Promise<string | null> {
   const hash = hashLLMParams(params);
   return cache.get<string>(CacheKeys.llmResponse(hash));
@@ -211,7 +208,7 @@ export async function setCachedLLMResponse(
   cache: TwoTierCache,
   params: LLMCacheParams,
   response: string,
-  ttlSeconds = 3600
+  ttlSeconds = 3600,
 ): Promise<void> {
   const hash = hashLLMParams(params);
   await cache.set(CacheKeys.llmResponse(hash), response, ttlSeconds);

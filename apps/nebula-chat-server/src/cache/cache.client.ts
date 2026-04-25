@@ -1,29 +1,26 @@
 import { createClient } from 'redis';
 import type { RedisClientType } from 'redis';
+import { env } from '@backend/env';
 import { RedisConnectionError } from '@backend/errors/AppError';
+import { logger } from '@backend/logger';
 import { cacheConfig } from '@backend/cache/cache.config';
 
 let redisClient: RedisClientType | null = null;
 let isConnected = false;
 
-const REDIS_URL = process.env.REDIS_URL;
-
 export const createRedisClient = async (): Promise<RedisClientType> => {
-  if (!REDIS_URL) {
-    throw new RedisConnectionError('REDIS_URL is not defined in environment variables');
-  }
   if (redisClient && isConnected) {
     return redisClient;
   }
 
   try {
     const client = createClient({
-      url: REDIS_URL,
+      url: env.REDIS_URL,
+      ...(env.REDIS_PASSWORD ? { password: env.REDIS_PASSWORD } : {}),
       socket: {
         reconnectStrategy: (retries: number) => {
           if (retries > cacheConfig.maxConnections) {
-            // eslint-disable-next-line no-console
-            console.error('Redis: Max reconnection attempts reached');
+            logger.error('Redis: Max reconnection attempts reached');
             return false;
           }
           return Math.min(retries * 100, 3000);
@@ -31,28 +28,23 @@ export const createRedisClient = async (): Promise<RedisClientType> => {
       },
     });
     client.on('error', (err) => {
-      // eslint-disable-next-line no-console
-      console.error('Redis Client Error:', err);
+      logger.error(err, 'Redis Client Error');
       isConnected = false;
     });
     client.on('connect', () => {
-      // eslint-disable-next-line no-console
-      console.log('Redis: Connection established');
+      logger.info('Redis: Connection established');
       isConnected = true;
     });
     client.on('ready', () => {
-      // eslint-disable-next-line no-console
-      console.log('Redis: Client ready');
+      logger.info('Redis: Client ready');
       isConnected = true;
     });
     client.on('reconnecting', () => {
-      // eslint-disable-next-line no-console
-      console.log('Redis: Reconnecting...');
+      logger.warn('Redis: Reconnecting...');
       isConnected = false;
     });
     client.on('end', () => {
-      // eslint-disable-next-line no-console
-      console.log('Redis: Connection closed');
+      logger.info('Redis: Connection closed');
       isConnected = false;
     });
 
@@ -61,8 +53,7 @@ export const createRedisClient = async (): Promise<RedisClientType> => {
     return redisClient;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    // eslint-disable-next-line no-console
-    console.error('Failed to connect to Redis:', errorMessage);
+    logger.error('Failed to connect to Redis: %s', errorMessage);
     throw new RedisConnectionError(`Failed to connect to Redis: ${errorMessage}`);
   }
 };
@@ -75,11 +66,9 @@ export const closeRedisClient = async (): Promise<void> => {
       await redisClient.quit();
       redisClient = null;
       isConnected = false;
-      // eslint-disable-next-line no-console
-      console.log('Redis: Client closed gracefully');
+      logger.info('Redis: Client closed gracefully');
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error closing Redis client:', error);
+      logger.error(error, 'Error closing Redis client');
     }
   }
 };

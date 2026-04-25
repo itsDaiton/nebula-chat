@@ -1,28 +1,30 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
 import { cacheService } from '@backend/cache/cache.service';
 import { setCacheHeaders } from '@backend/config/headers.config';
-import { streamFormatter } from '@backend/modules/chat/chat.utils';
-import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { createUserMessage, validateChatRequest } from '@backend/modules/chat/chat.service';
+import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
+import { streamFormatter } from '@backend/modules/chat/chat.utils';
 import { messageService } from '@backend/modules/message/message.service';
 
-export const cacheCheck = async (req: Request, res: Response, next: NextFunction) => {
+export const cacheCheckHook: preHandlerAsyncHookHandler = async (
+  req: FastifyRequest,
+  reply: FastifyReply,
+) => {
   try {
-    const key = cacheService.generateKey(req.body);
+    const body = req.body as CreateChatStreamDTO;
+    const key = cacheService.generateKey(body);
     const cachedData = await cacheService.getFromCache(key);
 
     if (!cachedData) {
-      return next();
+      return;
     }
-    //eslint-disable-next-line no-console
-    console.log('Redis: Cache hit');
+    req.log.info('Redis: Cache hit');
 
-    const input = req.body as CreateChatStreamDTO;
-    const conversationId = input.conversationId;
-    const userMessage = input.messages[0];
+    const conversationId = body.conversationId;
+    const userMessage = body.messages[0];
 
     if (!userMessage) {
-      return next();
+      return;
     }
 
     await validateChatRequest(conversationId, userMessage);
@@ -40,8 +42,7 @@ export const cacheCheck = async (req: Request, res: Response, next: NextFunction
             assistantContent += data.token;
           }
         } catch {
-          // eslint-disable-next-line no-console
-          console.log('Redis: Failed to parse cached token line');
+          req.log.warn('Redis: Failed to parse cached token line');
         }
       }
     }
@@ -56,7 +57,7 @@ export const cacheCheck = async (req: Request, res: Response, next: NextFunction
       conversationId: userMessageResult.conversationId,
       role: 'assistant',
       content: assistantContent,
-      model: input.model,
+      model: body.model,
       ...(cachedData.usageData !== undefined && { tokens: cachedData.usageData }),
     });
 
@@ -67,27 +68,23 @@ export const cacheCheck = async (req: Request, res: Response, next: NextFunction
     } = userMessageResult;
     const assistantMessageId = assistantMessage.id;
 
-    // Send SSE response
-    setCacheHeaders(res, req.headers.origin);
-    res.flushHeaders();
+    reply.hijack();
+    const raw = reply.raw;
+    setCacheHeaders(raw, req.headers.origin);
+    raw.flushHeaders?.();
 
-    // Send conversation created event if new
     if (isNewConversation) {
-      streamFormatter.writeConversationCreated(res, finalConversationId);
+      streamFormatter.writeConversationCreated(raw, finalConversationId);
     }
 
-    // Send user message created event
-    streamFormatter.writeUserMessageCreated(res, userMessageId);
+    streamFormatter.writeUserMessageCreated(raw, userMessageId);
+    streamFormatter.writeCacheHit(raw);
 
-    // Send cache hit event
-    streamFormatter.writeCacheHit(res);
-
-    // Send cached tokens (assistant response)
-    res.write(cachedData.tokens.trimEnd());
-    res.write('\n\n');
+    raw.write(cachedData.tokens.trimEnd());
+    raw.write('\n\n');
 
     streamFormatter.writeUsage(
-      res,
+      raw,
       cachedData.usageData ?? {
         promptTokens: 0,
         completionTokens: 0,
@@ -95,15 +92,11 @@ export const cacheCheck = async (req: Request, res: Response, next: NextFunction
       },
     );
 
-    // Send assistant message created event
-    streamFormatter.writeAssistantMessageCreated(res, assistantMessageId);
-
-    // Send end event
-    streamFormatter.writeEnd(res);
-    return res.end();
+    streamFormatter.writeAssistantMessageCreated(raw, assistantMessageId);
+    streamFormatter.writeEnd(raw);
+    raw.end();
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Cache check error (fail-open):', error);
-    return next();
+    req.log.error(error, 'Cache check error (fail-open)');
+    // Fall through — the handler will run and perform a fresh OpenAI request.
   }
 };

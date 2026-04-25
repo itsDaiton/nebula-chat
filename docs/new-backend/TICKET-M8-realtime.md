@@ -2,12 +2,12 @@
 
 ## Ticket metadata
 
-| Field | Value |
-|-------|-------|
-| **ID** | M-8 |
-| **Scope** | `apps/server` only |
-| **Depends on** | M-1 (Fastify) |
-| **Blocks** | Nothing |
+| Field          | Value                                                               |
+| -------------- | ------------------------------------------------------------------- |
+| **ID**         | M-8                                                                 |
+| **Scope**      | `apps/server` only                                                  |
+| **Depends on** | M-1 (Fastify)                                                       |
+| **Blocks**     | Nothing                                                             |
 | **Standalone** | Partial — SSE and WebSocket infrastructure can be added without M-7 |
 
 ## Objective
@@ -133,5 +133,5 @@ await app.register(import('./plugins/ws.plugin'));
 ```
 
 ---
----
 
+---

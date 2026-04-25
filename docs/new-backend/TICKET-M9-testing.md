@@ -2,12 +2,12 @@
 
 ## Ticket metadata
 
-| Field | Value |
-|-------|-------|
-| **ID** | M-9 |
-| **Scope** | `apps/server` + test infrastructure |
-| **Depends on** | M-1 (Fastify — tests run against the Fastify app) |
-| **Blocks** | Nothing |
+| Field          | Value                                                       |
+| -------------- | ----------------------------------------------------------- |
+| **ID**         | M-9                                                         |
+| **Scope**      | `apps/server` + test infrastructure                         |
+| **Depends on** | M-1 (Fastify — tests run against the Fastify app)           |
+| **Blocks**     | Nothing                                                     |
 | **Standalone** | Partial — infrastructure independent, tests are per-feature |
 
 ## Objective
@@ -129,9 +129,7 @@ test('GET /health returns 200', async () => {
 });
 
 test('POST /api/chat returns 401 without token', async () => {
-  const res = await supertest(app.server)
-    .post('/api/chat')
-    .send({ content: 'hello' });
+  const res = await supertest(app.server).post('/api/chat').send({ content: 'hello' });
   expect(res.status).toBe(401);
 });
 ```
@@ -148,14 +146,16 @@ export const openaiMock = setupServer(
     return HttpResponse.json({
       id: 'chatcmpl-test',
       object: 'chat.completion',
-      choices: [{
-        index: 0,
-        message: { role: 'assistant', content: 'Mocked LLM response' },
-        finish_reason: 'stop',
-      }],
+      choices: [
+        {
+          index: 0,
+          message: { role: 'assistant', content: 'Mocked LLM response' },
+          finish_reason: 'stop',
+        },
+      ],
       usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
     });
-  })
+  }),
 );
 
 // In test files that need LLM mocking:
@@ -165,5 +165,5 @@ export const openaiMock = setupServer(
 ```
 
 ---
----
 
+---

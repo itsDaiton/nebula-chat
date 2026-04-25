@@ -2,13 +2,13 @@
 
 ## Ticket metadata
 
-| Field | Value |
-|-------|-------|
-| **ID** | M-3 |
-| **Package** | `libs/langchain` → published as `@nebula-chat/langchain` |
-| **Depends on** | Nothing — fully independent lib ticket |
-| **Blocks** | M-7 (queues use this lib), M-10 (circuit breaker wraps this lib) |
-| **Standalone** | Yes |
+| Field          | Value                                                            |
+| -------------- | ---------------------------------------------------------------- |
+| **ID**         | M-3                                                              |
+| **Package**    | `libs/langchain` → published as `@nebula-chat/langchain`         |
+| **Depends on** | Nothing — fully independent lib ticket                           |
+| **Blocks**     | M-7 (queues use this lib), M-10 (circuit breaker wraps this lib) |
+| **Standalone** | Yes                                                              |
 
 ## Objective
 
@@ -155,7 +155,7 @@ export function buildChatChain(config: ChatChainConfig) {
   const systemPromptText =
     typeof config.systemPrompt === 'string' && config.systemPrompt in SYSTEM_PROMPTS
       ? SYSTEM_PROMPTS[config.systemPrompt as SystemPromptKey]
-      : config.systemPrompt ?? SYSTEM_PROMPTS.default;
+      : (config.systemPrompt ?? SYSTEM_PROMPTS.default);
 
   const prompt = ChatPromptTemplate.fromMessages([
     ['system', systemPromptText],
@@ -224,17 +224,15 @@ import { env } from '../../env';
 
 export async function generateResponse(
   userMessage: string,
-  history: Array<{ role: string; content: string }>
+  history: Array<{ role: string; content: string }>,
 ) {
   const chain = buildChatChain({ apiKey: env.OPENAI_API_KEY });
 
   const langchainHistory = history.map((m) =>
-    m.role === 'user' ? new HumanMessage(m.content) : new AIMessage(m.content)
+    m.role === 'user' ? new HumanMessage(m.content) : new AIMessage(m.content),
   );
 
-  return llmLimiter(() =>
-    chain.invoke({ history: langchainHistory, input: userMessage })
-  );
+  return llmLimiter(() => chain.invoke({ history: langchainHistory, input: userMessage }));
 }
 ```
 

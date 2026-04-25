@@ -2,17 +2,19 @@
 
 ## Ticket metadata
 
-| Field | Value |
-|-------|-------|
-| **ID** | M-5 |
-| **Package** | `libs/otel` → published as `@nebula-chat/otel` |
-| **Depends on** | Nothing — fully independent lib ticket |
-| **Blocks** | Nothing |
-| **Standalone** | Yes |
+| Field          | Value                                          |
+| -------------- | ---------------------------------------------- |
+| **ID**         | M-5                                            |
+| **Package**    | `libs/otel` → published as `@nebula-chat/otel` |
+| **Depends on** | Nothing — fully independent lib ticket         |
+| **Blocks**     | Nothing                                        |
+| **Standalone** | Yes                                            |
 
 ## Objective
 
 Create `libs/otel` providing a Pino logger factory and OpenTelemetry SDK initialisation. `apps/server` calls `initTelemetry()` as the very first statement in `server.ts` before any other imports.
+
+> **Workaround in place:** `apps/nebula-chat-server/src/logger.ts` is a temporary standalone pino instance added during M-1 so that non-request-scoped code (`src/cache/cache.client.ts`, `src/cache/cache.service.ts`, and the startup error handler in `server.ts`) could drop `console.*` calls before M-5 was ready. When this ticket is implemented, **delete `src/logger.ts`** and replace its import sites with `@nebula-chat/otel`'s `createLogger()`. Also remove `pino` from `apps/nebula-chat-server/package.json` — it will be provided transitively by `@nebula-chat/otel`.
 
 ## Acceptance criteria
 
@@ -145,5 +147,5 @@ await app.register(fastifyLoggerPlugin);
 ```
 
 ---
----
 
+---

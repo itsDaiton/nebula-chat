@@ -9,6 +9,7 @@ allowed-tools: Bash
 Runs the monorepo-wide ESLint (auto-fix) and Prettier.
 
 ## Steps
+
 1. Auto-fix:
    ```
    pnpm lint:fix

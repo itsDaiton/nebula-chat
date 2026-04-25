@@ -85,7 +85,7 @@ Do not disable ESLint rules with inline `// eslint-disable` comments unless abso
 nebula-chat/
 ├── apps/
 │   ├── nebula-chat-client/   # React SPA (frontend)
-│   └── nebula-chat-server/   # Express API (backend)
+│   └── nebula-chat-server/   # Fastify API (backend)
 ├── CLAUDE.md                 # Claude Code instructions
 ├── AGENTS.md                 # This file
 ├── package.json              # Root workspace (pnpm)
@@ -468,81 +468,68 @@ No hook or component in the codebase may import or call `useEffect`.
 
 ```
 apps/nebula-chat-server/src/
-├── server.ts                      # Express app bootstrap
+├── app.ts                         # buildApp() factory — registers plugins, routes, compilers
+├── server.ts                      # Thin entry point — calls buildApp() then app.listen()
+├── env.ts                         # Zod-validated env schema — single source for all process.env reads
 ├── prisma.ts                      # Prisma client singleton
 ├── config/
 │   ├── cors.config.ts             # Allowed origins, CORS options
-│   ├── headers.config.ts          # SSE + cache response headers
-│   ├── openapi.config.ts          # OpenAPI generator setup
+│   ├── headers.config.ts          # SSE + cache response headers (uses http.ServerResponse)
 │   └── pagination.config.ts       # Default/max page limits
 ├── errors/
-│   └── AppError.ts                # Error class hierarchy
-├── middleware/
-│   ├── errorHandler.ts            # Global error handler (last middleware)
-│   ├── validate.ts                # Zod schema validation middleware
-│   ├── rateLimiter.ts             # 10 req/min on /api/chat/stream
-│   ├── cacheCheck.ts              # Redis cache hit — bypass OpenAI
-│   └── streamCapture.ts           # Intercept stream to save to Redis
+│   ├── AppError.ts                # Error class hierarchy
+│   ├── error.handler.ts           # Fastify setErrorHandler callback (Zod, AppError, Prisma, fallback)
+│   └── error.schema.ts            # Shared Zod errorResponseSchema (used in route response schemas)
 ├── modules/
 │   ├── chat/
 │   │   ├── chat.types.ts
-│   │   ├── chat.validation.ts     # Zod request schemas
+│   │   ├── chat.validation.ts     # Zod request/response schemas
 │   │   ├── chat.config.ts         # Token limits, model allowlist
 │   │   ├── chat.tokenizer.ts      # tiktoken token counting/validation
-│   │   ├── chat.utils.ts          # OpenAI client, SSE event formatting
+│   │   ├── chat.utils.ts          # OpenAI client, SSE event formatting (uses http.ServerResponse)
 │   │   ├── chat.service.ts        # Streaming orchestration
 │   │   ├── chat.controller.ts
-│   │   ├── chat.routes.ts         # rateLimiter → validate → cacheCheck → streamCapture → controller
-│   │   └── chat.openapi.ts
+│   │   └── chat.routes.ts         # FastifyPluginAsyncZod; schema blocks + hook chain
 │   ├── conversation/
 │   │   ├── conversation.types.ts
 │   │   ├── conversation.validation.ts
 │   │   ├── conversation.repository.ts   # All Prisma queries
 │   │   ├── conversation.service.ts
 │   │   ├── conversation.controller.ts
-│   │   ├── conversation.routes.ts
-│   │   └── conversation.openapi.ts
+│   │   └── conversation.routes.ts
 │   └── message/
 │       ├── message.types.ts
 │       ├── message.validation.ts
 │       ├── message.repository.ts
 │       ├── message.service.ts
 │       ├── message.controller.ts
-│       ├── message.routes.ts
-│       └── message.openapi.ts
-├── cache/                         # Redis-backed cache as its own module
-│   ├── cache.types.ts
-│   ├── cache.config.ts            # Key format, TTL (600 000 ms), max items (1000)
-│   ├── cache.client.ts            # Redis connection
-│   ├── cache.service.ts           # get, set, stats, eviction
-│   ├── cache.validation.ts
-│   ├── cache.controller.ts
-│   ├── cache.routes.ts
-│   └── cache.openapi.ts
-├── openapi/
-│   ├── index.ts                   # Aggregates all module specs
-│   └── schemas.ts                 # Shared OpenAPI schemas (error shape, etc.)
-└── routes/
-    └── index.ts                   # Mounts all routers under /api/*
+│       └── message.routes.ts
+└── cache/                         # Redis-backed cache as its own module
+    ├── cache.types.ts
+    ├── cache.config.ts            # Key format, TTL (600 000 ms), max items (1000)
+    ├── cache.client.ts            # Redis connection
+    ├── cache.service.ts           # get, set, stats, eviction
+    ├── cache.validation.ts
+    ├── cache.controller.ts
+    └── cache.routes.ts
 ```
 
 ---
 
 ### Module Pattern
 
-Every feature module follows this strict layering. Add files in this order when creating a new module:
+Every feature module follows this strict 6-layer convention. Add files in this order when creating a new module:
 
 ```
 1. <module>.types.ts        — TypeScript types / DTOs (no logic)
-2. <module>.validation.ts   — Zod schemas for request body/params/query + OpenAPI extensions
+2. <module>.validation.ts   — Zod schemas for request body/params/query/response
 3. <module>.repository.ts   — Raw Prisma queries; no business logic (omit if no DB access)
 4. <module>.service.ts      — Business logic; calls repository; never touches req/res
 5. <module>.controller.ts   — Calls service; builds HTTP response; minimal logic
-6. <module>.routes.ts       — Express router; applies middleware chain
-7. <module>.openapi.ts      — Registers routes in the OpenAPI registry
+6. <module>.routes.ts       — FastifyPluginAsyncZod default export; schema blocks + hook chain
 ```
 
-New modules must be mounted in `routes/index.ts` and registered in `openapi/index.ts`.
+New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(plugin, { prefix: '/api/<module>' })`. No separate OpenAPI registry step — the `schema:` block on each route is the single source of truth for both validation and documentation.
 
 ---
 
@@ -561,7 +548,7 @@ All errors extend `AppError` from `errors/AppError.ts`. Use the subclass that ma
 | `RedisConnectionError` / `RedisCacheError` | 500          | Redis failures (usually fail-open) |
 | `APIError`                                 | configurable | External API errors                |
 
-Throw from service layer; the global `errorHandler` middleware in `server.ts` catches everything and returns:
+Throw from service layer; the `errorHandler` exported from `errors/error.handler.ts` and registered in `buildApp()` catches everything and returns:
 
 ```json
 { "success": false, "error": "NotFound", "message": "Conversation ... not found" }
@@ -573,34 +560,64 @@ Never return raw error objects to the client. Never throw from controllers — l
 
 ### Validation
 
-Use the `validate()` middleware from `middleware/validate.ts` with a Zod schema on every route that accepts input:
+Validation is handled by Fastify's native schema layer via `fastify-type-provider-zod`. Define Zod schemas in the module's `*.validation.ts` file, then reference them in the `schema:` block of the corresponding route. Use `FastifyPluginAsyncZod` (not `FastifyPluginAsync`) so TypeScript infers request types from the schemas:
 
 ```ts
-// chat.routes.ts
-router.post(
-  '/stream',
-  rateLimiter,
-  validate(chatStreamSchema),
-  cacheCheck,
-  streamCapture,
-  controller.streamMessage,
-);
+// conversation.routes.ts
+import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
+import { errorResponseSchema } from '@backend/errors/error.schema';
+import { conversationController } from '@backend/modules/conversation/conversation.controller';
+import { createConversationSchema, conversationResponseSchema } from './conversation.validation';
+
+const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
+  app.post('/', {
+    schema: {
+      description: 'Create a new conversation with a title',
+      summary: 'Create conversation',
+      tags: ['Conversations'],
+      operationId: 'createConversation',
+      body: createConversationSchema,
+      response: {
+        201: conversationResponseSchema.describe('Conversation created successfully'),
+        400: errorResponseSchema.describe('Invalid request body'),
+        500: errorResponseSchema.describe('Internal server error'),
+      },
+    },
+    handler: conversationController.create,
+  });
+};
 ```
 
-`validate()` checks body, params, and query. On failure it returns 400 with a structured error tree via `z.treeifyError()`. Define schemas in the module's `*.validation.ts` file using the OpenAPI-extended Zod registry:
+**Rule — every response entry must have `.describe('...')`:** `@fastify/swagger` emits "Default Response" for any response schema that has no description. Always call `.describe('...')` on the Zod schema at the point it is used in the `response:` block (not in the validation file — the description is route-contextual). This applies to success and error responses alike:
 
 ```ts
-import { z } from 'zod';
-import { registry } from '@backend/openapi';
+response: {
+  201: conversationResponseSchema.describe('Conversation created successfully'),
+  400: errorResponseSchema.describe('Invalid request body'),
+  404: errorResponseSchema.describe('Conversation not found'),
+  500: errorResponseSchema.describe('Internal server error'),
+},
+```
 
-export const chatStreamSchema = registry.register(
-  'ChatStreamRequest',
-  z.object({
-    messages: z.array(messageSchema).min(1),
-    model: z.string(),
-    conversationId: z.string().uuid().optional(),
-  }),
-);
+**Rule — every route needs a `schema:` block.** Routes without one produce "Default Response" entries. Use `{ schema: { hide: true } }` to explicitly exclude infrastructure routes (e.g. `/openapi.json`) from the spec rather than leaving them undocumented.
+
+On validation failure the error is routed through `setErrorHandler`. Use `hasZodFastifySchemaValidationErrors(err)` (exported from `fastify-type-provider-zod`) in the error handler to detect and format these. Define schemas in `*.validation.ts` using plain Zod — no registry extensions needed. Use `.describe()` to add field-level descriptions for Swagger docs:
+
+```ts
+// conversation.validation.ts
+import { z } from 'zod';
+
+export const getConversationsQuerySchema = z.object({
+  limit: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(50)
+    .optional()
+    .default(10)
+    .describe('Number of conversations to fetch (1-50, default 10)'),
+  cursor: z.uuid().optional().describe('Pagination cursor for the next page'),
+});
 ```
 
 ---
@@ -649,8 +666,8 @@ The cache is a Redis-backed SSE stream store keyed by conversation + model + pro
 
 **Flow:**
 
-1. `cacheCheck` middleware runs before the controller. If a key exists it replays the cached token stream and returns — OpenAI is never called.
-2. `streamCapture` middleware wraps `res.write()` after a real OpenAI call. When the response ends it saves the full SSE stream to Redis.
+1. `cacheCheckHook` preHandler runs before the controller. If a key exists it replays the cached token stream and returns — OpenAI is never called.
+2. `streamCaptureHook` preHandler monkey-patches `reply.raw.write` after a real OpenAI call. When the response ends it saves the full SSE stream to Redis.
 3. Max 1,000 cache entries. On overflow the oldest key (FIFO tracked in a Redis list) is evicted.
 4. TTL: 600,000 ms (10 minutes).
 5. **Fail-open:** all Redis errors are caught; the app continues without caching.
@@ -665,19 +682,19 @@ The chat route is the most complex part of the backend. End-to-end flow:
 
 ```
 POST /api/chat/stream
-  → rateLimiter          (10 req / 60 s per IP)
-  → validate(schema)     (Zod)
-  → cacheCheck           (Redis hit → replay stream, done)
-  → streamCapture        (wraps res.write to capture output)
+  → @fastify/rate-limit         (10 req / 60 s per IP, opt-in via route config)
+  → Zod body validation         (schema: { body: createChatStreamSchema } — native Fastify)
+  → cacheCheckHook preHandler   (Redis hit → replay stream via reply.hijack() + reply.raw, done)
+  → streamCaptureHook preHandler (monkey-patches reply.raw.write to capture output)
   → chatController.streamMessage
       → chat.service
           1. Validate token budget (tiktoken — max 2 000 prompt, 10 000 context)
           2. Fetch conversation history (last 20 messages)
           3. prisma.$transaction — create user message + conversation if new
           4. Call OpenAI streaming completions
-          5. Pipe tokens to client as SSE events
+          5. Pipe tokens to client as SSE events via reply.hijack() + reply.raw.write/reply.raw.end
           6. On stream end — persist assistant message + token usage
-      → streamCapture saves output to Redis
+      → streamCaptureHook saves captured output to Redis
 ```
 
 **SSE event types emitted to the client:**
@@ -702,21 +719,21 @@ Token limits are configured in `chat.config.ts`:
 
 ### OpenAPI Docs
 
-Every route is documented automatically. When adding a new route:
+OpenAPI documentation is generated dynamically by `@fastify/swagger` in dynamic mode, driven by `fastify-type-provider-zod`. There is no separate registry or `*.openapi.ts` file. The `schema:` block on each route is the single source of truth:
 
-1. Define the request/response Zod schemas in `*.validation.ts` using the shared `registry`.
-2. Register the route in `*.openapi.ts` with `registry.registerPath()`.
-3. Import and call your `register*` function from `openapi/index.ts`.
+- `body`, `params`, `querystring` — Zod schemas for request validation and request docs
+- `response` — Zod schemas per status code for response serialization and response docs
+- `description`, `summary`, `tags`, `operationId` — OpenAPI metadata, inline on the route
 
 The generated spec is served at `/openapi.json`; Swagger UI at `/docs`.
 
-To export the spec as a static file (no server required), run:
+To export the spec as a static YAML file for the frontend Orval client, run:
 
 ```bash
 pnpm --filter nebula-chat-server run generate:openapi  # writes openapi/openapi.yaml to repo root
 ```
 
-The script lives at `apps/nebula-chat-server/src/scripts/generate-openapi.ts`.
+The script (`src/scripts/generate-openapi.ts`) calls `buildApp()` → `app.ready()` → `app.swagger({ yaml: true })` and writes the result. It requires a full `.env` file since `buildApp()` parses env vars at startup.
 
 **Rule:** After every change to the backend, agents must re-run this script to keep `openapi/openapi.yaml` in sync with the current API state. Always commit the updated `openapi/openapi.yaml` alongside backend changes.
 
@@ -762,6 +779,8 @@ Never use relative paths in the backend. Aliases are configured in `tsconfig.jso
 | `CLIENT_URL`     | Frontend origin for CORS (e.g. `http://localhost:5173`) |
 | `SERVER_URL`     | Backend public URL (used in OpenAPI docs)               |
 | `PORT`           | Port to listen on (default `3000`)                      |
+
+> **`env.ts` rule:** All env vars are Zod-validated in `src/env.ts` and fail loudly at startup before any listener is bound. Never read `process.env.*` directly anywhere in the backend — always import from `@backend/env`.
 
 ---
 

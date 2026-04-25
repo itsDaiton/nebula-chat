@@ -1,43 +1,44 @@
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import { setHeaders } from '@backend/config/headers.config';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
-import type { NextFunction, Request, Response } from 'express';
 import { chatService } from '@backend/modules/chat/chat.service';
 import { streamFormatter } from '@backend/modules/chat/chat.utils';
 
 export const chatController = {
-  async streamMessage(req: Request, res: Response, next: NextFunction) {
-    try {
-      const input = req.body as CreateChatStreamDTO;
+  async streamMessage(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+    if (reply.raw.writableEnded) return;
 
-      setHeaders(res, req.headers.origin);
-      res.flushHeaders();
+    const input = req.body as CreateChatStreamDTO;
 
-      await chatService.streamResponse(input, {
-        onConversationCreated: (conversationId) => {
-          req.body.conversationId = conversationId;
-          streamFormatter.writeConversationCreated(res, conversationId);
-        },
-        onUserMessageCreated: (messageId) => {
-          streamFormatter.writeUserMessageCreated(res, messageId);
-        },
-        onToken: (token) => {
-          streamFormatter.writeToken(res, token);
-        },
-        onUsage: (usageData) => {
-          streamFormatter.writeUsage(res, usageData);
-        },
-        onAssistantMessageCreated: (messageId) => {
-          streamFormatter.writeAssistantMessageCreated(res, messageId);
-        },
-        onError: (error) => {
-          streamFormatter.writeError(res, error);
-        },
-      });
+    reply.hijack();
+    const raw = reply.raw;
 
-      streamFormatter.writeEnd(res);
-      res.end();
-    } catch (error) {
-      next(error);
-    }
+    setHeaders(raw, req.headers.origin);
+    raw.flushHeaders?.();
+
+    await chatService.streamResponse(input, {
+      onConversationCreated: (conversationId) => {
+        (req.body as CreateChatStreamDTO).conversationId = conversationId;
+        streamFormatter.writeConversationCreated(raw, conversationId);
+      },
+      onUserMessageCreated: (messageId) => {
+        streamFormatter.writeUserMessageCreated(raw, messageId);
+      },
+      onToken: (token) => {
+        streamFormatter.writeToken(raw, token);
+      },
+      onUsage: (usageData) => {
+        streamFormatter.writeUsage(raw, usageData);
+      },
+      onAssistantMessageCreated: (messageId) => {
+        streamFormatter.writeAssistantMessageCreated(raw, messageId);
+      },
+      onError: (error) => {
+        streamFormatter.writeError(raw, error);
+      },
+    });
+
+    streamFormatter.writeEnd(raw);
+    raw.end();
   },
 };

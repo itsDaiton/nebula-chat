@@ -1,47 +1,23 @@
-import 'dotenv/config';
-import type { Request, Response } from 'express';
-import express from 'express';
-import cors from 'cors';
-import swaggerUi from 'swagger-ui-express';
-import { checkOrigin, corsConfig } from './config/cors.config';
-import { registerRoutes } from './routes';
-import { errorHandler } from './middleware/errorHandler';
-import { openApiDocument } from './openapi';
-import { resolveTrustProxy } from '@backend/utils/trustProxy';
+import { env } from '@backend/env';
+import { logger } from '@backend/logger';
+import { buildApp } from '@backend/app';
 
-const app: express.Express = express();
-const PORT = process.env.PORT || 3000;
+const start = async (): Promise<void> => {
+  const app = await buildApp();
+  await app.listen({ port: env.PORT, host: '0.0.0.0' });
 
-app.set('trust proxy', resolveTrustProxy());
+  const shutdown = (): void => {
+    app.close().catch((err: unknown) => {
+      app.log.error(err, 'Error during shutdown');
+      process.exit(1);
+    });
+  };
 
-app.use(
-  cors({
-    origin: checkOrigin,
-    ...corsConfig,
-  }),
-);
-app.use(express.json({ limit: '10mb' }));
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+};
 
-registerRoutes(app);
-
-app.get('/openapi.json', (_req: Request, res: Response) => {
-  res.json(openApiDocument);
-});
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
-
-app.get('/', (_req: Request, res: Response) => {
-  res.json({ message: 'Welcome to the Nebula Chat API' });
-});
-app.get('/health', (_req: Request, res: Response) => {
-  res.json({ ok: true });
-});
-
-app.use(errorHandler);
-
-app.listen(PORT, () => {
-  const serverUrl = process.env.SERVER_URL || `http://localhost:${PORT}`;
-  // eslint-disable-next-line no-console
-  console.log(`🚀 Server running...`);
-  // eslint-disable-next-line no-console
-  console.log(`📘 API Documentation: ${serverUrl}/docs`);
+start().catch((err: unknown) => {
+  logger.error(err, 'Failed to start server');
+  process.exit(1);
 });

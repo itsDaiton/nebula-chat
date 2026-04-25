@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import { env } from '@backend/env';
 import { prisma } from '@backend/prisma';
 import type OpenAI from 'openai';
 import type {
@@ -190,7 +190,7 @@ const executeStreamRequest = async (
 
 export const chatService = {
   async streamResponse(data: CreateChatStreamDTO, callbacks: StreamCallbacks) {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!env.OPENAI_API_KEY) {
       throw new MissingConfigurationError('OpenAI API key');
     }
 
