@@ -1,4 +1,4 @@
-name: CI nebula-chat-client
+name: Build nebula-chat-client
 
 on:
   push:
