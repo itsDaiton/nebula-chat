@@ -1,9 +1,15 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { hasZodFastifySchemaValidationErrors } from 'fastify-type-provider-zod';
 import { AppError } from '@backend/errors/AppError';
 import { Prisma } from '@backend/prisma';
 
 export const errorHandler = (err: Error, _req: FastifyRequest, reply: FastifyReply): void => {
   reply.log.error(err);
+
+  if (hasZodFastifySchemaValidationErrors(err)) {
+    reply.status(400).send({ success: false, error: 'ValidationError', message: err.message });
+    return;
+  }
 
   if (err instanceof AppError) {
     reply.status(err.status).send({ success: false, error: err.error, message: err.message });

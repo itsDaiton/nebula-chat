@@ -1,4 +1,3 @@
-import '@backend/config/openapi.config';
 import { z } from 'zod';
 
 const tokenUsageSchema = z.object({
@@ -15,24 +14,18 @@ export const createMessageSchema = z.object({
   tokens: tokenUsageSchema.optional(),
 });
 
-export const getMessagesSchema = z
-  .object({
-    messageId: z.uuid(),
-  })
-  .openapi({
-    param: { name: 'messageId', in: 'path' },
-  });
+export const getMessagesSchema = z.object({
+  messageId: z.uuid(),
+});
 
-export const messageResponseSchema = z
-  .object({
-    id: z.uuid(),
-    conversationId: z.uuid(),
-    content: z.string(),
-    role: z.string(),
-    model: z.string().nullable(),
-    tokens: tokenUsageSchema.nullable(),
-    createdAt: z.iso.datetime(),
-  })
-  .openapi('Message');
+export const messageResponseSchema = z.object({
+  id: z.uuid(),
+  conversationId: z.uuid(),
+  content: z.string(),
+  role: z.string(),
+  model: z.string().nullable(),
+  tokens: tokenUsageSchema.nullable(),
+  createdAt: z.iso.datetime(),
+});
 
 export const messagesArraySchema = z.array(messageResponseSchema);
