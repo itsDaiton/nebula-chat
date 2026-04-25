@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.7.0...nebula-chat-client-v1.7.1) (2026-04-25)
+
+
+### Bug Fixes
+
+* **client:** reset conversations search state on dialog close ([#199](https://github.com/itsDaiton/nebula-chat/issues/199)) ([8798ab3](https://github.com/itsDaiton/nebula-chat/commit/8798ab30b0cf440b6c87e448cc527c5845d8b52a))
+
 ## [1.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.6.0...nebula-chat-client-v1.7.0) (2026-04-19)
 
 
