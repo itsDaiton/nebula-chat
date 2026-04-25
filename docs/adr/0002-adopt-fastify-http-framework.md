@@ -27,7 +27,7 @@ Only these two alternatives were seriously evaluated. Fastify is the explicit ta
 
 - **Positive:**
   - Typed route schemas via Zod → `zodToJsonSchema` give us request/response validation and OpenAPI generation from a single source.
-  - Built-in pino logging (with `pino-pretty` in development) replaces ad-hoc `console.log` calls and integrates with the observability work planned for later tickets.
+  - Built-in pino logging (with `pino-pretty` in development) is available via `req.log` on every request. Non-request-scoped code (cache client, cache service, startup errors) uses a thin standalone pino instance at `src/logger.ts` as an interim workaround until M-5 (`@nebula-chat/otel`) provides a proper `createLogger()` factory for the whole app.
   - `onClose` hooks give us real graceful shutdown for the Prisma/Redis clients and the OpenAI SSE stream.
   - `fastify-plugin` establishes the pattern M-2 will use to share the db/redis client across modules without leaking through module boundaries.
   - Centralized Zod env validation (`src/env.ts`) converts misconfiguration from runtime crashes into clear startup errors — an acceptance criterion of the ticket.
@@ -47,6 +47,10 @@ Only these two alternatives were seriously evaluated. Fastify is the explicit ta
 
 - Files touched (all under `apps/nebula-chat-server/`):
   - Added: `src/env.ts` (Zod env schema, first import in `server.ts`).
+  - Added: `src/logger.ts` — thin standalone pino instance (same dev/prod config as `buildApp`) used by non-request-scoped code (`cache.client`, `cache.service`, startup error). **Interim workaround** — to be deleted and replaced with `@nebula-chat/otel`'s `createLogger()` when M-5 lands.
+  - Added: `src/hooks/onClose.hook.ts` — `onCloseHook` extracted from `server.ts`; closes Redis and disconnects Prisma on shutdown.
+  - Added: `src/modules/chat/chat.cacheCheck.hook.ts` — `cacheCheckHook` extracted from `chat.routes.ts`.
+  - Added: `src/modules/chat/chat.streamCapture.hook.ts` — `streamCaptureHook` extracted from `chat.routes.ts`.
   - Modified: `src/server.ts` — replaced Express bootstrap with `buildApp()` returning a Fastify instance; registered `@fastify/sensible`, `@fastify/cors`, `@fastify/rate-limit`, `@fastify/swagger`, `@fastify/swagger-ui`, `@fastify/under-pressure`; mounted domain modules via `app.register(import('./modules/<m>/<m>.routes'), { prefix: '/api/<m>' })`; CORS plugin receives a single `corsOptions` object imported from `src/config/cors.config.ts` (single source of truth for origin allowlist, methods, credentials, and maxAge).
   - Modified: `src/config/cors.config.ts` — exports `corsOptions` (complete `@fastify/cors` options object) instead of a split `corsConfig`/`checkOrigin` pair; origin callback uses `cb(null, true|false)` rather than throwing; methods list is `['GET', 'HEAD', 'POST', 'DELETE', 'OPTIONS']` to cover all registered routes including `DELETE /api/cache/clear`.
   - Modified: every `src/modules/*/*.routes.ts` — converted from `express.Router()` to `FastifyPluginAsync` with `schema: { body, response }` driven by `zodToJsonSchema`.
@@ -67,3 +71,4 @@ Implementation verified on branch `feat/m-1-fastify` (2026-04-24):
 - `pnpm --filter nebula-chat-client run typecheck` — passes after Orval client regeneration.
 - Static confirmation: all four route prefixes (`/api/chat`, `/api/conversations`, `/api/messages`, `/api/cache`) registered in `buildApp()` with the same paths and HTTP methods as before.
 - Deviation: `@prisma/adapter-pg` retained; Prisma 7 typed API requires it. Will be removed in M-2 (Drizzle migration).
+- Deviation: `console.log`/`console.error` calls outside request context (cache layer, startup) replaced with a standalone `pino` instance at `src/logger.ts` rather than Fastify's built-in `app.log`. This is a temporary workaround; M-5 (`@nebula-chat/otel`) will replace it with a proper `createLogger()` factory and structured log shipping.

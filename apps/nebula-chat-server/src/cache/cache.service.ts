@@ -4,6 +4,7 @@ import type { CachedStreamData, BaseRedisStats, CacheStats } from '@backend/cach
 import type { CreateChatStreamDTO, UsageData } from '@backend/modules/chat/chat.types';
 import { createRedisClient, isRedisConnected, closeRedisClient } from '@backend/cache/cache.client';
 import { RedisCacheError } from '@backend/errors/AppError';
+import { logger } from '@backend/logger';
 import { cacheConfig } from '@backend/cache/cache.config';
 
 let redisClient: RedisClientType | null = null;
@@ -23,11 +24,9 @@ const parseCacheStats = async (): Promise<BaseRedisStats> => {
       return JSON.parse(stats);
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error getting stats from Redis:', error);
+    logger.error(error, 'Error getting stats from Redis');
   }
 
-  // Fallback to default stats
   return {
     hits: 0,
     misses: 0,
@@ -49,8 +48,7 @@ const updateStats = async (
     const updatedStats = { ...stats, ...updater(stats) };
     await client.set(cacheConfig.statsKey, JSON.stringify(updatedStats));
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error updating stats:', error);
+    logger.error(error, 'Error updating stats');
   }
 };
 
@@ -69,8 +67,7 @@ const getFromCache = async (key: string): Promise<CachedStreamData | null> => {
 
     return parsed;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Redis GET error (fail-open):', error);
+    logger.error(error, 'Redis GET error (fail-open)');
     await updateStats((s) => ({ misses: s.misses + 1 }));
     return null;
   }
@@ -114,8 +111,7 @@ const saveToCache = async (
 
     await updateStats((s) => ({ sets: s.sets + 1, lastSetKey: key }));
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Redis SET error (fail-open):', error);
+    logger.error(error, 'Redis SET error (fail-open)');
   }
 };
 
@@ -160,8 +156,7 @@ const getCacheStats = async (): Promise<CacheStats> => {
       },
     };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Redis STATS error (fail-open):', error);
+    logger.error(error, 'Redis STATS error (fail-open)');
     return {
       size: 0,
       activeItems: 0,
@@ -199,11 +194,9 @@ const clearCache = async (): Promise<void> => {
     await client.del(cacheConfig.keysList);
     await client.del(cacheConfig.statsKey);
 
-    // eslint-disable-next-line no-console
-    console.log('Redis: Cache cleared');
+    logger.info('Redis: Cache cleared');
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Redis CLEAR error:', error);
+    logger.error(error, 'Redis CLEAR error');
     throw new RedisCacheError(`Failed to clear cache: ${error}`);
   }
 };
@@ -213,8 +206,7 @@ const getRecentKeys = async (limit: number = 20): Promise<string[]> => {
     const client = await ensureConnection();
     return await client.lRange(cacheConfig.keysList, 0, limit - 1);
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Redis GET_KEYS error (fail-open):', error);
+    logger.error(error, 'Redis GET_KEYS error (fail-open)');
     return [];
   }
 };

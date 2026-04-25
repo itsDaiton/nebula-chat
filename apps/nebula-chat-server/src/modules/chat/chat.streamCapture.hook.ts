@@ -19,8 +19,7 @@ export const streamCaptureHook: preHandlerAsyncHookHandler = async (
     try {
       full += typeof chunk === 'string' ? chunk : chunk.toString();
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Error capturing stream chunk:', err);
+      req.log.error(err, 'Error capturing stream chunk');
     }
     return (originalWrite as unknown as (...a: unknown[]) => boolean)(chunk, ...args);
   }) as typeof raw.write;
@@ -43,11 +42,9 @@ export const streamCaptureHook: preHandlerAsyncHookHandler = async (
 
     const finalKey = cacheService.generateKey(req.body as CreateChatStreamDTO);
 
-    // eslint-disable-next-line no-console
-    console.log('Redis: Saving to cache');
+    req.log.info('Redis: Saving to cache');
     cacheService.saveToCache(finalKey, filtered, usageData ?? undefined).catch((error) => {
-      // eslint-disable-next-line no-console
-      console.error('Error saving to cache (fail-open):', error);
+      req.log.error(error, 'Error saving to cache (fail-open)');
     });
   });
 };

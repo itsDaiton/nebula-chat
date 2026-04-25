@@ -18,8 +18,7 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
     if (!cachedData) {
       return;
     }
-    // eslint-disable-next-line no-console
-    console.log('Redis: Cache hit');
+    req.log.info('Redis: Cache hit');
 
     const conversationId = body.conversationId;
     const userMessage = body.messages[0];
@@ -43,8 +42,7 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
             assistantContent += data.token;
           }
         } catch {
-          // eslint-disable-next-line no-console
-          console.log('Redis: Failed to parse cached token line');
+          req.log.warn('Redis: Failed to parse cached token line');
         }
       }
     }
@@ -98,8 +96,7 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
     streamFormatter.writeEnd(raw);
     raw.end();
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Cache check error (fail-open):', error);
+    req.log.error(error, 'Cache check error (fail-open)');
     // Fall through — the handler will run and perform a fresh OpenAI request.
   }
 };

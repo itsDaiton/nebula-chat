@@ -7,10 +7,10 @@ import swaggerUi from '@fastify/swagger-ui';
 import underPressure from '@fastify/under-pressure';
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
-import { closeRedisClient } from '@backend/cache/cache.client';
 import { corsOptions } from '@backend/config/cors.config';
 import { errorHandler } from '@backend/errors/error.handler';
-import { prisma } from '@backend/prisma';
+import { onCloseHook } from '@backend/hooks/onClose.hook';
+import { logger } from '@backend/logger';
 import cacheRoutes from '@backend/cache/cache.routes';
 import chatRoutes from '@backend/modules/chat/chat.routes';
 import conversationRoutes from '@backend/modules/conversation/conversation.routes';
@@ -58,18 +58,7 @@ export const buildApp = async (): Promise<FastifyInstance> => {
 
   app.setErrorHandler(errorHandler);
 
-  app.addHook('onClose', async () => {
-    try {
-      await closeRedisClient();
-    } catch {
-      // fail-open
-    }
-    try {
-      await prisma.$disconnect();
-    } catch {
-      // fail-open
-    }
-  });
+  app.addHook('onClose', onCloseHook);
 
   return app;
 };
@@ -90,7 +79,6 @@ const start = async (): Promise<void> => {
 };
 
 start().catch((err: unknown) => {
-  // eslint-disable-next-line no-console
-  console.error('Failed to start server:', err);
+  logger.error(err, 'Failed to start server');
   process.exit(1);
 });
