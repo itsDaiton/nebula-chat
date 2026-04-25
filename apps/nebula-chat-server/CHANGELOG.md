@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.5.0...nebula-chat-server-v1.6.0) (2026-04-25)
+
+
+### Features
+
+* **server:** migrate to fastify from express ([#196](https://github.com/itsDaiton/nebula-chat/issues/196)) ([9790324](https://github.com/itsDaiton/nebula-chat/commit/97903247f0c8c093cb2dc470ebb566a955182529))
+
 ## [1.5.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.4.3...nebula-chat-server-v1.5.0) (2026-03-29)
 
 
