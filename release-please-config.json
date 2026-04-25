@@ -4,7 +4,8 @@
     ".": {
       "release-type": "node",
       "component": "nebula-chat",
-      "include-component-in-tag": true
+      "include-component-in-tag": true,
+      "exclude-paths": ["apps/**"]
     },
     "apps/nebula-chat-client": {
       "release-type": "node",
