@@ -106,6 +106,7 @@ jobs:
           analysis_id=''
           task_status=''
           poll_interval_seconds=5
+          # Ceiling division so partial intervals still count as one polling attempt.
           max_attempts=$(((SONAR_QUALITY_GATE_TIMEOUT_SECONDS + poll_interval_seconds - 1) / poll_interval_seconds))
           if [ "${max_attempts}" -lt 1 ]; then
             echo 'SONAR_QUALITY_GATE_TIMEOUT_SECONDS must be at least 5 seconds.'
