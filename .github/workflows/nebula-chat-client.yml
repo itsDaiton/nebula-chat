@@ -121,6 +121,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           QUALITY_GATE_STATUS: ${{ steps.quality_gate.outputs.quality-gate-status }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           script: |
             const fs = require('node:fs');
@@ -129,7 +130,48 @@ jobs:
             const status = process.env.QUALITY_GATE_STATUS || 'UNKNOWN';
             const icon = status === 'PASSED' ? '✅' : status === 'FAILED' ? '❌' : '⚠️';
             const statusText = status === 'PASSED' ? 'passed' : status === 'FAILED' ? 'failed' : status.toLowerCase();
+            const statusTitle = status === 'PASSED' ? 'Quality Gate passed' : status === 'FAILED' ? 'Quality Gate failed' : `Quality Gate ${statusText}`;
+            const badgeName = status === 'PASSED' ? 'qg-passed-20px.png' : status === 'FAILED' ? 'qg-failed-20px.png' : 'qg-passed-20px.png';
             const reportPath = 'apps/nebula-chat-client/.scannerwork/report-task.txt';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const timestampUtc = new Date().toISOString();
+            const projectKey = 'itsDaiton_nebula-chat-client';
+            const prNumber = context.issue.number;
+            const sonarToken = process.env.SONAR_TOKEN || '';
+
+            const badgeBaseUrl = 'https://sonarsource.github.io/sonarcloud-github-static-resources/v2';
+            const statusIconPassed = `${badgeBaseUrl}/common/passed-16px.png`;
+            const statusIconFailed = `${badgeBaseUrl}/common/failed-16px.png`;
+            const statusIconAccepted = `${badgeBaseUrl}/common/accepted-16px.png`;
+
+            const newIssuesUrl = `https://sonarcloud.io/project/issues?id=${projectKey}&pullRequest=${prNumber}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true`;
+            const acceptedIssuesUrl = `https://sonarcloud.io/project/issues?id=${projectKey}&pullRequest=${prNumber}&issueStatuses=ACCEPTED`;
+            const hotspotsUrl = `https://sonarcloud.io/project/security_hotspots?id=${projectKey}&pullRequest=${prNumber}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true`;
+            const coverageUrl = `https://sonarcloud.io/component_measures?id=${projectKey}&pullRequest=${prNumber}&metric=new_coverage&view=list`;
+            const duplicationUrl = `https://sonarcloud.io/component_measures?id=${projectKey}&pullRequest=${prNumber}&metric=new_duplicated_lines_density&view=list`;
+
+            const fetchJson = async (url) => {
+              if (!sonarToken) return null;
+              try {
+                const response = await fetch(url, {
+                  headers: {
+                    Authorization: `Bearer ${sonarToken}`,
+                  },
+                });
+                if (!response.ok) {
+                  return null;
+                }
+                return await response.json();
+              } catch {
+                return null;
+              }
+            };
+
+            const formatCount = (value) => (Number.isFinite(value) ? `${value}` : 'n/a');
+            const formatPercent = (value) => {
+              const numeric = Number(value);
+              return Number.isFinite(numeric) ? `${numeric.toFixed(1)}%` : 'n/a';
+            };
 
             let dashboardUrl = '';
             if (fs.existsSync(reportPath)) {
@@ -138,18 +180,45 @@ jobs:
               dashboardUrl = match ? match[1].trim() : '';
             }
 
+            const [newIssuesData, acceptedIssuesData, hotspotsData, measuresData] = await Promise.all([
+              fetchJson(`https://sonarcloud.io/api/issues/search?componentKeys=${projectKey}&pullRequest=${prNumber}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true&ps=1`),
+              fetchJson(`https://sonarcloud.io/api/issues/search?componentKeys=${projectKey}&pullRequest=${prNumber}&issueStatuses=ACCEPTED&ps=1`),
+              fetchJson(`https://sonarcloud.io/api/issues/search?componentKeys=${projectKey}&pullRequest=${prNumber}&types=SECURITY_HOTSPOT&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true&ps=1`),
+              fetchJson(`https://sonarcloud.io/api/measures/component?component=${projectKey}&pullRequest=${prNumber}&metricKeys=new_coverage,new_duplicated_lines_density`),
+            ]);
+
+            const newIssuesCount = typeof newIssuesData?.total === 'number' ? newIssuesData.total : NaN;
+            const acceptedIssuesCount = typeof acceptedIssuesData?.total === 'number' ? acceptedIssuesData.total : NaN;
+            const hotspotCount = typeof hotspotsData?.total === 'number' ? hotspotsData.total : NaN;
+
+            const measures = Array.isArray(measuresData?.component?.measures)
+              ? measuresData.component.measures
+              : [];
+            const getMeasureValue = (metricKey) =>
+              measures.find((measure) => measure.metric === metricKey)?.value;
+
+            const coverageText = formatPercent(getMeasureValue('new_coverage'));
+            const duplicationText = formatPercent(getMeasureValue('new_duplicated_lines_density'));
+
+            const issueIcon = Number.isFinite(newIssuesCount) && newIssuesCount > 0 ? statusIconFailed : statusIconPassed;
+            const hotspotIcon = Number.isFinite(hotspotCount) && hotspotCount > 0 ? statusIconFailed : statusIconPassed;
+
             const body = [
               marker,
-              `### ${icon} Quality Gate ${statusText} (nebula-chat-client)`,
+              `## [![${statusTitle}](${badgeBaseUrl}/checks/QualityGateBadge/${badgeName})](${dashboardUrl || runUrl}) **${statusTitle}**`,
               '',
               'Issues',
-              dashboardUrl
-                ? `- [See analysis details on SonarQube Cloud](${dashboardUrl})`
-                : '- Dashboard unavailable',
+              `![](${issueIcon}) [${formatCount(newIssuesCount)} New issues](${newIssuesUrl})`,
+              `![](${statusIconAccepted}) [${formatCount(acceptedIssuesCount)} Accepted issues](${acceptedIssuesUrl})`,
               '',
               'Measures',
-              `- Quality Gate: ${status}`,
-              '- Project key: itsDaiton_nebula-chat-client',
+              `![](${hotspotIcon}) [${formatCount(hotspotCount)} Security Hotspots](${hotspotsUrl})`,
+              `![](${statusIconPassed}) [${coverageText} Coverage on New Code](${coverageUrl})`,
+              `![](${statusIconPassed}) [${duplicationText} Duplication on New Code](${duplicationUrl})`,
+              '',
+              `[See analysis details on SonarQube Cloud](${dashboardUrl || runUrl})`,
+              '',
+              `_${icon} App: nebula-chat-client | Updated (UTC): ${timestampUtc} | [Workflow run](${runUrl})_`,
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({
