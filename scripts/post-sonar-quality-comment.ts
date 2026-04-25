@@ -259,6 +259,6 @@ const postSonarComment = async (): Promise<void> => {
 
 postSonarComment().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : 'Unknown error';
-  console.error(`Failed to post Sonar quality comment: ${message}`);
+  process.stderr.write(`Failed to post Sonar quality comment: ${message}\n`);
   process.exit(1);
 });
