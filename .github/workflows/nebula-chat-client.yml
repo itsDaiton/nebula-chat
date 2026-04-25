@@ -1,10 +1,11 @@
-name: Build nebula-chat-client
+name: CI nebula-chat-client
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   changes:
@@ -31,7 +32,7 @@ jobs:
   build:
     needs: changes
     if: needs.changes.outputs.relevant == 'true'
-    name: Build nebula-chat-client
+    name: build-client
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -63,7 +64,7 @@ jobs:
       - changes
       - build
     if: needs.changes.outputs.relevant == 'true'
-    name: SonarQube nebula-chat-client
+    name: sonar-client
     runs-on: ubuntu-latest
     permissions:
       contents: read
