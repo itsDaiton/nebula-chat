@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -121,3 +121,59 @@ jobs:
               echo "- Dashboard: ${dashboard_url}"
             fi
           } >> "${GITHUB_STEP_SUMMARY}"
+      - name: Comment quality gate for server in PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        env:
+          QUALITY_GATE_STATUS: ${{ steps.quality_gate.outputs.quality-gate-status }}
+        with:
+          script: |
+            const fs = require('node:fs');
+
+            const marker = '<!-- sonar-quality-gate:nebula-chat-server -->';
+            const status = process.env.QUALITY_GATE_STATUS || 'UNKNOWN';
+            const icon = status === 'PASSED' ? '✅' : status === 'FAILED' ? '❌' : '⚠️';
+            const reportPath = 'apps/nebula-chat-server/.scannerwork/report-task.txt';
+
+            let dashboardUrl = '';
+            if (fs.existsSync(reportPath)) {
+              const report = fs.readFileSync(reportPath, 'utf8');
+              const match = report.match(/^dashboardUrl=(.*)$/m);
+              dashboardUrl = match ? match[1].trim() : '';
+            }
+
+            const body = [
+              marker,
+              `### ${icon} Sonar Quality Gate for nebula-chat-server: ${status}`,
+              '- Project key: itsDaiton_nebula-chat-server',
+              dashboardUrl ? `- Dashboard: ${dashboardUrl}` : '- Dashboard: unavailable',
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+
+            const existing = comments.find(
+              (comment) =>
+                comment.user?.type === 'Bot' &&
+                comment.body?.includes(marker),
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
