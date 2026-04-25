@@ -1,2 +1,7 @@
 packages:
   - apps/*
+  - openapi
+
+catalog:
+  '@types/node': ^25.5.0
+  typescript: ^5.9.3

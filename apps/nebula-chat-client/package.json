@@ -26,12 +26,12 @@
     "shiki": "^4.0.2"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0",
+    "@types/node": "catalog:",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "orval": "^7.14.0",
-    "typescript": "~5.9.3",
+    "typescript": "catalog:",
     "vite": "^8.0.5"
   }
 }
