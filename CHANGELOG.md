@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.14.4...nebula-chat-v1.14.5) (2026-04-25)
+
+
+### Bug Fixes
+
+* **release:** exclude apps paths from root release package ([#201](https://github.com/itsDaiton/nebula-chat/issues/201)) ([c9f8ad3](https://github.com/itsDaiton/nebula-chat/commit/c9f8ad38d692ea59fa49d7f74450bffe8f791d67))
+
 ## [1.14.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.14.3...nebula-chat-v1.14.4) (2026-04-25)
 
 
