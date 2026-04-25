@@ -22,13 +22,20 @@ export const useConversationsSearch = ({
     clearResults,
   } = useConversationsSearchStore();
 
-  const isPending = searchQuery.trim() !== debouncedQuery.trim();
-  const filteredConversations = searchQuery.trim() ? searchResults : localConversations;
+  const trimmedSearchQuery = searchQuery.trim();
+  const trimmedDebouncedQuery = debouncedQuery.trim();
+  const isPending = trimmedSearchQuery !== trimmedDebouncedQuery;
+  const hasSettledSearchQuery = Boolean(trimmedSearchQuery) && !isPending;
+  const filteredConversations = hasSettledSearchQuery ? searchResults : localConversations;
+
   const closeAndClearResults = () => {
+    setSearchQuery('');
     clearResults();
     onClose();
   };
+
   const selectConversationAndClearResults = (conversationId: string) => {
+    setSearchQuery('');
     clearResults();
     onConversationClick(conversationId);
   };
