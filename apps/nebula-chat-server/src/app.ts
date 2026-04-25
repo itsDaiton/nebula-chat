@@ -8,7 +8,11 @@ import swaggerUi from '@fastify/swagger-ui';
 import underPressure from '@fastify/under-pressure';
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
-import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
+import {
+  jsonSchemaTransform,
+  serializerCompiler,
+  validatorCompiler,
+} from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { corsOptions } from '@backend/config/cors.config';
 import { env } from '@backend/env';
@@ -68,27 +72,37 @@ export const buildApp = async (): Promise<FastifyInstance> => {
     healthCheckInterval: 5000,
   });
 
-  app.get('/', {
-    schema: {
-      summary: 'API root',
-      description: 'Welcome endpoint — confirms the API is reachable.',
-      tags: ['Health'],
-      response: {
-        200: z.object({ message: z.string() }).describe('API is reachable'),
+  app.get(
+    '/',
+    {
+      schema: {
+        summary: 'API root',
+        description: 'Welcome endpoint — confirms the API is reachable.',
+        tags: ['Health'],
+        response: {
+          200: z.object({ message: z.string() }).describe('API is reachable'),
+        },
       },
     },
-  }, async () => ({ message: 'Welcome to the Nebula Chat API' }));
+    async () => ({ message: 'Welcome to the Nebula Chat API' }),
+  );
 
-  app.get('/health', {
-    schema: {
-      summary: 'Health check',
-      description: 'Returns server liveness status and current UTC timestamp.',
-      tags: ['Health'],
-      response: {
-        200: z.object({ status: z.literal('ok'), timestamp: z.string() }).describe('Server is healthy'),
+  app.get(
+    '/health',
+    {
+      schema: {
+        summary: 'Health check',
+        description: 'Returns server liveness status and current UTC timestamp.',
+        tags: ['Health'],
+        response: {
+          200: z
+            .object({ status: z.literal('ok'), timestamp: z.string() })
+            .describe('Server is healthy'),
+        },
       },
     },
-  }, async () => ({ status: 'ok' as const, timestamp: new Date().toISOString() }));
+    async () => ({ status: 'ok' as const, timestamp: new Date().toISOString() }),
+  );
 
   app.get('/openapi.json', { schema: { hide: true } }, async () => app.swagger());
 

@@ -608,10 +608,15 @@ On validation failure the error is routed through `setErrorHandler`. Use `hasZod
 import { z } from 'zod';
 
 export const getConversationsQuerySchema = z.object({
-  limit: z.coerce.number().int().positive().max(50).optional().default(10)
+  limit: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(50)
+    .optional()
+    .default(10)
     .describe('Number of conversations to fetch (1-50, default 10)'),
-  cursor: z.uuid().optional()
-    .describe('Pagination cursor for the next page'),
+  cursor: z.uuid().optional().describe('Pagination cursor for the next page'),
 });
 ```
 
