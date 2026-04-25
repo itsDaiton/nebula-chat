@@ -82,6 +82,7 @@ jobs:
           SONAR_HOST_URL: https://sonarcloud.io
           SONAR_PROJECT_KEY: itsDaiton_nebula-chat-server
           REPORT_TASK_FILE: apps/nebula-chat-server/.scannerwork/report-task.txt
+          SONAR_QUALITY_GATE_TIMEOUT_SECONDS: '300'
         run: |
           set -euo pipefail
 
@@ -104,7 +105,13 @@ jobs:
 
           analysis_id=''
           task_status=''
-          for _ in $(seq 1 60); do
+          max_attempts=$((SONAR_QUALITY_GATE_TIMEOUT_SECONDS / 5))
+          if [ "${max_attempts}" -le 0 ]; then
+            echo 'SONAR_QUALITY_GATE_TIMEOUT_SECONDS must be greater than 0.'
+            exit 1
+          fi
+
+          for _ in $(seq 1 "${max_attempts}"); do
             ce_status_code="$(curl -sSL -H "Authorization: Bearer ${SONAR_TOKEN}" -w '%{http_code}' -o "${ce_response_file}" "${ce_task_url}")"
             if [ "${ce_status_code}" != '200' ]; then
               echo "Failed to load SonarQube compute engine task (HTTP ${ce_status_code})."
