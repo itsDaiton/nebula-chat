@@ -12,10 +12,21 @@ export const ConversationsSearch = ({
   onConversationClick,
   onClose,
 }: ConversationsSearchProps) => {
-  const { searchQuery, setSearchQuery, filteredConversations, isSearching, error } =
-    useConversationsSearch(conversations);
+  const {
+    searchQuery,
+    setSearchQuery,
+    filteredConversations,
+    isSearching,
+    error,
+    closeAndClearResults,
+    selectConversationAndClearResults,
+  } = useConversationsSearch({
+    localConversations: conversations,
+    onClose,
+    onConversationClick,
+  });
 
-  useEscapeKey(onClose);
+  useEscapeKey(closeAndClearResults);
 
   return (
     <Portal>
@@ -27,7 +38,7 @@ export const ConversationsSearch = ({
         bottom="0"
         bg="blackAlpha.600"
         zIndex="modal"
-        onClick={onClose}
+        onClick={closeAndClearResults}
       />
       <Flex
         position="fixed"
@@ -76,7 +87,7 @@ export const ConversationsSearch = ({
                 <ConversationListItem
                   key={conversation.id}
                   conversation={conversation}
-                  onClick={onConversationClick}
+                  onClick={selectConversationAndClearResults}
                 />
               ))}
             {!error && !isSearching && filteredConversations.length === 0 && searchQuery.trim() && (
