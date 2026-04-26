@@ -107,13 +107,13 @@ export const buildApp = async (): Promise<FastifyInstance> => {
 
   app.get('/openapi.json', { schema: { hide: true } }, async () => app.swagger());
 
+  app.setErrorHandler(errorHandler);
+  app.addHook('onClose', onCloseHook);
+
   await app.register(chatRoutes, { prefix: '/api/chat' });
   await app.register(conversationRoutes, { prefix: '/api/conversations' });
   await app.register(messageRoutes, { prefix: '/api/messages' });
   await app.register(cacheRoutes, { prefix: '/api/cache' });
-
-  app.setErrorHandler(errorHandler);
-  app.addHook('onClose', onCloseHook);
 
   return app;
 };
