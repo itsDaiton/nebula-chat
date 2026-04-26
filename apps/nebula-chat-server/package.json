@@ -1,9 +1,11 @@
 {
   "name": "nebula-chat-server",
   "version": "1.6.0",
+  "packageManager": "pnpm@10.26.2",
   "main": "dist/src/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "prebuild": "pnpm run prisma:generate",
     "build": "tsc && tsc-alias",
     "start": "node dist/src/server.js",
     "typecheck": "tsc --noEmit",
