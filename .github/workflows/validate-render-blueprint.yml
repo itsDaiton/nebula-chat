@@ -1,0 +1,36 @@
+name: Validate Render Blueprint
+
+on:
+  pull_request:
+    paths:
+      - render.yaml
+  push:
+    branches:
+      - main
+    paths:
+      - render.yaml
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  validate-blueprint:
+    name: Validate render.yaml schema
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Download Render schema
+        run: curl -fsSL https://render.com/schema/render.yaml.json -o render.schema.json
+
+      - name: Validate render.yaml against Render schema
+        run: pnpm dlx ajv-cli validate --spec=draft2020 --strict=false -s render.schema.json -d render.yaml
