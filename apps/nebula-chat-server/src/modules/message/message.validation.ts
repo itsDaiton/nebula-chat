@@ -18,7 +18,7 @@ export const messageResponseSchema = z.object({
   role: z.string(),
   tokenCount: z.number().int().nullable(),
   cached: z.boolean().nullable(),
-  createdAt: z.iso.datetime(),
+  createdAt: z.date().transform((d) => d.toISOString()),
 });
 
 export const messagesArraySchema = z.array(messageResponseSchema);

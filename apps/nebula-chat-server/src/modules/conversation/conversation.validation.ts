@@ -12,7 +12,7 @@ export const getConversationSchema = z.object({
 export const conversationResponseSchema = z.object({
   id: z.uuid(),
   title: z.string(),
-  createdAt: z.iso.datetime(),
+  createdAt: z.date().transform((d) => d.toISOString()),
 });
 
 export const conversationsArraySchema = z.array(conversationResponseSchema);
