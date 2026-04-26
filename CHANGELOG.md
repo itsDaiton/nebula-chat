@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.16.1...nebula-chat-v1.16.2) (2026-04-26)
+
+
+### Bug Fixes
+
+* **render:** sync-up render blueprint ([#212](https://github.com/itsDaiton/nebula-chat/issues/212)) ([09f8787](https://github.com/itsDaiton/nebula-chat/commit/09f8787acb2a1a78c13582578dc7ca83de40681d))
+
 ## [1.16.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.16.0...nebula-chat-v1.16.1) (2026-04-26)
 
 
