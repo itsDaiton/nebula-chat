@@ -1,5 +1,5 @@
 import { defineConfig } from 'drizzle-kit';
-import { loadServerEnv } from '../load-env';
+import { loadServerEnv } from '../../apps/nebula-chat-server/load-env';
 
 loadServerEnv();
 
