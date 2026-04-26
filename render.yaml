@@ -7,7 +7,6 @@ services:
     buildCommand: corepack enable && corepack prepare pnpm@10.26.2 --activate && pnpm install --frozen-lockfile && pnpm --filter nebula-chat-server run build
     startCommand: corepack enable && corepack prepare pnpm@10.26.2 --activate && pnpm --filter nebula-chat-server run start
     healthCheckPath: /health
-    autoDeploy: false
     autoDeployTrigger: off
 
   - type: web
@@ -17,7 +16,6 @@ services:
     buildCommand: corepack enable && corepack prepare pnpm@10.26.2 --activate && pnpm install --frozen-lockfile && pnpm --filter nebula-chat-client run build
     staticPublishPath: apps/nebula-chat-client/build
     pullRequestPreviewsEnabled: true
-    autoDeploy: false
     autoDeployTrigger: off
 
 # Optional environment variables can be managed in Render dashboard/secrets.
