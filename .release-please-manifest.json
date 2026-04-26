@@ -1,6 +1,6 @@
 {
-  ".": "1.16.0",
-  "apps/nebula-chat-client": "1.8.0",
-  "apps/nebula-chat-server": "1.6.0",
+  ".": "1.16.1",
+  "apps/nebula-chat-client": "1.8.1",
+  "apps/nebula-chat-server": "1.6.1",
   "openapi": "1.2.0"
 }

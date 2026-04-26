@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.8.0...nebula-chat-client-v1.8.1) (2026-04-26)
+
+
+### Bug Fixes
+
+* **render:** add configuration for render deploy ([#210](https://github.com/itsDaiton/nebula-chat/issues/210)) ([f239885](https://github.com/itsDaiton/nebula-chat/commit/f239885417fb8cbd6487e463667d3dae5abeee2a))
+
 ## [1.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.7.1...nebula-chat-client-v1.8.0) (2026-04-25)
 
 
