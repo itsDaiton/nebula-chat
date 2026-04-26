@@ -1,7 +1,11 @@
 import { defineConfig } from 'drizzle-kit';
-import { loadServerEnv } from '../../apps/nebula-chat-server/load-env';
+import { resolve } from 'node:path';
 
-loadServerEnv();
+try {
+  process.loadEnvFile(resolve(__dirname, '../../apps/nebula-chat-server/.env'));
+} catch {
+  // .env absent — CI/CD injects env vars directly
+}
 
 export default defineConfig({
   schema: './src/schema.ts',
