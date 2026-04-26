@@ -30,7 +30,7 @@ export const calculateContextTokens = (
   messages: Array<{
     role: string;
     content: string;
-    tokens?: unknown;
+    tokenCount?: number | null;
   }>,
 ): number => {
   let totalTokens = 0;

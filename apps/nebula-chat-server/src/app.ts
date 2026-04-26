@@ -40,6 +40,7 @@ export const buildApp = async (): Promise<FastifyInstance> => {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
+  await app.register(import('./plugins/db.plugin'));
   await app.register(sensible);
   await app.register(cors, corsOptions);
   await app.register(rateLimit, { global: false });

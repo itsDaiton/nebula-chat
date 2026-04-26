@@ -1,7 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { hasZodFastifySchemaValidationErrors } from 'fastify-type-provider-zod';
 import { AppError } from '@backend/errors/AppError';
-import { Prisma } from '@backend/prisma';
 
 export const errorHandler = (err: Error, _req: FastifyRequest, reply: FastifyReply): void => {
   reply.log.error(err);
@@ -16,12 +15,10 @@ export const errorHandler = (err: Error, _req: FastifyRequest, reply: FastifyRep
     return;
   }
 
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
-    reply.status(400).send({
-      success: false,
-      error: 'PrismaClientKnownRequestError',
-      message: err.message,
-    });
+  // PostgreSQL unique-violation (e.g. duplicate email)
+  const pgErr = err as { code?: string };
+  if (pgErr.code === '23505') {
+    reply.status(409).send({ success: false, error: 'ConflictError', message: err.message });
     return;
   }
 

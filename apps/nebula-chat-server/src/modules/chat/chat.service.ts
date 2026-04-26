@@ -1,5 +1,5 @@
 import { env } from '@backend/env';
-import { prisma } from '@backend/prisma';
+import { db } from '@backend/db';
 import type OpenAI from 'openai';
 import type {
   CreateChatStreamDTO,
@@ -32,7 +32,7 @@ export const createUserMessage = async (
 ) => {
   let isNewConversation = false;
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     let convId = conversationId;
 
     if (convId) {
@@ -51,7 +51,6 @@ export const createUserMessage = async (
       conversationId: convId,
       role: userMessageRole,
       content: userMessageContent,
-      model: null,
     });
 
     return {
@@ -167,8 +166,7 @@ const executeStreamRequest = async (
         conversationId,
         role: 'assistant',
         content: emptyResponseMessage,
-        model: data.model,
-        tokens: usageData ?? undefined,
+        tokenCount: usageData?.totalTokens ?? null,
       });
       callbacks.onAssistantMessageCreated(errorMsg.id);
       throw new Error(emptyResponseMessage);
@@ -178,8 +176,7 @@ const executeStreamRequest = async (
       conversationId,
       role: 'assistant',
       content: fullResponse,
-      model: data.model,
-      tokens: usageData ?? undefined,
+      tokenCount: usageData?.totalTokens ?? null,
     });
     callbacks.onAssistantMessageCreated(assistantMessage.id);
     return assistantMessage.id;
