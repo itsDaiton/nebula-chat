@@ -216,6 +216,9 @@ importers:
         specifier: ^8.16.0
         version: 8.20.0
     devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.5.0
       '@types/pg':
         specifier: ^8.11.0
         version: 8.20.0
