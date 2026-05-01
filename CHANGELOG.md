@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.17.1...nebula-chat-v1.17.2) (2026-05-01)
+
+
+### Bug Fixes
+
+* **deps:** update @typescript-eslint/parser, knip, and prettier versions ([#221](https://github.com/itsDaiton/nebula-chat/issues/221)) ([74befdb](https://github.com/itsDaiton/nebula-chat/commit/74befdbb4a45ea489b37795c8175deaccb4068d5))
+
 ## [1.17.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.17.0...nebula-chat-v1.17.1) (2026-05-01)
 
 
