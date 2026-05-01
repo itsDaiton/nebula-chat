@@ -23,8 +23,9 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "noImplicitOverride": true
+    "noImplicitOverride": true,
+    "ignoreDeprecations": "6.0"
   },
   "exclude": ["node_modules", "tmp", "dist"],
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "load-env.ts"]
 }

@@ -2,12 +2,12 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from './schema.js';
 
-export interface DbConfig {
+export type DbConfig = {
   connectionString: string;
   maxConnections?: number;
-}
+};
 
-export function createDbClient(config: DbConfig) {
+export const createDbClient = (config: DbConfig) => {
   const pool = new Pool({
     connectionString: config.connectionString,
     max: config.maxConnections ?? 10,
@@ -15,7 +15,7 @@ export function createDbClient(config: DbConfig) {
 
   const db = drizzle(pool, { schema });
   return { db, pool };
-}
+};
 
 export type DbClient = ReturnType<typeof createDbClient>['db'];
 

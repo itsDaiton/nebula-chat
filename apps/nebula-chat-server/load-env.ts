@@ -1,3 +1,4 @@
+import { logger } from '@backend/logger';
 import { resolve } from 'node:path';
 
 /**
@@ -5,10 +6,10 @@ import { resolve } from 'node:path';
  * Intended for drizzle configs and other lib-level CLI tools.
  * Falls through silently when .env is absent so CI/CD can inject vars directly.
  */
-export function loadServerEnv(): void {
+export const loadServerEnv = (): void => {
   try {
     process.loadEnvFile(resolve(__dirname, '.env'));
   } catch {
-    // .env not present — env vars must be set in the environment directly
+    logger.warn('No .env file found for nebula-chat-server, falling back to process.env');
   }
-}
+};

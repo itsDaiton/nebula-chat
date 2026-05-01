@@ -5,9 +5,3 @@ export default fp(async (app) => {
   app.decorate('db', db);
   app.addHook('onClose', closeDb);
 });
-
-declare module 'fastify' {
-  interface FastifyInstance {
-    db: import('@nebula-chat/db').DbClient;
-  }
-}
