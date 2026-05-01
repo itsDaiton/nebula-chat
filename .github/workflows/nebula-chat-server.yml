@@ -90,7 +90,7 @@ jobs:
             -Dsonar.projectKey=itsDaiton_nebula-chat-server
             -Dsonar.organization=itsdaiton
             -Dsonar.projectName=Nebula-Chat-Server
-            -Dsonar.sources=src
+            -Dsonar.sources=src,../../libs/db/src
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/generated/**
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.coverage.exclusions=**/*
