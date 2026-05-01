@@ -150,43 +150,39 @@ const executeStreamRequest = async (
   conversationId: string,
   callbacks: StreamCallbacks,
 ): Promise<string> => {
-  try {
-    const stream = await client.chat.completions.create({
-      model: data.model,
-      messages,
-      stream: true,
-      stream_options: { include_usage: true },
-      max_completion_tokens: chatConfig.tokenLimits.maxCompletionTokens,
-    });
+  const stream = await client.chat.completions.create({
+    model: data.model,
+    messages,
+    stream: true,
+    stream_options: { include_usage: true },
+    max_completion_tokens: chatConfig.tokenLimits.maxCompletionTokens,
+  });
 
-    const { fullResponse, usageData } = await processOpenAIStream(
-      stream as AsyncIterable<OpenAI.Chat.ChatCompletionChunk>,
-      callbacks,
-    );
+  const { fullResponse, usageData } = await processOpenAIStream(
+    stream as AsyncIterable<OpenAI.Chat.ChatCompletionChunk>,
+    callbacks,
+  );
 
-    if (!fullResponse || fullResponse.trim().length === 0) {
-      const emptyResponseMessage = 'The assistant did not generate a response.';
-      const errorMsg = await messageService.createMessage({
-        conversationId,
-        role: 'assistant',
-        content: emptyResponseMessage,
-        tokenCount: usageData?.totalTokens ?? null,
-      });
-      callbacks.onAssistantMessageCreated(errorMsg.id);
-      throw new Error(emptyResponseMessage);
-    }
-
-    const assistantMessage = await messageService.createMessage({
+  if (!fullResponse || fullResponse.trim().length === 0) {
+    const emptyResponseMessage = 'The assistant did not generate a response.';
+    const errorMsg = await messageService.createMessage({
       conversationId,
       role: 'assistant',
-      content: fullResponse,
+      content: emptyResponseMessage,
       tokenCount: usageData?.totalTokens ?? null,
     });
-    callbacks.onAssistantMessageCreated(assistantMessage.id);
-    return assistantMessage.id;
-  } catch (streamError) {
-    throw streamError;
+    callbacks.onAssistantMessageCreated(errorMsg.id);
+    throw new Error(emptyResponseMessage);
   }
+
+  const assistantMessage = await messageService.createMessage({
+    conversationId,
+    role: 'assistant',
+    content: fullResponse,
+    tokenCount: usageData?.totalTokens ?? null,
+  });
+  callbacks.onAssistantMessageCreated(assistantMessage.id);
+  return assistantMessage.id;
 };
 
 export const chatService = {
@@ -237,7 +233,7 @@ export const chatService = {
       const messagesWithSystem: OpenAI.Chat.ChatCompletionMessageParam[] = [
         { role: 'system', content: systemPrompt },
         ...conversationHistory.toReversed().map((msg) => ({
-          role: msg.role as 'user' | 'assistant' | 'system',
+          role: msg.role,
           content: msg.content,
         })),
       ];
