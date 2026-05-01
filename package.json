@@ -22,6 +22,7 @@
   },
   "pnpm": {
     "overrides": {
+      "effect": "3.20.0",
       "lodash": "4.18.1",
       "@hono/node-server": "^1.19.13",
       "hono": "4.12.14",
@@ -34,8 +35,8 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "@typescript-eslint/eslint-plugin": "^8.57.0",
-    "@typescript-eslint/parser": "^8.57.2",
+    "@typescript-eslint/eslint-plugin": "^8.59.1",
+    "@typescript-eslint/parser": "^8.59.1",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
@@ -45,8 +46,8 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^17.4.0",
     "jiti": "^2.6.1",
-    "knip": "^6.1.0",
-    "prettier": "^3.8.1",
+    "knip": "^6.9.0",
+    "prettier": "^3.8.3",
     "typescript": "catalog:"
   }
 }
