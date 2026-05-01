@@ -1,6 +1,7 @@
 import { env } from '@backend/env';
 import { db } from '@backend/db';
 import type OpenAI from 'openai';
+import type { DbTransaction } from '@nebula-chat/db';
 import type {
   CreateChatStreamDTO,
   StreamCallbacks,
@@ -32,7 +33,7 @@ export const createUserMessage = async (
 ): Promise<{ conversationId: string; userMessageId: string; isNewConversation: boolean }> => {
   let isNewConversation = false;
 
-  const result = await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx: DbTransaction) => {
     let convId = conversationId;
 
     if (convId) {
