@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.7.0...nebula-chat-server-v1.7.1) (2026-05-01)
+
+
+### Bug Fixes
+
+* update build script to include database ([#219](https://github.com/itsDaiton/nebula-chat/issues/219)) ([fd25b51](https://github.com/itsDaiton/nebula-chat/commit/fd25b51cd568e8653c37eb751d9b59f2394e5814))
+
 ## [1.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.6.1...nebula-chat-server-v1.7.0) (2026-05-01)
 
 
