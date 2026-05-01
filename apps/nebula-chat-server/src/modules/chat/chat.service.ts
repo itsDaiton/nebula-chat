@@ -29,7 +29,7 @@ export const createUserMessage = async (
   conversationId: string | undefined,
   userMessageContent: string,
   userMessageRole: CreateMessageDTO['role'],
-) => {
+): Promise<{ conversationId: string; userMessageId: string; isNewConversation: boolean }> => {
   let isNewConversation = false;
 
   const result = await db.transaction(async (tx) => {
@@ -45,6 +45,10 @@ export const createUserMessage = async (
       const newConversation = await conversationRepository.createTx(tx, title);
       convId = newConversation.id;
       isNewConversation = true;
+    }
+
+    if (!convId) {
+      throw new BadRequestError('Conversation id could not be resolved.');
     }
 
     const newUserMessage = await messageRepository.createTx(tx, {
@@ -197,7 +201,7 @@ export const chatService = {
       throw new ClientInitializationError('OpenAI');
     }
 
-    let conversationId = data.conversationId;
+    const conversationId = data.conversationId;
     let userMessageId: string | undefined;
     let assistantMessageId: string | undefined;
 
@@ -211,11 +215,11 @@ export const chatService = {
       await validateChatRequest(conversationId, userMessage);
 
       const result = await createUserMessage(conversationId, userMessage.content, userMessage.role);
-      conversationId = result.conversationId;
+      const resolvedConversationId = result.conversationId;
       userMessageId = result.userMessageId;
 
       if (result.isNewConversation) {
-        callbacks.onConversationCreated(conversationId);
+        callbacks.onConversationCreated(resolvedConversationId);
       }
       callbacks.onUserMessageCreated(userMessageId);
 
@@ -225,7 +229,7 @@ export const chatService = {
           : undefined;
 
       const conversationHistory = await messageRepository.findByConversationId(
-        conversationId,
+        resolvedConversationId,
         limit,
       );
 
@@ -242,11 +246,11 @@ export const chatService = {
         client,
         data,
         messagesWithSystem,
-        conversationId,
+        resolvedConversationId,
         callbacks,
       );
 
-      return { conversationId, userMessageId, assistantMessageId };
+      return { conversationId: resolvedConversationId, userMessageId, assistantMessageId };
     } catch (error) {
       callbacks.onError(error instanceof Error ? error.message : 'Unknown error occurred');
       return;
