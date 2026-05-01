@@ -21,7 +21,7 @@ Under `apps/nebula-chat-server/src/modules/$ARGUMENTS/`:
 
 1. `$ARGUMENTS.types.ts` — `type` definitions (domain + DTO shapes).
 2. `$ARGUMENTS.validation.ts` — Zod schemas for request bodies/params/queries.
-3. `$ARGUMENTS.repository.ts` — Prisma queries (the ONLY place Prisma is called).
+3. `$ARGUMENTS.repository.ts` — Drizzle queries (the ONLY place Drizzle is called).
 4. `$ARGUMENTS.service.ts` — business logic; throws `AppError` subclasses.
 5. `$ARGUMENTS.controller.ts` — thin Express handlers; calls service; no business logic.
 6. `$ARGUMENTS.routes.ts` — Router, wires middleware (`validate`, rate-limit, cache where needed).
@@ -39,7 +39,7 @@ Under `apps/nebula-chat-server/src/modules/$ARGUMENTS/`:
 
 ## Anti-goals
 
-- No Prisma outside `.repository.ts`.
+- No Drizzle outside `.repository.ts`.
 - No bare `Error` throws — use `AppError` subclasses.
 - No relative imports — `@backend/*` only.
 - No `index.ts` barrels.

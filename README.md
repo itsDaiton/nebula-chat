@@ -11,7 +11,7 @@ Redis.
 nebula-chat/
 └── apps/
     ├── nebula-chat-client/   # React + Vite client
-    └── nebula-chat-server/   # Express + Prisma API
+    └── nebula-chat-server/   # Fastify + Drizzle API
 ```
 
 ## Prerequisites
@@ -52,7 +52,7 @@ nebula-chat/
 
    ```bash
    cd ../..
-   pnpm --filter nebula-chat-server run prisma:migrate
+   pnpm --filter @nebula-chat/db db:migrate
    ```
 
 6. Start backend and frontend (in separate terminals):

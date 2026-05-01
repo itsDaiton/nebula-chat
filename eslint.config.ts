@@ -20,7 +20,7 @@ export default [
       'apps/nebula-chat-client/vite.config.*',
       'apps/nebula-chat-client/orval.config.*',
       'apps/nebula-chat-server/src/generated/**',
-      'apps/nebula-chat-server/prisma/**',
+      'libs/db/migrations/**',
       'apps/nebula-chat-client/src/libs/api/generated/**',
     ],
   },
