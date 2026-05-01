@@ -4,7 +4,16 @@ import type { DbTransaction } from '@nebula-chat/db';
 import { db } from '@backend/db';
 import type { CreateMessageDTO, GetMessageParams } from '@backend/modules/message/message.types';
 
-export const messageRepository = {
+type MessageRow = typeof messages.$inferSelect;
+type MessageHistoryRow = Pick<MessageRow, 'role' | 'content' | 'tokenCount'>;
+
+export const messageRepository: {
+  create: (data: CreateMessageDTO) => Promise<MessageRow>;
+  findById: (params: GetMessageParams) => Promise<MessageRow | null>;
+  findAll: () => Promise<MessageRow[]>;
+  createTx: (tx: DbTransaction, data: CreateMessageDTO) => Promise<MessageRow>;
+  findByConversationId: (conversationId: string, limit?: number) => Promise<MessageHistoryRow[]>;
+} = {
   async create({ conversationId, content, role, tokenCount }: CreateMessageDTO) {
     const [row] = await db
       .insert(messages)
@@ -16,7 +25,7 @@ export const messageRepository = {
     const [row] = await db.select().from(messages).where(eq(messages.id, messageId));
     return row ?? null;
   },
-  findAll() {
+  async findAll() {
     return db.select().from(messages).orderBy(desc(messages.createdAt));
   },
   async createTx(tx: DbTransaction, data: CreateMessageDTO) {
@@ -27,7 +36,7 @@ export const messageRepository = {
       .returning();
     return row!;
   },
-  findByConversationId(conversationId: string, limit?: number) {
+  async findByConversationId(conversationId: string, limit?: number) {
     const base = db
       .select({ role: messages.role, content: messages.content, tokenCount: messages.tokenCount })
       .from(messages)

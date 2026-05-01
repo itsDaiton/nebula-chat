@@ -4,8 +4,7 @@
     "rootDir": ".",
     "outDir": "dist",
     "paths": {
-      "@backend/*": ["src/*"],
-      "@nebula-chat/db": ["../../libs/db/src/index.ts"]
+      "@backend/*": ["src/*"]
     },
     "module": "commonjs",
     "moduleResolution": "node",
