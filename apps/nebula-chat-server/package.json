@@ -5,7 +5,7 @@
   "main": "dist/src/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc && tsc-alias",
+    "build": "pnpm --filter @nebula-chat/db build && tsc && tsc-alias",
     "start": "node dist/src/server.js",
     "typecheck": "pnpm --filter @nebula-chat/db build && tsc --noEmit",
     "generate:openapi": "tsx src/scripts/generate-openapi.ts"
