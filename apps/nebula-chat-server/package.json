@@ -1,6 +1,6 @@
 {
   "name": "nebula-chat-server",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "packageManager": "pnpm@10.26.2",
   "main": "dist/src/server.js",
   "scripts": {

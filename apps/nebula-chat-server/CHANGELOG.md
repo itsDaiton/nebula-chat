@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.6.1...nebula-chat-server-v1.7.0) (2026-05-01)
+
+
+### Features
+
+* **db:** migrate from Prisma to Drizzle ORM ([#214](https://github.com/itsDaiton/nebula-chat/issues/214)) ([c6c543a](https://github.com/itsDaiton/nebula-chat/commit/c6c543a9ea85c7742083ff37e58739d5f391c715))
+
 ## [1.6.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.6.0...nebula-chat-server-v1.6.1) (2026-04-26)
 
 

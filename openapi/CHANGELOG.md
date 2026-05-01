@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v1.2.0...nebula-chat-openapi-v1.3.0) (2026-05-01)
+
+
+### Features
+
+* **db:** migrate from Prisma to Drizzle ORM ([#214](https://github.com/itsDaiton/nebula-chat/issues/214)) ([c6c543a](https://github.com/itsDaiton/nebula-chat/commit/c6c543a9ea85c7742083ff37e58739d5f391c715))
+
 ## [1.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v1.1.0...nebula-chat-openapi-v1.2.0) (2026-04-25)
 
 
