@@ -25,7 +25,7 @@ export const getConversationsQuerySchema = z.object({
   limit: z.coerce
     .number()
     .int()
-    .positive()
+    .min(1)
     .max(paginationConfig.maxLimit)
     .optional()
     .default(paginationConfig.defaultLimit)

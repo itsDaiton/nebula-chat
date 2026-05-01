@@ -9,7 +9,7 @@ import {
 } from '@backend/modules/message/message.validation';
 
 const messageRoutes: FastifyPluginAsyncZod = async (app) => {
-  app.post('/', {
+  app.post('', {
     schema: {
       description: 'Create a new message in a conversation',
       summary: 'Create message',
@@ -42,7 +42,7 @@ const messageRoutes: FastifyPluginAsyncZod = async (app) => {
     handler: messageController.get,
   });
 
-  app.get('/', {
+  app.get('', {
     schema: {
       description: 'Retrieve all messages across all conversations',
       summary: 'List all messages',

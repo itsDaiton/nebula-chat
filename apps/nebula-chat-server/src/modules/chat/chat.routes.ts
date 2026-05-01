@@ -1,4 +1,5 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
+import { z } from 'zod';
 import { errorResponseSchema } from '@backend/errors/error.schema';
 import { cacheCheckHook } from '@backend/modules/chat/chat.cacheCheck.hook';
 import { chatController } from '@backend/modules/chat/chat.controller';
@@ -15,6 +16,7 @@ const chatRoutes: FastifyPluginAsyncZod = async (app) => {
       operationId: 'streamChat',
       body: createChatStreamSchema,
       response: {
+        200: z.string().describe('Streamed SSE events'),
         400: errorResponseSchema.describe('Invalid request body or validation error'),
         404: errorResponseSchema.describe('Conversation not found'),
         413: errorResponseSchema.describe('Message or context exceeds token limit'),

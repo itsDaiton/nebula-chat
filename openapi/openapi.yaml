@@ -10,6 +10,7 @@ components:
 paths:
   /:
     get:
+      operationId: getApiRoot
       summary: API root
       tags:
         - Health
@@ -30,6 +31,7 @@ paths:
                 description: API is reachable
   /health:
     get:
+      operationId: getHealth
       summary: Health check
       tags:
         - Health
@@ -96,6 +98,13 @@ paths:
                 - messages
                 - model
       responses:
+        "200":
+          description: Streamed SSE events
+          content:
+            application/json:
+              schema:
+                type: string
+                description: Streamed SSE events
         "400":
           description: Invalid request body or validation error
           content:
@@ -201,7 +210,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Internal server error
-  /api/conversations/:
+  /api/conversations:
     post:
       operationId: createConversation
       summary: Create conversation
@@ -294,7 +303,7 @@ paths:
         - schema:
             default: 10
             type: integer
-            exclusiveMinimum: true
+            minimum: 1
             maximum: 100
           in: query
           name: limit
@@ -547,7 +556,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Internal server error
-  /api/messages/:
+  /api/messages:
     post:
       operationId: createMessage
       summary: Create message

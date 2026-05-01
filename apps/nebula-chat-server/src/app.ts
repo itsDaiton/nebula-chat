@@ -80,6 +80,7 @@ export const buildApp = async (): Promise<FastifyInstance> => {
         summary: 'API root',
         description: 'Welcome endpoint — confirms the API is reachable.',
         tags: ['Health'],
+        operationId: 'getApiRoot',
         response: {
           200: z.object({ message: z.string() }).describe('API is reachable'),
         },
@@ -95,6 +96,7 @@ export const buildApp = async (): Promise<FastifyInstance> => {
         summary: 'Health check',
         description: 'Returns server liveness status and current UTC timestamp.',
         tags: ['Health'],
+        operationId: 'getHealth',
         response: {
           200: z
             .object({ status: z.literal('ok'), timestamp: z.string() })
