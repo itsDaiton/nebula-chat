@@ -25,10 +25,6 @@ jobs:
               - 'apps/nebula-chat-server/**'
               - 'libs/db/**'
               - 'scripts/post-sonar-quality-comment.ts'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'eslint.config.ts'
-              - 'prettier.config.cjs'
               - '.github/workflows/nebula-chat-server.yml'
 
   build:
