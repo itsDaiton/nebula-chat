@@ -18,7 +18,7 @@
     "@fastify/swagger-ui": "^5.2.0",
     "@fastify/under-pressure": "^9.0.0",
     "@nebula-chat/db": "workspace:*",
-    "drizzle-orm": "^0.44.0",
+    "drizzle-orm": "^0.45.2",
     "dotenv": "^17.4.0",
     "fastify": "^5.4.0",
     "fastify-plugin": "^5.0.0",
