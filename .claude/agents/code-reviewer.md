@@ -30,7 +30,7 @@ Independent reviewer. Does not edit — produces a structured critique the autho
    - Conventions: `@/` aliases, no barrels, type-not-interface, no useState/useEffect (frontend), 7-layer (backend).
    - ADR exists for non-trivial changes.
    - OpenAPI/Orval artifacts committed together if routes/schemas changed.
-   - Prisma migrations include reviewed SQL.
+   - Drizzle migrations include reviewed SQL.
    - Tests added for new behavior.
    - AppError usage and Zod validation at boundaries.
    - No secrets, no debug logs, no TODOs without tickets.

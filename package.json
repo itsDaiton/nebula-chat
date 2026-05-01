@@ -28,9 +28,8 @@
       "path-to-regexp": "8.4.0"
     },
     "onlyBuiltDependencies": [
-      "@prisma/engines",
-      "esbuild",
-      "prisma"
+      "argon2",
+      "esbuild"
     ]
   },
   "devDependencies": {

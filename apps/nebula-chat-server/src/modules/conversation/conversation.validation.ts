@@ -12,7 +12,7 @@ export const getConversationSchema = z.object({
 export const conversationResponseSchema = z.object({
   id: z.uuid(),
   title: z.string(),
-  createdAt: z.iso.datetime(),
+  createdAt: z.date().transform((d) => d.toISOString()),
 });
 
 export const conversationsArraySchema = z.array(conversationResponseSchema);
@@ -25,7 +25,7 @@ export const getConversationsQuerySchema = z.object({
   limit: z.coerce
     .number()
     .int()
-    .positive()
+    .min(1)
     .max(paginationConfig.maxLimit)
     .optional()
     .default(paginationConfig.defaultLimit)

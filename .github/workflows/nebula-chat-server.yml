@@ -23,11 +23,8 @@ jobs:
           filters: |
             relevant:
               - 'apps/nebula-chat-server/**'
+              - 'libs/db/**'
               - 'scripts/post-sonar-quality-comment.ts'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'eslint.config.ts'
-              - 'prettier.config.cjs'
               - '.github/workflows/nebula-chat-server.yml'
 
   build:
@@ -58,8 +55,8 @@ jobs:
         run: pnpm exec eslint --report-unused-disable-directives --max-warnings=0 apps/nebula-chat-server/ scripts/post-sonar-quality-comment.ts
       - name: Format check
         run: pnpm exec prettier --check apps/nebula-chat-server/ scripts/post-sonar-quality-comment.ts
-      - name: Prisma generate
-        run: pnpm --filter nebula-chat-server run prisma:generate
+      - name: Build @nebula-chat/db
+        run: pnpm --filter @nebula-chat/db build
       - name: TypeScript check
         run: pnpm --filter nebula-chat-server run typecheck
       - name: Build
@@ -89,7 +86,7 @@ jobs:
             -Dsonar.projectKey=itsDaiton_nebula-chat-server
             -Dsonar.organization=itsdaiton
             -Dsonar.projectName=Nebula-Chat-Server
-            -Dsonar.sources=src
+            -Dsonar.sources=src,../../libs/db/src
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/generated/**
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.coverage.exclusions=**/*

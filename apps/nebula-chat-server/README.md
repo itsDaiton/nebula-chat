@@ -4,7 +4,7 @@ The backend is an Express 5 API for Nebula Chat.
 
 It is responsible for:
 - Streaming AI chat responses from OpenAI
-- Persisting conversations/messages in PostgreSQL via Prisma
+- Persisting conversations/messages in PostgreSQL via Drizzle
 - Caching chat streams in Redis
 - Exposing OpenAPI docs (`/docs`, `/openapi.json`)
 
@@ -43,11 +43,11 @@ It is responsible for:
    docker-compose up -d
    ```
 
-5. Run Prisma migrations:
+5. Run DB migrations:
 
    ```bash
    cd ../..
-   pnpm --filter nebula-chat-server run prisma:migrate
+   pnpm --filter @nebula-chat/db db:migrate
    ```
 
 6. Start backend in watch mode:
@@ -67,11 +67,10 @@ pnpm --filter nebula-chat-server run dev
 pnpm --filter nebula-chat-server run build
 pnpm --filter nebula-chat-server run start
 pnpm --filter nebula-chat-server run typecheck
-pnpm --filter nebula-chat-server run prisma:generate
-pnpm --filter nebula-chat-server run prisma:migrate
-pnpm --filter nebula-chat-server run prisma:deploy
-pnpm --filter nebula-chat-server run prisma:studio
-pnpm --filter nebula-chat-server run prisma:validate
+pnpm --filter @nebula-chat/db db:generate
+pnpm --filter @nebula-chat/db db:migrate
+pnpm --filter @nebula-chat/db db:push
+pnpm --filter @nebula-chat/db db:studio
 ```
 
 ## API docs

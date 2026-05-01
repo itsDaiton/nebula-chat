@@ -16,9 +16,9 @@ We needed a shared, versioned agentic workspace that (a) encodes domain speciali
 
 Introduce a shared `.claude/` workspace committed to the repository, containing:
 
-- **13 specialized subagents** in `.claude/agents/` covering architecture migration, Prisma schema, API contract, backend modules, chat streaming hot path, frontend state, frontend UI, testing, code review, security audit, docs curation, ADR authoring, and a meta-synchronizer that updates agent definitions when source-of-truth docs change.
-- **7 skills** in `.claude/skills/` for repeatable procedures (`prisma-migrate`, `regenerate-api-client`, `lint-and-format`, `zustand-store-scaffold`, `backend-module-scaffold`, `load-conventions`, `load-migration-ticket`).
-- **Hooks** in `.claude/settings.json` + `.claude/hooks/`: a `PostToolUse` hook that runs `eslint --fix` on files changed since last commit, and a `PreToolUse` Bash hook that blocks destructive commands (`rm -rf`, `prisma migrate reset`, `git push --force`, unqualified `docker-compose down -v`, `DROP TABLE`, `--no-verify`, etc.).
+- **13 specialized subagents** in `.claude/agents/` covering architecture migration, database schema, API contract, backend modules, chat streaming hot path, frontend state, frontend UI, testing, code review, security audit, docs curation, ADR authoring, and a meta-synchronizer that updates agent definitions when source-of-truth docs change.
+- **7 skills** in `.claude/skills/` for repeatable procedures (`drizzle-migrate`, `regenerate-api-client`, `lint-and-format`, `zustand-store-scaffold`, `backend-module-scaffold`, `load-conventions`, `load-migration-ticket`).
+- **Hooks** in `.claude/settings.json` + `.claude/hooks/`: a `PostToolUse` hook that runs `eslint --fix` on files changed since last commit, and a `PreToolUse` Bash hook that blocks destructive commands (`rm -rf`, `git push --force`, unqualified `docker-compose down -v`, `DROP TABLE`, `--no-verify`, etc.).
 - **ADR workflow** rooted at `docs/adr/` with a canonical template at `docs/template/adr-template.md`. Build agents must check for a matching ADR before editing; `adr-author` is a pre-change gate. Agents are pointed at `docs/adr/` as required reading.
 - **gitignore adjustment**: track `.claude/` contents (agents/skills/hooks/settings.json) but continue to ignore `settings.local.json` so personal permission allowlists stay private.
 

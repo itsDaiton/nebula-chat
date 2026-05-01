@@ -57,8 +57,7 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
       conversationId: userMessageResult.conversationId,
       role: 'assistant',
       content: assistantContent,
-      model: body.model,
-      ...(cachedData.usageData !== undefined && { tokens: cachedData.usageData }),
+      tokenCount: cachedData.usageData?.totalTokens ?? null,
     });
 
     const {

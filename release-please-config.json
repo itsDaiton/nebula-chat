@@ -15,6 +15,10 @@
       "release-type": "node",
       "include-component-in-tag": true
     },
+    "libs/db": {
+      "release-type": "node",
+      "include-component-in-tag": true
+    },
     "openapi": {
       "release-type": "node",
       "include-component-in-tag": true,

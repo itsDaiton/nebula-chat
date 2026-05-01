@@ -8,7 +8,7 @@ apps/nebula-chat-client/build
 apps/nebula-chat-server/dist
 apps/nebula-chat-server/node_modules
 apps/nebula-chat-server/src/generated
-apps/nebula-chat-server/prisma/migrations
+libs/db/migrations
 
 *.log
 *.lock

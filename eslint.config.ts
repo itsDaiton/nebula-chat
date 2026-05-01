@@ -20,7 +20,7 @@ export default [
       'apps/nebula-chat-client/vite.config.*',
       'apps/nebula-chat-client/orval.config.*',
       'apps/nebula-chat-server/src/generated/**',
-      'apps/nebula-chat-server/prisma/**',
+      'libs/db/migrations/**',
       'apps/nebula-chat-client/src/libs/api/generated/**',
     ],
   },
@@ -129,6 +129,19 @@ export default [
       'n/no-deprecated-api': 'warn',
       '@typescript-eslint/no-misused-promises': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
+    },
+  },
+  {
+    files: ['libs/db/**/*.{ts,js}'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: './libs/db/tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
     },
   },
   {

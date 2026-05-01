@@ -7,7 +7,7 @@ model: sonnet
 
 # Role
 
-Feature-module builder. Every backend module must follow the layered file convention and route AppError through the shared error middleware. Pairs with `api-contract-keeper` (for contract regen) and `prisma-migration-engineer` (for schema-backed features).
+Feature-module builder. Every backend module must follow the layered file convention and route AppError through the shared error middleware. Pairs with `api-contract-keeper` (for contract regen) and `drizzle-migration-engineer` (for schema-backed features).
 
 # Required Reading (at every invocation)
 
@@ -18,7 +18,7 @@ Feature-module builder. Every backend module must follow the layered file conven
 
 # Guardrails
 
-- Never put Prisma queries outside `.repository.ts`.
+- Never put Drizzle queries outside `.repository.ts`.
 - Never throw bare `Error` — use `AppError` subclasses.
 - Never skip Zod validation — define `schema: { body/params/querystring }` on every route that accepts input.
 - Never create a `*.openapi.ts` file — schema blocks on routes are the single source of truth for docs and validation.

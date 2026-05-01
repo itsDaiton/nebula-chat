@@ -1,5 +1,7 @@
-import { prisma } from '@backend/prisma';
-import type { Prisma } from 'prisma/generated/prisma/client';
+import { eq, lt, desc, ilike, and, or } from 'drizzle-orm';
+import { conversations } from '@nebula-chat/db';
+import type { DbTransaction } from '@nebula-chat/db';
+import { db } from '@backend/db';
 import { paginationConfig } from '@backend/config/pagination.config';
 import type {
   CreateConversationDTO,
@@ -7,66 +9,73 @@ import type {
 } from '@backend/modules/conversation/conversation.types';
 
 export const conversationRepository = {
-  create({ title }: CreateConversationDTO) {
-    return prisma.conversation.create({
-      data: { title },
-    });
+  async create({ title }: CreateConversationDTO) {
+    const [row] = await db.insert(conversations).values({ title }).returning();
+    return row!;
   },
-  findById({ conversationId }: GetConversationParams) {
-    return prisma.conversation.findUnique({
-      where: { id: conversationId },
-      include: { messages: true },
-    });
+  async findById({ conversationId }: GetConversationParams) {
+    const [row] = await db.select().from(conversations).where(eq(conversations.id, conversationId));
+    return row ?? null;
   },
   async findAll(limit = paginationConfig.defaultLimit, cursor?: string) {
-    const conversations = await prisma.conversation.findMany({
-      take: limit + 1,
-      ...(cursor && {
-        cursor: { id: cursor },
-        skip: 1,
-      }),
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        createdAt: true,
-      },
-    });
+    let cursorCreatedAt: Date | undefined;
+    let cursorId: string | undefined;
+    if (cursor) {
+      const [cursorRow] = await db
+        .select({ createdAt: conversations.createdAt, id: conversations.id })
+        .from(conversations)
+        .where(eq(conversations.id, cursor));
+      cursorCreatedAt = cursorRow?.createdAt;
+      cursorId = cursorRow?.id;
+    }
 
-    const hasMore = conversations.length > limit;
-    const items = hasMore ? conversations.slice(0, -1) : conversations;
-    const nextCursor = hasMore ? items[items.length - 1]?.id : null;
+    const cursorFilter =
+      cursorCreatedAt && cursorId
+        ? or(
+            lt(conversations.createdAt, cursorCreatedAt),
+            and(eq(conversations.createdAt, cursorCreatedAt), lt(conversations.id, cursorId)),
+          )
+        : undefined;
 
-    return {
-      conversations: items,
-      nextCursor,
-      hasMore,
-    };
+    const rows = await db
+      .select({
+        id: conversations.id,
+        title: conversations.title,
+        createdAt: conversations.createdAt,
+      })
+      .from(conversations)
+      .where(cursorFilter)
+      .orderBy(desc(conversations.createdAt), desc(conversations.id))
+      .limit(limit + 1);
+
+    const hasMore = rows.length > limit;
+    const items = hasMore ? rows.slice(0, -1) : rows;
+    const nextCursor = hasMore ? (items.at(-1)?.id ?? null) : null;
+
+    return { conversations: items, nextCursor, hasMore };
   },
-  findByIdSimple(id: string) {
-    return prisma.conversation.findUnique({ where: { id } });
+  async findByIdSimple(id: string) {
+    const [row] = await db.select().from(conversations).where(eq(conversations.id, id));
+    return row ?? null;
   },
-  findByIdTx(tx: Prisma.TransactionClient, id: string) {
-    return tx.conversation.findUnique({ where: { id } });
+  async findByIdTx(tx: DbTransaction, id: string) {
+    const [row] = await tx.select().from(conversations).where(eq(conversations.id, id));
+    return row ?? null;
   },
-  createTx(tx: Prisma.TransactionClient, title: string) {
-    return tx.conversation.create({ data: { title } });
+  async createTx(tx: DbTransaction, title: string) {
+    const [row] = await tx.insert(conversations).values({ title }).returning();
+    return row!;
   },
   async search(query: string, limit = paginationConfig.maxLimit) {
-    return prisma.conversation.findMany({
-      where: {
-        title: {
-          contains: query,
-          mode: 'insensitive',
-        },
-      },
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        createdAt: true,
-      },
-    });
+    return db
+      .select({
+        id: conversations.id,
+        title: conversations.title,
+        createdAt: conversations.createdAt,
+      })
+      .from(conversations)
+      .where(ilike(conversations.title, `%${query}%`))
+      .orderBy(desc(conversations.createdAt))
+      .limit(limit);
   },
 };

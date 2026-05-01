@@ -40,6 +40,7 @@ export const buildApp = async (): Promise<FastifyInstance> => {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
+  await app.register(import('./plugins/db.plugin'));
   await app.register(sensible);
   await app.register(cors, corsOptions);
   await app.register(rateLimit, { global: false });
@@ -79,6 +80,7 @@ export const buildApp = async (): Promise<FastifyInstance> => {
         summary: 'API root',
         description: 'Welcome endpoint — confirms the API is reachable.',
         tags: ['Health'],
+        operationId: 'getApiRoot',
         response: {
           200: z.object({ message: z.string() }).describe('API is reachable'),
         },
@@ -94,6 +96,7 @@ export const buildApp = async (): Promise<FastifyInstance> => {
         summary: 'Health check',
         description: 'Returns server liveness status and current UTC timestamp.',
         tags: ['Health'],
+        operationId: 'getHealth',
         response: {
           200: z
             .object({ status: z.literal('ok'), timestamp: z.string() })
@@ -106,13 +109,13 @@ export const buildApp = async (): Promise<FastifyInstance> => {
 
   app.get('/openapi.json', { schema: { hide: true } }, async () => app.swagger());
 
+  app.setErrorHandler(errorHandler);
+  app.addHook('onClose', onCloseHook);
+
   await app.register(chatRoutes, { prefix: '/api/chat' });
   await app.register(conversationRoutes, { prefix: '/api/conversations' });
   await app.register(messageRoutes, { prefix: '/api/messages' });
   await app.register(cacheRoutes, { prefix: '/api/cache' });
-
-  app.setErrorHandler(errorHandler);
-  app.addHook('onClose', onCloseHook);
 
   return app;
 };

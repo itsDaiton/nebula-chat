@@ -5,15 +5,9 @@
   "main": "dist/src/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "prebuild": "pnpm run prisma:generate",
     "build": "tsc && tsc-alias",
     "start": "node dist/src/server.js",
-    "typecheck": "tsc --noEmit",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:deploy": "prisma migrate deploy",
-    "prisma:studio": "prisma studio",
-    "prisma:validate": "prisma validate",
+    "typecheck": "pnpm --filter @nebula-chat/db build && tsc --noEmit",
     "generate:openapi": "tsx src/scripts/generate-openapi.ts"
   },
   "dependencies": {
@@ -23,7 +17,8 @@
     "@fastify/swagger": "^9.5.0",
     "@fastify/swagger-ui": "^5.2.0",
     "@fastify/under-pressure": "^9.0.0",
-    "@prisma/adapter-pg": "^7.5.0",
+    "@nebula-chat/db": "workspace:*",
+    "drizzle-orm": "^0.44.0",
     "dotenv": "^17.4.0",
     "fastify": "^5.4.0",
     "fastify-plugin": "^5.0.0",
@@ -35,10 +30,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@prisma/client": "^7.5.0",
     "@types/node": "catalog:",
     "pino-pretty": "^13.0.0",
-    "prisma": "^7.5.0",
     "tsc-alias": "^1.8.16",
     "tsx": "^4.21.0",
     "typescript": "catalog:"

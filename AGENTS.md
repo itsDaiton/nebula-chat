@@ -25,7 +25,7 @@ Covers the full monorepo — where things live, how they are built, and how to a
    - [Module Pattern](#module-pattern)
    - [Error Handling](#error-handling)
    - [Validation](#validation)
-   - [Database — Prisma](#database--prisma)
+   - [Database — Drizzle](#database--drizzle)
    - [Caching — Redis](#caching--redis)
    - [Chat Streaming](#chat-streaming)
    - [OpenAPI Docs](#openapi-docs)
@@ -471,14 +471,14 @@ apps/nebula-chat-server/src/
 ├── app.ts                         # buildApp() factory — registers plugins, routes, compilers
 ├── server.ts                      # Thin entry point — calls buildApp() then app.listen()
 ├── env.ts                         # Zod-validated env schema — single source for all process.env reads
-├── prisma.ts                      # Prisma client singleton
+├── db.ts                          # DB client singleton (createDbClient from @nebula-chat/db)
 ├── config/
 │   ├── cors.config.ts             # Allowed origins, CORS options
 │   ├── headers.config.ts          # SSE + cache response headers (uses http.ServerResponse)
 │   └── pagination.config.ts       # Default/max page limits
 ├── errors/
 │   ├── AppError.ts                # Error class hierarchy
-│   ├── error.handler.ts           # Fastify setErrorHandler callback (Zod, AppError, Prisma, fallback)
+│   ├── error.handler.ts           # Fastify setErrorHandler callback (Zod, AppError, fallback)
 │   └── error.schema.ts            # Shared Zod errorResponseSchema (used in route response schemas)
 ├── modules/
 │   ├── chat/
@@ -493,7 +493,7 @@ apps/nebula-chat-server/src/
 │   ├── conversation/
 │   │   ├── conversation.types.ts
 │   │   ├── conversation.validation.ts
-│   │   ├── conversation.repository.ts   # All Prisma queries
+│   │   ├── conversation.repository.ts   # All Drizzle queries
 │   │   ├── conversation.service.ts
 │   │   ├── conversation.controller.ts
 │   │   └── conversation.routes.ts
@@ -523,7 +523,7 @@ Every feature module follows this strict 6-layer convention. Add files in this o
 ```
 1. <module>.types.ts        — TypeScript types / DTOs (no logic)
 2. <module>.validation.ts   — Zod schemas for request body/params/query/response
-3. <module>.repository.ts   — Raw Prisma queries; no business logic (omit if no DB access)
+3. <module>.repository.ts   — Raw Drizzle queries; no business logic (omit if no DB access)
 4. <module>.service.ts      — Business logic; calls repository; never touches req/res
 5. <module>.controller.ts   — Calls service; builds HTTP response; minimal logic
 6. <module>.routes.ts       — FastifyPluginAsyncZod default export; schema blocks + hook chain
@@ -622,37 +622,15 @@ export const getConversationsQuerySchema = z.object({
 
 ---
 
-### Database — Prisma
+### Database — Drizzle
 
-Schema lives at `prisma/schema.prisma`. Two models:
-
-```prisma
-model Conversation {
-  id        String    @id @default(uuid())
-  title     String
-  createdAt DateTime  @default(now())
-  messages  Message[]
-}
-
-model Message {
-  id             String       @id @default(uuid())
-  conversationId String
-  content        String
-  role           String       # "user" | "assistant" | "system"
-  model          String?
-  tokens         Json?        # { promptTokens, completionTokens, totalTokens }
-  createdAt      DateTime     @default(now())
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
-
-  @@index([conversationId])
-}
-```
+Schema lives at `libs/db/src/schema.ts` (`@nebula-chat/db`). Three tables: `users`, `conversations`, `messages` with FK constraints and indexes.
 
 **Rules:**
 
-- All Prisma calls go in `*.repository.ts` files — never in services or controllers.
-- The Prisma singleton lives in `src/prisma.ts`. Always import from there.
-- After changing the schema run `pnpm prisma:migrate` in dev or `pnpm prisma:deploy` in prod, then `pnpm prisma:generate`.
+- All Drizzle queries go in `*.repository.ts` files — never in services or controllers.
+- The DB client is created in `src/db.ts` via `createDbClient` from `@nebula-chat/db`. Always import `db` from `@backend/db`.
+- After changing the schema run `pnpm --filter @nebula-chat/db db:generate` in dev or `pnpm --filter @nebula-chat/db db:migrate` in prod.
 - Conversations are cursor-paginated using the conversation `id` as the cursor.
 - Max 20 messages are loaded into context for a single chat request.
 
@@ -690,7 +668,7 @@ POST /api/chat/stream
       → chat.service
           1. Validate token budget (tiktoken — max 2 000 prompt, 10 000 context)
           2. Fetch conversation history (last 20 messages)
-          3. prisma.$transaction — create user message + conversation if new
+          3. DB transaction — create user message + conversation if new
           4. Call OpenAI streaming completions
           5. Pipe tokens to client as SSE events via reply.hijack() + reply.raw.write/reply.raw.end
           6. On stream end — persist assistant message + token usage
@@ -752,7 +730,7 @@ The generator is Orval, configured at `apps/nebula-chat-client/orval.config.ts`,
 The backend uses `@backend/*` as a path alias for `src/*`:
 
 ```ts
-import { prisma } from '@backend/prisma';
+import { db } from '@backend/db';
 import { AppError } from '@backend/errors/AppError';
 ```
 
@@ -794,7 +772,7 @@ pnpm install
 cd apps/nebula-chat-server && docker-compose up -d
 
 # 3. Run DB migrations
-pnpm --filter nebula-chat-server run prisma:migrate
+pnpm --filter @nebula-chat/db db:migrate
 
 # 4. Start backend (watch mode)
 pnpm --filter nebula-chat-server run dev

@@ -12,7 +12,7 @@ import {
 } from '@backend/modules/conversation/conversation.validation';
 
 const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
-  app.post('/', {
+  app.post('', {
     schema: {
       description: 'Create a new conversation with a title',
       summary: 'Create conversation',
@@ -62,7 +62,7 @@ const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
     handler: conversationController.get,
   });
 
-  app.get('/', {
+  app.get('', {
     schema: {
       description:
         'Retrieve conversations with cursor-based pagination. Returns up to 10 conversations by default.',

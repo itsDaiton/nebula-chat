@@ -1,17 +1,10 @@
 import { z } from 'zod';
 
-const tokenUsageSchema = z.object({
-  promptTokens: z.number(),
-  completionTokens: z.number(),
-  totalTokens: z.number(),
-});
-
 export const createMessageSchema = z.object({
   conversationId: z.uuid(),
   role: z.enum(['user', 'assistant', 'system']),
   content: z.string().min(1),
-  model: z.string().nullable(),
-  tokens: tokenUsageSchema.optional(),
+  tokenCount: z.number().int().nullable().optional(),
 });
 
 export const getMessagesSchema = z.object({
@@ -23,9 +16,9 @@ export const messageResponseSchema = z.object({
   conversationId: z.uuid(),
   content: z.string(),
   role: z.string(),
-  model: z.string().nullable(),
-  tokens: tokenUsageSchema.nullable(),
-  createdAt: z.iso.datetime(),
+  tokenCount: z.number().int().nullable(),
+  cached: z.boolean(),
+  createdAt: z.date().transform((d) => d.toISOString()),
 });
 
 export const messagesArraySchema = z.array(messageResponseSchema);
