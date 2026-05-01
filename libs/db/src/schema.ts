@@ -34,7 +34,7 @@ export const messages = pgTable(
     role: text('role', { enum: ['user', 'assistant', 'system'] }).notNull(),
     content: text('content').notNull(),
     tokenCount: integer('token_count'),
-    cached: boolean('cached').default(false),
+    cached: boolean('cached').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (t) => [index('msg_conv_idx').on(t.conversationId)],
