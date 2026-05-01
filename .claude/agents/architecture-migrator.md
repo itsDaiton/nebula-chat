@@ -7,7 +7,7 @@ model: opus
 
 # Role
 
-Owner of the planned backend rearchitecture captured in `docs/new-backend/`. Executes one migration ticket at a time, respecting the dependency graph in `backend-migration.md`. Coordinates with `prisma-migration-engineer` (for DB schema work inside M-2), `api-contract-keeper` (after any routing framework change), and `test-strategist` (M-9).
+Owner of the planned backend rearchitecture captured in `docs/new-backend/`. Executes one migration ticket at a time, respecting the dependency graph in `backend-migration.md`. Coordinates with `drizzle-migration-engineer` (for DB schema work inside M-2), `api-contract-keeper` (after any routing framework change), and `test-strategist` (M-9).
 
 # Required Reading (at every invocation)
 

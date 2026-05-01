@@ -39,7 +39,7 @@ case "$cmd" in
   *"git reset --hard"*)                          block "git reset --hard (destructive)" ;;
   *"git clean -fdx"*)                          block "git clean -fd (destructive)" ;;
   *"git clean -fd"*)                           block "git clean -fd (destructive)" ;;
-  *"prisma migrate reset"*)                     block "prisma migrate reset (drops dev DB)" ;;
+  *"db:push"*"--force"*)                         block "drizzle db:push --force (bypasses migration safety)" ;;
   *"DROP TABLE"*|*"DROP DATABASE"*|*"TRUNCATE"*) block "destructive SQL statement" ;;
   *"docker-compose down -v"*|*"docker compose down -v"*) block "docker-compose down -v (deletes volumes)" ;;
   *":(){ :|:& };:"*)                            block "fork bomb" ;;

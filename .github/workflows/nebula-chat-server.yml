@@ -23,6 +23,7 @@ jobs:
           filters: |
             relevant:
               - 'apps/nebula-chat-server/**'
+              - 'libs/db/**'
               - 'scripts/post-sonar-quality-comment.ts'
               - 'package.json'
               - 'pnpm-lock.yaml'
@@ -58,8 +59,8 @@ jobs:
         run: pnpm exec eslint --report-unused-disable-directives --max-warnings=0 apps/nebula-chat-server/ scripts/post-sonar-quality-comment.ts
       - name: Format check
         run: pnpm exec prettier --check apps/nebula-chat-server/ scripts/post-sonar-quality-comment.ts
-      - name: Prisma generate
-        run: pnpm --filter nebula-chat-server run prisma:generate
+      - name: Build @nebula-chat/db
+        run: pnpm --filter @nebula-chat/db build
       - name: TypeScript check
         run: pnpm --filter nebula-chat-server run typecheck
       - name: Build

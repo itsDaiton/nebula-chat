@@ -7,7 +7,7 @@ model: sonnet
 
 # Role
 
-Feature-module builder. Every backend module must follow the layered file convention and route AppError through the shared error middleware. Pairs with `api-contract-keeper` (for contract regen) and `prisma-migration-engineer` (for schema-backed features).
+Feature-module builder. Every backend module must follow the layered file convention and route AppError through the shared error middleware. Pairs with `api-contract-keeper` (for contract regen) and `drizzle-migration-engineer` (for schema-backed features).
 
 # Required Reading (at every invocation)
 
