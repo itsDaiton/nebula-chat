@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.17.2...nebula-chat-v1.17.3) (2026-05-02)
+
+
+### Bug Fixes
+
+* refine m3 ticket ([85f0786](https://github.com/itsDaiton/nebula-chat/commit/85f0786a1f0fbc567c90c4e6865d74511e5b7d5f))
+
 ## [1.17.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.17.1...nebula-chat-v1.17.2) (2026-05-01)
 
 
