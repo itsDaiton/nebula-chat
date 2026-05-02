@@ -95,13 +95,13 @@ Errors use a custom `AppError` class. Path aliases use `@backend/*` mapping to `
 
 ### Key environment variables
 
-| Variable                      | Where                                               |
-| ----------------------------- | --------------------------------------------------- |
-| `VITE_API_URL`                | `apps/nebula-chat-client/.env`                      |
-| `OPENAI_API_KEY`              | `apps/nebula-chat-server/.env`                      |
+| Variable                      | Where                                                                                    |
+| ----------------------------- | ---------------------------------------------------------------------------------------- |
+| `VITE_API_URL`                | `apps/nebula-chat-client/.env`                                                           |
+| `OPENAI_API_KEY`              | `apps/nebula-chat-server/.env`                                                           |
 | `DATABASE_URL`                | `apps/nebula-chat-server/.env` (loaded by both server runtime and `libs/db` drizzle-kit) |
-| `REDIS_URL`, `REDIS_PASSWORD` | `apps/nebula-chat-server/.env`                      |
-| `CLIENT_URL`, `SERVER_URL`    | `apps/nebula-chat-server/.env` (CORS)               |
+| `REDIS_URL`, `REDIS_PASSWORD` | `apps/nebula-chat-server/.env`                                                           |
+| `CLIENT_URL`, `SERVER_URL`    | `apps/nebula-chat-server/.env` (CORS)                                                    |
 
 ## Code Style
 

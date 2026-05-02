@@ -236,8 +236,7 @@ export type WindowLimits = {
 export const packHistory = (history: BaseMessage[], limits: WindowLimits): BaseMessage[] => {
   const { maxInputTokens, model, systemPrompt = '', userMessage = '' } = limits;
 
-  const fixedTokens =
-    countTokens(systemPrompt, model) + countTokens(userMessage, model);
+  const fixedTokens = countTokens(systemPrompt, model) + countTokens(userMessage, model);
 
   let budget = maxInputTokens - fixedTokens;
   if (budget <= 0) return [];
@@ -269,7 +268,7 @@ export const llmConcurrencyLimiter = pLimit(10);
 
 ```ts
 export type RateLimiterOptions = {
-  windowMs: number;   // sliding window duration
+  windowMs: number; // sliding window duration
   maxRequests: number; // max calls per window per key
 };
 
@@ -469,9 +468,7 @@ export const generateResponse = async (
     streaming: false,
   });
 
-  return llmConcurrencyLimiter(() =>
-    chain.invoke({ history: trimmedHistory, input: userMessage }),
-  );
+  return llmConcurrencyLimiter(() => chain.invoke({ history: trimmedHistory, input: userMessage }));
 };
 ```
 
