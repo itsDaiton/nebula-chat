@@ -99,6 +99,16 @@ pnpm --filter nebula-chat-client run dev
 pnpm --filter nebula-chat-server run dev
 ```
 
+### Creating a new lib
+
+When scaffolding a new package under `libs/`, follow these steps **in order** before anything else:
+
+1. **Create `libs/<name>/.gitignore`** containing at minimum `dist/` and `node_modules/` — prevents build artifacts from ever reaching the index.
+2. **Add the package to `release-please-config.json`** under `"packages"` so it is versioned from day one.
+3. Implement the lib, then **commit and push** when the work is complete.
+
+Never skip steps 1 or 2, even for small utility libs.
+
 ---
 
 ## Frontend
