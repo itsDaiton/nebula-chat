@@ -19,11 +19,7 @@ import {
 } from '@nebula-chat/langchain';
 import type { LLMLogger } from '@nebula-chat/langchain';
 import { SYSTEM_PROMPT } from '@backend/modules/chat/chat.prompt';
-import {
-  NotFoundError,
-  PayloadTooLargeError,
-  BadRequestError,
-} from '@backend/errors/AppError';
+import { NotFoundError, PayloadTooLargeError, BadRequestError } from '@backend/errors/AppError';
 
 const MAX_PROMPT_TOKENS = 2000;
 const MAX_HISTORY_MESSAGES = 20;
@@ -102,7 +98,9 @@ export const chatService = {
     write: (chunk: string) => void,
     userId = 'anonymous',
     logger?: LLMLogger,
-  ): Promise<{ conversationId: string; userMessageId: string; assistantMessageId: string } | undefined> {
+  ): Promise<
+    { conversationId: string; userMessageId: string; assistantMessageId: string } | undefined
+  > {
     const { allowed, retryAfterMs } = rateLimiter.check(userId);
     if (!allowed) {
       logger?.warn({ userId, retryAfterMs }, 'LLM rate limit exceeded');
@@ -149,16 +147,13 @@ export const chatService = {
       if (logger !== undefined) streamConfig.logger = logger;
 
       let fullResponse = '';
-      await streamChat(
-        streamConfig,
-        {
-          onToken: (token) => {
-            fullResponse += token;
-            write(sseToken(token));
-          },
-          onUsage: (usage) => write(sseUsage(usage)),
+      await streamChat(streamConfig, {
+        onToken: (token) => {
+          fullResponse += token;
+          write(sseToken(token));
         },
-      );
+        onUsage: (usage) => write(sseUsage(usage)),
+      });
 
       if (!fullResponse.trim()) {
         const fallback = 'The assistant did not generate a response.';

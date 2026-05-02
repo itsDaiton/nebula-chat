@@ -67,7 +67,11 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
       tokenCount: cachedData.usageData?.totalTokens ?? null,
     });
 
-    const { userMessageId, conversationId: finalConversationId, isNewConversation } = userMessageResult;
+    const {
+      userMessageId,
+      conversationId: finalConversationId,
+      isNewConversation,
+    } = userMessageResult;
     const assistantMessageId = assistantMessage.id;
 
     reply.hijack();
@@ -86,9 +90,7 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
     raw.write('\n\n');
 
     raw.write(
-      sseUsage(
-        cachedData.usageData ?? { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
-      ),
+      sseUsage(cachedData.usageData ?? { promptTokens: 0, completionTokens: 0, totalTokens: 0 }),
     );
 
     raw.write(sseAssistantMessageCreated(assistantMessageId));

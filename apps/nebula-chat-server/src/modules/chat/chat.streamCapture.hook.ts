@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
 import { cacheService } from '@backend/cache/cache.service';
-import type { CreateChatStreamDTO , UsageData } from '@backend/modules/chat/chat.types';
+import type { CreateChatStreamDTO, UsageData } from '@backend/modules/chat/chat.types';
 
 const extractUsageFromStream = (stream: string): UsageData | null => {
   const lines = stream.split('\n');
