@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.17.3...nebula-chat-v1.17.4) (2026-05-02)
+
+
+### Bug Fixes
+
+* delete .jscpd.json ([#227](https://github.com/itsDaiton/nebula-chat/issues/227)) ([c6ddcbc](https://github.com/itsDaiton/nebula-chat/commit/c6ddcbc71c85617791802128f51d9d015562678f))
+
 ## [1.17.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.17.2...nebula-chat-v1.17.3) (2026-05-02)
 
 
