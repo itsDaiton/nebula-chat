@@ -3,7 +3,14 @@ import { cacheService } from '@backend/cache/cache.service';
 import { setCacheHeaders } from '@backend/config/headers.config';
 import { createUserMessage, validateChatRequest } from '@backend/modules/chat/chat.service';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
-import { streamFormatter } from '@backend/modules/chat/chat.utils';
+import {
+  sseConversationCreated,
+  sseUserMessageCreated,
+  sseCacheHit,
+  sseUsage,
+  sseAssistantMessageCreated,
+  sseEnd,
+} from '@nebula-chat/langchain';
 import { messageService } from '@backend/modules/message/message.service';
 
 export const cacheCheckHook: preHandlerAsyncHookHandler = async (
@@ -60,11 +67,7 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
       tokenCount: cachedData.usageData?.totalTokens ?? null,
     });
 
-    const {
-      userMessageId,
-      conversationId: finalConversationId,
-      isNewConversation,
-    } = userMessageResult;
+    const { userMessageId, conversationId: finalConversationId, isNewConversation } = userMessageResult;
     const assistantMessageId = assistantMessage.id;
 
     reply.hijack();
@@ -73,29 +76,25 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
     raw.flushHeaders?.();
 
     if (isNewConversation) {
-      streamFormatter.writeConversationCreated(raw, finalConversationId);
+      raw.write(sseConversationCreated(finalConversationId));
     }
 
-    streamFormatter.writeUserMessageCreated(raw, userMessageId);
-    streamFormatter.writeCacheHit(raw);
+    raw.write(sseUserMessageCreated(userMessageId));
+    raw.write(sseCacheHit());
 
     raw.write(cachedData.tokens.trimEnd());
     raw.write('\n\n');
 
-    streamFormatter.writeUsage(
-      raw,
-      cachedData.usageData ?? {
-        promptTokens: 0,
-        completionTokens: 0,
-        totalTokens: 0,
-      },
+    raw.write(
+      sseUsage(
+        cachedData.usageData ?? { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+      ),
     );
 
-    streamFormatter.writeAssistantMessageCreated(raw, assistantMessageId);
-    streamFormatter.writeEnd(raw);
+    raw.write(sseAssistantMessageCreated(assistantMessageId));
+    raw.write(sseEnd());
     raw.end();
   } catch (error) {
     req.log.error(error, 'Cache check error (fail-open)');
-    // Fall through — the handler will run and perform a fresh OpenAI request.
   }
 };

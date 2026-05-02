@@ -18,15 +18,14 @@
     "@fastify/swagger-ui": "^5.2.0",
     "@fastify/under-pressure": "^9.0.0",
     "@nebula-chat/db": "workspace:*",
+    "@nebula-chat/langchain": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "dotenv": "^17.4.0",
     "fastify": "^5.4.0",
     "fastify-plugin": "^5.0.0",
     "fastify-type-provider-zod": "^6.1.0",
-    "openai": "^6.32.0",
     "pino": "^9.0.0",
     "redis": "^5.11.0",
-    "tiktoken": "^1.0.22",
     "zod": "^4.3.6"
   },
   "devDependencies": {

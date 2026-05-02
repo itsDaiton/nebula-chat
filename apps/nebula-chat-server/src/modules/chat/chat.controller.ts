@@ -2,7 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { setHeaders } from '@backend/config/headers.config';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { chatService } from '@backend/modules/chat/chat.service';
-import { streamFormatter } from '@backend/modules/chat/chat.utils';
+import { sseEnd } from '@nebula-chat/langchain';
 
 export const chatController = {
   async streamMessage(req: FastifyRequest, reply: FastifyReply): Promise<void> {
@@ -16,29 +16,18 @@ export const chatController = {
     setHeaders(raw, req.headers.origin);
     raw.flushHeaders?.();
 
-    await chatService.streamResponse(input, {
-      onConversationCreated: (conversationId) => {
-        (req.body as CreateChatStreamDTO).conversationId = conversationId;
-        streamFormatter.writeConversationCreated(raw, conversationId);
-      },
-      onUserMessageCreated: (messageId) => {
-        streamFormatter.writeUserMessageCreated(raw, messageId);
-      },
-      onToken: (token) => {
-        streamFormatter.writeToken(raw, token);
-      },
-      onUsage: (usageData) => {
-        streamFormatter.writeUsage(raw, usageData);
-      },
-      onAssistantMessageCreated: (messageId) => {
-        streamFormatter.writeAssistantMessageCreated(raw, messageId);
-      },
-      onError: (error) => {
-        streamFormatter.writeError(raw, error);
-      },
-    });
+    const result = await chatService.streamResponse(
+      input,
+      (chunk) => raw.write(chunk),
+      'anonymous',
+      req.log,
+    );
 
-    streamFormatter.writeEnd(raw);
+    if (result) {
+      (req.body as CreateChatStreamDTO).conversationId = result.conversationId;
+    }
+
+    raw.write(sseEnd());
     raw.end();
   },
 };
