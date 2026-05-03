@@ -16,7 +16,7 @@ paths:
         - Health
       description: Welcome endpoint — confirms the API is reachable.
       responses:
-        '200':
+        "200":
           description: API is reachable
           content:
             application/json:
@@ -37,7 +37,7 @@ paths:
         - Health
       description: Returns server liveness status and current UTC timestamp.
       responses:
-        '200':
+        "200":
           description: Server is healthy
           content:
             application/json:
@@ -61,8 +61,7 @@ paths:
       summary: Stream chat completion
       tags:
         - Chat
-      description: >-
-        Stream a chat completion response from an AI model with automatic
+      description: Stream a chat completion response from an AI model with automatic
         conversation and message persistence.
       requestBody:
         required: true
@@ -73,6 +72,7 @@ paths:
               properties:
                 messages:
                   minItems: 1
+                  maxItems: 1
                   type: array
                   items:
                     type: object
@@ -94,20 +94,19 @@ paths:
                 conversationId:
                   type: string
                   format: uuid
-                  pattern: >-
-                    ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
               required:
                 - messages
                 - model
       responses:
-        '200':
+        "200":
           description: Streamed SSE events
           content:
             application/json:
               schema:
                 type: string
                 description: Streamed SSE events
-        '400':
+        "400":
           description: Invalid request body or validation error
           content:
             application/json:
@@ -128,7 +127,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Invalid request body or validation error
-        '404':
+        "404":
           description: Conversation not found
           content:
             application/json:
@@ -149,7 +148,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Conversation not found
-        '413':
+        "413":
           description: Message or context exceeds token limit
           content:
             application/json:
@@ -170,7 +169,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Message or context exceeds token limit
-        '429':
+        "429":
           description: Rate limit exceeded
           content:
             application/json:
@@ -191,7 +190,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Rate limit exceeded
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -232,7 +231,7 @@ paths:
               required:
                 - title
       responses:
-        '201':
+        "201":
           description: Conversation created successfully
           content:
             application/json:
@@ -242,8 +241,7 @@ paths:
                   id:
                     type: string
                     format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                   title:
                     type: string
                   createdAt: {}
@@ -253,7 +251,7 @@ paths:
                   - createdAt
                 additionalProperties: false
                 description: Conversation created successfully
-        '400':
+        "400":
           description: Invalid request body
           content:
             application/json:
@@ -274,7 +272,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Invalid request body
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -300,9 +298,8 @@ paths:
       summary: List conversations
       tags:
         - Conversations
-      description: >-
-        Retrieve conversations with cursor-based pagination. Returns up to 10
-        conversations by default.
+      description: Retrieve conversations with cursor-based pagination. Returns up to
+        10 conversations by default.
       parameters:
         - schema:
             default: 10
@@ -316,14 +313,13 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
           required: false
           description: Pagination cursor for fetching the next page of conversations
       responses:
-        '200':
+        "200":
           description: Paginated list of conversations
           content:
             application/json:
@@ -338,8 +334,7 @@ paths:
                         id:
                           type: string
                           format: uuid
-                          pattern: >-
-                            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                         title:
                           type: string
                         createdAt: {}
@@ -352,8 +347,7 @@ paths:
                     nullable: true
                     type: string
                     format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                   hasMore:
                     type: boolean
                 required:
@@ -362,7 +356,7 @@ paths:
                   - hasMore
                 additionalProperties: false
                 description: Paginated list of conversations
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -389,9 +383,8 @@ paths:
       summary: Search conversations
       tags:
         - Conversations
-      description: >-
-        Search conversations by title. Returns matching conversations ordered by
-        creation date.
+      description: Search conversations by title. Returns matching conversations
+        ordered by creation date.
       parameters:
         - schema:
             type: string
@@ -401,7 +394,7 @@ paths:
           required: true
           description: Search query to filter conversations by title
       responses:
-        '200':
+        "200":
           description: Matching conversations
           content:
             application/json:
@@ -413,8 +406,7 @@ paths:
                     id:
                       type: string
                       format: uuid
-                      pattern: >-
-                        ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                      pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                     title:
                       type: string
                     createdAt: {}
@@ -424,7 +416,7 @@ paths:
                     - createdAt
                   additionalProperties: false
                 description: Matching conversations
-        '400':
+        "400":
           description: Invalid search query
           content:
             application/json:
@@ -445,7 +437,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Invalid search query
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -477,13 +469,12 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: conversationId
           required: true
       responses:
-        '200':
+        "200":
           description: Conversation retrieved successfully
           content:
             application/json:
@@ -493,8 +484,7 @@ paths:
                   id:
                     type: string
                     format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                   title:
                     type: string
                   createdAt: {}
@@ -504,7 +494,7 @@ paths:
                   - createdAt
                 additionalProperties: false
                 description: Conversation retrieved successfully
-        '400':
+        "400":
           description: Invalid conversation ID format
           content:
             application/json:
@@ -525,7 +515,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Invalid conversation ID format
-        '404':
+        "404":
           description: Conversation not found
           content:
             application/json:
@@ -546,7 +536,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Conversation not found
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -584,8 +574,7 @@ paths:
                 conversationId:
                   type: string
                   format: uuid
-                  pattern: >-
-                    ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                 role:
                   type: string
                   enum:
@@ -605,7 +594,7 @@ paths:
                 - role
                 - content
       responses:
-        '201':
+        "201":
           description: Message created successfully
           content:
             application/json:
@@ -615,13 +604,11 @@ paths:
                   id:
                     type: string
                     format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                   conversationId:
                     type: string
                     format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                   content:
                     type: string
                   role:
@@ -644,7 +631,7 @@ paths:
                   - createdAt
                 additionalProperties: false
                 description: Message created successfully
-        '400':
+        "400":
           description: Invalid request body
           content:
             application/json:
@@ -665,7 +652,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Invalid request body
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -693,7 +680,7 @@ paths:
         - Messages
       description: Retrieve all messages across all conversations
       responses:
-        '200':
+        "200":
           description: List of messages
           content:
             application/json:
@@ -705,13 +692,11 @@ paths:
                     id:
                       type: string
                       format: uuid
-                      pattern: >-
-                        ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                      pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                     conversationId:
                       type: string
                       format: uuid
-                      pattern: >-
-                        ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                      pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                     content:
                       type: string
                     role:
@@ -734,7 +719,7 @@ paths:
                     - createdAt
                   additionalProperties: false
                 description: List of messages
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -766,13 +751,12 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: messageId
           required: true
       responses:
-        '200':
+        "200":
           description: Message retrieved successfully
           content:
             application/json:
@@ -782,13 +766,11 @@ paths:
                   id:
                     type: string
                     format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                   conversationId:
                     type: string
                     format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                   content:
                     type: string
                   role:
@@ -811,7 +793,7 @@ paths:
                   - createdAt
                 additionalProperties: false
                 description: Message retrieved successfully
-        '400':
+        "400":
           description: Invalid message ID format
           content:
             application/json:
@@ -832,7 +814,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Invalid message ID format
-        '404':
+        "404":
           description: Message not found
           content:
             application/json:
@@ -853,7 +835,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Message not found
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -882,7 +864,7 @@ paths:
         - Cache
       description: Get cache statistics including hit/miss rates and performance metrics
       responses:
-        '200':
+        "200":
           description: Cache statistics retrieved successfully
           content:
             application/json:
@@ -970,7 +952,7 @@ paths:
                   - stats
                 additionalProperties: false
                 description: Cache statistics retrieved successfully
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -999,7 +981,7 @@ paths:
         - Cache
       description: Clear all cached data
       responses:
-        '200':
+        "200":
           description: Cache cleared successfully
           content:
             application/json:
@@ -1015,7 +997,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Cache cleared successfully
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -1044,7 +1026,7 @@ paths:
         - Cache
       description: Get list of recent cache keys
       responses:
-        '200':
+        "200":
           description: Cache keys retrieved successfully
           content:
             application/json:
@@ -1065,7 +1047,7 @@ paths:
                   - keys
                 additionalProperties: false
                 description: Cache keys retrieved successfully
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -1094,7 +1076,7 @@ paths:
         - Cache
       description: Check cache system health status
       responses:
-        '200':
+        "200":
           description: Cache is healthy
           content:
             application/json:
@@ -1109,7 +1091,7 @@ paths:
                   - status
                 additionalProperties: false
                 description: Cache is healthy
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
