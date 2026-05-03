@@ -56,7 +56,7 @@ export const streamCaptureHook: preHandlerAsyncHookHandler = async (
 
     const usageData = extractUsageFromStream(full);
 
-    // Strip usage and end events (and their data lines) from cached content.
+    // Strip usage and end events plus the immediate data line that follows.
     let skipNextData = false;
     const filtered = full
       .split('\n')
@@ -65,15 +65,13 @@ export const streamCaptureHook: preHandlerAsyncHookHandler = async (
           skipNextData = true;
           return false;
         }
-        if (line.includes('"promptTokens"')) {
-          skipNextData = false;
-          return false;
-        }
         if (skipNextData && line.startsWith('data: ')) {
           skipNextData = false;
           return false;
         }
-        skipNextData = false;
+        if (skipNextData) {
+          skipNextData = false;
+        }
         return true;
       })
       .join('\n');
