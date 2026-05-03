@@ -31,7 +31,8 @@
       "flatted": "3.4.2",
       "uuid": ">=14.0.0",
       "langsmith": ">=0.5.19",
-      "esbuild": "0.27.4"
+      "esbuild": "0.27.4",
+      "@anthropic-ai/sdk": ">=0.91.1"
     },
     "onlyBuiltDependencies": [
       "argon2",
