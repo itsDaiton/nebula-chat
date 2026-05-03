@@ -40,8 +40,11 @@ export const streamChat = async (
 
   const resolvedModel = model ?? DEFAULT_MODELS[llmConfig.provider];
   const registry = MODEL_REGISTRY[resolvedModel];
+  const reservedOutputTokens = registry
+    ? Math.max(registry.defaultMaxOutput, llmConfig.maxTokens ?? 0)
+    : 0;
   const maxInputTokens = registry
-    ? registry.contextWindow - registry.defaultMaxOutput
+    ? registry.contextWindow - reservedOutputTokens
     : DEFAULT_MAX_INPUT_TOKENS;
 
   const langchainHistory = history.map((m) =>
