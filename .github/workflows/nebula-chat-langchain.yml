@@ -13,6 +13,8 @@ on:
       - '.github/workflows/nebula-chat-langchain.yml'
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   pipeline:
     name: nebula-chat-langchain

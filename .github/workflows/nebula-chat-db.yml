@@ -13,6 +13,8 @@ on:
       - '.github/workflows/nebula-chat-db.yml'
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   pipeline:
     name: nebula-chat-db

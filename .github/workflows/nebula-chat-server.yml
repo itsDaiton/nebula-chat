@@ -17,6 +17,8 @@ on:
       - '.github/workflows/nebula-chat-server.yml'
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   pipeline:
     name: nebula-chat-server
