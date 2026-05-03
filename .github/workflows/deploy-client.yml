@@ -13,4 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Render deploy
-        run: curl -fSs --retry 3 -X POST "${{ secrets.RENDER_CLIENT_DEPLOY_HOOK }}"
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_CLIENT_DEPLOY_HOOK }}
+        run: curl -fSs --retry 3 -X POST "$DEPLOY_HOOK"
