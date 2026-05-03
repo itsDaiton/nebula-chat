@@ -50,7 +50,7 @@ The lib uses **`tsup` for build output (dual ESM+CJS)** rather than plain `tsc`.
   - Pure SSE formatters (`sseToken`, `sseUsage`, `sseEnd`) are unit-testable in isolation with no Fastify, no HTTP, no streams.
 - **Negative / Tradeoffs:**
   - One additional layer of indirection between the controller and the LLM. Reading a streaming chat request now traces through `controller → streamChat → buildChatChain → createLLM → ChatOpenAI/ChatAnthropic` instead of `controller → openai.chat.completions.create`.
-  - `streamChat` becomes a public contract. Its callback shape (`onToken`, `onUsage`, `onEnd`, `onError`) must remain stable across future provider additions; breaking it cascades into every consumer (server today, M-7 workers and M-10 wrapper later). Adding a third provider with a fundamentally different stream shape (e.g. tool-calling deltas) requires extending the contract additively rather than reshaping it.
+  - `streamChat` becomes a public contract. Its callback shape (`onToken`, `onUsage`) must remain stable across future provider additions; breaking it cascades into every consumer (server today, M-7 workers and M-10 wrapper later). Adding a third provider with a fundamentally different stream shape (e.g. tool-calling deltas) requires extending the contract additively rather than reshaping it.
   - LangChain's bundle is non-trivial. Install size and cold-start time on the server will grow vs. the bare `openai` SDK. Acceptable given the ecosystem and observability gains, but worth measuring on Render after deploy.
 - **Neutral:**
   - HTTP API surface is unchanged. `POST /api/chat/stream` keeps the same request body schema, same SSE event names, and the same Orval-generated frontend client. The OpenAPI spec regenerates identically.
