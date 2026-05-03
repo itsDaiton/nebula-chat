@@ -2,10 +2,12 @@ import { eq, desc } from 'drizzle-orm';
 import { messages } from '@nebula-chat/db';
 import type { DbTransaction } from '@nebula-chat/db';
 import { db } from '@backend/db';
-import type { CreateMessageDTO, GetMessageParams } from '@backend/modules/message/message.types';
-
-type MessageRow = typeof messages.$inferSelect;
-type MessageHistoryRow = Pick<MessageRow, 'id' | 'createdAt' | 'role' | 'content' | 'tokenCount'>;
+import type {
+  CreateMessageDTO,
+  GetMessageParams,
+  MessageHistoryRow,
+  MessageRow,
+} from '@backend/modules/message/message.types';
 
 export const messageRepository: {
   create: (data: CreateMessageDTO) => Promise<MessageRow>;
