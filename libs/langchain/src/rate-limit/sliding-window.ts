@@ -20,7 +20,11 @@ export const createRateLimiter = (options: RateLimiterOptions): RateLimiter => {
       const cutoff = now - windowMs;
 
       const timestamps = (buckets.get(userId) ?? []).filter((t) => t > cutoff);
-      buckets.set(userId, timestamps);
+      if (timestamps.length === 0) {
+        buckets.delete(userId);
+      } else {
+        buckets.set(userId, timestamps);
+      }
 
       if (timestamps.length >= maxRequests) {
         const retryAfterMs = timestamps[0] - cutoff;
