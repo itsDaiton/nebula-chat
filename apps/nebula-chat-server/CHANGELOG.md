@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.8.1...nebula-chat-server-v1.8.2) (2026-05-03)
+
+
+### Bug Fixes
+
+* **ci:** migrate monorepo builds to Turborepo ([#239](https://github.com/itsDaiton/nebula-chat/issues/239)) ([1a03d6f](https://github.com/itsDaiton/nebula-chat/commit/1a03d6fdbdb4c003abffa502cb3abe15802173cb))
+
 ## [1.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.8.0...nebula-chat-server-v1.8.1) (2026-05-03)
 
 
