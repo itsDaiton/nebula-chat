@@ -30,7 +30,7 @@ export const createRateLimiter = (options: RateLimiterOptions): RateLimiter => {
 
   const timer = setInterval(sweep, windowMs);
   // Prevent the sweep timer from keeping the Node.js event loop alive.
-  (timer as NodeJS.Timeout).unref?.();
+  timer.unref?.();
 
   return {
     check: (userId: string) => {
