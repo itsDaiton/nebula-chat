@@ -8,6 +8,28 @@ export type WindowLimits = {
   userMessage?: string;
 };
 
+type ContentBlock = { type?: string; text?: string } | string;
+
+const normalizeMessageContent = (content: BaseMessage['content']): string => {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((part: ContentBlock) => {
+        if (typeof part === 'string') return part;
+        if (part && typeof part === 'object' && typeof part.text === 'string') return part.text;
+        return '';
+      })
+      .join('');
+  }
+
+  if (content && typeof content === 'object' && 'text' in content) {
+    const maybeText = (content as { text?: string }).text;
+    return typeof maybeText === 'string' ? maybeText : '';
+  }
+
+  return '';
+};
+
 // Returns the longest suffix of history that fits within maxInputTokens
 // after reserving space for the system prompt and the new user message.
 export const packHistory = (history: BaseMessage[], limits: WindowLimits): BaseMessage[] => {
@@ -22,7 +44,7 @@ export const packHistory = (history: BaseMessage[], limits: WindowLimits): BaseM
 
   // Walk backwards — most recent messages have priority
   for (let i = history.length - 1; i >= 0; i--) {
-    const msgTokens = countTokens(history[i].content as string, model);
+    const msgTokens = countTokens(normalizeMessageContent(history[i].content), model);
     if (msgTokens > budget) break;
     result.unshift(history[i]);
     budget -= msgTokens;
@@ -30,3 +52,6 @@ export const packHistory = (history: BaseMessage[], limits: WindowLimits): BaseM
 
   return result;
 };
+
+export const getMessageContentText = (message: BaseMessage): string =>
+  normalizeMessageContent(message.content);

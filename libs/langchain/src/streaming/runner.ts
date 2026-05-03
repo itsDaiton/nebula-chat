@@ -5,7 +5,7 @@ import { DEFAULT_MODELS, MODEL_REGISTRY } from '../providers/types';
 import type { LLMConfig } from '../providers/types';
 import { llmConcurrencyLimiter } from '../rate-limit/concurrency';
 import { countTokens } from '../tokens/counter';
-import { packHistory } from '../tokens/window';
+import { getMessageContentText, packHistory } from '../tokens/window';
 
 export type HistoryMessage = {
   role: string;
@@ -61,7 +61,10 @@ export const streamChat = async (
   const promptTokens =
     countTokens(systemPrompt, resolvedModel) +
     countTokens(userMessage, resolvedModel) +
-    trimmedHistory.reduce((sum, m) => sum + countTokens(m.content as string, resolvedModel), 0);
+    trimmedHistory.reduce(
+      (sum, m) => sum + countTokens(getMessageContentText(m), resolvedModel),
+      0,
+    );
 
   const chain = buildChatChain({
     ...llmConfig,
