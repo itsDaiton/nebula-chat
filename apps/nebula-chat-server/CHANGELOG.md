@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.8.0...nebula-chat-server-v1.8.1) (2026-05-03)
+
+
+### Bug Fixes
+
+* bump deps ([#236](https://github.com/itsDaiton/nebula-chat/issues/236)) ([7a3c49d](https://github.com/itsDaiton/nebula-chat/commit/7a3c49d9af36556bd1f427ec68df07c48573cfee))
+
 ## [1.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.7.1...nebula-chat-server-v1.8.0) (2026-05-03)
 
 
