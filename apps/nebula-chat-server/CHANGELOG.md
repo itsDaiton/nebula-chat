@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.7.1...nebula-chat-server-v1.8.0) (2026-05-03)
+
+
+### Features
+
+* **langchain:** implement @nebula-chat/langchain lib and wire into server ([#229](https://github.com/itsDaiton/nebula-chat/issues/229)) ([c883085](https://github.com/itsDaiton/nebula-chat/commit/c883085c3fcf21cbcbe7e42feef1a03c9347e002))
+
 ## [1.7.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.7.0...nebula-chat-server-v1.7.1) (2026-05-01)
 
 
