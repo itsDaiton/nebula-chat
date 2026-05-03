@@ -12,12 +12,27 @@ const TIKTOKEN_MODELS = new Set<string>([
   'gpt-3.5-turbo',
 ]);
 
-export const countTokens = (text: string, model?: string): number => {
-  const enc = TIKTOKEN_MODELS.has(model ?? '')
-    ? encoding_for_model(model as TiktokenModel)
-    : get_encoding('cl100k_base');
+const encoderCache = new Map<string, ReturnType<typeof get_encoding>>();
 
-  const count = enc.encode(text).length;
-  enc.free();
-  return count;
+const getEncoder = (model?: string) => {
+  const cacheKey = model && TIKTOKEN_MODELS.has(model) ? model : 'cl100k_base';
+  const cached = encoderCache.get(cacheKey);
+  if (cached) return cached;
+
+  let encoder;
+  if (cacheKey === 'cl100k_base') {
+    encoder = get_encoding('cl100k_base');
+  } else {
+    try {
+      encoder = encoding_for_model(cacheKey as TiktokenModel);
+    } catch {
+      encoder = get_encoding('cl100k_base');
+    }
+  }
+
+  encoderCache.set(cacheKey, encoder);
+  return encoder;
 };
+
+export const countTokens = (text: string, model?: string): number =>
+  getEncoder(model).encode(text).length;
