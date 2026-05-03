@@ -28,6 +28,7 @@
       "hono": "4.12.14",
       "path-to-regexp": "8.4.0",
       "fast-xml-parser": ">=5.7.0",
+      "flatted": "3.4.2",
       "uuid": ">=14.0.0",
       "langsmith": ">=0.5.19"
     },
