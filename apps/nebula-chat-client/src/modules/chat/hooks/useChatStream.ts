@@ -1,29 +1,11 @@
 import { useCallback, useRef } from 'react';
-import type { ChatHistoryStreamOptions } from '@/modules/chat/types/types';
+import type { ChatHistoryStreamOptions, SseEvent } from '@/modules/chat/types/types';
 import { SERVER_CONFIG } from '@/shared/config/serverConfig';
 import { useNavigate } from 'react-router';
 import { route } from '@/routing/routes';
 import { useConversationsStore } from '@/modules/conversations/stores/useConversationsStore';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
-
-type SseEvent =
-  | 'token'
-  | 'usage'
-  | 'error'
-  | 'end'
-  | 'conversation-created'
-  | 'user-message-created'
-  | 'assistant-message-created';
-
-const SSE_EVENTS: ReadonlySet<string> = new Set<SseEvent>([
-  'token',
-  'usage',
-  'error',
-  'end',
-  'conversation-created',
-  'user-message-created',
-  'assistant-message-created',
-]);
+import { SSE_EVENTS } from '@/modules/chat/utils/sseEvents';
 
 export const useChatStream = () => {
   const {
