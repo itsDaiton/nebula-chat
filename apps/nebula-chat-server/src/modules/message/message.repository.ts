@@ -48,6 +48,6 @@ export const messageRepository: {
       .from(messages)
       .where(eq(messages.conversationId, conversationId))
       .orderBy(desc(messages.createdAt));
-    return limit !== undefined ? base.limit(limit) : base;
+    return limit === undefined ? base : base.limit(limit);
   },
 };
