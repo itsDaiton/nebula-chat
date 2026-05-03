@@ -5,9 +5,9 @@
   "main": "dist/src/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "pnpm --filter \"@nebula-chat/*\" build && tsc && tsc-alias",
+    "build": "tsc && tsc-alias",
     "start": "node dist/src/server.js",
-    "typecheck": "pnpm --filter \"@nebula-chat/*\" build && tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "generate:openapi": "tsx src/scripts/generate-openapi.ts"
   },
   "dependencies": {
@@ -32,7 +32,6 @@
     "@types/node": "catalog:",
     "pino-pretty": "^13.0.0",
     "tsc-alias": "^1.8.17",
-    "tsx": "^4.21.0",
     "typescript": "catalog:"
   }
 }

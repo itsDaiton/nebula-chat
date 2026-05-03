@@ -4,7 +4,7 @@ services:
     runtime: node
     rootDir: .
     plan: free
-    buildCommand: corepack enable && corepack prepare pnpm@10.26.2 --activate && pnpm install --frozen-lockfile && pnpm --filter nebula-chat-server run build && pnpm --filter @nebula-chat/db db:migrate
+    buildCommand: corepack enable && corepack prepare pnpm@10.26.2 --activate && pnpm install --frozen-lockfile && pnpm turbo run build --filter=nebula-chat-server && pnpm --filter @nebula-chat/db db:migrate
     startCommand: corepack enable && corepack prepare pnpm@10.26.2 --activate && pnpm --filter nebula-chat-server run start
     healthCheckPath: /health
     autoDeployTrigger: off
@@ -13,7 +13,7 @@ services:
     name: nebula-chat-client
     runtime: static
     rootDir: .
-    buildCommand: corepack enable && corepack prepare pnpm@10.26.2 --activate && pnpm install --frozen-lockfile && pnpm --filter nebula-chat-client run build
+    buildCommand: corepack enable && corepack prepare pnpm@10.26.2 --activate && pnpm install --frozen-lockfile && pnpm turbo run build --filter=nebula-chat-client
     staticPublishPath: apps/nebula-chat-client/build
     pullRequestPreviewsEnabled: true
     autoDeployTrigger: off

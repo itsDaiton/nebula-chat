@@ -3,39 +3,35 @@ name: Build nebula-chat-client
 on:
   push:
     branches: [main]
+    paths:
+      - 'apps/nebula-chat-client/**'
+      - 'scripts/post-sonar-quality-comment.ts'
+      - '.github/workflows/nebula-chat-client.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'apps/nebula-chat-client/**'
+      - 'scripts/post-sonar-quality-comment.ts'
+      - '.github/workflows/nebula-chat-client.yml'
   workflow_dispatch:
 
-jobs:
-  changes:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-    outputs:
-      relevant: ${{ steps.filter.outputs.relevant }}
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
-        id: filter
-        with:
-          filters: |
-            relevant:
-              - 'apps/nebula-chat-client/**'
-              - 'scripts/post-sonar-quality-comment.ts'
-              - '.github/workflows/nebula-chat-client.yml'
+permissions: {}
 
-  build:
-    needs: changes
-    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.relevant == 'true'
-    name: build-client
+jobs:
+  pipeline:
+    name: nebula-chat-client
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
+      issues: write
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - name: Set up pnpm
         uses: pnpm/action-setup@26f6d4f2c533a43e6b5da0b4a5dd983f98f7b49a # v4
         with:
@@ -45,6 +41,13 @@ jobs:
         with:
           node-version: 24.14.1
           cache: 'pnpm'
+      - name: Cache turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-client-${{ github.sha }}
+          restore-keys: |
+            turbo-client-
       - name: Install dependencies
         run: pnpm install --ignore-scripts
       - name: Lint
@@ -52,27 +55,10 @@ jobs:
       - name: Format check
         run: pnpm exec prettier --check apps/nebula-chat-client/ scripts/post-sonar-quality-comment.ts
       - name: TypeScript check
-        run: pnpm --filter nebula-chat-client run typecheck
+        run: pnpm turbo run typecheck --filter=nebula-chat-client
       - name: Build
-        run: pnpm --filter nebula-chat-client run build
-
-  sonar:
-    needs:
-      - changes
-      - build
-    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.relevant == 'true'
-    name: sonar-client
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-      issues: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: SonarQube Scan for Nebula Chat Client
+        run: pnpm turbo run build --filter=nebula-chat-client
+      - name: SonarQube scan
         uses: SonarSource/sonarqube-scan-action@59db25f34e16620e48ab4bb9e4a5dce155cb5432 # v8.0.0
         with:
           projectBaseDir: apps/nebula-chat-client
@@ -86,16 +72,13 @@ jobs:
             -Dsonar.coverage.exclusions=**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      - name: Evaluate SonarQube quality gate for Nebula Chat Client
+      - name: Evaluate quality gate
         id: quality_gate
         uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
         with:
           scanMetadataReportFile: apps/nebula-chat-client/.scannerwork/report-task.txt
           pollingTimeoutSec: 300
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      - name: Publish Sonar summary for client
+      - name: Publish Sonar summary
         if: always()
         run: |
           report_file='apps/nebula-chat-client/.scannerwork/report-task.txt'
@@ -114,20 +97,14 @@ jobs:
               echo "- Dashboard: ${dashboard_url}"
             fi
           } >> "${GITHUB_STEP_SUMMARY}"
-      - name: Set up Node.js for Sonar PR comment
+      - name: Comment quality gate in PR
         if: github.event_name == 'pull_request' && always()
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-        with:
-          node-version: 24.14.1
-      - name: Comment quality gate for client in PR
-        if: github.event_name == 'pull_request' && always()
-        run: npx --yes tsx scripts/post-sonar-quality-comment.ts
+        run: pnpm exec tsx scripts/post-sonar-quality-comment.ts
         env:
           APP_NAME: nebula-chat-client
           SONAR_PROJECT_KEY: itsDaiton_nebula-chat-client
           SONAR_QUALITY_GATE_STATUS: ${{ steps.quality_gate.outputs.quality-gate-status }}
           SONAR_REPORT_PATH: apps/nebula-chat-client/.scannerwork/report-task.txt
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SERVER_URL: ${{ github.server_url }}

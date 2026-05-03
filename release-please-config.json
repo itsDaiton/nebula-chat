@@ -17,10 +17,12 @@
     },
     "libs/db": {
       "release-type": "node",
+      "component": "nebula-chat-db",
       "include-component-in-tag": true
     },
     "libs/langchain": {
       "release-type": "node",
+      "component": "nebula-chat-langchain",
       "include-component-in-tag": true
     },
     "openapi": {

@@ -1,34 +1,29 @@
-name: Build nebula-chat-server
+name: Build nebula-chat-langchain
 
 on:
   push:
     branches: [main]
     paths:
-      - 'apps/nebula-chat-server/**'
-      - 'libs/**'
-      - 'scripts/post-sonar-quality-comment.ts'
-      - '.github/workflows/nebula-chat-server.yml'
+      - 'libs/langchain/**'
+      - '.github/workflows/nebula-chat-langchain.yml'
   pull_request:
     branches: [main]
     paths:
-      - 'apps/nebula-chat-server/**'
-      - 'libs/**'
-      - 'scripts/post-sonar-quality-comment.ts'
-      - '.github/workflows/nebula-chat-server.yml'
+      - 'libs/langchain/**'
+      - '.github/workflows/nebula-chat-langchain.yml'
   workflow_dispatch:
 
 permissions: {}
 
 jobs:
   pipeline:
-    name: nebula-chat-server
+    name: nebula-chat-langchain
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
       issues: write
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
       - name: Checkout
@@ -48,29 +43,25 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .turbo
-          key: turbo-server-${{ github.sha }}
+          key: turbo-langchain-${{ github.sha }}
           restore-keys: |
-            turbo-server-
+            turbo-langchain-
       - name: Install dependencies
         run: pnpm install --ignore-scripts
-      - name: Lint
-        run: pnpm exec eslint --report-unused-disable-directives --max-warnings=0 apps/nebula-chat-server/ scripts/post-sonar-quality-comment.ts
-      - name: Format check
-        run: pnpm exec prettier --check apps/nebula-chat-server/ scripts/post-sonar-quality-comment.ts
-      - name: TypeScript check
-        run: pnpm turbo run typecheck --filter=nebula-chat-server
       - name: Build
-        run: pnpm turbo run build --filter=nebula-chat-server
+        run: pnpm turbo run build --filter=@nebula-chat/langchain
+      - name: TypeScript check
+        run: pnpm turbo run typecheck --filter=@nebula-chat/langchain
       - name: SonarQube scan
         uses: SonarSource/sonarqube-scan-action@59db25f34e16620e48ab4bb9e4a5dce155cb5432 # v8.0.0
         with:
-          projectBaseDir: apps/nebula-chat-server
+          projectBaseDir: libs/langchain
           args: >
-            -Dsonar.projectKey=itsDaiton_nebula-chat-server
+            -Dsonar.projectKey=itsDaiton_nebula-chat-langchain
             -Dsonar.organization=itsdaiton
-            -Dsonar.projectName=Nebula-Chat-Server
+            -Dsonar.projectName=Nebula-Chat-LangChain
             -Dsonar.sources=src
-            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/generated/**
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.coverage.exclusions=**/*
         env:
@@ -79,12 +70,12 @@ jobs:
         id: quality_gate
         uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
         with:
-          scanMetadataReportFile: apps/nebula-chat-server/.scannerwork/report-task.txt
+          scanMetadataReportFile: libs/langchain/.scannerwork/report-task.txt
           pollingTimeoutSec: 300
       - name: Publish Sonar summary
         if: always()
         run: |
-          report_file='apps/nebula-chat-server/.scannerwork/report-task.txt'
+          report_file='libs/langchain/.scannerwork/report-task.txt'
           dashboard_url=''
           if [ -f "${report_file}" ]; then
             dashboard_url="$(grep '^dashboardUrl=' "${report_file}" | cut -d= -f2-)"
@@ -93,8 +84,8 @@ jobs:
           {
             echo '## Sonar Scan Summary'
             echo ''
-            echo '- App: nebula-chat-server'
-            echo '- Project key: itsDaiton_nebula-chat-server'
+            echo '- Lib: nebula-chat-langchain'
+            echo '- Project key: itsDaiton_nebula-chat-langchain'
             echo '- Quality gate: ${{ steps.quality_gate.outputs.quality-gate-status }}'
             if [ -n "${dashboard_url}" ]; then
               echo "- Dashboard: ${dashboard_url}"
@@ -104,10 +95,10 @@ jobs:
         if: github.event_name == 'pull_request' && always()
         run: pnpm exec tsx scripts/post-sonar-quality-comment.ts
         env:
-          APP_NAME: nebula-chat-server
-          SONAR_PROJECT_KEY: itsDaiton_nebula-chat-server
+          APP_NAME: nebula-chat-langchain
+          SONAR_PROJECT_KEY: itsDaiton_nebula-chat-langchain
           SONAR_QUALITY_GATE_STATUS: ${{ steps.quality_gate.outputs.quality-gate-status }}
-          SONAR_REPORT_PATH: apps/nebula-chat-server/.scannerwork/report-task.txt
+          SONAR_REPORT_PATH: libs/langchain/.scannerwork/report-task.txt
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SERVER_URL: ${{ github.server_url }}

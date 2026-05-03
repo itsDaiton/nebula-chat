@@ -27,12 +27,18 @@ pnpm typecheck  # tsc --noEmit
 ### Backend (`/apps/nebula-chat-server`)
 
 ```bash
-pnpm dev              # tsx watch mode (auto-restart)
-pnpm build            # tsc + path alias resolution
+pnpm dev              # tsx watch mode (auto-restart) — assumes lib artifacts already built
 pnpm start            # node dist/src/server.js (production)
-pnpm typecheck        # tsc --noEmit
 pnpm generate:openapi # Regenerate openapi/openapi.yaml from live route schemas
 ```
+
+> **`build` and `typecheck` must be run via Turbo** so workspace lib artifacts (`dist/*.d.ts`) are
+> built first. Use these from the repo root:
+>
+> ```bash
+> pnpm turbo run build     --filter=nebula-chat-server  # builds @nebula-chat/* deps first
+> pnpm turbo run typecheck --filter=nebula-chat-server  # builds + typechecks dep closure first
+> ```
 
 ### DB lib (`/libs/db` — `@nebula-chat/db`)
 
