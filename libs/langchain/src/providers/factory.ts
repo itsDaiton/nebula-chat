@@ -9,5 +9,7 @@ export const createLLM = (config: LLMConfig): BaseChatModel => {
       return createOpenAILLM(config);
     case 'anthropic':
       return createAnthropicLLM(config);
+    default:
+      throw new Error(`Unsupported provider: ${config.provider}`);
   }
 };

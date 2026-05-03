@@ -7,8 +7,10 @@ const chatMessageSchema = z.object({
 });
 
 export const createChatStreamSchema = z.object({
-  messages: z.array(chatMessageSchema).min(1),
-  model: z.string().refine((m) => m in MODEL_REGISTRY, { message: 'Invalid model specified.' }),
+  messages: z.array(chatMessageSchema).length(1),
+  model: z
+    .string()
+    .refine((m) => Object.hasOwn(MODEL_REGISTRY, m), { message: 'Invalid model name' }),
   conversationId: z.uuid().optional(),
 });
 
