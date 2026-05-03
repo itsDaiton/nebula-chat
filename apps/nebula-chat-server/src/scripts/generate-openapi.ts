@@ -9,9 +9,7 @@ process.env.REDIS_URL ??= process.env.OPENAPI_REDIS_URL;
 
 const hasProviderKey =
   process.env.OPENAI_API_KEY !== undefined || process.env.ANTHROPIC_API_KEY !== undefined;
-const missingBaseKeys = (['DATABASE_URL', 'REDIS_URL'] as const).filter(
-  (key) => !process.env[key],
-);
+const missingBaseKeys = (['DATABASE_URL', 'REDIS_URL'] as const).filter((key) => !process.env[key]);
 
 if (!hasProviderKey || missingBaseKeys.length > 0) {
   const missing = [
