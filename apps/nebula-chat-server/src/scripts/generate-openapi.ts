@@ -1,15 +1,7 @@
 import 'dotenv/config';
+import { hasProviderKey, missingBaseKeys } from 'load-env';
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-
-process.env.OPENAI_API_KEY ??= process.env.OPENAPI_OPENAI_API_KEY;
-process.env.ANTHROPIC_API_KEY ??= process.env.OPENAPI_ANTHROPIC_API_KEY;
-process.env.DATABASE_URL ??= process.env.OPENAPI_DATABASE_URL;
-process.env.REDIS_URL ??= process.env.OPENAPI_REDIS_URL;
-
-const hasProviderKey =
-  process.env.OPENAI_API_KEY !== undefined || process.env.ANTHROPIC_API_KEY !== undefined;
-const missingBaseKeys = (['DATABASE_URL', 'REDIS_URL'] as const).filter((key) => !process.env[key]);
 
 if (!hasProviderKey || missingBaseKeys.length > 0) {
   const missing = [
