@@ -136,7 +136,10 @@ export const chatService = {
         MAX_HISTORY_MESSAGES,
       );
 
-      const history = dbHistory.toReversed().map((m) => ({ role: m.role, content: m.content }));
+      const history = dbHistory
+        .filter((m) => m.id !== userMessageId)
+        .toReversed()
+        .map((m) => ({ role: m.role, content: m.content }));
 
       const streamConfig: Parameters<typeof streamChat>[0] = {
         provider: env.LLM_PROVIDER,
