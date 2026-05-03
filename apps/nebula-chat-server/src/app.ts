@@ -32,7 +32,10 @@ export const buildApp = async (): Promise<FastifyInstance> => {
   const app = Fastify({
     logger:
       env.NODE_ENV === 'development'
-        ? { level: env.LOG_LEVEL, transport: { target: 'pino-pretty', options: { colorize: true } } }
+        ? {
+            level: env.LOG_LEVEL,
+            transport: { target: 'pino-pretty', options: { colorize: true } },
+          }
         : { level: env.LOG_LEVEL },
     trustProxy: resolveTrustProxy(),
   });
