@@ -95,14 +95,9 @@ jobs:
               echo "- Dashboard: ${dashboard_url}"
             fi
           } >> "${GITHUB_STEP_SUMMARY}"
-      - name: Set up Node.js for Sonar PR comment
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-        with:
-          node-version: 24.14.1
       - name: Comment quality gate in PR
         if: github.event_name == 'pull_request' && always()
-        run: npx --yes tsx scripts/post-sonar-quality-comment.ts
+        run: pnpm exec tsx scripts/post-sonar-quality-comment.ts
         env:
           APP_NAME: nebula-chat-client
           SONAR_PROJECT_KEY: itsDaiton_nebula-chat-client
