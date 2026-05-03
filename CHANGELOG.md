@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.18.0...nebula-chat-v1.18.1) (2026-05-03)
+
+
+### Bug Fixes
+
+* **security:** override esbuild version ([#233](https://github.com/itsDaiton/nebula-chat/issues/233)) ([a16d1e5](https://github.com/itsDaiton/nebula-chat/commit/a16d1e5f7a1fbf2a57b6802e2bd8835790b45f74))
+
 ## [1.18.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.17.4...nebula-chat-v1.18.0) (2026-05-03)
 
 
