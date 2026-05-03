@@ -24,14 +24,14 @@
     "fastify": "^5.4.0",
     "fastify-plugin": "^5.0.0",
     "fastify-type-provider-zod": "^6.1.0",
-    "pino": "^9.0.0",
+    "pino": "^10.3.1",
     "redis": "^5.11.0",
-    "zod": "^4.3.6"
+    "zod": "^4.4.2"
   },
   "devDependencies": {
     "@types/node": "catalog:",
     "pino-pretty": "^13.0.0",
-    "tsc-alias": "^1.8.16",
+    "tsc-alias": "^1.8.17",
     "tsx": "^4.21.0",
     "typescript": "catalog:"
   }
