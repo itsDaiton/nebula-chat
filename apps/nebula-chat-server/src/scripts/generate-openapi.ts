@@ -13,7 +13,7 @@ const missingBaseKeys = (['DATABASE_URL', 'REDIS_URL'] as const).filter((key) =>
 
 if (!hasProviderKey || missingBaseKeys.length > 0) {
   const missing = [
-    ...(!hasProviderKey ? ['OPENAI_API_KEY or ANTHROPIC_API_KEY'] : []),
+    ...(hasProviderKey ? [] : ['OPENAI_API_KEY or ANTHROPIC_API_KEY']),
     ...missingBaseKeys,
   ];
   process.stderr.write(
