@@ -152,12 +152,16 @@ export const chatService = {
       if (logger !== undefined) streamConfig.logger = logger;
 
       let fullResponse = '';
+      let totalTokens: number | null = null;
       await streamChat(streamConfig, {
         onToken: (token) => {
           fullResponse += token;
           write(sseToken(token));
         },
-        onUsage: (usage) => write(sseUsage(usage)),
+        onUsage: (usage) => {
+          totalTokens = usage.totalTokens ?? null;
+          write(sseUsage(usage));
+        },
       });
 
       if (!fullResponse.trim()) {
@@ -166,7 +170,7 @@ export const chatService = {
           conversationId,
           role: 'assistant',
           content: fallback,
-          tokenCount: null,
+          tokenCount: totalTokens,
         });
         assistantMessageId = errMsg.id;
         write(sseAssistantMessageCreated(assistantMessageId));
@@ -177,7 +181,7 @@ export const chatService = {
         conversationId,
         role: 'assistant',
         content: fullResponse,
-        tokenCount: null,
+        tokenCount: totalTokens,
       });
       assistantMessageId = assistantMessage.id;
       write(sseAssistantMessageCreated(assistantMessageId));
