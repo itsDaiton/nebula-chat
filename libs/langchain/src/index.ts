@@ -1,7 +1,7 @@
 // Providers
 export { createLLM } from './providers/factory';
 export type { LLMConfig, ProviderType, ModelEntry } from './providers/types';
-export { MODEL_REGISTRY, DEFAULT_MODELS } from './providers/types';
+export { MODEL_REGISTRY, DEFAULT_MODELS, getProviderForModel } from './providers/types';
 
 // Tokens
 export { countTokens } from './tokens/counter';

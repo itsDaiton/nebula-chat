@@ -2,17 +2,25 @@ import 'dotenv/config';
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-process.env.LLM_API_KEY ??= process.env.OPENAPI_LLM_API_KEY;
+process.env.OPENAI_API_KEY ??= process.env.OPENAPI_OPENAI_API_KEY;
+process.env.ANTHROPIC_API_KEY ??= process.env.OPENAPI_ANTHROPIC_API_KEY;
 process.env.DATABASE_URL ??= process.env.OPENAPI_DATABASE_URL;
 process.env.REDIS_URL ??= process.env.OPENAPI_REDIS_URL;
 
-const requiredKeys = ['LLM_API_KEY', 'DATABASE_URL', 'REDIS_URL'] as const;
-const missingKeys = requiredKeys.filter((key) => !process.env[key]);
+const hasProviderKey =
+  process.env.OPENAI_API_KEY !== undefined || process.env.ANTHROPIC_API_KEY !== undefined;
+const missingBaseKeys = (['DATABASE_URL', 'REDIS_URL'] as const).filter(
+  (key) => !process.env[key],
+);
 
-if (missingKeys.length > 0) {
+if (!hasProviderKey || missingBaseKeys.length > 0) {
+  const missing = [
+    ...(!hasProviderKey ? ['OPENAI_API_KEY or ANTHROPIC_API_KEY'] : []),
+    ...missingBaseKeys,
+  ];
   process.stderr.write(
-    `Missing required env vars for OpenAPI generation: ${missingKeys.join(', ')}\n` +
-      'Set the standard vars or provide OPENAPI_LLM_API_KEY, OPENAPI_DATABASE_URL, and OPENAPI_REDIS_URL.\n',
+    `Missing required env vars for OpenAPI generation: ${missing.join(', ')}\n` +
+      'Set the standard vars or provide OPENAPI_OPENAI_API_KEY / OPENAPI_ANTHROPIC_API_KEY, OPENAPI_DATABASE_URL, and OPENAPI_REDIS_URL.\n',
   );
   process.exit(1);
 }

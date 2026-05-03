@@ -10,6 +10,7 @@ import {
   streamChat,
   countTokens,
   createRateLimiter,
+  getProviderForModel,
   sseConversationCreated,
   sseUserMessageCreated,
   sseAssistantMessageCreated,
@@ -19,7 +20,12 @@ import {
 } from '@nebula-chat/langchain';
 import type { LLMLogger } from '@nebula-chat/langchain';
 import { SYSTEM_PROMPT } from '@backend/modules/chat/chat.prompt';
-import { NotFoundError, PayloadTooLargeError, BadRequestError } from '@backend/errors/AppError';
+import {
+  NotFoundError,
+  PayloadTooLargeError,
+  BadRequestError,
+  MissingConfigurationError,
+} from '@backend/errors/AppError';
 
 const MAX_PROMPT_TOKENS = 2000;
 const MAX_HISTORY_MESSAGES = 20;
@@ -119,7 +125,7 @@ export const chatService = {
       }
 
       const userMessage = data.messages[0]!;
-      const requestedModel = data.model ?? env.LLM_MODEL;
+      const requestedModel = data.model;
       await validateChatRequest(conversationId, userMessage, requestedModel);
 
       const result = await createUserMessage(conversationId, userMessage.content, userMessage.role);
@@ -141,9 +147,18 @@ export const chatService = {
         .toReversed()
         .map((m) => ({ role: m.role, content: m.content }));
 
+      const provider = getProviderForModel(requestedModel);
+      const apiKey =
+        provider === 'openai' ? env.OPENAI_API_KEY : env.ANTHROPIC_API_KEY;
+      if (!apiKey) {
+        throw new MissingConfigurationError(
+          `${provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY'} is not configured`,
+        );
+      }
+
       const streamConfig: Parameters<typeof streamChat>[0] = {
-        provider: env.LLM_PROVIDER,
-        apiKey: env.LLM_API_KEY,
+        provider,
+        apiKey,
         systemPrompt: SYSTEM_PROMPT,
         history,
         userMessage: userMessage.content,
