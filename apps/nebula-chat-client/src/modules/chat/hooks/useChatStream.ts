@@ -1,10 +1,11 @@
 import { useCallback, useRef } from 'react';
-import type { ChatHistoryStreamOptions } from '@/modules/chat/types/types';
+import type { ChatHistoryStreamOptions, SseEvent } from '@/modules/chat/types/types';
 import { SERVER_CONFIG } from '@/shared/config/serverConfig';
 import { useNavigate } from 'react-router';
 import { route } from '@/routing/routes';
 import { useConversationsStore } from '@/modules/conversations/stores/useConversationsStore';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
+import { SSE_EVENTS } from '@/modules/chat/utils/sseEvents';
 
 export const useChatStream = () => {
   const {
@@ -87,14 +88,7 @@ export const useChatStream = () => {
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
-        let currentEvent:
-          | 'token'
-          | 'usage'
-          | 'error'
-          | 'conversation-created'
-          | 'user-message-created'
-          | 'assistant-message-created'
-          | null = null;
+        let currentEvent: SseEvent | null = null;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -105,35 +99,16 @@ export const useChatStream = () => {
           buffer = lines.pop() || '';
 
           for (const line of lines) {
-            if (line.startsWith('event: conversation-created')) {
-              currentEvent = 'conversation-created';
-              continue;
-            }
-            if (line.startsWith('event: user-message-created')) {
-              currentEvent = 'user-message-created';
-              continue;
-            }
-            if (line.startsWith('event: assistant-message-created')) {
-              currentEvent = 'assistant-message-created';
-              continue;
-            }
-            if (line.startsWith('event: token')) {
-              currentEvent = 'token';
-              continue;
-            }
-            if (line.startsWith('event: usage')) {
-              currentEvent = 'usage';
-              continue;
-            }
-            if (line.startsWith('event: error')) {
-              currentEvent = 'error';
+            if (line.startsWith('event: ')) {
+              const name = line.slice(7);
+              currentEvent = SSE_EVENTS.has(name) ? (name as SseEvent) : null;
               continue;
             }
 
             if (line.startsWith('data: ')) {
               const raw = line.replace('data: ', '').trim();
 
-              if (raw === 'end') {
+              if (currentEvent === 'end') {
                 abortController.current = null;
                 if (pendingNavigationId.current) {
                   const navId = pendingNavigationId.current;

@@ -1,7 +1,32 @@
 import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
 import { cacheService } from '@backend/cache/cache.service';
-import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
-import { streamFormatter } from '@backend/modules/chat/chat.utils';
+import type { CreateChatStreamDTO, UsageData } from '@backend/modules/chat/chat.types';
+
+const extractUsageFromStream = (stream: string): UsageData | null => {
+  const lines = stream.split('\n');
+  for (let i = 0; i < lines.length - 1; i++) {
+    const currentLine = lines[i];
+    const nextLine = lines[i + 1];
+    if (
+      currentLine &&
+      nextLine &&
+      currentLine.startsWith('event: usage') &&
+      nextLine.startsWith('data: ')
+    ) {
+      try {
+        const data = JSON.parse(nextLine.substring(6));
+        return {
+          promptTokens: data.promptTokens,
+          completionTokens: data.completionTokens,
+          totalTokens: data.totalTokens,
+        };
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null;
+};
 
 export const streamCaptureHook: preHandlerAsyncHookHandler = async (
   req: FastifyRequest,
@@ -28,14 +53,29 @@ export const streamCaptureHook: preHandlerAsyncHookHandler = async (
     if (full.trim() === '') {
       return;
     }
-    const usageData = streamFormatter.extractUsageFromStream(full);
+
+    const usageData = extractUsageFromStream(full);
+
+    // Strip usage, end, and error events plus the immediate data line that follows.
+    let skipNextData = false;
     const filtered = full
       .split('\n')
       .filter((line) => {
-        if (line.startsWith('event: usage')) return false;
-        if (line.startsWith('event: end')) return false;
-        if (line.includes('"promptTokens"')) return false;
-        if (line === 'data: end') return false;
+        if (
+          line.startsWith('event: usage') ||
+          line.startsWith('event: end') ||
+          line.startsWith('event: error')
+        ) {
+          skipNextData = true;
+          return false;
+        }
+        if (skipNextData && line.startsWith('data: ')) {
+          skipNextData = false;
+          return false;
+        }
+        if (skipNextData) {
+          skipNextData = false;
+        }
         return true;
       })
       .join('\n');

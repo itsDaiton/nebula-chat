@@ -1,40 +1,45 @@
 import { env } from '@backend/env';
 import { db } from '@backend/db';
-import type OpenAI from 'openai';
 import type { DbTransaction } from '@nebula-chat/db';
-import type {
-  CreateChatStreamDTO,
-  StreamCallbacks,
-  UsageData,
-} from '@backend/modules/chat/chat.types';
+import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { messageService } from '@backend/modules/message/message.service';
 import { messageRepository } from '@backend/modules/message/message.repository';
 import type { CreateMessageDTO } from '@backend/modules/message/message.types';
 import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
-import { createClient, getSystemPrompt } from '@backend/modules/chat/chat.utils';
-import { chatConfig } from '@backend/modules/chat/chat.config';
 import {
-  validateTokenLimit,
-  calculateContextTokens,
+  streamChat,
   countTokens,
-} from '@backend/modules/chat/chat.tokenizer';
+  createRateLimiter,
+  getProviderForModel,
+  sseConversationCreated,
+  sseUserMessageCreated,
+  sseAssistantMessageCreated,
+  sseToken,
+  sseUsage,
+  sseError,
+} from '@nebula-chat/langchain';
+import type { LLMLogger, ChatStreamConfig, ProviderType } from '@nebula-chat/langchain';
+import { SYSTEM_PROMPT } from '@backend/modules/chat/chat.prompt';
 import {
-  MissingConfigurationError,
-  ClientInitializationError,
   NotFoundError,
   PayloadTooLargeError,
   BadRequestError,
+  MissingConfigurationError,
 } from '@backend/errors/AppError';
+
+const MAX_PROMPT_TOKENS = 2000;
+const MAX_HISTORY_MESSAGES = 20;
+
+const rateLimiter = createRateLimiter({ windowMs: 60_000, maxRequests: 20 });
 
 export const createUserMessage = async (
   conversationId: string | undefined,
   userMessageContent: string,
   userMessageRole: CreateMessageDTO['role'],
 ): Promise<{ conversationId: string; userMessageId: string; isNewConversation: boolean }> => {
-  let isNewConversation = false;
-
   const result = await db.transaction(async (tx: DbTransaction) => {
     let convId = conversationId;
+    let isNewConversation = false;
 
     if (convId) {
       const existingConversation = await conversationRepository.findByIdTx(tx, convId);
@@ -71,6 +76,7 @@ export const createUserMessage = async (
 export const validateChatRequest = async (
   conversationId: string | undefined,
   userMessage: { role: string; content: string },
+  model?: string,
 ) => {
   if (userMessage.role !== 'user') {
     throw new BadRequestError(
@@ -78,14 +84,10 @@ export const validateChatRequest = async (
     );
   }
 
-  const userMessageValidation = validateTokenLimit(
-    userMessage.content,
-    chatConfig.tokenLimits.maxPromptTokens,
-  );
-
-  if (!userMessageValidation.isValid) {
+  const tokens = countTokens(userMessage.content, model);
+  if (tokens > MAX_PROMPT_TOKENS) {
     throw new PayloadTooLargeError(
-      `User message exceeds token limit. Message has ${userMessageValidation.tokens} tokens, maximum allowed is ${chatConfig.tokenLimits.maxPromptTokens} tokens.`,
+      `User message exceeds token limit. Message has ${tokens} tokens, maximum allowed is ${MAX_PROMPT_TOKENS} tokens.`,
     );
   }
 
@@ -94,113 +96,29 @@ export const validateChatRequest = async (
     if (!existingConversation) {
       throw new NotFoundError('Conversation', conversationId);
     }
-
-    const limit =
-      chatConfig.maxHistoryMessages > 0 && Number.isFinite(chatConfig.maxHistoryMessages)
-        ? chatConfig.maxHistoryMessages
-        : undefined;
-
-    const existingHistory = await messageRepository.findByConversationId(conversationId, limit);
-
-    const systemPrompt = getSystemPrompt();
-    const existingHistoryTokens = calculateContextTokens(existingHistory);
-    const systemPromptTokens = countTokens(systemPrompt);
-    const newUserMessageTokens = userMessageValidation.tokens;
-    const messageOverhead = 4;
-    const projectedTotalTokens =
-      existingHistoryTokens + systemPromptTokens + newUserMessageTokens + messageOverhead;
-
-    if (projectedTotalTokens > chatConfig.tokenLimits.maxContextTokens) {
-      throw new PayloadTooLargeError(
-        `Adding this message would exceed context token limit. Projected context: ${projectedTotalTokens} tokens, maximum allowed: ${chatConfig.tokenLimits.maxContextTokens} tokens. Consider starting a new conversation.`,
-      );
-    }
   }
-};
-
-const processOpenAIStream = async (
-  stream: AsyncIterable<OpenAI.Chat.ChatCompletionChunk>,
-  callbacks: Pick<StreamCallbacks, 'onToken' | 'onUsage'>,
-): Promise<{ fullResponse: string; usageData: UsageData | null }> => {
-  let fullResponse = '';
-  let usageData: UsageData | null = null;
-
-  for await (const chunk of stream) {
-    const delta = chunk.choices?.[0]?.delta?.content;
-    if (typeof delta === 'string') {
-      fullResponse += delta;
-      callbacks.onToken(delta);
-    }
-    if (chunk.usage) {
-      usageData = {
-        promptTokens: chunk.usage.prompt_tokens,
-        completionTokens: chunk.usage.completion_tokens,
-        totalTokens: chunk.usage.total_tokens,
-      };
-      callbacks.onUsage(usageData);
-    }
-  }
-
-  return { fullResponse, usageData };
-};
-
-const executeStreamRequest = async (
-  client: OpenAI,
-  data: CreateChatStreamDTO,
-  messages: OpenAI.Chat.ChatCompletionMessageParam[],
-  conversationId: string,
-  callbacks: StreamCallbacks,
-): Promise<string> => {
-  const stream = await client.chat.completions.create({
-    model: data.model,
-    messages,
-    stream: true,
-    stream_options: { include_usage: true },
-    max_completion_tokens: chatConfig.tokenLimits.maxCompletionTokens,
-  });
-
-  const { fullResponse, usageData } = await processOpenAIStream(
-    stream as AsyncIterable<OpenAI.Chat.ChatCompletionChunk>,
-    callbacks,
-  );
-
-  if (!fullResponse || fullResponse.trim().length === 0) {
-    const emptyResponseMessage = 'The assistant did not generate a response.';
-    const errorMsg = await messageService.createMessage({
-      conversationId,
-      role: 'assistant',
-      content: emptyResponseMessage,
-      tokenCount: usageData?.totalTokens ?? null,
-    });
-    callbacks.onAssistantMessageCreated(errorMsg.id);
-    throw new Error(emptyResponseMessage);
-  }
-
-  const assistantMessage = await messageService.createMessage({
-    conversationId,
-    role: 'assistant',
-    content: fullResponse,
-    tokenCount: usageData?.totalTokens ?? null,
-  });
-  callbacks.onAssistantMessageCreated(assistantMessage.id);
-  return assistantMessage.id;
 };
 
 export const chatService = {
-  async streamResponse(data: CreateChatStreamDTO, callbacks: StreamCallbacks) {
-    if (!env.OPENAI_API_KEY) {
-      throw new MissingConfigurationError('OpenAI API key');
+  async streamResponse(
+    data: CreateChatStreamDTO,
+    write: (chunk: string) => void,
+    userId = 'anonymous',
+    logger?: LLMLogger,
+  ): Promise<
+    { conversationId: string; userMessageId: string; assistantMessageId: string } | undefined
+  > {
+    const { allowed, retryAfterMs } = rateLimiter.check(userId);
+    if (!allowed) {
+      logger?.warn({ userId, retryAfterMs }, 'LLM rate limit exceeded');
+      write(sseError(`Rate limit exceeded. Retry after ${retryAfterMs}ms.`));
+      return;
     }
 
-    const client = createClient();
-
-    if (!client) {
-      throw new ClientInitializationError('OpenAI');
-    }
-
-    const conversationId = data.conversationId;
+    let conversationId = data.conversationId;
     let userMessageId: string | undefined;
     let assistantMessageId: string | undefined;
+    const startMs = Date.now();
 
     try {
       if (data.messages.length !== 1) {
@@ -208,49 +126,105 @@ export const chatService = {
       }
 
       const userMessage = data.messages[0]!;
-
-      await validateChatRequest(conversationId, userMessage);
+      const requestedModel = data.model;
+      await validateChatRequest(conversationId, userMessage, requestedModel);
 
       const result = await createUserMessage(conversationId, userMessage.content, userMessage.role);
-      const resolvedConversationId = result.conversationId;
+      conversationId = result.conversationId;
       userMessageId = result.userMessageId;
 
       if (result.isNewConversation) {
-        callbacks.onConversationCreated(resolvedConversationId);
+        write(sseConversationCreated(conversationId));
       }
-      callbacks.onUserMessageCreated(userMessageId);
+      write(sseUserMessageCreated(userMessageId));
 
-      const limit =
-        chatConfig.maxHistoryMessages > 0 && Number.isFinite(chatConfig.maxHistoryMessages)
-          ? chatConfig.maxHistoryMessages
-          : undefined;
-
-      const conversationHistory = await messageRepository.findByConversationId(
-        resolvedConversationId,
-        limit,
+      const dbHistory = await messageRepository.findByConversationId(
+        conversationId,
+        MAX_HISTORY_MESSAGES,
       );
 
-      const systemPrompt = getSystemPrompt();
-      const messagesWithSystem: OpenAI.Chat.ChatCompletionMessageParam[] = [
-        { role: 'system', content: systemPrompt },
-        ...conversationHistory.toReversed().map((msg) => ({
-          role: msg.role,
-          content: msg.content,
-        })),
-      ];
+      const history = dbHistory
+        .filter((m) => m.id !== userMessageId)
+        .toReversed()
+        .map((m) => ({ role: m.role, content: m.content }));
 
-      assistantMessageId = await executeStreamRequest(
-        client,
-        data,
-        messagesWithSystem,
-        resolvedConversationId,
-        callbacks,
+      let provider: ProviderType;
+      try {
+        provider = getProviderForModel(requestedModel);
+      } catch {
+        throw new BadRequestError(`Unsupported model: ${requestedModel}`);
+      }
+
+      logger?.info({ model: requestedModel, provider, conversationId }, 'Chat request received');
+      const apiKey = provider === 'openai' ? env.OPENAI_API_KEY : env.ANTHROPIC_API_KEY;
+      if (!apiKey) {
+        throw new MissingConfigurationError(
+          `${provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY'} is not configured`,
+        );
+      }
+
+      const streamConfig: ChatStreamConfig = {
+        provider,
+        apiKey,
+        systemPrompt: SYSTEM_PROMPT,
+        history,
+        userMessage: userMessage.content,
+        model: requestedModel,
+        ...(logger !== undefined && { logger }),
+      };
+
+      let fullResponse = '';
+      let promptTokens: number | null = null;
+      let completionTokens: number | null = null;
+      let totalTokens: number | null = null;
+      await streamChat(streamConfig, {
+        onToken: (token) => {
+          fullResponse += token;
+          write(sseToken(token));
+        },
+        onUsage: (u) => {
+          promptTokens = u.promptTokens;
+          completionTokens = u.completionTokens;
+          totalTokens = u.totalTokens;
+          write(sseUsage(u));
+        },
+      });
+
+      if (!fullResponse.trim()) {
+        throw new Error('The assistant did not generate a response.');
+      }
+
+      const assistantMessage = await messageService.createMessage({
+        conversationId,
+        role: 'assistant',
+        content: fullResponse,
+        tokenCount: totalTokens,
+      });
+      assistantMessageId = assistantMessage.id;
+      write(sseAssistantMessageCreated(assistantMessageId));
+
+      logger?.info(
+        {
+          model: requestedModel,
+          provider,
+          conversationId,
+          userMessageId,
+          assistantMessageId,
+          promptTokens,
+          completionTokens,
+          totalTokens,
+          durationMs: Date.now() - startMs,
+        },
+        'Chat request completed',
       );
 
-      return { conversationId: resolvedConversationId, userMessageId, assistantMessageId };
+      return { conversationId, userMessageId, assistantMessageId };
     } catch (error) {
-      callbacks.onError(error instanceof Error ? error.message : 'Unknown error occurred');
-      return;
+      logger?.error(
+        { conversationId, error: error instanceof Error ? error.message : String(error) },
+        'Chat request failed',
+      );
+      write(sseError(error instanceof Error ? error.message : 'Unknown error occurred'));
     }
   },
 };

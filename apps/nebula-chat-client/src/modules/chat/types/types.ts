@@ -97,3 +97,12 @@ export type ModelSelectorState = {
   setIsSelectOpen: (isOpen: boolean) => void;
   setTriggerWidth: (width: number) => void;
 };
+
+export type SseEvent =
+  | 'token'
+  | 'usage'
+  | 'error'
+  | 'end'
+  | 'conversation-created'
+  | 'user-message-created'
+  | 'assistant-message-created';

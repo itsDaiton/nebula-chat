@@ -19,6 +19,10 @@
       "release-type": "node",
       "include-component-in-tag": true
     },
+    "libs/langchain": {
+      "release-type": "node",
+      "include-component-in-tag": true
+    },
     "openapi": {
       "release-type": "node",
       "include-component-in-tag": true,

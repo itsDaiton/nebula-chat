@@ -2,10 +2,12 @@ import { eq, desc } from 'drizzle-orm';
 import { messages } from '@nebula-chat/db';
 import type { DbTransaction } from '@nebula-chat/db';
 import { db } from '@backend/db';
-import type { CreateMessageDTO, GetMessageParams } from '@backend/modules/message/message.types';
-
-type MessageRow = typeof messages.$inferSelect;
-type MessageHistoryRow = Pick<MessageRow, 'role' | 'content' | 'tokenCount'>;
+import type {
+  CreateMessageDTO,
+  GetMessageParams,
+  MessageHistoryRow,
+  MessageRow,
+} from '@backend/modules/message/message.types';
 
 export const messageRepository: {
   create: (data: CreateMessageDTO) => Promise<MessageRow>;
@@ -38,10 +40,16 @@ export const messageRepository: {
   },
   async findByConversationId(conversationId: string, limit?: number) {
     const base = db
-      .select({ role: messages.role, content: messages.content, tokenCount: messages.tokenCount })
+      .select({
+        id: messages.id,
+        createdAt: messages.createdAt,
+        role: messages.role,
+        content: messages.content,
+        tokenCount: messages.tokenCount,
+      })
       .from(messages)
       .where(eq(messages.conversationId, conversationId))
       .orderBy(desc(messages.createdAt));
-    return limit !== undefined ? base.limit(limit) : base;
+    return limit === undefined ? base : base.limit(limit);
   },
 };

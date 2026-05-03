@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { chatConfig } from '@backend/modules/chat/chat.config';
+import { MODEL_REGISTRY } from '@nebula-chat/langchain';
 
 const chatMessageSchema = z.object({
   role: z.enum(['user', 'assistant', 'system']),
@@ -7,10 +7,10 @@ const chatMessageSchema = z.object({
 });
 
 export const createChatStreamSchema = z.object({
-  messages: z.array(chatMessageSchema).min(1),
-  model: z.string().refine((msg) => chatConfig.validModels.includes(msg), {
-    message: 'Invalid model specified.',
-  }),
+  messages: z.array(chatMessageSchema).length(1),
+  model: z
+    .string()
+    .refine((m) => Object.hasOwn(MODEL_REGISTRY, m), { message: 'Invalid model name' }),
   conversationId: z.uuid().optional(),
 });
 

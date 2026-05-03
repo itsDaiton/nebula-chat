@@ -1,8 +1,22 @@
+import 'dotenv/config';
+import { hasProviderKey, missingBaseKeys } from 'load-env';
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { buildApp } from '@backend/app';
+
+if (!hasProviderKey || missingBaseKeys.length > 0) {
+  const missing = [
+    ...(hasProviderKey ? [] : ['OPENAI_API_KEY or ANTHROPIC_API_KEY']),
+    ...missingBaseKeys,
+  ];
+  process.stderr.write(
+    `Missing required env vars for OpenAPI generation: ${missing.join(', ')}\n` +
+      'Set the standard vars or provide OPENAPI_OPENAI_API_KEY / OPENAPI_ANTHROPIC_API_KEY, OPENAPI_DATABASE_URL, and OPENAPI_REDIS_URL.\n',
+  );
+  process.exit(1);
+}
 
 const main = async (): Promise<void> => {
+  const { buildApp } = await import('@backend/app');
   const app = await buildApp();
   await app.ready();
 

@@ -145,6 +145,19 @@ export default [
     },
   },
   {
+    files: ['libs/langchain/**/*.{ts,js}'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: './libs/langchain/tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+  },
+  {
     files: ['scripts/**/*.ts'],
     languageOptions: {
       parser: tsParser,

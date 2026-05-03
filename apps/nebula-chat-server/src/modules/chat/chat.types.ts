@@ -8,12 +8,3 @@ export type UsageData = {
   completionTokens: number;
   totalTokens: number;
 };
-
-export type StreamCallbacks = {
-  onConversationCreated: (conversationId: string) => void;
-  onUserMessageCreated: (messageId: string) => void;
-  onToken: (token: string) => void;
-  onUsage: (usageData: UsageData) => void;
-  onAssistantMessageCreated: (messageId: string) => void;
-  onError: (error: string) => void;
-};
