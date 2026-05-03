@@ -1,0 +1,219 @@
+name: Build nebula-chat-libs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      db: ${{ steps.filter.outputs.db }}
+      langchain: ${{ steps.filter.outputs.langchain }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
+        id: filter
+        with:
+          filters: |
+            db:
+              - 'libs/db/**'
+              - '.github/workflows/nebula-chat-libs.yml'
+            langchain:
+              - 'libs/langchain/**'
+              - '.github/workflows/nebula-chat-libs.yml'
+
+  build:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.db == 'true' || needs.changes.outputs.langchain == 'true'
+    name: build-libs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up pnpm
+        uses: pnpm/action-setup@26f6d4f2c533a43e6b5da0b4a5dd983f98f7b49a # v4
+        with:
+          version: 10.26.2
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24.14.1
+          cache: 'pnpm'
+      - name: Cache turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-libs-${{ github.sha }}
+          restore-keys: |
+            turbo-libs-
+      - name: Install dependencies
+        run: pnpm install --ignore-scripts
+      - name: Build libs
+        run: pnpm turbo run build --filter=@nebula-chat/db --filter=@nebula-chat/langchain
+      - name: TypeScript check
+        run: pnpm turbo run typecheck --filter=@nebula-chat/db --filter=@nebula-chat/langchain
+
+  sonar-db:
+    needs:
+      - changes
+      - build
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.db == 'true'
+    name: sonar-db
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: SonarQube Scan for nebula-chat-db
+        uses: SonarSource/sonarqube-scan-action@59db25f34e16620e48ab4bb9e4a5dce155cb5432 # v8.0.0
+        with:
+          projectBaseDir: libs/db
+          args: >
+            -Dsonar.projectKey=itsDaiton_nebula-chat-db
+            -Dsonar.organization=itsdaiton
+            -Dsonar.projectName=Nebula-Chat-DB
+            -Dsonar.sources=src
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.coverage.exclusions=**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Evaluate SonarQube quality gate for nebula-chat-db
+        id: quality_gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
+        with:
+          scanMetadataReportFile: libs/db/.scannerwork/report-task.txt
+          pollingTimeoutSec: 300
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Publish Sonar summary for db
+        if: always()
+        run: |
+          report_file='libs/db/.scannerwork/report-task.txt'
+          dashboard_url=''
+          if [ -f "${report_file}" ]; then
+            dashboard_url="$(grep '^dashboardUrl=' "${report_file}" | cut -d= -f2-)"
+          fi
+
+          {
+            echo '## Sonar Scan Summary'
+            echo ''
+            echo '- Lib: nebula-chat-db'
+            echo '- Project key: itsDaiton_nebula-chat-db'
+            echo '- Quality gate: ${{ steps.quality_gate.outputs.quality-gate-status }}'
+            if [ -n "${dashboard_url}" ]; then
+              echo "- Dashboard: ${dashboard_url}"
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"
+      - name: Set up Node.js for Sonar PR comment
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24.14.1
+      - name: Comment quality gate for db in PR
+        if: github.event_name == 'pull_request' && always()
+        run: npx --yes tsx scripts/post-sonar-quality-comment.ts
+        env:
+          APP_NAME: nebula-chat-db
+          SONAR_PROJECT_KEY: itsDaiton_nebula-chat-db
+          SONAR_QUALITY_GATE_STATUS: ${{ steps.quality_gate.outputs.quality-gate-status }}
+          SONAR_REPORT_PATH: libs/db/.scannerwork/report-task.txt
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+
+  sonar-langchain:
+    needs:
+      - changes
+      - build
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.langchain == 'true'
+    name: sonar-langchain
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: SonarQube Scan for nebula-chat-langchain
+        uses: SonarSource/sonarqube-scan-action@59db25f34e16620e48ab4bb9e4a5dce155cb5432 # v8.0.0
+        with:
+          projectBaseDir: libs/langchain
+          args: >
+            -Dsonar.projectKey=itsDaiton_nebula-chat-langchain
+            -Dsonar.organization=itsdaiton
+            -Dsonar.projectName=Nebula-Chat-LangChain
+            -Dsonar.sources=src
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.coverage.exclusions=**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Evaluate SonarQube quality gate for nebula-chat-langchain
+        id: quality_gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
+        with:
+          scanMetadataReportFile: libs/langchain/.scannerwork/report-task.txt
+          pollingTimeoutSec: 300
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Publish Sonar summary for langchain
+        if: always()
+        run: |
+          report_file='libs/langchain/.scannerwork/report-task.txt'
+          dashboard_url=''
+          if [ -f "${report_file}" ]; then
+            dashboard_url="$(grep '^dashboardUrl=' "${report_file}" | cut -d= -f2-)"
+          fi
+
+          {
+            echo '## Sonar Scan Summary'
+            echo ''
+            echo '- Lib: nebula-chat-langchain'
+            echo '- Project key: itsDaiton_nebula-chat-langchain'
+            echo '- Quality gate: ${{ steps.quality_gate.outputs.quality-gate-status }}'
+            if [ -n "${dashboard_url}" ]; then
+              echo "- Dashboard: ${dashboard_url}"
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"
+      - name: Set up Node.js for Sonar PR comment
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24.14.1
+      - name: Comment quality gate for langchain in PR
+        if: github.event_name == 'pull_request' && always()
+        run: npx --yes tsx scripts/post-sonar-quality-comment.ts
+        env:
+          APP_NAME: nebula-chat-langchain
+          SONAR_PROJECT_KEY: itsDaiton_nebula-chat-langchain
+          SONAR_QUALITY_GATE_STATUS: ${{ steps.quality_gate.outputs.quality-gate-status }}
+          SONAR_REPORT_PATH: libs/langchain/.scannerwork/report-task.txt
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}

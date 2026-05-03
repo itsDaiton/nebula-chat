@@ -16,7 +16,8 @@
     "access": "restricted"
   },
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@langchain/anthropic": "^1.3.28",

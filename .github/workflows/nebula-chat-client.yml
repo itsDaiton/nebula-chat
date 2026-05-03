@@ -45,6 +45,13 @@ jobs:
         with:
           node-version: 24.14.1
           cache: 'pnpm'
+      - name: Cache turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-client-${{ github.sha }}
+          restore-keys: |
+            turbo-client-
       - name: Install dependencies
         run: pnpm install --ignore-scripts
       - name: Lint
@@ -52,9 +59,9 @@ jobs:
       - name: Format check
         run: pnpm exec prettier --check apps/nebula-chat-client/ scripts/post-sonar-quality-comment.ts
       - name: TypeScript check
-        run: pnpm --filter nebula-chat-client run typecheck
+        run: pnpm turbo run typecheck --filter=nebula-chat-client
       - name: Build
-        run: pnpm --filter nebula-chat-client run build
+        run: pnpm turbo run build --filter=nebula-chat-client
 
   sonar:
     needs:

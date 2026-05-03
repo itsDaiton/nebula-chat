@@ -28,3 +28,6 @@ megalinter-reports/
 # Sonar
 .sonar
 .sonarlint
+
+# Turbo
+.turbo

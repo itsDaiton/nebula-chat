@@ -23,7 +23,7 @@ jobs:
           filters: |
             relevant:
               - 'apps/nebula-chat-server/**'
-              - 'libs/db/**'
+              - 'libs/**'
               - 'scripts/post-sonar-quality-comment.ts'
               - '.github/workflows/nebula-chat-server.yml'
 
@@ -49,18 +49,23 @@ jobs:
         with:
           node-version: 24.14.1
           cache: 'pnpm'
+      - name: Cache turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-server-${{ github.sha }}
+          restore-keys: |
+            turbo-server-
       - name: Install dependencies
         run: pnpm install --ignore-scripts
       - name: Lint
         run: pnpm exec eslint --report-unused-disable-directives --max-warnings=0 apps/nebula-chat-server/ scripts/post-sonar-quality-comment.ts
       - name: Format check
         run: pnpm exec prettier --check apps/nebula-chat-server/ scripts/post-sonar-quality-comment.ts
-      - name: Build @nebula-chat/db
-        run: pnpm --filter @nebula-chat/db build
       - name: TypeScript check
-        run: pnpm --filter nebula-chat-server run typecheck
+        run: pnpm turbo run typecheck --filter=nebula-chat-server
       - name: Build
-        run: pnpm --filter nebula-chat-server run build
+        run: pnpm turbo run build --filter=nebula-chat-server
 
   sonar:
     needs:
@@ -86,7 +91,7 @@ jobs:
             -Dsonar.projectKey=itsDaiton_nebula-chat-server
             -Dsonar.organization=itsdaiton
             -Dsonar.projectName=Nebula-Chat-Server
-            -Dsonar.sources=src,../../libs/db/src
+            -Dsonar.sources=src
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/generated/**
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.coverage.exclusions=**/*
