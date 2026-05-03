@@ -23,7 +23,7 @@ Create `libs/langchain/` as a new workspace package published as `@nebula-chat/l
 - **Pure SSE string formatters** — `sseToken`, `sseUsage`, `sseEnd`, etc. — exported as side-effect-free helpers so the controller can format frames without depending on Fastify or any HTTP transport from inside the lib.
 - **`countTokens(text, model?)` and `packHistory(messages, limits)`** — tiktoken-backed (`cl100k_base` fallback for unknown models). Replaces `chat.tokenizer.ts` outright.
 - **`createRateLimiter(options)`** — userId-keyed in-memory sliding-window limiter. Defaults to `'anonymous'` until M-6 (auth) lands so the JWT subject can be passed through with no interface change.
-- **`LLMLogger` interface** — duck-typed Pino shape (`info`/`warn`/`error`/`debug` taking `(obj, msg?)`). The lib does not depend on Pino; the server passes its own logger in.
+- **`LLMLogger` interface** — duck-typed logger shape (`info`/`warn`/`error` taking `(obj, msg?)`). The lib does not depend on Pino; the server passes its own logger in.
 - **`MODEL_REGISTRY`** — the single source of truth for valid model names and context-window sizes. The server reads it for env validation and `packHistory` budget computation.
 - **LangSmith tracing via env vars** — `LANGCHAIN_TRACING_V2`, `LANGCHAIN_API_KEY`, `LANGCHAIN_PROJECT`. No code changes; presence of the vars activates tracing on every chain invocation.
 
