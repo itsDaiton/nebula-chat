@@ -35,7 +35,9 @@ const normalizeMessageContent = (content: BaseMessage['content']): string => {
 export const packHistory = (history: BaseMessage[], limits: WindowLimits): BaseMessage[] => {
   const { maxInputTokens, model, systemPrompt = '', userMessage = '' } = limits;
 
-  const fixedTokens = countTokens(systemPrompt, model) + countTokens(userMessage, model);
+  const fixedTokens =
+    (systemPrompt ? countTokens(systemPrompt, model) : 0) +
+    (userMessage ? countTokens(userMessage, model) : 0);
 
   let budget = maxInputTokens - fixedTokens;
   if (budget <= 0) return [];

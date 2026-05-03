@@ -56,12 +56,16 @@ export const streamCaptureHook: preHandlerAsyncHookHandler = async (
 
     const usageData = extractUsageFromStream(full);
 
-    // Strip usage and end events plus the immediate data line that follows.
+    // Strip usage, end, and error events plus the immediate data line that follows.
     let skipNextData = false;
     const filtered = full
       .split('\n')
       .filter((line) => {
-        if (line.startsWith('event: usage') || line.startsWith('event: end')) {
+        if (
+          line.startsWith('event: usage') ||
+          line.startsWith('event: end') ||
+          line.startsWith('event: error')
+        ) {
           skipNextData = true;
           return false;
         }

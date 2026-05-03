@@ -17,7 +17,7 @@ export type ModelEntry = {
 
 // Context window sizes used by packHistory to determine how much history to include.
 // Add new models here as providers are expanded.
-export const MODEL_REGISTRY: Record<string, ModelEntry> = {
+export const MODEL_REGISTRY: Readonly<Record<string, ModelEntry>> = {
   // OpenAI
   'gpt-4o': { provider: 'openai', contextWindow: 128_000, defaultMaxOutput: 4_096 },
   'gpt-4o-mini': { provider: 'openai', contextWindow: 128_000, defaultMaxOutput: 16_384 },

@@ -91,6 +91,7 @@ export const useChatStream = () => {
           | 'token'
           | 'usage'
           | 'error'
+          | 'end'
           | 'conversation-created'
           | 'user-message-created'
           | 'assistant-message-created'
@@ -129,11 +130,15 @@ export const useChatStream = () => {
               currentEvent = 'error';
               continue;
             }
+            if (line.startsWith('event: end')) {
+              currentEvent = 'end';
+              continue;
+            }
 
             if (line.startsWith('data: ')) {
               const raw = line.replace('data: ', '').trim();
 
-              if (raw === 'end') {
+              if (currentEvent === 'end') {
                 abortController.current = null;
                 if (pendingNavigationId.current) {
                   const navId = pendingNavigationId.current;

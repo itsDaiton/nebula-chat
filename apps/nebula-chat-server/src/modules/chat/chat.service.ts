@@ -18,7 +18,7 @@ import {
   sseUsage,
   sseError,
 } from '@nebula-chat/langchain';
-import type { LLMLogger } from '@nebula-chat/langchain';
+import type { LLMLogger, ChatStreamConfig, ProviderType } from '@nebula-chat/langchain';
 import { SYSTEM_PROMPT } from '@backend/modules/chat/chat.prompt';
 import {
   NotFoundError,
@@ -148,29 +148,30 @@ export const chatService = {
         .toReversed()
         .map((m) => ({ role: m.role, content: m.content }));
 
-      const provider = getProviderForModel(requestedModel);
+      let provider: ProviderType;
+      try {
+        provider = getProviderForModel(requestedModel);
+      } catch {
+        throw new BadRequestError(`Unsupported model: ${requestedModel}`);
+      }
 
-      logger?.info(
-        { model: requestedModel, provider, conversationId },
-        'Chat request received',
-      );
-      const apiKey =
-        provider === 'openai' ? env.OPENAI_API_KEY : env.ANTHROPIC_API_KEY;
+      logger?.info({ model: requestedModel, provider, conversationId }, 'Chat request received');
+      const apiKey = provider === 'openai' ? env.OPENAI_API_KEY : env.ANTHROPIC_API_KEY;
       if (!apiKey) {
         throw new MissingConfigurationError(
           `${provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY'} is not configured`,
         );
       }
 
-      const streamConfig: Parameters<typeof streamChat>[0] = {
+      const streamConfig: ChatStreamConfig = {
         provider,
         apiKey,
         systemPrompt: SYSTEM_PROMPT,
         history,
         userMessage: userMessage.content,
         model: requestedModel,
+        ...(logger !== undefined && { logger }),
       };
-      if (logger !== undefined) streamConfig.logger = logger;
 
       let fullResponse = '';
       let promptTokens: number | null = null;
@@ -190,16 +191,7 @@ export const chatService = {
       });
 
       if (!fullResponse.trim()) {
-        const fallback = 'The assistant did not generate a response.';
-        const errMsg = await messageService.createMessage({
-          conversationId,
-          role: 'assistant',
-          content: fallback,
-          tokenCount: totalTokens,
-        });
-        assistantMessageId = errMsg.id;
-        write(sseAssistantMessageCreated(assistantMessageId));
-        throw new Error(fallback);
+        throw new Error('The assistant did not generate a response.');
       }
 
       const assistantMessage = await messageService.createMessage({
