@@ -118,6 +118,7 @@ export const chatService = {
     let conversationId = data.conversationId;
     let userMessageId: string | undefined;
     let assistantMessageId: string | undefined;
+    const startMs = Date.now();
 
     try {
       if (data.messages.length !== 1) {
@@ -148,6 +149,11 @@ export const chatService = {
         .map((m) => ({ role: m.role, content: m.content }));
 
       const provider = getProviderForModel(requestedModel);
+
+      logger?.info(
+        { model: requestedModel, provider, conversationId },
+        'Chat request received',
+      );
       const apiKey =
         provider === 'openai' ? env.OPENAI_API_KEY : env.ANTHROPIC_API_KEY;
       if (!apiKey) {
@@ -167,15 +173,19 @@ export const chatService = {
       if (logger !== undefined) streamConfig.logger = logger;
 
       let fullResponse = '';
+      let promptTokens: number | null = null;
+      let completionTokens: number | null = null;
       let totalTokens: number | null = null;
       await streamChat(streamConfig, {
         onToken: (token) => {
           fullResponse += token;
           write(sseToken(token));
         },
-        onUsage: (usage) => {
-          totalTokens = usage.totalTokens ?? null;
-          write(sseUsage(usage));
+        onUsage: (u) => {
+          promptTokens = u.promptTokens;
+          completionTokens = u.completionTokens;
+          totalTokens = u.totalTokens;
+          write(sseUsage(u));
         },
       });
 
@@ -201,8 +211,27 @@ export const chatService = {
       assistantMessageId = assistantMessage.id;
       write(sseAssistantMessageCreated(assistantMessageId));
 
+      logger?.info(
+        {
+          model: requestedModel,
+          provider,
+          conversationId,
+          userMessageId,
+          assistantMessageId,
+          promptTokens,
+          completionTokens,
+          totalTokens,
+          durationMs: Date.now() - startMs,
+        },
+        'Chat request completed',
+      );
+
       return { conversationId, userMessageId, assistantMessageId };
     } catch (error) {
+      logger?.error(
+        { conversationId, error: error instanceof Error ? error.message : String(error) },
+        'Chat request failed',
+      );
       write(sseError(error instanceof Error ? error.message : 'Unknown error occurred'));
     }
   },
