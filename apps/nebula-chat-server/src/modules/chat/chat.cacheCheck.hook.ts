@@ -34,7 +34,7 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
       return;
     }
 
-    await validateChatRequest(conversationId, userMessage);
+    await validateChatRequest(conversationId, userMessage, body.model);
 
     const cachedTokens = cachedData.tokens;
     const lines = cachedTokens.split('\n');

@@ -70,6 +70,7 @@ export const createUserMessage = async (
 export const validateChatRequest = async (
   conversationId: string | undefined,
   userMessage: { role: string; content: string },
+  model?: string,
 ) => {
   if (userMessage.role !== 'user') {
     throw new BadRequestError(
@@ -77,7 +78,7 @@ export const validateChatRequest = async (
     );
   }
 
-  const tokens = countTokens(userMessage.content);
+  const tokens = countTokens(userMessage.content, model);
   if (tokens > MAX_PROMPT_TOKENS) {
     throw new PayloadTooLargeError(
       `User message exceeds token limit. Message has ${tokens} tokens, maximum allowed is ${MAX_PROMPT_TOKENS} tokens.`,
@@ -118,7 +119,8 @@ export const chatService = {
       }
 
       const userMessage = data.messages[0]!;
-      await validateChatRequest(conversationId, userMessage);
+      const requestedModel = data.model ?? env.LLM_MODEL;
+      await validateChatRequest(conversationId, userMessage, requestedModel);
 
       const result = await createUserMessage(conversationId, userMessage.content, userMessage.role);
       conversationId = result.conversationId;
@@ -142,8 +144,8 @@ export const chatService = {
         systemPrompt: SYSTEM_PROMPT,
         history,
         userMessage: userMessage.content,
+        model: requestedModel,
       };
-      if (env.LLM_MODEL !== undefined) streamConfig.model = env.LLM_MODEL;
       if (logger !== undefined) streamConfig.logger = logger;
 
       let fullResponse = '';
