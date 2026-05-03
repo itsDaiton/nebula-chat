@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.scripts.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "apps/nebula-chat-client/src/**/*.ts",
+    "apps/nebula-chat-client/src/**/*.tsx",
+    "apps/nebula-chat-server/src/**/*.ts",
+    "libs/**/src/**/*.ts",
+    "scripts/**/*.ts",
+    "*.ts"
+  ]
+}
