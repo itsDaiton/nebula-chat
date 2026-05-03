@@ -6,13 +6,15 @@ import { createLLM } from '../providers/factory';
 import type { LLMConfig } from '../providers/types';
 import { SYSTEM_PROMPTS, type SystemPromptKey } from '../prompts/system';
 
+type CustomSystemPrompt = string & { __customSystemPrompt?: never };
+
 export type ChatChainInput = {
   history: BaseMessage[];
   input: string;
 };
 
 export type ChatChainConfig = LLMConfig & {
-  systemPrompt?: string | SystemPromptKey;
+  systemPrompt?: SystemPromptKey | CustomSystemPrompt;
 };
 
 export const buildChatChain = (config: ChatChainConfig) => {
