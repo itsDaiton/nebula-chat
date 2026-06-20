@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.18.3...nebula-chat-v1.18.4) (2026-06-20)
+
+
+### Bug Fixes
+
+* **deps:** raise Hono override to 4.12.25 to remediate 2026 CVEs ([#255](https://github.com/itsDaiton/nebula-chat/issues/255)) ([9a0b674](https://github.com/itsDaiton/nebula-chat/commit/9a0b67473ddfba17d58f194bbc2280be62463339))
+
 ## [1.18.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.18.2...nebula-chat-v1.18.3) (2026-05-03)
 
 
