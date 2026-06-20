@@ -6,6 +6,14 @@
     },
     "apps/nebula-chat-server": {
       "project": ["src/**/*.ts"]
+    },
+    "libs/db": {
+      "entry": ["src/index.ts", "drizzle.config.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "libs/langchain": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
     }
   }
 }
