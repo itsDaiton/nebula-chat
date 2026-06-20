@@ -5,11 +5,13 @@ on:
     branches: [main]
     paths:
       - 'libs/db/**'
+      - 'scripts/post-sonar-quality-comment.ts'
       - '.github/workflows/nebula-chat-db.yml'
   pull_request:
     branches: [main]
     paths:
       - 'libs/db/**'
+      - 'scripts/post-sonar-quality-comment.ts'
       - '.github/workflows/nebula-chat-db.yml'
   workflow_dispatch:
 
@@ -48,11 +50,16 @@ jobs:
             turbo-db-
       - name: Install dependencies
         run: pnpm install --ignore-scripts
-      - name: Build
-        run: pnpm turbo run build --filter=@nebula-chat/db
+      - name: Lint
+        run: pnpm exec eslint --report-unused-disable-directives --max-warnings=0 libs/db/
+      - name: Format check
+        run: pnpm exec prettier --check libs/db/
       - name: TypeScript check
         run: pnpm turbo run typecheck --filter=@nebula-chat/db
+      - name: Build
+        run: pnpm turbo run build --filter=@nebula-chat/db
       - name: SonarQube scan
+        if: ${{ env.SONAR_TOKEN != '' }}
         uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
         with:
           projectBaseDir: libs/db
@@ -68,12 +75,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Evaluate quality gate
         id: quality_gate
+        if: ${{ env.SONAR_TOKEN != '' }}
         uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
         with:
           scanMetadataReportFile: libs/db/.scannerwork/report-task.txt
           pollingTimeoutSec: 300
       - name: Publish Sonar summary
-        if: always()
+        if: ${{ always() && env.SONAR_TOKEN != '' }}
         run: |
           report_file='libs/db/.scannerwork/report-task.txt'
           dashboard_url=''
@@ -92,7 +100,7 @@ jobs:
             fi
           } >> "${GITHUB_STEP_SUMMARY}"
       - name: Comment quality gate in PR
-        if: github.event_name == 'pull_request' && always()
+        if: ${{ always() && github.event_name == 'pull_request' && env.SONAR_TOKEN != '' }}
         run: pnpm exec tsx scripts/post-sonar-quality-comment.ts
         env:
           APP_NAME: nebula-chat-db
