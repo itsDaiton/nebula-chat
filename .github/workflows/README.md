@@ -13,15 +13,14 @@ All apps and libs are built by a single workflow, [`build.yml`](./build.yml):
   quality gate → PR comment`. The Sonar steps are guarded on `SONAR_TOKEN`, so
   dependabot/fork PRs (which do not receive the secret) skip Sonar instead of
   failing — lint/typecheck/build still gate those PRs.
-- **`ci-ok`** is a single gate job that always runs and passes iff `build`
-  succeeded or was skipped.
 
 ### Branch protection
 
-Because per-package legs only run when that package changed, their individual
-checks won't appear on unrelated PRs. **Require `ci-ok`** as the status check
-in branch protection (not the per-package leg names) so a PR is never blocked
-waiting on a check that will never run.
+Per-package legs only run when that package changed, so their individual checks
+(`nebula-chat-db`, etc.) won't appear on PRs that don't touch that package. Do
+**not** mark an individual leg as a _required_ status check in branch
+protection — a PR that skips that package would hang forever waiting on a check
+that never runs.
 
 ## Adding a new lib or app
 
