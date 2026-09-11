@@ -1,0 +1,12 @@
+# Normalize line endings to LF on commit so Prettier's eol:lf check
+# passes identically on Windows, macOS, and Linux / CI.
+* text=auto eol=lf
+
+# Binary assets — never normalize.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
