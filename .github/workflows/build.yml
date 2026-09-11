@@ -1,0 +1,222 @@
+name: build
+
+# Single build pipeline for every app and lib in the monorepo.
+#
+# 1. `changes` detects which packages a PR actually touched (via
+#    dorny/paths-filter) and emits a matrix of only those packages.
+#    Pushes to main and manual runs build ALL packages, so every Sonar
+#    project always gets a default-branch analysis.
+# 2. `build` runs the shared pipeline once per selected package as a
+#    matrix leg.
+# 3. `ci-ok` is a single always-running gate — make THIS the required
+#    status check in branch protection (see .github/workflows/README.md).
+#
+# Adding a new lib/app = add one entry to the `all` matrix list in the
+# `changes` job and one filter under "Detect changed packages".
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/**'
+      - 'libs/**'
+      - 'scripts/post-sonar-quality-comment.ts'
+      - '.github/workflows/build.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/**'
+      - 'libs/**'
+      - 'scripts/post-sonar-quality-comment.ts'
+      - '.github/workflows/build.yml'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  changes:
+    name: Detect changed packages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+      has_changes: ${{ steps.set.outputs.has_changes }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Detect changed packages
+        id: filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        with:
+          filters: |
+            client:
+              - 'apps/nebula-chat-client/**'
+            server:
+              - 'apps/nebula-chat-server/**'
+              - 'libs/**'
+            db:
+              - 'libs/db/**'
+            langchain:
+              - 'libs/langchain/**'
+            shared:
+              - 'scripts/post-sonar-quality-comment.ts'
+              - '.github/workflows/build.yml'
+      - name: Compute build matrix
+        id: set
+        env:
+          EVENT: ${{ github.event_name }}
+          F_CLIENT: ${{ steps.filter.outputs.client }}
+          F_SERVER: ${{ steps.filter.outputs.server }}
+          F_DB: ${{ steps.filter.outputs.db }}
+          F_LANGCHAIN: ${{ steps.filter.outputs.langchain }}
+          F_SHARED: ${{ steps.filter.outputs.shared }}
+        run: |
+          set -euo pipefail
+          all='[
+            {"id":"client","name":"nebula-chat-client","dir":"apps/nebula-chat-client","filter":"nebula-chat-client","lint":"apps/nebula-chat-client/ scripts/post-sonar-quality-comment.ts","key":"itsDaiton_nebula-chat-client","project":"Nebula-Chat-Client"},
+            {"id":"server","name":"nebula-chat-server","dir":"apps/nebula-chat-server","filter":"nebula-chat-server","lint":"apps/nebula-chat-server/ scripts/post-sonar-quality-comment.ts","key":"itsDaiton_nebula-chat-server","project":"Nebula-Chat-Server"},
+            {"id":"db","name":"nebula-chat-db","dir":"libs/db","filter":"@nebula-chat/db","lint":"libs/db/","key":"itsDaiton_nebula-chat-db","project":"Nebula-Chat-DB"},
+            {"id":"langchain","name":"nebula-chat-langchain","dir":"libs/langchain","filter":"@nebula-chat/langchain","lint":"libs/langchain/","key":"itsDaiton_nebula-chat-langchain","project":"Nebula-Chat-LangChain"}
+          ]'
+          # Non-PR runs (push to main, manual) and any change to shared
+          # files build everything; PRs build only the changed packages.
+          if [ "$EVENT" != "pull_request" ] || [ "$F_SHARED" = "true" ]; then
+            selected="$all"
+          else
+            ids='[]'
+            if [ "$F_CLIENT" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["client"]'); fi
+            if [ "$F_SERVER" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["server"]'); fi
+            if [ "$F_DB" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["db"]'); fi
+            if [ "$F_LANGCHAIN" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["langchain"]'); fi
+            selected=$(echo "$all" | jq -c --argjson ids "$ids" '[.[] | select(.id as $i | $ids | index($i))]')
+          fi
+          matrix=$(echo "$selected" | jq -c '{include: .}')
+          count=$(echo "$selected" | jq 'length')
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          if [ "$count" -gt 0 ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Building: $(echo "$selected" | jq -r '[.[].name] | join(", ")')"
+
+  build:
+    name: ${{ matrix.name }}
+    needs: changes
+    if: ${{ needs.changes.outputs.has_changes == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.changes.outputs.matrix) }}
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v4
+        with:
+          version: 10.26.2
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24.14.1
+          cache: 'pnpm'
+      - name: Cache turbo
+        uses: actions/cache@v5
+        with:
+          path: .turbo
+          key: turbo-${{ matrix.name }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ matrix.name }}-
+      - name: Install dependencies
+        run: pnpm install --ignore-scripts
+      - name: Lint
+        run: pnpm exec eslint --report-unused-disable-directives --max-warnings=0 ${{ matrix.lint }}
+      - name: Format check
+        run: pnpm exec prettier --check ${{ matrix.lint }}
+      - name: TypeScript check
+        run: pnpm turbo run typecheck --filter=${{ matrix.filter }}
+      - name: Build
+        run: pnpm turbo run build --filter=${{ matrix.filter }}
+      # Sonar steps are guarded on SONAR_TOKEN: dependabot/fork PRs do not
+      # receive the secret, so Sonar is skipped (not failed) there while
+      # lint/typecheck/build still gate the PR.
+      - name: SonarQube scan
+        if: ${{ env.SONAR_TOKEN != '' }}
+        uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
+        with:
+          projectBaseDir: ${{ matrix.dir }}
+          args: >
+            -Dsonar.projectKey=${{ matrix.key }}
+            -Dsonar.organization=itsdaiton
+            -Dsonar.projectName=${{ matrix.project }}
+            -Dsonar.sources=src
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/generated/**
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.coverage.exclusions=**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Evaluate quality gate
+        id: quality_gate
+        if: ${{ env.SONAR_TOKEN != '' }}
+        uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
+        with:
+          scanMetadataReportFile: ${{ matrix.dir }}/.scannerwork/report-task.txt
+          pollingTimeoutSec: 300
+      - name: Publish Sonar summary
+        if: ${{ always() && env.SONAR_TOKEN != '' }}
+        run: |
+          report_file='${{ matrix.dir }}/.scannerwork/report-task.txt'
+          dashboard_url=''
+          if [ -f "${report_file}" ]; then
+            dashboard_url="$(grep '^dashboardUrl=' "${report_file}" | cut -d= -f2-)"
+          fi
+
+          {
+            echo '## Sonar Scan Summary'
+            echo ''
+            echo '- Package: ${{ matrix.name }}'
+            echo '- Project key: ${{ matrix.key }}'
+            echo '- Quality gate: ${{ steps.quality_gate.outputs.quality-gate-status }}'
+            if [ -n "${dashboard_url}" ]; then
+              echo "- Dashboard: ${dashboard_url}"
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"
+      - name: Comment quality gate in PR
+        if: ${{ always() && github.event_name == 'pull_request' && env.SONAR_TOKEN != '' }}
+        run: pnpm exec tsx scripts/post-sonar-quality-comment.ts
+        env:
+          APP_NAME: ${{ matrix.name }}
+          SONAR_PROJECT_KEY: ${{ matrix.key }}
+          SONAR_QUALITY_GATE_STATUS: ${{ steps.quality_gate.outputs.quality-gate-status }}
+          SONAR_REPORT_PATH: ${{ matrix.dir }}/.scannerwork/report-task.txt
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+
+  ci-ok:
+    name: ci-ok
+    needs: build
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify build result
+        run: |
+          result='${{ needs.build.result }}'
+          echo "build result: ${result}"
+          # 'skipped' means no package changed -> nothing to build -> pass.
+          if [ "${result}" = "failure" ] || [ "${result}" = "cancelled" ]; then
+            exit 1
+          fi
