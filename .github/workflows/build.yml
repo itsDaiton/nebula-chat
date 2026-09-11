@@ -8,6 +8,8 @@ on:
       - 'libs/**'
       - 'scripts/post-sonar-quality-comment.ts'
       - '.github/workflows/build.yml'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
   pull_request:
     branches: [main]
     paths:
@@ -15,6 +17,8 @@ on:
       - 'libs/**'
       - 'scripts/post-sonar-quality-comment.ts'
       - '.github/workflows/build.yml'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
   workflow_dispatch:
 
 permissions: {}
@@ -49,6 +53,8 @@ jobs:
             shared:
               - 'scripts/post-sonar-quality-comment.ts'
               - '.github/workflows/build.yml'
+              - 'pnpm-workspace.yaml'
+              - 'pnpm-lock.yaml'
       - name: Compute build matrix
         id: set
         env:
