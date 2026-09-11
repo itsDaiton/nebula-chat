@@ -3,6 +3,8 @@ packages:
   - libs/*
   - openapi
 
+minimumReleaseAge: 14400
+
 catalog:
   '@types/node': ^25.6.0
   typescript: ^6.0.3
