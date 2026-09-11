@@ -1,19 +1,5 @@
 name: build
 
-# Single build pipeline for every app and lib in the monorepo.
-#
-# 1. `changes` detects which packages a PR actually touched (via
-#    dorny/paths-filter) and emits a matrix of only those packages.
-#    Pushes to main and manual runs build ALL packages, so every Sonar
-#    project always gets a default-branch analysis.
-# 2. `build` runs the shared pipeline once per selected package as a
-#    matrix leg.
-# 3. `ci-ok` is a single always-running gate — make THIS the required
-#    status check in branch protection (see .github/workflows/README.md).
-#
-# Adding a new lib/app = add one entry to the `all` matrix list in the
-# `changes` job and one filter under "Detect changed packages".
-
 on:
   push:
     branches: [main]
@@ -35,7 +21,7 @@ permissions: {}
 
 jobs:
   changes:
-    name: Detect changed packages
+    name: changes
     runs-on: ubuntu-latest
     permissions:
       contents: read
