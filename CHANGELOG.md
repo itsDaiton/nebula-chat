@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.18.4...nebula-chat-v1.18.5) (2026-09-11)
+
+
+### Bug Fixes
+
+* **ci:** consolidate per-package builds into one pluggable matrix pipeline ([#258](https://github.com/itsDaiton/nebula-chat/issues/258)) ([f1b1ba1](https://github.com/itsDaiton/nebula-chat/commit/f1b1ba1bb82c5a21f88e38396f19cebc63ae2cb9))
+
 ## [1.18.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.18.3...nebula-chat-v1.18.4) (2026-06-20)
 
 
