@@ -68,10 +68,13 @@ pnpm --filter @nebula-chat/db build        # Dual ESM+CJS build via tsup
 pnpm --filter @nebula-chat/db db:push      # Sync schema to local DB without migration files (dev)
 pnpm --filter @nebula-chat/db db:generate  # Generate SQL migration files from schema changes
 pnpm --filter @nebula-chat/db db:migrate   # Apply pending migration files (production)
+pnpm --filter @nebula-chat/db db:baseline  # Report journal state; --apply marks existing migrations applied
 pnpm --filter @nebula-chat/db db:studio    # Open Drizzle Studio GUI
 ```
 
-`DATABASE_URL` is read from `apps/nebula-chat-server/.env` by both the server at runtime and by drizzle-kit CLI commands — single source of truth.
+`DATABASE_URL` is read from `apps/nebula-chat-server/.env` by both the server at runtime and by the DB CLI commands — single source of truth.
+
+`db:migrate` calls the drizzle-orm migrator directly (`src/migrate.ts`) rather than `drizzle-kit migrate`, which exits 1 without printing the underlying Postgres error — unusable in a deploy log. `db:baseline` exists for a database whose schema predates the migration journal: it reports what it would do and only writes with `--apply`.
 
 ### Local infrastructure
 

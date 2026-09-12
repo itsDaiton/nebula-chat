@@ -19,7 +19,8 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "tsx src/migrate.ts",
+    "db:baseline": "tsx src/baseline.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },
@@ -32,6 +33,7 @@
     "@types/pg": "^8.11.0",
     "drizzle-kit": "^0.31.0",
     "tsup": "^8.5.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }
