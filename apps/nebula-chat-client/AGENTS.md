@@ -238,7 +238,7 @@ All client state is managed with [Zustand](https://zustand.docs.pmnd.rs/). React
 **Never use `useState`.** All state lives in Zustand stores. There is no scenario where `useState` is the right choice.
 
 | Scenario                                                       | Use                                                         |
-| ---------------------------------------------------------------| ------------------------------------------------------------|
+| -------------------------------------------------------------- | ----------------------------------------------------------- |
 | State shared across two or more components                     | Zustand store                                               |
 | Global UI state (drawer, search overlay, viewport height)      | Zustand store                                               |
 | API-fetching state (loading, data, error)                      | Zustand store                                               |
@@ -297,7 +297,7 @@ The one existing provider is `ConversationsProvider`, which wraps the app to sup
 ### Existing stores
 
 | Store                         | Location                        | Owns                                                             |
-| ------------------------------| ---------------------------------| ------------------------------------------------------------------|
+| ----------------------------- | ------------------------------- | ---------------------------------------------------------------- |
 | `useConversationsStore`       | `modules/conversations/stores/` | Conversations list, pagination, fetch, load-more                 |
 | `useConversationStore`        | `modules/conversations/stores/` | Single active conversation, loading, error, refetch              |
 | `useConversationsSearchStore` | `modules/conversations/stores/` | Search query, debounced query, results, loading, error           |
@@ -359,7 +359,7 @@ Utility hooks that are inherently parameterised per call-site (`useDebounce`, `u
 **Never use `useEffect`.** Reference: [You Might Not Need an Effect](https://react.dev/learn/you-might-not-need-an-effect)
 
 | Pattern                            | Wrong                            | Right                                                                             |
-| ------------------------------------| -----------------------------------| -------------------------------------------------------------------------------------|
+| ---------------------------------- | -------------------------------- | --------------------------------------------------------------------------------- |
 | Derived / computed state           | `useEffect` → `setState`         | Compute inline during render or `useMemo`                                         |
 | Syncing state on prop/route change | `useEffect` → Zustand `set`      | Render-time `useRef` guard (see `useConversation.ts`)                             |
 | Initialising data on mount         | `useEffect(() => fetch(), [])`   | Module-level store init (see `useConversationsStore.ts`)                          |
@@ -384,5 +384,5 @@ No hook or component in the codebase may import or call `useEffect`.
 `apps/nebula-chat-client/.env`:
 
 | Variable       | Purpose                                                    |
-| -------------- | ------------------------------------------------------------|
+| -------------- | ---------------------------------------------------------- |
 | `VITE_API_URL` | Base URL of the backend API (e.g. `http://localhost:3000`) |

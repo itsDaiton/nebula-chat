@@ -93,7 +93,7 @@ New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(pl
 All errors extend `AppError` from `errors/AppError.ts`. Use the subclass that matches the situation:
 
 | Class                                      | HTTP status  | When to use                        |
-| ---------------------------------------------| --------------| -------------------------------------|
+| ------------------------------------------ | ------------ | ---------------------------------- |
 | `NotFoundError`                            | 404          | Resource not found by ID           |
 | `BadRequestError`                          | 400          | Invalid input not caught by Zod    |
 | `UnauthorizedError`                        | 401          | Not authenticated                  |
@@ -233,7 +233,7 @@ POST /api/chat/stream
 **SSE event types emitted to the client:**
 
 | Event                       | Data                                              |
-| ------------------------------| ----------------------------------------------------|
+| --------------------------- | ------------------------------------------------- |
 | `conversation-created`      | `{ conversationId }`                              |
 | `user-message-created`      | `{ messageId }`                                   |
 | `token`                     | `{ token }` — one per streamed chunk              |
@@ -298,7 +298,7 @@ Never use relative paths in the backend. Aliases are configured in `tsconfig.jso
 `apps/nebula-chat-server/.env`:
 
 | Variable            | Purpose                                                                     |
-| ---------------------| -------------------------------------------------------------------------------|
+| ------------------- | --------------------------------------------------------------------------- |
 | `OPENAI_API_KEY`    | OpenAI API key (optional — set at least one of this or `ANTHROPIC_API_KEY`) |
 | `ANTHROPIC_API_KEY` | Anthropic API key (optional — set at least one of this or `OPENAI_API_KEY`) |
 | `DATABASE_URL`      | PostgreSQL connection string                                                |

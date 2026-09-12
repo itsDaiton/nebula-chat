@@ -31,16 +31,16 @@ This flow supersedes the old per-change "invoke an ADR-author agent first" gate:
 
 `/implement` is generic — left alone it implements a ticket directly. In this repo, when a ticket (or a slice of one) falls inside a specialist's domain, delegate that slice to the matching agent (via the Task tool) instead of implementing it directly, then run `/tdd` and `/code-review` over the combined result as usual:
 
-| Ticket touches...                                                    | Delegate to                  |
-| ------------------------------------------------------------------------| ---------------------------------|
-| A backend feature module (new/changed endpoint under `modules/**`)    | `backend-module-builder`     |
+| Ticket touches...                                                      | Delegate to                  |
+| ---------------------------------------------------------------------- | ---------------------------- |
+| A backend feature module (new/changed endpoint under `modules/**`)     | `backend-module-builder`     |
 | The chat streaming hot path (SSE, token budget, prompt, provider swap) | `chat-streaming-specialist`  |
-| A Drizzle schema or migration change (`libs/db`)                      | `drizzle-migration-engineer` |
-| OpenAPI/Orval regen after any backend route/schema change             | `api-contract-keeper`        |
-| A Zustand store, hook, or cross-module frontend state change          | `frontend-state-architect`   |
-| Chakra UI components, theme, layout, a11y, copy                       | `frontend-ui-artisan`        |
-| A `docs/new-backend/TICKET-M*.md` migration ticket                    | `architecture-migrator`      |
-| Heavier test infrastructure (beyond what `/tdd` covers inline)        | `test-strategist`            |
+| A Drizzle schema or migration change (`libs/db`)                       | `drizzle-migration-engineer` |
+| OpenAPI/Orval regen after any backend route/schema change              | `api-contract-keeper`        |
+| A Zustand store, hook, or cross-module frontend state change           | `frontend-state-architect`   |
+| Chakra UI components, theme, layout, a11y, copy                        | `frontend-ui-artisan`        |
+| A `docs/new-backend/TICKET-M*.md` migration ticket                     | `architecture-migrator`      |
+| Heavier test infrastructure (beyond what `/tdd` covers inline)         | `test-strategist`            |
 
 A vertical-slice ticket that spans layers (e.g. a new feature touching schema + API + UI) delegates each layer to its owning specialist in sequence, then reviews the whole slice together. `security-auditor` and `meta-synchronizer` stay out-of-band — invoke them directly when asked ("security review", "sync the agents"), not as part of routine ticket implementation.
 
