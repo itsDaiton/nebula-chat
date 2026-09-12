@@ -3,8 +3,56 @@ packages:
   - libs/*
   - openapi
 
+catalog:
+  '@types/node': ^26.4.1
+  typescript: ^6.0.3
+
+# --- pnpm settings -----------------------------------------------------------
+# Since pnpm v11 this file is the only place pnpm reads configuration from.
+# `.npmrc` is limited to auth/registry entries, and the `pnpm` field in
+# package.json is no longer read at all. See https://pnpm.io/settings
+
+# CLI & Node.js ---------------------------------------------------------------
+# Refuse to install a dependency that declares it cannot run on our Node line,
+# resolved against `nodeVersion` rather than whatever Node the contributor
+# happens to have on PATH. Keep `nodeVersion` in lockstep with `.nvmrc` and
+# `engines.node` in the root package.json.
+engineStrict: true
+nodeVersion: 26.8.2
+
+# Build -----------------------------------------------------------------------
+# Replaces the removed `onlyBuiltDependencies`. Packages absent from this map
+# are treated as unreviewed, and `strictDepBuilds` (on by default) fails the
+# install rather than silently skipping their scripts.
+allowBuilds:
+  argon2: true
+  esbuild: true
+
+# Dependency resolution -------------------------------------------------------
+# 10-day cooldown before a freshly published version is installable, matching
+# the dependabot `cooldown.default-days` in .github/dependabot.yml. Explicitly
+# setting it also turns on `minimumReleaseAgeStrict`, so resolution fails
+# instead of quietly falling back to a version inside the cooldown window.
 minimumReleaseAge: 14400
 
-catalog:
-  '@types/node': ^25.6.0
-  typescript: ^6.0.3
+# drizzle-orm declares every driver it can speak to as an optional peer, which
+# drags the whole Prisma toolchain into the dev tree. ADR 0004 replaced Prisma
+# with Drizzle, so nothing here needs it. Skipping it also sidesteps
+# @prisma/studio-core, which caps itself at Node 24 and therefore fails the
+# engineStrict check on Node 26.
+ignoredOptionalDependencies:
+  - prisma
+  - '@prisma/client'
+
+overrides:
+  effect: 3.20.0
+  lodash: 4.18.1
+  '@hono/node-server': ^1.19.13
+  hono: 4.12.25
+  path-to-regexp: 8.4.0
+  fast-xml-parser: '>=5.7.0'
+  flatted: 3.4.2
+  uuid: '>=14.0.0'
+  langsmith: '>=0.5.19'
+  esbuild: 0.27.4
+  '@anthropic-ai/sdk': '>=0.91.1'

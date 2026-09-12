@@ -16,10 +16,36 @@ nebula-chat/
 
 ## Prerequisites
 
-- Node.js `24.14.1` (see `.nvmrc`)
-- pnpm `>=10`
+- Node.js `26.8.2` (see `.nvmrc`)
+- pnpm `>=12` (pinned to `12.4.1` via `packageManager`)
 - Docker (recommended for local PostgreSQL + Redis)
 - OpenAI API key
+
+### Selecting the toolchain
+
+Node is managed with [nvm](https://github.com/nvm-sh/nvm) (macOS/Linux) or
+[nvm-windows](https://github.com/coreybutler/nvm-windows). From the repo root:
+
+```bash
+nvm install $(cat .nvmrc) && nvm use $(cat .nvmrc)
+```
+
+On nvm-windows, pass the version explicitly — it does not read `.nvmrc`:
+
+```powershell
+nvm install 26.8.2; nvm use 26.8.2
+```
+
+Node 26 no longer bundles Corepack, so install pnpm once per Node version with
+the npm that ships with the runtime:
+
+```bash
+npm install -g pnpm@12.4.1
+```
+
+After that the `packageManager` pin keeps everyone on the same pnpm: a mismatched
+local pnpm downloads and runs the pinned version (`pmOnFail: download`, the
+default).
 
 ## Local development (quick start)
 
