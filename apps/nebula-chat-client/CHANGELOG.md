@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.9.1...nebula-chat-client-v1.10.0) (2026-09-12)
+
+
+### Features
+
+* **agents:** overhaul the agentic workspace ([#284](https://github.com/itsDaiton/nebula-chat/issues/284)) ([c3c95c8](https://github.com/itsDaiton/nebula-chat/commit/c3c95c8bee4e936d43732ffc34b9a6c836661334))
+
 ## [1.9.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.9.0...nebula-chat-client-v1.9.1) (2026-05-03)
 
 
