@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v0.3.0...nebula-chat-db-v0.3.1) (2026-09-12)
+
+
+### Bug Fixes
+
+* **db:** surface migration errors and add a journal baseline ([#293](https://github.com/itsDaiton/nebula-chat/issues/293)) ([26b60b8](https://github.com/itsDaiton/nebula-chat/commit/26b60b8160ea3ae03ae51f340d9b45449bb830ae))
+
 ## [0.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v0.2.0...nebula-chat-db-v0.3.0) (2026-05-03)
 
 
