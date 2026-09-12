@@ -103,6 +103,15 @@ cd apps/nebula-chat-server && docker-compose up  # Start PostgreSQL (port 5332) 
 - PR description must include a brief summary of what changed and why, plus a test plan.
 - Keep PRs small and focused. Split large changes into multiple PRs.
 
+### Referencing tickets
+
+Tickets from `/to-tickets` (and issues picked up via `/triage`) are GitHub issues — their "code" is the issue number. A PR that implements one must reference it, since nothing else links the two after merge:
+
+- **Title**: append the issue number in parentheses at the end, after the Conventional Commit header: `type(scope): summary (#NN)`. The reference is trailing — it doesn't replace or share space with the `(scope)`.
+- **Body**: include a `Closes #NN` (or `Fixes #NN`) line so GitHub auto-closes the ticket when the PR merges into `main`. Use `Part of #NN` instead only for the rare ticket that genuinely can't close in one PR — `/to-tickets` sizes tickets to close in one, so this should be uncommon.
+- A PR spanning more than one ticket (avoid where possible — prefer one PR per ticket) lists each with its own `Closes #NN` / `Part of #NN` line.
+- This is independent of the Release Please rules below: the issue number is for traceability, not for the version bump — don't put it in the commit **type** or **scope** position.
+
 ### Release Please
 
 Releases on `main` are fully automated by [release-please](https://github.com/googleapis/release-please) (`.github/workflows/release-please.yml`, config in `release-please-config.json`) — it reads Conventional Commit messages on `main`, not anything written by hand. There is no manual changelog or version bump; get the commit/PR message right instead.
