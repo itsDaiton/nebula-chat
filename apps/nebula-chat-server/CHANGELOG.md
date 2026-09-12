@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.9.0...nebula-chat-server-v1.9.1) (2026-09-12)
+
+
+### Bug Fixes
+
+* **server,client:** correct stale README docs in both apps ([#291](https://github.com/itsDaiton/nebula-chat/issues/291)) ([f3423d6](https://github.com/itsDaiton/nebula-chat/commit/f3423d63f6e89c43b44b6ae02fc0e42d823bb668))
+
 ## [1.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.8.2...nebula-chat-server-v1.9.0) (2026-09-12)
 
 
