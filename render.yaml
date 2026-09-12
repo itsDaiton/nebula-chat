@@ -7,6 +7,11 @@ services:
     # Node 26 no longer bundles Corepack, so pnpm is provisioned with the npm
     # that ships with the runtime. Keep the version in step with the
     # `packageManager` pin in package.json.
+    #
+    # db:migrate runs here rather than as a preDeployCommand because those are
+    # paid-plan only; on free the build is the one hook available before boot.
+    # A migration failure therefore reports as "build failed" — check the tail
+    # of the log for the Postgres error, which db:migrate prints in full.
     buildCommand: npm install -g pnpm@12.4.1 && pnpm install --frozen-lockfile && pnpm turbo run build --filter=nebula-chat-server && pnpm --filter @nebula-chat/db db:migrate
     # Start does not need pnpm: the build already produced dist/, so keep the
     # boot path free of a network install. The cd reproduces the working

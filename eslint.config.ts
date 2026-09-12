@@ -145,6 +145,15 @@ export default [
     },
   },
   {
+    // Operator-facing CLI entry points: their stdout is the interface. A
+    // migration step that prints nothing is precisely the failure mode these
+    // scripts exist to replace.
+    files: ['libs/db/src/migrate.ts', 'libs/db/src/baseline.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
     files: ['libs/langchain/**/*.{ts,js}'],
     languageOptions: {
       parser: tsParser,
