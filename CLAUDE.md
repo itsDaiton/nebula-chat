@@ -128,3 +128,13 @@ This rule applies to **every** build/write agent in `.claude/agents/`. Read-only
 - **Open a PR when the work is complete**, consistent with `AGENTS.md`. Use `gh pr create` with the primary Conventional Commit header as the title. The body must include: one-line summary, test plan checklist, and a link to the ADR (`docs/adr/NNNN-*.md`) backing the change.
 - **Never merge your own PR** unless the user explicitly asks. Never `git push --force` (blocked by the pre-bash hook for shared refs anyway). Never use `--no-verify`.
 - **Read-only agents** that need to leave findings on a PR use `gh pr comment` or `gh pr review`; they never push commits.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues (`itsDaiton/nebula-chat`), managed via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
