@@ -1,11 +1,32 @@
 name: Deploy nebula-chat-server
 
+# The server bundles its workspace libraries at build time and reads the
+# openapi package version at runtime, so a release of any of them changes what
+# runs in production. Keying the deploy to `nebula-chat-server-v*` alone meant a
+# libs/db or libs/langchain fix shipped only if someone remembered to dispatch
+# this workflow by hand — a quiet way to leave stale code in production.
+#
+# Deliberately NOT triggered by the root `nebula-chat-v*` tag: that component is
+# mostly docs, AGENTS.md and .claude/, and redeploying production for those is
+# noise. The exception is a pnpm-workspace.yaml `overrides` bump, which does
+# change the server's dependency tree — dispatch this workflow manually for one.
 on:
   push:
-    tags: ['nebula-chat-server-v*']
+    tags:
+      - 'nebula-chat-server-v*'
+      - 'nebula-chat-db-v*'
+      - 'nebula-chat-langchain-v*'
+      - 'openapi-v*'
   workflow_dispatch:
 
 permissions: {}
+
+# One release pushes several tags at once, each firing its own run. Without this
+# a release touching the server and a library would POST the hook twice and
+# queue two builds of the same commit.
+concurrency:
+  group: deploy-nebula-chat-server
+  cancel-in-progress: true
 
 jobs:
   deploy:

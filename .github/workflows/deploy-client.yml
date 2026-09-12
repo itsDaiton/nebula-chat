@@ -1,5 +1,8 @@
 name: Deploy nebula-chat-client
 
+# Unlike the server, the client depends on no workspace packages — its Orval
+# output is committed under apps/nebula-chat-client — so its own tag is the
+# only release that changes what it serves.
 on:
   push:
     tags: ['nebula-chat-client-v*']
