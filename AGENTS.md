@@ -91,7 +91,7 @@ cd apps/nebula-chat-server && docker-compose up  # Start PostgreSQL (port 5332) 
 ### Commits
 
 - Use [Conventional Commits](https://www.conventionalcommits.org/) format: `type(scope): description`.
-  - Types: `feat`, `fix`, `chore`, `refactor`, `docs`, `style`, `test`.
+  - Types: `feat`, `fix`, `perf`, `chore`, `refactor`, `docs`, `style`, `test`, `build`, `ci`.
   - Scope is optional but encouraged: `feat(chat): ...`, `fix(backend): ...`, `refactor(frontend): ...`
 - Keep the subject line under 72 characters.
 - Commit logically complete units of work — don't leave the codebase in a broken state between commits.
@@ -102,6 +102,21 @@ cd apps/nebula-chat-server && docker-compose up  # Start PostgreSQL (port 5332) 
 - PR title follows the same Conventional Commits format.
 - PR description must include a brief summary of what changed and why, plus a test plan.
 - Keep PRs small and focused. Split large changes into multiple PRs.
+
+### Release Please
+
+Releases on `main` are fully automated by [release-please](https://github.com/googleapis/release-please) (`.github/workflows/release-please.yml`, config in `release-please-config.json`) — it reads Conventional Commit messages on `main`, not anything written by hand. There is no manual changelog or version bump; get the commit/PR message right instead.
+
+- **Squash-merge is this repo's default** (`squash_merge_commit_title: PR_TITLE`), so for a normal feature PR the **PR title becomes the one commit release-please parses** — get the title right, not just the individual commits inside the PR. If a PR is merged with a merge commit instead, every individual commit is parsed, so each one still needs a correct type/scope.
+- **Type decides the version bump** release-please applies to whichever component(s) the commit's changed files fall under:
+  - `fix:` → patch bump.
+  - `feat:` → minor bump.
+  - `feat!:`, `fix!:`, or a footer of `BREAKING CHANGE: ...` → major bump. Use this only for an actual breaking change to a released package's public surface (e.g. `libs/db`'s exported types, the OpenAPI contract) — not for internal refactors.
+  - `perf:` → patch bump.
+  - `chore:`, `refactor:`, `docs:`, `style:`, `test:`, `build:`, `ci:` → no version bump, changelog entry only (some types are excluded from the changelog by config).
+- **Scope should name the release-please component** the change belongs to, matching `release-please-config.json`'s `packages` keys: `client` (`apps/nebula-chat-client`), `server` (`apps/nebula-chat-server`), `db` (`libs/db`), `langchain` (`libs/langchain`), `openapi`, or omit the scope (or use a repo-wide one like `chore(agents): ...`) for root-level tooling/docs changes (`CLAUDE.md`, `AGENTS.md`, `CONTEXT.md`, `.claude/`, `docs/`) — those fall under the root `nebula-chat` component, which explicitly excludes `apps/**`, `libs/**`, and `openapi/**`.
+- release-please determines the bump **per component from the changed file paths**, not from the scope string — the scope is for changelog readability, so keep it accurate, but don't rely on it to control which package gets released.
+- A commit that spans multiple components (e.g. a backend route change plus its regenerated `openapi.yaml` and Orval client) still needs one accurate primary scope; each affected component gets its own bump from the same commit regardless of what the scope says.
 
 ---
 
