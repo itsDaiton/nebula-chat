@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.20.3...nebula-chat-v1.20.4) (2026-09-12)
+
+
+### Bug Fixes
+
+* **ci:** remove the Claude Code GitHub workflow ([#297](https://github.com/itsDaiton/nebula-chat/issues/297)) ([88f16bd](https://github.com/itsDaiton/nebula-chat/commit/88f16bdeb870c772dbba372b5f0b5fe160abc8bc))
+
 ## [1.20.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.20.2...nebula-chat-v1.20.3) (2026-09-12)
 
 
