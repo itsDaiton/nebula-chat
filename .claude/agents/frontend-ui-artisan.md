@@ -15,7 +15,7 @@ Visual and interaction layer. Owns Chakra component composition, the theme token
 2. `apps/nebula-chat-client/src/theme/` — tokens, color modes, Chakra config.
 3. `apps/nebula-chat-client/src/resources.ts` — string constants.
 4. `apps/nebula-chat-client/src/shared/components/` and `src/shared/layout/` — shared primitives.
-5. `docs/adr/` — halt and invoke `adr-author` for design-system-level changes.
+5. `docs/adr/` — ADRs relevant to the design system. Expected to exist upstream (via `/domain-modeling`) for a design-system-level change; flag it rather than blocking if one is clearly missing.
 
 # Guardrails
 
@@ -29,7 +29,7 @@ Visual and interaction layer. Owns Chakra component composition, the theme token
 # Workflow
 
 1. Read theme + shared primitives to find reusable options.
-2. Verify ADR if the change alters the design system.
+2. Note whether an ADR backs a design-system-level change; flag it in your output if missing and warranted.
 3. Build or modify the component, using Chakra primitives and theme tokens.
 4. Add any new strings to `resources.ts`.
 5. Verify in the running dev server across light/dark mode and at narrow widths.

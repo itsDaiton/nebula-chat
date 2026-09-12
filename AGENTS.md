@@ -7,10 +7,11 @@ Covers the full monorepo — where things live, how they are built, and how to a
 
 ## Table of Contents
 
-1. [Git Workflow](#git-workflow)
-2. [Code Quality](#code-quality)
-3. [Monorepo Structure](#monorepo-structure)
-4. [Frontend](#frontend)
+1. [Development Commands](#development-commands)
+2. [Git Workflow](#git-workflow)
+3. [Code Quality](#code-quality)
+4. [Monorepo Structure](#monorepo-structure)
+5. [Frontend](#frontend)
    - [Directory Layout](#frontend-directory-layout)
    - [Routing](#routing)
    - [Imports](#imports)
@@ -20,7 +21,7 @@ Covers the full monorepo — where things live, how they are built, and how to a
    - [Components](#components)
    - [Hooks](#hooks)
    - [Shared Utilities](#shared-utilities)
-5. [Backend](#backend)
+6. [Backend](#backend)
    - [Directory Layout](#backend-directory-layout)
    - [Module Pattern](#module-pattern)
    - [Error Handling](#error-handling)
@@ -30,8 +31,66 @@ Covers the full monorepo — where things live, how they are built, and how to a
    - [Chat Streaming](#chat-streaming)
    - [OpenAPI Docs](#openapi-docs)
    - [Path Aliases](#backend-path-aliases)
-6. [Environment Variables](#environment-variables)
-7. [Local Development](#local-development)
+7. [Environment Variables](#environment-variables)
+8. [Local Development](#local-development)
+
+---
+
+## Development Commands
+
+### Root (monorepo)
+
+```bash
+pnpm install                      # Install all workspace dependencies
+pnpm run lint                     # ESLint (strict, max-warnings=0)
+pnpm run lint:fix                 # Auto-fix linting issues
+pnpm run format                   # Prettier format all files
+pnpm run format:check             # Check formatting compliance
+pnpm --filter nebula-chat-client run <cmd>  # Run frontend script (e.g. pnpm --filter nebula-chat-client run dev)
+pnpm --filter nebula-chat-server run <cmd>  # Run backend script (e.g. pnpm --filter nebula-chat-server run dev)
+```
+
+### Frontend (`/apps/nebula-chat-client`)
+
+```bash
+pnpm dev        # Vite dev server on localhost:5173
+pnpm build      # tsc + Vite build → /apps/nebula-chat-client/build
+pnpm typecheck  # tsc --noEmit
+```
+
+### Backend (`/apps/nebula-chat-server`)
+
+```bash
+pnpm dev              # tsx watch mode (auto-restart) — assumes lib artifacts already built
+pnpm start            # node dist/src/server.js (production)
+pnpm generate:openapi # Regenerate openapi/openapi.yaml from live route schemas
+```
+
+> **`build` and `typecheck` must be run via Turbo** so workspace lib artifacts (`dist/*.d.ts`) are
+> built first. Use these from the repo root:
+>
+> ```bash
+> pnpm turbo run build     --filter=nebula-chat-server  # builds @nebula-chat/* deps first
+> pnpm turbo run typecheck --filter=nebula-chat-server  # builds + typechecks dep closure first
+> ```
+
+### DB lib (`/libs/db` — `@nebula-chat/db`)
+
+```bash
+pnpm --filter @nebula-chat/db build        # Dual ESM+CJS build via tsup
+pnpm --filter @nebula-chat/db db:push      # Sync schema to local DB without migration files (dev)
+pnpm --filter @nebula-chat/db db:generate  # Generate SQL migration files from schema changes
+pnpm --filter @nebula-chat/db db:migrate   # Apply pending migration files (production)
+pnpm --filter @nebula-chat/db db:studio    # Open Drizzle Studio GUI
+```
+
+`DATABASE_URL` is read from `apps/nebula-chat-server/.env` by both the server at runtime and by drizzle-kit CLI commands — single source of truth.
+
+### Local infrastructure
+
+```bash
+cd apps/nebula-chat-server && docker-compose up  # Start PostgreSQL (port 5332) + Redis (port 6380)
+```
 
 ---
 
@@ -768,6 +827,7 @@ Never use relative paths in the backend. Aliases are configured in `tsconfig.jso
 | `CLIENT_URL`        | Frontend origin for CORS (e.g. `http://localhost:5173`)                     |
 | `SERVER_URL`        | Backend public URL (used in OpenAPI docs)                                   |
 | `PORT`              | Port to listen on (default `3000`)                                          |
+| `LOG_LEVEL`         | Log verbosity (default `info`; set to `debug`/`warn` etc. in prod)          |
 
 > **`env.ts` rule:** All env vars are Zod-validated in `src/env.ts` and fail loudly at startup before any listener is bound. Never read `process.env.*` directly anywhere in the backend — always import from `@backend/env`.
 

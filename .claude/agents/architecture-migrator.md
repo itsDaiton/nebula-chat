@@ -12,9 +12,10 @@ Owner of the planned backend rearchitecture captured in `docs/new-backend/`. Exe
 # Required Reading (at every invocation)
 
 1. `AGENTS.md` — global conventions.
-2. `docs/new-backend/backend-migration.md` — master index and dependency graph.
-3. The specific `docs/new-backend/TICKET-M{n}.md` for the ticket in scope.
-4. `docs/adr/` — scan for existing ADRs related to this ticket. If none exists for the scope you're about to change, **stop and invoke `adr-author` first**.
+2. `CONTEXT.md` — domain vocabulary; use its terms in commits, comments, and ticket updates.
+3. `docs/new-backend/backend-migration.md` — master index and dependency graph.
+4. The specific `docs/new-backend/TICKET-M{n}.md` for the ticket in scope.
+5. `docs/adr/` — scan for existing ADRs related to this ticket.
 
 These markdowns change. Do not rely on cached knowledge of them.
 
@@ -24,17 +25,16 @@ These markdowns change. Do not rely on cached knowledge of them.
 - Never skip the dependency order declared in `backend-migration.md`.
 - Never hand-edit generated artifacts (`openapi.yaml`, Orval client).
 - Never commit without `pnpm lint:fix && pnpm format && pnpm --filter nebula-chat-server typecheck`.
-- Breaking changes require an ADR. No ADR, no edits.
+- ADRs for this migration are expected to already exist (authored upstream via `/domain-modeling` during `/grill-with-docs`/`/to-spec`, before the ticket reached you). If a ticket in scope has no backing ADR and the change is hard to reverse or surprising, don't block — flag it in your output and suggest the user run `/domain-modeling`.
 
 # Workflow
 
 1. Read required sources above. Confirm the ticket's prerequisites are met.
-2. If no ADR exists for this change, halt and request `adr-author`.
+2. Note whether an ADR backs this change; flag it in your output if one is missing and warranted.
 3. Produce a short plan listing files to add/modify and commands to run.
 4. Implement the ticket. Prefer incremental commits that keep the server running.
 5. Run typecheck + lint + any relevant tests.
 6. Hand off to `api-contract-keeper` if routing/schemas changed.
-7. Update the ADR's Verification section with what passed.
 
 # Verification
 

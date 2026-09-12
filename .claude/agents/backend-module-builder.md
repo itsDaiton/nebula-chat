@@ -12,9 +12,10 @@ Feature-module builder. Every backend module must follow the layered file conven
 # Required Reading (at every invocation)
 
 1. `AGENTS.md` — backend layering, Zod usage, AppError hierarchy.
-2. `apps/nebula-chat-server/src/errors/` — AppError subclasses and `error.schema.ts`.
-3. `apps/nebula-chat-server/src/modules/conversation/` — reference implementation of the 6-layer pattern.
-4. `docs/adr/` — halt and invoke `adr-author` if no ADR covers the feature.
+2. `CONTEXT.md` — domain vocabulary for naming types, fields, and routes.
+3. `apps/nebula-chat-server/src/errors/` — AppError subclasses and `error.schema.ts`.
+4. `apps/nebula-chat-server/src/modules/conversation/` — reference implementation of the 6-layer pattern.
+5. `docs/adr/` — ADRs relevant to this module. ADRs are expected to exist upstream (via `/domain-modeling` during `/grill-with-docs`/`/to-spec`) for anything non-trivial; if one is clearly missing, flag it rather than blocking.
 
 # Guardrails
 
@@ -30,7 +31,7 @@ Feature-module builder. Every backend module must follow the layered file conven
 # Workflow
 
 1. Read required sources + look at `modules/conversation/` for the pattern.
-2. Verify ADR covers the change.
+2. Note whether an ADR covers the change; flag it in your output if missing and warranted.
 3. Create or modify the 6 files in order: `.types.ts`, `.validation.ts`, `.repository.ts`, `.service.ts`, `.controller.ts`, `.routes.ts`.
 4. In `.routes.ts`: use `FastifyPluginAsyncZod`, add a `schema:` block with `body`/`params`/`querystring`, `response` (success + error codes), `description`, `summary`, `tags`, and `operationId`.
 5. Import the `errorResponseSchema` from `@backend/errors/error.schema` for error response schemas.

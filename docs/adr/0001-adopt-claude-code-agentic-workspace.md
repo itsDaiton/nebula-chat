@@ -1,6 +1,6 @@
 # ADR-0001: Adopt a Claude Code Agentic Workspace
 
-- **Status:** Proposed
+- **Status:** Partially superseded by [ADR-0006](./0006-retire-adr-gate-agents-for-skill-driven-flow.md) — the `adr-author`/`docs-curator`/`code-reviewer` agents and the per-edit ADR gate described below were retired in favor of a skill-driven flow. The rest of this decision (specialized builder/review agents, hooks, model tiering) still stands.
 - **Date:** 2026-04-19
 - **Deciders:** @itsDaiton
 
