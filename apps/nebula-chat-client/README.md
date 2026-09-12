@@ -49,6 +49,7 @@ pnpm --filter nebula-chat-client run dev
 pnpm --filter nebula-chat-client run build
 pnpm --filter nebula-chat-client run preview
 pnpm --filter nebula-chat-client run typecheck
+pnpm --filter nebula-chat-client run generate:api  # Regenerate the Orval client from openapi/openapi.yaml
 ```
 
 ## Container notes
