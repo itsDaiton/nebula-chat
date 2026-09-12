@@ -1,6 +1,6 @@
 # Nebula Chat Server
 
-The backend is an Express 5 API for Nebula Chat.
+The backend is a Fastify 5 API for Nebula Chat.
 
 It is responsible for:
 - Streaming AI chat responses from OpenAI
@@ -80,4 +80,10 @@ pnpm --filter @nebula-chat/db db:studio
 
 ## Health check
 
-- `GET /health` returns `{ "ok": true }`
+`GET /health` returns liveness plus the current UTC timestamp:
+
+```json
+{ "status": "ok", "timestamp": "2026-09-12T18:09:35.000Z" }
+```
+
+This is the path Render polls (`healthCheckPath` in `render.yaml`).
