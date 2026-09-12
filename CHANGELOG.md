@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.20.2...nebula-chat-v1.20.3) (2026-09-12)
+
+
+### Bug Fixes
+
+* **ci:** deploy the server when its libraries are released ([#295](https://github.com/itsDaiton/nebula-chat/issues/295)) ([8c68245](https://github.com/itsDaiton/nebula-chat/commit/8c68245a306305570db1c1eb4877776868782e75))
+
 ## [1.20.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.20.1...nebula-chat-v1.20.2) (2026-09-12)
 
 
