@@ -1,24 +1,16 @@
 name: Build
 
+# Deliberately NO `paths:` filter. `build-result` is the required status check,
+# and a workflow that never triggers never reports one — so a PR touching only
+# docs, .claude/, or another workflow would sit blocked forever waiting for a
+# check that cannot arrive. Instead this always runs, and the `changes` job
+# below resolves the matrix: when nothing buildable changed the matrix is empty,
+# the build legs skip, and `build-result` still reports success.
 on:
   push:
     branches: [main]
-    paths:
-      - 'apps/**'
-      - 'libs/**'
-      - 'scripts/post-sonar-quality-comment.ts'
-      - '.github/workflows/build.yml'
-      - 'pnpm-workspace.yaml'
-      - 'pnpm-lock.yaml'
   pull_request:
     branches: [main]
-    paths:
-      - 'apps/**'
-      - 'libs/**'
-      - 'scripts/post-sonar-quality-comment.ts'
-      - '.github/workflows/build.yml'
-      - 'pnpm-workspace.yaml'
-      - 'pnpm-lock.yaml'
   workflow_dispatch:
 
 permissions: {}
@@ -50,11 +42,21 @@ jobs:
               - 'libs/db/**'
             langchain:
               - 'libs/langchain/**'
+            # Root-level files that change how every package is installed,
+            # linted, typechecked or built — any of these rebuilds everything.
             shared:
               - 'scripts/post-sonar-quality-comment.ts'
               - '.github/workflows/build.yml'
               - 'pnpm-workspace.yaml'
               - 'pnpm-lock.yaml'
+              - 'package.json'
+              - '.npmrc'
+              - 'eslint.config.ts'
+              - 'prettier.config.cjs'
+              - 'tsconfig.eslint.json'
+              - 'tsconfig.scripts.json'
+              - 'turbo.json'
+              - 'knip.json'
       - name: Compute build matrix
         id: set
         env:
