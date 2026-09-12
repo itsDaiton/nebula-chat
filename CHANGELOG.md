@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.19.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.19.0...nebula-chat-v1.19.1) (2026-09-12)
+
+
+### Bug Fixes
+
+* **ci:** always run Build so build-result can report ([#288](https://github.com/itsDaiton/nebula-chat/issues/288)) ([4ec8770](https://github.com/itsDaiton/nebula-chat/commit/4ec877098c39d61a852126e612f0a68495dcb4a8))
+
 ## [1.19.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.18.5...nebula-chat-v1.19.0) (2026-09-12)
 
 
