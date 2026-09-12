@@ -10,8 +10,8 @@ Ensures current project conventions and domain vocabulary are in context before 
 
 ## Steps
 
-1. Read `AGENTS.md` at the repo root — the single source of truth for conventions. Note: dev commands, frontend rules (Zustand-only, no useState, no barrels, `@/`), backend rules (6-layer, Zod, AppError, `@backend/*`), OpenAPI/Orval regen requirements, and lint zero-warning policy.
-2. Read `CLAUDE.md` at the repo root for the default engineering workflow and shipping (branch/PR) rules.
-3. Read `CONTEXT.md` at the repo root for domain vocabulary — use its terms, not synonyms.
-4. If working inside a specific app, read `apps/<app-name>/AGENTS.md` if present (none exists today, but the pattern is allowed).
+1. Read `AGENTS.md` at the repo root — monorepo-wide commands, git workflow, and cross-cutting rules (no barrels, `type` not `interface`, arrow functions, lint zero-warning policy).
+2. Read `apps/nebula-chat-client/AGENTS.md` and/or `apps/nebula-chat-server/AGENTS.md`, whichever side the task touches, for package-specific conventions (Zustand-only/no useState/no useEffect on the frontend; 6-layer/Zod/AppError/`@backend/*` on the backend) and code examples.
+3. Read `CLAUDE.md` at the repo root for the default engineering workflow and shipping (branch/PR) rules.
+4. Read `CONTEXT.md` at the repo root for domain vocabulary — use its terms, not synonyms.
 5. Report which conventions are in scope for the current task.

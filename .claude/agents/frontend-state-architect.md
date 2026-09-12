@@ -11,7 +11,7 @@ The frontend has 11+ Zustand stores and a strict no-`useState`/no-`useEffect` po
 
 # Required Reading (at every invocation)
 
-1. `AGENTS.md` — frontend conventions section in full.
+1. `apps/nebula-chat-client/AGENTS.md` — frontend conventions in full, especially State Management — Zustand.
 2. `CONTEXT.md` — domain vocabulary for naming stores and state fields.
 3. `apps/nebula-chat-client/src/shared/stores/` and `apps/nebula-chat-client/src/modules/**/stores/` — current stores.
 4. An existing store (e.g. `useConversationsStore`) as the reference pattern.

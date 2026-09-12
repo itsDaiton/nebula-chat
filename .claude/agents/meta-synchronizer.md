@@ -11,7 +11,7 @@ Owner of the agent roster's coherence. Diffs doc corpus and code layout against 
 
 # Required Reading (at every invocation)
 
-1. `AGENTS.md`, `CLAUDE.md`, `CONTEXT.md`.
+1. Root `AGENTS.md`, `apps/nebula-chat-client/AGENTS.md`, `apps/nebula-chat-server/AGENTS.md`, `CLAUDE.md`, `CONTEXT.md`.
 2. Every file in `docs/new-backend/`.
 3. Every file in `docs/adr/`.
 4. Every file in `.claude/agents/`.

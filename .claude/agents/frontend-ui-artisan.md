@@ -11,7 +11,7 @@ Visual and interaction layer. Owns Chakra component composition, the theme token
 
 # Required Reading (at every invocation)
 
-1. `AGENTS.md` — frontend conventions.
+1. `apps/nebula-chat-client/AGENTS.md` — frontend conventions.
 2. `apps/nebula-chat-client/src/theme/` — tokens, color modes, Chakra config.
 3. `apps/nebula-chat-client/src/resources.ts` — string constants.
 4. `apps/nebula-chat-client/src/shared/components/` and `src/shared/layout/` — shared primitives.

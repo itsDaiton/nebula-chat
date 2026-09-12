@@ -7,7 +7,7 @@ argument-hint: '<StoreName> <target-path>'
 
 # Zustand Store Scaffold
 
-Creates a conventional store file. Reads `AGENTS.md` first to pick up any updated conventions.
+Creates a conventional store file. Reads `apps/nebula-chat-client/AGENTS.md` first to pick up any updated conventions.
 
 ## Preconditions
 

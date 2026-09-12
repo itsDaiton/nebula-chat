@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-`AGENTS.md` is the single source of truth for this repo's technical conventions — dev commands, architecture, directory layout, code style, and environment variables. Read it before making non-trivial changes. `CONTEXT.md` is the single source of truth for domain vocabulary. This file covers only what's specific to operating as an agent here: how to ship changes and which skills to reach for.
+`AGENTS.md` is the single source of truth for this repo's technical conventions: the root file covers monorepo-wide commands, git workflow, and cross-cutting rules; [apps/nebula-chat-client/AGENTS.md](./apps/nebula-chat-client/AGENTS.md) and [apps/nebula-chat-server/AGENTS.md](./apps/nebula-chat-server/AGENTS.md) cover package-specific conventions and code examples. Read the relevant ones before making non-trivial changes. `CONTEXT.md` is the single source of truth for domain vocabulary. This file covers only what's specific to operating as an agent here: how to ship changes and which skills to reach for.
 
 ## Shipping (branch + PR) — applies to every agent
 

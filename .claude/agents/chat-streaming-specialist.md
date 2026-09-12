@@ -11,7 +11,7 @@ Single owner for everything on the chat hot path: SSE transport, token budgeting
 
 # Required Reading (at every invocation)
 
-1. `AGENTS.md` — backend conventions.
+1. `apps/nebula-chat-server/AGENTS.md` — backend conventions, especially Chat Streaming and Caching — Redis.
 2. `CONTEXT.md` — domain vocabulary (streaming token vs. token-budget token, cache entry, model).
 3. `apps/nebula-chat-server/src/modules/chat/` — entire module, including `chat.cacheCheck.hook.ts` and `chat.streamCapture.hook.ts`.
 4. `apps/nebula-chat-server/src/cache/` — Redis cache module.

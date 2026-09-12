@@ -11,7 +11,7 @@ Feature-module builder. Every backend module must follow the layered file conven
 
 # Required Reading (at every invocation)
 
-1. `AGENTS.md` — backend layering, Zod usage, AppError hierarchy.
+1. `apps/nebula-chat-server/AGENTS.md` — backend layering, Zod usage, AppError hierarchy. Root `AGENTS.md` for cross-cutting rules.
 2. `CONTEXT.md` — domain vocabulary for naming types, fields, and routes.
 3. `apps/nebula-chat-server/src/errors/` — AppError subclasses and `error.schema.ts`.
 4. `apps/nebula-chat-server/src/modules/conversation/` — reference implementation of the 6-layer pattern.

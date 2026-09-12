@@ -11,8 +11,8 @@ Owns `libs/db/src/schema.ts` and everything under `libs/db/migrations/`. Authors
 
 # Required Reading (at every invocation)
 
-1. `AGENTS.md` — conventions for the backend.
-2. `AGENTS.md` — DB lib commands (Development Commands section) and `DATABASE_URL` source-of-truth notes.
+1. `apps/nebula-chat-server/AGENTS.md` — Database — Drizzle section.
+2. Root `AGENTS.md` — DB lib commands (Development Commands section) and `DATABASE_URL` source-of-truth notes.
 3. `libs/db/src/schema.ts` — current schema (tables, columns, FKs, indexes).
 4. `libs/db/drizzle.config.ts` — drizzle-kit configuration and migrations output dir.
 5. `libs/db/package.json` — available scripts and exports.
