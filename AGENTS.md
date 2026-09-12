@@ -1,37 +1,83 @@
 # AGENTS.md
 
-Comprehensive reference for AI agents (and contributors) working in this repository.
-Covers the full monorepo — where things live, how they are built, and how to add to them.
+Reference for AI agents (and contributors) working in this repository: monorepo-wide commands, workflow, and structure.
+
+Package-specific conventions — directory layout, state management, module patterns, code examples — live in each package's own `AGENTS.md`, not here:
+
+- [apps/nebula-chat-client/AGENTS.md](./apps/nebula-chat-client/AGENTS.md) — frontend (React, Zustand, Chakra UI)
+- [apps/nebula-chat-server/AGENTS.md](./apps/nebula-chat-server/AGENTS.md) — backend (Fastify, Drizzle, Zod)
+
+Read this file for anything that spans the whole repo; read the relevant package's `AGENTS.md` before touching code inside it.
 
 ---
 
 ## Table of Contents
 
-1. [Git Workflow](#git-workflow)
-2. [Code Quality](#code-quality)
-3. [Monorepo Structure](#monorepo-structure)
-4. [Frontend](#frontend)
-   - [Directory Layout](#frontend-directory-layout)
-   - [Routing](#routing)
-   - [Imports](#imports)
-   - [No `index.ts` barrels](#no-indexts-barrels)
-   - [TypeScript Types](#typescript-types)
-   - [State Management — Zustand](#state-management--zustand)
-   - [Components](#components)
-   - [Hooks](#hooks)
-   - [Shared Utilities](#shared-utilities)
-5. [Backend](#backend)
-   - [Directory Layout](#backend-directory-layout)
-   - [Module Pattern](#module-pattern)
-   - [Error Handling](#error-handling)
-   - [Validation](#validation)
-   - [Database — Drizzle](#database--drizzle)
-   - [Caching — Redis](#caching--redis)
-   - [Chat Streaming](#chat-streaming)
-   - [OpenAPI Docs](#openapi-docs)
-   - [Path Aliases](#backend-path-aliases)
-6. [Environment Variables](#environment-variables)
-7. [Local Development](#local-development)
+1. [Development Commands](#development-commands)
+2. [Git Workflow](#git-workflow)
+3. [Code Quality](#code-quality)
+4. [Cross-cutting Conventions](#cross-cutting-conventions)
+5. [Monorepo Structure](#monorepo-structure)
+6. [Local Development](#local-development)
+7. [Keeping the Agentic Workspace in Sync](#keeping-the-agentic-workspace-in-sync)
+
+---
+
+## Development Commands
+
+### Root (monorepo)
+
+```bash
+pnpm install                      # Install all workspace dependencies
+pnpm run lint                     # ESLint (strict, max-warnings=0)
+pnpm run lint:fix                 # Auto-fix linting issues
+pnpm run format                   # Prettier format all files
+pnpm run format:check             # Check formatting compliance
+pnpm --filter nebula-chat-client run <cmd>  # Run frontend script (e.g. pnpm --filter nebula-chat-client run dev)
+pnpm --filter nebula-chat-server run <cmd>  # Run backend script (e.g. pnpm --filter nebula-chat-server run dev)
+```
+
+### Frontend (`/apps/nebula-chat-client`)
+
+```bash
+pnpm dev        # Vite dev server on localhost:5173
+pnpm build      # tsc + Vite build → /apps/nebula-chat-client/build
+pnpm typecheck  # tsc --noEmit
+```
+
+### Backend (`/apps/nebula-chat-server`)
+
+```bash
+pnpm dev              # tsx watch mode (auto-restart) — assumes lib artifacts already built
+pnpm start            # node dist/src/server.js (production)
+pnpm generate:openapi # Regenerate openapi/openapi.yaml from live route schemas
+```
+
+> **`build` and `typecheck` must be run via Turbo** so workspace lib artifacts (`dist/*.d.ts`) are
+> built first. Use these from the repo root:
+>
+> ```bash
+> pnpm turbo run build     --filter=nebula-chat-server  # builds @nebula-chat/* deps first
+> pnpm turbo run typecheck --filter=nebula-chat-server  # builds + typechecks dep closure first
+> ```
+
+### DB lib (`/libs/db` — `@nebula-chat/db`)
+
+```bash
+pnpm --filter @nebula-chat/db build        # Dual ESM+CJS build via tsup
+pnpm --filter @nebula-chat/db db:push      # Sync schema to local DB without migration files (dev)
+pnpm --filter @nebula-chat/db db:generate  # Generate SQL migration files from schema changes
+pnpm --filter @nebula-chat/db db:migrate   # Apply pending migration files (production)
+pnpm --filter @nebula-chat/db db:studio    # Open Drizzle Studio GUI
+```
+
+`DATABASE_URL` is read from `apps/nebula-chat-server/.env` by both the server at runtime and by drizzle-kit CLI commands — single source of truth.
+
+### Local infrastructure
+
+```bash
+cd apps/nebula-chat-server && docker-compose up  # Start PostgreSQL (port 5332) + Redis (port 6380)
+```
 
 ---
 
@@ -45,7 +91,7 @@ Covers the full monorepo — where things live, how they are built, and how to a
 ### Commits
 
 - Use [Conventional Commits](https://www.conventionalcommits.org/) format: `type(scope): description`.
-  - Types: `feat`, `fix`, `chore`, `refactor`, `docs`, `style`, `test`.
+  - Types: `feat`, `fix`, `perf`, `chore`, `refactor`, `docs`, `style`, `test`, `build`, `ci`.
   - Scope is optional but encouraged: `feat(chat): ...`, `fix(backend): ...`, `refactor(frontend): ...`
 - Keep the subject line under 72 characters.
 - Commit logically complete units of work — don't leave the codebase in a broken state between commits.
@@ -56,6 +102,30 @@ Covers the full monorepo — where things live, how they are built, and how to a
 - PR title follows the same Conventional Commits format.
 - PR description must include a brief summary of what changed and why, plus a test plan.
 - Keep PRs small and focused. Split large changes into multiple PRs.
+
+### Referencing tickets
+
+Tickets from `/to-tickets` (and issues picked up via `/triage`) are GitHub issues — their "code" is the issue number. A PR that implements one must reference it, since nothing else links the two after merge:
+
+- **Title**: append the issue number in parentheses at the end, after the Conventional Commit header: `type(scope): summary (#NN)`. The reference is trailing — it doesn't replace or share space with the `(scope)`.
+- **Body**: include a `Closes #NN` (or `Fixes #NN`) line so GitHub auto-closes the ticket when the PR merges into `main`. Use `Part of #NN` instead only for the rare ticket that genuinely can't close in one PR — `/to-tickets` sizes tickets to close in one, so this should be uncommon.
+- A PR spanning more than one ticket (avoid where possible — prefer one PR per ticket) lists each with its own `Closes #NN` / `Part of #NN` line.
+- This is independent of the Release Please rules below: the issue number is for traceability, not for the version bump — don't put it in the commit **type** or **scope** position.
+
+### Release Please
+
+Releases on `main` are fully automated by [release-please](https://github.com/googleapis/release-please) (`.github/workflows/release-please.yml`, config in `release-please-config.json`) — it reads Conventional Commit messages on `main`, not anything written by hand. There is no manual changelog or version bump; get the commit/PR message right instead.
+
+- **Squash-merge is this repo's default** (`squash_merge_commit_title: PR_TITLE`), so for a normal feature PR the **PR title becomes the one commit release-please parses** — get the title right, not just the individual commits inside the PR. If a PR is merged with a merge commit instead, every individual commit is parsed, so each one still needs a correct type/scope.
+- **Type decides the version bump** release-please applies to whichever component(s) the commit's changed files fall under:
+  - `fix:` → patch bump.
+  - `feat:` → minor bump.
+  - `feat!:`, `fix!:`, or a footer of `BREAKING CHANGE: ...` → major bump. Use this only for an actual breaking change to a released package's public surface (e.g. `libs/db`'s exported types, the OpenAPI contract) — not for internal refactors.
+  - `perf:` → patch bump.
+  - `chore:`, `refactor:`, `docs:`, `style:`, `test:`, `build:`, `ci:` → no version bump, changelog entry only (some types are excluded from the changelog by config).
+- **Scope should name the release-please component** the change belongs to, matching `release-please-config.json`'s `packages` keys: `client` (`apps/nebula-chat-client`), `server` (`apps/nebula-chat-server`), `db` (`libs/db`), `langchain` (`libs/langchain`), `openapi`, or omit the scope (or use a repo-wide one like `chore(agents): ...`) for root-level tooling/docs changes (`CLAUDE.md`, `AGENTS.md`, `CONTEXT.md`, `.claude/`, `docs/`) — those fall under the root `nebula-chat` component, which explicitly excludes `apps/**`, `libs/**`, and `openapi/**`.
+- release-please determines the bump **per component from the changed file paths**, not from the scope string — the scope is for changelog readability, so keep it accurate, but don't rely on it to control which package gets released.
+- A commit that spans multiple components (e.g. a backend route change plus its regenerated `openapi.yaml` and Orval client) still needs one accurate primary scope; each affected component gets its own bump from the same commit regardless of what the scope says.
 
 ---
 
@@ -79,20 +149,34 @@ Do not disable ESLint rules with inline `// eslint-disable` comments unless abso
 
 ---
 
+## Cross-cutting Conventions
+
+These apply everywhere in the repo, frontend and backend alike. See each package's `AGENTS.md` for the full rules and code examples.
+
+- **`type`, never `interface`.** No exceptions, anywhere.
+- **`const` arrow functions, never `function` declarations.** Applies to hooks, utils, helpers, components, and route handlers alike.
+- **No `index.ts` barrel files, anywhere.** Import directly from the file that defines the thing. The only tolerated `index.ts` files are those emitted by code generators (e.g. Orval output) — never hand-author or hand-edit them.
+- **No relative imports.** Frontend uses `@/*` (→ `apps/nebula-chat-client/src/`); backend uses `@backend/*` (→ `apps/nebula-chat-server/src/`).
+
+---
+
 ## Monorepo Structure
 
 ```
 nebula-chat/
 ├── apps/
-│   ├── nebula-chat-client/   # React SPA (frontend)
-│   └── nebula-chat-server/   # Fastify API (backend)
-├── CLAUDE.md                 # Claude Code instructions
+│   ├── nebula-chat-client/   # React SPA (frontend) — see its AGENTS.md
+│   └── nebula-chat-server/   # Fastify API (backend) — see its AGENTS.md
+├── libs/
+│   └── db/                   # @nebula-chat/db — Drizzle ORM schema + migrations
+├── CLAUDE.md                 # Claude Code operating instructions
+├── CONTEXT.md                # Domain vocabulary glossary
 ├── AGENTS.md                 # This file
-├── package.json              # Root workspace (pnpm)
+├── package.json               # Root workspace (pnpm)
 └── pnpm-workspace.yaml
 ```
 
-Both packages are managed with pnpm workspaces. Run scripts scoped to a package:
+Both apps are managed with pnpm workspaces. Run scripts scoped to a package:
 
 ```bash
 pnpm --filter nebula-chat-client run dev
@@ -107,669 +191,7 @@ When scaffolding a new package under `libs/`, follow these steps **in order** be
 2. **Add the package to `release-please-config.json`** under `"packages"` so it is versioned from day one.
 3. Implement the lib, then **commit and push** when the work is complete.
 
-Never skip steps 1 or 2, even for small utility libs.
-
----
-
-## Frontend
-
-### Frontend Directory Layout
-
-```
-apps/nebula-chat-client/src/
-├── App.tsx                        # Root — mounts providers and router
-├── main.tsx                       # Vite entry point
-├── RouterProvider.tsx             # React Router setup
-├── routes.ts                      # Typed route helpers
-├── resources.ts                   # UI string constants
-├── App.css
-├── theme/
-│   ├── theme.ts                   # Chakra UI theme tokens
-│   └── ThemeProvider.tsx          # next-themes wrapper
-├── modules/                       # Feature modules
-│   ├── auth/
-│   │   └── AuthPage.tsx
-│   ├── chat/
-│   │   ├── ChatPage.tsx
-│   │   ├── types/types.ts         # All chat types
-│   │   ├── utils/chatUtils.ts     # Model options list, pure helpers
-│   │   ├── stores/                # Zustand stores
-│   │   │   ├── useChatStreamStore.ts
-│   │   │   ├── useMessageStore.ts
-│   │   │   ├── useModelStore.ts
-│   │   │   └── useModelSelectorStore.ts
-│   │   ├── hooks/                 # Logic hooks (consume stores)
-│   │   │   ├── useChatStream.ts
-│   │   │   ├── useHandleSendMessage.ts
-│   │   │   ├── useMessageHandler.ts
-│   │   │   ├── useModel.ts
-│   │   │   └── useModelSelector.ts
-│   │   └── components/
-│   │       ├── ChatContainer.tsx
-│   │       ├── ChatInput.tsx
-│   │       ├── ChatInputArea.tsx
-│   │       ├── ChatMessage.tsx
-│   │       ├── ChatStreaming.tsx
-│   │       ├── ModelSelect.tsx
-│   │       ├── SendButton.tsx
-│   │       └── ...
-│   └── conversations/
-│       ├── types/types.ts         # All conversation types
-│       ├── utils/navigationActions.tsx
-│       ├── context/
-│       │   └── ConversationsContext.tsx   # createContext + useConversationsContext hook only
-│       ├── providers/
-│       │   └── ConversationsProvider.tsx  # Provider component — reads store, supplies context value
-│       ├── stores/
-│       │   └── useConversationsStore.ts
-│       ├── hooks/
-│       │   ├── useConversation.ts
-│       │   ├── useConversationsSearch.ts
-│       │   └── useInfiniteScroll.ts
-│       └── components/
-│           ├── ConversationsList.tsx
-│           ├── ConversationDrawer.tsx
-│           ├── ConversationsSearch.tsx
-│           ├── ConversationListItem.tsx
-│           └── ConversationSkeletons.tsx
-└── shared/                        # Cross-module code
-    ├── types/types.ts             # Shared types
-    ├── config/
-    │   ├── serverConfig.ts        # API base URL helper
-    │   └── paginationConfig.ts    # Default page size
-    ├── stores/                    # Global Zustand stores
-    │   ├── useSearchStore.ts      # Search overlay open/closed
-    │   ├── useDrawerStore.ts      # Mobile drawer open/closed
-    │   └── useViewportStore.ts    # Viewport height
-    ├── hooks/                     # Shared utility hooks
-    │   ├── useAutoScroll.ts
-    │   ├── useDebounce.ts
-    │   ├── useDrawer.ts
-    │   ├── useEscapeKey.ts
-    │   ├── useEventListener.ts
-    │   ├── useKeyboardHandler.ts
-    │   ├── useKeyboardShortcut.ts
-    │   ├── useMultiLine.ts
-    │   ├── useResponsiveLayout.ts
-    │   ├── useResetChat.ts
-    │   ├── useTextareaAutoResize.ts
-    │   └── useViewportHeight.ts
-    ├── layout/
-    │   ├── Layout.tsx             # Main shell (header, sidepanels, drawer)
-    │   ├── Header.tsx
-    │   ├── SidePanel.tsx
-    │   └── Page.tsx
-    ├── components/
-    │   ├── navigation/
-    │   │   ├── NebulaButton.tsx
-    │   │   ├── NebulaMenu.tsx
-    │   │   └── BadgeActionButton.tsx
-    │   └── ui/                    # Chakra UI primitives & adapters
-    │       ├── color-mode.tsx
-    │       ├── provider.tsx
-    │       ├── toaster.tsx
-    │       ├── tooltip.tsx
-    │       ├── markdown-content.tsx
-    │       └── ...
-    └── utils/
-        ├── errorHandler.ts        # handleHttpError, handleNetworkError
-        ├── dateUtils.ts
-        ├── scrollUtils.ts
-        ├── menuUtils.ts
-        ├── urlUtils.ts
-        └── index.ts
-```
-
----
-
-### Routing
-
-Routes are defined in `routes.ts` as typed helpers and consumed through React Router:
-
-```ts
-import { route } from '@/routes';
-
-navigate(route.chat.root()); // /
-navigate(route.chat.conversation(id)); // /c/:id
-```
-
-`RouterProvider.tsx` sets up the React Router instance. Route components live in `modules/*/` as `*Page.tsx` files.
-
----
-
-### Imports
-
-Always use the `@/` path alias — never relative paths (`./`, `../../`, etc.). `@/` maps to `apps/nebula-chat-client/src/`. This applies to **every** import in every file — components, hooks, utils, and types — regardless of how close the files are to each other.
-
-**Check every import in every file you touch.** If a relative path exists anywhere in a file you modify, fix it.
-
-```ts
-// correct
-import { useSearchStore } from '@/shared/stores/useSearchStore';
-import type { Conversation } from '@/modules/conversations/types/types';
-import { ChatInput } from '@/modules/chat/components/ChatInput';
-import { useChatStream } from '@/modules/chat/hooks/useChatStream';
-
-// wrong — no relative paths, ever
-import { useSearchStore } from '../../shared/stores/useSearchStore';
-import type { Conversation } from '../types/types';
-import { ChatInput } from './ChatInput';
-```
-
----
-
-### No `index.ts` barrels
-
-Never use `index.ts` files for re-exports. Each module, component, hook, util, or type must be imported directly from the file that defines it — no barrel files anywhere in the repo (frontend or backend).
-
-This keeps imports explicit, avoids circular-dependency traps, and prevents the tree-shaking and IDE-performance issues barrel files are known for.
-
-```ts
-// correct — import from the defining file
-import { axiosClient } from '@/libs/api/client';
-import { queryClient } from '@/libs/api/queryClient';
-import { ChatInput } from '@/modules/chat/components/ChatInput';
-
-// wrong — never re-export through an index.ts
-// apps/nebula-chat-client/src/libs/api/index.ts
-export * from './client';
-export * from './queryClient';
-```
-
-The only `index.ts` files tolerated are those emitted by code generators (e.g. Orval output). Do not hand-author or hand-edit them.
-
----
-
-### TypeScript Types
-
-- Use `type` — never `interface`. This applies everywhere: `types/types.ts`, hooks, components, utils — no exceptions.
-
-```ts
-// correct
-type ConversationWithMessages = {
-  id: string;
-  messages: Message[];
-};
-
-// wrong — anywhere in the codebase
-interface ConversationWithMessages { ... }
-```
-
-- All types must live in `/types/types.ts` under the relevant module or `shared/`. Never define types inline inside hook, store, or component files.
-- Always import types with the `type` keyword:
-
-```ts
-import type { ChatMessage } from '@/modules/chat/types/types';
-```
-
-### Modern TypeScript / ES Style
-
-- **Never use `'use client'`** — this is a Vite/React SPA, not Next.js. The directive has no effect and must never appear in any file.
-
-- Always use `const` arrow functions — never `function` declarations. This applies to hooks, utils, helpers, and components.
-
-```ts
-// correct
-export const useMyHook = () => { ... };
-export const formatDate = (date: string): string => { ... };
-export const MyComponent = () => <div />;
-
-// wrong
-export function useMyHook() { ... }
-export function formatDate(date: string): string { ... }
-function MyComponent() { ... }
-```
-
----
-
-### State Management — Zustand
-
-All client state is managed with [Zustand](https://zustand.docs.pmnd.rs/). React Context is **not** used for state.
-
-#### Never use `useState`
-
-**Never use `useState`.** All state lives in Zustand stores. There is no scenario where `useState` is the right choice.
-
-| Scenario                                                       | Use                                                         |
-| -------------------------------------------------------------- | ----------------------------------------------------------- |
-| State shared across two or more components                     | Zustand store                                               |
-| Global UI state (drawer, search overlay, viewport height)      | Zustand store                                               |
-| API-fetching state (loading, data, error)                      | Zustand store                                               |
-| DOM measurements shared across instances (e.g. `useMultiLine`) | Zustand store keyed by content                              |
-| Debounce timers                                                | Module-level variable alongside the store — not React state |
-| Tracking a previous value across renders                       | `useRef` — not state                                        |
-| Any other "local" state                                        | Zustand store in the owning module                          |
-
-#### Folder rules
-
-- Zustand stores go in `/stores/` under the owning module or `shared/stores/` if global.
-- Hooks that consume stores go in `/hooks/`.
-- One store file per concern.
-
-#### Store conventions
-
-Define state and named actions together in a single `create()` call. Prefer action names that express intent over generic setters:
-
-```ts
-// correct — expressive actions
-export const useSearchStore = create<SearchState>((set) => ({
-  isSearchOpen: false,
-  openSearch: () => set({ isSearchOpen: true }),
-  closeSearch: () => set({ isSearchOpen: false }),
-  toggleSearch: () => set((state) => ({ isSearchOpen: !state.isSearchOpen })),
-}));
-
-// avoid — unclear intent at call site
-export const useSearchStore = create<SearchState>((set) => ({
-  isSearchOpen: false,
-  setIsSearchOpen: (value: boolean) => set({ isSearchOpen: value }),
-}));
-```
-
-Use `get()` inside async actions to read current state — do not close over stale values:
-
-```ts
-loadMore: async () => {
-  const { hasMore, isLoadingMore, nextCursor } = get();
-  if (!hasMore || isLoadingMore || !nextCursor) return;
-  // ...
-},
-```
-
-Store types that are referenced outside the store file must live in `/types/types.ts`.
-
-#### React Context
-
-Context is **not** used for shared state. When a context is needed, split it across two files:
-
-- **`context/<Name>Context.tsx`** — `createContext` + the typed `use<Name>Context()` hook. No JSX, no store imports.
-- **`providers/<Name>Provider.tsx`** — the provider component. Reads from Zustand stores, memoizes the value, renders `<Context.Provider>`.
-
-The one existing provider is `ConversationsProvider`, which wraps the app to supply context values from `useConversationsStore`. It does not hold its own state. The initial fetch is triggered at module-level store initialization. All components subscribe to `useConversationsStore` directly.
-
-#### Existing stores
-
-| Store                         | Location                        | Owns                                                             |
-| ----------------------------- | ------------------------------- | ---------------------------------------------------------------- |
-| `useConversationsStore`       | `modules/conversations/stores/` | Conversations list, pagination, fetch, load-more                 |
-| `useConversationStore`        | `modules/conversations/stores/` | Single active conversation, loading, error, refetch              |
-| `useConversationsSearchStore` | `modules/conversations/stores/` | Search query, debounced query, results, loading, error           |
-| `useChatStreamStore`          | `modules/chat/stores/`          | Chat history, streaming flag, token usage, conversation ID       |
-| `useMessageStore`             | `modules/chat/stores/`          | Current message input value                                      |
-| `useModelStore`               | `modules/chat/stores/`          | Selected AI model                                                |
-| `useModelSelectorStore`       | `modules/chat/stores/`          | Model dropdown open state and trigger width                      |
-| `useSearchStore`              | `shared/stores/`                | Search overlay open/closed                                       |
-| `useDrawerStore`              | `shared/stores/`                | Mobile drawer open/closed                                        |
-| `useViewportStore`            | `shared/stores/`                | Viewport height string (updated on resize)                       |
-| `useMultiLineStore`           | `shared/stores/`                | Per-content multi-line detection map (`Record<string, boolean>`) |
-
----
-
-### Components
-
-- Components live in `modules/<module>/components/` or `shared/components/`.
-- **One component per file.** Never define multiple components, hooks, or significant logic in a single file. No co-located sub-components, no local helper components at the bottom of a file — every component gets its own file.
-- Components read from stores and hooks — they do not own significant state themselves.
-- Use Chakra UI primitives. Custom UI wrappers live in `shared/components/ui/`.
-- Responsive layout decisions (`isMobile`, `showSidePanels`) come from `useResponsiveLayout`.
-- **All static text must live in `resources.ts`.** If it is a string shown in the UI — button labels, placeholders, error messages, hints, empty states, tooltips — it goes in `resources.ts`. Never hardcode UI strings inline in components or utilities.
-
----
-
-### Hooks
-
-Hooks in `/hooks/` are thin wrappers that read from one or more stores and compose logic. They must not duplicate state that already lives in a store.
-
-```ts
-// correct — delegates entirely to stores
-export const useDrawer = () => {
-  const { isDrawerOpen, openDrawer, closeDrawer, toggleDrawer } = useDrawerStore();
-  const { isSearchOpen, openSearch, closeSearch, toggleSearch } = useSearchStore();
-  return {
-    isDrawerOpen,
-    openDrawer,
-    closeDrawer,
-    toggleDrawer,
-    isSearchOpen,
-    openSearch,
-    closeSearch,
-    toggleSearch,
-  };
-};
-
-// wrong — re-introduces local state that belongs in a store
-export const useDrawer = () => {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // never do this
-};
-```
-
-Utility hooks that are inherently parameterised per call-site (`useDebounce`, `useEventListener`) may use `useRef` — they cannot be singleton stores.
-
----
-
-### `useEffect` rules
-
-**Never use `useEffect`.** Reference: [You Might Not Need an Effect](https://react.dev/learn/you-might-not-need-an-effect)
-
-| Pattern                            | Wrong                            | Right                                                                             |
-| ---------------------------------- | -------------------------------- | --------------------------------------------------------------------------------- |
-| Derived / computed state           | `useEffect` → `setState`         | Compute inline during render or `useMemo`                                         |
-| Syncing state on prop/route change | `useEffect` → Zustand `set`      | Render-time `useRef` guard (see `useConversation.ts`)                             |
-| Initialising data on mount         | `useEffect(() => fetch(), [])`   | Module-level store init (see `useConversationsStore.ts`)                          |
-| Reading a browser API value        | `useEffect` + `useState`         | `useSyncExternalStore` (see `useViewportHeight.ts`)                               |
-| DOM measurement after mount        | `useRef` + `useEffect`           | Callback ref — `ref={useCallback((node) => { ... }, [])}` (see `useMultiLine.ts`) |
-| Registering a DOM event listener   | `useEffect` + `addEventListener` | `useEventListener` via `useSyncExternalStore` subscribe lifecycle                 |
-
-No hook or component in the codebase may import or call `useEffect`.
-
----
-
-### Shared Utilities
-
-- `shared/utils/errorHandler.ts` — `handleHttpError(response)` and `handleNetworkError(err)` used in all API call sites. Always go through these rather than throwing raw errors.
-- `shared/config/serverConfig.ts` — `SERVER_CONFIG.getApiEndpoint(path)` constructs full API URLs from `VITE_API_URL`. Never hardcode API base URLs.
-- `shared/config/paginationConfig.ts` — `paginationConfig.defaultLimit` for page sizes.
-
----
-
-## Backend
-
-### Backend Directory Layout
-
-```
-apps/nebula-chat-server/src/
-├── app.ts                         # buildApp() factory — registers plugins, routes, compilers
-├── server.ts                      # Thin entry point — calls buildApp() then app.listen()
-├── env.ts                         # Zod-validated env schema — single source for all process.env reads
-├── db.ts                          # DB client singleton (createDbClient from @nebula-chat/db)
-├── config/
-│   ├── cors.config.ts             # Allowed origins, CORS options
-│   ├── headers.config.ts          # SSE + cache response headers (uses http.ServerResponse)
-│   └── pagination.config.ts       # Default/max page limits
-├── errors/
-│   ├── AppError.ts                # Error class hierarchy
-│   ├── error.handler.ts           # Fastify setErrorHandler callback (Zod, AppError, fallback)
-│   └── error.schema.ts            # Shared Zod errorResponseSchema (used in route response schemas)
-├── modules/
-│   ├── chat/
-│   │   ├── chat.types.ts
-│   │   ├── chat.validation.ts     # Zod request/response schemas
-│   │   ├── chat.config.ts         # Token limits, model allowlist
-│   │   ├── chat.tokenizer.ts      # tiktoken token counting/validation
-│   │   ├── chat.utils.ts          # OpenAI client, SSE event formatting (uses http.ServerResponse)
-│   │   ├── chat.service.ts        # Streaming orchestration
-│   │   ├── chat.controller.ts
-│   │   └── chat.routes.ts         # FastifyPluginAsyncZod; schema blocks + hook chain
-│   ├── conversation/
-│   │   ├── conversation.types.ts
-│   │   ├── conversation.validation.ts
-│   │   ├── conversation.repository.ts   # All Drizzle queries
-│   │   ├── conversation.service.ts
-│   │   ├── conversation.controller.ts
-│   │   └── conversation.routes.ts
-│   └── message/
-│       ├── message.types.ts
-│       ├── message.validation.ts
-│       ├── message.repository.ts
-│       ├── message.service.ts
-│       ├── message.controller.ts
-│       └── message.routes.ts
-└── cache/                         # Redis-backed cache as its own module
-    ├── cache.types.ts
-    ├── cache.config.ts            # Key format, TTL (600 000 ms), max items (1000)
-    ├── cache.client.ts            # Redis connection
-    ├── cache.service.ts           # get, set, stats, eviction
-    ├── cache.validation.ts
-    ├── cache.controller.ts
-    └── cache.routes.ts
-```
-
----
-
-### Module Pattern
-
-Every feature module follows this strict 6-layer convention. Add files in this order when creating a new module:
-
-```
-1. <module>.types.ts        — TypeScript types / DTOs (no logic)
-2. <module>.validation.ts   — Zod schemas for request body/params/query/response
-3. <module>.repository.ts   — Raw Drizzle queries; no business logic (omit if no DB access)
-4. <module>.service.ts      — Business logic; calls repository; never touches req/res
-5. <module>.controller.ts   — Calls service; builds HTTP response; minimal logic
-6. <module>.routes.ts       — FastifyPluginAsyncZod default export; schema blocks + hook chain
-```
-
-New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(plugin, { prefix: '/api/<module>' })`. No separate OpenAPI registry step — the `schema:` block on each route is the single source of truth for both validation and documentation.
-
----
-
-### Error Handling
-
-All errors extend `AppError` from `errors/AppError.ts`. Use the subclass that matches the situation:
-
-| Class                                      | HTTP status  | When to use                        |
-| ------------------------------------------ | ------------ | ---------------------------------- |
-| `NotFoundError`                            | 404          | Resource not found by ID           |
-| `BadRequestError`                          | 400          | Invalid input not caught by Zod    |
-| `UnauthorizedError`                        | 401          | Not authenticated                  |
-| `ForbiddenError`                           | 403          | Authenticated but not allowed      |
-| `PayloadTooLargeError`                     | 413          | Message exceeds token limit        |
-| `MissingConfigurationError`                | 500          | Required env var not set           |
-| `RedisConnectionError` / `RedisCacheError` | 500          | Redis failures (usually fail-open) |
-| `APIError`                                 | configurable | External API errors                |
-
-Throw from service layer; the `errorHandler` exported from `errors/error.handler.ts` and registered in `buildApp()` catches everything and returns:
-
-```json
-{ "success": false, "error": "NotFound", "message": "Conversation ... not found" }
-```
-
-Never return raw error objects to the client. Never throw from controllers — let the global handler do it.
-
----
-
-### Validation
-
-Validation is handled by Fastify's native schema layer via `fastify-type-provider-zod`. Define Zod schemas in the module's `*.validation.ts` file, then reference them in the `schema:` block of the corresponding route. Use `FastifyPluginAsyncZod` (not `FastifyPluginAsync`) so TypeScript infers request types from the schemas:
-
-```ts
-// conversation.routes.ts
-import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
-import { errorResponseSchema } from '@backend/errors/error.schema';
-import { conversationController } from '@backend/modules/conversation/conversation.controller';
-import { createConversationSchema, conversationResponseSchema } from './conversation.validation';
-
-const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
-  app.post('/', {
-    schema: {
-      description: 'Create a new conversation with a title',
-      summary: 'Create conversation',
-      tags: ['Conversations'],
-      operationId: 'createConversation',
-      body: createConversationSchema,
-      response: {
-        201: conversationResponseSchema.describe('Conversation created successfully'),
-        400: errorResponseSchema.describe('Invalid request body'),
-        500: errorResponseSchema.describe('Internal server error'),
-      },
-    },
-    handler: conversationController.create,
-  });
-};
-```
-
-**Rule — every response entry must have `.describe('...')`:** `@fastify/swagger` emits "Default Response" for any response schema that has no description. Always call `.describe('...')` on the Zod schema at the point it is used in the `response:` block (not in the validation file — the description is route-contextual). This applies to success and error responses alike:
-
-```ts
-response: {
-  201: conversationResponseSchema.describe('Conversation created successfully'),
-  400: errorResponseSchema.describe('Invalid request body'),
-  404: errorResponseSchema.describe('Conversation not found'),
-  500: errorResponseSchema.describe('Internal server error'),
-},
-```
-
-**Rule — every route needs a `schema:` block.** Routes without one produce "Default Response" entries. Use `{ schema: { hide: true } }` to explicitly exclude infrastructure routes (e.g. `/openapi.json`) from the spec rather than leaving them undocumented.
-
-On validation failure the error is routed through `setErrorHandler`. Use `hasZodFastifySchemaValidationErrors(err)` (exported from `fastify-type-provider-zod`) in the error handler to detect and format these. Define schemas in `*.validation.ts` using plain Zod — no registry extensions needed. Use `.describe()` to add field-level descriptions for Swagger docs:
-
-```ts
-// conversation.validation.ts
-import { z } from 'zod';
-
-export const getConversationsQuerySchema = z.object({
-  limit: z.coerce
-    .number()
-    .int()
-    .positive()
-    .max(50)
-    .optional()
-    .default(10)
-    .describe('Number of conversations to fetch (1-50, default 10)'),
-  cursor: z.uuid().optional().describe('Pagination cursor for the next page'),
-});
-```
-
----
-
-### Database — Drizzle
-
-Schema lives at `libs/db/src/schema.ts` (`@nebula-chat/db`). Three tables: `users`, `conversations`, `messages` with FK constraints and indexes.
-
-**Rules:**
-
-- All Drizzle queries go in `*.repository.ts` files — never in services or controllers.
-- The DB client is created in `src/db.ts` via `createDbClient` from `@nebula-chat/db`. Always import `db` from `@backend/db`.
-- After changing the schema run `pnpm --filter @nebula-chat/db db:generate` in dev or `pnpm --filter @nebula-chat/db db:migrate` in prod.
-- Conversations are cursor-paginated using the conversation `id` as the cursor.
-- Max 20 messages are loaded into context for a single chat request.
-
----
-
-### Caching — Redis
-
-The cache is a Redis-backed SSE stream store keyed by conversation + model + prompt hash.
-
-**Key format:** `conversation:{conversationId}:model:{model}:prompt:{sha256(prompt)[0:16]}`
-
-**Flow:**
-
-1. `cacheCheckHook` preHandler runs before the controller. If a key exists it replays the cached token stream and returns — OpenAI is never called.
-2. `streamCaptureHook` preHandler monkey-patches `reply.raw.write` after a real OpenAI call. When the response ends it saves the full SSE stream to Redis.
-3. Max 1,000 cache entries. On overflow the oldest key (FIFO tracked in a Redis list) is evicted.
-4. TTL: 600,000 ms (10 minutes).
-5. **Fail-open:** all Redis errors are caught; the app continues without caching.
-
-Cache stats and management endpoints live at `/api/cache/*`.
-
----
-
-### Chat Streaming
-
-The chat route is the most complex part of the backend. End-to-end flow:
-
-```
-POST /api/chat/stream
-  → @fastify/rate-limit         (10 req / 60 s per IP, opt-in via route config)
-  → Zod body validation         (schema: { body: createChatStreamSchema } — native Fastify)
-  → cacheCheckHook preHandler   (Redis hit → replay stream via reply.hijack() + reply.raw, done)
-  → streamCaptureHook preHandler (monkey-patches reply.raw.write to capture output)
-  → chatController.streamMessage
-      → chat.service
-          1. Validate token budget (tiktoken — max 2 000 prompt, 10 000 context)
-          2. Fetch conversation history (last 20 messages)
-          3. DB transaction — create user message + conversation if new
-          4. Call OpenAI streaming completions
-          5. Pipe tokens to client as SSE events via reply.hijack() + reply.raw.write/reply.raw.end
-          6. On stream end — persist assistant message + token usage
-      → streamCaptureHook saves captured output to Redis
-```
-
-**SSE event types emitted to the client:**
-
-| Event                       | Data                                              |
-| --------------------------- | ------------------------------------------------- |
-| `conversation-created`      | `{ conversationId }`                              |
-| `user-message-created`      | `{ messageId }`                                   |
-| `token`                     | `{ token }` — one per streamed chunk              |
-| `usage`                     | `{ promptTokens, completionTokens, totalTokens }` |
-| `assistant-message-created` | `{ messageId }`                                   |
-| `end`                       | `"end"`                                           |
-| `error`                     | `{ error }`                                       |
-
-Token limits are configured in `chat.config.ts`:
-
-- Max prompt tokens: **2 000**
-- Max completion tokens: **1 000**
-- Max context window: **10 000**
-
----
-
-### OpenAPI Docs
-
-OpenAPI documentation is generated dynamically by `@fastify/swagger` in dynamic mode, driven by `fastify-type-provider-zod`. There is no separate registry or `*.openapi.ts` file. The `schema:` block on each route is the single source of truth:
-
-- `body`, `params`, `querystring` — Zod schemas for request validation and request docs
-- `response` — Zod schemas per status code for response serialization and response docs
-- `description`, `summary`, `tags`, `operationId` — OpenAPI metadata, inline on the route
-
-The generated spec is served at `/openapi.json`; Swagger UI at `/docs`.
-
-To export the spec as a static YAML file for the frontend Orval client, run:
-
-```bash
-pnpm --filter nebula-chat-server run generate:openapi  # writes openapi/openapi.yaml to repo root
-```
-
-The script (`src/scripts/generate-openapi.ts`) calls `buildApp()` → `app.ready()` → `app.swagger({ yaml: true })` and writes the result. It requires a full `.env` file since `buildApp()` parses env vars at startup.
-
-**Rule:** After every change to the backend, agents must re-run this script to keep `openapi/openapi.yaml` in sync with the current API state. Always commit the updated `openapi/openapi.yaml` alongside backend changes.
-
-**Rule (API client regeneration):** Whenever `openapi/openapi.yaml` changes — whether you edited the backend and regenerated it, or the file changed for any other reason — agents must immediately regenerate the typed frontend API client at `apps/nebula-chat-client/src/libs/api/generated/`:
-
-```bash
-pnpm --filter nebula-chat-client run generate:api
-```
-
-The generator is Orval, configured at `apps/nebula-chat-client/orval.config.ts`, driven by `openapi/openapi.yaml`, and using the axios mutator at `apps/nebula-chat-client/src/libs/api/client.ts`. Regenerated files in `apps/nebula-chat-client/src/libs/api/generated/` must be committed in the same PR as the backend/OpenAPI change — never ship an API change with a stale client. Do not hand-edit anything under `apps/nebula-chat-client/src/libs/api/generated/`; always regenerate.
-
----
-
-### Backend Path Aliases
-
-The backend uses `@backend/*` as a path alias for `src/*`:
-
-```ts
-import { db } from '@backend/db';
-import { AppError } from '@backend/errors/AppError';
-```
-
-Never use relative paths in the backend. Aliases are configured in `tsconfig.json` and resolved at build time by `tsc-alias`.
-
----
-
-## Environment Variables
-
-### Frontend (`apps/nebula-chat-client/.env`)
-
-| Variable       | Purpose                                                    |
-| -------------- | ---------------------------------------------------------- |
-| `VITE_API_URL` | Base URL of the backend API (e.g. `http://localhost:3000`) |
-
-### Backend (`apps/nebula-chat-server/.env`)
-
-| Variable            | Purpose                                                                     |
-| ------------------- | --------------------------------------------------------------------------- |
-| `OPENAI_API_KEY`    | OpenAI API key (optional — set at least one of this or `ANTHROPIC_API_KEY`) |
-| `ANTHROPIC_API_KEY` | Anthropic API key (optional — set at least one of this or `OPENAI_API_KEY`) |
-| `DATABASE_URL`      | PostgreSQL connection string                                                |
-| `REDIS_URL`         | Redis connection (e.g. `redis://localhost:6380`)                            |
-| `REDIS_PASSWORD`    | Redis password (if set)                                                     |
-| `CLIENT_URL`        | Frontend origin for CORS (e.g. `http://localhost:5173`)                     |
-| `SERVER_URL`        | Backend public URL (used in OpenAPI docs)                                   |
-| `PORT`              | Port to listen on (default `3000`)                                          |
-
-> **`env.ts` rule:** All env vars are Zod-validated in `src/env.ts` and fail loudly at startup before any listener is bound. Never read `process.env.*` directly anywhere in the backend — always import from `@backend/env`.
+Never skip steps 1 or 2, even for small utility libs. If the lib is substantial enough to need its own conventions, give it its own `AGENTS.md` and link it from this file's list at the top.
 
 ---
 
@@ -795,3 +217,20 @@ pnpm --filter nebula-chat-client run dev
 ### API Docs (dev)
 
 Open `http://localhost:3000/docs` for the Swagger UI once the backend is running.
+
+Environment variables are documented per-package: see [Frontend Environment Variables](./apps/nebula-chat-client/AGENTS.md#environment-variables) and [Backend Environment Variables](./apps/nebula-chat-server/AGENTS.md#environment-variables).
+
+---
+
+## Keeping the Agentic Workspace in Sync
+
+This repo's `.claude/` workspace (agents, skills) and its documentation (`AGENTS.md` files, `CLAUDE.md`, `CONTEXT.md`, `docs/adr/`) describe the codebase as it actually is. When they drift, agents make decisions on stale information — treat a stale reference here the same as a stale code comment: a bug to fix, not a nit to skip.
+
+**Whenever a change touches conventions, module layout, or architecture, update these in the same PR:**
+
+- The relevant `AGENTS.md` — root for cross-cutting changes, the package's own `AGENTS.md` for package-specific ones.
+- `CONTEXT.md` if domain vocabulary was introduced, renamed, or retired (this is `/domain-modeling`'s job, ideally done upstream during `/grill-with-docs`/`/to-spec`, not as an afterthought here).
+- `docs/adr/` if the change is hard-to-reverse, surprising, or the result of a real trade-off (see `/domain-modeling`'s ADR criteria).
+- Any `.claude/agents/*.md` whose required-reading, guardrails, or file paths reference the area that changed (e.g. a renamed directory, a retired ticket, a changed convention). `meta-synchronizer` can be invoked to audit the whole roster, but don't rely on it to catch what you already know changed.
+
+A PR that changes how the codebase works but leaves these docs describing the old way is not done.

@@ -13,7 +13,7 @@ Generate a new SQL migration file from the current `libs/db/src/schema.ts` diff.
 
 - Docker-compose Postgres must be running (port 5332) so drizzle-kit can introspect.
 - A migration name was provided as `$ARGUMENTS`. If not, ask for one.
-- An ADR exists in `docs/adr/` covering the schema change (if not, stop and invoke `adr-author`).
+- An ADR should already exist in `docs/adr/` for a real schema change (authored upstream via `/domain-modeling` during `/grill-with-docs`/`/to-spec`). If one is clearly missing and warranted, flag it to the user rather than blocking.
 
 ## Steps
 

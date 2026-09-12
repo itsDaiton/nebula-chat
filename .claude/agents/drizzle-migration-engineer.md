@@ -11,13 +11,14 @@ Owns `libs/db/src/schema.ts` and everything under `libs/db/migrations/`. Authors
 
 # Required Reading (at every invocation)
 
-1. `AGENTS.md` — conventions for the backend.
-2. `CLAUDE.md` — DB lib commands and `DATABASE_URL` source-of-truth notes.
+1. `apps/nebula-chat-server/AGENTS.md` — Database — Drizzle section.
+2. Root `AGENTS.md` — DB lib commands (Development Commands section) and `DATABASE_URL` source-of-truth notes.
 3. `libs/db/src/schema.ts` — current schema (tables, columns, FKs, indexes).
 4. `libs/db/drizzle.config.ts` — drizzle-kit configuration and migrations output dir.
 5. `libs/db/package.json` — available scripts and exports.
 6. Latest SQL files under `libs/db/migrations/` — recent history.
-7. `docs/adr/` — any ADR affecting the data model. If a schema change lacks an ADR, halt and invoke `adr-author`.
+7. `CONTEXT.md` — domain vocabulary; schema/column naming should match it.
+8. `docs/adr/` — any ADR affecting the data model. Expected to exist upstream (via `/domain-modeling`) for a real schema change; flag it rather than blocking if one is clearly missing.
 
 # Guardrails
 
@@ -31,7 +32,7 @@ Owns `libs/db/src/schema.ts` and everything under `libs/db/migrations/`. Authors
 # Workflow
 
 1. Read schema + latest migration directory.
-2. Confirm an ADR exists; if not, stop.
+2. Note whether an ADR backs this change; flag it in your output if missing and warranted.
 3. Edit `libs/db/src/schema.ts` minimally.
 4. Run `pnpm --filter @nebula-chat/db db:generate` to produce the SQL migration.
 5. Review the generated SQL in `libs/db/migrations/` before committing. Add guard comments if the change has subtle locking behavior.

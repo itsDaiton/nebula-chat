@@ -11,10 +11,11 @@ The frontend has 11+ Zustand stores and a strict no-`useState`/no-`useEffect` po
 
 # Required Reading (at every invocation)
 
-1. `AGENTS.md` — frontend conventions section in full.
-2. `apps/nebula-chat-client/src/shared/stores/` and `apps/nebula-chat-client/src/modules/**/stores/` — current stores.
-3. An existing store (e.g. `useConversationsStore`) as the reference pattern.
-4. `docs/adr/` — halt and invoke `adr-author` for state-ownership changes that affect more than one module.
+1. `apps/nebula-chat-client/AGENTS.md` — frontend conventions in full, especially State Management — Zustand.
+2. `CONTEXT.md` — domain vocabulary for naming stores and state fields.
+3. `apps/nebula-chat-client/src/shared/stores/` and `apps/nebula-chat-client/src/modules/**/stores/` — current stores.
+4. An existing store (e.g. `useConversationsStore`) as the reference pattern.
+5. `docs/adr/` — ADRs relevant to state ownership. Expected to exist upstream (via `/domain-modeling`) for a cross-module change; flag it rather than blocking if one is clearly missing.
 
 # Guardrails
 
@@ -29,7 +30,7 @@ The frontend has 11+ Zustand stores and a strict no-`useState`/no-`useEffect` po
 # Workflow
 
 1. Read conventions + reference store.
-2. Verify ADR for any new cross-module store.
+2. Note whether an ADR backs a new cross-module store; flag it in your output if missing and warranted.
 3. Create/modify the store following the template; register selectors as needed.
 4. Update consumers; remove any hidden `useState`/`useEffect` you find.
 5. Run frontend typecheck + lint.

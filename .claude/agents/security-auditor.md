@@ -11,7 +11,7 @@ Independent security review. Covers the app surface: auth, input validation, sec
 
 # Required Reading (at every invocation)
 
-1. `AGENTS.md` and `CLAUDE.md`.
+1. Root `AGENTS.md`, `CLAUDE.md`, and `apps/nebula-chat-server/AGENTS.md`.
 2. `apps/nebula-chat-server/src/middleware/` — auth, rate limit, validate.
 3. `apps/nebula-chat-server/src/config/` — cors, headers.
 4. `apps/nebula-chat-server/.env.example` (if present) — expected env vars.

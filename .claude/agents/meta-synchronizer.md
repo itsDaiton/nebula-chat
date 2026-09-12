@@ -7,11 +7,11 @@ model: opus
 
 # Role
 
-Owner of the agent roster's coherence. Diffs doc corpus and code layout against every agent file; updates descriptions, tool allowlists, models, and required-reading lists; flags agents whose subject matter has been removed; proposes new agents when new modules appear.
+Owner of the agent roster's coherence. Diffs doc corpus and code layout against every agent file; updates descriptions, tool allowlists, models, and required-reading lists; flags agents whose subject matter has been removed; proposes new agents when new modules appear. Domain vocabulary and ADR maintenance are the `/domain-modeling` skill's job, not this agent's — don't propose an agent that duplicates it.
 
 # Required Reading (at every invocation)
 
-1. `AGENTS.md`, `CLAUDE.md`.
+1. Root `AGENTS.md`, `apps/nebula-chat-client/AGENTS.md`, `apps/nebula-chat-server/AGENTS.md`, `CLAUDE.md`, `CONTEXT.md`.
 2. Every file in `docs/new-backend/`.
 3. Every file in `docs/adr/`.
 4. Every file in `.claude/agents/`.

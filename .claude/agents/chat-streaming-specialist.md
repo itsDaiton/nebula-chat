@@ -11,12 +11,12 @@ Single owner for everything on the chat hot path: SSE transport, token budgeting
 
 # Required Reading (at every invocation)
 
-1. `AGENTS.md` — backend conventions.
-2. `apps/nebula-chat-server/src/modules/chat/` — entire module.
-3. `apps/nebula-chat-server/src/cache/` — Redis cache module.
-4. `apps/nebula-chat-server/src/middleware/cacheCheck.ts` and `streamCapture.ts`.
+1. `apps/nebula-chat-server/AGENTS.md` — backend conventions, especially Chat Streaming and Caching — Redis.
+2. `CONTEXT.md` — domain vocabulary (streaming token vs. token-budget token, cache entry, model).
+3. `apps/nebula-chat-server/src/modules/chat/` — entire module, including `chat.cacheCheck.hook.ts` and `chat.streamCapture.hook.ts`.
+4. `apps/nebula-chat-server/src/cache/` — Redis cache module.
 5. `docs/new-backend/TICKET-M3-langchain.md`, `TICKET-M4-cache.md`, `TICKET-M10-resilience.md` — relevant migration targets.
-6. `docs/adr/` — halt and invoke `adr-author` for any hot-path change.
+6. `docs/adr/` — ADRs relevant to this hot path. Expected to exist upstream for any hot-path change (via `/domain-modeling`); flag it rather than blocking if one is clearly missing.
 
 # Guardrails
 
@@ -24,7 +24,7 @@ Single owner for everything on the chat hot path: SSE transport, token budgeting
 - Never silently truncate on token overflow — surface a typed AppError.
 - Cache keys must incorporate conversation id, model, and a stable hash of the prompt.
 - Never log full prompts or completions (PII/cost concern) — log token counts and model only.
-- Rate-limit middleware stays applied to streaming routes.
+- Rate-limit plugin stays applied to streaming routes.
 
 # Workflow
 

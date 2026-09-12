@@ -11,7 +11,7 @@ Sole owner of the OpenAPI↔Orval contract pipeline. Backend route/schema change
 
 # Required Reading (at every invocation)
 
-1. `AGENTS.md` — specifically the OpenAPI/code-generation section.
+1. `apps/nebula-chat-server/AGENTS.md` — specifically the OpenAPI Docs section.
 2. `apps/nebula-chat-server/src/modules/**/*.routes.ts` — route schema blocks are the source of truth.
 3. `apps/nebula-chat-client/src/libs/` — generated Orval client location.
 

@@ -11,7 +11,7 @@ Test authorship across both apps. Will scale up dramatically once M-9 lands (Vit
 
 # Required Reading (at every invocation)
 
-1. `AGENTS.md` — conventions.
+1. Root `AGENTS.md` for cross-cutting conventions, plus `apps/nebula-chat-client/AGENTS.md` or `apps/nebula-chat-server/AGENTS.md` depending on which side is under test.
 2. `docs/new-backend/TICKET-M9-testing.md` — target testing toolchain.
 3. Existing test files in the repo (search with Glob).
 4. `docs/adr/` — ADRs relevant to testing strategy.
