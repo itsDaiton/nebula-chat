@@ -4,8 +4,15 @@ services:
     runtime: node
     rootDir: .
     plan: free
-    buildCommand: corepack enable && corepack prepare pnpm@10.26.2 --activate && pnpm install --frozen-lockfile && pnpm turbo run build --filter=nebula-chat-server && pnpm --filter @nebula-chat/db db:migrate
-    startCommand: corepack enable && corepack prepare pnpm@10.26.2 --activate && pnpm --filter nebula-chat-server run start
+    # Node 26 no longer bundles Corepack, so pnpm is provisioned with the npm
+    # that ships with the runtime. Keep the version in step with the
+    # `packageManager` pin in package.json.
+    buildCommand: npm install -g pnpm@12.4.1 && pnpm install --frozen-lockfile && pnpm turbo run build --filter=nebula-chat-server && pnpm --filter @nebula-chat/db db:migrate
+    # Start does not need pnpm: the build already produced dist/, so keep the
+    # boot path free of a network install. The cd reproduces the working
+    # directory "pnpm --filter" used to set, which the server relies on to
+    # resolve ../../openapi/package.json.
+    startCommand: cd apps/nebula-chat-server && node dist/src/server.js
     healthCheckPath: /health
     autoDeployTrigger: off
 
@@ -13,10 +20,11 @@ services:
     name: nebula-chat-client
     runtime: static
     rootDir: .
-    buildCommand: corepack enable && corepack prepare pnpm@10.26.2 --activate && pnpm install --frozen-lockfile && pnpm turbo run build --filter=nebula-chat-client
+    buildCommand: npm install -g pnpm@12.4.1 && pnpm install --frozen-lockfile && pnpm turbo run build --filter=nebula-chat-client
     staticPublishPath: apps/nebula-chat-client/build
     pullRequestPreviewsEnabled: true
     autoDeployTrigger: off
 
 # Optional environment variables can be managed in Render dashboard/secrets.
 # Keep Root Directory at repo root for pnpm workspace catalog resolution.
+# The Node version comes from .nvmrc.

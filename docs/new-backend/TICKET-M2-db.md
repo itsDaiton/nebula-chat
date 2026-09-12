@@ -269,7 +269,8 @@ After this ticket is complete and all Prisma usage is replaced:
 2. Remove from `apps/server/package.json` devDependencies:
    - `prisma`
 
-3. Remove from root `package.json` `pnpm.onlyBuiltDependencies`:
+3. Remove from `allowBuilds` in `pnpm-workspace.yaml` (this list lived in root
+   `package.json` under `pnpm.onlyBuiltDependencies` before pnpm v11):
    - `@prisma/engines`
    - `prisma`
 

@@ -103,16 +103,15 @@ Lib tickets (M-2 through M-5) are fully independent and can run in parallel. App
 - **M-7 (Queues)** works without M-3 (LangChain lib) by calling OpenAI directly as a temporary measure, but should be updated to use `@nebula-chat/langchain` once M-3 is merged.
 - **M-9 (Testing)** infrastructure can be set up any time. Tests for a specific feature should be written in the same PR as that feature.
 
-## `pnpm.onlyBuiltDependencies` update
+## `allowBuilds` update
 
-After removing Prisma, update the root `package.json`:
+After removing Prisma, update `pnpm-workspace.yaml` (pnpm v11 removed
+`pnpm.onlyBuiltDependencies` from `package.json` in favour of `allowBuilds`):
 
-```json
-{
-  "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "argon2"]
-  }
-}
+```yaml
+allowBuilds:
+  esbuild: true
+  argon2: true
 ```
 
 Remove `@prisma/engines` and `prisma`. Add `argon2` (requires native compilation).
