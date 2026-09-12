@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.19.1...nebula-chat-v1.20.0) (2026-09-12)
+
+
+### Features
+
+* **agents:** restrict commit types to feat and fix ([#287](https://github.com/itsDaiton/nebula-chat/issues/287)) ([d4b5c1d](https://github.com/itsDaiton/nebula-chat/commit/d4b5c1d29ca6f1ec6c9af1b57359970a93c7a227))
+
 ## [1.19.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.19.0...nebula-chat-v1.19.1) (2026-09-12)
 
 
