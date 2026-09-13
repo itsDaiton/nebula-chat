@@ -167,6 +167,19 @@ export default [
     },
   },
   {
+    files: ['libs/otel/**/*.{ts,js}'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: './libs/otel/tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+  },
+  {
     files: ['scripts/**/*.ts'],
     languageOptions: {
       parser: tsParser,

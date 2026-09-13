@@ -40,7 +40,38 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  # Local trace backend. Accepts OTLP directly — no separate Collector needed —
+  # and bundles Grafana + Tempo, so the trace UI here is the same one Grafana
+  # Cloud serves in production. The app itself stays vendor-neutral: it only ever
+  # speaks OTLP to OTEL_EXPORTER_OTLP_ENDPOINT, so swapping this for Jaeger or a
+  # hosted vendor is an env var, not a code change. See ADR-0007.
+  otel-lgtm:
+    image: grafana/otel-lgtm:0.11.15
+    container_name: otel-lgtm
+    ports:
+      # Grafana UI — 3001 on the host because the server itself defaults to 3000.
+      - "127.0.0.1:3001:3000"
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+    volumes: # kics-scan ignore-line
+      - otel-lgtm-data:/data
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    # Matches the hardening on db/redis. Every process in this image binds an
+    # unprivileged port, so dropping all caps should be safe — but it is
+    # untested here (no container runtime available when this landed). If the
+    # container fails to start, this block is the first thing to try removing.
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
 
 volumes:
   pgdata:
   redis-data:
+  otel-lgtm-data:

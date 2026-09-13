@@ -2,6 +2,8 @@ import { createClient } from 'redis';
 import type { RedisClientType } from 'redis';
 import { env } from '@backend/env';
 import { RedisConnectionError } from '@backend/errors/AppError';
+// Redis connection events fire outside the HTTP request lifecycle, so there is
+// no req.log to reach for here — use the server's shared instance.
 import { logger } from '@backend/logger';
 import { cacheConfig } from '@backend/cache/cache.config';
 

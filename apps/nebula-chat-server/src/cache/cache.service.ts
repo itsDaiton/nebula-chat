@@ -7,6 +7,9 @@ import { RedisCacheError } from '@backend/errors/AppError';
 import { logger } from '@backend/logger';
 import { cacheConfig } from '@backend/cache/cache.config';
 
+// The cache is exercised from preHandler hooks and from the SSE stream capture
+// after the reply is hijacked, where req.log is no longer in scope.
+
 let redisClient: RedisClientType | null = null;
 
 const ensureConnection = async (): Promise<RedisClientType> => {

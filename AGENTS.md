@@ -172,7 +172,10 @@ nebula-chat/
 │   ├── nebula-chat-client/   # React SPA (frontend) — see its AGENTS.md
 │   └── nebula-chat-server/   # Fastify API (backend) — see its AGENTS.md
 ├── libs/
-│   └── db/                   # @nebula-chat/db — Drizzle ORM schema + migrations
+│   ├── db/                   # @nebula-chat/db — Drizzle ORM schema + migrations
+│   ├── langchain/            # @nebula-chat/langchain — LLM providers, tokens, streaming, SSE
+│   └── otel/                 # @nebula-chat/otel — Pino logger factory + OpenTelemetry tracing
+├── openapi/                  # Generated OpenAPI spec — its own workspace package
 ├── CLAUDE.md                 # Claude Code operating instructions
 ├── CONTEXT.md                # Domain vocabulary glossary
 ├── AGENTS.md                 # This file

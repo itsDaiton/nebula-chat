@@ -92,7 +92,7 @@ reads as a to-do list. The `Done` column is the source of truth; keep it current
 | 2     | M-2 DB          | ✅   | Database access needed by most features                   |
 | 3     | M-3 LangChain   | ✅   | Core feature of the app (landed out of order, before M-5) |
 | 4     | M-5 OTel        |      | One logger seam before every later ticket adds log sites  |
-| 5     | M-9 Testing     |      | **Moved up from 7** — see below                            |
+| 5     | M-9 Testing     |      | **Moved up from 7** — see below                           |
 | 6     | M-4 Cache       |      | Improves LLM response times                               |
 | 7     | M-6 Auth        |      | Protect routes before adding features                     |
 | 8     | M-7 Queues      |      | Background jobs for long LLM calls                        |
