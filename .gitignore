@@ -31,3 +31,6 @@ megalinter-reports/
 
 # Turbo
 .turbo
+
+# Skills source tree (symlinked into .claude/skills; managed by the skills CLI)
+/.agents
