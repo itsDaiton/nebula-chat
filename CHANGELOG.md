@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.21.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.20.5...nebula-chat-v1.21.0) (2026-09-13)
+
+
+### Features
+
+* **skills:** vendor the engineering skill set into the repo ([#302](https://github.com/itsDaiton/nebula-chat/issues/302)) ([17db477](https://github.com/itsDaiton/nebula-chat/commit/17db477bd9b4f6f72bd35240575000d692b9d0d1))
+
 ## [1.20.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.20.4...nebula-chat-v1.20.5) (2026-09-13)
 
 
