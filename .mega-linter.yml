@@ -26,6 +26,11 @@ FILTER_REGEX_EXCLUDE: '\.claude/skills/'
 ADDITIONAL_EXCLUDED_DIRECTORIES:
   - skills
 
+# skills-lock.json records a SHA-256 per vendored skill, which DevSkim's DS173237
+# reads as 37 hardcoded tokens. Secret detection is already covered by betterleaks,
+# secretlint, trufflehog and kingfisher, so the rule is redundant here.
+REPOSITORY_DEVSKIM_ARGUMENTS: ["--ignore-rule-ids", "DS173237"]
+
 TYPESCRIPT_STANDARD_ARGUMENTS: -p tsconfig.eslint.json
 
 SHOW_ELAPSED_TIME: true
