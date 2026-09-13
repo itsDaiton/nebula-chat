@@ -1,11 +1,11 @@
 import pino from 'pino';
 
-export type LoggerOptions = {
+export type CreateLoggerOptions = {
   level?: string;
   pretty?: boolean;
 };
 
-export const createLogger = (options: LoggerOptions = {}) =>
+export const createLogger = (options: CreateLoggerOptions = {}) =>
   pino({
     level: options.level ?? process.env.LOG_LEVEL ?? 'info',
     transport: options.pretty

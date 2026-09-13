@@ -159,7 +159,7 @@ These apply everywhere in the repo, frontend and backend alike. See each package
 
 - **`type`, never `interface`.** No exceptions, anywhere.
 - **`const` arrow functions, never `function` declarations.** Applies to hooks, utils, helpers, components, and route handlers alike.
-- **No `index.ts` barrel files, anywhere.** Import directly from the file that defines the thing. The only tolerated `index.ts` files are those emitted by code generators (e.g. Orval output) — never hand-author or hand-edit them.
+- **No `index.ts` barrel files inside an app.** Import directly from the file that defines the thing. Two exceptions, and only two: `index.ts` files emitted by code generators (e.g. Orval output), which are never hand-authored or hand-edited; and the single top-level `src/index.ts` of a package under `libs/`, which is that package's public surface — it is what `tsup`'s `entry` and the `exports` map point at, so it is required, not optional. `libs/db`, `libs/langchain` and `libs/otel` each have exactly one. Never nest a barrel below that.
 - **No relative imports.** Frontend uses `@/*` (→ `apps/nebula-chat-client/src/`); backend uses `@backend/*` (→ `apps/nebula-chat-server/src/`).
 
 ---
