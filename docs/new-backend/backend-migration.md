@@ -83,18 +83,34 @@ nebula-chat/
 
 Lib tickets (M-2 through M-5) are fully independent and can run in parallel. App tickets require M-1.
 
-| Order | Ticket          | Reason                                   |
-| ----- | --------------- | ---------------------------------------- |
-| 1     | M-1 Fastify     | Core — everything else plugs into it     |
-| 2     | M-2 DB          | Database access needed by most features  |
-| 3     | M-5 OTel        | Logging needed early for debugging       |
-| 4     | M-3 LangChain   | Core feature of the app                  |
-| 5     | M-4 Cache       | Improves LLM response times              |
-| 6     | M-6 Auth        | Protect routes before adding features    |
-| 7     | M-9 Testing     | Add infrastructure before it gets harder |
-| 8     | M-7 Queues      | Background jobs for long LLM calls       |
-| 9     | M-8 Real-time   | Streaming and presence                   |
-| 10    | M-10 Resilience | Add last — wraps existing LLM calls      |
+**Status as of 2026-09-13.** M-3 was implemented ahead of M-5 and M-4, so the original order no longer
+reads as a to-do list. The `Done` column is the source of truth; keep it current as tickets merge.
+
+| Order | Ticket          | Done | Reason                                                    |
+| ----- | --------------- | ---- | --------------------------------------------------------- |
+| 1     | M-1 Fastify     | ✅   | Core — everything else plugs into it                      |
+| 2     | M-2 DB          | ✅   | Database access needed by most features                   |
+| 3     | M-3 LangChain   | ✅   | Core feature of the app (landed out of order, before M-5) |
+| 4     | M-5 OTel        |      | One logger seam before every later ticket adds log sites  |
+| 5     | M-9 Testing     |      | **Moved up from 7** — see below                            |
+| 6     | M-4 Cache       |      | Improves LLM response times                               |
+| 7     | M-6 Auth        |      | Protect routes before adding features                     |
+| 8     | M-7 Queues      |      | Background jobs for long LLM calls                        |
+| 9     | M-8 Real-time   |      | Streaming and presence                                    |
+| 10    | M-10 Resilience |      | Add last — wraps existing LLM calls                       |
+
+### Why M-9 moved up
+
+The repo has **no test infrastructure at all**: no `vitest`, `supertest`, or `testcontainers` in any
+`package.json`, no `*.test.ts` or `*.spec.ts` files, no vitest config, and no `test` script anywhere —
+while `turbo.json` already declares a `test` task that nothing implements. M-1, M-2, and M-3 all shipped
+without tests as a result, and the repo's own agent workflow (`/implement` drives `/tdd` internally) has
+no red-green loop to run.
+
+M-9 therefore goes second, ahead of M-4 and M-6, because those two are the first remaining tickets with
+logic genuinely worth testing: M-4's L1/L2 promotion path and M-6's password hashing are exactly the
+things you do not want to ship unverified. M-5 stays first — it is small, already fully specified, and a
+poor TDD target anyway, since its acceptance criteria are mostly wiring plus one no-op-when-unset branch.
 
 ## Ticket independence rules
 
