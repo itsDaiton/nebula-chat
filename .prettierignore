@@ -26,3 +26,8 @@ pnpm-workspace.yaml
 
 CHANGELOG.md
 README.md
+
+# Vendored agent skills (see skills-lock.json) — held byte-identical to
+# upstream, so their findings are not actionable here.
+.claude/skills/
+.agents/

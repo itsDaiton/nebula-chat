@@ -31,3 +31,9 @@ megalinter-reports/
 
 # Turbo
 .turbo
+
+# Skills source tree (symlinked into .claude/skills; managed by the skills CLI)
+/.agents
+
+# Vendored skills ship OpenAI-runner display metadata that Claude never reads
+.claude/skills/*/agents/

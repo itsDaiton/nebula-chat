@@ -23,7 +23,7 @@ This rule applies to **every** build/write agent in `.claude/agents/`. Read-only
 
 For any new feature or non-trivial change, follow the main flow instead of jumping straight to editing files: **`/grill-with-docs`** (sharpen the idea, update `CONTEXT.md`/ADRs as terms and decisions resolve) → **`/to-spec`** → **`/to-tickets`** → **`/implement`** per ticket (drives `/tdd` internally, finishes with `/code-review` before commit). Skip `/to-spec`/`/to-tickets` and go straight to `/implement` only for a single-session change with nothing to split.
 
-On-ramps onto this flow: **`/triage`** for incoming bug reports/feature requests you didn't create; **`/wayfinder`** for a greenfield or multi-session effort too foggy for one `/grill-with-docs` session. Unsure which skill fits? Ask **`/ask-matt`**. Full flow map: `~/.claude/skills/ask-matt/SKILL.md`.
+On-ramps onto this flow: **`/triage`** for incoming bug reports/feature requests you didn't create; **`/wayfinder`** for a greenfield or multi-session effort too foggy for one `/grill-with-docs` session. Unsure which skill fits? Ask **`/ask-matt`**. Full flow map: `.claude/skills/ask-matt/SKILL.md`.
 
 This flow supersedes the old per-change "invoke an ADR-author agent first" gate: ADRs and `CONTEXT.md` entries are now produced upstream, during `/grill-with-docs`/`/to-spec`/`/domain-modeling`, before a ticket ever reaches an implementing agent.
 
