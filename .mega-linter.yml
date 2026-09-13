@@ -18,6 +18,14 @@ DISABLE:
   - COPYPASTE # Uncomment to disable checks of excessive copy-pastes
   - SPELL # Uncomment to disable checks of spelling mistakes
 
+# Vendored agent skills (see skills-lock.json) are held byte-identical to their
+# upstream source, so lint findings in them are not actionable. FILTER_REGEX_EXCLUDE
+# covers the file-list linters; ADDITIONAL_EXCLUDED_DIRECTORIES (basename-matched at
+# any depth) covers the project-scope ones such as devskim and checkov.
+FILTER_REGEX_EXCLUDE: "\.claude/skills/"
+ADDITIONAL_EXCLUDED_DIRECTORIES:
+  - skills
+
 TYPESCRIPT_STANDARD_ARGUMENTS: -p tsconfig.eslint.json
 
 SHOW_ELAPSED_TIME: true
