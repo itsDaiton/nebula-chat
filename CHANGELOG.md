@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.20.4...nebula-chat-v1.20.5) (2026-09-13)
+
+
+### Bug Fixes
+
+* **server:** clear four dependency security advisories ([#300](https://github.com/itsDaiton/nebula-chat/issues/300)) ([4600a63](https://github.com/itsDaiton/nebula-chat/commit/4600a63a62cb3abfc4546004a58b2e3afa37b408))
+
 ## [1.20.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.20.3...nebula-chat-v1.20.4) (2026-09-12)
 
 
