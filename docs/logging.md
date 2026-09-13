@@ -165,12 +165,12 @@ tracing — observability never takes the service down.
 
 Three things do not go through Pino, on purpose. Don't "fix" them:
 
-1. **`libs/db` migration scripts** — `migrate.ts` and `baseline.ts` use
-   `console.log`. They are CLI tools run by a human via `pnpm db:migrate`;
-   structured JSON would be worse than plain text for that audience.
-2. **`generate-openapi.ts`** — writes with `process.stdout.write` /
-   `process.stderr.write`, same reasoning.
-3. **The frontend** — browser logging is a separate concern entirely.
+- **`libs/db` migration scripts** — `migrate.ts` and `baseline.ts` use
+  `console.log`. They are CLI tools run by a human via `pnpm db:migrate`;
+  structured JSON would be worse than plain text for that audience.
+- **`generate-openapi.ts`** — writes with `process.stdout.write` /
+  `process.stderr.write`, same reasoning.
+- **The frontend** — browser logging is a separate concern entirely.
 
 ## Known gaps
 
