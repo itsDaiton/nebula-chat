@@ -22,7 +22,7 @@ DISABLE:
 # upstream source, so lint findings in them are not actionable. FILTER_REGEX_EXCLUDE
 # covers the file-list linters; ADDITIONAL_EXCLUDED_DIRECTORIES (basename-matched at
 # any depth) covers the project-scope ones such as devskim and checkov.
-FILTER_REGEX_EXCLUDE: "\.claude/skills/"
+FILTER_REGEX_EXCLUDE: '\.claude/skills/'
 ADDITIONAL_EXCLUDED_DIRECTORIES:
   - skills
 
