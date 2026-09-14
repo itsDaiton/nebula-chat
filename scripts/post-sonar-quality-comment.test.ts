@@ -1,5 +1,10 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  buildMeasureLabel,
+  buildOverallCoverageLabel,
   buildStatusIcon,
   buildStatusTitle,
   conditionIcon,
@@ -7,10 +12,31 @@ import {
   formatPercent,
   getMetricValue,
   getTotal,
+  hasCondition,
+  isMetricPresent,
+  measureIcon,
+  parseLcovLineCoverage,
   postSonarComment,
+  readOverallCoverage,
   resolveOverallState,
   type QualitySignals,
 } from './post-sonar-quality-comment';
+
+/**
+ * Writes `<root>/coverage/lcov.info` and returns the report-task.txt path the
+ * script is given, so the derivation from scan metadata to lcov is exercised
+ * rather than assumed.
+ */
+const packageWithCoverage = (lcov: string): { reportPath: string; cleanup: () => void } => {
+  const root = mkdtempSync(join(tmpdir(), 'sonar-coverage-'));
+  mkdirSync(join(root, 'coverage'), { recursive: true });
+  mkdirSync(join(root, '.scannerwork'), { recursive: true });
+  writeFileSync(join(root, 'coverage', 'lcov.info'), lcov);
+  return {
+    reportPath: join(root, '.scannerwork', 'report-task.txt'),
+    cleanup: () => rmSync(root, { recursive: true, force: true }),
+  };
+};
 
 const signals = (overrides: Partial<QualitySignals> = {}): QualitySignals => ({
   gateStatus: 'PASSED',
@@ -124,11 +150,11 @@ describe('buildStatusTitle', () => {
   });
 });
 
-describe('conditionIcon', () => {
-  const gate = (metricKey: string, status: string) => ({
-    projectStatus: { conditions: [{ metricKey, status }] },
-  });
+const gate = (metricKey: string, status: string) => ({
+  projectStatus: { conditions: [{ metricKey, status }] },
+});
 
+describe('conditionIcon', () => {
   it('marks a breached condition as failed', () => {
     expect(conditionIcon(gate('new_coverage', 'ERROR'), 'new_coverage')).toContain('failed');
   });
@@ -168,6 +194,113 @@ describe('formatPercent', () => {
   it('renders a missing value as zero', () => {
     expect(formatPercent(undefined)).toBe('0.0%');
     expect(formatPercent('not a number')).toBe('0.0%');
+  });
+});
+
+describe('isMetricPresent', () => {
+  it('accepts a numeric value, including a genuine zero', () => {
+    expect(isMetricPresent('0')).toBe(true);
+    expect(isMetricPresent('91.2')).toBe(true);
+  });
+
+  it('rejects an absent or unparseable value', () => {
+    // Number('') is 0, which is why absent and zero have to be told apart.
+    expect(isMetricPresent(undefined)).toBe(false);
+    expect(isMetricPresent('')).toBe(false);
+    expect(isMetricPresent('   ')).toBe(false);
+    expect(isMetricPresent('not a number')).toBe(false);
+  });
+});
+
+describe('buildMeasureLabel', () => {
+  it('renders the measure when Sonar reported one', () => {
+    expect(buildMeasureLabel('91.24', 'Coverage on New Code', 'absent')).toBe(
+      '91.2% Coverage on New Code',
+    );
+  });
+
+  it('renders a real zero as zero, not as absent', () => {
+    expect(buildMeasureLabel('0', 'Coverage on New Code', 'absent')).toBe(
+      '0.0% Coverage on New Code',
+    );
+  });
+
+  it('says the measure does not apply instead of showing a misleading 0.0%', () => {
+    expect(buildMeasureLabel(undefined, 'Coverage on New Code', 'No new lines to cover')).toBe(
+      'No new lines to cover',
+    );
+  });
+});
+
+describe('parseLcovLineCoverage', () => {
+  it('sums LH over LF across every record', () => {
+    const lcov = ['SF:a.ts', 'LF:10', 'LH:8', 'end_of_record', 'SF:b.ts', 'LF:10', 'LH:10'].join(
+      '\n',
+    );
+
+    expect(parseLcovLineCoverage(lcov)).toBeCloseTo(90, 5);
+  });
+
+  it('reports NaN when nothing is coverable, which is not 0% covered', () => {
+    expect(parseLcovLineCoverage('')).toBeNaN();
+    expect(parseLcovLineCoverage('SF:a.ts\nLF:0\nLH:0\nend_of_record')).toBeNaN();
+  });
+
+  it('ignores the records it does not understand', () => {
+    expect(parseLcovLineCoverage('TN:\nFNF:3\nFNH:1\nLF:4\nLH:1\nBRF:2')).toBeCloseTo(25, 5);
+  });
+});
+
+describe('readOverallCoverage', () => {
+  it('reads the lcov report sitting beside the scan metadata', () => {
+    const { reportPath, cleanup } = packageWithCoverage('SF:a.ts\nLF:4\nLH:3\nend_of_record\n');
+
+    try {
+      expect(readOverallCoverage(reportPath)).toBeCloseTo(75, 5);
+    } finally {
+      cleanup();
+    }
+  });
+
+  it('reports NaN when no report was written', () => {
+    expect(readOverallCoverage('/nonexistent/.scannerwork/report-task.txt')).toBeNaN();
+  });
+});
+
+describe('buildOverallCoverageLabel', () => {
+  it('renders one decimal place', () => {
+    expect(buildOverallCoverageLabel(97.66)).toBe('97.7% Coverage on Overall Code');
+  });
+
+  it('says so when the number could not be determined', () => {
+    expect(buildOverallCoverageLabel(Number.NaN)).toBe('Coverage on Overall Code unavailable');
+  });
+});
+
+describe('hasCondition', () => {
+  it('finds a condition the gate reported', () => {
+    expect(hasCondition(gate('new_coverage', 'OK'), 'new_coverage')).toBe(true);
+  });
+
+  it('is false when the gate reported no such condition', () => {
+    expect(hasCondition(gate('other_metric', 'OK'), 'new_coverage')).toBe(false);
+    expect(hasCondition(null, 'new_coverage')).toBe(false);
+  });
+});
+
+describe('measureIcon', () => {
+  it('defers to the gate condition when there is one', () => {
+    expect(measureIcon(gate('coverage', 'ERROR'), 'coverage', 99)).toContain('failed');
+    expect(measureIcon(gate('coverage', 'OK'), 'coverage', 10)).toContain('passed');
+  });
+
+  it('judges a locally computed value against the 80% bar', () => {
+    expect(measureIcon(null, 'coverage', 80)).toContain('passed');
+    expect(measureIcon(null, 'coverage', 79.9)).toContain('failed');
+  });
+
+  it('renders a value it does not have as neither pass nor fail', () => {
+    expect(measureIcon(null, 'new_coverage', Number.NaN)).toContain('accepted');
   });
 });
 
@@ -227,17 +360,27 @@ describe('postSonarComment', () => {
    * Stubs every outbound call and returns the comment body that was posted.
    * Sonar counts are driven by `newIssues` / `hotspots`.
    */
+  const DEFAULT_CONDITIONS = [
+    { metricKey: 'new_coverage', actualValue: '0.0', status: 'OK' },
+    { metricKey: 'new_duplicated_lines_density', actualValue: '0.0', status: 'OK' },
+  ];
+
   const renderComment = async ({
     gateStatus,
     newIssues,
     hotspots = 0,
+    conditions = DEFAULT_CONDITIONS,
+    reportPath = ENV.SONAR_REPORT_PATH,
   }: {
     gateStatus: string;
     newIssues: number;
     hotspots?: number;
+    conditions?: Array<{ metricKey: string; actualValue?: string; status: string }>;
+    reportPath?: string;
   }): Promise<string> => {
     for (const [key, value] of Object.entries(ENV)) vi.stubEnv(key, value);
     vi.stubEnv('SONAR_QUALITY_GATE_STATUS', gateStatus);
+    vi.stubEnv('SONAR_REPORT_PATH', reportPath);
 
     let postedBody = '';
     vi.stubGlobal(
@@ -257,14 +400,7 @@ describe('postSonarComment', () => {
         }
         if (url.includes('/api/hotspots/search')) return json({ total: hotspots });
         if (url.includes('/api/qualitygates/')) {
-          return json({
-            projectStatus: {
-              conditions: [
-                { metricKey: 'new_coverage', actualValue: '0.0', status: 'OK' },
-                { metricKey: 'new_duplicated_lines_density', actualValue: '0.0', status: 'OK' },
-              ],
-            },
-          });
+          return json({ projectStatus: { conditions } });
         }
         return json({});
       }),
@@ -332,5 +468,79 @@ describe('postSonarComment', () => {
     const body = await renderComment({ gateStatus: 'PASSED', newIssues: 3 });
 
     expect(body).toContain('[3 New issues]');
+  });
+
+  it('reports overall coverage from the lcov report the test run wrote', async () => {
+    // The reported gap: the comment showed only new-code coverage, so a suite
+    // at 97.7% looked like it had none.
+    const { reportPath, cleanup } = packageWithCoverage(
+      'SF:a.ts\nLF:1000\nLH:977\nend_of_record\n',
+    );
+
+    try {
+      const body = await renderComment({ gateStatus: 'PASSED', newIssues: 0, reportPath });
+
+      expect(body).toContain('97.7% Coverage on Overall Code');
+    } finally {
+      cleanup();
+    }
+  });
+
+  it('marks overall coverage below the bar as a failure', async () => {
+    const { reportPath, cleanup } = packageWithCoverage('SF:a.ts\nLF:100\nLH:50\nend_of_record\n');
+
+    try {
+      const body = await renderComment({ gateStatus: 'PASSED', newIssues: 0, reportPath });
+
+      expect(body).toContain('50.0% Coverage on Overall Code');
+      expect(body).toMatch(/failed-16px\.png\) \[50\.0% Coverage on Overall Code/);
+    } finally {
+      cleanup();
+    }
+  });
+
+  it('prefers the gate\u2019s own overall coverage when it reports one', async () => {
+    const { reportPath, cleanup } = packageWithCoverage('SF:a.ts\nLF:100\nLH:50\nend_of_record\n');
+
+    try {
+      const body = await renderComment({
+        gateStatus: 'PASSED',
+        newIssues: 0,
+        reportPath,
+        conditions: [
+          ...DEFAULT_CONDITIONS,
+          { metricKey: 'coverage', actualValue: '88.4', status: 'OK' },
+        ],
+      });
+
+      expect(body).toContain('88.4% Coverage on Overall Code');
+    } finally {
+      cleanup();
+    }
+  });
+
+  it('says overall coverage is unavailable rather than inventing a number', async () => {
+    const body = await renderComment({ gateStatus: 'PASSED', newIssues: 0 });
+
+    expect(body).toContain('Coverage on Overall Code unavailable');
+  });
+
+  it('says there is nothing to cover when the gate omits the new-code condition', async () => {
+    // A PR touching only coverage-excluded files has no new coverable lines;
+    // Number('') is 0, so this used to render a misleading 0.0% shortfall.
+    const body = await renderComment({
+      gateStatus: 'PASSED',
+      newIssues: 0,
+      conditions: [{ metricKey: 'new_duplicated_lines_density', actualValue: '0.0', status: 'OK' }],
+    });
+
+    expect(body).toContain('No new lines to cover');
+    expect(body).not.toContain('0.0% Coverage on New Code');
+  });
+
+  it('still renders a genuine zero on new code as zero', async () => {
+    const body = await renderComment({ gateStatus: 'PASSED', newIssues: 0 });
+
+    expect(body).toContain('0.0% Coverage on New Code');
   });
 });

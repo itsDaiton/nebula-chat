@@ -1,5 +1,6 @@
 import { Buffer } from 'node:buffer';
 import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 
 type JsonValue = string | number | boolean | null | { [key: string]: JsonValue } | JsonValue[];
 
@@ -47,12 +48,61 @@ const STATUS_ICON_PASSED = `${BADGE_BASE_URL}/common/passed-16px.png`;
 const STATUS_ICON_FAILED = `${BADGE_BASE_URL}/common/failed-16px.png`;
 const STATUS_ICON_ACCEPTED = `${BADGE_BASE_URL}/common/accepted-16px.png`;
 
+/** Mirrors the Vitest thresholds and the Sonar gate (ADR-0008). */
+const COVERAGE_MINIMUM = 80;
+
 export const formatCount = (value: number): string => (Number.isFinite(value) ? `${value}` : '0');
 
 export const formatPercent = (value: string | undefined): string => {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? `${numeric.toFixed(1)}%` : '0.0%';
 };
+
+/**
+ * Sonar omits a new-code condition entirely when the PR adds no coverable
+ * lines. `Number('')` is 0, so treating that as a value renders a misleading
+ * `0.0%` shortfall — absent and genuinely-zero have to stay distinguishable.
+ */
+export const isMetricPresent = (value: string | undefined): boolean =>
+  value !== undefined && value.trim() !== '' && Number.isFinite(Number(value));
+
+export const buildMeasureLabel = (
+  value: string | undefined,
+  suffix: string,
+  absent: string,
+): string => (isMetricPresent(value) ? `${formatPercent(value)} ${suffix}` : absent);
+
+/**
+ * Line coverage from an lcov report: the sum of every record's `LH` over its
+ * `LF`. NaN when nothing is coverable, which is not the same as 0% covered.
+ */
+export const parseLcovLineCoverage = (lcov: string): number => {
+  let hit = 0;
+  let found = 0;
+
+  for (const line of lcov.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('LH:')) hit += Number(trimmed.slice(3)) || 0;
+    else if (trimmed.startsWith('LF:')) found += Number(trimmed.slice(3)) || 0;
+  }
+
+  return found > 0 ? (hit / found) * 100 : Number.NaN;
+};
+
+/**
+ * The scan metadata lives at `<package>/.scannerwork/report-task.txt`, so the
+ * coverage Vitest wrote for the same package is two directories up.
+ */
+export const readOverallCoverage = (reportPath: string): number => {
+  const lcovPath = join(dirname(dirname(reportPath)), 'coverage', 'lcov.info');
+  if (!existsSync(lcovPath)) return Number.NaN;
+  return parseLcovLineCoverage(readFileSync(lcovPath, 'utf8'));
+};
+
+export const buildOverallCoverageLabel = (coverage: number): string =>
+  Number.isFinite(coverage)
+    ? `${coverage.toFixed(1)}% Coverage on Overall Code`
+    : 'Coverage on Overall Code unavailable';
 
 /**
  * How the comment should read at a glance.
@@ -194,6 +244,31 @@ export const conditionIcon = (
   return condition?.status === 'ERROR' ? STATUS_ICON_FAILED : STATUS_ICON_PASSED;
 };
 
+export const hasCondition = (
+  qualityGateData: SonarQualityGateResponse | null,
+  metricKey: string,
+): boolean => {
+  const conditions = Array.isArray(qualityGateData?.projectStatus?.conditions)
+    ? qualityGateData.projectStatus.conditions
+    : [];
+  return conditions.some((item) => item.metricKey === metricKey);
+};
+
+/**
+ * Icon for a measure row. The gate condition is the authority when there is
+ * one; otherwise the locally computed value is judged against the same 80%
+ * bar, and a value we do not have renders as neither pass nor fail.
+ */
+export const measureIcon = (
+  qualityGateData: SonarQualityGateResponse | null,
+  metricKey: string,
+  fallbackValue: number,
+): string => {
+  if (hasCondition(qualityGateData, metricKey)) return conditionIcon(qualityGateData, metricKey);
+  if (!Number.isFinite(fallbackValue)) return STATUS_ICON_ACCEPTED;
+  return fallbackValue >= COVERAGE_MINIMUM ? STATUS_ICON_PASSED : STATUS_ICON_FAILED;
+};
+
 export const getTotal = (data: SonarIssueSearchResponse | null): number => {
   if (typeof data?.total === 'number') return data.total;
   if (typeof data?.paging?.total === 'number') return data.paging.total;
@@ -255,6 +330,7 @@ export const postSonarComment = async (): Promise<void> => {
   const acceptedIssuesUrl = `https://sonarcloud.io/project/issues?id=${env.projectKey}&pullRequest=${env.prNumber}&issueStatuses=ACCEPTED`;
   const hotspotsUrl = `https://sonarcloud.io/project/security_hotspots?id=${env.projectKey}&pullRequest=${env.prNumber}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true`;
   const coverageUrl = `https://sonarcloud.io/component_measures?id=${env.projectKey}&pullRequest=${env.prNumber}&metric=new_coverage&view=list`;
+  const overallCoverageUrl = `https://sonarcloud.io/component_measures?id=${env.projectKey}&metric=coverage&view=list`;
   const duplicationUrl = `https://sonarcloud.io/component_measures?id=${env.projectKey}&pullRequest=${env.prNumber}&metric=new_duplicated_lines_density&view=list`;
 
   const sonarHeaders = { Authorization: sonarAuth };
@@ -282,10 +358,29 @@ export const postSonarComment = async (): Promise<void> => {
   const acceptedIssuesCount = getTotal(acceptedIssuesData);
   const hotspotCount = getTotal(hotspotsData);
 
-  const coverageText = formatPercent(getMetricValue(qualityGateData, 'new_coverage'));
-  const duplicationText = formatPercent(
-    getMetricValue(qualityGateData, 'new_duplicated_lines_density'),
+  const newCoverageValue = getMetricValue(qualityGateData, 'new_coverage');
+  const duplicationValue = getMetricValue(qualityGateData, 'new_duplicated_lines_density');
+
+  const coverageText = buildMeasureLabel(
+    newCoverageValue,
+    'Coverage on New Code',
+    'No new lines to cover',
   );
+  const duplicationText = buildMeasureLabel(
+    duplicationValue,
+    'Duplication on New Code',
+    'No new lines to analyse',
+  );
+
+  // Overall coverage comes from the gate when it reports one, and otherwise
+  // from the lcov report Vitest wrote in the same package — a PR that only
+  // touches coverage-excluded files has no new-code coverage at all, and the
+  // suite's real number was invisible without this row.
+  const gateOverallCoverage = getMetricValue(qualityGateData, 'coverage');
+  const overallCoverage = isMetricPresent(gateOverallCoverage)
+    ? Number(gateOverallCoverage)
+    : readOverallCoverage(env.reportPath);
+  const overallCoverageText = buildOverallCoverageLabel(overallCoverage);
 
   const issueIcon =
     Number.isFinite(newIssuesCount) && newIssuesCount > 0 ? STATUS_ICON_FAILED : STATUS_ICON_PASSED;
@@ -295,8 +390,9 @@ export const postSonarComment = async (): Promise<void> => {
   // The coverage and duplication rows follow their own gate conditions rather
   // than always rendering green — a 0% coverage row with a tick was reporting a
   // shortfall as a pass.
-  const coverageIcon = conditionIcon(qualityGateData, 'new_coverage');
-  const duplicationIcon = conditionIcon(qualityGateData, 'new_duplicated_lines_density');
+  const coverageIcon = measureIcon(qualityGateData, 'new_coverage', Number.NaN);
+  const duplicationIcon = measureIcon(qualityGateData, 'new_duplicated_lines_density', Number.NaN);
+  const overallCoverageIcon = measureIcon(qualityGateData, 'coverage', overallCoverage);
 
   const signals: QualitySignals = {
     gateStatus: status,
@@ -317,8 +413,9 @@ export const postSonarComment = async (): Promise<void> => {
     '',
     'Measures',
     `![](${hotspotIcon}) [${formatCount(hotspotCount)} Security Hotspots](${hotspotsUrl})`,
-    `![](${coverageIcon}) [${coverageText} Coverage on New Code](${coverageUrl})`,
-    `![](${duplicationIcon}) [${duplicationText} Duplication on New Code](${duplicationUrl})`,
+    `![](${coverageIcon}) [${coverageText}](${coverageUrl})`,
+    `![](${overallCoverageIcon}) [${overallCoverageText}](${overallCoverageUrl})`,
+    `![](${duplicationIcon}) [${duplicationText}](${duplicationUrl})`,
     '',
     `[See analysis details on SonarQube Cloud](${dashboardUrl || runUrl})`,
     '',
