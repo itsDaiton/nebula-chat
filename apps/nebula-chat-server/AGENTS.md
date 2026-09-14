@@ -16,6 +16,7 @@ Conventions specific to the Fastify API. See the [root AGENTS.md](../../AGENTS.m
 8. [OpenAPI Docs](#openapi-docs)
 9. [Path Aliases](#path-aliases)
 10. [Environment Variables](#environment-variables)
+11. [Testing](#testing)
 
 ---
 
@@ -314,3 +315,41 @@ Never use relative paths in the backend. Aliases are configured in `tsconfig.jso
 > **`env.ts` rule:** All env vars are Zod-validated in `src/env.ts` and fail loudly at startup before any listener is bound. Never read `process.env.*` directly anywhere in the backend — always import from `@backend/env`.
 >
 > **One exception:** `@nebula-chat/otel` reads `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_LOG_LEVEL` from `process.env` itself — a published lib can't depend on one consumer's env schema. Both are still declared in `src/env.ts`. See [ADR-0007](../../docs/adr/0007-otel-lib-and-fastify-native-logger.md) for why, and [docs/logging.md](../../docs/logging.md) for how logging works.
+
+---
+
+## Testing
+
+The monorepo-wide rules live in the root [`AGENTS.md`](../../AGENTS.md#testing) and
+[ADR-0008](../../docs/adr/0008-vitest-unit-testing-with-an-enforced-coverage-gate.md). Backend specifics:
+
+```bash
+pnpm backend test              # vitest run
+pnpm backend test:watch
+pnpm backend test:coverage
+```
+
+- **Tests are co-located**: `src/modules/chat/chat.service.test.ts` sits beside `chat.service.ts`.
+- **`tsconfig.json` excludes `**/*.test.ts`.** The build is `tsc && tsc-alias` over `src/**/*.ts`, so
+  without that exclusion every test file compiles into `dist/` and ships in the production image. Do not
+  remove it.
+- **Route tests use `app.inject()`, never `supertest`.** Build the real app, mock only the repository:
+
+  ```ts
+  const app = await buildApp();
+  const res = await app.inject({ method: 'GET', url: '/api/conversations' });
+  expect(res.statusCode).toBe(200);
+  ```
+
+  This keeps routing, Zod validation, `error.handler.ts` and the `preHandler` hook chain under test. No
+  socket is opened and no container is needed.
+
+- **Mock the repository layer, not the service or controller.** `vi.mock` the `*.repository.ts` module;
+  everything above it stays real. Mocking a service to test its own controller tests nothing.
+- **No database, no Redis, no network.** The CI `DATABASE_URL` secret points at a shared database and is
+  off-limits to tests.
+- **Test each layer at its seam**: `.validation` (Zod schemas — accept and reject cases), `.service`
+  (business logic with the repository mocked), and the route (via `app.inject()`). Cover the error paths
+  too: validation failure, not-found, and rate-limited.
+- **`AppError` mapping is a seam worth its own tests** — `errors/error.handler.ts` is what every route
+  depends on for correct status codes.

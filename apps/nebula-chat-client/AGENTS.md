@@ -17,6 +17,7 @@ Conventions specific to the React SPA. See the [root AGENTS.md](../../AGENTS.md)
 9. [`useEffect` rules](#useeffect-rules)
 10. [Shared Utilities](#shared-utilities)
 11. [Environment Variables](#environment-variables)
+12. [Testing](#testing)
 
 ---
 
@@ -386,3 +387,34 @@ No hook or component in the codebase may import or call `useEffect`.
 | Variable       | Purpose                                                    |
 | -------------- | ---------------------------------------------------------- |
 | `VITE_API_URL` | Base URL of the backend API (e.g. `http://localhost:3000`) |
+
+---
+
+## Testing
+
+The monorepo-wide rules live in the root [`AGENTS.md`](../../AGENTS.md#testing) and
+[ADR-0008](../../docs/adr/0008-vitest-unit-testing-with-an-enforced-coverage-gate.md). Frontend specifics:
+
+```bash
+pnpm frontend test             # vitest run
+pnpm frontend test:watch
+pnpm frontend test:coverage
+```
+
+- **Environment is `jsdom`**, not `happy-dom` — Chakra UI v3 leans on layout and `matchMedia` APIs where
+  happy-dom has gaps.
+- **React Testing Library for components.** Query by role and accessible name, never by test id or class.
+  If a component is hard to query by role, that is usually an accessibility bug worth fixing rather than a
+  reason to reach for `container.querySelector`.
+- **Mock HTTP with `msw`, never stub the Orval hooks.** The API client under `src/libs/api/generated/` is
+  regenerated from OpenAPI on every backend change; intercepting at the network layer keeps that generated
+  code under test instead of replacing it with a fake.
+- **Tests are co-located**: `useDrawerStore.test.ts` beside `useDrawerStore.ts`, `ChatInput.test.tsx`
+  beside `ChatInput.tsx`.
+- **`tsconfig.app.json` declares the Vitest and testing-library types.** The build runs `tsc -b` over
+  `include: ["src"]`, so co-located tests are typechecked — without those `types` entries the build fails
+  on `describe` and `expect`.
+- **Stores and hooks are the highest-value targets.** Zustand stores are module-level singletons, so reset
+  state between tests rather than relying on fresh imports.
+- **Coverage-excluded**: `src/theme/**` (Chakra tokens) and `src/libs/api/generated/**` (Orval output).
+  Everything else faces the 80% bar.

@@ -16,10 +16,11 @@ Read this file for anything that spans the whole repo; read the relevant package
 1. [Development Commands](#development-commands)
 2. [Git Workflow](#git-workflow)
 3. [Code Quality](#code-quality)
-4. [Cross-cutting Conventions](#cross-cutting-conventions)
-5. [Monorepo Structure](#monorepo-structure)
-6. [Local Development](#local-development)
-7. [Keeping the Agentic Workspace in Sync](#keeping-the-agentic-workspace-in-sync)
+4. [Testing](#testing)
+5. [Cross-cutting Conventions](#cross-cutting-conventions)
+6. [Monorepo Structure](#monorepo-structure)
+7. [Local Development](#local-development)
+8. [Keeping the Agentic Workspace in Sync](#keeping-the-agentic-workspace-in-sync)
 
 ---
 
@@ -150,6 +151,51 @@ pnpm --filter nebula-chat-server run typecheck
 ```
 
 Do not disable ESLint rules with inline `// eslint-disable` comments unless absolutely necessary, and always document why.
+
+---
+
+## Testing
+
+**Every PR that changes behavior ships tests at the seams that behavior crosses.** A behavior change
+without a test is an incomplete PR. This is a hard rule, enforced mechanically by an 80% coverage gate —
+see [ADR-0008](./docs/adr/0008-vitest-unit-testing-with-an-enforced-coverage-gate.md).
+
+It is _not_ "write a test for every file". Tests go at **seams** — the public boundary where behavior is
+observable without reaching inside. `.claude/skills/tdd/SKILL.md` is the reference for what a good test
+is, where seams are, and the anti-patterns (implementation-coupled, tautological, horizontally sliced).
+Pick the seams deliberately; do not generate a test per function to move a number.
+
+```bash
+pnpm turbo run test              # every package
+pnpm backend test                # server only
+pnpm frontend test               # client only
+pnpm --filter @nebula-chat/langchain test
+```
+
+### Rules
+
+- **Vitest everywhere.** One runner for all five packages. Each package owns a `vitest.config.ts`; there
+  is no root workspace config.
+- **Tests are co-located**: `src/**/*.test.ts` next to the code under test (`.test.tsx` for components).
+- **Tests run against built libraries.** `turbo`'s `test` task declares `dependsOn: ["^build"]`, so a test
+  importing `@nebula-chat/*` exercises the tsup `dist` artifact production actually runs — not the lib's
+  source. Never alias `@nebula-chat/*` to `libs/*/src` in a Vitest config.
+- **80% coverage, enforced twice.** Vitest `coverage.thresholds` fail the CI `Test` step, and Sonar's
+  quality gate requires 80% on both overall and new code, per project. The Vitest threshold is the real
+  gate: Sonar steps are skipped when `SONAR_TOKEN` is absent (dependabot and fork PRs), so a Sonar-only
+  gate would not apply there.
+- **Below the bar? Add a coverage exclusion, never lower a threshold.** Excluding a file from _coverage_
+  asserts it has no behavior to test (schema declarations, SDK wiring, theme tokens, generated clients,
+  migrations). Lowering the threshold asserts nothing and is not an approved escape hatch.
+- **Unit tests only, for now.** No testcontainers, no live database, no network. Database-backed
+  integration testing is deliberate, recorded debt — see ADR-0008.
+- **Mock at the boundary, not the internals.** Server: mock the repository layer, keep routing, Zod
+  validation and the error handler real. Client: mock HTTP with `msw`, never stub the Orval-generated
+  hooks.
+- **A failing test is never fixed by skipping, deleting or weakening it.** Fix the code, or fix a test
+  that was asserting the wrong thing — and say which.
+
+See each app's `AGENTS.md` for package-specific conventions and examples.
 
 ---
 
