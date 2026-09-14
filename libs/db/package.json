@@ -22,7 +22,10 @@
     "db:migrate": "tsx src/migrate.ts",
     "db:baseline": "tsx src/baseline.ts",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
@@ -31,9 +34,11 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/pg": "^8.11.0",
+    "@vitest/coverage-v8": "^5.0.0",
     "drizzle-kit": "^0.31.0",
     "tsup": "^8.5.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.0"
   }
 }

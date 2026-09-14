@@ -27,6 +27,10 @@ nodeVersion: 26.8.2
 allowBuilds:
   argon2: true
   esbuild: true
+  # msw's postinstall writes the browser service-worker shim. The tests use
+  # msw/node, which does not need it, but strictDepBuilds fails the install
+  # rather than skipping an unreviewed script.
+  msw: true
   protobufjs: true
 
 # Dependency resolution -------------------------------------------------------
