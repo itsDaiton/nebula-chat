@@ -42,6 +42,8 @@ jobs:
               - 'libs/db/**'
             langchain:
               - 'libs/langchain/**'
+            otel:
+              - 'libs/otel/**'
             # Root-level files that change how every package is installed,
             # linted, typechecked or built — any of these rebuilds everything.
             shared:
@@ -65,6 +67,7 @@ jobs:
           F_SERVER: ${{ steps.filter.outputs.server }}
           F_DB: ${{ steps.filter.outputs.db }}
           F_LANGCHAIN: ${{ steps.filter.outputs.langchain }}
+          F_OTEL: ${{ steps.filter.outputs.otel }}
           F_SHARED: ${{ steps.filter.outputs.shared }}
         run: |
           set -euo pipefail
@@ -72,7 +75,8 @@ jobs:
             {"id":"client","name":"nebula-chat-client","dir":"apps/nebula-chat-client","filter":"nebula-chat-client","lint":"apps/nebula-chat-client/ scripts/post-sonar-quality-comment.ts","key":"itsDaiton_nebula-chat-client","project":"Nebula-Chat-Client"},
             {"id":"server","name":"nebula-chat-server","dir":"apps/nebula-chat-server","filter":"nebula-chat-server","lint":"apps/nebula-chat-server/ scripts/post-sonar-quality-comment.ts","key":"itsDaiton_nebula-chat-server","project":"Nebula-Chat-Server"},
             {"id":"db","name":"nebula-chat-db","dir":"libs/db","filter":"@nebula-chat/db","lint":"libs/db/","key":"itsDaiton_nebula-chat-db","project":"Nebula-Chat-DB"},
-            {"id":"langchain","name":"nebula-chat-langchain","dir":"libs/langchain","filter":"@nebula-chat/langchain","lint":"libs/langchain/","key":"itsDaiton_nebula-chat-langchain","project":"Nebula-Chat-LangChain"}
+            {"id":"langchain","name":"nebula-chat-langchain","dir":"libs/langchain","filter":"@nebula-chat/langchain","lint":"libs/langchain/","key":"itsDaiton_nebula-chat-langchain","project":"Nebula-Chat-LangChain"},
+            {"id":"otel","name":"nebula-chat-otel","dir":"libs/otel","filter":"@nebula-chat/otel","lint":"libs/otel/","key":"itsDaiton_nebula-chat-otel","project":"Nebula-Chat-OTel"}
           ]'
           # Non-PR runs (push to main, manual) and any change to shared
           # files build everything; PRs build only the changed packages.
@@ -84,6 +88,7 @@ jobs:
             if [ "$F_SERVER" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["server"]'); fi
             if [ "$F_DB" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["db"]'); fi
             if [ "$F_LANGCHAIN" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["langchain"]'); fi
+            if [ "$F_OTEL" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["otel"]'); fi
             selected=$(echo "$all" | jq -c --argjson ids "$ids" '[.[] | select(.id as $i | $ids | index($i))]')
           fi
           matrix=$(echo "$selected" | jq -c '{include: .}')

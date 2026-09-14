@@ -27,6 +27,7 @@ nodeVersion: 26.8.2
 allowBuilds:
   argon2: true
   esbuild: true
+  protobufjs: true
 
 # Dependency resolution -------------------------------------------------------
 # 10-day cooldown before a freshly published version is installable, matching

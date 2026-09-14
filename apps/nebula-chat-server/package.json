@@ -19,18 +19,17 @@
     "@fastify/under-pressure": "^9.0.0",
     "@nebula-chat/db": "workspace:*",
     "@nebula-chat/langchain": "workspace:*",
-    "drizzle-orm": "^0.45.2",
+    "@nebula-chat/otel": "workspace:*",
     "dotenv": "^17.4.0",
+    "drizzle-orm": "^0.45.2",
     "fastify": "^5.4.0",
     "fastify-plugin": "^5.0.0",
     "fastify-type-provider-zod": "^6.1.0",
-    "pino": "^10.3.1",
     "redis": "^5.11.0",
     "zod": "^4.4.2"
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "pino-pretty": "^13.0.0",
     "tsc-alias": "^1.8.17",
     "typescript": "catalog:"
   }

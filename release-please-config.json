@@ -25,6 +25,11 @@
       "component": "nebula-chat-langchain",
       "include-component-in-tag": true
     },
+    "libs/otel": {
+      "release-type": "node",
+      "component": "nebula-chat-otel",
+      "include-component-in-tag": true
+    },
     "openapi": {
       "release-type": "node",
       "include-component-in-tag": true,

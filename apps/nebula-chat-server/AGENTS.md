@@ -297,16 +297,20 @@ Never use relative paths in the backend. Aliases are configured in `tsconfig.jso
 
 `apps/nebula-chat-server/.env`:
 
-| Variable            | Purpose                                                                     |
-| ------------------- | --------------------------------------------------------------------------- |
-| `OPENAI_API_KEY`    | OpenAI API key (optional — set at least one of this or `ANTHROPIC_API_KEY`) |
-| `ANTHROPIC_API_KEY` | Anthropic API key (optional — set at least one of this or `OPENAI_API_KEY`) |
-| `DATABASE_URL`      | PostgreSQL connection string                                                |
-| `REDIS_URL`         | Redis connection (e.g. `redis://localhost:6380`)                            |
-| `REDIS_PASSWORD`    | Redis password (if set)                                                     |
-| `CLIENT_URL`        | Frontend origin for CORS (e.g. `http://localhost:5173`)                     |
-| `SERVER_URL`        | Backend public URL (used in OpenAPI docs)                                   |
-| `PORT`              | Port to listen on (default `3000`)                                          |
-| `LOG_LEVEL`         | Log verbosity (default `info`; set to `debug`/`warn` etc. in prod)          |
+| Variable                      | Purpose                                                                                                     |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `OPENAI_API_KEY`              | OpenAI API key (optional — set at least one of this or `ANTHROPIC_API_KEY`)                                 |
+| `ANTHROPIC_API_KEY`           | Anthropic API key (optional — set at least one of this or `OPENAI_API_KEY`)                                 |
+| `DATABASE_URL`                | PostgreSQL connection string                                                                                |
+| `REDIS_URL`                   | Redis connection (e.g. `redis://localhost:6380`)                                                            |
+| `REDIS_PASSWORD`              | Redis password (if set)                                                                                     |
+| `CLIENT_URL`                  | Frontend origin for CORS (e.g. `http://localhost:5173`)                                                     |
+| `SERVER_URL`                  | Backend public URL (used in OpenAPI docs)                                                                   |
+| `PORT`                        | Port to listen on (default `3000`)                                                                          |
+| `LOG_LEVEL`                   | Log verbosity (default `info`; set to `debug`/`warn` etc. in prod)                                          |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector URL. Unset disables tracing entirely (`initTelemetry` no-ops)                                |
+| `OTEL_LOG_LEVEL`              | Verbosity of the OTel SDK's own diagnostics (default `error`; `none`/`warn`/`info`/`debug`/`verbose`/`all`) |
 
 > **`env.ts` rule:** All env vars are Zod-validated in `src/env.ts` and fail loudly at startup before any listener is bound. Never read `process.env.*` directly anywhere in the backend — always import from `@backend/env`.
+>
+> **One exception:** `@nebula-chat/otel` reads `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_LOG_LEVEL` from `process.env` itself — a published lib can't depend on one consumer's env schema. Both are still declared in `src/env.ts`. See [ADR-0007](../../docs/adr/0007-otel-lib-and-fastify-native-logger.md) for why, and [docs/logging.md](../../docs/logging.md) for how logging works.

@@ -3,7 +3,7 @@ name: Deploy nebula-chat-server
 # The server bundles its workspace libraries at build time and reads the
 # openapi package version at runtime, so a release of any of them changes what
 # runs in production. Keying the deploy to `nebula-chat-server-v*` alone meant a
-# libs/db or libs/langchain fix shipped only if someone remembered to dispatch
+# libs/db, libs/langchain or libs/otel fix shipped only if someone remembered to dispatch
 # this workflow by hand — a quiet way to leave stale code in production.
 #
 # Deliberately NOT triggered by the root `nebula-chat-v*` tag: that component is
@@ -16,6 +16,7 @@ on:
       - 'nebula-chat-server-v*'
       - 'nebula-chat-db-v*'
       - 'nebula-chat-langchain-v*'
+      - 'nebula-chat-otel-v*'
       - 'openapi-v*'
   workflow_dispatch:
 

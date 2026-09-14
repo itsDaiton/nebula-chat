@@ -14,6 +14,13 @@ const envSchema = z
     CLIENT_URL: z.string().default('http://localhost:5173'),
     SERVER_URL: z.string().optional(),
     TRUST_PROXY: z.string().optional(),
+    // Documented and validated here for the app; @nebula-chat/otel reads both
+    // from process.env directly, so these declarations do not gate the lib's
+    // reads of them — see ADR-0007.
+    OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),
+    OTEL_LOG_LEVEL: z
+      .enum(['none', 'error', 'warn', 'info', 'debug', 'verbose', 'all'])
+      .default('error'),
   })
   .refine((data) => data.OPENAI_API_KEY !== undefined || data.ANTHROPIC_API_KEY !== undefined, {
     message: 'At least one of OPENAI_API_KEY or ANTHROPIC_API_KEY must be set',

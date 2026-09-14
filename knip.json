@@ -14,6 +14,11 @@
     "libs/langchain": {
       "entry": ["src/index.ts"],
       "project": ["src/**/*.ts"]
+    },
+    "libs/otel": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"],
+      "ignoreDependencies": ["pino-pretty"]
     }
   }
 }
