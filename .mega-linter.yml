@@ -43,7 +43,12 @@ TYPESCRIPT_STANDARD_ARGUMENTS: -p tsconfig.eslint.json
 #
 # The repo's own `pnpm lint` covers these files and passes, so this excludes
 # only the duplicate, conflicting opinion — not the linting itself.
-TYPESCRIPT_STANDARD_FILTER_REGEX_EXCLUDE: '(\.test\.tsx?$|/test/)'
+#
+# The vite/vitest config files are excluded for a different reason: tsconfig.eslint.json
+# covers only src/** per package, so a package-root config file belongs to no lint
+# TSConfig and ts-standard fails to parse it at all. eslint.config.ts already ignores
+# vite.config.* and vitest.config.* for exactly this reason.
+TYPESCRIPT_STANDARD_FILTER_REGEX_EXCLUDE: '(\.test\.tsx?$|/test/|(vite|vitest)\.config\.)'
 
 SHOW_ELAPSED_TIME: true
 
