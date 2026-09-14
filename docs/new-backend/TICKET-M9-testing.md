@@ -11,7 +11,12 @@
 | **Standalone** | Yes                                                                             |
 | **ADR**        | [ADR-0008](../adr/0008-vitest-unit-testing-with-an-enforced-coverage-gate.md)   |
 
-> **This ticket was rewritten on 2026-09-14.** Its original spec predated M-1 and M-5 and was wrong in five concrete ways: it referenced a `CI-1` workflow that does not exist, used `apps/server` paths (the real path is `apps/nebula-chat-server`), prescribed `supertest` (Fastify has `app.inject()` built in), mandated testcontainers and autocannon, and scoped testing to the server only — while the highest-value test target in the repo, the token budget, lives in `libs/langchain`. ADR-0008 records the reasoning; **the spec below is authoritative**.
+> **This ticket was rewritten on 2026-09-14.** Its original spec predated M-1 and M-5 and was wrong in five
+> concrete ways: it referenced a `CI-1` workflow that does not exist, used `apps/server` paths (the real path is
+> `apps/nebula-chat-server`), prescribed `supertest` (Fastify has `app.inject()` built in), mandated
+> testcontainers and autocannon, and scoped testing to the server only — while the highest-value test target in
+> the repo, the token budget, lives in `libs/langchain`. ADR-0008 records the reasoning; **the spec below is
+> authoritative**.
 
 ## Objective
 
