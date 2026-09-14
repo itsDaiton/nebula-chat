@@ -22,7 +22,11 @@ DISABLE:
 # upstream source, so lint findings in them are not actionable. FILTER_REGEX_EXCLUDE
 # covers the file-list linters; ADDITIONAL_EXCLUDED_DIRECTORIES (basename-matched at
 # any depth) covers the project-scope ones such as devskim and checkov.
-FILTER_REGEX_EXCLUDE: '\.claude/skills/'
+# `scripts/` holds the repo's own CI helper scripts. They belong to no workspace
+# package, are not built, typechecked or tested by the build workflow, and are
+# covered by the root `pnpm lint`/`pnpm format` — MegaLinter only duplicates
+# that with a conflicting ruleset (see TYPESCRIPT_STANDARD_FILTER_REGEX_EXCLUDE).
+FILTER_REGEX_EXCLUDE: '(\.claude/skills/|^scripts/|/scripts/)'
 ADDITIONAL_EXCLUDED_DIRECTORIES:
   - skills
 

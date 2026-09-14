@@ -16,8 +16,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "knip": "knip",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test": "turbo run test",
+    "test:coverage": "turbo run test -- --coverage"
   },
   "dependencies": {
     "only-allow": "^1.2.2"
@@ -26,7 +26,6 @@
     "@types/node": "catalog:",
     "@typescript-eslint/eslint-plugin": "^8.59.1",
     "@typescript-eslint/parser": "^8.59.1",
-    "@vitest/coverage-v8": "^5.0.0",
     "eslint": "^10.3.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
@@ -40,7 +39,6 @@
     "prettier": "^3.8.3",
     "tsx": "^4.21.0",
     "turbo": "^2.9.14",
-    "typescript": "catalog:",
-    "vitest": "^5.0.0"
+    "typescript": "catalog:"
   }
 }
