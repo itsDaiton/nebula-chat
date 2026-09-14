@@ -22,6 +22,7 @@ export default defineConfig({
       // `app.ts` is plugin registration exercised end-to-end by the route tests,
       // and `src/test/` is the harness itself.
       exclude: [
+        'src/**/tests/**',
         'src/server.ts',
         'src/app.ts',
         'src/logger.ts',

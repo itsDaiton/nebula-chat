@@ -12,6 +12,7 @@ export default defineConfig({
       // assert on, and the client/migration entrypoints require a live Postgres,
       // which this ticket excludes. `env.ts` carries the only real logic here.
       exclude: [
+        'src/**/tests/**',
         'src/index.ts',
         'src/schema.ts',
         'src/client.ts',

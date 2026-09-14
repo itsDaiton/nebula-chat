@@ -10,7 +10,7 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       // Thin wiring with no behaviour of its own: the public surface re-export
       // and the logger type module.
-      exclude: ['src/index.ts', 'src/logger.ts'],
+      exclude: ['src/**/tests/**', 'src/index.ts', 'src/logger.ts'],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },
   },

@@ -30,6 +30,9 @@ export default defineConfig({
         'src/theme/**',
         'src/libs/api/generated/**',
         'src/test/**',
+        // Tests and their local helpers live in `tests/` folders next to the
+        // code under test; neither is product code.
+        'src/**/tests/**',
         'src/**/*.types.ts',
         'src/**/types/**',
         // ADR-0008: style declarations and library wiring, with no behaviour to

@@ -181,9 +181,9 @@ jobs:
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/generated/**
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.tests=src
-            -Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx
+            -Dsonar.test.inclusions=**/tests/**,**/*.test.ts,**/*.test.tsx
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-            -Dsonar.coverage.exclusions=**/*.test.ts,**/*.test.tsx,**/test/**,**/*.config.*,**/theme/**,**/generated/**,**/*.types.ts,**/types/**,**/schema.ts,**/src/index.ts
+            -Dsonar.coverage.exclusions=**/tests/**,**/*.test.ts,**/*.test.tsx,**/test/**,**/*.config.*,**/theme/**,**/generated/**,**/*.types.ts,**/types/**,**/schema.ts,**/src/index.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Evaluate quality gate
