@@ -15,9 +15,9 @@ describe.each([
   ['useDrawerStore', useDrawerStore, 'isDrawerOpen', 'openDrawer', 'closeDrawer', 'toggleDrawer'],
   ['useSearchStore', useSearchStore, 'isSearchOpen', 'openSearch', 'closeSearch', 'toggleSearch'],
 ] as const)('%s', (_name, store, flag, open, close, toggle) => {
-  const read = () => store.getState()[flag] as boolean;
-  const call = (action: typeof open | typeof close | typeof toggle) =>
-    (store.getState()[action] as () => void)();
+  const state = () => store.getState() as unknown as Record<string, unknown>;
+  const read = () => state()[flag] as boolean;
+  const call = (action: string) => (state()[action] as () => void)();
 
   it('starts closed', () => {
     expect(read()).toBe(false);

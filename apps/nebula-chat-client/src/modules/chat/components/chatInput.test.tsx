@@ -105,7 +105,12 @@ describe('ModelSelect', () => {
 
   it('shows the currently selected model', () => {
     const { container } = renderWithChakra(
-      <ModelSelect selectedModel="gpt-4o-mini" onModelChange={vi.fn()} />,
+      <ModelSelect
+        selectedModel="gpt-4o-mini"
+        onModelChange={vi.fn()}
+        isSelectOpen={false}
+        setIsSelectOpen={vi.fn()}
+      />,
     );
 
     expect(valueText(container)).toBe('GPT-4o mini');
@@ -113,7 +118,12 @@ describe('ModelSelect', () => {
 
   it('reflects a different selection', () => {
     const { container } = renderWithChakra(
-      <ModelSelect selectedModel="gpt-4o" onModelChange={vi.fn()} />,
+      <ModelSelect
+        selectedModel="gpt-4o"
+        onModelChange={vi.fn()}
+        isSelectOpen={false}
+        setIsSelectOpen={vi.fn()}
+      />,
     );
 
     expect(valueText(container)).toBe('GPT-4o');
@@ -121,7 +131,12 @@ describe('ModelSelect', () => {
 
   it('exposes the trigger as a combobox for keyboard and screen-reader users', () => {
     const { container } = renderWithChakra(
-      <ModelSelect selectedModel="gpt-4o-mini" onModelChange={vi.fn()} />,
+      <ModelSelect
+        selectedModel="gpt-4o-mini"
+        onModelChange={vi.fn()}
+        isSelectOpen={false}
+        setIsSelectOpen={vi.fn()}
+      />,
     );
 
     expect(container.querySelector('[data-part="trigger"]')).toBeInTheDocument();

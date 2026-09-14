@@ -100,7 +100,7 @@ describe('useMessageHandler', () => {
     act(() => {
       result.current.handleSubmit({
         preventDefault,
-      } as unknown as React.FormEvent<HTMLFormElement>);
+      } as unknown as Parameters<typeof result.current.handleSubmit>[0]);
     });
 
     expect(preventDefault).toHaveBeenCalled();
@@ -115,7 +115,7 @@ describe('useMessageHandler', () => {
     act(() => {
       result.current.handleSubmit({
         preventDefault: vi.fn(),
-      } as unknown as React.FormEvent<HTMLFormElement>);
+      } as unknown as Parameters<typeof result.current.handleSubmit>[0]);
     });
 
     expect(onSendMessage).not.toHaveBeenCalled();

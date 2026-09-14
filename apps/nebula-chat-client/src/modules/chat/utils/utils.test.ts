@@ -42,7 +42,7 @@ describe('mapConversationMessages', () => {
         cached: false,
         createdAt: '2026-01-01T00:00:00.000Z',
       },
-    ] as Parameters<typeof mapConversationMessages>[0]);
+    ] as unknown as Parameters<typeof mapConversationMessages>[0]);
 
     expect(mapped).toEqual([{ id: 'm1', role: 'user', content: 'hello' }]);
   });
@@ -51,7 +51,7 @@ describe('mapConversationMessages', () => {
     const mapped = mapConversationMessages([
       { id: 'a', role: 'user', content: 'first' },
       { id: 'b', role: 'assistant', content: 'second' },
-    ] as Parameters<typeof mapConversationMessages>[0]);
+    ] as unknown as Parameters<typeof mapConversationMessages>[0]);
 
     expect(mapped.map((m) => m.id)).toEqual(['a', 'b']);
   });

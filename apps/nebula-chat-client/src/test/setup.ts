@@ -39,5 +39,17 @@ beforeAll(() => {
     })),
   );
 
+  // jsdom implements none of these; the infinite-scroll sentinel constructs an
+  // IntersectionObserver on mount, so it must be a real constructor.
+  vi.stubGlobal(
+    'IntersectionObserver',
+    class {
+      observe = vi.fn();
+      unobserve = vi.fn();
+      disconnect = vi.fn();
+      takeRecords = vi.fn(() => []);
+    },
+  );
+
   window.HTMLElement.prototype.scrollIntoView = vi.fn();
 });

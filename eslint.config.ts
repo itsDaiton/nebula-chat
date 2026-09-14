@@ -18,6 +18,8 @@ export default [
       '**/coverage/**',
       'eslint.config.ts',
       'vite.config.*',
+      'vitest.config.*',
+      '**/vitest.config.*',
       'apps/nebula-chat-client/vite.config.*',
       'apps/nebula-chat-client/orval.config.*',
       'apps/nebula-chat-server/src/generated/**',
