@@ -16,6 +16,7 @@ type SonarQualityGateResponse = {
       metricKey?: string;
       value?: string;
       actualValue?: string;
+      status?: string;
     }>;
   };
 };
@@ -46,24 +47,84 @@ const STATUS_ICON_PASSED = `${BADGE_BASE_URL}/common/passed-16px.png`;
 const STATUS_ICON_FAILED = `${BADGE_BASE_URL}/common/failed-16px.png`;
 const STATUS_ICON_ACCEPTED = `${BADGE_BASE_URL}/common/accepted-16px.png`;
 
-const formatCount = (value: number): string => (Number.isFinite(value) ? `${value}` : '0');
+export const formatCount = (value: number): string => (Number.isFinite(value) ? `${value}` : '0');
 
-const formatPercent = (value: string | undefined): string => {
+export const formatPercent = (value: string | undefined): string => {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? `${numeric.toFixed(1)}%` : '0.0%';
 };
 
-const buildStatusTitle = (status: string, appName: string): string => {
-  const statusText =
-    status === 'PASSED' ? 'passed' : status === 'FAILED' ? 'failed' : status.toLowerCase();
-  return `Quality Gate ${statusText} for ${appName}`;
+/**
+ * How the comment should read at a glance.
+ *
+ * `attention` is the case this exists for: the gate can pass while new issues or
+ * security hotspots are outstanding, and reporting that as a plain green tick
+ * hides them. The gate verdict stays truthful in the wording — only the signal
+ * changes.
+ */
+export type OverallState = 'clean' | 'attention' | 'failed' | 'unknown';
+
+export type QualitySignals = {
+  gateStatus: string;
+  /** NaN when the count could not be fetched. */
+  newIssues: number;
+  /** NaN when the count could not be fetched. */
+  hotspots: number;
 };
 
-const buildBadgeName = (status: string): string => {
-  if (status === 'PASSED') return 'qg-passed-20px.png';
-  if (status === 'FAILED') return 'qg-failed-20px.png';
-  return 'qg-passed-20px.png';
+export const resolveOverallState = ({
+  gateStatus,
+  newIssues,
+  hotspots,
+}: QualitySignals): OverallState => {
+  if (gateStatus === 'FAILED') return 'failed';
+  if (gateStatus !== 'PASSED') return 'unknown';
+
+  // A count we could not fetch is not evidence of a clean run.
+  if (!Number.isFinite(newIssues) || !Number.isFinite(hotspots)) return 'unknown';
+
+  return newIssues > 0 || hotspots > 0 ? 'attention' : 'clean';
 };
+
+export const buildStatusIcon = (state: OverallState): string => {
+  if (state === 'clean') return '✅';
+  if (state === 'unknown') return '⚠️';
+  // 'attention' shares the failure marker deliberately: outstanding findings
+  // should not read as success, even though the gate itself passed.
+  return '❌';
+};
+
+const pluralise = (count: number, singular: string): string =>
+  `${count} ${singular}${count === 1 ? '' : 's'}`;
+
+export const buildStatusTitle = (
+  state: OverallState,
+  appName: string,
+  signals: QualitySignals,
+): string => {
+  if (state === 'failed') return `Quality Gate failed for ${appName}`;
+  if (state === 'unknown') {
+    const verdict = signals.gateStatus === 'PASSED' ? 'passed' : signals.gateStatus.toLowerCase();
+    return `Quality Gate ${verdict} for ${appName} — status incomplete`;
+  }
+  if (state === 'clean') return `Quality Gate passed for ${appName}`;
+
+  // Name what is outstanding, so the header is self-contained.
+  const outstanding = [
+    signals.newIssues > 0 ? pluralise(signals.newIssues, 'new issue') : '',
+    signals.hotspots > 0 ? pluralise(signals.hotspots, 'security hotspot') : '',
+  ].filter(Boolean);
+
+  return `Quality Gate passed for ${appName} — ${outstanding.join(', ')} outstanding`;
+};
+
+/**
+ * The badge image tracks the gate verdict alone. Sonar ships only passed/failed
+ * artwork, and its alt text states the verdict literally, so showing the failed
+ * badge on a passing gate would assert something untrue.
+ */
+export const buildBadgeName = (gateStatus: string): string =>
+  gateStatus === 'FAILED' ? 'qg-failed-20px.png' : 'qg-passed-20px.png';
 
 const getRequiredEnv = (): RequiredEnv => {
   const get = (name: string): string => {
@@ -100,14 +161,14 @@ const fetchJson = async <T>(url: string, headers: Record<string, string>): Promi
   }
 };
 
-const readDashboardUrl = (reportPath: string): string => {
+export const readDashboardUrl = (reportPath: string): string => {
   if (!existsSync(reportPath)) return '';
   const report = readFileSync(reportPath, 'utf8');
   const match = report.match(/^dashboardUrl=(.*)$/m);
   return match ? match[1].trim() : '';
 };
 
-const getMetricValue = (
+export const getMetricValue = (
   qualityGateData: SonarQualityGateResponse | null,
   metricKey: string,
 ): string => {
@@ -118,7 +179,22 @@ const getMetricValue = (
   return condition?.actualValue ?? condition?.value ?? '';
 };
 
-const getTotal = (data: SonarIssueSearchResponse | null): number => {
+/**
+ * Icon for a single gate condition. Sonar reports ERROR on a breached condition;
+ * anything else (including an absent condition) renders as a pass.
+ */
+export const conditionIcon = (
+  qualityGateData: SonarQualityGateResponse | null,
+  metricKey: string,
+): string => {
+  const conditions = Array.isArray(qualityGateData?.projectStatus?.conditions)
+    ? qualityGateData.projectStatus.conditions
+    : [];
+  const condition = conditions.find((item) => item.metricKey === metricKey);
+  return condition?.status === 'ERROR' ? STATUS_ICON_FAILED : STATUS_ICON_PASSED;
+};
+
+export const getTotal = (data: SonarIssueSearchResponse | null): number => {
   if (typeof data?.total === 'number') return data.total;
   if (typeof data?.paging?.total === 'number') return data.paging.total;
   return Number.NaN;
@@ -154,7 +230,7 @@ const githubRequest = async <T>(
   return (await response.json()) as T;
 };
 
-const postSonarComment = async (): Promise<void> => {
+export const postSonarComment = async (): Promise<void> => {
   const env = getRequiredEnv();
   const [owner, repo] = env.githubRepository.split('/');
   if (!owner || !repo) {
@@ -163,8 +239,6 @@ const postSonarComment = async (): Promise<void> => {
 
   const marker = `<!-- sonar-quality-gate:${env.appName} -->`;
   const status = env.qualityGateStatus;
-  const icon = status === 'PASSED' ? '✅' : status === 'FAILED' ? '❌' : '⚠️';
-  const statusTitle = buildStatusTitle(status, env.appName);
   const badgeName = buildBadgeName(status);
 
   const runUrl = `${env.githubServerUrl}/${owner}/${repo}/actions/runs/${env.githubRunId}`;
@@ -218,6 +292,21 @@ const postSonarComment = async (): Promise<void> => {
   const hotspotIcon =
     Number.isFinite(hotspotCount) && hotspotCount > 0 ? STATUS_ICON_FAILED : STATUS_ICON_PASSED;
 
+  // The coverage and duplication rows follow their own gate conditions rather
+  // than always rendering green — a 0% coverage row with a tick was reporting a
+  // shortfall as a pass.
+  const coverageIcon = conditionIcon(qualityGateData, 'new_coverage');
+  const duplicationIcon = conditionIcon(qualityGateData, 'new_duplicated_lines_density');
+
+  const signals: QualitySignals = {
+    gateStatus: status,
+    newIssues: newIssuesCount,
+    hotspots: hotspotCount,
+  };
+  const overallState = resolveOverallState(signals);
+  const icon = buildStatusIcon(overallState);
+  const statusTitle = buildStatusTitle(overallState, env.appName, signals);
+
   const body = [
     marker,
     `## [![${statusTitle}](${BADGE_BASE_URL}/checks/QualityGateBadge/${badgeName})](${dashboardUrl || runUrl}) **${statusTitle}**`,
@@ -228,8 +317,8 @@ const postSonarComment = async (): Promise<void> => {
     '',
     'Measures',
     `![](${hotspotIcon}) [${formatCount(hotspotCount)} Security Hotspots](${hotspotsUrl})`,
-    `![](${STATUS_ICON_PASSED}) [${coverageText} Coverage on New Code](${coverageUrl})`,
-    `![](${STATUS_ICON_PASSED}) [${duplicationText} Duplication on New Code](${duplicationUrl})`,
+    `![](${coverageIcon}) [${coverageText} Coverage on New Code](${coverageUrl})`,
+    `![](${duplicationIcon}) [${duplicationText} Duplication on New Code](${duplicationUrl})`,
     '',
     `[See analysis details on SonarQube Cloud](${dashboardUrl || runUrl})`,
     '',
@@ -257,8 +346,14 @@ const postSonarComment = async (): Promise<void> => {
   }
 };
 
-postSonarComment().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : 'Unknown error';
-  process.stderr.write(`Failed to post Sonar quality comment: ${message}\n`);
-  process.exit(1);
-});
+// Only post when run as a command. The helpers above are imported by tests, and
+// importing this module must not fire a GitHub write.
+const isDirectRun = (process.argv[1] ?? '').includes('post-sonar-quality-comment');
+
+if (isDirectRun) {
+  postSonarComment().catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    process.stderr.write(`Failed to post Sonar quality comment: ${message}\n`);
+    process.exit(1);
+  });
+}
