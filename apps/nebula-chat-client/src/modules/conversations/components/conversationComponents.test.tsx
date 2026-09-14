@@ -83,7 +83,7 @@ describe('ConversationSkeletons', () => {
     const { container: three } = renderWithChakra(<ConversationSkeletons count={3} />);
     const { container: six } = renderWithChakra(<ConversationSkeletons count={6} />);
 
-    expect(six.querySelectorAll('.chakra-skeleton').length).toBe(
+    expect(six.querySelectorAll('.chakra-skeleton')).toHaveLength(
       three.querySelectorAll('.chakra-skeleton').length * 2,
     );
   });

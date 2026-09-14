@@ -25,46 +25,28 @@ describe('corsOptions.origin', () => {
     vi.resetModules();
   });
 
-  it('allows the configured client origin', async () => {
+  // One allow-list (CLIENT_URL only), every origin decision it has to make.
+  // `allows` rejects if the CORS callback is ever handed an error, so each row
+  // also asserts that a denial is a plain `false` rather than a thrown error.
+  it.each([
+    ['the configured client origin', 'https://app.example.com', true],
+    ['an origin that is not on the allow-list', 'https://evil.example.com', false],
+    // Exact match, not prefix: a suffixed look-alike domain must not pass.
+    ['a look-alike origin that only shares a prefix', 'https://app.example.com.evil.test', false],
+    // No Origin header at all — same-origin requests and curl.
+    ['a request with no Origin header', undefined, true],
+    // An unset allow-list entry is dropped rather than matched against ''.
+    ['an empty origin', '', true],
+  ])('decides %s as %s', async (_case, origin, expected) => {
     const options = await loadCorsOptions({ CLIENT_URL: 'https://app.example.com' });
 
-    await expect(allows(options, 'https://app.example.com')).resolves.toBe(true);
+    await expect(allows(options, origin)).resolves.toBe(expected);
   });
 
   it('allows the configured server origin', async () => {
     const options = await loadCorsOptions({ SERVER_URL: 'https://api.example.com' });
 
     await expect(allows(options, 'https://api.example.com')).resolves.toBe(true);
-  });
-
-  it('rejects an origin that is not on the allow-list', async () => {
-    const options = await loadCorsOptions({ CLIENT_URL: 'https://app.example.com' });
-
-    await expect(allows(options, 'https://evil.example.com')).resolves.toBe(false);
-  });
-
-  it('allows a request with no Origin header, so same-origin and curl still work', async () => {
-    const options = await loadCorsOptions({ CLIENT_URL: 'https://app.example.com' });
-
-    await expect(allows(options, undefined)).resolves.toBe(true);
-  });
-
-  it('matches origins exactly rather than by prefix', async () => {
-    const options = await loadCorsOptions({ CLIENT_URL: 'https://app.example.com' });
-
-    await expect(allows(options, 'https://app.example.com.evil.test')).resolves.toBe(false);
-  });
-
-  it('drops unset origins from the allow-list instead of matching undefined', async () => {
-    const options = await loadCorsOptions({ CLIENT_URL: 'https://app.example.com' });
-
-    await expect(allows(options, '')).resolves.toBe(true);
-  });
-
-  it('never surfaces an error to the CORS callback', async () => {
-    const options = await loadCorsOptions({ CLIENT_URL: 'https://app.example.com' });
-
-    await expect(allows(options, 'https://evil.example.com')).resolves.toBe(false);
   });
 });
 
