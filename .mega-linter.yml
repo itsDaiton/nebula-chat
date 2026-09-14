@@ -27,7 +27,7 @@ DISABLE:
 # toolchain and config against every package, so this removes a duplicate that
 # never worked rather than lint coverage.
 DISABLE_LINTERS:
-  - TYPESCRIPT_ESLINT
+  - TYPESCRIPT_ES
   - TSX_ESLINT
 
 # Vendored agent skills (see skills-lock.json) are held byte-identical to their
@@ -47,7 +47,7 @@ ADDITIONAL_EXCLUDED_DIRECTORIES:
 # betterleaks, secretlint, trufflehog and kingfisher, so the rule is redundant.
 # DS126858 (weak hash): the only match is the substring `mD4` inside a base64
 # integrity hash in pnpm-lock.yaml. Nothing in this repo uses MD4.
-REPOSITORY_DEVSKIM_ARGUMENTS: ["--ignore-rule-ids", "DS173237,DS126858"]
+REPOSITORY_DEVSKIM_ARGUMENTS: ["--ignore-rule-ids", "DS173237", "DS126858"]
 
 # jsonlint is strict JSON. Every tsconfig in this repo is JSONC — tsconfig.app.json
 # has carried `/* Bundler mode */` comments since it was generated — so jsonlint

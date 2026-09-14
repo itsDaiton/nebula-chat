@@ -27,7 +27,9 @@ jobs:
       has_changes: ${{ steps.set.outputs.has_changes }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Detect changed packages
         id: filter
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
@@ -118,9 +120,10 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Set up pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v4
       - name: Set up Node.js
@@ -129,7 +132,7 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
       - name: Cache turbo
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .turbo
           key: turbo-${{ matrix.name }}-${{ github.sha }}
@@ -138,20 +141,30 @@ jobs:
       - name: Install dependencies
         run: pnpm install --ignore-scripts
       - name: Lint
-        run: pnpm exec eslint --report-unused-disable-directives --max-warnings=0 ${{ matrix.lint }}
+        env:
+          MATRIX_LINT: ${{ matrix.lint }}
+        run: pnpm exec eslint --report-unused-disable-directives --max-warnings=0 "$MATRIX_LINT"
       - name: Format check
-        run: pnpm exec prettier --check ${{ matrix.lint }}
+        env:
+          MATRIX_LINT: ${{ matrix.lint }}
+        run: pnpm exec prettier --check "$MATRIX_LINT"
       - name: TypeScript check
-        run: pnpm turbo run typecheck --filter=${{ matrix.filter }}
+        env:
+          MATRIX_FILTER: ${{ matrix.filter }}
+        run: pnpm turbo run typecheck --filter="$MATRIX_FILTER"
       - name: Build
-        run: pnpm turbo run build --filter=${{ matrix.filter }}
+        env:
+          MATRIX_FILTER: ${{ matrix.filter }}
+        run: pnpm turbo run build --filter="$MATRIX_FILTER"
       # After Build: the `test` task depends on ^build, so workspace libraries are
       # exercised as their published dist artifact rather than as source (ADR-0008).
       # Vitest's own coverage thresholds fail this step below 80%, which is the
       # real gate — the Sonar steps below are skipped without SONAR_TOKEN, so a
       # Sonar-only gate would not apply to dependabot or fork PRs.
       - name: Test
-        run: pnpm turbo run test --filter=${{ matrix.filter }} -- --coverage
+        env:
+          MATRIX_FILTER: ${{ matrix.filter }}
+        run: pnpm turbo run test --filter="$MATRIX_FILTER" -- --coverage
       # Sonar steps are guarded on SONAR_TOKEN: dependabot/fork PRs do not
       # receive the secret, so Sonar is skipped (not failed) there while
       # lint/typecheck/build still gate the PR.
@@ -176,14 +189,19 @@ jobs:
       - name: Evaluate quality gate
         id: quality_gate
         if: ${{ env.SONAR_TOKEN != '' }}
-        uses: SonarSource/sonarqube-quality-gate-action@v1.2.1
+        uses: SonarSource/sonarqube-quality-gate-action@7a5fffe8e523c40e0c740b6bc2712ab503e52efa # v1.2.1
         with:
           scanMetadataReportFile: ${{ matrix.dir }}/.scannerwork/report-task.txt
           pollingTimeoutSec: 300
       - name: Publish Sonar summary
         if: ${{ always() && env.SONAR_TOKEN != '' }}
+        env:
+          MATRIX_DIR: ${{ matrix.dir }}
+          MATRIX_NAME: ${{ matrix.name }}
+          MATRIX_KEY: ${{ matrix.key }}
+          QUALITY_GATE_STATUS: ${{ steps.quality_gate.outputs.quality-gate-status }}
         run: |
-          report_file='${{ matrix.dir }}/.scannerwork/report-task.txt'
+          report_file="${MATRIX_DIR}/.scannerwork/report-task.txt"
           dashboard_url=''
           if [ -f "${report_file}" ]; then
             dashboard_url="$(grep '^dashboardUrl=' "${report_file}" | cut -d= -f2-)"
@@ -192,9 +210,9 @@ jobs:
           {
             echo '## Sonar Scan Summary'
             echo ''
-            echo '- Package: ${{ matrix.name }}'
-            echo '- Project key: ${{ matrix.key }}'
-            echo '- Quality gate: ${{ steps.quality_gate.outputs.quality-gate-status }}'
+            echo "- Package: ${MATRIX_NAME}"
+            echo "- Project key: ${MATRIX_KEY}"
+            echo "- Quality gate: ${QUALITY_GATE_STATUS}"
             if [ -n "${dashboard_url}" ]; then
               echo "- Dashboard: ${dashboard_url}"
             fi
