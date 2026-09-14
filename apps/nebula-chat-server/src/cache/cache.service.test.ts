@@ -60,8 +60,8 @@ vi.mock('@backend/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
-const { cacheService } = await import('@backend/cache/cache.service');
-const { closeRedisClient } = await import('@backend/cache/cache.client');
+import { closeRedisClient } from '@backend/cache/cache.client';
+import { cacheService } from '@backend/cache/cache.service';
 
 const streamRequest = (overrides: Partial<CreateChatStreamDTO> = {}) =>
   ({

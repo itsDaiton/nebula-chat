@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const mockEnv: { TRUST_PROXY?: string } = {};
+// vi.mock is hoisted above the imports, so its factory runs before a plain
+// `const` would be initialised — vi.hoisted lifts the object with it.
+const mockEnv = vi.hoisted(() => ({}) as { TRUST_PROXY?: string });
 
 vi.mock('@backend/env', () => ({ env: mockEnv }));
 
-const { resolveTrustProxy } = await import('@backend/utils/trustProxy');
+import { resolveTrustProxy } from '@backend/utils/trustProxy';
 
 /** Applies the resolved predicate the way @fastify/proxy-addr walks the XFF chain. */
 const trustsHop = (trust: ReturnType<typeof resolveTrustProxy>, hop: number) =>

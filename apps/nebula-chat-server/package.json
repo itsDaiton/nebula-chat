@@ -32,6 +32,7 @@
     "zod": "^4.4.2"
   },
   "devDependencies": {
+    "@total-typescript/shoehorn": "^0.1.2",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "^5.0.0",
     "tsc-alias": "^1.8.17",

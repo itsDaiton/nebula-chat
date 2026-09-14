@@ -15,6 +15,7 @@ export default [
       '**/build/**',
       '**/node_modules/**',
       '**/.turbo/**',
+      '**/coverage/**',
       'eslint.config.ts',
       'vite.config.*',
       'apps/nebula-chat-client/vite.config.*',

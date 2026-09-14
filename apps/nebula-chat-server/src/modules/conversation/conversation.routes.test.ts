@@ -1,3 +1,4 @@
+import { fromPartial } from '@total-typescript/shoehorn';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestApp } from '@backend/test/app';
@@ -17,14 +18,14 @@ vi.mock('@backend/modules/conversation/conversation.repository', () => ({
 // process, whose end() throws on a second app close.
 vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
-const { conversationRepository } = await import(
-  '@backend/modules/conversation/conversation.repository'
-);
+import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
 
 const repo = vi.mocked(conversationRepository);
 
 const CONVERSATION_ID = '11111111-1111-4111-8111-111111111111';
 
+// Only the fields the response schema serialises. `fromPartial` is applied at
+// each mock call site, where the target row type can be inferred.
 const aConversation = (overrides: Record<string, unknown> = {}) => ({
   id: CONVERSATION_ID,
   title: 'A conversation',
@@ -50,7 +51,7 @@ beforeEach(() => {
 
 describe('POST /api/conversations', () => {
   it('creates a conversation and responds 201', async () => {
-    repo.create.mockResolvedValue(aConversation());
+    repo.create.mockResolvedValue(fromPartial(aConversation()));
 
     const res = await app.inject({
       method: 'POST',
@@ -64,7 +65,7 @@ describe('POST /api/conversations', () => {
   });
 
   it('serialises createdAt as an ISO string', async () => {
-    repo.create.mockResolvedValue(aConversation());
+    repo.create.mockResolvedValue(fromPartial(aConversation()));
 
     const res = await app.inject({
       method: 'POST',
@@ -122,7 +123,7 @@ describe('POST /api/conversations', () => {
 
 describe('GET /api/conversations/:conversationId', () => {
   it('returns the conversation when it exists', async () => {
-    repo.findById.mockResolvedValue(aConversation());
+    repo.findById.mockResolvedValue(fromPartial(aConversation()));
 
     const res = await app.inject({ method: 'GET', url: `/api/conversations/${CONVERSATION_ID}` });
 
@@ -152,7 +153,7 @@ describe('GET /api/conversations', () => {
   const page = { conversations: [aConversation()], nextCursor: null, hasMore: false };
 
   it('returns a page of conversations', async () => {
-    repo.findAll.mockResolvedValue(page);
+    repo.findAll.mockResolvedValue(fromPartial(page));
 
     const res = await app.inject({ method: 'GET', url: '/api/conversations' });
 
@@ -161,7 +162,7 @@ describe('GET /api/conversations', () => {
   });
 
   it('applies the default limit when none is supplied', async () => {
-    repo.findAll.mockResolvedValue(page);
+    repo.findAll.mockResolvedValue(fromPartial(page));
 
     await app.inject({ method: 'GET', url: '/api/conversations' });
 
@@ -169,7 +170,7 @@ describe('GET /api/conversations', () => {
   });
 
   it('coerces the limit query parameter to a number', async () => {
-    repo.findAll.mockResolvedValue(page);
+    repo.findAll.mockResolvedValue(fromPartial(page));
 
     await app.inject({ method: 'GET', url: '/api/conversations?limit=25' });
 
@@ -177,7 +178,7 @@ describe('GET /api/conversations', () => {
   });
 
   it('passes the pagination cursor through', async () => {
-    repo.findAll.mockResolvedValue(page);
+    repo.findAll.mockResolvedValue(fromPartial(page));
 
     await app.inject({ method: 'GET', url: `/api/conversations?cursor=${CONVERSATION_ID}` });
 
@@ -206,7 +207,7 @@ describe('GET /api/conversations', () => {
 
 describe('GET /api/conversations/search', () => {
   it('returns matching conversations', async () => {
-    repo.search.mockResolvedValue([aConversation()]);
+    repo.search.mockResolvedValue(fromPartial([aConversation()]));
 
     const res = await app.inject({ method: 'GET', url: '/api/conversations/search?q=hello' });
 
@@ -229,7 +230,7 @@ describe('GET /api/conversations/search', () => {
   });
 
   it('is matched ahead of the /:conversationId route', async () => {
-    repo.search.mockResolvedValue([]);
+    repo.search.mockResolvedValue(fromPartial([]));
 
     await app.inject({ method: 'GET', url: '/api/conversations/search?q=x' });
 
