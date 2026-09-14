@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.21.0...nebula-chat-v1.22.0) (2026-09-14)
+
+
+### Features
+
+* **otel:** add @nebula-chat/otel logger factory and OTel tracing ([#299](https://github.com/itsDaiton/nebula-chat/issues/299)) ([357fec3](https://github.com/itsDaiton/nebula-chat/commit/357fec3de84a2f1328af647268e83c58fe2d26c9))
+
 ## [1.21.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.20.5...nebula-chat-v1.21.0) (2026-09-13)
 
 
