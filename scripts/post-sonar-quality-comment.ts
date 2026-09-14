@@ -11,6 +11,16 @@ type SonarIssueSearchResponse = {
   };
 };
 
+type SonarMeasuresResponse = {
+  component?: {
+    measures?: Array<{
+      metric?: string;
+      value?: string;
+      period?: { value?: string };
+    }>;
+  };
+};
+
 type SonarQualityGateResponse = {
   projectStatus?: {
     conditions?: Array<{
@@ -269,6 +279,24 @@ export const measureIcon = (
   return fallbackValue >= COVERAGE_MINIMUM ? STATUS_ICON_PASSED : STATUS_ICON_FAILED;
 };
 
+/**
+ * A count from the PR's own measures. This is the number SonarCloud's UI
+ * renders, which `api/issues/search` does not always agree with: a search over
+ * a pull request returns issues on the changed *files*, while the dashboard
+ * counts only those on the changed *lines*. An issue sitting on an untouched
+ * line of a touched file therefore showed up in the comment while the
+ * dashboard showed none. NaN when the measure is absent, so callers can fall
+ * back rather than report a confident zero.
+ */
+export const getMeasureCount = (data: SonarMeasuresResponse | null, metric: string): number => {
+  const measures = Array.isArray(data?.component?.measures) ? data.component.measures : [];
+  const measure = measures.find((item) => item.metric === metric);
+  const raw = measure?.period?.value ?? measure?.value;
+  if (raw === undefined || raw.trim() === '') return Number.NaN;
+  const numeric = Number(raw);
+  return Number.isFinite(numeric) ? numeric : Number.NaN;
+};
+
 export const getTotal = (data: SonarIssueSearchResponse | null): number => {
   if (typeof data?.total === 'number') return data.total;
   if (typeof data?.paging?.total === 'number') return data.paging.total;
@@ -335,28 +363,39 @@ export const postSonarComment = async (): Promise<void> => {
 
   const sonarHeaders = { Authorization: sonarAuth };
 
-  const [newIssuesData, acceptedIssuesData, hotspotsData, qualityGateData] = await Promise.all([
-    fetchJson<SonarIssueSearchResponse>(
-      `https://sonarcloud.io/api/issues/search?componentKeys=${env.projectKey}&pullRequest=${env.prNumber}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true&ps=1`,
-      sonarHeaders,
-    ),
-    fetchJson<SonarIssueSearchResponse>(
-      `https://sonarcloud.io/api/issues/search?componentKeys=${env.projectKey}&pullRequest=${env.prNumber}&issueStatuses=ACCEPTED&ps=1`,
-      sonarHeaders,
-    ),
-    fetchJson<SonarIssueSearchResponse>(
-      `https://sonarcloud.io/api/hotspots/search?projectKey=${env.projectKey}&pullRequest=${env.prNumber}&ps=1`,
-      sonarHeaders,
-    ),
-    fetchJson<SonarQualityGateResponse>(
-      `https://sonarcloud.io/api/qualitygates/project_status?projectKey=${env.projectKey}&pullRequest=${env.prNumber}`,
-      sonarHeaders,
-    ),
-  ]);
+  const [newIssuesData, acceptedIssuesData, hotspotsData, qualityGateData, measuresData] =
+    await Promise.all([
+      fetchJson<SonarIssueSearchResponse>(
+        `https://sonarcloud.io/api/issues/search?componentKeys=${env.projectKey}&pullRequest=${env.prNumber}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true&ps=1`,
+        sonarHeaders,
+      ),
+      fetchJson<SonarIssueSearchResponse>(
+        `https://sonarcloud.io/api/issues/search?componentKeys=${env.projectKey}&pullRequest=${env.prNumber}&issueStatuses=ACCEPTED&ps=1`,
+        sonarHeaders,
+      ),
+      fetchJson<SonarIssueSearchResponse>(
+        `https://sonarcloud.io/api/hotspots/search?projectKey=${env.projectKey}&pullRequest=${env.prNumber}&ps=1`,
+        sonarHeaders,
+      ),
+      fetchJson<SonarQualityGateResponse>(
+        `https://sonarcloud.io/api/qualitygates/project_status?projectKey=${env.projectKey}&pullRequest=${env.prNumber}`,
+        sonarHeaders,
+      ),
+      fetchJson<SonarMeasuresResponse>(
+        `https://sonarcloud.io/api/measures/component?component=${env.projectKey}&pullRequest=${env.prNumber}&metricKeys=new_violations,new_accepted_issues,new_security_hotspots`,
+        sonarHeaders,
+      ),
+    ]);
 
-  const newIssuesCount = getTotal(newIssuesData);
-  const acceptedIssuesCount = getTotal(acceptedIssuesData);
-  const hotspotCount = getTotal(hotspotsData);
+  // Measures first, issue search only as a fallback: see getMeasureCount.
+  const countOf = (metric: string, searchData: SonarIssueSearchResponse | null): number => {
+    const measured = getMeasureCount(measuresData, metric);
+    return Number.isFinite(measured) ? measured : getTotal(searchData);
+  };
+
+  const newIssuesCount = countOf('new_violations', newIssuesData);
+  const acceptedIssuesCount = countOf('new_accepted_issues', acceptedIssuesData);
+  const hotspotCount = countOf('new_security_hotspots', hotspotsData);
 
   const newCoverageValue = getMetricValue(qualityGateData, 'new_coverage');
   const duplicationValue = getMetricValue(qualityGateData, 'new_duplicated_lines_density');
