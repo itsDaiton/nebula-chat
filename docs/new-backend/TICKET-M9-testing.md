@@ -20,7 +20,10 @@
 
 ## Objective
 
-Stand up Vitest as the single test runner across every package, co-located as `src/**/*.test.ts(x)`, wired into `turbo` and the existing CI build matrix, and enforce **80% coverage** — both by Vitest thresholds and by the Sonar quality gate. Write enough tests in this ticket to clear that bar from day one.
+Stand up Vitest as the single test runner across every package, one test file per source module in a
+`tests/` folder beside it, wired into `turbo` and the existing CI build matrix, and enforce **80%
+coverage** — both by Vitest thresholds and by the Sonar quality gate. Write enough tests in this ticket to
+clear that bar from day one.
 
 ## Scope boundaries
 
@@ -38,14 +41,15 @@ Stand up Vitest as the single test runner across every package, co-located as `s
 - [x] `pnpm test` (via `turbo run test`) runs Vitest in every package that has tests
 - [x] `turbo.json`'s `test` task declares `dependsOn: ["^build"]` and `outputs: ["coverage/**"]`
 - [x] Each package owns a `vitest.config.ts` — no root `vitest.workspace.ts`
-- [x] Tests are co-located as `src/**/*.test.ts` / `src/**/*.test.tsx`
-- [x] `apps/nebula-chat-server/tsconfig.json` excludes `**/*.test.ts` so tests never reach `dist/`
-- [x] `apps/nebula-chat-client/tsconfig.app.json` declares the Vitest and testing-library types so `tsc -b` passes over co-located tests
+- [x] One test file per source module, named after it, in a sibling `tests/` folder
+      (`src/shared/hooks/tests/useResponsiveLayout.test.ts`)
+- [x] `apps/nebula-chat-server/tsconfig.build.json` excludes `src/**/*.test.ts` and `src/**/tests/**` so tests never reach `dist/`
+- [x] `apps/nebula-chat-client/tsconfig.app.json` declares the Vitest and testing-library types so `tsc -b` passes over the tests
 - [x] `knip.json` recognises test files, so test-only devDependencies are not reported unused
       (no change needed: the existing `project` globs already cover `*.test.ts`, confirmed by a
       `pnpm knip` run in which no testing dependency appears as unused)
 - [x] Server route tests use `app.inject()` against a real `buildApp()` with the repository layer mocked
-- [x] Client tests run on `jsdom` with React Testing Library, and mock the API through `msw` at the network layer (not by stubbing the Orval hooks)
+- [x] Client tests run on `jsdom` with React Testing Library, and mock the API through the MSW handlers Orval generates from `openapi.yaml` (not by stubbing the Orval hooks, and not with hand-written URLs)
 - [x] A `Test` step exists in `.github/workflows/build.yml`'s per-package matrix, after `Build`
 - [x] Vitest `coverage.thresholds` enforce **80%** per package and fail the `Test` step below it
 - [x] Sonar's `-Dsonar.coverage.exclusions=**/*` is removed and `sonar.javascript.lcov.reportPaths` is set

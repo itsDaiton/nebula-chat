@@ -181,7 +181,19 @@ pnpm --filter @nebula-chat/langchain test
 
 - **Vitest everywhere.** One runner for all five packages. Each package owns a `vitest.config.ts`; there
   is no root workspace config.
-- **Tests are co-located**: `src/**/*.test.ts` next to the code under test (`.test.tsx` for components).
+- **One test file per source file, named after it**: `useDrawerStore.ts` is tested by
+  `useDrawerStore.test.ts` and by nothing else. A file named for a grouping rather than a module
+  (`hooks.test.ts`, `stores.test.ts`, `chatComponents.test.tsx`) is wrong — when a test fails, its
+  filename should already name the module at fault.
+- **Tests live in a `tests/` folder beside the code under test**: `src/shared/hooks/useResponsiveLayout.ts`
+  is tested by `src/shared/hooks/tests/useResponsiveLayout.test.ts`. Helpers shared by the tests in one
+  folder sit alongside them (`tests/openCloseStore.contract.ts`); helpers shared across a package live in
+  `src/test/`.
+- **Frontend API mocks come from the OpenAPI spec, never from a hand-written URL.** Orval generates MSW
+  handlers next to the client (`*.msw.ts`), and they match any origin, so a test calls
+  `getListConversationsMockHandler(payload)` rather than naming `http://localhost:3000/api/conversations`.
+  Failure responses and the SSE chat endpoint (excluded from Orval by tag) go through `@/test/api`, which
+  is the only place a route string is written.
 - **Tests run against built libraries.** `turbo`'s `test` task declares `dependsOn: ["^build"]`, so a test
   importing `@nebula-chat/*` exercises the tsup `dist` artifact production actually runs — not the lib's
   source. Never alias `@nebula-chat/*` to `libs/*/src` in a Vitest config.

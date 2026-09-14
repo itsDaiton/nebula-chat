@@ -334,10 +334,11 @@ pnpm backend test:watch
 pnpm backend test:coverage
 ```
 
-- **Tests are co-located**: `src/modules/chat/chat.service.test.ts` sits beside `chat.service.ts`.
-- **`tsconfig.json` excludes `**/*.test.ts`.** The build is `tsc && tsc-alias` over `src/**/*.ts`, so
-  without that exclusion every test file compiles into `dist/` and ships in the production image. Do not
-  remove it.
+- **One test file per source file, in a `tests/` folder beside it**: `chat.service.ts` is tested by
+  `src/modules/chat/tests/chat.service.test.ts`. Never group several modules into one file.
+- **`tsconfig.build.json` excludes `src/**/*.test.ts` and `src/**/tests/**`.** The build is
+  `tsc && tsc-alias` over `src/**/*.ts`, so without those exclusions every test file compiles into
+  `dist/` and ships in the production image. Do not remove them.
 - **Route tests use `app.inject()`, never `supertest`.** Build the real app, mock only the repository:
 
   ```ts

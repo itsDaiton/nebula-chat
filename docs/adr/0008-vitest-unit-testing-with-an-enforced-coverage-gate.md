@@ -27,7 +27,9 @@ library. The server's own pure logic is a short list: `errors/error.handler.ts`,
 
 ## Decision
 
-Adopt **Vitest as the single test runner for every package**, with tests co-located as `src/**/*.test.ts(x)`, and gate merges on **80% coverage per Sonar project**.
+Adopt **Vitest as the single test runner for every package**, with one test file per source module in a
+`tests/` folder beside it (`src/shared/hooks/tests/useResponsiveLayout.test.ts`), and gate merges on
+**80% coverage per Sonar project**.
 
 ### Unit tests only — no testcontainers, no live database
 
@@ -42,18 +44,52 @@ one.
 
 This is a deliberate rejection of the obvious path. `build.yml` already passes `DATABASE_URL: ${{ secrets.DATABASE_URL }}` into every build leg, so a real Postgres _is_ reachable in CI without testcontainers. It is not used: that secret points at a shared database, and tests that write to it would eventually race a deploy or poison real rows.
 
-### Tests are co-located, and three configs pay for it
+### One test file per source module, in a `tests/` folder beside it
 
-Tests live next to the code they test (`src/**/*.test.ts`), which is worth real money for both the `/tdd` loop
-and AI navigability. On the server this is not free, because `build` is `tsc && tsc-alias` over `include:
-["src/**/*.ts"]` — left alone, every test file compiles into `dist/` and ships in the production image. Three
-compensating edits are therefore load-bearing and must not be "cleaned up":
+**Amended 2026-09-14.** This ADR originally specified bare co-location (`useDrawerStore.test.ts` sitting
+directly beside `useDrawerStore.ts`), and the first implementation also grouped unrelated modules into
+files named after a layer rather than a module — `hooks.test.ts`, `stores.test.ts`,
+`chatComponents.test.tsx`. Both are superseded:
 
-1. **`apps/nebula-chat-server/tsconfig.json`** excludes `**/*.test.ts` so tests never reach `dist/`.
-2. **Sonar** moves test globs to `sonar.tests` — co-located tests inside `-Dsonar.sources=src` would otherwise be scanned as production source and wreck duplication and complexity metrics.
+- **One test file per source file, named after it.** A failing test's filename should already name the
+  module at fault, and a grouped file quietly becomes the place new tests are appended regardless of what
+  they cover. The client's 24 test files became 63 under this rule with no change to what is asserted.
+- **Tests live in a `tests/` folder beside the code under test.** Source directories stay readable at a
+  glance, and a test's local helpers have an obvious home (`tests/openCloseStore.contract.ts`) without
+  sitting in the module directory pretending to be product code.
+
+Tests stay _next to_ their subject rather than in a mirrored top-level tree: that is what makes the `/tdd`
+loop and AI navigation cheap. On the server this is not free, because `build` is `tsc && tsc-alias` over
+`include: ["src/**/*.ts"]` — left alone, every test file compiles into `dist/` and ships in the production
+image. Three compensating edits are therefore load-bearing and must not be "cleaned up":
+
+1. **`apps/nebula-chat-server/tsconfig.build.json`** excludes `src/**/*.test.ts` and `src/**/tests/**` so
+   tests never reach `dist/`.
+2. **Sonar** moves test globs to `sonar.tests` — tests inside `-Dsonar.sources=src` would otherwise be scanned as production source and wreck duplication and complexity metrics.
 3. **`knip.json`** gains test patterns, or `vitest` and the testing-library packages are reported as unused devDependencies.
 
 The client has no `dist` problem (`noEmit: true`, and Vite tree-shakes), but its `tsc -b` over `include: ["src"]` **does** typecheck test files, so `vitest/globals` and the testing-library types must be declared in `tsconfig.app.json`'s `types` array or the build breaks.
+
+### Frontend HTTP mocks are generated from the OpenAPI document
+
+`orval.config.ts` declares `mock.generators: [{ type: 'msw' }]`, so every documented success response gets
+an MSW handler beside the generated client. A client test calls
+`getListConversationsMockHandler(payload)` instead of `http.get('http://localhost:3000/api/conversations')`:
+the mock and the client are generated from the same document the backend emits, so a route that moves or a
+response that changes shape breaks the test at regeneration rather than silently passing against a stale
+hand-written URL. The handlers match any origin, which is what removes the hard-coded host.
+
+Two gaps have no generated handler, and both are covered by `@/test/api` — the single place a route string
+is still written:
+
+- **Failure responses.** Orval generates the documented success response only.
+- **`/api/chat/stream`.** Excluded from Orval by tag, because it streams SSE rather than returning JSON.
+
+This required un-breaking msw's path matching. The workspace pins `path-to-regexp: 8.4.0` for every
+package, but msw declares `^6.3.0` and builds wildcard paths (`*/api/...`) with it; v8 removed unnamed
+wildcards, so every such handler threw `PathError: Missing parameter name`. The override is now scoped
+(`msw>path-to-regexp: ^6.3.0`), which keeps msw on the release that fixes GHSA-9wv6-86v2-598j while
+everything else stays on 8.4.0.
 
 ### Tests run against built libraries, not library sources
 

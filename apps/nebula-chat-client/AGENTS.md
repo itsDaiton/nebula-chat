@@ -406,13 +406,24 @@ pnpm frontend test:coverage
 - **React Testing Library for components.** Query by role and accessible name, never by test id or class.
   If a component is hard to query by role, that is usually an accessibility bug worth fixing rather than a
   reason to reach for `container.querySelector`.
-- **Mock HTTP with `msw`, never stub the Orval hooks.** The API client under `src/libs/api/generated/` is
-  regenerated from OpenAPI on every backend change; intercepting at the network layer keeps that generated
-  code under test instead of replacing it with a fake.
-- **Tests are co-located**: `useDrawerStore.test.ts` beside `useDrawerStore.ts`, `ChatInput.test.tsx`
-  beside `ChatInput.tsx`.
+- **Mock HTTP with the MSW handlers Orval generates, never with a hand-written URL and never by stubbing
+  the hooks.** `orval.config.ts` sets `mock.generators: [{ type: 'msw' }]`, so every documented success
+  response has a handler beside the client (`src/libs/api/generated/**/**.msw.ts`) built from the same
+  OpenAPI document the backend emits:
+
+  ```ts
+  server.use(getListConversationsMockHandler({ conversations, nextCursor: null, hasMore: false }));
+  ```
+
+  The generated handlers match any origin, which is what keeps `http://localhost:3000` out of tests. Two
+  things have no generated handler: failure responses (Orval emits only the documented success) and
+  `/api/chat/stream` (excluded from Orval by tag — it streams SSE). Both go through `@/test/api`, the one
+  place route strings are written. Regenerate with `pnpm frontend generate:api` after any backend change.
+
+- **One test file per source file, in a `tests/` folder beside it**: `ChatInput.tsx` is tested by
+  `components/tests/ChatInput.test.tsx`. Never group several modules into one file.
 - **`tsconfig.app.json` declares the Vitest and testing-library types.** The build runs `tsc -b` over
-  `include: ["src"]`, so co-located tests are typechecked — without those `types` entries the build fails
+  `include: ["src"]`, so tests are typechecked — without those `types` entries the build fails
   on `describe` and `expect`.
 - **Stores and hooks are the highest-value targets.** Zustand stores are module-level singletons, so reset
   state between tests rather than relying on fresh imports.
