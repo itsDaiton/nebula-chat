@@ -45,7 +45,7 @@
 
 ## Target monorepo structure
 
-```
+```text
 nebula-chat/
 ├── apps/
 │   ├── server/                    # nebula-chat-server (this migration)

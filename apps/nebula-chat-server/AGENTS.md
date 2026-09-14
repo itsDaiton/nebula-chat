@@ -22,7 +22,7 @@ Conventions specific to the Fastify API. See the [root AGENTS.md](../../AGENTS.m
 
 ## Directory Layout
 
-```
+```text
 apps/nebula-chat-server/src/
 ├── app.ts                         # buildApp() factory — registers plugins, routes, compilers
 ├── server.ts                      # Thin entry point — calls buildApp() then app.listen()
@@ -76,7 +76,7 @@ apps/nebula-chat-server/src/
 
 Every feature module follows this strict 6-layer convention. Add files in this order when creating a new module:
 
-```
+```text
 1. <module>.types.ts        — TypeScript types / DTOs (no logic)
 2. <module>.validation.ts   — Zod schemas for request body/params/query/response
 3. <module>.repository.ts   — Raw Drizzle queries; no business logic (omit if no DB access)
@@ -214,7 +214,7 @@ Cache stats and management endpoints live at `/api/cache/*`.
 
 The chat route is the most complex part of the backend. End-to-end flow:
 
-```
+```text
 POST /api/chat/stream
   → @fastify/rate-limit               (10 req / 60 s per IP, opt-in via route config)
   → Zod body validation               (schema: { body: createChatStreamSchema } — native Fastify)
@@ -277,7 +277,12 @@ The script (`src/scripts/generate-openapi.ts`) calls `buildApp()` → `app.ready
 pnpm --filter nebula-chat-client run generate:api
 ```
 
-The generator is Orval, configured at `apps/nebula-chat-client/orval.config.ts`, driven by `openapi/openapi.yaml`, and using the axios mutator at `apps/nebula-chat-client/src/libs/api/client.ts`. Regenerated files in `apps/nebula-chat-client/src/libs/api/generated/` must be committed in the same PR as the backend/OpenAPI change — never ship an API change with a stale client. Do not hand-edit anything under `apps/nebula-chat-client/src/libs/api/generated/`; always regenerate. Use the `regenerate-api-client` skill or the `api-contract-keeper` agent for this.
+The generator is Orval, configured at `apps/nebula-chat-client/orval.config.ts`, driven by
+`openapi/openapi.yaml`, and using the axios mutator at `apps/nebula-chat-client/src/libs/api/client.ts`.
+Regenerated files in `apps/nebula-chat-client/src/libs/api/generated/` must be committed in the same PR as the
+backend/OpenAPI change — never ship an API change with a stale client. Do not hand-edit anything under
+`apps/nebula-chat-client/src/libs/api/generated/`; always regenerate. Use the `regenerate-api-client` skill or
+the `api-contract-keeper` agent for this.
 
 ---
 

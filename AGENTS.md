@@ -128,7 +128,12 @@ Releases on `main` are fully automated by [release-please](https://github.com/go
   - `feat!:`, `fix!:`, or a footer of `BREAKING CHANGE: ...` → major bump. Use this only for an actual breaking change to a released package's public surface (e.g. `libs/db`'s exported types, the OpenAPI contract) — not for internal refactors.
 - **Do not use `chore`, `refactor`, `docs`, `style`, `test`, `build`, `ci`, or `perf`.** Release Please drops them. Pick `fix` or `feat` by the rule above instead — when in doubt, `fix`.
 - The cost of this rule is changelog noise: a CI tweak lands as a patch release. That is deliberate — a silently unreleased change is worse than an over-reported one.
-- **Scope should name the release-please component** the change belongs to, matching `release-please-config.json`'s `packages` keys: `client` (`apps/nebula-chat-client`), `server` (`apps/nebula-chat-server`), `db` (`libs/db`), `langchain` (`libs/langchain`), `openapi`, or omit the scope (or use a repo-wide one like `fix(agents): ...`) for root-level tooling/docs changes (`CLAUDE.md`, `AGENTS.md`, `CONTEXT.md`, `.claude/`, `docs/`) — those fall under the root `nebula-chat` component, which explicitly excludes `apps/**`, `libs/**`, and `openapi/**`.
+- **Scope should name the release-please component** the change belongs to, matching
+  `release-please-config.json`'s `packages` keys: `client` (`apps/nebula-chat-client`), `server`
+  (`apps/nebula-chat-server`), `db` (`libs/db`), `langchain` (`libs/langchain`), `openapi`, or omit the scope
+  (or use a repo-wide one like `fix(agents): ...`) for root-level tooling/docs changes (`CLAUDE.md`,
+  `AGENTS.md`, `CONTEXT.md`, `.claude/`, `docs/`) — those fall under the root `nebula-chat` component, which
+  explicitly excludes `apps/**`, `libs/**`, and `openapi/**`.
 - release-please determines the bump **per component from the changed file paths**, not from the scope string — the scope is for changelog readability, so keep it accurate, but don't rely on it to control which package gets released.
 - A commit that spans multiple components (e.g. a backend route change plus its regenerated `openapi.yaml` and Orval client) still needs one accurate primary scope; each affected component gets its own bump from the same commit regardless of what the scope says.
 
@@ -205,14 +210,19 @@ These apply everywhere in the repo, frontend and backend alike. See each package
 
 - **`type`, never `interface`.** No exceptions, anywhere.
 - **`const` arrow functions, never `function` declarations.** Applies to hooks, utils, helpers, components, and route handlers alike.
-- **No `index.ts` barrel files inside an app.** Import directly from the file that defines the thing. Two exceptions, and only two: `index.ts` files emitted by code generators (e.g. Orval output), which are never hand-authored or hand-edited; and the single top-level `src/index.ts` of a package under `libs/`, which is that package's public surface — it is what `tsup`'s `entry` and the `exports` map point at, so it is required, not optional. `libs/db`, `libs/langchain` and `libs/otel` each have exactly one. Never nest a barrel below that.
+- **No `index.ts` barrel files inside an app.** Import directly from the file that defines the thing. Two
+  exceptions, and only two: `index.ts` files emitted by code generators (e.g. Orval output), which are never
+  hand-authored or hand-edited; and the single top-level `src/index.ts` of a package under `libs/`, which is
+  that package's public surface — it is what `tsup`'s `entry` and the `exports` map point at, so it is
+  required, not optional. `libs/db`, `libs/langchain` and `libs/otel` each have exactly one. Never nest a
+  barrel below that.
 - **No relative imports.** Frontend uses `@/*` (→ `apps/nebula-chat-client/src/`); backend uses `@backend/*` (→ `apps/nebula-chat-server/src/`).
 
 ---
 
 ## Monorepo Structure
 
-```
+```text
 nebula-chat/
 ├── apps/
 │   ├── nebula-chat-client/   # React SPA (frontend) — see its AGENTS.md

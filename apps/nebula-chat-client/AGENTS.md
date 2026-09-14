@@ -23,7 +23,7 @@ Conventions specific to the React SPA. See the [root AGENTS.md](../../AGENTS.md)
 
 ## Directory Layout
 
-```
+```text
 apps/nebula-chat-client/src/
 ├── App.tsx                        # Root — mounts providers and router
 ├── main.tsx                       # Vite entry point

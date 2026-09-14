@@ -18,6 +18,18 @@ DISABLE:
   - COPYPASTE # Uncomment to disable checks of excessive copy-pastes
   - SPELL # Uncomment to disable checks of spelling mistakes
 
+# MegaLinter bundles its own ESLint in /node-deps, which cannot load this repo's
+# eslint.config.ts: it needs `jiti` for a TypeScript config file and does not
+# ship it, so both descriptors abort with "Oops! Something went wrong!" on every
+# PR that touches a .ts or .tsx file, having linted nothing. Installing jiti into
+# its image would only get it as far as our plugins, which it also lacks.
+# `.github/workflows/build.yml` already runs ESLint with the repo's own
+# toolchain and config against every package, so this removes a duplicate that
+# never worked rather than lint coverage.
+DISABLE_LINTERS:
+  - TYPESCRIPT_ESLINT
+  - TSX_ESLINT
+
 # Vendored agent skills (see skills-lock.json) are held byte-identical to their
 # upstream source, so lint findings in them are not actionable. FILTER_REGEX_EXCLUDE
 # covers the file-list linters; ADDITIONAL_EXCLUDED_DIRECTORIES (basename-matched at
@@ -30,10 +42,34 @@ FILTER_REGEX_EXCLUDE: '(\.claude/skills/|^scripts/|/scripts/)'
 ADDITIONAL_EXCLUDED_DIRECTORIES:
   - skills
 
-# skills-lock.json records a SHA-256 per vendored skill, which DevSkim's DS173237
-# reads as 37 hardcoded tokens. Secret detection is already covered by betterleaks,
-# secretlint, trufflehog and kingfisher, so the rule is redundant here.
-REPOSITORY_DEVSKIM_ARGUMENTS: ["--ignore-rule-ids", "DS173237"]
+# DS173237: skills-lock.json records a SHA-256 per vendored skill, which DevSkim
+# reads as 37 hardcoded tokens. Secret detection is already covered by
+# betterleaks, secretlint, trufflehog and kingfisher, so the rule is redundant.
+# DS126858 (weak hash): the only match is the substring `mD4` inside a base64
+# integrity hash in pnpm-lock.yaml. Nothing in this repo uses MD4.
+REPOSITORY_DEVSKIM_ARGUMENTS: ["--ignore-rule-ids", "DS173237,DS126858"]
+
+# jsonlint is strict JSON. Every tsconfig in this repo is JSONC — tsconfig.app.json
+# has carried `/* Bundler mode */` comments since it was generated — so jsonlint
+# fails to parse them by design. v8r and prettier still validate these files, and
+# both understand JSONC.
+JSON_JSONLINT_FILTER_REGEX_EXCLUDE: '(tsconfig.*\.json$)'
+
+# spectral lints OpenAPI documents. Pointed at the repo it picks up
+# pnpm-lock.yaml and reports "Expected a single document in the stream" — it is
+# linting a lockfile as an API spec. The real spec lives in openapi/.
+API_SPECTRAL_FILTER_REGEX_INCLUDE: '^openapi/'
+
+# pnpm-lock.yaml is generated: its long dependency-resolution lines trip
+# yamllint's 500-character limit and are not ours to reformat.
+YAML_YAMLLINT_FILTER_REGEX_EXCLUDE: '(pnpm-lock\.yaml$)'
+
+# zizmor's impostor-commit audit resolves every `uses:` against the GitHub API,
+# which answers 401 for the unauthenticated linter and aborts the whole run
+# ("fatal: no audit was performed") — so none of its other audits report either.
+# Offline mode drops that one audit and keeps the rest, without handing the
+# linter a token.
+ACTION_ZIZMOR_ARGUMENTS: --offline
 
 TYPESCRIPT_STANDARD_ARGUMENTS: -p tsconfig.eslint.json
 
