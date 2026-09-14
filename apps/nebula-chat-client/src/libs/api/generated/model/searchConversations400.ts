@@ -6,7 +6,11 @@
  * OpenAPI spec version: 1.4.0
  */
 
-export type CreateConversationBody = {
-  /** @minLength 1 */
-  title: string;
+/**
+ * Invalid search query
+ */
+export type SearchConversations400 = {
+  success: false;
+  error: string;
+  message: string;
 };

@@ -18,6 +18,19 @@ export default defineConfig({
       clean: true,
       prettier: true,
       indexFiles: true,
+      // MSW handlers and response factories are generated from the same spec as
+      // the client, so a test mocks the API the backend actually documents
+      // instead of a hand-written URL string (ADR-0008).
+      mock: {
+        generators: [
+          {
+            type: 'msw',
+            // Orval delays mocked responses by default, which only slows down
+            // every test that awaits one.
+            delay: false,
+          },
+        ],
+      },
       override: {
         mutator: {
           path: './src/libs/api/client.ts',

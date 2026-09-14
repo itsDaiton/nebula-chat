@@ -6,7 +6,9 @@
  * OpenAPI spec version: 1.4.0
  */
 
-export type CreateConversationBody = {
-  /** @minLength 1 */
-  title: string;
+/**
+ * API is reachable
+ */
+export type GetApiRoot200 = {
+  message: string;
 };

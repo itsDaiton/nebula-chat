@@ -6,7 +6,11 @@
  * OpenAPI spec version: 1.4.0
  */
 
-export type CreateConversationBody = {
-  /** @minLength 1 */
-  title: string;
+/**
+ * Conversation not found
+ */
+export type GetConversation404 = {
+  success: false;
+  error: string;
+  message: string;
 };

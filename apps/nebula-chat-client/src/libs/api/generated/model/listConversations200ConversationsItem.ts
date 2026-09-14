@@ -5,18 +5,10 @@
  * REST API for Nebula Chat
  * OpenAPI spec version: 1.4.0
  */
-import type { CreateMessageBodyRole } from './createMessageBodyRole';
 
-export type CreateMessageBody = {
+export type ListConversations200ConversationsItem = {
   /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
-  conversationId: string;
-  role: CreateMessageBodyRole;
-  /** @minLength 1 */
-  content: string;
-  /**
-   * @minimum -9007199254740991
-   * @maximum 9007199254740991
-   * @nullable
-   */
-  tokenCount?: number | null;
+  id: string;
+  title: string;
+  createdAt: unknown;
 };

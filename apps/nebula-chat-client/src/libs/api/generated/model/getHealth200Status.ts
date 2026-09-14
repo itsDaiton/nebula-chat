@@ -6,9 +6,8 @@
  * OpenAPI spec version: 1.4.0
  */
 
-export type GetCacheHealth200Status =
-  (typeof GetCacheHealth200Status)[keyof typeof GetCacheHealth200Status];
+export type GetHealth200Status = (typeof GetHealth200Status)[keyof typeof GetHealth200Status];
 
-export const GetCacheHealth200Status = {
+export const GetHealth200Status = {
   ok: 'ok',
 } as const;
