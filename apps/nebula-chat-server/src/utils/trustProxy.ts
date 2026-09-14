@@ -25,10 +25,18 @@ export const resolveTrustProxy = (): TrustProxy => {
     return trustHops(1);
   }
 
-  const proxyHops = Number.parseInt(trustProxy, 10);
-  if (!Number.isNaN(proxyHops) && proxyHops > 0) {
-    return trustHops(proxyHops);
+  // Only an all-digits value is a hop count. Number.parseInt would stop at the
+  // first non-digit and read '10.0.0.0/8' as 10 hops, silently trusting more of
+  // the X-Forwarded-For chain than the operator configured — which would let a
+  // client spoof its rate-limit key by prepending entries to the header.
+  if (/^\d+$/.test(trustProxy)) {
+    const proxyHops = Number.parseInt(trustProxy, 10);
+    if (proxyHops > 0) {
+      return trustHops(proxyHops);
+    }
   }
 
+  // Anything else is an address expression for @fastify/proxy-addr: a CIDR, an
+  // IP, a comma-separated list, or a predicate name like 'loopback'.
   return trustProxy;
 };
