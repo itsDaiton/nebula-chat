@@ -145,6 +145,13 @@ jobs:
         run: pnpm turbo run typecheck --filter=${{ matrix.filter }}
       - name: Build
         run: pnpm turbo run build --filter=${{ matrix.filter }}
+      # After Build: the `test` task depends on ^build, so workspace libraries are
+      # exercised as their published dist artifact rather than as source (ADR-0008).
+      # Vitest's own coverage thresholds fail this step below 80%, which is the
+      # real gate — the Sonar steps below are skipped without SONAR_TOKEN, so a
+      # Sonar-only gate would not apply to dependabot or fork PRs.
+      - name: Test
+        run: pnpm turbo run test --filter=${{ matrix.filter }} -- --coverage
       # Sonar steps are guarded on SONAR_TOKEN: dependabot/fork PRs do not
       # receive the secret, so Sonar is skipped (not failed) there while
       # lint/typecheck/build still gate the PR.
@@ -160,7 +167,10 @@ jobs:
             -Dsonar.sources=src
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/generated/**
             -Dsonar.sourceEncoding=UTF-8
-            -Dsonar.coverage.exclusions=**/*
+            -Dsonar.tests=src
+            -Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.coverage.exclusions=**/*.test.ts,**/*.test.tsx,**/test/**,**/*.config.*,**/theme/**,**/generated/**,**/*.types.ts,**/types/**,**/schema.ts,**/src/index.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Evaluate quality gate

@@ -1,10 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  loadDatabaseUrl,
-  migrationsFolder,
-  migrationsSchema,
-  migrationsTable,
-} from './env';
+import { loadDatabaseUrl, migrationsFolder, migrationsSchema, migrationsTable } from './env';
 
 const originalUrl = process.env['DATABASE_URL'];
 
@@ -57,9 +52,7 @@ describe('loadDatabaseUrl', () => {
 
     loadDatabaseUrl();
 
-    expect(spy).toHaveBeenCalledWith(
-      expect.stringContaining('apps/nebula-chat-server/.env'),
-    );
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('apps/nebula-chat-server/.env'));
   });
 });
 
