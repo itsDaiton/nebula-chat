@@ -32,6 +32,15 @@ export default defineConfig({
         'src/test/**',
         'src/**/*.types.ts',
         'src/**/types/**',
+        // ADR-0008: style declarations and library wiring, with no behaviour to
+        // assert on. `prose.tsx` is a Chakra style recipe, `scrollbar.ts` a style
+        // object, and the provider/toaster/code-block modules configure Chakra.
+        'src/shared/components/ui/prose.tsx',
+        'src/shared/components/ui/provider.tsx',
+        'src/shared/components/ui/toaster.tsx',
+        'src/shared/components/ui/code-block-adapter.ts',
+        'src/shared/components/scrollbar.ts',
+        'src/resources.ts',
       ],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },
