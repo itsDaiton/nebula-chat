@@ -4,11 +4,19 @@ import { dirname, join } from 'node:path';
 
 type JsonValue = string | number | boolean | null | { [key: string]: JsonValue } | JsonValue[];
 
+type SonarIssue = {
+  rule?: string;
+  message?: string;
+  component?: string;
+  line?: number;
+};
+
 type SonarIssueSearchResponse = {
   total?: number;
   paging?: {
     total?: number;
   };
+  issues?: SonarIssue[];
 };
 
 type SonarMeasuresResponse = {
@@ -297,6 +305,40 @@ export const getMeasureCount = (data: SonarMeasuresResponse | null, metric: stri
   return Number.isFinite(numeric) ? numeric : Number.NaN;
 };
 
+/** `project:src/x/y.ts` → `src/x/y.ts`; the project prefix is noise in a PR comment. */
+const stripProjectKey = (component: string): string =>
+  component.split(':').slice(1).join(':') || component;
+
+/**
+ * The findings themselves, not just how many there are. Without this the
+ * comment says "2 New issues" and the only way to learn what they are is to
+ * open SonarCloud, which is not always reachable from where the fix gets
+ * written.
+ */
+export const buildIssueList = (data: SonarIssueSearchResponse | null, limit = 10): string => {
+  const issues = Array.isArray(data?.issues) ? data.issues : [];
+  if (issues.length === 0) return '';
+
+  const rows = issues.slice(0, limit).map((issue) => {
+    const where = issue.component ? stripProjectKey(issue.component) : 'unknown file';
+    const at = typeof issue.line === 'number' ? `:${issue.line}` : '';
+    const rule = issue.rule ? ` (\`${issue.rule}\`)` : '';
+    return `- \`${where}${at}\` — ${issue.message ?? 'no message'}${rule}`;
+  });
+
+  const more = issues.length > limit ? [`- …and ${issues.length - limit} more`] : [];
+
+  return [
+    '',
+    '<details><summary>What the new issues are</summary>',
+    '',
+    ...rows,
+    ...more,
+    '',
+    '</details>',
+  ].join('\n');
+};
+
 export const getTotal = (data: SonarIssueSearchResponse | null): number => {
   if (typeof data?.total === 'number') return data.total;
   if (typeof data?.paging?.total === 'number') return data.paging.total;
@@ -366,7 +408,7 @@ export const postSonarComment = async (): Promise<void> => {
   const [newIssuesData, acceptedIssuesData, hotspotsData, qualityGateData, measuresData] =
     await Promise.all([
       fetchJson<SonarIssueSearchResponse>(
-        `https://sonarcloud.io/api/issues/search?componentKeys=${env.projectKey}&pullRequest=${env.prNumber}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true&ps=1`,
+        `https://sonarcloud.io/api/issues/search?componentKeys=${env.projectKey}&pullRequest=${env.prNumber}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true&ps=25`,
         sonarHeaders,
       ),
       fetchJson<SonarIssueSearchResponse>(
@@ -449,6 +491,7 @@ export const postSonarComment = async (): Promise<void> => {
     'Issues',
     `![](${issueIcon}) [${formatCount(newIssuesCount)} New issues](${newIssuesUrl})`,
     `![](${STATUS_ICON_ACCEPTED}) [${formatCount(acceptedIssuesCount)} Accepted issues](${acceptedIssuesUrl})`,
+    buildIssueList(newIssuesData),
     '',
     'Measures',
     `![](${hotspotIcon}) [${formatCount(hotspotCount)} Security Hotspots](${hotspotsUrl})`,
