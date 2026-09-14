@@ -33,6 +33,18 @@ REPOSITORY_DEVSKIM_ARGUMENTS: ["--ignore-rule-ids", "DS173237"]
 
 TYPESCRIPT_STANDARD_ARGUMENTS: -p tsconfig.eslint.json
 
+# ts-standard's ruleset contradicts this repo's own ESLint config on test code,
+# and eslint.config.ts is the documented source of truth (AGENTS.md). Most
+# notably it demands @typescript-eslint/explicit-function-return-type, which
+# eslint.config.ts explicitly sets to 'off'. It also rejects the non-null
+# assertions that noUncheckedIndexedAccess forces when indexing mock calls, and
+# flags a deliberate non-Error promise rejection in a test that exists precisely
+# to prove such a rejection gets wrapped.
+#
+# The repo's own `pnpm lint` covers these files and passes, so this excludes
+# only the duplicate, conflicting opinion — not the linting itself.
+TYPESCRIPT_STANDARD_FILTER_REGEX_EXCLUDE: '(\.test\.tsx?$|/test/)'
+
 SHOW_ELAPSED_TIME: true
 
 # Uncomment if you want MegaLinter to detect errors but not block CI to pass
