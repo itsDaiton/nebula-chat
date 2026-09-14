@@ -14,52 +14,29 @@ describe.each([
   ['setHeaders', setHeaders],
   ['setCacheHeaders', setCacheHeaders],
 ])('%s', (_name, applyHeaders) => {
-  it('declares an SSE content type', () => {
+  // Both helpers set the same five headers; only their write order differs.
+  it.each([
+    ['Content-Type', 'text/event-stream'],
+    ['Cache-Control', 'no-cache'],
+    ['Connection', 'keep-alive'],
+    ['Access-Control-Allow-Origin', 'https://app.example.com'],
+    ['Access-Control-Allow-Credentials', 'true'],
+  ])('sets %s to %s', (header, value) => {
     const { res, headers } = createResponse();
 
     applyHeaders(res, 'https://app.example.com');
 
-    expect(headers.get('Content-Type')).toBe('text/event-stream');
+    expect(headers.get(header)).toBe(value);
   });
 
-  it('disables caching and keeps the connection open', () => {
+  it.each([
+    ['no origin at all', undefined],
+    ['an empty origin', ''],
+  ])('falls back to a wildcard origin given %s', (_case, origin) => {
     const { res, headers } = createResponse();
 
-    applyHeaders(res, 'https://app.example.com');
-
-    expect(headers.get('Cache-Control')).toBe('no-cache');
-    expect(headers.get('Connection')).toBe('keep-alive');
-  });
-
-  it('echoes the request origin back', () => {
-    const { res, headers } = createResponse();
-
-    applyHeaders(res, 'https://app.example.com');
-
-    expect(headers.get('Access-Control-Allow-Origin')).toBe('https://app.example.com');
-  });
-
-  it('falls back to a wildcard origin when none is supplied', () => {
-    const { res, headers } = createResponse();
-
-    applyHeaders(res, undefined);
+    applyHeaders(res, origin);
 
     expect(headers.get('Access-Control-Allow-Origin')).toBe('*');
-  });
-
-  it('falls back to a wildcard for an empty origin', () => {
-    const { res, headers } = createResponse();
-
-    applyHeaders(res, '');
-
-    expect(headers.get('Access-Control-Allow-Origin')).toBe('*');
-  });
-
-  it('allows credentials', () => {
-    const { res, headers } = createResponse();
-
-    applyHeaders(res, 'https://app.example.com');
-
-    expect(headers.get('Access-Control-Allow-Credentials')).toBe('true');
   });
 });
