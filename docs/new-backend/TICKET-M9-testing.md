@@ -35,23 +35,25 @@ Stand up Vitest as the single test runner across every package, co-located as `s
 
 ## Acceptance criteria
 
-- [ ] `pnpm test` (via `turbo run test`) runs Vitest in every package that has tests
-- [ ] `turbo.json`'s `test` task declares `dependsOn: ["^build"]` and `outputs: ["coverage/**"]`
-- [ ] Each package owns a `vitest.config.ts` — no root `vitest.workspace.ts`
-- [ ] Tests are co-located as `src/**/*.test.ts` / `src/**/*.test.tsx`
-- [ ] `apps/nebula-chat-server/tsconfig.json` excludes `**/*.test.ts` so tests never reach `dist/`
-- [ ] `apps/nebula-chat-client/tsconfig.app.json` declares the Vitest and testing-library types so `tsc -b` passes over co-located tests
-- [ ] `knip.json` recognises test files, so test-only devDependencies are not reported unused
-- [ ] Server route tests use `app.inject()` against a real `buildApp()` with the repository layer mocked
-- [ ] Client tests run on `jsdom` with React Testing Library, and mock the API through `msw` at the network layer (not by stubbing the Orval hooks)
-- [ ] A `Test` step exists in `.github/workflows/build.yml`'s per-package matrix, after `Build`
-- [ ] Vitest `coverage.thresholds` enforce **80%** per package and fail the `Test` step below it
-- [ ] Sonar's `-Dsonar.coverage.exclusions=**/*` is removed and `sonar.javascript.lcov.reportPaths` is set
-- [ ] Sonar's quality gate requires **80% on overall code and 80% on new code**, per project
-- [ ] Co-located tests are declared to Sonar via `sonar.tests`, not scanned as production source
-- [ ] Coverage exclusions cover code with no behavior to assert (schema declarations, SDK wiring, theme tokens, generated clients, migrations)
-- [ ] Root `AGENTS.md` gains a Testing section; both app `AGENTS.md` files gain their package-specific conventions
-- [ ] `.claude/skills/tdd/SKILL.md`'s "confirm the seams with the user" gate is replaced by the `AGENTS.md` rule (the seams discipline itself is kept)
+- [x] `pnpm test` (via `turbo run test`) runs Vitest in every package that has tests
+- [x] `turbo.json`'s `test` task declares `dependsOn: ["^build"]` and `outputs: ["coverage/**"]`
+- [x] Each package owns a `vitest.config.ts` — no root `vitest.workspace.ts`
+- [x] Tests are co-located as `src/**/*.test.ts` / `src/**/*.test.tsx`
+- [x] `apps/nebula-chat-server/tsconfig.json` excludes `**/*.test.ts` so tests never reach `dist/`
+- [x] `apps/nebula-chat-client/tsconfig.app.json` declares the Vitest and testing-library types so `tsc -b` passes over co-located tests
+- [x] `knip.json` recognises test files, so test-only devDependencies are not reported unused
+      (no change needed: the existing `project` globs already cover `*.test.ts`, confirmed by a
+      `pnpm knip` run in which no testing dependency appears as unused)
+- [x] Server route tests use `app.inject()` against a real `buildApp()` with the repository layer mocked
+- [x] Client tests run on `jsdom` with React Testing Library, and mock the API through `msw` at the network layer (not by stubbing the Orval hooks)
+- [x] A `Test` step exists in `.github/workflows/build.yml`'s per-package matrix, after `Build`
+- [x] Vitest `coverage.thresholds` enforce **80%** per package and fail the `Test` step below it
+- [x] Sonar's `-Dsonar.coverage.exclusions=**/*` is removed and `sonar.javascript.lcov.reportPaths` is set
+- [x] Sonar's quality gate requires **80% on overall code and 80% on new code**, per project
+- [x] Co-located tests are declared to Sonar via `sonar.tests`, not scanned as production source
+- [x] Coverage exclusions cover code with no behavior to assert (schema declarations, SDK wiring, theme tokens, generated clients, migrations)
+- [x] Root `AGENTS.md` gains a Testing section; both app `AGENTS.md` files gain their package-specific conventions
+- [x] `.claude/skills/tdd/SKILL.md`'s "confirm the seams with the user" gate is replaced by the `AGENTS.md` rule (the seams discipline itself is kept)
 
 ## Coverage policy
 
