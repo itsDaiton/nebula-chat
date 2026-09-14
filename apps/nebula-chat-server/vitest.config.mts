@@ -26,10 +26,18 @@ export default defineConfig({
         'src/app.ts',
         'src/logger.ts',
         'src/env.ts',
+        'src/db.ts',
         'src/generated/**',
         'src/scripts/**',
         'src/test/**',
         'src/**/*.types.ts',
+        // The Drizzle adapter layer. Unit-testing it means asserting that a
+        // fluent query builder was called with particular expression objects —
+        // implementation-coupled by construction, and it would not catch the
+        // bugs that actually live here (wrong SQL). It belongs to the
+        // integration-test debt ADR-0008 records; the layers above it are
+        // tested with the repository mocked.
+        'src/**/*.repository.ts',
       ],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },
