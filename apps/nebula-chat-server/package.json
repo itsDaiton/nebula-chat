@@ -24,7 +24,7 @@
     "@nebula-chat/langchain": "workspace:*",
     "@nebula-chat/otel": "workspace:*",
     "dotenv": "^17.4.0",
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "catalog:",
     "fastify": "^5.4.0",
     "fastify-plugin": "^5.0.0",
     "fastify-type-provider-zod": "^6.1.0",
@@ -34,9 +34,9 @@
   "devDependencies": {
     "@total-typescript/shoehorn": "^0.1.2",
     "@types/node": "catalog:",
-    "@vitest/coverage-v8": "^5.0.0",
+    "@vitest/coverage-v8": "catalog:",
     "tsc-alias": "^1.8.17",
     "typescript": "catalog:",
-    "vitest": "^5.0.0"
+    "vitest": "catalog:"
   }
 }

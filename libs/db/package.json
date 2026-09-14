@@ -28,17 +28,17 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "catalog:",
     "pg": "^8.16.0"
   },
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/pg": "^8.11.0",
-    "@vitest/coverage-v8": "^5.0.0",
+    "@vitest/coverage-v8": "catalog:",
     "drizzle-kit": "^0.31.0",
-    "tsup": "^8.5.0",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "vitest": "^5.0.0"
+    "tsup": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }
