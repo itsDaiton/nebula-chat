@@ -102,7 +102,11 @@ boundary. Turbo caches the lib builds, so the cost is one build, once.
 
 ### Per-package configs, not a workspace config
 
-Each package owns its own Vitest config — `vitest.config.ts` in the client, `vitest.config.mts` in the four CommonJS packages, so Vite does not warn about loading an ESM config from a CJS package. The environments are genuinely different — the server is Node + CommonJS + `@backend/*` path aliases; the client is jsdom + React + `@/*`; the libs are plain Node ESM. The client config is deliberately standalone rather than extending `vite.config.ts`: that config registers `versionPlugin`, which writes `public/version.json` on `buildStart` and has no business running during a test. A root `vitest.workspace.ts` would have to carry all three anyway, and `turbo run test` already provides the single-command experience at the root.
+Each package owns its own Vitest config — `vitest.config.ts` in the client, `vitest.config.mts` in the four CommonJS packages, so Vite does not warn about loading an ESM config from a CJS package.
+
+The environments are genuinely different — the server is Node + CommonJS + `@backend/*` path aliases; the client is jsdom + React + `@/*`; the libs are plain Node ESM. A root `vitest.workspace.ts` would have to carry all three anyway, and `turbo run test` already provides the single-command experience at the root.
+
+The client config is deliberately standalone rather than extending `vite.config.ts`: that config registers `versionPlugin`, which writes `public/version.json` on `buildStart` and has no business running during a test.
 
 ### Coverage is enforced twice, at 80%, per project
 

@@ -13,10 +13,8 @@ behavior changes, not standing the stack up.
 
 # Required Reading (at every invocation)
 
-1. Root `AGENTS.md` § Testing for the hard rules, plus `apps/nebula-chat-client/AGENTS.md` or
-   `apps/nebula-chat-server/AGENTS.md` depending on which side is under test.
-2. `docs/adr/0008-vitest-unit-testing-with-an-enforced-coverage-gate.md` — why the stack looks the
-   way it does, and what is deliberate debt rather than oversight.
+1. Root `AGENTS.md` § Testing for the hard rules, plus `apps/nebula-chat-client/AGENTS.md` or `apps/nebula-chat-server/AGENTS.md` depending on which side is under test.
+2. `docs/adr/0008-vitest-unit-testing-with-an-enforced-coverage-gate.md` — why the stack looks the way it does, and what is deliberate debt rather than oversight.
 3. `.claude/skills/tdd/SKILL.md` — what a good test is, where seams are, and the anti-patterns.
 4. Existing test files in the package under test (search with Glob).
 
@@ -49,11 +47,9 @@ behavior changes, not standing the stack up.
 # Workflow
 
 1. Read the module under test and the existing test patterns in that package.
-2. Pick the seams deliberately — the public boundary where behavior is observable without reaching
-   inside. Do not generate a test per function to move a number.
+2. Pick the seams deliberately — the public boundary where behavior is observable without reaching inside. Do not generate a test per function to move a number.
 3. Add tests; run them.
-4. If a test reveals a production bug, file it with the owning agent — don't patch silently. Pinning
-   it with a test that names the bug and its impact is the right move inside a testing ticket.
+4. If a test reveals a production bug, file it with the owning agent — don't patch silently. Pinning it with a test that names the bug and its impact is the right move inside a testing ticket.
 
 # Verification
 
