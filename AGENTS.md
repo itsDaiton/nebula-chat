@@ -187,8 +187,9 @@ pnpm --filter @nebula-chat/langchain test
   filename should already name the module at fault.
 - **Tests live in a `tests/` folder beside the code under test**: `src/shared/hooks/useResponsiveLayout.ts`
   is tested by `src/shared/hooks/tests/useResponsiveLayout.test.ts`. Helpers shared by the tests in one
-  folder sit alongside them (`tests/openCloseStore.contract.ts`); helpers shared across a package live in
-  `src/test/`.
+  folder sit alongside them; helpers shared across a package live in `src/test/`. A test file must contain
+  its own assertions — a file whose `it()` blocks come from a helper reads as empty to both Sonar
+  (`typescript:S2187`) and to the next person to open it.
 - **Frontend API mocks come from the OpenAPI spec, never from a hand-written URL.** Orval generates MSW
   handlers next to the client (`*.msw.ts`), and they match any origin, so a test calls
   `getListConversationsMockHandler(payload)` rather than naming `http://localhost:3000/api/conversations`.

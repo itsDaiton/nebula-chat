@@ -55,16 +55,15 @@ files named after a layer rather than a module — `hooks.test.ts`, `stores.test
   module at fault, and a grouped file quietly becomes the place new tests are appended regardless of what
   they cover. The client's 24 test files became 63 under this rule with no change to what is asserted.
 - **Tests live in a `tests/` folder beside the code under test.** Source directories stay readable at a
-  glance, and a test's local helpers have an obvious home (`tests/openCloseStore.contract.ts`) without
-  sitting in the module directory pretending to be product code.
+  glance, and a test's local helpers have an obvious home without sitting in the module
+  directory pretending to be product code.
 
 Tests stay _next to_ their subject rather than in a mirrored top-level tree: that is what makes the `/tdd`
 loop and AI navigation cheap. On the server this is not free, because `build` is `tsc && tsc-alias` over
 `include: ["src/**/*.ts"]` — left alone, every test file compiles into `dist/` and ships in the production
 image. Three compensating edits are therefore load-bearing and must not be "cleaned up":
 
-1. **`apps/nebula-chat-server/tsconfig.build.json`** excludes `src/**/*.test.ts` and `src/**/tests/**` so
-   tests never reach `dist/`.
+1. **`apps/nebula-chat-server/tsconfig.build.json`** excludes `src/**/*.test.ts` and `src/**/tests/**` so tests never reach `dist/`.
 2. **Sonar** moves test globs to `sonar.tests` — tests inside `-Dsonar.sources=src` would otherwise be scanned as production source and wreck duplication and complexity metrics.
 3. **`knip.json`** gains test patterns, or `vitest` and the testing-library packages are reported as unused devDependencies.
 

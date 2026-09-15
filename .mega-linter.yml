@@ -41,6 +41,11 @@ DISABLE_LINTERS:
 FILTER_REGEX_EXCLUDE: '(\.claude/skills/|^scripts/|/scripts/)'
 ADDITIONAL_EXCLUDED_DIRECTORIES:
   - skills
+  # MegaLinter's own output. `APPLY_FIXES` copies every fixed file into
+  # megalinter-reports/updated_sources/, and the project-scope linters then scan
+  # those copies too — which is why checkov reported each openapi.yaml finding
+  # twice, once for the real file and once for the copy.
+  - megalinter-reports
 
 # DS173237: skills-lock.json records a SHA-256 per vendored skill, which DevSkim
 # reads as 37 hardcoded tokens. Secret detection is already covered by
@@ -88,7 +93,11 @@ TYPESCRIPT_STANDARD_ARGUMENTS: -p tsconfig.eslint.json
 # covers only src/** per package, so a package-root config file belongs to no lint
 # TSConfig and ts-standard fails to parse it at all. eslint.config.ts already ignores
 # vite.config.* and vitest.config.* for exactly this reason.
-TYPESCRIPT_STANDARD_FILTER_REGEX_EXCLUDE: '(\.test\.tsx?$|/test/|(vite|vitest)\.config\.)'
+# `/tests?/` covers both the shared `src/test/` harness and the per-module
+# `tests/` folders. `/generated/` is the Orval output, which eslint.config.ts
+# already ignores for the same reason: it is regenerated from the OpenAPI
+# document on every backend change and is not hand-editable.
+TYPESCRIPT_STANDARD_FILTER_REGEX_EXCLUDE: '(\.test\.tsx?$|/tests?/|/generated/|(vite|vitest)\.config\.)'
 
 SHOW_ELAPSED_TIME: true
 
