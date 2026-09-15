@@ -37,6 +37,10 @@ beforeEach(() => {
 
 describe('useConversation', () => {
   it('loads the conversation named in the route', async () => {
+    // Hand-written rather than generated: `messages` is not in the documented
+    // response for this endpoint, so the generated handler's payload type
+    // rejects it. That gap is a real bug, pinned in
+    // `modules/chat/stores/tests/chatConversationSync.test.ts`.
     server.use(
       http.get(API_ROUTE.conversation, () =>
         HttpResponse.json({ id: CONVERSATION_ID, title: 'Chat', messages: [] }),

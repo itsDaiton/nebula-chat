@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Route, Routes } from 'react-router';
+import { getListConversationsMockHandler } from '@/libs/api/generated/conversations/conversations.msw';
 import { ChatPage } from '@/modules/chat/ChatPage';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { ConversationsProvider } from '@/modules/conversations/providers/ConversationsProvider';
@@ -39,9 +40,11 @@ const renderPage = (route = '/') =>
 beforeEach(() => {
   vi.clearAllMocks();
   server.use(
-    http.get(API_ROUTE.conversations, () =>
-      HttpResponse.json({ conversations: [], nextCursor: null, hasMore: false }),
-    ),
+    getListConversationsMockHandler({ conversations: [], nextCursor: null, hasMore: false }),
+    // Hand-written rather than generated: `messages` is not in the documented
+    // response for this endpoint, so the generated handler's payload type
+    // rejects it. That gap is a real bug, pinned in
+    // `modules/chat/stores/tests/chatConversationSync.test.ts`.
     http.get(API_ROUTE.conversation, () =>
       HttpResponse.json({
         id: '11111111-1111-4111-8111-111111111111',
