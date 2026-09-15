@@ -25,6 +25,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set.outputs.matrix }}
       has_changes: ${{ steps.set.outputs.has_changes }}
+      scripts: ${{ steps.filter.outputs.scripts }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -46,6 +47,13 @@ jobs:
               - 'libs/langchain/**'
             otel:
               - 'libs/otel/**'
+            # `scripts/` belongs to no workspace package, so it is outside the
+            # build matrix and gets its own lint/format/typecheck job below.
+            scripts:
+              - 'scripts/**'
+              - 'tsconfig.scripts.json'
+              - 'eslint.config.ts'
+              - 'prettier.config.cjs'
             # Root-level files that change how every package is installed,
             # linted, typechecked or built — any of these rebuilds everything.
             shared:
@@ -73,12 +81,17 @@ jobs:
           F_SHARED: ${{ steps.filter.outputs.shared }}
         run: |
           set -euo pipefail
+          # `coverage` mirrors that package's `vitest.config` coverage.exclude,
+          # so Sonar and Vitest measure the same denominator. They cannot be one
+          # shared list: `logger.ts` is excluded in server and langchain but is the
+          # main tested unit in otel, and `env.ts` is excluded in server but is the
+          # only real logic in db. Change one, change the other.
           all='[
-            {"id":"client","name":"nebula-chat-client","dir":"apps/nebula-chat-client","filter":"nebula-chat-client","lint":"apps/nebula-chat-client/","key":"itsDaiton_nebula-chat-client","project":"Nebula-Chat-Client"},
-            {"id":"server","name":"nebula-chat-server","dir":"apps/nebula-chat-server","filter":"nebula-chat-server","lint":"apps/nebula-chat-server/","key":"itsDaiton_nebula-chat-server","project":"Nebula-Chat-Server"},
-            {"id":"db","name":"nebula-chat-db","dir":"libs/db","filter":"@nebula-chat/db","lint":"libs/db/","key":"itsDaiton_nebula-chat-db","project":"Nebula-Chat-DB"},
-            {"id":"langchain","name":"nebula-chat-langchain","dir":"libs/langchain","filter":"@nebula-chat/langchain","lint":"libs/langchain/","key":"itsDaiton_nebula-chat-langchain","project":"Nebula-Chat-LangChain"},
-            {"id":"otel","name":"nebula-chat-otel","dir":"libs/otel","filter":"@nebula-chat/otel","lint":"libs/otel/","key":"itsDaiton_nebula-chat-otel","project":"Nebula-Chat-OTel"}
+            {"id":"client","name":"nebula-chat-client","dir":"apps/nebula-chat-client","filter":"nebula-chat-client","lint":"apps/nebula-chat-client/","key":"itsDaiton_nebula-chat-client","project":"Nebula-Chat-Client","coverage":"src/main.tsx,src/vite-env.d.ts,src/theme/**,src/libs/api/generated/**,src/test/**,src/**/tests/**,src/**/*.types.ts,src/**/types/**,src/shared/components/ui/prose.tsx,src/shared/components/ui/provider.tsx,src/shared/components/ui/toaster.tsx,src/shared/components/ui/code-block-adapter.ts,src/shared/components/scrollbar.ts,src/resources.ts"},
+            {"id":"server","name":"nebula-chat-server","dir":"apps/nebula-chat-server","filter":"nebula-chat-server","lint":"apps/nebula-chat-server/","key":"itsDaiton_nebula-chat-server","project":"Nebula-Chat-Server","coverage":"src/**/tests/**,src/test/**,src/server.ts,src/app.ts,src/logger.ts,src/env.ts,src/db.ts,src/generated/**,src/scripts/**,src/**/*.types.ts,src/**/*.repository.ts"},
+            {"id":"db","name":"nebula-chat-db","dir":"libs/db","filter":"@nebula-chat/db","lint":"libs/db/","key":"itsDaiton_nebula-chat-db","project":"Nebula-Chat-DB","coverage":"src/**/tests/**,src/index.ts,src/schema.ts,src/client.ts,src/migrate.ts,src/baseline.ts"},
+            {"id":"langchain","name":"nebula-chat-langchain","dir":"libs/langchain","filter":"@nebula-chat/langchain","lint":"libs/langchain/","key":"itsDaiton_nebula-chat-langchain","project":"Nebula-Chat-LangChain","coverage":"src/**/tests/**,src/index.ts,src/logger.ts"},
+            {"id":"otel","name":"nebula-chat-otel","dir":"libs/otel","filter":"@nebula-chat/otel","lint":"libs/otel/","key":"itsDaiton_nebula-chat-otel","project":"Nebula-Chat-OTel","coverage":"src/**/tests/**,src/index.ts,src/tracing.ts"}
           ]'
           # Non-PR runs (push to main, manual) and any change to shared
           # files build everything; PRs build only the changed packages.
@@ -168,6 +181,9 @@ jobs:
       # Sonar steps are guarded on SONAR_TOKEN: dependabot/fork PRs do not
       # receive the secret, so Sonar is skipped (not failed) there while
       # lint/typecheck/build still gate the PR.
+      # `-Dsonar.coverage.exclusions` is `matrix.coverage`, which mirrors the
+      # package's vitest.config coverage.exclude. A file excluded from one gate
+      # and not the other makes "80% enforced twice" two different numbers.
       - name: SonarQube scan
         if: ${{ env.SONAR_TOKEN != '' }}
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
@@ -183,7 +199,7 @@ jobs:
             -Dsonar.tests=src
             -Dsonar.test.inclusions=**/tests/**,**/test/**,**/*.test.ts,**/*.test.tsx
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-            -Dsonar.coverage.exclusions=**/tests/**,**/*.test.ts,**/*.test.tsx,**/test/**,**/*.config.*,**/theme/**,**/generated/**,**/*.types.ts,**/types/**,**/schema.ts,**/src/index.ts
+            -Dsonar.coverage.exclusions=${{ matrix.coverage }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Evaluate quality gate
@@ -231,21 +247,58 @@ jobs:
           GITHUB_RUN_ID: ${{ github.run_id }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
 
-  # Single always-run gate that reflects whether every triggered build leg
-  # passed. Make THIS the required status check in branch protection — the
-  # per-package legs only run when their package changed, so requiring one
-  # of them directly would hang PRs that don't touch it.
+  # `scripts/` is in no workspace package, so the build matrix cannot reach it.
+  # It has no build and no tests by design — it is executed on every build leg by
+  # the Sonar comment step — but it is still TypeScript that CI must check.
+  scripts:
+    name: scripts
+    needs: changes
+    if: ${{ needs.changes.outputs.scripts == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v4
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --ignore-scripts
+      - name: Lint
+        run: pnpm exec eslint --report-unused-disable-directives --max-warnings=0 scripts/
+      - name: Format check
+        run: pnpm exec prettier --check scripts/
+      - name: TypeScript check
+        run: pnpm exec tsc -p tsconfig.scripts.json
+
+  # Single always-run gate that reflects whether every triggered leg passed —
+  # the build matrix and the scripts job alike. Make THIS the required status
+  # check in branch protection: the per-package legs only run when their
+  # package changed, so requiring one directly would hang PRs that don't
+  # touch it.
   build-result:
     name: build-result
-    needs: [build]
+    needs: [build, scripts]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
       - name: Verify build result
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+          SCRIPTS_RESULT: ${{ needs.scripts.result }}
         run: |
-          result='${{ needs.build.result }}'
-          echo "build result: ${result}"
-          # 'skipped' means no package changed -> nothing to build -> pass.
-          if [ "${result}" = "failure" ] || [ "${result}" = "cancelled" ]; then
-            exit 1
-          fi
+          echo "build result: ${BUILD_RESULT}"
+          echo "scripts result: ${SCRIPTS_RESULT}"
+          # 'skipped' means nothing in that job's scope changed -> pass.
+          for result in "${BUILD_RESULT}" "${SCRIPTS_RESULT}"; do
+            if [ "${result}" = "failure" ] || [ "${result}" = "cancelled" ]; then
+              exit 1
+            fi
+          done

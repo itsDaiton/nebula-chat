@@ -9,6 +9,8 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "types": ["node"],
+    // tsup's dts pass injects `baseUrl`, which TypeScript 6 rejects outright
+    // (TS5101) rather than warning. Matches apps/nebula-chat-server/tsconfig.json.
     "ignoreDeprecations": "6.0"
   },
   "include": ["src", "tsup.config.ts"]

@@ -11,6 +11,8 @@ export default defineConfig({
       // ADR-0008: SDK wiring, not behaviour. `tracing.ts` constructs and starts the
       // OpenTelemetry NodeSDK and `index.ts` re-exports; neither is assertable
       // without standing up a live OTLP collector, which this ticket excludes.
+      // Mirrored into `matrix.coverage` in .github/workflows/build.yml so the
+      // Sonar gate measures the same denominator. Change one, change the other.
       exclude: ['src/**/tests/**', 'src/index.ts', 'src/tracing.ts'],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },

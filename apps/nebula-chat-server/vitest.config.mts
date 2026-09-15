@@ -21,6 +21,8 @@ export default defineConfig({
       // Entrypoints and generated artefacts. `server.ts` boots a listening process,
       // `app.ts` is plugin registration exercised end-to-end by the route tests,
       // and `src/test/` is the harness itself.
+      // Mirrored into `matrix.coverage` in .github/workflows/build.yml so the
+      // Sonar gate measures the same denominator. Change one, change the other.
       exclude: [
         'src/**/tests/**',
         'src/server.ts',

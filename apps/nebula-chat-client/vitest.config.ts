@@ -24,6 +24,8 @@ export default defineConfig({
       include: ['src/**/*.{ts,tsx}'],
       // ADR-0008: Chakra theme tokens and the Orval-generated API client have no
       // behaviour of their own; `main.tsx` is the bootstrap entrypoint.
+      // Mirrored into `matrix.coverage` in .github/workflows/build.yml so the
+      // Sonar gate measures the same denominator. Change one, change the other.
       exclude: [
         'src/main.tsx',
         'src/vite-env.d.ts',

@@ -35,9 +35,10 @@ DISABLE_LINTERS:
 # covers the file-list linters; ADDITIONAL_EXCLUDED_DIRECTORIES (basename-matched at
 # any depth) covers the project-scope ones such as devskim and checkov.
 # `scripts/` holds the repo's own CI helper scripts. They belong to no workspace
-# package, are not built, typechecked or tested by the build workflow, and are
-# covered by the root `pnpm lint`/`pnpm format` — MegaLinter only duplicates
-# that with a conflicting ruleset (see TYPESCRIPT_STANDARD_FILTER_REGEX_EXCLUDE).
+# package and are neither built nor tested, but they are linted, format-checked
+# and typechecked by the `scripts` job in build.yml, which `build-result` gates
+# on. MegaLinter would only duplicate that against a ruleset `eslint.config.ts`
+# contradicts (see TYPESCRIPT_STANDARD_FILTER_REGEX_EXCLUDE).
 FILTER_REGEX_EXCLUDE: '(\.claude/skills/|^scripts/|/scripts/)'
 ADDITIONAL_EXCLUDED_DIRECTORIES:
   - skills
@@ -90,20 +91,17 @@ TYPESCRIPT_STANDARD_ARGUMENTS: -p tsconfig.eslint.json
 # The repo's own `pnpm lint` covers these files and passes, so this excludes
 # only the duplicate, conflicting opinion — not the linting itself.
 #
-# The vite/vitest config files are excluded for a different reason: tsconfig.eslint.json
-# covers only src/** per package, so a package-root config file belongs to no lint
-# TSConfig and ts-standard fails to parse it at all. eslint.config.ts already ignores
-# vite.config.* and vitest.config.* for exactly this reason.
 # `/tests?/` covers both the shared `src/test/` harness and the per-module
 # `tests/` folders. `/generated/` is the Orval output, which eslint.config.ts
 # already ignores for the same reason: it is regenerated from the OpenAPI
 # document on every backend change and is not hand-editable.
 #
-# `*.config.ts` matches every package-root config file — vite, vitest, orval,
-# drizzle, tsup. tsconfig.eslint.json covers `src/**` per package, so a file at
-# a package root belongs to no lint TSConfig and ts-standard cannot parse it at
-# all ("that TSConfig does not include this file"). eslint.config.ts ignores
-# them for exactly this reason.
+# `\.config\.[cm]?tsx?$` is excluded for a different reason. It matches every
+# package-root config file — vite, vitest, orval, drizzle, tsup — and
+# tsconfig.eslint.json covers only `src/**` per package, so a file at a package
+# root belongs to no lint TSConfig and ts-standard cannot parse it at all
+# ("that TSConfig does not include this file"). eslint.config.ts ignores them
+# for exactly this reason.
 TYPESCRIPT_STANDARD_FILTER_REGEX_EXCLUDE: '(\.test\.tsx?$|/tests?/|/generated/|\.config\.[cm]?tsx?$)'
 
 SHOW_ELAPSED_TIME: true

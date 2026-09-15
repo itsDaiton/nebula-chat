@@ -11,6 +11,8 @@ export default defineConfig({
       // ADR-0008: `schema.ts` is Drizzle table declarations with no behaviour to
       // assert on, and the client/migration entrypoints require a live Postgres,
       // which this ticket excludes. `env.ts` carries the only real logic here.
+      // Mirrored into `matrix.coverage` in .github/workflows/build.yml so the
+      // Sonar gate measures the same denominator. Change one, change the other.
       exclude: [
         'src/**/tests/**',
         'src/index.ts',
