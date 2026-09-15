@@ -16,12 +16,13 @@ Conventions specific to the Fastify API. See the [root AGENTS.md](../../AGENTS.m
 8. [OpenAPI Docs](#openapi-docs)
 9. [Path Aliases](#path-aliases)
 10. [Environment Variables](#environment-variables)
+11. [Testing](#testing)
 
 ---
 
 ## Directory Layout
 
-```
+```text
 apps/nebula-chat-server/src/
 ├── app.ts                         # buildApp() factory — registers plugins, routes, compilers
 ├── server.ts                      # Thin entry point — calls buildApp() then app.listen()
@@ -75,7 +76,7 @@ apps/nebula-chat-server/src/
 
 Every feature module follows this strict 6-layer convention. Add files in this order when creating a new module:
 
-```
+```text
 1. <module>.types.ts        — TypeScript types / DTOs (no logic)
 2. <module>.validation.ts   — Zod schemas for request body/params/query/response
 3. <module>.repository.ts   — Raw Drizzle queries; no business logic (omit if no DB access)
@@ -213,7 +214,7 @@ Cache stats and management endpoints live at `/api/cache/*`.
 
 The chat route is the most complex part of the backend. End-to-end flow:
 
-```
+```text
 POST /api/chat/stream
   → @fastify/rate-limit               (10 req / 60 s per IP, opt-in via route config)
   → Zod body validation               (schema: { body: createChatStreamSchema } — native Fastify)
@@ -276,7 +277,12 @@ The script (`src/scripts/generate-openapi.ts`) calls `buildApp()` → `app.ready
 pnpm --filter nebula-chat-client run generate:api
 ```
 
-The generator is Orval, configured at `apps/nebula-chat-client/orval.config.ts`, driven by `openapi/openapi.yaml`, and using the axios mutator at `apps/nebula-chat-client/src/libs/api/client.ts`. Regenerated files in `apps/nebula-chat-client/src/libs/api/generated/` must be committed in the same PR as the backend/OpenAPI change — never ship an API change with a stale client. Do not hand-edit anything under `apps/nebula-chat-client/src/libs/api/generated/`; always regenerate. Use the `regenerate-api-client` skill or the `api-contract-keeper` agent for this.
+The generator is Orval, configured at `apps/nebula-chat-client/orval.config.ts`, driven by
+`openapi/openapi.yaml`, and using the axios mutator at `apps/nebula-chat-client/src/libs/api/client.ts`.
+Regenerated files in `apps/nebula-chat-client/src/libs/api/generated/` must be committed in the same PR as the
+backend/OpenAPI change — never ship an API change with a stale client. Do not hand-edit anything under
+`apps/nebula-chat-client/src/libs/api/generated/`; always regenerate. Use the `regenerate-api-client` skill or
+the `api-contract-keeper` agent for this.
 
 ---
 
@@ -314,3 +320,48 @@ Never use relative paths in the backend. Aliases are configured in `tsconfig.jso
 > **`env.ts` rule:** All env vars are Zod-validated in `src/env.ts` and fail loudly at startup before any listener is bound. Never read `process.env.*` directly anywhere in the backend — always import from `@backend/env`.
 >
 > **One exception:** `@nebula-chat/otel` reads `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_LOG_LEVEL` from `process.env` itself — a published lib can't depend on one consumer's env schema. Both are still declared in `src/env.ts`. See [ADR-0007](../../docs/adr/0007-otel-lib-and-fastify-native-logger.md) for why, and [docs/logging.md](../../docs/logging.md) for how logging works.
+
+---
+
+## Testing
+
+The monorepo-wide rules live in the root [`AGENTS.md`](../../AGENTS.md#testing) and
+[ADR-0008](../../docs/adr/0008-vitest-unit-testing-with-an-enforced-coverage-gate.md). Backend specifics:
+
+```bash
+pnpm backend test              # vitest run
+pnpm backend test:watch
+pnpm backend test:coverage
+```
+
+- **One test file per source file, in a `tests/` folder beside it**: `chat.service.ts` is tested by
+  `src/modules/chat/tests/chat.service.test.ts`. Never group several modules into one file.
+- **`tsconfig.build.json` excludes `src/**/*.test.ts` and `src/**/tests/**`.** The build is
+  `tsc && tsc-alias` over `src/**/*.ts`, so without those exclusions every test file compiles into
+  `dist/` and ships in the production image. Do not remove them.
+- **Route tests use `app.inject()`, never `supertest`.** Build the real app, mock only the repository:
+
+  ```ts
+  const app = await buildApp();
+  const res = await app.inject({ method: 'GET', url: '/api/conversations' });
+  expect(res.statusCode).toBe(200);
+  ```
+
+  This keeps routing, Zod validation, `error.handler.ts` and the `preHandler` hook chain under test. No
+  socket is opened and no container is needed.
+
+- **Mock at the nearest boundary to an external system, and nothing above it.** For a CRUD route that
+  is the repository: `vi.mock` the `*.repository.ts` module and leave the service and controller real —
+  mocking a service to test its own controller tests nothing. Two routes have their boundary elsewhere,
+  because Postgres is not the system they talk to: `/api/chat/stream` reaches the LLM provider through
+  `chat.service`, and the cache routes reach Redis through `cache.service`, so those are the modules to
+  fake. The rule is the same one either way — fake the thing that would otherwise open a socket, keep
+  everything between it and the HTTP boundary real — and the faked module gets its own `.service` test
+  at its own seam.
+- **No database, no Redis, no network.** The CI `DATABASE_URL` secret points at a shared database and is
+  off-limits to tests.
+- **Test each layer at its seam**: `.validation` (Zod schemas — accept and reject cases), `.service`
+  (business logic with the repository mocked), and the route (via `app.inject()`). Cover the error paths
+  too: validation failure, not-found, and rate-limited.
+- **`AppError` mapping is a seam worth its own tests** — `errors/error.handler.ts` is what every route
+  depends on for correct status codes.

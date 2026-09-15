@@ -15,7 +15,9 @@
     "lint:fix": "eslint --report-unused-disable-directives --max-warnings=0 . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "knip": "knip"
+    "knip": "knip",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test -- --coverage"
   },
   "dependencies": {
     "only-allow": "^1.2.2"
@@ -35,7 +37,7 @@
     "jiti": "^2.6.1",
     "knip": "^6.11.0",
     "prettier": "^3.8.3",
-    "tsx": "^4.21.0",
+    "tsx": "catalog:",
     "turbo": "^2.9.14",
     "typescript": "catalog:"
   }
