@@ -40,7 +40,9 @@ clear that bar from day one.
 
 - [x] `pnpm test` (via `turbo run test`) runs Vitest in every package that has tests
 - [x] `turbo.json`'s `test` task declares `dependsOn: ["^build"]` and `outputs: ["coverage/**"]`
-- [x] Each package owns a `vitest.config.ts` — no root `vitest.workspace.ts`
+- [x] Each package owns its own Vitest config — no root `vitest.workspace.ts`. `vitest.config.ts` in
+      the client; `vitest.config.mts` in the four CommonJS packages, so Vite does not warn about
+      loading an ESM config from a CJS package
 - [x] One test file per source module, named after it, in a sibling `tests/` folder
       (`src/shared/hooks/tests/useResponsiveLayout.test.ts`)
 - [x] `apps/nebula-chat-server/tsconfig.build.json` excludes `src/**/*.test.ts` and `src/**/tests/**` so tests never reach `dist/`
@@ -53,8 +55,12 @@ clear that bar from day one.
 - [x] A `Test` step exists in `.github/workflows/build.yml`'s per-package matrix, after `Build`
 - [x] Vitest `coverage.thresholds` enforce **80%** per package and fail the `Test` step below it
 - [x] Sonar's `-Dsonar.coverage.exclusions=**/*` is removed and `sonar.javascript.lcov.reportPaths` is set
-- [x] Sonar's quality gate requires **80% on overall code and 80% on new code**, per project
-- [x] Co-located tests are declared to Sonar via `sonar.tests`, not scanned as production source
+- [x] Sonar's quality gate requires **80% on overall code and 80% on new code**, per project.
+      This one is configured in the SonarCloud UI, not in this repo — the branch cannot evidence it,
+      only the green gate on each of the five projects can
+- [x] Tests are declared to Sonar via `sonar.tests`/`sonar.test.inclusions`, not scanned as
+      production source, and `sonar.coverage.exclusions` mirrors each package's Vitest
+      `coverage.exclude` (`matrix.coverage` in `build.yml`) so both gates measure one denominator
 - [x] Coverage exclusions cover code with no behavior to assert (schema declarations, SDK wiring, theme tokens, generated clients, migrations)
 - [x] Root `AGENTS.md` gains a Testing section; both app `AGENTS.md` files gain their package-specific conventions
 - [x] `.claude/skills/tdd/SKILL.md`'s "confirm the seams with the user" gate is replaced by the `AGENTS.md` rule (the seams discipline itself is kept)
@@ -75,7 +81,7 @@ Excluding a file from _coverage_ is not excluding it from _testing_. It is an as
 | Package              | Environment | Notable config                                                          |
 | -------------------- | ----------- | ----------------------------------------------------------------------- |
 | `nebula-chat-server` | `node`      | `@backend/*` alias resolution; `tsconfig` excludes tests from the build |
-| `nebula-chat-client` | `jsdom`     | Extends `vite.config.ts`; React Testing Library + `msw`; `@/*` alias    |
+| `nebula-chat-client` | `jsdom`     | Standalone of `vite.config.ts`; RTL + `msw`; `@/*` alias                |
 | `libs/langchain`     | `node`      | Highest-value target — token budget, rate limiting, streaming           |
 | `libs/db`            | `node`      | Schema declarations — largely coverage-excluded                         |
 | `libs/otel`          | `node`      | SDK wiring — largely coverage-excluded                                  |

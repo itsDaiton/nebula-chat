@@ -179,8 +179,9 @@ pnpm --filter @nebula-chat/langchain test
 
 ### Rules
 
-- **Vitest everywhere.** One runner for all five packages. Each package owns a `vitest.config.ts`; there
-  is no root workspace config.
+- **Vitest everywhere.** One runner for all five packages, and no root workspace config. Each package
+  owns its own: `vitest.config.ts` in the client, `vitest.config.mts` in the four CommonJS packages, so
+  Vite does not warn about loading an ESM config from a CJS package.
 - **One test file per source file, named after it**: `useDrawerStore.ts` is tested by
   `useDrawerStore.test.ts` and by nothing else. A file named for a grouping rather than a module
   (`hooks.test.ts`, `stores.test.ts`, `chatComponents.test.tsx`) is wrong — when a test fails, its
@@ -204,7 +205,11 @@ pnpm --filter @nebula-chat/langchain test
   gate would not apply there.
 - **Below the bar? Add a coverage exclusion, never lower a threshold.** Excluding a file from _coverage_
   asserts it has no behavior to test (schema declarations, SDK wiring, theme tokens, generated clients,
-  migrations). Lowering the threshold asserts nothing and is not an approved escape hatch.
+  migrations). Lowering the threshold asserts nothing and is not an approved escape hatch. A coverage
+  exclusion lives in two places — the package's `vitest.config` and `matrix.coverage` in
+  `.github/workflows/build.yml` — and must be added to both, or the two gates measure different
+  denominators. They cannot share one list: `logger.ts` is excluded in the server and langchain but is
+  the main tested unit in otel.
 - **Unit tests only, for now.** No testcontainers, no live database, no network. Database-backed
   integration testing is deliberate, recorded debt — see ADR-0008.
 - **Mock at the boundary, not the internals.** Server: mock the repository layer, keep routing, Zod

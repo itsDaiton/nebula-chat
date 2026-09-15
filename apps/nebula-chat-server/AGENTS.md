@@ -350,8 +350,14 @@ pnpm backend test:coverage
   This keeps routing, Zod validation, `error.handler.ts` and the `preHandler` hook chain under test. No
   socket is opened and no container is needed.
 
-- **Mock the repository layer, not the service or controller.** `vi.mock` the `*.repository.ts` module;
-  everything above it stays real. Mocking a service to test its own controller tests nothing.
+- **Mock at the nearest boundary to an external system, and nothing above it.** For a CRUD route that
+  is the repository: `vi.mock` the `*.repository.ts` module and leave the service and controller real —
+  mocking a service to test its own controller tests nothing. Two routes have their boundary elsewhere,
+  because Postgres is not the system they talk to: `/api/chat/stream` reaches the LLM provider through
+  `chat.service`, and the cache routes reach Redis through `cache.service`, so those are the modules to
+  fake. The rule is the same one either way — fake the thing that would otherwise open a socket, keep
+  everything between it and the HTTP boundary real — and the faked module gets its own `.service` test
+  at its own seam.
 - **No database, no Redis, no network.** The CI `DATABASE_URL` secret points at a shared database and is
   off-limits to tests.
 - **Test each layer at its seam**: `.validation` (Zod schemas — accept and reject cases), `.service`
