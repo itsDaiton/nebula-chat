@@ -9,7 +9,7 @@
 | [TICKET-M1-fastify.md](./TICKET-M1-fastify.md)         | M-1    | Replace Express with Fastify                                | Nothing — do first |
 | [TICKET-M2-db.md](./TICKET-M2-db.md)                   | M-2    | `@nebula-chat/db` — Drizzle ORM (replaces Prisma)           | Nothing            |
 | [TICKET-M3-langchain.md](./TICKET-M3-langchain.md)     | M-3    | `@nebula-chat/langchain` — LangChain lib (replaces openai)  | Nothing            |
-| [TICKET-M4-cache.md](./TICKET-M4-cache.md)             | M-4    | `@nebula-chat/cache` — two-tier cache (replaces bare redis) | Nothing            |
+| [TICKET-M4-redis.md](./TICKET-M4-redis.md)             | M-4    | `@nebula-chat/redis` — shared Redis substrate (replaces bare redis) | M-5 (otel)         |
 | [TICKET-M5-otel.md](./TICKET-M5-otel.md)               | M-5    | `@nebula-chat/otel` — Pino + OpenTelemetry                  | Nothing            |
 | [TICKET-M6-auth.md](./TICKET-M6-auth.md)               | M-6    | Auth & security — JWT, argon2, OAuth2, helmet               | M-1                |
 | [TICKET-M7-queues.md](./TICKET-M7-queues.md)           | M-7    | Background jobs — BullMQ + dashboard                        | M-1, M-3           |
@@ -24,7 +24,7 @@
 | Remove | `express`, `@types/express`                      | `fastify` + plugins                              | Core framework                |
 | Remove | `openai`                                         | `@langchain/openai` via `@nebula-chat/langchain` | LLM client                    |
 | Remove | `prisma`, `@prisma/client`, `@prisma/adapter-pg` | `drizzle-orm` + `pg`                             | ORM                           |
-| Remove | `redis` (bare client)                            | `ioredis` + `lru-cache`                          | Cache client                  |
+| Remove | `redis` (bare client)                            | `ioredis` (via `@nebula-chat/redis`)             | Shared Redis substrate; single-tier, no `lru-cache` (see M-4) |
 | Remove | `express-rate-limit`                             | `@fastify/rate-limit` + `@upstash/ratelimit`     | Rate limiting                 |
 | Remove | `swagger-ui-express`                             | `@fastify/swagger` + `@fastify/swagger-ui`       | API docs                      |
 | Remove | `cors`                                           | `@fastify/cors`                                  | CORS                          |
@@ -70,7 +70,7 @@ nebula-chat/
 │   └── client/                    # no changes in this migration
 ├── libs/
 │   ├── langchain/                 # @nebula-chat/langchain
-│   ├── cache/                     # @nebula-chat/cache
+│   ├── redis/                     # @nebula-chat/redis
 │   ├── otel/                      # @nebula-chat/otel
 │   ├── db/                        # @nebula-chat/db
 │   └── api/                       # @nebula-chat/api
@@ -94,7 +94,7 @@ ticket** — M-5 merged with its row left blank, which is how this table goes st
 | 3     | M-3 LangChain   | ✅   | Core feature of the app (landed out of order, before M-5) |
 | 4     | M-5 OTel        | ✅   | One logger seam before every later ticket adds log sites  |
 | 5     | M-9 Testing     | ✅   | **Moved up from 7** — see below                           |
-| 6     | M-4 Cache       |      | Improves LLM response times                               |
+| 6     | M-4 Redis       |      | Shared Redis substrate; single-tier cache first (needs M-5 otel) |
 | 7     | M-6 Auth        |      | Protect routes before adding features                     |
 | 8     | M-7 Queues      |      | Background jobs for long LLM calls                        |
 | 9     | M-8 Real-time   |      | Streaming and presence                                    |
@@ -119,7 +119,7 @@ erode the way it did over the previous four tickets.
 
 ## Ticket independence rules
 
-- **Lib tickets (M-2, M-3, M-4, M-5)** can be implemented in any order and merged independently. They have no dependency on each other.
+- **Lib tickets (M-2, M-3, M-5)** can be implemented in any order and merged independently. **M-4 (`@nebula-chat/redis`)** now depends on M-5 (otel) — it logs and emits metrics exclusively through `@nebula-chat/otel` — so M-4 lands after M-5 (already merged). See [TICKET-M4-redis.md](./TICKET-M4-redis.md).
 - **App tickets (M-6, M-7, M-8, M-9, M-10)** require M-1 (Fastify) to be complete.
 - **M-7 (Queues)** works without M-3 (LangChain lib) by calling OpenAI directly as a temporary measure, but should be updated to use `@nebula-chat/langchain` once M-3 is merged.
 - **M-9 (Testing)** infrastructure can be set up any time. Tests for a specific feature should be written in the same PR as that feature.
