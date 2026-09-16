@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.23.0...nebula-chat-v1.23.1) (2026-09-16)
+
+
+### Bug Fixes
+
+* **ci:** validate render.yaml as JSON to dodge the js-yaml 4 override ([#309](https://github.com/itsDaiton/nebula-chat/issues/309)) ([0715660](https://github.com/itsDaiton/nebula-chat/commit/07156608e3e57bdff06ecb4904d51790355da7cb))
+
 ## [1.23.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.22.0...nebula-chat-v1.23.0) (2026-09-16)
 
 
