@@ -248,7 +248,8 @@ nebula-chat/
 ├── libs/
 │   ├── db/                   # @nebula-chat/db — Drizzle ORM schema + migrations
 │   ├── langchain/            # @nebula-chat/langchain — LLM providers, tokens, streaming, SSE
-│   └── otel/                 # @nebula-chat/otel — Pino logger factory + OpenTelemetry tracing
+│   ├── otel/                 # @nebula-chat/otel — Pino logger factory + OpenTelemetry tracing
+│   └── redis/                # @nebula-chat/redis — shared Redis connection + cache primitive
 ├── openapi/                  # Generated OpenAPI spec — its own workspace package
 ├── CLAUDE.md                 # Claude Code operating instructions
 ├── CONTEXT.md                # Domain vocabulary glossary

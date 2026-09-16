@@ -181,6 +181,19 @@ export default [
     },
   },
   {
+    files: ['libs/redis/**/*.{ts,js}'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: './libs/redis/tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+  },
+  {
     files: ['scripts/**/*.ts'],
     languageOptions: {
       parser: tsParser,

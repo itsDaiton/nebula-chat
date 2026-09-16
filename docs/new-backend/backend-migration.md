@@ -4,44 +4,44 @@
 
 ## Document index
 
-| File                                                   | Ticket | Description                                                 | Depends on         |
-| ------------------------------------------------------ | ------ | ----------------------------------------------------------- | ------------------ |
-| [TICKET-M1-fastify.md](./TICKET-M1-fastify.md)         | M-1    | Replace Express with Fastify                                | Nothing — do first |
-| [TICKET-M2-db.md](./TICKET-M2-db.md)                   | M-2    | `@nebula-chat/db` — Drizzle ORM (replaces Prisma)           | Nothing            |
-| [TICKET-M3-langchain.md](./TICKET-M3-langchain.md)     | M-3    | `@nebula-chat/langchain` — LangChain lib (replaces openai)  | Nothing            |
+| File                                                   | Ticket | Description                                                         | Depends on         |
+| ------------------------------------------------------ | ------ | ------------------------------------------------------------------- | ------------------ |
+| [TICKET-M1-fastify.md](./TICKET-M1-fastify.md)         | M-1    | Replace Express with Fastify                                        | Nothing — do first |
+| [TICKET-M2-db.md](./TICKET-M2-db.md)                   | M-2    | `@nebula-chat/db` — Drizzle ORM (replaces Prisma)                   | Nothing            |
+| [TICKET-M3-langchain.md](./TICKET-M3-langchain.md)     | M-3    | `@nebula-chat/langchain` — LangChain lib (replaces openai)          | Nothing            |
 | [TICKET-M4-redis.md](./TICKET-M4-redis.md)             | M-4    | `@nebula-chat/redis` — shared Redis substrate (replaces bare redis) | M-5 (otel)         |
-| [TICKET-M5-otel.md](./TICKET-M5-otel.md)               | M-5    | `@nebula-chat/otel` — Pino + OpenTelemetry                  | Nothing            |
-| [TICKET-M6-auth.md](./TICKET-M6-auth.md)               | M-6    | Auth & security — JWT, argon2, OAuth2, helmet               | M-1                |
-| [TICKET-M7-queues.md](./TICKET-M7-queues.md)           | M-7    | Background jobs — BullMQ + dashboard                        | M-1, M-3           |
-| [TICKET-M8-realtime.md](./TICKET-M8-realtime.md)       | M-8    | Real-time — SSE streaming + WebSockets                      | M-1                |
-| [TICKET-M9-testing.md](./TICKET-M9-testing.md)         | M-9    | Testing — Vitest, Supertest, testcontainers, msw            | M-1                |
-| [TICKET-M10-resilience.md](./TICKET-M10-resilience.md) | M-10   | Resilience — circuit breaker with cockatiel                 | M-3                |
+| [TICKET-M5-otel.md](./TICKET-M5-otel.md)               | M-5    | `@nebula-chat/otel` — Pino + OpenTelemetry                          | Nothing            |
+| [TICKET-M6-auth.md](./TICKET-M6-auth.md)               | M-6    | Auth & security — JWT, argon2, OAuth2, helmet                       | M-1                |
+| [TICKET-M7-queues.md](./TICKET-M7-queues.md)           | M-7    | Background jobs — BullMQ + dashboard                                | M-1, M-3           |
+| [TICKET-M8-realtime.md](./TICKET-M8-realtime.md)       | M-8    | Real-time — SSE streaming + WebSockets                              | M-1                |
+| [TICKET-M9-testing.md](./TICKET-M9-testing.md)         | M-9    | Testing — Vitest, Supertest, testcontainers, msw                    | M-1                |
+| [TICKET-M10-resilience.md](./TICKET-M10-resilience.md) | M-10   | Resilience — circuit breaker with cockatiel                         | M-3                |
 
 ## Full package migration summary
 
-| Action | From                                             | To                                               | Notes                         |
-| ------ | ------------------------------------------------ | ------------------------------------------------ | ----------------------------- |
-| Remove | `express`, `@types/express`                      | `fastify` + plugins                              | Core framework                |
-| Remove | `openai`                                         | `@langchain/openai` via `@nebula-chat/langchain` | LLM client                    |
-| Remove | `prisma`, `@prisma/client`, `@prisma/adapter-pg` | `drizzle-orm` + `pg`                             | ORM                           |
+| Action | From                                             | To                                               | Notes                                                         |
+| ------ | ------------------------------------------------ | ------------------------------------------------ | ------------------------------------------------------------- |
+| Remove | `express`, `@types/express`                      | `fastify` + plugins                              | Core framework                                                |
+| Remove | `openai`                                         | `@langchain/openai` via `@nebula-chat/langchain` | LLM client                                                    |
+| Remove | `prisma`, `@prisma/client`, `@prisma/adapter-pg` | `drizzle-orm` + `pg`                             | ORM                                                           |
 | Remove | `redis` (bare client)                            | `ioredis` (via `@nebula-chat/redis`)             | Shared Redis substrate; single-tier, no `lru-cache` (see M-4) |
-| Remove | `express-rate-limit`                             | `@fastify/rate-limit` + `@upstash/ratelimit`     | Rate limiting                 |
-| Remove | `swagger-ui-express`                             | `@fastify/swagger` + `@fastify/swagger-ui`       | API docs                      |
-| Remove | `cors`                                           | `@fastify/cors`                                  | CORS                          |
-| Keep   | `zod`                                            | —                                                | No change                     |
-| Keep   | `@asteasolutions/zod-to-openapi`                 | —                                                | No change                     |
-| Keep   | `tiktoken`                                       | —                                                | No change                     |
-| Keep   | `dotenv`, `tsx`, `tsc-alias`                     | —                                                | No change                     |
-| Add    | —                                                | `bullmq`, `@bull-board/fastify`                  | Job queue                     |
-| Add    | —                                                | `pino`, `pino-http`                              | Structured logging            |
-| Add    | —                                                | `@opentelemetry/*` (3 packages)                  | Distributed tracing           |
-| Add    | —                                                | `langsmith`                                      | LLM observability             |
-| Add    | —                                                | `jose`, `argon2`                                 | JWT crypto + password hashing |
-| Add    | —                                                | `@fastify/jwt`, `@fastify/oauth2`                | Auth plugins                  |
-| Add    | —                                                | `@fastify/helmet`, `@fastify/csrf-protection`    | Security headers              |
-| Add    | —                                                | `cockatiel`                                      | Circuit breaker               |
-| Add    | —                                                | `vitest`, `supertest`, `testcontainers`, `msw`   | Testing                       |
-| Add    | —                                                | `@fastify/websocket`                             | WebSockets                    |
+| Remove | `express-rate-limit`                             | `@fastify/rate-limit` + `@upstash/ratelimit`     | Rate limiting                                                 |
+| Remove | `swagger-ui-express`                             | `@fastify/swagger` + `@fastify/swagger-ui`       | API docs                                                      |
+| Remove | `cors`                                           | `@fastify/cors`                                  | CORS                                                          |
+| Keep   | `zod`                                            | —                                                | No change                                                     |
+| Keep   | `@asteasolutions/zod-to-openapi`                 | —                                                | No change                                                     |
+| Keep   | `tiktoken`                                       | —                                                | No change                                                     |
+| Keep   | `dotenv`, `tsx`, `tsc-alias`                     | —                                                | No change                                                     |
+| Add    | —                                                | `bullmq`, `@bull-board/fastify`                  | Job queue                                                     |
+| Add    | —                                                | `pino`, `pino-http`                              | Structured logging                                            |
+| Add    | —                                                | `@opentelemetry/*` (3 packages)                  | Distributed tracing                                           |
+| Add    | —                                                | `langsmith`                                      | LLM observability                                             |
+| Add    | —                                                | `jose`, `argon2`                                 | JWT crypto + password hashing                                 |
+| Add    | —                                                | `@fastify/jwt`, `@fastify/oauth2`                | Auth plugins                                                  |
+| Add    | —                                                | `@fastify/helmet`, `@fastify/csrf-protection`    | Security headers                                              |
+| Add    | —                                                | `cockatiel`                                      | Circuit breaker                                               |
+| Add    | —                                                | `vitest`, `supertest`, `testcontainers`, `msw`   | Testing                                                       |
+| Add    | —                                                | `@fastify/websocket`                             | WebSockets                                                    |
 
 ## Target monorepo structure
 
@@ -87,18 +87,18 @@ Lib tickets (M-2 through M-5) are fully independent and can run in parallel. App
 reads as a to-do list. The `Done` column is the source of truth; **tick it in the same PR that implements the
 ticket** — M-5 merged with its row left blank, which is how this table goes stale.
 
-| Order | Ticket          | Done | Reason                                                    |
-| ----- | --------------- | ---- | --------------------------------------------------------- |
-| 1     | M-1 Fastify     | ✅   | Core — everything else plugs into it                      |
-| 2     | M-2 DB          | ✅   | Database access needed by most features                   |
-| 3     | M-3 LangChain   | ✅   | Core feature of the app (landed out of order, before M-5) |
-| 4     | M-5 OTel        | ✅   | One logger seam before every later ticket adds log sites  |
-| 5     | M-9 Testing     | ✅   | **Moved up from 7** — see below                           |
+| Order | Ticket          | Done | Reason                                                           |
+| ----- | --------------- | ---- | ---------------------------------------------------------------- |
+| 1     | M-1 Fastify     | ✅   | Core — everything else plugs into it                             |
+| 2     | M-2 DB          | ✅   | Database access needed by most features                          |
+| 3     | M-3 LangChain   | ✅   | Core feature of the app (landed out of order, before M-5)        |
+| 4     | M-5 OTel        | ✅   | One logger seam before every later ticket adds log sites         |
+| 5     | M-9 Testing     | ✅   | **Moved up from 7** — see below                                  |
 | 6     | M-4 Redis       |      | Shared Redis substrate; single-tier cache first (needs M-5 otel) |
-| 7     | M-6 Auth        |      | Protect routes before adding features                     |
-| 8     | M-7 Queues      |      | Background jobs for long LLM calls                        |
-| 9     | M-8 Real-time   |      | Streaming and presence                                    |
-| 10    | M-10 Resilience |      | Add last — wraps existing LLM calls                       |
+| 7     | M-6 Auth        |      | Protect routes before adding features                            |
+| 8     | M-7 Queues      |      | Background jobs for long LLM calls                               |
+| 9     | M-8 Real-time   |      | Streaming and presence                                           |
+| 10    | M-10 Resilience |      | Add last — wraps existing LLM calls                              |
 
 ### Why M-9 moved up
 

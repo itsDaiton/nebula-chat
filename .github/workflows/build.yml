@@ -47,6 +47,8 @@ jobs:
               - 'libs/langchain/**'
             otel:
               - 'libs/otel/**'
+            redis:
+              - 'libs/redis/**'
             # `scripts/` belongs to no workspace package, so it is outside the
             # build matrix and gets its own lint/format/typecheck job below.
             scripts:
@@ -78,6 +80,7 @@ jobs:
           F_DB: ${{ steps.filter.outputs.db }}
           F_LANGCHAIN: ${{ steps.filter.outputs.langchain }}
           F_OTEL: ${{ steps.filter.outputs.otel }}
+          F_REDIS: ${{ steps.filter.outputs.redis }}
           F_SHARED: ${{ steps.filter.outputs.shared }}
         run: |
           set -euo pipefail
@@ -91,7 +94,8 @@ jobs:
             {"id":"server","name":"nebula-chat-server","dir":"apps/nebula-chat-server","filter":"nebula-chat-server","lint":"apps/nebula-chat-server/","key":"itsDaiton_nebula-chat-server","project":"Nebula-Chat-Server","coverage":"src/**/tests/**,src/test/**,src/server.ts,src/app.ts,src/logger.ts,src/env.ts,src/db.ts,src/generated/**,src/scripts/**,src/**/*.types.ts,src/**/*.repository.ts"},
             {"id":"db","name":"nebula-chat-db","dir":"libs/db","filter":"@nebula-chat/db","lint":"libs/db/","key":"itsDaiton_nebula-chat-db","project":"Nebula-Chat-DB","coverage":"src/**/tests/**,src/index.ts,src/schema.ts,src/client.ts,src/migrate.ts,src/baseline.ts"},
             {"id":"langchain","name":"nebula-chat-langchain","dir":"libs/langchain","filter":"@nebula-chat/langchain","lint":"libs/langchain/","key":"itsDaiton_nebula-chat-langchain","project":"Nebula-Chat-LangChain","coverage":"src/**/tests/**,src/index.ts,src/logger.ts"},
-            {"id":"otel","name":"nebula-chat-otel","dir":"libs/otel","filter":"@nebula-chat/otel","lint":"libs/otel/","key":"itsDaiton_nebula-chat-otel","project":"Nebula-Chat-OTel","coverage":"src/**/tests/**,src/index.ts,src/tracing.ts"}
+            {"id":"otel","name":"nebula-chat-otel","dir":"libs/otel","filter":"@nebula-chat/otel","lint":"libs/otel/","key":"itsDaiton_nebula-chat-otel","project":"Nebula-Chat-OTel","coverage":"src/**/tests/**,src/index.ts,src/tracing.ts"},
+            {"id":"redis","name":"nebula-chat-redis","dir":"libs/redis","filter":"@nebula-chat/redis","lint":"libs/redis/","key":"itsDaiton_nebula-chat-redis","project":"Nebula-Chat-Redis","coverage":"src/**/tests/**,src/index.ts,src/connection.ts,src/factory.ts,src/metrics.ts"}
           ]'
           # Non-PR runs (push to main, manual) and any change to shared
           # files build everything; PRs build only the changed packages.
@@ -104,6 +108,7 @@ jobs:
             if [ "$F_DB" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["db"]'); fi
             if [ "$F_LANGCHAIN" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["langchain"]'); fi
             if [ "$F_OTEL" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["otel"]'); fi
+            if [ "$F_REDIS" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["redis"]'); fi
             selected=$(echo "$all" | jq -c --argjson ids "$ids" '[.[] | select(.id as $i | $ids | index($i))]')
           fi
           matrix=$(echo "$selected" | jq -c '{include: .}')
