@@ -3,9 +3,16 @@ packages:
   - libs/*
   - openapi
 
+# Versions shared by more than one package live here so a bump happens once.
+# `catalog:` in a package.json resolves to the entry below.
 catalog:
   '@types/node': ^26.4.1
+  '@vitest/coverage-v8': ^5.0.0
+  drizzle-orm: ^0.45.2
+  tsup: ^8.5.0
+  tsx: ^4.21.0
   typescript: ^6.0.3
+  vitest: ^5.0.0
 
 # --- pnpm settings -----------------------------------------------------------
 # Since pnpm v11 this file is the only place pnpm reads configuration from.
@@ -27,6 +34,10 @@ nodeVersion: 26.8.2
 allowBuilds:
   argon2: true
   esbuild: true
+  # msw's postinstall writes the browser service-worker shim. The tests use
+  # msw/node, which does not need it, but strictDepBuilds fails the install
+  # rather than skipping an unreviewed script.
+  msw: true
   protobufjs: true
 
 # Dependency resolution -------------------------------------------------------
@@ -51,6 +62,14 @@ overrides:
   '@hono/node-server': ^1.19.13
   hono: 4.12.25
   path-to-regexp: 8.4.0
+  # msw declares `path-to-regexp: ^6.3.0` and builds wildcard paths ('*/api/...')
+  # with it. v8 removed unnamed wildcards — every such handler throws
+  # `PathError: Missing parameter name` — so the blanket override above silently
+  # broke msw's path matching, and with it the MSW handlers Orval generates from
+  # the OpenAPI spec. 6.3.0 is the release that fixes GHSA-9wv6-86v2-598j, so
+  # pinning msw to the patched 6.x line keeps the vulnerability closed while
+  # every other consumer stays on 8.4.0.
+  msw>path-to-regexp: ^6.3.0
   fast-xml-parser: '>=5.7.0'
   flatted: 3.4.2
   uuid: '>=14.0.0'

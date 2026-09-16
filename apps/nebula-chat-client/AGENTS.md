@@ -17,12 +17,13 @@ Conventions specific to the React SPA. See the [root AGENTS.md](../../AGENTS.md)
 9. [`useEffect` rules](#useeffect-rules)
 10. [Shared Utilities](#shared-utilities)
 11. [Environment Variables](#environment-variables)
+12. [Testing](#testing)
 
 ---
 
 ## Directory Layout
 
-```
+```text
 apps/nebula-chat-client/src/
 ├── App.tsx                        # Root — mounts providers and router
 ├── main.tsx                       # Vite entry point
@@ -386,3 +387,45 @@ No hook or component in the codebase may import or call `useEffect`.
 | Variable       | Purpose                                                    |
 | -------------- | ---------------------------------------------------------- |
 | `VITE_API_URL` | Base URL of the backend API (e.g. `http://localhost:3000`) |
+
+---
+
+## Testing
+
+The monorepo-wide rules live in the root [`AGENTS.md`](../../AGENTS.md#testing) and
+[ADR-0008](../../docs/adr/0008-vitest-unit-testing-with-an-enforced-coverage-gate.md). Frontend specifics:
+
+```bash
+pnpm frontend test             # vitest run
+pnpm frontend test:watch
+pnpm frontend test:coverage
+```
+
+- **Environment is `jsdom`**, not `happy-dom` — Chakra UI v3 leans on layout and `matchMedia` APIs where
+  happy-dom has gaps.
+- **React Testing Library for components.** Query by role and accessible name, never by test id or class.
+  If a component is hard to query by role, that is usually an accessibility bug worth fixing rather than a
+  reason to reach for `container.querySelector`.
+- **Mock HTTP with the MSW handlers Orval generates, never with a hand-written URL and never by stubbing
+  the hooks.** `orval.config.ts` sets `mock.generators: [{ type: 'msw' }]`, so every documented success
+  response has a handler beside the client (`src/libs/api/generated/**/**.msw.ts`) built from the same
+  OpenAPI document the backend emits:
+
+  ```ts
+  server.use(getListConversationsMockHandler({ conversations, nextCursor: null, hasMore: false }));
+  ```
+
+  The generated handlers match any origin, which is what keeps `http://localhost:3000` out of tests. Two
+  things have no generated handler: failure responses (Orval emits only the documented success) and
+  `/api/chat/stream` (excluded from Orval by tag — it streams SSE). Both go through `@/test/api`, the one
+  place route strings are written. Regenerate with `pnpm frontend generate:api` after any backend change.
+
+- **One test file per source file, in a `tests/` folder beside it**: `ChatInput.tsx` is tested by
+  `components/tests/ChatInput.test.tsx`. Never group several modules into one file.
+- **`tsconfig.app.json` declares the Vitest and testing-library types.** The build runs `tsc -b` over
+  `include: ["src"]`, so tests are typechecked — without those `types` entries the build fails
+  on `describe` and `expect`.
+- **Stores and hooks are the highest-value targets.** Zustand stores are module-level singletons, so reset
+  state between tests rather than relying on fresh imports.
+- **Coverage-excluded**: `src/theme/**` (Chakra tokens) and `src/libs/api/generated/**` (Orval output).
+  Everything else faces the 80% bar.

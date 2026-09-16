@@ -5,10 +5,13 @@
   "main": "dist/src/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc && tsc-alias",
+    "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "start": "node dist/src/server.js",
     "typecheck": "tsc --noEmit",
-    "generate:openapi": "tsx src/scripts/generate-openapi.ts"
+    "generate:openapi": "tsx src/scripts/generate-openapi.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.2",
@@ -21,7 +24,7 @@
     "@nebula-chat/langchain": "workspace:*",
     "@nebula-chat/otel": "workspace:*",
     "dotenv": "^17.4.0",
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "catalog:",
     "fastify": "^5.4.0",
     "fastify-plugin": "^5.0.0",
     "fastify-type-provider-zod": "^6.1.0",
@@ -29,8 +32,11 @@
     "zod": "^4.4.2"
   },
   "devDependencies": {
+    "@total-typescript/shoehorn": "^0.1.2",
     "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "tsc-alias": "^1.8.17",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

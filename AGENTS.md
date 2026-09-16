@@ -16,10 +16,11 @@ Read this file for anything that spans the whole repo; read the relevant package
 1. [Development Commands](#development-commands)
 2. [Git Workflow](#git-workflow)
 3. [Code Quality](#code-quality)
-4. [Cross-cutting Conventions](#cross-cutting-conventions)
-5. [Monorepo Structure](#monorepo-structure)
-6. [Local Development](#local-development)
-7. [Keeping the Agentic Workspace in Sync](#keeping-the-agentic-workspace-in-sync)
+4. [Testing](#testing)
+5. [Cross-cutting Conventions](#cross-cutting-conventions)
+6. [Monorepo Structure](#monorepo-structure)
+7. [Local Development](#local-development)
+8. [Keeping the Agentic Workspace in Sync](#keeping-the-agentic-workspace-in-sync)
 
 ---
 
@@ -127,7 +128,12 @@ Releases on `main` are fully automated by [release-please](https://github.com/go
   - `feat!:`, `fix!:`, or a footer of `BREAKING CHANGE: ...` → major bump. Use this only for an actual breaking change to a released package's public surface (e.g. `libs/db`'s exported types, the OpenAPI contract) — not for internal refactors.
 - **Do not use `chore`, `refactor`, `docs`, `style`, `test`, `build`, `ci`, or `perf`.** Release Please drops them. Pick `fix` or `feat` by the rule above instead — when in doubt, `fix`.
 - The cost of this rule is changelog noise: a CI tweak lands as a patch release. That is deliberate — a silently unreleased change is worse than an over-reported one.
-- **Scope should name the release-please component** the change belongs to, matching `release-please-config.json`'s `packages` keys: `client` (`apps/nebula-chat-client`), `server` (`apps/nebula-chat-server`), `db` (`libs/db`), `langchain` (`libs/langchain`), `openapi`, or omit the scope (or use a repo-wide one like `fix(agents): ...`) for root-level tooling/docs changes (`CLAUDE.md`, `AGENTS.md`, `CONTEXT.md`, `.claude/`, `docs/`) — those fall under the root `nebula-chat` component, which explicitly excludes `apps/**`, `libs/**`, and `openapi/**`.
+- **Scope should name the release-please component** the change belongs to, matching
+  `release-please-config.json`'s `packages` keys: `client` (`apps/nebula-chat-client`), `server`
+  (`apps/nebula-chat-server`), `db` (`libs/db`), `langchain` (`libs/langchain`), `openapi`, or omit the scope
+  (or use a repo-wide one like `fix(agents): ...`) for root-level tooling/docs changes (`CLAUDE.md`,
+  `AGENTS.md`, `CONTEXT.md`, `.claude/`, `docs/`) — those fall under the root `nebula-chat` component, which
+  explicitly excludes `apps/**`, `libs/**`, and `openapi/**`.
 - release-please determines the bump **per component from the changed file paths**, not from the scope string — the scope is for changelog readability, so keep it accurate, but don't rely on it to control which package gets released.
 - A commit that spans multiple components (e.g. a backend route change plus its regenerated `openapi.yaml` and Orval client) still needs one accurate primary scope; each affected component gets its own bump from the same commit regardless of what the scope says.
 
@@ -153,20 +159,88 @@ Do not disable ESLint rules with inline `// eslint-disable` comments unless abso
 
 ---
 
+## Testing
+
+**Every PR that changes behavior ships tests at the seams that behavior crosses.** A behavior change
+without a test is an incomplete PR. This is a hard rule, enforced mechanically by an 80% coverage gate —
+see [ADR-0008](./docs/adr/0008-vitest-unit-testing-with-an-enforced-coverage-gate.md).
+
+It is _not_ "write a test for every file". Tests go at **seams** — the public boundary where behavior is
+observable without reaching inside. `.claude/skills/tdd/SKILL.md` is the reference for what a good test
+is, where seams are, and the anti-patterns (implementation-coupled, tautological, horizontally sliced).
+Pick the seams deliberately; do not generate a test per function to move a number.
+
+```bash
+pnpm turbo run test              # every package
+pnpm backend test                # server only
+pnpm frontend test               # client only
+pnpm --filter @nebula-chat/langchain test
+```
+
+### Rules
+
+- **Vitest everywhere.** One runner for all five packages, and no root workspace config. Each package
+  owns its own: `vitest.config.ts` in the client, `vitest.config.mts` in the four CommonJS packages, so
+  Vite does not warn about loading an ESM config from a CJS package.
+- **One test file per source file, named after it**: `useDrawerStore.ts` is tested by
+  `useDrawerStore.test.ts` and by nothing else. A file named for a grouping rather than a module
+  (`hooks.test.ts`, `stores.test.ts`, `chatComponents.test.tsx`) is wrong — when a test fails, its
+  filename should already name the module at fault.
+- **Tests live in a `tests/` folder beside the code under test**: `src/shared/hooks/useResponsiveLayout.ts`
+  is tested by `src/shared/hooks/tests/useResponsiveLayout.test.ts`. Helpers shared by the tests in one
+  folder sit alongside them; helpers shared across a package live in `src/test/`. A test file must contain
+  its own assertions — a file whose `it()` blocks come from a helper reads as empty to both Sonar
+  (`typescript:S2187`) and to the next person to open it.
+- **Frontend API mocks come from the OpenAPI spec, never from a hand-written URL.** Orval generates MSW
+  handlers next to the client (`*.msw.ts`), and they match any origin, so a test calls
+  `getListConversationsMockHandler(payload)` rather than naming `http://localhost:3000/api/conversations`.
+  Failure responses and the SSE chat endpoint (excluded from Orval by tag) go through `@/test/api`, which
+  is the only place a route string is written.
+- **Tests run against built libraries.** `turbo`'s `test` task declares `dependsOn: ["^build"]`, so a test
+  importing `@nebula-chat/*` exercises the tsup `dist` artifact production actually runs — not the lib's
+  source. Never alias `@nebula-chat/*` to `libs/*/src` in a Vitest config.
+- **80% coverage, enforced twice.** Vitest `coverage.thresholds` fail the CI `Test` step, and Sonar's
+  quality gate requires 80% on both overall and new code, per project. The Vitest threshold is the real
+  gate: Sonar steps are skipped when `SONAR_TOKEN` is absent (dependabot and fork PRs), so a Sonar-only
+  gate would not apply there.
+- **Below the bar? Add a coverage exclusion, never lower a threshold.** Excluding a file from _coverage_
+  asserts it has no behavior to test (schema declarations, SDK wiring, theme tokens, generated clients,
+  migrations). Lowering the threshold asserts nothing and is not an approved escape hatch. A coverage
+  exclusion lives in two places — the package's `vitest.config` and `matrix.coverage` in
+  `.github/workflows/build.yml` — and must be added to both, or the two gates measure different
+  denominators. They cannot share one list: `logger.ts` is excluded in the server and langchain but is
+  the main tested unit in otel.
+- **Unit tests only, for now.** No testcontainers, no live database, no network. Database-backed
+  integration testing is deliberate, recorded debt — see ADR-0008.
+- **Mock at the boundary, not the internals.** Server: mock the repository layer, keep routing, Zod
+  validation and the error handler real. Client: mock HTTP with `msw`, never stub the Orval-generated
+  hooks.
+- **A failing test is never fixed by skipping, deleting or weakening it.** Fix the code, or fix a test
+  that was asserting the wrong thing — and say which.
+
+See each app's `AGENTS.md` for package-specific conventions and examples.
+
+---
+
 ## Cross-cutting Conventions
 
 These apply everywhere in the repo, frontend and backend alike. See each package's `AGENTS.md` for the full rules and code examples.
 
 - **`type`, never `interface`.** No exceptions, anywhere.
 - **`const` arrow functions, never `function` declarations.** Applies to hooks, utils, helpers, components, and route handlers alike.
-- **No `index.ts` barrel files inside an app.** Import directly from the file that defines the thing. Two exceptions, and only two: `index.ts` files emitted by code generators (e.g. Orval output), which are never hand-authored or hand-edited; and the single top-level `src/index.ts` of a package under `libs/`, which is that package's public surface — it is what `tsup`'s `entry` and the `exports` map point at, so it is required, not optional. `libs/db`, `libs/langchain` and `libs/otel` each have exactly one. Never nest a barrel below that.
+- **No `index.ts` barrel files inside an app.** Import directly from the file that defines the thing. Two
+  exceptions, and only two: `index.ts` files emitted by code generators (e.g. Orval output), which are never
+  hand-authored or hand-edited; and the single top-level `src/index.ts` of a package under `libs/`, which is
+  that package's public surface — it is what `tsup`'s `entry` and the `exports` map point at, so it is
+  required, not optional. `libs/db`, `libs/langchain` and `libs/otel` each have exactly one. Never nest a
+  barrel below that.
 - **No relative imports.** Frontend uses `@/*` (→ `apps/nebula-chat-client/src/`); backend uses `@backend/*` (→ `apps/nebula-chat-server/src/`).
 
 ---
 
 ## Monorepo Structure
 
-```
+```text
 nebula-chat/
 ├── apps/
 │   ├── nebula-chat-client/   # React SPA (frontend) — see its AGENTS.md

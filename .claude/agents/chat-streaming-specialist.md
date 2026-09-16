@@ -38,4 +38,4 @@ Single owner for everything on the chat hot path: SSE transport, token budgeting
 
 - `pnpm --filter nebula-chat-server typecheck`
 - Manual: send a long prompt, observe chunked SSE, observe cache hit on replay.
-- `pnpm --filter nebula-chat-server test` (once M-9 testing lib is in place).
+- `pnpm --filter nebula-chat-server test` — the streaming hot path is covered; keep it above the 80% gate.

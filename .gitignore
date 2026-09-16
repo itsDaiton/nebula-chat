@@ -37,3 +37,6 @@ megalinter-reports/
 
 # Vendored skills ship OpenAI-runner display metadata that Claude never reads
 .claude/skills/*/agents/
+
+# Vitest coverage output (ADR-0008)
+coverage/
