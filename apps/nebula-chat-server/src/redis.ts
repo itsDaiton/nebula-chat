@@ -31,7 +31,7 @@ export type CachedStreamData = {
  * future ticket. Key composition and hashing come from `@nebula-chat/redis`.
  */
 export const chatCacheKey = (data: CreateChatStreamDTO): string => {
-  const conversationId = data.conversationId || 'default';
+  const conversationId = data.conversationId ?? 'default';
   const lastUserMessage = [...data.messages].reverse().find((msg) => msg.role === 'user');
   const prompt = lastUserMessage?.content ?? '';
 
