@@ -9,3 +9,8 @@ insert_final_newline = true
 
 [*.md]
 trim_trailing_whitespace = false
+# Markdown indentation is content-driven — a sub-bullet under an ordered item
+# aligns at 3 spaces (past "1. "), which is CommonMark-correct but trips
+# editorconfig-checker's "multiple of indent_size" rule. Unset it for Markdown so
+# the checker stops fighting valid nesting; markdownlint governs Markdown style.
+indent_size = unset
