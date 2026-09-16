@@ -4,11 +4,13 @@ on:
   pull_request:
     paths:
       - render.yaml
+      - .github/workflows/validate-render-blueprint.yml
   push:
     branches:
       - main
     paths:
       - render.yaml
+      - .github/workflows/validate-render-blueprint.yml
   workflow_dispatch:
 
 permissions: {}
@@ -32,5 +34,13 @@ jobs:
       - name: Download Render schema
         run: curl -fsSL https://render.com/schema/render.yaml.json -o render.schema.json
 
+      # ajv-cli 5 parses YAML with js-yaml 3's `safeLoad`, but `pnpm dlx` run
+      # from the repo root applies the workspace `js-yaml: ^4` override, where
+      # `safeLoad` is removed. ajv-cli then falls back to `require()`-ing the
+      # file and fails with "Unexpected token ':'". Converting with yq (on the
+      # runner image) hands ajv plain JSON and keeps it out of YAML parsing.
+      - name: Convert render.yaml to JSON
+        run: yq -o=json '.' render.yaml > render.json
+
       - name: Validate render.yaml against Render schema
-        run: pnpm dlx ajv-cli validate --spec=draft2020 --strict=false -s render.schema.json -d render.yaml
+        run: pnpm dlx ajv-cli validate --spec=draft2020 --strict=false -s render.schema.json -d render.json
