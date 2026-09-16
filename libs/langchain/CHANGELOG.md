@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-langchain-v1.1.0...nebula-chat-langchain-v1.2.0) (2026-09-16)
+
+
+### Features
+
+* **test:** add Vitest unit testing across server, client and libs ([#305](https://github.com/itsDaiton/nebula-chat/issues/305)) ([e8c09ee](https://github.com/itsDaiton/nebula-chat/commit/e8c09eec1385c11ab1d6744ae7a75b79713b47fd))
+
 ## [1.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-langchain-v1.0.1...nebula-chat-langchain-v1.1.0) (2026-05-03)
 
 

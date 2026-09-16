@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v0.3.1...nebula-chat-db-v0.4.0) (2026-09-16)
+
+
+### Features
+
+* **test:** add Vitest unit testing across server, client and libs ([#305](https://github.com/itsDaiton/nebula-chat/issues/305)) ([e8c09ee](https://github.com/itsDaiton/nebula-chat/commit/e8c09eec1385c11ab1d6744ae7a75b79713b47fd))
+
 ## [0.3.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v0.3.0...nebula-chat-db-v0.3.1) (2026-09-12)
 
 
