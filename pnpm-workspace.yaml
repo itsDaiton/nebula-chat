@@ -47,6 +47,19 @@ allowBuilds:
 # instead of quietly falling back to a version inside the cooldown window.
 minimumReleaseAge: 14400
 
+# `minimumReleaseAgeStrict` (auto-on above) makes resolution *fail* rather than
+# fall back when the newest in-range version is inside the cooldown window. That
+# is what we want for our own installs, but it also breaks Dependabot: its
+# `pnpm update <dep> --lockfile-only` re-resolves the whole tree, and when a
+# transitive dep like remeda (pulled in by orval) publishes a release inside the
+# window, pnpm hard-errors with ERR_PNPM_NO_MATURE_MATCHING_VERSION and *every*
+# dependency in the group fails to update. remeda ships frequent point releases
+# we never pin directly, so exempt it from the age gate — the packages that pull
+# it in are already covered by the cooldown. Add further offenders here as they
+# surface rather than relaxing the gate globally.
+minimumReleaseAgeExclude:
+  - remeda
+
 # drizzle-orm declares every driver it can speak to as an optional peer, which
 # drags the whole Prisma toolchain into the dev tree. ADR 0004 replaced Prisma
 # with Drizzle, so nothing here needs it. Skipping it also sidesteps
