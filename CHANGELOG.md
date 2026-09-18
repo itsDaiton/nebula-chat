@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.23.1...nebula-chat-v1.23.2) (2026-09-18)
+
+
+### Bug Fixes
+
+* **ci:** exempt remeda from pnpm minimumReleaseAge so Dependabot resolves ([#314](https://github.com/itsDaiton/nebula-chat/issues/314)) ([c0a7b39](https://github.com/itsDaiton/nebula-chat/commit/c0a7b39ab35592d56c24462bdb82d95804dcf876))
+
 ## [1.23.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.23.0...nebula-chat-v1.23.1) (2026-09-16)
 
 
