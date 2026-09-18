@@ -33,7 +33,9 @@
     "libs/redis": {
       "release-type": "node",
       "component": "nebula-chat-redis",
-      "include-component-in-tag": true
+      "include-component-in-tag": true,
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
     },
     "openapi": {
       "release-type": "node",
