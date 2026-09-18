@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v1.5.0...nebula-chat-openapi-v1.6.0) (2026-09-18)
+
+
+### Features
+
+* **redis:** add @nebula-chat/redis lib ([#312](https://github.com/itsDaiton/nebula-chat/issues/312)) ([3c6f77f](https://github.com/itsDaiton/nebula-chat/commit/3c6f77ff7a197a879c794029407671ca45d475ae))
+
 ## [1.5.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v1.4.0...nebula-chat-openapi-v1.5.0) (2026-09-16)
 
 
