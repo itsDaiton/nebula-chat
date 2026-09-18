@@ -54,7 +54,18 @@ ADDITIONAL_EXCLUDED_DIRECTORIES:
 # betterleaks, secretlint, trufflehog and kingfisher, so the rule is redundant.
 # DS126858 (weak hash): the only match is the substring `mD4` inside a base64
 # integrity hash in pnpm-lock.yaml. Nothing in this repo uses MD4.
-REPOSITORY_DEVSKIM_ARGUMENTS: ["--ignore-rule-ids", "DS173237", "DS126858"]
+# DS162092 (accessing localhost): the only matches are dev-only defaults —
+# docker-compose.yml, env.ts's CLIENT_URL fallback, serverConfig.ts, the test
+# harness — none of which ship as production endpoints. TLS/host for real
+# deployments is a deployment-config concern, not source hygiene.
+# DS137138 (URL without TLS): the only match is a deliberate `http://example.com`
+# fixture in urlUtils.test.ts that exists to prove the URL-safety check handles
+# non-TLS URLs; rewriting it to https would defeat the test.
+# DS172411 (review setTimeout for untrusted data): a note-level match on the
+# debounce timer in useConversationsSearchStore.ts — a fixed numeric delay with a
+# static callback, no untrusted input. setTimeout debounces are idiomatic here.
+REPOSITORY_DEVSKIM_ARGUMENTS:
+  ["--ignore-rule-ids", "DS173237", "DS126858", "DS162092", "DS137138", "DS172411"]
 
 # jsonlint is strict JSON. Every tsconfig in this repo is JSONC — tsconfig.app.json
 # has carried `/* Bundler mode */` comments since it was generated — so jsonlint
@@ -102,7 +113,14 @@ TYPESCRIPT_STANDARD_ARGUMENTS: -p tsconfig.eslint.json
 # root belongs to no lint TSConfig and ts-standard cannot parse it at all
 # ("that TSConfig does not include this file"). eslint.config.ts ignores them
 # for exactly this reason.
-TYPESCRIPT_STANDARD_FILTER_REGEX_EXCLUDE: '(\.test\.tsx?$|/tests?/|/generated/|\.config\.[cm]?tsx?$)'
+#
+# `\.hook\.ts$` (Fastify preHandler hooks) is excluded because ts-standard
+# resolves `req.body as CreateChatStreamDTO` to `any` — that DTO is a `z.infer`
+# of a schema importing from `@nebula-chat/langchain`, whose built types
+# ts-standard does not load — and then raises `strict-boolean-expressions` /
+# `restrict-plus-operands` on every access. eslint.config.ts (the source of
+# truth) does not enable those rules and passes on these files.
+TYPESCRIPT_STANDARD_FILTER_REGEX_EXCLUDE: '(\.test\.tsx?$|/tests?/|/generated/|\.config\.[cm]?tsx?$|\.hook\.ts$)'
 
 SHOW_ELAPSED_TIME: true
 

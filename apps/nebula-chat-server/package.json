@@ -23,12 +23,12 @@
     "@nebula-chat/db": "workspace:*",
     "@nebula-chat/langchain": "workspace:*",
     "@nebula-chat/otel": "workspace:*",
+    "@nebula-chat/redis": "workspace:*",
     "dotenv": "^17.4.0",
     "drizzle-orm": "catalog:",
     "fastify": "^5.4.0",
     "fastify-plugin": "^5.0.0",
     "fastify-type-provider-zod": "^6.1.0",
-    "redis": "^5.11.0",
     "zod": "^4.4.2"
   },
   "devDependencies": {

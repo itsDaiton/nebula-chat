@@ -19,8 +19,6 @@ import { corsOptions } from '@backend/config/cors.config';
 import { env } from '@backend/env';
 import { errorHandler } from '@backend/errors/error.handler';
 import { logger } from '@backend/logger';
-import { onCloseHook } from '@backend/hooks/onClose.hook';
-import cacheRoutes from '@backend/cache/cache.routes';
 import chatRoutes from '@backend/modules/chat/chat.routes';
 import conversationRoutes from '@backend/modules/conversation/conversation.routes';
 import messageRoutes from '@backend/modules/message/message.routes';
@@ -61,6 +59,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   app.setSerializerCompiler(serializerCompiler);
 
   await app.register(import('./plugins/db.plugin'));
+  await app.register(import('./plugins/redis.plugin'));
   await app.register(sensible);
   await app.register(cors, corsOptions);
   await app.register(rateLimit, { global: false });
@@ -80,7 +79,6 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
         { name: 'Chat', description: 'Chat streaming endpoints' },
         { name: 'Conversations', description: 'Conversation management' },
         { name: 'Messages', description: 'Message management' },
-        { name: 'Cache', description: 'Cache inspection and management' },
       ],
     },
     transform: jsonSchemaTransform,
@@ -130,12 +128,10 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   app.get('/openapi.json', { schema: { hide: true } }, async () => app.swagger());
 
   app.setErrorHandler(errorHandler);
-  app.addHook('onClose', onCloseHook);
 
   await app.register(chatRoutes, { prefix: '/api/chat' });
   await app.register(conversationRoutes, { prefix: '/api/conversations' });
   await app.register(messageRoutes, { prefix: '/api/messages' });
-  await app.register(cacheRoutes, { prefix: '/api/cache' });
 
   return app;
 };

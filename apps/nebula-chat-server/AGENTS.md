@@ -28,6 +28,7 @@ apps/nebula-chat-server/src/
 ├── server.ts                      # Thin entry point — calls buildApp() then app.listen()
 ├── env.ts                         # Zod-validated env schema — single source for all process.env reads
 ├── db.ts                          # DB client singleton (createDbClient from @nebula-chat/db)
+├── redis.ts                       # Redis toolkit singleton + chat cache helpers (createRedis from @nebula-chat/redis)
 ├── config/
 │   ├── cors.config.ts             # Allowed origins, CORS options
 │   ├── headers.config.ts          # SSE + cache response headers (uses http.ServerResponse)
@@ -60,15 +61,14 @@ apps/nebula-chat-server/src/
 │       ├── message.service.ts
 │       ├── message.controller.ts
 │       └── message.routes.ts
-└── cache/                         # Redis-backed cache as its own module
-    ├── cache.types.ts
-    ├── cache.config.ts            # Key format, TTL (600 000 ms), max items (1000)
-    ├── cache.client.ts            # Redis connection
-    ├── cache.service.ts           # get, set, stats, eviction
-    ├── cache.validation.ts
-    ├── cache.controller.ts
-    └── cache.routes.ts
+└── plugins/
+    ├── db.plugin.ts               # Decorates app.db (@nebula-chat/db)
+    └── redis.plugin.ts            # Decorates app.redis (@nebula-chat/redis); closes it on shutdown
 ```
+
+Redis is no longer an in-app module. It lives in the `@nebula-chat/redis` lib
+(shared connection + `cache` primitive), registered via `plugins/redis.plugin.ts`
+and consumed through `app.redis.cache`. See [ADR-0009](../../docs/adr/0009-nebula-chat-redis-lib.md).
 
 ---
 
@@ -194,19 +194,23 @@ Schema lives at `libs/db/src/schema.ts` (`@nebula-chat/db`). Three tables: `user
 
 ## Caching — Redis
 
-The cache is a Redis-backed SSE stream store keyed by conversation + model + prompt hash.
+Redis access is provided by the **`@nebula-chat/redis`** lib (shared connection manager +
+single-tier `cache` primitive), registered by `plugins/redis.plugin.ts` and reached through
+`app.redis`. The chat cache helpers (`chatCacheKey`, `getCachedStream`, `saveCachedStream`) live in
+`src/redis.ts` alongside the toolkit singleton and are imported from `@backend/redis`. See
+[ADR-0009](../../docs/adr/0009-nebula-chat-redis-lib.md).
 
-**Key format:** `conversation:{conversationId}:model:{model}:prompt:{sha256(prompt)[0:16]}`
+**Key format** (built in `src/redis.ts` via the lib's `buildKey`/`hashText`, kept as-is per ADR-0009):
+`conversation:{conversationId}:model:{model}:prompt:{sha256(lastUserMessage)[0:16]}`
 
 **Flow:**
 
-1. `chat.cacheCheck.hook.ts` preHandler runs before the controller. If a key exists it replays the cached token stream and returns — the LLM provider is never called.
-2. `chat.streamCapture.hook.ts` preHandler monkey-patches `reply.raw.write` after a real completion call. When the response ends it saves the full SSE stream to Redis.
-3. Max 1,000 cache entries. On overflow the oldest key (FIFO tracked in a Redis list) is evicted.
-4. TTL: 600,000 ms (10 minutes).
-5. **Fail-open:** all Redis errors are caught; the app continues without caching.
+1. `chat.cacheCheck.hook.ts` preHandler runs before the controller. If `regenerate` is set it bypasses the cache; otherwise, on a hit it replays the cached token stream and returns — the LLM provider is never called.
+2. `chat.streamCapture.hook.ts` preHandler monkey-patches `reply.raw.write` after a real completion call. When the response ends it saves (and, on regenerate, overwrites) the full SSE stream to Redis.
+3. TTL: 600 seconds (10 minutes). The keyspace is bounded by TTL + Redis `maxmemory-policy` (`allkeys-lru`) — there is no hand-rolled eviction.
+4. **Fail-open:** every cache operation swallows Redis errors (read → miss, write → no-op), logged through `@nebula-chat/otel`; the app continues without caching.
 
-Cache stats and management endpoints live at `/api/cache/*`.
+Cache hit/miss are emitted as OpenTelemetry metrics; there are no `/api/cache/*` admin endpoints (removed in the migration — a dashboard is a later concern).
 
 ---
 
@@ -352,12 +356,12 @@ pnpm backend test:coverage
 
 - **Mock at the nearest boundary to an external system, and nothing above it.** For a CRUD route that
   is the repository: `vi.mock` the `*.repository.ts` module and leave the service and controller real —
-  mocking a service to test its own controller tests nothing. Two routes have their boundary elsewhere,
-  because Postgres is not the system they talk to: `/api/chat/stream` reaches the LLM provider through
-  `chat.service`, and the cache routes reach Redis through `cache.service`, so those are the modules to
-  fake. The rule is the same one either way — fake the thing that would otherwise open a socket, keep
-  everything between it and the HTTP boundary real — and the faked module gets its own `.service` test
-  at its own seam.
+  mocking a service to test its own controller tests nothing. `/api/chat/stream` has its boundary
+  elsewhere, because Postgres is not the system it talks to: it reaches the LLM provider through
+  `chat.service` and Redis through `@backend/redis` (`src/redis.ts`), so those are the modules the route
+  test fakes. The rule is the same one either way — fake the thing that would otherwise open a socket,
+  keep everything between it and the HTTP boundary real — and the faked module gets its own unit test at
+  its own seam (`src/tests/redis.test.ts`; the lib's `cache` primitive is tested in `@nebula-chat/redis`).
 - **No database, no Redis, no network.** The CI `DATABASE_URL` secret points at a shared database and is
   off-limits to tests.
 - **Test each layer at its seam**: `.validation` (Zod schemas — accept and reject cases), `.service`

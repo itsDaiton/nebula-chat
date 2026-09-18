@@ -7,13 +7,13 @@
 
 ## Ticket metadata
 
-| Field          | Value                                                       |
-| -------------- | ----------------------------------------------------------- |
-| **ID**         | M-4                                                         |
-| **Package**    | `libs/redis` → published as `@nebula-chat/redis`            |
-| **Depends on** | `@nebula-chat/otel` (M-5, merged) — hard dependency         |
-| **Blocks**     | Nothing (but M-6/M-7/M-8 will extend this lib)              |
-| **Standalone** | Yes                                                         |
+| Field          | Value                                               |
+| -------------- | --------------------------------------------------- |
+| **ID**         | M-4                                                 |
+| **Package**    | `libs/redis` → published as `@nebula-chat/redis`    |
+| **Depends on** | `@nebula-chat/otel` (M-5, merged) — hard dependency |
+| **Blocks**     | Nothing (but M-6/M-7/M-8 will extend this lib)      |
+| **Standalone** | Yes                                                 |
 
 ---
 
@@ -136,14 +136,14 @@ Good tests here assert **external behavior**, never implementation details (not 
    - Redis failure → request still succeeds uncached (**fail-open**).
 2. **`cache` primitive (unit, new seam) in `libs/redis`.** Vitest unit tests against a mocked ioredis (e.g. `ioredis-mock` or a hand fake), one test file per module in a `tests/` folder beside the source (repo convention). Cover: `get`/`set`/`del`/`clear`, namespace prefixing, per-call TTL passthrough, and **fail-open** (a connection whose commands throw → `get` returns null, `set` is a no-op, nothing propagates).
 
-Not tested (deliberately): the connection manager's lazy-subscriber/BullMQ paths (no consumer yet — out of scope), and OTel metric emission (asserted as hit/miss *behavior* at seam #1, not by inspecting counters). The old module's `cache.service`/`cache.client`/`cache.routes` tests are deleted with the module; seams #1 + #2 replace their coverage.
+Not tested (deliberately): the connection manager's lazy-subscriber/BullMQ paths (no consumer yet — out of scope), and OTel metric emission (asserted as hit/miss _behavior_ at seam #1, not by inspecting counters). The old module's `cache.service`/`cache.client`/`cache.routes` tests are deleted with the module; seams #1 + #2 replace their coverage.
 
 Consistent with **ADR-0008**: unit tests only, no testcontainers, no live database, no `supertest`.
 
 ## Out of Scope
 
 - **Any change to the cache key** — full-context hashing, dropping `conversationId`, including `temperature`/`systemPrompt`, and semantic/embedding-based caching are a **separate future ticket**.
-- **Building** pub/sub, Redis streams, rate-limiting, or distributed locks. These are *designed-for* seams only; each lands with its consuming ticket (M-6/M-7/M-8).
+- **Building** pub/sub, Redis streams, rate-limiting, or distributed locks. These are _designed-for_ seams only; each lands with its consuming ticket (M-6/M-7/M-8).
 - Wiring BullMQ itself (M-7) — this ticket only exposes the `connection` accessor it will use.
 - An opt-in L1 in-process LRU wrapper — added later only if a hot path proves it needs it.
 - A cache admin dashboard / HTTP admin surface — a later concern.

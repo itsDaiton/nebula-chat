@@ -5,12 +5,15 @@ import { createTestApp } from '@backend/test/app';
 
 vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
-vi.mock('@backend/cache/cache.service', () => ({
-  cacheService: {
-    generateKey: vi.fn(() => 'cache-key'),
-    getFromCache: vi.fn(),
-    saveToCache: vi.fn(async () => undefined),
-  },
+// @backend/redis is the boundary to Redis: the hooks call its cache helpers, so
+// faking the module keeps this route test about routing, hijacking and the cache
+// hooks without opening a connection.
+vi.mock('@backend/redis', () => ({
+  redis: { cache: {}, connection: {}, close: vi.fn(async () => undefined) },
+  closeRedis: vi.fn(async () => undefined),
+  chatCacheKey: vi.fn(() => 'cache-key'),
+  getCachedStream: vi.fn(),
+  saveCachedStream: vi.fn(async () => undefined),
 }));
 
 // The whole chat service is faked: the controller and both hooks import from it,
@@ -31,11 +34,12 @@ vi.mock('@backend/modules/message/message.service', () => ({
   },
 }));
 
-import { cacheService } from '@backend/cache/cache.service';
+import { getCachedStream, saveCachedStream } from '@backend/redis';
 import { chatService, createUserMessage } from '@backend/modules/chat/chat.service';
 import { messageService } from '@backend/modules/message/message.service';
 
-const cache = vi.mocked(cacheService);
+const mockedGetCachedStream = vi.mocked(getCachedStream);
+const mockedSaveCachedStream = vi.mocked(saveCachedStream);
 const chat = vi.mocked(chatService);
 const mockedCreateUserMessage = vi.mocked(createUserMessage);
 
@@ -80,12 +84,11 @@ afterAll(async () => {
 beforeEach(async () => {
   // raw.end() emits 'finish' asynchronously, so the previous request's capture
   // hook can still be in flight. Let it land before clearing, or its
-  // saveToCache call is attributed to this test.
+  // saveCachedStream call is attributed to this test.
   await new Promise((resolve) => setImmediate(resolve));
   vi.clearAllMocks();
-  cache.generateKey.mockReturnValue('cache-key');
-  cache.getFromCache.mockResolvedValue(null);
-  cache.saveToCache.mockResolvedValue(undefined);
+  mockedGetCachedStream.mockResolvedValue(null);
+  mockedSaveCachedStream.mockResolvedValue(undefined);
   mockedCreateUserMessage.mockResolvedValue({
     conversationId: '11111111-1111-4111-8111-111111111111',
     userMessageId: '22222222-2222-4222-8222-222222222222',
@@ -141,6 +144,7 @@ describe('POST /api/chat/stream — validation', () => {
     const withoutConversation = { model: validBody.model, messages: validBody.messages };
 
     const res = await post(withoutConversation, app);
+    await new Promise((resolve) => setImmediate(resolve));
 
     expect(res.statusCode).toBe(200);
   });
@@ -149,6 +153,7 @@ describe('POST /api/chat/stream — validation', () => {
 describe('POST /api/chat/stream — cache miss', () => {
   it('streams the model response as SSE and terminates with an end event', async () => {
     const res = await post(validBody, app);
+    await new Promise((resolve) => setImmediate(resolve));
 
     expect(res.statusCode).toBe(200);
     expect(res.headers['content-type']).toBe('text/event-stream');
@@ -157,8 +162,9 @@ describe('POST /api/chat/stream — cache miss', () => {
 
   it('consults the cache before calling the model', async () => {
     await post(validBody, app);
+    await new Promise((resolve) => setImmediate(resolve));
 
-    expect(cache.getFromCache).toHaveBeenCalledWith('cache-key');
+    expect(mockedGetCachedStream).toHaveBeenCalledWith('cache-key');
     expect(chat.streamResponse).toHaveBeenCalled();
   });
 
@@ -166,7 +172,7 @@ describe('POST /api/chat/stream — cache miss', () => {
     await post(validBody, app);
     await new Promise((resolve) => setImmediate(resolve));
 
-    expect(cache.saveToCache).toHaveBeenCalledWith(
+    expect(mockedSaveCachedStream).toHaveBeenCalledWith(
       'cache-key',
       expect.stringContaining('event: token'),
       expect.objectContaining({ totalTokens: 6 }),
@@ -177,15 +183,16 @@ describe('POST /api/chat/stream — cache miss', () => {
     await post(validBody, app);
     await new Promise((resolve) => setImmediate(resolve));
 
-    const cached = cache.saveToCache.mock.calls[0]![1];
+    const cached = mockedSaveCachedStream.mock.calls[0]![1];
     expect(cached).not.toContain('event: usage');
     expect(cached).not.toContain('event: end');
   });
 
   it('falls open to normal streaming when the cache lookup throws', async () => {
-    cache.getFromCache.mockRejectedValue(new Error('redis down'));
+    mockedGetCachedStream.mockRejectedValue(new Error('redis down'));
 
     const res = await post(validBody, app);
+    await new Promise((resolve) => setImmediate(resolve));
 
     expect(res.statusCode).toBe(200);
     expect(chat.streamResponse).toHaveBeenCalled();
@@ -203,8 +210,8 @@ describe('POST /api/chat/stream — cache miss', () => {
     await post(validBody, app);
     await new Promise((resolve) => setImmediate(resolve));
 
-    expect(cache.saveToCache).toHaveBeenCalled();
-    const lastCall = cache.saveToCache.mock.calls.at(-1)!;
+    expect(mockedSaveCachedStream).toHaveBeenCalled();
+    const lastCall = mockedSaveCachedStream.mock.calls.at(-1)!;
     expect(lastCall[1].trim()).toBe('');
   });
 });
@@ -216,7 +223,7 @@ describe('POST /api/chat/stream — cache hit', () => {
   };
 
   it('replays the cached stream without calling the model', async () => {
-    cache.getFromCache.mockResolvedValue(cachedEntry);
+    mockedGetCachedStream.mockResolvedValue(cachedEntry);
 
     const res = await post(validBody, app);
 
@@ -225,7 +232,7 @@ describe('POST /api/chat/stream — cache hit', () => {
   });
 
   it('marks the response as a cache hit', async () => {
-    cache.getFromCache.mockResolvedValue(cachedEntry);
+    mockedGetCachedStream.mockResolvedValue(cachedEntry);
 
     const res = await post(validBody, app);
 
@@ -240,7 +247,7 @@ describe('POST /api/chat/stream — cache hit', () => {
   });
 
   it('announces a new conversation when the replay creates one', async () => {
-    cache.getFromCache.mockResolvedValue(cachedEntry);
+    mockedGetCachedStream.mockResolvedValue(cachedEntry);
     mockedCreateUserMessage.mockResolvedValue({
       conversationId: '11111111-1111-4111-8111-111111111111',
       userMessageId: '22222222-2222-4222-8222-222222222222',
@@ -253,7 +260,7 @@ describe('POST /api/chat/stream — cache hit', () => {
   });
 
   it('replays zeroed usage when the cached entry carries none', async () => {
-    cache.getFromCache.mockResolvedValue({ tokens: sseToken('4') });
+    mockedGetCachedStream.mockResolvedValue({ tokens: sseToken('4') });
 
     const res = await post(validBody, app);
 
@@ -261,7 +268,7 @@ describe('POST /api/chat/stream — cache hit', () => {
   });
 
   it('persists the reconstructed assistant message from the cached tokens', async () => {
-    cache.getFromCache.mockResolvedValue(cachedEntry);
+    mockedGetCachedStream.mockResolvedValue(cachedEntry);
 
     await post(validBody, app);
 
@@ -271,12 +278,45 @@ describe('POST /api/chat/stream — cache hit', () => {
   });
 
   it('does not re-cache a replayed stream', async () => {
-    cache.getFromCache.mockResolvedValue(cachedEntry);
+    mockedGetCachedStream.mockResolvedValue(cachedEntry);
 
     await post(validBody, app);
     await new Promise((resolve) => setImmediate(resolve));
 
-    expect(cache.saveToCache).not.toHaveBeenCalled();
+    expect(mockedSaveCachedStream).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/chat/stream — regenerate', () => {
+  const cachedEntry = {
+    tokens: `${sseToken('4')}`,
+    usageData: { promptTokens: 5, completionTokens: 1, totalTokens: 6 },
+  };
+
+  it('bypasses the cache and calls the model even when an entry exists', async () => {
+    mockedGetCachedStream.mockResolvedValue(cachedEntry);
+
+    const res = await post({ ...validBody, regenerate: true }, app);
+    // Drain the fire-and-forget capture so its saveCachedStream is not
+    // attributed to a later test.
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(res.statusCode).toBe(200);
+    expect(mockedGetCachedStream).not.toHaveBeenCalled();
+    expect(chat.streamResponse).toHaveBeenCalled();
+  });
+
+  it('overwrites the cached entry with the fresh completion', async () => {
+    mockedGetCachedStream.mockResolvedValue(cachedEntry);
+
+    await post({ ...validBody, regenerate: true }, app);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(mockedSaveCachedStream).toHaveBeenCalledWith(
+      'cache-key',
+      expect.stringContaining('event: token'),
+      expect.objectContaining({ totalTokens: 6 }),
+    );
   });
 });
 
@@ -293,7 +333,7 @@ describe('POST /api/chat/stream — rate limiting', () => {
     expect(statuses[10]).toBe(429);
   });
 
-  it('does not spend another address\u2019s budget', async () => {
+  it('does not spend another address’s budget', async () => {
     const ip = '10.99.0.2';
     for (let i = 0; i < 11; i++) await post(validBody, app, ip);
 

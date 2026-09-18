@@ -3,11 +3,9 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.4.0
+ * OpenAPI spec version: 1.5.0
  */
 
-export * from './clearCache200';
-export * from './clearCache500';
 export * from './createConversation201';
 export * from './createConversation400';
 export * from './createConversation500';
@@ -18,15 +16,6 @@ export * from './createMessage500';
 export * from './createMessageBody';
 export * from './createMessageBodyRole';
 export * from './getApiRoot200';
-export * from './getCacheHealth200';
-export * from './getCacheHealth200Status';
-export * from './getCacheHealth500';
-export * from './getCacheKeys200';
-export * from './getCacheKeys500';
-export * from './getCacheStats200';
-export * from './getCacheStats200Stats';
-export * from './getCacheStats200StatsStats';
-export * from './getCacheStats500';
 export * from './getConversation200';
 export * from './getConversation400';
 export * from './getConversation404';

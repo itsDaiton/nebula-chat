@@ -12,6 +12,11 @@ export const createChatStreamSchema = z.object({
     .string()
     .refine((m) => Object.hasOwn(MODEL_REGISTRY, m), { message: 'Invalid model name' }),
   conversationId: z.uuid().optional(),
+  regenerate: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe('Bypass and overwrite any cached response, forcing a fresh completion'),
 });
 
 export const chatStreamResponseSchema = z.object({

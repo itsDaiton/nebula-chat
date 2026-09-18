@@ -1,8 +1,8 @@
 import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
-import { cacheService } from '@backend/cache/cache.service';
 import { setCacheHeaders } from '@backend/config/headers.config';
 import { createUserMessage, validateChatRequest } from '@backend/modules/chat/chat.service';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
+import { chatCacheKey, getCachedStream } from '@backend/redis';
 import {
   sseConversationCreated,
   sseUserMessageCreated,
@@ -19,8 +19,15 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
 ) => {
   try {
     const body = req.body as CreateChatStreamDTO;
-    const key = cacheService.generateKey(body);
-    const cachedData = await cacheService.getFromCache(key);
+
+    // A regenerate request bypasses the cache so the model is called afresh; the
+    // capture hook then overwrites the stale entry (ADR-0009).
+    if (body.regenerate) {
+      return;
+    }
+
+    const key = chatCacheKey(body);
+    const cachedData = await getCachedStream(key);
 
     if (!cachedData) {
       return;

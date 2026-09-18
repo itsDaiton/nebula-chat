@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
-import { cacheService } from '@backend/cache/cache.service';
+import { chatCacheKey, saveCachedStream } from '@backend/redis';
 import type { CreateChatStreamDTO, UsageData } from '@backend/modules/chat/chat.types';
 
 const extractUsageFromStream = (stream: string): UsageData | null => {
@@ -80,10 +80,10 @@ export const streamCaptureHook: preHandlerAsyncHookHandler = async (
       })
       .join('\n');
 
-    const finalKey = cacheService.generateKey(req.body as CreateChatStreamDTO);
+    const finalKey = chatCacheKey(req.body as CreateChatStreamDTO);
 
     req.log.info('Redis: Saving to cache');
-    cacheService.saveToCache(finalKey, filtered, usageData ?? undefined).catch((error) => {
+    saveCachedStream(finalKey, filtered, usageData ?? undefined).catch((error) => {
       req.log.error(error, 'Error saving to cache (fail-open)');
     });
   });
