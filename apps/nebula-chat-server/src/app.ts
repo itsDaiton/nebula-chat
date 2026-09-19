@@ -28,7 +28,7 @@ const { version } = JSON.parse(
   readFileSync(resolve(process.cwd(), '../../openapi/package.json'), 'utf8')
 ) as { version: string }
 
-export interface BuildAppOptions {
+export type BuildAppOptions = {
   /**
    * Logger the Fastify instance is built with. `src/server.ts` passes the same
    * instance it hands to `initTelemetry`, so the process runs one Pino logger.
