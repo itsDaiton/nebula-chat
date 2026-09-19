@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.12.0...nebula-chat-server-v1.12.1) (2026-09-19)
+
+
+### Bug Fixes
+
+* **openapi:** resolve Checkov CKV_OPENAPI_4/5/21 failures ([#319](https://github.com/itsDaiton/nebula-chat/issues/319)) ([6de7935](https://github.com/itsDaiton/nebula-chat/commit/6de79358062a5c22135a8586a9b6349b3d7003fa))
+
 ## [1.12.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.11.0...nebula-chat-server-v1.12.0) (2026-09-18)
 
 
