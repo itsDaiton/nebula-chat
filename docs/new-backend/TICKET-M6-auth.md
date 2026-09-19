@@ -8,7 +8,7 @@
 ## Ticket metadata
 
 | Field          | Value                                                                           |
-| -------------- | ------------------------------------------------------------------------------- |
+|----------------|---------------------------------------------------------------------------------|
 | **ID**         | M-6                                                                             |
 | **Package**    | `libs/auth` → published as `@nebula-chat/auth`, plus `apps/server` wiring       |
 | **Depends on** | M-1 (Fastify), M-2 (`@nebula-chat/db`), M-4 (`@nebula-chat/redis`) — all merged |

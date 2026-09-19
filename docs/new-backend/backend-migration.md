@@ -5,7 +5,7 @@
 ## Document index
 
 | File                                                   | Ticket | Description                                                         | Depends on         |
-| ------------------------------------------------------ | ------ | ------------------------------------------------------------------- | ------------------ |
+|--------------------------------------------------------|--------|---------------------------------------------------------------------|--------------------|
 | [TICKET-M1-fastify.md](./TICKET-M1-fastify.md)         | M-1    | Replace Express with Fastify                                        | Nothing — do first |
 | [TICKET-M2-db.md](./TICKET-M2-db.md)                   | M-2    | `@nebula-chat/db` — Drizzle ORM (replaces Prisma)                   | Nothing            |
 | [TICKET-M3-langchain.md](./TICKET-M3-langchain.md)     | M-3    | `@nebula-chat/langchain` — LangChain lib (replaces openai)          | Nothing            |
@@ -20,7 +20,7 @@
 ## Full package migration summary
 
 | Action | From                                             | To                                               | Notes                                                                                                                              |
-| ------ | ------------------------------------------------ | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+|--------|--------------------------------------------------|--------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
 | Remove | `express`, `@types/express`                      | `fastify` + plugins                              | Core framework                                                                                                                     |
 | Remove | `openai`                                         | `@langchain/openai` via `@nebula-chat/langchain` | LLM client                                                                                                                         |
 | Remove | `prisma`, `@prisma/client`, `@prisma/adapter-pg` | `drizzle-orm` + `pg`                             | ORM                                                                                                                                |
@@ -87,12 +87,12 @@ reads as a to-do list. The `Done` column is the source of truth; **tick it in th
 ticket** — M-5 merged with its row left blank, which is how this table goes stale.
 
 | Order | Ticket          | Done | Reason                                                           |
-| ----- | --------------- | ---- | ---------------------------------------------------------------- |
-| 1     | M-1 Fastify     | ✅   | Core — everything else plugs into it                             |
-| 2     | M-2 DB          | ✅   | Database access needed by most features                          |
-| 3     | M-3 LangChain   | ✅   | Core feature of the app (landed out of order, before M-5)        |
-| 4     | M-5 OTel        | ✅   | One logger seam before every later ticket adds log sites         |
-| 5     | M-9 Testing     | ✅   | **Moved up from 7** — see below                                  |
+|-------|-----------------|------|------------------------------------------------------------------|
+| 1     | M-1 Fastify     | ✅    | Core — everything else plugs into it                             |
+| 2     | M-2 DB          | ✅    | Database access needed by most features                          |
+| 3     | M-3 LangChain   | ✅    | Core feature of the app (landed out of order, before M-5)        |
+| 4     | M-5 OTel        | ✅    | One logger seam before every later ticket adds log sites         |
+| 5     | M-9 Testing     | ✅    | **Moved up from 7** — see below                                  |
 | 6     | M-4 Redis       |      | Shared Redis substrate; single-tier cache first (needs M-5 otel) |
 | 7     | M-6 Auth        |      | better-auth accounts + metered-anonymous; consumes M-2 & M-4     |
 | 8     | M-7 Queues      |      | Background jobs for long LLM calls                               |
