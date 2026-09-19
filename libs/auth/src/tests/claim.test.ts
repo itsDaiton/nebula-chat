@@ -16,7 +16,7 @@ const makeDb = () => {
 };
 
 describe('claimConversations', () => {
-  it('reassigns the anonymous user\'s conversations to the linked user', async () => {
+  it("reassigns the anonymous user's conversations to the linked user", async () => {
     const { db, update, set, where } = makeDb();
 
     await claimConversations(db, {
@@ -48,8 +48,8 @@ describe('claimConversations', () => {
     const update = vi.fn(() => ({ set }));
     const db = { update } as unknown as DbClient;
 
-    await expect(
-      claimConversations(db, { fromUserId: 'a', toUserId: 'b' }),
-    ).rejects.toThrow('db down');
+    await expect(claimConversations(db, { fromUserId: 'a', toUserId: 'b' })).rejects.toThrow(
+      'db down',
+    );
   });
 });
