@@ -29,5 +29,21 @@ A previously captured SSE token stream for a given conversation + model + prompt
 _Avoid_: Cached response.
 
 **User**:
-An account holder who owns conversations. A conversation's `userId` is nullable — anonymous/unauthenticated conversations are permitted by the current schema.
-_Avoid_: Account.
+Anyone who owns conversations. Every conversation has exactly one owner — `userId` is non-null. A User is either a **Guest** or a **Registered user**.
+_Avoid_: Account (an Account is an auth-provider link belonging to a User, not the User themselves).
+
+**Guest**:
+An anonymous User, auto-created on first use without any credentials, allowed a bounded number of messages (the **message allowance**) before registration is required to continue. Becomes a Registered user by **claiming** their conversations on sign-up or sign-in.
+_Avoid_: Anonymous user (that names a state; the Guest is the actor), visitor.
+
+**Registered user**:
+A User who has authenticated with a credential (email/password today; social providers later). Not subject to the message allowance.
+_Avoid_: Member, authenticated user.
+
+**Message allowance**:
+The maximum number of `user`-authored messages a Guest may send before they must register. Counted per Guest across all their conversations; assistant messages and regenerations do not count against it. Removed once the Guest becomes a Registered user.
+_Avoid_: Quota, rate limit (rate limiting is auth-endpoint abuse throttling — a separate concern).
+
+**Claim**:
+Reassigning a Guest's conversations to a Registered account at the moment they sign up or sign in, so that authenticating upgrades the Guest in place rather than resetting their history.
+_Avoid_: Merge, migrate.
