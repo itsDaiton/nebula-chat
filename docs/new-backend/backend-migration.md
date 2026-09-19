@@ -11,7 +11,7 @@
 | [TICKET-M3-langchain.md](./TICKET-M3-langchain.md)     | M-3    | `@nebula-chat/langchain` — LangChain lib (replaces openai)          | Nothing            |
 | [TICKET-M4-redis.md](./TICKET-M4-redis.md)             | M-4    | `@nebula-chat/redis` — shared Redis substrate (replaces bare redis) | M-5 (otel)         |
 | [TICKET-M5-otel.md](./TICKET-M5-otel.md)               | M-5    | `@nebula-chat/otel` — Pino + OpenTelemetry                          | Nothing            |
-| [TICKET-M6-auth.md](./TICKET-M6-auth.md)               | M-6    | Auth & security — JWT, argon2, OAuth2, helmet                       | M-1                |
+| [TICKET-M6-auth.md](./TICKET-M6-auth.md)               | M-6    | `@nebula-chat/auth` — better-auth (sessions, anonymous, claim)      | M-1, M-2, M-4      |
 | [TICKET-M7-queues.md](./TICKET-M7-queues.md)           | M-7    | Background jobs — BullMQ + dashboard                                | M-1, M-3           |
 | [TICKET-M8-realtime.md](./TICKET-M8-realtime.md)       | M-8    | Real-time — SSE streaming + WebSockets                              | M-1                |
 | [TICKET-M9-testing.md](./TICKET-M9-testing.md)         | M-9    | Testing — Vitest, Supertest, testcontainers, msw                    | M-1                |
@@ -36,9 +36,8 @@
 | Add    | —                                                | `pino`, `pino-http`                              | Structured logging                                            |
 | Add    | —                                                | `@opentelemetry/*` (3 packages)                  | Distributed tracing                                           |
 | Add    | —                                                | `langsmith`                                      | LLM observability                                             |
-| Add    | —                                                | `jose`, `argon2`                                 | JWT crypto + password hashing                                 |
-| Add    | —                                                | `@fastify/jwt`, `@fastify/oauth2`                | Auth plugins                                                  |
-| Add    | —                                                | `@fastify/helmet`, `@fastify/csrf-protection`    | Security headers                                              |
+| Add    | —                                                | `better-auth` (via `@nebula-chat/auth`)          | Auth substrate (M-6) — sessions, hashing, anonymous, claim. Replaces the old `jose`/`argon2`/`@fastify/jwt`/`@fastify/oauth2` plan |
+| Add    | —                                                | `@fastify/helmet`, `@fastify/csrf-protection`    | Security headers (optional M-6 follow-up)                     |
 | Add    | —                                                | `cockatiel`                                      | Circuit breaker                                               |
 | Add    | —                                                | `vitest`, `supertest`, `testcontainers`, `msw`   | Testing                                                       |
 | Add    | —                                                | `@fastify/websocket`                             | WebSockets                                                    |
@@ -95,7 +94,7 @@ ticket** — M-5 merged with its row left blank, which is how this table goes st
 | 4     | M-5 OTel        | ✅   | One logger seam before every later ticket adds log sites         |
 | 5     | M-9 Testing     | ✅   | **Moved up from 7** — see below                                  |
 | 6     | M-4 Redis       |      | Shared Redis substrate; single-tier cache first (needs M-5 otel) |
-| 7     | M-6 Auth        |      | Protect routes before adding features                            |
+| 7     | M-6 Auth        |      | better-auth accounts + metered-anonymous; consumes M-2 & M-4     |
 | 8     | M-7 Queues      |      | Background jobs for long LLM calls                               |
 | 9     | M-8 Real-time   |      | Streaming and presence                                           |
 | 10    | M-10 Resilience |      | Add last — wraps existing LLM calls                              |
@@ -120,7 +119,7 @@ erode the way it did over the previous four tickets.
 ## Ticket independence rules
 
 - **Lib tickets (M-2, M-3, M-5)** can be implemented in any order and merged independently. **M-4 (`@nebula-chat/redis`)** now depends on M-5 (otel) — it logs and emits metrics exclusively through `@nebula-chat/otel` — so M-4 lands after M-5 (already merged). See [TICKET-M4-redis.md](./TICKET-M4-redis.md).
-- **App tickets (M-6, M-7, M-8, M-9, M-10)** require M-1 (Fastify) to be complete.
+- **App tickets (M-6, M-7, M-8, M-9, M-10)** require M-1 (Fastify) to be complete. **M-6 (`@nebula-chat/auth`)** additionally depends on M-2 (`@nebula-chat/db`, for the auth schema) and M-4 (`@nebula-chat/redis`, for session/rate-limit storage) — both merged. See [TICKET-M6-auth.md](./TICKET-M6-auth.md) and [ADR-0010](../adr/0010-better-auth-for-auth.md).
 - **M-7 (Queues)** works without M-3 (LangChain lib) by calling OpenAI directly as a temporary measure, but should be updated to use `@nebula-chat/langchain` once M-3 is merged.
 - **M-9 (Testing)** infrastructure can be set up any time. Tests for a specific feature should be written in the same PR as that feature.
 
