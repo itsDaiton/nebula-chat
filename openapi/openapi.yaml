@@ -5,15 +5,7 @@ info:
   description: REST API for Nebula Chat
   contact:
     name: Nebula Chat
-security:
-  - cookieAuth: []
-
 components:
-  securitySchemes:
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: better-auth.session_token
   schemas: {}
 paths:
   /:
@@ -347,7 +339,6 @@ paths:
                 properties:
                   conversations:
                     type: array
-                    maxItems: 100
                     items:
                       type: object
                       properties:
@@ -423,7 +414,6 @@ paths:
             application/json:
               schema:
                 type: array
-                maxItems: 100
                 items:
                   type: object
                   properties:
@@ -716,7 +706,6 @@ paths:
             application/json:
               schema:
                 type: array
-                maxItems: 1000
                 items:
                   type: object
                   properties:
