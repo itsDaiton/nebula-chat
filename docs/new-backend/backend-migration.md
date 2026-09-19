@@ -19,28 +19,28 @@
 
 ## Full package migration summary
 
-| Action | From                                             | To                                               | Notes                                                         |
-| ------ | ------------------------------------------------ | ------------------------------------------------ | ------------------------------------------------------------- |
-| Remove | `express`, `@types/express`                      | `fastify` + plugins                              | Core framework                                                |
-| Remove | `openai`                                         | `@langchain/openai` via `@nebula-chat/langchain` | LLM client                                                    |
-| Remove | `prisma`, `@prisma/client`, `@prisma/adapter-pg` | `drizzle-orm` + `pg`                             | ORM                                                           |
-| Remove | `redis` (bare client)                            | `ioredis` (via `@nebula-chat/redis`)             | Shared Redis substrate; single-tier, no `lru-cache` (see M-4) |
-| Remove | `express-rate-limit`                             | `@fastify/rate-limit` + `@upstash/ratelimit`     | Rate limiting                                                 |
-| Remove | `swagger-ui-express`                             | `@fastify/swagger` + `@fastify/swagger-ui`       | API docs                                                      |
-| Remove | `cors`                                           | `@fastify/cors`                                  | CORS                                                          |
-| Keep   | `zod`                                            | —                                                | No change                                                     |
-| Keep   | `@asteasolutions/zod-to-openapi`                 | —                                                | No change                                                     |
-| Keep   | `tiktoken`                                       | —                                                | No change                                                     |
-| Keep   | `dotenv`, `tsx`, `tsc-alias`                     | —                                                | No change                                                     |
-| Add    | —                                                | `bullmq`, `@bull-board/fastify`                  | Job queue                                                     |
-| Add    | —                                                | `pino`, `pino-http`                              | Structured logging                                            |
-| Add    | —                                                | `@opentelemetry/*` (3 packages)                  | Distributed tracing                                           |
-| Add    | —                                                | `langsmith`                                      | LLM observability                                             |
+| Action | From                                             | To                                               | Notes                                                                                                                              |
+| ------ | ------------------------------------------------ | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Remove | `express`, `@types/express`                      | `fastify` + plugins                              | Core framework                                                                                                                     |
+| Remove | `openai`                                         | `@langchain/openai` via `@nebula-chat/langchain` | LLM client                                                                                                                         |
+| Remove | `prisma`, `@prisma/client`, `@prisma/adapter-pg` | `drizzle-orm` + `pg`                             | ORM                                                                                                                                |
+| Remove | `redis` (bare client)                            | `ioredis` (via `@nebula-chat/redis`)             | Shared Redis substrate; single-tier, no `lru-cache` (see M-4)                                                                      |
+| Remove | `express-rate-limit`                             | `@fastify/rate-limit` + `@upstash/ratelimit`     | Rate limiting                                                                                                                      |
+| Remove | `swagger-ui-express`                             | `@fastify/swagger` + `@fastify/swagger-ui`       | API docs                                                                                                                           |
+| Remove | `cors`                                           | `@fastify/cors`                                  | CORS                                                                                                                               |
+| Keep   | `zod`                                            | —                                                | No change                                                                                                                          |
+| Keep   | `@asteasolutions/zod-to-openapi`                 | —                                                | No change                                                                                                                          |
+| Keep   | `tiktoken`                                       | —                                                | No change                                                                                                                          |
+| Keep   | `dotenv`, `tsx`, `tsc-alias`                     | —                                                | No change                                                                                                                          |
+| Add    | —                                                | `bullmq`, `@bull-board/fastify`                  | Job queue                                                                                                                          |
+| Add    | —                                                | `pino`, `pino-http`                              | Structured logging                                                                                                                 |
+| Add    | —                                                | `@opentelemetry/*` (3 packages)                  | Distributed tracing                                                                                                                |
+| Add    | —                                                | `langsmith`                                      | LLM observability                                                                                                                  |
 | Add    | —                                                | `better-auth` (via `@nebula-chat/auth`)          | Auth substrate (M-6) — sessions, hashing, anonymous, claim. Replaces the old `jose`/`argon2`/`@fastify/jwt`/`@fastify/oauth2` plan |
-| Add    | —                                                | `@fastify/helmet`, `@fastify/csrf-protection`    | Security headers (optional M-6 follow-up)                     |
-| Add    | —                                                | `cockatiel`                                      | Circuit breaker                                               |
-| Add    | —                                                | `vitest`, `supertest`, `testcontainers`, `msw`   | Testing                                                       |
-| Add    | —                                                | `@fastify/websocket`                             | WebSockets                                                    |
+| Add    | —                                                | `@fastify/helmet`, `@fastify/csrf-protection`    | Security headers (optional M-6 follow-up)                                                                                          |
+| Add    | —                                                | `cockatiel`                                      | Circuit breaker                                                                                                                    |
+| Add    | —                                                | `vitest`, `supertest`, `testcontainers`, `msw`   | Testing                                                                                                                            |
+| Add    | —                                                | `@fastify/websocket`                             | WebSockets                                                                                                                         |
 
 ## Target monorepo structure
 

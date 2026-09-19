@@ -7,9 +7,9 @@
 
 ## Ticket metadata
 
-| Field          | Value                                                                          |
-| -------------- | ------------------------------------------------------------------------------ |
-| **ID**         | M-6                                                                            |
+| Field          | Value                                                                           |
+| -------------- | ------------------------------------------------------------------------------- |
+| **ID**         | M-6                                                                             |
 | **Package**    | `libs/auth` → published as `@nebula-chat/auth`, plus `apps/server` wiring       |
 | **Depends on** | M-1 (Fastify), M-2 (`@nebula-chat/db`), M-4 (`@nebula-chat/redis`) — all merged |
 | **Blocks**     | Nothing (M-7/M-8 may extend the `authStore` primitive)                          |
@@ -57,13 +57,13 @@ Anonymous access is **metered**: a Guest gets a bounded **message allowance**, a
 ### Package & tooling
 
 - New package `libs/auth`, name `@nebula-chat/auth`, published to the GitHub registry with `access:
-  restricted`, matching the other libs.
+restricted`, matching the other libs.
 - Build with **`tsup`**, use the `catalog:` protocol for shared dev deps, mirroring `libs/otel` / `libs/redis`.
 - Runtime deps: **`better-auth`**, `@nebula-chat/db` (`workspace:*`), `@nebula-chat/redis` (`workspace:*`), and
   `@nebula-chat/otel` (`workspace:*`) for logging.
 - New-lib plumbing (required, in this order): add `.gitignore` (`dist/`, `node_modules/`); add a `libs/auth`
   entry to `release-please-config.json` with `component: nebula-chat-auth` and `include-component-in-tag:
-  true`; then commit + push. (See the new-lib checklist in AGENTS.md.)
+true`; then commit + push. (See the new-lib checklist in AGENTS.md.)
 
 ### Schema ownership (see ADR-0010 §1) — drizzle-migration-engineer owns this
 
@@ -83,7 +83,7 @@ Anonymous access is **metered**: a Guest gets a bounded **message allowance**, a
 - Enable better-auth's **anonymous plugin**. `signIn.anonymous()` mints a Guest user + session on first use.
 - Configure **`onLinkAccount`** to **claim** the Guest's conversations: reassign their `conversations.userId`
   to the newly linked account before the anonymous user is cleaned up (default deletion is fine).
-- The **message allowance** is *our* logic, not better-auth's rate limiter:
+- The **message allowance** is _our_ logic, not better-auth's rate limiter:
   - Enforced in a **chat send pre-handler** in the chat module.
   - If the session user is a **Guest** and their `role='user'` message count **≥ cap**, reject the send with a
     machine-readable "registration required" response the client renders as a login wall.

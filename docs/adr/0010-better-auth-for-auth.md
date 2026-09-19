@@ -78,7 +78,7 @@ true` moves sessions back to Postgres in one line.
 The first shippable slice is **email/password auth (with the Have I Been Pwned plugin rejecting breached
 passwords), the anonymous plugin, and the claim** — social OAuth (Google/GitHub, near-trivial config in
 better-auth) is deferred to its own ticket rather than shipped half-built like the old ticket's
-`@fastify/oauth2`. **Email verification and password reset are deliberately *not* in the first slice**: they
+`@fastify/oauth2`. **Email verification and password reset are deliberately _not_ in the first slice**: they
 require a transactional email provider (Resend/SMTP), so they are M-6's named immediate follow-up rather than a
 silent omission. The message-allowance counter is a **live Postgres
 `count`** of the Guest's `role='user'` messages, not a Redis counter: at a cap of ~10 the count is trivial,
