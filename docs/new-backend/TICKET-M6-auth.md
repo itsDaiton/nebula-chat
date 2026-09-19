@@ -91,6 +91,9 @@ Anonymous access is **metered**: a Guest gets a bounded **message allowance**, a
     No Redis counter (exact, stateless, trivial at a cap of ~10).
   - Cap is **env-configured**, default **10**. Regenerations and assistant messages do **not** count.
   - Registered users are **uncapped**.
+- **Abuse backstops** for the cookie-reset hole (a Guest can reset their allowance by clearing cookies):
+  better-auth's IP rate-limiting plus a **captcha** on the anonymous/sign-up path (provider TBD — Cloudflare
+  Turnstile / hCaptcha / reCAPTCHA; may land in the first slice or a fast-follow).
 
 ### Storage: sessions in Redis via `@nebula-chat/redis` (see ADR-0010 §3)
 
@@ -109,8 +112,9 @@ Anonymous access is **metered**: a Guest gets a bounded **message allowance**, a
 
 The first PR is exactly this slice — no OAuth, no speculative capability:
 
-1. Add `libs/auth` exporting the configured better-auth instance (Drizzle adapter, anonymous plugin,
-   `authStore` secondaryStorage, cookieCache, rate limiting).
+1. Add `libs/auth` exporting the configured better-auth instance (Drizzle adapter, anonymous plugin, **Have I
+   Been Pwned plugin**, `authStore` secondaryStorage, cookieCache, rate limiting; captcha plugin if it makes
+   the first slice).
 2. Add the `authStore` primitive to `@nebula-chat/redis`.
 3. Add a Fastify **`auth.plugin.ts`** that mounts the catch-all `GET|POST /api/auth/*` route calling
    `auth.handler()`, and decorates the app with **`requireUser`** and **`requireRegistered`** (over
@@ -118,8 +122,9 @@ The first PR is exactly this slice — no OAuth, no speculative capability:
 4. Add the **message-allowance pre-handler** to the chat send path.
 5. Generate + migrate the schema changes (drizzle-migration-engineer): reshape `users`, add
    `session`/`account`/`verification`, `conversations.userId` → NOT NULL, relocate password hashes.
-6. Add env vars: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GUEST_MESSAGE_ALLOWANCE` (default 10). Remove the
-   old `JWT_SECRET` / `JWT_REFRESH_SECRET` design from `env.ts` (it is discarded).
+6. Add env vars: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GUEST_MESSAGE_ALLOWANCE` (default 10), and the
+   captcha provider secret if captcha lands in this slice. Remove the old `JWT_SECRET` / `JWT_REFRESH_SECRET`
+   design from `env.ts` (it is discarded).
 
 ## Testing Decisions
 
@@ -135,12 +140,20 @@ coverage gate**. Assert external behavior, never better-auth internals:
 2. **`authStore` primitive (unit, `libs/redis`).** Against a mocked ioredis: `get`/`set`/`getAndDelete`/
    `increment`/`delete`, namespace prefixing, TTL passthrough.
 3. **Claim (unit/integration).** `onLinkAccount` reassigns the Guest's conversations to the linked account.
+4. **Breached-password rejection (integration).** Registering with a known-breached password (HIBP) is
+   rejected.
 
 Do **not** unit-test better-auth's own session/hashing/verification — that's the library's responsibility.
 
 ## Out of Scope
 
-- **Social OAuth (Google/GitHub)** — deferred to its own ticket; it's config on the same instance.
+- **Email verification & password reset** — deferred to M-6's **immediate follow-up**; requires a transactional
+  email provider (Resend/SMTP) decision. The first slice ships password auth without them (documented
+  limitation, not a silent omission).
+- **Social OAuth (Google/GitHub)** — deferred to its own ticket; it's config on the same instance. (#318)
+- **Further better-auth capabilities** — passwordless (magic link / email OTP), passkey, 2FA, the OpenAPI
+  plugin ↔ Orval integration, JWT/Bearer for SSE/WS/workers, payments/tiered-allowance, API keys — catalogued
+  in **#318**, not scoped here.
 - **CSRF/helmet hardening** beyond better-auth's defaults — a later security-auditor pass (`@fastify/helmet`
   can land separately).
 - **Sessions in Postgres** — reversible via `storeSessionInDatabase` when scaling requires it; not now.

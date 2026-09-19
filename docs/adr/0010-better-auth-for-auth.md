@@ -54,8 +54,9 @@ in, the plugin's `onLinkAccount` hook **claims** their conversations (reassigns 
 account before the anonymous row is cleaned up, and the allowance no longer applies.
 
 The trade-off accepted: cookie-clearing resets a Guest's allowance, because the Guest identity is a session
-cookie. That is acceptable for a conversion gate (not a paywall); better-auth's own IP rate-limiting is the
-abuse backstop.
+cookie. That is acceptable for a conversion gate (not a paywall). The abuse backstops are better-auth's own IP
+rate-limiting plus a **captcha** on the anonymous/sign-up path (provider TBD — may land in the first slice or a
+fast-follow).
 
 ### 3. Sessions live in Redis via `@nebula-chat/redis` (the `authStore` primitive)
 
@@ -74,9 +75,12 @@ true` moves sessions back to Postgres in one line.
 
 ### 4. First slice is email/password + anonymous + claim; OAuth and the counter store are scoped tightly
 
-The first shippable slice is **email/password auth, the anonymous plugin, and the claim** — social OAuth
-(Google/GitHub, near-trivial config in better-auth) is deferred to its own ticket rather than shipped
-half-built like the old ticket's `@fastify/oauth2`. The message-allowance counter is a **live Postgres
+The first shippable slice is **email/password auth (with the Have I Been Pwned plugin rejecting breached
+passwords), the anonymous plugin, and the claim** — social OAuth (Google/GitHub, near-trivial config in
+better-auth) is deferred to its own ticket rather than shipped half-built like the old ticket's
+`@fastify/oauth2`. **Email verification and password reset are deliberately *not* in the first slice**: they
+require a transactional email provider (Resend/SMTP), so they are M-6's named immediate follow-up rather than a
+silent omission. The message-allowance counter is a **live Postgres
 `count`** of the Guest's `role='user'` messages, not a Redis counter: at a cap of ~10 the count is trivial,
 exact, needs no seeding, and adds no second source of truth. Redis is reserved for better-auth's own
 disposable state (sub-decision 3), not the allowance.
@@ -93,6 +97,11 @@ disposable state (sub-decision 3), not the allowance.
   `session`/`account`/`verification` stay out of the glossary as better-auth infrastructure.
 - We depend on better-auth's release cadence and its schema-generation CLI coexisting with `drizzle-kit`.
 - OAuth is a known, deferred follow-up, not missing scope.
+- **Email verification / password reset are not in the first slice** and require an email-provider decision;
+  they are the immediate M-6 follow-up.
+- Further better-auth capabilities worth evaluating after M-6 (passwordless, passkey, 2FA, the OpenAPI plugin ↔
+  Orval integration, JWT/Bearer for SSE/WS/workers, payments/tiered-allowance, API keys) are catalogued in
+  issue #318 rather than scoped here.
 
 ## Alternatives considered
 
