@@ -80,6 +80,16 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
         { name: 'Conversations', description: 'Conversation management' },
         { name: 'Messages', description: 'Message management' },
       ],
+      components: {
+        securitySchemes: {
+          cookieAuth: {
+            type: 'apiKey',
+            in: 'cookie',
+            name: 'better-auth.session_token',
+          },
+        },
+      },
+      security: [{ cookieAuth: [] }],
     },
     transform: jsonSchemaTransform,
   });

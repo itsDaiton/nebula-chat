@@ -15,7 +15,7 @@ export const conversationResponseSchema = z.object({
   createdAt: z.date().transform((d) => d.toISOString()),
 });
 
-export const conversationsArraySchema = z.array(conversationResponseSchema);
+export const conversationsArraySchema = z.array(conversationResponseSchema).max(100);
 
 export const searchConversationsQuerySchema = z.object({
   q: z.string().min(1).describe('Search query to filter conversations by title'),
@@ -30,7 +30,7 @@ export const getConversationsQuerySchema = z.object({
     .optional()
     .default(paginationConfig.defaultLimit)
     .describe(
-      `Number of conversations to fetch (1-${paginationConfig.maxLimit}, default ${paginationConfig.defaultLimit})`,
+      `Number of conversations to fetch (1-${String(paginationConfig.maxLimit)}, default ${String(paginationConfig.defaultLimit)})`,
     ),
   cursor: z
     .uuid()

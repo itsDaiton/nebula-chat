@@ -21,4 +21,4 @@ export const messageResponseSchema = z.object({
   createdAt: z.date().transform((d) => d.toISOString()),
 });
 
-export const messagesArraySchema = z.array(messageResponseSchema);
+export const messagesArraySchema = z.array(messageResponseSchema).max(1000);

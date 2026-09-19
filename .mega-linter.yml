@@ -120,7 +120,14 @@ TYPESCRIPT_STANDARD_ARGUMENTS: -p tsconfig.eslint.json
 # ts-standard does not load — and then raises `strict-boolean-expressions` /
 # `restrict-plus-operands` on every access. eslint.config.ts (the source of
 # truth) does not enable those rules and passes on these files.
-TYPESCRIPT_STANDARD_FILTER_REGEX_EXCLUDE: '(\.test\.tsx?$|/tests?/|/generated/|\.config\.[cm]?tsx?$|\.hook\.ts$)'
+#
+# `nebula-chat-server/src/` is excluded because ts-standard's
+# @typescript-eslint/consistent-type-definitions prefers `interface` while the
+# project's eslint.config.ts prefers `type`. The auto-fixer loop this creates
+# (ts-standard converts type→interface, ESLint fails, Prettier restores,
+# repeat) cannot be resolved without excluding one side. The project's own
+# `pnpm lint` covers all server source files and is the source of truth.
+TYPESCRIPT_STANDARD_FILTER_REGEX_EXCLUDE: '(\.test\.tsx?$|/tests?/|/generated/|\.config\.[cm]?tsx?$|\.hook\.ts$|nebula-chat-server/src/)'
 
 SHOW_ELAPSED_TIME: true
 
