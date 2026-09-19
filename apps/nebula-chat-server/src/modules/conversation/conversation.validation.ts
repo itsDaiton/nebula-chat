@@ -30,7 +30,7 @@ export const getConversationsQuerySchema = z.object({
     .optional()
     .default(paginationConfig.defaultLimit)
     .describe(
-      `Number of conversations to fetch (1-${paginationConfig.maxLimit}, default ${paginationConfig.defaultLimit})`,
+      `Number of conversations to fetch (1-${String(paginationConfig.maxLimit)}, default ${String(paginationConfig.defaultLimit)})`,
     ),
   cursor: z
     .uuid()
