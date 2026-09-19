@@ -34,19 +34,6 @@ export class ForbiddenError extends AppError {
   }
 }
 
-/**
- * A Guest has exhausted the message allowance (ADR-0010 §4). The stable `error`
- * name `RegistrationRequired` is the machine-readable signal the client detects
- * to render a login wall — do not rename it without updating the client.
- */
-export class RegistrationRequiredError extends AppError {
-  constructor(
-    message: string = 'Guest message allowance reached. Register or sign in to continue.',
-  ) {
-    super(message, 403, 'RegistrationRequired');
-  }
-}
-
 export class MissingConfigurationError extends AppError {
   constructor(configName: string) {
     super(`${configName} is not configured`, 500, 'MissingConfiguration');

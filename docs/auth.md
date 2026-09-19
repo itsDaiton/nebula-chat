@@ -118,16 +118,20 @@ No Redis counter is used — at a cap of ~10 the live count is exact and statele
 
 ### The client contract
 
-A capped Guest gets a **machine-readable** rejection the client renders as a login
-wall — a `403` whose body is:
+A capped Guest gets a plain `403 Forbidden` — the standard `AppError` shape:
 
 ```json
-{ "success": false, "error": "RegistrationRequired", "message": "..." }
+{
+  "success": false,
+  "error": "Forbidden",
+  "message": "Guest message allowance reached. Register or sign in to continue."
+}
 ```
 
-The client detects `error === 'RegistrationRequired'` on the chat send path. (No
-generated type exists for it — the `Chat` tag is excluded from the Orval client, so
-the chat SSE endpoint is consumed by hand-written code.)
+The client treats a `403` on the chat send path as the allowance wall and prompts
+the Guest to register or sign in. (No generated type exists for it — the `Chat` tag
+is excluded from the Orval client, so the chat SSE endpoint is consumed by
+hand-written code.)
 
 ## The claim
 

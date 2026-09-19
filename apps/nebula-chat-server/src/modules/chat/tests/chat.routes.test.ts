@@ -360,14 +360,14 @@ describe('POST /api/chat/stream — Guest message allowance', () => {
     expect(chat.streamResponse).toHaveBeenCalled();
   });
 
-  it('rejects a Guest at the cap with a machine-readable RegistrationRequired error', async () => {
+  it('rejects a Guest at the cap with a 403 Forbidden', async () => {
     mockedGetSession.mockResolvedValue(guestSession() as never);
     mockedCountUserMessages.mockResolvedValue(CAP);
 
     const res = await post(validBody, app);
 
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toMatchObject({ success: false, error: 'RegistrationRequired' });
+    expect(res.json()).toMatchObject({ success: false, error: 'Forbidden' });
     // Rejected before any model work.
     expect(chat.streamResponse).not.toHaveBeenCalled();
   });
