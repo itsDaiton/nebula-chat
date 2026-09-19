@@ -51,6 +51,9 @@ const mockedMessageService = vi.mocked(messageService);
 const CONVERSATION_ID = '11111111-1111-4111-8111-111111111111';
 const USER_MESSAGE_ID = '22222222-2222-4222-8222-222222222222';
 const ASSISTANT_MESSAGE_ID = '33333333-3333-4333-8333-333333333333';
+// The session owner threaded into conversation creation (conversations.userId is
+// NOT NULL, ADR-0010 §2).
+const OWNER_ID = '44444444-4444-4444-8444-444444444444';
 
 const request = (overrides: Partial<CreateChatStreamDTO> = {}): CreateChatStreamDTO =>
   ({
@@ -134,7 +137,7 @@ describe('validateChatRequest', () => {
 
 describe('createUserMessage', () => {
   it('reuses an existing conversation', async () => {
-    const result = await createUserMessage(CONVERSATION_ID, 'hello', 'user');
+    const result = await createUserMessage(CONVERSATION_ID, 'hello', 'user', OWNER_ID);
 
     expect(result).toEqual({
       conversationId: CONVERSATION_ID,
@@ -143,33 +146,35 @@ describe('createUserMessage', () => {
     });
   });
 
-  it('creates a conversation when none is supplied', async () => {
-    const result = await createUserMessage(undefined, 'hello there', 'user');
+  it('creates a conversation when none is supplied, owned by the session user', async () => {
+    const result = await createUserMessage(undefined, 'hello there', 'user', OWNER_ID);
 
     expect(result.isNewConversation).toBe(true);
-    expect(conversationRepo.createTx).toHaveBeenCalledWith(fakeTx, 'hello there');
+    expect(conversationRepo.createTx).toHaveBeenCalledWith(fakeTx, 'hello there', OWNER_ID);
   });
 
   it('titles a new conversation from the first 50 characters of the message', async () => {
-    await createUserMessage(undefined, 'x'.repeat(80), 'user');
+    await createUserMessage(undefined, 'x'.repeat(80), 'user', OWNER_ID);
 
-    expect(conversationRepo.createTx).toHaveBeenCalledWith(fakeTx, 'x'.repeat(50));
+    expect(conversationRepo.createTx).toHaveBeenCalledWith(fakeTx, 'x'.repeat(50), OWNER_ID);
   });
 
   it("falls back to 'New Chat' for an empty first message", async () => {
-    await createUserMessage(undefined, '', 'user');
+    await createUserMessage(undefined, '', 'user', OWNER_ID);
 
-    expect(conversationRepo.createTx).toHaveBeenCalledWith(fakeTx, 'New Chat');
+    expect(conversationRepo.createTx).toHaveBeenCalledWith(fakeTx, 'New Chat', OWNER_ID);
   });
 
   it('throws when the supplied conversation does not exist', async () => {
     conversationRepo.findByIdTx.mockResolvedValue(fromPartial(null));
 
-    await expect(createUserMessage(CONVERSATION_ID, 'hello', 'user')).rejects.toThrow('not found');
+    await expect(createUserMessage(CONVERSATION_ID, 'hello', 'user', OWNER_ID)).rejects.toThrow(
+      'not found',
+    );
   });
 
   it('writes the user message inside the same transaction', async () => {
-    await createUserMessage(CONVERSATION_ID, 'hello', 'user');
+    await createUserMessage(CONVERSATION_ID, 'hello', 'user', OWNER_ID);
 
     expect(messageRepo.createTx).toHaveBeenCalledWith(fakeTx, {
       conversationId: CONVERSATION_ID,

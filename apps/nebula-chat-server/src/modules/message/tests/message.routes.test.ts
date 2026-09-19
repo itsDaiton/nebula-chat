@@ -8,6 +8,13 @@ vi.mock('@backend/modules/message/message.repository', () => ({
 }));
 vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
+// The message routes are not owner-gated, but `buildApp()` registers the auth
+// plugin, which imports `@backend/auth`. Faking it keeps a real better-auth
+// instance (and its DB/Redis wiring) out of this unit test (ADR-0008).
+vi.mock('@backend/auth', () => ({
+  auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
+}));
+
 import { messageRepository } from '@backend/modules/message/message.repository';
 
 const repo = vi.mocked(messageRepository);

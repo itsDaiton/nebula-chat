@@ -9,8 +9,8 @@ import type {
 } from '@backend/modules/conversation/conversation.types';
 
 export const conversationRepository = {
-  async create({ title }: CreateConversationDTO) {
-    const [row] = await db.insert(conversations).values({ title }).returning();
+  async create({ title }: CreateConversationDTO, userId: string) {
+    const [row] = await db.insert(conversations).values({ title, userId }).returning();
     return row!;
   },
   async findById({ conversationId }: GetConversationParams) {
@@ -62,8 +62,8 @@ export const conversationRepository = {
     const [row] = await tx.select().from(conversations).where(eq(conversations.id, id));
     return row ?? null;
   },
-  async createTx(tx: DbTransaction, title: string) {
-    const [row] = await tx.insert(conversations).values({ title }).returning();
+  async createTx(tx: DbTransaction, title: string, userId: string) {
+    const [row] = await tx.insert(conversations).values({ title, userId }).returning();
     return row!;
   },
   async search(query: string, limit = paginationConfig.maxLimit) {

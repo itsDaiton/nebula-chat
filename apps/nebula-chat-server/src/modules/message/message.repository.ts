@@ -1,5 +1,5 @@
-import { eq, desc } from 'drizzle-orm';
-import { messages } from '@nebula-chat/db';
+import { eq, desc, and, count } from 'drizzle-orm';
+import { messages, conversations } from '@nebula-chat/db';
 import type { DbTransaction } from '@nebula-chat/db';
 import { db } from '@backend/db';
 import type {
@@ -15,6 +15,7 @@ export const messageRepository: {
   findAll: () => Promise<MessageRow[]>;
   createTx: (tx: DbTransaction, data: CreateMessageDTO) => Promise<MessageRow>;
   findByConversationId: (conversationId: string, limit?: number) => Promise<MessageHistoryRow[]>;
+  countUserMessagesByOwner: (userId: string) => Promise<number>;
 } = {
   async create({ conversationId, content, role, tokenCount }: CreateMessageDTO) {
     const [row] = await db
@@ -51,5 +52,16 @@ export const messageRepository: {
       .where(eq(messages.conversationId, conversationId))
       .orderBy(desc(messages.createdAt));
     return limit === undefined ? base : base.limit(limit);
+  },
+  async countUserMessagesByOwner(userId: string) {
+    // The Guest message allowance (ADR-0010 §4): count the owner's `user`-authored
+    // messages live from Postgres by joining messages to their conversations.
+    // Assistant messages and other owners' rows never contribute.
+    const [row] = await db
+      .select({ value: count() })
+      .from(messages)
+      .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+      .where(and(eq(conversations.userId, userId), eq(messages.role, 'user')));
+    return row?.value ?? 0;
   },
 };

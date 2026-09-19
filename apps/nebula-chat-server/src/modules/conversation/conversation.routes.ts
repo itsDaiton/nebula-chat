@@ -1,6 +1,7 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { errorResponseSchema } from '@backend/errors/error.schema';
 import { conversationController } from '@backend/modules/conversation/conversation.controller';
+import { requireUser } from '@backend/plugins/auth.plugin';
 import {
   conversationResponseSchema,
   conversationsArraySchema,
@@ -22,9 +23,13 @@ const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
       response: {
         201: conversationResponseSchema.describe('Conversation created successfully'),
         400: errorResponseSchema.describe('Invalid request body'),
+        401: errorResponseSchema.describe('No authenticated session'),
         500: errorResponseSchema.describe('Internal server error'),
       },
     },
+    // A conversation needs an owner (conversations.userId is NOT NULL), so the
+    // session user is required; the owner id is read from the session, never the body.
+    preHandler: requireUser,
     handler: conversationController.create,
   });
 

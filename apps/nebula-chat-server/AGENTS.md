@@ -29,6 +29,7 @@ apps/nebula-chat-server/src/
 ├── env.ts                         # Zod-validated env schema — single source for all process.env reads
 ├── db.ts                          # DB client singleton (createDbClient from @nebula-chat/db)
 ├── redis.ts                       # Redis toolkit singleton + chat cache helpers (createRedis from @nebula-chat/redis)
+├── auth.ts                        # better-auth instance singleton (createAuth from @nebula-chat/auth)
 ├── config/
 │   ├── cors.config.ts             # Allowed origins, CORS options
 │   ├── headers.config.ts          # SSE + cache response headers (uses http.ServerResponse)
@@ -46,6 +47,7 @@ apps/nebula-chat-server/src/
 │   │   ├── chat.controller.ts
 │   │   ├── chat.cacheCheck.hook.ts     # preHandler — replays a cached SSE stream on a hit
 │   │   ├── chat.streamCapture.hook.ts  # preHandler — captures the SSE stream for caching
+│   │   ├── chat.messageAllowance.hook.ts # preHandler — rejects a Guest over the message allowance
 │   │   └── chat.routes.ts         # FastifyPluginAsyncZod; schema blocks + hook chain
 │   ├── conversation/
 │   │   ├── conversation.types.ts
@@ -63,7 +65,8 @@ apps/nebula-chat-server/src/
 │       └── message.routes.ts
 └── plugins/
     ├── db.plugin.ts               # Decorates app.db (@nebula-chat/db)
-    └── redis.plugin.ts            # Decorates app.redis (@nebula-chat/redis); closes it on shutdown
+    ├── redis.plugin.ts            # Decorates app.redis (@nebula-chat/redis); closes it on shutdown
+    └── auth.plugin.ts             # Mounts /api/auth/* (better-auth handler); decorates requireUser/requireRegistered
 ```
 
 Redis is no longer an in-app module. It lives in the `@nebula-chat/redis` lib
@@ -180,7 +183,7 @@ export const getConversationsQuerySchema = z.object({
 
 ## Database — Drizzle
 
-Schema lives at `libs/db/src/schema.ts` (`@nebula-chat/db`). Three tables: `users`, `conversations`, `messages` with FK constraints and indexes — see [CONTEXT.md](../../CONTEXT.md) for the domain vocabulary.
+Schema lives at `libs/db/src/schema.ts` (`@nebula-chat/db`). The domain tables are `users`, `conversations`, `messages`; better-auth owns `session`, `account`, and `verification` (see [ADR-0010](../../docs/adr/0010-better-auth-for-auth.md)). `conversations.userId` is **NOT NULL** — every conversation has an owner. See [CONTEXT.md](../../CONTEXT.md) for the domain vocabulary.
 
 **Rules:**
 
@@ -316,6 +319,9 @@ Never use relative paths in the backend. Aliases are configured in `tsconfig.jso
 | `REDIS_PASSWORD`              | Redis password (if set)                                                                                     |
 | `CLIENT_URL`                  | Frontend origin for CORS (e.g. `http://localhost:5173`)                                                     |
 | `SERVER_URL`                  | Backend public URL (used in OpenAPI docs)                                                                   |
+| `BETTER_AUTH_SECRET`          | better-auth secret — signs sessions and the session cookie cache (required)                                 |
+| `BETTER_AUTH_URL`             | App base URL for better-auth cookies/redirects (required, e.g. `http://localhost:3000`)                     |
+| `GUEST_MESSAGE_ALLOWANCE`     | Guest `user`-message cap before registration is required (int, default `10`; ADR-0010)                      |
 | `PORT`                        | Port to listen on (default `3000`)                                                                          |
 | `LOG_LEVEL`                   | Log verbosity (default `info`; set to `debug`/`warn` etc. in prod)                                          |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector URL. Unset disables tracing entirely (`initTelemetry` no-ops)                                |

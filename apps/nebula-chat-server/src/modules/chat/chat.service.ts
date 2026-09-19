@@ -36,6 +36,7 @@ export const createUserMessage = async (
   conversationId: string | undefined,
   userMessageContent: string,
   userMessageRole: CreateMessageDTO['role'],
+  userId: string,
 ): Promise<{ conversationId: string; userMessageId: string; isNewConversation: boolean }> => {
   const result = await db.transaction(async (tx: DbTransaction) => {
     let convId = conversationId;
@@ -48,7 +49,9 @@ export const createUserMessage = async (
       }
     } else {
       const title = userMessageContent.slice(0, 50) || 'New Chat';
-      const newConversation = await conversationRepository.createTx(tx, title);
+      // conversations.userId is NOT NULL (ADR-0010 §2): a new conversation is
+      // owned by the session user (a Guest or a Registered user).
+      const newConversation = await conversationRepository.createTx(tx, title, userId);
       convId = newConversation.id;
       isNewConversation = true;
     }
@@ -103,7 +106,7 @@ export const chatService = {
   async streamResponse(
     data: CreateChatStreamDTO,
     write: (chunk: string) => void,
-    userId = 'anonymous',
+    userId: string,
     logger?: LLMLogger,
   ): Promise<
     { conversationId: string; userMessageId: string; assistantMessageId: string } | undefined
@@ -129,7 +132,12 @@ export const chatService = {
       const requestedModel = data.model;
       await validateChatRequest(conversationId, userMessage, requestedModel);
 
-      const result = await createUserMessage(conversationId, userMessage.content, userMessage.role);
+      const result = await createUserMessage(
+        conversationId,
+        userMessage.content,
+        userMessage.role,
+        userId,
+      );
       conversationId = result.conversationId;
       userMessageId = result.userMessageId;
 

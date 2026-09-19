@@ -3,11 +3,12 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.5.0
+ * OpenAPI spec version: 1.6.0
  */
 
 export * from './createConversation201';
 export * from './createConversation400';
+export * from './createConversation401';
 export * from './createConversation500';
 export * from './createConversationBody';
 export * from './createMessage201';

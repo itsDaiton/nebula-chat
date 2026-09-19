@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.5.0
+ * OpenAPI spec version: 1.6.0
  */
 import type { ListConversations200ConversationsItem } from './listConversations200ConversationsItem';
 
@@ -11,6 +11,7 @@ import type { ListConversations200ConversationsItem } from './listConversations2
  * Paginated list of conversations
  */
 export type ListConversations200 = {
+  /** @maxItems 100 */
   conversations: ListConversations200ConversationsItem[];
   /**
    * @nullable

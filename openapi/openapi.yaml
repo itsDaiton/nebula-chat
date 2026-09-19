@@ -21,7 +21,7 @@ paths:
         - Health
       description: Welcome endpoint — confirms the API is reachable.
       responses:
-        '200':
+        "200":
           description: API is reachable
           content:
             application/json:
@@ -42,7 +42,7 @@ paths:
         - Health
       description: Returns server liveness status and current UTC timestamp.
       responses:
-        '200':
+        "200":
           description: Server is healthy
           content:
             application/json:
@@ -109,14 +109,14 @@ paths:
                 - messages
                 - model
       responses:
-        '200':
+        "200":
           description: Streamed SSE events
           content:
             application/json:
               schema:
                 type: string
                 description: Streamed SSE events
-        '400':
+        "400":
           description: Invalid request body or validation error
           content:
             application/json:
@@ -137,7 +137,49 @@ paths:
                   - message
                 additionalProperties: false
                 description: Invalid request body or validation error
-        '404':
+        "401":
+          description: No authenticated session
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: No authenticated session
+        "403":
+          description: Guest message allowance reached — registration required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Guest message allowance reached — registration required
+        "404":
           description: Conversation not found
           content:
             application/json:
@@ -158,7 +200,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Conversation not found
-        '413':
+        "413":
           description: Message or context exceeds token limit
           content:
             application/json:
@@ -179,7 +221,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Message or context exceeds token limit
-        '429':
+        "429":
           description: Rate limit exceeded
           content:
             application/json:
@@ -200,7 +242,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Rate limit exceeded
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -241,7 +283,7 @@ paths:
               required:
                 - title
       responses:
-        '201':
+        "201":
           description: Conversation created successfully
           content:
             application/json:
@@ -261,7 +303,7 @@ paths:
                   - createdAt
                 additionalProperties: false
                 description: Conversation created successfully
-        '400':
+        "400":
           description: Invalid request body
           content:
             application/json:
@@ -282,7 +324,28 @@ paths:
                   - message
                 additionalProperties: false
                 description: Invalid request body
-        '500':
+        "401":
+          description: No authenticated session
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: No authenticated session
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -329,7 +392,7 @@ paths:
           required: false
           description: Pagination cursor for fetching the next page of conversations
       responses:
-        '200':
+        "200":
           description: Paginated list of conversations
           content:
             application/json:
@@ -367,7 +430,7 @@ paths:
                   - hasMore
                 additionalProperties: false
                 description: Paginated list of conversations
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -405,7 +468,7 @@ paths:
           required: true
           description: Search query to filter conversations by title
       responses:
-        '200':
+        "200":
           description: Matching conversations
           content:
             application/json:
@@ -428,7 +491,7 @@ paths:
                     - createdAt
                   additionalProperties: false
                 description: Matching conversations
-        '400':
+        "400":
           description: Invalid search query
           content:
             application/json:
@@ -449,7 +512,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Invalid search query
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -486,7 +549,7 @@ paths:
           name: conversationId
           required: true
       responses:
-        '200':
+        "200":
           description: Conversation retrieved successfully
           content:
             application/json:
@@ -506,7 +569,7 @@ paths:
                   - createdAt
                 additionalProperties: false
                 description: Conversation retrieved successfully
-        '400':
+        "400":
           description: Invalid conversation ID format
           content:
             application/json:
@@ -527,7 +590,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Invalid conversation ID format
-        '404':
+        "404":
           description: Conversation not found
           content:
             application/json:
@@ -548,7 +611,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Conversation not found
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -606,7 +669,7 @@ paths:
                 - role
                 - content
       responses:
-        '201':
+        "201":
           description: Message created successfully
           content:
             application/json:
@@ -643,7 +706,7 @@ paths:
                   - createdAt
                 additionalProperties: false
                 description: Message created successfully
-        '400':
+        "400":
           description: Invalid request body
           content:
             application/json:
@@ -664,7 +727,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Invalid request body
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -692,7 +755,7 @@ paths:
         - Messages
       description: Retrieve all messages across all conversations
       responses:
-        '200':
+        "200":
           description: List of messages
           content:
             application/json:
@@ -732,7 +795,7 @@ paths:
                     - createdAt
                   additionalProperties: false
                 description: List of messages
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -769,7 +832,7 @@ paths:
           name: messageId
           required: true
       responses:
-        '200':
+        "200":
           description: Message retrieved successfully
           content:
             application/json:
@@ -806,7 +869,7 @@ paths:
                   - createdAt
                 additionalProperties: false
                 description: Message retrieved successfully
-        '400':
+        "400":
           description: Invalid message ID format
           content:
             application/json:
@@ -827,7 +890,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Invalid message ID format
-        '404':
+        "404":
           description: Message not found
           content:
             application/json:
@@ -848,7 +911,7 @@ paths:
                   - message
                 additionalProperties: false
                 description: Message not found
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:

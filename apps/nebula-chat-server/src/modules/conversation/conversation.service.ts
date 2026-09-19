@@ -4,8 +4,10 @@ import { paginationConfig } from '@backend/config/pagination.config';
 import type { CreateConversationDTO } from '@backend/modules/conversation/conversation.types';
 
 export const conversationService = {
-  async createConversation(data: CreateConversationDTO) {
-    return conversationRepository.create(data);
+  async createConversation(data: CreateConversationDTO, userId: string) {
+    // conversations.userId is NOT NULL (ADR-0010 §2): the owner is the session
+    // user, resolved in the controller — never trusted from the request body.
+    return conversationRepository.create(data, userId);
   },
   async getConversation(conversationId: string) {
     const conversation = await conversationRepository.findById({ conversationId });

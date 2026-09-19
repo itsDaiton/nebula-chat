@@ -3,6 +3,7 @@ import { setCacheHeaders } from '@backend/config/headers.config';
 import { createUserMessage, validateChatRequest } from '@backend/modules/chat/chat.service';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { chatCacheKey, getCachedStream } from '@backend/redis';
+import { getSessionData } from '@backend/plugins/auth.plugin';
 import {
   sseConversationCreated,
   sseUserMessageCreated,
@@ -65,6 +66,7 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
       conversationId,
       userMessage.content,
       userMessage.role,
+      getSessionData(req).user.id,
     );
 
     const assistantMessage = await messageService.createMessage({

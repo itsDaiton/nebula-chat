@@ -246,6 +246,7 @@ nebula-chat/
 │   ├── nebula-chat-client/   # React SPA (frontend) — see its AGENTS.md
 │   └── nebula-chat-server/   # Fastify API (backend) — see its AGENTS.md
 ├── libs/
+│   ├── auth/                 # @nebula-chat/auth — better-auth substrate (sessions, anonymous, claim)
 │   ├── db/                   # @nebula-chat/db — Drizzle ORM schema + migrations
 │   ├── langchain/            # @nebula-chat/langchain — LLM providers, tokens, streaming, SSE
 │   ├── otel/                 # @nebula-chat/otel — Pino logger factory + OpenTelemetry tracing

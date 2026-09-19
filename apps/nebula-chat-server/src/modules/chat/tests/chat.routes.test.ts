@@ -2,8 +2,24 @@ import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { sseToken, sseUsage } from '@nebula-chat/langchain';
 import { createTestApp } from '@backend/test/app';
+import { guestSession, registeredSession } from '@backend/test/session';
 
 vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
+
+// @backend/auth is the boundary to better-auth: the route's `requireUser` gate
+// calls `auth.api.getSession`, so faking the module lets the test drive the
+// session (a Registered user by default; a Guest in the allowance tests) without
+// standing up a real better-auth instance (ADR-0008).
+vi.mock('@backend/auth', () => ({
+  auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
+}));
+
+// message.repository is the boundary the message-allowance hook reaches Postgres
+// through (the live `role='user'` count). The rest of the chat send path fakes
+// the chat service, so this is the only DB seam the route test opens.
+vi.mock('@backend/modules/message/message.repository', () => ({
+  messageRepository: { countUserMessagesByOwner: vi.fn() },
+}));
 
 // @backend/redis is the boundary to Redis: the hooks call its cache helpers, so
 // faking the module keeps this route test about routing, hijacking and the cache
@@ -34,14 +50,18 @@ vi.mock('@backend/modules/message/message.service', () => ({
   },
 }));
 
+import { auth } from '@backend/auth';
 import { getCachedStream, saveCachedStream } from '@backend/redis';
 import { chatService, createUserMessage } from '@backend/modules/chat/chat.service';
+import { messageRepository } from '@backend/modules/message/message.repository';
 import { messageService } from '@backend/modules/message/message.service';
 
 const mockedGetCachedStream = vi.mocked(getCachedStream);
 const mockedSaveCachedStream = vi.mocked(saveCachedStream);
 const chat = vi.mocked(chatService);
 const mockedCreateUserMessage = vi.mocked(createUserMessage);
+const mockedGetSession = vi.mocked(auth.api.getSession);
+const mockedCountUserMessages = vi.mocked(messageRepository.countUserMessagesByOwner);
 
 const validBody = {
   model: 'gpt-4o-mini',
@@ -87,6 +107,10 @@ beforeEach(async () => {
   // saveCachedStream call is attributed to this test.
   await new Promise((resolve) => setImmediate(resolve));
   vi.clearAllMocks();
+  // Default: an authenticated Registered user (uncapped). Allowance tests below
+  // swap in a Guest and drive the live message count.
+  mockedGetSession.mockResolvedValue(registeredSession() as never);
+  mockedCountUserMessages.mockResolvedValue(0);
   mockedGetCachedStream.mockResolvedValue(null);
   mockedSaveCachedStream.mockResolvedValue(undefined);
   mockedCreateUserMessage.mockResolvedValue({
@@ -317,6 +341,69 @@ describe('POST /api/chat/stream — regenerate', () => {
       expect.stringContaining('event: token'),
       expect.objectContaining({ totalTokens: 6 }),
     );
+  });
+});
+
+describe('POST /api/chat/stream — Guest message allowance', () => {
+  // GUEST_MESSAGE_ALLOWANCE defaults to 10 (env.ts). The count comes live from
+  // Postgres via the mocked repository.
+  const CAP = 10;
+
+  it('lets a Guest under the cap send', async () => {
+    mockedGetSession.mockResolvedValue(guestSession() as never);
+    mockedCountUserMessages.mockResolvedValue(CAP - 1);
+
+    const res = await post(validBody, app);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(res.statusCode).toBe(200);
+    expect(chat.streamResponse).toHaveBeenCalled();
+  });
+
+  it('rejects a Guest at the cap with a machine-readable RegistrationRequired error', async () => {
+    mockedGetSession.mockResolvedValue(guestSession() as never);
+    mockedCountUserMessages.mockResolvedValue(CAP);
+
+    const res = await post(validBody, app);
+
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toMatchObject({ success: false, error: 'RegistrationRequired' });
+    // Rejected before any model work.
+    expect(chat.streamResponse).not.toHaveBeenCalled();
+  });
+
+  it('still allows a regenerate at the cap, since regenerations do not count', async () => {
+    mockedGetSession.mockResolvedValue(guestSession() as never);
+    mockedCountUserMessages.mockResolvedValue(CAP + 5);
+
+    const res = await post({ ...validBody, regenerate: true }, app);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(res.statusCode).toBe(200);
+    // The count is never consulted for a regenerate.
+    expect(mockedCountUserMessages).not.toHaveBeenCalled();
+    expect(chat.streamResponse).toHaveBeenCalled();
+  });
+
+  it('leaves a Registered user uncapped, never counting their messages', async () => {
+    mockedGetSession.mockResolvedValue(registeredSession() as never);
+    mockedCountUserMessages.mockResolvedValue(CAP + 100);
+
+    const res = await post(validBody, app);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(res.statusCode).toBe(200);
+    expect(mockedCountUserMessages).not.toHaveBeenCalled();
+    expect(chat.streamResponse).toHaveBeenCalled();
+  });
+
+  it('rejects a request with no authenticated session', async () => {
+    mockedGetSession.mockResolvedValue(null);
+
+    const res = await post(validBody, app);
+
+    expect(res.statusCode).toBe(401);
+    expect(chat.streamResponse).not.toHaveBeenCalled();
   });
 });
 

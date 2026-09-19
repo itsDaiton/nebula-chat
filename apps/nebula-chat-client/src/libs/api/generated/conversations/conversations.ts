@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.5.0
+ * OpenAPI spec version: 1.6.0
  */
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
@@ -24,6 +24,7 @@ import type {
 import type {
   CreateConversation201,
   CreateConversation400,
+  CreateConversation401,
   CreateConversation500,
   CreateConversationBody,
   GetConversation200,
@@ -88,7 +89,7 @@ export const getCreateConversationQueryKey = (
 
 export const getCreateConversationQueryOptions = <
   TData = Awaited<ReturnType<typeof createConversation>>,
-  TError = ErrorType<CreateConversation400 | CreateConversation500>,
+  TError = ErrorType<CreateConversation400 | CreateConversation401 | CreateConversation500>,
 >(
   createConversationBody: BodyType<CreateConversationBody>,
   options?: {
@@ -113,11 +114,13 @@ export const getCreateConversationQueryOptions = <
 export type CreateConversationQueryResult = NonNullable<
   Awaited<ReturnType<typeof createConversation>>
 >;
-export type CreateConversationQueryError = ErrorType<CreateConversation400 | CreateConversation500>;
+export type CreateConversationQueryError = ErrorType<
+  CreateConversation400 | CreateConversation401 | CreateConversation500
+>;
 
 export function useCreateConversation<
   TData = Awaited<ReturnType<typeof createConversation>>,
-  TError = ErrorType<CreateConversation400 | CreateConversation500>,
+  TError = ErrorType<CreateConversation400 | CreateConversation401 | CreateConversation500>,
 >(
   createConversationBody: BodyType<CreateConversationBody>,
   options: {
@@ -136,7 +139,7 @@ export function useCreateConversation<
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useCreateConversation<
   TData = Awaited<ReturnType<typeof createConversation>>,
-  TError = ErrorType<CreateConversation400 | CreateConversation500>,
+  TError = ErrorType<CreateConversation400 | CreateConversation401 | CreateConversation500>,
 >(
   createConversationBody: BodyType<CreateConversationBody>,
   options?: {
@@ -157,7 +160,7 @@ export function useCreateConversation<
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useCreateConversation<
   TData = Awaited<ReturnType<typeof createConversation>>,
-  TError = ErrorType<CreateConversation400 | CreateConversation500>,
+  TError = ErrorType<CreateConversation400 | CreateConversation401 | CreateConversation500>,
 >(
   createConversationBody: BodyType<CreateConversationBody>,
   options?: {
@@ -172,7 +175,7 @@ export function useCreateConversation<
 
 export function useCreateConversation<
   TData = Awaited<ReturnType<typeof createConversation>>,
-  TError = ErrorType<CreateConversation400 | CreateConversation500>,
+  TError = ErrorType<CreateConversation400 | CreateConversation401 | CreateConversation500>,
 >(
   createConversationBody: BodyType<CreateConversationBody>,
   options?: {

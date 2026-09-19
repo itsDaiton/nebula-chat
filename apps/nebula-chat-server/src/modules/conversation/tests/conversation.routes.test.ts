@@ -2,6 +2,7 @@ import { fromPartial } from '@total-typescript/shoehorn';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestApp } from '@backend/test/app';
+import { REGISTERED_USER_ID, registeredSession } from '@backend/test/session';
 
 // ADR-0008: only the repository layer is faked. Routing, Zod validation, the
 // error handler and the hook chain are all the real thing.
@@ -18,9 +19,17 @@ vi.mock('@backend/modules/conversation/conversation.repository', () => ({
 // process, whose end() throws on a second app close.
 vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
+// The create route is gated by `requireUser`; faking `@backend/auth` lets the
+// test authenticate without a real better-auth instance (ADR-0008).
+vi.mock('@backend/auth', () => ({
+  auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
+}));
+
+import { auth } from '@backend/auth';
 import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
 
 const repo = vi.mocked(conversationRepository);
+const mockedGetSession = vi.mocked(auth.api.getSession);
 
 const CONVERSATION_ID = '11111111-1111-4111-8111-111111111111';
 
@@ -47,10 +56,12 @@ afterAll(async () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: an authenticated Registered user, so the gated create route passes.
+  mockedGetSession.mockResolvedValue(registeredSession() as never);
 });
 
 describe('POST /api/conversations', () => {
-  it('creates a conversation and responds 201', async () => {
+  it('creates a conversation owned by the session user and responds 201', async () => {
     repo.create.mockResolvedValue(fromPartial(aConversation()));
 
     const res = await app.inject({
@@ -61,7 +72,21 @@ describe('POST /api/conversations', () => {
 
     expect(res.statusCode).toBe(201);
     expect(res.json()).toMatchObject({ id: CONVERSATION_ID, title: 'A conversation' });
-    expect(repo.create).toHaveBeenCalledWith({ title: 'A conversation' });
+    // The owner is taken from the session, never the request body.
+    expect(repo.create).toHaveBeenCalledWith({ title: 'A conversation' }, REGISTERED_USER_ID);
+  });
+
+  it('rejects an unauthenticated create with 401 and never reaches the repository', async () => {
+    mockedGetSession.mockResolvedValue(null);
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/conversations',
+      payload: { title: 'A conversation' },
+    });
+
+    expect(res.statusCode).toBe(401);
+    expect(repo.create).not.toHaveBeenCalled();
   });
 
   it('serialises createdAt as an ISO string', async () => {

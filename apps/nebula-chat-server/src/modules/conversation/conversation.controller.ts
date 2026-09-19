@@ -4,6 +4,7 @@ import type {
   CreateConversationDTO,
   GetConversationParams,
 } from '@backend/modules/conversation/conversation.types';
+import { getSessionData } from '@backend/plugins/auth.plugin';
 
 type GetConversationsQuery = {
   limit: number;
@@ -16,7 +17,8 @@ type SearchConversationsQuery = {
 
 export const conversationController = {
   async create(req: FastifyRequest<{ Body: CreateConversationDTO }>, reply: FastifyReply) {
-    const conversation = await conversationService.createConversation(req.body);
+    const { user } = getSessionData(req);
+    const conversation = await conversationService.createConversation(req.body, user.id);
     return reply.status(201).send(conversation);
   },
   async get(req: FastifyRequest<{ Params: GetConversationParams }>, reply: FastifyReply) {

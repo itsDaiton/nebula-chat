@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.5.0
+ * OpenAPI spec version: 1.6.0
  */
 import { faker } from '@faker-js/faker';
 
@@ -29,7 +29,7 @@ export const getCreateMessageResponseMock = (
 });
 
 export const getListMessagesResponseMock = (): ListMessages200Item[] =>
-  Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
+  Array.from({ length: faker.number.int({ min: 1, max: 1000 }) }, (_, i) => i + 1).map(() => ({
     id: faker.string.uuid(),
     conversationId: faker.string.uuid(),
     content: faker.string.alpha({ length: { min: 10, max: 20 } }),
