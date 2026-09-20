@@ -75,50 +75,78 @@ body parser is disabled **for this route only** via an encapsulated child scope;
 rest of the API keeps normal JSON parsing. The route is `{ schema: { hide: true } }`
 and does not appear in the OpenAPI spec.
 
-All authentication is performed by calling better-auth's endpoints under
-`/api/auth`. The paths this application relies on:
+All authentication happens by calling better-auth's endpoints under `/api/auth`.
+This instance exposes the following, given its configuration (email/password +
+anonymous). The examples use a cookie jar (`jar.txt`) because auth is cookie-based —
+`-c` writes the session cookies, `-b` sends them on the next call — and assume the
+server is at `http://localhost:3000` (`BETTER_AUTH_URL`).
 
-| Method | Path                              | Purpose                                                                             |
-| ------ | --------------------------------- | ----------------------------------------------------------------------------------- |
-| `POST` | `/api/auth/sign-in/anonymous`     | Create a Guest user and session. Errors if the caller is already an anonymous user. |
-| `POST` | `/api/auth/sign-up/email`         | Register with email + password. Triggers the claim if a Guest session is present.   |
-| `POST` | `/api/auth/sign-in/email`         | Sign in with email + password. Triggers the claim if a Guest session is present.    |
-| `POST` | `/api/auth/sign-out`              | Invalidate the current session and clear the session cookies.                       |
-| `GET`  | `/api/auth/get-session`           | Return the current `{ session, user }`, or `null`.                                  |
-| `POST` | `/api/auth/delete-anonymous-user` | Delete the current anonymous user.                                                  |
+#### `POST /api/auth/sign-in/anonymous` — become a Guest
 
-These are better-auth's standard endpoints; the full surface (password change,
-session listing, etc.) is whatever the configured plugins expose. Registration and
-sign-out are handled entirely by better-auth — the application adds no endpoints of
-its own on top of the catch-all.
-
-### API reference
-
-The Fastify catch-all is `hide: true`, so these endpoints are absent from the
-application's own `openapi.yaml`. Instead they are documented by better-auth's
-`openAPI` plugin, reachable through the same `/api/auth/*` passthrough:
-
-| Method | Path                                 | Purpose                                                                |
-| ------ | ------------------------------------ | ---------------------------------------------------------------------- |
-| `GET`  | `/api/auth/reference`                | Interactive [Scalar](https://scalar.com/) reference with "Try it out". |
-| `GET`  | `/api/auth/open-api/generate-schema` | The raw OpenAPI 3.1.1 document as JSON.                                |
-
-Point Bruno (or Postman/Insomnia) at the `generate-schema` URL to import the auth
-collection, or open `/api/auth/reference` in a browser. A version-controlled copy of
-the schema lives at [`openapi/auth-openapi.json`](../openapi/auth-openapi.json) so a
-collection can be regenerated without a running server; refresh it with:
+Creates a Guest user and session. Errors if the caller is already anonymous.
 
 ```bash
-pnpm --filter nebula-chat-server generate:auth-openapi
+curl -i -c jar.txt -X POST http://localhost:3000/api/auth/sign-in/anonymous
 ```
 
-That script (`src/scripts/generate-auth-openapi.ts`) needs no database, Redis, or
-provider key — it builds a throwaway instance and calls
-`auth.api.generateOpenAPISchema()`.
+#### `POST /api/auth/sign-up/email` — register
 
-The reference lists better-auth's full core catalogue, so it includes endpoints for
-features this instance does not enable (social sign-in, password reset, email
-verification); the active surface is email/password + anonymous as configured above.
+Registers with email + password. If a Guest session is present, the claim moves that
+Guest's conversations to the new account. A breached password is rejected with
+`400 PASSWORD_COMPROMISED`.
+
+```bash
+curl -i -b jar.txt -c jar.txt -X POST http://localhost:3000/api/auth/sign-up/email \
+  -H 'content-type: application/json' \
+  -d '{"email":"you@example.com","password":"a-long-unique-passphrase","name":"You"}'
+```
+
+#### `POST /api/auth/sign-in/email` — sign in
+
+Signs in with email + password. If a Guest session is present, the claim runs as above.
+
+```bash
+curl -i -c jar.txt -X POST http://localhost:3000/api/auth/sign-in/email \
+  -H 'content-type: application/json' \
+  -d '{"email":"you@example.com","password":"a-long-unique-passphrase"}'
+```
+
+#### `GET /api/auth/get-session` — current session
+
+Returns `{ session, user }`, or `null` when there is no session. This is how the
+client learns its auth state.
+
+```bash
+curl -s -b jar.txt http://localhost:3000/api/auth/get-session
+```
+
+#### `POST /api/auth/sign-out` — sign out
+
+Invalidates the current session and clears the session cookies.
+
+```bash
+curl -i -b jar.txt -X POST http://localhost:3000/api/auth/sign-out
+```
+
+#### `POST /api/auth/delete-anonymous-user` — delete the Guest
+
+Deletes the current anonymous user (anonymous plugin). Only reachable while signed in
+anonymously.
+
+```bash
+curl -i -b jar.txt -X POST http://localhost:3000/api/auth/delete-anonymous-user
+```
+
+### Interactive reference
+
+The Fastify catch-all is `hide: true`, so these endpoints are absent from the
+application's own `openapi.yaml`. better-auth's `openAPI` plugin serves an interactive
+[Scalar](https://scalar.com/) reference at `/api/auth/reference`, backed by the
+OpenAPI 3.1 schema at `/api/auth/open-api/generate-schema` (the reference UI fetches
+that schema). The reference lists better-auth's full core catalogue — including
+endpoints for features this instance does not enable (social sign-in, password reset,
+email verification) — so the hand-written list above is the authoritative set of
+active endpoints.
 
 ## Sessions and cookies
 

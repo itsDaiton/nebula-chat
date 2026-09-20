@@ -10,10 +10,6 @@ apps/nebula-chat-server/node_modules
 apps/nebula-chat-server/src/generated
 libs/db/migrations
 
-# Generated OpenAPI schema (see server `generate:auth-openapi`) — kept
-# byte-identical to the generator output so a regen produces no diff.
-openapi/auth-openapi.json
-
 *.log
 *.lock
 *.env

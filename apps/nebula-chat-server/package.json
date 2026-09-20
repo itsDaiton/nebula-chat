@@ -9,7 +9,6 @@
     "start": "node dist/src/server.js",
     "typecheck": "tsc --noEmit",
     "generate:openapi": "tsx src/scripts/generate-openapi.ts",
-    "generate:auth-openapi": "tsx src/scripts/generate-auth-openapi.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
