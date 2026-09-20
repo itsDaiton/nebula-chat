@@ -170,6 +170,9 @@ catalogs:
     '@vitest/coverage-v8':
       specifier: ^5.0.0
       version: 5.0.0
+    better-auth:
+      specifier: 1.7.3
+      version: 1.7.3
     drizzle-orm:
       specifier: ^0.45.2
       version: 0.45.2
@@ -388,7 +391,7 @@ importers:
         specifier: workspace:*
         version: link:../../libs/redis
       better-auth:
-        specifier: 1.7.3
+        specifier: 'catalog:'
         version: 1.7.3(@opentelemetry/api@1.9.1)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(kysely@0.28.17)(pg@8.23.0))(pg@8.23.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(vitest@5.0.0)
       dotenv:
         specifier: ^17.4.0
@@ -440,7 +443,7 @@ importers:
         specifier: workspace:*
         version: link:../redis
       better-auth:
-        specifier: 1.7.3
+        specifier: 'catalog:'
         version: 1.7.3(@opentelemetry/api@1.9.1)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(kysely@0.28.17)(pg@8.23.0))(pg@8.23.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(vitest@5.0.0)
       drizzle-orm:
         specifier: 'catalog:'
