@@ -3,8 +3,11 @@
 # See all available variables at https://megalinter.io/latest/config-file/ and in
 # linters documentation
 ---
-# all, none, or list of linter keys
-APPLY_FIXES: all
+# all, none, or list of linter keys. Kept `none`: MegaLinter reports issues but
+# never auto-applies/commits fixes (the workflow's git-auto-commit step was
+# rewriting generated + committed files and breaking branches). See the matching
+# APPLY_FIXES note in .github/workflows/mega-linter.yml.
+APPLY_FIXES: none
 
 # If you use ENABLE variable, all other languages/formats/tooling-formats will
 # be disabled by default
