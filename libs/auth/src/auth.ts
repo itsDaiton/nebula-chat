@@ -134,7 +134,7 @@ export const createAuth = ({
  * as the base `Auth` (rather than the inferred `Auth<typeof options>`) because the
  * plugin option types better-auth embeds in the inferred type are not exported
  * from a stable path, which makes the inferred type non-portable in `.d.ts` emit
- * (TS2883). The server's `requireUser`/`requireRegistered` decorators use the
+ * (TS2883). The server's `requireAuthentication`/`requireRegistered` decorators use the
  * `User`/`Session` aliases below, which we compose explicitly.
  */
 export type AuthInstance = Auth;

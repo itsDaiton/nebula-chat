@@ -1,7 +1,7 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { errorResponseSchema } from '@backend/errors/error.schema';
 import { conversationController } from '@backend/modules/conversation/conversation.controller';
-import { requireUser } from '@backend/plugins/auth.plugin';
+import { requireAuthentication } from '@backend/plugins/authGate.plugin';
 import {
   conversationResponseSchema,
   conversationsArraySchema,
@@ -29,7 +29,7 @@ const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
     },
     // A conversation needs an owner (conversations.userId is NOT NULL), so the
     // session user is required; the owner id is read from the session, never the body.
-    preHandler: requireUser,
+    preHandler: requireAuthentication,
     handler: conversationController.create,
   });
 
@@ -48,7 +48,7 @@ const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     // Owner-scoped: results are filtered to the session user (ADR-0010 §2).
-    preHandler: requireUser,
+    preHandler: requireAuthentication,
     handler: conversationController.search,
   });
 
@@ -68,7 +68,7 @@ const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     // Owner-scoped: another user's conversation reads as 404, never 403 (no leak).
-    preHandler: requireUser,
+    preHandler: requireAuthentication,
     handler: conversationController.get,
   });
 
@@ -89,7 +89,7 @@ const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     // Owner-scoped: only the session user's conversations are listed (ADR-0010 §2).
-    preHandler: requireUser,
+    preHandler: requireAuthentication,
     handler: conversationController.getAll,
   });
 };

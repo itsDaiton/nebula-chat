@@ -4,7 +4,7 @@ import type {
   CreateConversationDTO,
   GetConversationParams,
 } from '@backend/modules/conversation/conversation.types';
-import { getSessionData } from '@backend/plugins/auth.plugin';
+import { getSessionData } from '@backend/plugins/authGate.plugin';
 
 type GetConversationsQuery = {
   limit: number;

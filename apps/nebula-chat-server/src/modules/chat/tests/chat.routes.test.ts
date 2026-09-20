@@ -6,7 +6,7 @@ import { guestSession, registeredSession, REGISTERED_USER_ID } from '@backend/te
 
 vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
-// @backend/auth is the boundary to better-auth: the route's `requireUser` gate
+// @backend/auth is the boundary to better-auth: the route's `requireAuthentication` gate
 // calls `auth.api.getSession`, so faking the module lets the test drive the
 // session (a Registered user by default; a Guest in the allowance tests) without
 // standing up a real better-auth instance (ADR-0008).

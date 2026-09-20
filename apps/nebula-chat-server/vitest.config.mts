@@ -32,7 +32,7 @@ export default defineConfig({
         'src/db.ts',
         // Pure better-auth wiring: constructs the configured instance from the
         // lib factory + injected env/db/redis. All tests mock `@backend/auth`, so
-        // there is no behavior of its own to cover (the gates in auth.plugin.ts
+        // there is no behavior of its own to cover (the gates in authGate.plugin.ts
         // and the lib's own tests carry that). Mirrored in build.yml matrix.coverage.
         'src/auth.ts',
         'src/generated/**',

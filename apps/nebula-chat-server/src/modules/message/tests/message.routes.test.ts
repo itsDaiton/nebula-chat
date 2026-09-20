@@ -14,7 +14,7 @@ vi.mock('@backend/modules/conversation/conversation.repository', () => ({
 }));
 vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
-// Every message route is gated by `requireUser`; faking `@backend/auth` lets the
+// Every message route is gated by `requireAuthentication`; faking `@backend/auth` lets the
 // test authenticate without a real better-auth instance (ADR-0008).
 vi.mock('@backend/auth', () => ({
   auth: { api: { getSession: vi.fn() }, handler: vi.fn() },

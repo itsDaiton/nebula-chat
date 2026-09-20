@@ -1,7 +1,7 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { errorResponseSchema } from '@backend/errors/error.schema';
 import { messageController } from '@backend/modules/message/message.controller';
-import { requireUser } from '@backend/plugins/auth.plugin';
+import { requireAuthentication } from '@backend/plugins/authGate.plugin';
 import {
   createMessageSchema,
   getMessagesSchema,
@@ -26,7 +26,7 @@ const messageRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     // Owner-scoped: the target conversation must belong to the session user.
-    preHandler: requireUser,
+    preHandler: requireAuthentication,
     handler: messageController.create,
   });
 
@@ -46,7 +46,7 @@ const messageRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     // Owner-scoped: another user's message reads as 404, never 403 (no leak).
-    preHandler: requireUser,
+    preHandler: requireAuthentication,
     handler: messageController.get,
   });
 
@@ -63,7 +63,7 @@ const messageRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     // Owner-scoped: only messages in the session user's conversations are listed.
-    preHandler: requireUser,
+    preHandler: requireAuthentication,
     handler: messageController.getAll,
   });
 };

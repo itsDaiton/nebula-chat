@@ -66,7 +66,7 @@ apps/nebula-chat-server/src/
 └── plugins/
     ├── db.plugin.ts               # Decorates app.db (@nebula-chat/db)
     ├── redis.plugin.ts            # Decorates app.redis (@nebula-chat/redis); closes it on shutdown
-    └── auth.plugin.ts             # Mounts /api/auth/* (better-auth handler); decorates requireUser/requireRegistered
+    └── authGate.plugin.ts         # `authGate`: mounts /api/auth/* (better-auth handler); decorates requireAuthentication/requireRegistered
 ```
 
 Redis is no longer an in-app module. It lives in the `@nebula-chat/redis` lib

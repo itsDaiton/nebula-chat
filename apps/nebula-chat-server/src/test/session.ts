@@ -4,7 +4,7 @@ import type { SessionData } from '@nebula-chat/auth';
 /**
  * Session fixtures for route tests. Tests `vi.mock('@backend/auth')` so
  * `auth.api.getSession` resolves to one of these, exercising the real
- * `requireUser` / `requireRegistered` gates without a live better-auth instance
+ * `requireAuthentication` / `requireRegistered` gates without a live better-auth instance
  * (ADR-0008: assert external behavior, never better-auth internals). Only the
  * fields the gates and owner-wiring read (`user.id`, `user.isAnonymous`) matter;
  * `fromPartial` fills the rest of better-auth's shape.

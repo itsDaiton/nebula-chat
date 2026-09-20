@@ -2,7 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { setHeaders } from '@backend/config/headers.config';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { chatService } from '@backend/modules/chat/chat.service';
-import { getSessionData } from '@backend/plugins/auth.plugin';
+import { getSessionData } from '@backend/plugins/authGate.plugin';
 import { sseEnd } from '@nebula-chat/langchain';
 
 export const chatController = {

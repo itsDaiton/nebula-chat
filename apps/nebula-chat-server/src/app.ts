@@ -60,7 +60,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
 
   await app.register(import('./plugins/db.plugin'));
   await app.register(import('./plugins/redis.plugin'));
-  await app.register(import('./plugins/auth.plugin'));
+  await app.register(import('./plugins/authGate.plugin'));
   await app.register(sensible);
   await app.register(cors, corsOptions);
   await app.register(rateLimit, { global: false });

@@ -6,7 +6,7 @@ import { chatController } from '@backend/modules/chat/chat.controller';
 import { messageAllowanceHook } from '@backend/modules/chat/chat.messageAllowance.hook';
 import { streamCaptureHook } from '@backend/modules/chat/chat.streamCapture.hook';
 import { createChatStreamSchema } from '@backend/modules/chat/chat.validation';
-import { requireUser } from '@backend/plugins/auth.plugin';
+import { requireAuthentication } from '@backend/plugins/authGate.plugin';
 
 const chatRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post('/stream', {
@@ -38,7 +38,7 @@ const chatRoutes: FastifyPluginAsyncZod = async (app) => {
     },
     // Order matters: authenticate, then reject a capped Guest before any cache or
     // model work, then the cache-replay/capture hooks (ADR-0010 §4).
-    preHandler: [requireUser, messageAllowanceHook, cacheCheckHook, streamCaptureHook],
+    preHandler: [requireAuthentication, messageAllowanceHook, cacheCheckHook, streamCaptureHook],
     handler: chatController.streamMessage,
   });
 };

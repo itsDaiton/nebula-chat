@@ -9,15 +9,15 @@ import { ForbiddenError, UnauthorizedError } from '@backend/errors/AppError';
  * The request with its resolved session attached. Fastify augmentation would need
  * a merged `interface`, which the repo forbids (`type` only, ADR/AGENTS) and which
  * nothing else here uses — decorators are accessed by direct import, not off the
- * typed instance. The cast is confined to this file: `requireUser` writes it and
- * `getSessionData` reads it, so no consumer touches an untyped property.
+ * typed instance. The cast is confined to this file: `requireAuthentication` writes
+ * it and `getSessionData` reads it, so no consumer touches an untyped property.
  */
 type RequestWithSession = FastifyRequest & { sessionData: SessionData | null };
 
 /**
- * Returns the session attached by `requireUser` / `requireRegistered`, or throws
- * `UnauthorizedError` if no gate ran (a programming error — the gate belongs in
- * the route's `preHandler` chain). Downstream handlers read the owner id through
+ * Returns the session attached by `requireAuthentication` / `requireRegistered`, or
+ * throws `UnauthorizedError` if no gate ran (a programming error — the gate belongs
+ * in the route's `preHandler` chain). Downstream handlers read the owner id through
  * this rather than reaching for an untyped request property.
  */
 export const getSessionData = (req: FastifyRequest): SessionData => {
@@ -48,13 +48,13 @@ const resolveSession = async (req: FastifyRequest): Promise<SessionData> => {
  * success the session is attached to the request for downstream handlers
  * (`getSessionData`).
  */
-export const requireUser: preHandlerAsyncHookHandler = async (req) => {
+export const requireAuthentication: preHandlerAsyncHookHandler = async (req) => {
   await resolveSession(req);
 };
 
 /**
- * preHandler: `requireUser` plus a `ForbiddenError` when the session user is a
- * Guest (`isAnonymous`). Use on routes that a Guest must never reach.
+ * preHandler: `requireAuthentication` plus a `ForbiddenError` when the session user
+ * is a Guest (`isAnonymous`). Use on routes that a Guest must never reach.
  */
 export const requireRegistered: preHandlerAsyncHookHandler = async (req) => {
   const { user } = await resolveSession(req);
@@ -64,7 +64,7 @@ export const requireRegistered: preHandlerAsyncHookHandler = async (req) => {
 };
 
 /**
- * Mounts better-auth and exposes the route gates.
+ * `authGate` — mounts better-auth and exposes the route gates.
  *
  * - `GET|POST /api/auth/*` delegates to better-auth's Node handler
  *   (`toNodeHandler`) on the raw req/res. better-auth reads the raw request body
@@ -73,33 +73,36 @@ export const requireRegistered: preHandlerAsyncHookHandler = async (req) => {
  *   applies only to the auth catch-all — the rest of the API keeps normal JSON
  *   parsing. The route is `{ schema: { hide: true } }` to stay out of the OpenAPI
  *   spec.
- * - `requireUser` / `requireRegistered` are decorated on the app (via
+ * - `requireAuthentication` / `requireRegistered` are decorated on the app (via
  *   `fastify-plugin`, so they reach the whole instance) for availability and are
  *   also exported for direct import by route modules.
  */
-export default fp(async (app) => {
-  app.decorateRequest('sessionData', null);
-  app.decorate('requireUser', requireUser);
-  app.decorate('requireRegistered', requireRegistered);
+export default fp(
+  async (app) => {
+    app.decorateRequest('sessionData', null);
+    app.decorate('requireAuthentication', requireAuthentication);
+    app.decorate('requireRegistered', requireRegistered);
 
-  const authHandler = toNodeHandler(auth);
+    const authHandler = toNodeHandler(auth);
 
-  await app.register(async (authScope) => {
-    // Scoped to this child instance only: better-auth owns the raw body, so the
-    // JSON/urlencoded parsers must hand the stream through untouched here.
-    authScope.addContentTypeParser(
-      ['application/json', 'application/x-www-form-urlencoded'],
-      (_req, _payload, done) => done(null, undefined),
-    );
+    await app.register(async (authScope) => {
+      // Scoped to this child instance only: better-auth owns the raw body, so the
+      // JSON/urlencoded parsers must hand the stream through untouched here.
+      authScope.addContentTypeParser(
+        ['application/json', 'application/x-www-form-urlencoded'],
+        (_req, _payload, done) => done(null, undefined),
+      );
 
-    authScope.route({
-      method: ['GET', 'POST'],
-      url: '/api/auth/*',
-      schema: { hide: true },
-      handler: async (req, reply) => {
-        reply.hijack();
-        await authHandler(req.raw, reply.raw);
-      },
+      authScope.route({
+        method: ['GET', 'POST'],
+        url: '/api/auth/*',
+        schema: { hide: true },
+        handler: async (req, reply) => {
+          reply.hijack();
+          await authHandler(req.raw, reply.raw);
+        },
+      });
     });
-  });
-});
+  },
+  { name: 'authGate' },
+);

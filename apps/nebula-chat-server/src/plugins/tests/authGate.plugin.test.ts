@@ -16,7 +16,11 @@ vi.mock('@backend/auth', () => ({
 vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
 import { auth } from '@backend/auth';
-import { getSessionData, requireRegistered, requireUser } from '@backend/plugins/auth.plugin';
+import {
+  getSessionData,
+  requireAuthentication,
+  requireRegistered,
+} from '@backend/plugins/authGate.plugin';
 
 const mockedGetSession = vi.mocked(auth.api.getSession);
 
@@ -33,12 +37,12 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('requireUser', () => {
+describe('requireAuthentication', () => {
   it('attaches the resolved session to the request', async () => {
     mockedGetSession.mockResolvedValue(registeredSession() as never);
     const req = makeReq();
 
-    await run(requireUser, req);
+    await run(requireAuthentication, req);
 
     expect(getSessionData(req).user.isAnonymous).toBe(false);
   });
@@ -46,7 +50,7 @@ describe('requireUser', () => {
   it('throws UnauthorizedError when there is no session', async () => {
     mockedGetSession.mockResolvedValue(null);
 
-    await expect(run(requireUser, makeReq())).rejects.toBeInstanceOf(UnauthorizedError);
+    await expect(run(requireAuthentication, makeReq())).rejects.toBeInstanceOf(UnauthorizedError);
   });
 });
 

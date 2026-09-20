@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { messageService } from '@backend/modules/message/message.service';
 import type { CreateMessageDTO, GetMessageParams } from '@backend/modules/message/message.types';
-import { getSessionData } from '@backend/plugins/auth.plugin';
+import { getSessionData } from '@backend/plugins/authGate.plugin';
 
 export const messageController = {
   async create(req: FastifyRequest<{ Body: CreateMessageDTO }>, reply: FastifyReply) {

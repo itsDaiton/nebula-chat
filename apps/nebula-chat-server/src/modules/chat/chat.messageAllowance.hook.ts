@@ -3,11 +3,11 @@ import { env } from '@backend/env';
 import { ForbiddenError } from '@backend/errors/AppError';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { messageRepository } from '@backend/modules/message/message.repository';
-import { getSessionData } from '@backend/plugins/auth.plugin';
+import { getSessionData } from '@backend/plugins/authGate.plugin';
 
 /**
  * Enforces the Guest message allowance (ADR-0010 §4) on the chat send path. Runs
- * after `requireUser` (so the session is attached) and before the cache hook, so a
+ * after `requireAuthentication` (so the session is attached) and before the cache hook, so a
  * capped Guest is rejected with a `403 Forbidden` before any model or cache work
  * happens.
  *
