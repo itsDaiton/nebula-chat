@@ -15,13 +15,6 @@ on:
       - main
       - master
 
-# Automatic fix application is intentionally OFF. MegaLinter still runs and
-# reports (it stays a CI gate), but it must never auto-commit linter fixes to a
-# branch: `git-auto-commit-action` was rewriting generated/committed files
-# (e.g. reformatting the OpenAPI spec and generated client) out from under real
-# commits and breaking the branch. `APPLY_FIXES: none` stops MegaLinter modifying
-# files in place, and the auto-commit/PR steps are removed entirely (below).
-# Fixes are applied by a human/agent instead.
 env:
   APPLY_FIXES: none
 
@@ -119,9 +112,3 @@ jobs:
           path: |
             megalinter-reports
             mega-linter.log
-
-      # NOTE: the "Create Pull Request" / "Commit and push applied linter fixes"
-      # steps from the MegaLinter template were removed on purpose. With
-      # APPLY_FIXES: none there is nothing to commit, and those steps (a) pushed
-      # unwanted [MegaLinter] auto-fix commits that broke branches and (b) tripped
-      # zizmor (template-injection / artipacked). Keep this workflow report-only.
