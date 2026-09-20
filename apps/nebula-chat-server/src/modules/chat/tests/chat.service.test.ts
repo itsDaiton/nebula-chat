@@ -98,38 +98,43 @@ beforeEach(() => {
 describe('validateChatRequest', () => {
   it('accepts a user message within the token budget', async () => {
     await expect(
-      validateChatRequest(CONVERSATION_ID, { role: 'user', content: 'hi' }, 'gpt-4o-mini'),
+      validateChatRequest(
+        CONVERSATION_ID,
+        { role: 'user', content: 'hi' },
+        OWNER_ID,
+        'gpt-4o-mini',
+      ),
     ).resolves.toBeUndefined();
   });
 
   it('rejects a non-user role', async () => {
     await expect(
-      validateChatRequest(undefined, { role: 'assistant', content: 'hi' }),
+      validateChatRequest(undefined, { role: 'assistant', content: 'hi' }, OWNER_ID),
     ).rejects.toThrow("Expected message with role 'user', received 'assistant'");
   });
 
   it('rejects a prompt over the token limit with a 413-mapped error', async () => {
     await expect(
-      validateChatRequest(undefined, { role: 'user', content: 'word '.repeat(3000) }),
+      validateChatRequest(undefined, { role: 'user', content: 'word '.repeat(3000) }, OWNER_ID),
     ).rejects.toThrow(/exceeds token limit/);
   });
 
   it('names both the actual and the maximum token count in the error', async () => {
     await expect(
-      validateChatRequest(undefined, { role: 'user', content: 'word '.repeat(3000) }),
+      validateChatRequest(undefined, { role: 'user', content: 'word '.repeat(3000) }, OWNER_ID),
     ).rejects.toThrow(/maximum allowed is 2000 tokens/);
   });
 
-  it('rejects an unknown conversation', async () => {
+  it('rejects an unknown or unowned conversation', async () => {
     conversationRepo.findByIdSimple.mockResolvedValue(fromPartial(null));
 
     await expect(
-      validateChatRequest(CONVERSATION_ID, { role: 'user', content: 'hi' }),
+      validateChatRequest(CONVERSATION_ID, { role: 'user', content: 'hi' }, OWNER_ID),
     ).rejects.toThrow(`Conversation with id "${CONVERSATION_ID}" not found`);
   });
 
   it('skips the conversation lookup when starting a new conversation', async () => {
-    await validateChatRequest(undefined, { role: 'user', content: 'hi' });
+    await validateChatRequest(undefined, { role: 'user', content: 'hi' }, OWNER_ID);
 
     expect(conversationRepo.findByIdSimple).not.toHaveBeenCalled();
   });

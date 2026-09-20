@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.6.0
+ * OpenAPI spec version: 1.6.1
  */
 
 export type GetHealth200Status = (typeof GetHealth200Status)[keyof typeof GetHealth200Status];

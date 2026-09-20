@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Nebula Chat API
-  version: 1.6.0
+  version: 1.6.1
   description: REST API for Nebula Chat
   contact:
     name: Nebula Chat
