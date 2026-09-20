@@ -1,13 +1,13 @@
-import { betterAuth } from 'better-auth';
-import type { Auth, User as BetterAuthUser, Session as BetterAuthSession } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { anonymous, haveIBeenPwned } from 'better-auth/plugins';
-import { users, session, account, verification } from '@nebula-chat/db';
-import type { DbClient } from '@nebula-chat/db';
-import type { AuthStore } from '@nebula-chat/redis';
-import type { Logger } from '@nebula-chat/otel';
-import { claimConversations } from './claim';
-import { toBetterAuthLogHandler } from './logger';
+import { betterAuth } from 'better-auth'
+import type { Auth, User as BetterAuthUser, Session as BetterAuthSession } from 'better-auth'
+import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { anonymous, haveIBeenPwned } from 'better-auth/plugins'
+import { users, session, account, verification } from '@nebula-chat/db'
+import type { DbClient } from '@nebula-chat/db'
+import type { AuthStore } from '@nebula-chat/redis'
+import type { Logger } from '@nebula-chat/otel'
+import { claimConversations } from './claim'
+import { toBetterAuthLogHandler } from './logger'
 
 /**
  * Everything the lib needs to build a configured better-auth instance. The lib
@@ -18,28 +18,28 @@ import { toBetterAuthLogHandler } from './logger';
  * The Guest message allowance is deliberately NOT here: it is enforced in the
  * chat send pre-handler (ADR-0010 §4), not by better-auth.
  */
-export type CreateAuthConfig = {
+export interface CreateAuthConfig {
   /** The Drizzle client from `@nebula-chat/db` (better-auth owns the auth tables). */
-  db: DbClient;
+  db: DbClient
   /**
    * The Redis-backed `authStore` from `@nebula-chat/redis`, adapted to
    * better-auth's `SecondaryStorage`. Sessions, verification records and
    * rate-limit counters live here (ADR-0010 §3).
    */
-  authStore: AuthStore;
+  authStore: AuthStore
   /**
    * Injected `@nebula-chat/otel` (Pino) logger. better-auth's internal logs are
    * routed through it (the lib's single sink); the lib never reaches for
    * `console` or a consumer's own logger.
    */
-  logger: Logger;
+  logger: Logger
   /** `BETTER_AUTH_SECRET` — signs sessions and the session cookie cache. */
-  secret: string;
+  secret: string
   /** `BETTER_AUTH_URL` — the app's base URL, used for cookies/redirects. */
-  baseURL: string;
+  baseURL: string
   /** Origins allowed to call the auth endpoints (CSRF protection). */
-  trustedOrigins?: string[];
-};
+  trustedOrigins?: string[]
+}
 
 /**
  * Build the configured better-auth instance for Nebula Chat.
@@ -64,7 +64,7 @@ export const createAuth = ({
   logger,
   secret,
   baseURL,
-  trustedOrigins,
+  trustedOrigins
 }: CreateAuthConfig): Auth =>
   // better-auth 1.7 made `Auth` generic (`Auth<Options>`) and invariant, so the
   // instance `betterAuth()` infers no longer widens to the base `Auth` we expose.
@@ -76,22 +76,22 @@ export const createAuth = ({
     trustedOrigins,
     // Route better-auth's internal logs through the injected Pino logger.
     logger: {
-      log: toBetterAuthLogHandler(logger),
+      log: toBetterAuthLogHandler(logger)
     },
     database: drizzleAdapter(db, {
       provider: 'pg',
-      schema: { users, session, account, verification },
+      schema: { users, session, account, verification }
     }),
     user: {
-      modelName: 'users',
+      modelName: 'users'
     },
     advanced: {
       database: {
-        generateId: 'uuid',
-      },
+        generateId: 'uuid'
+      }
     },
     emailAndPassword: {
-      enabled: true,
+      enabled: true
     },
     // Adapt the Redis-backed authStore to better-auth's SecondaryStorage. As of
     // @better-auth/core 1.7 (src/db/type.ts) the interface is
@@ -103,16 +103,16 @@ export const createAuth = ({
       getAndDelete: (key) => authStore.getAndDelete(key),
       increment: (key, ttl) => authStore.increment(key, ttl),
       set: (key, value, ttl) => authStore.set(key, value, ttl),
-      delete: (key) => authStore.delete(key),
+      delete: (key) => authStore.delete(key)
     },
     session: {
       cookieCache: {
-        enabled: true,
-      },
+        enabled: true
+      }
     },
     rateLimit: {
       enabled: true,
-      storage: 'secondary-storage',
+      storage: 'secondary-storage'
     },
     plugins: [
       anonymous({
@@ -121,13 +121,13 @@ export const createAuth = ({
           // anonymous row is cleaned up (ADR-0010 §2).
           await claimConversations(db, {
             fromUserId: anonymousUser.user.id,
-            toUserId: newUser.user.id,
-          });
-        },
+            toUserId: newUser.user.id
+          })
+        }
       }),
-      haveIBeenPwned(),
-    ],
-  }) as unknown as Auth;
+      haveIBeenPwned()
+    ]
+  }) as unknown as Auth
 
 /**
  * The configured better-auth instance type — what `createAuth` returns. Annotated
@@ -137,7 +137,7 @@ export const createAuth = ({
  * (TS2883). The server's `requireUser`/`requireRegistered` decorators use the
  * `User`/`Session` aliases below, which we compose explicitly.
  */
-export type AuthInstance = Auth;
+export type AuthInstance = Auth
 
 /**
  * The user record as seen by the server. The base better-auth `User` plus the
@@ -146,14 +146,14 @@ export type AuthInstance = Auth;
  */
 export type User = BetterAuthUser & {
   /** `true` for a Guest (anonymous plugin); falsy/absent for a Registered user. */
-  isAnonymous?: boolean | null;
-};
+  isAnonymous?: boolean | null
+}
 
 /** The session record as seen by the server. */
-export type Session = BetterAuthSession;
+export type Session = BetterAuthSession
 
 /** `{ session, user }` — the shape `auth.api.getSession()` resolves to. */
-export type SessionData = {
-  session: Session;
-  user: User;
-};
+export interface SessionData {
+  session: Session
+  user: User
+}

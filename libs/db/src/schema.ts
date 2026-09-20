@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, integer, boolean, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, integer, boolean, index } from 'drizzle-orm/pg-core'
 
 // better-auth is the source of truth for this table's shape (modelName: "users").
 // Field names must match better-auth's core user model exactly so the Drizzle adapter
@@ -12,8 +12,8 @@ export const users = pgTable('users', {
   image: text('image'),
   isAnonymous: boolean('is_anonymous').default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+})
 
 // better-auth core table — one session per active login (or anonymous Guest identity).
 export const session = pgTable('session', {
@@ -26,8 +26,8 @@ export const session = pgTable('session', {
   userAgent: text('user_agent'),
   userId: uuid('user_id')
     .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-});
+    .references(() => users.id, { onDelete: 'cascade' })
+})
 
 // better-auth core table — one row per linked credential/OAuth provider for a user.
 // `password` holds the credential-provider password hash (relocated out of `users`).
@@ -46,8 +46,8 @@ export const account = pgTable('account', {
   scope: text('scope'),
   password: text('password'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+})
 
 // better-auth core table — email verification tokens / password reset tokens / OTPs.
 export const verification = pgTable('verification', {
@@ -56,8 +56,8 @@ export const verification = pgTable('verification', {
   value: text('value').notNull(),
   expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+})
 
 export const conversations = pgTable(
   'conversations',
@@ -70,10 +70,10 @@ export const conversations = pgTable(
     model: text('model').notNull().default('gpt-4o-mini'),
     systemPrompt: text('system_prompt'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull()
   },
-  (t) => [index('conv_user_idx').on(t.userId)],
-);
+  (t) => [index('conv_user_idx').on(t.userId)]
+)
 
 export const messages = pgTable(
   'messages',
@@ -86,7 +86,7 @@ export const messages = pgTable(
     content: text('content').notNull(),
     tokenCount: integer('token_count'),
     cached: boolean('cached').default(false).notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull()
   },
-  (t) => [index('msg_conv_idx').on(t.conversationId)],
-);
+  (t) => [index('msg_conv_idx').on(t.conversationId)]
+)

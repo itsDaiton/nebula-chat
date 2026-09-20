@@ -1,21 +1,21 @@
-import type { Redis } from 'ioredis';
-import type { Logger } from '@nebula-chat/otel';
+import type { Redis } from 'ioredis'
+import type { Logger } from '@nebula-chat/otel'
 
-export type CacheOptions = {
+export interface CacheOptions {
   /** Default TTL in seconds applied by `set()` when no per-call TTL is given. Default: 600 (10 min). */
-  defaultTtlSeconds?: number;
-};
+  defaultTtlSeconds?: number
+}
 
-export type RedisConfig = {
+export interface RedisConfig {
   /** Redis connection string */
-  redisUrl: string;
+  redisUrl: string
   /**
    * Injected `@nebula-chat/otel` logger. The lib logs exclusively through this —
    * it never reaches for `console` or a consumer's own logger.
    */
-  logger: Logger;
-  cache?: CacheOptions;
-};
+  logger: Logger
+  cache?: CacheOptions
+}
 
 /**
  * The subset of the ioredis client the cache primitive actually calls. Narrowing
@@ -23,8 +23,8 @@ export type RedisConfig = {
  * a real `Redis` instance satisfies it structurally.
  */
 export type CacheConnection = Pick<Redis, 'get' | 'del' | 'keys'> & {
-  set(key: string, value: string, expiryMode: 'EX', ttlSeconds: number): Promise<unknown>;
-};
+  set: (key: string, value: string, expiryMode: 'EX', ttlSeconds: number) => Promise<unknown>
+}
 
 /**
  * The subset of the ioredis client the `authStore` primitive actually calls.
@@ -35,6 +35,5 @@ export type CacheConnection = Pick<Redis, 'get' | 'del' | 'keys'> & {
  * (better-auth passes the TTL in seconds).
  */
 export type AuthStoreConnection = Pick<Redis, 'get' | 'del' | 'getdel' | 'incr' | 'expire'> & {
-  set(key: string, value: string, expiryMode: 'EX', ttlSeconds: number): Promise<unknown>;
-  set(key: string, value: string): Promise<unknown>;
-};
+  set: ((key: string, value: string, expiryMode: 'EX', ttlSeconds: number) => Promise<unknown>) & ((key: string, value: string) => Promise<unknown>)
+}

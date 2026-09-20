@@ -1,4 +1,4 @@
-import type { Logger } from '@nebula-chat/otel';
+import type { Logger } from '@nebula-chat/otel'
 
 /**
  * better-auth's log levels as seen by a custom `logger.log` handler. better-auth's
@@ -6,7 +6,7 @@ import type { Logger } from '@nebula-chat/otel';
  * mapped to `"info"` upstream), so the handler only ever sees these four — which
  * map 1:1 onto the injected Pino logger's methods.
  */
-export type BetterAuthLogLevel = 'debug' | 'info' | 'warn' | 'error';
+export type BetterAuthLogLevel = 'debug' | 'info' | 'warn' | 'error'
 
 /**
  * Adapt the injected `@nebula-chat/otel` (Pino) logger into a handler for
@@ -18,10 +18,10 @@ export type BetterAuthLogLevel = 'debug' | 'info' | 'warn' | 'error';
  */
 export const toBetterAuthLogHandler =
   (logger: Logger) =>
-  (level: BetterAuthLogLevel, message: string, ...args: unknown[]): void => {
+    (level: BetterAuthLogLevel, message: string, ...args: unknown[]): void => {
     // Pino's `LogFn` is an overload set whose object-first overloads reject a
     // spread of `unknown[]`; narrow to the plain `(message, ...args)` form (which
     // Pino supports) so the injected logger receives the message and its args.
-    const log = logger[level] as (message: string, ...args: unknown[]) => void;
-    log(message, ...args);
-  };
+      const log = logger[level] as (message: string, ...args: unknown[]) => void
+      log(message, ...args)
+    }

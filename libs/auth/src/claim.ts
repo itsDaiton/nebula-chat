@@ -1,13 +1,13 @@
-import { eq } from 'drizzle-orm';
-import { conversations } from '@nebula-chat/db';
-import type { DbClient } from '@nebula-chat/db';
+import { eq } from 'drizzle-orm'
+import { conversations } from '@nebula-chat/db'
+import type { DbClient } from '@nebula-chat/db'
 
-export type ClaimConversationsParams = {
+export interface ClaimConversationsParams {
   /** The anonymous Guest user whose conversations are being claimed. */
-  fromUserId: string;
+  fromUserId: string
   /** The newly linked (Registered) user the conversations move to. */
-  toUserId: string;
-};
+  toUserId: string
+}
 
 /**
  * Claim a Guest's conversations into a real account: reassign every
@@ -19,10 +19,10 @@ export type ClaimConversationsParams = {
  */
 export const claimConversations = async (
   db: DbClient,
-  { fromUserId, toUserId }: ClaimConversationsParams,
+  { fromUserId, toUserId }: ClaimConversationsParams
 ): Promise<void> => {
   await db
     .update(conversations)
     .set({ userId: toUserId })
-    .where(eq(conversations.userId, fromUserId));
-};
+    .where(eq(conversations.userId, fromUserId))
+}

@@ -1,5 +1,5 @@
-import type { AuthStoreConnection } from './types';
-import { authKey } from './keys';
+import type { AuthStoreConnection } from './types'
+import { authKey } from './keys'
 
 /**
  * A Redis-backed implementation of better-auth's `SecondaryStorage` interface —
@@ -29,18 +29,18 @@ import { authKey } from './keys';
  * `AuthStore` satisfies it structurally without `libs/redis` depending on
  * `better-auth`; `libs/auth` (M-6) passes this straight to `secondaryStorage`.
  */
-export type AuthStore = {
+export interface AuthStore {
   /** Returns the raw stored string, or `null` on a miss. Errors propagate. */
-  get(key: string): Promise<string | null>;
+  get: (key: string) => Promise<string | null>
   /**
    * Stores a raw string. `ttlSeconds` (better-auth passes seconds) is applied via
    * `SET ... EX`; when omitted the key is set without an expiry. Errors propagate.
    */
-  set(key: string, value: string, ttlSeconds?: number): Promise<void>;
+  set: (key: string, value: string, ttlSeconds?: number) => Promise<void>
   /** Removes a single key. Errors propagate. */
-  delete(key: string): Promise<void>;
+  delete: (key: string) => Promise<void>
   /** Atomically reads and removes a key (`GETDEL`). Errors propagate. */
-  getAndDelete(key: string): Promise<string | null>;
+  getAndDelete: (key: string) => Promise<string | null>
   /**
    * Increments the counter at `key` by one (`INCR`) and returns the new value.
    * The `ttlSeconds` expiry is applied only when the counter is first created
@@ -48,41 +48,41 @@ export type AuthStore = {
    * fixed from creation — the contract better-auth's secondary-storage rate
    * limiter depends on. Errors propagate.
    */
-  increment(key: string, ttlSeconds: number): Promise<number>;
-};
+  increment: (key: string, ttlSeconds: number) => Promise<number>
+}
 
-type CreateAuthStoreDeps = {
-  connection: AuthStoreConnection;
-};
+interface CreateAuthStoreDeps {
+  connection: AuthStoreConnection
+}
 
 export const createAuthStore = ({ connection }: CreateAuthStoreDeps): AuthStore => {
-  const get = async (key: string): Promise<string | null> => connection.get(authKey(key));
+  const get = async (key: string): Promise<string | null> => connection.get(authKey(key))
 
   const set = async (key: string, value: string, ttlSeconds?: number): Promise<void> => {
     if (ttlSeconds === undefined) {
-      await connection.set(authKey(key), value);
-      return;
+      await connection.set(authKey(key), value)
+      return
     }
-    await connection.set(authKey(key), value, 'EX', ttlSeconds);
-  };
+    await connection.set(authKey(key), value, 'EX', ttlSeconds)
+  }
 
   const del = async (key: string): Promise<void> => {
-    await connection.del(authKey(key));
-  };
+    await connection.del(authKey(key))
+  }
 
   const getAndDelete = async (key: string): Promise<string | null> =>
-    connection.getdel(authKey(key));
+    connection.getdel(authKey(key))
 
   const increment = async (key: string, ttlSeconds: number): Promise<number> => {
-    const namespaced = authKey(key);
-    const value = await connection.incr(namespaced);
+    const namespaced = authKey(key)
+    const value = await connection.incr(namespaced)
     // Apply the TTL only on creation, so the window is fixed from first increment
     // and never extended by subsequent ones (better-auth's rate-limit contract).
     if (value === 1) {
-      await connection.expire(namespaced, ttlSeconds);
+      await connection.expire(namespaced, ttlSeconds)
     }
-    return value;
-  };
+    return value
+  }
 
-  return { get, set, delete: del, getAndDelete, increment };
-};
+  return { get, set, delete: del, getAndDelete, increment }
+}

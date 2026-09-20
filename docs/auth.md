@@ -49,7 +49,7 @@ All of this lives in `@nebula-chat/auth` (`libs/auth/src/auth.ts`), so the serve
 never assembles auth primitives by hand:
 
 | Piece                        | What it does                                                                                                                                                                       |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Drizzle adapter**          | Persists durable identity to Postgres via `@nebula-chat/db`. `advanced.database.generateId: 'uuid'` so **Postgres** generates ids, keeping `conversations.userId` a plain uuid FK. |
 | **Anonymous plugin**         | `signIn.anonymous()` mints a Guest user + session. Its `onLinkAccount` hook runs the claim (below).                                                                                |
 | **Have I Been Pwned plugin** | Rejects registration with a known-breached password.                                                                                                                               |
@@ -65,7 +65,7 @@ live sessions depend on Redis, buffered only by the cookie-cache window.
 ## Storage: what lives where
 
 | Data                                                   | Store               | Why                                                  |
-| ------------------------------------------------------ | ------------------- | ---------------------------------------------------- |
+|--------------------------------------------------------|---------------------|------------------------------------------------------|
 | `users`, `account` (durable identity, password hashes) | Postgres            | A Redis outage must cost live sessions, not accounts |
 | `session`, `verification`, rate-limit counters         | Redis (`authStore`) | Disposable, high-churn — kept off Postgres           |
 
@@ -80,7 +80,7 @@ mounts better-auth and exposes two preHandlers. Both resolve the session with
 `auth.api.getSession({ headers: fromNodeHeaders(req.headers) })`:
 
 | Gate                | Behavior                                                                                                              |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------- |
+|---------------------|-----------------------------------------------------------------------------------------------------------------------|
 | `requireUser`       | Requires any session (Guest or Registered). Attaches the session to the request; `401 Unauthorized` if there is none. |
 | `requireRegistered` | `requireUser` plus `403 Forbidden` when the user is a Guest (`user.isAnonymous`).                                     |
 
@@ -169,7 +169,7 @@ Declared and validated in
 [`apps/nebula-chat-server/src/env.ts`](../apps/nebula-chat-server/src/env.ts):
 
 | Variable                  | Purpose                                                                 |
-| ------------------------- | ----------------------------------------------------------------------- |
+|---------------------------|-------------------------------------------------------------------------|
 | `BETTER_AUTH_SECRET`      | Signs sessions and the session cookie cache (required)                  |
 | `BETTER_AUTH_URL`         | App base URL for better-auth cookies/redirects (required)               |
 | `GUEST_MESSAGE_ALLOWANCE` | Guest `user`-message cap before registration is required (default `10`) |
