@@ -32,6 +32,15 @@ DISABLE:
 DISABLE_LINTERS:
   - TYPESCRIPT_ES
   - TSX_ESLINT
+  # ts-standard enforces JS Standard style — no semicolons and `interface` over
+  # `type` (@typescript-eslint/semi, consistent-type-definitions,
+  # member-delimiter-style) — the exact opposite of this repo's Prettier/ESLint
+  # conventions. It only ever passed because APPLY_FIXES: all silently rewrote
+  # sources into that style and auto-committed them; with fixes off (see
+  # .github/workflows/mega-linter.yml) it fails on the repo's own correct code.
+  # The `scripts` and per-package jobs in build.yml already lint/format TS with
+  # the repo's toolchain, so this is a contradictory duplicate, not lost coverage.
+  - TYPESCRIPT_STANDARD
 
 # Vendored agent skills (see skills-lock.json) are held byte-identical to their
 # upstream source, so lint findings in them are not actionable. FILTER_REGEX_EXCLUDE
@@ -41,7 +50,7 @@ DISABLE_LINTERS:
 # package and are neither built nor tested, but they are linted, format-checked
 # and typechecked by the `scripts` job in build.yml, which `build-result` gates
 # on. MegaLinter would only duplicate that against a ruleset `eslint.config.ts`
-# contradicts (see TYPESCRIPT_STANDARD_FILTER_REGEX_EXCLUDE).
+# contradicts.
 FILTER_REGEX_EXCLUDE: '(\.claude/skills/|^scripts/|/scripts/)'
 ADDITIONAL_EXCLUDED_DIRECTORIES:
   - skills
@@ -92,45 +101,8 @@ YAML_YAMLLINT_FILTER_REGEX_EXCLUDE: '(pnpm-lock\.yaml$)'
 # linter a token.
 ACTION_ZIZMOR_ARGUMENTS: --offline
 
-TYPESCRIPT_STANDARD_ARGUMENTS: -p tsconfig.eslint.json
-
-# ts-standard's ruleset contradicts this repo's own ESLint config on test code,
-# and eslint.config.ts is the documented source of truth (AGENTS.md). Most
-# notably it demands @typescript-eslint/explicit-function-return-type, which
-# eslint.config.ts explicitly sets to 'off'. It also rejects the non-null
-# assertions that noUncheckedIndexedAccess forces when indexing mock calls, and
-# flags a deliberate non-Error promise rejection in a test that exists precisely
-# to prove such a rejection gets wrapped.
-#
-# The repo's own `pnpm lint` covers these files and passes, so this excludes
-# only the duplicate, conflicting opinion — not the linting itself.
-#
-# `/tests?/` covers both the shared `src/test/` harness and the per-module
-# `tests/` folders. `/generated/` is the Orval output, which eslint.config.ts
-# already ignores for the same reason: it is regenerated from the OpenAPI
-# document on every backend change and is not hand-editable.
-#
-# `\.config\.[cm]?tsx?$` is excluded for a different reason. It matches every
-# package-root config file — vite, vitest, orval, drizzle, tsup — and
-# tsconfig.eslint.json covers only `src/**` per package, so a file at a package
-# root belongs to no lint TSConfig and ts-standard cannot parse it at all
-# ("that TSConfig does not include this file"). eslint.config.ts ignores them
-# for exactly this reason.
-#
-# `\.hook\.ts$` (Fastify preHandler hooks) is excluded because ts-standard
-# resolves `req.body as CreateChatStreamDTO` to `any` — that DTO is a `z.infer`
-# of a schema importing from `@nebula-chat/langchain`, whose built types
-# ts-standard does not load — and then raises `strict-boolean-expressions` /
-# `restrict-plus-operands` on every access. eslint.config.ts (the source of
-# truth) does not enable those rules and passes on these files.
-#
-# `nebula-chat-server/src/` is excluded because ts-standard's
-# @typescript-eslint/consistent-type-definitions prefers `interface` while the
-# project's eslint.config.ts prefers `type`. The auto-fixer loop this creates
-# (ts-standard converts type→interface, ESLint fails, Prettier restores,
-# repeat) cannot be resolved without excluding one side. The project's own
-# `pnpm lint` covers all server source files and is the source of truth.
-TYPESCRIPT_STANDARD_FILTER_REGEX_EXCLUDE: '(\.test\.tsx?$|/tests?/|/generated/|\.config\.[cm]?tsx?$|\.hook\.ts$|nebula-chat-server/src/)'
+# (ts-standard itself is disabled in DISABLE_LINTERS above — it enforces a style
+# opposite to this repo's — so it needs no _ARGUMENTS or _FILTER_REGEX_EXCLUDE.)
 
 SHOW_ELAPSED_TIME: true
 
