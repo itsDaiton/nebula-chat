@@ -6,12 +6,12 @@ packages:
 # Versions shared by more than one package live here so a bump happens once.
 # `catalog:` in a package.json resolves to the entry below.
 catalog:
-  '@types/node': ^26.4.1
+  '@types/node': ^26.5.1
   '@vitest/coverage-v8': ^5.0.0
   drizzle-orm: ^0.45.2
   tsup: ^8.5.0
   tsx: ^4.21.0
-  typescript: ^6.0.3
+  typescript: ^7.0.2
   vitest: ^5.0.0
 
 # --- pnpm settings -----------------------------------------------------------
