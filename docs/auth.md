@@ -57,6 +57,7 @@ The instance is configured with:
 | Email / password         | Enabled. Password hashing is better-auth's built-in default (scrypt).                                                                                                |
 | Anonymous plugin         | `POST /sign-in/anonymous` mints a Guest. Its `onLinkAccount` hook runs the claim.                                                                                    |
 | Have I Been Pwned plugin | Rejects sign-up with a known-breached password (`400 PASSWORD_COMPROMISED`).                                                                                         |
+| openAPI plugin           | Serves the auth API reference — see [API reference](#api-reference).                                                                                                 |
 | `secondaryStorage`       | The `@nebula-chat/redis` `authStore` — sessions, verification records, and rate-limit counters.                                                                      |
 | `session.cookieCache`    | Enabled — a short-lived signed cookie lets most requests validate without a store round-trip.                                                                        |
 | `rateLimit`              | Enabled, `storage: 'secondary-storage'` (Redis).                                                                                                                     |
@@ -90,6 +91,24 @@ These are better-auth's standard endpoints; the full surface (password change,
 session listing, etc.) is whatever the configured plugins expose. Registration and
 sign-out are handled entirely by better-auth — the application adds no endpoints of
 its own on top of the catch-all.
+
+### API reference
+
+The Fastify catch-all is `hide: true`, so these endpoints are absent from the
+application's own `openapi.yaml`. Instead they are documented by better-auth's
+`openAPI` plugin, reachable through the same `/api/auth/*` passthrough:
+
+| Method | Path                                 | Purpose                                                                |
+| ------ | ------------------------------------ | ---------------------------------------------------------------------- |
+| `GET`  | `/api/auth/reference`                | Interactive [Scalar](https://scalar.com/) reference with "Try it out". |
+| `GET`  | `/api/auth/open-api/generate-schema` | The raw OpenAPI 3.1.1 document as JSON.                                |
+
+Point Bruno (or Postman/Insomnia) at the `generate-schema` URL to import the auth
+collection, or open `/api/auth/reference` in a browser. `auth.api.generateOpenAPISchema()`
+returns the same document as a JSON object for build-time emission. The reference
+lists better-auth's full core catalogue, so it includes endpoints for features this
+instance does not enable (social sign-in, password reset, email verification); the
+active surface is email/password + anonymous as configured above.
 
 ## Sessions and cookies
 

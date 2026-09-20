@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth';
 import type { Auth, User as BetterAuthUser, Session as BetterAuthSession } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { anonymous, haveIBeenPwned } from 'better-auth/plugins';
+import { anonymous, haveIBeenPwned, openAPI } from 'better-auth/plugins';
 import { users, session, account, verification } from '@nebula-chat/db';
 import type { DbClient } from '@nebula-chat/db';
 import type { AuthStore } from '@nebula-chat/redis';
@@ -56,6 +56,11 @@ export type CreateAuthConfig = {
  * - `rateLimit` enabled with `storage: 'secondary-storage'` (counters in Redis).
  * - anonymous plugin with `onLinkAccount` claiming the Guest's conversations.
  * - Have I Been Pwned plugin rejecting breached passwords on sign-up.
+ * - openAPI plugin documenting the whole auth surface: a Scalar reference UI at
+ *   `/api/auth/reference` and the OpenAPI 3.1 schema at
+ *   `/api/auth/open-api/generate-schema`. The Fastify `/api/auth/*` route is
+ *   `hide: true`, so this is the only machine-readable description of these
+ *   endpoints (importable into Bruno/Postman, etc.).
  * - email/password enabled. No OAuth / email verification / reset in this slice.
  */
 export const createAuth = ({
@@ -126,6 +131,12 @@ export const createAuth = ({
         },
       }),
       haveIBeenPwned(),
+      // Serves a Scalar reference UI at `/api/auth/reference` and the OpenAPI 3.1
+      // schema at `/api/auth/open-api/generate-schema`, both reached through the
+      // server's `/api/auth/*` passthrough. Documents every endpoint the core and
+      // the plugins above expose. `auth.api.generateOpenAPISchema()` returns the
+      // same schema as a JSON object for build-time emission.
+      openAPI(),
     ],
   }) as unknown as Auth;
 
