@@ -104,11 +104,21 @@ application's own `openapi.yaml`. Instead they are documented by better-auth's
 | `GET`  | `/api/auth/open-api/generate-schema` | The raw OpenAPI 3.1.1 document as JSON.                                |
 
 Point Bruno (or Postman/Insomnia) at the `generate-schema` URL to import the auth
-collection, or open `/api/auth/reference` in a browser. `auth.api.generateOpenAPISchema()`
-returns the same document as a JSON object for build-time emission. The reference
-lists better-auth's full core catalogue, so it includes endpoints for features this
-instance does not enable (social sign-in, password reset, email verification); the
-active surface is email/password + anonymous as configured above.
+collection, or open `/api/auth/reference` in a browser. A version-controlled copy of
+the schema lives at [`openapi/auth-openapi.json`](../openapi/auth-openapi.json) so a
+collection can be regenerated without a running server; refresh it with:
+
+```bash
+pnpm --filter nebula-chat-server generate:auth-openapi
+```
+
+That script (`src/scripts/generate-auth-openapi.ts`) needs no database, Redis, or
+provider key — it builds a throwaway instance and calls
+`auth.api.generateOpenAPISchema()`.
+
+The reference lists better-auth's full core catalogue, so it includes endpoints for
+features this instance does not enable (social sign-in, password reset, email
+verification); the active surface is email/password + anonymous as configured above.
 
 ## Sessions and cookies
 
