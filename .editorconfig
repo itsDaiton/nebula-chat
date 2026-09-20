@@ -14,3 +14,11 @@ trim_trailing_whitespace = false
 # editorconfig-checker's "multiple of indent_size" rule. Unset it for Markdown so
 # the checker stops fighting valid nesting; markdownlint governs Markdown style.
 indent_size = unset
+
+# Drizzle generates the migration SQL with tab indentation and writes its journal
+# without a trailing newline. These are generated artifacts (also excluded from
+# Prettier), so don't hold them to the repo's space/final-newline style — the next
+# `db:generate` would only overwrite any hand-fix.
+[libs/db/migrations/**]
+indent_style = unset
+insert_final_newline = unset
