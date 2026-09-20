@@ -7,9 +7,9 @@
  */
 
 /**
- * Message not found or not owned by the caller
+ * Conversation not found or not owned by the caller
  */
-export type GetMessage404 = {
+export type CreateMessage404 = {
   success: false;
   error: string;
   message: string;

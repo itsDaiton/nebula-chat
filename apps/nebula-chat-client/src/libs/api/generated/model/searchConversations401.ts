@@ -7,9 +7,9 @@
  */
 
 /**
- * Message not found or not owned by the caller
+ * No authenticated session
  */
-export type GetMessage404 = {
+export type SearchConversations401 = {
   success: false;
   error: string;
   message: string;

@@ -8,7 +8,7 @@
 import type { ListConversations200ConversationsItem } from './listConversations200ConversationsItem';
 
 /**
- * Paginated list of conversations
+ * Paginated list of conversations owned by the caller
  */
 export type ListConversations200 = {
   /** @maxItems 100 */

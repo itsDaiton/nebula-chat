@@ -42,7 +42,7 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
       return;
     }
 
-    await validateChatRequest(conversationId, userMessage, body.model);
+    await validateChatRequest(conversationId, userMessage, getSessionData(req).user.id, body.model);
 
     const cachedTokens = cachedData.tokens;
     const lines = cachedTokens.split('\n');
@@ -69,12 +69,15 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
       getSessionData(req).user.id,
     );
 
-    const assistantMessage = await messageService.createMessage({
-      conversationId: userMessageResult.conversationId,
-      role: 'assistant',
-      content: assistantContent,
-      tokenCount: cachedData.usageData?.totalTokens ?? null,
-    });
+    const assistantMessage = await messageService.createMessage(
+      {
+        conversationId: userMessageResult.conversationId,
+        role: 'assistant',
+        content: assistantContent,
+        tokenCount: cachedData.usageData?.totalTokens ?? null,
+      },
+      getSessionData(req).user.id,
+    );
 
     const {
       userMessageId,

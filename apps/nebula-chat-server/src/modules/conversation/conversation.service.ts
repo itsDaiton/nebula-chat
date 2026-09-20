@@ -9,17 +9,21 @@ export const conversationService = {
     // user, resolved in the controller — never trusted from the request body.
     return conversationRepository.create(data, userId);
   },
-  async getConversation(conversationId: string) {
-    const conversation = await conversationRepository.findById({ conversationId });
+  async getConversation(conversationId: string, userId: string) {
+    const conversation = await conversationRepository.findById({ conversationId }, userId);
     if (!conversation) {
       throw new NotFoundError('Conversation', conversationId);
     }
     return conversation;
   },
-  async getAllConversations(limit = paginationConfig.defaultLimit, cursor?: string) {
-    return conversationRepository.findAll(limit, cursor);
+  async getAllConversations(
+    userId: string,
+    limit = paginationConfig.defaultLimit,
+    cursor?: string,
+  ) {
+    return conversationRepository.findAll(userId, limit, cursor);
   },
-  async searchConversations(query: string) {
-    return conversationRepository.search(query);
+  async searchConversations(userId: string, query: string) {
+    return conversationRepository.search(userId, query);
   },
 };

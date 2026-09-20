@@ -371,8 +371,8 @@ paths:
       summary: List conversations
       tags:
         - Conversations
-      description: Retrieve conversations with cursor-based pagination. Returns up to
-        10 conversations by default.
+      description: Retrieve the caller’s own conversations with cursor-based
+        pagination. Returns up to 10 conversations by default.
       parameters:
         - schema:
             default: 10
@@ -393,7 +393,7 @@ paths:
           description: Pagination cursor for fetching the next page of conversations
       responses:
         "200":
-          description: Paginated list of conversations
+          description: Paginated list of conversations owned by the caller
           content:
             application/json:
               schema:
@@ -429,7 +429,28 @@ paths:
                   - nextCursor
                   - hasMore
                 additionalProperties: false
-                description: Paginated list of conversations
+                description: Paginated list of conversations owned by the caller
+        "401":
+          description: No authenticated session
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: No authenticated session
         "500":
           description: Internal server error
           content:
@@ -457,8 +478,7 @@ paths:
       summary: Search conversations
       tags:
         - Conversations
-      description: Search conversations by title. Returns matching conversations
-        ordered by creation date.
+      description: Search the caller’s own conversations by title, ordered by creation date.
       parameters:
         - schema:
             type: string
@@ -469,7 +489,7 @@ paths:
           description: Search query to filter conversations by title
       responses:
         "200":
-          description: Matching conversations
+          description: Matching conversations owned by the caller
           content:
             application/json:
               schema:
@@ -490,7 +510,7 @@ paths:
                     - title
                     - createdAt
                   additionalProperties: false
-                description: Matching conversations
+                description: Matching conversations owned by the caller
         "400":
           description: Invalid search query
           content:
@@ -512,6 +532,27 @@ paths:
                   - message
                 additionalProperties: false
                 description: Invalid search query
+        "401":
+          description: No authenticated session
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: No authenticated session
         "500":
           description: Internal server error
           content:
@@ -539,7 +580,7 @@ paths:
       summary: Get conversation by ID
       tags:
         - Conversations
-      description: Retrieve a specific conversation by ID
+      description: Retrieve one of the caller’s own conversations by ID
       parameters:
         - schema:
             type: string
@@ -590,8 +631,8 @@ paths:
                   - message
                 additionalProperties: false
                 description: Invalid conversation ID format
-        "404":
-          description: Conversation not found
+        "401":
+          description: No authenticated session
           content:
             application/json:
               schema:
@@ -610,7 +651,28 @@ paths:
                   - error
                   - message
                 additionalProperties: false
-                description: Conversation not found
+                description: No authenticated session
+        "404":
+          description: Conversation not found or not owned by the caller
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Conversation not found or not owned by the caller
         "500":
           description: Internal server error
           content:
@@ -638,7 +700,7 @@ paths:
       summary: Create message
       tags:
         - Messages
-      description: Create a new message in a conversation
+      description: Create a new message in one of the caller’s own conversations
       requestBody:
         required: true
         content:
@@ -727,6 +789,48 @@ paths:
                   - message
                 additionalProperties: false
                 description: Invalid request body
+        "401":
+          description: No authenticated session
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: No authenticated session
+        "404":
+          description: Conversation not found or not owned by the caller
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Conversation not found or not owned by the caller
         "500":
           description: Internal server error
           content:
@@ -750,13 +854,13 @@ paths:
                 description: Internal server error
     get:
       operationId: listMessages
-      summary: List all messages
+      summary: List messages
       tags:
         - Messages
-      description: Retrieve all messages across all conversations
+      description: Retrieve all messages across the caller’s own conversations
       responses:
         "200":
-          description: List of messages
+          description: List of messages owned by the caller
           content:
             application/json:
               schema:
@@ -794,7 +898,28 @@ paths:
                     - cached
                     - createdAt
                   additionalProperties: false
-                description: List of messages
+                description: List of messages owned by the caller
+        "401":
+          description: No authenticated session
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: No authenticated session
         "500":
           description: Internal server error
           content:
@@ -822,7 +947,7 @@ paths:
       summary: Get message by ID
       tags:
         - Messages
-      description: Retrieve a specific message by ID
+      description: Retrieve one of the caller’s own messages by ID
       parameters:
         - schema:
             type: string
@@ -890,8 +1015,8 @@ paths:
                   - message
                 additionalProperties: false
                 description: Invalid message ID format
-        "404":
-          description: Message not found
+        "401":
+          description: No authenticated session
           content:
             application/json:
               schema:
@@ -910,7 +1035,28 @@ paths:
                   - error
                   - message
                 additionalProperties: false
-                description: Message not found
+                description: No authenticated session
+        "404":
+          description: Message not found or not owned by the caller
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  error:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - success
+                  - error
+                  - message
+                additionalProperties: false
+                description: Message not found or not owned by the caller
         "500":
           description: Internal server error
           content:

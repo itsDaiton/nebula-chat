@@ -228,6 +228,7 @@ describe('chatService.streamResponse', () => {
 
     expect(mockedMessageService.createMessage).toHaveBeenCalledWith(
       expect.objectContaining({ role: 'assistant', content: 'Hello, world' }),
+      'anonymous',
     );
   });
 
@@ -238,6 +239,7 @@ describe('chatService.streamResponse', () => {
 
     expect(mockedMessageService.createMessage).toHaveBeenCalledWith(
       expect.objectContaining({ tokenCount: 15 }),
+      'anonymous',
     );
   });
 

@@ -43,7 +43,9 @@ export const createUserMessage = async (
     let isNewConversation = false;
 
     if (convId) {
-      const existingConversation = await conversationRepository.findByIdTx(tx, convId);
+      // Owner-scoped (ADR-0010 §2): a conversation the caller doesn't own reads as
+      // absent, so a Guest cannot append to another user's conversation.
+      const existingConversation = await conversationRepository.findByIdTx(tx, convId, userId);
       if (!existingConversation) {
         throw new NotFoundError('Conversation', convId);
       }
@@ -79,6 +81,7 @@ export const createUserMessage = async (
 export const validateChatRequest = async (
   conversationId: string | undefined,
   userMessage: { role: string; content: string },
+  userId: string,
   model?: string,
 ) => {
   if (userMessage.role !== 'user') {
@@ -95,7 +98,11 @@ export const validateChatRequest = async (
   }
 
   if (conversationId) {
-    const existingConversation = await conversationRepository.findByIdSimple(conversationId);
+    // Owner-scoped (ADR-0010 §2): another user's conversation reads as absent.
+    const existingConversation = await conversationRepository.findByIdSimple(
+      conversationId,
+      userId,
+    );
     if (!existingConversation) {
       throw new NotFoundError('Conversation', conversationId);
     }
@@ -130,7 +137,7 @@ export const chatService = {
 
       const userMessage = data.messages[0]!;
       const requestedModel = data.model;
-      await validateChatRequest(conversationId, userMessage, requestedModel);
+      await validateChatRequest(conversationId, userMessage, userId, requestedModel);
 
       const result = await createUserMessage(
         conversationId,
@@ -202,12 +209,15 @@ export const chatService = {
         throw new Error('The assistant did not generate a response.');
       }
 
-      const assistantMessage = await messageService.createMessage({
-        conversationId,
-        role: 'assistant',
-        content: fullResponse,
-        tokenCount: totalTokens,
-      });
+      const assistantMessage = await messageService.createMessage(
+        {
+          conversationId,
+          role: 'assistant',
+          content: fullResponse,
+          tokenCount: totalTokens,
+        },
+        userId,
+      );
       assistantMessageId = assistantMessage.id;
       write(sseAssistantMessageCreated(assistantMessageId));
 

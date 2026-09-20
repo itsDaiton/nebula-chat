@@ -2,7 +2,7 @@ import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { sseToken, sseUsage } from '@nebula-chat/langchain';
 import { createTestApp } from '@backend/test/app';
-import { guestSession, registeredSession } from '@backend/test/session';
+import { guestSession, registeredSession, REGISTERED_USER_ID } from '@backend/test/session';
 
 vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
@@ -298,6 +298,7 @@ describe('POST /api/chat/stream — cache hit', () => {
 
     expect(vi.mocked(messageService).createMessage).toHaveBeenCalledWith(
       expect.objectContaining({ role: 'assistant', content: '4' }),
+      REGISTERED_USER_ID,
     );
   });
 

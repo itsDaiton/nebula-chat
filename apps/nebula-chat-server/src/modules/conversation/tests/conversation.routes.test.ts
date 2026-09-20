@@ -154,10 +154,14 @@ describe('GET /api/conversations/:conversationId', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ id: CONVERSATION_ID });
-    expect(repo.findById).toHaveBeenCalledWith({ conversationId: CONVERSATION_ID });
+    // Owner-scoped: the lookup is filtered to the session user.
+    expect(repo.findById).toHaveBeenCalledWith(
+      { conversationId: CONVERSATION_ID },
+      REGISTERED_USER_ID,
+    );
   });
 
-  it('returns 404 with a NotFound code when the conversation is absent', async () => {
+  it('returns 404 with a NotFound code when the conversation is absent or not owned', async () => {
     repo.findById.mockResolvedValue(null);
 
     const res = await app.inject({ method: 'GET', url: `/api/conversations/${CONVERSATION_ID}` });
@@ -170,6 +174,15 @@ describe('GET /api/conversations/:conversationId', () => {
     const res = await app.inject({ method: 'GET', url: '/api/conversations/not-a-uuid' });
 
     expect(res.statusCode).toBe(400);
+    expect(repo.findById).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unauthenticated read with 401 and never reaches the repository', async () => {
+    mockedGetSession.mockResolvedValue(null);
+
+    const res = await app.inject({ method: 'GET', url: `/api/conversations/${CONVERSATION_ID}` });
+
+    expect(res.statusCode).toBe(401);
     expect(repo.findById).not.toHaveBeenCalled();
   });
 });
@@ -191,7 +204,8 @@ describe('GET /api/conversations', () => {
 
     await app.inject({ method: 'GET', url: '/api/conversations' });
 
-    expect(repo.findAll).toHaveBeenCalledWith(10, undefined);
+    // Owner-scoped: the session user is the first argument.
+    expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, 10, undefined);
   });
 
   it('coerces the limit query parameter to a number', async () => {
@@ -199,7 +213,7 @@ describe('GET /api/conversations', () => {
 
     await app.inject({ method: 'GET', url: '/api/conversations?limit=25' });
 
-    expect(repo.findAll).toHaveBeenCalledWith(25, undefined);
+    expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, 25, undefined);
   });
 
   it('passes the pagination cursor through', async () => {
@@ -207,7 +221,16 @@ describe('GET /api/conversations', () => {
 
     await app.inject({ method: 'GET', url: `/api/conversations?cursor=${CONVERSATION_ID}` });
 
-    expect(repo.findAll).toHaveBeenCalledWith(10, CONVERSATION_ID);
+    expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, 10, CONVERSATION_ID);
+  });
+
+  it('rejects an unauthenticated list with 401 and never reaches the repository', async () => {
+    mockedGetSession.mockResolvedValue(null);
+
+    const res = await app.inject({ method: 'GET', url: '/api/conversations' });
+
+    expect(res.statusCode).toBe(401);
+    expect(repo.findAll).not.toHaveBeenCalled();
   });
 
   it('rejects a limit above the configured maximum', async () => {
@@ -238,13 +261,23 @@ describe('GET /api/conversations/search', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toHaveLength(1);
-    expect(repo.search).toHaveBeenCalledWith('hello');
+    // Owner-scoped: the session user is the first argument.
+    expect(repo.search).toHaveBeenCalledWith(REGISTERED_USER_ID, 'hello');
   });
 
   it('rejects a missing query string with 400', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/conversations/search' });
 
     expect(res.statusCode).toBe(400);
+    expect(repo.search).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unauthenticated search with 401 and never reaches the repository', async () => {
+    mockedGetSession.mockResolvedValue(null);
+
+    const res = await app.inject({ method: 'GET', url: '/api/conversations/search?q=hello' });
+
+    expect(res.statusCode).toBe(401);
     expect(repo.search).not.toHaveBeenCalled();
   });
 

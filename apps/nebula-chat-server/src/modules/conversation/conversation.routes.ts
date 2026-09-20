@@ -35,24 +35,26 @@ const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
 
   app.get('/search', {
     schema: {
-      description:
-        'Search conversations by title. Returns matching conversations ordered by creation date.',
+      description: 'Search the caller’s own conversations by title, ordered by creation date.',
       summary: 'Search conversations',
       tags: ['Conversations'],
       operationId: 'searchConversations',
       querystring: searchConversationsQuerySchema,
       response: {
-        200: conversationsArraySchema.describe('Matching conversations'),
+        200: conversationsArraySchema.describe('Matching conversations owned by the caller'),
         400: errorResponseSchema.describe('Invalid search query'),
+        401: errorResponseSchema.describe('No authenticated session'),
         500: errorResponseSchema.describe('Internal server error'),
       },
     },
+    // Owner-scoped: results are filtered to the session user (ADR-0010 §2).
+    preHandler: requireUser,
     handler: conversationController.search,
   });
 
   app.get('/:conversationId', {
     schema: {
-      description: 'Retrieve a specific conversation by ID',
+      description: 'Retrieve one of the caller’s own conversations by ID',
       summary: 'Get conversation by ID',
       tags: ['Conversations'],
       operationId: 'getConversation',
@@ -60,26 +62,34 @@ const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
       response: {
         200: conversationResponseSchema.describe('Conversation retrieved successfully'),
         400: errorResponseSchema.describe('Invalid conversation ID format'),
-        404: errorResponseSchema.describe('Conversation not found'),
+        401: errorResponseSchema.describe('No authenticated session'),
+        404: errorResponseSchema.describe('Conversation not found or not owned by the caller'),
         500: errorResponseSchema.describe('Internal server error'),
       },
     },
+    // Owner-scoped: another user's conversation reads as 404, never 403 (no leak).
+    preHandler: requireUser,
     handler: conversationController.get,
   });
 
   app.get('', {
     schema: {
       description:
-        'Retrieve conversations with cursor-based pagination. Returns up to 10 conversations by default.',
+        'Retrieve the caller’s own conversations with cursor-based pagination. Returns up to 10 conversations by default.',
       summary: 'List conversations',
       tags: ['Conversations'],
       operationId: 'listConversations',
       querystring: getConversationsQuerySchema,
       response: {
-        200: paginatedConversationsResponseSchema.describe('Paginated list of conversations'),
+        200: paginatedConversationsResponseSchema.describe(
+          'Paginated list of conversations owned by the caller',
+        ),
+        401: errorResponseSchema.describe('No authenticated session'),
         500: errorResponseSchema.describe('Internal server error'),
       },
     },
+    // Owner-scoped: only the session user's conversations are listed (ADR-0010 §2).
+    preHandler: requireUser,
     handler: conversationController.getAll,
   });
 };

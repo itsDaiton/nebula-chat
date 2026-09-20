@@ -91,6 +91,16 @@ request property). Add a gate to a route's `preHandler` chain to protect it:
 app.post('/', { preHandler: [requireUser], schema: {/* ... */} }, handler);
 ```
 
+**Every conversation and message route is gated by `requireUser`** — there is no
+unauthenticated read path, so a random caller off the internet gets `401` rather
+than data. On top of the gate, reads are **owner-scoped**: `getConversation`,
+`listConversations`, `searchConversations`, `getMessage`, and `listMessages` filter
+by the session user, and the message/chat write paths verify the target
+conversation is owned by the caller. A conversation or message belonging to another
+user reads as **`404`** (never `403`), so the gate never leaks that a row exists.
+The allowance cap only stops _streaming_ — a capped Guest can still read their own
+conversations and messages.
+
 ### The `/api/auth/*` catch-all
 
 `GET|POST /api/auth/*` delegates to better-auth's `toNodeHandler(auth)` on the raw
@@ -174,6 +184,4 @@ Deliberately out of the first slice (see ADR-0010 and the ticket's _Out of Scope
   transactional email provider decision.
 - **Captcha** on the anonymous/sign-up path — an abuse backstop for the
   cookie-reset hole, alongside better-auth's IP rate limiting.
-- **Owner-scoped read routes** — only `POST /api/conversations` is gated so far;
-  filtering reads by owner is a tracked follow-up.
 - **`@fastify/helmet` / CSRF hardening** beyond better-auth's defaults.

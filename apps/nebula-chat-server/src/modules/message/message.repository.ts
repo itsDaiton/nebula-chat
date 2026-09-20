@@ -11,8 +11,8 @@ import type {
 
 export const messageRepository: {
   create: (data: CreateMessageDTO) => Promise<MessageRow>;
-  findById: (params: GetMessageParams) => Promise<MessageRow | null>;
-  findAll: () => Promise<MessageRow[]>;
+  findById: (params: GetMessageParams, userId: string) => Promise<MessageRow | null>;
+  findAll: (userId: string) => Promise<MessageRow[]>;
   createTx: (tx: DbTransaction, data: CreateMessageDTO) => Promise<MessageRow>;
   findByConversationId: (conversationId: string, limit?: number) => Promise<MessageHistoryRow[]>;
   countUserMessagesByOwner: (userId: string) => Promise<number>;
@@ -24,12 +24,25 @@ export const messageRepository: {
       .returning();
     return row!;
   },
-  async findById({ messageId }: GetMessageParams) {
-    const [row] = await db.select().from(messages).where(eq(messages.id, messageId));
-    return row ?? null;
+  // Reads are owner-scoped through the message's conversation (ADR-0010 §2): a
+  // message in another user's conversation reads as absent, joining messages to
+  // `conversations.userId` the same way the allowance count does.
+  async findById({ messageId }: GetMessageParams, userId: string) {
+    const [row] = await db
+      .select()
+      .from(messages)
+      .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+      .where(and(eq(messages.id, messageId), eq(conversations.userId, userId)));
+    return row?.messages ?? null;
   },
-  async findAll() {
-    return db.select().from(messages).orderBy(desc(messages.createdAt));
+  async findAll(userId: string) {
+    const rows = await db
+      .select()
+      .from(messages)
+      .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+      .where(eq(conversations.userId, userId))
+      .orderBy(desc(messages.createdAt));
+    return rows.map((row) => row.messages);
   },
   async createTx(tx: DbTransaction, data: CreateMessageDTO) {
     const { conversationId, content, role, tokenCount } = data;
