@@ -29,11 +29,12 @@ export type CacheConnection = Pick<Redis, 'get' | 'del' | 'keys'> & {
 /**
  * The subset of the ioredis client the `authStore` primitive actually calls.
  * Like `CacheConnection`, narrowing it lets tests supply a plain fake while a real
- * `Redis` instance satisfies it structurally. `getdel` maps to Redis `GETDEL` and
- * `incr` to `INCR`; `set` carries both the plain and `EX`-with-TTL overloads
+ * `Redis` instance satisfies it structurally. `getdel` maps to Redis `GETDEL`,
+ * `incr` to `INCR` and `expire` to `EXPIRE` (used together for TTL-on-create
+ * counters); `set` carries both the plain and `EX`-with-TTL overloads
  * (better-auth passes the TTL in seconds).
  */
-export type AuthStoreConnection = Pick<Redis, 'get' | 'del' | 'getdel' | 'incr'> & {
+export type AuthStoreConnection = Pick<Redis, 'get' | 'del' | 'getdel' | 'incr' | 'expire'> & {
   set(key: string, value: string, expiryMode: 'EX', ttlSeconds: number): Promise<unknown>;
   set(key: string, value: string): Promise<unknown>;
 };

@@ -66,6 +66,10 @@ export const createAuth = ({
   baseURL,
   trustedOrigins,
 }: CreateAuthConfig): Auth =>
+  // better-auth 1.7 made `Auth` generic (`Auth<Options>`) and invariant, so the
+  // instance `betterAuth()` infers no longer widens to the base `Auth` we expose.
+  // Cast back to the portable base type (see `AuthInstance`): safe because the
+  // value IS an `Auth` — only the embedded options generic differs.
   betterAuth({
     secret,
     baseURL,
@@ -89,13 +93,15 @@ export const createAuth = ({
     emailAndPassword: {
       enabled: true,
     },
-    // Adapt the Redis-backed authStore to better-auth's SecondaryStorage. The
-    // interface is exactly get/set/delete (verified against @better-auth/core
-    // 1.4.10, src/db/type.ts); `ttl` is in seconds, which authStore passes
-    // straight through to `SET ... EX`. authStore's `getAndDelete`/`increment`
-    // are not part of SecondaryStorage and are unused by this wiring.
+    // Adapt the Redis-backed authStore to better-auth's SecondaryStorage. As of
+    // @better-auth/core 1.7 (src/db/type.ts) the interface is
+    // get/getAndDelete/increment/set/delete; `ttl` is in seconds, which authStore
+    // maps to `SET ... EX` (set) and `INCR` + create-only `EXPIRE` (increment, the
+    // fixed-window semantics the secondary-storage rate limiter requires).
     secondaryStorage: {
       get: (key) => authStore.get(key),
+      getAndDelete: (key) => authStore.getAndDelete(key),
+      increment: (key, ttl) => authStore.increment(key, ttl),
       set: (key, value, ttl) => authStore.set(key, value, ttl),
       delete: (key) => authStore.delete(key),
     },
@@ -121,7 +127,7 @@ export const createAuth = ({
       }),
       haveIBeenPwned(),
     ],
-  });
+  }) as unknown as Auth;
 
 /**
  * The configured better-auth instance type — what `createAuth` returns. Annotated

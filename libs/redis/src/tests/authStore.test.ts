@@ -33,6 +33,7 @@ const makeConnection = (): FakeConnection => {
       store.set(key, String(next));
       return next;
     }) as AuthStoreConnection['incr'],
+    expire: (async (key: string) => (store.has(key) ? 1 : 0)) as AuthStoreConnection['expire'],
   };
 };
 
@@ -45,6 +46,7 @@ const brokenConnection = (): AuthStoreConnection => {
     del: boom as AuthStoreConnection['del'],
     getdel: boom as AuthStoreConnection['getdel'],
     incr: boom as AuthStoreConnection['incr'],
+    expire: boom as AuthStoreConnection['expire'],
   };
 };
 
@@ -126,9 +128,23 @@ describe('createAuthStore', () => {
     const connection = makeConnection();
     const store = createAuthStore({ connection });
 
-    expect(await store.increment('ratelimit:ip')).toBe(1);
-    expect(await store.increment('ratelimit:ip')).toBe(2);
+    expect(await store.increment('ratelimit:ip', 60)).toBe(1);
+    expect(await store.increment('ratelimit:ip', 60)).toBe(2);
     expect(connection.store.get('auth:ratelimit:ip')).toBe('2');
+  });
+
+  it('applies the TTL only when the counter is first created (EXPIRE on INCR===1)', async () => {
+    const connection = makeConnection();
+    const spy = vi.spyOn(connection, 'expire');
+    const store = createAuthStore({ connection });
+
+    await store.increment('ratelimit:ip', 60);
+    await store.increment('ratelimit:ip', 60);
+    await store.increment('ratelimit:ip', 60);
+
+    // Expiry set once, on creation, with the namespaced key and ttl — never extended.
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith('auth:ratelimit:ip', 60);
   });
 
   describe('is NOT fail-open — Redis errors propagate (ADR-0010 §3)', () => {
@@ -159,7 +175,7 @@ describe('createAuthStore', () => {
     it('rejects when increment fails', async () => {
       const store = createAuthStore({ connection: brokenConnection() });
 
-      await expect(store.increment('k')).rejects.toThrow('redis down');
+      await expect(store.increment('k', 60)).rejects.toThrow('redis down');
     });
   });
 });
