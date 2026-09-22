@@ -4,6 +4,7 @@ import type {
   CreateConversationDTO,
   GetConversationParams,
 } from '@backend/modules/conversation/conversation.types';
+import { getSessionData } from '@backend/plugins/authGate.plugin';
 
 type GetConversationsQuery = {
   limit: number;
@@ -16,17 +17,20 @@ type SearchConversationsQuery = {
 
 export const conversationController = {
   async create(req: FastifyRequest<{ Body: CreateConversationDTO }>, reply: FastifyReply) {
-    const conversation = await conversationService.createConversation(req.body);
+    const { user } = getSessionData(req);
+    const conversation = await conversationService.createConversation(req.body, user.id);
     return reply.status(201).send(conversation);
   },
   async get(req: FastifyRequest<{ Params: GetConversationParams }>, reply: FastifyReply) {
     const { conversationId } = req.params;
-    const conversation = await conversationService.getConversation(conversationId);
+    const { user } = getSessionData(req);
+    const conversation = await conversationService.getConversation(conversationId, user.id);
     return reply.status(200).send(conversation);
   },
   async getAll(req: FastifyRequest<{ Querystring: GetConversationsQuery }>, reply: FastifyReply) {
     const { limit, cursor } = req.query;
-    const result = await conversationService.getAllConversations(limit, cursor);
+    const { user } = getSessionData(req);
+    const result = await conversationService.getAllConversations(user.id, limit, cursor);
     return reply.status(200).send(result);
   },
   async search(
@@ -34,7 +38,8 @@ export const conversationController = {
     reply: FastifyReply,
   ) {
     const { q } = req.query;
-    const conversations = await conversationService.searchConversations(q);
+    const { user } = getSessionData(req);
+    const conversations = await conversationService.searchConversations(user.id, q);
     return reply.status(200).send(conversations);
   },
 };

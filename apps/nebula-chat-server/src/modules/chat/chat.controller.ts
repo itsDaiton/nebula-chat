@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { setHeaders } from '@backend/config/headers.config';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { chatService } from '@backend/modules/chat/chat.service';
+import { getSessionData } from '@backend/plugins/authGate.plugin';
 import { sseEnd } from '@nebula-chat/langchain';
 
 export const chatController = {
@@ -9,6 +10,7 @@ export const chatController = {
     if (reply.raw.writableEnded) return;
 
     const input = req.body as CreateChatStreamDTO;
+    const { user } = getSessionData(req);
 
     reply.hijack();
     const raw = reply.raw;
@@ -19,7 +21,7 @@ export const chatController = {
     const result = await chatService.streamResponse(
       input,
       (chunk) => raw.write(chunk),
-      'anonymous',
+      user.id,
       req.log,
     );
 

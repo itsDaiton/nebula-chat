@@ -3,6 +3,7 @@ import { setCacheHeaders } from '@backend/config/headers.config';
 import { createUserMessage, validateChatRequest } from '@backend/modules/chat/chat.service';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { chatCacheKey, getCachedStream } from '@backend/redis';
+import { getSessionData } from '@backend/plugins/authGate.plugin';
 import {
   sseConversationCreated,
   sseUserMessageCreated,
@@ -41,7 +42,7 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
       return;
     }
 
-    await validateChatRequest(conversationId, userMessage, body.model);
+    await validateChatRequest(conversationId, userMessage, getSessionData(req).user.id, body.model);
 
     const cachedTokens = cachedData.tokens;
     const lines = cachedTokens.split('\n');
@@ -65,14 +66,18 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
       conversationId,
       userMessage.content,
       userMessage.role,
+      getSessionData(req).user.id,
     );
 
-    const assistantMessage = await messageService.createMessage({
-      conversationId: userMessageResult.conversationId,
-      role: 'assistant',
-      content: assistantContent,
-      tokenCount: cachedData.usageData?.totalTokens ?? null,
-    });
+    const assistantMessage = await messageService.createMessage(
+      {
+        conversationId: userMessageResult.conversationId,
+        role: 'assistant',
+        content: assistantContent,
+        tokenCount: cachedData.usageData?.totalTokens ?? null,
+      },
+      getSessionData(req).user.id,
+    );
 
     const {
       userMessageId,

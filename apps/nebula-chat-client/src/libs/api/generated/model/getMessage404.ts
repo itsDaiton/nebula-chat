@@ -3,11 +3,11 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.5.0
+ * OpenAPI spec version: 1.6.1
  */
 
 /**
- * Message not found
+ * Message not found or not owned by the caller
  */
 export type GetMessage404 = {
   success: false;

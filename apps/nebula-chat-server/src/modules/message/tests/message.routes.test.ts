@@ -2,15 +2,31 @@ import { fromPartial } from '@total-typescript/shoehorn';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestApp } from '@backend/test/app';
+import { REGISTERED_USER_ID, registeredSession } from '@backend/test/session';
 
+// ADR-0008: only the repository layer is faked. The owner-scoped create path also
+// consults the conversation repository, so it is faked here too.
 vi.mock('@backend/modules/message/message.repository', () => ({
   messageRepository: { create: vi.fn(), findById: vi.fn(), findAll: vi.fn() },
 }));
+vi.mock('@backend/modules/conversation/conversation.repository', () => ({
+  conversationRepository: { findByIdSimple: vi.fn() },
+}));
 vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
+// Every message route is gated by `requireAuthentication`; faking `@backend/auth` lets the
+// test authenticate without a real better-auth instance (ADR-0008).
+vi.mock('@backend/auth', () => ({
+  auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
+}));
+
+import { auth } from '@backend/auth';
 import { messageRepository } from '@backend/modules/message/message.repository';
+import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
 
 const repo = vi.mocked(messageRepository);
+const conversationRepo = vi.mocked(conversationRepository);
+const mockedGetSession = vi.mocked(auth.api.getSession);
 
 const MESSAGE_ID = '33333333-3333-4333-8333-333333333333';
 const CONVERSATION_ID = '11111111-1111-4111-8111-111111111111';
@@ -54,6 +70,12 @@ afterAll(async () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: an authenticated Registered user who owns the target conversation, so
+  // the gated routes pass and the create's ownership check succeeds.
+  mockedGetSession.mockResolvedValue(registeredSession() as never);
+  conversationRepo.findByIdSimple.mockResolvedValue(
+    fromPartial({ id: CONVERSATION_ID, userId: REGISTERED_USER_ID }),
+  );
 });
 
 describe('POST /api/messages', () => {
@@ -151,6 +173,25 @@ describe('POST /api/messages', () => {
 
     expect(res.statusCode).toBe(409);
   });
+
+  it('returns 404 when the target conversation is not owned by the caller', async () => {
+    conversationRepo.findByIdSimple.mockResolvedValue(null);
+
+    const res = await app.inject({ method: 'POST', url: '/api/messages', payload: validBody });
+
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toMatchObject({ success: false, error: 'NotFound' });
+    expect(repo.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unauthenticated create with 401 and never reaches the repository', async () => {
+    mockedGetSession.mockResolvedValue(null);
+
+    const res = await app.inject({ method: 'POST', url: '/api/messages', payload: validBody });
+
+    expect(res.statusCode).toBe(401);
+    expect(repo.create).not.toHaveBeenCalled();
+  });
 });
 
 describe('GET /api/messages/:messageId', () => {
@@ -161,10 +202,11 @@ describe('GET /api/messages/:messageId', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json().id).toBe(MESSAGE_ID);
-    expect(repo.findById).toHaveBeenCalledWith({ messageId: MESSAGE_ID });
+    // Owner-scoped: the lookup is filtered to the session user.
+    expect(repo.findById).toHaveBeenCalledWith({ messageId: MESSAGE_ID }, REGISTERED_USER_ID);
   });
 
-  it('returns 404 when the message is absent', async () => {
+  it('returns 404 when the message is absent or not owned', async () => {
     repo.findById.mockResolvedValue(null);
 
     const res = await app.inject({ method: 'GET', url: `/api/messages/${MESSAGE_ID}` });
@@ -177,6 +219,15 @@ describe('GET /api/messages/:messageId', () => {
     const res = await app.inject({ method: 'GET', url: '/api/messages/nope' });
 
     expect(res.statusCode).toBe(400);
+    expect(repo.findById).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unauthenticated read with 401 and never reaches the repository', async () => {
+    mockedGetSession.mockResolvedValue(null);
+
+    const res = await app.inject({ method: 'GET', url: `/api/messages/${MESSAGE_ID}` });
+
+    expect(res.statusCode).toBe(401);
     expect(repo.findById).not.toHaveBeenCalled();
   });
 });
@@ -207,5 +258,22 @@ describe('GET /api/messages', () => {
     const res = await app.inject({ method: 'GET', url: '/api/messages' });
 
     expect(res.json()[0].createdAt).toBe('2026-01-01T00:00:00.000Z');
+  });
+
+  it('lists only the caller’s own messages', async () => {
+    repo.findAll.mockResolvedValue(fromPartial([aMessage()]));
+
+    await app.inject({ method: 'GET', url: '/api/messages' });
+
+    expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID);
+  });
+
+  it('rejects an unauthenticated list with 401 and never reaches the repository', async () => {
+    mockedGetSession.mockResolvedValue(null);
+
+    const res = await app.inject({ method: 'GET', url: '/api/messages' });
+
+    expect(res.statusCode).toBe(401);
+    expect(repo.findAll).not.toHaveBeenCalled();
   });
 });

@@ -36,19 +36,24 @@ export const createUserMessage = async (
   conversationId: string | undefined,
   userMessageContent: string,
   userMessageRole: CreateMessageDTO['role'],
+  userId: string,
 ): Promise<{ conversationId: string; userMessageId: string; isNewConversation: boolean }> => {
   const result = await db.transaction(async (tx: DbTransaction) => {
     let convId = conversationId;
     let isNewConversation = false;
 
     if (convId) {
-      const existingConversation = await conversationRepository.findByIdTx(tx, convId);
+      // Owner-scoped (ADR-0010 §2): a conversation the caller doesn't own reads as
+      // absent, so a Guest cannot append to another user's conversation.
+      const existingConversation = await conversationRepository.findByIdTx(tx, convId, userId);
       if (!existingConversation) {
         throw new NotFoundError('Conversation', convId);
       }
     } else {
       const title = userMessageContent.slice(0, 50) || 'New Chat';
-      const newConversation = await conversationRepository.createTx(tx, title);
+      // conversations.userId is NOT NULL (ADR-0010 §2): a new conversation is
+      // owned by the session user (a Guest or a Registered user).
+      const newConversation = await conversationRepository.createTx(tx, title, userId);
       convId = newConversation.id;
       isNewConversation = true;
     }
@@ -76,6 +81,7 @@ export const createUserMessage = async (
 export const validateChatRequest = async (
   conversationId: string | undefined,
   userMessage: { role: string; content: string },
+  userId: string,
   model?: string,
 ) => {
   if (userMessage.role !== 'user') {
@@ -92,7 +98,11 @@ export const validateChatRequest = async (
   }
 
   if (conversationId) {
-    const existingConversation = await conversationRepository.findByIdSimple(conversationId);
+    // Owner-scoped (ADR-0010 §2): another user's conversation reads as absent.
+    const existingConversation = await conversationRepository.findByIdSimple(
+      conversationId,
+      userId,
+    );
     if (!existingConversation) {
       throw new NotFoundError('Conversation', conversationId);
     }
@@ -103,7 +113,7 @@ export const chatService = {
   async streamResponse(
     data: CreateChatStreamDTO,
     write: (chunk: string) => void,
-    userId = 'anonymous',
+    userId: string,
     logger?: LLMLogger,
   ): Promise<
     { conversationId: string; userMessageId: string; assistantMessageId: string } | undefined
@@ -127,9 +137,14 @@ export const chatService = {
 
       const userMessage = data.messages[0]!;
       const requestedModel = data.model;
-      await validateChatRequest(conversationId, userMessage, requestedModel);
+      await validateChatRequest(conversationId, userMessage, userId, requestedModel);
 
-      const result = await createUserMessage(conversationId, userMessage.content, userMessage.role);
+      const result = await createUserMessage(
+        conversationId,
+        userMessage.content,
+        userMessage.role,
+        userId,
+      );
       conversationId = result.conversationId;
       userMessageId = result.userMessageId;
 
@@ -194,12 +209,15 @@ export const chatService = {
         throw new Error('The assistant did not generate a response.');
       }
 
-      const assistantMessage = await messageService.createMessage({
-        conversationId,
-        role: 'assistant',
-        content: fullResponse,
-        tokenCount: totalTokens,
-      });
+      const assistantMessage = await messageService.createMessage(
+        {
+          conversationId,
+          role: 'assistant',
+          content: fullResponse,
+          tokenCount: totalTokens,
+        },
+        userId,
+      );
       assistantMessageId = assistantMessage.id;
       write(sseAssistantMessageCreated(assistantMessageId));
 

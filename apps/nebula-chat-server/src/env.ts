@@ -14,9 +14,9 @@ const envSchema = z
     CLIENT_URL: z.string().default('http://localhost:5173'),
     SERVER_URL: z.string().optional(),
     TRUST_PROXY: z.string().optional(),
-    // Documented and validated here for the app; @nebula-chat/otel reads both
-    // from process.env directly, so these declarations do not gate the lib's
-    // reads of them — see ADR-0007.
+    BETTER_AUTH_SECRET: z.string().min(1),
+    BETTER_AUTH_URL: z.url(),
+    GUEST_MESSAGE_ALLOWANCE: z.coerce.number().int().default(10),
     OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),
     OTEL_LOG_LEVEL: z
       .enum(['none', 'error', 'warn', 'info', 'debug', 'verbose', 'all'])

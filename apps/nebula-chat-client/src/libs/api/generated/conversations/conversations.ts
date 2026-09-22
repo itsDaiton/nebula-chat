@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.5.0
+ * OpenAPI spec version: 1.6.1
  */
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
@@ -24,17 +24,21 @@ import type {
 import type {
   CreateConversation201,
   CreateConversation400,
+  CreateConversation401,
   CreateConversation500,
   CreateConversationBody,
   GetConversation200,
   GetConversation400,
+  GetConversation401,
   GetConversation404,
   GetConversation500,
   ListConversations200,
+  ListConversations401,
   ListConversations500,
   ListConversationsParams,
   SearchConversations200Item,
   SearchConversations400,
+  SearchConversations401,
   SearchConversations500,
   SearchConversationsParams,
 } from '../model';
@@ -88,7 +92,7 @@ export const getCreateConversationQueryKey = (
 
 export const getCreateConversationQueryOptions = <
   TData = Awaited<ReturnType<typeof createConversation>>,
-  TError = ErrorType<CreateConversation400 | CreateConversation500>,
+  TError = ErrorType<CreateConversation400 | CreateConversation401 | CreateConversation500>,
 >(
   createConversationBody: BodyType<CreateConversationBody>,
   options?: {
@@ -113,11 +117,13 @@ export const getCreateConversationQueryOptions = <
 export type CreateConversationQueryResult = NonNullable<
   Awaited<ReturnType<typeof createConversation>>
 >;
-export type CreateConversationQueryError = ErrorType<CreateConversation400 | CreateConversation500>;
+export type CreateConversationQueryError = ErrorType<
+  CreateConversation400 | CreateConversation401 | CreateConversation500
+>;
 
 export function useCreateConversation<
   TData = Awaited<ReturnType<typeof createConversation>>,
-  TError = ErrorType<CreateConversation400 | CreateConversation500>,
+  TError = ErrorType<CreateConversation400 | CreateConversation401 | CreateConversation500>,
 >(
   createConversationBody: BodyType<CreateConversationBody>,
   options: {
@@ -136,7 +142,7 @@ export function useCreateConversation<
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useCreateConversation<
   TData = Awaited<ReturnType<typeof createConversation>>,
-  TError = ErrorType<CreateConversation400 | CreateConversation500>,
+  TError = ErrorType<CreateConversation400 | CreateConversation401 | CreateConversation500>,
 >(
   createConversationBody: BodyType<CreateConversationBody>,
   options?: {
@@ -157,7 +163,7 @@ export function useCreateConversation<
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useCreateConversation<
   TData = Awaited<ReturnType<typeof createConversation>>,
-  TError = ErrorType<CreateConversation400 | CreateConversation500>,
+  TError = ErrorType<CreateConversation400 | CreateConversation401 | CreateConversation500>,
 >(
   createConversationBody: BodyType<CreateConversationBody>,
   options?: {
@@ -172,7 +178,7 @@ export function useCreateConversation<
 
 export function useCreateConversation<
   TData = Awaited<ReturnType<typeof createConversation>>,
-  TError = ErrorType<CreateConversation400 | CreateConversation500>,
+  TError = ErrorType<CreateConversation400 | CreateConversation401 | CreateConversation500>,
 >(
   createConversationBody: BodyType<CreateConversationBody>,
   options?: {
@@ -191,7 +197,7 @@ export function useCreateConversation<
 }
 
 /**
- * Retrieve conversations with cursor-based pagination. Returns up to 10 conversations by default.
+ * Retrieve the caller’s own conversations with cursor-based pagination. Returns up to 10 conversations by default.
  * @summary List conversations
  */
 export const listConversations = (
@@ -208,7 +214,7 @@ export const listConversations = (
 export const getListConversationsMutationKey = () => ['listConversations'] as const;
 
 export const getListConversationsMutationOptions = <
-  TError = ErrorType<ListConversations500>,
+  TError = ErrorType<ListConversations401 | ListConversations500>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -247,13 +253,16 @@ export type ListConversationsMutationResult = NonNullable<
   Awaited<ReturnType<typeof listConversations>>
 >;
 
-export type ListConversationsMutationError = ErrorType<ListConversations500>;
+export type ListConversationsMutationError = ErrorType<ListConversations401 | ListConversations500>;
 export type ListConversationsMutationVariables = { params?: ListConversationsParams };
 
 /**
  * @summary List conversations
  */
-export const useListConversations = <TError = ErrorType<ListConversations500>, TContext = unknown>(
+export const useListConversations = <
+  TError = ErrorType<ListConversations401 | ListConversations500>,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof listConversations>>,
@@ -273,7 +282,7 @@ export const useListConversations = <TError = ErrorType<ListConversations500>, T
   return useMutation(getListConversationsMutationOptions(options), queryClient);
 };
 /**
- * Search conversations by title. Returns matching conversations ordered by creation date.
+ * Search the caller’s own conversations by title, ordered by creation date.
  * @summary Search conversations
  */
 export const searchConversations = (
@@ -290,7 +299,7 @@ export const searchConversations = (
 export const getSearchConversationsMutationKey = () => ['searchConversations'] as const;
 
 export const getSearchConversationsMutationOptions = <
-  TError = ErrorType<SearchConversations400 | SearchConversations500>,
+  TError = ErrorType<SearchConversations400 | SearchConversations401 | SearchConversations500>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -330,7 +339,7 @@ export type SearchConversationsMutationResult = NonNullable<
 >;
 
 export type SearchConversationsMutationError = ErrorType<
-  SearchConversations400 | SearchConversations500
+  SearchConversations400 | SearchConversations401 | SearchConversations500
 >;
 export type SearchConversationsMutationVariables = { params: SearchConversationsParams };
 
@@ -338,7 +347,7 @@ export type SearchConversationsMutationVariables = { params: SearchConversations
  * @summary Search conversations
  */
 export const useSearchConversations = <
-  TError = ErrorType<SearchConversations400 | SearchConversations500>,
+  TError = ErrorType<SearchConversations400 | SearchConversations401 | SearchConversations500>,
   TContext = unknown,
 >(
   options?: {
@@ -360,7 +369,7 @@ export const useSearchConversations = <
   return useMutation(getSearchConversationsMutationOptions(options), queryClient);
 };
 /**
- * Retrieve a specific conversation by ID
+ * Retrieve one of the caller’s own conversations by ID
  * @summary Get conversation by ID
  */
 export const getConversation = (
@@ -377,7 +386,9 @@ export const getConversation = (
 export const getGetConversationMutationKey = () => ['getConversation'] as const;
 
 export const getGetConversationMutationOptions = <
-  TError = ErrorType<GetConversation400 | GetConversation404 | GetConversation500>,
+  TError = ErrorType<
+    GetConversation400 | GetConversation401 | GetConversation404 | GetConversation500
+  >,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -417,7 +428,7 @@ export type GetConversationMutationResult = NonNullable<
 >;
 
 export type GetConversationMutationError = ErrorType<
-  GetConversation400 | GetConversation404 | GetConversation500
+  GetConversation400 | GetConversation401 | GetConversation404 | GetConversation500
 >;
 export type GetConversationMutationVariables = { conversationId: string };
 
@@ -425,7 +436,9 @@ export type GetConversationMutationVariables = { conversationId: string };
  * @summary Get conversation by ID
  */
 export const useGetConversation = <
-  TError = ErrorType<GetConversation400 | GetConversation404 | GetConversation500>,
+  TError = ErrorType<
+    GetConversation400 | GetConversation401 | GetConversation404 | GetConversation500
+  >,
   TContext = unknown,
 >(
   options?: {

@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.5.0
+ * OpenAPI spec version: 1.6.1
  */
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
@@ -24,13 +24,17 @@ import type {
 import type {
   CreateMessage201,
   CreateMessage400,
+  CreateMessage401,
+  CreateMessage404,
   CreateMessage500,
   CreateMessageBody,
   GetMessage200,
   GetMessage400,
+  GetMessage401,
   GetMessage404,
   GetMessage500,
   ListMessages200Item,
+  ListMessages401,
   ListMessages500,
 } from '../model';
 
@@ -55,7 +59,7 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 /**
- * Create a new message in a conversation
+ * Create a new message in one of the caller’s own conversations
  * @summary Create message
  */
 export const createMessage = (
@@ -81,7 +85,7 @@ export const getCreateMessageQueryKey = (createMessageBody?: BodyType<CreateMess
 
 export const getCreateMessageQueryOptions = <
   TData = Awaited<ReturnType<typeof createMessage>>,
-  TError = ErrorType<CreateMessage400 | CreateMessage500>,
+  TError = ErrorType<CreateMessage400 | CreateMessage401 | CreateMessage404 | CreateMessage500>,
 >(
   createMessageBody: BodyType<CreateMessageBody>,
   options?: {
@@ -104,11 +108,13 @@ export const getCreateMessageQueryOptions = <
 };
 
 export type CreateMessageQueryResult = NonNullable<Awaited<ReturnType<typeof createMessage>>>;
-export type CreateMessageQueryError = ErrorType<CreateMessage400 | CreateMessage500>;
+export type CreateMessageQueryError = ErrorType<
+  CreateMessage400 | CreateMessage401 | CreateMessage404 | CreateMessage500
+>;
 
 export function useCreateMessage<
   TData = Awaited<ReturnType<typeof createMessage>>,
-  TError = ErrorType<CreateMessage400 | CreateMessage500>,
+  TError = ErrorType<CreateMessage400 | CreateMessage401 | CreateMessage404 | CreateMessage500>,
 >(
   createMessageBody: BodyType<CreateMessageBody>,
   options: {
@@ -127,7 +133,7 @@ export function useCreateMessage<
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useCreateMessage<
   TData = Awaited<ReturnType<typeof createMessage>>,
-  TError = ErrorType<CreateMessage400 | CreateMessage500>,
+  TError = ErrorType<CreateMessage400 | CreateMessage401 | CreateMessage404 | CreateMessage500>,
 >(
   createMessageBody: BodyType<CreateMessageBody>,
   options?: {
@@ -146,7 +152,7 @@ export function useCreateMessage<
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useCreateMessage<
   TData = Awaited<ReturnType<typeof createMessage>>,
-  TError = ErrorType<CreateMessage400 | CreateMessage500>,
+  TError = ErrorType<CreateMessage400 | CreateMessage401 | CreateMessage404 | CreateMessage500>,
 >(
   createMessageBody: BodyType<CreateMessageBody>,
   options?: {
@@ -161,7 +167,7 @@ export function useCreateMessage<
 
 export function useCreateMessage<
   TData = Awaited<ReturnType<typeof createMessage>>,
-  TError = ErrorType<CreateMessage400 | CreateMessage500>,
+  TError = ErrorType<CreateMessage400 | CreateMessage401 | CreateMessage404 | CreateMessage500>,
 >(
   createMessageBody: BodyType<CreateMessageBody>,
   options?: {
@@ -180,8 +186,8 @@ export function useCreateMessage<
 }
 
 /**
- * Retrieve all messages across all conversations
- * @summary List all messages
+ * Retrieve all messages across the caller’s own conversations
+ * @summary List messages
  */
 export const listMessages = (
   options?: SecondParameter<typeof axiosClient>,
@@ -196,7 +202,7 @@ export const listMessages = (
 export const getListMessagesMutationKey = () => ['listMessages'] as const;
 
 export const getListMessagesMutationOptions = <
-  TError = ErrorType<ListMessages500>,
+  TError = ErrorType<ListMessages401 | ListMessages500>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<Awaited<ReturnType<typeof listMessages>>, TError, void, TContext>;
@@ -218,12 +224,15 @@ export const getListMessagesMutationOptions = <
 
 export type ListMessagesMutationResult = NonNullable<Awaited<ReturnType<typeof listMessages>>>;
 
-export type ListMessagesMutationError = ErrorType<ListMessages500>;
+export type ListMessagesMutationError = ErrorType<ListMessages401 | ListMessages500>;
 
 /**
- * @summary List all messages
+ * @summary List messages
  */
-export const useListMessages = <TError = ErrorType<ListMessages500>, TContext = unknown>(
+export const useListMessages = <
+  TError = ErrorType<ListMessages401 | ListMessages500>,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<Awaited<ReturnType<typeof listMessages>>, TError, void, TContext>;
     request?: SecondParameter<typeof axiosClient>;
@@ -233,7 +242,7 @@ export const useListMessages = <TError = ErrorType<ListMessages500>, TContext = 
   return useMutation(getListMessagesMutationOptions(options), queryClient);
 };
 /**
- * Retrieve a specific message by ID
+ * Retrieve one of the caller’s own messages by ID
  * @summary Get message by ID
  */
 export const getMessage = (
@@ -250,7 +259,7 @@ export const getMessage = (
 export const getGetMessageMutationKey = () => ['getMessage'] as const;
 
 export const getGetMessageMutationOptions = <
-  TError = ErrorType<GetMessage400 | GetMessage404 | GetMessage500>,
+  TError = ErrorType<GetMessage400 | GetMessage401 | GetMessage404 | GetMessage500>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -287,14 +296,16 @@ export const getGetMessageMutationOptions = <
 
 export type GetMessageMutationResult = NonNullable<Awaited<ReturnType<typeof getMessage>>>;
 
-export type GetMessageMutationError = ErrorType<GetMessage400 | GetMessage404 | GetMessage500>;
+export type GetMessageMutationError = ErrorType<
+  GetMessage400 | GetMessage401 | GetMessage404 | GetMessage500
+>;
 export type GetMessageMutationVariables = { messageId: string };
 
 /**
  * @summary Get message by ID
  */
 export const useGetMessage = <
-  TError = ErrorType<GetMessage400 | GetMessage404 | GetMessage500>,
+  TError = ErrorType<GetMessage400 | GetMessage401 | GetMessage404 | GetMessage500>,
   TContext = unknown,
 >(
   options?: {

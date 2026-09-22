@@ -155,6 +155,19 @@ export default [
     },
   },
   {
+    files: ['libs/auth/**/*.{ts,js}'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: './libs/auth/tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+  },
+  {
     files: ['libs/langchain/**/*.{ts,js}'],
     languageOptions: {
       parser: tsParser,

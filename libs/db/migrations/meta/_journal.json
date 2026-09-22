@@ -15,6 +15,13 @@
       "when": 1777201000000,
       "tag": "0001_make_cached_not_null",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789833963967,
+      "tag": "0002_curious_anthem",
+      "breakpoints": true
     }
   ]
 }

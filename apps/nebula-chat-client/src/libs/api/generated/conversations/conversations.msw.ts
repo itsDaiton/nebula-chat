@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.5.0
+ * OpenAPI spec version: 1.6.1
  */
 import { faker } from '@faker-js/faker';
 
@@ -29,20 +29,21 @@ export const getCreateConversationResponseMock = (
 export const getListConversationsResponseMock = (
   overrideResponse: Partial<Extract<ListConversations200, object>> = {},
 ): ListConversations200 => ({
-  conversations: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
-    () => ({
-      id: faker.string.uuid(),
-      title: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      createdAt: {},
-    }),
-  ),
+  conversations: Array.from(
+    { length: faker.number.int({ min: 1, max: 100 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    id: faker.string.uuid(),
+    title: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    createdAt: {},
+  })),
   nextCursor: faker.helpers.arrayElement([faker.string.uuid(), null]),
   hasMore: faker.datatype.boolean(),
   ...overrideResponse,
 });
 
 export const getSearchConversationsResponseMock = (): SearchConversations200Item[] =>
-  Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
+  Array.from({ length: faker.number.int({ min: 1, max: 100 }) }, (_, i) => i + 1).map(() => ({
     id: faker.string.uuid(),
     title: faker.string.alpha({ length: { min: 10, max: 20 } }),
     createdAt: {},

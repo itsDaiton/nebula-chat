@@ -1,0 +1,18 @@
+import { defineConfig } from 'tsup';
+
+export default defineConfig({
+  entry: ['src/index.ts'],
+  format: ['esm', 'cjs'],
+  dts: true,
+  clean: true,
+  outDir: 'dist',
+  sourcemap: true,
+  target: 'es2022',
+  external: [
+    'better-auth',
+    'drizzle-orm',
+    '@nebula-chat/db',
+    '@nebula-chat/redis',
+    '@nebula-chat/otel',
+  ],
+});
