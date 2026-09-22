@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-redis-v0.1.1...nebula-chat-redis-v0.1.2) (2026-09-22)
+
+
+### Features
+
+* **auth:** add @nebula-chat/auth better-auth substrate (M-6) ([#322](https://github.com/itsDaiton/nebula-chat/issues/322)) ([a4ba239](https://github.com/itsDaiton/nebula-chat/commit/a4ba2392f879b97966a92978288cd64d1dc55b8d))
+
 ## [0.1.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-redis-v0.1.0...nebula-chat-redis-v0.1.1) (2026-09-18)
 
 
