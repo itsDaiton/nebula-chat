@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.13.0...nebula-chat-server-v1.13.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **workspace:** retire new-backend migration and custom agents; adopt GitHub Issues tickets ([#329](https://github.com/itsDaiton/nebula-chat/issues/329)) ([96cb556](https://github.com/itsDaiton/nebula-chat/commit/96cb5563ee2675dbe33e10d4f97d0d00bec5569c))
+
 ## [1.13.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.12.1...nebula-chat-server-v1.13.0) (2026-09-22)
 
 
