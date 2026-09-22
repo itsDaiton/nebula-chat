@@ -11,19 +11,6 @@ Read this file for anything that spans the whole repo; read the relevant package
 
 ---
 
-## Table of Contents
-
-1. [Development Commands](#development-commands)
-2. [Git Workflow](#git-workflow)
-3. [Code Quality](#code-quality)
-4. [Testing](#testing)
-5. [Cross-cutting Conventions](#cross-cutting-conventions)
-6. [Monorepo Structure](#monorepo-structure)
-7. [Local Development](#local-development)
-8. [Keeping the Agentic Workspace in Sync](#keeping-the-agentic-workspace-in-sync)
-
----
-
 ## Development Commands
 
 ### Root (monorepo)
