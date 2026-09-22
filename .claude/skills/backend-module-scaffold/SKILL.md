@@ -32,8 +32,8 @@ Under `apps/nebula-chat-server/src/modules/$ARGUMENTS/`:
 
 ## Post-scaffold
 
-- Hand off to `api-contract-keeper` to regenerate `openapi.yaml` + Orval client.
-- Ask `test-strategist` to add at least one happy-path integration test.
+- Run the `regenerate-api-client` skill to regenerate `openapi.yaml` + Orval client.
+- Add at least one happy-path integration test (`app.inject()`).
 
 ## Anti-goals
 

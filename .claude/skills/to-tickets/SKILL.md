@@ -83,23 +83,50 @@ Do NOT close or modify any parent issue.
 
 <issue-template>
 
-## Parent
+**This repo overrides the generic template — use it no matter what.** Fill the canonical skeleton `.github/ISSUE_TEMPLATE.md` and follow the **Ticket anatomy** in `docs/agents/issue-tracker.md`. Do not fall back to a thinner shape (a `validate-ticket` CI check flags anything that doesn't match). The body's sections, in order:
 
-A reference to the parent issue on the tracker (if the source was an existing issue, otherwise omit this section).
+## Change type
 
-## What to build
+`feat` / `fix` (`!` for a breaking/major change).
 
-The end-to-end behaviour this ticket makes work, from the user's perspective, not layer-by-layer implementation.
+## Summary
+
+2–5 sentences: what is true once this ships that isn't today, and the shape of the change.
+
+## Background & problem
+
+The long section — explain everything an implementer needs without prior context: the current state in detail, what breaks or is missing, who it costs, and the constraints and prior decisions that bound the fix. Present tense — this is a pre-implementation artifact, never past tense or a changelog voice, and it does not cite an ADR as already decided.
+
+## Scope
+
+A table of area/package → what changes.
 
 ## Acceptance criteria
 
-- [ ] Criterion 1
-- [ ] Criterion 2
+- [ ] Checkable, unchecked; cover the happy path, the error paths, and tests.
 
-## Blocked by
+## Technical approach & notes
 
-- A reference to each blocking ticket, or "None (can start immediately)".
+The files/modules/patterns/interfaces/gotchas a cold implementer needs — go into detail and **name the files**, but no code snippets or line numbers.
+
+## Testing
+
+Which seams to test and how — what to mock vs. keep real, the test types (Vitest unit / `app.inject()` route / MSW-mocked client), and what is deliberately not tested.
+
+## Depends on
+
+- A bullet list linking each blocking ticket with `#NN` (e.g. `- #334 — @nebula-chat/otel`), or a single `- None (can start immediately)`.
+
+## Out of scope
+
+Explicit non-goals, where they matter.
+
+## Notes
+
+Optional. Anything that doesn't fit above: references, deployment realities that shape the design, domain-vocabulary changes (`CONTEXT.md` terms), links to related tickets. Omit if empty.
 
 </issue-template>
 
-In either form, avoid specific file paths or code snippets: they go stale fast. Exception: if a prototype produced a snippet that encodes a decision more precisely than prose can (state machine, reducer, schema, type shape), inline it and note briefly that it came from a prototype. Trim to the decision-rich parts, not a working demo, just the important bits.
+Title each issue `type(scope): summary`; once it has a number, edit the title to `type(scope): NEB-<n> summary` (the ID, a space, then the summary — no colon). Apply the area/lib labels plus `ready-for-agent` (see `docs/agents/issue-tracker.md` → Labels).
+
+**Name the files and modules** a ticket touches (the Technical approach section expects them) — but avoid code snippets and line numbers: they go stale fast. Exception: if a prototype produced a snippet that encodes a decision more precisely than prose can (state machine, reducer, schema, type shape), inline it and note briefly that it came from a prototype. Trim to the decision-rich parts, not a working demo, just the important bits.

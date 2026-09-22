@@ -11,84 +11,31 @@ Read this file for anything that spans the whole repo; read the relevant package
 
 ---
 
-## Table of Contents
-
-1. [Development Commands](#development-commands)
-2. [Git Workflow](#git-workflow)
-3. [Code Quality](#code-quality)
-4. [Testing](#testing)
-5. [Cross-cutting Conventions](#cross-cutting-conventions)
-6. [Monorepo Structure](#monorepo-structure)
-7. [Local Development](#local-development)
-8. [Keeping the Agentic Workspace in Sync](#keeping-the-agentic-workspace-in-sync)
-
----
-
 ## Development Commands
 
-### Root (monorepo)
+Monorepo-wide, from the repo root:
 
 ```bash
-pnpm install                      # Install all workspace dependencies
-pnpm run lint                     # ESLint (strict, max-warnings=0)
-pnpm run lint:fix                 # Auto-fix linting issues
-pnpm run format                   # Prettier format all files
-pnpm run format:check             # Check formatting compliance
-pnpm --filter nebula-chat-client run <cmd>  # Run frontend script (e.g. pnpm --filter nebula-chat-client run dev)
-pnpm --filter nebula-chat-server run <cmd>  # Run backend script (e.g. pnpm --filter nebula-chat-server run dev)
+pnpm install                                   # install all workspace dependencies
+pnpm run lint | lint:fix | format | format:check
+pnpm --filter <pkg> run <cmd>                  # run one package's script
+pnpm turbo run build|typecheck --filter=<pkg>  # builds workspace lib artifacts (dist/*.d.ts) first
 ```
 
-### Frontend (`/apps/nebula-chat-client`)
+Start local infrastructure (PostgreSQL on `:5332`, Redis on `:6380`):
 
 ```bash
-pnpm dev        # Vite dev server on localhost:5173
-pnpm build      # tsc + Vite build → /apps/nebula-chat-client/build
-pnpm typecheck  # tsc --noEmit
+cd apps/nebula-chat-server && docker-compose up
 ```
 
-### Backend (`/apps/nebula-chat-server`)
-
-```bash
-pnpm dev              # tsx watch mode (auto-restart) — assumes lib artifacts already built
-pnpm start            # node dist/src/server.js (production)
-pnpm generate:openapi # Regenerate openapi/openapi.yaml from live route schemas
-```
-
-> **`build` and `typecheck` must be run via Turbo** so workspace lib artifacts (`dist/*.d.ts`) are
-> built first. Use these from the repo root:
->
-> ```bash
-> pnpm turbo run build     --filter=nebula-chat-server  # builds @nebula-chat/* deps first
-> pnpm turbo run typecheck --filter=nebula-chat-server  # builds + typechecks dep closure first
-> ```
-
-### DB lib (`/libs/db` — `@nebula-chat/db`)
-
-```bash
-pnpm --filter @nebula-chat/db build        # Dual ESM+CJS build via tsup
-pnpm --filter @nebula-chat/db db:push      # Sync schema to local DB without migration files (dev)
-pnpm --filter @nebula-chat/db db:generate  # Generate SQL migration files from schema changes
-pnpm --filter @nebula-chat/db db:migrate   # Apply pending migration files (production)
-pnpm --filter @nebula-chat/db db:baseline  # Report journal state; --apply marks existing migrations applied
-pnpm --filter @nebula-chat/db db:studio    # Open Drizzle Studio GUI
-```
-
-`DATABASE_URL` is read from `apps/nebula-chat-server/.env` by both the server at runtime and by the DB CLI commands — single source of truth.
-
-`db:migrate` calls the drizzle-orm migrator directly (`src/migrate.ts`) rather than `drizzle-kit migrate`, which exits 1 without printing the underlying Postgres error — unusable in a deploy log. `db:baseline` exists for a database whose schema predates the migration journal: it reports what it would do and only writes with `--apply`.
-
-### Local infrastructure
-
-```bash
-cd apps/nebula-chat-server && docker-compose up  # Start PostgreSQL (port 5332) + Redis (port 6380)
-```
+Package-specific scripts live with the package: frontend `dev`/`build`/`typecheck` in the [frontend AGENTS.md](./apps/nebula-chat-client/AGENTS.md#commands); backend `dev`/`start`/`generate:openapi` and the `@nebula-chat/db` `db:*` migration commands in the [backend AGENTS.md](./apps/nebula-chat-server/AGENTS.md#commands).
 
 ---
 
 ## Git Workflow
 
 - **Never commit directly to `main`.** All work must go through a feature branch and pull request.
-- Branch naming: `feat/<short-description>`, `fix/<short-description>`, `chore/<short-description>`, `refactor/<short-description>`. The branch prefix is free-form and independent of the commit type — a `chore/` branch still needs a `feat:` or `fix:` PR title, since only those reach Release Please.
+- Branch naming: `feat/<short-description>`, `fix/<short-description>`, `chore/<short-description>`, `refactor/<short-description>` — or `type/neb-<n>-<slug>` when the work comes from a ticket (see [Referencing tickets](#referencing-tickets)). The branch prefix is free-form and independent of the commit type — a `chore/` branch still needs a `feat:` or `fix:` PR title, since only those reach Release Please.
 - One logical change per branch. Don't bundle unrelated changes.
 - Always push the branch and open a PR when the work is complete.
 
@@ -109,12 +56,13 @@ cd apps/nebula-chat-server && docker-compose up  # Start PostgreSQL (port 5332) 
 
 ### Referencing tickets
 
-Tickets from `/to-tickets` (and issues picked up via `/triage`) are GitHub issues — their "code" is the issue number. A PR that implements one must reference it, since nothing else links the two after merge:
+Tickets from `/to-tickets` (and issues picked up via `/triage`) are GitHub issues. Each issue **is** a ticket, identified by the Jira-style key **`NEB-<issue-number>`** — issue `#329` is ticket `NEB-329`. The key is a human-friendly alias over the GitHub issue number; there is no separate counter to maintain, and it's the token you write in branches, commits, and PR titles (where a bare `#329` is ambiguous — GitHub shares that number space with PRs). A PR that implements a ticket must carry its ID, since nothing else links the two after merge:
 
-- **Title**: append the issue number in parentheses at the end, after the Conventional Commit header: `type(scope): summary (#NN)`. The reference is trailing — it doesn't replace or share space with the `(scope)`.
-- **Body**: include a `Closes #NN` (or `Fixes #NN`) line so GitHub auto-closes the ticket when the PR merges into `main`. Use `Part of #NN` instead only for the rare ticket that genuinely can't close in one PR — `/to-tickets` sizes tickets to close in one, so this should be uncommon.
-- A PR spanning more than one ticket (avoid where possible — prefer one PR per ticket) lists each with its own `Closes #NN` / `Part of #NN` line.
-- This is independent of the Release Please rules below: the issue number is for traceability, not for the version bump — don't put it in the commit **type** or **scope** position.
+- **The issue title is the PR title.** Once an issue is filed, edit its title to carry its ID — `type(scope): NEB-<n> summary` (the ID, a space, then the summary — no colon after it) — and the implementing PR reuses that exact string. Example: `feat(server): NEB-330 migrate the HTTP framework from Express to Fastify`; breaking: `feat(server)!: NEB-330 …`. The `NEB-<n>` sits in the description position, right after the Conventional Commit header.
+- **Branch**: `type/neb-<n>-<slug>`, e.g. `feat/neb-330-fastify`.
+- **Body**: include a `Closes #NN` (or `Fixes #NN`) line. GitHub's auto-close keys off the bare `#NN`, **not** the `NEB-` alias, so this line is what actually closes the ticket when the PR merges into `main`. Use `Part of #NN` only for the rare ticket that genuinely can't close in one PR — `/to-tickets` sizes tickets to close in one, so this should be uncommon.
+- A PR spanning more than one ticket (avoid where possible — prefer one PR per ticket) names each ID in the title and adds one `Closes #NN` line per ticket in the body.
+- The ID lives in the description position on purpose — `NEB-330` then shows in the changelog line Release Please generates — but never in the commit **type** or **scope** position. A PR with no backing ticket (ad-hoc maintenance) drops the `NEB-<n>:` and uses the plain `type(scope): summary` form.
 
 ### Release Please
 
@@ -191,11 +139,6 @@ pnpm --filter @nebula-chat/langchain test
   folder sit alongside them; helpers shared across a package live in `src/test/`. A test file must contain
   its own assertions — a file whose `it()` blocks come from a helper reads as empty to both Sonar
   (`typescript:S2187`) and to the next person to open it.
-- **Frontend API mocks come from the OpenAPI spec, never from a hand-written URL.** Orval generates MSW
-  handlers next to the client (`*.msw.ts`), and they match any origin, so a test calls
-  `getListConversationsMockHandler(payload)` rather than naming `http://localhost:3000/api/conversations`.
-  Failure responses and the SSE chat endpoint (excluded from Orval by tag) go through `@/test/api`, which
-  is the only place a route string is written.
 - **Tests run against built libraries.** `turbo`'s `test` task declares `dependsOn: ["^build"]`, so a test
   importing `@nebula-chat/*` exercises the tsup `dist` artifact production actually runs — not the lib's
   source. Never alias `@nebula-chat/*` to `libs/*/src` in a Vitest config.
@@ -212,9 +155,7 @@ pnpm --filter @nebula-chat/langchain test
   the main tested unit in otel.
 - **Unit tests only, for now.** No testcontainers, no live database, no network. Database-backed
   integration testing is deliberate, recorded debt — see ADR-0008.
-- **Mock at the boundary, not the internals.** Server: mock the repository layer, keep routing, Zod
-  validation and the error handler real. Client: mock HTTP with `msw`, never stub the Orval-generated
-  hooks.
+- **Mock at the boundary, not the internals** — see each package's `AGENTS.md` for where that boundary sits.
 - **A failing test is never fixed by skipping, deleting or weakening it.** Fix the code, or fix a test
   that was asserting the wrong thing — and say which.
 
@@ -272,7 +213,8 @@ When scaffolding a new package under `libs/`, follow these steps **in order** be
 
 1. **Create `libs/<name>/.gitignore`** containing at minimum `dist/` and `node_modules/` — prevents build artifacts from ever reaching the index.
 2. **Add the package to `release-please-config.json`** under `"packages"` so it is versioned from day one.
-3. Implement the lib, then **commit and push** when the work is complete.
+3. **Create a `lib:<name>` GitHub label** (`gh label create lib:<name> --color 5319e7 --description "Touches libs/<name>"`) so tickets touching it can be labelled — see `docs/agents/issue-tracker.md` → Labels.
+4. Implement the lib, then **commit and push** when the work is complete.
 
 Never skip steps 1 or 2, even for small utility libs. If the lib is substantial enough to need its own conventions, give it its own `AGENTS.md` and link it from this file's list at the top.
 
@@ -307,13 +249,13 @@ Environment variables are documented per-package: see [Frontend Environment Vari
 
 ## Keeping the Agentic Workspace in Sync
 
-This repo's `.claude/` workspace (agents, skills) and its documentation (`AGENTS.md` files, `CLAUDE.md`, `CONTEXT.md`, `docs/adr/`) describe the codebase as it actually is. When they drift, agents make decisions on stale information — treat a stale reference here the same as a stale code comment: a bug to fix, not a nit to skip.
+This repo's `.claude/` workspace (skills) and its documentation (`AGENTS.md` files, `CLAUDE.md`, `CONTEXT.md`, `docs/adr/`) describe the codebase as it actually is. When they drift, agents make decisions on stale information — treat a stale reference here the same as a stale code comment: a bug to fix, not a nit to skip.
 
 **Whenever a change touches conventions, module layout, or architecture, update these in the same PR:**
 
 - The relevant `AGENTS.md` — root for cross-cutting changes, the package's own `AGENTS.md` for package-specific ones.
 - `CONTEXT.md` if domain vocabulary was introduced, renamed, or retired (this is `/domain-modeling`'s job, ideally done upstream during `/grill-with-docs`/`/to-spec`, not as an afterthought here).
 - `docs/adr/` if the change is hard-to-reverse, surprising, or the result of a real trade-off (see `/domain-modeling`'s ADR criteria).
-- Any `.claude/agents/*.md` whose required-reading, guardrails, or file paths reference the area that changed (e.g. a renamed directory, a retired ticket, a changed convention). `meta-synchronizer` can be invoked to audit the whole roster, but don't rely on it to catch what you already know changed.
+- Any `.claude/skills/**` whose steps or file paths reference the area that changed (e.g. a renamed directory, a retired ticket, a changed convention).
 
 A PR that changes how the codebase works but leaves these docs describing the old way is not done.

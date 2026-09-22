@@ -4,19 +4,29 @@ Conventions specific to the Fastify API. See the [root AGENTS.md](../../AGENTS.m
 
 ---
 
-## Table of Contents
+## Commands
 
-1. [Directory Layout](#directory-layout)
-2. [Module Pattern](#module-pattern)
-3. [Error Handling](#error-handling)
-4. [Validation](#validation)
-5. [Database — Drizzle](#database--drizzle)
-6. [Caching — Redis](#caching--redis)
-7. [Chat Streaming](#chat-streaming)
-8. [OpenAPI Docs](#openapi-docs)
-9. [Path Aliases](#path-aliases)
-10. [Environment Variables](#environment-variables)
-11. [Testing](#testing)
+Run from `apps/nebula-chat-server` (or `pnpm --filter nebula-chat-server run <cmd>` from the root):
+
+```bash
+pnpm dev              # tsx watch mode (auto-restart) — assumes lib artifacts already built
+pnpm start            # node dist/src/server.js (production)
+pnpm generate:openapi # regenerate openapi/openapi.yaml from live route schemas
+```
+
+`build` and `typecheck` must run via Turbo from the repo root, so workspace lib artifacts (`dist/*.d.ts`) build first: `pnpm turbo run build --filter=nebula-chat-server` (and `typecheck` likewise).
+
+**`@nebula-chat/db` migrations** (`libs/db` has no separate AGENTS.md):
+
+```bash
+pnpm --filter @nebula-chat/db db:push      # sync schema to local DB without migration files (dev)
+pnpm --filter @nebula-chat/db db:generate  # generate SQL migration files from schema changes
+pnpm --filter @nebula-chat/db db:migrate   # apply pending migration files (production)
+pnpm --filter @nebula-chat/db db:baseline  # report journal state; --apply marks existing migrations applied
+pnpm --filter @nebula-chat/db db:studio    # open Drizzle Studio GUI
+```
+
+`DATABASE_URL` is read from `apps/nebula-chat-server/.env` by both the server at runtime and the DB CLI — single source of truth. `db:migrate` calls the drizzle-orm migrator directly (`src/migrate.ts`) rather than `drizzle-kit migrate`, which exits 1 without printing the underlying Postgres error. `db:baseline` is for a database whose schema predates the migration journal: it reports what it would do and only writes with `--apply`.
 
 ---
 
@@ -88,7 +98,7 @@ Every feature module follows this strict 6-layer convention. Add files in this o
 6. <module>.routes.ts       — FastifyPluginAsyncZod default export; schema blocks + hook chain
 ```
 
-New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(plugin, { prefix: '/api/<module>' })`. No separate OpenAPI registry step — the `schema:` block on each route is the single source of truth for both validation and documentation. Use the `backend-module-scaffold` skill or the `backend-module-builder` agent to generate one.
+New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(plugin, { prefix: '/api/<module>' })`. No separate OpenAPI registry step — the `schema:` block on each route is the single source of truth for both validation and documentation. Use the `backend-module-scaffold` skill to generate one.
 
 ---
 
@@ -189,7 +199,7 @@ Schema lives at `libs/db/src/schema.ts` (`@nebula-chat/db`). The domain tables a
 
 - All Drizzle queries go in `*.repository.ts` files — never in services or controllers.
 - The DB client is created in `src/db.ts` via `createDbClient` from `@nebula-chat/db`. Always import `db` from `@backend/db`.
-- After changing the schema run `pnpm --filter @nebula-chat/db db:generate` in dev or `pnpm --filter @nebula-chat/db db:migrate` in prod. Use the `drizzle-migrate` skill or the `drizzle-migration-engineer` agent for schema changes.
+- After changing the schema run `pnpm --filter @nebula-chat/db db:generate` in dev or `pnpm --filter @nebula-chat/db db:migrate` in prod. Use the `drizzle-migrate` skill for schema changes.
 - Conversations are cursor-paginated using the conversation `id` as the cursor.
 - Max 20 messages are loaded into context for a single chat request.
 
@@ -288,8 +298,7 @@ The generator is Orval, configured at `apps/nebula-chat-client/orval.config.ts`,
 `openapi/openapi.yaml`, and using the axios mutator at `apps/nebula-chat-client/src/libs/api/client.ts`.
 Regenerated files in `apps/nebula-chat-client/src/libs/api/generated/` must be committed in the same PR as the
 backend/OpenAPI change — never ship an API change with a stale client. Do not hand-edit anything under
-`apps/nebula-chat-client/src/libs/api/generated/`; always regenerate. Use the `regenerate-api-client` skill or
-the `api-contract-keeper` agent for this.
+`apps/nebula-chat-client/src/libs/api/generated/`; always regenerate. Use the `regenerate-api-client` skill for this.
 
 ---
 

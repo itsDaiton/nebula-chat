@@ -2,6 +2,50 @@
 
 Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 
+## Ticket IDs
+
+Every issue is a ticket with a Jira-style key: **`NEB-<issue-number>`** (issue `#329` → `NEB-329`). The number is the GitHub issue number itself — no separate counter.
+
+- Use the bare `#NN` in `gh` commands and `Closes #NN` lines (GitHub only understands that form).
+- Use the `NEB-<n>` key in branch names and titles, where a bare `#NN` collides with PR numbers.
+- **The issue title carries the key and becomes the PR title.** Right after creating an issue, edit its title to `type(scope): NEB-<n> summary` — the ID, a space, then the summary, no colon after it (e.g. `feat(server): NEB-330 migrate Express to Fastify`). The implementing PR reuses that exact string. Full title/branch format: `AGENTS.md` → **Referencing tickets**.
+
+## Labels
+
+Every ticket gets, in addition to its triage state (see [triage-labels.md](./triage-labels.md)):
+
+- **One or more area/lib labels** naming what it touches:
+  - `app:server` — `apps/nebula-chat-server` (backend) · `app:client` — `apps/nebula-chat-client` (frontend)
+  - `lib:auth`, `lib:db`, `lib:langchain`, `lib:otel`, `lib:redis` — the corresponding `libs/*` package
+- **`enhancement`** for a `feat`, **`bug`** for a `fix`.
+
+Apply these when creating or triaging a ticket. **When a new `libs/<name>` package is created, add a matching `lib:<name>` GitHub label** (`gh label create lib:<name> --color 5319e7 --description "Touches libs/<name>"`) — this is part of the new-lib checklist in `AGENTS.md`.
+
+## Ticket anatomy
+
+A ticket is a **pre-implementation artifact** — the output of a `/grill-with-docs` or `/to-tickets` session, handed to an agent or human who may pick it up with **no other context**. Write it accordingly:
+
+- **Forward-looking, present/imperative tense.** Describe the work to be done, not work that was done. "Create `libs/db`…", "Replace Express with Fastify…" — never "Created…", "✅ Delivered", or a changelog voice. Acceptance criteria are **unchecked** (`- [ ]`).
+- **No ADR / decision-record framing in the body.** A ticket precedes the ADR; it doesn't cite one as already decided or link to a changelog. (The ADR is written from the grilling session, separately.)
+- **Detailed enough to implement cold.** Name the files, modules, and packages involved and the pattern to follow; call out gotchas and the seams to test. Do **not** paste implementation code or line numbers — they go stale. Prose, tables, and short lists over code blocks.
+- **Fill the template.** [`.github/ISSUE_TEMPLATE.md`](../../.github/ISSUE_TEMPLATE.md) is the one canonical skeleton — it pre-fills a new issue in the browser, and agents fill the same file. Keep every `## heading`. A **validate-ticket** GitHub Action ([`.github/workflows/validate-ticket.yml`](../../.github/workflows/validate-ticket.yml)) checks the title and these sections on every issue, auto-applies `needs-triage`, and labels `malformed-ticket` + comments when a ticket doesn't match.
+- **The standard sections:**
+
+  | Section | Holds |
+  | ------- | ----- |
+  | **Change type** | `feat` / `fix` (`!` for breaking) |
+  | **Summary** | 2–5 sentences: what's true once this ships, and the shape of the change |
+  | **Background & problem** | the long section — the current state in detail, what breaks or is missing, who it costs, and the constraints and prior decisions that bound the fix. Explain everything |
+  | **Scope** | a table of area/package → what changes |
+  | **Acceptance criteria** | checkable, unchecked; cover happy path, error paths, and tests |
+  | **Technical approach & notes** | files/patterns/interfaces/gotchas for a cold implementer — go into detail, name the files, no code |
+  | **Testing** | which seams to test, what to mock vs. keep real, the test types, and what's deliberately not tested |
+  | **Depends on** | a **bullet list** of blocking tickets, each linking the issue on GitHub with `#NN` (e.g. `- #334 — @nebula-chat/otel`); a single `- None` bullet if it can start immediately. The inverse ("blocks") is GitHub's native dependency graph, not a written field |
+  | **Out of scope** | explicit non-goals, where they matter |
+  | **Notes** _(optional)_ | anything that doesn't fit above: references, deployment realities that shape the design, domain-vocabulary changes (`CONTEXT.md` terms), links to related tickets |
+
+The closed issues `NEB-330`…`NEB-336` (the retired backend-migration work) are worked examples of this shape.
+
 ## Conventions
 
 - **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.

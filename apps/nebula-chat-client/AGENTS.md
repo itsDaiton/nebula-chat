@@ -4,20 +4,17 @@ Conventions specific to the React SPA. See the [root AGENTS.md](../../AGENTS.md)
 
 ---
 
-## Table of Contents
+## Commands
 
-1. [Directory Layout](#directory-layout)
-2. [Routing](#routing)
-3. [Imports](#imports)
-4. [No `index.ts` barrels](#no-indexts-barrels)
-5. [TypeScript Types](#typescript-types)
-6. [State Management — Zustand](#state-management--zustand)
-7. [Components](#components)
-8. [Hooks](#hooks)
-9. [`useEffect` rules](#useeffect-rules)
-10. [Shared Utilities](#shared-utilities)
-11. [Environment Variables](#environment-variables)
-12. [Testing](#testing)
+Run from `apps/nebula-chat-client` (or `pnpm --filter nebula-chat-client run <cmd>` from the root):
+
+```bash
+pnpm dev        # Vite dev server on localhost:5173
+pnpm build      # tsc + Vite build → build/
+pnpm typecheck  # tsc --noEmit
+```
+
+Test commands are under [Testing](#testing); monorepo-wide lint/format/build live in the [root AGENTS.md](../../AGENTS.md#development-commands).
 
 ---
 
