@@ -13,62 +13,22 @@ Read this file for anything that spans the whole repo; read the relevant package
 
 ## Development Commands
 
-### Root (monorepo)
+Monorepo-wide, from the repo root:
 
 ```bash
-pnpm install                      # Install all workspace dependencies
-pnpm run lint                     # ESLint (strict, max-warnings=0)
-pnpm run lint:fix                 # Auto-fix linting issues
-pnpm run format                   # Prettier format all files
-pnpm run format:check             # Check formatting compliance
-pnpm --filter nebula-chat-client run <cmd>  # Run frontend script (e.g. pnpm --filter nebula-chat-client run dev)
-pnpm --filter nebula-chat-server run <cmd>  # Run backend script (e.g. pnpm --filter nebula-chat-server run dev)
+pnpm install                                   # install all workspace dependencies
+pnpm run lint | lint:fix | format | format:check
+pnpm --filter <pkg> run <cmd>                  # run one package's script
+pnpm turbo run build|typecheck --filter=<pkg>  # builds workspace lib artifacts (dist/*.d.ts) first
 ```
 
-### Frontend (`/apps/nebula-chat-client`)
+Start local infrastructure (PostgreSQL on `:5332`, Redis on `:6380`):
 
 ```bash
-pnpm dev        # Vite dev server on localhost:5173
-pnpm build      # tsc + Vite build → /apps/nebula-chat-client/build
-pnpm typecheck  # tsc --noEmit
+cd apps/nebula-chat-server && docker-compose up
 ```
 
-### Backend (`/apps/nebula-chat-server`)
-
-```bash
-pnpm dev              # tsx watch mode (auto-restart) — assumes lib artifacts already built
-pnpm start            # node dist/src/server.js (production)
-pnpm generate:openapi # Regenerate openapi/openapi.yaml from live route schemas
-```
-
-> **`build` and `typecheck` must be run via Turbo** so workspace lib artifacts (`dist/*.d.ts`) are
-> built first. Use these from the repo root:
->
-> ```bash
-> pnpm turbo run build     --filter=nebula-chat-server  # builds @nebula-chat/* deps first
-> pnpm turbo run typecheck --filter=nebula-chat-server  # builds + typechecks dep closure first
-> ```
-
-### DB lib (`/libs/db` — `@nebula-chat/db`)
-
-```bash
-pnpm --filter @nebula-chat/db build        # Dual ESM+CJS build via tsup
-pnpm --filter @nebula-chat/db db:push      # Sync schema to local DB without migration files (dev)
-pnpm --filter @nebula-chat/db db:generate  # Generate SQL migration files from schema changes
-pnpm --filter @nebula-chat/db db:migrate   # Apply pending migration files (production)
-pnpm --filter @nebula-chat/db db:baseline  # Report journal state; --apply marks existing migrations applied
-pnpm --filter @nebula-chat/db db:studio    # Open Drizzle Studio GUI
-```
-
-`DATABASE_URL` is read from `apps/nebula-chat-server/.env` by both the server at runtime and by the DB CLI commands — single source of truth.
-
-`db:migrate` calls the drizzle-orm migrator directly (`src/migrate.ts`) rather than `drizzle-kit migrate`, which exits 1 without printing the underlying Postgres error — unusable in a deploy log. `db:baseline` exists for a database whose schema predates the migration journal: it reports what it would do and only writes with `--apply`.
-
-### Local infrastructure
-
-```bash
-cd apps/nebula-chat-server && docker-compose up  # Start PostgreSQL (port 5332) + Redis (port 6380)
-```
+Package-specific scripts live with the package: frontend `dev`/`build`/`typecheck` in the [frontend AGENTS.md](./apps/nebula-chat-client/AGENTS.md#commands); backend `dev`/`start`/`generate:openapi` and the `@nebula-chat/db` `db:*` migration commands in the [backend AGENTS.md](./apps/nebula-chat-server/AGENTS.md#commands).
 
 ---
 
@@ -180,11 +140,6 @@ pnpm --filter @nebula-chat/langchain test
   folder sit alongside them; helpers shared across a package live in `src/test/`. A test file must contain
   its own assertions — a file whose `it()` blocks come from a helper reads as empty to both Sonar
   (`typescript:S2187`) and to the next person to open it.
-- **Frontend API mocks come from the OpenAPI spec, never from a hand-written URL.** Orval generates MSW
-  handlers next to the client (`*.msw.ts`), and they match any origin, so a test calls
-  `getListConversationsMockHandler(payload)` rather than naming `http://localhost:3000/api/conversations`.
-  Failure responses and the SSE chat endpoint (excluded from Orval by tag) go through `@/test/api`, which
-  is the only place a route string is written.
 - **Tests run against built libraries.** `turbo`'s `test` task declares `dependsOn: ["^build"]`, so a test
   importing `@nebula-chat/*` exercises the tsup `dist` artifact production actually runs — not the lib's
   source. Never alias `@nebula-chat/*` to `libs/*/src` in a Vitest config.
@@ -201,9 +156,7 @@ pnpm --filter @nebula-chat/langchain test
   the main tested unit in otel.
 - **Unit tests only, for now.** No testcontainers, no live database, no network. Database-backed
   integration testing is deliberate, recorded debt — see ADR-0008.
-- **Mock at the boundary, not the internals.** Server: mock the repository layer, keep routing, Zod
-  validation and the error handler real. Client: mock HTTP with `msw`, never stub the Orval-generated
-  hooks.
+- **Mock at the boundary, not the internals** — see each package's `AGENTS.md` for where that boundary sits.
 - **A failing test is never fixed by skipping, deleting or weakening it.** Fix the code, or fix a test
   that was asserting the wrong thing — and say which.
 
