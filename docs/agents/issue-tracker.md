@@ -8,7 +8,7 @@ Every issue is a ticket with a Jira-style key: **`NEB-<issue-number>`** (issue `
 
 - Use the bare `#NN` in `gh` commands and `Closes #NN` lines (GitHub only understands that form).
 - Use the `NEB-<n>` key in branch names and titles, where a bare `#NN` collides with PR numbers.
-- **The issue title carries the key and becomes the PR title.** Right after creating an issue, edit its title to `type(scope): NEB-<n>: summary` (e.g. `feat(server): NEB-330: migrate Express to Fastify`). The implementing PR reuses that exact string. Full title/branch format: `AGENTS.md` → **Referencing tickets**.
+- **The issue title carries the key and becomes the PR title.** Right after creating an issue, edit its title to `type(scope): NEB-<n> summary` — the ID, a space, then the summary, no colon after it (e.g. `feat(server): NEB-330 migrate Express to Fastify`). The implementing PR reuses that exact string. Full title/branch format: `AGENTS.md` → **Referencing tickets**.
 
 ## Labels
 
@@ -20,6 +20,28 @@ Every ticket gets, in addition to its triage state (see [triage-labels.md](./tri
 - **`enhancement`** for a `feat`, **`bug`** for a `fix`.
 
 Apply these when creating or triaging a ticket. **When a new `libs/<name>` package is created, add a matching `lib:<name>` GitHub label** (`gh label create lib:<name> --color 5319e7 --description "Touches libs/<name>"`) — this is part of the new-lib checklist in `AGENTS.md`.
+
+## Ticket anatomy
+
+A ticket is a **pre-implementation artifact** — the output of a `/grill-with-docs` or `/to-tickets` session, handed to an agent or human who may pick it up with **no other context**. Write it accordingly:
+
+- **Forward-looking, present/imperative tense.** Describe the work to be done, not work that was done. "Create `libs/db`…", "Replace Express with Fastify…" — never "Created…", "✅ Delivered", or a changelog voice. Acceptance criteria are **unchecked** (`- [ ]`).
+- **No ADR / decision-record framing in the body.** A ticket precedes the ADR; it doesn't cite one as already decided or link to a changelog. (The ADR is written from the grilling session, separately.)
+- **Detailed enough to implement cold.** Name the files, modules, and packages involved and the pattern to follow; call out gotchas and the seams to test. Do **not** paste implementation code or line numbers — they go stale. Prose, tables, and short lists over code blocks.
+- **The standard sections** (the [`ticket.yml`](../../.github/ISSUE_TEMPLATE/ticket.yml) form produces these; keep the same shape when creating a ticket by hand):
+
+  | Section | Holds |
+  | ------- | ----- |
+  | **Change type** | `feat` / `fix` (`!` for breaking) |
+  | **Summary** | one or two sentences: what's true after this ships |
+  | **Background & problem** | current state and why it's not good enough |
+  | **Scope** | a table of area/package → what changes |
+  | **Acceptance criteria** | checkable, unchecked; cover happy path, error paths, and tests |
+  | **Technical approach & notes** | files/patterns/gotchas for a cold implementer |
+  | **Depends on** | blocking `NEB-<n>` tickets, or none |
+  | **Out of scope** | explicit non-goals, where they matter |
+
+The closed issues `NEB-330`…`NEB-336` (the retired backend-migration work) are worked examples of this shape.
 
 ## Conventions
 

@@ -7,14 +7,15 @@ body:
     attributes:
       value: |
         Issues are the single source of truth for work here — the `/triage` → `/implement` flow reads them
-        directly, and an agent may pick one up with **no other context**. Write it so that's enough: be
-        specific, link the ADRs and files that matter, and spell out done. More detail is better than less.
+        directly, and an agent may pick one up with **no other context**. Write it so that's enough: present
+        tense, specific, name the files that matter, and spell out done. More detail is better than less.
+        (Full guidance: [Ticket anatomy](https://github.com/itsDaiton/nebula-chat/blob/main/docs/agents/issue-tracker.md#ticket-anatomy).)
 
         **Title** — Conventional Commit shape, `type(scope): summary`. Once filed, this issue **is** ticket
         `NEB-<issue-number>` (issue `#341` → `NEB-341`), and its title is edited to carry that ID:
-        `type(scope): NEB-<n>: summary` — e.g. `feat(server): NEB-330: migrate Express to Fastify`. That
-        exact string becomes the PR title Release Please parses, so `type` must be `feat`/`fix` (`!` for a
-        breaking/major change).
+        `type(scope): NEB-<n> summary` — e.g. `feat(server): NEB-330 migrate Express to Fastify` (the ID, a
+        space, then the summary — no colon after it). That exact string becomes the PR title Release Please
+        parses, so `type` must be `feat`/`fix` (`!` for a breaking/major change).
 
         **Labels** — this form applies `needs-triage`. During `/triage` a maintainer adds the area/lib
         labels (`app:server`, `app:client`, `lib:db`, …) and a triage state (`ready-for-agent` /

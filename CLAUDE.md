@@ -10,7 +10,7 @@ Follow `AGENTS.md` for the full Git workflow; these are the agent-behaviour rule
 
 - **Never commit to `main`.** Branch first (`git checkout -b <type>/<kebab-slug>`), and reuse the active feature branch rather than forking a parallel one for the same work.
 - **Conventional Commits, `feat`/`fix` only** (`feat!`/`fix!` for a breaking/major change) — Release Please ignores every other type, so a `chore:`/`refactor:` change merges but never releases. Default to `fix(<scope>): …`. Never bundle unrelated changes.
-- **Open a PR when the work is complete.** The PR title is the issue's title carrying the ticket ID — `type(scope): NEB-<n>: summary` (plain `type(scope): summary` for ad-hoc work with no ticket); it's the one line Release Please parses, so it must be `feat`/`fix`. Body: one-line summary, `Closes #NN`, test-plan checklist, and the backing ADR link if one exists. Full title/branch/close rules: `AGENTS.md` → Referencing tickets.
+- **Open a PR when the work is complete.** The PR title is the issue's title carrying the ticket ID — `type(scope): NEB-<n> summary` (plain `type(scope): summary` for ad-hoc work with no ticket); it's the one line Release Please parses, so it must be `feat`/`fix`. Body: one-line summary, `Closes #NN`, test-plan checklist, and the backing ADR link if one exists. Full title/branch/close rules: `AGENTS.md` → Referencing tickets.
 - **Never merge your own PR** unless the user asks. Never force-push shared refs (the pre-bash hook blocks it) or use `--no-verify`.
 
 ## Workflow & skills
