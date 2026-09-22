@@ -88,7 +88,7 @@ cd apps/nebula-chat-server && docker-compose up  # Start PostgreSQL (port 5332) 
 ## Git Workflow
 
 - **Never commit directly to `main`.** All work must go through a feature branch and pull request.
-- Branch naming: `feat/<short-description>`, `fix/<short-description>`, `chore/<short-description>`, `refactor/<short-description>`. The branch prefix is free-form and independent of the commit type — a `chore/` branch still needs a `feat:` or `fix:` PR title, since only those reach Release Please.
+- Branch naming: `feat/<short-description>`, `fix/<short-description>`, `chore/<short-description>`, `refactor/<short-description>` — or `type/neb-<n>-<slug>` when the work comes from a ticket (see [Referencing tickets](#referencing-tickets)). The branch prefix is free-form and independent of the commit type — a `chore/` branch still needs a `feat:` or `fix:` PR title, since only those reach Release Please.
 - One logical change per branch. Don't bundle unrelated changes.
 - Always push the branch and open a PR when the work is complete.
 
@@ -109,12 +109,14 @@ cd apps/nebula-chat-server && docker-compose up  # Start PostgreSQL (port 5332) 
 
 ### Referencing tickets
 
-Tickets from `/to-tickets` (and issues picked up via `/triage`) are GitHub issues — their "code" is the issue number. A PR that implements one must reference it, since nothing else links the two after merge:
+Tickets from `/to-tickets` (and issues picked up via `/triage`) are GitHub issues. Each issue **is** a ticket, identified by the Jira-style key **`NEB-<issue-number>`** — issue `#329` is ticket `NEB-329`. The key is a human-friendly alias over the GitHub issue number; there is no separate counter to maintain, and it's the token you write in branches, commits, and PR titles (where a bare `#329` is ambiguous — GitHub shares that number space with PRs). A PR that implements a ticket must carry its ID, since nothing else links the two after merge:
 
-- **Title**: append the issue number in parentheses at the end, after the Conventional Commit header: `type(scope): summary (#NN)`. The reference is trailing — it doesn't replace or share space with the `(scope)`.
-- **Body**: include a `Closes #NN` (or `Fixes #NN`) line so GitHub auto-closes the ticket when the PR merges into `main`. Use `Part of #NN` instead only for the rare ticket that genuinely can't close in one PR — `/to-tickets` sizes tickets to close in one, so this should be uncommon.
-- A PR spanning more than one ticket (avoid where possible — prefer one PR per ticket) lists each with its own `Closes #NN` / `Part of #NN` line.
-- This is independent of the Release Please rules below: the issue number is for traceability, not for the version bump — don't put it in the commit **type** or **scope** position.
+- **Branch**: `type/neb-<n>-<slug>`, e.g. `feat/neb-329-model-picker`.
+- **Title**: `type(scope): NEB-<n> "Ticket title"` — the ID and the quoted ticket title sit in the description position, right after the Conventional Commit header. Example: `feat(chat): NEB-329 "Add model picker"`; breaking: `feat(chat)!: NEB-329 "Add model picker"`.
+- **Body**: include a `Closes #NN` (or `Fixes #NN`) line. GitHub's auto-close keys off the bare `#NN`, **not** the `NEB-` alias, so this line is what actually closes the ticket when the PR merges into `main`. Use `Part of #NN` instead only for the rare ticket that genuinely can't close in one PR — `/to-tickets` sizes tickets to close in one, so this should be uncommon.
+- A PR spanning more than one ticket (avoid where possible — prefer one PR per ticket) lists every ID in the title (`NEB-329, NEB-330 "…"`) and one `Closes #NN` line per ticket in the body.
+- The ID living in the description position is deliberate — `NEB-329` then shows up in the changelog line Release Please generates. It stays independent of the Release Please rules below: the key never goes in the commit **type** or **scope** position.
+- A PR that doesn't come from a ticket (ad-hoc maintenance) has no `NEB-` key — use the plain `type(scope): summary` form.
 
 ### Release Please
 

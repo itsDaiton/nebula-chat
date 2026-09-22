@@ -10,10 +10,13 @@ body:
         `/triage` → `/implement` flow reads them directly, so the more precise this is, the more of it an
         agent can pick up unattended.
 
+        Once filed, this issue **is** ticket `NEB-<its issue number>` (issue `#329` → `NEB-329`) — that's
+        its Jira-style ID, used in the branch and PR that implement it.
+
         Keep the **title** in Conventional Commit shape — `type(scope): summary` (e.g. `feat(chat): add
-        model picker`, `fix(auth): reject expired guest sessions`). It becomes the PR title Release Please
-        parses, so `type` must be `feat` or `fix` (append `!` — `feat!`/`fix!` — only for a breaking change
-        that warrants a major version bump).
+        model picker`, `fix(auth): reject expired guest sessions`). The PR that closes this ticket will be
+        titled `type(scope): NEB-<n> "Ticket title"`, and its `type` (`feat`/`fix`, or `!` for a breaking
+        major change) is the one line Release Please parses.
   - type: dropdown
     id: change-type
     attributes:

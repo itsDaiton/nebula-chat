@@ -2,6 +2,10 @@
 
 Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 
+## Ticket IDs
+
+Every issue is a ticket with a Jira-style key: **`NEB-<issue-number>`** (issue `#329` → `NEB-329`). The number is the GitHub issue number itself — no separate counter. Use the bare `#NN` in `gh` commands and `Closes #NN` lines (GitHub only understands that form); use the `NEB-<n>` alias in branch names, commit subjects, and PR titles, where a bare `#NN` collides with PR numbers. Full title/branch format lives in `AGENTS.md` → **Referencing tickets**. Optionally, prepend `NEB-<n>: ` to an issue's title after creation to surface the key in the issue list — cosmetic, not required.
+
 ## Conventions
 
 - **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
