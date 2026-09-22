@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.25.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.25.0...nebula-chat-v1.25.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **ci:** cancel superseded build.yml runs to cut Actions minutes usage ([#327](https://github.com/itsDaiton/nebula-chat/issues/327)) ([09d69c6](https://github.com/itsDaiton/nebula-chat/commit/09d69c6d7074827545f0b1b084826ffb4be1e8fd))
+
 ## [1.25.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.24.1...nebula-chat-v1.25.0) (2026-09-22)
 
 
