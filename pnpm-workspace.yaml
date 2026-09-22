@@ -14,7 +14,7 @@ catalog:
   drizzle-orm: ^0.45.2
   tsup: ^8.5.0
   tsx: ^4.21.0
-  typescript: ^7.0.2
+  typescript: ^6.0.3
   vitest: ^5.0.0
 
 # --- pnpm settings -----------------------------------------------------------
