@@ -31,20 +31,40 @@ A ticket is a **pre-implementation artifact** — the output of a `/grill-with-d
 - **Fill the template.** [`.github/ISSUE_TEMPLATE.md`](../../.github/ISSUE_TEMPLATE.md) is the one canonical skeleton — it pre-fills a new issue in the browser, and agents fill the same file. Keep every `## heading`. A **validate-ticket** GitHub Action ([`.github/workflows/validate-ticket.yml`](../../.github/workflows/validate-ticket.yml)) checks the title and these sections on every issue, auto-applies `needs-triage`, and labels `malformed-ticket` + comments when a ticket doesn't match. It **skips** non-ticket tracking issues — label a capability backlog or an umbrella epic `backlog` or `epic` and validate-ticket leaves it alone.
 - **The standard sections:**
 
-  | Section | Holds |
-  | ------- | ----- |
-  | **Change type** | `feat` / `fix` (`!` for breaking) |
-  | **Summary** | 2–5 sentences: what's true once this ships, and the shape of the change |
-  | **Background & problem** | the long section — the current state in detail, what breaks or is missing, who it costs, and the constraints and prior decisions that bound the fix. Explain everything |
-  | **Scope** | a table of area/package → what changes |
-  | **Acceptance criteria** | checkable, unchecked; cover happy path, error paths, and tests |
-  | **Technical approach & notes** | files/patterns/interfaces/gotchas for a cold implementer — go into detail, name the files, no code |
-  | **Testing** | which seams to test, what to mock vs. keep real, the test types, and what's deliberately not tested |
-  | **Depends on** | a **bullet list** of blocking tickets, each linking the issue on GitHub with `#NN` (e.g. `- #334 — @nebula-chat/otel`); a single `- None` bullet if it can start immediately. The inverse ("blocks") is GitHub's native dependency graph, not a written field |
-  | **Out of scope** | explicit non-goals, where they matter |
-  | **Notes** _(optional)_ | anything that doesn't fit above: references, deployment realities that shape the design, domain-vocabulary changes (`CONTEXT.md` terms), links to related tickets |
+  | Section                        | Holds                                                                                                                                                                                                                                                                                                                                                                                                                    |
+  | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+  | **Change type**                | `feat` / `fix` (`!` for breaking)                                                                                                                                                                                                                                                                                                                                                                                        |
+  | **Summary**                    | 2–5 sentences: what's true once this ships, and the shape of the change                                                                                                                                                                                                                                                                                                                                                  |
+  | **Background & problem**       | the long section — the current state in detail, what breaks or is missing, who it costs, and the constraints and prior decisions that bound the fix. Explain everything                                                                                                                                                                                                                                                  |
+  | **Scope**                      | a table of area/package → what changes                                                                                                                                                                                                                                                                                                                                                                                   |
+  | **Acceptance criteria**        | checkable, unchecked; cover happy path, error paths, and tests                                                                                                                                                                                                                                                                                                                                                           |
+  | **Technical approach & notes** | files/patterns/interfaces/gotchas for a cold implementer — go into detail, name the files, no code                                                                                                                                                                                                                                                                                                                       |
+  | **Testing**                    | which seams to test, what to mock vs. keep real, the test types, and what's deliberately not tested                                                                                                                                                                                                                                                                                                                      |
+  | **Depends on**                 | a **bullet list** of blocking tickets, each linking the issue on GitHub with `#NN` (e.g. `- #334 — @nebula-chat/otel`); a single `- None` bullet if it can start immediately. **Every bullet must also be recorded as a native `blocked_by` edge** (see [Dependencies](#dependencies)) so the block is machine-visible, not prose only. The inverse ("blocks") is the same graph read the other way, not a written field |
+  | **Out of scope**               | explicit non-goals, where they matter                                                                                                                                                                                                                                                                                                                                                                                    |
+  | **Notes** _(optional)_         | anything that doesn't fit above: references, deployment realities that shape the design, domain-vocabulary changes (`CONTEXT.md` terms), links to related tickets                                                                                                                                                                                                                                                        |
 
 The closed issues `NEB-330`…`NEB-336` (the retired backend-migration work) are worked examples of this shape.
+
+## Dependencies
+
+A ticket's blocking relationships live in **GitHub's native issue dependency graph**, not only in the `## Depends on` prose. The prose is for a human reading the ticket; the graph is what tooling reads — the `/wayfinder` frontier query and any "what can I pick up now?" check gate on it. **Whenever a ticket names a blocker, add the matching native edge**, and keep the two in sync: add or remove one, do the other.
+
+- **Add an edge** (child blocked by another issue):
+
+  ```bash
+  gh api --method POST repos/<owner>/<repo>/issues/<child>/dependencies/blocked_by -F issue_id=<blocker-db-id>
+  ```
+
+  `<blocker-db-id>` is the blocker's numeric **database id** (`gh api repos/<owner>/<repo>/issues/<n> --jq .id`) — **not** the `#number` or the `node_id`. Passing the issue number here silently targets the wrong record.
+
+- **Read edges**: `gh api repos/<owner>/<repo>/issues/<n>/dependencies/blocked_by` lists the blockers with their state; `gh api repos/<owner>/<repo>/issues/<n> --jq .issue_dependencies_summary` reports `blocked_by` (open blockers — the live gate) and `total_blocked_by` (all edges).
+
+- **Remove an edge**: `gh api --method DELETE repos/<owner>/<repo>/issues/<child>/dependencies/blocked_by/<blocker-db-id>`.
+
+A ticket is **grabbable** when its open-blocker count (`issue_dependencies_summary.blocked_by`) is `0`. A blocker being _closed_ — not merely referenced — is what unblocks the dependent.
+
+> **Gotcha:** GitHub's linked-issue parser auto-closes an issue when a merged PR's title, body, or commits contain a closing keyword (`close`/`fixes`/`resolves`) before `#NN` — **even when the surrounding words negate it** (`"do not close #NN"` still closes `#NN`). When a PR must mention a ticket it isn't resolving, write the number without `#` (e.g. "issue 323") or avoid the keyword.
 
 ## Conventions
 
@@ -83,7 +103,7 @@ Used by `/wayfinder`. The **map** is a single issue with **child** issues as tic
 
 - **Map**: a single issue labelled `wayfinder:map`, holding the Notes / Decisions-so-far / Fog body. `gh issue create --label wayfinder:map`.
 - **Child ticket**: an issue linked to the map as a GitHub sub-issue (`gh api` on the sub-issues endpoint). Where sub-issues aren't enabled, add the child to a task list in the map body and put `Part of #<map>` at the top of the child body. Labels: `wayfinder:<type>` (`research`/`prototype`/`grilling`/`task`). Once claimed, the ticket is assigned to the driving dev.
-- **Blocking**: GitHub's **native issue dependencies**, the canonical, UI-visible representation. Add an edge with `gh api --method POST repos/<owner>/<repo>/issues/<child>/dependencies/blocked_by -F issue_id=<blocker-db-id>`, where `<blocker-db-id>` is the blocker's numeric **database id** (`gh api repos/<owner>/<repo>/issues/<n> --jq .id`, _not_ the `#number` or `node_id`). GitHub reports `issue_dependencies_summary.blocked_by` (open blockers only, the live gate). Where dependencies aren't available, fall back to a `Blocked by: #<n>, #<n>` line at the top of the child body. A ticket is unblocked when every blocker is closed.
+- **Blocking**: GitHub's **native issue dependencies** — see [Dependencies](#dependencies) for the `gh api` commands and the database-id gotcha. GitHub reports `issue_dependencies_summary.blocked_by` (open blockers only, the live gate). Where dependencies aren't available, fall back to a `Blocked by: #<n>, #<n>` line at the top of the child body. A ticket is unblocked when every blocker is closed.
 - **Frontier query**: list the map's open children (`gh issue list --state open`, scoped to the map's sub-issues / task list), drop any with an open blocker (`issue_dependencies_summary.blocked_by > 0`, or an open issue in the `Blocked by` line) or an assignee; first in map order wins.
 - **Claim**: `gh issue edit <n> --add-assignee @me`, the session's first write.
 - **Resolve**: `gh issue comment <n> --body "<answer>"`, then `gh issue close <n>`, then append a context pointer (gist + link) to the map's Decisions-so-far.
