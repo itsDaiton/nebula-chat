@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.25.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.25.2...nebula-chat-v1.25.3) (2026-09-22)
+
+
+### Bug Fixes
+
+* **ci:** validate-ticket skips backlog/epic tracking issues ([#343](https://github.com/itsDaiton/nebula-chat/issues/343)) ([6103d47](https://github.com/itsDaiton/nebula-chat/commit/6103d47ee1354edd6c47e61529ae0406633afdd6))
+
 ## [1.25.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.25.1...nebula-chat-v1.25.2) (2026-09-22)
 
 
