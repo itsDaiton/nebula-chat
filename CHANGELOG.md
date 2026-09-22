@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.25.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.25.4...nebula-chat-v1.25.5) (2026-09-22)
+
+
+### Bug Fixes
+
+* **agents:** document native issue dependency graph as the ticket blocking convention ([#347](https://github.com/itsDaiton/nebula-chat/issues/347)) ([810315e](https://github.com/itsDaiton/nebula-chat/commit/810315e490913f59c5dc3ad7976cadd3b2afe94a))
+
 ## [1.25.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.25.3...nebula-chat-v1.25.4) (2026-09-22)
 
 
