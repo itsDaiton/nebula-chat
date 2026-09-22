@@ -68,3 +68,11 @@ The test strategy: which seams to test and how — what to mock vs. keep real, t
 ## Out of scope
 
 <!-- Explicit non-goals, where they matter. Omit the section if there are none. -->
+
+## Notes
+
+<!--
+Optional. Anything that doesn't fit above: references, deployment realities that shape the design, domain
+vocabulary this introduces or changes (new/renamed CONTEXT.md terms), and links to related tickets. Omit if
+there's nothing to add.
+-->

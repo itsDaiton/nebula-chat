@@ -40,8 +40,9 @@ A ticket is a **pre-implementation artifact** — the output of a `/grill-with-d
   | **Acceptance criteria** | checkable, unchecked; cover happy path, error paths, and tests |
   | **Technical approach & notes** | files/patterns/interfaces/gotchas for a cold implementer — go into detail, name the files, no code |
   | **Testing** | which seams to test, what to mock vs. keep real, the test types, and what's deliberately not tested |
-  | **Depends on** | a **bullet list** of blocking tickets, each linking the issue on GitHub with `#NN` (e.g. `- #334 — @nebula-chat/otel`); a single `- None` bullet if it can start immediately |
+  | **Depends on** | a **bullet list** of blocking tickets, each linking the issue on GitHub with `#NN` (e.g. `- #334 — @nebula-chat/otel`); a single `- None` bullet if it can start immediately. The inverse ("blocks") is GitHub's native dependency graph, not a written field |
   | **Out of scope** | explicit non-goals, where they matter |
+  | **Notes** _(optional)_ | anything that doesn't fit above: references, deployment realities that shape the design, domain-vocabulary changes (`CONTEXT.md` terms), links to related tickets |
 
 The closed issues `NEB-330`…`NEB-336` (the retired backend-migration work) are worked examples of this shape.
 

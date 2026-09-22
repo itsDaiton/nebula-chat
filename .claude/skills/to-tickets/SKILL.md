@@ -121,6 +121,10 @@ Which seams to test and how — what to mock vs. keep real, the test types (Vite
 
 Explicit non-goals, where they matter.
 
+## Notes
+
+Optional. Anything that doesn't fit above: references, deployment realities that shape the design, domain-vocabulary changes (`CONTEXT.md` terms), links to related tickets. Omit if empty.
+
 </issue-template>
 
 Title each issue `type(scope): summary`; once it has a number, edit the title to `type(scope): NEB-<n> summary` (the ID, a space, then the summary — no colon). Apply the area/lib labels plus `ready-for-agent` (see `docs/agents/issue-tracker.md` → Labels).
