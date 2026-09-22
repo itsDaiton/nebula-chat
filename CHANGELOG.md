@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.25.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.25.5...nebula-chat-v1.25.6) (2026-09-22)
+
+
+### Bug Fixes
+
+* **agents:** add ADRs 0013-0016 and orchestration glossary for nebula-chat 2.0 ([#350](https://github.com/itsDaiton/nebula-chat/issues/350)) ([fc87893](https://github.com/itsDaiton/nebula-chat/commit/fc87893e465e9fae096ac73d74ab1a640f599c4f))
+
 ## [1.25.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.25.4...nebula-chat-v1.25.5) (2026-09-22)
 
 
