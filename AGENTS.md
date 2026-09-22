@@ -58,12 +58,11 @@ Package-specific scripts live with the package: frontend `dev`/`build`/`typechec
 
 Tickets from `/to-tickets` (and issues picked up via `/triage`) are GitHub issues. Each issue **is** a ticket, identified by the Jira-style key **`NEB-<issue-number>`** — issue `#329` is ticket `NEB-329`. The key is a human-friendly alias over the GitHub issue number; there is no separate counter to maintain, and it's the token you write in branches, commits, and PR titles (where a bare `#329` is ambiguous — GitHub shares that number space with PRs). A PR that implements a ticket must carry its ID, since nothing else links the two after merge:
 
-- **Branch**: `type/neb-<n>-<slug>`, e.g. `feat/neb-329-model-picker`.
-- **Title**: `type(scope): NEB-<n> "Ticket title"` — the ID and the quoted ticket title sit in the description position, right after the Conventional Commit header. Example: `feat(chat): NEB-329 "Add model picker"`; breaking: `feat(chat)!: NEB-329 "Add model picker"`.
-- **Body**: include a `Closes #NN` (or `Fixes #NN`) line. GitHub's auto-close keys off the bare `#NN`, **not** the `NEB-` alias, so this line is what actually closes the ticket when the PR merges into `main`. Use `Part of #NN` instead only for the rare ticket that genuinely can't close in one PR — `/to-tickets` sizes tickets to close in one, so this should be uncommon.
-- A PR spanning more than one ticket (avoid where possible — prefer one PR per ticket) lists every ID in the title (`NEB-329, NEB-330 "…"`) and one `Closes #NN` line per ticket in the body.
-- The ID living in the description position is deliberate — `NEB-329` then shows up in the changelog line Release Please generates. It stays independent of the Release Please rules below: the key never goes in the commit **type** or **scope** position.
-- A PR that doesn't come from a ticket (ad-hoc maintenance) has no `NEB-` key — use the plain `type(scope): summary` form.
+- **The issue title is the PR title.** Once an issue is filed, edit its title to carry its ID — `type(scope): NEB-<n>: summary` — and the implementing PR reuses that exact string. Example: `feat(server): NEB-330: migrate the HTTP framework from Express to Fastify`; breaking: `feat(server)!: NEB-330: …`. The `NEB-<n>:` sits in the description position, right after the Conventional Commit header.
+- **Branch**: `type/neb-<n>-<slug>`, e.g. `feat/neb-330-fastify`.
+- **Body**: include a `Closes #NN` (or `Fixes #NN`) line. GitHub's auto-close keys off the bare `#NN`, **not** the `NEB-` alias, so this line is what actually closes the ticket when the PR merges into `main`. Use `Part of #NN` only for the rare ticket that genuinely can't close in one PR — `/to-tickets` sizes tickets to close in one, so this should be uncommon.
+- A PR spanning more than one ticket (avoid where possible — prefer one PR per ticket) names each ID in the title and adds one `Closes #NN` line per ticket in the body.
+- The ID lives in the description position on purpose — `NEB-330` then shows in the changelog line Release Please generates — but never in the commit **type** or **scope** position. A PR with no backing ticket (ad-hoc maintenance) drops the `NEB-<n>:` and uses the plain `type(scope): summary` form.
 
 ### Release Please
 
@@ -214,7 +213,8 @@ When scaffolding a new package under `libs/`, follow these steps **in order** be
 
 1. **Create `libs/<name>/.gitignore`** containing at minimum `dist/` and `node_modules/` — prevents build artifacts from ever reaching the index.
 2. **Add the package to `release-please-config.json`** under `"packages"` so it is versioned from day one.
-3. Implement the lib, then **commit and push** when the work is complete.
+3. **Create a `lib:<name>` GitHub label** (`gh label create lib:<name> --color 5319e7 --description "Touches libs/<name>"`) so tickets touching it can be labelled — see `docs/agents/issue-tracker.md` → Labels.
+4. Implement the lib, then **commit and push** when the work is complete.
 
 Never skip steps 1 or 2, even for small utility libs. If the lib is substantial enough to need its own conventions, give it its own `AGENTS.md` and link it from this file's list at the top.
 

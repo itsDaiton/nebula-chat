@@ -1,22 +1,24 @@
 name: Ticket
-description: File a bug, feature, or chore. Every unit of work in this repo is a GitHub issue.
+description: File a feature or fix. Every unit of work in this repo is a GitHub issue an agent can pick up cold.
 title: 'type(scope): short summary'
 labels: ['needs-triage']
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for filing a ticket. Issues are the single source of truth for work in this repo — the
-        `/triage` → `/implement` flow reads them directly, so the more precise this is, the more of it an
-        agent can pick up unattended.
+        Issues are the single source of truth for work here — the `/triage` → `/implement` flow reads them
+        directly, and an agent may pick one up with **no other context**. Write it so that's enough: be
+        specific, link the ADRs and files that matter, and spell out done. More detail is better than less.
 
-        Once filed, this issue **is** ticket `NEB-<its issue number>` (issue `#329` → `NEB-329`) — that's
-        its Jira-style ID, used in the branch and PR that implement it.
+        **Title** — Conventional Commit shape, `type(scope): summary`. Once filed, this issue **is** ticket
+        `NEB-<issue-number>` (issue `#341` → `NEB-341`), and its title is edited to carry that ID:
+        `type(scope): NEB-<n>: summary` — e.g. `feat(server): NEB-330: migrate Express to Fastify`. That
+        exact string becomes the PR title Release Please parses, so `type` must be `feat`/`fix` (`!` for a
+        breaking/major change).
 
-        Keep the **title** in Conventional Commit shape — `type(scope): summary` (e.g. `feat(chat): add
-        model picker`, `fix(auth): reject expired guest sessions`). The PR that closes this ticket will be
-        titled `type(scope): NEB-<n> "Ticket title"`, and its `type` (`feat`/`fix`, or `!` for a breaking
-        major change) is the one line Release Please parses.
+        **Labels** — this form applies `needs-triage`. During `/triage` a maintainer adds the area/lib
+        labels (`app:server`, `app:client`, `lib:db`, …) and a triage state (`ready-for-agent` /
+        `ready-for-human` / `needs-info`). See [`docs/agents/triage-labels.md`](https://github.com/itsDaiton/nebula-chat/blob/main/docs/agents/triage-labels.md).
   - type: dropdown
     id: change-type
     attributes:
@@ -37,34 +39,54 @@ body:
     validations:
       required: true
   - type: textarea
-    id: context
+    id: background
     attributes:
-      label: Context & motivation
-      description: Why this matters, links to related issues/ADRs (`docs/adr/NNNN-*.md`), reproduction steps for a bug.
+      label: Background & problem
+      description: The current state and why it's not good enough. What breaks, what's missing, what a user or agent hits today. Link related issues and ADRs (`docs/adr/NNNN-*.md`). For a bug, include reproduction steps.
     validations:
-      required: false
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: The packages/areas this ticket touches and what changes in each. Keep the table; add or remove rows.
+      value: |
+        | Area / package | What changes |
+        | -------------- | ------------ |
+        | `apps/nebula-chat-server` |  |
+        | `libs/…` |  |
+    validations:
+      required: true
   - type: textarea
     id: acceptance-criteria
     attributes:
       label: Acceptance criteria
-      description: A concrete, checkable definition of done. An agent implementing this should be able to verify each line.
+      description: A concrete, checkable definition of done — an agent should be able to verify each line, and a reviewer sign off against it. Cover the happy path, the error paths, and tests.
       value: |
         - [ ]
         - [ ]
+        - [ ] Tests cover the behaviour at its seam(s)
     validations:
       required: true
-  - type: input
-    id: affected-area
+  - type: textarea
+    id: technical-approach
     attributes:
-      label: Affected area
-      description: Which part of the codebase? e.g. `chat` module, `libs/db` schema, frontend store, OpenAPI contract. Guides specialist delegation during `/implement`.
-      placeholder: apps/nebula-chat-server/src/modules/chat
+      label: Technical approach & notes
+      description: Hints for whoever implements it cold — the files/modules likely involved, the pattern to follow, gotchas, the ADR that governs the decision. Not a line-by-line plan; the decision-rich pointers.
+    validations:
+      required: false
+  - type: input
+    id: dependencies
+    attributes:
+      label: Depends on
+      description: Other tickets that must land first, by ID — e.g. `NEB-330, NEB-333`. Leave blank if it can start immediately.
+      placeholder: None (can start immediately)
     validations:
       required: false
   - type: textarea
     id: out-of-scope
     attributes:
       label: Out of scope / non-goals
-      description: Anything explicitly NOT part of this ticket, to keep the change focused.
+      description: What this ticket explicitly does NOT do, to keep the change focused and reviewable.
     validations:
       required: false

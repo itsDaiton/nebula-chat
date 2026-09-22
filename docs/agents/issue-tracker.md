@@ -4,7 +4,22 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 
 ## Ticket IDs
 
-Every issue is a ticket with a Jira-style key: **`NEB-<issue-number>`** (issue `#329` → `NEB-329`). The number is the GitHub issue number itself — no separate counter. Use the bare `#NN` in `gh` commands and `Closes #NN` lines (GitHub only understands that form); use the `NEB-<n>` alias in branch names, commit subjects, and PR titles, where a bare `#NN` collides with PR numbers. Full title/branch format lives in `AGENTS.md` → **Referencing tickets**. Optionally, prepend `NEB-<n>: ` to an issue's title after creation to surface the key in the issue list — cosmetic, not required.
+Every issue is a ticket with a Jira-style key: **`NEB-<issue-number>`** (issue `#329` → `NEB-329`). The number is the GitHub issue number itself — no separate counter.
+
+- Use the bare `#NN` in `gh` commands and `Closes #NN` lines (GitHub only understands that form).
+- Use the `NEB-<n>` key in branch names and titles, where a bare `#NN` collides with PR numbers.
+- **The issue title carries the key and becomes the PR title.** Right after creating an issue, edit its title to `type(scope): NEB-<n>: summary` (e.g. `feat(server): NEB-330: migrate Express to Fastify`). The implementing PR reuses that exact string. Full title/branch format: `AGENTS.md` → **Referencing tickets**.
+
+## Labels
+
+Every ticket gets, in addition to its triage state (see [triage-labels.md](./triage-labels.md)):
+
+- **One or more area/lib labels** naming what it touches:
+  - `app:server` — `apps/nebula-chat-server` (backend) · `app:client` — `apps/nebula-chat-client` (frontend)
+  - `lib:auth`, `lib:db`, `lib:langchain`, `lib:otel`, `lib:redis` — the corresponding `libs/*` package
+- **`enhancement`** for a `feat`, **`bug`** for a `fix`.
+
+Apply these when creating or triaging a ticket. **When a new `libs/<name>` package is created, add a matching `lib:<name>` GitHub label** (`gh label create lib:<name> --color 5319e7 --description "Touches libs/<name>"`) — this is part of the new-lib checklist in `AGENTS.md`.
 
 ## Conventions
 
