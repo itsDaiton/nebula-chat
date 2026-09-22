@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.25.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.25.3...nebula-chat-v1.25.4) (2026-09-22)
+
+
+### Bug Fixes
+
+* **agents:** add ADRs for shared error lib (NEB-323) and TanStack Query adoption (NEB-307) ([#345](https://github.com/itsDaiton/nebula-chat/issues/345)) ([1b25700](https://github.com/itsDaiton/nebula-chat/commit/1b2570067cd27326bd85ceee4ade6c27087eff78))
+
 ## [1.25.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.25.2...nebula-chat-v1.25.3) (2026-09-22)
 
 
