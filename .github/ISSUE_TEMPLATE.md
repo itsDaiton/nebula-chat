@@ -12,8 +12,8 @@ A ticket is a PRE-IMPLEMENTATION artifact an agent may pick up with no other con
     `type(scope): NEB-<n> summary` (feat/fix only; `!` for a breaking/major change). It becomes the PR title.
   • Labels: `needs-triage` is applied automatically. Triage adds area/lib labels (`app:server`, `app:client`,
     `lib:db`, …) and a state (`ready-for-agent` / `ready-for-human` / `needs-info`).
-  • Full guidance: docs/agents/issue-tracker.md#ticket-anatomy. A ticket-lint CI check flags anything that
-    doesn't match this shape.
+  • Full guidance: docs/agents/issue-tracker.md#ticket-anatomy. A validate-ticket CI check flags anything
+    that doesn't match this shape.
 -->
 
 ## Change type

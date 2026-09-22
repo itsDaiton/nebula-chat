@@ -83,7 +83,7 @@ Do NOT close or modify any parent issue.
 
 <issue-template>
 
-**This repo overrides the generic template — use it no matter what.** Fill the canonical skeleton `.github/ISSUE_TEMPLATE.md` and follow the **Ticket anatomy** in `docs/agents/issue-tracker.md`. Do not fall back to a thinner shape (a `ticket-lint` CI check flags anything that doesn't match). The body's sections, in order:
+**This repo overrides the generic template — use it no matter what.** Fill the canonical skeleton `.github/ISSUE_TEMPLATE.md` and follow the **Ticket anatomy** in `docs/agents/issue-tracker.md`. Do not fall back to a thinner shape (a `validate-ticket` CI check flags anything that doesn't match). The body's sections, in order:
 
 ## Change type
 

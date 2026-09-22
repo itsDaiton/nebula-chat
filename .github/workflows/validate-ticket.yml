@@ -1,4 +1,4 @@
-name: Ticket lint
+name: Validate ticket
 
 # Enforces the ticket format (docs/agents/issue-tracker.md#ticket-anatomy) on every issue —
 # humans and agents alike. It can't hard-block issue creation the way a PR check blocks a merge,
@@ -48,7 +48,7 @@ jobs:
               }
             }
 
-            const marker = '<!-- ticket-lint -->';
+            const marker = '<!-- validate-ticket -->';
             const comments = await github.rest.issues.listComments({ owner, repo, issue_number: number, per_page: 100 });
             const existing = comments.data.find((c) => c.body && c.body.includes(marker));
             const hasMalformed = labels.includes('malformed-ticket');
