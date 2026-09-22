@@ -15,6 +15,14 @@ on:
 
 permissions: {}
 
+# A push to a PR branch (or another quick push to main) supersedes the previous
+# commit's build before it finishes. Without this, every superseded run still
+# runs the full matrix (lint/format/typecheck/build/test/Sonar per package) to
+# completion, burning Actions minutes on a result nobody will look at.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   changes:
     name: changes
