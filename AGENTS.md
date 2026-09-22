@@ -307,13 +307,13 @@ Environment variables are documented per-package: see [Frontend Environment Vari
 
 ## Keeping the Agentic Workspace in Sync
 
-This repo's `.claude/` workspace (agents, skills) and its documentation (`AGENTS.md` files, `CLAUDE.md`, `CONTEXT.md`, `docs/adr/`) describe the codebase as it actually is. When they drift, agents make decisions on stale information — treat a stale reference here the same as a stale code comment: a bug to fix, not a nit to skip.
+This repo's `.claude/` workspace (skills) and its documentation (`AGENTS.md` files, `CLAUDE.md`, `CONTEXT.md`, `docs/adr/`) describe the codebase as it actually is. When they drift, agents make decisions on stale information — treat a stale reference here the same as a stale code comment: a bug to fix, not a nit to skip.
 
 **Whenever a change touches conventions, module layout, or architecture, update these in the same PR:**
 
 - The relevant `AGENTS.md` — root for cross-cutting changes, the package's own `AGENTS.md` for package-specific ones.
 - `CONTEXT.md` if domain vocabulary was introduced, renamed, or retired (this is `/domain-modeling`'s job, ideally done upstream during `/grill-with-docs`/`/to-spec`, not as an afterthought here).
 - `docs/adr/` if the change is hard-to-reverse, surprising, or the result of a real trade-off (see `/domain-modeling`'s ADR criteria).
-- Any `.claude/agents/*.md` whose required-reading, guardrails, or file paths reference the area that changed (e.g. a renamed directory, a retired ticket, a changed convention). `meta-synchronizer` can be invoked to audit the whole roster, but don't rely on it to catch what you already know changed.
+- Any `.claude/skills/**` whose steps or file paths reference the area that changed (e.g. a renamed directory, a retired ticket, a changed convention).
 
 A PR that changes how the codebase works but leaves these docs describing the old way is not done.

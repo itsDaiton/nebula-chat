@@ -1,0 +1,67 @@
+name: Ticket
+description: File a bug, feature, or chore. Every unit of work in this repo is a GitHub issue.
+title: 'type(scope): short summary'
+labels: ['needs-triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a ticket. Issues are the single source of truth for work in this repo — the
+        `/triage` → `/implement` flow reads them directly, so the more precise this is, the more of it an
+        agent can pick up unattended.
+
+        Keep the **title** in Conventional Commit shape — `type(scope): summary` (e.g. `feat(chat): add
+        model picker`, `fix(auth): reject expired guest sessions`). It becomes the PR title Release Please
+        parses, so `type` must be `feat` or `fix` (append `!` — `feat!`/`fix!` — only for a breaking change
+        that warrants a major version bump).
+  - type: dropdown
+    id: change-type
+    attributes:
+      label: Change type
+      description: The Conventional Commit type for the eventual PR title. Only feat and fix are released; `!` marks a breaking (major) change.
+      options:
+        - feat — new capability
+        - fix — bug fix or corrected behaviour
+        - feat! — new capability, breaking (major version)
+        - fix! — bug fix, breaking (major version)
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences. What should be true after this ships that isn't true today?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context & motivation
+      description: Why this matters, links to related issues/ADRs (`docs/adr/NNNN-*.md`), reproduction steps for a bug.
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: A concrete, checkable definition of done. An agent implementing this should be able to verify each line.
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+  - type: input
+    id: affected-area
+    attributes:
+      label: Affected area
+      description: Which part of the codebase? e.g. `chat` module, `libs/db` schema, frontend store, OpenAPI contract. Guides specialist delegation during `/implement`.
+      placeholder: apps/nebula-chat-server/src/modules/chat
+    validations:
+      required: false
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope / non-goals
+      description: Anything explicitly NOT part of this ticket, to keep the change focused.
+    validations:
+      required: false

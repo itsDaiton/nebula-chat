@@ -88,7 +88,7 @@ Every feature module follows this strict 6-layer convention. Add files in this o
 6. <module>.routes.ts       — FastifyPluginAsyncZod default export; schema blocks + hook chain
 ```
 
-New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(plugin, { prefix: '/api/<module>' })`. No separate OpenAPI registry step — the `schema:` block on each route is the single source of truth for both validation and documentation. Use the `backend-module-scaffold` skill or the `backend-module-builder` agent to generate one.
+New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(plugin, { prefix: '/api/<module>' })`. No separate OpenAPI registry step — the `schema:` block on each route is the single source of truth for both validation and documentation. Use the `backend-module-scaffold` skill to generate one.
 
 ---
 
@@ -189,7 +189,7 @@ Schema lives at `libs/db/src/schema.ts` (`@nebula-chat/db`). The domain tables a
 
 - All Drizzle queries go in `*.repository.ts` files — never in services or controllers.
 - The DB client is created in `src/db.ts` via `createDbClient` from `@nebula-chat/db`. Always import `db` from `@backend/db`.
-- After changing the schema run `pnpm --filter @nebula-chat/db db:generate` in dev or `pnpm --filter @nebula-chat/db db:migrate` in prod. Use the `drizzle-migrate` skill or the `drizzle-migration-engineer` agent for schema changes.
+- After changing the schema run `pnpm --filter @nebula-chat/db db:generate` in dev or `pnpm --filter @nebula-chat/db db:migrate` in prod. Use the `drizzle-migrate` skill for schema changes.
 - Conversations are cursor-paginated using the conversation `id` as the cursor.
 - Max 20 messages are loaded into context for a single chat request.
 
@@ -288,8 +288,7 @@ The generator is Orval, configured at `apps/nebula-chat-client/orval.config.ts`,
 `openapi/openapi.yaml`, and using the axios mutator at `apps/nebula-chat-client/src/libs/api/client.ts`.
 Regenerated files in `apps/nebula-chat-client/src/libs/api/generated/` must be committed in the same PR as the
 backend/OpenAPI change — never ship an API change with a stale client. Do not hand-edit anything under
-`apps/nebula-chat-client/src/libs/api/generated/`; always regenerate. Use the `regenerate-api-client` skill or
-the `api-contract-keeper` agent for this.
+`apps/nebula-chat-client/src/libs/api/generated/`; always regenerate. Use the `regenerate-api-client` skill for this.
 
 ---
 
