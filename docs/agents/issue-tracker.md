@@ -28,7 +28,8 @@ A ticket is a **pre-implementation artifact** — the output of a `/grill-with-d
 - **Forward-looking, present/imperative tense.** Describe the work to be done, not work that was done. "Create `libs/db`…", "Replace Express with Fastify…" — never "Created…", "✅ Delivered", or a changelog voice. Acceptance criteria are **unchecked** (`- [ ]`).
 - **No ADR / decision-record framing in the body.** A ticket precedes the ADR; it doesn't cite one as already decided or link to a changelog. (The ADR is written from the grilling session, separately.)
 - **Detailed enough to implement cold.** Name the files, modules, and packages involved and the pattern to follow; call out gotchas and the seams to test. Do **not** paste implementation code or line numbers — they go stale. Prose, tables, and short lists over code blocks.
-- **The standard sections** (the [`ticket.yml`](../../.github/ISSUE_TEMPLATE/ticket.yml) form produces these; keep the same shape when creating a ticket by hand):
+- **Fill the template.** [`.github/ISSUE_TEMPLATE.md`](../../.github/ISSUE_TEMPLATE.md) is the one canonical skeleton — it pre-fills a new issue in the browser, and agents fill the same file. Keep every `## heading`. A **ticket-lint** GitHub Action ([`.github/workflows/ticket-lint.yml`](../../.github/workflows/ticket-lint.yml)) checks the title and these sections on every issue, auto-applies `needs-triage`, and labels `malformed-ticket` + comments when a ticket doesn't match.
+- **The standard sections:**
 
   | Section | Holds |
   | ------- | ----- |
@@ -38,7 +39,7 @@ A ticket is a **pre-implementation artifact** — the output of a `/grill-with-d
   | **Scope** | a table of area/package → what changes |
   | **Acceptance criteria** | checkable, unchecked; cover happy path, error paths, and tests |
   | **Technical approach & notes** | files/patterns/gotchas for a cold implementer |
-  | **Depends on** | blocking `NEB-<n>` tickets, or none |
+  | **Depends on** | a **bullet list** of blocking tickets, each linking the issue with `#NN` (e.g. `- #334 — @nebula-chat/otel`); a single `- None` bullet if it can start immediately |
   | **Out of scope** | explicit non-goals, where they matter |
 
 The closed issues `NEB-330`…`NEB-336` (the retired backend-migration work) are worked examples of this shape.

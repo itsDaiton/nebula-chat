@@ -21,7 +21,7 @@ ADRs and `CONTEXT.md` entries are produced upstream during `/grill-with-docs`/`/
 
 ## Issues & domain docs
 
-- **Creating a ticket** (`/to-tickets`, `/triage`, or by hand): the body **must** follow the **Ticket anatomy** in `docs/agents/issue-tracker.md` — present tense, detailed enough to implement cold, with the standard sections — and the title is `type(scope): NEB-<n> summary`. **This is authoritative and overrides any thinner issue template a skill embeds** (e.g. `/to-tickets`'s built-in `<issue-template>`, and its "avoid file paths" note — name the files). Apply the area/lib + triage labels below.
+- **Creating a ticket** (`/to-tickets`, `/triage`, or by hand): fill the canonical skeleton `.github/ISSUE_TEMPLATE.md` and follow the **Ticket anatomy** in `docs/agents/issue-tracker.md` — present tense, detailed enough to implement cold, with every section — and title it `type(scope): NEB-<n> summary`. **This is authoritative and overrides any thinner issue template a skill embeds** (e.g. `/to-tickets`'s built-in `<issue-template>`, and its "avoid file paths" note — name the files). Apply the area/lib + triage labels below. A `ticket-lint` CI check flags any issue that doesn't match.
 - **Tracker**: GitHub Issues (`itsDaiton/nebula-chat`) via the `gh` CLI. Each issue is ticket `NEB-<number>`. See `docs/agents/issue-tracker.md`.
 - **Triage labels**: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
 - **Area/lib labels**: `app:server`, `app:client`, and `lib:<name>` (`lib:db`, `lib:langchain`, …) — label each ticket with what it touches. See `docs/agents/issue-tracker.md` → Labels.

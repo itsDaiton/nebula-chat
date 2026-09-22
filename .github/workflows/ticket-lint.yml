@@ -1,0 +1,70 @@
+name: Ticket lint
+
+# Enforces the ticket format (docs/agents/issue-tracker.md#ticket-anatomy) on every issue —
+# humans and agents alike. It can't hard-block issue creation the way a PR check blocks a merge,
+# so it flags instead: auto-applies needs-triage, and on a malformed ticket it labels
+# `malformed-ticket`, posts/updates a comment listing what's wrong, and fails the run.
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            if (!issue) return;
+            const { number, title } = issue;
+            const body = issue.body || '';
+            const labels = (issue.labels || []).map((l) => (typeof l === 'string' ? l : l.name));
+            const { owner, repo } = context.repo;
+
+            const TRIAGE_STATES = ['needs-triage', 'needs-info', 'ready-for-agent', 'ready-for-human', 'wontfix'];
+
+            // Default a triage state for a freshly opened ticket that has none.
+            if (context.payload.action === 'opened' && !labels.some((l) => TRIAGE_STATES.includes(l))) {
+              await github.rest.issues.addLabels({ owner, repo, issue_number: number, labels: ['needs-triage'] });
+            }
+
+            const problems = [];
+
+            // Title: `type(scope): summary`, feat/fix only, optional scope, optional ! .
+            if (!/^(feat|fix)(\([^)]+\))?!?:\s+\S+/.test(title || '')) {
+              problems.push('Title must be `type(scope): summary` with `type` = `feat` or `fix` — e.g. `feat(server): NEB-330 migrate to Fastify`.');
+            }
+
+            const REQUIRED = ['Change type', 'Summary', 'Background & problem', 'Scope', 'Acceptance criteria', 'Technical approach & notes', 'Depends on'];
+            for (const h of REQUIRED) {
+              const esc = h.replace(/[.*+?^${}()|[\]\\&]/g, '\\$&');
+              if (!new RegExp('^##\\s+' + esc + '\\s*$', 'im').test(body)) {
+                problems.push('Missing section: `## ' + h + '`');
+              }
+            }
+
+            const marker = '<!-- ticket-lint -->';
+            const comments = await github.rest.issues.listComments({ owner, repo, issue_number: number, per_page: 100 });
+            const existing = comments.data.find((c) => c.body && c.body.includes(marker));
+            const hasMalformed = labels.includes('malformed-ticket');
+            const anatomy = `https://github.com/${owner}/${repo}/blob/main/docs/agents/issue-tracker.md#ticket-anatomy`;
+
+            if (problems.length) {
+              const md = `${marker}\n⚠️ **This ticket does not match the required format** ([ticket anatomy](${anatomy})):\n\n` +
+                problems.map((p) => '- ' + p).join('\n') +
+                '\n\nEdit the issue to fix it — this check re-runs on every edit.';
+              if (existing) await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body: md });
+              else await github.rest.issues.createComment({ owner, repo, issue_number: number, body: md });
+              if (!hasMalformed) await github.rest.issues.addLabels({ owner, repo, issue_number: number, labels: ['malformed-ticket'] });
+              core.setFailed('Ticket format problems:\n' + problems.join('\n'));
+            } else {
+              if (hasMalformed) {
+                await github.rest.issues.removeLabel({ owner, repo, issue_number: number, name: 'malformed-ticket' }).catch(() => {});
+              }
+              if (existing) await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body: `${marker}\n✅ Ticket format looks good.` });
+            }
