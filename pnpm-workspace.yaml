@@ -6,15 +6,15 @@ packages:
 # Versions shared by more than one package live here so a bump happens once.
 # `catalog:` in a package.json resolves to the entry below.
 catalog:
-  '@types/node': ^26.4.1
+  '@types/node': ^26.5.1
   '@vitest/coverage-v8': ^5.0.0
   # Exact-pinned (not caret) so the auth substrate's version is deliberate, not
   # floated by a later resolve; shared by @nebula-chat/auth and the server.
-  better-auth: 1.7.3
+  better-auth: 1.7.4
   drizzle-orm: ^0.45.2
   tsup: ^8.5.0
   tsx: ^4.21.0
-  typescript: ^6.0.3
+  typescript: ^7.0.2
   vitest: ^5.0.0
 
 # --- pnpm settings -----------------------------------------------------------
