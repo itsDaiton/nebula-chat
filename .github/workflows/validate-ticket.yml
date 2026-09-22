@@ -26,6 +26,11 @@ jobs:
             const labels = (issue.labels || []).map((l) => (typeof l === 'string' ? l : l.name));
             const { owner, repo } = context.repo;
 
+            // Non-ticket tracking issues (a capability backlog, an umbrella epic) don't follow the ticket
+            // anatomy — skip them entirely.
+            const EXEMPT = ['backlog', 'epic'];
+            if (labels.some((l) => EXEMPT.includes(l))) return;
+
             const TRIAGE_STATES = ['needs-triage', 'needs-info', 'ready-for-agent', 'ready-for-human', 'wontfix'];
 
             // Default a triage state for a freshly opened ticket that has none.
