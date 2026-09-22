@@ -40,7 +40,7 @@ jobs:
               problems.push('Title must be `type(scope): summary` with `type` = `feat` or `fix` — e.g. `feat(server): NEB-330 migrate to Fastify`.');
             }
 
-            const REQUIRED = ['Change type', 'Summary', 'Background & problem', 'Scope', 'Acceptance criteria', 'Technical approach & notes', 'Depends on'];
+            const REQUIRED = ['Change type', 'Summary', 'Background & problem', 'Scope', 'Acceptance criteria', 'Technical approach & notes', 'Testing', 'Depends on'];
             for (const h of REQUIRED) {
               const esc = h.replace(/[.*+?^${}()|[\]\\&]/g, '\\$&');
               if (!new RegExp('^##\\s+' + esc + '\\s*$', 'im').test(body)) {

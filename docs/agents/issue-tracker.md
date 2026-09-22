@@ -34,12 +34,13 @@ A ticket is a **pre-implementation artifact** — the output of a `/grill-with-d
   | Section | Holds |
   | ------- | ----- |
   | **Change type** | `feat` / `fix` (`!` for breaking) |
-  | **Summary** | one or two sentences: what's true after this ships |
-  | **Background & problem** | current state and why it's not good enough |
+  | **Summary** | 2–5 sentences: what's true once this ships, and the shape of the change |
+  | **Background & problem** | the long section — the current state in detail, what breaks or is missing, who it costs, and the constraints and prior decisions that bound the fix. Explain everything |
   | **Scope** | a table of area/package → what changes |
   | **Acceptance criteria** | checkable, unchecked; cover happy path, error paths, and tests |
-  | **Technical approach & notes** | files/patterns/gotchas for a cold implementer |
-  | **Depends on** | a **bullet list** of blocking tickets, each linking the issue with `#NN` (e.g. `- #334 — @nebula-chat/otel`); a single `- None` bullet if it can start immediately |
+  | **Technical approach & notes** | files/patterns/interfaces/gotchas for a cold implementer — go into detail, name the files, no code |
+  | **Testing** | which seams to test, what to mock vs. keep real, the test types, and what's deliberately not tested |
+  | **Depends on** | a **bullet list** of blocking tickets, each linking the issue on GitHub with `#NN` (e.g. `- #334 — @nebula-chat/otel`); a single `- None` bullet if it can start immediately |
   | **Out of scope** | explicit non-goals, where they matter |
 
 The closed issues `NEB-330`…`NEB-336` (the retired backend-migration work) are worked examples of this shape.

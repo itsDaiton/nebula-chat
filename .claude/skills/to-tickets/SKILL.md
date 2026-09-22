@@ -91,11 +91,11 @@ Do NOT close or modify any parent issue.
 
 ## Summary
 
-One or two sentences: what is true once this ships.
+2–5 sentences: what is true once this ships that isn't today, and the shape of the change.
 
 ## Background & problem
 
-The current state and why it isn't good enough. Present tense — this is a pre-implementation artifact, never past tense or a changelog voice, and it does not cite an ADR as already decided.
+The long section — explain everything an implementer needs without prior context: the current state in detail, what breaks or is missing, who it costs, and the constraints and prior decisions that bound the fix. Present tense — this is a pre-implementation artifact, never past tense or a changelog voice, and it does not cite an ADR as already decided.
 
 ## Scope
 
@@ -107,7 +107,11 @@ A table of area/package → what changes.
 
 ## Technical approach & notes
 
-The files/modules/patterns/gotchas a cold implementer needs — **name the files**, but no code snippets or line numbers.
+The files/modules/patterns/interfaces/gotchas a cold implementer needs — go into detail and **name the files**, but no code snippets or line numbers.
+
+## Testing
+
+Which seams to test and how — what to mock vs. keep real, the test types (Vitest unit / `app.inject()` route / MSW-mocked client), and what is deliberately not tested.
 
 ## Depends on
 
