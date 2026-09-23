@@ -372,6 +372,10 @@ No hook or component in the codebase may import or call `useEffect`.
 ## Shared Utilities
 
 - `shared/utils/errorHandler.ts` — `handleHttpError(response)` and `handleNetworkError(err)` used in all API call sites. Always go through these rather than throwing raw errors.
+- `@nebula-chat/errors` — the error vocabulary shared with the server (ADR-0011). Read an error body or an SSE
+  `error` frame with `parseErrorEnvelope(value)` (or `isErrorEnvelope`) and show its `message`; never parse
+  error payloads by hand. Switch on the envelope's `error` code, not the HTTP status, and read typed `details`
+  only after narrowing on it.
 - `shared/config/serverConfig.ts` — `SERVER_CONFIG.getApiEndpoint(path)` constructs full API URLs from `VITE_API_URL`. Never hardcode API base URLs.
 - `shared/config/paginationConfig.ts` — `paginationConfig.defaultLimit` for page sizes.
 

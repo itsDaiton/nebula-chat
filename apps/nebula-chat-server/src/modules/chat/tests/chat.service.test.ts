@@ -1,3 +1,4 @@
+import { GENERIC_ERROR_MESSAGE } from '@nebula-chat/errors';
 import type * as LangChainLib from '@nebula-chat/langchain';
 import { fromPartial } from '@total-typescript/shoehorn';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -68,6 +69,13 @@ const collectStream = async (data: CreateChatStreamDTO, userId = 'anonymous') =>
   const frames: string[] = [];
   const result = await chatService.streamResponse(data, (chunk) => frames.push(chunk), userId);
   return { frames, joined: frames.join(''), result };
+};
+
+/** The payload of the stream's `error` frame — the shared error envelope. */
+const errorFrame = (frames: string[]): unknown => {
+  const frame = frames.find((f) => f.startsWith('event: error\n'));
+  const data = frame && /^data: (.+)$/m.exec(frame)?.[1];
+  return data ? JSON.parse(data) : undefined;
 };
 
 const eventNames = (frames: string[]) =>
@@ -275,10 +283,13 @@ describe('chatService.streamResponse', () => {
   });
 
   it('emits an error frame and no result when the model is unsupported', async () => {
-    const { joined, result } = await collectStream(request({ model: 'not-a-model' }));
+    const { frames, result } = await collectStream(request({ model: 'not-a-model' }));
 
-    expect(joined).toContain('event: error');
-    expect(joined).toContain('Unsupported model: not-a-model');
+    expect(errorFrame(frames)).toEqual({
+      success: false,
+      error: 'BadRequest',
+      message: 'Unsupported model: not-a-model',
+    });
     expect(result).toBeUndefined();
   });
 
@@ -293,53 +304,68 @@ describe('chatService.streamResponse', () => {
     );
 
     expect(joined).toContain('Expected one message, received 2.');
+    expect(joined).toContain('"error":"BadRequest"');
   });
 
   it('emits an error frame when the assistant produces nothing', async () => {
     respondWith(['   ']);
 
-    const { joined, result } = await collectStream(request());
+    const { frames, result } = await collectStream(request());
 
-    expect(joined).toContain('The assistant did not generate a response.');
+    expect(errorFrame(frames)).toMatchObject({ error: 'Internal', message: GENERIC_ERROR_MESSAGE });
     expect(result).toBeUndefined();
     expect(mockedMessageService.createMessage).not.toHaveBeenCalled();
   });
 
-  it('emits an error frame when the LLM call throws', async () => {
-    mockedStreamChat.mockRejectedValue(new Error('provider timed out'));
+  it('reports an unclassified LLM failure as Internal without leaking its message', async () => {
+    mockedStreamChat.mockRejectedValue(new Error('401 Incorrect API key provided: sk-abc'));
 
-    const { joined } = await collectStream(request());
+    const { frames, joined } = await collectStream(request());
 
-    expect(joined).toContain('provider timed out');
+    expect(errorFrame(frames)).toEqual({
+      success: false,
+      error: 'Internal',
+      message: GENERIC_ERROR_MESSAGE,
+    });
+    expect(joined).not.toContain('sk-abc');
   });
 
-  it('reports a non-Error failure as an unknown error', async () => {
+  it('reports a non-Error failure as Internal', async () => {
     mockedStreamChat.mockRejectedValue('a bare string');
 
-    const { joined } = await collectStream(request());
+    const { frames, joined } = await collectStream(request());
 
-    expect(joined).toContain('event: error');
+    expect(errorFrame(frames)).toMatchObject({ error: 'Internal', message: GENERIC_ERROR_MESSAGE });
+    expect(joined).not.toContain('a bare string');
   });
 
   it('surfaces a missing conversation as an error frame rather than throwing', async () => {
     conversationRepo.findByIdSimple.mockResolvedValue(fromPartial(null));
 
-    const { joined, result } = await collectStream(request());
+    const { frames, result } = await collectStream(request());
 
-    expect(joined).toContain('not found');
+    expect(errorFrame(frames)).toEqual({
+      success: false,
+      error: 'NotFound',
+      message: `Conversation with id "${CONVERSATION_ID}" not found`,
+    });
     expect(result).toBeUndefined();
   });
 
   it('rate-limits a single user after the configured burst', async () => {
     const userId = `burst-${Date.now()}`;
-    let lastJoined = '';
+    let lastFrames: string[] = [];
 
     // The limiter allows 20 requests per minute per user.
     for (let i = 0; i < 21; i++) {
-      lastJoined = (await collectStream(request(), userId)).joined;
+      lastFrames = (await collectStream(request(), userId)).frames;
     }
 
-    expect(lastJoined).toContain('Rate limit exceeded');
+    expect(errorFrame(lastFrames)).toMatchObject({
+      success: false,
+      error: 'TooManyRequests',
+      message: expect.stringContaining('Rate limit exceeded'),
+    });
   });
 
   it('does not call the model at all once rate-limited', async () => {

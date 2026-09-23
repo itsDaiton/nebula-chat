@@ -1,6 +1,8 @@
 // Pure SSE string formatters — no Node.js or HTTP transport dependency.
 // Consumers (e.g. Fastify routes) write the returned string to their response stream.
 
+import type { ErrorEnvelope } from '@nebula-chat/errors';
+
 const fmt = (event: string, data: unknown): string =>
   `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 
@@ -23,6 +25,8 @@ export const sseUsage = (usage: {
 
 export const sseCacheHit = () => fmt('cache-hit', {});
 
-export const sseError = (message: string) => fmt('error', { error: message });
+// The same envelope the JSON error handler sends (ADR-0011), so a client reads
+// errors one way whichever transport they arrive on.
+export const sseError = (envelope: ErrorEnvelope) => fmt('error', envelope);
 
 export const sseEnd = () => fmt('end', {});

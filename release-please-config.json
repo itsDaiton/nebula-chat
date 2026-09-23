@@ -25,6 +25,13 @@
       "component": "nebula-chat-db",
       "include-component-in-tag": true
     },
+    "libs/errors": {
+      "release-type": "node",
+      "component": "nebula-chat-errors",
+      "include-component-in-tag": true,
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    },
     "libs/langchain": {
       "release-type": "node",
       "component": "nebula-chat-langchain",

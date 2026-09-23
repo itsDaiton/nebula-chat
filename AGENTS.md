@@ -78,7 +78,7 @@ Releases on `main` are fully automated by [release-please](https://github.com/go
 - The cost of this rule is changelog noise: a CI tweak lands as a patch release. That is deliberate — a silently unreleased change is worse than an over-reported one.
 - **Scope should name the release-please component** the change belongs to, matching
   `release-please-config.json`'s `packages` keys: `client` (`apps/nebula-chat-client`), `server`
-  (`apps/nebula-chat-server`), `db` (`libs/db`), `langchain` (`libs/langchain`), `openapi`, or omit the scope
+  (`apps/nebula-chat-server`), `db` (`libs/db`), `errors` (`libs/errors`), `langchain` (`libs/langchain`), `openapi`, or omit the scope
   (or use a repo-wide one like `fix(agents): ...`) for root-level tooling/docs changes (`CLAUDE.md`,
   `AGENTS.md`, `CONTEXT.md`, `.claude/`, `docs/`) — those fall under the root `nebula-chat` component, which
   explicitly excludes `apps/**`, `libs/**`, and `openapi/**`.
@@ -173,8 +173,7 @@ These apply everywhere in the repo, frontend and backend alike. See each package
   exceptions, and only two: `index.ts` files emitted by code generators (e.g. Orval output), which are never
   hand-authored or hand-edited; and the single top-level `src/index.ts` of a package under `libs/`, which is
   that package's public surface — it is what `tsup`'s `entry` and the `exports` map point at, so it is
-  required, not optional. `libs/db`, `libs/langchain` and `libs/otel` each have exactly one. Never nest a
-  barrel below that.
+  required, not optional. Every package under `libs/` has exactly one. Never nest a barrel below that.
 - **No relative imports.** Frontend uses `@/*` (→ `apps/nebula-chat-client/src/`); backend uses `@backend/*` (→ `apps/nebula-chat-server/src/`).
 
 ---
@@ -189,6 +188,7 @@ nebula-chat/
 ├── libs/
 │   ├── auth/                 # @nebula-chat/auth — better-auth substrate (sessions, anonymous, claim)
 │   ├── db/                   # @nebula-chat/db — Drizzle ORM schema + migrations
+│   ├── errors/               # @nebula-chat/errors — isomorphic error codes, envelope schema, AppError classes
 │   ├── langchain/            # @nebula-chat/langchain — LLM providers, tokens, streaming, SSE
 │   ├── otel/                 # @nebula-chat/otel — Pino logger factory + OpenTelemetry tracing
 │   └── redis/                # @nebula-chat/redis — shared Redis connection + cache primitive

@@ -11,6 +11,10 @@
       "entry": ["src/index.ts", "drizzle.config.ts"],
       "project": ["src/**/*.ts"]
     },
+    "libs/errors": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
     "libs/langchain": {
       "entry": ["src/index.ts"],
       "project": ["src/**/*.ts"]

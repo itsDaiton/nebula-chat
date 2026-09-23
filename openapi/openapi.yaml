@@ -11,7 +11,337 @@ components:
       type: apiKey
       in: cookie
       name: better-auth.session_token
-  schemas: {}
+  schemas:
+    ErrorEnvelopeInput:
+      oneOf:
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - BadRequest
+          required:
+            - success
+            - message
+            - error
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - Validation
+          required:
+            - success
+            - message
+            - error
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - Unauthorized
+          required:
+            - success
+            - message
+            - error
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - Forbidden
+            details:
+              type: object
+              properties:
+                limit:
+                  type: integer
+                  minimum: 0
+                  maximum: 9007199254740991
+                count:
+                  type: integer
+                  minimum: 0
+                  maximum: 9007199254740991
+              required:
+                - limit
+                - count
+          required:
+            - success
+            - message
+            - error
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - NotFound
+          required:
+            - success
+            - message
+            - error
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - Conflict
+          required:
+            - success
+            - message
+            - error
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - PayloadTooLarge
+          required:
+            - success
+            - message
+            - error
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - TooManyRequests
+          required:
+            - success
+            - message
+            - error
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - Internal
+          required:
+            - success
+            - message
+            - error
+    ErrorEnvelope:
+      oneOf:
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - BadRequest
+          required:
+            - success
+            - message
+            - error
+          additionalProperties: false
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - Validation
+          required:
+            - success
+            - message
+            - error
+          additionalProperties: false
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - Unauthorized
+          required:
+            - success
+            - message
+            - error
+          additionalProperties: false
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - Forbidden
+            details:
+              type: object
+              properties:
+                limit:
+                  type: integer
+                  minimum: 0
+                  maximum: 9007199254740991
+                count:
+                  type: integer
+                  minimum: 0
+                  maximum: 9007199254740991
+              required:
+                - limit
+                - count
+              additionalProperties: false
+          required:
+            - success
+            - message
+            - error
+          additionalProperties: false
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - NotFound
+          required:
+            - success
+            - message
+            - error
+          additionalProperties: false
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - Conflict
+          required:
+            - success
+            - message
+            - error
+          additionalProperties: false
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - PayloadTooLarge
+          required:
+            - success
+            - message
+            - error
+          additionalProperties: false
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - TooManyRequests
+          required:
+            - success
+            - message
+            - error
+          additionalProperties: false
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum:
+                - false
+            message:
+              type: string
+            error:
+              type: string
+              enum:
+                - Internal
+          required:
+            - success
+            - message
+            - error
+          additionalProperties: false
 paths:
   /:
     get:
@@ -66,8 +396,7 @@ paths:
       summary: Stream chat completion
       tags:
         - Chat
-      description: >-
-        Stream a chat completion response from an AI model with automatic
+      description: Stream a chat completion response from an AI model with automatic
         conversation and message persistence.
       requestBody:
         required: true
@@ -100,12 +429,10 @@ paths:
                 conversationId:
                   type: string
                   format: uuid
-                  pattern: >-
-                    ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                 regenerate:
                   default: false
-                  description: >-
-                    Bypass and overwrite any cached response, forcing a fresh
+                  description: Bypass and overwrite any cached response, forcing a fresh
                     completion
                   type: boolean
               required:
@@ -124,148 +451,57 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Invalid request body or validation error
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '401':
           description: No authenticated session
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: No authenticated session
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '403':
           description: Guest message allowance reached — registration required
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Guest message allowance reached — registration required
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '404':
           description: Conversation not found
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Conversation not found
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '413':
           description: Message or context exceeds token limit
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Message or context exceeds token limit
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '429':
           description: Rate limit exceeded
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Rate limit exceeded
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Internal server error
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
   /api/conversations:
     post:
       operationId: createConversation
@@ -296,8 +532,7 @@ paths:
                   id:
                     type: string
                     format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                   title:
                     type: string
                   createdAt: {}
@@ -312,72 +547,32 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Invalid request body
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '401':
           description: No authenticated session
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: No authenticated session
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Internal server error
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
     get:
       operationId: listConversations
       summary: List conversations
       tags:
         - Conversations
-      description: >-
-        Retrieve the caller’s own conversations with cursor-based pagination.
-        Returns up to 10 conversations by default.
+      description: Retrieve the caller’s own conversations with cursor-based
+        pagination. Returns up to 10 conversations by default.
       parameters:
         - schema:
             default: 10
@@ -391,8 +586,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
           required: false
@@ -414,8 +608,7 @@ paths:
                         id:
                           type: string
                           format: uuid
-                          pattern: >-
-                            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                         title:
                           type: string
                         createdAt: {}
@@ -428,8 +621,7 @@ paths:
                     nullable: true
                     type: string
                     format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                   hasMore:
                     type: boolean
                 required:
@@ -443,52 +635,24 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: No authenticated session
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Internal server error
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
   /api/conversations/search:
     get:
       operationId: searchConversations
       summary: Search conversations
       tags:
         - Conversations
-      description: >-
-        Search the caller’s own conversations by title, ordered by creation
-        date.
+      description: Search the caller’s own conversations by title, ordered by creation date.
       parameters:
         - schema:
             type: string
@@ -511,8 +675,7 @@ paths:
                     id:
                       type: string
                       format: uuid
-                      pattern: >-
-                        ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                      pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                     title:
                       type: string
                     createdAt: {}
@@ -527,64 +690,25 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Invalid search query
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '401':
           description: No authenticated session
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: No authenticated session
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Internal server error
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
   /api/conversations/{conversationId}:
     get:
       operationId: getConversation
@@ -596,8 +720,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: conversationId
           required: true
@@ -612,8 +735,7 @@ paths:
                   id:
                     type: string
                     format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                   title:
                     type: string
                   createdAt: {}
@@ -628,85 +750,33 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Invalid conversation ID format
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '401':
           description: No authenticated session
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: No authenticated session
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '404':
           description: Conversation not found or not owned by the caller
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Conversation not found or not owned by the caller
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Internal server error
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
   /api/messages:
     post:
       operationId: createMessage
@@ -724,8 +794,7 @@ paths:
                 conversationId:
                   type: string
                   format: uuid
-                  pattern: >-
-                    ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                 role:
                   type: string
                   enum:
@@ -755,13 +824,11 @@ paths:
                   id:
                     type: string
                     format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                   conversationId:
                     type: string
                     format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                   content:
                     type: string
                   role:
@@ -789,85 +856,33 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Invalid request body
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '401':
           description: No authenticated session
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: No authenticated session
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '404':
           description: Conversation not found or not owned by the caller
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Conversation not found or not owned by the caller
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Internal server error
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
     get:
       operationId: listMessages
       summary: List messages
@@ -888,13 +903,11 @@ paths:
                     id:
                       type: string
                       format: uuid
-                      pattern: >-
-                        ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                      pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                     conversationId:
                       type: string
                       format: uuid
-                      pattern: >-
-                        ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                      pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                     content:
                       type: string
                     role:
@@ -922,43 +935,17 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: No authenticated session
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Internal server error
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
   /api/messages/{messageId}:
     get:
       operationId: getMessage
@@ -970,8 +957,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: messageId
           required: true
@@ -986,13 +972,11 @@ paths:
                   id:
                     type: string
                     format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                   conversationId:
                     type: string
                     format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                   content:
                     type: string
                   role:
@@ -1020,85 +1004,33 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Invalid message ID format
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '401':
           description: No authenticated session
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: No authenticated session
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '404':
           description: Message not found or not owned by the caller
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Message not found or not owned by the caller
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    enum:
-                      - false
-                  error:
-                    type: string
-                  message:
-                    type: string
-                required:
-                  - success
-                  - error
-                  - message
-                additionalProperties: false
                 description: Internal server error
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
 servers:
   - url: http://localhost:3000
 security:

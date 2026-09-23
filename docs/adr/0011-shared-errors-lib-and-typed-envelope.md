@@ -1,6 +1,6 @@
 # ADR-0011: Consolidate error handling into a shared `@nebula-chat/errors` lib with a typed error envelope across both apps
 
-- **Status:** Proposed — to be implemented for NEB-323
+- **Status:** Accepted — implemented in NEB-323
 - **Date:** 2026-09-22
 - **Deciders:** @itsDaiton
 
@@ -52,4 +52,6 @@ The backend already validates route responses with `fastify-type-provider-zod`, 
 
 - Enriching the envelope changes the OpenAPI contract, so NEB-323 ends with `pnpm --filter nebula-chat-server run generate:openapi` + an Orval client regen. The envelope stays **generic per route** (no per-endpoint error-code unions) to avoid over-engineering.
 - `libs/errors` follows the new-lib checklist in order: `.gitignore` (`dist/`, `node_modules/`) → register in `release-please-config.json` → `gh label create lib:errors` → implement → commit/push. It is small enough not to warrant its own `AGENTS.md`.
+- The server registers the envelope schema under the id `ErrorEnvelope`, so the OpenAPI document declares it once as a component and every error response references it. Orval therefore generates one shared `ErrorEnvelope` type instead of a separate type per route and status.
+- The client takes on `zod` **through** `@nebula-chat/errors` (a dependency of the lib), not as a direct dependency of its own — the client never imports `zod` itself.
 - Frontend call-site conversion is **out of scope here** — NEB-323 ships the lib, the backend emission (JSON + SSE), and the FE mapping primitives; the react-query/axios call-site adoption that consumes them is NEB-307 (see ADR-0012). This is why NEB-323 ships first.

@@ -3,7 +3,7 @@ import type { FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
 import fp from 'fastify-plugin';
 import type { SessionData } from '@nebula-chat/auth';
 import { auth } from '@backend/auth';
-import { ForbiddenError, UnauthorizedError } from '@backend/errors/AppError';
+import { ForbiddenError, UnauthorizedError } from '@nebula-chat/errors';
 
 /**
  * The request with its resolved session attached. Fastify augmentation would need

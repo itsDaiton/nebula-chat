@@ -10,6 +10,7 @@ import Fastify from 'fastify';
 import type { FastifyBaseLogger, FastifyInstance } from 'fastify';
 import type { Logger } from '@nebula-chat/otel';
 import {
+  createJsonSchemaTransformObject,
   jsonSchemaTransform,
   serializerCompiler,
   validatorCompiler,
@@ -93,6 +94,12 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
       security: [{ cookieAuth: [] }],
     },
     transform: jsonSchemaTransform,
+    // Emits schemas registered with an id (the shared ErrorEnvelope) as components.
+    // The target is explicit because component schemas otherwise default to
+    // draft-2020-12 (`const`), which OpenAPI 3.0 does not understand.
+    transformObject: createJsonSchemaTransformObject({
+      zodToJsonConfig: { target: 'openapi-3.0' },
+    }),
   });
 
   await app.register(swaggerUi, { routePrefix: '/docs' });

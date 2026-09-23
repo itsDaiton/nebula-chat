@@ -3,6 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
+import { resources } from '@/resources';
 import { API_ROUTE } from '@/test/api';
 import { server } from '@/test/msw';
 
@@ -159,31 +160,40 @@ describe('useChatStream — usage and errors', () => {
     );
   });
 
-  it('surfaces a server error frame and shows it in place of the reply', async () => {
-    streamFrames(frame('error', { error: 'Rate limit exceeded.' }));
+  it('surfaces the message of an error-envelope frame in place of the reply', async () => {
+    streamFrames(
+      frame('error', {
+        success: false,
+        error: 'TooManyRequests',
+        message: 'Rate limit exceeded. Retry after 500ms.',
+      }),
+    );
     const { result } = renderHook(() => useChatStream());
 
     await sendMessage(result);
 
     await waitFor(() => {
-      expect(useChatStreamStore.getState().error).toBe('Rate limit exceeded.');
-      expect(assistantContent()).toBe('Rate limit exceeded.');
+      expect(useChatStreamStore.getState().error).toBe('Rate limit exceeded. Retry after 500ms.');
+      expect(assistantContent()).toBe('Rate limit exceeded. Retry after 500ms.');
     });
   });
 
-  it('falls back to a generic message when the error frame carries none', async () => {
-    streamFrames(frame('error', {}));
+  it.each([
+    ['carries no envelope', {}],
+    ['is in the retired `{ error }` shape', { error: 'Rate limit exceeded.' }],
+  ])('falls back to a generic message when the error frame %s', async (_label, data) => {
+    streamFrames(frame('error', data));
     const { result } = renderHook(() => useChatStream());
 
     await sendMessage(result);
 
     await waitFor(() =>
-      expect(useChatStreamStore.getState().error).toBe('An error occurred during streaming.'),
+      expect(useChatStreamStore.getState().error).toBe(resources.chat.streamError),
     );
   });
 
   it('stops streaming after an error', async () => {
-    streamFrames(frame('error', { error: 'boom' }));
+    streamFrames(frame('error', { success: false, error: 'Internal', message: 'boom' }));
     const { result } = renderHook(() => useChatStream());
 
     await sendMessage(result);
@@ -191,13 +201,40 @@ describe('useChatStream — usage and errors', () => {
     await waitFor(() => expect(useChatStreamStore.getState().isStreaming).toBe(false));
   });
 
-  it('reports a non-OK response as an error', async () => {
+  it('reports a non-OK response without an envelope with the generic message', async () => {
     server.use(http.post(ENDPOINT, () => new HttpResponse(null, { status: 500 })));
     const { result } = renderHook(() => useChatStream());
 
     await sendMessage(result);
 
-    await waitFor(() => expect(useChatStreamStore.getState().error).toContain('500'));
+    await waitFor(() =>
+      expect(useChatStreamStore.getState().error).toBe(resources.chat.streamError),
+    );
+  });
+
+  it('reports a rejected request by the message of its error envelope', async () => {
+    server.use(
+      http.post(ENDPOINT, () =>
+        HttpResponse.json(
+          {
+            success: false,
+            error: 'Forbidden',
+            message: 'Guest message allowance reached. Register or sign in to continue.',
+            details: { limit: 10, count: 10 },
+          },
+          { status: 403 },
+        ),
+      ),
+    );
+    const { result } = renderHook(() => useChatStream());
+
+    await sendMessage(result);
+
+    await waitFor(() =>
+      expect(useChatStreamStore.getState().error).toBe(
+        'Guest message allowance reached. Register or sign in to continue.',
+      ),
+    );
   });
 });
 

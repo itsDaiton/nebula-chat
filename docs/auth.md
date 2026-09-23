@@ -227,13 +227,15 @@ No Redis counter is involved; at a cap of ~10 the live count is exact and statel
 
 ### Client contract
 
-A capped Guest receives a plain `403 Forbidden` in the standard `AppError` shape:
+A capped Guest receives a `403` carrying the shared error envelope (ADR-0011), with the
+allowance and the Guest's count as typed `details`:
 
 ```json
 {
   "success": false,
   "error": "Forbidden",
-  "message": "Guest message allowance reached. Register or sign in to continue."
+  "message": "Guest message allowance reached. Register or sign in to continue.",
+  "details": { "limit": 10, "count": 10 }
 }
 ```
 

@@ -1,7 +1,6 @@
-import { z } from 'zod';
+import { errorEnvelopeSchema } from '@nebula-chat/errors';
 
-export const errorResponseSchema = z.object({
-  success: z.literal(false),
-  error: z.string(),
-  message: z.string(),
-});
+// The shared envelope (ADR-0011), registered under one id so the OpenAPI
+// document declares it once as a component and every route's error responses
+// reference it, rather than inlining the whole union per status code.
+export const errorResponseSchema = errorEnvelopeSchema.meta({ id: 'ErrorEnvelope' });

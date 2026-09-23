@@ -1,6 +1,6 @@
 import type { FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
 import { env } from '@backend/env';
-import { ForbiddenError } from '@backend/errors/AppError';
+import { ForbiddenError } from '@nebula-chat/errors';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { messageRepository } from '@backend/modules/message/message.repository';
 import { getSessionData } from '@backend/plugins/authGate.plugin';
@@ -15,7 +15,8 @@ import { getSessionData } from '@backend/plugins/authGate.plugin';
  * - Regenerations do not count and are always allowed (they replay an existing
  *   exchange rather than authoring a new `user` message).
  * - Otherwise the Guest's live `role='user'` message count is compared against
- *   `GUEST_MESSAGE_ALLOWANCE`; at or above the cap the send is rejected.
+ *   `GUEST_MESSAGE_ALLOWANCE`; at or above the cap the send is rejected, with the
+ *   limit and count as the error's `details` so the client can say how much is used.
  */
 export const messageAllowanceHook: preHandlerAsyncHookHandler = async (req: FastifyRequest) => {
   const { user } = getSessionData(req);
@@ -31,6 +32,9 @@ export const messageAllowanceHook: preHandlerAsyncHookHandler = async (req: Fast
 
   const userMessageCount = await messageRepository.countUserMessagesByOwner(user.id);
   if (userMessageCount >= env.GUEST_MESSAGE_ALLOWANCE) {
-    throw new ForbiddenError('Guest message allowance reached. Register or sign in to continue.');
+    throw new ForbiddenError('Guest message allowance reached. Register or sign in to continue.', {
+      limit: env.GUEST_MESSAGE_ALLOWANCE,
+      count: userMessageCount,
+    });
   }
 };

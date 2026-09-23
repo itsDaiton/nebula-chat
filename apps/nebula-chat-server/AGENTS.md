@@ -45,9 +45,8 @@ apps/nebula-chat-server/src/
 │   ├── headers.config.ts          # SSE + cache response headers (uses http.ServerResponse)
 │   └── pagination.config.ts       # Default/max page limits
 ├── errors/
-│   ├── AppError.ts                # Error class hierarchy
-│   ├── error.handler.ts           # Fastify setErrorHandler callback (Zod, AppError, fallback)
-│   └── error.schema.ts            # Shared Zod errorResponseSchema (used in route response schemas)
+│   ├── error.handler.ts           # Fastify setErrorHandler callback (Zod, AppError, PG codes, fallback)
+│   └── error.schema.ts            # errorResponseSchema — the lib's envelope, registered as the ErrorEnvelope component
 ├── modules/
 │   ├── chat/
 │   │   ├── chat.types.ts
@@ -104,24 +103,39 @@ New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(pl
 
 ## Error Handling
 
-All errors extend `AppError` from `errors/AppError.ts`. Use the subclass that matches the situation:
+The error vocabulary lives in the shared **`@nebula-chat/errors`** lib (`libs/errors`), which both apps
+import — see [ADR-0011](../../docs/adr/0011-shared-errors-lib-and-typed-envelope.md). Throw the `AppError`
+subclass that matches the situation, imported from `@nebula-chat/errors`:
 
-| Class                                      | HTTP status  | When to use                        |
-| ------------------------------------------ | ------------ | ---------------------------------- |
-| `NotFoundError`                            | 404          | Resource not found by ID           |
-| `BadRequestError`                          | 400          | Invalid input not caught by Zod    |
-| `UnauthorizedError`                        | 401          | Not authenticated                  |
-| `ForbiddenError`                           | 403          | Authenticated but not allowed      |
-| `PayloadTooLargeError`                     | 413          | Message exceeds token limit        |
-| `MissingConfigurationError`                | 500          | Required env var not set           |
-| `RedisConnectionError` / `RedisCacheError` | 500          | Redis failures (usually fail-open) |
-| `APIError`                                 | configurable | External API errors                |
+| Class                                      | HTTP status  | Code (`error`)    | When to use                        |
+| ------------------------------------------ | ------------ | ----------------- | ---------------------------------- |
+| `NotFoundError`                            | 404          | `NotFound`        | Resource not found by ID           |
+| `BadRequestError`                          | 400          | `BadRequest`      | Invalid input not caught by Zod    |
+| `UnauthorizedError`                        | 401          | `Unauthorized`    | Not authenticated                  |
+| `ForbiddenError`                           | 403          | `Forbidden`       | Authenticated but not allowed      |
+| `PayloadTooLargeError`                     | 413          | `PayloadTooLarge` | Message exceeds token limit        |
+| `TooManyRequestsError`                     | 429          | `TooManyRequests` | A rate limit was hit               |
+| `MissingConfigurationError`                | 500          | `Internal`        | Required env var not set           |
+| `RedisConnectionError` / `RedisCacheError` | 500          | `Internal`        | Redis failures (usually fail-open) |
+| `APIError`                                 | configurable | from the status   | External API errors                |
 
-Throw from service layer; the `errorHandler` exported from `errors/error.handler.ts` and registered in `buildApp()` catches everything and returns:
+Throw from the service layer; the `errorHandler` exported from `errors/error.handler.ts` and registered in
+`buildApp()` catches everything and answers with the shared **error envelope**:
 
 ```json
 { "success": false, "error": "NotFound", "message": "Conversation ... not found" }
 ```
+
+- `error` is a closed union (`ErrorCode`), not a free string. `Internal` is the escape hatch for anything
+  unclassified, and its message is always the generic `GENERIC_ERROR_MESSAGE` — a raw `error.message` never
+  reaches the client unless the error is an `AppError` (or a Fastify 4xx, whose message is written for the
+  caller).
+- `details` is typed per code and absent unless a code needs it. Today only the Guest message-allowance
+  `Forbidden` carries one: `{ limit, count }`.
+- The chat stream hijacks its reply, so it never reaches `errorHandler`. `chat.service` classifies its own
+  failures with `toErrorEnvelope` and writes the **same** envelope as the SSE `error` event.
+- Adding a code or a `details` shape means editing `libs/errors/src/errorEnvelope.ts`, then regenerating the
+  OpenAPI spec and the Orval client.
 
 Never return raw error objects to the client. Never throw from controllers — let the global handler do it.
 
@@ -258,7 +272,7 @@ POST /api/chat/stream
 | `usage`                     | `{ promptTokens, completionTokens, totalTokens }` |
 | `assistant-message-created` | `{ messageId }`                                   |
 | `end`                       | `"end"`                                           |
-| `error`                     | `{ error }`                                       |
+| `error`                     | the error envelope (`ErrorEnvelope`)              |
 
 Token budget (see [CONTEXT.md](../../CONTEXT.md#language) for the vocabulary):
 
@@ -308,7 +322,7 @@ The backend uses `@backend/*` as a path alias for `src/*`:
 
 ```ts
 import { db } from '@backend/db';
-import { AppError } from '@backend/errors/AppError';
+import { errorHandler } from '@backend/errors/error.handler';
 ```
 
 Never use relative paths in the backend. Aliases are configured in `tsconfig.json` and resolved at build time by `tsc-alias`.

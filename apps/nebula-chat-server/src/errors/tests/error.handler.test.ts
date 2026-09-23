@@ -1,20 +1,27 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { validatorCompiler } from 'fastify-type-provider-zod';
 import { describe, expect, it, vi } from 'vitest';
-import { AppError, NotFoundError } from '@backend/errors/AppError';
+import { z } from 'zod';
+import {
+  AppError,
+  errorEnvelopeSchema,
+  ForbiddenError,
+  GENERIC_ERROR_MESSAGE,
+  NotFoundError,
+} from '@nebula-chat/errors';
+import type { ErrorEnvelope } from '@nebula-chat/errors';
 import { errorHandler } from '@backend/errors/error.handler';
-
-type SentBody = { success: false; error: string; message: string };
 
 /** Minimal reply double capturing the status/body the handler chose. */
 const createReply = () => {
-  const sent: { status?: number; body?: SentBody } = {};
+  const sent: { status?: number; body?: ErrorEnvelope } = {};
   const reply = {
     log: { error: vi.fn() },
     status(code: number) {
       sent.status = code;
       return this;
     },
-    send(body: SentBody) {
+    send(body: ErrorEnvelope) {
       sent.body = body;
       return this;
     },
@@ -24,8 +31,33 @@ const createReply = () => {
 
 const request = {} as FastifyRequest;
 
+const handle = (err: Error) => {
+  const { reply, sent } = createReply();
+  errorHandler(err, request, reply);
+  return sent;
+};
+
 /** Shapes a node-postgres style error, which carries a `code` but is not an AppError. */
 const pgError = (code: string) => Object.assign(new Error('db said no'), { code });
+
+/**
+ * A genuine Fastify schema-validation error: the validation entries come from
+ * the real Zod validator compiler, exactly as Fastify attaches them.
+ */
+const validationError = () => {
+  const validate = validatorCompiler({
+    schema: z.object({ title: z.string() }),
+    method: 'POST',
+    url: '/x',
+    httpPart: 'body',
+  });
+  const result = validate({}) as { error: unknown };
+  return Object.assign(new Error('body/title Invalid input'), {
+    validation: result.error,
+    statusCode: 400,
+    code: 'FST_ERR_VALIDATION',
+  });
+};
 
 describe('errorHandler', () => {
   it('logs every error it handles', () => {
@@ -37,10 +69,19 @@ describe('errorHandler', () => {
     expect(logError).toHaveBeenCalledWith(err);
   });
 
-  it('maps an AppError onto its own status and code', () => {
-    const { reply, sent } = createReply();
+  it('maps a schema-validation failure onto 400 Validation', () => {
+    const sent = handle(validationError());
 
-    errorHandler(new NotFoundError('Conversation', 'abc'), request, reply);
+    expect(sent.status).toBe(400);
+    expect(sent.body).toEqual({
+      success: false,
+      error: 'Validation',
+      message: 'body/title Invalid input',
+    });
+  });
+
+  it('maps an AppError onto its own status and code', () => {
+    const sent = handle(new NotFoundError('Conversation', 'abc'));
 
     expect(sent.status).toBe(404);
     expect(sent.body).toEqual({
@@ -50,113 +91,127 @@ describe('errorHandler', () => {
     });
   });
 
-  it('maps a bare AppError onto 500', () => {
-    const { reply, sent } = createReply();
+  it("carries an AppError's details into the envelope", () => {
+    const sent = handle(
+      new ForbiddenError('Guest message allowance reached.', { limit: 10, count: 10 }),
+    );
 
-    errorHandler(new AppError('generic failure'), request, reply);
+    expect(sent.status).toBe(403);
+    expect(sent.body).toEqual({
+      success: false,
+      error: 'Forbidden',
+      message: 'Guest message allowance reached.',
+      details: { limit: 10, count: 10 },
+    });
+  });
+
+  it('maps a bare AppError onto its status', () => {
+    const sent = handle(
+      new AppError({ code: 'Internal', status: 500, message: 'generic failure' }),
+    );
 
     expect(sent.status).toBe(500);
-    expect(sent.body?.error).toBe('InternalServerError');
+    expect(sent.body?.error).toBe('Internal');
   });
 
   it.each([
-    ['23505', 409, 'ConflictError', 'A record with the same unique value already exists.'],
-    ['23503', 409, 'ConflictError', 'A related record could not be found.'],
-    ['23502', 400, 'ValidationError', 'Missing required data for this operation.'],
-    ['23514', 400, 'ValidationError', 'Provided data did not satisfy a required rule.'],
+    ['23505', 409, 'Conflict', 'A record with the same unique value already exists.'],
+    ['23503', 409, 'Conflict', 'A related record could not be found.'],
+    ['23502', 400, 'Validation', 'Missing required data for this operation.'],
+    ['23514', 400, 'Validation', 'Provided data did not satisfy a required rule.'],
   ])('translates Postgres %s into a client-safe response', (code, status, error, message) => {
-    const { reply, sent } = createReply();
-
-    errorHandler(pgError(code), request, reply);
+    const sent = handle(pgError(code));
 
     expect(sent.status).toBe(status);
     expect(sent.body).toEqual({ success: false, error, message });
   });
 
   it('never leaks the raw database message for a mapped Postgres error', () => {
-    const { reply, sent } = createReply();
-
-    errorHandler(pgError('23505'), request, reply);
-
-    expect(sent.body?.message).not.toContain('db said no');
+    expect(handle(pgError('23505')).body?.message).not.toContain('db said no');
   });
 
-  it('falls through to generic handling for an unmapped Postgres code', () => {
-    const { reply, sent } = createReply();
-
-    errorHandler(pgError('99999'), request, reply);
+  it('treats an unmapped Postgres code as Internal without leaking its message', () => {
+    const sent = handle(pgError('99999'));
 
     expect(sent.status).toBe(500);
-    expect(sent.body?.message).toBe('db said no');
+    expect(sent.body).toEqual({
+      success: false,
+      error: 'Internal',
+      message: GENERIC_ERROR_MESSAGE,
+    });
   });
 
-  it('honours a numeric statusCode on a plain error', () => {
-    const { reply, sent } = createReply();
+  it('classifies a client error that carries a statusCode by that status, keeping its message', () => {
+    const sent = handle(
+      Object.assign(new Error('Rate limit exceeded, retry in 1 minute'), { statusCode: 429 }),
+    );
 
-    errorHandler(Object.assign(new Error('nope'), { statusCode: 418 }), request, reply);
-
-    expect(sent.status).toBe(418);
+    expect(sent.status).toBe(429);
+    expect(sent.body).toEqual({
+      success: false,
+      error: 'TooManyRequests',
+      message: 'Rate limit exceeded, retry in 1 minute',
+    });
   });
 
   it('falls back to a numeric `status` when `statusCode` is absent', () => {
-    const { reply, sent } = createReply();
-
-    errorHandler(Object.assign(new Error('nope'), { status: 422 }), request, reply);
+    const sent = handle(Object.assign(new Error('nope'), { status: 422 }));
 
     expect(sent.status).toBe(422);
+    expect(sent.body?.error).toBe('Validation');
   });
 
   it('prefers statusCode over status when both are present', () => {
-    const { reply, sent } = createReply();
-
-    errorHandler(
-      Object.assign(new Error('nope'), { statusCode: 418, status: 422 }),
-      request,
-      reply,
-    );
+    const sent = handle(Object.assign(new Error('nope'), { statusCode: 418, status: 422 }));
 
     expect(sent.status).toBe(418);
+    expect(sent.body?.error).toBe('BadRequest');
   });
 
-  it('ignores a non-numeric statusCode and defaults to 500', () => {
-    const { reply, sent } = createReply();
+  it.each([
+    ['a non-numeric statusCode', { statusCode: 'teapot' }],
+    ['a status outside the error range', { statusCode: 200 }],
+  ])('ignores %s and defaults to 500', (_label, fields) => {
+    expect(handle(Object.assign(new Error('nope'), fields)).status).toBe(500);
+  });
 
-    errorHandler(Object.assign(new Error('nope'), { statusCode: 'teapot' }), request, reply);
+  it('hides the message of a server-side error that carries a 5xx status', () => {
+    const sent = handle(
+      Object.assign(new Error('pool exhausted at 10.0.0.5'), { statusCode: 503 }),
+    );
+
+    expect(sent.status).toBe(503);
+    expect(sent.body).toEqual({
+      success: false,
+      error: 'Internal',
+      message: GENERIC_ERROR_MESSAGE,
+    });
+  });
+
+  it('reports an unknown error as a 500 Internal without leaking its message', () => {
+    const sent = handle(new TypeError("Cannot read properties of undefined (reading 'id')"));
 
     expect(sent.status).toBe(500);
+    expect(sent.body).toEqual({
+      success: false,
+      error: 'Internal',
+      message: GENERIC_ERROR_MESSAGE,
+    });
   });
 
-  it('uses an explicit string `error` field when present', () => {
-    const { reply, sent } = createReply();
+  it('always responds with an envelope the shared schema accepts', () => {
+    const errors = [
+      validationError(),
+      new NotFoundError('x'),
+      new ForbiddenError('x', { limit: 1, count: 1 }),
+      pgError('23505'),
+      pgError('99999'),
+      Object.assign(new Error('x'), { statusCode: 415 }),
+      new Error('y'),
+    ];
 
-    errorHandler(Object.assign(new Error('nope'), { error: 'CustomError' }), request, reply);
-
-    expect(sent.body?.error).toBe('CustomError');
-  });
-
-  it("falls back to the error's name when no `error` field is present", () => {
-    const { reply, sent } = createReply();
-    const err = new TypeError('wrong type');
-
-    errorHandler(err, request, reply);
-
-    expect(sent.body?.error).toBe('TypeError');
-  });
-
-  it('defaults an unknown error to a 500 InternalServerError shape', () => {
-    const { reply, sent } = createReply();
-
-    errorHandler(new Error('unexpected'), request, reply);
-
-    expect(sent.status).toBe(500);
-    expect(sent.body).toEqual({ success: false, error: 'Error', message: 'unexpected' });
-  });
-
-  it('always responds with success: false', () => {
-    for (const err of [new NotFoundError('x'), pgError('23505'), new Error('y')]) {
-      const { reply, sent } = createReply();
-      errorHandler(err, request, reply);
-      expect(sent.body?.success).toBe(false);
+    for (const err of errors) {
+      expect(errorEnvelopeSchema.safeParse(handle(err).body).success, err.message).toBe(true);
     }
   });
 });

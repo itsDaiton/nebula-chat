@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react';
+import { parseErrorEnvelope } from '@nebula-chat/errors';
 import type { ChatHistoryStreamOptions, SseEvent } from '@/modules/chat/types/types';
 import { SERVER_CONFIG } from '@/shared/config/serverConfig';
 import { useNavigate } from 'react-router';
@@ -6,6 +7,7 @@ import { route } from '@/routing/routes';
 import { useConversationsStore } from '@/modules/conversations/stores/useConversationsStore';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { SSE_EVENTS } from '@/modules/chat/utils/sseEvents';
+import { resources } from '@/resources';
 
 export const useChatStream = () => {
   const {
@@ -78,7 +80,10 @@ export const useChatStream = () => {
         const response = await responseFetch;
 
         if (!response.ok) {
-          throw new Error(`Error: ${response.status} ${response.statusText}`);
+          // A rejection before streaming starts (auth, allowance, validation,
+          // rate limit) arrives as the JSON error envelope.
+          const envelope = parseErrorEnvelope(await response.json().catch(() => null));
+          throw new Error(envelope?.message ?? resources.chat.streamError);
         }
 
         if (!response.body) {
@@ -164,7 +169,7 @@ export const useChatStream = () => {
               }
 
               if (currentEvent === 'error') {
-                const errorMsg = parsed.error || 'An error occurred during streaming.';
+                const errorMsg = parseErrorEnvelope(parsed)?.message ?? resources.chat.streamError;
                 setError(errorMsg);
                 setHistory((prev) => {
                   const updated = [...prev];

@@ -25,7 +25,9 @@ import {
   PayloadTooLargeError,
   BadRequestError,
   MissingConfigurationError,
-} from '@backend/errors/AppError';
+  TooManyRequestsError,
+  toErrorEnvelope,
+} from '@nebula-chat/errors';
 
 const MAX_PROMPT_TOKENS = 2000;
 const MAX_HISTORY_MESSAGES = 20;
@@ -121,7 +123,13 @@ export const chatService = {
     const { allowed, retryAfterMs } = rateLimiter.check(userId);
     if (!allowed) {
       logger?.warn({ userId, retryAfterMs }, 'LLM rate limit exceeded');
-      write(sseError(`Rate limit exceeded. Retry after ${retryAfterMs}ms.`));
+      write(
+        sseError(
+          toErrorEnvelope(
+            new TooManyRequestsError(`Rate limit exceeded. Retry after ${retryAfterMs}ms.`),
+          ),
+        ),
+      );
       return;
     }
 
@@ -174,7 +182,7 @@ export const chatService = {
       const apiKey = provider === 'openai' ? env.OPENAI_API_KEY : env.ANTHROPIC_API_KEY;
       if (!apiKey) {
         throw new MissingConfigurationError(
-          `${provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY'} is not configured`,
+          provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY',
         );
       }
 
@@ -242,7 +250,9 @@ export const chatService = {
         { conversationId, error: error instanceof Error ? error.message : String(error) },
         'Chat request failed',
       );
-      write(sseError(error instanceof Error ? error.message : 'Unknown error occurred'));
+      // The hijacked reply bypasses the global error handler, so classify here:
+      // an AppError speaks for itself, anything else is reported generically.
+      write(sseError(toErrorEnvelope(error)));
     }
   },
 };

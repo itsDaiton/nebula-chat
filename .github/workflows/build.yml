@@ -46,6 +46,8 @@ jobs:
           filters: |
             client:
               - 'apps/nebula-chat-client/**'
+              # The only lib the client consumes.
+              - 'libs/errors/**'
             server:
               - 'apps/nebula-chat-server/**'
               - 'libs/**'
@@ -53,6 +55,8 @@ jobs:
               - 'libs/auth/**'
             db:
               - 'libs/db/**'
+            errors:
+              - 'libs/errors/**'
             langchain:
               - 'libs/langchain/**'
             otel:
@@ -89,6 +93,7 @@ jobs:
           F_SERVER: ${{ steps.filter.outputs.server }}
           F_AUTH: ${{ steps.filter.outputs.auth }}
           F_DB: ${{ steps.filter.outputs.db }}
+          F_ERRORS: ${{ steps.filter.outputs.errors }}
           F_LANGCHAIN: ${{ steps.filter.outputs.langchain }}
           F_OTEL: ${{ steps.filter.outputs.otel }}
           F_REDIS: ${{ steps.filter.outputs.redis }}
@@ -105,6 +110,7 @@ jobs:
             {"id":"server","name":"nebula-chat-server","dir":"apps/nebula-chat-server","filter":"nebula-chat-server","lint":"apps/nebula-chat-server/","key":"itsDaiton_nebula-chat-server","project":"Nebula-Chat-Server","coverage":"src/**/tests/**,src/test/**,src/server.ts,src/app.ts,src/logger.ts,src/env.ts,src/db.ts,src/auth.ts,src/generated/**,src/scripts/**,src/**/*.types.ts,src/**/*.repository.ts"},
             {"id":"auth","name":"nebula-chat-auth","dir":"libs/auth","filter":"@nebula-chat/auth","lint":"libs/auth/","key":"itsDaiton_nebula-chat-auth","project":"Nebula-Chat-Auth","coverage":"src/**/tests/**,src/index.ts,src/auth.ts"},
             {"id":"db","name":"nebula-chat-db","dir":"libs/db","filter":"@nebula-chat/db","lint":"libs/db/","key":"itsDaiton_nebula-chat-db","project":"Nebula-Chat-DB","coverage":"src/**/tests/**,src/index.ts,src/schema.ts,src/client.ts,src/migrate.ts,src/baseline.ts"},
+            {"id":"errors","name":"nebula-chat-errors","dir":"libs/errors","filter":"@nebula-chat/errors","lint":"libs/errors/","key":"itsDaiton_nebula-chat-errors","project":"Nebula-Chat-Errors","coverage":"src/**/tests/**,src/index.ts"},
             {"id":"langchain","name":"nebula-chat-langchain","dir":"libs/langchain","filter":"@nebula-chat/langchain","lint":"libs/langchain/","key":"itsDaiton_nebula-chat-langchain","project":"Nebula-Chat-LangChain","coverage":"src/**/tests/**,src/index.ts,src/logger.ts"},
             {"id":"otel","name":"nebula-chat-otel","dir":"libs/otel","filter":"@nebula-chat/otel","lint":"libs/otel/","key":"itsDaiton_nebula-chat-otel","project":"Nebula-Chat-OTel","coverage":"src/**/tests/**,src/index.ts,src/tracing.ts"},
             {"id":"redis","name":"nebula-chat-redis","dir":"libs/redis","filter":"@nebula-chat/redis","lint":"libs/redis/","key":"itsDaiton_nebula-chat-redis","project":"Nebula-Chat-Redis","coverage":"src/**/tests/**,src/index.ts,src/connection.ts,src/factory.ts,src/metrics.ts"}
@@ -119,6 +125,7 @@ jobs:
             if [ "$F_SERVER" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["server"]'); fi
             if [ "$F_AUTH" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["auth"]'); fi
             if [ "$F_DB" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["db"]'); fi
+            if [ "$F_ERRORS" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["errors"]'); fi
             if [ "$F_LANGCHAIN" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["langchain"]'); fi
             if [ "$F_OTEL" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["otel"]'); fi
             if [ "$F_REDIS" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["redis"]'); fi

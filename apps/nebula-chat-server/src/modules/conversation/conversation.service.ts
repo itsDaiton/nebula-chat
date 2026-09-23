@@ -1,5 +1,5 @@
 import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
-import { NotFoundError } from '@backend/errors/AppError';
+import { NotFoundError } from '@nebula-chat/errors';
 import { paginationConfig } from '@backend/config/pagination.config';
 import type { CreateConversationDTO } from '@backend/modules/conversation/conversation.types';
 
