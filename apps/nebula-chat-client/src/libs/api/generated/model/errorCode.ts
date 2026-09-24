@@ -6,13 +6,14 @@
  * OpenAPI spec version: 1.7.0
  */
 
-export type GeneralErrorCode = (typeof GeneralErrorCode)[keyof typeof GeneralErrorCode];
+export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
 
-export const GeneralErrorCode = {
+export const ErrorCode = {
   BadRequest: 'BadRequest',
   Validation: 'Validation',
   Unauthorized: 'Unauthorized',
   Forbidden: 'Forbidden',
+  MessageAllowanceReached: 'MessageAllowanceReached',
   NotFound: 'NotFound',
   Conflict: 'Conflict',
   PayloadTooLarge: 'PayloadTooLarge',

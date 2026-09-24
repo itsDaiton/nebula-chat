@@ -81,8 +81,7 @@ describe('SSE formatters', () => {
     const envelope: ErrorEnvelope = {
       success: false,
       error: 'MessageAllowanceReached',
-      message: 'Guest message allowance reached.',
-      details: { limit: 10, count: 10 },
+      message: 'Message allowance exceeded: a Guest can send at most 10 messages.',
     };
 
     expect(parseFrame(sseError(envelope))).toEqual({ event: 'error', data: envelope });

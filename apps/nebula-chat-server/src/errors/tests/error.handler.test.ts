@@ -91,20 +91,19 @@ describe('errorHandler', () => {
     });
   });
 
-  it("carries an AppError's details into the envelope", () => {
-    const sent = handle(new MessageAllowanceReachedError({ limit: 10, count: 10 }));
+  it('answers the message allowance with its own code on a 403', () => {
+    const sent = handle(new MessageAllowanceReachedError(10));
 
     expect(sent.status).toBe(403);
     expect(sent.body).toEqual({
       success: false,
       error: 'MessageAllowanceReached',
-      message: 'Guest message allowance reached. Register or sign in to continue.',
-      details: { limit: 10, count: 10 },
+      message: 'Message allowance exceeded: a Guest can send at most 10 messages.',
     });
   });
 
   it('withholds the message of an Internal AppError', () => {
-    const sent = handle(new AppError({ error: 'Internal', message: 'pool exhausted' }));
+    const sent = handle(new AppError('Internal', 'pool exhausted'));
 
     expect(sent.status).toBe(500);
     expect(sent.body).toEqual({
@@ -214,7 +213,7 @@ describe('errorHandler', () => {
     const errors = [
       validationError(),
       new NotFoundError('x'),
-      new MessageAllowanceReachedError({ limit: 1, count: 1 }),
+      new MessageAllowanceReachedError(1),
       pgError('23505'),
       pgError('99999'),
       Object.assign(new Error('x'), { statusCode: 415 }),

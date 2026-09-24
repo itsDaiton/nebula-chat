@@ -373,7 +373,7 @@ No hook or component in the codebase may import or call `useEffect`.
 
 - `@nebula-chat/errors` — the error vocabulary shared with the server (ADR-0011). Read an error body or an SSE
   `error` frame with `parseErrorEnvelope(value)` (or `isErrorEnvelope`) and show its `message`. Switch on the
-  envelope's `error` code, not the HTTP status, and read `details` only after narrowing on it.
+  envelope's `error` code, not the HTTP status (a `MessageAllowanceReached` and a `Forbidden` are both 403s).
 - `shared/utils/errorHandler.ts` — **legacy**. `handleHttpError(response)` and `handleNetworkError(err)` still
   back the raw-`fetch` conversation stores and parse error bodies by hand. NEB-307 replaces them with the
   envelope parser above; do not add new call sites.

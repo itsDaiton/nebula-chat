@@ -15,8 +15,7 @@ import { getSessionData } from '@backend/plugins/authGate.plugin';
  * - Regenerations do not count and are always allowed (they replay an existing
  *   exchange rather than authoring a new `user` message).
  * - Otherwise the Guest's live `role='user'` message count is compared against
- *   `GUEST_MESSAGE_ALLOWANCE`; at or above the cap the send is rejected, with the
- *   limit and count as the error's `details` so the client can say how much is used.
+ *   `GUEST_MESSAGE_ALLOWANCE`; at or above the cap the send is rejected.
  */
 export const messageAllowanceHook: preHandlerAsyncHookHandler = async (req: FastifyRequest) => {
   const { user } = getSessionData(req);
@@ -32,9 +31,6 @@ export const messageAllowanceHook: preHandlerAsyncHookHandler = async (req: Fast
 
   const userMessageCount = await messageRepository.countUserMessagesByOwner(user.id);
   if (userMessageCount >= env.GUEST_MESSAGE_ALLOWANCE) {
-    throw new MessageAllowanceReachedError({
-      limit: env.GUEST_MESSAGE_ALLOWANCE,
-      count: userMessageCount,
-    });
+    throw new MessageAllowanceReachedError(env.GUEST_MESSAGE_ALLOWANCE);
   }
 };

@@ -1,11 +1,6 @@
 import { INTERNAL_ERROR_ENVELOPE } from './errorEnvelope';
-import type { ErrorCode, ErrorEnvelope, MessageAllowanceDetails } from './errorEnvelope';
+import type { ErrorCode, ErrorEnvelope } from './errorEnvelope';
 import { ERROR_STATUS } from './errorStatus';
-
-type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
-
-/** An envelope without its constant `success` flag: what an AppError is built from. */
-type ErrorBody = DistributiveOmit<ErrorEnvelope, 'success'>;
 
 /**
  * A classified error. Its code decides its HTTP status, and `toEnvelope()` is
@@ -15,14 +10,12 @@ type ErrorBody = DistributiveOmit<ErrorEnvelope, 'success'>;
 export class AppError extends Error {
   readonly code: ErrorCode;
   readonly status: number;
-  readonly #body: ErrorBody;
 
-  constructor(body: ErrorBody) {
-    super(body.message);
+  constructor(code: ErrorCode, message: string) {
+    super(message);
     this.name = new.target.name;
-    this.code = body.error;
-    this.status = ERROR_STATUS[body.error];
-    this.#body = body;
+    this.code = code;
+    this.status = ERROR_STATUS[code];
   }
 
   toEnvelope(): ErrorEnvelope {
@@ -30,7 +23,7 @@ export class AppError extends Error {
     if (this.code === 'Internal') {
       return INTERNAL_ERROR_ENVELOPE;
     }
-    return { success: false, ...this.#body };
+    return { success: false, error: this.code, message: this.message };
   }
 }
 
@@ -38,66 +31,64 @@ export const isAppError = (value: unknown): value is AppError => value instanceo
 
 export class BadRequestError extends AppError {
   constructor(message: string) {
-    super({ error: 'BadRequest', message });
+    super('BadRequest', message);
   }
 }
 
 export class ValidationError extends AppError {
   constructor(message: string) {
-    super({ error: 'Validation', message });
+    super('Validation', message);
   }
 }
 
 export class UnauthorizedError extends AppError {
   constructor(message: string = 'Unauthorized') {
-    super({ error: 'Unauthorized', message });
+    super('Unauthorized', message);
   }
 }
 
 export class ForbiddenError extends AppError {
   constructor(message: string = 'Forbidden') {
-    super({ error: 'Forbidden', message });
+    super('Forbidden', message);
   }
 }
 
 /** A Guest has spent their message allowance and must register to continue. */
 export class MessageAllowanceReachedError extends AppError {
-  constructor(details: MessageAllowanceDetails) {
-    super({
-      error: 'MessageAllowanceReached',
-      message: 'Guest message allowance reached. Register or sign in to continue.',
-      details,
-    });
+  constructor(limit: number) {
+    super(
+      'MessageAllowanceReached',
+      `Message allowance exceeded: a Guest can send at most ${limit} messages.`,
+    );
   }
 }
 
 export class NotFoundError extends AppError {
   constructor(resource: string, id?: string) {
-    const message = id ? `${resource} with id "${id}" not found` : `${resource} not found`;
-    super({ error: 'NotFound', message });
+    super('NotFound', id ? `${resource} with id "${id}" not found` : `${resource} not found`);
   }
 }
 
 export class ConflictError extends AppError {
   constructor(message: string) {
-    super({ error: 'Conflict', message });
+    super('Conflict', message);
   }
 }
 
 export class PayloadTooLargeError extends AppError {
   constructor(message: string) {
-    super({ error: 'PayloadTooLarge', message });
+    super('PayloadTooLarge', message);
   }
 }
 
 export class TooManyRequestsError extends AppError {
   constructor(message: string = 'Too many requests') {
-    super({ error: 'TooManyRequests', message });
+    super('TooManyRequests', message);
   }
 }
 
 export class MissingConfigurationError extends AppError {
   constructor(configName: string) {
-    super({ error: 'Internal', message: `${configName} is not configured` });
+    super('Internal', `${configName} is not configured`);
   }
 }

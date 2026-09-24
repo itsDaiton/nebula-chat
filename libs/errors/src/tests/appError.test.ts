@@ -17,7 +17,7 @@ import { errorEnvelopeSchema, GENERIC_ERROR_MESSAGE } from '../errorEnvelope';
 
 describe('AppError', () => {
   it('takes its status from its code', () => {
-    const err = new AppError({ error: 'Conflict', message: 'taken' });
+    const err = new AppError('Conflict', 'taken');
 
     expect(err.code).toBe('Conflict');
     expect(err.status).toBe(409);
@@ -33,7 +33,7 @@ describe('AppError', () => {
   });
 
   it('answers with its code and message as the envelope', () => {
-    expect(new AppError({ error: 'Conflict', message: 'taken' }).toEnvelope()).toEqual({
+    expect(new AppError('Conflict', 'taken').toEnvelope()).toEqual({
       success: false,
       error: 'Conflict',
       message: 'taken',
@@ -62,15 +62,14 @@ describe('NotFoundError', () => {
 });
 
 describe('MessageAllowanceReachedError', () => {
-  it('answers 403 with the allowance as its details', () => {
-    const err = new MessageAllowanceReachedError({ limit: 10, count: 12 });
+  it('answers 403 and names the allowance it exceeded', () => {
+    const err = new MessageAllowanceReachedError(10);
 
     expect(err.status).toBe(403);
     expect(err.toEnvelope()).toEqual({
       success: false,
       error: 'MessageAllowanceReached',
-      message: 'Guest message allowance reached. Register or sign in to continue.',
-      details: { limit: 10, count: 12 },
+      message: 'Message allowance exceeded: a Guest can send at most 10 messages.',
     });
   });
 });
@@ -105,7 +104,7 @@ describe('the AppError subclasses', () => {
 
 describe('isAppError', () => {
   it('recognises an AppError and its subclasses', () => {
-    expect(isAppError(new AppError({ error: 'Internal', message: 'x' }))).toBe(true);
+    expect(isAppError(new AppError('Internal', 'x'))).toBe(true);
     expect(isAppError(new NotFoundError('x'))).toBe(true);
   });
 

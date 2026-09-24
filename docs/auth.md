@@ -228,15 +228,13 @@ No Redis counter is involved; at a cap of ~10 the live count is exact and statel
 ### Client contract
 
 A capped Guest receives a `403` carrying the shared error envelope (ADR-0011) with the
-`MessageAllowanceReached` code. Its `details` (the allowance and the Guest's count) are
-always present:
+`MessageAllowanceReached` code. The message names the configured allowance:
 
 ```json
 {
   "success": false,
   "error": "MessageAllowanceReached",
-  "message": "Guest message allowance reached. Register or sign in to continue.",
-  "details": { "limit": 10, "count": 10 }
+  "message": "Message allowance exceeded: a Guest can send at most 10 messages."
 }
 ```
 

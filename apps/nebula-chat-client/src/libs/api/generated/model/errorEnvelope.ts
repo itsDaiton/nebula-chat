@@ -5,18 +5,10 @@
  * REST API for Nebula Chat
  * OpenAPI spec version: 1.7.0
  */
-import type { GeneralErrorCode } from './generalErrorCode';
-import type { MessageAllowanceDetails } from './messageAllowanceDetails';
+import type { ErrorCode } from './errorCode';
 
-export type ErrorEnvelope =
-  | {
-      success: false;
-      error: GeneralErrorCode;
-      message: string;
-    }
-  | {
-      success: false;
-      error: 'MessageAllowanceReached';
-      message: string;
-      details: MessageAllowanceDetails;
-    };
+export interface ErrorEnvelope {
+  success: false;
+  error: ErrorCode;
+  message: string;
+}

@@ -371,8 +371,7 @@ describe('POST /api/chat/stream — Guest message allowance', () => {
     expect(res.json()).toEqual({
       success: false,
       error: 'MessageAllowanceReached',
-      message: 'Guest message allowance reached. Register or sign in to continue.',
-      details: { limit: CAP, count: CAP },
+      message: `Message allowance exceeded: a Guest can send at most ${CAP} messages.`,
     });
     // Rejected before any model work.
     expect(chat.streamResponse).not.toHaveBeenCalled();

@@ -5,7 +5,7 @@ import { toErrorEnvelope } from '../toErrorEnvelope';
 
 describe('toErrorEnvelope', () => {
   it('lets an AppError speak for itself', () => {
-    const err = new MessageAllowanceReachedError({ limit: 10, count: 10 });
+    const err = new MessageAllowanceReachedError(10);
 
     expect(toErrorEnvelope(err)).toEqual(err.toEnvelope());
     expect(toErrorEnvelope(new NotFoundError('Conversation', 'abc'))).toEqual({

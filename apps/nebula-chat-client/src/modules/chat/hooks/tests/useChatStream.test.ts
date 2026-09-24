@@ -219,8 +219,7 @@ describe('useChatStream — usage and errors', () => {
           {
             success: false,
             error: 'MessageAllowanceReached',
-            message: 'Guest message allowance reached. Register or sign in to continue.',
-            details: { limit: 10, count: 10 },
+            message: 'Message allowance exceeded: a Guest can send at most 10 messages.',
           },
           { status: 403 },
         ),
@@ -232,7 +231,7 @@ describe('useChatStream — usage and errors', () => {
 
     await waitFor(() =>
       expect(useChatStreamStore.getState().error).toBe(
-        'Guest message allowance reached. Register or sign in to continue.',
+        'Message allowance exceeded: a Guest can send at most 10 messages.',
       ),
     );
   });

@@ -1,19 +1,13 @@
 // Envelope: the on-wire error contract (ADR-0011)
 export {
   errorEnvelopeSchema,
-  generalErrorCodeSchema,
-  messageAllowanceDetailsSchema,
+  errorCodeSchema,
   GENERIC_ERROR_MESSAGE,
   INTERNAL_ERROR_ENVELOPE,
   isErrorEnvelope,
   parseErrorEnvelope,
 } from './errorEnvelope';
-export type {
-  ErrorEnvelope,
-  ErrorCode,
-  GeneralErrorCode,
-  MessageAllowanceDetails,
-} from './errorEnvelope';
+export type { ErrorEnvelope, ErrorCode } from './errorEnvelope';
 
 // Codes → HTTP statuses
 export { ERROR_STATUS, errorCodeForStatus } from './errorStatus';

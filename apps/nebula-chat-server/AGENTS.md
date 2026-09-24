@@ -132,15 +132,14 @@ Throw from the service layer; the `errorHandler` exported from `errors/error.han
 - `error` is a closed union (`ErrorCode`), not a free string. `Internal` is the escape hatch for anything
   unclassified, and its message is always the generic `GENERIC_ERROR_MESSAGE`. A raw message reaches the
   client only from a non-`Internal` `AppError`, or from a Fastify 4xx, whose message is written for the caller.
-- A code that carries `details` is its own member of the union, with the details required. Today that is only
-  `MessageAllowanceReached`, with `{ limit, count }`.
+- The envelope is flat: `{ success: false, error, message }` for every code. A case the client must tell apart
+  gets its own code rather than extra fields, like `MessageAllowanceReached` (a 403, like `Forbidden`).
 - The handler turns everything it catches into an `AppError`: Zod validation failures, Postgres constraint
   codes, and framework errors (classified by their status). A framework error keeps its own status (415, 503).
 - The chat stream hijacks its reply, so it never reaches `errorHandler`. `chat.service` classifies its own
   failures with `toErrorEnvelope` and writes the **same** envelope as the SSE `error` event.
-- To add a code, add it to `generalErrorCodeSchema` in `libs/errors/src/errorEnvelope.ts` and give it a status
-  in `ERROR_STATUS` (the compiler insists on both). A code with `details` gets its own union member instead.
-  Then regenerate the OpenAPI spec and the Orval client.
+- To add a code, add it to `errorCodeSchema` in `libs/errors/src/errorEnvelope.ts` and give it a status in
+  `ERROR_STATUS` (the compiler insists on both). Then regenerate the OpenAPI spec and the Orval client.
 
 Never return raw error objects to the client. Never throw from controllers — let the global handler do it.
 

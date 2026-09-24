@@ -40,7 +40,7 @@ const toAppError = (err: Error): AppError => {
   }
   // A framework error is classified by its status. A 4xx message is written
   // for the caller; anything else lands on Internal, whose message is withheld.
-  return new AppError({ error: errorCodeForStatus(ownStatus(err) ?? 500), message: err.message });
+  return new AppError(errorCodeForStatus(ownStatus(err) ?? 500), err.message);
 };
 
 export const errorHandler = (err: Error, _req: FastifyRequest, reply: FastifyReply): void => {

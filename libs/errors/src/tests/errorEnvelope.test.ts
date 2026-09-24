@@ -6,19 +6,13 @@ import {
   type ErrorEnvelope,
 } from '../errorEnvelope';
 
-const allowanceEnvelope = {
-  success: false,
-  error: 'MessageAllowanceReached',
-  message: 'Guest message allowance reached.',
-  details: { limit: 10, count: 10 },
-} as const;
-
 describe('errorEnvelopeSchema', () => {
   it.each([
     'BadRequest',
     'Validation',
     'Unauthorized',
     'Forbidden',
+    'MessageAllowanceReached',
     'NotFound',
     'Conflict',
     'PayloadTooLarge',
@@ -30,31 +24,15 @@ describe('errorEnvelopeSchema', () => {
     expect(errorEnvelopeSchema.parse(envelope)).toEqual(envelope);
   });
 
-  it('accepts a MessageAllowanceReached envelope with its details', () => {
-    expect(errorEnvelopeSchema.parse(allowanceEnvelope)).toEqual(allowanceEnvelope);
-  });
-
-  it('requires details on MessageAllowanceReached', () => {
-    const withoutDetails = { success: false, error: 'MessageAllowanceReached', message: 'x' };
-
-    expect(errorEnvelopeSchema.safeParse(withoutDetails).success).toBe(false);
-  });
-
-  it('rejects malformed details', () => {
-    const envelope = { ...allowanceEnvelope, details: { limit: 'ten', count: 10 } };
-
-    expect(errorEnvelopeSchema.safeParse(envelope).success).toBe(false);
-  });
-
-  it('drops details from a code that carries none', () => {
+  it('drops fields outside the envelope', () => {
     const parsed = errorEnvelopeSchema.parse({
       success: false,
-      error: 'Forbidden',
+      error: 'NotFound',
       message: 'nope',
-      details: { limit: 1, count: 1 },
+      stack: 'at db.query',
     });
 
-    expect(parsed).not.toHaveProperty('details');
+    expect(parsed).toEqual({ success: false, error: 'NotFound', message: 'nope' });
   });
 
   it.each([
@@ -78,17 +56,6 @@ describe('isErrorEnvelope', () => {
       expect(isErrorEnvelope(value)).toBe(false);
     },
   );
-
-  it('narrows details by code once recognised', () => {
-    const value: unknown = allowanceEnvelope;
-
-    if (!isErrorEnvelope(value) || value.error !== 'MessageAllowanceReached') {
-      throw new Error('expected a MessageAllowanceReached envelope');
-    }
-
-    // Required on this code, so no optional chaining is needed.
-    expect(value.details.limit).toBe(10);
-  });
 });
 
 describe('parseErrorEnvelope', () => {

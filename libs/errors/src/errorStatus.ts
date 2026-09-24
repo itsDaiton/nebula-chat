@@ -1,5 +1,5 @@
-import { generalErrorCodeSchema } from './errorEnvelope';
-import type { ErrorCode, GeneralErrorCode } from './errorEnvelope';
+import { errorCodeSchema } from './errorEnvelope';
+import type { ErrorCode } from './errorEnvelope';
 
 /** The HTTP status each code answers with. Typed so every code must have one. */
 export const ERROR_STATUS: Readonly<Record<ErrorCode, number>> = {
@@ -15,10 +15,10 @@ export const ERROR_STATUS: Readonly<Record<ErrorCode, number>> = {
   Internal: 500,
 };
 
-// Status → the first general code listed for it, so 400 reads as BadRequest
-// rather than Validation.
-const CODE_BY_STATUS = new Map<number, GeneralErrorCode>();
-for (const code of generalErrorCodeSchema.options) {
+// Status → the first code listed for it, so 400 reads as BadRequest rather
+// than Validation, and 403 as Forbidden rather than MessageAllowanceReached.
+const CODE_BY_STATUS = new Map<number, ErrorCode>();
+for (const code of errorCodeSchema.options) {
   if (!CODE_BY_STATUS.has(ERROR_STATUS[code])) {
     CODE_BY_STATUS.set(ERROR_STATUS[code], code);
   }
@@ -29,7 +29,7 @@ for (const code of generalErrorCodeSchema.options) {
  * of their own (framework errors). An unmapped 4xx is still the caller's fault,
  * so it reads as `BadRequest`; everything else is `Internal`.
  */
-export const errorCodeForStatus = (status: number): GeneralErrorCode => {
+export const errorCodeForStatus = (status: number): ErrorCode => {
   const code = CODE_BY_STATUS.get(status);
   if (code) {
     return code;
