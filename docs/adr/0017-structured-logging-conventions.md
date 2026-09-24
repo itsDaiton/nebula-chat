@@ -28,7 +28,9 @@ A handled error is logged by class: an `Internal` or other 5xx logs at `error` w
 
 ### 2. One summary line per unit of work
 
-A unit of work — an HTTP request, and in v2 a Job, a Run, a Step — writes exactly **one** line at `info` when it ends, carrying every field that matters (IDs, model, tokens, duration, outcome). Progress within a unit (stream started, cache hit, Intake Agent finished) is `debug`; per-chunk detail is `trace`. The chat path goes from ~6 `info` lines to 2 (`http.request.completed`, `chat.reply.completed`); a Run becomes one line plus one per Step.
+A unit of work — an HTTP request, and in v2 a Job, a Run, a Step — writes exactly **one** line at `info` when it ends, carrying every field that matters (IDs, model, tokens, duration, outcome).
+Progress within a unit (stream started, cache hit, Intake Agent finished) is `debug`; per-chunk detail is `trace`.
+The chat path goes from ~6 `info` lines to 2 (`http.request.completed`, `chat.reply.completed`); a Run becomes one line plus one per Step.
 
 ### 3. Line shape: `event.name` + readable `msg` + flat dotted attributes
 
@@ -60,7 +62,11 @@ The auth gate, on resolving the session, binds `user.id` and `nebula.user.kind` 
 
 ### 6. Fastify's request lines are replaced by ours
 
-`disableRequestLogging: true`, and an `onResponse` hook writes `http.request.completed` (`info`) with the catalogue keys, the bound user, `error.type` for a 4xx, and `nebula.duration_ms`; `http.request.received` goes to `debug`. The request ID is relabelled `http.request.id`. Everything ADR-0007 actually protected stays: `req.log` child loggers, Fastify's request-ID generation, and **no `pino-http`**. Because the chat reply is hijacked, the HTTP status says nothing about the reply's fate — `chat.reply.completed` carries `nebula.outcome` (`completed` | `rate_limited` | `failed`).
+`disableRequestLogging: true`, and an `onResponse` hook writes `http.request.completed` (`info`) with the catalogue keys, the bound user, `error.type` for a 4xx, and `nebula.duration_ms`;
+`http.request.received` goes to `debug`.
+The request ID is relabelled `http.request.id`.
+Everything ADR-0007 actually protected stays: `req.log` child loggers, Fastify's request-ID generation, and **no `pino-http`**.
+Because the chat reply is hijacked, the HTTP status says nothing about the reply's fate — `chat.reply.completed` carries `nebula.outcome` (`completed` | `rate_limited` | `failed`).
 
 ### 7. The tracer always runs; only the exporter is gated
 
@@ -68,7 +74,10 @@ This amends ADR-0007's "no-op when `OTEL_EXPORTER_OTLP_ENDPOINT` is unset". The 
 
 ### 8. Cross-process correlation (v2 requirement)
 
-A job payload in `@nebula-chat/contracts` carries a W3C `traceparent` plus the domain IDs (`user.id`, `nebula.session.id`, `nebula.message.id`, `nebula.run.id`). The worker starts the job's span as a child of that trace and binds those IDs onto the job logger. One `trace_id` then spans server request → worker job → Steps. Recorded here as a requirement on the NEB-349 epic; nothing is built for it now.
+A job payload in `@nebula-chat/contracts` carries a W3C `traceparent` plus the domain IDs (`user.id`, `nebula.session.id`, `nebula.message.id`, `nebula.run.id`).
+The worker starts the job's span as a child of that trace and binds those IDs onto the job logger.
+One `trace_id` then spans server request → worker job → Steps.
+Recorded here as a requirement on the NEB-349 epic; nothing is built for it now.
 
 ### 9. Levels mean one thing each
 
@@ -91,11 +100,15 @@ Message content, prompts, completions, Streaming tokens, emails, names, cookies,
 
 ### 11. Third-party lines get a generic event name
 
-Free-text output we do not author — better-auth (`libs/auth/src/logger.ts`), OTel diagnostics (`libs/otel/src/diag.ts`), Fastify's own lifecycle lines — is stamped by its adapter with a per-source `event.name` (`auth.library.log`, `otel.diag.log`, `fastify.log`) and `nebula.component`, passing the library's text through as `msg`. The invariant "every line has an `event.name`" holds, so a filter on it never hides third-party output.
+Free-text output we do not author — better-auth (`libs/auth/src/logger.ts`), OTel diagnostics (`libs/otel/src/diag.ts`), Fastify's own lifecycle lines — is stamped by its adapter with a per-source `event.name` (`auth.library.log`, `otel.diag.log`, `fastify.log`) and `nebula.component`, passing the library's text through as `msg`.
+The invariant "every line has an `event.name`" holds, so a filter on it never hides third-party output.
 
 ### 12. Enforced by types, not only by convention
 
-`@nebula-chat/otel` exports the attribute keys as constants, a union type of known `event.name`s (including the generic third-party ones), and a thin typed helper — `logEvent(logger, level, eventName, attrs, msg)` — that rejects unknown keys and events at compile time. An ESLint `no-restricted-syntax` rule rejects an `error:` key in a log call. `createLogger` makes `service.name` required, so no lib can construct an unlabelled logger. `docs/logging.md` is rewritten to these rules when they are implemented.
+`@nebula-chat/otel` exports the attribute keys as constants, a union type of known `event.name`s (including the generic third-party ones), and a thin typed helper — `logEvent(logger, level, eventName, attrs, msg)` — that rejects unknown keys and events at compile time.
+An ESLint `no-restricted-syntax` rule rejects an `error:` key in a log call.
+`createLogger` makes `service.name` required, so no lib can construct an unlabelled logger.
+`docs/logging.md` is rewritten to these rules when they are implemented.
 
 **Development output.** `pino-pretty` hides the base fields and `pid`, renders `event.name · msg` as the headline, and prints remaining attributes beneath. Production JSON is unaffected.
 

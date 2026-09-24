@@ -140,7 +140,7 @@ work the same locally and in production.
 Nothing to deploy. The app speaks plain OTLP, so you point it at a hosted
 endpoint and set the auth header — no Collector, no sidecar:
 
-```
+```text
 OTEL_EXPORTER_OTLP_ENDPOINT=<vendor OTLP endpoint>
 OTEL_EXPORTER_OTLP_HEADERS=<vendor auth header>
 ```
