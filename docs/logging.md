@@ -3,6 +3,12 @@
 How logs and traces actually work in Nebula Chat. For the decisions behind this
 shape, see [ADR-0007](./adr/0007-otel-lib-and-fastify-native-logger.md).
 
+> **Being revised.** [ADR-0017](./adr/0017-structured-logging-conventions.md)
+> (Proposed) replaces the level conventions, the Fastify request lines and the
+> tracer no-op described below. This page describes the code as it is today and
+> is rewritten when ADR-0017 is implemented. New code should already follow
+> ADR-0017's "log once, where it is handled" and "never log content" rules.
+
 ## The short version
 
 Every logger in the system comes from `createLogger()` in `@nebula-chat/otel`.
@@ -134,7 +140,7 @@ work the same locally and in production.
 Nothing to deploy. The app speaks plain OTLP, so you point it at a hosted
 endpoint and set the auth header — no Collector, no sidecar:
 
-```
+```text
 OTEL_EXPORTER_OTLP_ENDPOINT=<vendor OTLP endpoint>
 OTEL_EXPORTER_OTLP_HEADERS=<vendor auth header>
 ```
