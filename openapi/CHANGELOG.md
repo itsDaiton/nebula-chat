@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v1.7.0...nebula-chat-openapi-v1.7.1) (2026-09-24)
+
+
+### Bug Fixes
+
+* **errors:** NEB-323 shared error library and unified error envelope across both apps ([#364](https://github.com/itsDaiton/nebula-chat/issues/364)) ([dcca70b](https://github.com/itsDaiton/nebula-chat/commit/dcca70b450381c2918708937aa24557dfd393a88))
+
 ## [1.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v1.6.1...nebula-chat-openapi-v1.7.0) (2026-09-22)
 
 
