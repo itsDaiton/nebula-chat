@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.25.8](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.25.7...nebula-chat-v1.25.8) (2026-09-24)
+
+
+### Bug Fixes
+
+* **agents:** add ADR-0017 structured logging conventions ([#366](https://github.com/itsDaiton/nebula-chat/issues/366)) ([5294672](https://github.com/itsDaiton/nebula-chat/commit/5294672da9063368ca5a7d62f1c1e0d30ae9bb29))
+
 ## [1.25.7](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.25.6...nebula-chat-v1.25.7) (2026-09-24)
 
 
