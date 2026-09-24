@@ -1,6 +1,6 @@
 # ADR-0011: Consolidate error handling into a shared `@nebula-chat/errors` lib with a typed error envelope across both apps
 
-- **Status:** Proposed — to be implemented for NEB-323
+- **Status:** Accepted — implemented in NEB-323
 - **Date:** 2026-09-22
 - **Deciders:** @itsDaiton
 
@@ -53,3 +53,14 @@ The backend already validates route responses with `fastify-type-provider-zod`, 
 - Enriching the envelope changes the OpenAPI contract, so NEB-323 ends with `pnpm --filter nebula-chat-server run generate:openapi` + an Orval client regen. The envelope stays **generic per route** (no per-endpoint error-code unions) to avoid over-engineering.
 - `libs/errors` follows the new-lib checklist in order: `.gitignore` (`dist/`, `node_modules/`) → register in `release-please-config.json` → `gh label create lib:errors` → implement → commit/push. It is small enough not to warrant its own `AGENTS.md`.
 - Frontend call-site conversion is **out of scope here** — NEB-323 ships the lib, the backend emission (JSON + SSE), and the FE mapping primitives; the react-query/axios call-site adoption that consumes them is NEB-307 (see ADR-0012). This is why NEB-323 ships first.
+
+## Amendments made while implementing NEB-323
+
+Implementing the decision above changed some of its details. These amendments supersede the text above where the two disagree.
+
+1. **The envelope is flat, with no `details`, and the allowance has its own code.** This supersedes the `details` half of decision 2. The envelope is `{ success: false, error: ErrorCode, message: string }` for every code. The Guest allowance rejection is `MessageAllowanceReached` (403) rather than a `Forbidden` with `{ limit, count }`, because the client only needs to tell the allowance wall apart from a plain `Forbidden`, and the code does that. The numbers carried almost nothing: the server rejects only once the count reaches the limit, so "X of Y used" would always read "10 of 10". A running "N left" counter needs the usage _before_ any error, which is a session or usage concern, not an error one. The message names the configured limit. Should a real need for structured error data appear, an optional field can be added without breaking clients.
+2. **`Internal` never shows its own message.** Decision 4 had every `AppError` emit its own message. An `AppError` classified as `Internal` (for example `MissingConfigurationError`, "OPENAI_API_KEY is not configured") is a server-side fault, so its message stays in the logs and the client gets `GENERIC_ERROR_MESSAGE`, as for any unclassified error.
+3. **One code table decides the status.** `ERROR_STATUS` maps each code to its HTTP status, and an `AppError` takes its status from its code, so the two cannot disagree. The old free-string codes were renamed to fit the closed union: `ValidationError` → `Validation`, `ConflictError` → `Conflict`, and `InternalServerError` / `MissingConfiguration` → `Internal`. HTTP statuses are unchanged. `TooManyRequests` (429) was added for both rate limiters. `APIError`, `ClientInitializationError`, `RedisConnectionError` and `RedisCacheError` had no callers and were not carried over.
+4. **Routes import the lib schema directly.** `error.schema.ts` was going to be a re-export. Instead it was deleted, and routes use `errorEnvelopeSchema` from `@nebula-chat/errors`, so the concept has one name.
+5. **The envelope is a named OpenAPI component.** The lib gives the envelope and its parts metadata ids (`ErrorEnvelope`, `ErrorCode`). The OpenAPI document declares each once, and every error response references `ErrorEnvelope`, so Orval generates one small set of shared types instead of a separate type per route and status. The server prunes the unreferenced `…Input` twins that `fastify-type-provider-zod` emits for every registered schema.
+6. **The client takes on `zod` through `@nebula-chat/errors`** (a dependency of the lib), not as a direct dependency of its own. The client never imports `zod` itself.

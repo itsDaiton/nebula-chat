@@ -26,6 +26,7 @@
     "@langchain/anthropic": "^1.3.28",
     "@langchain/core": "^1.1.44",
     "@langchain/openai": "^1.4.5",
+    "@nebula-chat/errors": "workspace:*",
     "langchain": "^1.3.5",
     "langsmith": "^0.6.0",
     "p-limit": "^7.3.0",

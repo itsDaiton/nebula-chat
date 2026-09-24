@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ForbiddenError, UnauthorizedError } from '@backend/errors/AppError';
+import { ForbiddenError, UnauthorizedError } from '@nebula-chat/errors';
 import { createTestApp } from '@backend/test/app';
 import { guestSession, registeredSession } from '@backend/test/session';
 

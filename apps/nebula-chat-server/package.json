@@ -22,6 +22,7 @@
     "@fastify/under-pressure": "^9.0.0",
     "@nebula-chat/auth": "workspace:*",
     "@nebula-chat/db": "workspace:*",
+    "@nebula-chat/errors": "workspace:*",
     "@nebula-chat/langchain": "workspace:*",
     "@nebula-chat/otel": "workspace:*",
     "@nebula-chat/redis": "workspace:*",

@@ -38,7 +38,7 @@ Under `apps/nebula-chat-server/src/modules/$ARGUMENTS/`:
 ## Anti-goals
 
 - No Drizzle outside `.repository.ts`.
-- No bare `Error` throws — use `AppError` subclasses.
+- No bare `Error` throws — use `AppError` subclasses from `@nebula-chat/errors`.
 - No relative imports — `@backend/*` only.
 - No `index.ts` barrels.
 - No `*.openapi.ts` file and no `FastifyPluginAsync` (use `FastifyPluginAsyncZod`) — this module predates the Fastify/Zod migration only if it doesn't follow this pattern, which would itself be a bug to fix, not a pattern to copy.

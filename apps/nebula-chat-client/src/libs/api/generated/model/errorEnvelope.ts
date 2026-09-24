@@ -3,14 +3,12 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.6.1
+ * OpenAPI spec version: 1.7.0
  */
+import type { ErrorCode } from './errorCode';
 
-/**
- * No authenticated session
- */
-export type GetMessage401 = {
+export interface ErrorEnvelope {
   success: false;
-  error: string;
+  error: ErrorCode;
   message: string;
-};
+}

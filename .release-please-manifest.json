@@ -7,5 +7,6 @@
   "libs/langchain": "1.2.0",
   "libs/otel": "1.1.0",
   "libs/redis": "0.1.2",
-  "libs/auth": "1.0.0"
+  "libs/auth": "1.0.0",
+  "libs/errors": "0.1.0"
 }

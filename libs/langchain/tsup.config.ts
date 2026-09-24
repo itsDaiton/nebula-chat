@@ -13,6 +13,7 @@ export default defineConfig({
     '@langchain/core',
     '@langchain/openai',
     '@langchain/anthropic',
+    '@nebula-chat/errors',
     'langsmith',
     'tiktoken',
     'p-limit',

@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "declaration": true,
+    "outDir": "./dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    // Isomorphic: imported by the browser client as well as the server, so it
+    // must not reach for Node APIs. No `node` types keeps that honest.
+    "lib": ["ES2022"],
+    "types": [],
+    // tsup's dts pass injects `baseUrl`, which TypeScript 6 rejects outright
+    // (TS5101) rather than warning. Matches libs/redis/tsconfig.json.
+    "ignoreDeprecations": "6.0"
+  },
+  "include": ["src", "tsup.config.ts"]
+}

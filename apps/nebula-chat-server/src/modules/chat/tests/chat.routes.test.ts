@@ -361,14 +361,18 @@ describe('POST /api/chat/stream — Guest message allowance', () => {
     expect(chat.streamResponse).toHaveBeenCalled();
   });
 
-  it('rejects a Guest at the cap with a 403 Forbidden', async () => {
+  it('rejects a Guest at the cap with a 403 MessageAllowanceReached', async () => {
     mockedGetSession.mockResolvedValue(guestSession() as never);
     mockedCountUserMessages.mockResolvedValue(CAP);
 
     const res = await post(validBody, app);
 
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toMatchObject({ success: false, error: 'Forbidden' });
+    expect(res.json()).toEqual({
+      success: false,
+      error: 'MessageAllowanceReached',
+      message: `Message allowance exceeded: a Guest can send at most ${CAP} messages.`,
+    });
     // Rejected before any model work.
     expect(chat.streamResponse).not.toHaveBeenCalled();
   });
@@ -419,6 +423,14 @@ describe('POST /api/chat/stream — rate limiting', () => {
 
     expect(statuses.slice(0, 10).every((s) => s === 200)).toBe(true);
     expect(statuses[10]).toBe(429);
+  });
+
+  it('answers a rate-limited request with the TooManyRequests envelope', async () => {
+    const ip = '10.99.0.4';
+    let res: LightMyRequestResponse | undefined;
+    for (let i = 0; i < 11; i++) res = await post(validBody, app, ip);
+
+    expect(res?.json()).toMatchObject({ success: false, error: 'TooManyRequests' });
   });
 
   it('does not spend another address’s budget', async () => {

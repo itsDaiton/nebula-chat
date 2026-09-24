@@ -227,18 +227,20 @@ No Redis counter is involved; at a cap of ~10 the live count is exact and statel
 
 ### Client contract
 
-A capped Guest receives a plain `403 Forbidden` in the standard `AppError` shape:
+A capped Guest receives a `403` carrying the shared error envelope (ADR-0011) with the
+`MessageAllowanceReached` code. The message names the configured allowance:
 
 ```json
 {
   "success": false,
-  "error": "Forbidden",
-  "message": "Guest message allowance reached. Register or sign in to continue."
+  "error": "MessageAllowanceReached",
+  "message": "Message allowance exceeded: a Guest can send at most 10 messages."
 }
 ```
 
-The client treats a `403` on the chat-send path as the allowance wall and prompts the
-Guest to register or sign in. No generated type exists for it — the `Chat` tag is
+The client treats the `MessageAllowanceReached` code as the allowance wall and prompts the
+Guest to register or sign in. It switches on the code, not the status: a plain `Forbidden`
+is also a `403`. No generated type exists for it — the `Chat` tag is
 excluded from the Orval client, so the chat SSE endpoint is consumed by hand-written
 code.
 

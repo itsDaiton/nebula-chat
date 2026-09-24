@@ -3,44 +3,24 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.6.1
+ * OpenAPI spec version: 1.7.0
  */
 
 export * from './createConversation201';
-export * from './createConversation400';
-export * from './createConversation401';
-export * from './createConversation500';
 export * from './createConversationBody';
 export * from './createMessage201';
-export * from './createMessage400';
-export * from './createMessage401';
-export * from './createMessage404';
-export * from './createMessage500';
 export * from './createMessageBody';
 export * from './createMessageBodyRole';
+export * from './errorCode';
+export * from './errorEnvelope';
 export * from './getApiRoot200';
 export * from './getConversation200';
-export * from './getConversation400';
-export * from './getConversation401';
-export * from './getConversation404';
-export * from './getConversation500';
 export * from './getHealth200';
 export * from './getHealth200Status';
 export * from './getMessage200';
-export * from './getMessage400';
-export * from './getMessage401';
-export * from './getMessage404';
-export * from './getMessage500';
 export * from './listConversations200';
 export * from './listConversations200ConversationsItem';
-export * from './listConversations401';
-export * from './listConversations500';
 export * from './listConversationsParams';
 export * from './listMessages200Item';
-export * from './listMessages401';
-export * from './listMessages500';
 export * from './searchConversations200Item';
-export * from './searchConversations400';
-export * from './searchConversations401';
-export * from './searchConversations500';
 export * from './searchConversationsParams';

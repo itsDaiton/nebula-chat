@@ -1,3 +1,4 @@
+import type { ErrorEnvelope } from '@nebula-chat/errors';
 import { describe, expect, it } from 'vitest';
 import {
   sseAssistantMessageCreated,
@@ -9,6 +10,8 @@ import {
   sseUsage,
   sseUserMessageCreated,
 } from '../sse';
+
+const boom: ErrorEnvelope = { success: false, error: 'Internal', message: 'boom' };
 
 /** Parses a raw SSE frame back into its event name and payload. */
 const parseFrame = (frame: string) => {
@@ -26,7 +29,7 @@ describe('SSE formatters', () => {
       sseToken('hi'),
       sseUsage({ promptTokens: 1, completionTokens: 2, totalTokens: 3 }),
       sseCacheHit(),
-      sseError('boom'),
+      sseError(boom),
       sseEnd(),
     ];
 
@@ -74,11 +77,14 @@ describe('SSE formatters', () => {
     expect(parseFrame(sseEnd())).toEqual({ event: 'end', data: {} });
   });
 
-  it('emits errors under an `error` key', () => {
-    expect(parseFrame(sseError('it broke'))).toEqual({
-      event: 'error',
-      data: { error: 'it broke' },
-    });
+  it('emits the error envelope as the error frame payload', () => {
+    const envelope: ErrorEnvelope = {
+      success: false,
+      error: 'MessageAllowanceReached',
+      message: 'Message allowance exceeded: a Guest can send at most 10 messages.',
+    };
+
+    expect(parseFrame(sseError(envelope))).toEqual({ event: 'error', data: envelope });
   });
 
   it('escapes newlines in token content so they cannot split the frame', () => {

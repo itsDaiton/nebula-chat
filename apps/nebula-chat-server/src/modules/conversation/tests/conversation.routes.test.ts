@@ -105,7 +105,7 @@ describe('POST /api/conversations', () => {
     const res = await app.inject({ method: 'POST', url: '/api/conversations', payload: {} });
 
     expect(res.statusCode).toBe(400);
-    expect(res.json()).toMatchObject({ success: false, error: 'ValidationError' });
+    expect(res.json()).toMatchObject({ success: false, error: 'Validation' });
     expect(repo.create).not.toHaveBeenCalled();
   });
 

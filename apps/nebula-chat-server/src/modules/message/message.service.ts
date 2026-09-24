@@ -1,6 +1,6 @@
 import { messageRepository } from '@backend/modules/message/message.repository';
 import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
-import { NotFoundError } from '@backend/errors/AppError';
+import { NotFoundError } from '@nebula-chat/errors';
 import type { CreateMessageDTO } from '@backend/modules/message/message.types';
 
 export const messageService = {
