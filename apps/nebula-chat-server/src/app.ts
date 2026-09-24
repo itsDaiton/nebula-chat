@@ -23,6 +23,7 @@ import { logger } from '@backend/logger';
 import chatRoutes from '@backend/modules/chat/chat.routes';
 import conversationRoutes from '@backend/modules/conversation/conversation.routes';
 import messageRoutes from '@backend/modules/message/message.routes';
+import { pruneUnreferencedSchemas } from '@backend/utils/pruneUnreferencedSchemas';
 import { resolveTrustProxy } from '@backend/utils/trustProxy';
 
 const { version } = JSON.parse(
@@ -36,6 +37,13 @@ export type BuildAppOptions = {
    */
   logger?: Logger;
 };
+
+// Emits the schemas registered with an id (the shared error envelope and its
+// parts) as named components. The target is explicit because component schemas
+// otherwise default to draft-2020-12 (`const`), which OpenAPI 3.0 does not read.
+const transformComponents = createJsonSchemaTransformObject({
+  zodToJsonConfig: { target: 'openapi-3.0' },
+});
 
 export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstance> => {
   // Widened to FastifyBaseLogger deliberately: Fastify infers its logger generic
@@ -94,12 +102,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
       security: [{ cookieAuth: [] }],
     },
     transform: jsonSchemaTransform,
-    // Emits schemas registered with an id (the shared ErrorEnvelope) as components.
-    // The target is explicit because component schemas otherwise default to
-    // draft-2020-12 (`const`), which OpenAPI 3.0 does not understand.
-    transformObject: createJsonSchemaTransformObject({
-      zodToJsonConfig: { target: 'openapi-3.0' },
-    }),
+    transformObject: (input) => pruneUnreferencedSchemas(transformComponents(input)),
   });
 
   await app.register(swaggerUi, { routePrefix: '/docs' });

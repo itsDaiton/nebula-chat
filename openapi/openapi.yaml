@@ -12,166 +12,33 @@ components:
       in: cookie
       name: better-auth.session_token
   schemas:
-    ErrorEnvelopeInput:
-      oneOf:
-        - type: object
-          properties:
-            success:
-              type: boolean
-              enum:
-                - false
-            message:
-              type: string
-            error:
-              type: string
-              enum:
-                - BadRequest
-          required:
-            - success
-            - message
-            - error
-        - type: object
-          properties:
-            success:
-              type: boolean
-              enum:
-                - false
-            message:
-              type: string
-            error:
-              type: string
-              enum:
-                - Validation
-          required:
-            - success
-            - message
-            - error
-        - type: object
-          properties:
-            success:
-              type: boolean
-              enum:
-                - false
-            message:
-              type: string
-            error:
-              type: string
-              enum:
-                - Unauthorized
-          required:
-            - success
-            - message
-            - error
-        - type: object
-          properties:
-            success:
-              type: boolean
-              enum:
-                - false
-            message:
-              type: string
-            error:
-              type: string
-              enum:
-                - Forbidden
-            details:
-              type: object
-              properties:
-                limit:
-                  type: integer
-                  minimum: 0
-                  maximum: 9007199254740991
-                count:
-                  type: integer
-                  minimum: 0
-                  maximum: 9007199254740991
-              required:
-                - limit
-                - count
-          required:
-            - success
-            - message
-            - error
-        - type: object
-          properties:
-            success:
-              type: boolean
-              enum:
-                - false
-            message:
-              type: string
-            error:
-              type: string
-              enum:
-                - NotFound
-          required:
-            - success
-            - message
-            - error
-        - type: object
-          properties:
-            success:
-              type: boolean
-              enum:
-                - false
-            message:
-              type: string
-            error:
-              type: string
-              enum:
-                - Conflict
-          required:
-            - success
-            - message
-            - error
-        - type: object
-          properties:
-            success:
-              type: boolean
-              enum:
-                - false
-            message:
-              type: string
-            error:
-              type: string
-              enum:
-                - PayloadTooLarge
-          required:
-            - success
-            - message
-            - error
-        - type: object
-          properties:
-            success:
-              type: boolean
-              enum:
-                - false
-            message:
-              type: string
-            error:
-              type: string
-              enum:
-                - TooManyRequests
-          required:
-            - success
-            - message
-            - error
-        - type: object
-          properties:
-            success:
-              type: boolean
-              enum:
-                - false
-            message:
-              type: string
-            error:
-              type: string
-              enum:
-                - Internal
-          required:
-            - success
-            - message
-            - error
+    GeneralErrorCode:
+      type: string
+      enum:
+        - BadRequest
+        - Validation
+        - Unauthorized
+        - Forbidden
+        - NotFound
+        - Conflict
+        - PayloadTooLarge
+        - TooManyRequests
+        - Internal
+    MessageAllowanceDetails:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        count:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+      required:
+        - limit
+        - count
+      additionalProperties: false
     ErrorEnvelope:
       oneOf:
         - type: object
@@ -180,16 +47,14 @@ components:
               type: boolean
               enum:
                 - false
+            error:
+              $ref: '#/components/schemas/GeneralErrorCode'
             message:
               type: string
-            error:
-              type: string
-              enum:
-                - BadRequest
           required:
             - success
-            - message
             - error
+            - message
           additionalProperties: false
         - type: object
           properties:
@@ -197,150 +62,19 @@ components:
               type: boolean
               enum:
                 - false
-            message:
-              type: string
             error:
               type: string
               enum:
-                - Validation
-          required:
-            - success
-            - message
-            - error
-          additionalProperties: false
-        - type: object
-          properties:
-            success:
-              type: boolean
-              enum:
-                - false
+                - MessageAllowanceReached
             message:
               type: string
-            error:
-              type: string
-              enum:
-                - Unauthorized
-          required:
-            - success
-            - message
-            - error
-          additionalProperties: false
-        - type: object
-          properties:
-            success:
-              type: boolean
-              enum:
-                - false
-            message:
-              type: string
-            error:
-              type: string
-              enum:
-                - Forbidden
             details:
-              type: object
-              properties:
-                limit:
-                  type: integer
-                  minimum: 0
-                  maximum: 9007199254740991
-                count:
-                  type: integer
-                  minimum: 0
-                  maximum: 9007199254740991
-              required:
-                - limit
-                - count
-              additionalProperties: false
+              $ref: '#/components/schemas/MessageAllowanceDetails'
           required:
             - success
-            - message
             - error
-          additionalProperties: false
-        - type: object
-          properties:
-            success:
-              type: boolean
-              enum:
-                - false
-            message:
-              type: string
-            error:
-              type: string
-              enum:
-                - NotFound
-          required:
-            - success
             - message
-            - error
-          additionalProperties: false
-        - type: object
-          properties:
-            success:
-              type: boolean
-              enum:
-                - false
-            message:
-              type: string
-            error:
-              type: string
-              enum:
-                - Conflict
-          required:
-            - success
-            - message
-            - error
-          additionalProperties: false
-        - type: object
-          properties:
-            success:
-              type: boolean
-              enum:
-                - false
-            message:
-              type: string
-            error:
-              type: string
-              enum:
-                - PayloadTooLarge
-          required:
-            - success
-            - message
-            - error
-          additionalProperties: false
-        - type: object
-          properties:
-            success:
-              type: boolean
-              enum:
-                - false
-            message:
-              type: string
-            error:
-              type: string
-              enum:
-                - TooManyRequests
-          required:
-            - success
-            - message
-            - error
-          additionalProperties: false
-        - type: object
-          properties:
-            success:
-              type: boolean
-              enum:
-                - false
-            message:
-              type: string
-            error:
-              type: string
-              enum:
-                - Internal
-          required:
-            - success
-            - message
-            - error
+            - details
           additionalProperties: false
 paths:
   /:

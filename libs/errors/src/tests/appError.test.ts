@@ -1,50 +1,57 @@
 import { describe, expect, it } from 'vitest';
 import {
-  APIError,
   AppError,
   BadRequestError,
-  ClientInitializationError,
+  ConflictError,
   ForbiddenError,
   isAppError,
+  MessageAllowanceReachedError,
   MissingConfigurationError,
   NotFoundError,
   PayloadTooLargeError,
-  RedisCacheError,
-  RedisConnectionError,
   TooManyRequestsError,
   UnauthorizedError,
+  ValidationError,
 } from '../appError';
+import { errorEnvelopeSchema, GENERIC_ERROR_MESSAGE } from '../errorEnvelope';
 
 describe('AppError', () => {
-  it('carries the code, status and message it was built with', () => {
-    const err = new AppError({ code: 'Conflict', status: 409, message: 'taken' });
+  it('takes its status from its code', () => {
+    const err = new AppError({ error: 'Conflict', message: 'taken' });
 
     expect(err.code).toBe('Conflict');
     expect(err.status).toBe(409);
     expect(err.message).toBe('taken');
-    expect(err.details).toBeUndefined();
   });
 
-  it('is a real Error, so instanceof and stack traces still work', () => {
-    const err = new AppError({ code: 'Internal', status: 500, message: 'boom' });
+  it('is a real Error named after its class, so logs say what went wrong', () => {
+    const err = new NotFoundError('Conversation');
 
     expect(err).toBeInstanceOf(Error);
-    expect(err.name).toBe('AppError');
+    expect(err.name).toBe('NotFoundError');
     expect(err.stack).toBeDefined();
   });
 
-  it("names a subclass instance after the subclass, so logs say what's wrong", () => {
-    expect(new NotFoundError('Conversation').name).toBe('NotFoundError');
+  it('answers with its code and message as the envelope', () => {
+    expect(new AppError({ error: 'Conflict', message: 'taken' }).toEnvelope()).toEqual({
+      success: false,
+      error: 'Conflict',
+      message: 'taken',
+    });
+  });
+
+  it('withholds the message of an Internal error, which is a server-side fault', () => {
+    expect(new MissingConfigurationError('OPENAI_API_KEY').toEnvelope()).toEqual({
+      success: false,
+      error: 'Internal',
+      message: GENERIC_ERROR_MESSAGE,
+    });
   });
 });
 
 describe('NotFoundError', () => {
   it('names the resource when no id is given', () => {
-    const err = new NotFoundError('Conversation');
-
-    expect(err.message).toBe('Conversation not found');
-    expect(err.status).toBe(404);
-    expect(err.code).toBe('NotFound');
+    expect(new NotFoundError('Conversation').message).toBe('Conversation not found');
   });
 
   it('quotes the id when one is given', () => {
@@ -54,25 +61,30 @@ describe('NotFoundError', () => {
   });
 });
 
-describe('ForbiddenError', () => {
-  it('carries no details for a plain refusal', () => {
-    expect(new ForbiddenError('not yours').details).toBeUndefined();
-  });
+describe('MessageAllowanceReachedError', () => {
+  it('answers 403 with the allowance as its details', () => {
+    const err = new MessageAllowanceReachedError({ limit: 10, count: 12 });
 
-  it('carries typed message-allowance details when given them', () => {
-    const err = new ForbiddenError('Guest message allowance reached.', { limit: 10, count: 12 });
-
-    expect(err.details).toEqual({ limit: 10, count: 12 });
+    expect(err.status).toBe(403);
+    expect(err.toEnvelope()).toEqual({
+      success: false,
+      error: 'MessageAllowanceReached',
+      message: 'Guest message allowance reached. Register or sign in to continue.',
+      details: { limit: 10, count: 12 },
+    });
   });
 });
 
 describe('the AppError subclasses', () => {
   it.each([
     [new BadRequestError('bad input'), 400, 'BadRequest', 'bad input'],
+    [new ValidationError('bad field'), 400, 'Validation', 'bad field'],
     [new UnauthorizedError(), 401, 'Unauthorized', 'Unauthorized'],
     [new UnauthorizedError('token expired'), 401, 'Unauthorized', 'token expired'],
     [new ForbiddenError(), 403, 'Forbidden', 'Forbidden'],
     [new ForbiddenError('not yours'), 403, 'Forbidden', 'not yours'],
+    [new NotFoundError('Message'), 404, 'NotFound', 'Message not found'],
+    [new ConflictError('taken'), 409, 'Conflict', 'taken'],
     [new PayloadTooLargeError('too many tokens'), 413, 'PayloadTooLarge', 'too many tokens'],
     [new TooManyRequestsError(), 429, 'TooManyRequests', 'Too many requests'],
     [new TooManyRequestsError('slow down'), 429, 'TooManyRequests', 'slow down'],
@@ -82,44 +94,18 @@ describe('the AppError subclasses', () => {
       'Internal',
       'OPENAI_API_KEY is not configured',
     ],
-    [new ClientInitializationError(), 500, 'Internal', 'Failed to initialize Client'],
-    [new ClientInitializationError('Redis'), 500, 'Internal', 'Failed to initialize Redis'],
-    [new APIError('upstream failed'), 500, 'Internal', 'upstream failed'],
-    [new APIError('rate limited', 429), 429, 'TooManyRequests', 'rate limited'],
-    [new APIError('no reply', 502), 502, 'Internal', 'no reply'],
-    [new RedisConnectionError(), 500, 'Internal', 'Failed to connect to Redis'],
-    [new RedisCacheError(), 500, 'Internal', 'Redis cache operation failed'],
-    [new RedisCacheError('GET failed'), 500, 'Internal', 'GET failed'],
   ])('%s carries the right status, code and message', (err, status, code, message) => {
     expect(err.status).toBe(status);
     expect(err.code).toBe(code);
     expect(err.message).toBe(message);
-  });
-
-  it('are all instances of AppError, so the error handler catches them', () => {
-    const errors = [
-      new BadRequestError('x'),
-      new NotFoundError('x'),
-      new UnauthorizedError(),
-      new ForbiddenError(),
-      new PayloadTooLargeError('x'),
-      new TooManyRequestsError(),
-      new MissingConfigurationError('x'),
-      new ClientInitializationError(),
-      new APIError('x'),
-      new RedisConnectionError(),
-      new RedisCacheError(),
-    ];
-
-    for (const err of errors) {
-      expect(err, err.name).toBeInstanceOf(AppError);
-    }
+    expect(err).toBeInstanceOf(AppError);
+    expect(errorEnvelopeSchema.safeParse(err.toEnvelope()).success).toBe(true);
   });
 });
 
 describe('isAppError', () => {
   it('recognises an AppError and its subclasses', () => {
-    expect(isAppError(new AppError({ code: 'Internal', status: 500, message: 'x' }))).toBe(true);
+    expect(isAppError(new AppError({ error: 'Internal', message: 'x' }))).toBe(true);
     expect(isAppError(new NotFoundError('x'))).toBe(true);
   });
 

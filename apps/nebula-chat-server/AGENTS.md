@@ -45,8 +45,7 @@ apps/nebula-chat-server/src/
 │   ├── headers.config.ts          # SSE + cache response headers (uses http.ServerResponse)
 │   └── pagination.config.ts       # Default/max page limits
 ├── errors/
-│   ├── error.handler.ts           # Fastify setErrorHandler callback (Zod, AppError, PG codes, fallback)
-│   └── error.schema.ts            # errorResponseSchema — the lib's envelope, registered as the ErrorEnvelope component
+│   └── error.handler.ts           # Fastify setErrorHandler callback (Zod, AppError, PG codes, fallback)
 ├── modules/
 │   ├── chat/
 │   │   ├── chat.types.ts
@@ -107,17 +106,20 @@ The error vocabulary lives in the shared **`@nebula-chat/errors`** lib (`libs/er
 import — see [ADR-0011](../../docs/adr/0011-shared-errors-lib-and-typed-envelope.md). Throw the `AppError`
 subclass that matches the situation, imported from `@nebula-chat/errors`:
 
-| Class                                      | HTTP status  | Code (`error`)    | When to use                        |
-| ------------------------------------------ | ------------ | ----------------- | ---------------------------------- |
-| `NotFoundError`                            | 404          | `NotFound`        | Resource not found by ID           |
-| `BadRequestError`                          | 400          | `BadRequest`      | Invalid input not caught by Zod    |
-| `UnauthorizedError`                        | 401          | `Unauthorized`    | Not authenticated                  |
-| `ForbiddenError`                           | 403          | `Forbidden`       | Authenticated but not allowed      |
-| `PayloadTooLargeError`                     | 413          | `PayloadTooLarge` | Message exceeds token limit        |
-| `TooManyRequestsError`                     | 429          | `TooManyRequests` | A rate limit was hit               |
-| `MissingConfigurationError`                | 500          | `Internal`        | Required env var not set           |
-| `RedisConnectionError` / `RedisCacheError` | 500          | `Internal`        | Redis failures (usually fail-open) |
-| `APIError`                                 | configurable | from the status   | External API errors                |
+| Class                          | HTTP status | Code (`error`)            | When to use                               |
+| ------------------------------ | ----------- | ------------------------- | ----------------------------------------- |
+| `BadRequestError`              | 400         | `BadRequest`              | Invalid input not caught by Zod           |
+| `ValidationError`              | 400         | `Validation`              | Data that breaks a rule (Zod, DB checks)  |
+| `UnauthorizedError`            | 401         | `Unauthorized`            | Not authenticated                         |
+| `ForbiddenError`               | 403         | `Forbidden`               | Authenticated but not allowed             |
+| `MessageAllowanceReachedError` | 403         | `MessageAllowanceReached` | A Guest has spent their message allowance |
+| `NotFoundError`                | 404         | `NotFound`                | Resource not found by ID                  |
+| `ConflictError`                | 409         | `Conflict`                | The data clashes with an existing record  |
+| `PayloadTooLargeError`         | 413         | `PayloadTooLarge`         | Message exceeds token limit               |
+| `TooManyRequestsError`         | 429         | `TooManyRequests`         | A rate limit was hit                      |
+| `MissingConfigurationError`    | 500         | `Internal`                | Required env var not set                  |
+
+The code decides the status (`ERROR_STATUS` in `libs/errors/src/errorStatus.ts`), so the two cannot disagree.
 
 Throw from the service layer; the `errorHandler` exported from `errors/error.handler.ts` and registered in
 `buildApp()` catches everything and answers with the shared **error envelope**:
@@ -126,16 +128,19 @@ Throw from the service layer; the `errorHandler` exported from `errors/error.han
 { "success": false, "error": "NotFound", "message": "Conversation ... not found" }
 ```
 
+- An `AppError` builds its own envelope with `toEnvelope()`. Never write an envelope literal by hand.
 - `error` is a closed union (`ErrorCode`), not a free string. `Internal` is the escape hatch for anything
-  unclassified, and its message is always the generic `GENERIC_ERROR_MESSAGE` — a raw `error.message` never
-  reaches the client unless the error is an `AppError` (or a Fastify 4xx, whose message is written for the
-  caller).
-- `details` is typed per code and absent unless a code needs it. Today only the Guest message-allowance
-  `Forbidden` carries one: `{ limit, count }`.
+  unclassified, and its message is always the generic `GENERIC_ERROR_MESSAGE`. A raw message reaches the
+  client only from a non-`Internal` `AppError`, or from a Fastify 4xx, whose message is written for the caller.
+- A code that carries `details` is its own member of the union, with the details required. Today that is only
+  `MessageAllowanceReached`, with `{ limit, count }`.
+- The handler turns everything it catches into an `AppError`: Zod validation failures, Postgres constraint
+  codes, and framework errors (classified by their status). A framework error keeps its own status (415, 503).
 - The chat stream hijacks its reply, so it never reaches `errorHandler`. `chat.service` classifies its own
   failures with `toErrorEnvelope` and writes the **same** envelope as the SSE `error` event.
-- Adding a code or a `details` shape means editing `libs/errors/src/errorEnvelope.ts`, then regenerating the
-  OpenAPI spec and the Orval client.
+- To add a code, add it to `generalErrorCodeSchema` in `libs/errors/src/errorEnvelope.ts` and give it a status
+  in `ERROR_STATUS` (the compiler insists on both). A code with `details` gets its own union member instead.
+  Then regenerate the OpenAPI spec and the Orval client.
 
 Never return raw error objects to the client. Never throw from controllers — let the global handler do it.
 
@@ -148,7 +153,7 @@ Validation is handled by Fastify's native schema layer via `fastify-type-provide
 ```ts
 // conversation.routes.ts
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
-import { errorResponseSchema } from '@backend/errors/error.schema';
+import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { conversationController } from '@backend/modules/conversation/conversation.controller';
 import { createConversationSchema, conversationResponseSchema } from './conversation.validation';
 
@@ -162,8 +167,8 @@ const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
       body: createConversationSchema,
       response: {
         201: conversationResponseSchema.describe('Conversation created successfully'),
-        400: errorResponseSchema.describe('Invalid request body'),
-        500: errorResponseSchema.describe('Internal server error'),
+        400: errorEnvelopeSchema.describe('Invalid request body'),
+        500: errorEnvelopeSchema.describe('Internal server error'),
       },
     },
     handler: conversationController.create,
@@ -176,9 +181,9 @@ const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
 ```ts
 response: {
   201: conversationResponseSchema.describe('Conversation created successfully'),
-  400: errorResponseSchema.describe('Invalid request body'),
-  404: errorResponseSchema.describe('Conversation not found'),
-  500: errorResponseSchema.describe('Internal server error'),
+  400: errorEnvelopeSchema.describe('Invalid request body'),
+  404: errorEnvelopeSchema.describe('Conversation not found'),
+  500: errorEnvelopeSchema.describe('Internal server error'),
 },
 ```
 

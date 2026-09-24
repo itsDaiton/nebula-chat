@@ -218,7 +218,7 @@ describe('useChatStream — usage and errors', () => {
         HttpResponse.json(
           {
             success: false,
-            error: 'Forbidden',
+            error: 'MessageAllowanceReached',
             message: 'Guest message allowance reached. Register or sign in to continue.',
             details: { limit: 10, count: 10 },
           },

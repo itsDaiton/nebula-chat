@@ -1,99 +1,103 @@
-import { errorCodeForStatus } from './errorCodeForStatus';
-import type { ErrorCode, ErrorDetails, MessageAllowanceDetails } from './errorEnvelope';
+import { INTERNAL_ERROR_ENVELOPE } from './errorEnvelope';
+import type { ErrorCode, ErrorEnvelope, MessageAllowanceDetails } from './errorEnvelope';
+import { ERROR_STATUS } from './errorStatus';
 
-type AppErrorOptions<C extends ErrorCode> = {
-  code: C;
-  status: number;
-  message: string;
-  details?: ErrorDetails<C>;
-};
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
+
+/** An envelope without its constant `success` flag: what an AppError is built from. */
+type ErrorBody = DistributiveOmit<ErrorEnvelope, 'success'>;
 
 /**
- * A classified, client-safe error: its `code`, `message` and `details` are what
- * reach the client in the error envelope, and `status` is the HTTP status the
- * JSON error handler answers with. Anything thrown that is not an AppError is
- * treated as internal and never shown to the client verbatim.
+ * A classified error. Its code decides its HTTP status, and `toEnvelope()` is
+ * what the client is told. Anything thrown that is not an AppError is treated
+ * as internal and never shown to the client verbatim.
  */
-export class AppError<C extends ErrorCode = ErrorCode> extends Error {
-  readonly code: C;
+export class AppError extends Error {
+  readonly code: ErrorCode;
   readonly status: number;
-  readonly details: ErrorDetails<C> | undefined;
+  readonly #body: ErrorBody;
 
-  constructor({ code, status, message, details }: AppErrorOptions<C>) {
-    super(message);
+  constructor(body: ErrorBody) {
+    super(body.message);
     this.name = new.target.name;
-    this.code = code;
-    this.status = status;
-    this.details = details;
+    this.code = body.error;
+    this.status = ERROR_STATUS[body.error];
+    this.#body = body;
+  }
+
+  toEnvelope(): ErrorEnvelope {
+    // An Internal error is a server-side fault: its message stays in the logs.
+    if (this.code === 'Internal') {
+      return INTERNAL_ERROR_ENVELOPE;
+    }
+    return { success: false, ...this.#body };
   }
 }
 
 export const isAppError = (value: unknown): value is AppError => value instanceof AppError;
 
-export class NotFoundError extends AppError<'NotFound'> {
+export class BadRequestError extends AppError {
+  constructor(message: string) {
+    super({ error: 'BadRequest', message });
+  }
+}
+
+export class ValidationError extends AppError {
+  constructor(message: string) {
+    super({ error: 'Validation', message });
+  }
+}
+
+export class UnauthorizedError extends AppError {
+  constructor(message: string = 'Unauthorized') {
+    super({ error: 'Unauthorized', message });
+  }
+}
+
+export class ForbiddenError extends AppError {
+  constructor(message: string = 'Forbidden') {
+    super({ error: 'Forbidden', message });
+  }
+}
+
+/** A Guest has spent their message allowance and must register to continue. */
+export class MessageAllowanceReachedError extends AppError {
+  constructor(details: MessageAllowanceDetails) {
+    super({
+      error: 'MessageAllowanceReached',
+      message: 'Guest message allowance reached. Register or sign in to continue.',
+      details,
+    });
+  }
+}
+
+export class NotFoundError extends AppError {
   constructor(resource: string, id?: string) {
     const message = id ? `${resource} with id "${id}" not found` : `${resource} not found`;
-    super({ code: 'NotFound', status: 404, message });
+    super({ error: 'NotFound', message });
   }
 }
 
-export class BadRequestError extends AppError<'BadRequest'> {
+export class ConflictError extends AppError {
   constructor(message: string) {
-    super({ code: 'BadRequest', status: 400, message });
+    super({ error: 'Conflict', message });
   }
 }
 
-export class UnauthorizedError extends AppError<'Unauthorized'> {
-  constructor(message: string = 'Unauthorized') {
-    super({ code: 'Unauthorized', status: 401, message });
-  }
-}
-
-export class ForbiddenError extends AppError<'Forbidden'> {
-  constructor(message: string = 'Forbidden', details?: MessageAllowanceDetails) {
-    super({ code: 'Forbidden', status: 403, message, details });
-  }
-}
-
-export class PayloadTooLargeError extends AppError<'PayloadTooLarge'> {
+export class PayloadTooLargeError extends AppError {
   constructor(message: string) {
-    super({ code: 'PayloadTooLarge', status: 413, message });
+    super({ error: 'PayloadTooLarge', message });
   }
 }
 
-export class TooManyRequestsError extends AppError<'TooManyRequests'> {
+export class TooManyRequestsError extends AppError {
   constructor(message: string = 'Too many requests') {
-    super({ code: 'TooManyRequests', status: 429, message });
+    super({ error: 'TooManyRequests', message });
   }
 }
 
-export class MissingConfigurationError extends AppError<'Internal'> {
+export class MissingConfigurationError extends AppError {
   constructor(configName: string) {
-    super({ code: 'Internal', status: 500, message: `${configName} is not configured` });
-  }
-}
-
-export class ClientInitializationError extends AppError<'Internal'> {
-  constructor(clientName: string = 'Client') {
-    super({ code: 'Internal', status: 500, message: `Failed to initialize ${clientName}` });
-  }
-}
-
-/** A failure reported by an external API; its status decides the code. */
-export class APIError extends AppError {
-  constructor(message: string, status: number = 500) {
-    super({ code: errorCodeForStatus(status), status, message });
-  }
-}
-
-export class RedisConnectionError extends AppError<'Internal'> {
-  constructor(message: string = 'Failed to connect to Redis') {
-    super({ code: 'Internal', status: 500, message });
-  }
-}
-
-export class RedisCacheError extends AppError<'Internal'> {
-  constructor(message: string = 'Redis cache operation failed') {
-    super({ code: 'Internal', status: 500, message });
+    super({ error: 'Internal', message: `${configName} is not configured` });
   }
 }

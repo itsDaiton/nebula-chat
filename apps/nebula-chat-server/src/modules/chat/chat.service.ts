@@ -123,13 +123,10 @@ export const chatService = {
     const { allowed, retryAfterMs } = rateLimiter.check(userId);
     if (!allowed) {
       logger?.warn({ userId, retryAfterMs }, 'LLM rate limit exceeded');
-      write(
-        sseError(
-          toErrorEnvelope(
-            new TooManyRequestsError(`Rate limit exceeded. Retry after ${retryAfterMs}ms.`),
-          ),
-        ),
+      const rateLimited = new TooManyRequestsError(
+        `Rate limit exceeded. Retry after ${retryAfterMs}ms.`,
       );
+      write(sseError(rateLimited.toEnvelope()));
       return;
     }
 

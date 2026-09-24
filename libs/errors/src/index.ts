@@ -1,34 +1,38 @@
 // Envelope: the on-wire error contract (ADR-0011)
 export {
   errorEnvelopeSchema,
+  generalErrorCodeSchema,
   messageAllowanceDetailsSchema,
+  GENERIC_ERROR_MESSAGE,
+  INTERNAL_ERROR_ENVELOPE,
   isErrorEnvelope,
   parseErrorEnvelope,
 } from './errorEnvelope';
 export type {
   ErrorEnvelope,
   ErrorCode,
-  ErrorDetails,
+  GeneralErrorCode,
   MessageAllowanceDetails,
 } from './errorEnvelope';
+
+// Codes → HTTP statuses
+export { ERROR_STATUS, errorCodeForStatus } from './errorStatus';
 
 // Classified error classes
 export {
   AppError,
   isAppError,
-  NotFoundError,
   BadRequestError,
+  ValidationError,
   UnauthorizedError,
   ForbiddenError,
+  MessageAllowanceReachedError,
+  NotFoundError,
+  ConflictError,
   PayloadTooLargeError,
   TooManyRequestsError,
   MissingConfigurationError,
-  ClientInitializationError,
-  APIError,
-  RedisConnectionError,
-  RedisCacheError,
 } from './appError';
 
-// Classification
-export { toErrorEnvelope, GENERIC_ERROR_MESSAGE } from './toErrorEnvelope';
-export { errorCodeForStatus } from './errorCodeForStatus';
+// Classification of anything thrown
+export { toErrorEnvelope } from './toErrorEnvelope';

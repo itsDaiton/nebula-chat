@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { errorEnvelopeSchema, isErrorEnvelope, parseErrorEnvelope } from '../errorEnvelope';
-import type { ErrorEnvelope } from '../errorEnvelope';
+import {
+  errorEnvelopeSchema,
+  isErrorEnvelope,
+  parseErrorEnvelope,
+  type ErrorEnvelope,
+} from '../errorEnvelope';
+
+const allowanceEnvelope = {
+  success: false,
+  error: 'MessageAllowanceReached',
+  message: 'Guest message allowance reached.',
+  details: { limit: 10, count: 10 },
+} as const;
 
 describe('errorEnvelopeSchema', () => {
   it.each([
@@ -13,36 +24,24 @@ describe('errorEnvelopeSchema', () => {
     'PayloadTooLarge',
     'TooManyRequests',
     'Internal',
-  ])('accepts a %s envelope without details', (code) => {
+  ])('accepts a %s envelope', (code) => {
     const envelope = { success: false, error: code, message: 'nope' };
-
-    expect(errorEnvelopeSchema.safeParse(envelope).success).toBe(true);
-  });
-
-  it('accepts a Forbidden envelope carrying message-allowance details', () => {
-    const envelope = {
-      success: false,
-      error: 'Forbidden',
-      message: 'Guest message allowance reached.',
-      details: { limit: 10, count: 10 },
-    };
 
     expect(errorEnvelopeSchema.parse(envelope)).toEqual(envelope);
   });
 
-  it('rejects a code outside the closed union', () => {
-    const envelope = { success: false, error: 'ImATeapot', message: 'nope' };
-
-    expect(errorEnvelopeSchema.safeParse(envelope).success).toBe(false);
+  it('accepts a MessageAllowanceReached envelope with its details', () => {
+    expect(errorEnvelopeSchema.parse(allowanceEnvelope)).toEqual(allowanceEnvelope);
   });
 
-  it('rejects malformed Forbidden details', () => {
-    const envelope = {
-      success: false,
-      error: 'Forbidden',
-      message: 'nope',
-      details: { limit: 'ten', count: 10 },
-    };
+  it('requires details on MessageAllowanceReached', () => {
+    const withoutDetails = { success: false, error: 'MessageAllowanceReached', message: 'x' };
+
+    expect(errorEnvelopeSchema.safeParse(withoutDetails).success).toBe(false);
+  });
+
+  it('rejects malformed details', () => {
+    const envelope = { ...allowanceEnvelope, details: { limit: 'ten', count: 10 } };
 
     expect(errorEnvelopeSchema.safeParse(envelope).success).toBe(false);
   });
@@ -50,7 +49,7 @@ describe('errorEnvelopeSchema', () => {
   it('drops details from a code that carries none', () => {
     const parsed = errorEnvelopeSchema.parse({
       success: false,
-      error: 'NotFound',
+      error: 'Forbidden',
       message: 'nope',
       details: { limit: 1, count: 1 },
     });
@@ -59,10 +58,11 @@ describe('errorEnvelopeSchema', () => {
   });
 
   it.each([
-    ['success: true', { success: true, error: 'NotFound', message: 'nope' }],
+    ['a code outside the closed union', { success: false, error: 'ImATeapot', message: 'x' }],
+    ['success: true', { success: true, error: 'NotFound', message: 'x' }],
     ['a missing message', { success: false, error: 'NotFound' }],
-    ['a missing code', { success: false, message: 'nope' }],
-  ])('rejects an envelope with %s', (_label, envelope) => {
+    ['a missing code', { success: false, message: 'x' }],
+  ])('rejects %s', (_label, envelope) => {
     expect(errorEnvelopeSchema.safeParse(envelope).success).toBe(false);
   });
 });
@@ -80,18 +80,14 @@ describe('isErrorEnvelope', () => {
   );
 
   it('narrows details by code once recognised', () => {
-    const value: unknown = {
-      success: false,
-      error: 'Forbidden',
-      message: 'cap',
-      details: { limit: 10, count: 10 },
-    };
+    const value: unknown = allowanceEnvelope;
 
-    if (!isErrorEnvelope(value) || value.error !== 'Forbidden') {
-      throw new Error('expected a Forbidden envelope');
+    if (!isErrorEnvelope(value) || value.error !== 'MessageAllowanceReached') {
+      throw new Error('expected a MessageAllowanceReached envelope');
     }
 
-    expect(value.details?.limit).toBe(10);
+    // Required on this code, so no optional chaining is needed.
+    expect(value.details.limit).toBe(10);
   });
 });
 

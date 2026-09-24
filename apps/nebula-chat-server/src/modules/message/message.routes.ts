@@ -1,5 +1,5 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
-import { errorResponseSchema } from '@backend/errors/error.schema';
+import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { messageController } from '@backend/modules/message/message.controller';
 import { requireAuthentication } from '@backend/plugins/authGate.plugin';
 import {
@@ -19,10 +19,10 @@ const messageRoutes: FastifyPluginAsyncZod = async (app) => {
       body: createMessageSchema,
       response: {
         201: messageResponseSchema.describe('Message created successfully'),
-        400: errorResponseSchema.describe('Invalid request body'),
-        401: errorResponseSchema.describe('No authenticated session'),
-        404: errorResponseSchema.describe('Conversation not found or not owned by the caller'),
-        500: errorResponseSchema.describe('Internal server error'),
+        400: errorEnvelopeSchema.describe('Invalid request body'),
+        401: errorEnvelopeSchema.describe('No authenticated session'),
+        404: errorEnvelopeSchema.describe('Conversation not found or not owned by the caller'),
+        500: errorEnvelopeSchema.describe('Internal server error'),
       },
     },
     // Owner-scoped: the target conversation must belong to the session user.
@@ -39,10 +39,10 @@ const messageRoutes: FastifyPluginAsyncZod = async (app) => {
       params: getMessagesSchema,
       response: {
         200: messageResponseSchema.describe('Message retrieved successfully'),
-        400: errorResponseSchema.describe('Invalid message ID format'),
-        401: errorResponseSchema.describe('No authenticated session'),
-        404: errorResponseSchema.describe('Message not found or not owned by the caller'),
-        500: errorResponseSchema.describe('Internal server error'),
+        400: errorEnvelopeSchema.describe('Invalid message ID format'),
+        401: errorEnvelopeSchema.describe('No authenticated session'),
+        404: errorEnvelopeSchema.describe('Message not found or not owned by the caller'),
+        500: errorEnvelopeSchema.describe('Internal server error'),
       },
     },
     // Owner-scoped: another user's message reads as 404, never 403 (no leak).
@@ -58,8 +58,8 @@ const messageRoutes: FastifyPluginAsyncZod = async (app) => {
       operationId: 'listMessages',
       response: {
         200: messagesArraySchema.describe('List of messages owned by the caller'),
-        401: errorResponseSchema.describe('No authenticated session'),
-        500: errorResponseSchema.describe('Internal server error'),
+        401: errorEnvelopeSchema.describe('No authenticated session'),
+        500: errorEnvelopeSchema.describe('Internal server error'),
       },
     },
     // Owner-scoped: only messages in the session user's conversations are listed.

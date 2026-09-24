@@ -1,6 +1,6 @@
 import type { FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
 import { env } from '@backend/env';
-import { ForbiddenError } from '@nebula-chat/errors';
+import { MessageAllowanceReachedError } from '@nebula-chat/errors';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { messageRepository } from '@backend/modules/message/message.repository';
 import { getSessionData } from '@backend/plugins/authGate.plugin';
@@ -8,7 +8,7 @@ import { getSessionData } from '@backend/plugins/authGate.plugin';
 /**
  * Enforces the Guest message allowance (ADR-0010 §4) on the chat send path. Runs
  * after `requireAuthentication` (so the session is attached) and before the cache hook, so a
- * capped Guest is rejected with a `403 Forbidden` before any model or cache work
+ * capped Guest is rejected with a `403 MessageAllowanceReached` before any model or cache work
  * happens.
  *
  * - Registered users are uncapped — the check is skipped entirely.
@@ -32,7 +32,7 @@ export const messageAllowanceHook: preHandlerAsyncHookHandler = async (req: Fast
 
   const userMessageCount = await messageRepository.countUserMessagesByOwner(user.id);
   if (userMessageCount >= env.GUEST_MESSAGE_ALLOWANCE) {
-    throw new ForbiddenError('Guest message allowance reached. Register or sign in to continue.', {
+    throw new MessageAllowanceReachedError({
       limit: env.GUEST_MESSAGE_ALLOWANCE,
       count: userMessageCount,
     });

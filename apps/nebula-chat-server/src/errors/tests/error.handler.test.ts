@@ -5,8 +5,8 @@ import { z } from 'zod';
 import {
   AppError,
   errorEnvelopeSchema,
-  ForbiddenError,
   GENERIC_ERROR_MESSAGE,
+  MessageAllowanceReachedError,
   NotFoundError,
 } from '@nebula-chat/errors';
 import type { ErrorEnvelope } from '@nebula-chat/errors';
@@ -92,26 +92,26 @@ describe('errorHandler', () => {
   });
 
   it("carries an AppError's details into the envelope", () => {
-    const sent = handle(
-      new ForbiddenError('Guest message allowance reached.', { limit: 10, count: 10 }),
-    );
+    const sent = handle(new MessageAllowanceReachedError({ limit: 10, count: 10 }));
 
     expect(sent.status).toBe(403);
     expect(sent.body).toEqual({
       success: false,
-      error: 'Forbidden',
-      message: 'Guest message allowance reached.',
+      error: 'MessageAllowanceReached',
+      message: 'Guest message allowance reached. Register or sign in to continue.',
       details: { limit: 10, count: 10 },
     });
   });
 
-  it('maps a bare AppError onto its status', () => {
-    const sent = handle(
-      new AppError({ code: 'Internal', status: 500, message: 'generic failure' }),
-    );
+  it('withholds the message of an Internal AppError', () => {
+    const sent = handle(new AppError({ error: 'Internal', message: 'pool exhausted' }));
 
     expect(sent.status).toBe(500);
-    expect(sent.body?.error).toBe('Internal');
+    expect(sent.body).toEqual({
+      success: false,
+      error: 'Internal',
+      message: GENERIC_ERROR_MESSAGE,
+    });
   });
 
   it.each([
@@ -155,10 +155,21 @@ describe('errorHandler', () => {
   });
 
   it('falls back to a numeric `status` when `statusCode` is absent', () => {
-    const sent = handle(Object.assign(new Error('nope'), { status: 422 }));
+    const sent = handle(Object.assign(new Error('nope'), { status: 409 }));
 
-    expect(sent.status).toBe(422);
-    expect(sent.body?.error).toBe('Validation');
+    expect(sent.status).toBe(409);
+    expect(sent.body?.error).toBe('Conflict');
+  });
+
+  it('keeps the precise status of a client error whose code is broader', () => {
+    const sent = handle(Object.assign(new Error('Unsupported Media Type'), { statusCode: 415 }));
+
+    expect(sent.status).toBe(415);
+    expect(sent.body).toEqual({
+      success: false,
+      error: 'BadRequest',
+      message: 'Unsupported Media Type',
+    });
   });
 
   it('prefers statusCode over status when both are present', () => {
@@ -203,7 +214,7 @@ describe('errorHandler', () => {
     const errors = [
       validationError(),
       new NotFoundError('x'),
-      new ForbiddenError('x', { limit: 1, count: 1 }),
+      new MessageAllowanceReachedError({ limit: 1, count: 1 }),
       pgError('23505'),
       pgError('99999'),
       Object.assign(new Error('x'), { statusCode: 415 }),

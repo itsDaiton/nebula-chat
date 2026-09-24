@@ -5,62 +5,18 @@
  * REST API for Nebula Chat
  * OpenAPI spec version: 1.7.0
  */
+import type { GeneralErrorCode } from './generalErrorCode';
+import type { MessageAllowanceDetails } from './messageAllowanceDetails';
 
 export type ErrorEnvelope =
   | {
       success: false;
+      error: GeneralErrorCode;
       message: string;
-      error: 'BadRequest';
     }
   | {
       success: false;
+      error: 'MessageAllowanceReached';
       message: string;
-      error: 'Validation';
-    }
-  | {
-      success: false;
-      message: string;
-      error: 'Unauthorized';
-    }
-  | {
-      success: false;
-      message: string;
-      error: 'Forbidden';
-      details?: {
-        /**
-         * @minimum 0
-         * @maximum 9007199254740991
-         */
-        limit: number;
-        /**
-         * @minimum 0
-         * @maximum 9007199254740991
-         */
-        count: number;
-      };
-    }
-  | {
-      success: false;
-      message: string;
-      error: 'NotFound';
-    }
-  | {
-      success: false;
-      message: string;
-      error: 'Conflict';
-    }
-  | {
-      success: false;
-      message: string;
-      error: 'PayloadTooLarge';
-    }
-  | {
-      success: false;
-      message: string;
-      error: 'TooManyRequests';
-    }
-  | {
-      success: false;
-      message: string;
-      error: 'Internal';
+      details: MessageAllowanceDetails;
     };

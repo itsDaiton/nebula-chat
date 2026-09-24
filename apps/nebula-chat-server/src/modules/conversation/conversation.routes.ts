@@ -1,5 +1,5 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
-import { errorResponseSchema } from '@backend/errors/error.schema';
+import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { conversationController } from '@backend/modules/conversation/conversation.controller';
 import { requireAuthentication } from '@backend/plugins/authGate.plugin';
 import {
@@ -22,9 +22,9 @@ const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
       body: createConversationSchema,
       response: {
         201: conversationResponseSchema.describe('Conversation created successfully'),
-        400: errorResponseSchema.describe('Invalid request body'),
-        401: errorResponseSchema.describe('No authenticated session'),
-        500: errorResponseSchema.describe('Internal server error'),
+        400: errorEnvelopeSchema.describe('Invalid request body'),
+        401: errorEnvelopeSchema.describe('No authenticated session'),
+        500: errorEnvelopeSchema.describe('Internal server error'),
       },
     },
     // A conversation needs an owner (conversations.userId is NOT NULL), so the
@@ -42,9 +42,9 @@ const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
       querystring: searchConversationsQuerySchema,
       response: {
         200: conversationsArraySchema.describe('Matching conversations owned by the caller'),
-        400: errorResponseSchema.describe('Invalid search query'),
-        401: errorResponseSchema.describe('No authenticated session'),
-        500: errorResponseSchema.describe('Internal server error'),
+        400: errorEnvelopeSchema.describe('Invalid search query'),
+        401: errorEnvelopeSchema.describe('No authenticated session'),
+        500: errorEnvelopeSchema.describe('Internal server error'),
       },
     },
     // Owner-scoped: results are filtered to the session user (ADR-0010 §2).
@@ -61,10 +61,10 @@ const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
       params: getConversationSchema,
       response: {
         200: conversationResponseSchema.describe('Conversation retrieved successfully'),
-        400: errorResponseSchema.describe('Invalid conversation ID format'),
-        401: errorResponseSchema.describe('No authenticated session'),
-        404: errorResponseSchema.describe('Conversation not found or not owned by the caller'),
-        500: errorResponseSchema.describe('Internal server error'),
+        400: errorEnvelopeSchema.describe('Invalid conversation ID format'),
+        401: errorEnvelopeSchema.describe('No authenticated session'),
+        404: errorEnvelopeSchema.describe('Conversation not found or not owned by the caller'),
+        500: errorEnvelopeSchema.describe('Internal server error'),
       },
     },
     // Owner-scoped: another user's conversation reads as 404, never 403 (no leak).
@@ -84,8 +84,8 @@ const conversationRoutes: FastifyPluginAsyncZod = async (app) => {
         200: paginatedConversationsResponseSchema.describe(
           'Paginated list of conversations owned by the caller',
         ),
-        401: errorResponseSchema.describe('No authenticated session'),
-        500: errorResponseSchema.describe('Internal server error'),
+        401: errorEnvelopeSchema.describe('No authenticated session'),
+        500: errorEnvelopeSchema.describe('Internal server error'),
       },
     },
     // Owner-scoped: only the session user's conversations are listed (ADR-0010 §2).

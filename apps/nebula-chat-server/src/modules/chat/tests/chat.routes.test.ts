@@ -361,7 +361,7 @@ describe('POST /api/chat/stream — Guest message allowance', () => {
     expect(chat.streamResponse).toHaveBeenCalled();
   });
 
-  it('rejects a Guest at the cap with a 403 Forbidden', async () => {
+  it('rejects a Guest at the cap with a 403 MessageAllowanceReached', async () => {
     mockedGetSession.mockResolvedValue(guestSession() as never);
     mockedCountUserMessages.mockResolvedValue(CAP);
 
@@ -370,7 +370,7 @@ describe('POST /api/chat/stream — Guest message allowance', () => {
     expect(res.statusCode).toBe(403);
     expect(res.json()).toEqual({
       success: false,
-      error: 'Forbidden',
+      error: 'MessageAllowanceReached',
       message: 'Guest message allowance reached. Register or sign in to continue.',
       details: { limit: CAP, count: CAP },
     });

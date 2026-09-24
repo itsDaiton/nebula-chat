@@ -80,7 +80,7 @@ describe('SSE formatters', () => {
   it('emits the error envelope as the error frame payload', () => {
     const envelope: ErrorEnvelope = {
       success: false,
-      error: 'Forbidden',
+      error: 'MessageAllowanceReached',
       message: 'Guest message allowance reached.',
       details: { limit: 10, count: 10 },
     };
