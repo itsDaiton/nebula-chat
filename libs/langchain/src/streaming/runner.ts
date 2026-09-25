@@ -35,12 +35,20 @@ export const streamChat = async (
   const { history, userMessage, systemPrompt = '', logger, model, ...llmConfig } = config;
   const startMs = Date.now();
 
-  logger?.info(
-    { provider: llmConfig.provider, model, historyLength: history.length },
-    'LLM stream started',
+  const resolvedModel = model ?? DEFAULT_MODELS[llmConfig.provider];
+  // Flat OTel gen_ai.* keys, stamped by hand: this lib does not depend on
+  // @nebula-chat/otel. Progress inside the Direct reply, so `debug` — the
+  // caller writes the one `info` summary for the unit of work.
+  const genAi = {
+    'gen_ai.provider.name': llmConfig.provider,
+    'gen_ai.request.model': resolvedModel,
+  };
+
+  logger?.debug(
+    { 'event.name': 'llm.stream.started', ...genAi },
+    `LLM stream started · ${resolvedModel}`,
   );
 
-  const resolvedModel = model ?? DEFAULT_MODELS[llmConfig.provider];
   const registry = MODEL_REGISTRY[resolvedModel];
   const reservedOutputTokens = registry
     ? Math.max(registry.defaultMaxOutput, llmConfig.maxTokens ?? 0)
@@ -100,24 +108,20 @@ export const streamChat = async (
       callbacks.onUsage({ promptTokens, completionTokens, totalTokens });
 
       const durationMs = Date.now() - startMs;
-      logger?.info(
+      logger?.debug(
         {
-          provider: llmConfig.provider,
-          model: resolvedModel,
-          promptTokens,
-          completionTokens,
-          totalTokens,
-          durationMs,
+          'event.name': 'llm.stream.finished',
+          ...genAi,
+          'gen_ai.usage.input_tokens': promptTokens,
+          'gen_ai.usage.output_tokens': completionTokens,
+          'nebula.duration_ms': durationMs,
         },
-        'LLM stream completed',
+        `LLM stream finished · ${resolvedModel} · ${totalTokens} tokens`,
       );
     });
   } catch (err) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    logger?.error(
-      { error: error.message, provider: llmConfig.provider, model: resolvedModel },
-      'LLM stream failed',
-    );
-    throw error;
+    // Rethrow only. The failure is the caller's to log, once, where it is
+    // handled — logging it here too wrote a second error line for it.
+    throw err instanceof Error ? err : new Error(String(err));
   }
 };

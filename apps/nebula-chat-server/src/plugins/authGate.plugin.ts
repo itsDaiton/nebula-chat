@@ -1,7 +1,8 @@
 import { fromNodeHeaders, toNodeHandler } from 'better-auth/node';
-import type { FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
+import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
 import fp from 'fastify-plugin';
 import type { SessionData } from '@nebula-chat/auth';
+import { bindAttributes } from '@nebula-chat/otel';
 import { auth } from '@backend/auth';
 import { ForbiddenError, UnauthorizedError } from '@nebula-chat/errors';
 
@@ -32,14 +33,26 @@ export const getSessionData = (req: FastifyRequest): SessionData => {
  * Resolves the better-auth session from the request cookies, throws
  * `UnauthorizedError` when there is none, and attaches it to the request. Both
  * gates share this — a preHandler cannot call another (the `this` context differs).
+ *
+ * It also binds the User onto the request's loggers, so every later line in the
+ * request — the handler's, the error handler's, `http.request.completed` — says
+ * who made it. Both loggers are rebound: Fastify copies `request.log` onto
+ * `reply.log` when the reply is created, so rebinding only `req.log` would leave
+ * the lines written through the reply anonymous.
  */
-const resolveSession = async (req: FastifyRequest): Promise<SessionData> => {
+const resolveSession = async (req: FastifyRequest, reply: FastifyReply): Promise<SessionData> => {
   const sessionData = await auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
   if (!sessionData) {
     throw new UnauthorizedError();
   }
   const typed = sessionData as unknown as SessionData;
   (req as RequestWithSession).sessionData = typed;
+  const log = bindAttributes(req.log, {
+    'user.id': typed.user.id,
+    'nebula.user.kind': typed.user.isAnonymous ? 'guest' : 'registered',
+  });
+  req.log = log;
+  reply.log = log;
   return typed;
 };
 
@@ -48,16 +61,16 @@ const resolveSession = async (req: FastifyRequest): Promise<SessionData> => {
  * success the session is attached to the request for downstream handlers
  * (`getSessionData`).
  */
-export const requireAuthentication: preHandlerAsyncHookHandler = async (req) => {
-  await resolveSession(req);
+export const requireAuthentication: preHandlerAsyncHookHandler = async (req, reply) => {
+  await resolveSession(req, reply);
 };
 
 /**
  * preHandler: `requireAuthentication` plus a `ForbiddenError` when the session user
  * is a Guest (`isAnonymous`). Use on routes that a Guest must never reach.
  */
-export const requireRegistered: preHandlerAsyncHookHandler = async (req) => {
-  const { user } = await resolveSession(req);
+export const requireRegistered: preHandlerAsyncHookHandler = async (req, reply) => {
+  const { user } = await resolveSession(req, reply);
   if (user.isAnonymous) {
     throw new ForbiddenError('This action requires a registered account.');
   }

@@ -1,3 +1,4 @@
+import { componentLogger, logEvent } from '@nebula-chat/otel';
 import type { Logger } from '@nebula-chat/otel';
 import type { CacheConnection } from './types';
 import { recordCacheHit, recordCacheMiss } from './metrics';
@@ -6,7 +7,8 @@ import { recordCacheHit, recordCacheMiss } from './metrics';
  * A single-tier Redis cache. Values are JSON-serialised. Every operation is
  * **fail-open**: a Redis error degrades a read to a miss and a write to a no-op,
  * logged through the injected logger and never thrown, so a cache outage can
- * never break the caller (per ADR-0009).
+ * never break the caller (per ADR-0009). A failure is handled and the user is
+ * unaffected, so it is a `warn` (`cache.*.failed`), not an `error`.
  */
 export type RedisCache = {
   /** Returns the cached value, or `null` on a miss or any Redis error. */
@@ -30,6 +32,8 @@ export const createCache = ({
   logger,
   defaultTtlSeconds = 600,
 }: CreateCacheDeps): RedisCache => {
+  const log = componentLogger(logger, 'redis');
+
   const get = async <T>(key: string): Promise<T | null> => {
     try {
       const raw = await connection.get(key);
@@ -40,7 +44,13 @@ export const createCache = ({
       recordCacheHit();
       return JSON.parse(raw) as T;
     } catch (error) {
-      logger.error({ err: error, key }, 'redis cache get failed (fail-open)');
+      logEvent(
+        log,
+        'warn',
+        'cache.read.failed',
+        { err: error, 'nebula.cache.key': key },
+        'Cache read failed; treating it as a miss',
+      );
       recordCacheMiss();
       return null;
     }
@@ -54,7 +64,13 @@ export const createCache = ({
     try {
       await connection.set(key, JSON.stringify(value), 'EX', ttlSeconds);
     } catch (error) {
-      logger.error({ err: error, key }, 'redis cache set failed (fail-open)');
+      logEvent(
+        log,
+        'warn',
+        'cache.write.failed',
+        { err: error, 'nebula.cache.key': key },
+        'Cache write failed; continuing without caching',
+      );
     }
   };
 
@@ -62,7 +78,13 @@ export const createCache = ({
     try {
       await connection.del(key);
     } catch (error) {
-      logger.error({ err: error, key }, 'redis cache del failed (fail-open)');
+      logEvent(
+        log,
+        'warn',
+        'cache.delete.failed',
+        { err: error, 'nebula.cache.key': key },
+        'Cache delete failed; the entry expires on its TTL',
+      );
     }
   };
 
@@ -73,7 +95,13 @@ export const createCache = ({
         await connection.del(...keys);
       }
     } catch (error) {
-      logger.error({ err: error, pattern }, 'redis cache clear failed (fail-open)');
+      logEvent(
+        log,
+        'warn',
+        'cache.clear.failed',
+        { err: error, 'nebula.cache.pattern': pattern },
+        'Cache clear failed; matching entries expire on their TTL',
+      );
     }
   };
 

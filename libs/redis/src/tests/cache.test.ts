@@ -1,10 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createLogger } from '@nebula-chat/otel';
 import type { Logger } from '@nebula-chat/otel';
 import { createCache } from '../cache';
 import type { CacheConnection } from '../types';
 
-const makeLogger = () =>
-  ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }) as unknown as Logger;
+type LogLine = Record<string, unknown> & { level: number; msg: string };
+
+/** A real `@nebula-chat/otel` logger writing parsed lines to memory. */
+const makeLogger = () => {
+  const lines: LogLine[] = [];
+  const logger = createLogger({
+    serviceName: 'test',
+    level: 'trace',
+    destination: { write: (chunk: string) => lines.push(JSON.parse(chunk) as LogLine) },
+  });
+  return { logger, lines };
+};
 
 type FakeConnection = CacheConnection & { store: Map<string, string> };
 
@@ -43,9 +54,10 @@ const brokenConnection = (): CacheConnection => {
 };
 
 let logger: Logger;
+let lines: LogLine[];
 
 beforeEach(() => {
-  logger = makeLogger();
+  ({ logger, lines } = makeLogger());
 });
 
 describe('createCache', () => {
@@ -106,33 +118,77 @@ describe('createCache', () => {
     expect(await cache.get('user:1')).toBe('c');
   });
 
+  it('logs nothing on the happy path', async () => {
+    const cache = createCache({ connection: makeConnection(), logger });
+
+    await cache.set('k', 'v');
+    await cache.get('k');
+    await cache.get('missing');
+    await cache.del('k');
+    await cache.clear();
+
+    expect(lines).toEqual([]);
+  });
+
   describe('fail-open', () => {
-    it('returns null instead of throwing when get fails, and logs it', async () => {
+    it('returns null instead of throwing when get fails, and warns once', async () => {
       const cache = createCache({ connection: brokenConnection(), logger });
 
-      await expect(cache.get('k')).resolves.toBeNull();
-      expect(logger.error).toHaveBeenCalled();
+      await expect(cache.get('conv:1')).resolves.toBeNull();
+      expect(lines).toEqual([
+        expect.objectContaining({
+          level: 40,
+          'event.name': 'cache.read.failed',
+          'nebula.component': 'redis',
+          'nebula.cache.key': 'conv:1',
+          err: expect.objectContaining({ message: 'redis down', stack: expect.any(String) }),
+        }),
+      ]);
     });
 
-    it('swallows a failing set', async () => {
+    it('swallows a failing set and warns once', async () => {
       const cache = createCache({ connection: brokenConnection(), logger });
 
-      await expect(cache.set('k', 'v')).resolves.toBeUndefined();
-      expect(logger.error).toHaveBeenCalled();
+      await expect(cache.set('conv:1', 'v')).resolves.toBeUndefined();
+      expect(lines).toEqual([
+        expect.objectContaining({
+          level: 40,
+          'event.name': 'cache.write.failed',
+          'nebula.component': 'redis',
+          'nebula.cache.key': 'conv:1',
+          err: expect.objectContaining({ message: 'redis down' }),
+        }),
+      ]);
     });
 
-    it('swallows a failing del', async () => {
+    it('swallows a failing del and warns once', async () => {
       const cache = createCache({ connection: brokenConnection(), logger });
 
-      await expect(cache.del('k')).resolves.toBeUndefined();
-      expect(logger.error).toHaveBeenCalled();
+      await expect(cache.del('conv:1')).resolves.toBeUndefined();
+      expect(lines).toEqual([
+        expect.objectContaining({
+          level: 40,
+          'event.name': 'cache.delete.failed',
+          'nebula.component': 'redis',
+          'nebula.cache.key': 'conv:1',
+          err: expect.objectContaining({ message: 'redis down' }),
+        }),
+      ]);
     });
 
-    it('swallows a failing clear', async () => {
+    it('swallows a failing clear and warns once with the pattern', async () => {
       const cache = createCache({ connection: brokenConnection(), logger });
 
-      await expect(cache.clear()).resolves.toBeUndefined();
-      expect(logger.error).toHaveBeenCalled();
+      await expect(cache.clear('conv:*')).resolves.toBeUndefined();
+      expect(lines).toEqual([
+        expect.objectContaining({
+          level: 40,
+          'event.name': 'cache.clear.failed',
+          'nebula.component': 'redis',
+          'nebula.cache.pattern': 'conv:*',
+          err: expect.objectContaining({ message: 'redis down' }),
+        }),
+      ]);
     });
   });
 });

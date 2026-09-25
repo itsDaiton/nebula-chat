@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
+import { componentLogger, logEvent } from '@nebula-chat/otel';
 import { chatCacheKey, saveCachedStream } from '@backend/redis';
 import type { CreateChatStreamDTO, UsageData } from '@backend/modules/chat/chat.types';
 
@@ -36,6 +37,9 @@ export const streamCaptureHook: preHandlerAsyncHookHandler = async (
     return;
   }
 
+  // Fail-open like the cache itself: a capture or save failure is a `warn`,
+  // and the reply the user already received is unaffected.
+  const log = componentLogger(req.log, 'redis');
   let full = '';
   const raw = reply.raw;
   const originalWrite = raw.write.bind(raw);
@@ -44,7 +48,13 @@ export const streamCaptureHook: preHandlerAsyncHookHandler = async (
     try {
       full += typeof chunk === 'string' ? chunk : chunk.toString();
     } catch (err) {
-      req.log.error(err, 'Error capturing stream chunk');
+      logEvent(
+        log,
+        'warn',
+        'cache.capture.failed',
+        { err },
+        'Could not capture a stream chunk for the cache',
+      );
     }
     return (originalWrite as unknown as (...a: unknown[]) => boolean)(chunk, ...args);
   }) as typeof raw.write;
@@ -82,9 +92,21 @@ export const streamCaptureHook: preHandlerAsyncHookHandler = async (
 
     const finalKey = chatCacheKey(req.body as CreateChatStreamDTO);
 
-    req.log.info('Redis: Saving to cache');
-    saveCachedStream(finalKey, filtered, usageData ?? undefined).catch((error) => {
-      req.log.error(error, 'Error saving to cache (fail-open)');
+    logEvent(
+      log,
+      'debug',
+      'cache.saved',
+      { 'nebula.cache.key': finalKey },
+      'Saving the reply to the cache',
+    );
+    saveCachedStream(finalKey, filtered, usageData ?? undefined).catch((error: unknown) => {
+      logEvent(
+        log,
+        'warn',
+        'cache.write.failed',
+        { err: error, 'nebula.cache.key': finalKey },
+        'Cache write failed; continuing without caching',
+      );
     });
   });
 };

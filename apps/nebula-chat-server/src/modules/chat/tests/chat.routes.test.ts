@@ -2,6 +2,7 @@ import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { sseToken, sseUsage } from '@nebula-chat/langchain';
 import { createTestApp } from '@backend/test/app';
+import { captureLogger, eventLines, LEVEL } from '@backend/test/logCapture';
 import { guestSession, registeredSession, REGISTERED_USER_ID } from '@backend/test/session';
 
 vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
@@ -91,10 +92,11 @@ const eventsIn = (body: string) =>
     .filter((l) => l.startsWith('event: '))
     .map((l) => l.slice(7));
 
+const { logger, lines } = captureLogger();
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  app = await createTestApp();
+  app = await createTestApp({ logger });
 });
 
 afterAll(async () => {
@@ -107,6 +109,7 @@ beforeEach(async () => {
   // saveCachedStream call is attributed to this test.
   await new Promise((resolve) => setImmediate(resolve));
   vi.clearAllMocks();
+  lines.length = 0;
   // Default: an authenticated Registered user (uncapped). Allowance tests below
   // swap in a Guest and drive the live message count.
   mockedGetSession.mockResolvedValue(registeredSession() as never);
@@ -440,5 +443,143 @@ describe('POST /api/chat/stream — rate limiting', () => {
     const res = await post(validBody, app, '10.99.0.3');
 
     expect(res.statusCode).toBe(200);
+  });
+});
+
+describe('POST /api/chat/stream — logging', () => {
+  // Earlier describes fire requests back to back (the rate-limit loops) whose
+  // capture hooks save on a later 'finish'. Let every one of them land, then
+  // start from an empty capture, so each test sees only its own request.
+  beforeEach(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    lines.length = 0;
+  });
+
+  const cachedEntry = {
+    tokens: `${sseToken('4')}`,
+    usageData: { promptTokens: 5, completionTokens: 1, totalTokens: 6 },
+  };
+
+  it('completes the hijacked stream with one http.request.completed line', async () => {
+    await post(validBody, app);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(eventLines(lines, 'http.request.completed')).toEqual([
+      expect.objectContaining({
+        level: LEVEL.info,
+        'url.path': '/api/chat/stream',
+        'http.response.status_code': 200,
+        'user.id': REGISTERED_USER_ID,
+      }),
+    ]);
+  });
+
+  it('writes the cache hit at debug with its key', async () => {
+    mockedGetCachedStream.mockResolvedValue(cachedEntry);
+
+    await post(validBody, app);
+
+    expect(eventLines(lines, 'cache.hit')).toEqual([
+      expect.objectContaining({
+        level: LEVEL.debug,
+        'nebula.component': 'redis',
+        'nebula.cache.key': 'cache-key',
+      }),
+    ]);
+  });
+
+  it('writes one chat.reply.completed for a reply replayed from the cache', async () => {
+    mockedGetCachedStream.mockResolvedValue(cachedEntry);
+
+    await post(validBody, app);
+
+    expect(eventLines(lines, 'chat.reply.completed')).toEqual([
+      expect.objectContaining({
+        level: LEVEL.info,
+        'nebula.component': 'chat',
+        'nebula.outcome': 'completed',
+        'nebula.session.id': '11111111-1111-4111-8111-111111111111',
+        'nebula.message.id': '22222222-2222-4222-8222-222222222222',
+        'nebula.reply.message.id': '33333333-3333-4333-8333-333333333333',
+        'nebula.cache.key': 'cache-key',
+        'gen_ai.request.model': 'gpt-4o-mini',
+        'gen_ai.usage.input_tokens': 5,
+        'gen_ai.usage.output_tokens': 1,
+        'nebula.duration_ms': expect.any(Number),
+        'user.id': REGISTERED_USER_ID,
+      }),
+    ]);
+  });
+
+  it('writes the cache save at debug with its key', async () => {
+    await post(validBody, app);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(eventLines(lines, 'cache.saved')).toEqual([
+      expect.objectContaining({ level: LEVEL.debug, 'nebula.cache.key': 'cache-key' }),
+    ]);
+  });
+
+  it('writes a failed cache check as one warn with err, and still streams', async () => {
+    mockedGetCachedStream.mockRejectedValue(new Error('redis down'));
+
+    const res = await post(validBody, app);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(res.statusCode).toBe(200);
+    expect(lines.filter((line) => line.level >= LEVEL.warn)).toEqual([
+      expect.objectContaining({
+        level: LEVEL.warn,
+        'event.name': 'cache.check.failed',
+        'nebula.component': 'redis',
+        err: expect.objectContaining({ message: 'redis down', stack: expect.any(String) }),
+      }),
+    ]);
+  });
+
+  it('writes a failed cache save as a warn with err', async () => {
+    mockedSaveCachedStream.mockRejectedValue(new Error('redis down'));
+
+    await post(validBody, app);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(eventLines(lines, 'cache.write.failed')).toEqual([
+      expect.objectContaining({
+        level: LEVEL.warn,
+        err: expect.objectContaining({ message: 'redis down' }),
+      }),
+    ]);
+  });
+
+  it('writes an unparseable cached token line as a warn', async () => {
+    mockedGetCachedStream.mockResolvedValue({
+      tokens: `event: token\ndata: {"token": not json\n\n${sseToken('4')}`,
+    });
+
+    await post(validBody, app);
+
+    expect(eventLines(lines, 'cache.entry.unparseable')).toEqual([
+      expect.objectContaining({ level: LEVEL.warn, 'nebula.cache.key': 'cache-key' }),
+    ]);
+  });
+
+  it('logs no cookie, Authorization value or Message content', async () => {
+    await app.inject({
+      method: 'POST',
+      url: '/api/chat/stream',
+      remoteAddress: uniqueIp(),
+      headers: {
+        cookie: 'better-auth.session_token=SECRET-COOKIE',
+        authorization: 'Bearer SECRET-TOKEN',
+      },
+      payload: { ...validBody, messages: [{ role: 'user', content: 'SECRET-CONTENT' }] },
+    });
+    await new Promise((resolve) => setImmediate(resolve));
+
+    const logged = JSON.stringify(lines);
+    expect(lines.length).toBeGreaterThan(0);
+    expect(logged).not.toContain('SECRET-COOKIE');
+    expect(logged).not.toContain('SECRET-TOKEN');
+    expect(logged).not.toContain('SECRET-CONTENT');
   });
 });

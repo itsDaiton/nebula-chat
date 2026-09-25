@@ -1,13 +1,44 @@
-import { describe, it, expect, vi } from 'vitest';
-import type { Logger } from '@nebula-chat/otel';
+import { describe, it, expect } from 'vitest';
+import { createLogger } from '@nebula-chat/otel';
 import { toBetterAuthLogHandler } from '../logger';
 
-const makeLogger = () =>
-  ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }) as unknown as Logger;
+type LogLine = Record<string, unknown> & { level: number; msg: string };
+
+/** A real `@nebula-chat/otel` logger writing parsed lines to memory. */
+const makeLogger = (level = 'trace') => {
+  const lines: LogLine[] = [];
+  const logger = createLogger({
+    serviceName: 'test',
+    level,
+    destination: { write: (chunk: string) => lines.push(JSON.parse(chunk) as LogLine) },
+  });
+  return { logger, lines };
+};
 
 describe('toBetterAuthLogHandler', () => {
-  it('routes each better-auth level to the matching Pino method', () => {
-    const logger = makeLogger();
+  it('stamps every line as auth.library.log from nebula.component auth', () => {
+    const { logger, lines } = makeLogger();
+    const log = toBetterAuthLogHandler(logger);
+
+    log('info', 'session created');
+    log('error', 'sign-in failed');
+
+    for (const line of lines) {
+      expect(line['event.name']).toBe('auth.library.log');
+      expect(line['nebula.component']).toBe('auth');
+    }
+  });
+
+  it("keeps better-auth's own text as the message", () => {
+    const { logger, lines } = makeLogger();
+
+    toBetterAuthLogHandler(logger)('warn', 'Rate limit exceeded');
+
+    expect(lines[0]?.msg).toBe('Rate limit exceeded');
+  });
+
+  it('routes each better-auth level to the matching Pino level', () => {
+    const { logger, lines } = makeLogger();
     const log = toBetterAuthLogHandler(logger);
 
     log('debug', 'd');
@@ -15,29 +46,45 @@ describe('toBetterAuthLogHandler', () => {
     log('warn', 'w');
     log('error', 'e');
 
-    expect(logger.debug).toHaveBeenCalledWith('d');
-    expect(logger.info).toHaveBeenCalledWith('i');
-    expect(logger.warn).toHaveBeenCalledWith('w');
-    expect(logger.error).toHaveBeenCalledWith('e');
+    // Pino numeric levels: debug 20, info 30, warn 40, error 50.
+    expect(lines.map((l) => [l.level, l.msg])).toEqual([
+      [20, 'd'],
+      [30, 'i'],
+      [40, 'w'],
+      [50, 'e'],
+    ]);
   });
 
-  it('forwards extra args through to the logger method', () => {
-    const logger = makeLogger();
-    const log = toBetterAuthLogHandler(logger);
+  it('gathers extra args under a single args attribute rather than interpolating them', () => {
+    const { logger, lines } = makeLogger();
 
-    log('error', 'failed', { code: 500 }, 'extra');
+    toBetterAuthLogHandler(logger)('error', 'failed', { code: 500 }, 'extra');
 
-    expect(logger.error).toHaveBeenCalledWith('failed', { code: 500 }, 'extra');
+    expect(lines[0]?.msg).toBe('failed');
+    expect(lines[0]?.args).toEqual([{ code: 500 }, 'extra']);
   });
 
-  it('does not touch levels other than the one logged', () => {
-    const logger = makeLogger();
-    const log = toBetterAuthLogHandler(logger);
+  it('omits args when better-auth passes none', () => {
+    const { logger, lines } = makeLogger();
 
-    log('info', 'only info');
+    toBetterAuthLogHandler(logger)('info', 'bare');
 
-    expect(logger.debug).not.toHaveBeenCalled();
-    expect(logger.warn).not.toHaveBeenCalled();
-    expect(logger.error).not.toHaveBeenCalled();
+    expect(lines[0]).not.toHaveProperty('args');
+  });
+
+  it('censors an email better-auth passes along in its args', () => {
+    const { logger, lines } = makeLogger();
+
+    toBetterAuthLogHandler(logger)('error', 'user lookup failed', { email: 'ada@example.com' });
+
+    expect(JSON.stringify(lines)).not.toContain('ada@example.com');
+  });
+
+  it('respects the logger level', () => {
+    const { logger, lines } = makeLogger('warn');
+
+    toBetterAuthLogHandler(logger)('info', 'not emitted');
+
+    expect(lines).toEqual([]);
   });
 });

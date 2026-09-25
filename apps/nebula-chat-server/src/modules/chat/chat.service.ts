@@ -1,7 +1,7 @@
 import { env } from '@backend/env';
 import { db } from '@backend/db';
 import type { DbTransaction } from '@nebula-chat/db';
-import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
+import type { ChatLogger, CreateChatStreamDTO, UsageData } from '@backend/modules/chat/chat.types';
 import { messageService } from '@backend/modules/message/message.service';
 import { messageRepository } from '@backend/modules/message/message.repository';
 import type { CreateMessageDTO } from '@backend/modules/message/message.types';
@@ -18,7 +18,9 @@ import {
   sseUsage,
   sseError,
 } from '@nebula-chat/langchain';
-import type { LLMLogger, ChatStreamConfig, ProviderType } from '@nebula-chat/langchain';
+import type { ChatStreamConfig, ProviderType } from '@nebula-chat/langchain';
+import { bindAttributes, componentLogger, logEvent } from '@nebula-chat/otel';
+import type { LogAttributes } from '@nebula-chat/otel';
 import { SYSTEM_PROMPT } from '@backend/modules/chat/chat.prompt';
 import {
   NotFoundError,
@@ -26,6 +28,7 @@ import {
   BadRequestError,
   MissingConfigurationError,
   TooManyRequestsError,
+  isAppError,
   toErrorEnvelope,
 } from '@nebula-chat/errors';
 
@@ -112,28 +115,61 @@ export const validateChatRequest = async (
 };
 
 export const chatService = {
+  /**
+   * Streams one Direct reply and writes exactly one `chat.reply.completed` line
+   * for it, whichever way it ends: `completed` at `info`, `rate_limited` at
+   * `warn`, `failed` at `error` with `err` (or `warn` when the caller caused it,
+   * as a 4xx does). The SSE catch below is the single handler for a failed
+   * stream — `@nebula-chat/langchain` rethrows without logging — so a failure
+   * is logged once.
+   */
   async streamResponse(
     data: CreateChatStreamDTO,
     write: (chunk: string) => void,
     userId: string,
-    logger?: LLMLogger,
+    logger: ChatLogger,
   ): Promise<
     { conversationId: string; userMessageId: string; assistantMessageId: string } | undefined
   > {
+    const startMs = Date.now();
+    let conversationId = data.conversationId;
+    let userMessageId: string | undefined;
+    let assistantMessageId: string | undefined;
+    let provider: ProviderType | undefined;
+    let usage: UsageData | undefined;
+
+    // The Session is bound once it is known (a new conversation only gets its
+    // id mid-request), so the model call's lines and the summary both carry it.
+    const sessionLogger = (): ChatLogger =>
+      conversationId === undefined
+        ? logger
+        : bindAttributes(logger, { 'nebula.session.id': conversationId });
+
+    const summary = (): LogAttributes => ({
+      'nebula.message.id': userMessageId,
+      'nebula.reply.message.id': assistantMessageId,
+      'gen_ai.provider.name': provider,
+      'gen_ai.request.model': data.model,
+      'gen_ai.usage.input_tokens': usage?.promptTokens,
+      'gen_ai.usage.output_tokens': usage?.completionTokens,
+      'nebula.duration_ms': Date.now() - startMs,
+    });
+
     const { allowed, retryAfterMs } = rateLimiter.check(userId);
     if (!allowed) {
-      logger?.warn({ userId, retryAfterMs }, 'LLM rate limit exceeded');
       const rateLimited = new TooManyRequestsError(
         `Rate limit exceeded. Retry after ${retryAfterMs}ms.`,
+      );
+      logEvent(
+        componentLogger(sessionLogger(), 'chat'),
+        'warn',
+        'chat.reply.completed',
+        { ...summary(), 'nebula.outcome': 'rate_limited', 'error.type': rateLimited.code },
+        `Direct reply rate-limited · retry in ${retryAfterMs} ms`,
       );
       write(sseError(rateLimited.toEnvelope()));
       return;
     }
-
-    let conversationId = data.conversationId;
-    let userMessageId: string | undefined;
-    let assistantMessageId: string | undefined;
-    const startMs = Date.now();
 
     try {
       if (data.messages.length !== 1) {
@@ -168,14 +204,12 @@ export const chatService = {
         .toReversed()
         .map((m) => ({ role: m.role, content: m.content }));
 
-      let provider: ProviderType;
       try {
         provider = getProviderForModel(requestedModel);
       } catch {
         throw new BadRequestError(`Unsupported model: ${requestedModel}`);
       }
 
-      logger?.info({ model: requestedModel, provider, conversationId }, 'Chat request received');
       const apiKey = provider === 'openai' ? env.OPENAI_API_KEY : env.ANTHROPIC_API_KEY;
       if (!apiKey) {
         throw new MissingConfigurationError(
@@ -190,22 +224,17 @@ export const chatService = {
         history,
         userMessage: userMessage.content,
         model: requestedModel,
-        ...(logger !== undefined && { logger }),
+        logger: componentLogger(sessionLogger(), 'llm'),
       };
 
       let fullResponse = '';
-      let promptTokens: number | null = null;
-      let completionTokens: number | null = null;
-      let totalTokens: number | null = null;
       await streamChat(streamConfig, {
         onToken: (token) => {
           fullResponse += token;
           write(sseToken(token));
         },
         onUsage: (u) => {
-          promptTokens = u.promptTokens;
-          completionTokens = u.completionTokens;
-          totalTokens = u.totalTokens;
+          usage = u;
           write(sseUsage(u));
         },
       });
@@ -219,37 +248,35 @@ export const chatService = {
           conversationId,
           role: 'assistant',
           content: fullResponse,
-          tokenCount: totalTokens,
+          tokenCount: usage?.totalTokens ?? null,
         },
         userId,
       );
       assistantMessageId = assistantMessage.id;
       write(sseAssistantMessageCreated(assistantMessageId));
 
-      logger?.info(
-        {
-          model: requestedModel,
-          provider,
-          conversationId,
-          userMessageId,
-          assistantMessageId,
-          promptTokens,
-          completionTokens,
-          totalTokens,
-          durationMs: Date.now() - startMs,
-        },
-        'Chat request completed',
+      logEvent(
+        componentLogger(sessionLogger(), 'chat'),
+        'info',
+        'chat.reply.completed',
+        { ...summary(), 'nebula.outcome': 'completed' },
+        `Direct reply completed · ${requestedModel} · ${usage?.totalTokens ?? 0} tokens · ${((Date.now() - startMs) / 1000).toFixed(1)} s`,
       );
 
       return { conversationId, userMessageId, assistantMessageId };
     } catch (error) {
-      logger?.error(
-        { conversationId, error: error instanceof Error ? error.message : String(error) },
-        'Chat request failed',
-      );
       // The hijacked reply bypasses the global error handler, so classify here:
       // an AppError speaks for itself, anything else is reported generically.
-      write(sseError(toErrorEnvelope(error)));
+      const envelope = toErrorEnvelope(error);
+      const callerCaused = isAppError(error) && error.status < 500;
+      logEvent(
+        componentLogger(sessionLogger(), 'chat'),
+        callerCaused ? 'warn' : 'error',
+        'chat.reply.completed',
+        { ...summary(), 'nebula.outcome': 'failed', 'error.type': envelope.error, err: error },
+        `Direct reply failed · ${envelope.error}`,
+      );
+      write(sseError(envelope));
     }
   },
 };

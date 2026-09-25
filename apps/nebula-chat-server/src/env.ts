@@ -1,10 +1,12 @@
 import 'dotenv/config';
 import { z } from 'zod';
+import { LOG_LEVELS, logLevelOverridesSchema } from '@backend/utils/logLevelOverrides';
 
 const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-    LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+    LOG_LEVEL: z.enum(LOG_LEVELS).default('info'),
+    LOG_LEVEL_OVERRIDES: logLevelOverridesSchema,
     PORT: z.coerce.number().default(3000),
     DATABASE_URL: z.url(),
     REDIS_URL: z.url(),
