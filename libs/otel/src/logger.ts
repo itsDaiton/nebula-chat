@@ -10,17 +10,17 @@ export type CreateLoggerOptions = {
   /** `service.name` on every line. Required: a line that cannot say who wrote it is noise. */
   serviceName: string;
   /** `service.version` on every line. */
-  serviceVersion?: string | undefined;
+  serviceVersion?: string;
   /** `deployment.environment.name` on every line (e.g. `production`). */
-  environment?: string | undefined;
+  environment?: string;
   /** Root level. Falls back to `process.env.LOG_LEVEL`, then `info`. */
-  level?: string | undefined;
+  level?: string;
   /** Per-component levels applied by `componentLogger`, e.g. `{ redis: 'debug' }`. */
-  levelOverrides?: LevelOverrides | undefined;
+  levelOverrides?: LevelOverrides;
   /** Render through `pino-pretty` (development only). Ignored when `destination` is given. */
-  pretty?: boolean | undefined;
+  pretty?: boolean;
   /** Where lines go instead of stdout — tests pass an in-memory stream. */
-  destination?: DestinationStream | undefined;
+  destination?: DestinationStream;
 };
 
 export type Logger = pino.Logger;

@@ -83,34 +83,46 @@ describe('logEvent', () => {
   });
 
   describe('compile-time catalogue', () => {
+    // Each call below is a compile error. Nothing checks the catalogue at
+    // runtime, so each also shows the line going out exactly as given — the
+    // compiler is the only guard.
+
     it('rejects an unknown event name', () => {
-      const { logger } = capture();
+      const { logger, lines } = capture();
 
       // @ts-expect-error -- not in the event catalogue
       logEvent(logger, 'info', 'http.request.finished', {}, 'x');
+
+      expect(lines[0]?.['event.name']).toBe('http.request.finished');
     });
 
     it('rejects an unknown attribute key in a literal', () => {
-      const { logger } = capture();
+      const { logger, lines } = capture();
 
       // @ts-expect-error -- not in the attribute catalogue
       logEvent(logger, 'info', 'server.started', { 'session.id': 's-1' }, 'x');
+
+      expect(lines[0]?.['session.id']).toBe('s-1');
     });
 
     it('rejects an unknown attribute key held in a variable', () => {
-      const { logger } = capture();
+      const { logger, lines } = capture();
       const attributes = { 'server.port': 3000, userId: 'u-1' };
 
       // @ts-expect-error -- `userId` is not a catalogue key, even outside a literal
       logEvent(logger, 'info', 'server.started', attributes, 'x');
+
+      expect(lines[0]?.userId).toBe('u-1');
     });
 
     it('rejects an attribute of the wrong type', () => {
-      const { logger } = capture();
+      const { logger, lines } = capture();
       const attributes = { 'http.response.status_code': '200' };
 
       // @ts-expect-error -- status codes are numbers
       logEvent(logger, 'info', 'http.request.completed', attributes, 'x');
+
+      expect(lines[0]?.['http.response.status_code']).toBe('200');
     });
 
     it('rejects a level the logger does not have', () => {

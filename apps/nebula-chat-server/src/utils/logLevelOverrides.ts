@@ -15,17 +15,14 @@ const isOverrideLevel = (value: string): value is OverrideLevel => OVERRIDE_LEVE
  * `LOG_LEVEL_OVERRIDES`: comma-separated `component=level` pairs, e.g.
  * `redis=debug,auth=warn`, raising or lowering one `nebula.component` without
  * touching the rest. Component names are free-form (a name no logger uses is
- * inert); an unknown level fails env parsing at boot.
+ * inert); an unknown level fails env parsing at boot. Unset means no overrides.
  */
 export const logLevelOverridesSchema = z
   .string()
   .optional()
-  .transform((raw, ctx): LevelOverrides | undefined => {
-    if (raw === undefined) {
-      return undefined;
-    }
+  .transform((raw, ctx): LevelOverrides => {
     const overrides: Record<string, OverrideLevel> = {};
-    for (const entry of raw.split(',')) {
+    for (const entry of (raw ?? '').split(',')) {
       if (entry.trim() === '') {
         continue;
       }

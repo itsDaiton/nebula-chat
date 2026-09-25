@@ -18,7 +18,11 @@ nebula-chat 2.0 (NEB-349) moves LLM work into a separately deployed worker. One 
 
 ## Decision
 
-- **One line shape, enforced by types.** Every line carries a stable dotted `event.name`, a human `msg`, and flat dotted attributes (OTel semantic conventions, `nebula.*` for domain concepts). The one nested value is `err`. `@nebula-chat/otel` owns the catalogue (`events.ts`, `attributes.ts`) and writes lines through `logEvent`, so an unknown event or key is a compile error. Third-party lines go through stamped adapters (`auth.library.log`, `otel.diag.log`, `fastify.log`).
+- **One line shape, enforced by types.** Every line carries a stable dotted `event.name`, a human `msg`, and flat dotted
+  attributes (OTel semantic conventions, `nebula.*` for domain concepts). The one nested value is `err`.
+  `@nebula-chat/otel` owns the catalogue (`events.ts`, `attributes.ts`) and writes lines through `logEvent`, so an
+  unknown event or key is a compile error. Third-party lines go through stamped adapters (`auth.library.log`,
+  `otel.diag.log`, `fastify.log`).
 - **Log once, where handled.** A 5xx writes one `error` line. A 4xx writes none; its code rides on the completion line as `error.type`. Libraries rethrow without logging.
 - **One `info` line per unit of work.** We replace Fastify's `incoming request`/`request completed` pair with our own `http.request.completed`, written by a root `onResponse` hook. Fastify's request logging is switched off through its `logController` option. That option is also where its remaining internal lines get stamped. The Direct reply writes one `chat.reply.completed`.
 - **Context on every line.** `createLogger` stamps the service fields (a required `serviceName`) and `trace_id`/`span_id`, the latter through a mixin. The auth gate binds the User on `req.log` and `reply.log`, and the chat service binds the Session.

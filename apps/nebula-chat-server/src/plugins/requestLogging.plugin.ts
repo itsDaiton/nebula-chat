@@ -48,7 +48,7 @@ export default fp(
           'nebula.duration_ms': durationMs,
           'error.type': errorType,
         },
-        `${req.method} ${path} ${reply.statusCode}${errorType ? ` ${errorType}` : ''} · ${durationMs} ms`,
+        `${[req.method, path, reply.statusCode, errorType].filter(Boolean).join(' ')} · ${durationMs} ms`,
       );
     });
   },

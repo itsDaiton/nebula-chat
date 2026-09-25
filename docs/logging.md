@@ -281,7 +281,7 @@ dots for _nesting_, so a flat dotted key needs bracket notation
 In development, `pino-pretty` renders `event.name · msg` as the headline and
 hides the service fields and `pid`:
 
-```
+```text
 [13:50:04] INFO: http.request.completed · GET /nope 404 NotFound · 0.55 ms
     http.request.id: "req-2"
     nebula.component: "http"
@@ -349,7 +349,7 @@ Then set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` in
 Nothing to deploy. The app speaks plain OTLP, so you point it at a hosted
 endpoint and set the auth header — no Collector, no sidecar:
 
-```
+```bash
 OTEL_EXPORTER_OTLP_ENDPOINT=<vendor OTLP endpoint>
 OTEL_EXPORTER_OTLP_HEADERS=<vendor auth header>
 ```

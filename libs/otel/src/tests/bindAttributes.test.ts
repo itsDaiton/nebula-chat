@@ -33,17 +33,24 @@ describe('bindAttributes', () => {
     expect(lines[0]).not.toHaveProperty('nebula.session.id');
   });
 
+  // Both calls are compile errors. Nothing checks at runtime, so each also
+  // shows the binding going out as given — the compiler is the only guard.
+
   it('rejects a key outside the catalogue at compile time', () => {
-    const { logger } = capture();
+    const { logger, lines } = capture();
 
     // @ts-expect-error -- flat dotted catalogue keys only
-    bindAttributes(logger, { userId: 'u-1' });
+    bindAttributes(logger, { userId: 'u-1' }).info('bound');
+
+    expect(lines[0]?.userId).toBe('u-1');
   });
 
   it('rejects a value outside the attribute type at compile time', () => {
-    const { logger } = capture();
+    const { logger, lines } = capture();
 
     // @ts-expect-error -- a User is a guest or registered
-    bindAttributes(logger, { 'nebula.user.kind': 'admin' });
+    bindAttributes(logger, { 'nebula.user.kind': 'admin' }).info('bound');
+
+    expect(lines[0]?.['nebula.user.kind']).toBe('admin');
   });
 });

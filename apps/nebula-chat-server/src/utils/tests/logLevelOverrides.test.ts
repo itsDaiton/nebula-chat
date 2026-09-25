@@ -28,8 +28,8 @@ describe('logLevelOverridesSchema', () => {
     expect(logLevelOverridesSchema.parse('')).toEqual({});
   });
 
-  it('leaves the variable optional', () => {
-    expect(logLevelOverridesSchema.parse(undefined)).toBeUndefined();
+  it('reads an unset variable as no overrides', () => {
+    expect(logLevelOverridesSchema.parse(undefined)).toEqual({});
   });
 
   it('accepts any component name, known or not', () => {
