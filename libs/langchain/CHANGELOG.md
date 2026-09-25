@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-langchain-v1.2.0...nebula-chat-langchain-v1.2.1) (2026-09-24)
+
+
+### Bug Fixes
+
+* **errors:** NEB-323 shared error library and unified error envelope across both apps ([#364](https://github.com/itsDaiton/nebula-chat/issues/364)) ([dcca70b](https://github.com/itsDaiton/nebula-chat/commit/dcca70b450381c2918708937aa24557dfd393a88))
+
 ## [1.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-langchain-v1.1.0...nebula-chat-langchain-v1.2.0) (2026-09-16)
 
 

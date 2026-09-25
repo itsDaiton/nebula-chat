@@ -1,6 +1,6 @@
 # ADR-0007: Extract logging and tracing into `@nebula-chat/otel`, with no Fastify logger plugin
 
-- **Status:** Accepted — implemented on `feat/m-5-otel`. Superseded in part by [ADR-0017](./0017-structured-logging-conventions-and-always-on-tracer.md): request logging is no longer Fastify-native, and the tracer is no longer a no-op without an endpoint.
+- **Status:** Accepted — implemented on `feat/m-5-otel`. Amended by [ADR-0017](./0017-structured-logging-conventions.md): request logging is no longer Fastify-native, and the tracer is no longer a no-op without an endpoint.
 - **Date:** 2026-09-13
 - **Deciders:** @itsDaiton
 

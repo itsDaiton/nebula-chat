@@ -1,8 +1,10 @@
 # Logging and tracing
 
 How logs and traces work in Nebula Chat, and the conventions every line follows.
-For the decisions behind the logger's shape, see
-[ADR-0007](./adr/0007-otel-lib-and-fastify-native-logger.md).
+For the decisions behind them, see
+[ADR-0017](./adr/0017-structured-logging-conventions.md) (the conventions) and
+[ADR-0007](./adr/0007-otel-lib-and-fastify-native-logger.md) (one logger, no
+`pino-http`).
 
 ## The short version
 
