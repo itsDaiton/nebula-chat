@@ -73,8 +73,9 @@ const emit = (logger: Logger, level: PinoDiagLevel, message: string, args: unkno
 };
 
 /**
- * Routes OpenTelemetry's internal diagnostics into the given Pino logger, tagged
- * `component: 'otel'` so SDK noise stays filterable in aggregated logs.
+ * Routes OpenTelemetry's internal diagnostics into the given Pino logger, stamped
+ * `event.name: 'otel.diag.log'` from `nebula.component: 'otel'` so SDK noise
+ * stays filterable in aggregated logs. The SDK's own text becomes `msg`.
  *
  * Deliberately not `DiagConsoleLogger`: that writes to `console.*`, which would
  * bypass the very logging pipeline this lib exists to provide.
@@ -86,8 +87,12 @@ const emit = (logger: Logger, level: PinoDiagLevel, message: string, args: unkno
 export const attachDiagLogger = (logger: Logger, raw?: string): void => {
   const logLevel = resolveDiagLevel(raw);
   // The child carries its own level so OTEL_LOG_LEVEL works independently of
-  // the app's LOG_LEVEL — see childLevelFor.
-  const diagLog = logger.child({ component: 'otel' }, { level: childLevelFor(logLevel) });
+  // the app's LOG_LEVEL — see childLevelFor. Not `componentLogger`: its level
+  // comes from OTEL_LOG_LEVEL, not from LOG_LEVEL_OVERRIDES.
+  const diagLog = logger.child(
+    { 'nebula.component': 'otel', 'event.name': 'otel.diag.log' },
+    { level: childLevelFor(logLevel) },
+  );
 
   const adapter: DiagLogger = {
     error: (message, ...args) => emit(diagLog, 'error', message, args),

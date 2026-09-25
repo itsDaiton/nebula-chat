@@ -5,7 +5,13 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { attachDiagLogger, resolveDiagLevel } from '../diag';
 import type { Logger } from '../logger';
 
-type LogLine = { level: number; msg: string; component?: string; args?: unknown[] };
+type LogLine = {
+  level: number;
+  msg: string;
+  'nebula.component'?: string;
+  'event.name'?: string;
+  args?: unknown[];
+};
 
 /**
  * A Pino logger whose output is captured in memory.
@@ -68,13 +74,17 @@ describe('attachDiagLogger', () => {
     diag.disable();
   });
 
-  it("tags every diagnostic with component 'otel'", () => {
+  it("stamps every diagnostic as otel.diag.log from nebula.component 'otel'", () => {
     const { logger, lines } = captureLogger();
     attachDiagLogger(logger, 'all');
 
     diag.error('exporter unreachable');
+    diag.debug('sdk detail');
 
-    expect(lines[0].component).toBe('otel');
+    for (const line of lines) {
+      expect(line['event.name']).toBe('otel.diag.log');
+      expect(line['nebula.component']).toBe('otel');
+    }
     expect(lines[0].msg).toBe('exporter unreachable');
   });
 

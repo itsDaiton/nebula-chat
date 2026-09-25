@@ -1,8 +1,14 @@
-import type { FastifyInstance, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
+import type {
+  FastifyInstance,
+  FastifyReply,
+  FastifyRequest,
+  preHandlerAsyncHookHandler,
+} from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ForbiddenError, UnauthorizedError } from '@nebula-chat/errors';
 import { createTestApp } from '@backend/test/app';
-import { guestSession, registeredSession } from '@backend/test/session';
+import { captureLogger } from '@backend/test/logCapture';
+import { guestSession, registeredSession, REGISTERED_USER_ID } from '@backend/test/session';
 
 // @backend/auth is the boundary to better-auth. Faking it lets the gates be
 // tested against a controllable session without a real instance (ADR-0008). The
@@ -24,14 +30,26 @@ import {
 
 const mockedGetSession = vi.mocked(auth.api.getSession);
 
-// The gates only read `req.headers`; downstream reads happen via `getSessionData`.
-const makeReq = (): FastifyRequest => ({ headers: {} }) as FastifyRequest;
+// The gates read `req.headers` and rebind `req.log`/`reply.log`; downstream reads
+// happen via `getSessionData`. Both loggers write to one in-memory capture, as
+// Fastify's request and reply loggers share one destination.
+const makeRequest = () => {
+  const { logger, lines } = captureLogger();
+  const req = { headers: {}, log: logger } as unknown as FastifyRequest;
+  const reply = { log: logger } as unknown as FastifyReply;
+  return { req, reply, lines };
+};
+
+const makeReq = (): FastifyRequest => makeRequest().req;
 
 // The hooks carry a `this: FastifyInstance` context (Fastify binds it at
-// registration); calling them directly needs a plain-function view. Neither gate
-// uses `reply`, so only `req` is passed.
-const run = (hook: preHandlerAsyncHookHandler, req: FastifyRequest): Promise<unknown> =>
-  (hook as unknown as (r: FastifyRequest) => Promise<unknown>)(req);
+// registration); calling them directly needs a plain-function view.
+const run = (
+  hook: preHandlerAsyncHookHandler,
+  req: FastifyRequest,
+  reply: FastifyReply = makeRequest().reply,
+): Promise<unknown> =>
+  (hook as unknown as (r: FastifyRequest, rep: FastifyReply) => Promise<unknown>)(req, reply);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -51,6 +69,55 @@ describe('requireAuthentication', () => {
     mockedGetSession.mockResolvedValue(null);
 
     await expect(run(requireAuthentication, makeReq())).rejects.toBeInstanceOf(UnauthorizedError);
+  });
+});
+
+describe('User binding', () => {
+  it('binds the Registered user onto both the request and the reply logger', async () => {
+    mockedGetSession.mockResolvedValue(registeredSession() as never);
+    const { req, reply, lines } = makeRequest();
+
+    await run(requireAuthentication, req, reply);
+    req.log.info('from the handler');
+    reply.log.info('from the completion hook');
+
+    expect(lines).toHaveLength(2);
+    for (const line of lines) {
+      expect(line).toMatchObject({
+        'user.id': REGISTERED_USER_ID,
+        'nebula.user.kind': 'registered',
+      });
+    }
+  });
+
+  it('binds a Guest as nebula.user.kind guest', async () => {
+    mockedGetSession.mockResolvedValue(guestSession() as never);
+    const { req, reply, lines } = makeRequest();
+
+    await run(requireAuthentication, req, reply);
+    reply.log.info('done');
+
+    expect(lines[0]?.['nebula.user.kind']).toBe('guest');
+  });
+
+  it('binds the user even when requireRegistered then rejects a Guest', async () => {
+    mockedGetSession.mockResolvedValue(guestSession() as never);
+    const { req, reply, lines } = makeRequest();
+
+    await expect(run(requireRegistered, req, reply)).rejects.toBeInstanceOf(ForbiddenError);
+    reply.log.info('the 403 completion line');
+
+    expect(lines[0]?.['nebula.user.kind']).toBe('guest');
+  });
+
+  it('binds nothing when there is no session', async () => {
+    mockedGetSession.mockResolvedValue(null);
+    const { req, reply, lines } = makeRequest();
+
+    await expect(run(requireAuthentication, req, reply)).rejects.toBeInstanceOf(UnauthorizedError);
+    reply.log.info('the 401 completion line');
+
+    expect(lines[0]).not.toHaveProperty('user.id');
   });
 });
 

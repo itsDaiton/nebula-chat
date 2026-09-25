@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { validatorCompiler } from 'fastify-type-provider-zod';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
   AppError,
@@ -11,12 +11,17 @@ import {
 } from '@nebula-chat/errors';
 import type { ErrorEnvelope } from '@nebula-chat/errors';
 import { errorHandler } from '@backend/errors/error.handler';
+import { captureLogger, eventLines, LEVEL } from '@backend/test/logCapture';
 
-/** Minimal reply double capturing the status/body the handler chose. */
+/**
+ * Minimal reply double capturing the status/body the handler chose. Its `log`
+ * is a real logger writing to memory, so the tests read the lines themselves.
+ */
 const createReply = () => {
   const sent: { status?: number; body?: ErrorEnvelope } = {};
+  const { logger, lines } = captureLogger();
   const reply = {
-    log: { error: vi.fn() },
+    log: logger,
     status(code: number) {
       sent.status = code;
       return this;
@@ -26,10 +31,10 @@ const createReply = () => {
       return this;
     },
   };
-  return { reply: reply as unknown as FastifyReply, sent, logError: reply.log.error };
+  return { reply: reply as unknown as FastifyReply, sent, lines };
 };
 
-const request = {} as FastifyRequest;
+const request = { method: 'GET', url: '/api/conversations?limit=5' } as FastifyRequest;
 
 const handle = (err: Error) => {
   const { reply, sent } = createReply();
@@ -60,13 +65,51 @@ const validationError = () => {
 };
 
 describe('errorHandler', () => {
-  it('logs every error it handles', () => {
-    const { reply, logError } = createReply();
-    const err = new Error('boom');
+  describe('logging', () => {
+    it('logs a 5xx exactly once, at error, with err and its stack', () => {
+      const { reply, lines } = createReply();
 
-    errorHandler(err, request, reply);
+      errorHandler(new TypeError('boom'), request, reply);
 
-    expect(logError).toHaveBeenCalledWith(err);
+      expect(lines).toEqual([
+        expect.objectContaining({
+          level: LEVEL.error,
+          'event.name': 'http.request.failed',
+          'nebula.component': 'http',
+          'error.type': 'Internal',
+          'http.response.status_code': 500,
+          'url.path': '/api/conversations',
+          err: expect.objectContaining({
+            type: 'TypeError',
+            message: 'boom',
+            stack: expect.stringContaining('TypeError: boom'),
+          }),
+        }),
+      ]);
+    });
+
+    it('names a classified 5xx by its own code', () => {
+      const { reply, lines } = createReply();
+
+      errorHandler(Object.assign(new Error('pool exhausted'), { statusCode: 503 }), request, reply);
+
+      expect(eventLines(lines, 'http.request.failed')).toEqual([
+        expect.objectContaining({ 'error.type': 'Internal', 'http.response.status_code': 503 }),
+      ]);
+    });
+
+    it.each([
+      ['an AppError', new NotFoundError('Conversation', 'abc')],
+      ['a schema-validation failure', validationError()],
+      ['a mapped Postgres constraint violation', pgError('23505')],
+      ['a framework 4xx', Object.assign(new Error('Unsupported Media Type'), { statusCode: 415 })],
+    ])('writes no line for %s, a client error', (_label, err) => {
+      const { reply, lines } = createReply();
+
+      errorHandler(err, request, reply);
+
+      expect(lines).toEqual([]);
+    });
   });
 
   it('maps a schema-validation failure onto 400 Validation', () => {

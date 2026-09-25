@@ -45,7 +45,8 @@ apps/nebula-chat-server/src/
 │   ├── headers.config.ts          # SSE + cache response headers (uses http.ServerResponse)
 │   └── pagination.config.ts       # Default/max page limits
 ├── errors/
-│   └── error.handler.ts           # Fastify setErrorHandler callback (Zod, AppError, PG codes, fallback)
+│   ├── error.handler.ts           # Fastify setErrorHandler callback (Zod, AppError, PG codes, fallback); logs a 5xx once
+│   └── requestErrorType.ts        # Per-request error classification, read by the http.request.completed line
 ├── modules/
 │   ├── chat/
 │   │   ├── chat.types.ts
@@ -71,10 +72,18 @@ apps/nebula-chat-server/src/
 │       ├── message.service.ts
 │       ├── message.controller.ts
 │       └── message.routes.ts
+├── test/                          # Shared test harness: createTestApp, session fixtures, logCapture (in-memory logger)
+├── utils/
+│   ├── logController.ts           # Fastify logController: request lines off, framework faults stamped fastify.log
+│   ├── logLevelOverrides.ts       # LOG_LEVEL_OVERRIDES parser (component=level pairs)
+│   ├── requestPath.ts             # url.path: the request path without its query string
+│   ├── pruneUnreferencedSchemas.ts
+│   └── trustProxy.ts
 └── plugins/
+    ├── requestLogging.plugin.ts   # Root hooks: http.request.received (debug) + one http.request.completed (info)
     ├── db.plugin.ts               # Decorates app.db (@nebula-chat/db)
     ├── redis.plugin.ts            # Decorates app.redis (@nebula-chat/redis); closes it on shutdown
-    └── authGate.plugin.ts         # `authGate`: mounts /api/auth/* (better-auth handler); decorates requireAuthentication/requireRegistered
+    └── authGate.plugin.ts         # `authGate`: mounts /api/auth/* (better-auth handler); decorates requireAuthentication/requireRegistered; binds the User onto req.log/reply.log
 ```
 
 Redis is no longer an in-app module. It lives in the `@nebula-chat/redis` lib
@@ -142,6 +151,24 @@ Throw from the service layer; the `errorHandler` exported from `errors/error.han
   `ERROR_STATUS` (the compiler insists on both). Then regenerate the OpenAPI spec and the Orval client.
 
 Never return raw error objects to the client. Never throw from controllers — let the global handler do it.
+
+---
+
+## Logging
+
+The full conventions are in [docs/logging.md](../../docs/logging.md). The rules that bite:
+
+- **Every line goes through `logEvent(logger, level, event, attributes, msg)`** from `@nebula-chat/otel`,
+  or through a stamped adapter. An event name or attribute key missing from the catalogue
+  (`libs/otel/src/events.ts`, `libs/otel/src/attributes.ts`) is a compile error — add it there.
+- **Inside a request, log through `req.log`.** It carries `http.request.id`, and the User once a gate has
+  run. Outside a request, use `@backend/logger`. Never `console`.
+- **Log an error once, where it is handled**, under `err` (never `error`; ESLint rejects it). Code that
+  throws does not also log. A 4xx writes no line of its own.
+- **One `info` line per unit of work** (`http.request.completed`, `chat.reply.completed`); progress inside
+  it is `debug`.
+- **Never log** Message content, prompts, completions, Streaming tokens, emails, names, cookies,
+  `Authorization` headers or API keys. Opaque ids are fine.
 
 ---
 
@@ -239,7 +266,7 @@ single-tier `cache` primitive), registered by `plugins/redis.plugin.ts` and reac
 1. `chat.cacheCheck.hook.ts` preHandler runs before the controller. If `regenerate` is set it bypasses the cache; otherwise, on a hit it replays the cached token stream and returns — the LLM provider is never called.
 2. `chat.streamCapture.hook.ts` preHandler monkey-patches `reply.raw.write` after a real completion call. When the response ends it saves (and, on regenerate, overwrites) the full SSE stream to Redis.
 3. TTL: 600 seconds (10 minutes). The keyspace is bounded by TTL + Redis `maxmemory-policy` (`allkeys-lru`) — there is no hand-rolled eviction.
-4. **Fail-open:** every cache operation swallows Redis errors (read → miss, write → no-op), logged through `@nebula-chat/otel`; the app continues without caching.
+4. **Fail-open:** every cache operation swallows Redis errors (read → miss, write → no-op), logged at `warn` as `cache.*.failed` through `@nebula-chat/otel`; the app continues without caching.
 
 Cache hit/miss are emitted as OpenTelemetry metrics; there are no `/api/cache/*` admin endpoints (removed in the migration — a dashboard is a later concern).
 
@@ -337,22 +364,23 @@ Never use relative paths in the backend. Aliases are configured in `tsconfig.jso
 
 `apps/nebula-chat-server/.env`:
 
-| Variable                      | Purpose                                                                                                     |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `OPENAI_API_KEY`              | OpenAI API key (optional — set at least one of this or `ANTHROPIC_API_KEY`)                                 |
-| `ANTHROPIC_API_KEY`           | Anthropic API key (optional — set at least one of this or `OPENAI_API_KEY`)                                 |
-| `DATABASE_URL`                | PostgreSQL connection string                                                                                |
-| `REDIS_URL`                   | Redis connection (e.g. `redis://localhost:6380`)                                                            |
-| `REDIS_PASSWORD`              | Redis password (if set)                                                                                     |
-| `CLIENT_URL`                  | Frontend origin for CORS (e.g. `http://localhost:5173`)                                                     |
-| `SERVER_URL`                  | Backend public URL (used in OpenAPI docs)                                                                   |
-| `BETTER_AUTH_SECRET`          | better-auth secret — signs sessions and the session cookie cache (required)                                 |
-| `BETTER_AUTH_URL`             | App base URL for better-auth cookies/redirects (required, e.g. `http://localhost:3000`)                     |
-| `GUEST_MESSAGE_ALLOWANCE`     | Guest `user`-message cap before registration is required (int, default `10`; ADR-0010)                      |
-| `PORT`                        | Port to listen on (default `3000`)                                                                          |
-| `LOG_LEVEL`                   | Log verbosity (default `info`; set to `debug`/`warn` etc. in prod)                                          |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector URL. Unset disables tracing entirely (`initTelemetry` no-ops)                                |
-| `OTEL_LOG_LEVEL`              | Verbosity of the OTel SDK's own diagnostics (default `error`; `none`/`warn`/`info`/`debug`/`verbose`/`all`) |
+| Variable                      | Purpose                                                                                                          |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `OPENAI_API_KEY`              | OpenAI API key (optional — set at least one of this or `ANTHROPIC_API_KEY`)                                      |
+| `ANTHROPIC_API_KEY`           | Anthropic API key (optional — set at least one of this or `OPENAI_API_KEY`)                                      |
+| `DATABASE_URL`                | PostgreSQL connection string                                                                                     |
+| `REDIS_URL`                   | Redis connection (e.g. `redis://localhost:6380`)                                                                 |
+| `REDIS_PASSWORD`              | Redis password (if set)                                                                                          |
+| `CLIENT_URL`                  | Frontend origin for CORS (e.g. `http://localhost:5173`)                                                          |
+| `SERVER_URL`                  | Backend public URL (used in OpenAPI docs)                                                                        |
+| `BETTER_AUTH_SECRET`          | better-auth secret — signs sessions and the session cookie cache (required)                                      |
+| `BETTER_AUTH_URL`             | App base URL for better-auth cookies/redirects (required, e.g. `http://localhost:3000`)                          |
+| `GUEST_MESSAGE_ALLOWANCE`     | Guest `user`-message cap before registration is required (int, default `10`; ADR-0010)                           |
+| `PORT`                        | Port to listen on (default `3000`)                                                                               |
+| `LOG_LEVEL`                   | Log verbosity (default `info`; set to `debug`/`warn` etc. in prod)                                               |
+| `LOG_LEVEL_OVERRIDES`         | Per-component levels, comma-separated `component=level` (e.g. `redis=debug,auth=warn`); unknown level fails boot |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector URL. Unset = spans are not exported (the tracer still runs, so lines keep their `trace_id`)       |
+| `OTEL_LOG_LEVEL`              | Verbosity of the OTel SDK's own diagnostics (default `error`; `none`/`warn`/`info`/`debug`/`verbose`/`all`)      |
 
 > **`env.ts` rule:** All env vars are Zod-validated in `src/env.ts` and fail loudly at startup before any listener is bound. Never read `process.env.*` directly anywhere in the backend — always import from `@backend/env`.
 >

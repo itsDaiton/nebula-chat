@@ -23,6 +23,8 @@ import { logger } from '@backend/logger';
 import chatRoutes from '@backend/modules/chat/chat.routes';
 import conversationRoutes from '@backend/modules/conversation/conversation.routes';
 import messageRoutes from '@backend/modules/message/message.routes';
+import requestLogging from '@backend/plugins/requestLogging.plugin';
+import { logController } from '@backend/utils/logController';
 import { pruneUnreferencedSchemas } from '@backend/utils/pruneUnreferencedSchemas';
 import { resolveTrustProxy } from '@backend/utils/trustProxy';
 
@@ -52,20 +54,26 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   const loggerInstance: FastifyBaseLogger = options?.logger ?? logger;
 
   const app = Fastify({
-    // Fastify owns request/response logging, reqId generation, the req/res
-    // serializers, and the per-request req.log child logger. Do not layer a
-    // pino-http hook on top of this — see ADR-0007.
+    // Fastify owns request-id generation and the per-request req.log child
+    // logger. Its own request/response lines are off (`logController`): the
+    // requestLogging plugin writes one `http.request.completed` per request
+    // instead (ADR-0017). Do not layer a pino-http hook on top of this — see
+    // ADR-0007.
     //
     // `loggerInstance`, not `logger`: since Fastify v5 the `logger` option takes
     // a boolean or a Pino *config*, and an already-constructed instance goes to
     // `loggerInstance`. Passing one to `logger` falls through to the http2
     // overload and misreports itself as a dozen unrelated type errors.
     loggerInstance,
+    logController,
     trustProxy: resolveTrustProxy(),
   });
 
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
+
+  // First, so its root-level hooks wrap every route registered after it.
+  await app.register(requestLogging);
 
   await app.register(import('./plugins/db.plugin'));
   await app.register(import('./plugins/redis.plugin'));

@@ -11,7 +11,9 @@ export type RedisConfig = {
   redisUrl: string;
   /**
    * Injected `@nebula-chat/otel` logger. The lib logs exclusively through this —
-   * it never reaches for `console` or a consumer's own logger.
+   * it never reaches for `console` or a consumer's own logger — via a
+   * `nebula.component: redis` child, so `LOG_LEVEL_OVERRIDES=redis=…` applies.
+   * Pass a logger with no component bound yet.
    */
   logger: Logger;
   cache?: CacheOptions;

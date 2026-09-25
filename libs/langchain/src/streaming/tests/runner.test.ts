@@ -220,18 +220,48 @@ describe('streamChat', () => {
     await expect(collect(baseConfig())).rejects.toThrow('a bare string');
   });
 
-  it('logs start and completion when a logger is supplied', async () => {
+  it('logs start and finish at debug with the gen_ai attributes', async () => {
     stubChain(['x']);
     const logger = { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
 
     await collect(baseConfig({ logger }));
 
-    expect(logger.info).toHaveBeenCalledWith(expect.anything(), 'LLM stream started');
-    expect(logger.info).toHaveBeenCalledWith(expect.anything(), 'LLM stream completed');
-    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.debug).toHaveBeenCalledWith(
+      expect.objectContaining({
+        'event.name': 'llm.stream.started',
+        'gen_ai.provider.name': 'openai',
+        'gen_ai.request.model': 'gpt-4o-mini',
+      }),
+      expect.any(String),
+    );
+    expect(logger.debug).toHaveBeenCalledWith(
+      expect.objectContaining({
+        'event.name': 'llm.stream.finished',
+        'gen_ai.provider.name': 'openai',
+        'gen_ai.request.model': 'gpt-4o-mini',
+        'gen_ai.usage.input_tokens': expect.any(Number),
+        'gen_ai.usage.output_tokens': expect.any(Number),
+        'nebula.duration_ms': expect.any(Number),
+      }),
+      expect.any(String),
+    );
+    expect(logger.info).not.toHaveBeenCalled();
   });
 
-  it('logs the failure and does not log completion when the stream throws', async () => {
+  it('never logs the user message or the completion text', async () => {
+    stubChain(['the secret answer']);
+    const logger = { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
+
+    await collect(baseConfig({ logger, userMessage: 'my private question' }));
+
+    const logged = JSON.stringify(
+      [logger.info, logger.warn, logger.error, logger.debug].flatMap((m) => m.mock.calls),
+    );
+    expect(logged).not.toContain('my private question');
+    expect(logged).not.toContain('the secret answer');
+  });
+
+  it('leaves a stream failure to the caller: rethrows without logging it', async () => {
     mockedBuildChatChain.mockReturnValue({
       stream: () => Promise.reject(new Error('nope')),
     } as unknown as ReturnType<typeof buildChatChain>);
@@ -239,11 +269,12 @@ describe('streamChat', () => {
 
     await expect(collect(baseConfig({ logger }))).rejects.toThrow('nope');
 
-    expect(logger.error).toHaveBeenCalledWith(
-      expect.objectContaining({ error: 'nope' }),
-      'LLM stream failed',
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.warn).not.toHaveBeenCalled();
+    expect(logger.debug).not.toHaveBeenCalledWith(
+      expect.objectContaining({ 'event.name': 'llm.stream.finished' }),
+      expect.any(String),
     );
-    expect(logger.info).not.toHaveBeenCalledWith(expect.anything(), 'LLM stream completed');
   });
 
   it('runs without a logger', async () => {

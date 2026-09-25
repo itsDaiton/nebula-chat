@@ -3,6 +3,7 @@ import type * as LangChainLib from '@nebula-chat/langchain';
 import { fromPartial } from '@total-typescript/shoehorn';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
+import { captureLogger, eventLines, LEVEL } from '@backend/test/logCapture';
 
 const fakeTx = { __tx: true };
 
@@ -64,12 +65,24 @@ const request = (overrides: Partial<CreateChatStreamDTO> = {}): CreateChatStream
     ...overrides,
   }) as CreateChatStreamDTO;
 
-/** Collects everything the service writes to the SSE stream. */
+/**
+ * Collects everything the service writes to the SSE stream, and every line it
+ * logs through a real in-memory logger.
+ */
 const collectStream = async (data: CreateChatStreamDTO, userId = 'anonymous') => {
   const frames: string[] = [];
-  const result = await chatService.streamResponse(data, (chunk) => frames.push(chunk), userId);
-  return { frames, joined: frames.join(''), result };
+  const { logger, lines } = captureLogger();
+  const result = await chatService.streamResponse(
+    data,
+    (chunk) => frames.push(chunk),
+    userId,
+    logger,
+  );
+  return { frames, joined: frames.join(''), result, lines };
 };
+
+const replyLines = (lines: Parameters<typeof eventLines>[0]) =>
+  eventLines(lines, 'chat.reply.completed');
 
 /** The payload of the stream's `error` frame — the shared error envelope. */
 const errorFrame = (frames: string[]): unknown => {
@@ -386,5 +399,134 @@ describe('chatService.streamResponse', () => {
     const { joined } = await collectStream(request(), `quiet-${Date.now()}`);
 
     expect(joined).not.toContain('Rate limit exceeded');
+  });
+});
+
+describe('chatService.streamResponse — chat.reply.completed', () => {
+  it('writes exactly one info line for a completed Direct reply', async () => {
+    respondWith(['4'], { promptTokens: 11, completionTokens: 4, totalTokens: 15 });
+
+    const { lines } = await collectStream(request());
+
+    expect(replyLines(lines)).toEqual([
+      expect.objectContaining({
+        level: LEVEL.info,
+        'nebula.component': 'chat',
+        'nebula.outcome': 'completed',
+        'nebula.session.id': CONVERSATION_ID,
+        'nebula.message.id': USER_MESSAGE_ID,
+        'nebula.reply.message.id': ASSISTANT_MESSAGE_ID,
+        'gen_ai.provider.name': 'openai',
+        'gen_ai.request.model': 'gpt-4o-mini',
+        'gen_ai.usage.input_tokens': 11,
+        'gen_ai.usage.output_tokens': 4,
+        'nebula.duration_ms': expect.any(Number),
+      }),
+    ]);
+  });
+
+  it('is the only info line a completed reply writes', async () => {
+    const { lines } = await collectStream(request());
+
+    expect(lines.filter((line) => line.level >= LEVEL.info)).toHaveLength(1);
+  });
+
+  it('binds the Session a new conversation was given', async () => {
+    const { lines } = await collectStream(request({ conversationId: undefined }));
+
+    expect(replyLines(lines)[0]?.['nebula.session.id']).toBe(CONVERSATION_ID);
+  });
+
+  it('has the model call log under the Session, from the llm component', async () => {
+    // The faked LLM logs the way @nebula-chat/langchain does: through the
+    // logger it is handed.
+    mockedStreamChat.mockImplementation(async (config, callbacks) => {
+      config.logger?.debug({ 'event.name': 'llm.stream.started' }, 'LLM stream started');
+      callbacks.onToken('4');
+      callbacks.onUsage({ promptTokens: 5, completionTokens: 1, totalTokens: 6 });
+    });
+
+    const { lines } = await collectStream(request());
+
+    expect(eventLines(lines, 'llm.stream.started')).toEqual([
+      expect.objectContaining({
+        'nebula.component': 'llm',
+        'nebula.session.id': CONVERSATION_ID,
+      }),
+    ]);
+  });
+
+  it('writes one warn line, and nothing else, when rate-limited', async () => {
+    const userId = `limited-${Date.now()}`;
+    for (let i = 0; i < 20; i++) await collectStream(request(), userId);
+
+    const { lines } = await collectStream(request(), userId);
+
+    expect(lines.filter((line) => line.level >= LEVEL.info)).toEqual([
+      expect.objectContaining({
+        level: LEVEL.warn,
+        'event.name': 'chat.reply.completed',
+        'nebula.outcome': 'rate_limited',
+        'error.type': 'TooManyRequests',
+        'nebula.session.id': CONVERSATION_ID,
+      }),
+    ]);
+  });
+
+  it('writes exactly one error line when the LLM stream fails', async () => {
+    mockedStreamChat.mockRejectedValue(new Error('401 Incorrect API key provided'));
+
+    const { lines } = await collectStream(request());
+
+    const errors = lines.filter((line) => line.level >= LEVEL.error);
+    expect(errors).toEqual([
+      expect.objectContaining({
+        'event.name': 'chat.reply.completed',
+        'nebula.outcome': 'failed',
+        'error.type': 'Internal',
+        'nebula.session.id': CONVERSATION_ID,
+        'nebula.message.id': USER_MESSAGE_ID,
+        err: expect.objectContaining({
+          message: '401 Incorrect API key provided',
+          stack: expect.any(String),
+        }),
+      }),
+    ]);
+    expect(replyLines(lines)).toHaveLength(1);
+  });
+
+  it('omits the assistant message id when none was created', async () => {
+    mockedStreamChat.mockRejectedValue(new Error('boom'));
+
+    const { lines } = await collectStream(request());
+
+    expect(replyLines(lines)[0]).not.toHaveProperty('nebula.reply.message.id');
+  });
+
+  it('writes a failure the caller caused at warn, still as failed', async () => {
+    conversationRepo.findByIdSimple.mockResolvedValue(fromPartial(null));
+
+    const { lines } = await collectStream(request());
+
+    expect(replyLines(lines)).toEqual([
+      expect.objectContaining({
+        level: LEVEL.warn,
+        'nebula.outcome': 'failed',
+        'error.type': 'NotFound',
+        err: expect.objectContaining({ type: 'NotFoundError' }),
+      }),
+    ]);
+  });
+
+  it('never logs Message content: not the prompt, not the completion', async () => {
+    respondWith(['the secret answer']);
+
+    const { lines } = await collectStream(
+      request({ messages: [{ role: 'user', content: 'my private question' }] }),
+    );
+
+    const logged = JSON.stringify(lines);
+    expect(logged).not.toContain('my private question');
+    expect(logged).not.toContain('the secret answer');
   });
 });

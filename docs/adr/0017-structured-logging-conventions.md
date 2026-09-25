@@ -1,6 +1,6 @@
 # ADR-0017: Structured logging conventions — log once, one summary per unit of work, OTel-style flat attributes
 
-- **Status:** Proposed
+- **Status:** Accepted — implemented by NEB-369 (#372)
 - **Date:** 2026-09-24
 - **Deciders:** @itsDaiton
 - **Amends:** [ADR-0007](./0007-otel-lib-and-fastify-native-logger.md) — request log lines and tracer start-up
@@ -133,6 +133,29 @@ An ESLint `no-restricted-syntax` rule rejects an `error:` key in a log call.
   - Dotted keys are noisier than camelCase to read in raw JSON; the pretty dev format mitigates it locally only.
   - Level changes need a redeploy until runtime switching exists.
 - **Neutral:** no HTTP API, OpenAPI or DB change.
+
+## Implementation notes
+
+Where NEB-369 departs from the text above, and why:
+
+- **Trace ids come from a Pino `mixin`, not the OTel Pino instrumentation** (decision 4's Trace row).
+  Pino is loaded through `@nebula-chat/otel` before `initTelemetry` runs, so the instrumentation never
+  patches it; it is disabled, and the mixin reads the active span through `@opentelemetry/api`.
+- **Fastify's request lines are switched off through its `logController` option**, not
+  `disableRequestLogging: true` (decision 6). Fastify 5.12 deprecates the top-level option. The same
+  controller stamps Fastify's remaining framework-fault lines `fastify.log` (decision 11).
+- **`error.type` is always the classification code** — the `AppError` code, `Internal` when
+  unclassified (decision 4). The class name is already in `err.type`.
+- **The assistant Message is `nebula.reply.message.id`.** A summary line names both Messages, and one
+  flat key cannot hold two values; the user Message keeps `nebula.message.id`.
+- **A `failed` Direct reply the caller caused (a 4xx code) is `warn`**, not `error`, per decision 1's
+  "a 4xx writes no line of its own". It still carries `err`.
+- **Without an endpoint, the SDK runs with a span processor that discards every span** (decision 7).
+  With zero processors `NodeSDK` installs no tracer provider, and spans would carry no ids.
+- **Under `tsx` (`pnpm dev`), auto-instrumentation does not patch**, so development lines carry no
+  `trace_id`. The compiled server does.
+
+See [docs/logging.md](../logging.md) for the conventions as built.
 
 ## Follow-ups
 

@@ -220,6 +220,32 @@ export default [
     },
   },
   {
+    // docs/logging.md: an error is logged under `err`, never `error`. Pino's
+    // error serializer runs only for `err`, so `{ error }` loses the stack and
+    // the cause — and `{ error: err.message }` throws them away on purpose.
+    files: [
+      'apps/nebula-chat-server/**/*.{ts,js}',
+      'libs/{auth,db,errors,langchain,otel,redis}/**/*.{ts,js}',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            'CallExpression[callee.property.name=/^(trace|debug|info|warn|error|fatal)$/] > ObjectExpression:first-child > Property[key.name="error"]',
+          message:
+            'Log an error under `err`, not `error`: Pino serializes only `err`, with its stack and cause (docs/logging.md).',
+        },
+        {
+          selector:
+            'CallExpression[callee.property.name=/^(trace|debug|info|warn|error|fatal)$/] > ObjectExpression:first-child > Property[key.value="error"]',
+          message:
+            'Log an error under `err`, not `error`: Pino serializes only `err`, with its stack and cause (docs/logging.md).',
+        },
+      ],
+    },
+  },
+  {
     files: ['scripts/**/*.ts'],
     languageOptions: {
       parser: tsParser,

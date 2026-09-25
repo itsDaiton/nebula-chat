@@ -11,8 +11,13 @@ export class AppError extends Error {
   readonly code: ErrorCode;
   readonly status: number;
 
-  constructor(code: ErrorCode, message: string) {
-    super(message);
+  /**
+   * `options.cause` keeps the error this one was mapped from (a Postgres driver
+   * error behind a `ConflictError`, say). It stays server-side: `toEnvelope()`
+   * never includes it, but the logger's `err` serializer does.
+   */
+  constructor(code: ErrorCode, message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = new.target.name;
     this.code = code;
     this.status = ERROR_STATUS[code];
@@ -36,8 +41,8 @@ export class BadRequestError extends AppError {
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string) {
-    super('Validation', message);
+  constructor(message: string, options?: ErrorOptions) {
+    super('Validation', message, options);
   }
 }
 
@@ -70,8 +75,8 @@ export class NotFoundError extends AppError {
 }
 
 export class ConflictError extends AppError {
-  constructor(message: string) {
-    super('Conflict', message);
+  constructor(message: string, options?: ErrorOptions) {
+    super('Conflict', message, options);
   }
 }
 

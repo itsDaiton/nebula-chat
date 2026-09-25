@@ -32,6 +32,20 @@ describe('AppError', () => {
     expect(err.stack).toBeDefined();
   });
 
+  it('keeps the error it was mapped from as its cause', () => {
+    const driverError = new Error('duplicate key value violates unique constraint');
+
+    expect(new AppError('Conflict', 'taken', { cause: driverError }).cause).toBe(driverError);
+    expect(new ConflictError('taken', { cause: driverError }).cause).toBe(driverError);
+    expect(new ValidationError('bad', { cause: driverError }).cause).toBe(driverError);
+  });
+
+  it('never puts the cause in the envelope the client sees', () => {
+    const err = new ConflictError('taken', { cause: new Error('driver detail') });
+
+    expect(JSON.stringify(err.toEnvelope())).not.toContain('driver detail');
+  });
+
   it('answers with its code and message as the envelope', () => {
     expect(new AppError('Conflict', 'taken').toEnvelope()).toEqual({
       success: false,

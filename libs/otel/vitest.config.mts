@@ -9,8 +9,10 @@ export default defineConfig({
       reporter: ['text-summary', 'lcov'],
       include: ['src/**/*.ts'],
       // ADR-0008: SDK wiring, not behaviour. `tracing.ts` constructs and starts the
-      // OpenTelemetry NodeSDK and `index.ts` re-exports; neither is assertable
-      // without standing up a live OTLP collector, which this ticket excludes.
+      // OpenTelemetry NodeSDK and `index.ts` re-exports. What tracing.ts promises
+      // a log reader (trace ids with no endpoint, no exporter built, a warn on a
+      // failed start) is asserted in tracing.test.ts; its export branch needs a
+      // live OTLP collector, which unit tests exclude.
       // Mirrored into `matrix.coverage` in .github/workflows/build.yml so the
       // Sonar gate measures the same denominator. Change one, change the other.
       exclude: ['src/**/tests/**', 'src/index.ts', 'src/tracing.ts'],

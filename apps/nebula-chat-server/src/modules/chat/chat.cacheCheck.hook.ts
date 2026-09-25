@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
+import { bindAttributes, componentLogger, logEvent } from '@nebula-chat/otel';
 import { setCacheHeaders } from '@backend/config/headers.config';
 import { createUserMessage, validateChatRequest } from '@backend/modules/chat/chat.service';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
@@ -14,10 +15,21 @@ import {
 } from '@nebula-chat/langchain';
 import { messageService } from '@backend/modules/message/message.service';
 
+/**
+ * Replays a cached Direct reply. Fail-open: any failure here (a Redis error, a
+ * replay that cannot be persisted) is a `warn` and the request falls through to
+ * a normal model call — the user is unaffected.
+ *
+ * A replay is still a Direct reply, so it writes the same one-per-reply
+ * `chat.reply.completed` summary `chat.service` does, marked by its
+ * `nebula.cache.key`.
+ */
 export const cacheCheckHook: preHandlerAsyncHookHandler = async (
   req: FastifyRequest,
   reply: FastifyReply,
 ) => {
+  const startMs = Date.now();
+  const log = componentLogger(req.log, 'redis');
   try {
     const body = req.body as CreateChatStreamDTO;
 
@@ -33,7 +45,7 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
     if (!cachedData) {
       return;
     }
-    req.log.info('Redis: Cache hit');
+    logEvent(log, 'debug', 'cache.hit', { 'nebula.cache.key': key }, 'Replaying a cached reply');
 
     const conversationId = body.conversationId;
     const userMessage = body.messages[0];
@@ -57,7 +69,13 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
             assistantContent += data.token;
           }
         } catch {
-          req.log.warn('Redis: Failed to parse cached token line');
+          logEvent(
+            log,
+            'warn',
+            'cache.entry.unparseable',
+            { 'nebula.cache.key': key },
+            'Skipped an unparseable token line in a cached reply',
+          );
         }
       }
     }
@@ -108,7 +126,33 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
     raw.write(sseAssistantMessageCreated(assistantMessageId));
     raw.write(sseEnd());
     raw.end();
+
+    logEvent(
+      componentLogger(
+        bindAttributes(req.log, { 'nebula.session.id': finalConversationId }),
+        'chat',
+      ),
+      'info',
+      'chat.reply.completed',
+      {
+        'nebula.outcome': 'completed',
+        'nebula.message.id': userMessageId,
+        'nebula.reply.message.id': assistantMessageId,
+        'nebula.cache.key': key,
+        'gen_ai.request.model': body.model,
+        'gen_ai.usage.input_tokens': cachedData.usageData?.promptTokens,
+        'gen_ai.usage.output_tokens': cachedData.usageData?.completionTokens,
+        'nebula.duration_ms': Date.now() - startMs,
+      },
+      `Direct reply replayed from the cache · ${body.model} · ${cachedData.usageData?.totalTokens ?? 0} tokens`,
+    );
   } catch (error) {
-    req.log.error(error, 'Cache check error (fail-open)');
+    logEvent(
+      log,
+      'warn',
+      'cache.check.failed',
+      { err: error },
+      'Cache check failed; calling the model instead',
+    );
   }
 };
