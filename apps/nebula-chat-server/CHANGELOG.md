@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.13.2...nebula-chat-server-v2.0.0) (2026-09-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* **otel:** NEB-369 structured logging conventions across server and libs ([#372](https://github.com/itsDaiton/nebula-chat/issues/372))
+
+### Features
+
+* **otel:** NEB-369 structured logging conventions across server and libs ([#372](https://github.com/itsDaiton/nebula-chat/issues/372)) ([d276ddf](https://github.com/itsDaiton/nebula-chat/commit/d276ddf6711db0ff715efe2c2f3afe67275a3a32))
+
 ## [1.13.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.13.1...nebula-chat-server-v1.13.2) (2026-09-24)
 
 
