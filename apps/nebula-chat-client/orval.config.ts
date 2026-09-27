@@ -36,10 +36,7 @@ export default defineConfig({
           path: './src/libs/api/client.ts',
           name: 'axiosClient',
         },
-        // `useQuery`/`useMutation` are left to Orval's verb defaults (GET → query,
-        // everything else → mutation): setting either globally forces every
-        // operation into that shape, which generated the GETs as mutations.
-        // Non-suspense hooks keep the skeleton-on-`isPending` pattern (ADR-0012).
+        // No global useQuery/useMutation: either flag forces every operation into that shape.
         query: {
           useSuspenseQuery: false,
           signal: true,

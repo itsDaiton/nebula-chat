@@ -89,8 +89,7 @@ describe('useConversation', () => {
   });
 
   it('waits out a refetch of stale messages rather than loading them', async () => {
-    // After a stream ends the messages query is invalidated; the conversation
-    // must be loaded from the refetch, not from the stale cache.
+    // A finished stream invalidates messages; load from the refetch, not the stale cache.
     const queryClient = createTestQueryClient();
     queryClient.setQueryData(getListMessagesQueryKey(), []);
     await queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() });
@@ -102,8 +101,7 @@ describe('useConversation', () => {
   });
 
   it('keeps the live history of the conversation already in the chat', async () => {
-    // The post-stream navigation lands here with the streamed reply already
-    // in the chat; replacing it from the server would flash the message list.
+    // Post-stream navigation arrives with the reply already streamed; reloading it would flash.
     useChatStreamStore.setState({
       conversationId: CONVERSATION_ID,
       history: [{ id: 'live', role: 'assistant', content: 'streamed' }],

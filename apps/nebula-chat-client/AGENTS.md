@@ -30,6 +30,7 @@ apps/nebula-chat-client/src/
 │   ├── client.ts                  # axios instance (credentials, AppError interceptor); Orval's mutator
 │   ├── queryClient.ts             # createQueryClient + the app's client (global onError → toaster)
 │   ├── types/types.ts             # createQueryClient options
+│   ├── utils/                     # toAppError (failed request → AppError), notifyError (→ toaster)
 │   └── generated/                 # Orval output: react-query hooks, models, MSW handlers
 ├── resources.ts                   # UI string constants
 ├── App.css
@@ -251,8 +252,8 @@ generate:api` after any backend change; generated files are never hand-edited.
 - Use the plain, non-suspense hooks (`useSuspenseQuery: false` in `orval.config.ts`) and drive skeletons off
   `isPending` / `isFetchingNextPage`.
 - **Errors are typed.** The axios interceptor in `libs/api/client.ts` rejects every failed request with an
-  `AppError` from `@nebula-chat/errors`: an envelope keeps its code and message, anything else gets a code
-  from its status and a generic message. `query.error` is therefore an `AppError` whose `message` is safe to
+  `AppError` from `@nebula-chat/errors`, built by `libs/api/utils/toAppError.ts`: an envelope keeps its code
+  and message, anything else gets a code from its status and a generic message. `query.error` is therefore an `AppError` whose `message` is safe to
   show. The global `onError` in `libs/api/queryClient.ts` toasts every failure once; a component reads
   `query.error` only for an inline state.
 - **After a write the cache cannot see, invalidate** with the generated key helpers:

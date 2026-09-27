@@ -3,13 +3,8 @@ import { useListMessages } from '@/libs/api/generated/messages/messages';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { mapConversationMessages } from '@/modules/chat/utils/mapConversationMessages';
 
-/**
- * The conversation named in the route, loaded into the chat.
- *
- * The API has no per-conversation messages endpoint, so its messages are read
- * from the caller's full message list — one cached query shared by every
- * conversation — and filtered here.
- */
+// Loads the routed conversation into the chat. Its messages are filtered from the
+// caller's full list, as no per-conversation messages endpoint exists.
 export const useConversation = (conversationId: string | undefined) => {
   const hasConversation = Boolean(conversationId);
 
@@ -24,13 +19,10 @@ export const useConversation = (conversationId: string | undefined) => {
     },
   });
 
-  // A refetch in flight means the cached messages are stale (a stream just
-  // ended), so the history waits for it rather than loading the old copy.
+  // A refetch in flight means the cached messages are stale (a stream just ended).
   const isSettled = detail.isSuccess && messages.isSuccess && !messages.isFetching;
 
-  // Render-time sync, no effect: the chat store holds the history the view
-  // shows, and it follows the route. Each write is guarded, so it happens once
-  // per route change and a re-render is a no-op.
+  // Guarded render-time sync (no effect): the chat history follows the route.
   const chat = useChatStreamStore.getState();
   if (!conversationId) {
     if (!chat.isStreaming && chat.conversationId !== undefined) {

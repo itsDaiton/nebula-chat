@@ -41,9 +41,7 @@ export const useChatStream = () => {
   const conversationIdRef = useRef(conversationId);
   conversationIdRef.current = conversationId;
 
-  // The stream is bespoke SSE, not a query, so the server state it changes is
-  // invalidated here rather than seeded (ADR-0012): the chat store already
-  // holds the streamed content for the current view.
+  // SSE isn't a query, so the cache is invalidated rather than seeded (ADR-0012).
   const invalidateConversationList = useCallback(
     () => queryClient.invalidateQueries({ queryKey: getListConversationsInfiniteQueryKey() }),
     [queryClient],
@@ -142,8 +140,7 @@ export const useChatStream = () => {
 
               if (currentEvent === 'end') {
                 abortController.current = null;
-                // Read from the store: the ref only catches up on the next render, which
-                // a `conversation-created` frame in the same chunk has not had yet.
+                // Not the ref: it lags a `conversation-created` frame in the same chunk.
                 invalidateCompletedStream(useChatStreamStore.getState().conversationId);
                 if (pendingNavigationId.current) {
                   const navId = pendingNavigationId.current;
