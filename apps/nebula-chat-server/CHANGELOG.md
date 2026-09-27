@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.0.0...nebula-chat-server-v2.1.0) (2026-09-27)
+
+
+### Features
+
+* **server:** NEB-377 list one conversation's messages via GET /api/messages?conversationId ([#381](https://github.com/itsDaiton/nebula-chat/issues/381)) ([189091b](https://github.com/itsDaiton/nebula-chat/commit/189091b6cb513a23fafd99c70ac92114b6b1a305))
+
 ## [2.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v1.13.2...nebula-chat-server-v2.0.0) (2026-09-25)
 
 
