@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.2.1...nebula-chat-v2.3.0) (2026-09-27)
+
+
+### Features
+
+* **server:** NEB-385 switch OpenAPI generation to fastify-zod-openapi with named response schemas ([#386](https://github.com/itsDaiton/nebula-chat/issues/386)) ([693278d](https://github.com/itsDaiton/nebula-chat/commit/693278dc6615a21eec120e0d719760f0ec263ee7))
+
 ## [2.2.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.2.0...nebula-chat-v2.2.1) (2026-09-27)
 
 
