@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.3.1...nebula-chat-v2.3.2) (2026-09-27)
+
+
+### Bug Fixes
+
+* **ci:** ignore typescript major bumps until typescript-eslint supports TS 7 ([#393](https://github.com/itsDaiton/nebula-chat/issues/393)) ([01113ee](https://github.com/itsDaiton/nebula-chat/commit/01113eeee6a028e827f9f4b4bc8e565cb60f4996))
+
 ## [2.3.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.3.0...nebula-chat-v2.3.1) (2026-09-27)
 
 
