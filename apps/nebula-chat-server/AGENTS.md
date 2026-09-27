@@ -14,6 +14,8 @@ pnpm start            # node dist/src/server.js (production)
 pnpm generate:openapi # regenerate openapi/openapi.yaml from live route schemas
 ```
 
+`generate:openapi` needs `SERVER_URL=http://localhost:3000`, or the spec's `servers.url` becomes `/` and diverges from the committed `openapi/openapi.yaml`. It also needs every var `src/env.ts` requires, but only to parse: without a `.env`, set `OPENAPI_`-prefixed placeholders (`OPENAPI_OPENAI_API_KEY` or `OPENAPI_ANTHROPIC_API_KEY`, `OPENAPI_DATABASE_URL`, `OPENAPI_REDIS_URL`, `OPENAPI_BETTER_AUTH_SECRET`, `OPENAPI_BETTER_AUTH_URL`). A real var always wins over its stand-in, and no database or Redis connection is opened.
+
 `build` and `typecheck` must run via Turbo from the repo root, so workspace lib artifacts (`dist/*.d.ts`) build first: `pnpm turbo run build --filter=nebula-chat-server` (and `typecheck` likewise).
 
 **`@nebula-chat/db` migrations** (`libs/db` has no separate AGENTS.md):
@@ -329,7 +331,7 @@ To export the spec as a static YAML file for the frontend Orval client, run:
 pnpm --filter nebula-chat-server run generate:openapi  # writes openapi/openapi.yaml to repo root
 ```
 
-The script (`src/scripts/generate-openapi.ts`) calls `buildApp()` → `app.ready()` → `app.swagger({ yaml: true })` and writes the result. It requires a full `.env` file since `buildApp()` parses env vars at startup.
+The script (`src/scripts/generate-openapi.ts`) calls `buildApp()` → `app.ready()` → `app.swagger({ yaml: true })` and writes the result. `buildApp()` parses env vars at startup, so the script needs `SERVER_URL` and the required env vars (or their `OPENAPI_*` placeholders) described under [Commands](#commands).
 
 **Rule:** After every change to the backend, re-run this script to keep `openapi/openapi.yaml` in sync with the current API state. Always commit the updated `openapi/openapi.yaml` alongside backend changes.
 

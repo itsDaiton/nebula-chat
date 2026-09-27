@@ -24,10 +24,3 @@ export const loadServerEnv = (): void => {
     );
   }
 };
-
-export const hasProviderKey =
-  process.env.OPENAI_API_KEY !== undefined || process.env.ANTHROPIC_API_KEY !== undefined;
-
-export const missingBaseKeys = (['DATABASE_URL', 'REDIS_URL'] as const).filter(
-  (key) => !process.env[key],
-);

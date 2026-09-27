@@ -14,6 +14,7 @@ Syncs the backend↔frontend contract. Both artifacts must be committed together
    ```
    pnpm --filter nebula-chat-server run generate:openapi
    ```
+   `SERVER_URL` must be `http://localhost:3000`; otherwise `servers.url` becomes `/` and the spec diverges from the committed one. With no `apps/nebula-chat-server/.env`, pass placeholder values as `OPENAPI_*` vars instead. The backend AGENTS.md (Commands) lists them.
 2. Diff the resulting `openapi.yaml` (or path reported by the script). Confirm only expected changes.
 3. Regenerate the frontend typed client:
    ```
