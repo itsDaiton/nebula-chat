@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.3.0...nebula-chat-v2.3.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* **server:** NEB-388 record ADR-0019 for dotenvx env loading ([#389](https://github.com/itsDaiton/nebula-chat/issues/389)) ([d581621](https://github.com/itsDaiton/nebula-chat/commit/d581621920c2b5a02b0f02b771b3327bb43ce9a7))
+
 ## [2.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.2.1...nebula-chat-v2.3.0) (2026-09-27)
 
 
