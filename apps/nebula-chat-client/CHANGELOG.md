@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.13.2...nebula-chat-client-v1.14.0) (2026-09-27)
+
+
+### Features
+
+* **client:** NEB-307 adopt TanStack Query for server state ([#376](https://github.com/itsDaiton/nebula-chat/issues/376)) ([aa6f40c](https://github.com/itsDaiton/nebula-chat/commit/aa6f40c20ac19c4b2d78f9bc3738522802997514))
+
 ## [1.13.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.13.1...nebula-chat-client-v1.13.2) (2026-09-24)
 
 
