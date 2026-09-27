@@ -8,7 +8,7 @@ import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
 import { ConversationDrawer } from '@/modules/conversations/components/ConversationDrawer';
 import { useDrawer } from '@/shared/hooks/useDrawer';
 import { ConversationsSearch } from '@/modules/conversations/components/ConversationsSearch';
-import { useConversationsContext } from '@/modules/conversations/context/ConversationsContext';
+import { useConversations } from '@/modules/conversations/hooks/useConversations';
 import { useNavigate } from 'react-router';
 import { route } from '@/routing/routes';
 import { useViewportHeight } from '@/shared/hooks/useViewportHeight';
@@ -17,7 +17,7 @@ export const Layout = ({ children }: LayoutProps) => {
   const { isDrawerOpen, openDrawer, closeDrawer, isSearchOpen, toggleSearch, closeSearch } =
     useDrawer();
   const { showSidePanels, showRightPanel } = useResponsiveLayout();
-  const { conversations } = useConversationsContext();
+  const { conversations } = useConversations();
 
   useEffect(() => {
     if (showSidePanels && isSearchOpen) {

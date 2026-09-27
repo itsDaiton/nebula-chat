@@ -22,6 +22,12 @@ export const resources = {
       error: 'Error loading conversation',
     },
   },
+  errors: {
+    title: 'Something went wrong',
+    requestFailed: 'The request failed. Please try again.',
+    network:
+      'Unable to connect to the server. Please check your internet connection and try again.',
+  },
   notFound: {
     status: 404,
     title: 'Page Not Found',

@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router';
 import { Box, Flex, Text, Spinner } from '@chakra-ui/react';
 import { toaster } from '@/shared/components/ui/toaster';
-import { useConversationsContext } from '@/modules/conversations/context/ConversationsContext';
+import { useConversations } from '@/modules/conversations/hooks/useConversations';
 import { ConversationListItem } from '@/modules/conversations/components/ConversationListItem';
 import { ConversationsSearch } from '@/modules/conversations/components/ConversationsSearch';
 import { SidePanel } from '@/shared/components/layout/SidePanel';
@@ -23,8 +23,7 @@ export const ConversationsList = ({
   toggleSearch: externalToggleSearch,
   closeSearch: externalCloseSearch,
 }: ConversationsListProps = {}) => {
-  const { conversations, isLoading, isLoadingMore, error, hasMore, loadMore } =
-    useConversationsContext();
+  const { conversations, isLoading, isLoadingMore, error, hasMore, loadMore } = useConversations();
   const {
     isSearchOpen: storeIsSearchOpen,
     openSearch,
@@ -106,7 +105,7 @@ export const ConversationsList = ({
           maxW="100%"
           textAlign="center"
         >
-          {error}
+          {error.message}
         </Text>
       </Flex>
     );

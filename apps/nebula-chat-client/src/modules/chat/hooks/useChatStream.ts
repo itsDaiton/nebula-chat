@@ -1,10 +1,15 @@
 import { useCallback, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { parseErrorEnvelope } from '@nebula-chat/errors';
+import {
+  getGetConversationQueryKey,
+  getListConversationsInfiniteQueryKey,
+} from '@/libs/api/generated/conversations/conversations';
+import { getListMessagesQueryKey } from '@/libs/api/generated/messages/messages';
 import type { ChatHistoryStreamOptions, SseEvent } from '@/modules/chat/types/types';
 import { SERVER_CONFIG } from '@/shared/config/serverConfig';
 import { useNavigate } from 'react-router';
 import { route } from '@/routing/routes';
-import { useConversationsStore } from '@/modules/conversations/stores/useConversationsStore';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { SSE_EVENTS } from '@/modules/chat/utils/sseEvents';
 import { resources } from '@/resources';
@@ -25,8 +30,7 @@ export const useChatStream = () => {
     setConversationId,
   } = useChatStreamStore();
   const navigate = useNavigate();
-  const refetchConversations = useConversationsStore((state) => state.refetch);
-  const prependConversation = useConversationsStore((state) => state.prependConversation);
+  const queryClient = useQueryClient();
 
   const abortController = useRef<AbortController | null>(null);
   const pendingNavigationId = useRef<string | null>(null);
@@ -36,6 +40,27 @@ export const useChatStream = () => {
   // would recreate streamMessage → handleSendMessage → re-render the entire ChatContainer.
   const conversationIdRef = useRef(conversationId);
   conversationIdRef.current = conversationId;
+
+  // The stream is bespoke SSE, not a query, so the server state it changes is
+  // invalidated here rather than seeded (ADR-0012): the chat store already
+  // holds the streamed content for the current view.
+  const invalidateConversationList = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: getListConversationsInfiniteQueryKey() }),
+    [queryClient],
+  );
+
+  const invalidateCompletedStream = useCallback(
+    (completedConversationId: string | undefined) => {
+      void invalidateConversationList();
+      void queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() });
+      if (completedConversationId) {
+        void queryClient.invalidateQueries({
+          queryKey: getGetConversationQueryKey(completedConversationId),
+        });
+      }
+    },
+    [invalidateConversationList, queryClient],
+  );
 
   const abort = useCallback(() => {
     abortController.current?.abort();
@@ -64,6 +89,8 @@ export const useChatStream = () => {
       const responseFetch = fetch(SERVER_CONFIG.getApiEndpoint('/api/chat/stream'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        // Carries the better-auth session cookie cross-origin, as the axios client does.
+        credentials: 'include',
         body: JSON.stringify(requestBody),
         signal: controller.signal,
       });
@@ -115,6 +142,9 @@ export const useChatStream = () => {
 
               if (currentEvent === 'end') {
                 abortController.current = null;
+                // Read from the store: the ref only catches up on the next render, which
+                // a `conversation-created` frame in the same chunk has not had yet.
+                invalidateCompletedStream(useChatStreamStore.getState().conversationId);
                 if (pendingNavigationId.current) {
                   const navId = pendingNavigationId.current;
                   pendingNavigationId.current = null;
@@ -127,7 +157,6 @@ export const useChatStream = () => {
                   // → empty state flicker.)
                   setIsPostStreamNavigation(true);
                   void navigate(route.chat.conversation(navId), { replace: true });
-                  void refetchConversations();
                 } else {
                   setIsStreaming(false);
                 }
@@ -147,11 +176,8 @@ export const useChatStream = () => {
                   setConversationId(parsed.conversationId);
                   if (isNewConversation) {
                     pendingNavigationId.current = parsed.conversationId;
-                    prependConversation({
-                      id: parsed.conversationId,
-                      title: '...',
-                      createdAt: new Date().toISOString(),
-                    });
+                    // The server has persisted it, so the sidebar can show it now.
+                    void invalidateConversationList();
                   }
                 }
                 currentEvent = null;
@@ -225,9 +251,9 @@ export const useChatStream = () => {
       }
     },
     [
+      invalidateCompletedStream,
+      invalidateConversationList,
       navigate,
-      prependConversation,
-      refetchConversations,
       setConversationId,
       setError,
       setHistory,

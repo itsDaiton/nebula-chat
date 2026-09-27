@@ -1,50 +1,36 @@
+import type { ListConversations200ConversationsItem } from '@/libs/api/generated/model/listConversations200ConversationsItem';
+
 export type Conversation = {
   id: string;
   title: string;
   createdAt: string;
 };
 
-export type ConversationsState = {
-  conversations: Conversation[];
-  isLoading: boolean;
-  isLoadingMore: boolean;
-  error: string | null;
-  nextCursor: string | null;
-  hasMore: boolean;
-  fetchConversations: (showLoading?: boolean) => Promise<void>;
-  loadMore: () => Promise<void>;
-  refetch: () => Promise<void>;
-  prependConversation: (conversation: Conversation) => void;
-};
-
-export type ConversationWithMessages = Conversation & {
-  messages: Array<{
-    id: string;
-    role: 'user' | 'assistant' | 'system';
-    content: string;
-    createdAt: string;
-  }>;
-};
+/** A conversation as the API returns it: list, search and detail share this shape. */
+export type ConversationResponse = ListConversations200ConversationsItem;
 
 export type ConversationListItemProps = {
   conversation: Conversation;
   onClick: (id: string) => void;
 };
 
+export type ConversationsSearchState = {
+  searchQuery: string;
+  debouncedQuery: string;
+  setSearchQuery: (query: string) => void;
+  clearSearch: () => void;
+};
+
+export type UseConversationsSearchParams = {
+  localConversations: Conversation[];
+  onClose: () => void;
+  onConversationClick: (conversationId: string) => void;
+};
+
 export type ConversationsSearchProps = {
   conversations: Conversation[];
   onConversationClick: (id: string) => void;
   onClose: () => void;
-};
-
-export type ConversationsContextValue = {
-  conversations: Conversation[];
-  isLoading: boolean;
-  isLoadingMore: boolean;
-  error: string | null;
-  hasMore: boolean;
-  loadMore: () => Promise<void>;
-  refetch: () => Promise<void>;
 };
 
 export type ConversationListSkeletonsProps = {
