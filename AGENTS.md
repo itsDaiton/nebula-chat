@@ -4,7 +4,7 @@ Reference for AI agents (and contributors) working in this repository: monorepo-
 
 Package-specific conventions — directory layout, state management, module patterns, code examples — live in each package's own `AGENTS.md`, not here:
 
-- [apps/nebula-chat-client/AGENTS.md](./apps/nebula-chat-client/AGENTS.md) — frontend (React, Zustand, Chakra UI)
+- [apps/nebula-chat-client/AGENTS.md](./apps/nebula-chat-client/AGENTS.md) — frontend (React, TanStack Query, Zustand, Chakra UI)
 - [apps/nebula-chat-server/AGENTS.md](./apps/nebula-chat-server/AGENTS.md) — backend (Fastify, Drizzle, Zod)
 
 Read this file for anything that spans the whole repo; read the relevant package's `AGENTS.md` before touching code inside it.

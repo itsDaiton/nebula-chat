@@ -36,11 +36,19 @@ export default defineConfig({
           path: './src/libs/api/client.ts',
           name: 'axiosClient',
         },
+        // No global useQuery/useMutation: either flag forces every operation into that shape.
         query: {
-          useQuery: true,
-          useSuspenseQuery: true,
-          useMutation: true,
+          useSuspenseQuery: false,
           signal: true,
+        },
+        operations: {
+          // The sidebar pages through conversations by cursor.
+          listConversations: {
+            query: {
+              useInfinite: true,
+              useInfiniteQueryParam: 'cursor',
+            },
+          },
         },
       },
     },

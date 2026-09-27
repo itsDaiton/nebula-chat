@@ -1,42 +1,44 @@
-import type { Conversation } from '@/modules/conversations/types/types';
+import { useSearchConversations } from '@/libs/api/generated/conversations/conversations';
+import type { UseConversationsSearchParams } from '@/modules/conversations/types/types';
 import { useConversationsSearchStore } from '@/modules/conversations/stores/useConversationsSearchStore';
-
-type UseConversationsSearchParams = {
-  localConversations: Conversation[];
-  onClose: () => void;
-  onConversationClick: (conversationId: string) => void;
-};
+import { toConversation } from '@/modules/conversations/utils/toConversation';
 
 export const useConversationsSearch = ({
   localConversations,
   onClose,
   onConversationClick,
 }: UseConversationsSearchParams) => {
-  const {
-    searchQuery,
-    setSearchQuery,
-    debouncedQuery,
-    searchResults,
-    isSearching,
-    error,
-    clearResults,
-  } = useConversationsSearchStore();
+  const { searchQuery, setSearchQuery, debouncedQuery, clearSearch } =
+    useConversationsSearchStore();
 
   const trimmedSearchQuery = searchQuery.trim();
   const trimmedDebouncedQuery = debouncedQuery.trim();
+
+  const {
+    data: searchResults,
+    isFetching,
+    error,
+  } = useSearchConversations(
+    { q: trimmedDebouncedQuery },
+    {
+      query: {
+        enabled: Boolean(trimmedDebouncedQuery),
+        select: (results) => results.map(toConversation),
+      },
+    },
+  );
+
   const isPending = trimmedSearchQuery !== trimmedDebouncedQuery;
   const hasSettledSearchQuery = Boolean(trimmedSearchQuery) && !isPending;
-  const filteredConversations = hasSettledSearchQuery ? searchResults : localConversations;
+  const filteredConversations = hasSettledSearchQuery ? (searchResults ?? []) : localConversations;
 
-  const closeAndClearResults = () => {
-    setSearchQuery('');
-    clearResults();
+  const closeAndClearSearch = () => {
+    clearSearch();
     onClose();
   };
 
-  const selectConversationAndClearResults = (conversationId: string) => {
-    setSearchQuery('');
-    clearResults();
+  const selectConversationAndClearSearch = (conversationId: string) => {
+    clearSearch();
     onConversationClick(conversationId);
   };
 
@@ -44,9 +46,9 @@ export const useConversationsSearch = ({
     searchQuery,
     setSearchQuery,
     filteredConversations,
-    isSearching: isPending || isSearching,
-    error,
-    closeAndClearResults,
-    selectConversationAndClearResults,
+    isSearching: isPending || isFetching,
+    error: hasSettledSearchQuery ? error : null,
+    closeAndClearSearch,
+    selectConversationAndClearSearch,
   };
 };

@@ -1,22 +1,22 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { QueryClient, QueryKey } from '@tanstack/react-query';
+import {
+  getGetConversationQueryKey,
+  getListConversationsInfiniteQueryKey,
+} from '@/libs/api/generated/conversations/conversations';
+import { getListMessagesQueryKey } from '@/libs/api/generated/messages/messages';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { resources } from '@/resources';
 import { API_ROUTE } from '@/test/api';
 import { server } from '@/test/msw';
+import { createTestQueryClient, renderHookWithQueryClient } from '@/test/render';
 
 const navigate = vi.fn();
-const refetch = vi.fn();
-const prependConversation = vi.fn();
 
 vi.mock('react-router', () => ({ useNavigate: () => navigate }));
-
-vi.mock('@/modules/conversations/stores/useConversationsStore', () => ({
-  useConversationsStore: (selector: (s: unknown) => unknown) =>
-    selector({ refetch, prependConversation }),
-}));
 
 const ENDPOINT = API_ROUTE.chatStream;
 
@@ -72,7 +72,7 @@ describe('useChatStream — token streaming', () => {
       frame('token', { token: ' is 4' }),
       frame('end', {}),
     );
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
@@ -81,7 +81,7 @@ describe('useChatStream — token streaming', () => {
 
   it('seeds an empty assistant message before the first token arrives', async () => {
     streamFrames(frame('end', {}));
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
@@ -93,7 +93,7 @@ describe('useChatStream — token streaming', () => {
     // The reader hands back arbitrary byte slices, so the parser must buffer
     // a partial line rather than dropping it.
     streamFrames('event: token\ndata: {"tok', 'en":"split"}\n\n', frame('end', {}));
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
@@ -102,7 +102,7 @@ describe('useChatStream — token streaming', () => {
 
   it('stops streaming once the end event arrives', async () => {
     streamFrames(frame('token', { token: 'x' }), frame('end', {}));
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
@@ -111,7 +111,7 @@ describe('useChatStream — token streaming', () => {
 
   it('ignores an event name outside the known set', async () => {
     streamFrames(frame('sneaky', { token: 'nope' }), frame('end', {}));
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
@@ -124,7 +124,7 @@ describe('useChatStream — token streaming', () => {
       frame('token', { token: 'ok' }),
       frame('end', {}),
     );
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
@@ -133,7 +133,7 @@ describe('useChatStream — token streaming', () => {
 
   it('ignores a token payload that is not a string', async () => {
     streamFrames(frame('token', { token: 42 }), frame('end', {}));
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
@@ -147,7 +147,7 @@ describe('useChatStream — usage and errors', () => {
       frame('usage', { promptTokens: 10, completionTokens: 4, totalTokens: 14 }),
       frame('end', {}),
     );
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
@@ -168,7 +168,7 @@ describe('useChatStream — usage and errors', () => {
         message: 'Rate limit exceeded. Retry after 500ms.',
       }),
     );
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
@@ -183,7 +183,7 @@ describe('useChatStream — usage and errors', () => {
     ['is in the retired `{ error }` shape', { error: 'Rate limit exceeded.' }],
   ])('falls back to a generic message when the error frame %s', async (_label, data) => {
     streamFrames(frame('error', data));
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
@@ -194,7 +194,7 @@ describe('useChatStream — usage and errors', () => {
 
   it('stops streaming after an error', async () => {
     streamFrames(frame('error', { success: false, error: 'Internal', message: 'boom' }));
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
@@ -203,7 +203,7 @@ describe('useChatStream — usage and errors', () => {
 
   it('reports a non-OK response without an envelope with the generic message', async () => {
     server.use(http.post(ENDPOINT, () => new HttpResponse(null, { status: 500 })));
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
@@ -225,7 +225,7 @@ describe('useChatStream — usage and errors', () => {
         ),
       ),
     );
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
@@ -242,59 +242,38 @@ describe('useChatStream — conversation creation', () => {
 
   it('adopts the conversation id the server assigns', async () => {
     streamFrames(frame('conversation-created', { conversationId: NEW_ID }), frame('end', {}));
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
     await waitFor(() => expect(useChatStreamStore.getState().conversationId).toBe(NEW_ID));
   });
 
-  it('adds the new conversation to the sidebar straight away', async () => {
-    streamFrames(frame('conversation-created', { conversationId: NEW_ID }), frame('end', {}));
-    const { result } = renderHook(() => useChatStream());
-
-    await sendMessage(result);
-
-    await waitFor(() =>
-      expect(prependConversation).toHaveBeenCalledWith(expect.objectContaining({ id: NEW_ID })),
-    );
-  });
-
   it('navigates to the new conversation once the stream ends', async () => {
     streamFrames(frame('conversation-created', { conversationId: NEW_ID }), frame('end', {}));
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
     await waitFor(() => expect(navigate).toHaveBeenCalledWith(`/c/${NEW_ID}`, { replace: true }));
   });
 
-  it('refreshes the conversation list after navigating', async () => {
-    streamFrames(frame('conversation-created', { conversationId: NEW_ID }), frame('end', {}));
-    const { result } = renderHook(() => useChatStream());
-
-    await sendMessage(result);
-
-    await waitFor(() => expect(refetch).toHaveBeenCalled());
-  });
-
   it('does not navigate when continuing an existing conversation', async () => {
     useChatStreamStore.setState({ conversationId: 'existing-id' });
     streamFrames(frame('conversation-created', { conversationId: NEW_ID }), frame('end', {}));
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
     await waitFor(() => expect(useChatStreamStore.getState().isStreaming).toBe(false));
     expect(navigate).not.toHaveBeenCalled();
-    expect(prependConversation).not.toHaveBeenCalled();
   });
 
   it('keeps isStreaming true through the post-stream navigation window', async () => {
     // Dropping it here would render a frame with no conversation and no stream,
     // which shows as an empty-state flicker.
     streamFrames(frame('conversation-created', { conversationId: NEW_ID }), frame('end', {}));
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
@@ -304,18 +283,73 @@ describe('useChatStream — conversation creation', () => {
 
   it('ignores a conversation-created frame with no id', async () => {
     streamFrames(frame('conversation-created', {}), frame('end', {}));
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
-    expect(prependConversation).not.toHaveBeenCalled();
+    expect(useChatStreamStore.getState().conversationId).toBeUndefined();
+    expect(navigate).not.toHaveBeenCalled();
+  });
+});
+
+describe('useChatStream — query cache', () => {
+  const NEW_ID = '11111111-1111-4111-8111-111111111111';
+  const EXISTING_ID = '44444444-4444-4444-8444-444444444444';
+
+  /** A query client holding fresh data for `keys`, so invalidation is observable. */
+  const primedClient = (...keys: QueryKey[]) => {
+    const queryClient = createTestQueryClient();
+    for (const key of keys) queryClient.setQueryData(key, []);
+    return queryClient;
+  };
+
+  const isInvalidated = (queryClient: QueryClient, key: QueryKey) =>
+    queryClient.getQueryState(key)?.isInvalidated;
+
+  it('refreshes the sidebar as soon as the server creates a conversation', async () => {
+    // No `end` frame: the list must refresh on creation, not only on completion.
+    streamFrames(frame('conversation-created', { conversationId: NEW_ID }));
+    const queryClient = primedClient(getListConversationsInfiniteQueryKey());
+    const { result } = renderHookWithQueryClient(() => useChatStream(), { queryClient });
+
+    await sendMessage(result);
+
+    expect(isInvalidated(queryClient, getListConversationsInfiniteQueryKey())).toBe(true);
+  });
+
+  it('invalidates the list, the conversation and its messages when the stream completes', async () => {
+    useChatStreamStore.setState({ conversationId: EXISTING_ID });
+    streamFrames(frame('token', { token: 'x' }), frame('end', {}));
+    const queryClient = primedClient(
+      getListConversationsInfiniteQueryKey(),
+      getGetConversationQueryKey(EXISTING_ID),
+      getListMessagesQueryKey(),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(), { queryClient });
+
+    await sendMessage(result);
+
+    expect(isInvalidated(queryClient, getListConversationsInfiniteQueryKey())).toBe(true);
+    expect(isInvalidated(queryClient, getGetConversationQueryKey(EXISTING_ID))).toBe(true);
+    expect(isInvalidated(queryClient, getListMessagesQueryKey())).toBe(true);
+  });
+
+  it('leaves the cache alone when the stream fails', async () => {
+    useChatStreamStore.setState({ conversationId: EXISTING_ID });
+    streamFrames(frame('error', { success: false, error: 'Internal', message: 'boom' }));
+    const queryClient = primedClient(getListMessagesQueryKey());
+    const { result } = renderHookWithQueryClient(() => useChatStream(), { queryClient });
+
+    await sendMessage(result);
+
+    expect(isInvalidated(queryClient, getListMessagesQueryKey())).toBe(false);
   });
 });
 
 describe('useChatStream — lifecycle', () => {
   it('clearPostStream drops both streaming flags together', async () => {
     useChatStreamStore.setState({ isStreaming: true, isPostStreamNavigation: true });
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     act(() => result.current.clearPostStream());
 
@@ -327,7 +361,7 @@ describe('useChatStream — lifecycle', () => {
 
   it('abort stops the stream without recording an error', async () => {
     streamFrames(frame('token', { token: 'x' }), frame('end', {}));
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     act(() => result.current.abort());
 
@@ -345,7 +379,7 @@ describe('useChatStream — lifecycle', () => {
         });
       }),
     );
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await act(async () => {
       await result.current.streamMessage({
@@ -361,6 +395,23 @@ describe('useChatStream — lifecycle', () => {
     expect(received?.messages).toHaveLength(1);
   });
 
+  it('sends the session cookie with the stream request', async () => {
+    let credentials: RequestCredentials | undefined;
+    server.use(
+      http.post(ENDPOINT, ({ request }) => {
+        credentials = request.credentials;
+        return new HttpResponse(frame('end', {}), {
+          headers: { 'Content-Type': 'text/event-stream' },
+        });
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream());
+
+    await sendMessage(result);
+
+    expect(credentials).toBe('include');
+  });
+
   it('includes the conversation id when one is already active', async () => {
     let received: { conversationId?: string } | undefined;
     server.use(
@@ -372,7 +423,7 @@ describe('useChatStream — lifecycle', () => {
       }),
     );
     useChatStreamStore.setState({ conversationId: 'existing-id' });
-    const { result } = renderHook(() => useChatStream());
+    const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 

@@ -1,6 +1,6 @@
 ---
 name: zustand-store-scaffold
-description: Scaffold a new Zustand store file following project conventions (no useState, module-level init, @/ aliases, one-file-per-store). Use when creating a new store in apps/nebula-chat-client/src/**/stores/.
+description: Scaffold a new Zustand store file for client/UI state following project conventions (no useState, @/ aliases, one-file-per-store). Use when creating a new store in apps/nebula-chat-client/src/**/stores/. Not for server state — that is a generated react-query hook.
 allowed-tools: Read, Write
 argument-hint: '<StoreName> <target-path>'
 ---
@@ -12,7 +12,8 @@ Creates a conventional store file. Reads `apps/nebula-chat-client/AGENTS.md` fir
 ## Preconditions
 
 - `$ARGUMENTS` includes the PascalCase store name (without the `use` prefix or `Store` suffix — e.g. `Example`) and the target directory (e.g. `apps/nebula-chat-client/src/modules/chat/stores`).
-- A reference store (e.g. `useConversationsStore`) exists — read it to match current style.
+- A reference store (e.g. `useSearchStore`) exists — read it to match current style.
+- The state is **client/UI state** (ADR-0012). Anything read from or written to the API is server state: use the Orval-generated react-query hook instead of a store, and stop here.
 
 ## Template
 
@@ -45,4 +46,5 @@ export const use<StoreName>Store = create<<StoreName>Store>()((set) => ({
 
 - No `interface` — always `type`.
 - No barrel exports.
-- No side effects at module load unless required by the conventions (initialization via store action called from a Provider).
+- No side effects at module load — in particular no fetch; a query hook fetches on mount.
+- No API calls inside actions — server state lives in react-query, not in a store.

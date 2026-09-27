@@ -68,7 +68,7 @@ export const ChatContainer = () => {
               {resources.conversations.single.error}
             </Text>
             <Text fontSize="sm" color="fg.muted">
-              {conversationError}
+              {conversationError.message}
             </Text>
           </Flex>
         </Flex>

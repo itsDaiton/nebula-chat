@@ -1,8 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useInfiniteScroll } from '@/modules/conversations/hooks/useInfiniteScroll';
-import { useConversationStore } from '@/modules/conversations/stores/useConversationStore';
-
 /** Captures the observer instances the hook creates. */
 class FakeIntersectionObserver {
   static instances: FakeIntersectionObserver[] = [];
@@ -22,12 +20,6 @@ class FakeIntersectionObserver {
 beforeEach(() => {
   FakeIntersectionObserver.instances = [];
   vi.stubGlobal('IntersectionObserver', FakeIntersectionObserver);
-  useConversationStore.setState({
-    conversationId: null,
-    conversation: null,
-    isLoading: false,
-    error: null,
-  });
 });
 
 describe('useInfiniteScroll', () => {

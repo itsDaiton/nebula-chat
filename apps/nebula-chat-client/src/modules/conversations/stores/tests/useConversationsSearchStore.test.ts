@@ -1,27 +1,11 @@
-import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getSearchConversationsMockHandler } from '@/libs/api/generated/conversations/conversations.msw';
-import { useConversationStore } from '@/modules/conversations/stores/useConversationStore';
 import { useConversationsSearchStore } from '@/modules/conversations/stores/useConversationsSearchStore';
-import { API_ROUTE } from '@/test/api';
-import { server } from '@/test/msw';
 
-const search = () => useConversationsSearchStore.getState();
+const store = () => useConversationsSearchStore.getState();
 
 beforeEach(() => {
-  useConversationStore.setState({
-    conversationId: null,
-    conversation: null,
-    isLoading: false,
-    error: null,
-  });
-  useConversationsSearchStore.setState({
-    searchQuery: '',
-    debouncedQuery: '',
-    searchResults: [],
-    isSearching: false,
-    error: null,
-  });
+  vi.useFakeTimers();
+  store().clearSearch();
 });
 
 afterEach(() => {
@@ -29,104 +13,38 @@ afterEach(() => {
 });
 
 describe('useConversationsSearchStore', () => {
-  it('returns matching conversations', async () => {
-    const results = [{ id: 'a', title: 'Hello', createdAt: '2026-01-01T00:00:00.000Z' }];
-    server.use(getSearchConversationsMockHandler(results));
+  it('shows the typed text at once but settles the query only after a pause', () => {
+    store().setSearchQuery('hel');
 
-    await search().search('hello');
+    expect(store().searchQuery).toBe('hel');
+    expect(store().debouncedQuery).toBe('');
 
-    expect(search().searchResults).toEqual(results);
-    expect(search().isSearching).toBe(false);
+    vi.advanceTimersByTime(300);
+
+    expect(store().debouncedQuery).toBe('hel');
   });
 
-  it('skips the request entirely for a blank query', async () => {
-    let called = false;
-    server.use(
-      http.get(API_ROUTE.conversationsSearch, () => {
-        called = true;
-        return HttpResponse.json([]);
-      }),
-    );
+  it('settles only the last of several quick keystrokes', () => {
+    store().setSearchQuery('h');
+    vi.advanceTimersByTime(100);
+    store().setSearchQuery('he');
+    vi.advanceTimersByTime(100);
+    store().setSearchQuery('hey');
 
-    await search().search('   ');
+    vi.advanceTimersByTime(299);
+    expect(store().debouncedQuery).toBe('');
 
-    expect(called).toBe(false);
-    expect(search().searchResults).toEqual([]);
+    vi.advanceTimersByTime(1);
+    expect(store().debouncedQuery).toBe('hey');
   });
 
-  it('url-encodes the query', async () => {
-    let receivedQuery: string | null = null;
-    server.use(
-      http.get(API_ROUTE.conversationsSearch, ({ request }) => {
-        receivedQuery = new URL(request.url).searchParams.get('q');
-        return HttpResponse.json([]);
-      }),
-    );
+  it('clearing cancels a pending settle', () => {
+    store().setSearchQuery('abandoned');
 
-    await search().search('a & b');
+    store().clearSearch();
+    vi.advanceTimersByTime(300);
 
-    expect(receivedQuery).toBe('a & b');
-  });
-
-  it('records a search failure', async () => {
-    server.use(
-      http.get(API_ROUTE.conversationsSearch, () =>
-        HttpResponse.json({ message: 'Search index down' }, { status: 500 }),
-      ),
-    );
-
-    await search().search('hello');
-
-    expect(search().error).toBe('Search index down');
-    expect(search().isSearching).toBe(false);
-  });
-
-  it('debounces typing into a single search after 300ms', async () => {
-    vi.useFakeTimers();
-    let calls = 0;
-    server.use(
-      http.get(API_ROUTE.conversationsSearch, () => {
-        calls += 1;
-        return HttpResponse.json([]);
-      }),
-    );
-
-    search().setSearchQuery('h');
-    search().setSearchQuery('he');
-    search().setSearchQuery('hel');
-
-    expect(calls).toBe(0);
-    await vi.advanceTimersByTimeAsync(300);
-
-    expect(search().debouncedQuery).toBe('hel');
-    expect(calls).toBe(1);
-  });
-
-  it('updates the visible query immediately, before the debounce fires', () => {
-    vi.useFakeTimers();
-
-    search().setSearchQuery('hel');
-
-    expect(search().searchQuery).toBe('hel');
-    expect(search().debouncedQuery).toBe('');
-  });
-
-  it('clearResults cancels a pending debounce so no stale search lands', async () => {
-    vi.useFakeTimers();
-    let calls = 0;
-    server.use(
-      http.get(API_ROUTE.conversationsSearch, () => {
-        calls += 1;
-        return HttpResponse.json([]);
-      }),
-    );
-    search().setSearchQuery('hello');
-
-    search().clearResults();
-    await vi.advanceTimersByTimeAsync(300);
-
-    expect(calls).toBe(0);
-    expect(search().searchQuery).toBe('');
-    expect(search().searchResults).toEqual([]);
+    expect(store().searchQuery).toBe('');
+    expect(store().debouncedQuery).toBe('');
   });
 });

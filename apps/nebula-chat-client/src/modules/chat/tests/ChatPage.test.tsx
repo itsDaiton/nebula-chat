@@ -1,16 +1,20 @@
 import { screen, waitFor } from '@testing-library/react';
-import { HttpResponse, http } from 'msw';
+import userEvent from '@testing-library/user-event';
+import { HttpResponse, delay, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Route, Routes } from 'react-router';
-import { getListConversationsMockHandler } from '@/libs/api/generated/conversations/conversations.msw';
+import {
+  getGetConversationMockHandler,
+  getListConversationsMockHandler,
+} from '@/libs/api/generated/conversations/conversations.msw';
+import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
 import { ChatPage } from '@/modules/chat/ChatPage';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
-import { ConversationsProvider } from '@/modules/conversations/providers/ConversationsProvider';
-import { useConversationStore } from '@/modules/conversations/stores/useConversationStore';
-import { useConversationsStore } from '@/modules/conversations/stores/useConversationsStore';
+import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
+import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
 import { renderWithChakra } from '@/test/render';
-import { API_ROUTE } from '@/test/api';
+import { API_ROUTE, mockApiError } from '@/test/api';
 import { server } from '@/test/msw';
 
 vi.mock('@/theme/hooks/useColorMode', () => ({
@@ -24,49 +28,46 @@ const layout = vi.hoisted(() => ({
 }));
 vi.mock('@/shared/hooks/useResponsiveLayout', () => ({ useResponsiveLayout: () => layout }));
 
+const CONVERSATION_ID = '11111111-1111-4111-8111-111111111111';
+
+const aConversation = (id: string, title: string) => ({
+  id,
+  title,
+  createdAt: '2026-06-15T11:00:00.000Z',
+});
+
+const aMessage = (id: string, role: string, content: string) => ({
+  id,
+  conversationId: CONVERSATION_ID,
+  role,
+  content,
+  tokenCount: null,
+  cached: false,
+  createdAt: '2026-06-15T11:00:00.000Z',
+});
+
+const serveConversations = (...conversations: ReturnType<typeof aConversation>[]) =>
+  server.use(getListConversationsMockHandler({ conversations, nextCursor: null, hasMore: false }));
+
 // Rendered inside real <Routes> so ChatContainer's useParams() sees the id —
 // a bare MemoryRouter would leave it undefined and always show the empty state.
 const renderPage = (route = '/') =>
   renderWithChakra(
-    <ConversationsProvider>
-      <Routes>
-        <Route path="/" element={<ChatPage />} />
-        <Route path="/c/:id" element={<ChatPage />} />
-      </Routes>
-    </ConversationsProvider>,
+    <Routes>
+      <Route path="/" element={<ChatPage />} />
+      <Route path="/c/:id" element={<ChatPage />} />
+    </Routes>,
     { route },
   );
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.restoreAllMocks();
+  serveConversations();
   server.use(
-    getListConversationsMockHandler({ conversations: [], nextCursor: null, hasMore: false }),
-    // Hand-written rather than generated: `messages` is not in the documented
-    // response for this endpoint, so the generated handler's payload type
-    // rejects it. That gap is a real bug, pinned in
-    // `modules/chat/stores/tests/chatConversationSync.test.ts`.
-    http.get(API_ROUTE.conversation, () =>
-      HttpResponse.json({
-        id: '11111111-1111-4111-8111-111111111111',
-        title: 'Chat',
-        messages: [],
-      }),
-    ),
+    getGetConversationMockHandler(aConversation(CONVERSATION_ID, 'Chat')),
+    getListMessagesMockHandler([]),
   );
-  useConversationsStore.setState({
-    conversations: [],
-    isLoading: false,
-    isLoadingMore: false,
-    error: null,
-    nextCursor: null,
-    hasMore: false,
-  });
-  useConversationStore.setState({
-    conversationId: null,
-    conversation: null,
-    isLoading: false,
-    error: null,
-  });
+  useMessageStore.setState({ message: '' });
   useChatStreamStore.setState({
     history: [],
     isStreaming: false,
@@ -90,10 +91,8 @@ describe('ChatPage', () => {
     expect(await screen.findByRole('textbox', { name: '' })).toBeInTheDocument();
   });
 
-  it('renders the conversation list panel on a desktop layout', async () => {
-    useConversationsStore.setState({
-      conversations: [{ id: 'a', title: 'Earlier chat', createdAt: '2026-06-15T11:00:00.000Z' }],
-    });
+  it('lists the conversations the API returns on a desktop layout', async () => {
+    serveConversations(aConversation('a', 'Earlier chat'));
 
     renderPage();
 
@@ -107,7 +106,12 @@ describe('ChatPage', () => {
   });
 
   it('shows loading skeletons while conversations load', async () => {
-    useConversationsStore.setState({ isLoading: true });
+    server.use(
+      getListConversationsMockHandler(async () => {
+        await delay('infinite');
+        return { conversations: [], nextCursor: null, hasMore: false };
+      }),
+    );
 
     const { container } = renderPage();
 
@@ -116,41 +120,79 @@ describe('ChatPage', () => {
     );
   });
 
-  it('renders the messages of an open conversation', async () => {
-    // Served from the API rather than preset on the store: chatConversationSync
-    // rewrites history from the fetched conversation, so a preset would be
-    // overwritten the moment the fetch lands.
+  it('shows the error in the sidebar when the conversations fail to load', async () => {
     server.use(
-      http.get(API_ROUTE.conversation, () =>
-        HttpResponse.json({
-          id: '11111111-1111-4111-8111-111111111111',
-          title: 'Chat',
-          messages: [
-            { id: 'm1', role: 'user', content: 'a question' },
-            { id: 'm2', role: 'assistant', content: 'an answer' },
-          ],
-        }),
-      ),
+      mockApiError('get', API_ROUTE.conversations, 401, {
+        success: false,
+        error: 'Unauthorized',
+        message: 'No authenticated session',
+      }),
     );
 
-    renderPage('/c/11111111-1111-4111-8111-111111111111');
+    renderPage();
+
+    expect(await screen.findByText('No authenticated session')).toBeInTheDocument();
+  });
+
+  it('renders the messages of an open conversation', async () => {
+    server.use(
+      getListMessagesMockHandler([
+        aMessage('m1', 'user', 'a question'),
+        aMessage('m2', 'assistant', 'an answer'),
+      ]),
+    );
+
+    renderPage(`/c/${CONVERSATION_ID}`);
 
     expect(await screen.findByText('a question', {}, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.getByText('an answer')).toBeInTheDocument();
   });
 
-  it('surfaces a conversation load failure', async () => {
+  it('surfaces a conversation load failure inline and through the toaster', async () => {
+    const toast = vi.spyOn(toaster, 'create');
     server.use(
-      http.get(API_ROUTE.conversation, () =>
-        HttpResponse.json({ message: 'Not found' }, { status: 404 }),
-      ),
+      mockApiError('get', API_ROUTE.conversation, 404, {
+        success: false,
+        error: 'NotFound',
+        message: 'Conversation not found',
+      }),
     );
 
-    renderPage('/c/11111111-1111-4111-8111-111111111111');
+    renderPage(`/c/${CONVERSATION_ID}`);
 
     expect(
       await screen.findByText(resources.conversations.single.error, {}, { timeout: 3000 }),
     ).toBeInTheDocument();
+    expect(screen.getByText('Conversation not found')).toBeInTheDocument();
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', description: 'Conversation not found' }),
+    );
+  });
+
+  it('shows a conversation created by a reply in the sidebar without a refresh', async () => {
+    let created = false;
+    server.use(
+      getListConversationsMockHandler(() => ({
+        conversations: created ? [aConversation(CONVERSATION_ID, 'Brand new chat')] : [],
+        nextCursor: null,
+        hasMore: false,
+      })),
+      http.post(API_ROUTE.chatStream, () => {
+        created = true;
+        return new HttpResponse(
+          `event: conversation-created\ndata: ${JSON.stringify({ conversationId: CONVERSATION_ID })}\n\n` +
+            `event: token\ndata: ${JSON.stringify({ token: 'hi there' })}\n\n` +
+            'event: end\ndata: {}\n\n',
+          { headers: { 'Content-Type': 'text/event-stream' } },
+        );
+      }),
+    );
+    renderPage();
+    expect(await screen.findByText(resources.conversations.empty)).toBeInTheDocument();
+
+    await userEvent.type(screen.getByRole('textbox', { name: '' }), 'hello{Enter}');
+
+    expect(await screen.findByText('Brand new chat')).toBeInTheDocument();
   });
 
   it('renders on a mobile layout without the side panels', async () => {

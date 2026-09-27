@@ -12,13 +12,7 @@ const aConversation = (id: string, title = `Conversation ${id}`) => ({
 });
 
 beforeEach(() => {
-  useConversationsSearchStore.setState({
-    searchQuery: '',
-    debouncedQuery: '',
-    searchResults: [],
-    isSearching: false,
-    error: null,
-  });
+  useConversationsSearchStore.getState().clearSearch();
 });
 
 afterEach(() => {

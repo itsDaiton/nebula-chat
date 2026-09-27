@@ -4,13 +4,7 @@ import { useConversationsSearchStore } from '@/modules/conversations/stores/useC
 import { renderWithChakra } from '@/test/render';
 
 beforeEach(() => {
-  useConversationsSearchStore.setState({
-    searchQuery: '',
-    debouncedQuery: '',
-    searchResults: [],
-    isSearching: false,
-    error: null,
-  });
+  useConversationsSearchStore.getState().clearSearch();
 });
 
 afterEach(() => {

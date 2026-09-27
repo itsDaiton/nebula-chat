@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.7.0
+ * OpenAPI spec version: 1.7.1
  */
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
@@ -70,110 +70,71 @@ export const createMessage = (
   );
 };
 
-export const getCreateMessageQueryKey = (createMessageBody?: BodyType<CreateMessageBody>) => {
-  return ['POST', `/api/messages`, createMessageBody] as const;
-};
+export const getCreateMessageMutationKey = () => ['createMessage'] as const;
 
-export const getCreateMessageQueryOptions = <
-  TData = Awaited<ReturnType<typeof createMessage>>,
+export const getCreateMessageMutationOptions = <
   TError = ErrorType<ErrorEnvelope>,
->(
-  createMessageBody: BodyType<CreateMessageBody>,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof createMessage>>, TError, TData>>;
-    request?: SecondParameter<typeof axiosClient>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getCreateMessageQueryKey(createMessageBody);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof createMessage>>> = ({ signal }) =>
-    createMessage(createMessageBody, requestOptions, signal);
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof createMessage>>,
     TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+    CreateMessageMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof axiosClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createMessage>>,
+  TError,
+  CreateMessageMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateMessageMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createMessage>>,
+    CreateMessageMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createMessage(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
 };
 
-export type CreateMessageQueryResult = NonNullable<Awaited<ReturnType<typeof createMessage>>>;
-export type CreateMessageQueryError = ErrorType<ErrorEnvelope>;
+export type CreateMessageMutationResult = NonNullable<Awaited<ReturnType<typeof createMessage>>>;
+export type CreateMessageMutationBody = BodyType<CreateMessageBody>;
+export type CreateMessageMutationError = ErrorType<ErrorEnvelope>;
+export type CreateMessageMutationVariables = { data: BodyType<CreateMessageBody> };
 
-export function useCreateMessage<
-  TData = Awaited<ReturnType<typeof createMessage>>,
-  TError = ErrorType<ErrorEnvelope>,
->(
-  createMessageBody: BodyType<CreateMessageBody>,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof createMessage>>, TError, TData>> &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof createMessage>>,
-          TError,
-          Awaited<ReturnType<typeof createMessage>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof axiosClient>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useCreateMessage<
-  TData = Awaited<ReturnType<typeof createMessage>>,
-  TError = ErrorType<ErrorEnvelope>,
->(
-  createMessageBody: BodyType<CreateMessageBody>,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof createMessage>>, TError, TData>> &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof createMessage>>,
-          TError,
-          Awaited<ReturnType<typeof createMessage>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof axiosClient>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useCreateMessage<
-  TData = Awaited<ReturnType<typeof createMessage>>,
-  TError = ErrorType<ErrorEnvelope>,
->(
-  createMessageBody: BodyType<CreateMessageBody>,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof createMessage>>, TError, TData>>;
-    request?: SecondParameter<typeof axiosClient>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Create message
  */
-
-export function useCreateMessage<
-  TData = Awaited<ReturnType<typeof createMessage>>,
-  TError = ErrorType<ErrorEnvelope>,
->(
-  createMessageBody: BodyType<CreateMessageBody>,
+export const useCreateMessage = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
   options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof createMessage>>, TError, TData>>;
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createMessage>>,
+      TError,
+      CreateMessageMutationVariables,
+      TContext
+    >;
     request?: SecondParameter<typeof axiosClient>;
   },
   queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getCreateMessageQueryOptions(createMessageBody, options);
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
+): UseMutationResult<
+  Awaited<ReturnType<typeof createMessage>>,
+  TError,
+  CreateMessageMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateMessageMutationOptions(options), queryClient);
+};
 /**
  * Retrieve all messages across the caller’s own conversations
  * @summary List messages
@@ -188,45 +149,103 @@ export const listMessages = (
   );
 };
 
-export const getListMessagesMutationKey = () => ['listMessages'] as const;
-
-export const getListMessagesMutationOptions = <
-  TError = ErrorType<ErrorEnvelope>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof listMessages>>, TError, void, TContext>;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseMutationOptions<Awaited<ReturnType<typeof listMessages>>, TError, void, TContext> => {
-  const mutationKey = getListMessagesMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof listMessages>>, void> = () => {
-    return listMessages(requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
+export const getListMessagesQueryKey = () => {
+  return [`/api/messages`] as const;
 };
 
-export type ListMessagesMutationResult = NonNullable<Awaited<ReturnType<typeof listMessages>>>;
+export const getListMessagesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMessages>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
+  request?: SecondParameter<typeof axiosClient>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-export type ListMessagesMutationError = ErrorType<ErrorEnvelope>;
+  const queryKey = queryOptions?.queryKey ?? getListMessagesQueryKey();
 
-/**
- * @summary List messages
- */
-export const useListMessages = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof listMessages>>, TError, void, TContext>;
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMessages>>> = ({ signal }) =>
+    listMessages(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMessages>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListMessagesQueryResult = NonNullable<Awaited<ReturnType<typeof listMessages>>>;
+export type ListMessagesQueryError = ErrorType<ErrorEnvelope>;
+
+export function useListMessages<
+  TData = Awaited<ReturnType<typeof listMessages>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMessages>>,
+          TError,
+          Awaited<ReturnType<typeof listMessages>>
+        >,
+        'initialData'
+      >;
     request?: SecondParameter<typeof axiosClient>;
   },
   queryClient?: QueryClient,
-): UseMutationResult<Awaited<ReturnType<typeof listMessages>>, TError, void, TContext> => {
-  return useMutation(getListMessagesMutationOptions(options), queryClient);
-};
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMessages<
+  TData = Awaited<ReturnType<typeof listMessages>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMessages>>,
+          TError,
+          Awaited<ReturnType<typeof listMessages>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMessages<
+  TData = Awaited<ReturnType<typeof listMessages>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary List messages
+ */
+
+export function useListMessages<
+  TData = Awaited<ReturnType<typeof listMessages>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListMessagesQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 /**
  * Retrieve one of the caller’s own messages by ID
  * @summary Get message by ID
@@ -242,68 +261,109 @@ export const getMessage = (
   );
 };
 
-export const getGetMessageMutationKey = () => ['getMessage'] as const;
-
-export const getGetMessageMutationOptions = <
-  TError = ErrorType<ErrorEnvelope>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof getMessage>>,
-    TError,
-    GetMessageMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof getMessage>>,
-  TError,
-  GetMessageMutationVariables,
-  TContext
-> => {
-  const mutationKey = getGetMessageMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof getMessage>>,
-    GetMessageMutationVariables
-  > = (props) => {
-    const { messageId } = props ?? {};
-
-    return getMessage(messageId, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
+export const getGetMessageQueryKey = (messageId: string) => {
+  return [`/api/messages/${messageId}`] as const;
 };
 
-export type GetMessageMutationResult = NonNullable<Awaited<ReturnType<typeof getMessage>>>;
-
-export type GetMessageMutationError = ErrorType<ErrorEnvelope>;
-export type GetMessageMutationVariables = { messageId: string };
-
-/**
- * @summary Get message by ID
- */
-export const useGetMessage = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
+export const getGetMessageQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMessage>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  messageId: string,
   options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof getMessage>>,
-      TError,
-      GetMessageMutationVariables,
-      TContext
-    >;
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMessageQueryKey(messageId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMessage>>> = ({ signal }) =>
+    getMessage(messageId, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: messageId !== null && messageId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type GetMessageQueryResult = NonNullable<Awaited<ReturnType<typeof getMessage>>>;
+export type GetMessageQueryError = ErrorType<ErrorEnvelope>;
+
+export function useGetMessage<
+  TData = Awaited<ReturnType<typeof getMessage>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  messageId: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMessage>>,
+          TError,
+          Awaited<ReturnType<typeof getMessage>>
+        >,
+        'initialData'
+      >;
     request?: SecondParameter<typeof axiosClient>;
   },
   queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof getMessage>>,
-  TError,
-  GetMessageMutationVariables,
-  TContext
-> => {
-  return useMutation(getGetMessageMutationOptions(options), queryClient);
-};
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMessage<
+  TData = Awaited<ReturnType<typeof getMessage>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  messageId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMessage>>,
+          TError,
+          Awaited<ReturnType<typeof getMessage>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMessage<
+  TData = Awaited<ReturnType<typeof getMessage>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  messageId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get message by ID
+ */
+
+export function useGetMessage<
+  TData = Awaited<ReturnType<typeof getMessage>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  messageId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessage>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetMessageQueryOptions(messageId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

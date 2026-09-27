@@ -26,6 +26,12 @@ apps/nebula-chat-client/src/
 ├── main.tsx                       # Vite entry point
 ├── RouterProvider.tsx             # React Router setup
 ├── routes.ts                      # Typed route helpers
+├── libs/api/
+│   ├── client.ts                  # axios instance (credentials, AppError interceptor); Orval's mutator
+│   ├── queryClient.ts             # createQueryClient + the app's client (global onError → toaster)
+│   ├── types/types.ts             # createQueryClient options
+│   ├── utils/                     # toAppError (failed request → AppError), notifyError (→ toaster)
+│   └── generated/                 # Orval output: react-query hooks, models, MSW handlers
 ├── resources.ts                   # UI string constants
 ├── App.css
 ├── theme/
@@ -37,8 +43,8 @@ apps/nebula-chat-client/src/
 │   ├── chat/
 │   │   ├── ChatPage.tsx
 │   │   ├── types/types.ts         # All chat types
-│   │   ├── utils/chatUtils.ts     # Model options list, pure helpers
-│   │   ├── stores/                # Zustand stores
+│   │   ├── utils/                 # Model options, SSE event names, message mapping
+│   │   ├── stores/                # Zustand stores (client state)
 │   │   │   ├── useChatStreamStore.ts
 │   │   │   ├── useMessageStore.ts
 │   │   │   ├── useModelStore.ts
@@ -60,16 +66,13 @@ apps/nebula-chat-client/src/
 │   │       └── ...
 │   └── conversations/
 │       ├── types/types.ts         # All conversation types
-│       ├── utils/navigationActions.tsx
-│       ├── context/
-│       │   └── ConversationsContext.tsx   # createContext + useConversationsContext hook only
-│       ├── providers/
-│       │   └── ConversationsProvider.tsx  # Provider component — reads store, supplies context value
+│       ├── utils/                 # navigationActions, toConversation (API model → view type)
 │       ├── stores/
-│       │   └── useConversationsStore.ts
+│       │   └── useConversationsSearchStore.ts  # Search text + its debounced copy
 │       ├── hooks/
-│       │   ├── useConversation.ts
-│       │   ├── useConversationsSearch.ts
+│       │   ├── useConversations.ts        # Sidebar list: infinite query
+│       │   ├── useConversation.ts         # Open conversation: detail + messages queries
+│       │   ├── useConversationsSearch.ts  # Search results: query on the debounced text
 │       │   └── useInfiniteScroll.ts
 │       └── components/
 │           ├── ConversationsList.tsx
@@ -117,7 +120,6 @@ apps/nebula-chat-client/src/
     │       ├── markdown-content.tsx
     │       └── ...
     └── utils/
-        ├── errorHandler.ts        # handleHttpError, handleNetworkError
         ├── dateUtils.ts
         ├── scrollUtils.ts
         ├── menuUtils.ts
@@ -227,19 +229,49 @@ function MyComponent() { ... }
 
 ---
 
-## State Management — Zustand
+## State Management — react-query for server state, Zustand for client state
 
-All client state is managed with [Zustand](https://zustand.docs.pmnd.rs/). React Context is **not** used for state.
+State is split by **kind** ([ADR-0012](../../docs/adr/0012-adopt-tanstack-query-for-server-state.md)):
 
-### Never use `useState`
+- **Server state** is anything the API owns (conversations, messages, search results). It lives in the
+  [TanStack Query](https://tanstack.com/query) cache and is read through the **Orval-generated hooks** in
+  `src/libs/api/generated/**`; the cache owns loading, errors, dedup and refetching.
+- **Client state** is what the browser owns (drawer open, selected model, input text). It lives in
+  [Zustand](https://zustand.docs.pmnd.rs/) stores.
+- **Chat streaming** is neither: `useChatStream` keeps its bespoke SSE `fetch` and writes the live reply
+  into `useChatStreamStore`.
 
-**Never use `useState`.** All state lives in Zustand stores. There is no scenario where `useState` is the right choice.
+### Server state — the generated hooks
+
+- Import the generated hook (`useGetConversation`, `useListConversationsInfinite`, …) from its per-resource
+  file, e.g. `@/libs/api/generated/conversations/conversations`. Regenerate with `pnpm frontend
+generate:api` after any backend change; generated files are never hand-edited.
+- Wrap it in a module hook in `/hooks/` when the view needs another shape: `useConversations` flattens the
+  pages, and `select` + `toConversation` map API models to view types. Components that call the same hook
+  share one request (react-query dedupes by query key), so no provider distributes server state.
+- Use the plain, non-suspense hooks (`useSuspenseQuery: false` in `orval.config.ts`) and drive skeletons off
+  `isPending` / `isFetchingNextPage`.
+- **Errors are typed.** The axios interceptor in `libs/api/client.ts` rejects every failed request with an
+  `AppError` from `@nebula-chat/errors`, built by `libs/api/utils/toAppError.ts`: an envelope keeps its code
+  and message, anything else gets a code from its status and a generic message. `query.error` is therefore an `AppError` whose `message` is safe to
+  show. The global `onError` in `libs/api/queryClient.ts` toasts every failure once; a component reads
+  `query.error` only for an inline state.
+- **After a write the cache cannot see, invalidate** with the generated key helpers:
+  `queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() })`. `useChatStream` invalidates the
+  list on `conversation-created`, and the list, conversation detail and messages on `end` (a messages
+  refetch mid-stream would race the reply). Invalidate rather than hand-seed with `setQueryData`.
+- The API has no per-conversation messages endpoint: `useConversation` reads the caller's whole message
+  list (one cached query, shared by every conversation) and filters it by conversation id in `select`.
+
+### Client state — Zustand
+
+**Never use `useState`.** Client state lives in Zustand stores.
 
 | Scenario                                                       | Use                                                         |
 | -------------------------------------------------------------- | ----------------------------------------------------------- |
+| Anything read from or written to the API                       | Generated react-query hook (see above)                      |
 | State shared across two or more components                     | Zustand store                                               |
 | Global UI state (drawer, search overlay, viewport height)      | Zustand store                                               |
-| API-fetching state (loading, data, error)                      | Zustand store                                               |
 | DOM measurements shared across instances (e.g. `useMultiLine`) | Zustand store keyed by content                              |
 | Debounce timers                                                | Module-level variable alongside the store — not React state |
 | Tracking a previous value across renders                       | `useRef` — not state                                        |
@@ -248,8 +280,9 @@ All client state is managed with [Zustand](https://zustand.docs.pmnd.rs/). React
 ### Folder rules
 
 - Zustand stores go in `/stores/` under the owning module or `shared/stores/` if global.
-- Hooks that consume stores go in `/hooks/`.
-- One store file per concern.
+- Hooks (query wrappers and hooks that consume stores) go in `/hooks/`.
+- One store file per concern. A store holds no API calls and does no work at module load; a query hook
+  fetches on mount.
 
 ### Store conventions
 
@@ -271,34 +304,24 @@ export const useSearchStore = create<SearchState>((set) => ({
 }));
 ```
 
-Use `get()` inside async actions to read current state — do not close over stale values:
-
-```ts
-loadMore: async () => {
-  const { hasMore, isLoadingMore, nextCursor } = get();
-  if (!hasMore || isLoadingMore || !nextCursor) return;
-  // ...
-},
-```
+Inside an action, read current state with `get()` rather than a value closed over earlier.
 
 Store types that are referenced outside the store file must live in `/types/types.ts`.
 
 ### React Context
 
-Context is **not** used for shared state. When a context is needed, split it across two files:
+Server state is shared through the query cache and client state through Zustand, so neither needs a
+context. The providers in `App.tsx` (`QueryClientProvider`, theme, Chakra) are library wiring. When a
+context is genuinely needed, split it across two files:
 
 - **`context/<Name>Context.tsx`** — `createContext` + the typed `use<Name>Context()` hook. No JSX, no store imports.
-- **`providers/<Name>Provider.tsx`** — the provider component. Reads from Zustand stores, memoizes the value, renders `<Context.Provider>`.
-
-The one existing provider is `ConversationsProvider`, which wraps the app to supply context values from `useConversationsStore`. It does not hold its own state. The initial fetch is triggered at module-level store initialization. All components subscribe to `useConversationsStore` directly.
+- **`providers/<Name>Provider.tsx`** — the provider component, memoizing its value and rendering `<Context.Provider>`.
 
 ### Existing stores
 
 | Store                         | Location                        | Owns                                                             |
 | ----------------------------- | ------------------------------- | ---------------------------------------------------------------- |
-| `useConversationsStore`       | `modules/conversations/stores/` | Conversations list, pagination, fetch, load-more                 |
-| `useConversationStore`        | `modules/conversations/stores/` | Single active conversation, loading, error, refetch              |
-| `useConversationsSearchStore` | `modules/conversations/stores/` | Search query, debounced query, results, loading, error           |
+| `useConversationsSearchStore` | `modules/conversations/stores/` | Search text and its debounced copy (the results are a query)     |
 | `useChatStreamStore`          | `modules/chat/stores/`          | Chat history, streaming flag, token usage, conversation ID       |
 | `useMessageStore`             | `modules/chat/stores/`          | Current message input value                                      |
 | `useModelStore`               | `modules/chat/stores/`          | Selected AI model                                                |
@@ -323,7 +346,7 @@ The one existing provider is `ConversationsProvider`, which wraps the app to sup
 
 ## Hooks
 
-Hooks in `/hooks/` are thin wrappers that read from one or more stores and compose logic. They must not duplicate state that already lives in a store.
+Hooks in `/hooks/` are thin wrappers that read from stores or query hooks and compose logic. They must not duplicate state that already lives in a store or the query cache.
 
 ```ts
 // correct — delegates entirely to stores
@@ -359,25 +382,27 @@ Utility hooks that are inherently parameterised per call-site (`useDebounce`, `u
 | Pattern                            | Wrong                            | Right                                                                             |
 | ---------------------------------- | -------------------------------- | --------------------------------------------------------------------------------- |
 | Derived / computed state           | `useEffect` → `setState`         | Compute inline during render or `useMemo`                                         |
-| Syncing state on prop/route change | `useEffect` → Zustand `set`      | Render-time `useRef` guard (see `useConversation.ts`)                             |
-| Initialising data on mount         | `useEffect(() => fetch(), [])`   | Module-level store init (see `useConversationsStore.ts`)                          |
+| Syncing state on prop/route change | `useEffect` → Zustand `set`      | Guarded render-time write (see `useConversation.ts`)                              |
+| Fetching data on mount             | `useEffect(() => fetch(), [])`   | Generated react-query hook, which fetches on mount (see `useConversations.ts`)    |
+| Refreshing data after a write      | `useEffect` → refetch            | `queryClient.invalidateQueries` where the write happens (see `useChatStream.ts`)  |
 | Reading a browser API value        | `useEffect` + `useState`         | `useSyncExternalStore` (see `useViewportHeight.ts`)                               |
 | DOM measurement after mount        | `useRef` + `useEffect`           | Callback ref — `ref={useCallback((node) => { ... }, [])}` (see `useMultiLine.ts`) |
 | Registering a DOM event listener   | `useEffect` + `addEventListener` | `useEventListener` via `useSyncExternalStore` subscribe lifecycle                 |
 
-No hook or component in the codebase may import or call `useEffect`.
+New code reaches for the patterns above. Two `useEffect` calls predate this rule and remain until they are
+reworked: `ChatContainer` (clearing the post-stream flags, scrolling to the newest message) and `Layout`
+(closing mobile search when the desktop layout appears). Add no others.
 
 ---
 
 ## Shared Utilities
 
-- `@nebula-chat/errors` — the error vocabulary shared with the server (ADR-0011). Read an error body or an SSE
-  `error` frame with `parseErrorEnvelope(value)` (or `isErrorEnvelope`) and show its `message`. Switch on the
-  envelope's `error` code, not the HTTP status (a `MessageAllowanceReached` and a `Forbidden` are both 403s).
-- `shared/utils/errorHandler.ts` — **legacy**. `handleHttpError(response)` and `handleNetworkError(err)` still
-  back the raw-`fetch` conversation stores and parse error bodies by hand. NEB-307 replaces them with the
-  envelope parser above; do not add new call sites.
-- `shared/config/serverConfig.ts` — `SERVER_CONFIG.getApiEndpoint(path)` constructs full API URLs from `VITE_API_URL`. Never hardcode API base URLs.
+- `@nebula-chat/errors` — the error vocabulary shared with the server (ADR-0011). The generated hooks already
+  reject with its `AppError`; the SSE stream reads an error body or `error` frame with
+  `parseErrorEnvelope(value)` and shows its `message`. Switch on the error code (`AppError.code`), not the
+  HTTP status (a `MessageAllowanceReached` and a `Forbidden` are both 403s).
+- `shared/config/serverConfig.ts` — `SERVER_CONFIG.BASE_URL` (the axios `baseURL`) and `getApiEndpoint(path)`
+  (the SSE `fetch`) come from `VITE_API_URL`. Never hardcode API base URLs.
 - `shared/config/paginationConfig.ts` — `paginationConfig.defaultLimit` for page sizes.
 
 ---
@@ -427,7 +452,12 @@ pnpm frontend test:coverage
 - **`tsconfig.app.json` declares the Vitest and testing-library types.** The build runs `tsc -b` over
   `include: ["src"]`, so tests are typechecked — without those `types` entries the build fails
   on `describe` and `expect`.
-- **Stores and hooks are the highest-value targets.** Zustand stores are module-level singletons, so reset
-  state between tests rather than relying on fresh imports.
+- **Render inside a fresh query client.** `renderWithChakra` and `renderHookWithQueryClient` (`@/test/render`)
+  each create one per test with retries off, so no cached response leaks between tests and a failure
+  surfaces at once. Pass your own `queryClient` to prime or inspect the cache, e.g. assert an invalidation
+  with `queryClient.getQueryState(key)?.isInvalidated`.
+- **Hooks and pages are the highest-value targets.** Drive query hooks and the components that use them
+  through MSW rather than stubbing the generated hooks. Zustand stores are module-level singletons, so
+  reset state between tests rather than relying on fresh imports.
 - **Coverage-excluded**: `src/theme/**` (Chakra tokens) and `src/libs/api/generated/**` (Orval output).
   Everything else faces the 80% bar.

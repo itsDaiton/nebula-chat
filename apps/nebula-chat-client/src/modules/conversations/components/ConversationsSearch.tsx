@@ -18,15 +18,15 @@ export const ConversationsSearch = ({
     filteredConversations,
     isSearching,
     error,
-    closeAndClearResults,
-    selectConversationAndClearResults,
+    closeAndClearSearch,
+    selectConversationAndClearSearch,
   } = useConversationsSearch({
     localConversations: conversations,
     onClose,
     onConversationClick,
   });
 
-  useEscapeKey(closeAndClearResults);
+  useEscapeKey(closeAndClearSearch);
 
   return (
     <Portal>
@@ -38,7 +38,7 @@ export const ConversationsSearch = ({
         bottom="0"
         bg="blackAlpha.600"
         zIndex="modal"
-        onClick={closeAndClearResults}
+        onClick={closeAndClearSearch}
       />
       <Flex
         position="fixed"
@@ -75,7 +75,7 @@ export const ConversationsSearch = ({
             {error && (
               <Box py={8} textAlign="center">
                 <Text fontSize="sm" color="red.500">
-                  {error}
+                  {error.message}
                 </Text>
               </Box>
             )}
@@ -87,7 +87,7 @@ export const ConversationsSearch = ({
                 <ConversationListItem
                   key={conversation.id}
                   conversation={conversation}
-                  onClick={selectConversationAndClearResults}
+                  onClick={selectConversationAndClearSearch}
                 />
               ))}
             {!error && !isSearching && filteredConversations.length === 0 && searchQuery.trim() && (
