@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.0.0...nebula-chat-v2.0.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* **agents:** keep code comments to a line or two ([#378](https://github.com/itsDaiton/nebula-chat/issues/378)) ([c23e4f9](https://github.com/itsDaiton/nebula-chat/commit/c23e4f9f7e91c4b5aa22cc52e8679cc823901129))
+
 ## [2.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v1.25.8...nebula-chat-v2.0.0) (2026-09-25)
 
 
