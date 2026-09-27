@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.2.0...nebula-chat-v2.2.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* **server:** honour OPENAPI_* env stand-ins in generate:openapi ([#383](https://github.com/itsDaiton/nebula-chat/issues/383)) ([d5ffcae](https://github.com/itsDaiton/nebula-chat/commit/d5ffcae27d796655529207fe01a8e5c4a0984876))
+
 ## [2.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.1.0...nebula-chat-v2.2.0) (2026-09-27)
 
 
