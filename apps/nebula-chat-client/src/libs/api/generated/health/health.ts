@@ -3,14 +3,19 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.7.0
+ * OpenAPI spec version: 1.7.1
  */
-import { useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type {
-  MutationFunction,
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   QueryClient,
-  UseMutationOptions,
-  UseMutationResult,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseQueryOptions,
+  UseQueryResult,
 } from '@tanstack/react-query';
 
 import type { GetApiRoot200, GetHealth200 } from '../model';
@@ -20,6 +25,21 @@ import type { ErrorType } from '../../client';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
+  const result = { queryKey } as T & { queryKey: K };
+  for (const key of Object.keys(query)) {
+    // The explicit queryKey always wins, matching the previous
+    // `{ ...query, queryKey }` spread where it was set last.
+    if (key === 'queryKey') continue;
+    Object.defineProperty(result, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => (query as Record<string, unknown>)[key],
+    });
+  }
+  return result;
+};
+
 /**
  * Welcome endpoint — confirms the API is reachable.
  * @summary API root
@@ -28,45 +48,103 @@ export const getApiRoot = (options?: SecondParameter<typeof axiosClient>, signal
   return axiosClient<GetApiRoot200>({ url: `/`, method: 'GET', signal }, options);
 };
 
-export const getGetApiRootMutationKey = () => ['getApiRoot'] as const;
-
-export const getGetApiRootMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof getApiRoot>>, TError, void, TContext>;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseMutationOptions<Awaited<ReturnType<typeof getApiRoot>>, TError, void, TContext> => {
-  const mutationKey = getGetApiRootMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof getApiRoot>>, void> = () => {
-    return getApiRoot(requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
+export const getGetApiRootQueryKey = () => {
+  return [`/`] as const;
 };
 
-export type GetApiRootMutationResult = NonNullable<Awaited<ReturnType<typeof getApiRoot>>>;
+export const getGetApiRootQueryOptions = <
+  TData = Awaited<ReturnType<typeof getApiRoot>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiRoot>>, TError, TData>>;
+  request?: SecondParameter<typeof axiosClient>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-export type GetApiRootMutationError = ErrorType<unknown>;
+  const queryKey = queryOptions?.queryKey ?? getGetApiRootQueryKey();
 
-/**
- * @summary API root
- */
-export const useGetApiRoot = <TError = ErrorType<unknown>, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof getApiRoot>>, TError, void, TContext>;
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiRoot>>> = ({ signal }) =>
+    getApiRoot(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getApiRoot>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetApiRootQueryResult = NonNullable<Awaited<ReturnType<typeof getApiRoot>>>;
+export type GetApiRootQueryError = ErrorType<unknown>;
+
+export function useGetApiRoot<
+  TData = Awaited<ReturnType<typeof getApiRoot>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiRoot>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiRoot>>,
+          TError,
+          Awaited<ReturnType<typeof getApiRoot>>
+        >,
+        'initialData'
+      >;
     request?: SecondParameter<typeof axiosClient>;
   },
   queryClient?: QueryClient,
-): UseMutationResult<Awaited<ReturnType<typeof getApiRoot>>, TError, void, TContext> => {
-  return useMutation(getGetApiRootMutationOptions(options), queryClient);
-};
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetApiRoot<
+  TData = Awaited<ReturnType<typeof getApiRoot>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiRoot>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiRoot>>,
+          TError,
+          Awaited<ReturnType<typeof getApiRoot>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetApiRoot<
+  TData = Awaited<ReturnType<typeof getApiRoot>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiRoot>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary API root
+ */
+
+export function useGetApiRoot<
+  TData = Awaited<ReturnType<typeof getApiRoot>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiRoot>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetApiRootQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 /**
  * Returns server liveness status and current UTC timestamp.
  * @summary Health check
@@ -75,42 +153,99 @@ export const getHealth = (options?: SecondParameter<typeof axiosClient>, signal?
   return axiosClient<GetHealth200>({ url: `/health`, method: 'GET', signal }, options);
 };
 
-export const getGetHealthMutationKey = () => ['getHealth'] as const;
-
-export const getGetHealthMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof getHealth>>, TError, void, TContext>;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseMutationOptions<Awaited<ReturnType<typeof getHealth>>, TError, void, TContext> => {
-  const mutationKey = getGetHealthMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof getHealth>>, void> = () => {
-    return getHealth(requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
+export const getGetHealthQueryKey = () => {
+  return [`/health`] as const;
 };
 
-export type GetHealthMutationResult = NonNullable<Awaited<ReturnType<typeof getHealth>>>;
+export const getGetHealthQueryOptions = <
+  TData = Awaited<ReturnType<typeof getHealth>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>>;
+  request?: SecondParameter<typeof axiosClient>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-export type GetHealthMutationError = ErrorType<unknown>;
+  const queryKey = queryOptions?.queryKey ?? getGetHealthQueryKey();
 
-/**
- * @summary Health check
- */
-export const useGetHealth = <TError = ErrorType<unknown>, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof getHealth>>, TError, void, TContext>;
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getHealth>>> = ({ signal }) =>
+    getHealth(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getHealth>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetHealthQueryResult = NonNullable<Awaited<ReturnType<typeof getHealth>>>;
+export type GetHealthQueryError = ErrorType<unknown>;
+
+export function useGetHealth<
+  TData = Awaited<ReturnType<typeof getHealth>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getHealth>>,
+          TError,
+          Awaited<ReturnType<typeof getHealth>>
+        >,
+        'initialData'
+      >;
     request?: SecondParameter<typeof axiosClient>;
   },
   queryClient?: QueryClient,
-): UseMutationResult<Awaited<ReturnType<typeof getHealth>>, TError, void, TContext> => {
-  return useMutation(getGetHealthMutationOptions(options), queryClient);
-};
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetHealth<
+  TData = Awaited<ReturnType<typeof getHealth>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getHealth>>,
+          TError,
+          Awaited<ReturnType<typeof getHealth>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetHealth<
+  TData = Awaited<ReturnType<typeof getHealth>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Health check
+ */
+
+export function useGetHealth<
+  TData = Awaited<ReturnType<typeof getHealth>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetHealthQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

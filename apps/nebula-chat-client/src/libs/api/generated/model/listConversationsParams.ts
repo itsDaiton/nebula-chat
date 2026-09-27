@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.7.0
+ * OpenAPI spec version: 1.7.1
  */
 
 export type ListConversationsParams = {

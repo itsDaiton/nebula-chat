@@ -3,18 +3,22 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.7.0
+ * OpenAPI spec version: 1.7.1
  */
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
+  DefinedUseInfiniteQueryResult,
   DefinedUseQueryResult,
+  InfiniteData,
   MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseInfiniteQueryOptions,
+  UseInfiniteQueryResult,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
@@ -73,116 +77,73 @@ export const createConversation = (
   );
 };
 
-export const getCreateConversationQueryKey = (
-  createConversationBody?: BodyType<CreateConversationBody>,
-) => {
-  return ['POST', `/api/conversations`, createConversationBody] as const;
-};
+export const getCreateConversationMutationKey = () => ['createConversation'] as const;
 
-export const getCreateConversationQueryOptions = <
-  TData = Awaited<ReturnType<typeof createConversation>>,
+export const getCreateConversationMutationOptions = <
   TError = ErrorType<ErrorEnvelope>,
->(
-  createConversationBody: BodyType<CreateConversationBody>,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof createConversation>>, TError, TData>>;
-    request?: SecondParameter<typeof axiosClient>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getCreateConversationQueryKey(createConversationBody);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof createConversation>>> = ({ signal }) =>
-    createConversation(createConversationBody, requestOptions, signal);
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof createConversation>>,
     TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+    CreateConversationMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof axiosClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createConversation>>,
+  TError,
+  CreateConversationMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateConversationMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createConversation>>,
+    CreateConversationMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createConversation(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
 };
 
-export type CreateConversationQueryResult = NonNullable<
+export type CreateConversationMutationResult = NonNullable<
   Awaited<ReturnType<typeof createConversation>>
 >;
-export type CreateConversationQueryError = ErrorType<ErrorEnvelope>;
+export type CreateConversationMutationBody = BodyType<CreateConversationBody>;
+export type CreateConversationMutationError = ErrorType<ErrorEnvelope>;
+export type CreateConversationMutationVariables = { data: BodyType<CreateConversationBody> };
 
-export function useCreateConversation<
-  TData = Awaited<ReturnType<typeof createConversation>>,
-  TError = ErrorType<ErrorEnvelope>,
->(
-  createConversationBody: BodyType<CreateConversationBody>,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof createConversation>>, TError, TData>> &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof createConversation>>,
-          TError,
-          Awaited<ReturnType<typeof createConversation>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof axiosClient>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useCreateConversation<
-  TData = Awaited<ReturnType<typeof createConversation>>,
-  TError = ErrorType<ErrorEnvelope>,
->(
-  createConversationBody: BodyType<CreateConversationBody>,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof createConversation>>, TError, TData>
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof createConversation>>,
-          TError,
-          Awaited<ReturnType<typeof createConversation>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof axiosClient>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useCreateConversation<
-  TData = Awaited<ReturnType<typeof createConversation>>,
-  TError = ErrorType<ErrorEnvelope>,
->(
-  createConversationBody: BodyType<CreateConversationBody>,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof createConversation>>, TError, TData>>;
-    request?: SecondParameter<typeof axiosClient>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Create conversation
  */
-
-export function useCreateConversation<
-  TData = Awaited<ReturnType<typeof createConversation>>,
-  TError = ErrorType<ErrorEnvelope>,
->(
-  createConversationBody: BodyType<CreateConversationBody>,
+export const useCreateConversation = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
   options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof createConversation>>, TError, TData>>;
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createConversation>>,
+      TError,
+      CreateConversationMutationVariables,
+      TContext
+    >;
     request?: SecondParameter<typeof axiosClient>;
   },
   queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getCreateConversationQueryOptions(createConversationBody, options);
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
+): UseMutationResult<
+  Awaited<ReturnType<typeof createConversation>>,
+  TError,
+  CreateConversationMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateConversationMutationOptions(options), queryClient);
+};
 /**
  * Retrieve the caller’s own conversations with cursor-based pagination. Returns up to 10 conversations by default.
  * @summary List conversations
@@ -198,73 +159,286 @@ export const listConversations = (
   );
 };
 
-export const getListConversationsMutationKey = () => ['listConversations'] as const;
-
-export const getListConversationsMutationOptions = <
-  TError = ErrorType<ErrorEnvelope>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof listConversations>>,
-    TError,
-    ListConversationsMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof listConversations>>,
-  TError,
-  ListConversationsMutationVariables,
-  TContext
-> => {
-  const mutationKey = getListConversationsMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof listConversations>>,
-    ListConversationsMutationVariables
-  > = (props) => {
-    const { params } = props ?? {};
-
-    return listConversations(params, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
+export const getListConversationsInfiniteQueryKey = (params?: ListConversationsParams) => {
+  return ['infinite', `/api/conversations`, ...(params ? [params] : [])] as const;
 };
 
-export type ListConversationsMutationResult = NonNullable<
+export const getListConversationsQueryKey = (params?: ListConversationsParams) => {
+  return [`/api/conversations`, ...(params ? [params] : [])] as const;
+};
+
+export const getListConversationsInfiniteQueryOptions = <
+  TData = InfiniteData<
+    Awaited<ReturnType<typeof listConversations>>,
+    ListConversationsParams['cursor']
+  >,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListConversationsParams,
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof listConversations>>,
+        TError,
+        TData,
+        QueryKey,
+        ListConversationsParams['cursor']
+      >
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListConversationsInfiniteQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listConversations>>,
+    QueryKey,
+    ListConversationsParams['cursor']
+  > = ({ signal, pageParam }) =>
+    listConversations(
+      { ...params, cursor: pageParam ?? params?.['cursor'] },
+      requestOptions,
+      signal,
+    );
+
+  return { queryKey, queryFn, ...queryOptions } as UseInfiniteQueryOptions<
+    Awaited<ReturnType<typeof listConversations>>,
+    TError,
+    TData,
+    QueryKey,
+    ListConversationsParams['cursor']
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListConversationsInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof listConversations>>
 >;
+export type ListConversationsInfiniteQueryError = ErrorType<ErrorEnvelope>;
 
-export type ListConversationsMutationError = ErrorType<ErrorEnvelope>;
-export type ListConversationsMutationVariables = { params?: ListConversationsParams };
-
-/**
- * @summary List conversations
- */
-export const useListConversations = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
+export function useListConversationsInfinite<
+  TData = InfiniteData<
+    Awaited<ReturnType<typeof listConversations>>,
+    ListConversationsParams['cursor']
+  >,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params: undefined | ListConversationsParams,
+  options: {
+    query: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof listConversations>>,
+        TError,
+        TData,
+        QueryKey,
+        ListConversationsParams['cursor']
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConversations>>,
+          TError,
+          Awaited<ReturnType<typeof listConversations>>,
+          QueryKey
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListConversationsInfinite<
+  TData = InfiniteData<
+    Awaited<ReturnType<typeof listConversations>>,
+    ListConversationsParams['cursor']
+  >,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListConversationsParams,
   options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof listConversations>>,
-      TError,
-      ListConversationsMutationVariables,
-      TContext
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof listConversations>>,
+        TError,
+        TData,
+        QueryKey,
+        ListConversationsParams['cursor']
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConversations>>,
+          TError,
+          Awaited<ReturnType<typeof listConversations>>,
+          QueryKey
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListConversationsInfinite<
+  TData = InfiniteData<
+    Awaited<ReturnType<typeof listConversations>>,
+    ListConversationsParams['cursor']
+  >,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListConversationsParams,
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof listConversations>>,
+        TError,
+        TData,
+        QueryKey,
+        ListConversationsParams['cursor']
+      >
     >;
     request?: SecondParameter<typeof axiosClient>;
   },
   queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof listConversations>>,
-  TError,
-  ListConversationsMutationVariables,
-  TContext
-> => {
-  return useMutation(getListConversationsMutationOptions(options), queryClient);
+): UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary List conversations
+ */
+
+export function useListConversationsInfinite<
+  TData = InfiniteData<
+    Awaited<ReturnType<typeof listConversations>>,
+    ListConversationsParams['cursor']
+  >,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListConversationsParams,
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof listConversations>>,
+        TError,
+        TData,
+        QueryKey,
+        ListConversationsParams['cursor']
+      >
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListConversationsInfiniteQueryOptions(params, options);
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as UseInfiniteQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListConversationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listConversations>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListConversationsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListConversationsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listConversations>>> = ({ signal }) =>
+    listConversations(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listConversations>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
+
+export type ListConversationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listConversations>>
+>;
+export type ListConversationsQueryError = ErrorType<ErrorEnvelope>;
+
+export function useListConversations<
+  TData = Awaited<ReturnType<typeof listConversations>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params: undefined | ListConversationsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConversations>>,
+          TError,
+          Awaited<ReturnType<typeof listConversations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListConversations<
+  TData = Awaited<ReturnType<typeof listConversations>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListConversationsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConversations>>,
+          TError,
+          Awaited<ReturnType<typeof listConversations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListConversations<
+  TData = Awaited<ReturnType<typeof listConversations>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListConversationsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary List conversations
+ */
+
+export function useListConversations<
+  TData = Awaited<ReturnType<typeof listConversations>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListConversationsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listConversations>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListConversationsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 /**
  * Search the caller’s own conversations by title, ordered by creation date.
  * @summary Search conversations
@@ -280,73 +454,122 @@ export const searchConversations = (
   );
 };
 
-export const getSearchConversationsMutationKey = () => ['searchConversations'] as const;
-
-export const getSearchConversationsMutationOptions = <
-  TError = ErrorType<ErrorEnvelope>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof searchConversations>>,
-    TError,
-    SearchConversationsMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof searchConversations>>,
-  TError,
-  SearchConversationsMutationVariables,
-  TContext
-> => {
-  const mutationKey = getSearchConversationsMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof searchConversations>>,
-    SearchConversationsMutationVariables
-  > = (props) => {
-    const { params } = props ?? {};
-
-    return searchConversations(params, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
+export const getSearchConversationsQueryKey = (params?: SearchConversationsParams) => {
+  return [`/api/conversations/search`, ...(params ? [params] : [])] as const;
 };
 
-export type SearchConversationsMutationResult = NonNullable<
+export const getSearchConversationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof searchConversations>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params: SearchConversationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSearchConversationsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof searchConversations>>> = ({ signal }) =>
+    searchConversations(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof searchConversations>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SearchConversationsQueryResult = NonNullable<
   Awaited<ReturnType<typeof searchConversations>>
 >;
+export type SearchConversationsQueryError = ErrorType<ErrorEnvelope>;
 
-export type SearchConversationsMutationError = ErrorType<ErrorEnvelope>;
-export type SearchConversationsMutationVariables = { params: SearchConversationsParams };
-
-/**
- * @summary Search conversations
- */
-export const useSearchConversations = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
+export function useSearchConversations<
+  TData = Awaited<ReturnType<typeof searchConversations>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params: SearchConversationsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchConversations>>,
+          TError,
+          Awaited<ReturnType<typeof searchConversations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchConversations<
+  TData = Awaited<ReturnType<typeof searchConversations>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params: SearchConversationsParams,
   options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof searchConversations>>,
-      TError,
-      SearchConversationsMutationVariables,
-      TContext
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchConversations>>,
+          TError,
+          Awaited<ReturnType<typeof searchConversations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchConversations<
+  TData = Awaited<ReturnType<typeof searchConversations>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params: SearchConversationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>
     >;
     request?: SecondParameter<typeof axiosClient>;
   },
   queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof searchConversations>>,
-  TError,
-  SearchConversationsMutationVariables,
-  TContext
-> => {
-  return useMutation(getSearchConversationsMutationOptions(options), queryClient);
-};
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Search conversations
+ */
+
+export function useSearchConversations<
+  TData = Awaited<ReturnType<typeof searchConversations>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params: SearchConversationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchConversations>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getSearchConversationsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 /**
  * Retrieve one of the caller’s own conversations by ID
  * @summary Get conversation by ID
@@ -362,70 +585,109 @@ export const getConversation = (
   );
 };
 
-export const getGetConversationMutationKey = () => ['getConversation'] as const;
-
-export const getGetConversationMutationOptions = <
-  TError = ErrorType<ErrorEnvelope>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof getConversation>>,
-    TError,
-    GetConversationMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof getConversation>>,
-  TError,
-  GetConversationMutationVariables,
-  TContext
-> => {
-  const mutationKey = getGetConversationMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof getConversation>>,
-    GetConversationMutationVariables
-  > = (props) => {
-    const { conversationId } = props ?? {};
-
-    return getConversation(conversationId, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
+export const getGetConversationQueryKey = (conversationId: string) => {
+  return [`/api/conversations/${conversationId}`] as const;
 };
 
-export type GetConversationMutationResult = NonNullable<
-  Awaited<ReturnType<typeof getConversation>>
->;
-
-export type GetConversationMutationError = ErrorType<ErrorEnvelope>;
-export type GetConversationMutationVariables = { conversationId: string };
-
-/**
- * @summary Get conversation by ID
- */
-export const useGetConversation = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
+export const getGetConversationQueryOptions = <
+  TData = Awaited<ReturnType<typeof getConversation>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  conversationId: string,
   options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof getConversation>>,
-      TError,
-      GetConversationMutationVariables,
-      TContext
-    >;
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetConversationQueryKey(conversationId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getConversation>>> = ({ signal }) =>
+    getConversation(conversationId, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: conversationId !== null && conversationId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type GetConversationQueryResult = NonNullable<Awaited<ReturnType<typeof getConversation>>>;
+export type GetConversationQueryError = ErrorType<ErrorEnvelope>;
+
+export function useGetConversation<
+  TData = Awaited<ReturnType<typeof getConversation>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  conversationId: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConversation>>,
+          TError,
+          Awaited<ReturnType<typeof getConversation>>
+        >,
+        'initialData'
+      >;
     request?: SecondParameter<typeof axiosClient>;
   },
   queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof getConversation>>,
-  TError,
-  GetConversationMutationVariables,
-  TContext
-> => {
-  return useMutation(getGetConversationMutationOptions(options), queryClient);
-};
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetConversation<
+  TData = Awaited<ReturnType<typeof getConversation>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  conversationId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConversation>>,
+          TError,
+          Awaited<ReturnType<typeof getConversation>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetConversation<
+  TData = Awaited<ReturnType<typeof getConversation>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  conversationId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get conversation by ID
+ */
+
+export function useGetConversation<
+  TData = Awaited<ReturnType<typeof getConversation>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  conversationId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversation>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetConversationQueryOptions(conversationId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
