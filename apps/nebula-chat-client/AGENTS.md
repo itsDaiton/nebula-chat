@@ -260,8 +260,6 @@ generate:api` after any backend change; generated files are never hand-edited.
   `queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() })`. `useChatStream` invalidates the
   list on `conversation-created`, and the list, conversation detail and messages on `end` (a messages
   refetch mid-stream would race the reply). Invalidate rather than hand-seed with `setQueryData`.
-- The API has no per-conversation messages endpoint: `useConversation` reads the caller's whole message
-  list (one cached query, shared by every conversation) and filters it by conversation id in `select`.
 
 ### Client state — Zustand
 

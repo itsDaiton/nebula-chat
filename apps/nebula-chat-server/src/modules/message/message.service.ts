@@ -20,7 +20,7 @@ export const messageService = {
     }
     return message;
   },
-  async getAllMessages(userId: string) {
-    return messageRepository.findAll(userId);
+  async getAllMessages(userId: string, conversationId?: string) {
+    return messageRepository.findAll(userId, conversationId);
   },
 };

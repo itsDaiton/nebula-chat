@@ -1,6 +1,10 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { messageService } from '@backend/modules/message/message.service';
-import type { CreateMessageDTO, GetMessageParams } from '@backend/modules/message/message.types';
+import type {
+  CreateMessageDTO,
+  GetMessageParams,
+  ListMessagesQuery,
+} from '@backend/modules/message/message.types';
 import { getSessionData } from '@backend/plugins/authGate.plugin';
 
 export const messageController = {
@@ -15,9 +19,10 @@ export const messageController = {
     const message = await messageService.getMessage(messageId, user.id);
     return reply.status(200).send(message);
   },
-  async getAll(req: FastifyRequest, reply: FastifyReply) {
+  async getAll(req: FastifyRequest<{ Querystring: ListMessagesQuery }>, reply: FastifyReply) {
+    const { conversationId } = req.query;
     const { user } = getSessionData(req);
-    const messages = await messageService.getAllMessages(user.id);
+    const messages = await messageService.getAllMessages(user.id, conversationId);
     return reply.status(200).send(messages);
   },
 };

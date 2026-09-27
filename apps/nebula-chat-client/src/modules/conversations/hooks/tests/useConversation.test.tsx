@@ -11,7 +11,6 @@ import { server } from '@/test/msw';
 import { createTestQueryClient, renderHookWithQueryClient } from '@/test/render';
 
 const CONVERSATION_ID = '11111111-1111-4111-8111-111111111111';
-const OTHER_ID = '33333333-3333-4333-8333-333333333333';
 
 const aMessage = (id: string, conversationId: string, role: string, content: string) => ({
   id,
@@ -23,6 +22,8 @@ const aMessage = (id: string, conversationId: string, role: string, content: str
   createdAt: '2026-01-01T00:00:00.000Z',
 });
 
+// The server narrows the list to the requested conversation, so the messages
+// are only served to a request that names it.
 const serveConversation = (messages = [aMessage('m1', CONVERSATION_ID, 'user', 'a question')]) =>
   server.use(
     getGetConversationMockHandler({
@@ -30,7 +31,9 @@ const serveConversation = (messages = [aMessage('m1', CONVERSATION_ID, 'user', '
       title: 'Chat',
       createdAt: '2026-01-01T00:00:00.000Z',
     }),
-    getListMessagesMockHandler(messages),
+    getListMessagesMockHandler(({ request }) =>
+      new URL(request.url).searchParams.get('conversationId') === CONVERSATION_ID ? messages : [],
+    ),
   );
 
 const chat = () => useChatStreamStore.getState();
@@ -49,7 +52,6 @@ describe('useConversation', () => {
   it('loads the conversation named in the route into the chat history', async () => {
     serveConversation([
       aMessage('m1', CONVERSATION_ID, 'user', 'a question'),
-      aMessage('x1', OTHER_ID, 'user', 'another conversation'),
       aMessage('m2', CONVERSATION_ID, 'assistant', 'an answer'),
     ]);
 
@@ -90,8 +92,9 @@ describe('useConversation', () => {
 
   it('waits out a refetch of stale messages rather than loading them', async () => {
     // A finished stream invalidates messages; load from the refetch, not the stale cache.
+    // It invalidates by the parameterless key, a prefix of every per-conversation key.
     const queryClient = createTestQueryClient();
-    queryClient.setQueryData(getListMessagesQueryKey(), []);
+    queryClient.setQueryData(getListMessagesQueryKey({ conversationId: CONVERSATION_ID }), []);
     await queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() });
     serveConversation([aMessage('m1', CONVERSATION_ID, 'user', 'fresh')]);
 

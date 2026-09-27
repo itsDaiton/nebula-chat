@@ -265,7 +265,41 @@ describe('GET /api/messages', () => {
 
     await app.inject({ method: 'GET', url: '/api/messages' });
 
-    expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID);
+    expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, undefined);
+  });
+
+  it('narrows the caller’s messages to one conversation', async () => {
+    repo.findAll.mockResolvedValue(fromPartial([aMessage()]));
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/messages?conversationId=${CONVERSATION_ID}`,
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toHaveLength(1);
+    // Owner-scoped: the filter is applied inside the session user's messages.
+    expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, CONVERSATION_ID);
+  });
+
+  it('reads a conversation the caller does not own as empty, not 404', async () => {
+    repo.findAll.mockResolvedValue(fromPartial([]));
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/messages?conversationId=${CONVERSATION_ID}`,
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual([]);
+  });
+
+  it('rejects a non-UUID conversationId before reaching the repository', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/messages?conversationId=nope' });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toMatchObject({ success: false });
+    expect(repo.findAll).not.toHaveBeenCalled();
   });
 
   it('rejects an unauthenticated list with 401 and never reaches the repository', async () => {

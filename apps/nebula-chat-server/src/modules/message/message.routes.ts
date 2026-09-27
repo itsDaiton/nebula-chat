@@ -5,6 +5,7 @@ import { requireAuthentication } from '@backend/plugins/authGate.plugin';
 import {
   createMessageSchema,
   getMessagesSchema,
+  listMessagesQuerySchema,
   messageResponseSchema,
   messagesArraySchema,
 } from '@backend/modules/message/message.validation';
@@ -52,17 +53,21 @@ const messageRoutes: FastifyPluginAsyncZod = async (app) => {
 
   app.get('', {
     schema: {
-      description: 'Retrieve all messages across the caller’s own conversations',
+      description:
+        'Retrieve the messages across the caller’s own conversations, newest first. Pass `conversationId` to list one conversation’s messages, oldest first; a conversation the caller does not own lists as empty.',
       summary: 'List messages',
       tags: ['Messages'],
       operationId: 'listMessages',
+      querystring: listMessagesQuerySchema,
       response: {
         200: messagesArraySchema.describe('List of messages owned by the caller'),
+        400: errorEnvelopeSchema.describe('Invalid conversation ID format'),
         401: errorEnvelopeSchema.describe('No authenticated session'),
         500: errorEnvelopeSchema.describe('Internal server error'),
       },
     },
-    // Owner-scoped: only messages in the session user's conversations are listed.
+    // Owner-scoped: only messages in the session user's conversations are listed,
+    // and a `conversationId` filter narrows within them (ADR-0010 §2).
     preHandler: requireAuthentication,
     handler: messageController.getAll,
   });

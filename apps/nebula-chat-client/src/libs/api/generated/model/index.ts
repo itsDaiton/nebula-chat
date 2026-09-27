@@ -22,5 +22,6 @@ export * from './listConversations200';
 export * from './listConversations200ConversationsItem';
 export * from './listConversationsParams';
 export * from './listMessages200Item';
+export * from './listMessagesParams';
 export * from './searchConversations200Item';
 export * from './searchConversationsParams';
