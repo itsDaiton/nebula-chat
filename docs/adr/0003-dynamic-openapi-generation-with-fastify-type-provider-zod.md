@@ -1,6 +1,6 @@
 # ADR-0003: Dynamic OpenAPI Generation via fastify-type-provider-zod
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0018](./0018-fastify-zod-openapi-named-schemas-env-free-spec.md) — the provider and spec-generation mechanics. Routes as the single source of truth still stands.
 - **Date:** 2026-04-25
 - **Deciders:** @itsDaiton
 
