@@ -175,6 +175,9 @@ These apply everywhere in the repo, frontend and backend alike. See each package
   that package's public surface — it is what `tsup`'s `entry` and the `exports` map point at, so it is
   required, not optional. Every package under `libs/` has exactly one. Never nest a barrel below that.
 - **No relative imports.** Frontend uses `@/*` (→ `apps/nebula-chat-client/src/`); backend uses `@backend/*` (→ `apps/nebula-chat-server/src/`).
+- **Comments are brief.** Comment only what the code can't say: the reason, constraint, or gotcha behind a
+  choice. Keep each comment to one line, two at most. Names and types carry the what; history belongs in the
+  commit message, rationale that spans files in an ADR.
 
 ---
 
