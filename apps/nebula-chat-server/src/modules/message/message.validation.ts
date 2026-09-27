@@ -11,6 +11,13 @@ export const getMessagesSchema = z.object({
   messageId: z.uuid(),
 });
 
+export const listMessagesQuerySchema = z.object({
+  conversationId: z
+    .uuid()
+    .optional()
+    .describe('Only list the messages of this conversation, oldest first'),
+});
+
 export const messageResponseSchema = z.object({
   id: z.uuid(),
   conversationId: z.uuid(),

@@ -27,6 +27,7 @@ import type {
   ErrorEnvelope,
   GetMessage200,
   ListMessages200Item,
+  ListMessagesParams,
 } from '../model';
 
 import { axiosClient } from '../../client';
@@ -136,36 +137,40 @@ export const useCreateMessage = <TError = ErrorType<ErrorEnvelope>, TContext = u
   return useMutation(getCreateMessageMutationOptions(options), queryClient);
 };
 /**
- * Retrieve all messages across the caller’s own conversations
+ * Retrieve the messages across the caller’s own conversations, newest first. Pass `conversationId` to list one conversation’s messages, oldest first; a conversation the caller does not own lists as empty.
  * @summary List messages
  */
 export const listMessages = (
+  params?: ListMessagesParams,
   options?: SecondParameter<typeof axiosClient>,
   signal?: AbortSignal,
 ) => {
   return axiosClient<ListMessages200Item[]>(
-    { url: `/api/messages`, method: 'GET', signal },
+    { url: `/api/messages`, method: 'GET', params, signal },
     options,
   );
 };
 
-export const getListMessagesQueryKey = () => {
-  return [`/api/messages`] as const;
+export const getListMessagesQueryKey = (params?: ListMessagesParams) => {
+  return [`/api/messages`, ...(params ? [params] : [])] as const;
 };
 
 export const getListMessagesQueryOptions = <
   TData = Awaited<ReturnType<typeof listMessages>>,
   TError = ErrorType<ErrorEnvelope>,
->(options?: {
-  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
-  request?: SecondParameter<typeof axiosClient>;
-}) => {
+>(
+  params?: ListMessagesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getListMessagesQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getListMessagesQueryKey(params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof listMessages>>> = ({ signal }) =>
-    listMessages(requestOptions, signal);
+    listMessages(params, requestOptions, signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof listMessages>>,
@@ -181,6 +186,7 @@ export function useListMessages<
   TData = Awaited<ReturnType<typeof listMessages>>,
   TError = ErrorType<ErrorEnvelope>,
 >(
+  params: undefined | ListMessagesParams,
   options: {
     query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>> &
       Pick<
@@ -199,6 +205,7 @@ export function useListMessages<
   TData = Awaited<ReturnType<typeof listMessages>>,
   TError = ErrorType<ErrorEnvelope>,
 >(
+  params?: ListMessagesParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>> &
       Pick<
@@ -217,6 +224,7 @@ export function useListMessages<
   TData = Awaited<ReturnType<typeof listMessages>>,
   TError = ErrorType<ErrorEnvelope>,
 >(
+  params?: ListMessagesParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
     request?: SecondParameter<typeof axiosClient>;
@@ -231,13 +239,14 @@ export function useListMessages<
   TData = Awaited<ReturnType<typeof listMessages>>,
   TError = ErrorType<ErrorEnvelope>,
 >(
+  params?: ListMessagesParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
     request?: SecondParameter<typeof axiosClient>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getListMessagesQueryOptions(options);
+  const queryOptions = getListMessagesQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

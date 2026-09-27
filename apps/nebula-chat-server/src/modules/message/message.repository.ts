@@ -1,4 +1,4 @@
-import { eq, desc, and, count } from 'drizzle-orm';
+import { eq, asc, desc, and, count } from 'drizzle-orm';
 import { messages, conversations } from '@nebula-chat/db';
 import type { DbTransaction } from '@nebula-chat/db';
 import { db } from '@backend/db';
@@ -12,7 +12,7 @@ import type {
 export const messageRepository: {
   create: (data: CreateMessageDTO) => Promise<MessageRow>;
   findById: (params: GetMessageParams, userId: string) => Promise<MessageRow | null>;
-  findAll: (userId: string) => Promise<MessageRow[]>;
+  findAll: (userId: string, conversationId?: string) => Promise<MessageRow[]>;
   createTx: (tx: DbTransaction, data: CreateMessageDTO) => Promise<MessageRow>;
   findByConversationId: (conversationId: string, limit?: number) => Promise<MessageHistoryRow[]>;
   countUserMessagesByOwner: (userId: string) => Promise<number>;
@@ -35,13 +35,21 @@ export const messageRepository: {
       .where(and(eq(messages.id, messageId), eq(conversations.userId, userId)));
     return row?.messages ?? null;
   },
-  async findAll(userId: string) {
+  // Narrowing to one conversation stays inside the owner join, so another user's
+  // conversation reads as empty rather than leaking its existence. One
+  // conversation is a thread, read oldest first; the full list stays newest first.
+  async findAll(userId: string, conversationId?: string) {
     const rows = await db
       .select()
       .from(messages)
       .innerJoin(conversations, eq(messages.conversationId, conversations.id))
-      .where(eq(conversations.userId, userId))
-      .orderBy(desc(messages.createdAt));
+      .where(
+        and(
+          eq(conversations.userId, userId),
+          conversationId === undefined ? undefined : eq(messages.conversationId, conversationId),
+        ),
+      )
+      .orderBy(conversationId === undefined ? desc(messages.createdAt) : asc(messages.createdAt));
     return rows.map((row) => row.messages);
   },
   async createTx(tx: DbTransaction, data: CreateMessageDTO) {
