@@ -1,16 +1,16 @@
 import 'dotenv/config';
-import { hasProviderKey, missingBaseKeys } from 'load-env';
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { applyOpenApiEnvFallbacks, missingOpenApiEnv } from '@backend/scripts/openapiEnv';
 
-if (!hasProviderKey || missingBaseKeys.length > 0) {
-  const missing = [
-    ...(hasProviderKey ? [] : ['OPENAI_API_KEY or ANTHROPIC_API_KEY']),
-    ...missingBaseKeys,
-  ];
+// Must run before @backend/app is imported: env.ts parses process.env on import.
+applyOpenApiEnvFallbacks();
+
+const missing = missingOpenApiEnv();
+if (missing.length > 0) {
   process.stderr.write(
     `Missing required env vars for OpenAPI generation: ${missing.join(', ')}\n` +
-      'Set the standard vars or provide OPENAPI_OPENAI_API_KEY / OPENAPI_ANTHROPIC_API_KEY, OPENAPI_DATABASE_URL, and OPENAPI_REDIS_URL.\n',
+      'Set them, or their OPENAPI_-prefixed stand-ins (e.g. OPENAPI_DATABASE_URL); placeholder values are fine.\n',
   );
   process.exit(1);
 }
