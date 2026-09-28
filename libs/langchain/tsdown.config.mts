@@ -7,7 +7,7 @@ export default defineConfig({
   clean: true,
   outDir: 'dist',
   sourcemap: true,
-  // Keep tsup's names (index.js CJS, index.mjs ESM) that the exports map points at.
+  // Emit index.js (CJS) and index.mjs (ESM), the names the exports map points at.
   fixedExtension: false,
   target: 'es2022',
   deps: {
