@@ -1,4 +1,4 @@
-import { defineConfig } from 'tsup';
+import { defineConfig } from 'tsdown';
 
 export default defineConfig({
   entry: ['src/index.ts'],
@@ -7,6 +7,6 @@ export default defineConfig({
   clean: true,
   outDir: 'dist',
   sourcemap: true,
-  target: 'es2022',
-  external: ['ioredis', '@nebula-chat/otel', '@opentelemetry/api'],
+  // Emit index.js (CJS) and index.mjs (ESM), the names the exports map points at.
+  fixedExtension: false,
 });

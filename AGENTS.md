@@ -140,7 +140,7 @@ pnpm --filter @nebula-chat/langchain test
   its own assertions — a file whose `it()` blocks come from a helper reads as empty to both Sonar
   (`typescript:S2187`) and to the next person to open it.
 - **Tests run against built libraries.** `turbo`'s `test` task declares `dependsOn: ["^build"]`, so a test
-  importing `@nebula-chat/*` exercises the tsup `dist` artifact production actually runs — not the lib's
+  importing `@nebula-chat/*` exercises the tsdown `dist` artifact production actually runs — not the lib's
   source. Never alias `@nebula-chat/*` to `libs/*/src` in a Vitest config.
 - **80% coverage, enforced twice.** Vitest `coverage.thresholds` fail the CI `Test` step, and Sonar's
   quality gate requires 80% on both overall and new code, per project. The Vitest threshold is the real
@@ -172,7 +172,7 @@ These apply everywhere in the repo, frontend and backend alike. See each package
 - **No `index.ts` barrel files inside an app.** Import directly from the file that defines the thing. Two
   exceptions, and only two: `index.ts` files emitted by code generators (e.g. Orval output), which are never
   hand-authored or hand-edited; and the single top-level `src/index.ts` of a package under `libs/`, which is
-  that package's public surface — it is what `tsup`'s `entry` and the `exports` map point at, so it is
+  that package's public surface — it is what `tsdown`'s `entry` and the `exports` map point at, so it is
   required, not optional. Every package under `libs/` has exactly one. Never nest a barrel below that.
 - **No relative imports.** Frontend uses `@/*` (→ `apps/nebula-chat-client/src/`); backend uses `@backend/*` (→ `apps/nebula-chat-server/src/`).
 - **Comments are brief.** Comment only what the code can't say: the reason, constraint, or gotcha behind a

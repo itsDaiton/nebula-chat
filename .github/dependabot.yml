@@ -9,7 +9,7 @@ updates:
     open-pull-requests-limit: 10
     cooldown:
       default-days: 10
-    # TS 7 is blocked on typescript-eslint + tsup support (NEB-392); remove this then.
+    # TS 7 is blocked on typescript-eslint support (NEB-392); remove this then.
     ignore:
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
