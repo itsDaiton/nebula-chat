@@ -23,6 +23,9 @@ import { logger } from '@backend/logger';
 import chatRoutes from '@backend/modules/chat/chat.routes';
 import conversationRoutes from '@backend/modules/conversation/conversation.routes';
 import messageRoutes from '@backend/modules/message/message.routes';
+import authGate from '@backend/plugins/authGate.plugin';
+import dbPlugin from '@backend/plugins/db.plugin';
+import redisPlugin from '@backend/plugins/redis.plugin';
 import requestLogging from '@backend/plugins/requestLogging.plugin';
 import { logController } from '@backend/utils/logController';
 import { pruneUnreferencedSchemas } from '@backend/utils/pruneUnreferencedSchemas';
@@ -75,9 +78,9 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   // First, so its root-level hooks wrap every route registered after it.
   await app.register(requestLogging);
 
-  await app.register(import('./plugins/db.plugin'));
-  await app.register(import('./plugins/redis.plugin'));
-  await app.register(import('./plugins/authGate.plugin'));
+  await app.register(dbPlugin);
+  await app.register(redisPlugin);
+  await app.register(authGate);
   await app.register(sensible);
   await app.register(cors, corsOptions);
   await app.register(rateLimit, { global: false });

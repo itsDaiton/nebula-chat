@@ -16,7 +16,7 @@ if (missing.length > 0) {
 }
 
 const main = async (): Promise<void> => {
-  const { buildApp } = await import('@backend/app');
+  const { buildApp } = await import('@backend/app.js');
   const app = await buildApp();
   await app.ready();
 
