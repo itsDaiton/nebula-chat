@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-langchain-v2.0.0...nebula-chat-langchain-v2.0.1) (2026-09-28)
+
+
+### Bug Fixes
+
+* **deps:** NEB-398 migrate lib builds from tsup to tsdown ([#399](https://github.com/itsDaiton/nebula-chat/issues/399)) ([678284f](https://github.com/itsDaiton/nebula-chat/commit/678284fd43a580450dda1586802bd27eac1c06c0))
+
 ## [2.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-langchain-v1.2.1...nebula-chat-langchain-v2.0.0) (2026-09-25)
 
 
