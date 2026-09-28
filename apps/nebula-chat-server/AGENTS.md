@@ -360,6 +360,8 @@ import { errorHandler } from '@backend/errors/error.handler';
 
 Never use relative paths in the backend. Aliases are configured in `tsconfig.json` and resolved at build time by `tsc-alias`.
 
+Static imports stay extensionless. A dynamic `import()` needs a `.js` extension (`await import('@backend/app.js')`): under `"module": "node20"` it is emitted as a real ESM import, which resolves like ESM.
+
 ---
 
 ## Environment Variables
