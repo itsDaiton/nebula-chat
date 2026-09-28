@@ -1,13 +1,12 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "rootDir": ".",
     "outDir": "dist",
     "paths": {
-      "@backend/*": ["src/*"]
+      "@backend/*": ["./src/*"]
     },
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "node20",
+    "moduleResolution": "node16",
     "esModuleInterop": true,
     "target": "es2023",
     "sourceMap": true,
@@ -23,8 +22,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "noImplicitOverride": true,
-    "ignoreDeprecations": "6.0"
+    "noImplicitOverride": true
   },
   "exclude": ["node_modules", "tmp", "dist"],
   "include": ["src/**/*.ts", "load-env.ts"]

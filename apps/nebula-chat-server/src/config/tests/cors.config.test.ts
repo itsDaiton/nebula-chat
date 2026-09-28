@@ -11,7 +11,7 @@ vi.mock('@backend/env', () => ({ env: mockEnv }));
 const loadCorsOptions = async (env: typeof mockEnv) => {
   Object.assign(mockEnv, { CLIENT_URL: undefined, SERVER_URL: undefined }, env);
   vi.resetModules();
-  const mod = await import('@backend/config/cors.config');
+  const mod = await import('@backend/config/cors.config.js');
   return mod.corsOptions;
 };
 

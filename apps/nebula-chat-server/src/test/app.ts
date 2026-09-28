@@ -21,7 +21,7 @@ type CreateTestAppOptions = {
 export const createTestApp = async (
   options: CreateTestAppOptions = {},
 ): Promise<FastifyInstance> => {
-  const { buildApp } = await import('@backend/app');
+  const { buildApp } = await import('@backend/app.js');
   const app = await buildApp(options.logger ? { logger: options.logger } : {});
   await app.ready();
   return app;
