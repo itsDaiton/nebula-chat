@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.3.2...nebula-chat-v2.3.3) (2026-09-28)
+
+
+### Bug Fixes
+
+* **server:** NEB-391 drop TS 6 deprecated tsconfig options ([#396](https://github.com/itsDaiton/nebula-chat/issues/396)) ([01f9b9c](https://github.com/itsDaiton/nebula-chat/commit/01f9b9c145c248ba9f6b677a835b0ca971a8b7a2))
+
 ## [2.3.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.3.1...nebula-chat-v2.3.2) (2026-09-27)
 
 
