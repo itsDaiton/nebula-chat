@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.4.1...nebula-chat-v2.4.2) (2026-09-29)
+
+
+### Bug Fixes
+
+* **ci:** NEB-404 make pnpm knip pass and keep it green ([#406](https://github.com/itsDaiton/nebula-chat/issues/406)) ([052f360](https://github.com/itsDaiton/nebula-chat/commit/052f360423092be0e66bd108739bf1484de47edd))
+
 ## [2.4.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.4.0...nebula-chat-v2.4.1) (2026-09-29)
 
 
