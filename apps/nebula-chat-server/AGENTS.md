@@ -178,7 +178,10 @@ The full conventions are in [docs/logging.md](../../docs/logging.md). The rules 
 
 ## Validation
 
-Validation is handled by Fastify's native schema layer via `fastify-zod-openapi` (see [ADR-0018](../../docs/adr/0018-fastify-zod-openapi-named-schemas-env-free-spec.md)). Define Zod schemas in the module's `*.validation.ts` file, then reference them in the `schema:` block of the corresponding route. Use `FastifyPluginAsyncZodOpenApi` (not `FastifyPluginAsync`) so TypeScript infers request types from the schemas:
+Validation is handled by Fastify's native schema layer via `fastify-zod-openapi` (see
+[ADR-0018](../../docs/adr/0018-fastify-zod-openapi-named-schemas-env-free-spec.md)). Define Zod schemas in the
+module's `*.validation.ts` file, then reference them in the `schema:` block of the corresponding route. Use
+`FastifyPluginAsyncZodOpenApi` (not `FastifyPluginAsync`) so TypeScript infers request types from the schemas:
 
 ```ts
 // conversation.routes.ts
@@ -210,7 +213,10 @@ const conversationRoutes: FastifyPluginAsyncZodOpenApi = async (app) => {
 };
 ```
 
-**Rule — every response entry is `jsonResponse('description', schema)`:** `fastify-zod-openapi` reads a response's description from the response object, not from the schema, so a bare schema (or one with `.describe('...')`) documents as "Default Response". The description is route-contextual, so it lives in the `response:` block, not the validation file. This applies to success and error responses alike:
+**Rule — every response entry is `jsonResponse('description', schema)`:** `fastify-zod-openapi` reads a
+response's description from the response object, not from the schema, so a bare schema (or one with
+`.describe('...')`) documents as "Default Response". The description is route-contextual, so it lives in the
+`response:` block, not the validation file. This applies to success and error responses alike:
 
 ```ts
 response: {
@@ -221,7 +227,12 @@ response: {
 },
 ```
 
-**Rule — every response resource schema carries `.meta({ id })`:** declare it on the schema in the module's `*.validation.ts`, as a plain noun with no `…Response` suffix (`Conversation`, `ConversationPage`, `Message`). The spec then declares it once as a named component, and Orval generates a model with that name. Without an id the body is inlined, and Orval names it after the operation and status (`listMessages200Item`). An array of a named schema needs no id of its own. Request bodies, params and querystrings stay unnamed. `src/tests/app.test.ts` fails on any inline `2xx` JSON object.
+**Rule — every response resource schema carries `.meta({ id })`:** declare it on the schema in the module's
+`*.validation.ts`, as a plain noun with no `…Response` suffix (`Conversation`, `ConversationPage`, `Message`).
+The spec then declares it once as a named component, and Orval generates a model with that name. Without an id
+the body is inlined, and Orval names it after the operation and status (`listMessages200Item`). An array of a
+named schema needs no id of its own. Request bodies, params and querystrings stay unnamed.
+`src/tests/app.test.ts` fails on any inline `2xx` JSON object.
 
 ```ts
 export const conversationResponseSchema = z
@@ -233,7 +244,11 @@ A response timestamp the handler holds as a `Date` is `isoDateTimeSchema` (`@bac
 
 **Rule — every route needs a `schema:` block.** Routes without one produce "Default Response" entries. Use `{ schema: { hide: true } }` to explicitly exclude infrastructure routes (e.g. `/openapi.json`) from the spec rather than leaving them undocumented.
 
-On a request validation failure Fastify throws `FST_ERR_VALIDATION`, whose `validation` entries are `fastify-zod-openapi`'s `RequestValidationError`s. `errors/error.handler.ts` detects them with `instanceof RequestValidationError` and answers `400` with the `Validation` code. A reply that fails its response schema answers `500` `Internal`. Define schemas in `*.validation.ts` using plain Zod — no registry extensions needed. Use `.describe()` to add field-level descriptions for Swagger docs:
+On a request validation failure Fastify throws `FST_ERR_VALIDATION`, whose `validation` entries are
+`fastify-zod-openapi`'s `RequestValidationError`s. `errors/error.handler.ts` detects them with `instanceof
+RequestValidationError` and answers `400` with the `Validation` code. A reply that fails its response schema
+answers `500` `Internal`. Define schemas in `*.validation.ts` using plain Zod — no registry extensions needed.
+Use `.describe()` to add field-level descriptions for Swagger docs:
 
 ```ts
 // conversation.validation.ts
@@ -333,7 +348,11 @@ Token budget (see [CONTEXT.md](../../CONTEXT.md#language) for the vocabulary):
 
 ## OpenAPI Docs
 
-OpenAPI documentation is generated dynamically by `@fastify/swagger` in dynamic mode, driven by `fastify-zod-openapi`: its plugin is registered before `@fastify/swagger`, which takes `fastifyZodOpenApiTransformers`. The document is OpenAPI 3.1 (the minimum `zod-openapi` renders), and `servers` is always `/`. There is no separate registry or `*.openapi.ts` file. The `schema:` block on each route is the single source of truth:
+OpenAPI documentation is generated dynamically by `@fastify/swagger` in dynamic mode, driven by
+`fastify-zod-openapi`: its plugin is registered before `@fastify/swagger`, which takes
+`fastifyZodOpenApiTransformers`. The document is OpenAPI 3.1 (the minimum `zod-openapi` renders), and
+`servers` is always `/`. There is no separate registry or `*.openapi.ts` file. The `schema:` block on each
+route is the single source of truth:
 
 - `body`, `params`, `querystring` — Zod schemas for request validation and request docs
 - `response` — a `jsonResponse(description, schema)` per status code, for response serialization and response docs
