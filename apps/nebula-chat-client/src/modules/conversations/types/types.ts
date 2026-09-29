@@ -1,13 +1,4 @@
-import type { ListConversations200ConversationsItem } from '@/libs/api/generated/model/listConversations200ConversationsItem';
-
-export type Conversation = {
-  id: string;
-  title: string;
-  createdAt: string;
-};
-
-/** A conversation as the API returns it: list, search and detail share this shape. */
-export type ConversationResponse = ListConversations200ConversationsItem;
+import type { Conversation } from '@/libs/api/generated/model/conversation';
 
 export type ConversationListItemProps = {
   conversation: Conversation;

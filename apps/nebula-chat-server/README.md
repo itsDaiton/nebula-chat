@@ -31,7 +31,7 @@ It is responsible for:
 
 3. Configure required variables in `apps/nebula-chat-server/.env`:
    - `OPENAI_API_KEY`
-   - `SERVER_URL` (for local use: `http://localhost:3000`)
+   - `SERVER_URL` (for local use: `http://localhost:3000`), allowed as a CORS origin (e.g. for Swagger UI at `/docs`)
    - `CLIENT_URL` (for local use: `http://localhost:5173`)
    - `DATABASE_URL` (if using external DB) or local Postgres values (`POSTGRES_*`)
    - `REDIS_URL` (if using external Redis) or `REDIS_PASSWORD` for local Redis

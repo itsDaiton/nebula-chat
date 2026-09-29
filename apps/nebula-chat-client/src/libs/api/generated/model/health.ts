@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.8.0
  */
 
-export type CreateConversationBody = {
-  /** @minLength 1 */
-  title: string;
-};
+export interface Health {
+  status: 'ok';
+  timestamp: string;
+}

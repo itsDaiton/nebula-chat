@@ -66,7 +66,7 @@ apps/nebula-chat-client/src/
 │   │       └── ...
 │   └── conversations/
 │       ├── types/types.ts         # All conversation types
-│       ├── utils/                 # navigationActions, toConversation (API model → view type)
+│       ├── utils/                 # navigationActions
 │       ├── stores/
 │       │   └── useConversationsSearchStore.ts  # Search text + its debounced copy
 │       ├── hooks/
@@ -247,7 +247,8 @@ State is split by **kind** ([ADR-0012](../../docs/adr/0012-adopt-tanstack-query-
   file, e.g. `@/libs/api/generated/conversations/conversations`. Regenerate with `pnpm frontend
 generate:api` after any backend change; generated files are never hand-edited.
 - Wrap it in a module hook in `/hooks/` when the view needs another shape: `useConversations` flattens the
-  pages, and `select` + `toConversation` map API models to view types. Components that call the same hook
+  pages with `select`. Type the view with the generated models (`Conversation`, `Message`); never re-declare
+  or alias them by hand. Components that call the same hook
   share one request (react-query dedupes by query key), so no provider distributes server state.
 - Use the plain, non-suspense hooks (`useSuspenseQuery: false` in `orval.config.ts`) and drive skeletons off
   `isPending` / `isFetchingNextPage`.

@@ -3,25 +3,19 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.7.1
+ * OpenAPI spec version: 1.8.0
  */
 
-export * from './createConversation201';
+export * from './apiRoot';
+export * from './conversation';
+export * from './conversationPage';
 export * from './createConversationBody';
-export * from './createMessage201';
 export * from './createMessageBody';
 export * from './createMessageBodyRole';
 export * from './errorCode';
 export * from './errorEnvelope';
-export * from './getApiRoot200';
-export * from './getConversation200';
-export * from './getHealth200';
-export * from './getHealth200Status';
-export * from './getMessage200';
-export * from './listConversations200';
-export * from './listConversations200ConversationsItem';
+export * from './health';
 export * from './listConversationsParams';
-export * from './listMessages200Item';
 export * from './listMessagesParams';
-export * from './searchConversations200Item';
+export * from './message';
 export * from './searchConversationsParams';

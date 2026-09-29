@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.7.1
+ * OpenAPI spec version: 1.8.0
  */
 import type { CreateMessageBodyRole } from './createMessageBodyRole';
 
@@ -13,10 +13,5 @@ export type CreateMessageBody = {
   role: CreateMessageBodyRole;
   /** @minLength 1 */
   content: string;
-  /**
-   * @minimum -9007199254740991
-   * @maximum 9007199254740991
-   * @nullable
-   */
   tokenCount?: number | null;
 };

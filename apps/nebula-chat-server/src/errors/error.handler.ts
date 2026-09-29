@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { hasZodFastifySchemaValidationErrors } from 'fastify-type-provider-zod';
+import { RequestValidationError } from 'fastify-zod-openapi';
 import {
   AppError,
   ConflictError,
@@ -32,11 +32,22 @@ const ownStatus = (err: Error): number | undefined => {
   return [statusCode, status].find(isErrorStatus);
 };
 
+/**
+ * A request that failed its route's Zod schema. Fastify wraps the failure in its
+ * own FST_ERR_VALIDATION error, and the Zod issues ride along in `validation`.
+ */
+const isRequestValidationFailure = (err: Error): boolean => {
+  const { validation } = err as { validation?: unknown };
+  return (
+    Array.isArray(validation) && validation.some((entry) => entry instanceof RequestValidationError)
+  );
+};
+
 const toAppError = (err: Error): AppError => {
   if (isAppError(err)) {
     return err;
   }
-  if (hasZodFastifySchemaValidationErrors(err)) {
+  if (isRequestValidationFailure(err)) {
     return new ValidationError(err.message, { cause: err });
   }
   const { code } = err as { code?: unknown };

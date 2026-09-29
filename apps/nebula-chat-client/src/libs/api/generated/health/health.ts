@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.7.1
+ * OpenAPI spec version: 1.8.0
  */
 import { useQuery } from '@tanstack/react-query';
 import type {
@@ -18,7 +18,7 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { GetApiRoot200, GetHealth200 } from '../model';
+import type { ApiRoot, Health } from '../model';
 
 import { axiosClient } from '../../client';
 import type { ErrorType } from '../../client';
@@ -45,7 +45,7 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
  * @summary API root
  */
 export const getApiRoot = (options?: SecondParameter<typeof axiosClient>, signal?: AbortSignal) => {
-  return axiosClient<GetApiRoot200>({ url: `/`, method: 'GET', signal }, options);
+  return axiosClient<ApiRoot>({ url: `/`, method: 'GET', signal }, options);
 };
 
 export const getGetApiRootQueryKey = () => {
@@ -150,7 +150,7 @@ export function useGetApiRoot<
  * @summary Health check
  */
 export const getHealth = (options?: SecondParameter<typeof axiosClient>, signal?: AbortSignal) => {
-  return axiosClient<GetHealth200>({ url: `/health`, method: 'GET', signal }, options);
+  return axiosClient<Health>({ url: `/health`, method: 'GET', signal }, options);
 };
 
 export const getGetHealthQueryKey = () => {

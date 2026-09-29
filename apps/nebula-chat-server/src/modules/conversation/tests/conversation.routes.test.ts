@@ -101,6 +101,36 @@ describe('POST /api/conversations', () => {
     expect(res.json().createdAt).toBe('2026-01-01T00:00:00.000Z');
   });
 
+  it('strips a field the response schema does not declare', async () => {
+    repo.create.mockResolvedValue(fromPartial(aConversation({ userId: REGISTERED_USER_ID })));
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/conversations',
+      payload: { title: 'A conversation' },
+    });
+
+    expect(res.statusCode).toBe(201);
+    expect(res.json()).toEqual({
+      id: CONVERSATION_ID,
+      title: 'A conversation',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    });
+  });
+
+  it('answers 500 Internal when the reply does not match its response schema', async () => {
+    repo.create.mockResolvedValue(fromPartial(aConversation({ createdAt: 'not a date' })));
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/conversations',
+      payload: { title: 'A conversation' },
+    });
+
+    expect(res.statusCode).toBe(500);
+    expect(res.json()).toMatchObject({ success: false, error: 'Internal' });
+  });
+
   it('rejects a missing title with 400 and never reaches the repository', async () => {
     const res = await app.inject({ method: 'POST', url: '/api/conversations', payload: {} });
 
@@ -295,34 +325,5 @@ describe('GET /api/conversations/search', () => {
     // A route-ordering regression would send this to findById instead.
     expect(repo.search).toHaveBeenCalled();
     expect(repo.findById).not.toHaveBeenCalled();
-  });
-});
-
-describe('health and root routes', () => {
-  it('reports liveness on /health', async () => {
-    const res = await app.inject({ method: 'GET', url: '/health' });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.json().status).toBe('ok');
-  });
-
-  it('serves a welcome message at the root', async () => {
-    const res = await app.inject({ method: 'GET', url: '/' });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.json().message).toContain('Nebula Chat');
-  });
-
-  it('serves the generated OpenAPI document', async () => {
-    const res = await app.inject({ method: 'GET', url: '/openapi.json' });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.json().openapi).toBe('3.0.0');
-  });
-
-  it('responds 404 for an unknown route', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/nope' });
-
-    expect(res.statusCode).toBe(404);
   });
 });

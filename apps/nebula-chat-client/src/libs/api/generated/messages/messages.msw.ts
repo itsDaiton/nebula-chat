@@ -3,18 +3,18 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.7.1
+ * OpenAPI spec version: 1.8.0
  */
 import { faker } from '@faker-js/faker';
 
 import { HttpResponse, http } from 'msw';
 import type { RequestHandlerOptions } from 'msw';
 
-import type { CreateMessage201, GetMessage200, ListMessages200Item } from '../model';
+import type { Message } from '../model';
 
 export const getCreateMessageResponseMock = (
-  overrideResponse: Partial<Extract<CreateMessage201, object>> = {},
-): CreateMessage201 => ({
+  overrideResponse: Partial<Extract<Message, object>> = {},
+): Message => ({
   id: faker.string.uuid(),
   conversationId: faker.string.uuid(),
   content: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -24,11 +24,11 @@ export const getCreateMessageResponseMock = (
     null,
   ]),
   cached: faker.datatype.boolean(),
-  createdAt: {},
+  createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   ...overrideResponse,
 });
 
-export const getListMessagesResponseMock = (): ListMessages200Item[] =>
+export const getListMessagesResponseMock = (): Message[] =>
   Array.from({ length: faker.number.int({ min: 1, max: 1000 }) }, (_, i) => i + 1).map(() => ({
     id: faker.string.uuid(),
     conversationId: faker.string.uuid(),
@@ -39,12 +39,12 @@ export const getListMessagesResponseMock = (): ListMessages200Item[] =>
       null,
     ]),
     cached: faker.datatype.boolean(),
-    createdAt: {},
+    createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   }));
 
 export const getGetMessageResponseMock = (
-  overrideResponse: Partial<Extract<GetMessage200, object>> = {},
-): GetMessage200 => ({
+  overrideResponse: Partial<Extract<Message, object>> = {},
+): Message => ({
   id: faker.string.uuid(),
   conversationId: faker.string.uuid(),
   content: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -54,16 +54,14 @@ export const getGetMessageResponseMock = (
     null,
   ]),
   cached: faker.datatype.boolean(),
-  createdAt: {},
+  createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   ...overrideResponse,
 });
 
 export const getCreateMessageMockHandler = (
   overrideResponse?:
-    | CreateMessage201
-    | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
-      ) => Promise<CreateMessage201> | CreateMessage201),
+    | Message
+    | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<Message> | Message),
   options?: RequestHandlerOptions,
 ) => {
   return http.post(
@@ -84,10 +82,8 @@ export const getCreateMessageMockHandler = (
 
 export const getListMessagesMockHandler = (
   overrideResponse?:
-    | ListMessages200Item[]
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<ListMessages200Item[]> | ListMessages200Item[]),
+    | Message[]
+    | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<Message[]> | Message[]),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
@@ -108,10 +104,7 @@ export const getListMessagesMockHandler = (
 
 export const getGetMessageMockHandler = (
   overrideResponse?:
-    | GetMessage200
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<GetMessage200> | GetMessage200),
+    Message | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<Message> | Message),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(

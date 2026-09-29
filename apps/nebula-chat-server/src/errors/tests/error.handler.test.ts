@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { validatorCompiler } from 'fastify-type-provider-zod';
+import { validatorCompiler } from 'fastify-zod-openapi';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {

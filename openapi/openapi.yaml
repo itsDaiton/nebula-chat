@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.1.0
 info:
   title: Nebula Chat API
   version: 1.8.0
@@ -12,6 +12,41 @@ components:
       in: cookie
       name: better-auth.session_token
   schemas:
+    ApiRoot:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+      additionalProperties: false
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+          const: ok
+        timestamp:
+          type: string
+      required:
+        - status
+        - timestamp
+      additionalProperties: false
+    ErrorEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          const: false
+        error:
+          $ref: '#/components/schemas/ErrorCode'
+        message:
+          type: string
+      required:
+        - success
+        - error
+        - message
+      additionalProperties: false
     ErrorCode:
       type: string
       enum:
@@ -25,21 +60,80 @@ components:
         - PayloadTooLarge
         - TooManyRequests
         - Internal
-    ErrorEnvelope:
+    Conversation:
       type: object
       properties:
-        success:
-          type: boolean
-          enum:
-            - false
-        error:
-          $ref: '#/components/schemas/ErrorCode'
-        message:
+        id:
           type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
-        - success
-        - error
-        - message
+        - id
+        - title
+        - createdAt
+      additionalProperties: false
+    ConversationPage:
+      type: object
+      properties:
+        conversations:
+          maxItems: 100
+          type: array
+          items:
+            $ref: '#/components/schemas/Conversation'
+        nextCursor:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: 'null'
+        hasMore:
+          type: boolean
+      required:
+        - conversations
+        - nextCursor
+        - hasMore
+      additionalProperties: false
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        conversationId:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        content:
+          type: string
+        role:
+          type: string
+        tokenCount:
+          anyOf:
+            - type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            - type: 'null'
+        cached:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+      required:
+        - id
+        - conversationId
+        - content
+        - role
+        - tokenCount
+        - cached
+        - createdAt
       additionalProperties: false
 paths:
   /:
@@ -55,14 +149,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
-                description: API is reachable
+                $ref: '#/components/schemas/ApiRoot'
   /health:
     get:
       operationId: getHealth
@@ -76,27 +163,14 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - ok
-                  timestamp:
-                    type: string
-                required:
-                  - status
-                  - timestamp
-                additionalProperties: false
-                description: Server is healthy
+                $ref: '#/components/schemas/Health'
   /api/chat/stream:
     post:
       operationId: streamChat
       summary: Stream chat completion
       tags:
         - Chat
-      description: >-
-        Stream a chat completion response from an AI model with automatic
+      description: Stream a chat completion response from an AI model with automatic
         conversation and message persistence.
       requestBody:
         required: true
@@ -129,12 +203,10 @@ paths:
                 conversationId:
                   type: string
                   format: uuid
-                  pattern: >-
-                    ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                 regenerate:
                   default: false
-                  description: >-
-                    Bypass and overwrite any cached response, forcing a fresh
+                  description: Bypass and overwrite any cached response, forcing a fresh
                     completion
                   type: boolean
               required:
@@ -147,63 +219,48 @@ paths:
             application/json:
               schema:
                 type: string
-                description: Streamed SSE events
         '400':
           description: Invalid request body or validation error
           content:
             application/json:
               schema:
-                description: Invalid request body or validation error
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '401':
           description: No authenticated session
           content:
             application/json:
               schema:
-                description: No authenticated session
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '403':
           description: Guest message allowance reached — registration required
           content:
             application/json:
               schema:
-                description: Guest message allowance reached — registration required
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '404':
           description: Conversation not found
           content:
             application/json:
               schema:
-                description: Conversation not found
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '413':
           description: Message or context exceeds token limit
           content:
             application/json:
               schema:
-                description: Message or context exceeds token limit
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '429':
           description: Rate limit exceeded
           content:
             application/json:
               schema:
-                description: Rate limit exceeded
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                description: Internal server error
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
   /api/conversations:
     post:
       operationId: createConversation
@@ -229,72 +286,49 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-                  title:
-                    type: string
-                  createdAt: {}
-                required:
-                  - id
-                  - title
-                  - createdAt
-                additionalProperties: false
-                description: Conversation created successfully
+                $ref: '#/components/schemas/Conversation'
         '400':
           description: Invalid request body
           content:
             application/json:
               schema:
-                description: Invalid request body
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '401':
           description: No authenticated session
           content:
             application/json:
               schema:
-                description: No authenticated session
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                description: Internal server error
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
     get:
       operationId: listConversations
       summary: List conversations
       tags:
         - Conversations
-      description: >-
-        Retrieve the caller’s own conversations with cursor-based pagination.
-        Returns up to 10 conversations by default.
+      description: Retrieve the caller’s own conversations with cursor-based
+        pagination. Returns up to 10 conversations by default.
       parameters:
         - schema:
             default: 10
+            description: Number of conversations to fetch (1-100, default 10)
             type: integer
             minimum: 1
             maximum: 100
           in: query
           name: limit
-          required: false
           description: Number of conversations to fetch (1-100, default 10)
         - schema:
+            description: Pagination cursor for fetching the next page of conversations
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
-          required: false
           description: Pagination cursor for fetching the next page of conversations
       responses:
         '200':
@@ -302,70 +336,31 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  conversations:
-                    maxItems: 100
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          format: uuid
-                          pattern: >-
-                            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-                        title:
-                          type: string
-                        createdAt: {}
-                      required:
-                        - id
-                        - title
-                        - createdAt
-                      additionalProperties: false
-                  nextCursor:
-                    nullable: true
-                    type: string
-                    format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-                  hasMore:
-                    type: boolean
-                required:
-                  - conversations
-                  - nextCursor
-                  - hasMore
-                additionalProperties: false
-                description: Paginated list of conversations owned by the caller
+                $ref: '#/components/schemas/ConversationPage'
         '401':
           description: No authenticated session
           content:
             application/json:
               schema:
-                description: No authenticated session
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                description: Internal server error
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
   /api/conversations/search:
     get:
       operationId: searchConversations
       summary: Search conversations
       tags:
         - Conversations
-      description: >-
-        Search the caller’s own conversations by title, ordered by creation
-        date.
+      description: Search the caller’s own conversations by title, ordered by creation date.
       parameters:
         - schema:
             type: string
             minLength: 1
+            description: Search query to filter conversations by title
           in: query
           name: q
           required: true
@@ -379,46 +374,25 @@ paths:
                 maxItems: 100
                 type: array
                 items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                      pattern: >-
-                        ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-                    title:
-                      type: string
-                    createdAt: {}
-                  required:
-                    - id
-                    - title
-                    - createdAt
-                  additionalProperties: false
-                description: Matching conversations owned by the caller
+                  $ref: '#/components/schemas/Conversation'
         '400':
           description: Invalid search query
           content:
             application/json:
               schema:
-                description: Invalid search query
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '401':
           description: No authenticated session
           content:
             application/json:
               schema:
-                description: No authenticated session
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                description: Internal server error
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
   /api/conversations/{conversationId}:
     get:
       operationId: getConversation
@@ -430,8 +404,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: conversationId
           required: true
@@ -441,54 +414,31 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-                  title:
-                    type: string
-                  createdAt: {}
-                required:
-                  - id
-                  - title
-                  - createdAt
-                additionalProperties: false
-                description: Conversation retrieved successfully
+                $ref: '#/components/schemas/Conversation'
         '400':
           description: Invalid conversation ID format
           content:
             application/json:
               schema:
-                description: Invalid conversation ID format
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '401':
           description: No authenticated session
           content:
             application/json:
               schema:
-                description: No authenticated session
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '404':
           description: Conversation not found or not owned by the caller
           content:
             application/json:
               schema:
-                description: Conversation not found or not owned by the caller
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                description: Internal server error
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
   /api/messages:
     post:
       operationId: createMessage
@@ -506,8 +456,7 @@ paths:
                 conversationId:
                   type: string
                   format: uuid
-                  pattern: >-
-                    ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                 role:
                   type: string
                   enum:
@@ -518,10 +467,11 @@ paths:
                   type: string
                   minLength: 1
                 tokenCount:
-                  nullable: true
-                  type: integer
-                  minimum: -9007199254740991
-                  maximum: 9007199254740991
+                  anyOf:
+                    - type: integer
+                      minimum: -9007199254740991
+                      maximum: 9007199254740991
+                    - type: 'null'
               required:
                 - conversationId
                 - role
@@ -532,90 +482,47 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-                  conversationId:
-                    type: string
-                    format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-                  content:
-                    type: string
-                  role:
-                    type: string
-                  tokenCount:
-                    nullable: true
-                    type: integer
-                    minimum: -9007199254740991
-                    maximum: 9007199254740991
-                  cached:
-                    type: boolean
-                  createdAt: {}
-                required:
-                  - id
-                  - conversationId
-                  - content
-                  - role
-                  - tokenCount
-                  - cached
-                  - createdAt
-                additionalProperties: false
-                description: Message created successfully
+                $ref: '#/components/schemas/Message'
         '400':
           description: Invalid request body
           content:
             application/json:
               schema:
-                description: Invalid request body
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '401':
           description: No authenticated session
           content:
             application/json:
               schema:
-                description: No authenticated session
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '404':
           description: Conversation not found or not owned by the caller
           content:
             application/json:
               schema:
-                description: Conversation not found or not owned by the caller
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                description: Internal server error
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
     get:
       operationId: listMessages
       summary: List messages
       tags:
         - Messages
-      description: >-
-        Retrieve the messages across the caller’s own conversations, newest
+      description: Retrieve the messages across the caller’s own conversations, newest
         first. Pass `conversationId` to list one conversation’s messages, oldest
         first; a conversation the caller does not own lists as empty.
       parameters:
         - schema:
+            description: Only list the messages of this conversation, oldest first
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: conversationId
-          required: false
           description: Only list the messages of this conversation, oldest first
       responses:
         '200':
@@ -626,64 +533,25 @@ paths:
                 maxItems: 1000
                 type: array
                 items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                      pattern: >-
-                        ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-                    conversationId:
-                      type: string
-                      format: uuid
-                      pattern: >-
-                        ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-                    content:
-                      type: string
-                    role:
-                      type: string
-                    tokenCount:
-                      nullable: true
-                      type: integer
-                      minimum: -9007199254740991
-                      maximum: 9007199254740991
-                    cached:
-                      type: boolean
-                    createdAt: {}
-                  required:
-                    - id
-                    - conversationId
-                    - content
-                    - role
-                    - tokenCount
-                    - cached
-                    - createdAt
-                  additionalProperties: false
-                description: List of messages owned by the caller
+                  $ref: '#/components/schemas/Message'
         '400':
           description: Invalid conversation ID format
           content:
             application/json:
               schema:
-                description: Invalid conversation ID format
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '401':
           description: No authenticated session
           content:
             application/json:
               schema:
-                description: No authenticated session
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                description: Internal server error
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
   /api/messages/{messageId}:
     get:
       operationId: getMessage
@@ -695,8 +563,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: messageId
           required: true
@@ -706,74 +573,33 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-                  conversationId:
-                    type: string
-                    format: uuid
-                    pattern: >-
-                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-                  content:
-                    type: string
-                  role:
-                    type: string
-                  tokenCount:
-                    nullable: true
-                    type: integer
-                    minimum: -9007199254740991
-                    maximum: 9007199254740991
-                  cached:
-                    type: boolean
-                  createdAt: {}
-                required:
-                  - id
-                  - conversationId
-                  - content
-                  - role
-                  - tokenCount
-                  - cached
-                  - createdAt
-                additionalProperties: false
-                description: Message retrieved successfully
+                $ref: '#/components/schemas/Message'
         '400':
           description: Invalid message ID format
           content:
             application/json:
               schema:
-                description: Invalid message ID format
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '401':
           description: No authenticated session
           content:
             application/json:
               schema:
-                description: No authenticated session
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '404':
           description: Message not found or not owned by the caller
           content:
             application/json:
               schema:
-                description: Message not found or not owned by the caller
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                description: Internal server error
-                allOf:
-                  - $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: '#/components/schemas/ErrorEnvelope'
 servers:
-  - url: http://localhost:3000
+  - url: /
 security:
   - cookieAuth: []
 tags:

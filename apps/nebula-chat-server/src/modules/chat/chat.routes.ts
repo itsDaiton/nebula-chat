@@ -1,4 +1,4 @@
-import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
+import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi';
 import { z } from 'zod';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { cacheCheckHook } from '@backend/modules/chat/chat.cacheCheck.hook';
@@ -7,8 +7,9 @@ import { messageAllowanceHook } from '@backend/modules/chat/chat.messageAllowanc
 import { streamCaptureHook } from '@backend/modules/chat/chat.streamCapture.hook';
 import { createChatStreamSchema } from '@backend/modules/chat/chat.validation';
 import { requireAuthentication } from '@backend/plugins/authGate.plugin';
+import { jsonResponse } from '@backend/utils/jsonResponse';
 
-const chatRoutes: FastifyPluginAsyncZod = async (app) => {
+const chatRoutes: FastifyPluginAsyncZodOpenApi = async (app) => {
   app.post('/stream', {
     schema: {
       description:
@@ -18,16 +19,17 @@ const chatRoutes: FastifyPluginAsyncZod = async (app) => {
       operationId: 'streamChat',
       body: createChatStreamSchema,
       response: {
-        200: z.string().describe('Streamed SSE events'),
-        400: errorEnvelopeSchema.describe('Invalid request body or validation error'),
-        404: errorEnvelopeSchema.describe('Conversation not found'),
-        401: errorEnvelopeSchema.describe('No authenticated session'),
-        403: errorEnvelopeSchema.describe(
+        200: jsonResponse('Streamed SSE events', z.string()),
+        400: jsonResponse('Invalid request body or validation error', errorEnvelopeSchema),
+        404: jsonResponse('Conversation not found', errorEnvelopeSchema),
+        401: jsonResponse('No authenticated session', errorEnvelopeSchema),
+        403: jsonResponse(
           'Guest message allowance reached — registration required',
+          errorEnvelopeSchema,
         ),
-        413: errorEnvelopeSchema.describe('Message or context exceeds token limit'),
-        429: errorEnvelopeSchema.describe('Rate limit exceeded'),
-        500: errorEnvelopeSchema.describe('Internal server error'),
+        413: jsonResponse('Message or context exceeds token limit', errorEnvelopeSchema),
+        429: jsonResponse('Rate limit exceeded', errorEnvelopeSchema),
+        500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },
     config: {

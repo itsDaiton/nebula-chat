@@ -1,7 +1,6 @@
 import { useSearchConversations } from '@/libs/api/generated/conversations/conversations';
 import type { UseConversationsSearchParams } from '@/modules/conversations/types/types';
 import { useConversationsSearchStore } from '@/modules/conversations/stores/useConversationsSearchStore';
-import { toConversation } from '@/modules/conversations/utils/toConversation';
 
 export const useConversationsSearch = ({
   localConversations,
@@ -23,7 +22,6 @@ export const useConversationsSearch = ({
     {
       query: {
         enabled: Boolean(trimmedDebouncedQuery),
-        select: (results) => results.map(toConversation),
       },
     },
   );

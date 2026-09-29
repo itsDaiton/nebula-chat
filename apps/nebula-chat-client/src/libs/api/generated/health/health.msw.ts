@@ -3,36 +3,33 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.7.1
+ * OpenAPI spec version: 1.8.0
  */
 import { faker } from '@faker-js/faker';
 
 import { HttpResponse, http } from 'msw';
 import type { RequestHandlerOptions } from 'msw';
 
-import type { GetApiRoot200, GetHealth200 } from '../model';
+import type { ApiRoot, Health } from '../model';
 
 export const getGetApiRootResponseMock = (
-  overrideResponse: Partial<Extract<GetApiRoot200, object>> = {},
-): GetApiRoot200 => ({
+  overrideResponse: Partial<Extract<ApiRoot, object>> = {},
+): ApiRoot => ({
   message: faker.string.alpha({ length: { min: 10, max: 20 } }),
   ...overrideResponse,
 });
 
 export const getGetHealthResponseMock = (
-  overrideResponse: Partial<Extract<GetHealth200, object>> = {},
-): GetHealth200 => ({
-  status: faker.helpers.arrayElement(['ok'] as const),
+  overrideResponse: Partial<Extract<Health, object>> = {},
+): Health => ({
+  status: 'ok',
   timestamp: faker.string.alpha({ length: { min: 10, max: 20 } }),
   ...overrideResponse,
 });
 
 export const getGetApiRootMockHandler = (
   overrideResponse?:
-    | GetApiRoot200
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<GetApiRoot200> | GetApiRoot200),
+    ApiRoot | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ApiRoot> | ApiRoot),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
@@ -53,10 +50,7 @@ export const getGetApiRootMockHandler = (
 
 export const getGetHealthMockHandler = (
   overrideResponse?:
-    | GetHealth200
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<GetHealth200> | GetHealth200),
+    Health | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<Health> | Health),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(

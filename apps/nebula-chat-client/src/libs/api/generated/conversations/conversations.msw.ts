@@ -3,67 +3,62 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.7.1
+ * OpenAPI spec version: 1.8.0
  */
 import { faker } from '@faker-js/faker';
 
 import { HttpResponse, http } from 'msw';
 import type { RequestHandlerOptions } from 'msw';
 
-import type {
-  CreateConversation201,
-  GetConversation200,
-  ListConversations200,
-  SearchConversations200Item,
-} from '../model';
+import type { Conversation, ConversationPage } from '../model';
 
 export const getCreateConversationResponseMock = (
-  overrideResponse: Partial<Extract<CreateConversation201, object>> = {},
-): CreateConversation201 => ({
+  overrideResponse: Partial<Extract<Conversation, object>> = {},
+): Conversation => ({
   id: faker.string.uuid(),
   title: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  createdAt: {},
+  createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   ...overrideResponse,
 });
 
 export const getListConversationsResponseMock = (
-  overrideResponse: Partial<Extract<ListConversations200, object>> = {},
-): ListConversations200 => ({
+  overrideResponse: Partial<Extract<ConversationPage, object>> = {},
+): ConversationPage => ({
   conversations: Array.from(
     { length: faker.number.int({ min: 1, max: 100 }) },
     (_, i) => i + 1,
   ).map(() => ({
     id: faker.string.uuid(),
     title: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    createdAt: {},
+    createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   })),
   nextCursor: faker.helpers.arrayElement([faker.string.uuid(), null]),
   hasMore: faker.datatype.boolean(),
   ...overrideResponse,
 });
 
-export const getSearchConversationsResponseMock = (): SearchConversations200Item[] =>
+export const getSearchConversationsResponseMock = (): Conversation[] =>
   Array.from({ length: faker.number.int({ min: 1, max: 100 }) }, (_, i) => i + 1).map(() => ({
     id: faker.string.uuid(),
     title: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    createdAt: {},
+    createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   }));
 
 export const getGetConversationResponseMock = (
-  overrideResponse: Partial<Extract<GetConversation200, object>> = {},
-): GetConversation200 => ({
+  overrideResponse: Partial<Extract<Conversation, object>> = {},
+): Conversation => ({
   id: faker.string.uuid(),
   title: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  createdAt: {},
+  createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   ...overrideResponse,
 });
 
 export const getCreateConversationMockHandler = (
   overrideResponse?:
-    | CreateConversation201
+    | Conversation
     | ((
         info: Parameters<Parameters<typeof http.post>[1]>[0],
-      ) => Promise<CreateConversation201> | CreateConversation201),
+      ) => Promise<Conversation> | Conversation),
   options?: RequestHandlerOptions,
 ) => {
   return http.post(
@@ -84,10 +79,10 @@ export const getCreateConversationMockHandler = (
 
 export const getListConversationsMockHandler = (
   overrideResponse?:
-    | ListConversations200
+    | ConversationPage
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<ListConversations200> | ListConversations200),
+      ) => Promise<ConversationPage> | ConversationPage),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
@@ -108,10 +103,10 @@ export const getListConversationsMockHandler = (
 
 export const getSearchConversationsMockHandler = (
   overrideResponse?:
-    | SearchConversations200Item[]
+    | Conversation[]
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<SearchConversations200Item[]> | SearchConversations200Item[]),
+      ) => Promise<Conversation[]> | Conversation[]),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
@@ -132,10 +127,10 @@ export const getSearchConversationsMockHandler = (
 
 export const getGetConversationMockHandler = (
   overrideResponse?:
-    | GetConversation200
+    | Conversation
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<GetConversation200> | GetConversation200),
+      ) => Promise<Conversation> | Conversation),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
