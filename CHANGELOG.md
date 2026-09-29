@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.4.0...nebula-chat-v2.4.1) (2026-09-29)
+
+
+### Bug Fixes
+
+* **server:** NEB-388 load env files with dotenvx in package scripts ([#403](https://github.com/itsDaiton/nebula-chat/issues/403)) ([23792d3](https://github.com/itsDaiton/nebula-chat/commit/23792d342af65a151c9e30d26462c3efe237ec5a))
+
 ## [2.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.3.4...nebula-chat-v2.4.0) (2026-09-29)
 
 

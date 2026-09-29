@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v0.5.1...nebula-chat-db-v0.5.2) (2026-09-29)
+
+
+### Bug Fixes
+
+* **server:** NEB-388 load env files with dotenvx in package scripts ([#403](https://github.com/itsDaiton/nebula-chat/issues/403)) ([23792d3](https://github.com/itsDaiton/nebula-chat/commit/23792d342af65a151c9e30d26462c3efe237ec5a))
+
 ## [0.5.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v0.5.0...nebula-chat-db-v0.5.1) (2026-09-28)
 
 
