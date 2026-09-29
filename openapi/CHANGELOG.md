@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v1.8.0...nebula-chat-openapi-v1.9.0) (2026-09-29)
+
+
+### Features
+
+* **server:** NEB-385 switch OpenAPI generation to fastify-zod-openapi with named response schemas ([#401](https://github.com/itsDaiton/nebula-chat/issues/401)) ([f63d4fa](https://github.com/itsDaiton/nebula-chat/commit/f63d4fa7506af733c1cc6c138e13f538f6d40e53))
+
 ## [1.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v1.7.1...nebula-chat-openapi-v1.8.0) (2026-09-27)
 
 
