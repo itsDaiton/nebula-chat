@@ -9,7 +9,8 @@
     },
     "libs/db": {
       "entry": ["src/index.ts", "drizzle.config.ts"],
-      "project": ["src/**/*.ts"]
+      "project": ["src/**/*.ts"],
+      "drizzle": false
     },
     "libs/errors": {
       "entry": ["src/index.ts"],

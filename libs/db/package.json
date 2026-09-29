@@ -18,11 +18,11 @@
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc --noEmit",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx src/migrate.ts",
-    "db:baseline": "tsx src/baseline.ts",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
+    "db:generate": "dotenvx run -f ../../apps/nebula-chat-server/.env --ignore=MISSING_ENV_FILE -- drizzle-kit generate",
+    "db:migrate": "dotenvx run -f ../../apps/nebula-chat-server/.env --ignore=MISSING_ENV_FILE -- tsx src/migrate.ts",
+    "db:baseline": "dotenvx run -f ../../apps/nebula-chat-server/.env --ignore=MISSING_ENV_FILE -- tsx src/baseline.ts",
+    "db:push": "dotenvx run -f ../../apps/nebula-chat-server/.env --ignore=MISSING_ENV_FILE -- drizzle-kit push",
+    "db:studio": "dotenvx run -f ../../apps/nebula-chat-server/.env --ignore=MISSING_ENV_FILE -- drizzle-kit studio",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
@@ -32,6 +32,7 @@
     "pg": "^8.16.0"
   },
   "devDependencies": {
+    "@dotenvx/dotenvx": "catalog:",
     "@types/node": "catalog:",
     "@types/pg": "^8.11.0",
     "@vitest/coverage-v8": "catalog:",

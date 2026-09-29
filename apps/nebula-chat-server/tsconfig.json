@@ -25,5 +25,5 @@
     "noImplicitOverride": true
   },
   "exclude": ["node_modules", "tmp", "dist"],
-  "include": ["src/**/*.ts", "load-env.ts"]
+  "include": ["src/**/*.ts"]
 }

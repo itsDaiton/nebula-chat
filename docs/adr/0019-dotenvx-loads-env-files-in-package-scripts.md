@@ -1,6 +1,6 @@
 # ADR-0019: dotenvx loads env files, in package scripts only
 
-- **Status:** Accepted — to be implemented by NEB-388 (#388)
+- **Status:** Accepted — implemented by NEB-388 (#388)
 - **Date:** 2026-09-27
 - **Deciders:** @itsDaiton
 - **Related:** [ADR-0018](./0018-fastify-zod-openapi-named-schemas-env-free-spec.md) — `generate:openapi` needs no environment, so it reads no env file

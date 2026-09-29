@@ -36,6 +36,9 @@ It is responsible for:
    - `DATABASE_URL` (if using external DB) or local Postgres values (`POSTGRES_*`)
    - `REDIS_URL` (if using external Redis) or `REDIS_PASSWORD` for local Redis
 
+   The `dev`, `start` and `db:*` scripts load this file through `dotenvx run`; a variable already set in your shell
+   wins over the file. Running `node` or `tsx` directly skips it.
+
 4. Start local PostgreSQL + Redis:
 
    ```bash

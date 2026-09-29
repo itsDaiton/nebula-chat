@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { z } from 'zod';
 import { LOG_LEVELS, logLevelOverridesSchema } from '@backend/utils/logLevelOverrides';
 

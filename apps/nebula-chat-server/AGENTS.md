@@ -28,7 +28,9 @@ pnpm --filter @nebula-chat/db db:baseline  # report journal state; --apply marks
 pnpm --filter @nebula-chat/db db:studio    # open Drizzle Studio GUI
 ```
 
-`DATABASE_URL` is read from `apps/nebula-chat-server/.env` by both the server at runtime and the DB CLI — single source of truth. `db:migrate` calls the drizzle-orm migrator directly (`src/migrate.ts`) rather than `drizzle-kit migrate`, which exits 1 without printing the underlying Postgres error. `db:baseline` is for a database whose schema predates the migration journal: it reports what it would do and only writes with `--apply`.
+`DATABASE_URL` lives in `apps/nebula-chat-server/.env`, which the server's `dev`/`start` scripts and every `db:*`
+script load through `dotenvx run` — single source of truth (see [Environment Variables](#environment-variables)).
+`db:migrate` calls the drizzle-orm migrator directly (`src/migrate.ts`) rather than `drizzle-kit migrate`, which exits 1 without printing the underlying Postgres error. `db:baseline` is for a database whose schema predates the migration journal: it reports what it would do and only writes with `--apply`.
 
 ---
 
@@ -401,7 +403,11 @@ Static imports stay extensionless. A dynamic `import()` needs a `.js` extension 
 
 ## Environment Variables
 
-`apps/nebula-chat-server/.env`:
+`apps/nebula-chat-server/.env` is loaded by package scripts, never by code: `dev`, `start` and the `@nebula-chat/db`
+`db:*` scripts wrap their command in `dotenvx run -f <file> --ignore=MISSING_ENV_FILE --`. A variable already set by
+the shell, CI or Render wins over the file, and a missing file is silent. `test` and `generate:openapi` deliberately
+read no `.env`, so a test run behaves the same on a developer machine as in CI. A new script that needs the file must
+be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-files-in-package-scripts.md).
 
 | Variable                      | Purpose                                                                                                          |
 | ----------------------------- | ---------------------------------------------------------------------------------------------------------------- |

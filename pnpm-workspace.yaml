@@ -6,6 +6,7 @@ packages:
 # Versions shared by more than one package live here so a bump happens once.
 # `catalog:` in a package.json resolves to the entry below.
 catalog:
+  '@dotenvx/dotenvx': ^2.28.0
   '@types/node': ^26.5.1
   '@vitest/coverage-v8': ^5.0.0
   # Exact-pinned (not caret) so the auth substrate's version is deliberate, not

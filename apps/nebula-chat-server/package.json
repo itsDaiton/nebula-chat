@@ -4,9 +4,9 @@
   "packageManager": "pnpm@12.4.1",
   "main": "dist/src/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "dotenvx run -f .env --ignore=MISSING_ENV_FILE -- tsx watch src/server.ts",
     "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
-    "start": "node dist/src/server.js",
+    "start": "dotenvx run -f .env --ignore=MISSING_ENV_FILE -- node dist/src/server.js",
     "typecheck": "tsc --noEmit",
     "generate:openapi": "tsx src/scripts/generate-openapi.ts",
     "test": "vitest run",
@@ -27,7 +27,6 @@
     "@nebula-chat/otel": "workspace:*",
     "@nebula-chat/redis": "workspace:*",
     "better-auth": "catalog:",
-    "dotenv": "^17.4.0",
     "drizzle-orm": "catalog:",
     "fastify": "^5.4.0",
     "fastify-plugin": "^5.0.0",
@@ -35,6 +34,7 @@
     "zod": "^4.4.2"
   },
   "devDependencies": {
+    "@dotenvx/dotenvx": "catalog:",
     "@total-typescript/shoehorn": "^0.1.2",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
