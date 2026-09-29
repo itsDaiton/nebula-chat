@@ -342,7 +342,8 @@ docker compose up -d otel-lgtm
 ```
 
 Then set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` in
-`apps/nebula-chat-server/.env`, run the compiled server, and open Grafana at
+`apps/nebula-chat-server/.env`, run the compiled server with
+`pnpm --filter nebula-chat-server start` (which loads that file), and open Grafana at
 <http://localhost:3001> (3001, because the server itself uses 3000). A line's
 `trace_id` is the id to search for in Tempo.
 

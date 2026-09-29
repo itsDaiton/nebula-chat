@@ -1,12 +1,7 @@
 import { defineConfig } from 'drizzle-kit';
-import { resolve } from 'node:path';
 
-try {
-  process.loadEnvFile(resolve(__dirname, '../../apps/nebula-chat-server/.env'));
-} catch {
-  // .env absent — CI/CD injects env vars directly
-}
-
+// The `db:*` package scripts load the server's `.env` through `dotenvx run`;
+// CI and Render inject the variable directly. See ADR-0019.
 const databaseUrl = process.env['DATABASE_URL'];
 if (!databaseUrl) {
   throw new Error('DATABASE_URL is required');
