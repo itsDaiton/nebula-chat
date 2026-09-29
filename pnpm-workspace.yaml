@@ -7,16 +7,16 @@ packages:
 # `catalog:` in a package.json resolves to the entry below.
 catalog:
   '@dotenvx/dotenvx': ^2.28.0
-  '@types/node': ^26.5.1
-  '@vitest/coverage-v8': ^5.0.0
+  '@types/node': ^26.6.2
+  '@vitest/coverage-v8': ^5.0.1
   # Exact-pinned (not caret) so the auth substrate's version is deliberate, not
   # floated by a later resolve; shared by @nebula-chat/auth and the server.
-  better-auth: 1.7.4
+  better-auth: 1.7.5
   drizzle-orm: ^0.45.2
   tsdown: ^0.23.0
   tsx: ^4.21.0
   typescript: ^6.0.3
-  vitest: ^5.0.0
+  vitest: ^5.0.1
 
 # --- pnpm settings -----------------------------------------------------------
 # Since pnpm v11 this file is the only place pnpm reads configuration from.
