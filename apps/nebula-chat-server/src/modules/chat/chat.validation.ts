@@ -18,8 +18,3 @@ export const createChatStreamSchema = z.object({
     .default(false)
     .describe('Bypass and overwrite any cached response, forcing a fresh completion'),
 });
-
-export const chatStreamResponseSchema = z.object({
-  event: z.string(),
-  data: z.string(),
-});

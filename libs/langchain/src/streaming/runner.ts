@@ -7,7 +7,7 @@ import { llmConcurrencyLimiter } from '../rate-limit/concurrency';
 import { countTokens } from '../tokens/counter';
 import { getMessageContentText, packHistory } from '../tokens/window';
 
-export type HistoryRole = 'assistant' | 'system' | 'user';
+type HistoryRole = 'assistant' | 'system' | 'user';
 
 export type HistoryMessage = {
   role: HistoryRole;

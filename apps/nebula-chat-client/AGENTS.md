@@ -116,7 +116,6 @@ apps/nebula-chat-client/src/
     │       ├── color-mode.tsx
     │       ├── provider.tsx
     │       ├── toaster.tsx
-    │       ├── tooltip.tsx
     │       ├── markdown-content.tsx
     │       └── ...
     └── utils/

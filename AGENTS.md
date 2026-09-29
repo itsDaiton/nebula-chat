@@ -105,6 +105,19 @@ pnpm --filter nebula-chat-server run typecheck
 
 Do not disable ESLint rules with inline `// eslint-disable` comments unless absolutely necessary, and always document why.
 
+### Knip (on demand)
+
+```bash
+pnpm knip              # unused files, exports, types and dependencies (knip.json)
+```
+
+Not mandatory after every change and not run on PRs. Run it when a change warrants it: deleting or moving files, removing a feature or module, changing a package's exports, adding or removing dependencies, cleanup/refactor work.
+
+- `main` is Knip-clean, so any finding is caused by your change and is fixed in the same PR.
+- Resolve a finding by deleting the dead code or dropping the unneeded `export`.
+- Add a `knip.json` ignore only for generated code (Orval output) or vendored code (`.claude/skills/**`). Never hand-edit generated files to silence a finding.
+- For a CI-side check, run the "Knip Code Analysis" workflow manually (`workflow_dispatch`).
+
 ---
 
 ## Testing
