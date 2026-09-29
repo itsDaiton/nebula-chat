@@ -1,5 +1,4 @@
 import { useListConversationsInfinite } from '@/libs/api/generated/conversations/conversations';
-import { toConversation } from '@/modules/conversations/utils/toConversation';
 import { paginationConfig } from '@/shared/config/paginationConfig';
 
 /** The caller's conversations, newest first, paged by cursor as the sidebar scrolls. */
@@ -12,8 +11,7 @@ export const useConversations = () => {
           initialPageParam: undefined,
           getNextPageParam: (lastPage) =>
             lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
-          select: (result) =>
-            result.pages.flatMap((page) => page.conversations.map(toConversation)),
+          select: (result) => result.pages.flatMap((page) => page.conversations),
         },
       },
     );

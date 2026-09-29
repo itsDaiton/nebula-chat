@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.7.1
+ * OpenAPI spec version: 1.8.0
  */
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
@@ -21,14 +21,7 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type {
-  CreateMessage201,
-  CreateMessageBody,
-  ErrorEnvelope,
-  GetMessage200,
-  ListMessages200Item,
-  ListMessagesParams,
-} from '../model';
+import type { CreateMessageBody, ErrorEnvelope, ListMessagesParams, Message } from '../model';
 
 import { axiosClient } from '../../client';
 import type { ErrorType, BodyType } from '../../client';
@@ -59,7 +52,7 @@ export const createMessage = (
   options?: SecondParameter<typeof axiosClient>,
   signal?: AbortSignal,
 ) => {
-  return axiosClient<CreateMessage201>(
+  return axiosClient<Message>(
     {
       url: `/api/messages`,
       method: 'POST',
@@ -145,10 +138,7 @@ export const listMessages = (
   options?: SecondParameter<typeof axiosClient>,
   signal?: AbortSignal,
 ) => {
-  return axiosClient<ListMessages200Item[]>(
-    { url: `/api/messages`, method: 'GET', params, signal },
-    options,
-  );
+  return axiosClient<Message[]>({ url: `/api/messages`, method: 'GET', params, signal }, options);
 };
 
 export const getListMessagesQueryKey = (params?: ListMessagesParams) => {
@@ -264,7 +254,7 @@ export const getMessage = (
   options?: SecondParameter<typeof axiosClient>,
   signal?: AbortSignal,
 ) => {
-  return axiosClient<GetMessage200>(
+  return axiosClient<Message>(
     { url: `/api/messages/${messageId}`, method: 'GET', signal },
     options,
   );

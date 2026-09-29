@@ -10,15 +10,14 @@ import Fastify from 'fastify';
 import type { FastifyBaseLogger, FastifyInstance } from 'fastify';
 import type { Logger } from '@nebula-chat/otel';
 import {
-  createJsonSchemaTransformObject,
-  jsonSchemaTransform,
+  fastifyZodOpenApiPlugin,
+  fastifyZodOpenApiTransformers,
   serializerCompiler,
   validatorCompiler,
-} from 'fastify-type-provider-zod';
-import { z } from 'zod';
+} from 'fastify-zod-openapi';
 import { corsOptions } from '@backend/config/cors.config';
-import { env } from '@backend/env';
 import { errorHandler } from '@backend/errors/error.handler';
+import { apiRootSchema, healthSchema } from '@backend/health.validation';
 import { logger } from '@backend/logger';
 import chatRoutes from '@backend/modules/chat/chat.routes';
 import conversationRoutes from '@backend/modules/conversation/conversation.routes';
@@ -28,8 +27,8 @@ import dbPlugin from '@backend/plugins/db.plugin';
 import redisPlugin from '@backend/plugins/redis.plugin';
 import requestLogging from '@backend/plugins/requestLogging.plugin';
 import { logController } from '@backend/utils/logController';
-import { pruneUnreferencedSchemas } from '@backend/utils/pruneUnreferencedSchemas';
 import { resolveTrustProxy } from '@backend/utils/trustProxy';
+import { jsonResponse } from '@backend/utils/jsonResponse';
 
 const { version } = JSON.parse(
   readFileSync(resolve(process.cwd(), '../../openapi/package.json'), 'utf8'),
@@ -42,13 +41,6 @@ export type BuildAppOptions = {
    */
   logger?: Logger;
 };
-
-// Emits the schemas registered with an id (the shared error envelope and its
-// parts) as named components. The target is explicit because component schemas
-// otherwise default to draft-2020-12 (`const`), which OpenAPI 3.0 does not read.
-const transformComponents = createJsonSchemaTransformObject({
-  zodToJsonConfig: { target: 'openapi-3.0' },
-});
 
 export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstance> => {
   // Widened to FastifyBaseLogger deliberately: Fastify infers its logger generic
@@ -85,16 +77,21 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   await app.register(cors, corsOptions);
   await app.register(rateLimit, { global: false });
 
+  // Before @fastify/swagger: it collects the schemas carrying `.meta({ id })`,
+  // which the transformers below emit as named components.
+  await app.register(fastifyZodOpenApiPlugin);
   await app.register(swagger, {
     openapi: {
-      openapi: '3.0.0',
+      // zod-openapi renders 3.1 at minimum.
+      openapi: '3.1.0',
       info: {
         title: 'Nebula Chat API',
         version,
         description: 'REST API for Nebula Chat',
         contact: { name: 'Nebula Chat' },
       },
-      servers: [{ url: env.SERVER_URL ?? '/' }],
+      // Nothing reads it: the client sets its own base URL and /docs is same-origin.
+      servers: [{ url: '/' }],
       tags: [
         { name: 'Health', description: 'Liveness and readiness probes' },
         { name: 'Chat', description: 'Chat streaming endpoints' },
@@ -112,8 +109,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
       },
       security: [{ cookieAuth: [] }],
     },
-    transform: jsonSchemaTransform,
-    transformObject: (input) => pruneUnreferencedSchemas(transformComponents(input)),
+    ...fastifyZodOpenApiTransformers,
   });
 
   await app.register(swaggerUi, { routePrefix: '/docs' });
@@ -132,7 +128,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
         tags: ['Health'],
         operationId: 'getApiRoot',
         response: {
-          200: z.object({ message: z.string() }).describe('API is reachable'),
+          200: jsonResponse('API is reachable', apiRootSchema),
         },
       },
     },
@@ -148,9 +144,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
         tags: ['Health'],
         operationId: 'getHealth',
         response: {
-          200: z
-            .object({ status: z.literal('ok'), timestamp: z.string() })
-            .describe('Server is healthy'),
+          200: jsonResponse('Server is healthy', healthSchema),
         },
       },
     },

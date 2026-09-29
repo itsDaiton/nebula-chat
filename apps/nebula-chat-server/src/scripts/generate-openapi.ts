@@ -1,18 +1,15 @@
 import 'dotenv/config';
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { applyOpenApiEnvFallbacks, missingOpenApiEnv } from '@backend/scripts/openapiEnv';
 
-// Must run before @backend/app is imported: env.ts parses process.env on import.
-applyOpenApiEnvFallbacks();
-
-const missing = missingOpenApiEnv();
-if (missing.length > 0) {
-  process.stderr.write(
-    `Missing required env vars for OpenAPI generation: ${missing.join(', ')}\n` +
-      'Set them, or their OPENAPI_-prefixed stand-ins (e.g. OPENAPI_DATABASE_URL); placeholder values are fine.\n',
-  );
-  process.exit(1);
+// env.ts parses process.env on import, so these must be set before @backend/app loads.
+// No connection is opened (pg and Redis are lazy), so placeholders suffice; a real var wins.
+process.env['DATABASE_URL'] ??= 'postgresql://localhost:5432/openapi';
+process.env['REDIS_URL'] ??= 'redis://localhost:6379';
+process.env['BETTER_AUTH_SECRET'] ??= 'openapi-placeholder-secret-never-used-for-signing';
+process.env['BETTER_AUTH_URL'] ??= 'http://localhost:3000';
+if (!process.env['OPENAI_API_KEY'] && !process.env['ANTHROPIC_API_KEY']) {
+  process.env['OPENAI_API_KEY'] = 'openapi-placeholder-key';
 }
 
 const main = async (): Promise<void> => {

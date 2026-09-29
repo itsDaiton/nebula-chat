@@ -1,6 +1,6 @@
 # ADR-0018: fastify-zod-openapi, named response schemas, and an env-free spec script
 
-- **Status:** Accepted — to be implemented by NEB-385 (#385)
+- **Status:** Accepted — implemented by NEB-385 (#385)
 - **Date:** 2026-09-27
 - **Deciders:** @itsDaiton
 - **Supersedes:** [ADR-0003](./0003-dynamic-openapi-generation-with-fastify-type-provider-zod.md) — the provider choice and how the spec is generated. Routes as the single source of truth still stands.
@@ -37,4 +37,4 @@ ADR-0003 made each route's `schema:` block the single source of truth, with `fas
 - Generated client types carry real names, and the client imports `Conversation`/`Message` instead of aliasing `…200…` types.
 - The wire format does not change, but component names and the OpenAPI version do. For codegen consumers of the `openapi` package this is a non-breaking `feat`, noted in its changelog.
 - The spec can go stale silently. A route change without a regeneration is caught only in review.
-- `Conversation` is a deliberate, temporary use of a `CONTEXT.md` *Avoid* term. NEB-352 renames it to `Session` and lands after this.
+- `Conversation` is a deliberate, temporary use of a `CONTEXT.md` _Avoid_ term. NEB-352 renames it to `Session` and lands after this.

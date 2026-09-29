@@ -3,12 +3,9 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.7.1
+ * OpenAPI spec version: 1.8.0
  */
 
-/**
- * API is reachable
- */
-export type GetApiRoot200 = {
+export interface ApiRoot {
   message: string;
-};
+}

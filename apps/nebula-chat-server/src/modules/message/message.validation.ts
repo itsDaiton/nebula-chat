@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isoDateTimeSchema } from '@backend/utils/isoDateTimeSchema';
 
 export const createMessageSchema = z.object({
   conversationId: z.uuid(),
@@ -18,14 +19,16 @@ export const listMessagesQuerySchema = z.object({
     .describe('Only list the messages of this conversation, oldest first'),
 });
 
-export const messageResponseSchema = z.object({
-  id: z.uuid(),
-  conversationId: z.uuid(),
-  content: z.string(),
-  role: z.string(),
-  tokenCount: z.number().int().nullable(),
-  cached: z.boolean(),
-  createdAt: z.date().transform((d) => d.toISOString()),
-});
+export const messageResponseSchema = z
+  .object({
+    id: z.uuid(),
+    conversationId: z.uuid(),
+    content: z.string(),
+    role: z.string(),
+    tokenCount: z.number().int().nullable(),
+    cached: z.boolean(),
+    createdAt: isoDateTimeSchema,
+  })
+  .meta({ id: 'Message' });
 
 export const messagesArraySchema = z.array(messageResponseSchema).max(1000);
