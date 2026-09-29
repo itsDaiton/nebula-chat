@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 
 // env.ts parses process.env on import, so these must be set before @backend/app loads.
 // No connection is opened (pg and Redis are lazy), so placeholders suffice; a real var wins.
-process.env['DATABASE_URL'] ??= 'postgresql://openapi:openapi@localhost:5432/openapi';
+process.env['DATABASE_URL'] ??= 'postgresql://localhost:5432/openapi';
 process.env['REDIS_URL'] ??= 'redis://localhost:6379';
 process.env['BETTER_AUTH_SECRET'] ??= 'openapi-placeholder-secret-never-used-for-signing';
 process.env['BETTER_AUTH_URL'] ??= 'http://localhost:3000';
