@@ -1,29 +1,29 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreFiles": [".claude/skills/**"],
   "workspaces": {
     "apps/nebula-chat-client": {
-      "project": ["src/**/*.{ts,tsx}"]
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignoreFiles": ["src/libs/api/generated/**"],
+      "ignoreIssues": {
+        "src/libs/api/generated/**": ["exports", "types"]
+      }
     },
     "apps/nebula-chat-server": {
       "project": ["src/**/*.ts"]
     },
     "libs/db": {
-      "entry": ["src/index.ts", "drizzle.config.ts"],
       "project": ["src/**/*.ts"],
       "drizzle": false
     },
     "libs/errors": {
-      "entry": ["src/index.ts"],
       "project": ["src/**/*.ts"]
     },
     "libs/langchain": {
-      "entry": ["src/index.ts"],
       "project": ["src/**/*.ts"]
     },
     "libs/otel": {
-      "entry": ["src/index.ts"],
-      "project": ["src/**/*.ts"],
-      "ignoreDependencies": ["pino-pretty"]
+      "project": ["src/**/*.ts"]
     }
   }
 }

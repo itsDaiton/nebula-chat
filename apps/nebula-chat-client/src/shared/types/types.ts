@@ -37,7 +37,7 @@ export type NebulaMenuItemProps = {
   onClick?: () => void;
 };
 
-export type BadgeConfig = {
+type BadgeConfig = {
   text: string;
   colorPalette?: string;
   variant?: 'solid' | 'subtle' | 'outline' | 'surface' | 'plain';
