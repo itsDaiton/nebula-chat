@@ -84,6 +84,18 @@ export const requireRegistered: preHandlerAsyncHookHandler = async (req, reply) 
 };
 
 /**
+ * Copies the reply's buffered headers (`@fastify/cors`'s) onto the raw response:
+ * a hijacked reply never runs `reply.send`, which would otherwise flush them.
+ */
+const forwardReplyHeaders = (reply: FastifyReply): void => {
+  for (const [name, value] of Object.entries(reply.getHeaders())) {
+    if (value !== undefined) {
+      reply.raw.setHeader(name, value);
+    }
+  }
+};
+
+/**
  * Logs and ends a hijacked auth request whose handler threw: the hijack bypasses
  * `errorHandler`, so without this the raw response never ends and the client hangs.
  */
@@ -95,10 +107,12 @@ const failAuthRequest = (err: unknown, req: FastifyRequest, reply: FastifyReply)
   logRequestFailed(err, req, reply, 'Internal', status);
 
   if (!res.headersSent) {
-    // A half-built better-auth response (a session cookie, say) must not ride on the 500.
+    // A half-built better-auth response (a session cookie, say) must not ride on the 500;
+    // the CORS headers must, or the browser hides the 500 from the client.
     for (const name of res.getHeaderNames()) {
       res.removeHeader(name);
     }
+    forwardReplyHeaders(reply);
     res
       .writeHead(ERROR_STATUS.Internal, { 'content-type': 'application/json; charset=utf-8' })
       .end(JSON.stringify(INTERNAL_ERROR_ENVELOPE));
@@ -117,7 +131,9 @@ const failAuthRequest = (err: unknown, req: FastifyRequest, reply: FastifyReply)
  *   passthrough parser is registered in an **encapsulated child scope** so it
  *   applies only to the auth catch-all — the rest of the API keeps normal JSON
  *   parsing. The route is `{ schema: { hide: true } }` to stay out of the OpenAPI
- *   spec. A throw from the handler is answered by `failAuthRequest`.
+ *   spec. Pending reply headers (CORS) are forwarded to the raw response first;
+ *   better-auth's own win on conflict. A throw from the handler is answered by
+ *   `failAuthRequest`.
  * - `requireAuthentication` / `requireRegistered` are decorated on the app (via
  *   `fastify-plugin`, so they reach the whole instance) for availability and are
  *   also exported for direct import by route modules.
@@ -144,6 +160,7 @@ export default fp(
         schema: { hide: true },
         handler: async (req, reply) => {
           reply.hijack();
+          forwardReplyHeaders(reply);
           try {
             await authHandler(req.raw, reply.raw);
           } catch (err) {

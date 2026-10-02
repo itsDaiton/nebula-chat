@@ -1,0 +1,36 @@
+# grype configuration, read by MegaLinter's REPOSITORY_GRYPE linter. A file here
+# replaces MegaLinter's bundled default (/action/lib/.automation/.grype.yaml)
+# rather than merging into it, so the default's severity gate is restated below.
+# (The default's other rule, an ignore for pip's CVE-2018-20225, is not carried
+# over: there is no Python in this repo.)
+fail-on-severity: 'high'
+
+ignore:
+  # GHSA-86w9-cpqp-85rv (CVE-2026-85393): node-forge's RSA PKCS#1 v1.5 signature
+  # verification accepts extra nested DigestAlgorithm elements, letting a forged
+  # signature verify against a low-exponent key. Every release (<= 1.4.0) is
+  # affected and none is patched, so there is no version to bump to.
+  #
+  # node-forge reaches this repo only through @dotenvx/dotenvx, a devDependency
+  # of apps/nebula-chat-server and libs/db (`pnpm why node-forge -r`); the latest
+  # dotenvx still depends on it. dotenvx is the env-file loader wrapped around the
+  # dev and db:* scripts (including db:migrate in the Render build). The deployed
+  # server starts with plain `node` (render.yaml), so it never loads dotenvx.
+  # dotenvx's only use of node-forge, src/lib/proxy/proxyCertificates.js, mints
+  # and *signs* a throwaway CA and leaf certificate for its Armor credential
+  # proxy. It never verifies a signature, which is the only code path the
+  # advisory affects.
+  #
+  # Pinned to node-forge 1.4.0 so the rule stops matching as soon as the
+  # resolved version changes; delete it once a patched node-forge ships.
+  - vulnerability: GHSA-86w9-cpqp-85rv
+    # Also match the advisory if grype reports it under its CVE ID.
+    include-aliases: true
+    reason: >-
+      Transitive devDependency via @dotenvx/dotenvx, which only signs
+      certificates with node-forge and never verifies RSA PKCS#1 v1.5
+      signatures. No patched node-forge release exists.
+    package:
+      name: node-forge
+      version: 1.4.0
+      type: npm
