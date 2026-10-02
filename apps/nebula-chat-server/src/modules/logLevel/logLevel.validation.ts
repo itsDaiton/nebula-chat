@@ -6,9 +6,10 @@ import { isoDateTimeSchema } from '@backend/utils/isoDateTimeSchema';
 const DEFAULT_TTL_SECONDS = 15 * 60;
 
 export const changeLogLevelSchema = z.object({
+  // exactOptional: absent, never `undefined`, as `LogLevelChange.component` expects.
   component: z
     .enum(LOG_COMPONENTS)
-    .optional()
+    .exactOptional()
     .describe('The `nebula.component` to change; omit it to change the root level'),
   level: z.enum(LOG_LEVELS),
   ttlSeconds: z

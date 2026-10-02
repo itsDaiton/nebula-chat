@@ -9,7 +9,7 @@ export type LevelOverrides = Readonly<Record<string, LevelWithSilent>>;
 
 /** A runtime level change: the root level, or one component's when `component` is set. */
 export type LogLevelChange = {
-  component?: LogComponent | undefined;
+  component?: LogComponent;
   level: LogLevel;
   /** How long the change holds before the boot-time level returns. */
   ttlSeconds: number;

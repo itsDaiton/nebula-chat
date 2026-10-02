@@ -18,12 +18,36 @@ ADR-0017 deferred runtime switching because it raises questions of its own:
 
 ## Decision
 
-1. **An operator route, gated by a shared secret.** `POST /api/internal/log-level` takes `{ component?, level, ttlSeconds, operator }`. Only `Authorization: Bearer <OPERATOR_TOKEN>` gets through, compared in constant time over SHA-256 digests. A User's session counts for nothing, so a Guest or a Registered user gets `403 Forbidden`. The gate runs in `onRequest`, before body validation, so a caller without the token learns nothing of the schema. With `OPERATOR_TOKEN` unset the route answers `404`. It is hidden from the OpenAPI spec, so no generated client hook exists for it. `operator` is a name the caller states, not an identity: everyone holding the token is equally trusted.
-2. **Broadcast over Redis pub/sub, one channel per service.** The route publishes the change on `log-level:<service.name>` and answers `202 { receivers, expiresAt }`. Every instance subscribes at boot and applies what arrives, the instance that took the request included. `receivers` is Redis's count of subscribers on that channel, so it counts the targeted service's instances and `0` means none was listening.
-3. **Each instance applies and records the change itself.** `changeLogLevel` in `@nebula-chat/otel` sets the root level, or one component's, on the live logger tree. Every instance writes `log.level.changed` (`nebula.log.target`, `nebula.log.level.from`/`.to`, `nebula.log.level.expires_at`, `nebula.operator`), and on expiry `log.level.reverted`. Both are written at `info` by a child with its own fixed level, so a switch to `error` is still recorded.
+1. **An operator route, gated by a shared secret.** `POST /api/internal/log-level` takes
+   `{ component?, level, ttlSeconds, operator }`. Only `Authorization: Bearer <OPERATOR_TOKEN>` gets
+   through, compared in constant time over SHA-256 digests. A User's session counts for nothing, so
+   a Guest or a Registered user gets `403 Forbidden`. The gate runs in `onRequest`, before body
+   validation, so a caller without the token learns nothing of the schema. With `OPERATOR_TOKEN`
+   unset the route answers `404`. It is hidden from the OpenAPI spec, so no generated client hook
+   exists for it. `operator` is a name the caller states, not an identity: everyone holding the
+   token is equally trusted.
+2. **Broadcast over Redis pub/sub, one channel per service.** The route publishes the change on
+   `log-level:<service.name>` and answers `202 { receivers, expiresAt }`. Every instance subscribes
+   at boot and applies what arrives, the instance that took the request included. `receivers` is
+   Redis's count of subscribers on that channel, so it counts the targeted service's instances and
+   `0` means none was listening.
+3. **Each instance applies and records the change itself.** `changeLogLevel` in `@nebula-chat/otel`
+   sets the root level, or one component's, on the live logger tree. Every instance writes
+   `log.level.changed` (`nebula.log.target`, `nebula.log.level.from`/`.to`,
+   `nebula.log.level.expires_at`, `nebula.operator`), and on expiry `log.level.reverted`. Both are
+   written at `info` by a child with its own fixed level, so a switch to `error` is still recorded.
 4. **Every change expires.** `ttlSeconds` defaults to 15 minutes and is capped at 4 hours (`MAX_LOG_LEVEL_TTL_SECONDS`). On expiry the boot-time level returns. The root and each component carry their own timer. A second change to the same target replaces the first and restarts its timer. There is no early reset: send the boot level with a short TTL.
-5. **The lib tracks the children it makes.** A Pino child created with its own level never follows its parent again, and Pino cannot unset that level. `componentLogger` therefore registers every child it creates, and each change re-applies to all of them: the component's runtime or boot override, else the parent's level. Component children are mostly per request, so the registry holds them through `WeakRef`, and a `FinalizationRegistry` drops collected ones.
-6. **Layering.** `@nebula-chat/otel` owns the protocol: the in-process change, the message format, the channel name, and `publishLogLevelChange` / `listenForLogLevelChanges`. These run over a structural `LogLevelPubSub` port, so otel takes no Redis dependency. `@nebula-chat/redis` gains a generic `pubsub` primitive that fits the port, over a dedicated subscriber connection opened on the first `subscribe`. The worker (NEB-354) joins with one `listenForLogLevelChanges` call; the route gains a `service` selector then.
+5. **The lib tracks the children it makes.** A Pino child created with its own level never follows
+   its parent again, and Pino cannot unset that level. `componentLogger` therefore registers every
+   child it creates, and each change re-applies to all of them: the component's runtime or boot
+   override, else the parent's level. Component children are mostly per request, so the registry
+   holds them through `WeakRef`, and a `FinalizationRegistry` drops collected ones.
+6. **Layering.** `@nebula-chat/otel` owns the protocol: the in-process change, the message format,
+   the channel name, and `publishLogLevelChange` / `listenForLogLevelChanges`. These run over a
+   structural `LogLevelPubSub` port, so otel takes no Redis dependency. `@nebula-chat/redis` gains a
+   generic `pubsub` primitive that fits the port, over a dedicated subscriber connection opened on
+   the first `subscribe`. The worker (NEB-354) joins with one `listenForLogLevelChanges` call; the
+   route gains a `service` selector then.
 
 ## Considered options
 
