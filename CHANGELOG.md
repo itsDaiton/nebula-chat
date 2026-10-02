@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.5.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.5.3...nebula-chat-v2.5.4) (2026-10-02)
+
+
+### Bug Fixes
+
+* **ci:** unblock MegaLinter's grype and trivy scans ([#421](https://github.com/itsDaiton/nebula-chat/issues/421)) ([b7fc2d0](https://github.com/itsDaiton/nebula-chat/commit/b7fc2d005b0a1a1d4eadf133d5255094ea868a74))
+* **server:** NEB-415 add CORS headers to /api/auth/* responses ([#424](https://github.com/itsDaiton/nebula-chat/issues/424)) ([3a6aef8](https://github.com/itsDaiton/nebula-chat/commit/3a6aef868d8f4adff6ee0f8a7ed1a60619916bb8))
+* **server:** NEB-423 forward @fastify/cors headers onto the chat stream ([#425](https://github.com/itsDaiton/nebula-chat/issues/425)) ([fe75351](https://github.com/itsDaiton/nebula-chat/commit/fe753515f13b242238c0d8d67a29aeb415ae1275))
+
 ## [2.5.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.5.2...nebula-chat-v2.5.3) (2026-10-02)
 
 
