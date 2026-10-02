@@ -77,7 +77,7 @@ apps/nebula-chat-server/src/
 │   │   ├── message.service.ts
 │   │   ├── message.controller.ts
 │   │   └── message.routes.ts
-│   └── logLevel/                  # Operator route: POST /api/internal/log-level (hidden from the spec; ADR-0020)
+│   └── logLevel/                  # Operator route: POST /api/internal/log-level (spec tag `Operator`, left out of the Orval client; ADR-0020)
 │       ├── logLevel.types.ts
 │       ├── logLevel.validation.ts
 │       ├── logLevel.service.ts    # Publishes the change to every server instance over Redis pub/sub

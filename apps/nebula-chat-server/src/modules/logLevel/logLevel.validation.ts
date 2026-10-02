@@ -26,8 +26,9 @@ export const changeLogLevelSchema = z.object({
     .describe('Who is asking, recorded on the lines that log the change'),
 });
 
-// No `.meta({ id })`: the route is hidden from the spec, so there is no component to name.
-export const logLevelChangeResponseSchema = z.object({
-  receivers: z.int().describe('How many server instances received the change'),
-  expiresAt: isoDateTimeSchema.describe('When the change reverts'),
-});
+export const logLevelChangeResponseSchema = z
+  .object({
+    receivers: z.int().describe('How many server instances received the change'),
+    expiresAt: isoDateTimeSchema.describe('When the change reverts'),
+  })
+  .meta({ id: 'LogLevelChange' });

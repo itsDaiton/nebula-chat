@@ -23,9 +23,10 @@ ADR-0017 deferred runtime switching because it raises questions of its own:
    through, compared in constant time over SHA-256 digests. A User's session counts for nothing, so
    a Guest or a Registered user gets `403 Forbidden`. The gate runs in `onRequest`, before body
    validation, so a caller without the token learns nothing of the schema. With `OPERATOR_TOKEN`
-   unset the route answers `404`. It is hidden from the OpenAPI spec, so no generated client hook
-   exists for it. `operator` is a name the caller states, not an identity: everyone holding the
-   token is equally trusted.
+   unset the route answers `404`. The OpenAPI spec documents it under an `Operator` tag with an
+   `operatorToken` bearer security scheme, and `orval.config.ts` excludes that tag, so the browser
+   client gets no hook for it. `operator` is a name the caller states, not an identity: everyone
+   holding the token is equally trusted.
 2. **Broadcast over Redis pub/sub, one channel per service.** The route publishes the change on
    `log-level:<service.name>` and answers `202 { receivers, expiresAt }`. Every instance subscribes
    at boot and applies what arrives, the instance that took the request included. `receivers` is
@@ -68,4 +69,5 @@ ADR-0017 deferred runtime switching because it raises questions of its own:
   - Each `componentLogger` call now allocates a `WeakRef` and a finalization record, and every change walks the live children.
   - `OPERATOR_TOKEN` is shared, so "who" is self-declared. Rotating it means changing one env var, which is itself a redeploy.
   - One more Redis connection per process, opened only by processes that listen.
-- **Neutral:** no OpenAPI or DB change. `OTEL_LOG_LEVEL` stays boot-only.
+  - The route and its request schema are listed in the public `/docs`. The token, not obscurity, is what guards it.
+- **Neutral:** the spec gains the route, the `LogLevelChange` schema and the `operatorToken` scheme, an `openapi` release; the generated client does not change. No DB change. `OTEL_LOG_LEVEL` stays boot-only.

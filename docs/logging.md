@@ -297,6 +297,9 @@ curl -X POST "$SERVER_URL/api/internal/log-level" \
   back after `ttlSeconds`. Changing the same target again restarts its expiry;
   the root and each component expire independently.
 
+The route is in the OpenAPI spec (Swagger UI at `/docs`, tag `Operator`, which
+`orval.config.ts` leaves out of the browser client).
+
 In code, `changeLogLevel(logger, change)` from `@nebula-chat/otel` does the
 in-process part. `listenForLogLevelChanges` and `publishLogLevelChange` carry it
 over any pub/sub with `@nebula-chat/redis`'s `pubsub` shape. A new process (the

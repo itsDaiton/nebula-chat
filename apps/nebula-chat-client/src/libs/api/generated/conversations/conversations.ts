@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.8.0
+ * OpenAPI spec version: 1.9.0
  */
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 import type {

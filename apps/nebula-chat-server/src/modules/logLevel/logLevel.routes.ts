@@ -9,11 +9,15 @@ import {
 import { jsonResponse } from '@backend/utils/jsonResponse';
 
 const logLevelRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
-  app.post('/', {
+  app.post('', {
     schema: {
-      // An operator endpoint, not part of the client API: kept out of the spec
-      // so no generated client hook exists for it.
-      hide: true,
+      description:
+        "Change the root log level, or one component's, on every running server instance. It reverts to the boot-time level after `ttlSeconds`. Requires the operator token, not a User session.",
+      summary: 'Change log level',
+      // orval.config.ts excludes this tag: the browser client gets no hook for it.
+      tags: ['Operator'],
+      operationId: 'changeLogLevel',
+      security: [{ operatorToken: [] }],
       body: changeLogLevelSchema,
       response: {
         202: jsonResponse('Change sent to every server instance', logLevelChangeResponseSchema),

@@ -17,11 +17,17 @@ type SchemaObject = {
 
 type ResponseObject = { content?: Record<string, { schema?: SchemaObject }> };
 
+type OperationObject = {
+  tags?: string[];
+  security?: Record<string, string[]>[];
+  responses?: Record<string, ResponseObject>;
+};
+
 type OpenApiDocument = {
   openapi: string;
   servers: { url: string }[];
-  paths: Record<string, Record<string, { responses?: Record<string, ResponseObject> }>>;
-  components: { schemas: Record<string, unknown> };
+  paths: Record<string, Record<string, OperationObject>>;
+  components: { schemas: Record<string, unknown>; securitySchemes: Record<string, unknown> };
 };
 
 const isInlineObject = (schema: SchemaObject | undefined) =>
@@ -71,8 +77,21 @@ describe('OpenAPI document', () => {
       'ErrorCode',
       'ErrorEnvelope',
       'Health',
+      'LogLevelChange',
       'Message',
     ]);
+  });
+
+  // Tagged so orval.config.ts can leave it out of the browser client.
+  it('documents the operator route under its own tag, behind the operator token', () => {
+    const operation = document.paths['/api/internal/log-level']?.['post'];
+
+    expect(operation?.tags).toEqual(['Operator']);
+    expect(operation?.security).toEqual([{ operatorToken: [] }]);
+    expect(document.components.securitySchemes['operatorToken']).toEqual({
+      type: 'http',
+      scheme: 'bearer',
+    });
   });
 
   it('renders a response timestamp as a date-time string', () => {

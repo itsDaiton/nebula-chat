@@ -98,6 +98,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
         { name: 'Chat', description: 'Chat streaming endpoints' },
         { name: 'Conversations', description: 'Conversation management' },
         { name: 'Messages', description: 'Message management' },
+        { name: 'Operator', description: 'Operations for whoever runs the deployment' },
       ],
       components: {
         securitySchemes: {
@@ -106,6 +107,8 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
             in: 'cookie',
             name: 'better-auth.session_token',
           },
+          // OPERATOR_TOKEN, sent as `Authorization: Bearer <token>`.
+          operatorToken: { type: 'http', scheme: 'bearer' },
         },
       },
       security: [{ cookieAuth: [] }],
