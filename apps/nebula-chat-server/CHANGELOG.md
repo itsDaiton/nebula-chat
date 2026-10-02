@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.3.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.3.2...nebula-chat-server-v2.3.3) (2026-10-02)
+
+
+### Bug Fixes
+
+* **server:** NEB-415 add CORS headers to /api/auth/* responses ([#424](https://github.com/itsDaiton/nebula-chat/issues/424)) ([3a6aef8](https://github.com/itsDaiton/nebula-chat/commit/3a6aef868d8f4adff6ee0f8a7ed1a60619916bb8))
+* **server:** NEB-423 forward @fastify/cors headers onto the chat stream ([#425](https://github.com/itsDaiton/nebula-chat/issues/425)) ([fe75351](https://github.com/itsDaiton/nebula-chat/commit/fe753515f13b242238c0d8d67a29aeb415ae1275))
+
 ## [2.3.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.3.1...nebula-chat-server-v2.3.2) (2026-10-02)
 
 
