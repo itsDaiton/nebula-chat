@@ -73,7 +73,10 @@ The server registers a single catch-all route,
 `toNodeHandler(auth)`. better-auth reads the raw request body itself, so the JSON
 body parser is disabled **for this route only** via an encapsulated child scope; the
 rest of the API keeps normal JSON parsing. The route is `{ schema: { hide: true } }`
-and does not appear in the OpenAPI spec.
+and does not appear in the OpenAPI spec. The reply is hijacked, so a throw from the
+handler (a Redis error from the `authStore`, say) never reaches `errorHandler`: the route
+logs it as `http.request.failed` and answers `500` `Internal` itself, or drops the
+connection if the headers were already sent.
 
 All authentication happens by calling better-auth's endpoints under `/api/auth`.
 This instance exposes the following, given its configuration (email/password +
