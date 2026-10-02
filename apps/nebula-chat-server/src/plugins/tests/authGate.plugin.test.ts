@@ -37,6 +37,7 @@ vi.mock('better-auth/node', async (importOriginal) => {
 vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
 import { auth } from '@backend/auth';
+import { env } from '@backend/env';
 import {
   getSessionData,
   requireAuthentication,
@@ -226,6 +227,148 @@ describe('auth catch-all route delegation (GET|POST /api/auth/*)', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ ok: true });
+  });
+});
+
+/**
+ * The hijacked catch-all writes straight to the raw response, so the CORS headers
+ * `@fastify/cors` buffered on the reply only reach the client if the route forwards
+ * them. `/health` is the reference: a normal route, flushed by `reply.send`.
+ */
+describe('auth catch-all CORS (GET|POST /api/auth/*)', () => {
+  const allowedOrigin = env.CLIENT_URL;
+  const sessionCookie = 'better-auth.session_token=abc; Path=/; HttpOnly';
+  const allowedCorsHeaders = {
+    'access-control-allow-origin': allowedOrigin,
+    'access-control-allow-credentials': 'true',
+    vary: 'Origin',
+  };
+  let app: FastifyInstance;
+
+  beforeAll(async () => {
+    // Stand in for a better-auth sign-in: a JSON body plus a session cookie.
+    (auth as { handler: unknown }).handler = async (): Promise<Response> =>
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json', 'set-cookie': sessionCookie },
+      });
+    app = await createTestApp();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  beforeEach(() => {
+    adapterOverride.current = undefined;
+  });
+
+  const pickCorsHeaders = (headers: Record<string, unknown>) => ({
+    'access-control-allow-origin': headers['access-control-allow-origin'],
+    'access-control-allow-credentials': headers['access-control-allow-credentials'],
+    vary: headers['vary'],
+  });
+
+  it.each(['GET', 'POST'] as const)(
+    'answers %s from an allowed origin with the same CORS headers as /health',
+    async (method) => {
+      const health = await app.inject({
+        method: 'GET',
+        url: '/health',
+        headers: { origin: allowedOrigin },
+      });
+      const res = await app.inject({
+        method,
+        url: '/api/auth/get-session',
+        headers: { origin: allowedOrigin },
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(pickCorsHeaders(res.headers)).toEqual(allowedCorsHeaders);
+      expect(pickCorsHeaders(res.headers)).toEqual(pickCorsHeaders(health.headers));
+    },
+  );
+
+  it('adds no access-control-allow-* headers for a disallowed origin', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/sign-in/anonymous',
+      headers: { origin: 'https://attacker.example' },
+      payload: {},
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(Object.keys(res.headers).filter((name) => name.startsWith('access-control-'))).toEqual(
+      [],
+    );
+  });
+
+  it('passes a request with no Origin through unchanged', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/sign-in/anonymous',
+      payload: {},
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ ok: true });
+  });
+
+  it("keeps better-auth's own headers alongside the CORS ones", async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/sign-in/anonymous',
+      headers: { origin: allowedOrigin },
+      payload: {},
+    });
+
+    expect(res.headers).toMatchObject({
+      'set-cookie': [sessionCookie],
+      'content-type': 'application/json',
+      ...allowedCorsHeaders,
+    });
+  });
+
+  it('answers a preflight from an allowed origin without reaching better-auth', async () => {
+    const handler = vi.fn<NodeHandler>();
+    adapterOverride.current = handler;
+
+    const res = await app.inject({
+      method: 'OPTIONS',
+      url: '/api/auth/sign-in/anonymous',
+      headers: {
+        origin: allowedOrigin,
+        'access-control-request-method': 'POST',
+        'access-control-request-headers': 'content-type',
+      },
+    });
+
+    expect(res.statusCode).toBe(204);
+    expect(res.headers).toMatchObject({
+      'access-control-allow-origin': allowedOrigin,
+      'access-control-allow-credentials': 'true',
+      'access-control-allow-methods': 'GET, HEAD, POST, DELETE, OPTIONS',
+      'access-control-allow-headers': 'Content-Type',
+      'access-control-max-age': '86400',
+    });
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('keeps the CORS headers on the 500 written when better-auth throws', async () => {
+    adapterOverride.current = async () => {
+      throw new Error('better-auth failed');
+    };
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/sign-in/anonymous',
+      headers: { origin: allowedOrigin },
+      payload: {},
+    });
+
+    expect(res.statusCode).toBe(500);
+    expect(res.json()).toEqual(INTERNAL_ERROR_ENVELOPE);
+    expect(pickCorsHeaders(res.headers)).toEqual(allowedCorsHeaders);
   });
 });
 
