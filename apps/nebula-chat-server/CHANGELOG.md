@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.3.0...nebula-chat-server-v2.3.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* **server:** answer the auth catch-all with a 500 when better-auth throws ([#414](https://github.com/itsDaiton/nebula-chat/issues/414)) ([e34721a](https://github.com/itsDaiton/nebula-chat/commit/e34721af33f67ae21f594e824e506e77f4f46367))
+
 ## [2.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.2.3...nebula-chat-server-v2.3.0) (2026-10-02)
 
 
