@@ -1,7 +1,7 @@
 import pino from 'pino';
 import type { DestinationStream, LoggerOptions } from 'pino';
-import { attachLevelOverrides } from './levelOverrides';
-import type { LevelOverrides } from './levelOverrides';
+import { attachLevelControl } from './levelControl';
+import type { LevelOverrides } from './levelControl';
 import { REDACT_CENSOR, REDACT_PATHS } from './redaction';
 import { serializeErr } from './serializeErr';
 import { traceFields } from './traceFields';
@@ -76,6 +76,6 @@ export const createLogger = (options: CreateLoggerOptions): Logger => {
     ? pino(config, options.destination)
     : pino({ ...config, transport: options.pretty ? prettyTransport : undefined });
 
-  attachLevelOverrides(logger, options.levelOverrides ?? {});
+  attachLevelControl(logger, options.levelOverrides ?? {});
   return logger;
 };

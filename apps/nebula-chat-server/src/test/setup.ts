@@ -12,3 +12,5 @@ process.env['BETTER_AUTH_URL'] ??= 'http://localhost:3000';
 // 'fatal' is the quietest level env.ts's Zod enum accepts — Pino's 'silent' is
 // not in that union, and using it fails env parsing before any test runs.
 process.env['LOG_LEVEL'] ??= 'fatal';
+// The shared operator secret gating /api/internal/* (32+ characters, as env.ts insists).
+process.env['OPERATOR_TOKEN'] ??= 'test-operator-token-0123456789abcdef';

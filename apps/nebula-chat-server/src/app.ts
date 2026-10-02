@@ -21,6 +21,7 @@ import { apiRootSchema, healthSchema } from '@backend/health.validation';
 import { logger } from '@backend/logger';
 import chatRoutes from '@backend/modules/chat/chat.routes';
 import conversationRoutes from '@backend/modules/conversation/conversation.routes';
+import logLevelRoutes from '@backend/modules/logLevel/logLevel.routes';
 import messageRoutes from '@backend/modules/message/message.routes';
 import authGate from '@backend/plugins/authGate.plugin';
 import dbPlugin from '@backend/plugins/db.plugin';
@@ -97,6 +98,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
         { name: 'Chat', description: 'Chat streaming endpoints' },
         { name: 'Conversations', description: 'Conversation management' },
         { name: 'Messages', description: 'Message management' },
+        { name: 'Operator', description: 'Operations for whoever runs the deployment' },
       ],
       components: {
         securitySchemes: {
@@ -105,6 +107,8 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
             in: 'cookie',
             name: 'better-auth.session_token',
           },
+          // OPERATOR_TOKEN, sent as `Authorization: Bearer <token>`.
+          operatorToken: { type: 'http', scheme: 'bearer' },
         },
       },
       security: [{ cookieAuth: [] }],
@@ -132,7 +136,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
         },
       },
     },
-    async () => ({ message: 'Welcome to the Nebula Chat API' }),
+    () => ({ message: 'Welcome to the Nebula Chat API' }),
   );
 
   app.get(
@@ -148,16 +152,17 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
         },
       },
     },
-    async () => ({ status: 'ok' as const, timestamp: new Date().toISOString() }),
+    () => ({ status: 'ok' as const, timestamp: new Date().toISOString() }),
   );
 
-  app.get('/openapi.json', { schema: { hide: true } }, async () => app.swagger());
+  app.get('/openapi.json', { schema: { hide: true } }, () => app.swagger());
 
   app.setErrorHandler(errorHandler);
 
   await app.register(chatRoutes, { prefix: '/api/chat' });
   await app.register(conversationRoutes, { prefix: '/api/conversations' });
   await app.register(messageRoutes, { prefix: '/api/messages' });
+  await app.register(logLevelRoutes, { prefix: '/api/internal/log-level' });
 
   return app;
 };

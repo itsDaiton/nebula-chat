@@ -46,3 +46,23 @@ export type AuthStoreConnection = Pick<Redis, 'get' | 'del' | 'getdel' | 'incr' 
   set(key: string, value: string, expiryMode: 'EX', ttlSeconds: number): Promise<unknown>;
   set(key: string, value: string): Promise<unknown>;
 };
+
+/** The subset of the ioredis client the pub/sub primitive publishes with. */
+export type PublishConnection = Pick<Redis, 'publish'>;
+
+/**
+ * The subset of an ioredis client in subscriber mode that the pub/sub primitive
+ * calls: it subscribes to channels and listens for their messages.
+ */
+export type SubscribeConnection = Pick<Redis, 'subscribe'> & {
+  on(event: 'message', listener: (channel: string, message: string) => void): unknown;
+};
+
+/**
+ * The events of an ioredis client that `logConnectionErrors` listens to: `error`
+ * on every failed (re)connect, `ready` once the connection can take commands.
+ */
+export type ConnectionEvents = {
+  on(event: 'error', listener: (error: Error) => void): unknown;
+  on(event: 'ready', listener: () => void): unknown;
+};

@@ -1,8 +1,6 @@
 import type { KnownAttributes, LogAttributes } from './attributes';
 import type { LogEventName } from './events';
-
-/** Pino's six levels, from most to least severe. */
-export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
+import type { LogLevel } from './logLevels';
 
 type LogMethod = (obj: object, msg?: string) => void;
 

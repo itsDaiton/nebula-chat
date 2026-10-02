@@ -1,8 +1,8 @@
-import { initTelemetry, logEvent } from '@nebula-chat/otel';
+import { initTelemetry, listenForLogLevelChanges, logEvent } from '@nebula-chat/otel';
 import { env } from '@backend/env';
-import { logger } from '@backend/logger';
+import { logger, SERVICE_NAME } from '@backend/logger';
 
-initTelemetry('nebula-chat-server', { logger, diagLevel: env.OTEL_LOG_LEVEL });
+initTelemetry(SERVICE_NAME, { logger, diagLevel: env.OTEL_LOG_LEVEL });
 
 import { buildApp } from '@backend/app';
 import { redis } from '@backend/redis';
@@ -43,6 +43,9 @@ const start = async (): Promise<void> => {
     { 'server.address': new URL(address).hostname, 'server.port': env.PORT },
     `Server listening at ${address}`,
   );
+
+  // Not awaited: it never rejects, and a Redis that is down must not hold up boot.
+  void listenForLogLevelChanges({ logger, pubsub: redis.pubsub, serviceName: SERVICE_NAME });
 
   const shutdown = (): void => {
     app.close().catch((err: unknown) => {

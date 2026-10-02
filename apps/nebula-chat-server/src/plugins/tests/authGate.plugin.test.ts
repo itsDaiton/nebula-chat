@@ -1,3 +1,5 @@
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import type * as BetterAuthNode from 'better-auth/node';
 import type {
   FastifyInstance,
   FastifyReply,
@@ -5,9 +7,9 @@ import type {
   preHandlerAsyncHookHandler,
 } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ForbiddenError, UnauthorizedError } from '@nebula-chat/errors';
+import { ForbiddenError, INTERNAL_ERROR_ENVELOPE, UnauthorizedError } from '@nebula-chat/errors';
 import { createTestApp } from '@backend/test/app';
-import { captureLogger } from '@backend/test/logCapture';
+import { captureLogger, eventLines, LEVEL } from '@backend/test/logCapture';
 import { guestSession, registeredSession, REGISTERED_USER_ID } from '@backend/test/session';
 
 // @backend/auth is the boundary to better-auth. Faking it lets the gates be
@@ -17,6 +19,22 @@ import { guestSession, registeredSession, REGISTERED_USER_ID } from '@backend/te
 vi.mock('@backend/auth', () => ({
   auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
 }));
+
+type NodeHandler = (req: IncomingMessage, res: ServerResponse) => Promise<void>;
+
+// better-auth's Node adapter, passed through unless a test swaps in its own: the
+// adapter, not `auth.handler`, writes the headers, so only it can fail after them.
+const nodeHandler = vi.hoisted(() => ({ override: undefined as NodeHandler | undefined }));
+vi.mock('better-auth/node', async (importOriginal) => {
+  const actual = await importOriginal<typeof BetterAuthNode>();
+  return {
+    ...actual,
+    toNodeHandler: (...args: Parameters<typeof actual.toNodeHandler>): NodeHandler => {
+      const real = actual.toNodeHandler(...args);
+      return (req, res) => (nodeHandler.override ?? real)(req, res);
+    },
+  };
+});
 
 // No database in a unit test; also keeps the real pg Pool out of the process.
 vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
@@ -211,5 +229,90 @@ describe('auth catch-all route delegation (GET|POST /api/auth/*)', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ ok: true });
+  });
+});
+
+describe('auth catch-all failure (better-auth throws)', () => {
+  const { logger, lines } = captureLogger();
+  // As observed live: the rate limiter's Redis-backed store throws inside the handler.
+  const redisDown = new Error("Stream isn't writeable and enableOfflineQueue options is false");
+  let app: FastifyInstance;
+
+  beforeAll(async () => {
+    (auth as { handler: unknown }).handler = async (): Promise<Response> => {
+      throw redisDown;
+    };
+    app = await createTestApp({ logger });
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  beforeEach(() => {
+    lines.length = 0;
+    nodeHandler.override = undefined;
+  });
+
+  const signIn = () =>
+    app.inject({ method: 'POST', url: '/api/auth/sign-in/anonymous', payload: {} });
+
+  it('answers 500 with the Internal error envelope instead of hanging', async () => {
+    const res = await signIn();
+
+    expect(res.statusCode).toBe(500);
+    expect(res.headers['content-type']).toBe('application/json; charset=utf-8');
+    expect(res.json()).toEqual(INTERNAL_ERROR_ENVELOPE);
+  });
+
+  it('logs the failure once, as http.request.failed', async () => {
+    await signIn();
+
+    expect(lines.filter((line) => line.level >= LEVEL.error)).toEqual([
+      expect.objectContaining({
+        level: LEVEL.error,
+        'event.name': 'http.request.failed',
+        'nebula.component': 'http',
+        'error.type': 'Internal',
+        'http.request.method': 'POST',
+        'url.path': '/api/auth/sign-in/anonymous',
+        'http.response.status_code': 500,
+        err: expect.objectContaining({ message: redisDown.message }),
+      }),
+    ]);
+  });
+
+  it('names the failure on the request completion line', async () => {
+    await signIn();
+
+    expect(eventLines(lines, 'http.request.completed')).toEqual([
+      expect.objectContaining({ 'http.response.status_code': 500, 'error.type': 'Internal' }),
+    ]);
+  });
+
+  it('drops headers the handler set before it threw', async () => {
+    nodeHandler.override = async (_req, res) => {
+      res.setHeader('set-cookie', 'better-auth.session_token=half-built');
+      throw redisDown;
+    };
+
+    const res = await signIn();
+
+    expect(res.statusCode).toBe(500);
+    expect(res.headers['set-cookie']).toBeUndefined();
+    expect(res.json()).toEqual(INTERNAL_ERROR_ENVELOPE);
+  });
+
+  it('drops the connection when the handler fails after the headers are sent', async () => {
+    nodeHandler.override = async (_req, res) => {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.write('{"partial":');
+      throw redisDown;
+    };
+
+    await expect(signIn()).rejects.toMatchObject({ code: 'LIGHT_ECONNRESET' });
+    expect(eventLines(lines, 'http.request.failed')).toEqual([
+      expect.objectContaining({ 'error.type': 'Internal', 'http.response.status_code': 200 }),
+    ]);
   });
 });

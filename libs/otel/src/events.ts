@@ -26,6 +26,9 @@ export const LOG_EVENTS = [
   'cache.check.failed',
   'cache.capture.failed',
   'cache.entry.unparseable',
+  // Redis
+  'redis.connection.failed',
+  'redis.connection.restored',
   // Lifecycle
   'server.started',
   'server.start.failed',
@@ -33,6 +36,11 @@ export const LOG_EVENTS = [
   'redis.connect.failed',
   'otel.start.failed',
   'env.file.missing',
+  // Log control
+  'log.level.changed',
+  'log.level.reverted',
+  'log.level.message.rejected',
+  'log.level.listen.failed',
   // Adapters
   'auth.library.log',
   'otel.diag.log',

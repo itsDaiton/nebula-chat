@@ -4,7 +4,9 @@ import fp from 'fastify-plugin';
 import type { SessionData } from '@nebula-chat/auth';
 import { bindAttributes } from '@nebula-chat/otel';
 import { auth } from '@backend/auth';
-import { ForbiddenError, UnauthorizedError } from '@nebula-chat/errors';
+import { logRequestFailed } from '@backend/errors/error.handler';
+import { recordErrorType } from '@backend/errors/requestErrorType';
+import { ForbiddenError, INTERNAL_ERROR_ENVELOPE, UnauthorizedError } from '@nebula-chat/errors';
 
 /**
  * The request with its resolved session attached. Fastify augmentation would need
@@ -77,6 +79,32 @@ export const requireRegistered: preHandlerAsyncHookHandler = async (req, reply) 
 };
 
 /**
+ * Ends a hijacked auth request whose better-auth handler threw (a Redis failure
+ * in its rate limiter, say). The hijack bypasses `errorHandler`, so this logs the
+ * failure and answers it; otherwise the raw response never ends and the client hangs.
+ */
+const failAuthRequest = (err: unknown, req: FastifyRequest, reply: FastifyReply): void => {
+  const res = reply.raw;
+  const status = res.headersSent ? res.statusCode : 500;
+  // Before the response ends, so its `http.request.completed` line names it.
+  recordErrorType(req, 'Internal');
+  logRequestFailed(err, req, reply, 'Internal', status);
+
+  if (!res.headersSent) {
+    // A half-built better-auth response (a session cookie, say) must not ride on the 500.
+    for (const name of res.getHeaderNames()) {
+      res.removeHeader(name);
+    }
+    res
+      .writeHead(500, { 'content-type': 'application/json; charset=utf-8' })
+      .end(JSON.stringify(INTERNAL_ERROR_ENVELOPE));
+  } else if (!res.writableEnded) {
+    // Too late for a status: drop the connection so the client sees the failure.
+    res.destroy();
+  }
+};
+
+/**
  * `authGate` — mounts better-auth and exposes the route gates.
  *
  * - `GET|POST /api/auth/*` delegates to better-auth's Node handler
@@ -85,7 +113,7 @@ export const requireRegistered: preHandlerAsyncHookHandler = async (req, reply) 
  *   passthrough parser is registered in an **encapsulated child scope** so it
  *   applies only to the auth catch-all — the rest of the API keeps normal JSON
  *   parsing. The route is `{ schema: { hide: true } }` to stay out of the OpenAPI
- *   spec.
+ *   spec. A throw from the handler is answered by `failAuthRequest`.
  * - `requireAuthentication` / `requireRegistered` are decorated on the app (via
  *   `fastify-plugin`, so they reach the whole instance) for availability and are
  *   also exported for direct import by route modules.
@@ -112,7 +140,11 @@ export default fp(
         schema: { hide: true },
         handler: async (req, reply) => {
           reply.hijack();
-          await authHandler(req.raw, reply.raw);
+          try {
+            await authHandler(req.raw, reply.raw);
+          } catch (err) {
+            failAuthRequest(err, req, reply);
+          }
         },
       });
     });

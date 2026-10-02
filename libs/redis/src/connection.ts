@@ -1,5 +1,7 @@
 import IORedis from 'ioredis';
 import type { Redis } from 'ioredis';
+import type { Logger } from '@nebula-chat/otel';
+import { logConnectionErrors } from './connectionErrors';
 import { createConnector } from './connector';
 
 export type ConnectionManager = {
@@ -7,46 +9,71 @@ export type ConnectionManager = {
   main: Redis;
   /** Opens `main` if it has never connected; every caller shares one attempt. */
   connect(): Promise<void>;
+  /** The subscriber connection for pub/sub, opened on first call. */
+  subscriber(): Redis;
   /** Tears down every connection this manager owns. */
   close(): Promise<void>;
 };
 
+const closeConnection = async (connection: Redis): Promise<void> => {
+  // `quit()` sends a QUIT command, which forces a connect first — on a
+  // lazily-connected client that never connected (or against a down Redis)
+  // that would hang retrying. Only quit gracefully when actually connected;
+  // otherwise tear the socket down synchronously.
+  if (connection.status === 'ready') {
+    try {
+      await connection.quit();
+      return;
+    } catch {
+      // Fall through to a hard disconnect.
+    }
+  }
+  connection.disconnect();
+};
+
 /**
- * Owns the app's Redis connection(s). Today it provisions a single main command
- * connection. Pub/sub (a dedicated subscriber connection, which in Redis cannot
- * also run normal commands) and BullMQ (a connection configured with
- * `maxRetriesPerRequest: null`) are provisioned here when M-8 / M-7 land — a
- * caller asks a primitive for what it needs and the manager hands over the right
- * connection, so call sites never learn there is more than one.
+ * Owns the app's Redis connection(s): a main command connection, plus a
+ * subscriber connection for pub/sub (in subscriber mode Redis runs no other
+ * command), opened only once something subscribes. BullMQ (a connection
+ * configured with `maxRetriesPerRequest: null`) is provisioned here when M-7
+ * lands — a caller asks a primitive for what it needs and the manager hands over
+ * the right connection, so call sites never learn there is more than one.
  *
  * `lazyConnect` + `enableOfflineQueue: false` keep the cache fail-open fast: when
  * Redis is unreachable a command rejects immediately rather than queueing, and
  * the cache turns that rejection into a miss. The cost is that a command sent
  * before the first connect is ready is rejected too, so `connect` opens it ahead
- * of use (the server calls it at startup) and the authStore awaits it.
+ * of use (the server calls it at startup) and the authStore and pub/sub await it.
+ *
+ * Every connection it opens logs its errors through `logger`.
  */
-export const createConnectionManager = (redisUrl: string): ConnectionManager => {
+export const createConnectionManager = (redisUrl: string, logger: Logger): ConnectionManager => {
   const main = new IORedis(redisUrl, {
     lazyConnect: true,
     enableOfflineQueue: false,
   });
+  logConnectionErrors(main, logger);
   const connect = createConnector(main);
+  let subscriberConnection: Redis | undefined;
 
-  const close = async (): Promise<void> => {
-    // `quit()` sends a QUIT command, which forces a connect first — on a
-    // lazily-connected client that never connected (or against a down Redis)
-    // that would hang retrying. Only quit gracefully when actually connected;
-    // otherwise tear the socket down synchronously.
-    if (main.status === 'ready') {
-      try {
-        await main.quit();
-        return;
-      } catch {
-        // Fall through to a hard disconnect.
-      }
+  // A SUBSCRIBE waits in the offline queue for as long as Redis is down, rather
+  // than failing after 20 retries and never listening; ioredis re-subscribes on
+  // its own after a reconnect.
+  const subscriber = (): Redis => {
+    if (!subscriberConnection) {
+      subscriberConnection = main.duplicate({
+        enableOfflineQueue: true,
+        maxRetriesPerRequest: null,
+      });
+      // `duplicate()` copies options, not listeners.
+      logConnectionErrors(subscriberConnection, logger);
     }
-    main.disconnect();
+    return subscriberConnection;
   };
 
-  return { main, connect, close };
+  const close = async (): Promise<void> => {
+    await Promise.all([main, subscriberConnection].flatMap((c) => (c ? [closeConnection(c)] : [])));
+  };
+
+  return { main, connect, subscriber, close };
 };
