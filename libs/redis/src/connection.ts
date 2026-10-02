@@ -1,9 +1,12 @@
 import IORedis from 'ioredis';
 import type { Redis } from 'ioredis';
+import { createConnector } from './connector';
 
 export type ConnectionManager = {
   /** The main command connection, used by the cache and general commands. */
   main: Redis;
+  /** Opens `main` if it has never connected; every caller shares one attempt. */
+  connect(): Promise<void>;
   /** Tears down every connection this manager owns. */
   close(): Promise<void>;
 };
@@ -18,13 +21,16 @@ export type ConnectionManager = {
  *
  * `lazyConnect` + `enableOfflineQueue: false` keep the cache fail-open fast: when
  * Redis is unreachable a command rejects immediately rather than queueing, and
- * the cache turns that rejection into a miss.
+ * the cache turns that rejection into a miss. The cost is that a command sent
+ * before the first connect is ready is rejected too, so `connect` opens it ahead
+ * of use (the server calls it at startup) and the authStore awaits it.
  */
 export const createConnectionManager = (redisUrl: string): ConnectionManager => {
   const main = new IORedis(redisUrl, {
     lazyConnect: true,
     enableOfflineQueue: false,
   });
+  const connect = createConnector(main);
 
   const close = async (): Promise<void> => {
     // `quit()` sends a QUIT command, which forces a connect first — on a
@@ -42,5 +48,5 @@ export const createConnectionManager = (redisUrl: string): ConnectionManager => 
     main.disconnect();
   };
 
-  return { main, close };
+  return { main, connect, close };
 };

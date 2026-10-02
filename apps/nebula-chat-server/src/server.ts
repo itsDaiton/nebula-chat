@@ -5,8 +5,21 @@ import { logger } from '@backend/logger';
 initTelemetry('nebula-chat-server', { logger, diagLevel: env.OTEL_LOG_LEVEL });
 
 import { buildApp } from '@backend/app';
+import { redis } from '@backend/redis';
 
 const start = async (): Promise<void> => {
+  // Open Redis while the app builds, so the first request does not race the connect.
+  // Not awaited: a Redis that is down must not hold up boot.
+  redis.connect().catch((err: unknown) => {
+    logEvent(
+      logger,
+      'error',
+      'redis.connect.failed',
+      { err },
+      'Could not connect to Redis; retrying in the background',
+    );
+  });
+
   const app = await buildApp({ logger });
 
   // `app.listen()` writes Fastify's own "Server listening at …" line through

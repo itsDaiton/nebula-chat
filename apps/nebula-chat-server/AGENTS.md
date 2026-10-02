@@ -293,6 +293,11 @@ single-tier `cache` primitive), registered by `plugins/redis.plugin.ts` and reac
 `src/redis.ts` alongside the toolkit singleton and are imported from `@backend/redis`. See
 [ADR-0009](../../docs/adr/0009-nebula-chat-redis-lib.md).
 
+The connection is lazy with no offline queue, so a command sent before it is ready is rejected.
+`server.ts` therefore calls `redis.connect()` at startup without awaiting it (a failure logs
+`redis.connect.failed` while ioredis keeps retrying), and the `authStore` awaits that same connect
+before each command.
+
 **Key format** (built in `src/redis.ts` via the lib's `buildKey`/`hashText`, kept as-is per ADR-0009):
 `conversation:{conversationId}:model:{model}:prompt:{sha256(lastUserMessage)[0:16]}`
 

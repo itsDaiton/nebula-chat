@@ -29,6 +29,12 @@ export type CacheConnection = Pick<Redis, 'get' | 'del' | 'keys'> & {
 };
 
 /**
+ * The subset of a lazily-connecting ioredis client `createConnector` drives:
+ * `status` is `'wait'` until the first `connect()`.
+ */
+export type LazyConnection = Pick<Redis, 'connect'> & { readonly status: string };
+
+/**
  * The subset of the ioredis client the `authStore` primitive actually calls.
  * Like `CacheConnection`, narrowing it lets tests supply a plain fake while a real
  * `Redis` instance satisfies it structurally. `getdel` maps to Redis `GETDEL`,
