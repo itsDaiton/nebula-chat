@@ -28,7 +28,7 @@
     "@nebula-chat/redis": "workspace:*",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
-    "fastify": "^5.4.0",
+    "fastify": "^5.12.5",
     "fastify-plugin": "^5.0.0",
     "fastify-zod-openapi": "^5.7.0",
     "zod": "^4.4.2"
