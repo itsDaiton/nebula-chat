@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.2.2...nebula-chat-server-v2.2.3) (2026-10-02)
+
+
+### Bug Fixes
+
+* **deps:** bump fastify, grpc-js, brace-expansion, fast-uri for CVEs ([#409](https://github.com/itsDaiton/nebula-chat/issues/409)) ([ef619c0](https://github.com/itsDaiton/nebula-chat/commit/ef619c03ee268b16b04d0c884ffe363e4991db03))
+
 ## [2.2.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.2.1...nebula-chat-server-v2.2.2) (2026-09-29)
 
 

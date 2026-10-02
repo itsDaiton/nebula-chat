@@ -1,7 +1,7 @@
 {
-  ".": "2.4.2",
+  ".": "2.4.3",
   "apps/nebula-chat-client": "1.16.1",
-  "apps/nebula-chat-server": "2.2.2",
+  "apps/nebula-chat-server": "2.2.3",
   "libs/db": "0.5.2",
   "openapi": "1.9.0",
   "libs/langchain": "2.0.2",
