@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.2.3...nebula-chat-server-v2.3.0) (2026-10-02)
+
+
+### Features
+
+* **otel:** NEB-370 change log levels at runtime without a restart ([#408](https://github.com/itsDaiton/nebula-chat/issues/408)) ([399cee0](https://github.com/itsDaiton/nebula-chat/commit/399cee03a0992cbd64bef6ace59fda931bd5f00b))
+
 ## [2.2.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.2.2...nebula-chat-server-v2.2.3) (2026-10-02)
 
 

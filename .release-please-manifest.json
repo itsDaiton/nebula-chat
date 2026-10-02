@@ -1,12 +1,12 @@
 {
-  ".": "2.4.3",
-  "apps/nebula-chat-client": "1.16.1",
-  "apps/nebula-chat-server": "2.2.3",
+  ".": "2.5.0",
+  "apps/nebula-chat-client": "1.17.0",
+  "apps/nebula-chat-server": "2.3.0",
   "libs/db": "0.5.2",
-  "openapi": "1.9.0",
+  "openapi": "1.10.0",
   "libs/langchain": "2.0.2",
-  "libs/otel": "2.0.1",
-  "libs/redis": "0.2.1",
+  "libs/otel": "2.1.0",
+  "libs/redis": "0.2.2",
   "libs/auth": "2.0.1",
   "libs/errors": "0.2.1"
 }
