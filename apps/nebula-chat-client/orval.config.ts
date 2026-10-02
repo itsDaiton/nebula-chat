@@ -6,7 +6,9 @@ export default defineConfig({
       target: '../../openapi/openapi.yaml',
       filters: {
         mode: 'exclude',
-        tags: ['Chat'],
+        // Operator routes are called with OPERATOR_TOKEN by whoever runs the
+        // deployment, never by the browser.
+        tags: ['Chat', 'Operator'],
       },
     },
     output: {

@@ -40,3 +40,17 @@ export type AuthStoreConnection = Pick<Redis, 'get' | 'del' | 'getdel' | 'incr' 
   set(key: string, value: string, expiryMode: 'EX', ttlSeconds: number): Promise<unknown>;
   set(key: string, value: string): Promise<unknown>;
 };
+
+/**
+ * The subset of the ioredis client the pub/sub primitive publishes with:
+ * `status` and `connect` let it open a lazy connection that has never connected.
+ */
+export type PublishConnection = Pick<Redis, 'publish' | 'connect'> & { readonly status: string };
+
+/**
+ * The subset of an ioredis client in subscriber mode that the pub/sub primitive
+ * calls: it subscribes to channels and listens for their messages.
+ */
+export type SubscribeConnection = Pick<Redis, 'subscribe'> & {
+  on(event: 'message', listener: (channel: string, message: string) => void): unknown;
+};

@@ -4,13 +4,16 @@ import { createCache } from './cache';
 import type { RedisCache } from './cache';
 import { createAuthStore } from './authStore';
 import type { AuthStore } from './authStore';
+import { createPubSub } from './pubsub';
+import type { RedisPubSub } from './pubsub';
 import type { RedisConfig } from './types';
 
 /**
- * The namespaced Redis toolkit returned by `createRedis`. `cache`, `authStore`
- * and the raw `connection` are built now; `pubsub`, `streams` and `lock` remain
+ * The namespaced Redis toolkit returned by `createRedis`. `cache`, `authStore`,
+ * `pubsub` and the raw `connection` are built now; `streams` and `lock` remain
  * designed-for seams that land with their consuming tickets (M-7/M-8). `authStore`
- * is the first consumer of the reserved storage seam (M-6, better-auth).
+ * is the first consumer of the reserved storage seam (M-6, better-auth); `pubsub`
+ * carries runtime log-level changes (ADR-0020).
  */
 export type RedisToolkit = {
   cache: RedisCache;
@@ -19,6 +22,8 @@ export type RedisToolkit = {
    * and rate-limit counters. NOT fail-open: Redis errors propagate (ADR-0010 §3).
    */
   authStore: AuthStore;
+  /** Fire-and-forget broadcast to every subscribed process (ADR-0020). */
+  pubsub: RedisPubSub;
   /** Raw ioredis instance, for libraries that need one (e.g. BullMQ in M-7). */
   connection: Redis;
   /** Tears down every connection the toolkit owns. */
@@ -37,10 +42,12 @@ export const createRedis = (config: RedisConfig): RedisToolkit => {
     defaultTtlSeconds: config.cache?.defaultTtlSeconds,
   });
   const authStore = createAuthStore({ connection: manager.main });
+  const pubsub = createPubSub({ publisher: manager.main, subscriber: manager.subscriber });
 
   return {
     cache,
     authStore,
+    pubsub,
     connection: manager.main,
     close: () => manager.close(),
   };

@@ -1,3 +1,5 @@
+import type { LogLevel } from './logLevels';
+
 /**
  * The attribute catalogue: every key a log line may carry, with its value type.
  *
@@ -15,9 +17,14 @@
 
 /**
  * The subsystems a line can come from, bound as `nebula.component` by
- * `componentLogger`. Also the names `levelOverrides` keys on.
+ * `componentLogger`. Also the names `levelOverrides` and `changeLogLevel` key on.
  */
-export type LogComponent = 'auth' | 'chat' | 'http' | 'llm' | 'otel' | 'redis';
+export const LOG_COMPONENTS = ['auth', 'chat', 'http', 'llm', 'otel', 'redis'] as const;
+
+export type LogComponent = (typeof LOG_COMPONENTS)[number];
+
+/** What a runtime level change applies to: the root level, or one component's. */
+export type LogLevelTarget = 'root' | LogComponent;
 
 export type LogAttributeValues = {
   // Service (also stamped as base fields by createLogger)
@@ -62,6 +69,14 @@ export type LogAttributeValues = {
   'nebula.cache.pattern': string;
   // Subsystem
   'nebula.component': LogComponent;
+  // Log control
+  'nebula.log.target': LogLevelTarget;
+  'nebula.log.level.from': LogLevel | 'silent';
+  'nebula.log.level.to': LogLevel | 'silent';
+  /** When a runtime level change reverts, as an ISO 8601 timestamp. */
+  'nebula.log.level.expires_at': string;
+  /** Who asked for an operational change, as they named themselves. */
+  'nebula.operator': string;
   // Outcome
   'nebula.duration_ms': number;
   'nebula.outcome': 'completed' | 'rate_limited' | 'failed';
@@ -116,6 +131,11 @@ export const ATTR = {
   NEBULA_CACHE_KEY: 'nebula.cache.key',
   NEBULA_CACHE_PATTERN: 'nebula.cache.pattern',
   NEBULA_COMPONENT: 'nebula.component',
+  NEBULA_LOG_TARGET: 'nebula.log.target',
+  NEBULA_LOG_LEVEL_FROM: 'nebula.log.level.from',
+  NEBULA_LOG_LEVEL_TO: 'nebula.log.level.to',
+  NEBULA_LOG_LEVEL_EXPIRES_AT: 'nebula.log.level.expires_at',
+  NEBULA_OPERATOR: 'nebula.operator',
   NEBULA_DURATION_MS: 'nebula.duration_ms',
   NEBULA_OUTCOME: 'nebula.outcome',
   TRACE_ID: 'trace_id',

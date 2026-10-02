@@ -62,7 +62,7 @@ apps/nebula-chat-server/src/
 │   │   ├── chat.cacheCheck.hook.ts     # preHandler — replays a cached SSE stream on a hit
 │   │   ├── chat.streamCapture.hook.ts  # preHandler — captures the SSE stream for caching
 │   │   ├── chat.messageAllowance.hook.ts # preHandler — rejects a Guest over the message allowance
-│   │   └── chat.routes.ts         # FastifyPluginAsyncZodOpenApi; schema blocks + hook chain
+│   │   └── chat.routes.ts         # FastifyPluginCallbackZodOpenApi; schema blocks + hook chain
 │   ├── conversation/
 │   │   ├── conversation.types.ts
 │   │   ├── conversation.validation.ts
@@ -70,14 +70,21 @@ apps/nebula-chat-server/src/
 │   │   ├── conversation.service.ts
 │   │   ├── conversation.controller.ts
 │   │   └── conversation.routes.ts
-│   └── message/
-│       ├── message.types.ts
-│       ├── message.validation.ts
-│       ├── message.repository.ts
-│       ├── message.service.ts
-│       ├── message.controller.ts
-│       └── message.routes.ts
-├── test/                          # Shared test harness: createTestApp, session fixtures, logCapture (in-memory logger)
+│   ├── message/
+│   │   ├── message.types.ts
+│   │   ├── message.validation.ts
+│   │   ├── message.repository.ts
+│   │   ├── message.service.ts
+│   │   ├── message.controller.ts
+│   │   └── message.routes.ts
+│   └── logLevel/                  # Operator route: POST /api/internal/log-level (spec tag `Operator`, left out of the Orval client; ADR-0020)
+│       ├── logLevel.types.ts
+│       ├── logLevel.validation.ts
+│       ├── logLevel.service.ts    # Publishes the change to every server instance over Redis pub/sub
+│       ├── logLevel.controller.ts
+│       ├── logLevel.operatorGate.hook.ts # onRequest — admits only `Authorization: Bearer <OPERATOR_TOKEN>`
+│       └── logLevel.routes.ts
+├── test/                          # Shared test harness: createTestApp, session fixtures, logCapture (in-memory logger), memoryPubSub
 ├── utils/
 │   ├── logController.ts           # Fastify logController: request lines off, framework faults stamped fastify.log
 │   ├── logLevelOverrides.ts       # LOG_LEVEL_OVERRIDES parser (component=level pairs)
@@ -108,7 +115,7 @@ Every feature module follows this strict 6-layer convention. Add files in this o
 3. <module>.repository.ts   — Raw Drizzle queries; no business logic (omit if no DB access)
 4. <module>.service.ts      — Business logic; calls repository; never touches req/res
 5. <module>.controller.ts   — Calls service; builds HTTP response; minimal logic
-6. <module>.routes.ts       — FastifyPluginAsyncZodOpenApi default export; schema blocks + hook chain
+6. <module>.routes.ts       — FastifyPluginCallbackZodOpenApi default export; schema blocks + hook chain
 ```
 
 New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(plugin, { prefix: '/api/<module>' })`. No separate OpenAPI registry step — the `schema:` block on each route is the single source of truth for both validation and documentation. Use the `backend-module-scaffold` skill to generate one.
@@ -183,11 +190,13 @@ The full conventions are in [docs/logging.md](../../docs/logging.md). The rules 
 Validation is handled by Fastify's native schema layer via `fastify-zod-openapi` (see
 [ADR-0018](../../docs/adr/0018-fastify-zod-openapi-named-schemas-env-free-spec.md)). Define Zod schemas in the
 module's `*.validation.ts` file, then reference them in the `schema:` block of the corresponding route. Use
-`FastifyPluginAsyncZodOpenApi` (not `FastifyPluginAsync`) so TypeScript infers request types from the schemas:
+`FastifyPluginCallbackZodOpenApi` (not `FastifyPluginCallback`) so TypeScript infers request types from the schemas.
+Registering routes awaits nothing, so the plugin is a callback that ends with `done()`: an `async` one with no
+`await` is Sonar's `typescript:S7503`:
 
 ```ts
 // conversation.routes.ts
-import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi';
+import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { conversationController } from '@backend/modules/conversation/conversation.controller';
 import {
@@ -196,7 +205,7 @@ import {
 } from '@backend/modules/conversation/conversation.validation';
 import { jsonResponse } from '@backend/utils/jsonResponse';
 
-const conversationRoutes: FastifyPluginAsyncZodOpenApi = async (app) => {
+const conversationRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
   app.post('/', {
     schema: {
       description: 'Create a new conversation with a title',
@@ -212,6 +221,7 @@ const conversationRoutes: FastifyPluginAsyncZodOpenApi = async (app) => {
     },
     handler: conversationController.create,
   });
+  done();
 };
 ```
 
@@ -232,7 +242,8 @@ response: {
 **Rule — every response resource schema carries `.meta({ id })`:** declare it on the schema in the module's
 `*.validation.ts`, as a plain noun with no `…Response` suffix (`Conversation`, `ConversationPage`, `Message`).
 The spec then declares it once as a named component, and Orval generates a model with that name. Without an id
-the body is inlined, and Orval names it after the operation and status (`listMessages200Item`). An array of a
+the body is inlined, and Orval names it after the operation and status (`listMessages200Item`). A route hidden with
+`hide: true` needs no id, since it has no place in the spec. An array of a
 named schema needs no id of its own. Request bodies, params and querystrings stay unnamed.
 `src/tests/app.test.ts` fails on any inline `2xx` JSON object.
 
@@ -409,23 +420,24 @@ the shell, CI or Render wins over the file, and a missing file is silent. `test`
 read no `.env`, so a test run behaves the same on a developer machine as in CI. A new script that needs the file must
 be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-files-in-package-scripts.md).
 
-| Variable                      | Purpose                                                                                                          |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `OPENAI_API_KEY`              | OpenAI API key (optional — set at least one of this or `ANTHROPIC_API_KEY`)                                      |
-| `ANTHROPIC_API_KEY`           | Anthropic API key (optional — set at least one of this or `OPENAI_API_KEY`)                                      |
-| `DATABASE_URL`                | PostgreSQL connection string                                                                                     |
-| `REDIS_URL`                   | Redis connection (e.g. `redis://localhost:6380`)                                                                 |
-| `REDIS_PASSWORD`              | Redis password (if set)                                                                                          |
-| `CLIENT_URL`                  | Frontend origin for CORS (e.g. `http://localhost:5173`)                                                          |
-| `SERVER_URL`                  | Backend public URL, allowed as a CORS origin alongside `CLIENT_URL` (e.g. for Swagger UI at `/docs`)             |
-| `BETTER_AUTH_SECRET`          | better-auth secret — signs sessions and the session cookie cache (required)                                      |
-| `BETTER_AUTH_URL`             | App base URL for better-auth cookies/redirects (required, e.g. `http://localhost:3000`)                          |
-| `GUEST_MESSAGE_ALLOWANCE`     | Guest `user`-message cap before registration is required (int, default `10`; ADR-0010)                           |
-| `PORT`                        | Port to listen on (default `3000`)                                                                               |
-| `LOG_LEVEL`                   | Log verbosity (default `info`; set to `debug`/`warn` etc. in prod)                                               |
-| `LOG_LEVEL_OVERRIDES`         | Per-component levels, comma-separated `component=level` (e.g. `redis=debug,auth=warn`); unknown level fails boot |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector URL. Unset = spans are not exported (the tracer still runs, so lines keep their `trace_id`)       |
-| `OTEL_LOG_LEVEL`              | Verbosity of the OTel SDK's own diagnostics (default `error`; `none`/`warn`/`info`/`debug`/`verbose`/`all`)      |
+| Variable                      | Purpose                                                                                                                 |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `OPENAI_API_KEY`              | OpenAI API key (optional — set at least one of this or `ANTHROPIC_API_KEY`)                                             |
+| `ANTHROPIC_API_KEY`           | Anthropic API key (optional — set at least one of this or `OPENAI_API_KEY`)                                             |
+| `DATABASE_URL`                | PostgreSQL connection string                                                                                            |
+| `REDIS_URL`                   | Redis connection (e.g. `redis://localhost:6380`)                                                                        |
+| `REDIS_PASSWORD`              | Redis password (if set)                                                                                                 |
+| `CLIENT_URL`                  | Frontend origin for CORS (e.g. `http://localhost:5173`)                                                                 |
+| `SERVER_URL`                  | Backend public URL, allowed as a CORS origin alongside `CLIENT_URL` (e.g. for Swagger UI at `/docs`)                    |
+| `BETTER_AUTH_SECRET`          | better-auth secret — signs sessions and the session cookie cache (required)                                             |
+| `BETTER_AUTH_URL`             | App base URL for better-auth cookies/redirects (required, e.g. `http://localhost:3000`)                                 |
+| `GUEST_MESSAGE_ALLOWANCE`     | Guest `user`-message cap before registration is required (int, default `10`; ADR-0010)                                  |
+| `PORT`                        | Port to listen on (default `3000`)                                                                                      |
+| `LOG_LEVEL`                   | Log verbosity (default `info`; set to `debug`/`warn` etc. in prod)                                                      |
+| `LOG_LEVEL_OVERRIDES`         | Per-component levels, comma-separated `component=level` (e.g. `redis=debug,auth=warn`); unknown level fails boot        |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector URL. Unset = spans are not exported (the tracer still runs, so lines keep their `trace_id`)              |
+| `OTEL_LOG_LEVEL`              | Verbosity of the OTel SDK's own diagnostics (default `error`; `none`/`warn`/`info`/`debug`/`verbose`/`all`)             |
+| `OPERATOR_TOKEN`              | Shared operator secret (32+ chars) for `/api/internal/*`, e.g. changing log levels at runtime. Unset = those routes 404 |
 
 > **`env.ts` rule:** All env vars are Zod-validated in `src/env.ts` and fail loudly at startup before any listener is bound. Never read `process.env.*` directly anywhere in the backend — always import from `@backend/env`. The only code that touches `process.env` is what runs before `env.ts` parses it: `src/test/setup.ts` and `src/scripts/generate-openapi.ts`, which fill placeholders with `??=`.
 >

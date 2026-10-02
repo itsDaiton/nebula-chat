@@ -207,7 +207,7 @@ nebula-chat/
 │   ├── errors/               # @nebula-chat/errors — isomorphic error codes, envelope schema, AppError classes
 │   ├── langchain/            # @nebula-chat/langchain — LLM providers, tokens, streaming, SSE
 │   ├── otel/                 # @nebula-chat/otel — Pino logger factory + OpenTelemetry tracing
-│   └── redis/                # @nebula-chat/redis — shared Redis connection + cache primitive
+│   └── redis/                # @nebula-chat/redis — shared Redis connection + cache, auth store and pub/sub primitives
 ├── openapi/                  # Generated OpenAPI spec — its own workspace package
 ├── CLAUDE.md                 # Claude Code operating instructions
 ├── CONTEXT.md                # Domain vocabulary glossary
