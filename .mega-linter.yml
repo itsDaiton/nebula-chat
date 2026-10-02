@@ -101,6 +101,19 @@ YAML_YAMLLINT_FILTER_REGEX_EXCLUDE: '(pnpm-lock\.yaml$)'
 # linter a token.
 ACTION_ZIZMOR_ARGUMENTS: --offline
 
+# trivy downloads its vulnerability DB from mirror.gcr.io, falling back to
+# ghcr.io. Both intermittently answer GitHub-hosted runners with TOOMANYREQUESTS.
+# MegaLinter retries five times, then re-runs trivy with --skip-db-update, which
+# aborts in a fresh container ("The first run cannot skip downloading DB")
+# because there is nothing cached to skip to. Aqua's trivy-db pipeline publishes
+# the same DB to AWS ECR Public, which has its own rate limits, so try it first
+# and keep trivy's two defaults behind it as fallbacks. (The misconfig checks
+# bundle has no ECR copy, but trivy falls back to its embedded checks when that
+# download fails, so it can't take the run down.)
+REPOSITORY_TRIVY_ARGUMENTS:
+  - "--db-repository"
+  - "public.ecr.aws/aquasecurity/trivy-db:2,mirror.gcr.io/aquasec/trivy-db:2,ghcr.io/aquasecurity/trivy-db:2"
+
 # (ts-standard itself is disabled in DISABLE_LINTERS above — it enforces a style
 # opposite to this repo's — so it needs no _ARGUMENTS or _FILTER_REGEX_EXCLUDE.)
 
