@@ -62,7 +62,7 @@ apps/nebula-chat-server/src/
 │   │   ├── chat.cacheCheck.hook.ts     # preHandler — replays a cached SSE stream on a hit
 │   │   ├── chat.streamCapture.hook.ts  # preHandler — captures the SSE stream for caching
 │   │   ├── chat.messageAllowance.hook.ts # preHandler — rejects a Guest over the message allowance
-│   │   └── chat.routes.ts         # FastifyPluginAsyncZodOpenApi; schema blocks + hook chain
+│   │   └── chat.routes.ts         # FastifyPluginCallbackZodOpenApi; schema blocks + hook chain
 │   ├── conversation/
 │   │   ├── conversation.types.ts
 │   │   ├── conversation.validation.ts
@@ -115,7 +115,7 @@ Every feature module follows this strict 6-layer convention. Add files in this o
 3. <module>.repository.ts   — Raw Drizzle queries; no business logic (omit if no DB access)
 4. <module>.service.ts      — Business logic; calls repository; never touches req/res
 5. <module>.controller.ts   — Calls service; builds HTTP response; minimal logic
-6. <module>.routes.ts       — FastifyPluginAsyncZodOpenApi default export; schema blocks + hook chain
+6. <module>.routes.ts       — FastifyPluginCallbackZodOpenApi default export; schema blocks + hook chain
 ```
 
 New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(plugin, { prefix: '/api/<module>' })`. No separate OpenAPI registry step — the `schema:` block on each route is the single source of truth for both validation and documentation. Use the `backend-module-scaffold` skill to generate one.
@@ -190,11 +190,13 @@ The full conventions are in [docs/logging.md](../../docs/logging.md). The rules 
 Validation is handled by Fastify's native schema layer via `fastify-zod-openapi` (see
 [ADR-0018](../../docs/adr/0018-fastify-zod-openapi-named-schemas-env-free-spec.md)). Define Zod schemas in the
 module's `*.validation.ts` file, then reference them in the `schema:` block of the corresponding route. Use
-`FastifyPluginAsyncZodOpenApi` (not `FastifyPluginAsync`) so TypeScript infers request types from the schemas:
+`FastifyPluginCallbackZodOpenApi` (not `FastifyPluginCallback`) so TypeScript infers request types from the schemas.
+Registering routes awaits nothing, so the plugin is a callback that ends with `done()`: an `async` one with no
+`await` is Sonar's `typescript:S7503`:
 
 ```ts
 // conversation.routes.ts
-import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi';
+import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { conversationController } from '@backend/modules/conversation/conversation.controller';
 import {
@@ -203,7 +205,7 @@ import {
 } from '@backend/modules/conversation/conversation.validation';
 import { jsonResponse } from '@backend/utils/jsonResponse';
 
-const conversationRoutes: FastifyPluginAsyncZodOpenApi = async (app) => {
+const conversationRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
   app.post('/', {
     schema: {
       description: 'Create a new conversation with a title',
@@ -219,6 +221,7 @@ const conversationRoutes: FastifyPluginAsyncZodOpenApi = async (app) => {
     },
     handler: conversationController.create,
   });
+  done();
 };
 ```
 

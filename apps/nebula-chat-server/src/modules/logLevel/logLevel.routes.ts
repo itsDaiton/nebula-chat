@@ -1,4 +1,4 @@
-import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi';
+import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { logLevelController } from '@backend/modules/logLevel/logLevel.controller';
 import { requireOperator } from '@backend/modules/logLevel/logLevel.operatorGate.hook';
@@ -8,7 +8,7 @@ import {
 } from '@backend/modules/logLevel/logLevel.validation';
 import { jsonResponse } from '@backend/utils/jsonResponse';
 
-const logLevelRoutes: FastifyPluginAsyncZodOpenApi = async (app) => {
+const logLevelRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
   app.post('/', {
     schema: {
       // An operator endpoint, not part of the client API: kept out of the spec
@@ -26,6 +26,7 @@ const logLevelRoutes: FastifyPluginAsyncZodOpenApi = async (app) => {
     onRequest: requireOperator,
     handler: logLevelController.change,
   });
+  done();
 };
 
 export default logLevelRoutes;

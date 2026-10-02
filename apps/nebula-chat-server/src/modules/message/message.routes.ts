@@ -1,4 +1,4 @@
-import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi';
+import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { messageController } from '@backend/modules/message/message.controller';
 import { requireAuthentication } from '@backend/plugins/authGate.plugin';
@@ -11,7 +11,7 @@ import {
 } from '@backend/modules/message/message.validation';
 import { jsonResponse } from '@backend/utils/jsonResponse';
 
-const messageRoutes: FastifyPluginAsyncZodOpenApi = async (app) => {
+const messageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
   app.post('', {
     schema: {
       description: 'Create a new message in one of the caller’s own conversations',
@@ -72,6 +72,7 @@ const messageRoutes: FastifyPluginAsyncZodOpenApi = async (app) => {
     preHandler: requireAuthentication,
     handler: messageController.getAll,
   });
+  done();
 };
 
 export default messageRoutes;

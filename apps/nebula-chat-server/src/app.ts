@@ -133,7 +133,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
         },
       },
     },
-    async () => ({ message: 'Welcome to the Nebula Chat API' }),
+    () => ({ message: 'Welcome to the Nebula Chat API' }),
   );
 
   app.get(
@@ -149,10 +149,10 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
         },
       },
     },
-    async () => ({ status: 'ok' as const, timestamp: new Date().toISOString() }),
+    () => ({ status: 'ok' as const, timestamp: new Date().toISOString() }),
   );
 
-  app.get('/openapi.json', { schema: { hide: true } }, async () => app.swagger());
+  app.get('/openapi.json', { schema: { hide: true } }, () => app.swagger());
 
   app.setErrorHandler(errorHandler);
 
