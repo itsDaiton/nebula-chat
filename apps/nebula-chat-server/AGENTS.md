@@ -47,7 +47,7 @@ apps/nebula-chat-server/src/
 ├── auth.ts                        # better-auth instance singleton (createAuth from @nebula-chat/auth)
 ├── config/
 │   ├── cors.config.ts             # Allowed origins, CORS options
-│   ├── headers.config.ts          # SSE + cache response headers (uses http.ServerResponse)
+│   ├── headers.config.ts          # Opens a hijacked SSE response: forwards the reply's CORS headers, sets the SSE ones
 │   └── pagination.config.ts       # Default/max page limits
 ├── errors/
 │   ├── error.handler.ts           # Fastify setErrorHandler callback (Zod, AppError, PG codes, fallback); logs a 5xx once
@@ -91,6 +91,7 @@ apps/nebula-chat-server/src/
 │   ├── requestPath.ts             # url.path: the request path without its query string
 │   ├── isoDateTimeSchema.ts       # Response timestamp codec: a Date in the handler, an ISO date-time string on the wire
 │   ├── jsonResponse.ts            # One `response:` entry: its description + application/json schema
+│   ├── forwardReplyHeaders.ts     # Copies a hijacked reply's buffered headers (@fastify/cors's) onto reply.raw
 │   └── trustProxy.ts
 └── plugins/
     ├── requestLogging.plugin.ts   # Root hooks: http.request.received (debug) + one http.request.completed (info)

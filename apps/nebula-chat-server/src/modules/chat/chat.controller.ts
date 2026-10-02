@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { setHeaders } from '@backend/config/headers.config';
+import { setSseHeaders } from '@backend/config/headers.config';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { chatService } from '@backend/modules/chat/chat.service';
 import { getSessionData } from '@backend/plugins/authGate.plugin';
@@ -15,7 +15,7 @@ export const chatController = {
     reply.hijack();
     const raw = reply.raw;
 
-    setHeaders(raw, req.headers.origin);
+    setSseHeaders(reply);
     raw.flushHeaders?.();
 
     const result = await chatService.streamResponse(

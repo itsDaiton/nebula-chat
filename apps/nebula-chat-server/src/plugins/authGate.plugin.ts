@@ -6,6 +6,7 @@ import { bindAttributes } from '@nebula-chat/otel';
 import { auth } from '@backend/auth';
 import { logRequestFailed } from '@backend/errors/error.handler';
 import { recordErrorType } from '@backend/errors/requestErrorType';
+import { forwardReplyHeaders } from '@backend/utils/forwardReplyHeaders';
 import {
   ERROR_STATUS,
   ForbiddenError,
@@ -80,18 +81,6 @@ export const requireRegistered: preHandlerAsyncHookHandler = async (req, reply) 
   const { user } = await resolveSession(req, reply);
   if (user.isAnonymous) {
     throw new ForbiddenError('This action requires a registered account.');
-  }
-};
-
-/**
- * Copies the reply's buffered headers (`@fastify/cors`'s) onto the raw response:
- * a hijacked reply never runs `reply.send`, which would otherwise flush them.
- */
-const forwardReplyHeaders = (reply: FastifyReply): void => {
-  for (const [name, value] of Object.entries(reply.getHeaders())) {
-    if (value !== undefined) {
-      reply.raw.setHeader(name, value);
-    }
   }
 };
 

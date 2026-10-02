@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
 import { bindAttributes, componentLogger, logEvent } from '@nebula-chat/otel';
-import { setCacheHeaders } from '@backend/config/headers.config';
+import { setSseHeaders } from '@backend/config/headers.config';
 import { createUserMessage, validateChatRequest } from '@backend/modules/chat/chat.service';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { chatCacheKey, getCachedStream } from '@backend/redis';
@@ -106,7 +106,7 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
 
     reply.hijack();
     const raw = reply.raw;
-    setCacheHeaders(raw, req.headers.origin);
+    setSseHeaders(reply);
     raw.flushHeaders?.();
 
     if (isNewConversation) {
