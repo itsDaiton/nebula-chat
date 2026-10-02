@@ -17,6 +17,8 @@ export type RedisPubSub = {
 
 type PubSubDeps = {
   publisher: PublishConnection;
+  /** Opens `publisher` if it has never connected (the manager's shared `connect`). */
+  connect: () => Promise<void>;
   /** Opens the subscriber connection; called once, on the first `subscribe`. */
   subscriber: () => SubscribeConnection;
 };
@@ -26,21 +28,9 @@ type PubSubDeps = {
  * subscriptions share one dedicated connection, opened lazily: a process that
  * never subscribes never opens it. Publishing goes over the main connection.
  */
-export const createPubSub = ({ publisher, subscriber }: PubSubDeps): RedisPubSub => {
+export const createPubSub = ({ publisher, connect, subscriber }: PubSubDeps): RedisPubSub => {
   const handlers = new Map<string, Set<(message: string) => void>>();
   let connection: SubscribeConnection | undefined;
-  let connecting: Promise<void> | undefined;
-
-  // The main connection is lazy and fails a command sent before its first
-  // connect, and a publish may be the first command a process sends.
-  const connectPublisher = async (): Promise<void> => {
-    if (publisher.status === 'wait') {
-      connecting ??= publisher.connect().finally(() => {
-        connecting = undefined;
-      });
-    }
-    await connecting;
-  };
 
   const subscriberConnection = (): SubscribeConnection => {
     if (!connection) {
@@ -54,7 +44,8 @@ export const createPubSub = ({ publisher, subscriber }: PubSubDeps): RedisPubSub
 
   return {
     publish: async (channel, message) => {
-      await connectPublisher();
+      // The main connection rejects a command sent before its first connect is ready.
+      await connect();
       return publisher.publish(channel, message);
     },
     subscribe: async (channel, onMessage) => {

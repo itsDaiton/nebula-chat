@@ -13,7 +13,9 @@ import { authKey } from './keys';
  * every Redis error propagate to the caller: Redis is a hard dependency for login
  * (ADR-0010 §3), so an outage must surface as a failed request rather than be
  * silently masked. It therefore holds no try/catch and injects no logger — the
- * caller (better-auth, then Fastify) owns the failure.
+ * caller (better-auth, then Fastify) owns the failure. For the same reason every
+ * command first awaits the shared `connect`: on a connection that has not finished
+ * its first connect, a command is rejected rather than queued.
  *
  * Every key is namespaced under `auth:` (via `authKey`) so auth state never
  * collides with cache keys sharing the same Redis keyspace.
@@ -53,12 +55,18 @@ export type AuthStore = {
 
 type CreateAuthStoreDeps = {
   connection: AuthStoreConnection;
+  /** Opens `connection` if it has never connected (the manager's shared `connect`). */
+  connect: () => Promise<void>;
 };
 
-export const createAuthStore = ({ connection }: CreateAuthStoreDeps): AuthStore => {
-  const get = async (key: string): Promise<string | null> => connection.get(authKey(key));
+export const createAuthStore = ({ connection, connect }: CreateAuthStoreDeps): AuthStore => {
+  const get = async (key: string): Promise<string | null> => {
+    await connect();
+    return connection.get(authKey(key));
+  };
 
   const set = async (key: string, value: string, ttlSeconds?: number): Promise<void> => {
+    await connect();
     if (ttlSeconds === undefined) {
       await connection.set(authKey(key), value);
       return;
@@ -67,13 +75,17 @@ export const createAuthStore = ({ connection }: CreateAuthStoreDeps): AuthStore 
   };
 
   const del = async (key: string): Promise<void> => {
+    await connect();
     await connection.del(authKey(key));
   };
 
-  const getAndDelete = async (key: string): Promise<string | null> =>
-    connection.getdel(authKey(key));
+  const getAndDelete = async (key: string): Promise<string | null> => {
+    await connect();
+    return connection.getdel(authKey(key));
+  };
 
   const increment = async (key: string, ttlSeconds: number): Promise<number> => {
+    await connect();
     const namespaced = authKey(key);
     const value = await connection.incr(namespaced);
     // Apply the TTL only on creation, so the window is fixed from first increment

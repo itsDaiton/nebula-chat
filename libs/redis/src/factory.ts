@@ -26,6 +26,12 @@ export type RedisToolkit = {
   pubsub: RedisPubSub;
   /** Raw ioredis instance, for libraries that need one (e.g. BullMQ in M-7). */
   connection: Redis;
+  /**
+   * Opens the connection now rather than on first use; resolves once it is ready,
+   * or rejects if that attempt fails (ioredis keeps retrying). Call it at startup,
+   * unawaited, so the first requests find Redis connected.
+   */
+  connect(): Promise<void>;
   /** Tears down every connection the toolkit owns. */
   close(): Promise<void>;
 };
@@ -41,14 +47,19 @@ export const createRedis = (config: RedisConfig): RedisToolkit => {
     logger: config.logger,
     defaultTtlSeconds: config.cache?.defaultTtlSeconds,
   });
-  const authStore = createAuthStore({ connection: manager.main });
-  const pubsub = createPubSub({ publisher: manager.main, subscriber: manager.subscriber });
+  const authStore = createAuthStore({ connection: manager.main, connect: manager.connect });
+  const pubsub = createPubSub({
+    publisher: manager.main,
+    connect: manager.connect,
+    subscriber: manager.subscriber,
+  });
 
   return {
     cache,
     authStore,
     pubsub,
     connection: manager.main,
+    connect: manager.connect,
     close: () => manager.close(),
   };
 };

@@ -29,6 +29,12 @@ export type CacheConnection = Pick<Redis, 'get' | 'del' | 'keys'> & {
 };
 
 /**
+ * The subset of a lazily-connecting ioredis client `createConnector` drives:
+ * `status` is `'wait'` until the first `connect()`.
+ */
+export type LazyConnection = Pick<Redis, 'connect'> & { readonly status: string };
+
+/**
  * The subset of the ioredis client the `authStore` primitive actually calls.
  * Like `CacheConnection`, narrowing it lets tests supply a plain fake while a real
  * `Redis` instance satisfies it structurally. `getdel` maps to Redis `GETDEL`,
@@ -41,11 +47,8 @@ export type AuthStoreConnection = Pick<Redis, 'get' | 'del' | 'getdel' | 'incr' 
   set(key: string, value: string): Promise<unknown>;
 };
 
-/**
- * The subset of the ioredis client the pub/sub primitive publishes with:
- * `status` and `connect` let it open a lazy connection that has never connected.
- */
-export type PublishConnection = Pick<Redis, 'publish' | 'connect'> & { readonly status: string };
+/** The subset of the ioredis client the pub/sub primitive publishes with. */
+export type PublishConnection = Pick<Redis, 'publish'>;
 
 /**
  * The subset of an ioredis client in subscriber mode that the pub/sub primitive

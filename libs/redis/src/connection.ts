@@ -2,10 +2,13 @@ import IORedis from 'ioredis';
 import type { Redis } from 'ioredis';
 import type { Logger } from '@nebula-chat/otel';
 import { logConnectionErrors } from './connectionErrors';
+import { createConnector } from './connector';
 
 export type ConnectionManager = {
   /** The main command connection, used by the cache and general commands. */
   main: Redis;
+  /** Opens `main` if it has never connected; every caller shares one attempt. */
+  connect(): Promise<void>;
   /** The subscriber connection for pub/sub, opened on first call. */
   subscriber(): Redis;
   /** Tears down every connection this manager owns. */
@@ -38,7 +41,9 @@ const closeConnection = async (connection: Redis): Promise<void> => {
  *
  * `lazyConnect` + `enableOfflineQueue: false` keep the cache fail-open fast: when
  * Redis is unreachable a command rejects immediately rather than queueing, and
- * the cache turns that rejection into a miss.
+ * the cache turns that rejection into a miss. The cost is that a command sent
+ * before the first connect is ready is rejected too, so `connect` opens it ahead
+ * of use (the server calls it at startup) and the authStore and pub/sub await it.
  *
  * Every connection it opens logs its errors through `logger`.
  */
@@ -48,6 +53,7 @@ export const createConnectionManager = (redisUrl: string, logger: Logger): Conne
     enableOfflineQueue: false,
   });
   logConnectionErrors(main, logger);
+  const connect = createConnector(main);
   let subscriberConnection: Redis | undefined;
 
   // A SUBSCRIBE waits in the offline queue for as long as Redis is down, rather
@@ -69,5 +75,5 @@ export const createConnectionManager = (redisUrl: string, logger: Logger): Conne
     await Promise.all([main, subscriberConnection].flatMap((c) => (c ? [closeConnection(c)] : [])));
   };
 
-  return { main, subscriber, close };
+  return { main, connect, subscriber, close };
 };

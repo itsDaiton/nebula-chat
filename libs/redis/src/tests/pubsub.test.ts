@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createConnector } from '../connector';
 import { createPubSub } from '../pubsub';
 import type { PublishConnection, SubscribeConnection } from '../types';
 
@@ -62,7 +63,9 @@ const fakeRedis = () => {
       subscribers.push(connection);
       return connection;
     });
-    return { pubsub: createPubSub({ publisher, subscriber }), publisher, subscriber };
+    // Wired the way `createRedis` wires it: the manager's connector over the publisher.
+    const pubsub = createPubSub({ publisher, connect: createConnector(publisher), subscriber });
+    return { pubsub, publisher, subscriber };
   };
   return { startProcess };
 };
