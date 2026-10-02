@@ -12,26 +12,23 @@ import { createTestApp } from '@backend/test/app';
 import { captureLogger, eventLines, LEVEL } from '@backend/test/logCapture';
 import { guestSession, registeredSession, REGISTERED_USER_ID } from '@backend/test/session';
 
-// @backend/auth is the boundary to better-auth. Faking it lets the gates be
-// tested against a controllable session without a real instance (ADR-0008). The
-// `handler` stub stands in for better-auth's request handler in the catch-all
-// delegation test below.
+// @backend/auth is the boundary to better-auth: faking it gives the gates a controllable
+// session (ADR-0008) and the catch-all tests below a stand-in request `handler`.
 vi.mock('@backend/auth', () => ({
   auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
 }));
 
 type NodeHandler = (req: IncomingMessage, res: ServerResponse) => Promise<void>;
 
-// better-auth's Node adapter, passed through unless a test swaps in its own: the
-// adapter, not `auth.handler`, writes the headers, so only it can fail after them.
-const nodeHandler = vi.hoisted(() => ({ override: undefined as NodeHandler | undefined }));
+// Post-header failures need this: better-call's setResponse swallows a failing `auth.handler` body.
+const adapterOverride = vi.hoisted(() => ({ current: undefined as NodeHandler | undefined }));
 vi.mock('better-auth/node', async (importOriginal) => {
   const actual = await importOriginal<typeof BetterAuthNode>();
   return {
     ...actual,
     toNodeHandler: (...args: Parameters<typeof actual.toNodeHandler>): NodeHandler => {
       const real = actual.toNodeHandler(...args);
-      return (req, res) => (nodeHandler.override ?? real)(req, res);
+      return (req, res) => (adapterOverride.current ?? real)(req, res);
     },
   };
 });
@@ -234,7 +231,7 @@ describe('auth catch-all route delegation (GET|POST /api/auth/*)', () => {
 
 describe('auth catch-all failure (better-auth throws)', () => {
   const { logger, lines } = captureLogger();
-  // As observed live: the rate limiter's Redis-backed store throws inside the handler.
+  // ioredis's offline-queue error: what the rate limiter's Redis store throws with Redis down.
   const redisDown = new Error("Stream isn't writeable and enableOfflineQueue options is false");
   let app: FastifyInstance;
 
@@ -251,7 +248,7 @@ describe('auth catch-all failure (better-auth throws)', () => {
 
   beforeEach(() => {
     lines.length = 0;
-    nodeHandler.override = undefined;
+    adapterOverride.current = undefined;
   });
 
   const signIn = () =>
@@ -291,7 +288,7 @@ describe('auth catch-all failure (better-auth throws)', () => {
   });
 
   it('drops headers the handler set before it threw', async () => {
-    nodeHandler.override = async (_req, res) => {
+    adapterOverride.current = async (_req, res) => {
       res.setHeader('set-cookie', 'better-auth.session_token=half-built');
       throw redisDown;
     };
@@ -304,7 +301,7 @@ describe('auth catch-all failure (better-auth throws)', () => {
   });
 
   it('drops the connection when the handler fails after the headers are sent', async () => {
-    nodeHandler.override = async (_req, res) => {
+    adapterOverride.current = async (_req, res) => {
       res.writeHead(200, { 'content-type': 'application/json' });
       res.write('{"partial":');
       throw redisDown;
