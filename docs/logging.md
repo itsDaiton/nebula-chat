@@ -153,6 +153,9 @@ once, and nobody else does:
   so the request's `http.request.completed` line names it as `error.type`
   (`NotFound`, `Validation`, …). A Postgres constraint violation mapped to
   `Conflict` or `Validation` keeps the driver error as its `cause`.
+- **Auth.** The `/api/auth/*` catch-all hijacks its reply, so a throw from
+  better-auth's handler skips the error handler. The route writes the same
+  `http.request.failed` line (`error.type: Internal`) and records the code.
 - **Chat.** The SSE stream hijacks its reply, so `chat.service` is its own
   handler. `@nebula-chat/langchain`'s `streamChat` rethrows without logging, and
   the service writes exactly one `chat.reply.completed` per Direct reply:

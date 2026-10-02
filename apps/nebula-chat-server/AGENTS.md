@@ -160,6 +160,9 @@ Throw from the service layer; the `errorHandler` exported from `errors/error.han
   codes, and framework errors (classified by their status). A framework error keeps its own status (415, 503).
 - The chat stream hijacks its reply, so it never reaches `errorHandler`. `chat.service` classifies its own
   failures with `toErrorEnvelope` and writes the **same** envelope as the SSE `error` event.
+- The `/api/auth/*` catch-all hijacks its reply too. A throw from better-auth's handler is logged through
+  `logRequestFailed` and answered `500` `Internal` on `reply.raw`; once headers are out, the connection is
+  dropped instead.
 - To add a code, add it to `errorCodeSchema` in `libs/errors/src/errorEnvelope.ts` and give it a status in
   `ERROR_STATUS` (the compiler insists on both). Then regenerate the OpenAPI spec and the Orval client.
 
