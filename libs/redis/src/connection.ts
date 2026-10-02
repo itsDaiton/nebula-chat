@@ -1,5 +1,7 @@
 import IORedis from 'ioredis';
 import type { Redis } from 'ioredis';
+import type { Logger } from '@nebula-chat/otel';
+import { logConnectionErrors } from './connectionErrors';
 
 export type ConnectionManager = {
   /** The main command connection, used by the cache and general commands. */
@@ -37,22 +39,29 @@ const closeConnection = async (connection: Redis): Promise<void> => {
  * `lazyConnect` + `enableOfflineQueue: false` keep the cache fail-open fast: when
  * Redis is unreachable a command rejects immediately rather than queueing, and
  * the cache turns that rejection into a miss.
+ *
+ * Every connection it opens logs its errors through `logger`.
  */
-export const createConnectionManager = (redisUrl: string): ConnectionManager => {
+export const createConnectionManager = (redisUrl: string, logger: Logger): ConnectionManager => {
   const main = new IORedis(redisUrl, {
     lazyConnect: true,
     enableOfflineQueue: false,
   });
+  logConnectionErrors(main, logger);
   let subscriberConnection: Redis | undefined;
 
   // A SUBSCRIBE waits in the offline queue for as long as Redis is down, rather
   // than failing after 20 retries and never listening; ioredis re-subscribes on
   // its own after a reconnect.
   const subscriber = (): Redis => {
-    subscriberConnection ??= main.duplicate({
-      enableOfflineQueue: true,
-      maxRetriesPerRequest: null,
-    });
+    if (!subscriberConnection) {
+      subscriberConnection = main.duplicate({
+        enableOfflineQueue: true,
+        maxRetriesPerRequest: null,
+      });
+      // `duplicate()` copies options, not listeners.
+      logConnectionErrors(subscriberConnection, logger);
+    }
     return subscriberConnection;
   };
 

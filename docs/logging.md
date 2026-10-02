@@ -177,6 +177,13 @@ once, and nobody else does:
   `cache.clear.failed`, `cache.check.failed`, `cache.capture.failed`) with `err`
   and the key or pattern. A cached token line that cannot be parsed is skipped
   with a `cache.entry.unparseable` warning.
+- **Redis connection.** `@nebula-chat/redis` listens for ioredis's `error`
+  event, which fires on every failed (re)connect, so nothing reaches
+  `console.error`. The first failure of an outage is one `error` line,
+  `redis.connection.failed` with `err`. Every retry after it logs the same event
+  at `debug` (`LOG_LEVEL_OVERRIDES=redis=debug` shows them). Reconnecting logs
+  `redis.connection.restored` at `info`, with the outage length as
+  `nebula.duration_ms`.
 
 Log an error under **`err`**, never `error`. Pino's error serializer runs only for
 `err`; `{ error: err.message }` throws away the stack and the cause. ESLint

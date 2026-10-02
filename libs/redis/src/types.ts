@@ -54,3 +54,12 @@ export type PublishConnection = Pick<Redis, 'publish' | 'connect'> & { readonly 
 export type SubscribeConnection = Pick<Redis, 'subscribe'> & {
   on(event: 'message', listener: (channel: string, message: string) => void): unknown;
 };
+
+/**
+ * The events of an ioredis client that `logConnectionErrors` listens to: `error`
+ * on every failed (re)connect, `ready` once the connection can take commands.
+ */
+export type ConnectionEvents = {
+  on(event: 'error', listener: (error: Error) => void): unknown;
+  on(event: 'ready', listener: () => void): unknown;
+};
