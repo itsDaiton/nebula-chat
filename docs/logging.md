@@ -153,6 +153,9 @@ once, and nobody else does:
   so the request's `http.request.completed` line names it as `error.type`
   (`NotFound`, `Validation`, …). A Postgres constraint violation mapped to
   `Conflict` or `Validation` keeps the driver error as its `cause`.
+- **Auth.** The `/api/auth/*` catch-all hijacks its reply, so a throw from
+  better-auth's handler skips the error handler. The route writes the same
+  `http.request.failed` line (`error.type: Internal`) and records the code.
 - **Chat.** The SSE stream hijacks its reply, so `chat.service` is its own
   handler. `@nebula-chat/langchain`'s `streamChat` rethrows without logging, and
   the service writes exactly one `chat.reply.completed` per Direct reply:
@@ -188,18 +191,19 @@ rejects an `error` key in a log call's object across the backend packages.
 
 ## The attribute catalogue
 
-| Concern   | Keys                                                                                                                                                                                     |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Service   | `service.name`, `service.version`, `deployment.environment.name`, `pid` (base fields); no `hostname`                                                                                     |
-| Request   | `http.request.method`, `url.path` (no query string), `http.route`, `http.response.status_code`, `http.request.id`, `server.address`, `server.port`                                       |
-| Error     | `err` (object; `err.type` is the class name), `error.type` (the classification: the `AppError` code, `Internal` when unclassified)                                                       |
-| LLM       | `gen_ai.provider.name`, `gen_ai.request.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`                                                                                |
-| User      | `user.id`, `nebula.user.kind` (`guest` \| `registered`)                                                                                                                                  |
-| Domain    | `nebula.session.id`, `nebula.message.id`, `nebula.reply.message.id`, `nebula.run.id`, `nebula.step.id`, `nebula.agent.name`, `nebula.job.id`, `nebula.cache.key`, `nebula.cache.pattern` |
-| Subsystem | `nebula.component` (`auth`, `chat`, `http`, `llm`, `otel`, `redis`)                                                                                                                      |
-| Outcome   | `nebula.duration_ms`, `nebula.outcome`                                                                                                                                                   |
-| Trace     | `trace_id`, `span_id`                                                                                                                                                                    |
-| Adapters  | `args` (a third-party logger's extra arguments)                                                                                                                                          |
+| Concern     | Keys                                                                                                                                                                                     |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Service     | `service.name`, `service.version`, `deployment.environment.name`, `pid` (base fields); no `hostname`                                                                                     |
+| Request     | `http.request.method`, `url.path` (no query string), `http.route`, `http.response.status_code`, `http.request.id`, `server.address`, `server.port`                                       |
+| Error       | `err` (object; `err.type` is the class name), `error.type` (the classification: the `AppError` code, `Internal` when unclassified)                                                       |
+| LLM         | `gen_ai.provider.name`, `gen_ai.request.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`                                                                                |
+| User        | `user.id`, `nebula.user.kind` (`guest` \| `registered`)                                                                                                                                  |
+| Domain      | `nebula.session.id`, `nebula.message.id`, `nebula.reply.message.id`, `nebula.run.id`, `nebula.step.id`, `nebula.agent.name`, `nebula.job.id`, `nebula.cache.key`, `nebula.cache.pattern` |
+| Subsystem   | `nebula.component` (`auth`, `chat`, `http`, `llm`, `otel`, `redis`)                                                                                                                      |
+| Log control | `nebula.log.target` (`root` or a component), `nebula.log.level.from`, `nebula.log.level.to`, `nebula.log.level.expires_at`, `nebula.operator`                                            |
+| Outcome     | `nebula.duration_ms`, `nebula.outcome`                                                                                                                                                   |
+| Trace       | `trace_id`, `span_id`                                                                                                                                                                    |
+| Adapters    | `args` (a third-party logger's extra arguments)                                                                                                                                          |
 
 Keys follow [OpenTelemetry semantic conventions](https://opentelemetry.io/docs/specs/semconv/)
 where one exists, and `nebula.*` for domain concepts.
@@ -271,10 +275,53 @@ still writes its `debug` lines.
 `OTEL_LOG_LEVEL` works the same way for the SDK's own diagnostics. It is
 independent of both.
 
+## Changing levels at runtime
+
+On Render, changing an env var means a redeploy, and the restart often hides the
+problem you wanted `debug` lines for. An operator can instead change the root
+level, or one component's, on every running server instance at once, and the
+change reverts on its own ([ADR-0020](./adr/0020-runtime-log-level-switching.md)):
+
+```bash
+curl -X POST "$SERVER_URL/api/internal/log-level" \
+  -H "Authorization: Bearer $OPERATOR_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"component":"redis","level":"debug","ttlSeconds":900,"operator":"ada"}'
+# 202 {"receivers":2,"expiresAt":"2026-10-02T09:15:00.000Z"}
+```
+
+- **Body.** `level` is one of the six levels. `component` is optional: omit it to
+  change the root level. `ttlSeconds` defaults to 15 minutes, at most 4 hours.
+  `operator` names who is asking.
+- **Auth.** Only `Authorization: Bearer <OPERATOR_TOKEN>` gets through. A Guest
+  or Registered user's session counts for nothing: `403 Forbidden`. With
+  `OPERATOR_TOKEN` unset the route answers `404`, as if it did not exist.
+- **Reach.** The route publishes on the Redis pub/sub channel
+  `log-level:nebula-chat-server`. Every instance subscribes at boot and applies
+  what arrives. `receivers` is how many instances got it; `0` means none was
+  listening.
+- **Record.** Each instance writes `log.level.changed` (target, from, to,
+  `expires_at`, operator) and, on expiry, `log.level.reverted`. Both are `info`
+  lines that bypass the level being changed, so a switch to `error` is still
+  recorded.
+- **Expiry.** The boot-time level (`LOG_LEVEL` / `LOG_LEVEL_OVERRIDES`) comes
+  back after `ttlSeconds`. Changing the same target again restarts its expiry;
+  the root and each component expire independently.
+
+The route is in the OpenAPI spec (Swagger UI at `/docs`, tag `Operator`, which
+`orval.config.ts` leaves out of the browser client).
+
+In code, `changeLogLevel(logger, change)` from `@nebula-chat/otel` does the
+in-process part. `listenForLogLevelChanges` and `publishLogLevelChange` carry it
+over any pub/sub with `@nebula-chat/redis`'s `pubsub` shape. A new process (the
+worker, NEB-354) listens with one call next to its `createLogger`.
+
 ## Never logged
 
 Message content, prompts, completions, Streaming tokens, emails, names,
 cookies, `Authorization` headers and API keys. Opaque ids are fine.
+
+The one name that is logged is `nebula.operator`: what an Operator calls
+themselves on a runtime level change. Use a handle, not a full name.
 
 The catalogue already keeps these out of `logEvent`. As a second line of
 defence, `createLogger` censors (`[Redacted]`) credential and content-bearing
@@ -410,5 +457,11 @@ Three things do not go through Pino, on purpose. Don't "fix" them:
   SQL is never logged. Wiring it to Pino is a reasonable follow-up ticket.
 - **No metrics.** Traces and logs only. `@fastify/under-pressure` exposes
   event-loop health in the meantime.
-- **Levels are fixed at boot.** Changing `LOG_LEVEL` or `LOG_LEVEL_OVERRIDES`
-  needs a restart.
+- **A runtime level change is fire-and-forget.** Redis pub/sub keeps nothing,
+  so an instance that starts, or reconnects to Redis, after the change was sent
+  never gets it, and a restart drops it. An instance that boots while Redis is
+  down subscribes once Redis is back, and misses changes until then. `receivers`
+  shows how many got it; send it again if that is short.
+- **A root change reaches requests from the next one on.** Fastify fixes a
+  request logger's level when the request starts. A component change reaches
+  in-flight requests at once.

@@ -1,4 +1,4 @@
-import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi';
+import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { z } from 'zod';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { cacheCheckHook } from '@backend/modules/chat/chat.cacheCheck.hook';
@@ -9,7 +9,7 @@ import { createChatStreamSchema } from '@backend/modules/chat/chat.validation';
 import { requireAuthentication } from '@backend/plugins/authGate.plugin';
 import { jsonResponse } from '@backend/utils/jsonResponse';
 
-const chatRoutes: FastifyPluginAsyncZodOpenApi = async (app) => {
+const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
   app.post('/stream', {
     schema: {
       description:
@@ -43,6 +43,7 @@ const chatRoutes: FastifyPluginAsyncZodOpenApi = async (app) => {
     preHandler: [requireAuthentication, messageAllowanceHook, cacheCheckHook, streamCaptureHook],
     handler: chatController.streamMessage,
   });
+  done();
 };
 
 export default chatRoutes;

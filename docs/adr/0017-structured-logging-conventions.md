@@ -120,7 +120,7 @@ An ESLint `no-restricted-syntax` rule rejects an `error:` key in a log call.
 - **4xx as a separate `warn` line.** Rejected: one line per request is the goal, and the status code on `http.request.completed` already classifies it. The cost is that client errors are found by `http.response.status_code >= 400`, not by level.
 - **Keep Fastify's request lines and reshape them with custom `req`/`res` serializers.** Rejected: more code than an `onResponse` hook, and still leaves `incoming request` at `info`.
 - **Keep the tracer a full no-op without an endpoint.** Rejected: it leaves production with no cross-process correlation ID; `http.request.id` stops at the server.
-- **Runtime level switching** (authenticated endpoint or signal). Deferred, not rejected — it needs an authorization model there is no admin role for, and a Redis pub/sub broadcast once there are several instances. Revisit when a restart starts costing in-flight Runs.
+- **Runtime level switching** (authenticated endpoint or signal). Deferred, not rejected — it needs an authorization model there is no admin role for, and a Redis pub/sub broadcast once there are several instances. Revisit when a restart starts costing in-flight Runs. _Since decided in [ADR-0020](./0020-runtime-log-level-switching.md)._
 - **OTLP log export to Grafana Loki.** Deferred: stdout JSON stays the source of truth; the attribute choices above make export a later env switch.
 - **Convention in docs only, no typed helper.** Rejected: field names become the interface of queries and alerts, so a typo is a silent break.
 
@@ -159,6 +159,6 @@ See [docs/logging.md](../logging.md) for the conventions as built.
 
 ## Follow-ups
 
-- Runtime log-level switching (deferred above).
+- Runtime log-level switching (deferred above) — decided in [ADR-0020](./0020-runtime-log-level-switching.md).
 - OTLP log export to Grafana Loki (deferred above).
 - Decision 8 as a requirement on the v2 `@nebula-chat/contracts` and worker tickets under NEB-349.

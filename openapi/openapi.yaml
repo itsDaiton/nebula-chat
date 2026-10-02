@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nebula Chat API
-  version: 1.9.0
+  version: 1.10.0
   description: REST API for Nebula Chat
   contact:
     name: Nebula Chat
@@ -11,6 +11,9 @@ components:
       type: apiKey
       in: cookie
       name: better-auth.session_token
+    operatorToken:
+      type: http
+      scheme: bearer
   schemas:
     ApiRoot:
       type: object
@@ -140,6 +143,24 @@ components:
         - tokenCount
         - cached
         - createdAt
+      additionalProperties: false
+    LogLevelChange:
+      type: object
+      properties:
+        receivers:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: How many server instances received the change
+        expiresAt:
+          description: When the change reverts
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+      required:
+        - receivers
+        - expiresAt
       additionalProperties: false
 paths:
   /:
@@ -616,6 +637,91 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+  /api/internal/log-level:
+    post:
+      operationId: changeLogLevel
+      summary: Change log level
+      tags:
+        - Operator
+      description: >-
+        Change the root log level, or one component's, on every running server
+        instance. It reverts to the boot-time level after `ttlSeconds`. Requires
+        the operator token, not a User session.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                component:
+                  description: >-
+                    The `nebula.component` to change; omit it to change the root
+                    level
+                  type: string
+                  enum:
+                    - auth
+                    - chat
+                    - http
+                    - llm
+                    - otel
+                    - redis
+                level:
+                  type: string
+                  enum:
+                    - fatal
+                    - error
+                    - warn
+                    - info
+                    - debug
+                    - trace
+                ttlSeconds:
+                  default: 900
+                  description: How long the change holds before the boot-time level returns
+                  type: integer
+                  minimum: 1
+                  maximum: 14400
+                operator:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                  description: Who is asking, recorded on the lines that log the change
+              required:
+                - level
+                - operator
+      security:
+        - operatorToken: []
+      responses:
+        '202':
+          description: Change sent to every server instance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogLevelChange'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Missing or wrong operator token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: No operator token is configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
 servers:
   - url: /
 security:
@@ -629,3 +735,5 @@ tags:
     description: Conversation management
   - name: Messages
     description: Message management
+  - name: Operator
+    description: Operations for whoever runs the deployment

@@ -48,6 +48,10 @@ _Avoid_: Quota, rate limit (rate limiting is auth-endpoint abuse throttling — 
 Reassigning a Guest's Sessions to a Registered account at the moment they sign up or sign in, so that authenticating upgrades the Guest in place rather than resetting their history.
 _Avoid_: Merge, migrate.
 
+**Operator**:
+Someone running a deployment rather than using it: holds the operator token and can change operational settings, such as log levels at runtime. Not a User — an Operator owns no Sessions, and no Guest or Registered user can act as one.
+_Avoid_: Admin (there is no admin role; operating is not a kind of User).
+
 ### Orchestration
 
 **Direct reply**:

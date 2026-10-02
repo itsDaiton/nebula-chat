@@ -10,6 +10,9 @@ const { version } = JSON.parse(readFileSync(resolve(process.cwd(), 'package.json
   version: string;
 };
 
+/** The server's `service.name`: on every line, and what level changes target. */
+export const SERVICE_NAME = 'nebula-chat-server';
+
 /**
  * The server's single Pino instance.
  *
@@ -27,7 +30,7 @@ const { version } = JSON.parse(readFileSync(resolve(process.cwd(), 'package.json
  * Fastify's. This is the instance Fastify itself uses. See ADR-0007.
  */
 export const logger: Logger = createLogger({
-  serviceName: 'nebula-chat-server',
+  serviceName: SERVICE_NAME,
   serviceVersion: version,
   environment: env.NODE_ENV,
   level: env.LOG_LEVEL,

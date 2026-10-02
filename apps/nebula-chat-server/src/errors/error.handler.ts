@@ -7,6 +7,7 @@ import {
   isAppError,
   ValidationError,
 } from '@nebula-chat/errors';
+import type { ErrorCode } from '@nebula-chat/errors';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
 import { recordErrorType } from '@backend/errors/requestErrorType';
 import { requestPath } from '@backend/utils/requestPath';
@@ -61,6 +62,32 @@ const toAppError = (err: Error): AppError => {
 };
 
 /**
+ * The one `error` line a failed request writes, `http.request.failed`. Exported
+ * for a hijacked reply, which never reaches `errorHandler` but fails the same way.
+ */
+export const logRequestFailed = (
+  err: unknown,
+  req: FastifyRequest,
+  reply: FastifyReply,
+  errorType: ErrorCode,
+  status: number,
+): void => {
+  logEvent(
+    componentLogger(reply.log, 'http'),
+    'error',
+    'http.request.failed',
+    {
+      err,
+      'error.type': errorType,
+      'http.request.method': req.method,
+      'url.path': requestPath(req),
+      'http.response.status_code': status,
+    },
+    `${req.method} ${requestPath(req)} failed · ${errorType}`,
+  );
+};
+
+/**
  * Classifies, then logs once — here, where the error is handled:
  *
  * - A 5xx writes one `error` line (`http.request.failed`) with the thrown error
@@ -78,19 +105,7 @@ export const errorHandler = (err: Error, req: FastifyRequest, reply: FastifyRepl
   recordErrorType(req, appError.code);
 
   if (status >= 500) {
-    logEvent(
-      componentLogger(reply.log, 'http'),
-      'error',
-      'http.request.failed',
-      {
-        err,
-        'error.type': appError.code,
-        'http.request.method': req.method,
-        'url.path': requestPath(req),
-        'http.response.status_code': status,
-      },
-      `${req.method} ${requestPath(req)} failed · ${appError.code}`,
-    );
+    logRequestFailed(err, req, reply, appError.code, status);
   }
 
   reply.status(status).send(appError.toEnvelope());
