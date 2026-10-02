@@ -1,42 +1,56 @@
-import type { ServerResponse } from 'node:http';
-import { describe, expect, it, vi } from 'vitest';
-import { setCacheHeaders, setHeaders } from '@backend/config/headers.config';
+import { IncomingMessage, ServerResponse } from 'node:http';
+import { Socket } from 'node:net';
+import type { FastifyReply } from 'fastify';
+import { describe, expect, it } from 'vitest';
+import { setSseHeaders } from '@backend/config/headers.config';
 
-const createResponse = () => {
-  const headers = new Map<string, string>();
-  const res = {
-    setHeader: vi.fn((name: string, value: string) => headers.set(name, value)),
-  };
-  return { res: res as unknown as ServerResponse, headers };
+// A real raw response behind a reply that holds `pending` as its buffered headers.
+const createReply = (pending: Record<string, string> = {}) => {
+  const raw = new ServerResponse(new IncomingMessage(new Socket()));
+  const reply = { raw, getHeaders: () => pending } as unknown as FastifyReply;
+  return { reply, raw };
 };
 
-describe.each([
-  ['setHeaders', setHeaders],
-  ['setCacheHeaders', setCacheHeaders],
-])('%s', (_name, applyHeaders) => {
-  // Both helpers set the same five headers; only their write order differs.
+describe('setSseHeaders', () => {
   it.each([
-    ['Content-Type', 'text/event-stream'],
-    ['Cache-Control', 'no-cache'],
-    ['Connection', 'keep-alive'],
-    ['Access-Control-Allow-Origin', 'https://app.example.com'],
-    ['Access-Control-Allow-Credentials', 'true'],
+    ['content-type', 'text/event-stream'],
+    ['cache-control', 'no-cache'],
+    ['connection', 'keep-alive'],
   ])('sets %s to %s', (header, value) => {
-    const { res, headers } = createResponse();
+    const { reply, raw } = createReply();
 
-    applyHeaders(res, 'https://app.example.com');
+    setSseHeaders(reply);
 
-    expect(headers.get(header)).toBe(value);
+    expect(raw.getHeader(header)).toBe(value);
   });
 
-  it.each([
-    ['no origin at all', undefined],
-    ['an empty origin', ''],
-  ])('falls back to a wildcard origin given %s', (_case, origin) => {
-    const { res, headers } = createResponse();
+  it("forwards the reply's buffered headers onto the raw response", () => {
+    const pending = {
+      'access-control-allow-origin': 'https://app.example.com',
+      'access-control-allow-credentials': 'true',
+      vary: 'Origin',
+      'x-ratelimit-remaining': '9',
+    };
+    const { reply, raw } = createReply(pending);
 
-    applyHeaders(res, origin);
+    setSseHeaders(reply);
 
-    expect(headers.get('Access-Control-Allow-Origin')).toBe('*');
+    expect(raw.getHeaders()).toMatchObject(pending);
+  });
+
+  it('adds no access-control-* header of its own', () => {
+    const { reply, raw } = createReply();
+
+    setSseHeaders(reply);
+
+    expect(raw.getHeaderNames().filter((name) => name.startsWith('access-control-'))).toEqual([]);
+  });
+
+  it('keeps the SSE content-type over one already buffered on the reply', () => {
+    const { reply, raw } = createReply({ 'content-type': 'application/json' });
+
+    setSseHeaders(reply);
+
+    expect(raw.getHeader('content-type')).toBe('text/event-stream');
   });
 });

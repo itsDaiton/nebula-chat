@@ -1,6 +1,7 @@
 import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { sseToken, sseUsage } from '@nebula-chat/langchain';
+import { env } from '@backend/env';
 import { createTestApp } from '@backend/test/app';
 import { captureLogger, eventLines, LEVEL } from '@backend/test/logCapture';
 import { guestSession, registeredSession, REGISTERED_USER_ID } from '@backend/test/session';
@@ -412,6 +413,79 @@ describe('POST /api/chat/stream — Guest message allowance', () => {
 
     expect(res.statusCode).toBe(401);
     expect(chat.streamResponse).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Both paths hijack the reply and write to the raw response, so the CORS headers
+ * `@fastify/cors` buffered on the reply only reach the client if they are forwarded.
+ * `/health` is the reference: a normal route, flushed by `reply.send`.
+ */
+describe('POST /api/chat/stream — CORS', () => {
+  const cachedEntry = {
+    tokens: `${sseToken('4')}`,
+    usageData: { promptTokens: 5, completionTokens: 1, totalTokens: 6 },
+  };
+
+  const postFrom = async (origin?: string): Promise<LightMyRequestResponse> => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/chat/stream',
+      payload: validBody,
+      remoteAddress: uniqueIp(),
+      headers: origin ? { origin } : {},
+    });
+    // Let the model stream's capture hook land before the next test clears mocks.
+    await new Promise((resolve) => setImmediate(resolve));
+    return res;
+  };
+
+  const corsHeadersOf = (headers: LightMyRequestResponse['headers']) =>
+    Object.fromEntries(
+      Object.entries(headers).filter(
+        ([name]) => name.startsWith('access-control-') || name === 'vary',
+      ),
+    );
+
+  describe.each([
+    ['the model stream', null],
+    ['the cache replay', cachedEntry],
+  ])('on %s', (_path, cached) => {
+    beforeEach(() => {
+      mockedGetCachedStream.mockResolvedValue(cached);
+    });
+
+    it('echoes an allowed origin with credentials and Vary: Origin', async () => {
+      const res = await postFrom(env.CLIENT_URL);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.headers).toMatchObject({
+        'access-control-allow-origin': env.CLIENT_URL,
+        'access-control-allow-credentials': 'true',
+        vary: 'Origin',
+        'content-type': 'text/event-stream',
+      });
+    });
+
+    it('adds no access-control-allow-* header for a disallowed origin', async () => {
+      const res = await postFrom('https://evil.example');
+
+      expect(res.statusCode).toBe(200);
+      expect(
+        Object.keys(res.headers).filter((name) => name.startsWith('access-control-allow-')),
+      ).toEqual([]);
+    });
+
+    it('answers a request with no origin as /health does, without a wildcard', async () => {
+      const health = await app.inject({ method: 'GET', url: '/health' });
+
+      const res = await postFrom();
+
+      expect(res.statusCode).toBe(200);
+      expect(res.headers['content-type']).toBe('text/event-stream');
+      expect(res.headers['access-control-allow-origin']).toBeUndefined();
+      expect(corsHeadersOf(res.headers)).toEqual(corsHeadersOf(health.headers));
+    });
   });
 });
 
