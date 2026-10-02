@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-redis-v0.2.2...nebula-chat-redis-v0.2.3) (2026-10-02)
+
+
+### Bug Fixes
+
+* **redis:** log connection errors through the injected logger ([#412](https://github.com/itsDaiton/nebula-chat/issues/412)) ([54b4be2](https://github.com/itsDaiton/nebula-chat/commit/54b4be2744ca7ab5739050a632562b4fc537fd47))
+
 ## [0.2.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-redis-v0.2.1...nebula-chat-redis-v0.2.2) (2026-10-02)
 
 

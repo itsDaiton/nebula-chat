@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.1.0...nebula-chat-otel-v2.1.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* **redis:** log connection errors through the injected logger ([#412](https://github.com/itsDaiton/nebula-chat/issues/412)) ([54b4be2](https://github.com/itsDaiton/nebula-chat/commit/54b4be2744ca7ab5739050a632562b4fc537fd47))
+
 ## [2.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.0.1...nebula-chat-otel-v2.1.0) (2026-10-02)
 
 
