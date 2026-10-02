@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-redis-v0.2.3...nebula-chat-redis-v0.2.4) (2026-10-02)
+
+
+### Bug Fixes
+
+* **redis:** open the connection before the first authStore command ([#410](https://github.com/itsDaiton/nebula-chat/issues/410)) ([c5366dc](https://github.com/itsDaiton/nebula-chat/commit/c5366dcc54ec62c84fe7d3813b25daa36340e704))
+
 ## [0.2.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-redis-v0.2.2...nebula-chat-redis-v0.2.3) (2026-10-02)
 
 

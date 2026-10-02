@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.1.1...nebula-chat-otel-v2.1.2) (2026-10-02)
+
+
+### Bug Fixes
+
+* **redis:** open the connection before the first authStore command ([#410](https://github.com/itsDaiton/nebula-chat/issues/410)) ([c5366dc](https://github.com/itsDaiton/nebula-chat/commit/c5366dcc54ec62c84fe7d3813b25daa36340e704))
+
 ## [2.1.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.1.0...nebula-chat-otel-v2.1.1) (2026-10-02)
 
 
