@@ -21,6 +21,7 @@ import { apiRootSchema, healthSchema } from '@backend/health.validation';
 import { logger } from '@backend/logger';
 import chatRoutes from '@backend/modules/chat/chat.routes';
 import conversationRoutes from '@backend/modules/conversation/conversation.routes';
+import logLevelRoutes from '@backend/modules/logLevel/logLevel.routes';
 import messageRoutes from '@backend/modules/message/message.routes';
 import authGate from '@backend/plugins/authGate.plugin';
 import dbPlugin from '@backend/plugins/db.plugin';
@@ -158,6 +159,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   await app.register(chatRoutes, { prefix: '/api/chat' });
   await app.register(conversationRoutes, { prefix: '/api/conversations' });
   await app.register(messageRoutes, { prefix: '/api/messages' });
+  await app.register(logLevelRoutes, { prefix: '/api/internal/log-level' });
 
   return app;
 };

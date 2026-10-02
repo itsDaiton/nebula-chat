@@ -1,5 +1,5 @@
 import type { LogComponent } from './attributes';
-import { levelOverridesOf } from './levelOverrides';
+import { levelControlOf } from './levelControl';
 
 type ComponentParent<T> = {
   child: (bindings: { 'nebula.component': LogComponent }, options?: { level: string }) => T;
@@ -8,7 +8,8 @@ type ComponentParent<T> = {
 /**
  * A child logger for one subsystem: binds `nebula.component` and takes its
  * level from `createLogger`'s `levelOverrides` when the map names it, otherwise
- * inherits the level of the logger it is derived from.
+ * inherits the level of the logger it is derived from. The child is tracked, so
+ * a later `changeLogLevel` (and its expiry) reaches it too.
  *
  * An override may sit below the root level: Pino filters per logger instance,
  * not at the destination, so a `debug` child under an `info` root still writes
@@ -21,7 +22,10 @@ export const componentLogger = <T extends ComponentParent<T>>(
   logger: T,
   component: LogComponent,
 ): T => {
-  const level = levelOverridesOf(logger)?.[component];
+  const control = levelControlOf(logger);
+  const level = control?.levelFor(component);
   const bindings = { 'nebula.component': component };
-  return level === undefined ? logger.child(bindings) : logger.child(bindings, { level });
+  const child = level === undefined ? logger.child(bindings) : logger.child(bindings, { level });
+  control?.track(component, child);
+  return child;
 };

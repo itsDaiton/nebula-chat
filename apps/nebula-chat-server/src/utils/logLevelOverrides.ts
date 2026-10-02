@@ -1,8 +1,6 @@
+import { LOG_LEVELS } from '@nebula-chat/otel';
 import type { LevelOverrides } from '@nebula-chat/otel';
 import { z } from 'zod';
-
-/** The levels `LOG_LEVEL` accepts. */
-export const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace'] as const;
 
 // An override may also mute a component outright.
 const OVERRIDE_LEVELS: readonly string[] = [...LOG_LEVELS, 'silent'];

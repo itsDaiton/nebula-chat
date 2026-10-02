@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { LOG_LEVELS, logLevelOverridesSchema } from '@backend/utils/logLevelOverrides';
+import { LOG_LEVELS } from '@nebula-chat/otel';
+import { logLevelOverridesSchema } from '@backend/utils/logLevelOverrides';
 
 const envSchema = z
   .object({
@@ -18,6 +19,8 @@ const envSchema = z
     BETTER_AUTH_SECRET: z.string().min(1),
     BETTER_AUTH_URL: z.url(),
     GUEST_MESSAGE_ALLOWANCE: z.coerce.number().int().default(10),
+    // Shared operator secret for /api/internal/*; unset turns those routes off.
+    OPERATOR_TOKEN: z.string().min(32).optional(),
     OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),
     OTEL_LOG_LEVEL: z
       .enum(['none', 'error', 'warn', 'info', 'debug', 'verbose', 'all'])

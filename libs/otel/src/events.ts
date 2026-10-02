@@ -32,6 +32,11 @@ export const LOG_EVENTS = [
   'server.shutdown.failed',
   'otel.start.failed',
   'env.file.missing',
+  // Log control
+  'log.level.changed',
+  'log.level.reverted',
+  'log.level.message.rejected',
+  'log.level.listen.failed',
   // Adapters
   'auth.library.log',
   'otel.diag.log',

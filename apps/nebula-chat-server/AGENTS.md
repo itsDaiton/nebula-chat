@@ -70,14 +70,21 @@ apps/nebula-chat-server/src/
 │   │   ├── conversation.service.ts
 │   │   ├── conversation.controller.ts
 │   │   └── conversation.routes.ts
-│   └── message/
-│       ├── message.types.ts
-│       ├── message.validation.ts
-│       ├── message.repository.ts
-│       ├── message.service.ts
-│       ├── message.controller.ts
-│       └── message.routes.ts
-├── test/                          # Shared test harness: createTestApp, session fixtures, logCapture (in-memory logger)
+│   ├── message/
+│   │   ├── message.types.ts
+│   │   ├── message.validation.ts
+│   │   ├── message.repository.ts
+│   │   ├── message.service.ts
+│   │   ├── message.controller.ts
+│   │   └── message.routes.ts
+│   └── logLevel/                  # Operator route: POST /api/internal/log-level (hidden from the spec; ADR-0020)
+│       ├── logLevel.types.ts
+│       ├── logLevel.validation.ts
+│       ├── logLevel.service.ts    # Publishes the change to every server instance over Redis pub/sub
+│       ├── logLevel.controller.ts
+│       ├── logLevel.operatorGate.hook.ts # onRequest — admits only `Authorization: Bearer <OPERATOR_TOKEN>`
+│       └── logLevel.routes.ts
+├── test/                          # Shared test harness: createTestApp, session fixtures, logCapture (in-memory logger), memoryPubSub
 ├── utils/
 │   ├── logController.ts           # Fastify logController: request lines off, framework faults stamped fastify.log
 │   ├── logLevelOverrides.ts       # LOG_LEVEL_OVERRIDES parser (component=level pairs)
@@ -232,7 +239,8 @@ response: {
 **Rule — every response resource schema carries `.meta({ id })`:** declare it on the schema in the module's
 `*.validation.ts`, as a plain noun with no `…Response` suffix (`Conversation`, `ConversationPage`, `Message`).
 The spec then declares it once as a named component, and Orval generates a model with that name. Without an id
-the body is inlined, and Orval names it after the operation and status (`listMessages200Item`). An array of a
+the body is inlined, and Orval names it after the operation and status (`listMessages200Item`). A route hidden with
+`hide: true` needs no id, since it has no place in the spec. An array of a
 named schema needs no id of its own. Request bodies, params and querystrings stay unnamed.
 `src/tests/app.test.ts` fails on any inline `2xx` JSON object.
 
@@ -409,23 +417,24 @@ the shell, CI or Render wins over the file, and a missing file is silent. `test`
 read no `.env`, so a test run behaves the same on a developer machine as in CI. A new script that needs the file must
 be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-files-in-package-scripts.md).
 
-| Variable                      | Purpose                                                                                                          |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `OPENAI_API_KEY`              | OpenAI API key (optional — set at least one of this or `ANTHROPIC_API_KEY`)                                      |
-| `ANTHROPIC_API_KEY`           | Anthropic API key (optional — set at least one of this or `OPENAI_API_KEY`)                                      |
-| `DATABASE_URL`                | PostgreSQL connection string                                                                                     |
-| `REDIS_URL`                   | Redis connection (e.g. `redis://localhost:6380`)                                                                 |
-| `REDIS_PASSWORD`              | Redis password (if set)                                                                                          |
-| `CLIENT_URL`                  | Frontend origin for CORS (e.g. `http://localhost:5173`)                                                          |
-| `SERVER_URL`                  | Backend public URL, allowed as a CORS origin alongside `CLIENT_URL` (e.g. for Swagger UI at `/docs`)             |
-| `BETTER_AUTH_SECRET`          | better-auth secret — signs sessions and the session cookie cache (required)                                      |
-| `BETTER_AUTH_URL`             | App base URL for better-auth cookies/redirects (required, e.g. `http://localhost:3000`)                          |
-| `GUEST_MESSAGE_ALLOWANCE`     | Guest `user`-message cap before registration is required (int, default `10`; ADR-0010)                           |
-| `PORT`                        | Port to listen on (default `3000`)                                                                               |
-| `LOG_LEVEL`                   | Log verbosity (default `info`; set to `debug`/`warn` etc. in prod)                                               |
-| `LOG_LEVEL_OVERRIDES`         | Per-component levels, comma-separated `component=level` (e.g. `redis=debug,auth=warn`); unknown level fails boot |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector URL. Unset = spans are not exported (the tracer still runs, so lines keep their `trace_id`)       |
-| `OTEL_LOG_LEVEL`              | Verbosity of the OTel SDK's own diagnostics (default `error`; `none`/`warn`/`info`/`debug`/`verbose`/`all`)      |
+| Variable                      | Purpose                                                                                                                 |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `OPENAI_API_KEY`              | OpenAI API key (optional — set at least one of this or `ANTHROPIC_API_KEY`)                                             |
+| `ANTHROPIC_API_KEY`           | Anthropic API key (optional — set at least one of this or `OPENAI_API_KEY`)                                             |
+| `DATABASE_URL`                | PostgreSQL connection string                                                                                            |
+| `REDIS_URL`                   | Redis connection (e.g. `redis://localhost:6380`)                                                                        |
+| `REDIS_PASSWORD`              | Redis password (if set)                                                                                                 |
+| `CLIENT_URL`                  | Frontend origin for CORS (e.g. `http://localhost:5173`)                                                                 |
+| `SERVER_URL`                  | Backend public URL, allowed as a CORS origin alongside `CLIENT_URL` (e.g. for Swagger UI at `/docs`)                    |
+| `BETTER_AUTH_SECRET`          | better-auth secret — signs sessions and the session cookie cache (required)                                             |
+| `BETTER_AUTH_URL`             | App base URL for better-auth cookies/redirects (required, e.g. `http://localhost:3000`)                                 |
+| `GUEST_MESSAGE_ALLOWANCE`     | Guest `user`-message cap before registration is required (int, default `10`; ADR-0010)                                  |
+| `PORT`                        | Port to listen on (default `3000`)                                                                                      |
+| `LOG_LEVEL`                   | Log verbosity (default `info`; set to `debug`/`warn` etc. in prod)                                                      |
+| `LOG_LEVEL_OVERRIDES`         | Per-component levels, comma-separated `component=level` (e.g. `redis=debug,auth=warn`); unknown level fails boot        |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector URL. Unset = spans are not exported (the tracer still runs, so lines keep their `trace_id`)              |
+| `OTEL_LOG_LEVEL`              | Verbosity of the OTel SDK's own diagnostics (default `error`; `none`/`warn`/`info`/`debug`/`verbose`/`all`)             |
+| `OPERATOR_TOKEN`              | Shared operator secret (32+ chars) for `/api/internal/*`, e.g. changing log levels at runtime. Unset = those routes 404 |
 
 > **`env.ts` rule:** All env vars are Zod-validated in `src/env.ts` and fail loudly at startup before any listener is bound. Never read `process.env.*` directly anywhere in the backend — always import from `@backend/env`. The only code that touches `process.env` is what runs before `env.ts` parses it: `src/test/setup.ts` and `src/scripts/generate-openapi.ts`, which fill placeholders with `??=`.
 >
