@@ -41,6 +41,13 @@ DISABLE_LINTERS:
   # The `scripts` and per-package jobs in build.yml already lint/format TS with
   # the repo's toolchain, so this is a contradictory duplicate, not lost coverage.
   - TYPESCRIPT_STANDARD
+  # markdown-table-formatter wants unpadded separator rows (`|------|------|`),
+  # while the repo's Prettier — which `pnpm run format` writes and build.yml
+  # enforces — pads them (`| ---- | ---- |`). The two cannot both pass, so it
+  # warned on every PR that touched a Markdown table. Prettier already formats
+  # tables, and markdownlint stays enabled, so this drops a contradictory
+  # duplicate, not lost coverage.
+  - MARKDOWN_MARKDOWN_TABLE_FORMATTER
 
 # Vendored agent skills (see skills-lock.json) are held byte-identical to their
 # upstream source, so lint findings in them are not actionable. FILTER_REGEX_EXCLUDE
