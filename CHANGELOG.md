@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.5.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.5.2...nebula-chat-v2.5.3) (2026-10-02)
+
+
+### Bug Fixes
+
+* **redis:** open the connection before the first authStore command ([#410](https://github.com/itsDaiton/nebula-chat/issues/410)) ([c5366dc](https://github.com/itsDaiton/nebula-chat/commit/c5366dcc54ec62c84fe7d3813b25daa36340e704))
+* **server:** tighten the auth catch-all failure comments and status ([#418](https://github.com/itsDaiton/nebula-chat/issues/418)) ([b7d15bd](https://github.com/itsDaiton/nebula-chat/commit/b7d15bd8a8a53c94776e1da1d874869a9d887c7d))
+
 ## [2.5.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.5.1...nebula-chat-v2.5.2) (2026-10-02)
 
 

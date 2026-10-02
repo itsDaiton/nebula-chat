@@ -6,7 +6,12 @@ import { bindAttributes } from '@nebula-chat/otel';
 import { auth } from '@backend/auth';
 import { logRequestFailed } from '@backend/errors/error.handler';
 import { recordErrorType } from '@backend/errors/requestErrorType';
-import { ForbiddenError, INTERNAL_ERROR_ENVELOPE, UnauthorizedError } from '@nebula-chat/errors';
+import {
+  ERROR_STATUS,
+  ForbiddenError,
+  INTERNAL_ERROR_ENVELOPE,
+  UnauthorizedError,
+} from '@nebula-chat/errors';
 
 /**
  * The request with its resolved session attached. Fastify augmentation would need
@@ -91,14 +96,13 @@ const forwardReplyHeaders = (reply: FastifyReply): void => {
 };
 
 /**
- * Ends a hijacked auth request whose better-auth handler threw (a Redis failure
- * in its rate limiter, say). The hijack bypasses `errorHandler`, so this logs the
- * failure and answers it; otherwise the raw response never ends and the client hangs.
+ * Logs and ends a hijacked auth request whose handler threw: the hijack bypasses
+ * `errorHandler`, so without this the raw response never ends and the client hangs.
  */
 const failAuthRequest = (err: unknown, req: FastifyRequest, reply: FastifyReply): void => {
   const res = reply.raw;
-  const status = res.headersSent ? res.statusCode : 500;
-  // Before the response ends, so its `http.request.completed` line names it.
+  const status = res.headersSent ? res.statusCode : ERROR_STATUS.Internal;
+  // Names the 500's `http.request.completed` line; a destroyed response writes none.
   recordErrorType(req, 'Internal');
   logRequestFailed(err, req, reply, 'Internal', status);
 
@@ -110,7 +114,7 @@ const failAuthRequest = (err: unknown, req: FastifyRequest, reply: FastifyReply)
     }
     forwardReplyHeaders(reply);
     res
-      .writeHead(500, { 'content-type': 'application/json; charset=utf-8' })
+      .writeHead(ERROR_STATUS.Internal, { 'content-type': 'application/json; charset=utf-8' })
       .end(JSON.stringify(INTERNAL_ERROR_ENVELOPE));
   } else if (!res.writableEnded) {
     // Too late for a status: drop the connection so the client sees the failure.
