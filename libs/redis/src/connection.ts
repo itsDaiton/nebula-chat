@@ -1,5 +1,7 @@
 import IORedis from 'ioredis';
 import type { Redis } from 'ioredis';
+import type { Logger } from '@nebula-chat/otel';
+import { logConnectionErrors } from './connectionErrors';
 
 export type ConnectionManager = {
   /** The main command connection, used by the cache and general commands. */
@@ -19,12 +21,15 @@ export type ConnectionManager = {
  * `lazyConnect` + `enableOfflineQueue: false` keep the cache fail-open fast: when
  * Redis is unreachable a command rejects immediately rather than queueing, and
  * the cache turns that rejection into a miss.
+ *
+ * Every connection it opens logs its errors through `logger`.
  */
-export const createConnectionManager = (redisUrl: string): ConnectionManager => {
+export const createConnectionManager = (redisUrl: string, logger: Logger): ConnectionManager => {
   const main = new IORedis(redisUrl, {
     lazyConnect: true,
     enableOfflineQueue: false,
   });
+  logConnectionErrors(main, logger);
 
   const close = async (): Promise<void> => {
     // `quit()` sends a QUIT command, which forces a connect first — on a

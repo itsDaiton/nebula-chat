@@ -26,6 +26,9 @@ export const LOG_EVENTS = [
   'cache.check.failed',
   'cache.capture.failed',
   'cache.entry.unparseable',
+  // Redis
+  'redis.connection.failed',
+  'redis.connection.restored',
   // Lifecycle
   'server.started',
   'server.start.failed',

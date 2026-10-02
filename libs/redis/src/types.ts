@@ -40,3 +40,12 @@ export type AuthStoreConnection = Pick<Redis, 'get' | 'del' | 'getdel' | 'incr' 
   set(key: string, value: string, expiryMode: 'EX', ttlSeconds: number): Promise<unknown>;
   set(key: string, value: string): Promise<unknown>;
 };
+
+/**
+ * The events of an ioredis client that `logConnectionErrors` listens to: `error`
+ * on every failed (re)connect, `ready` once the connection can take commands.
+ */
+export type ConnectionEvents = {
+  on(event: 'error', listener: (error: Error) => void): unknown;
+  on(event: 'ready', listener: () => void): unknown;
+};

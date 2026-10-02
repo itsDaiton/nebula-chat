@@ -30,7 +30,7 @@ export type RedisToolkit = {
  * primitives over it; one `close()` tears everything down.
  */
 export const createRedis = (config: RedisConfig): RedisToolkit => {
-  const manager = createConnectionManager(config.redisUrl);
+  const manager = createConnectionManager(config.redisUrl, config.logger);
   const cache = createCache({
     connection: manager.main,
     logger: config.logger,
