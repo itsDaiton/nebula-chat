@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.3.4...nebula-chat-server-v2.3.5) (2026-10-03)
+
+
+### Bug Fixes
+
+* **server:** validate CLIENT_URL and SERVER_URL as http(s) origins ([#436](https://github.com/itsDaiton/nebula-chat/issues/436)) ([c81a461](https://github.com/itsDaiton/nebula-chat/commit/c81a4617ec2cb44ae84f725c5bd7c6a9a8de0eaa))
+
 ## [2.3.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.3.3...nebula-chat-server-v2.3.4) (2026-10-03)
 
 

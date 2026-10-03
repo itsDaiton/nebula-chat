@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.5.7...nebula-chat-v2.6.0) (2026-10-03)
+
+
+### Features
+
+* **client:** NEB-338 wire better-auth client and bootstrap a Guest session on load ([#435](https://github.com/itsDaiton/nebula-chat/issues/435)) ([c7e70bb](https://github.com/itsDaiton/nebula-chat/commit/c7e70bb43926d2d1654f15bc2ea6aa7c0c69a89d))
+
+
+### Bug Fixes
+
+* **server:** validate CLIENT_URL and SERVER_URL as http(s) origins ([#436](https://github.com/itsDaiton/nebula-chat/issues/436)) ([c81a461](https://github.com/itsDaiton/nebula-chat/commit/c81a4617ec2cb44ae84f725c5bd7c6a9a8de0eaa))
+
 ## [2.5.7](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.5.6...nebula-chat-v2.5.7) (2026-10-03)
 
 
