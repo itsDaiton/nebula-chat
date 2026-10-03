@@ -34,3 +34,24 @@ ignore:
       name: node-forge
       version: 1.4.0
       type: npm
+
+  # GHSA-vfj7-8cjw-p6xm (CVE-2026-93687): braces' recursive AST walkers have no
+  # depth guard, so a deeply nested brace pattern overflows the stack. Every
+  # release (<= 3.0.3) is affected and none is patched.
+  #
+  # braces reaches this repo only through tsc-alias (chokidar, fast-glob), a
+  # devDependency of apps/nebula-chat-server run by its `build` script
+  # (`pnpm why braces -r`). It expands globs from the repo's own tsconfig, never
+  # untrusted input, and the deployed server does not ship it.
+  #
+  # Pinned to braces 3.0.3; delete once a patched braces ships.
+  - vulnerability: GHSA-vfj7-8cjw-p6xm
+    include-aliases: true
+    reason: >-
+      Transitive build-time devDependency via tsc-alias, which only expands
+      glob patterns from the repo's own tsconfig. No patched braces release
+      exists.
+    package:
+      name: braces
+      version: 3.0.3
+      type: npm
