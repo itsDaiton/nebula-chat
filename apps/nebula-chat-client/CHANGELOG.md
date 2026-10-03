@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.17.0...nebula-chat-client-v1.18.0) (2026-10-03)
+
+
+### Features
+
+* **client:** NEB-338 wire better-auth client and bootstrap a Guest session on load ([#435](https://github.com/itsDaiton/nebula-chat/issues/435)) ([c7e70bb](https://github.com/itsDaiton/nebula-chat/commit/c7e70bb43926d2d1654f15bc2ea6aa7c0c69a89d))
+
 ## [1.17.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.16.1...nebula-chat-client-v1.17.0) (2026-10-02)
 
 
