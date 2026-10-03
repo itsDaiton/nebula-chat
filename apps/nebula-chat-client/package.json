@@ -17,6 +17,7 @@
   "dependencies": {
     "@chakra-ui/react": "^3.34.0",
     "@emotion/react": "^11.14.0",
+    "@hookform/resolvers": "^5.9.1",
     "@nebula-chat/errors": "workspace:*",
     "@tanstack/react-query": "^5.90.0",
     "axios": "^1.18.0",
@@ -24,11 +25,13 @@
     "next-themes": "^0.4.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-hook-form": "^7.88.0",
     "react-icons": "^5.6.0",
     "react-markdown": "^10.1.0",
     "react-router": "^7.18.2",
     "remark-gfm": "^4.0.1",
     "shiki": "^4.0.2",
+    "zod": "catalog:",
     "zustand": "^5.0.3"
   },
   "devDependencies": {

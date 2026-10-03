@@ -4,6 +4,7 @@ import { useResetChat } from '@/shared/hooks/useResetChat';
 import { TbGalaxy } from 'react-icons/tb';
 import { HiMenuAlt2 } from 'react-icons/hi';
 import { NebulaMenu } from '@/shared/components/navigation/NebulaMenu';
+import { AccountStatus } from '@/modules/auth/components/AccountStatus';
 import { menuItems } from '@/shared/utils/menuUtils';
 import { resources } from '@/resources';
 import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
@@ -52,6 +53,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
           </Text>
         </Box>
         <Flex gap={2} alignItems="center">
+          <AccountStatus />
           <ColorModeButton />
           <NebulaMenu items={menuItems} />
         </Flex>

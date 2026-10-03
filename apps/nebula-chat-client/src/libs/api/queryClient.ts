@@ -6,7 +6,12 @@ import { notifyError } from '@/libs/api/utils/notifyError';
 export const createQueryClient = ({ retry = 1 }: CreateQueryClientOptions = {}) =>
   new QueryClient({
     queryCache: new QueryCache({ onError: notifyError }),
-    mutationCache: new MutationCache({ onError: notifyError }),
+    mutationCache: new MutationCache({
+      // A mutation flagged `meta.inlineError` renders its own failure, so it is not toasted twice.
+      onError: (error, _variables, _context, mutation) => {
+        if (mutation.meta?.inlineError !== true) notifyError(error);
+      },
+    }),
     defaultOptions: {
       queries: {
         staleTime: 60_000,

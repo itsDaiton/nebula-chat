@@ -15,6 +15,7 @@ import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
 import { renderWithChakra } from '@/test/render';
 import { API_ROUTE, mockApiError } from '@/test/api';
+import { aSession, mockGetSession } from '@/test/auth';
 import { server } from '@/test/msw';
 
 vi.mock('@/theme/hooks/useColorMode', () => ({
@@ -64,6 +65,7 @@ beforeEach(() => {
   vi.restoreAllMocks();
   serveConversations();
   server.use(
+    mockGetSession(aSession()),
     getGetConversationMockHandler(aConversation(CONVERSATION_ID, 'Chat')),
     getListMessagesMockHandler([]),
   );

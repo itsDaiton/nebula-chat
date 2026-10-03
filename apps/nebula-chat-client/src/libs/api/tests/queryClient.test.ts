@@ -42,6 +42,22 @@ describe('createQueryClient', () => {
     expect(toast).toHaveBeenCalledWith(expect.objectContaining({ description: 'boom' }));
   });
 
+  it('leaves a mutation that renders its own error inline untoasted', async () => {
+    const toast = vi.spyOn(toaster, 'create');
+    const client = createQueryClient({ retry: false });
+
+    await client
+      .getMutationCache()
+      .build(client, {
+        mutationFn: () => Promise.reject(new Error('boom')),
+        meta: { inlineError: true },
+      })
+      .execute(undefined)
+      .catch(() => {});
+
+    expect(toast).not.toHaveBeenCalled();
+  });
+
   it('does not toast a query that succeeds', async () => {
     const toast = vi.spyOn(toaster, 'create');
     const client = createQueryClient({ retry: false });

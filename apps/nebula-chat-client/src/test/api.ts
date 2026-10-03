@@ -23,6 +23,9 @@ export const API_ROUTE = {
   chatStream: '*/api/chat/stream',
   authSession: '*/api/auth/get-session',
   authSignInAnonymous: '*/api/auth/sign-in/anonymous',
+  authSignInEmail: '*/api/auth/sign-in/email',
+  authSignUpEmail: '*/api/auth/sign-up/email',
+  authSignOut: '*/api/auth/sign-out',
 } as const;
 
 type Method = 'get' | 'post' | 'put' | 'delete';
