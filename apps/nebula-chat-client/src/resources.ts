@@ -22,6 +22,10 @@ export const resources = {
       error: 'Error loading conversation',
     },
   },
+  auth: {
+    loading: 'Starting your session...',
+    sessionFailed: 'Unable to start a session. Please refresh the page to try again.',
+  },
   errors: {
     title: 'Something went wrong',
     requestFailed: 'The request failed. Please try again.',

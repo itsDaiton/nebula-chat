@@ -32,6 +32,10 @@ apps/nebula-chat-client/src/
 │   ├── types/types.ts             # createQueryClient options
 │   ├── utils/                     # toAppError (failed request → AppError), notifyError (→ toaster)
 │   └── generated/                 # Orval output: react-query hooks, models, MSW handlers
+├── libs/auth/
+│   ├── client.ts                  # better-auth client (anonymous plugin, credentials) — the one auth entry point
+│   ├── types/types.ts             # AuthUser (inferred from the auth client)
+│   └── utils/ensureSession.ts     # get-session, else sign-in/anonymous → the current user
 ├── resources.ts                   # UI string constants
 ├── App.css
 ├── theme/
@@ -39,7 +43,13 @@ apps/nebula-chat-client/src/
 │   └── ThemeProvider.tsx          # next-themes wrapper
 ├── modules/                       # Feature modules
 │   ├── auth/
-│   │   └── AuthPage.tsx
+│   │   ├── AuthPage.tsx
+│   │   ├── types/types.ts         # AuthGateProps
+│   │   ├── hooks/
+│   │   │   ├── useAuth.ts             # Current session (Guest vs Registered) from better-auth's useSession
+│   │   │   └── useSessionBootstrap.ts # Query that runs ensureSession once per page load
+│   │   └── components/
+│   │       └── AuthGate.tsx       # Wraps the routes; renders nothing until a session (Guest at least) exists
 │   ├── chat/
 │   │   ├── ChatPage.tsx
 │   │   ├── types/types.ts         # All chat types
@@ -261,6 +271,14 @@ generate:api` after any backend change; generated files are never hand-edited.
   list on `conversation-created`, and the list, conversation detail and messages on `end` (a messages
   refetch mid-stream would race the reply). Invalidate rather than hand-seed with `setQueryData`.
 
+### Auth state — better-auth
+
+Auth is not in `openapi.yaml`, so it goes through better-auth's own client (`libs/auth/client.ts`), never
+Orval. `AuthGate` (around the routes in `routing/RouterProvider.tsx`) resolves `get-session` and, with no
+session, mints a Guest via `signIn.anonymous()` before any route renders — the server never mints one and
+every API route `401`s without a session. Read the session with `useAuth`, which wraps better-auth's
+`useSession`; never copy it into a Zustand store or `useState`.
+
 ### Client state — Zustand
 
 **Never use `useState`.** Client state lives in Zustand stores.
@@ -442,8 +460,9 @@ pnpm frontend test:coverage
 
   The generated handlers match any origin, which is what keeps `http://localhost:3000` out of tests. Two
   things have no generated handler: failure responses (Orval emits only the documented success) and
-  `/api/chat/stream` (excluded from Orval by tag — it streams SSE). Both go through `@/test/api`, the one
-  place route strings are written. Regenerate with `pnpm frontend generate:api` after any backend change.
+  `/api/chat/stream` (excluded from Orval by tag — it streams SSE), and better-auth's `/api/auth/*`. All
+  go through `@/test/api`, the one place route strings are written; `aSession` in `@/test/auth` builds a
+  `get-session` body. Regenerate with `pnpm frontend generate:api` after any backend change.
 
 - **One test file per source file, in a `tests/` folder beside it**: `ChatInput.tsx` is tested by
   `components/tests/ChatInput.test.tsx`. Never group several modules into one file.

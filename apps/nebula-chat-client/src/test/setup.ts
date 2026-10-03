@@ -4,8 +4,9 @@ import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 import { server } from '@/test/msw';
 
 // ADR-0008: the API is mocked at the network layer so the Orval-generated client
-// stays under test instead of being replaced by a stub.
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+// stays under test instead of being replaced by a stub. Listening at load, not in
+// beforeAll, patches `fetch` before better-auth's client captures it on import.
+server.listen({ onUnhandledRequest: 'error' });
 
 afterEach(() => {
   server.resetHandlers();
