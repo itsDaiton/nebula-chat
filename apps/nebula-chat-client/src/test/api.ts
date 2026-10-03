@@ -10,16 +10,19 @@ import { HttpResponse, http, type HttpHandler, type JsonBodyType } from 'msw';
  * server.use(getListConversationsMockHandler({ conversations, nextCursor: null, hasMore: false }));
  * ```
  *
- * Failure responses have no generated handler, and the two endpoints below are
- * not generated at all — `/api/chat/stream` is excluded from Orval by tag (it
- * streams SSE rather than JSON). This module covers exactly that gap, keeping
- * the origin wildcard in one place.
+ * Failure responses have no generated handler, and the endpoints below are not
+ * generated at all — `/api/chat/stream` is excluded from Orval by tag (it
+ * streams SSE rather than JSON) and better-auth's `/api/auth/*` is absent from
+ * the OpenAPI spec. This module covers exactly that gap, keeping the origin
+ * wildcard in one place.
  */
 export const API_ROUTE = {
   conversations: '*/api/conversations',
   conversationsSearch: '*/api/conversations/search',
   conversation: '*/api/conversations/:conversationId',
   chatStream: '*/api/chat/stream',
+  authSession: '*/api/auth/get-session',
+  authSignInAnonymous: '*/api/auth/sign-in/anonymous',
 } as const;
 
 type Method = 'get' | 'post' | 'put' | 'delete';
