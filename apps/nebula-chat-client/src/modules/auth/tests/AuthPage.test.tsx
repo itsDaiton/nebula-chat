@@ -106,6 +106,7 @@ describe('AuthPage', () => {
   it('opens on sign-in and offers sign-up on its own tab', async () => {
     renderAuthFlow();
 
+    expect(screen.getByRole('heading', { name: resources.auth.signIn.title })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: resources.auth.actions.signIn })).toBeInTheDocument();
     expect(
       screen.queryByRole('textbox', { name: resources.auth.fields.name }),
@@ -113,6 +114,7 @@ describe('AuthPage', () => {
 
     await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
 
+    expect(screen.getByRole('heading', { name: resources.auth.signUp.title })).toBeInTheDocument();
     expect(nameField()).toBeInTheDocument();
     expect(screen.getByRole('button', { name: resources.auth.actions.signUp })).toBeInTheDocument();
   });

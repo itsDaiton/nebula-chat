@@ -8,7 +8,7 @@ import type {
 import { signInSchema, signUpSchema } from '@/modules/auth/utils/authSchemas';
 import { resources } from '@/resources';
 
-const { fields, tabs, actions } = resources.auth;
+const { fields, tabs, actions, signIn, signUp } = resources.auth;
 
 const emailField = {
   name: 'email',
@@ -27,6 +27,8 @@ const passwordField = (autoComplete: 'current-password' | 'new-password') =>
 
 export const SIGN_IN_FORM: AuthFormConfig<SignInCredentials> = {
   label: tabs.signIn,
+  title: signIn.title,
+  description: signIn.description,
   submitLabel: actions.signIn,
   schema: signInSchema,
   fields: [emailField, passwordField('current-password')],
@@ -35,6 +37,8 @@ export const SIGN_IN_FORM: AuthFormConfig<SignInCredentials> = {
 
 export const SIGN_UP_FORM: AuthFormConfig<SignUpCredentials> = {
   label: tabs.signUp,
+  title: signUp.title,
+  description: signUp.description,
   submitLabel: actions.signUp,
   schema: signUpSchema,
   fields: [

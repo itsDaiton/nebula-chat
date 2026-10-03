@@ -34,6 +34,8 @@ export type AuthFieldConfig<Values extends FieldValues> = {
 /** Everything that tells the sign-in form from the sign-up form. */
 export type AuthFormConfig<Values extends FieldValues> = {
   label: string;
+  title: string;
+  description: string;
   submitLabel: string;
   schema: z.ZodType<Values, Values>;
   fields: AuthFieldConfig<Values>[];

@@ -1,4 +1,4 @@
-import { Button, Card, Flex, Heading, Icon, Tabs, Text } from '@chakra-ui/react';
+import { Button, Card, Flex, HStack, Icon, Separator, Tabs, Text } from '@chakra-ui/react';
 import { TbGalaxy } from 'react-icons/tb';
 import { Link } from 'react-router';
 import { AuthForm } from '@/modules/auth/components/AuthForm';
@@ -31,14 +31,6 @@ export const AuthPage = () => {
         </Link>
       </Flex>
       <Card.Root w="full" maxW="md">
-        <Card.Header>
-          <Heading as="h1" size="xl">
-            {resources.auth.page.title}
-          </Heading>
-          <Text color="fg.muted" fontSize="sm">
-            {resources.auth.page.subtitle}
-          </Text>
-        </Card.Header>
         <Card.Body>
           {/* Only the open form is mounted, so its field labels stay unique. */}
           <Tabs.Root
@@ -60,8 +52,15 @@ export const AuthPage = () => {
             </Tabs.Content>
           </Tabs.Root>
         </Card.Body>
-        <Card.Footer justifyContent="center">
-          <Button asChild variant="ghost" size="sm">
+        <Card.Footer flexDirection="column" gap={4}>
+          <HStack w="full">
+            <Separator flex="1" />
+            <Text fontSize="sm" color="fg.muted">
+              {resources.auth.page.or}
+            </Text>
+            <Separator flex="1" />
+          </HStack>
+          <Button asChild variant="outline" borderColor="border.emphasized" w="full">
             <Link to={route.chat.root()} onClick={hidePassword}>
               {resources.auth.page.continueAsGuest}
             </Link>

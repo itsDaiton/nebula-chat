@@ -26,9 +26,17 @@ export const resources = {
     loading: 'Starting your session...',
     sessionFailed: 'Unable to start a session. Please refresh the page to try again.',
     page: {
-      title: 'Keep your conversations',
-      subtitle: 'Sign in or create an account. Your Guest conversations come with you.',
+      or: 'or',
       continueAsGuest: 'Continue as Guest',
+    },
+    signIn: {
+      title: 'Welcome back',
+      description: 'Sign in to pick up your conversations where you left off.',
+    },
+    signUp: {
+      title: 'Create your account',
+      description:
+        'Chat without a message limit. Everything you started as a Guest comes with you.',
     },
     tabs: {
       signIn: 'Sign in',

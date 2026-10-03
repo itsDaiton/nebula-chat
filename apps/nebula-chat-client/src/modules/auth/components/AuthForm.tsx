@@ -1,4 +1,4 @@
-import { Button, Stack } from '@chakra-ui/react';
+import { Button, Heading, Stack, Text } from '@chakra-ui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, type FieldValues } from 'react-hook-form';
 import { AuthFormAlert } from '@/modules/auth/components/AuthFormAlert';
@@ -10,7 +10,7 @@ import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
 
 /** The sign-in or sign-up form, as its config describes it. */
 export const AuthForm = <Values extends FieldValues>({ config }: AuthFormProps<Values>) => {
-  const { label, submitLabel, schema, fields, request } = config;
+  const { label, title, description, submitLabel, schema, fields, request } = config;
   const { mutate, isPending } = useAuthMutation(request);
   const { hidePassword } = usePasswordVisibilityStore();
   const {
@@ -32,6 +32,14 @@ export const AuthForm = <Values extends FieldValues>({ config }: AuthFormProps<V
   return (
     <form onSubmit={(event) => void handleSubmit(onSubmit)(event)} aria-label={label} noValidate>
       <Stack gap={4}>
+        <Stack gap={1} mb={2}>
+          <Heading as="h1" size="xl">
+            {title}
+          </Heading>
+          <Text color="fg.muted" fontSize="sm">
+            {description}
+          </Text>
+        </Stack>
         <AuthFormAlert message={errors.root?.server?.message} />
         {fields.map((field) => (
           <AuthFormField
