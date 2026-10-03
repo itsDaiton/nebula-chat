@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.5.5...nebula-chat-v2.5.6) (2026-10-03)
+
+
+### Bug Fixes
+
+* **ci:** enable Dependabot for docker-compose images ([#428](https://github.com/itsDaiton/nebula-chat/issues/428)) ([745e619](https://github.com/itsDaiton/nebula-chat/commit/745e619abf4b899bffb355c593bdfa5e16bc7f88))
+
 ## [2.5.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.5.4...nebula-chat-v2.5.5) (2026-10-02)
 
 
