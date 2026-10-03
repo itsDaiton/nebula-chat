@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.5.4...nebula-chat-v2.5.5) (2026-10-02)
+
+
+### Bug Fixes
+
+* **ci:** disable MegaLinter's markdown-table-formatter, which contradicts Prettier ([#426](https://github.com/itsDaiton/nebula-chat/issues/426)) ([14c7f68](https://github.com/itsDaiton/nebula-chat/commit/14c7f68766b0920b2e19fde2c68af3502153f8eb))
+
 ## [2.5.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.5.3...nebula-chat-v2.5.4) (2026-10-02)
 
 
