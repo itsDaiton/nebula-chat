@@ -1,10 +1,11 @@
-import { screen } from '@testing-library/react';
+import { renderHook, screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { AuthGate } from '@/modules/auth/components/AuthGate';
+import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { resources } from '@/resources';
-import { API_ROUTE } from '@/test/api';
-import { aSession } from '@/test/auth';
+import { API_ROUTE, mockApiError } from '@/test/api';
+import { aSession, mockAnonymousSignIn, mockGetSession } from '@/test/auth';
 import { server } from '@/test/msw';
 import { renderWithChakra } from '@/test/render';
 
@@ -15,13 +16,10 @@ const renderGate = () => renderWithChakra(<AuthGate>{APP}</AuthGate>);
 describe('AuthGate', () => {
   it('mints a Guest before rendering when there is no session', async () => {
     let signIns = 0;
-    let hasGuest = false;
     server.use(
-      http.get(API_ROUTE.authSession, () => HttpResponse.json(hasGuest ? aSession() : null)),
-      http.post(API_ROUTE.authSignInAnonymous, () => {
+      mockGetSession(() => (signIns > 0 ? aSession() : null)),
+      mockAnonymousSignIn(() => {
         signIns += 1;
-        hasGuest = true;
-        return HttpResponse.json({ token: 'token-1', user: aSession().user });
       }),
     );
 
@@ -29,15 +27,16 @@ describe('AuthGate', () => {
 
     expect(await screen.findByText(APP)).toBeInTheDocument();
     expect(signIns).toBe(1);
+    const { result } = renderHook(() => useAuth());
+    await waitFor(() => expect(result.current.isGuest).toBe(true));
   });
 
   it('renders without minting a second Guest when a session exists', async () => {
     let signIns = 0;
     server.use(
-      http.get(API_ROUTE.authSession, () => HttpResponse.json(aSession())),
-      http.post(API_ROUTE.authSignInAnonymous, () => {
+      mockGetSession(aSession()),
+      mockAnonymousSignIn(() => {
         signIns += 1;
-        return HttpResponse.json({ token: 'token-1', user: aSession().user });
       }),
     );
 
@@ -48,7 +47,7 @@ describe('AuthGate', () => {
   });
 
   it('holds the app behind a loading state until the session resolves', () => {
-    server.use(http.get(API_ROUTE.authSession, () => HttpResponse.json(aSession())));
+    server.use(mockGetSession(aSession()));
 
     renderGate();
 
@@ -57,31 +56,25 @@ describe('AuthGate', () => {
   });
 
   it('sends the session cookie on the auth requests', async () => {
-    const credentials: RequestCredentials[] = [];
+    const credentials: { session?: RequestCredentials; signIn?: RequestCredentials } = {};
     server.use(
-      http.get(API_ROUTE.authSession, ({ request }) => {
-        credentials.push(request.credentials);
-        return HttpResponse.json(null);
+      mockGetSession((request) => {
+        credentials.session = request.credentials;
+        return null;
       }),
-      http.post(API_ROUTE.authSignInAnonymous, ({ request }) => {
-        credentials.push(request.credentials);
-        return HttpResponse.json({ token: 'token-1', user: aSession().user });
+      mockAnonymousSignIn((request) => {
+        credentials.signIn = request.credentials;
       }),
     );
 
     renderGate();
 
     await screen.findByText(APP);
-    expect(credentials).toEqual(['include', 'include']);
+    expect(credentials).toEqual({ session: 'include', signIn: 'include' });
   });
 
   it('shows an error instead of the app when no session can be established', async () => {
-    server.use(
-      http.get(API_ROUTE.authSession, () => HttpResponse.json(null)),
-      http.post(API_ROUTE.authSignInAnonymous, () =>
-        HttpResponse.json({ message: 'boom' }, { status: 500 }),
-      ),
-    );
+    server.use(mockGetSession(null), mockApiError('post', API_ROUTE.authSignInAnonymous, 500));
 
     renderGate();
 

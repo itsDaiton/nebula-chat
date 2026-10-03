@@ -34,8 +34,7 @@ apps/nebula-chat-client/src/
 │   └── generated/                 # Orval output: react-query hooks, models, MSW handlers
 ├── libs/auth/
 │   ├── client.ts                  # better-auth client (anonymous plugin, credentials) — the one auth entry point
-│   ├── types/types.ts             # AuthUser (inferred from the auth client)
-│   └── utils/ensureSession.ts     # get-session, else sign-in/anonymous → the current user
+│   └── utils/ensureSession.ts     # get-session, else sign-in/anonymous
 ├── resources.ts                   # UI string constants
 ├── App.css
 ├── theme/
@@ -458,11 +457,11 @@ pnpm frontend test:coverage
   server.use(getListConversationsMockHandler({ conversations, nextCursor: null, hasMore: false }));
   ```
 
-  The generated handlers match any origin, which is what keeps `http://localhost:3000` out of tests. Two
-  things have no generated handler: failure responses (Orval emits only the documented success) and
-  `/api/chat/stream` (excluded from Orval by tag — it streams SSE), and better-auth's `/api/auth/*`. All
-  go through `@/test/api`, the one place route strings are written; `aSession` in `@/test/auth` builds a
-  `get-session` body. Regenerate with `pnpm frontend generate:api` after any backend change.
+  The generated handlers match any origin, which is what keeps `http://localhost:3000` out of tests. Three
+  things have no generated handler: failure responses (Orval emits only the documented success),
+  `/api/chat/stream` (excluded from Orval by tag — it streams SSE) and better-auth's `/api/auth/*`. Their
+  routes live in `@/test/api`, the one place route strings are written; `@/test/auth` holds the auth
+  fixture and handlers (`aSession`, `mockGetSession`, `mockAnonymousSignIn`). Regenerate with `pnpm frontend generate:api` after any backend change.
 
 - **One test file per source file, in a `tests/` folder beside it**: `ChatInput.tsx` is tested by
   `components/tests/ChatInput.test.tsx`. Never group several modules into one file.

@@ -1,18 +1,17 @@
-import { renderHook, waitFor } from '@testing-library/react';
-import { HttpResponse, http } from 'msw';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { authClient } from '@/libs/auth/client';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
-import { API_ROUTE } from '@/test/api';
-import { aSession } from '@/test/auth';
+import { aSession, mockGetSession } from '@/test/auth';
 import { server } from '@/test/msw';
 
-// better-auth's session atom is a module singleton that skips a refetch within a second
-// of the last one, so each test refetches explicitly rather than relying on mount.
+// The session store is a module singleton that skips a refetch within a second of the last,
+// so each test fires the signal better-auth's own sign-in and sign-out calls fire.
 const renderAuth = async (body: ReturnType<typeof aSession> | null) => {
-  server.use(http.get(API_ROUTE.authSession, () => HttpResponse.json(body)));
+  server.use(mockGetSession(body));
   const hook = renderHook(() => useAuth());
-  await hook.result.current.refetch();
-  await waitFor(() => expect(hook.result.current.isPending).toBe(false));
+  act(() => authClient.$store.notify('$sessionSignal'));
+  await waitFor(() => expect(hook.result.current.user?.id ?? null).toBe(body?.user.id ?? null));
   return hook;
 };
 
@@ -22,7 +21,6 @@ describe('useAuth', () => {
 
     await waitFor(() => expect(result.current.isGuest).toBe(true));
     expect(result.current.isRegistered).toBe(false);
-    expect(result.current.user?.id).toBe('user-1');
   });
 
   it('reports a Registered user', async () => {
@@ -36,8 +34,8 @@ describe('useAuth', () => {
   it('reports no user when there is no session', async () => {
     const { result } = await renderAuth(null);
 
-    await waitFor(() => expect(result.current.session).toBeNull());
-    expect(result.current.user).toBeNull();
+    await waitFor(() => expect(result.current.isPending).toBe(false));
+    expect(result.current.session).toBeNull();
     expect(result.current.isGuest).toBe(false);
     expect(result.current.isRegistered).toBe(false);
   });
