@@ -3,7 +3,10 @@ import { LOG_LEVELS } from '@nebula-chat/otel';
 import { logLevelOverridesSchema } from '@backend/utils/logLevelOverrides';
 import { operatorTokenSchema } from '@backend/utils/operatorToken';
 
-const envSchema = z
+// CORS and better-auth match the browser's `Origin` header exactly, so keep only scheme://host:port.
+const originSchema = z.url({ protocol: /^https?$/ }).transform((url) => new URL(url).origin);
+
+export const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
     LOG_LEVEL: z.enum(LOG_LEVELS).default('info'),
@@ -14,8 +17,8 @@ const envSchema = z
     REDIS_PASSWORD: z.string().optional(),
     OPENAI_API_KEY: z.string().min(1).optional(),
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
-    CLIENT_URL: z.string().default('http://localhost:5173'),
-    SERVER_URL: z.string().optional(),
+    CLIENT_URL: originSchema.default('http://localhost:5173'),
+    SERVER_URL: z.preprocess((raw) => (raw === '' ? undefined : raw), originSchema.optional()),
     TRUST_PROXY: z.string().optional(),
     BETTER_AUTH_SECRET: z.string().min(1),
     BETTER_AUTH_URL: z.url(),
