@@ -59,7 +59,7 @@ apps/nebula-chat-client/src/
 │   │   │   └── useIdentityChange.ts   # After any of them: reset server state, go to the chat root
 │   │   └── components/
 │   │       ├── AuthGate.tsx       # Wraps the routes; renders nothing until a session (Guest at least) exists
-│   │       ├── AccountStatus.tsx  # Nav: Guest badge + sign-in link, or email + sign-out button
+│   │       ├── AccountStatus.tsx  # Nav: sign-in link for a Guest, or email + sign-out button
 │   │       ├── AuthForm.tsx       # One react-hook-form + zod form, driven by an AuthFormConfig
 │   │       ├── AuthFormField.tsx  # Label, input (or PasswordInput) and its error text
 │   │       └── AuthFormAlert.tsx  # Failure that belongs to the whole form

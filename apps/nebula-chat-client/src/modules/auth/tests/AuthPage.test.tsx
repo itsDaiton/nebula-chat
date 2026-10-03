@@ -323,7 +323,9 @@ describe('AuthPage', () => {
     renderAuthFlow(route.chat.root());
 
     expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
-    expect(await screen.findByText(resources.auth.status.guest)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('link', { name: resources.auth.actions.signIn }),
+    ).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('link', { name: resources.auth.actions.signIn }));
     await fillSignIn();

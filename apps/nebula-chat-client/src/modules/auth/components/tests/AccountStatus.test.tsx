@@ -67,10 +67,12 @@ beforeEach(() => {
 });
 
 describe('AccountStatus', () => {
-  it('marks a Guest and links to the auth page', async () => {
+  it('offers a Guest a sign-in link to the auth page', async () => {
     await renderStatus();
 
-    expect(await screen.findByText(resources.auth.status.guest)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('link', { name: resources.auth.actions.signIn }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: resources.auth.actions.signOut }),
     ).not.toBeInTheDocument();
@@ -80,7 +82,7 @@ describe('AccountStatus', () => {
     expect(screen.getByText(AUTH_PAGE)).toBeInTheDocument();
   });
 
-  it('shows a Registered user their email and a sign-out control, without a badge', async () => {
+  it('shows a Registered user their email and a sign-out control', async () => {
     session = aSession({ isAnonymous: false });
     await renderStatus();
 
@@ -88,7 +90,6 @@ describe('AccountStatus', () => {
     expect(
       screen.getByRole('button', { name: resources.auth.actions.signOut }),
     ).toBeInTheDocument();
-    expect(screen.queryByText(resources.auth.status.guest)).not.toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: resources.auth.actions.signIn }),
     ).not.toBeInTheDocument();
@@ -118,7 +119,9 @@ describe('AccountStatus', () => {
     );
 
     expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
-    expect(await screen.findByText(resources.auth.status.guest)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('link', { name: resources.auth.actions.signIn }),
+    ).toBeInTheDocument();
     expect(signIns).toBe(1);
     expect(unauthenticatedRequests).toBe(0);
   });

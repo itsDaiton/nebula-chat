@@ -1,4 +1,4 @@
-import { Badge, Box, Button, Flex, Text } from '@chakra-ui/react';
+import { Box, Button, Flex, Text } from '@chakra-ui/react';
 import { LuLogIn, LuLogOut } from 'react-icons/lu';
 import { Link } from 'react-router';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
@@ -13,17 +13,12 @@ export const AccountStatus = () => {
 
   if (isGuest) {
     return (
-      <Flex gap={3} alignItems="center">
-        <Badge size="md" variant="surface" display={{ base: 'none', sm: 'inline-flex' }}>
-          {resources.auth.status.guest}
-        </Badge>
-        <Button asChild size="sm" variant="solid" borderRadius="full" px={4}>
-          <Link to={route.auth()}>
-            <LuLogIn />
-            {resources.auth.actions.signIn}
-          </Link>
-        </Button>
-      </Flex>
+      <Button asChild size="sm" variant="solid" borderRadius="full" px={4}>
+        <Link to={route.auth()}>
+          <LuLogIn />
+          {resources.auth.actions.signIn}
+        </Link>
+      </Button>
     );
   }
 

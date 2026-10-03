@@ -54,7 +54,9 @@ describe('Header', () => {
     renderWithChakra(<Header />);
     refreshSession();
 
-    expect(await screen.findByText(resources.auth.status.guest)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('link', { name: resources.auth.actions.signIn }),
+    ).toBeInTheDocument();
   });
 
   it('renders without a menu handler', () => {

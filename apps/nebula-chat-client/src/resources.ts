@@ -44,9 +44,6 @@ export const resources = {
       signUp: 'Create account',
       signOut: 'Sign out',
     },
-    status: {
-      guest: 'Guest',
-    },
     validation: {
       nameRequired: 'Enter your name.',
       emailRequired: 'Enter your email address.',
