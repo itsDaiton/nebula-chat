@@ -23,20 +23,19 @@ export const resources = {
     },
   },
   auth: {
-    loading: 'Starting your session...',
-    sessionFailed: 'Unable to start a session. Please refresh the page to try again.',
+    loading: 'Getting things ready...',
+    sessionFailed: "We couldn't connect you right now. Refresh the page to try again.",
     page: {
       or: 'or',
-      continueAsGuest: 'Continue as Guest',
+      continueWithoutAccount: 'Continue without an account',
     },
     signIn: {
       title: 'Welcome back',
-      description: 'Sign in to pick up your conversations where you left off.',
+      description: 'Sign in to pick up right where you left off.',
     },
     signUp: {
       title: 'Create your account',
-      description:
-        'Chat without a message limit. Everything you started as a Guest comes with you.',
+      description: "Chat as much as you like, and keep the conversations you've already started.",
     },
     tabs: {
       signIn: 'Sign in',
@@ -53,19 +52,19 @@ export const resources = {
       signOut: 'Sign out',
     },
     validation: {
-      nameRequired: 'Enter your name.',
+      nameRequired: 'Tell us what to call you.',
       emailRequired: 'Enter your email address.',
-      emailInvalid: 'Enter a valid email address.',
+      emailInvalid: "That doesn't look like a valid email address.",
       passwordRequired: 'Enter your password.',
-      passwordTooShort: 'Use at least 8 characters.',
-      passwordTooLong: 'Use at most 128 characters.',
+      passwordTooShort: 'Your password needs at least 8 characters.',
+      passwordTooLong: 'Your password can be at most 128 characters.',
     },
     errors: {
       passwordCompromised:
-        'This password has appeared in a data breach. Please choose a different one.',
-      userExists: 'An account with this email already exists. Sign in instead.',
-      invalidCredentials: 'Incorrect email or password.',
-      unknown: 'Authentication failed. Please try again.',
+        'This password has shown up in a known data breach. Please pick a different one.',
+      userExists: 'You already have an account with this email. Try signing in instead.',
+      invalidCredentials: "That email and password don't match. Please try again.",
+      unknown: 'Something went wrong on our end. Please try again.',
     },
   },
   passwordInput: {

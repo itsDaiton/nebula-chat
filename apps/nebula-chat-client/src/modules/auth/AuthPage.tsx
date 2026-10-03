@@ -62,7 +62,7 @@ export const AuthPage = () => {
           </HStack>
           <Button asChild variant="outline" borderColor="border.emphasized" w="full">
             <Link to={route.chat.root()} onClick={hidePassword}>
-              {resources.auth.page.continueAsGuest}
+              {resources.auth.page.continueWithoutAccount}
             </Link>
           </Button>
         </Card.Footer>

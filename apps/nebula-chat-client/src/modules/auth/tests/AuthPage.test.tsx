@@ -343,7 +343,9 @@ describe('AuthPage', () => {
   it('lets a visitor go back to the chat as a Guest', async () => {
     renderAuthFlow();
 
-    await userEvent.click(screen.getByRole('link', { name: resources.auth.page.continueAsGuest }));
+    await userEvent.click(
+      screen.getByRole('link', { name: resources.auth.page.continueWithoutAccount }),
+    );
 
     expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
   });
