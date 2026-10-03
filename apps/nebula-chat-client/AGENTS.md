@@ -42,13 +42,21 @@ apps/nebula-chat-client/src/
 │   └── ThemeProvider.tsx          # next-themes wrapper
 ├── modules/                       # Feature modules
 │   ├── auth/
-│   │   ├── AuthPage.tsx
-│   │   ├── types/types.ts         # AuthGateProps
+│   │   ├── AuthPage.tsx           # /auth — sign-in and sign-up tabs; opt-in, never a wall
+│   │   ├── types/types.ts         # Auth props, credentials, better-auth result shape
+│   │   ├── utils/
+│   │   │   ├── runAuthRequest.ts      # better-auth call → AppError with copy mapped from its error code
+│   │   │   └── formValue.ts
 │   │   ├── hooks/
 │   │   │   ├── useAuth.ts             # Current session (Guest vs Registered) from better-auth's useSession
-│   │   │   └── useSessionBootstrap.ts # Query that runs ensureSession once per page load
+│   │   │   ├── useSessionBootstrap.ts # Query that runs ensureSession once per page load
+│   │   │   ├── useSignIn.ts / useSignUp.ts / useSignOut.ts  # Auth mutations
+│   │   │   └── useIdentityChange.ts   # After any of them: reset server state, go to the chat root
 │   │   └── components/
-│   │       └── AuthGate.tsx       # Wraps the routes; renders nothing until a session (Guest at least) exists
+│   │       ├── AuthGate.tsx       # Wraps the routes; renders nothing until a session (Guest at least) exists
+│   │       ├── AccountStatus.tsx  # Nav: Guest/Registered badge + sign-in link or sign-out button
+│   │       ├── SignInForm.tsx / SignUpForm.tsx  # Uncontrolled forms; errors render inline
+│   │       └── AuthField.tsx, AuthFormAlert.tsx
 │   ├── chat/
 │   │   ├── ChatPage.tsx
 │   │   ├── types/types.ts         # All chat types
@@ -461,7 +469,9 @@ pnpm frontend test:coverage
   things have no generated handler: failure responses (Orval emits only the documented success),
   `/api/chat/stream` (excluded from Orval by tag — it streams SSE) and better-auth's `/api/auth/*`. Their
   routes live in `@/test/api`, the one place route strings are written; `@/test/auth` holds the auth
-  fixture and handlers (`aSession`, `mockGetSession`, `mockAnonymousSignIn`). Regenerate with `pnpm frontend generate:api` after any backend change.
+  fixture and handlers (`aSession`, `mockGetSession`, `mockAnonymousSignIn`, `mockEmailSignIn`,
+  `mockEmailSignUp`, `mockSignOut`) plus `refreshSession`, which refetches better-auth's module-level session
+  store after a render. Regenerate with `pnpm frontend generate:api` after any backend change.
 
 - **One test file per source file, in a `tests/` folder beside it**: `ChatInput.tsx` is tested by
   `components/tests/ChatInput.test.tsx`. Never group several modules into one file.

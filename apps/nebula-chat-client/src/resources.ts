@@ -25,6 +25,39 @@ export const resources = {
   auth: {
     loading: 'Starting your session...',
     sessionFailed: 'Unable to start a session. Please refresh the page to try again.',
+    page: {
+      title: 'Keep your conversations',
+      subtitle: 'Sign in or create an account. Your Guest conversations come with you.',
+      continueAsGuest: 'Continue as Guest',
+    },
+    tabs: {
+      signIn: 'Sign in',
+      signUp: 'Sign up',
+    },
+    fields: {
+      name: 'Name',
+      email: 'Email',
+      password: 'Password',
+    },
+    actions: {
+      signIn: 'Sign in',
+      signUp: 'Create account',
+      signOut: 'Sign out',
+    },
+    status: {
+      guest: 'Guest',
+      registered: 'Registered',
+    },
+    errors: {
+      passwordCompromised:
+        'This password has appeared in a data breach. Please choose a different one.',
+      userExists: 'An account with this email already exists. Sign in instead.',
+      invalidCredentials: 'Incorrect email or password.',
+      invalidEmail: 'Please enter a valid email address.',
+      passwordTooShort: 'This password is too short.',
+      passwordTooLong: 'This password is too long.',
+      unknown: 'Authentication failed. Please try again.',
+    },
   },
   errors: {
     title: 'Something went wrong',

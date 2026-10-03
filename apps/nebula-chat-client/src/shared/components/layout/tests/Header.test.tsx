@@ -2,6 +2,9 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Header } from '@/shared/components/layout/Header';
+import { resources } from '@/resources';
+import { aSession, mockGetSession, refreshSession } from '@/test/auth';
+import { server } from '@/test/msw';
 import { renderWithChakra } from '@/test/render';
 
 vi.mock('@/theme/hooks/useColorMode', () => ({
@@ -15,6 +18,7 @@ vi.mock('@/shared/hooks/useResponsiveLayout', () => ({ useResponsiveLayout: () =
 
 beforeEach(() => {
   vi.clearAllMocks();
+  server.use(mockGetSession(aSession()));
 });
 
 describe('Header', () => {
@@ -44,6 +48,13 @@ describe('Header', () => {
 
     expect(screen.queryByLabelText('Menu')).not.toBeInTheDocument();
     layout.isMobile = true;
+  });
+
+  it('shows the account status in the nav', async () => {
+    renderWithChakra(<Header />);
+    refreshSession();
+
+    expect(await screen.findByText(resources.auth.status.guest)).toBeInTheDocument();
   });
 
   it('renders without a menu handler', () => {

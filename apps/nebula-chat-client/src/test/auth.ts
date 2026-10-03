@@ -1,4 +1,6 @@
+import { act } from '@testing-library/react';
 import { HttpResponse, http, type HttpHandler } from 'msw';
+import { authClient } from '@/libs/auth/client';
 import { API_ROUTE } from '@/test/api';
 
 /** A better-auth `get-session` body; a Guest unless `isAnonymous` is false. */
@@ -25,6 +27,8 @@ export const aSession = ({ isAnonymous = true }: { isAnonymous?: boolean } = {})
 
 type SessionBody = ReturnType<typeof aSession> | null;
 
+type OnRequest = (request: Request) => void | Promise<void>;
+
 /** Answers `get-session` with `body`, or with what `body` returns for each request. */
 export const mockGetSession = (
   body: SessionBody | ((request: Request) => SessionBody),
@@ -41,3 +45,31 @@ export const mockAnonymousSignIn = (
     onRequest(request);
     return HttpResponse.json({ token: 'token-1', user: aSession().user });
   });
+
+/** Signs in a Registered user on `sign-in/email`, calling `onRequest` first. */
+export const mockEmailSignIn = (onRequest: OnRequest = () => {}): HttpHandler =>
+  http.post(API_ROUTE.authSignInEmail, async ({ request }) => {
+    await onRequest(request);
+    return HttpResponse.json({
+      redirect: false,
+      token: 'token-1',
+      user: aSession({ isAnonymous: false }).user,
+    });
+  });
+
+/** Registers a user on `sign-up/email`, calling `onRequest` first. */
+export const mockEmailSignUp = (onRequest: OnRequest = () => {}): HttpHandler =>
+  http.post(API_ROUTE.authSignUpEmail, async ({ request }) => {
+    await onRequest(request);
+    return HttpResponse.json({ token: 'token-1', user: aSession({ isAnonymous: false }).user });
+  });
+
+/** Ends the session on `sign-out`, calling `onRequest` first. */
+export const mockSignOut = (onRequest: OnRequest = () => {}): HttpHandler =>
+  http.post(API_ROUTE.authSignOut, async ({ request }) => {
+    await onRequest(request);
+    return HttpResponse.json({ success: true });
+  });
+
+/** Refetches the session the way better-auth's own auth calls do; its store outlives a test. */
+export const refreshSession = () => act(() => authClient.$store.notify('$sessionSignal'));
