@@ -15,6 +15,13 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    # The entrypoint starts as root, chowns the data dir, then drops to `postgres`.
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - FOWNER
+      - DAC_OVERRIDE
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -34,6 +41,11 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    # Same root-then-drop entrypoint: chown /data, then switch to `redis`.
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
