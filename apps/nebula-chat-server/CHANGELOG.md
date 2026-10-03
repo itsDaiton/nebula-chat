@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.3.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.3.3...nebula-chat-server-v2.3.4) (2026-10-03)
+
+
+### Bug Fixes
+
+* **server:** keep the capabilities postgres and redis need to start ([#433](https://github.com/itsDaiton/nebula-chat/issues/433)) ([e7974e8](https://github.com/itsDaiton/nebula-chat/commit/e7974e89a4cb7c367a24a450fb5d81e04b6c1ee2))
+* **server:** treat an empty OPERATOR_TOKEN as unset ([#432](https://github.com/itsDaiton/nebula-chat/issues/432)) ([6d480d4](https://github.com/itsDaiton/nebula-chat/commit/6d480d4eb0767bb1a99a629fa1a14024933ed2bc))
+
 ## [2.3.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.3.2...nebula-chat-server-v2.3.3) (2026-10-02)
 
 
