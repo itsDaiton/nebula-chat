@@ -28,3 +28,18 @@ updates:
       github-actions-dependencies:
         patterns:
           - "*"
+
+  # Docker Compose images (local dev services)
+  - package-ecosystem: "docker-compose"
+    directory: "/apps/nebula-chat-server"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    # A Postgres major needs a dump/restore of the pgdata volume; bump it by hand.
+    ignore:
+      - dependency-name: "postgres"
+        update-types: ["version-update:semver-major"]
+    groups:
+      docker-compose-dependencies:
+        patterns:
+          - "*"
