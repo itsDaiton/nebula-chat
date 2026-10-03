@@ -35,9 +35,11 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
-    # A Postgres major needs a dump/restore of the pgdata volume; bump it by hand.
+    # Stateful images break their data volumes across majors; bump those by hand.
     ignore:
       - dependency-name: "postgres"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "redis"
         update-types: ["version-update:semver-major"]
     groups:
       docker-compose-dependencies:
