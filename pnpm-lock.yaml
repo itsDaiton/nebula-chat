@@ -191,6 +191,9 @@ catalogs:
     vitest:
       specifier: ^5.0.0
       version: 5.0.0
+    zod:
+      specifier: ^4.5.4
+      version: 4.5.4
 
 overrides:
   effect: 3.20.0
@@ -427,7 +430,7 @@ importers:
         specifier: ^5.7.0
         version: 5.7.0(@fastify/swagger-ui@6.1.1)(@fastify/swagger@9.8.1)(fastify@5.12.5)(zod@4.5.4)
       zod:
-        specifier: ^4.4.2
+        specifier: 'catalog:'
         version: 4.5.4
     devDependencies:
       '@dotenvx/dotenvx':
@@ -526,7 +529,7 @@ importers:
   libs/errors:
     dependencies:
       zod:
-        specifier: ^4.4.2
+        specifier: 'catalog:'
         version: 4.5.4
     devDependencies:
       '@vitest/coverage-v8':

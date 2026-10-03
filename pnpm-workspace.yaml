@@ -17,6 +17,7 @@ catalog:
   tsx: ^4.21.0
   typescript: ^6.0.3
   vitest: ^5.0.0
+  zod: ^4.5.4
 
 # --- pnpm settings -----------------------------------------------------------
 # Since pnpm v11 this file is the only place pnpm reads configuration from.
