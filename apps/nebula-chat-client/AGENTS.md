@@ -43,20 +43,26 @@ apps/nebula-chat-client/src/
 ├── modules/                       # Feature modules
 │   ├── auth/
 │   │   ├── AuthPage.tsx           # /auth — sign-in and sign-up tabs; opt-in, never a wall
-│   │   ├── types/types.ts         # Auth props, credentials, better-auth result shape
+│   │   ├── types/types.ts         # Auth props, credentials (inferred from the schemas), better-auth result shape
+│   │   ├── stores/
+│   │   │   └── usePasswordVisibilityStore.ts
 │   │   ├── utils/
-│   │   │   ├── runAuthRequest.ts      # better-auth call → AppError with copy mapped from its error code
-│   │   │   └── formValue.ts
+│   │   │   ├── authSchemas.ts         # zod schemas for the sign-in / sign-up forms
+│   │   │   ├── authForms.ts           # SIGN_IN_FORM / SIGN_UP_FORM: schema, fields, copy, better-auth call
+│   │   │   ├── runAuthRequest.ts      # better-auth call → AuthRequestError (copy + field) from its error code
+│   │   │   └── AuthRequestError.ts    # AppError carrying the form field its message belongs under
 │   │   ├── hooks/
 │   │   │   ├── useAuth.ts             # Current session (Guest vs Registered) from better-auth's useSession
 │   │   │   ├── useSessionBootstrap.ts # Query that runs ensureSession once per page load
-│   │   │   ├── useSignIn.ts / useSignUp.ts / useSignOut.ts  # Auth mutations
+│   │   │   ├── useAuthMutation.ts     # Email sign-in / sign-up mutation for a form config's request
+│   │   │   ├── useSignOut.ts          # Sign-out; resets the bootstrap so AuthGate re-mints a Guest
 │   │   │   └── useIdentityChange.ts   # After any of them: reset server state, go to the chat root
 │   │   └── components/
 │   │       ├── AuthGate.tsx       # Wraps the routes; renders nothing until a session (Guest at least) exists
-│   │       ├── AccountStatus.tsx  # Nav: Guest/Registered badge + sign-in link or sign-out button
-│   │       ├── SignInForm.tsx / SignUpForm.tsx  # Uncontrolled forms; errors render inline
-│   │       └── AuthField.tsx, AuthFormAlert.tsx
+│   │       ├── AccountStatus.tsx  # Nav: Guest badge + sign-in link, or email + sign-out button
+│   │       ├── AuthForm.tsx       # One react-hook-form + zod form, driven by an AuthFormConfig
+│   │       ├── AuthFormField.tsx  # Label, input (or PasswordInput) and its error text
+│   │       └── AuthFormAlert.tsx  # Failure that belongs to the whole form
 │   ├── chat/
 │   │   ├── ChatPage.tsx
 │   │   ├── types/types.ts         # All chat types
@@ -133,6 +139,7 @@ apps/nebula-chat-client/src/
     │       ├── color-mode.tsx
     │       ├── provider.tsx
     │       ├── toaster.tsx
+    │       ├── password-input.tsx # Controlled masking toggle (Chakra's snippet, keyboard-reachable)
     │       ├── markdown-content.tsx
     │       └── ...
     └── utils/
@@ -272,7 +279,8 @@ generate:api` after any backend change; generated files are never hand-edited.
   `AppError` from `@nebula-chat/errors`, built by `libs/api/utils/toAppError.ts`: an envelope keeps its code
   and message, anything else gets a code from its status and a generic message. `query.error` is therefore an `AppError` whose `message` is safe to
   show. The global `onError` in `libs/api/queryClient.ts` toasts every failure once; a component reads
-  `query.error` only for an inline state.
+  `query.error` only for an inline state. A mutation whose form shows its failure inline sets
+  `meta: { inlineError: true }` and is not toasted.
 - **After a write the cache cannot see, invalidate** with the generated key helpers:
   `queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() })`. `useChatStream` invalidates the
   list on `conversation-created`, and the list, conversation detail and messages on `end` (a messages
@@ -296,6 +304,7 @@ every API route `401`s without a session. Read the session with `useAuth`, which
 | State shared across two or more components                     | Zustand store                                               |
 | Global UI state (drawer, search overlay, viewport height)      | Zustand store                                               |
 | DOM measurements shared across instances (e.g. `useMultiLine`) | Zustand store keyed by content                              |
+| Form field values, validation and submit state                 | react-hook-form (see [Forms](#forms))                       |
 | Debounce timers                                                | Module-level variable alongside the store — not React state |
 | Tracking a previous value across renders                       | `useRef` — not state                                        |
 | Any other "local" state                                        | Zustand store in the owning module                          |
@@ -353,6 +362,7 @@ context is genuinely needed, split it across two files:
 | `useDrawerStore`              | `shared/stores/`                | Mobile drawer open/closed                                        |
 | `useViewportStore`            | `shared/stores/`                | Viewport height string (updated on resize)                       |
 | `useMultiLineStore`           | `shared/stores/`                | Per-content multi-line detection map (`Record<string, boolean>`) |
+| `usePasswordVisibilityStore`  | `modules/auth/stores/`          | Whether the auth form's password is unmasked                     |
 
 ---
 
@@ -364,6 +374,29 @@ context is genuinely needed, split it across two files:
 - Use Chakra UI primitives. Custom UI wrappers live in `shared/components/ui/`.
 - Responsive layout decisions (`isMobile`, `showSidePanels`) come from `useResponsiveLayout`.
 - **All static text must live in `resources.ts`.** If it is a string shown in the UI — button labels, placeholders, error messages, hints, empty states, tooltips — it goes in `resources.ts`. Never hardcode UI strings inline in components or utilities.
+
+---
+
+## Forms
+
+Forms use [react-hook-form](https://react-hook-form.com) with a [zod](https://zod.dev) schema through
+`zodResolver`. `AuthForm` in `modules/auth/components/` is the reference: sign-in and sign-up are one
+component fed two configs (`utils/authForms.ts`), not two copies — variants of a form differ by config.
+
+- **The schema is the source of truth.** It lives in the owning module's `utils/` (`authSchemas.ts`), its
+  messages come from `resources.ts`, and the form's value type is `z.infer<typeof schema>` in
+  `types/types.ts` — never a hand-written duplicate.
+- `useForm({ resolver: zodResolver(schema), mode: 'onTouched' })`: a field validates on first blur, then
+  on every change, so an error clears as soon as it is fixed. Set `noValidate` on the `<form>` so the
+  browser's own bubbles never pre-empt the schema.
+- **Errors render under their field.** Wrap each input in Chakra's `Field.Root invalid={…}` with a
+  `Field.ErrorText`; Field wires `aria-invalid` and `aria-errormessage`, so tests assert with
+  `toHaveAccessibleErrorMessage`.
+- **Server failures go through `setError`.** One that belongs to a field goes under it
+  (`setError('password', …)`); anything else goes to `root.server` and renders as an alert above the
+  fields. Flag that mutation `meta: { inlineError: true }` so it is not toasted too.
+- Field values belong to react-hook-form — never mirror them into a Zustand store. UI state around a form
+  (e.g. password masking) is still a Zustand store.
 
 ---
 

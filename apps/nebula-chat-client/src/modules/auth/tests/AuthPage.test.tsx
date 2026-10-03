@@ -2,11 +2,13 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getListConversationsMockHandler } from '@/libs/api/generated/conversations/conversations.msw';
 import { AuthPage } from '@/modules/auth/AuthPage';
 import { AccountStatus } from '@/modules/auth/components/AccountStatus';
+import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import { ConversationsList } from '@/modules/conversations/components/ConversationsList';
+import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 import { API_ROUTE, mockApiError } from '@/test/api';
@@ -60,19 +62,35 @@ const renderAuthFlow = (initialRoute = route.auth()) => {
   return view;
 };
 
-const fillSignUp = async () => {
+const nameField = () => screen.getByRole('textbox', { name: resources.auth.fields.name });
+const emailField = () => screen.getByRole('textbox', { name: resources.auth.fields.email });
+// A masked password input has no ARIA role, so it is found by its label.
+const passwordField = () => screen.getByLabelText(resources.auth.fields.password);
+
+// Submitting validates, calls the API, refetches the session and navigates: slower than one tick.
+const findSignOut = () =>
+  screen.findByRole('button', { name: resources.auth.actions.signOut }, { timeout: 3000 });
+
+const submitSignIn = () =>
+  userEvent.click(screen.getByRole('button', { name: resources.auth.actions.signIn }));
+const submitSignUp = () =>
+  userEvent.click(screen.getByRole('button', { name: resources.auth.actions.signUp }));
+
+const fillSignUp = async ({ password = 'hunter22hunter' } = {}) => {
   await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
-  await userEvent.type(screen.getByLabelText(resources.auth.fields.name), 'Ada');
-  await userEvent.type(screen.getByLabelText(resources.auth.fields.email), 'ada@example.com');
-  await userEvent.type(screen.getByLabelText(resources.auth.fields.password), 'hunter22hunter');
+  await userEvent.type(nameField(), 'Ada');
+  await userEvent.type(emailField(), 'ada@example.com');
+  await userEvent.type(passwordField(), password);
 };
 
 const fillSignIn = async () => {
-  await userEvent.type(screen.getByLabelText(resources.auth.fields.email), 'ada@example.com');
-  await userEvent.type(screen.getByLabelText(resources.auth.fields.password), 'hunter22hunter');
+  await userEvent.type(emailField(), 'ada@example.com');
+  await userEvent.type(passwordField(), 'hunter22hunter');
 };
 
 beforeEach(() => {
+  vi.restoreAllMocks();
+  usePasswordVisibilityStore.setState({ isPasswordVisible: false });
   session = aSession();
   server.use(
     mockGetSession(() => session),
@@ -89,11 +107,13 @@ describe('AuthPage', () => {
     renderAuthFlow();
 
     expect(screen.getByRole('button', { name: resources.auth.actions.signIn })).toBeInTheDocument();
-    expect(screen.queryByLabelText(resources.auth.fields.name)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('textbox', { name: resources.auth.fields.name }),
+    ).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
 
-    expect(screen.getByLabelText(resources.auth.fields.name)).toBeInTheDocument();
+    expect(nameField()).toBeInTheDocument();
     expect(screen.getByRole('button', { name: resources.auth.actions.signUp })).toBeInTheDocument();
   });
 
@@ -108,12 +128,9 @@ describe('AuthPage', () => {
     renderAuthFlow();
 
     await fillSignUp();
-    await userEvent.click(screen.getByRole('button', { name: resources.auth.actions.signUp }));
+    await submitSignUp();
 
-    expect(await screen.findByText(resources.auth.status.registered)).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: resources.auth.actions.signOut }),
-    ).toBeInTheDocument();
+    expect(await findSignOut()).toBeInTheDocument();
     expect(body).toMatchObject({
       name: 'Ada',
       email: 'ada@example.com',
@@ -121,7 +138,8 @@ describe('AuthPage', () => {
     });
   });
 
-  it('shows a breached password without clearing the form', async () => {
+  it('shows a breached password under the password field without clearing the form', async () => {
+    const toast = vi.spyOn(toaster, 'create');
     server.use(
       mockApiError('post', API_ROUTE.authSignUpEmail, 400, {
         code: 'PASSWORD_COMPROMISED',
@@ -131,17 +149,22 @@ describe('AuthPage', () => {
     renderAuthFlow();
 
     await fillSignUp();
-    await userEvent.click(screen.getByRole('button', { name: resources.auth.actions.signUp }));
+    await submitSignUp();
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      resources.auth.errors.passwordCompromised,
+    await waitFor(() =>
+      expect(passwordField()).toHaveAccessibleErrorMessage(
+        resources.auth.errors.passwordCompromised,
+      ),
     );
-    expect(screen.getByLabelText(resources.auth.fields.name)).toHaveValue('Ada');
-    expect(screen.getByLabelText(resources.auth.fields.email)).toHaveValue('ada@example.com');
-    expect(screen.getByLabelText(resources.auth.fields.password)).toHaveValue('hunter22hunter');
+    expect(passwordField()).toBeInvalid();
+    expect(nameField()).toHaveValue('Ada');
+    expect(emailField()).toHaveValue('ada@example.com');
+    expect(passwordField()).toHaveValue('hunter22hunter');
+    // Shown once, where it applies — not repeated as a toast.
+    expect(toast).not.toHaveBeenCalled();
   });
 
-  it('tells a returning user their email is already registered', async () => {
+  it('shows an email that is already registered under the email field', async () => {
     server.use(
       mockApiError('post', API_ROUTE.authSignUpEmail, 422, {
         code: 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL',
@@ -150,9 +173,48 @@ describe('AuthPage', () => {
     renderAuthFlow();
 
     await fillSignUp();
-    await userEvent.click(screen.getByRole('button', { name: resources.auth.actions.signUp }));
+    await submitSignUp();
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(resources.auth.errors.userExists);
+    await waitFor(() =>
+      expect(emailField()).toHaveAccessibleErrorMessage(resources.auth.errors.userExists),
+    );
+  });
+
+  it('validates sign-up fields before sending anything', async () => {
+    let signUps = 0;
+    server.use(
+      mockEmailSignUp(() => {
+        signUps += 1;
+      }),
+    );
+    renderAuthFlow();
+    await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
+
+    await userEvent.type(emailField(), 'not-an-email');
+    await userEvent.type(passwordField(), 'short');
+    await submitSignUp();
+
+    await waitFor(() =>
+      expect(nameField()).toHaveAccessibleErrorMessage(resources.auth.validation.nameRequired),
+    );
+    expect(emailField()).toHaveAccessibleErrorMessage(resources.auth.validation.emailInvalid);
+    expect(passwordField()).toHaveAccessibleErrorMessage(
+      resources.auth.validation.passwordTooShort,
+    );
+    expect(signUps).toBe(0);
+  });
+
+  it('clears a field error once the value is fixed', async () => {
+    renderAuthFlow();
+
+    await submitSignIn();
+    await waitFor(() =>
+      expect(emailField()).toHaveAccessibleErrorMessage(resources.auth.validation.emailRequired),
+    );
+
+    await userEvent.type(emailField(), 'ada@example.com');
+
+    await waitFor(() => expect(emailField()).not.toBeInvalid());
   });
 
   it('signs in with email and returns to the chat as a Registered user', async () => {
@@ -166,25 +228,38 @@ describe('AuthPage', () => {
     renderAuthFlow();
 
     await fillSignIn();
-    await userEvent.click(screen.getByRole('button', { name: resources.auth.actions.signIn }));
+    await submitSignIn();
 
-    expect(await screen.findByText(resources.auth.status.registered)).toBeInTheDocument();
+    expect(await findSignOut()).toBeInTheDocument();
     expect(body).toMatchObject({ email: 'ada@example.com', password: 'hunter22hunter' });
   });
 
-  it('shows wrong credentials without clearing the form', async () => {
+  it('requires both fields to sign in', async () => {
+    renderAuthFlow();
+
+    await submitSignIn();
+
+    await waitFor(() =>
+      expect(emailField()).toHaveAccessibleErrorMessage(resources.auth.validation.emailRequired),
+    );
+    expect(passwordField()).toHaveAccessibleErrorMessage(
+      resources.auth.validation.passwordRequired,
+    );
+  });
+
+  it('shows wrong credentials above the form without clearing it', async () => {
     server.use(
       mockApiError('post', API_ROUTE.authSignInEmail, 401, { code: 'INVALID_EMAIL_OR_PASSWORD' }),
     );
     renderAuthFlow();
 
     await fillSignIn();
-    await userEvent.click(screen.getByRole('button', { name: resources.auth.actions.signIn }));
+    await submitSignIn();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       resources.auth.errors.invalidCredentials,
     );
-    expect(screen.getByLabelText(resources.auth.fields.email)).toHaveValue('ada@example.com');
+    expect(emailField()).toHaveValue('ada@example.com');
   });
 
   it('falls back to a generic message for an unrecognised error', async () => {
@@ -192,7 +267,7 @@ describe('AuthPage', () => {
     renderAuthFlow();
 
     await fillSignIn();
-    await userEvent.click(screen.getByRole('button', { name: resources.auth.actions.signIn }));
+    await submitSignIn();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(resources.auth.errors.unknown);
   });
@@ -202,9 +277,38 @@ describe('AuthPage', () => {
     renderAuthFlow();
 
     await fillSignIn();
-    await userEvent.click(screen.getByRole('button', { name: resources.auth.actions.signIn }));
+    await submitSignIn();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(resources.errors.network);
+  });
+
+  it('reveals and re-masks the password', async () => {
+    renderAuthFlow();
+    await userEvent.type(passwordField(), 'hunter22hunter');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: resources.passwordInput.showPassword }),
+    );
+
+    expect(passwordField()).toHaveAttribute('type', 'text');
+    expect(passwordField()).toHaveValue('hunter22hunter');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: resources.passwordInput.hidePassword }),
+    );
+
+    expect(passwordField()).toHaveAttribute('type', 'password');
+  });
+
+  it('masks the password again when switching tabs', async () => {
+    renderAuthFlow();
+    await userEvent.click(
+      screen.getByRole('button', { name: resources.passwordInput.showPassword }),
+    );
+
+    await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
+
+    expect(passwordField()).toHaveAttribute('type', 'password');
   });
 
   it("keeps the Guest's conversations after signing in (the claim)", async () => {
@@ -223,9 +327,9 @@ describe('AuthPage', () => {
 
     await userEvent.click(screen.getByRole('link', { name: resources.auth.actions.signIn }));
     await fillSignIn();
-    await userEvent.click(screen.getByRole('button', { name: resources.auth.actions.signIn }));
+    await submitSignIn();
 
-    expect(await screen.findByText(resources.auth.status.registered)).toBeInTheDocument();
+    expect(await findSignOut()).toBeInTheDocument();
     expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
     expect(screen.getByText('Sourdough tips')).toBeInTheDocument();
     // Re-read for the new account rather than served from the Guest's cache.

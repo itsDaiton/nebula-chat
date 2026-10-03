@@ -1,17 +1,22 @@
 import { AppError, errorCodeForStatus } from '@nebula-chat/errors';
-import type { AuthResult } from '@/modules/auth/types/types';
+import type { AuthErrorDescription, AuthResult } from '@/modules/auth/types/types';
+import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
 import { resources } from '@/resources';
 
-// better-auth's codes (core + Have I Been Pwned) mapped to copy; anything else is generic.
-const MESSAGE_BY_CODE: Partial<Record<string, string>> = {
-  PASSWORD_COMPROMISED: resources.auth.errors.passwordCompromised,
-  USER_ALREADY_EXISTS: resources.auth.errors.userExists,
-  USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: resources.auth.errors.userExists,
-  INVALID_EMAIL_OR_PASSWORD: resources.auth.errors.invalidCredentials,
-  INVALID_EMAIL: resources.auth.errors.invalidEmail,
-  PASSWORD_TOO_SHORT: resources.auth.errors.passwordTooShort,
-  PASSWORD_TOO_LONG: resources.auth.errors.passwordTooLong,
+const { errors, validation } = resources.auth;
+
+// better-auth's codes (core + Have I Been Pwned), each placed under the field it concerns.
+const AUTH_ERRORS: Partial<Record<string, AuthErrorDescription>> = {
+  PASSWORD_COMPROMISED: { field: 'password', message: errors.passwordCompromised },
+  PASSWORD_TOO_SHORT: { field: 'password', message: validation.passwordTooShort },
+  PASSWORD_TOO_LONG: { field: 'password', message: validation.passwordTooLong },
+  USER_ALREADY_EXISTS: { field: 'email', message: errors.userExists },
+  USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: { field: 'email', message: errors.userExists },
+  INVALID_EMAIL: { field: 'email', message: validation.emailInvalid },
+  INVALID_EMAIL_OR_PASSWORD: { field: 'root', message: errors.invalidCredentials },
 };
+
+const UNKNOWN_ERROR: AuthErrorDescription = { field: 'root', message: errors.unknown };
 
 /** Runs a better-auth call, rejecting with an AppError whose message is safe to show. */
 export const runAuthRequest = async (request: () => Promise<AuthResult>): Promise<void> => {
@@ -21,9 +26,6 @@ export const runAuthRequest = async (request: () => Promise<AuthResult>): Promis
   if (!result.error) return;
 
   const { code, status } = result.error;
-  throw new AppError(
-    errorCodeForStatus(status),
-    MESSAGE_BY_CODE[code ?? ''] ?? resources.auth.errors.unknown,
-    { cause: result.error },
-  );
+  const { field, message } = AUTH_ERRORS[code ?? ''] ?? UNKNOWN_ERROR;
+  throw new AuthRequestError(errorCodeForStatus(status), message, field, { cause: result.error });
 };

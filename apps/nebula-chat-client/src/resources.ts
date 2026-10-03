@@ -46,18 +46,26 @@ export const resources = {
     },
     status: {
       guest: 'Guest',
-      registered: 'Registered',
+    },
+    validation: {
+      nameRequired: 'Enter your name.',
+      emailRequired: 'Enter your email address.',
+      emailInvalid: 'Enter a valid email address.',
+      passwordRequired: 'Enter your password.',
+      passwordTooShort: 'Use at least 8 characters.',
+      passwordTooLong: 'Use at most 128 characters.',
     },
     errors: {
       passwordCompromised:
         'This password has appeared in a data breach. Please choose a different one.',
       userExists: 'An account with this email already exists. Sign in instead.',
       invalidCredentials: 'Incorrect email or password.',
-      invalidEmail: 'Please enter a valid email address.',
-      passwordTooShort: 'This password is too short.',
-      passwordTooLong: 'This password is too long.',
       unknown: 'Authentication failed. Please try again.',
     },
+  },
+  passwordInput: {
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
   },
   errors: {
     title: 'Something went wrong',

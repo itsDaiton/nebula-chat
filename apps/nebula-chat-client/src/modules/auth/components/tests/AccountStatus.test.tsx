@@ -80,12 +80,15 @@ describe('AccountStatus', () => {
     expect(screen.getByText(AUTH_PAGE)).toBeInTheDocument();
   });
 
-  it('marks a Registered user with their email', async () => {
+  it('shows a Registered user their email and a sign-out control, without a badge', async () => {
     session = aSession({ isAnonymous: false });
     await renderStatus();
 
-    expect(await screen.findByText(resources.auth.status.registered)).toBeInTheDocument();
-    expect(screen.getByText('ada@example.com')).toBeInTheDocument();
+    expect(await screen.findByText('ada@example.com')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: resources.auth.actions.signOut }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(resources.auth.status.guest)).not.toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: resources.auth.actions.signIn }),
     ).not.toBeInTheDocument();
@@ -152,6 +155,8 @@ describe('AccountStatus', () => {
         expect.objectContaining({ description: resources.auth.errors.unknown }),
       ),
     );
-    expect(screen.getByText(resources.auth.status.registered)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: resources.auth.actions.signOut }),
+    ).toBeInTheDocument();
   });
 });
