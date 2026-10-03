@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-errors-v0.2.1...nebula-chat-errors-v0.2.2) (2026-10-03)
+
+
+### Bug Fixes
+
+* move zod to the pnpm catalog ([#439](https://github.com/itsDaiton/nebula-chat/issues/439)) ([7ce238d](https://github.com/itsDaiton/nebula-chat/commit/7ce238d413bd2097adff9af911dbb997de87f9eb))
+
 ## [0.2.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-errors-v0.2.0...nebula-chat-errors-v0.2.1) (2026-09-28)
 
 
