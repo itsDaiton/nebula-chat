@@ -28,3 +28,20 @@ updates:
       github-actions-dependencies:
         patterns:
           - "*"
+
+  # Docker Compose images (local dev services)
+  - package-ecosystem: "docker-compose"
+    directory: "/apps/nebula-chat-server"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    # Stateful images break their data volumes across majors; bump those by hand.
+    ignore:
+      - dependency-name: "postgres"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "redis"
+        update-types: ["version-update:semver-major"]
+    groups:
+      docker-compose-dependencies:
+        patterns:
+          - "*"
