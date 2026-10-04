@@ -56,6 +56,8 @@ export type AuthFormConfig<Values extends FieldValues> = {
 export type AuthFormProps<Values extends FieldValues> = {
   config: AuthFormConfig<Values>;
   onSuccess?: () => void;
+  /** Called after the failure is shown, for a page that reacts to a specific one. */
+  onError?: (error: Error) => void;
 };
 
 export type AuthFormFieldProps = {

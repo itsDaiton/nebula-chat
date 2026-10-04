@@ -58,7 +58,7 @@ describe('ResetPasswordPage', () => {
     expect(screen.getByText(SIGN_IN_PAGE)).toBeInTheDocument();
   });
 
-  it('explains a token that expired or was already used', async () => {
+  it('swaps the form for a new-link offer when the token turns out spent or edited', async () => {
     server.use(
       mockApiError('post', API_ROUTE.authResetPassword, 400, {
         code: 'INVALID_TOKEN',
@@ -70,8 +70,44 @@ describe('ResetPasswordPage', () => {
     await userEvent.type(passwordField(), 'a-new-long-passphrase');
     await submit();
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      resources.auth.errors.resetLinkInvalid,
+    expect(
+      await screen.findByRole('link', { name: resetPassword.requestNewLink }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(resetPassword.linkInvalid);
+    expect(screen.queryByLabelText(resources.auth.fields.newPassword)).not.toBeInTheDocument();
+  });
+
+  it('refuses the current password under the field, keeping the link usable', async () => {
+    server.use(
+      mockApiError('post', API_ROUTE.authResetPassword, 400, {
+        code: 'PASSWORD_REUSED',
+        message: 'Choose a password different from your current one.',
+      }),
+    );
+    renderPage('?token=reset-token');
+
+    await userEvent.type(passwordField(), 'my-current-passphrase');
+    await submit();
+
+    await waitFor(() =>
+      expect(passwordField()).toHaveAccessibleErrorMessage(resources.auth.errors.passwordReused),
+    );
+    expect(screen.getByRole('button', { name: resetPassword.submit })).toBeInTheDocument();
+  });
+
+  it('refuses a breached password under the field', async () => {
+    server.use(
+      mockApiError('post', API_ROUTE.authResetPassword, 400, { code: 'PASSWORD_COMPROMISED' }),
+    );
+    renderPage('?token=reset-token');
+
+    await userEvent.type(passwordField(), 'password1234');
+    await submit();
+
+    await waitFor(() =>
+      expect(passwordField()).toHaveAccessibleErrorMessage(
+        resources.auth.errors.passwordCompromised,
+      ),
     );
   });
 

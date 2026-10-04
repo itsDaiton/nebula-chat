@@ -58,7 +58,7 @@ The instance is configured with:
 | Email / password         | Enabled. Password hashing is better-auth's built-in default (scrypt). Password reset enabled; a reset revokes the user's other sessions.                             |
 | Email verification       | Sent on sign-up (`sendOnSignUp`), **not required** to sign in; following the link verifies and signs the user in. See [Email](#email).                               |
 | Anonymous plugin         | `POST /sign-in/anonymous` mints a Guest. Its `onLinkAccount` hook runs the claim.                                                                                    |
-| Have I Been Pwned plugin | Rejects sign-up with a known-breached password (`400 PASSWORD_COMPROMISED`).                                                                                         |
+| Have I Been Pwned plugin | Rejects sign-up with a known-breached password (`400 PASSWORD_COMPROMISED`); a reset is checked by the reset guard instead.                                          |
 | openAPI plugin           | Serves the auth API reference — see [API reference](#api-reference).                                                                                                 |
 | `secondaryStorage`       | The `@nebula-chat/redis` `authStore` — sessions, verification records, and rate-limit counters.                                                                      |
 | `session.cookieCache`    | Enabled — a short-lived signed cookie lets most requests validate without a store round-trip.                                                                        |
@@ -140,7 +140,9 @@ and an already-verified email is rejected (`400 EMAIL_ALREADY_VERIFIED`). `callb
 is where the link lands afterwards — the client passes its `/auth/verify-email` page.
 
 ```bash
-curl -i -b jar.txt -X POST http://localhost:3000/api/auth/send-verification-email   -H 'content-type: application/json'   -d '{"email":"you@example.com","callbackURL":"http://localhost:5173/auth/verify-email"}'
+curl -i -b jar.txt -X POST http://localhost:3000/api/auth/send-verification-email \
+  -H 'content-type: application/json' \
+  -d '{"email":"you@example.com","callbackURL":"http://localhost:5173/auth/verify-email"}'
 ```
 
 #### `GET /api/auth/verify-email` — follow the verification link
@@ -155,7 +157,9 @@ Emails a reset link when an account exists, and answers the same `200` either wa
 `redirectTo` is the client's `/auth/reset-password` page.
 
 ```bash
-curl -i -X POST http://localhost:3000/api/auth/request-password-reset   -H 'content-type: application/json'   -d '{"email":"you@example.com","redirectTo":"http://localhost:5173/auth/reset-password"}'
+curl -i -X POST http://localhost:3000/api/auth/request-password-reset \
+  -H 'content-type: application/json' \
+  -d '{"email":"you@example.com","redirectTo":"http://localhost:5173/auth/reset-password"}'
 ```
 
 The emailed link (`GET /api/auth/reset-password/:token`) redirects to `redirectTo?token=…`,
@@ -163,11 +167,22 @@ or `redirectTo?error=INVALID_TOKEN` when the token is unknown or expired.
 
 #### `POST /api/auth/reset-password` — set the new password
 
-Consumes the token and sets the password, then revokes the user's sessions. An unknown,
-expired or already-used token is rejected with `400 INVALID_TOKEN`.
+Consumes the token and sets the password, then revokes the user's sessions and marks the
+email verified (the emailed link proves ownership). A reset token works **once**, for **one
+hour**; an unknown, expired, already-used or edited token is rejected with
+`400 INVALID_TOKEN`. Requesting another link does not cancel earlier ones, which stay
+usable until they expire.
+
+A `before` hook in `@nebula-chat/auth` vets the new password while the token is still
+unspent, because better-auth consumes the token before it hashes the password. It answers
+`400 PASSWORD_COMPROMISED` (Have I Been Pwned) or `400 PASSWORD_REUSED` (the current
+password), and the same link can be retried with a different password. The guard is
+[`libs/auth/src/resetPassword.ts`](../libs/auth/src/resetPassword.ts).
 
 ```bash
-curl -i -X POST http://localhost:3000/api/auth/reset-password   -H 'content-type: application/json'   -d '{"token":"<token from the link>","newPassword":"another-long-passphrase"}'
+curl -i -X POST http://localhost:3000/api/auth/reset-password \
+  -H 'content-type: application/json' \
+  -d '{"token":"<token from the link>","newPassword":"another-long-passphrase"}'
 ```
 
 #### `POST /api/auth/delete-anonymous-user` — delete the Guest
@@ -300,6 +315,8 @@ injected `sendEmail` (`EmailSender`); `createResendEmailSender`
 server passes in. Sends run as better-auth background tasks, so a response never waits on
 Resend (no timing signal about which emails have accounts) and a failed send is logged as
 `auth.library.log` rather than failing the request. Both links expire after an hour.
+Requesting a reset or resending verification is rate-limited to 3 per minute; the client
+shows a "wait a minute" message on the `429`.
 
 Verification does not block sign-in: requiring it would stop sign-up from creating a
 session, and the claim below runs on that session. Instead an unverified Registered user

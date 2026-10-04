@@ -3,21 +3,25 @@ import type { AuthErrorDescription, AuthResult } from '@/modules/auth/types/type
 import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
 import { resources } from '@/resources';
 
-const { errors, validation } = resources.auth;
+const { errors, validation, resetPassword } = resources.auth;
 
 // better-auth's codes (core + Have I Been Pwned), each placed under the field it concerns.
 const AUTH_ERRORS: Partial<Record<string, AuthErrorDescription>> = {
   PASSWORD_COMPROMISED: { field: 'password', message: errors.passwordCompromised },
+  PASSWORD_REUSED: { field: 'password', message: errors.passwordReused },
   PASSWORD_TOO_SHORT: { field: 'password', message: validation.passwordTooShort },
   PASSWORD_TOO_LONG: { field: 'password', message: validation.passwordTooLong },
   USER_ALREADY_EXISTS: { field: 'email', message: errors.userExists },
   USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: { field: 'email', message: errors.userExists },
   INVALID_EMAIL: { field: 'email', message: validation.emailInvalid },
   INVALID_EMAIL_OR_PASSWORD: { field: 'root', message: errors.invalidCredentials },
-  INVALID_TOKEN: { field: 'root', message: errors.resetLinkInvalid },
+  INVALID_TOKEN: { field: 'root', message: resetPassword.linkInvalid },
 };
 
 const UNKNOWN_ERROR: AuthErrorDescription = { field: 'root', message: errors.unknown };
+
+// better-auth's rate limiter answers 429 with no code of its own.
+const TOO_MANY_REQUESTS: AuthErrorDescription = { field: 'root', message: errors.tooManyRequests };
 
 /** Runs a better-auth call, rejecting with an AppError whose message is safe to show. */
 export const runAuthRequest = async (request: () => Promise<AuthResult>): Promise<void> => {
@@ -27,6 +31,9 @@ export const runAuthRequest = async (request: () => Promise<AuthResult>): Promis
   if (!result.error) return;
 
   const { code, status } = result.error;
-  const { field, message } = AUTH_ERRORS[code ?? ''] ?? UNKNOWN_ERROR;
-  throw new AuthRequestError(errorCodeForStatus(status), message, field, { cause: result.error });
+  const { field, message } =
+    status === 429 ? TOO_MANY_REQUESTS : (AUTH_ERRORS[code ?? ''] ?? UNKNOWN_ERROR);
+  throw new AuthRequestError(errorCodeForStatus(status), message, field, code, {
+    cause: result.error,
+  });
 };

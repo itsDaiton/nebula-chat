@@ -13,6 +13,7 @@ import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
 export const AuthForm = <Values extends FieldValues>({
   config,
   onSuccess,
+  onError,
 }: AuthFormProps<Values>) => {
   const { label, title, description, submitLabel, schema, fields, request, successMessage } =
     config;
@@ -29,6 +30,7 @@ export const AuthForm = <Values extends FieldValues>({
     const target = error instanceof AuthRequestError ? error.field : 'root';
     const field = fields.find(({ name }) => name === target);
     setError(field?.name ?? 'root.server', { message: error.message });
+    onError?.(error);
   };
 
   const onSubmit = (values: Values) =>

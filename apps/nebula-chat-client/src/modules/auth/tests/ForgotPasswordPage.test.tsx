@@ -85,6 +85,18 @@ describe('ForgotPasswordPage', () => {
     expect(emailField()).toHaveValue('ada@example.com');
   });
 
+  it('asks the user to wait when reset requests are rate limited', async () => {
+    server.use(mockApiError('post', API_ROUTE.authRequestPasswordReset, 429, {}));
+    renderPage();
+
+    await userEvent.type(emailField(), 'ada@example.com');
+    await submit();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      resources.auth.errors.tooManyRequests,
+    );
+  });
+
   it('leads back to sign in', async () => {
     renderPage();
 

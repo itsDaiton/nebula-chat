@@ -51,7 +51,8 @@ export const resources = {
       description: 'Your new password replaces the old one and signs you out everywhere else.',
       submit: 'Update password',
       done: 'Your password has been updated. Sign in with your new password.',
-      linkInvalid: 'This reset link is invalid or has expired.',
+      linkInvalid:
+        'This reset link has expired or was already used. Each link works once, for one hour.',
       requestNewLink: 'Request a new link',
     },
     verifyEmail: {
@@ -103,7 +104,8 @@ export const resources = {
         'This password has shown up in a known data breach. Please pick a different one.',
       userExists: 'You already have an account with this email. Try signing in instead.',
       invalidCredentials: "That email and password don't match. Please try again.",
-      resetLinkInvalid: 'This reset link is invalid or has expired. Request a new one.',
+      passwordReused: 'Choose a password different from your current one.',
+      tooManyRequests: 'Too many attempts. Wait a minute, then try again.',
       unknown: 'Something went wrong on our end. Please try again.',
     },
   },
