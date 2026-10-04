@@ -42,10 +42,12 @@ services:
     cap_drop:
       - ALL
     # Same root-then-drop entrypoint: chown /data, then switch to `redis`.
+    # DAC_OVERRIDE lets root traverse the redis-owned 0700 appendonlydir.
     cap_add:
       - CHOWN
       - SETUID
       - SETGID
+      - DAC_OVERRIDE
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
