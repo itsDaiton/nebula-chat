@@ -84,6 +84,7 @@ apps/nebula-chat-client/src/
 │   │       ├── ChatInputArea.tsx
 │   │       ├── ChatMessage.tsx
 │   │       ├── ChatStreaming.tsx
+│   │       ├── MessageAllowancePrompt.tsx # Guest's send refused at the message allowance → register
 │   │       ├── ModelSelect.tsx
 │   │       ├── SendButton.tsx
 │   │       └── ...
@@ -354,7 +355,7 @@ context is genuinely needed, split it across two files:
 | Store                         | Location                        | Owns                                                             |
 | ----------------------------- | ------------------------------- | ---------------------------------------------------------------- |
 | `useConversationsSearchStore` | `modules/conversations/stores/` | Search text and its debounced copy (the results are a query)     |
-| `useChatStreamStore`          | `modules/chat/stores/`          | Chat history, streaming flag, token usage, conversation ID       |
+| `useChatStreamStore`          | `modules/chat/stores/`          | History, stream flag, usage, conversation ID, message allowance  |
 | `useMessageStore`             | `modules/chat/stores/`          | Current message input value                                      |
 | `useModelStore`               | `modules/chat/stores/`          | Selected AI model                                                |
 | `useModelSelectorStore`       | `modules/chat/stores/`          | Model dropdown open state and trigger width                      |

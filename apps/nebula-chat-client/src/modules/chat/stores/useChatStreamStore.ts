@@ -8,6 +8,7 @@ export const useChatStreamStore = create<ChatStreamState>((set) => ({
   error: null,
   usage: null,
   conversationId: undefined,
+  isMessageAllowanceReached: false,
   setHistory: (history) =>
     set((state) => ({
       history: typeof history === 'function' ? history(state.history) : history,
@@ -17,4 +18,5 @@ export const useChatStreamStore = create<ChatStreamState>((set) => ({
   setError: (error) => set({ error }),
   setUsage: (usage) => set({ usage }),
   setConversationId: (id) => set({ conversationId: id }),
+  clearMessageAllowanceReached: () => set({ isMessageAllowanceReached: false }),
 }));

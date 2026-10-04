@@ -7,6 +7,11 @@ export const resources = {
     emptyConversation: 'This conversation has no messages yet. 😔',
     emptyConversationHint: 'Start the conversation by asking Nebula Chat something!',
     streamError: 'An error occurred during streaming.',
+    messageAllowance: {
+      title: "You've reached the free message limit",
+      description: 'Register or sign in to keep chatting. Your conversations come with you.',
+      action: 'Register or sign in',
+    },
   },
   conversations: {
     title: 'Conversations',

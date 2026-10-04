@@ -9,8 +9,9 @@ import {
 import { getListMessagesQueryKey } from '@/libs/api/generated/messages/messages';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
+import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
 import { resources } from '@/resources';
-import { API_ROUTE } from '@/test/api';
+import { API_ROUTE, mockApiError } from '@/test/api';
 import { server } from '@/test/msw';
 import { createTestQueryClient, renderHookWithQueryClient } from '@/test/render';
 
@@ -62,7 +63,9 @@ beforeEach(() => {
     error: null,
     usage: null,
     conversationId: undefined,
+    isMessageAllowanceReached: false,
   });
+  useMessageStore.setState({ message: '' });
 });
 
 describe('useChatStream — token streaming', () => {
@@ -214,26 +217,86 @@ describe('useChatStream — usage and errors', () => {
 
   it('reports a rejected request by the message of its error envelope', async () => {
     server.use(
-      http.post(ENDPOINT, () =>
-        HttpResponse.json(
-          {
-            success: false,
-            error: 'MessageAllowanceReached',
-            message: 'Message allowance exceeded: a Guest can send at most 10 messages.',
-          },
-          { status: 403 },
-        ),
-      ),
+      mockApiError('post', ENDPOINT, 429, {
+        success: false,
+        error: 'TooManyRequests',
+        message: 'Rate limit exceeded. Retry after 500ms.',
+      }),
     );
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
     await waitFor(() =>
-      expect(useChatStreamStore.getState().error).toBe(
-        'Message allowance exceeded: a Guest can send at most 10 messages.',
-      ),
+      expect(useChatStreamStore.getState().error).toBe('Rate limit exceeded. Retry after 500ms.'),
     );
+  });
+});
+
+describe('useChatStream — message allowance', () => {
+  const allowanceEnvelope = {
+    success: false,
+    error: 'MessageAllowanceReached',
+    message: 'Message allowance exceeded: a Guest can send at most 10 messages.',
+  };
+
+  it('flags the reached allowance instead of reporting a generic error', async () => {
+    server.use(mockApiError('post', ENDPOINT, 403, allowanceEnvelope));
+    const { result } = renderHookWithQueryClient(() => useChatStream());
+
+    await sendMessage(result);
+
+    expect(useChatStreamStore.getState()).toMatchObject({
+      isMessageAllowanceReached: true,
+      isStreaming: false,
+      error: null,
+    });
+  });
+
+  it('returns the refused message to the composer instead of the history', async () => {
+    server.use(mockApiError('post', ENDPOINT, 403, allowanceEnvelope));
+    const { result } = renderHookWithQueryClient(() => useChatStream());
+
+    await sendMessage(result);
+
+    expect(history()).toEqual([]);
+    expect(useMessageStore.getState().message).toBe('what is 2+2?');
+  });
+
+  it('treats a 403 without an envelope as the reached allowance', async () => {
+    server.use(http.post(ENDPOINT, () => new HttpResponse(null, { status: 403 })));
+    const { result } = renderHookWithQueryClient(() => useChatStream());
+
+    await sendMessage(result);
+
+    expect(useChatStreamStore.getState().isMessageAllowanceReached).toBe(true);
+  });
+
+  it('reports a plain Forbidden as an error, not the reached allowance', async () => {
+    server.use(
+      mockApiError('post', ENDPOINT, 403, {
+        success: false,
+        error: 'Forbidden',
+        message: 'Forbidden.',
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream());
+
+    await sendMessage(result);
+
+    await waitFor(() => expect(useChatStreamStore.getState().error).toBe('Forbidden.'));
+    expect(useChatStreamStore.getState().isMessageAllowanceReached).toBe(false);
+  });
+
+  it('clears the reached allowance once a later send goes through', async () => {
+    useChatStreamStore.setState({ isMessageAllowanceReached: true });
+    streamFrames(frame('token', { token: 'welcome back' }), frame('end', {}));
+    const { result } = renderHookWithQueryClient(() => useChatStream());
+
+    await sendMessage(result);
+
+    expect(useChatStreamStore.getState().isMessageAllowanceReached).toBe(false);
+    await waitFor(() => expect(assistantContent()).toBe('welcome back'));
   });
 });
 
