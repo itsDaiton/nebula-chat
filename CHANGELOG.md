@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.9.0...nebula-chat-v2.9.1) (2026-10-04)
+
+
+### Bug Fixes
+
+* point the API at api.nebula-chat.cz and document the same-site cookie rule ([#449](https://github.com/itsDaiton/nebula-chat/issues/449)) ([17af975](https://github.com/itsDaiton/nebula-chat/commit/17af975c468e6c85bf4ccf173f413b2d6bd0edbc))
+
 ## [2.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.8.0...nebula-chat-v2.9.0) (2026-10-04)
 
 
