@@ -1,7 +1,12 @@
 import type { ReactNode } from 'react';
 import type { FieldValues, Path, UseFormRegisterReturn } from 'react-hook-form';
 import type { z } from 'zod';
-import type { signInSchema, signUpSchema } from '@/modules/auth/utils/authSchemas';
+import type {
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  signInSchema,
+  signUpSchema,
+} from '@/modules/auth/utils/authSchemas';
 
 export type AuthGateProps = {
   children: ReactNode;
@@ -15,6 +20,10 @@ export type AuthResult = {
 export type SignInCredentials = z.infer<typeof signInSchema>;
 
 export type SignUpCredentials = z.infer<typeof signUpSchema>;
+
+export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
+
+export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
 /** The form field an auth failure belongs to; `root` is the form as a whole. */
 export type AuthErrorField = 'email' | 'password' | 'root';
@@ -31,7 +40,7 @@ export type AuthFieldConfig<Values extends FieldValues> = {
   autoComplete: string;
 };
 
-/** Everything that tells the sign-in form from the sign-up form. */
+/** Everything that tells one auth form from another. */
 export type AuthFormConfig<Values extends FieldValues> = {
   label: string;
   title: string;
@@ -40,10 +49,13 @@ export type AuthFormConfig<Values extends FieldValues> = {
   schema: z.ZodType<Values, Values>;
   fields: AuthFieldConfig<Values>[];
   request: (values: Values) => Promise<AuthResult>;
+  /** Shown in place of the form once it succeeds; without one, `onSuccess` moves on. */
+  successMessage?: string;
 };
 
 export type AuthFormProps<Values extends FieldValues> = {
   config: AuthFormConfig<Values>;
+  onSuccess?: () => void;
 };
 
 export type AuthFormFieldProps = {
@@ -54,8 +66,24 @@ export type AuthFormFieldProps = {
   error?: string;
 };
 
+export type AuthAlertStatus = 'error' | 'success';
+
 export type AuthFormAlertProps = {
   message?: string;
+  status?: AuthAlertStatus;
+};
+
+export type AuthLayoutProps = {
+  children: ReactNode;
+  footer?: ReactNode;
+};
+
+/** A titled outcome shown in place of a form: its success, or a link that failed. */
+export type AuthStatusProps = {
+  title: string;
+  status: AuthAlertStatus;
+  message: string;
+  children?: ReactNode;
 };
 
 export type PasswordVisibilityState = {

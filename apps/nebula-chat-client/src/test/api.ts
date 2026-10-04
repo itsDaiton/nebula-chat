@@ -26,6 +26,9 @@ export const API_ROUTE = {
   authSignInEmail: '*/api/auth/sign-in/email',
   authSignUpEmail: '*/api/auth/sign-up/email',
   authSignOut: '*/api/auth/sign-out',
+  authRequestPasswordReset: '*/api/auth/request-password-reset',
+  authResetPassword: '*/api/auth/reset-password',
+  authSendVerificationEmail: '*/api/auth/send-verification-email',
 } as const;
 
 type Method = 'get' | 'post' | 'put' | 'delete';

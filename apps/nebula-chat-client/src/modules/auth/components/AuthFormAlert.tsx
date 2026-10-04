@@ -1,10 +1,10 @@
 import { Alert } from '@chakra-ui/react';
 import type { AuthFormAlertProps } from '@/modules/auth/types/types';
 
-/** A failure that belongs to the whole form rather than one field. */
-export const AuthFormAlert = ({ message }: AuthFormAlertProps) =>
+/** An outcome that belongs to the whole form rather than one field. */
+export const AuthFormAlert = ({ message, status = 'error' }: AuthFormAlertProps) =>
   message ? (
-    <Alert.Root status="error" role="alert">
+    <Alert.Root status={status} role={status === 'error' ? 'alert' : 'status'}>
       <Alert.Indicator />
       <Alert.Title>{message}</Alert.Title>
     </Alert.Root>

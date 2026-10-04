@@ -17,6 +17,7 @@ export default defineConfig({
       '@nebula-chat/db',
       '@nebula-chat/redis',
       '@nebula-chat/otel',
+      'resend',
     ],
   },
 });

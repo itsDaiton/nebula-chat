@@ -3,5 +3,10 @@ export const route = {
     root: () => '/',
     conversation: (id: string) => `/c/${id}`,
   },
-  auth: () => '/auth',
+  auth: {
+    root: () => '/auth',
+    forgotPassword: () => '/auth/forgot-password',
+    resetPassword: () => '/auth/reset-password',
+    verifyEmail: () => '/auth/verify-email',
+  },
 };

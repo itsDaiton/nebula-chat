@@ -14,6 +14,7 @@ const AUTH_ERRORS: Partial<Record<string, AuthErrorDescription>> = {
   USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: { field: 'email', message: errors.userExists },
   INVALID_EMAIL: { field: 'email', message: validation.emailInvalid },
   INVALID_EMAIL_OR_PASSWORD: { field: 'root', message: errors.invalidCredentials },
+  INVALID_TOKEN: { field: 'root', message: errors.resetLinkInvalid },
 };
 
 const UNKNOWN_ERROR: AuthErrorDescription = { field: 'root', message: errors.unknown };

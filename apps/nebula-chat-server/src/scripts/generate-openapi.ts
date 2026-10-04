@@ -7,6 +7,8 @@ process.env['DATABASE_URL'] ??= 'postgresql://localhost:5432/openapi';
 process.env['REDIS_URL'] ??= 'redis://localhost:6379';
 process.env['BETTER_AUTH_SECRET'] ??= 'openapi-placeholder-secret-never-used-for-signing';
 process.env['BETTER_AUTH_URL'] ??= 'http://localhost:3000';
+process.env['RESEND_API_KEY'] ??= 'openapi-placeholder-resend-key';
+process.env['EMAIL_FROM'] ??= 'openapi@example.com';
 if (!process.env['OPENAI_API_KEY'] && !process.env['ANTHROPIC_API_KEY']) {
   process.env['OPENAI_API_KEY'] = 'openapi-placeholder-key';
 }

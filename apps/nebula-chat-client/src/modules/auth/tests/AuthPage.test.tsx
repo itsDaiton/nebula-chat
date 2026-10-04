@@ -5,6 +5,7 @@ import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getListConversationsMockHandler } from '@/libs/api/generated/conversations/conversations.msw';
 import { AuthPage } from '@/modules/auth/AuthPage';
+import { ForgotPasswordPage } from '@/modules/auth/ForgotPasswordPage';
 import { AccountStatus } from '@/modules/auth/components/AccountStatus';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import { ConversationsList } from '@/modules/conversations/components/ConversationsList';
@@ -42,7 +43,7 @@ const becomeRegistered = () => {
 };
 
 // The chat root stands in for the app: the nav indicator plus the Guest's conversation list.
-const renderAuthFlow = (initialRoute = route.auth()) => {
+const renderAuthFlow = (initialRoute = route.auth.root()) => {
   const view = renderWithChakra(
     <Routes>
       <Route
@@ -54,7 +55,8 @@ const renderAuthFlow = (initialRoute = route.auth()) => {
           </>
         }
       />
-      <Route path={route.auth()} element={<AuthPage />} />
+      <Route path={route.auth.root()} element={<AuthPage />} />
+      <Route path={route.auth.forgotPassword()} element={<ForgotPasswordPage />} />
     </Routes>,
     { route: initialRoute },
   );
@@ -137,6 +139,25 @@ describe('AuthPage', () => {
       name: 'Ada',
       email: 'ada@example.com',
       password: 'hunter22hunter',
+    });
+  });
+
+  it("sends the verification email's link back to the verify page", async () => {
+    let body: unknown;
+    server.use(
+      mockEmailSignUp(async (request) => {
+        body = await request.clone().json();
+        becomeRegistered();
+      }),
+    );
+    renderAuthFlow();
+
+    await fillSignUp();
+    await submitSignUp();
+
+    await findSignOut();
+    expect(body).toMatchObject({
+      callbackURL: expect.stringMatching(new RegExp(`${route.auth.verifyEmail()}$`)),
     });
   });
 
@@ -338,6 +359,16 @@ describe('AuthPage', () => {
     expect(screen.getByText('Sourdough tips')).toBeInTheDocument();
     // Re-read for the new account rather than served from the Guest's cache.
     await waitFor(() => expect(listRequests).toBe(2));
+  });
+
+  it('offers a password reset from the sign-in form', async () => {
+    renderAuthFlow();
+
+    await userEvent.click(screen.getByRole('link', { name: resources.auth.signIn.forgotPassword }));
+
+    expect(
+      screen.getByRole('heading', { name: resources.auth.forgotPassword.title }),
+    ).toBeInTheDocument();
   });
 
   it('lets a visitor go back to the chat as a Guest', async () => {

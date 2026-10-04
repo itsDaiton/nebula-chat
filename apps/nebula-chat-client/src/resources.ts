@@ -33,10 +33,40 @@ export const resources = {
     page: {
       or: 'or',
       continueWithoutAccount: 'Continue without an account',
+      backToSignIn: 'Back to sign in',
     },
     signIn: {
       title: 'Welcome back',
       description: 'Sign in to pick up right where you left off.',
+      forgotPassword: 'Forgot your password?',
+    },
+    forgotPassword: {
+      title: 'Reset your password',
+      description: "Enter your account's email and we'll send you a link to choose a new password.",
+      submit: 'Send reset link',
+      sent: 'If an account exists for that email, a reset link is on its way. Check your inbox.',
+    },
+    resetPassword: {
+      title: 'Choose a new password',
+      description: 'Your new password replaces the old one and signs you out everywhere else.',
+      submit: 'Update password',
+      done: 'Your password has been updated. Sign in with your new password.',
+      linkInvalid: 'This reset link is invalid or has expired.',
+      requestNewLink: 'Request a new link',
+    },
+    verifyEmail: {
+      verifiedTitle: 'Email verified',
+      verified: 'Thanks for confirming your email address. Your account is all set.',
+      failedTitle: "We couldn't verify your email",
+      linkExpired: 'This verification link has expired. Send yourself a new one.',
+      linkInvalid: 'This verification link is invalid or no longer works.',
+      continueToChat: 'Continue to chat',
+    },
+    emailVerification: {
+      title: 'Verify your email',
+      description: 'Follow the link we emailed you to confirm your address.',
+      resend: 'Resend email',
+      sent: 'Verification email sent. Check your inbox.',
     },
     signUp: {
       title: 'Create your account',
@@ -50,6 +80,7 @@ export const resources = {
       name: 'Name',
       email: 'Email',
       password: 'Password',
+      newPassword: 'New password',
     },
     actions: {
       signIn: 'Sign in',
@@ -69,6 +100,7 @@ export const resources = {
         'This password has shown up in a known data breach. Please pick a different one.',
       userExists: 'You already have an account with this email. Try signing in instead.',
       invalidCredentials: "That email and password don't match. Please try again.",
+      resetLinkInvalid: 'This reset link is invalid or has expired. Request a new one.',
       unknown: 'Something went wrong on our end. Please try again.',
     },
   },

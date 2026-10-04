@@ -21,7 +21,7 @@ export const MessageAllowancePrompt = () => {
         <Alert.Description>{resources.chat.messageAllowance.description}</Alert.Description>
       </Alert.Content>
       <Button asChild size="sm" borderRadius="full" flexShrink={0}>
-        <Link to={route.auth()}>
+        <Link to={route.auth.root()}>
           <LuLogIn />
           {resources.chat.messageAllowance.action}
         </Link>

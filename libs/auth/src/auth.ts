@@ -6,8 +6,10 @@ import { users, session, account, verification } from '@nebula-chat/db';
 import type { DbClient } from '@nebula-chat/db';
 import type { AuthStore } from '@nebula-chat/redis';
 import type { Logger } from '@nebula-chat/otel';
+import { passwordResetEmail, verificationEmail } from './authEmails';
 import { claimConversations } from './claim';
 import { toBetterAuthLogHandler } from './logger';
+import type { EmailSender } from './resend';
 
 /**
  * Everything the lib needs to build a configured better-auth instance. The lib
@@ -39,6 +41,8 @@ export type CreateAuthConfig = {
   baseURL: string;
   /** Origins allowed to call the auth endpoints (CSRF protection). */
   trustedOrigins?: string[];
+  /** Delivers the verification and reset emails — Resend in production (ADR-0021). */
+  sendEmail: EmailSender;
 };
 
 /**
@@ -61,7 +65,8 @@ export type CreateAuthConfig = {
  *   `/api/auth/open-api/generate-schema`. The Fastify `/api/auth/*` route is
  *   `hide: true`, so this is the only machine-readable description of these
  *   endpoints (importable into Bruno/Postman, etc.).
- * - email/password enabled. No OAuth / email verification / reset in this slice.
+ * - email/password with password reset; verification is sent on sign-up but not
+ *   required to sign in, sent in the background via `sendEmail` (ADR-0021).
  */
 export const createAuth = ({
   db,
@@ -70,6 +75,7 @@ export const createAuth = ({
   secret,
   baseURL,
   trustedOrigins,
+  sendEmail,
 }: CreateAuthConfig): Auth =>
   // better-auth 1.7 made `Auth` generic (`Auth<Options>`) and invariant, so the
   // instance `betterAuth()` infers no longer widens to the base `Auth` we expose.
@@ -94,9 +100,22 @@ export const createAuth = ({
       database: {
         generateId: 'uuid',
       },
+      // Fire-and-forget on a long-lived Node server; better-auth catches and logs a rejection.
+      backgroundTasks: {
+        handler: (promise) => {
+          void promise;
+        },
+      },
     },
     emailAndPassword: {
       enabled: true,
+      sendResetPassword: ({ user, url }) => sendEmail(passwordResetEmail({ user, url })),
+      revokeSessionsOnPasswordReset: true,
+    },
+    emailVerification: {
+      sendOnSignUp: true,
+      autoSignInAfterVerification: true,
+      sendVerificationEmail: ({ user, url }) => sendEmail(verificationEmail({ user, url })),
     },
     // Adapt the Redis-backed authStore to better-auth's SecondaryStorage. As of
     // @better-auth/core 1.7 (src/db/type.ts) the interface is

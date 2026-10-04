@@ -27,7 +27,8 @@
     "@nebula-chat/otel": "workspace:*",
     "@nebula-chat/redis": "workspace:*",
     "better-auth": "catalog:",
-    "drizzle-orm": "catalog:"
+    "drizzle-orm": "catalog:",
+    "resend": "^6.28.1"
   },
   "devDependencies": {
     "@types/node": "catalog:",

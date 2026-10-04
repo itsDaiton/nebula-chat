@@ -24,7 +24,7 @@ const renderPrompt = async ({ isAnonymous }: { isAnonymous: boolean }) => {
   renderWithChakra(
     <Routes>
       <Route path={route.chat.root()} element={<MessageAllowancePrompt />} />
-      <Route path={route.auth()} element={AUTH_PAGE} />
+      <Route path={route.auth.root()} element={AUTH_PAGE} />
     </Routes>,
   );
 };

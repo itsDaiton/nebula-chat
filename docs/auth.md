@@ -24,11 +24,11 @@ the Guest's conversations are reassigned to the new account (see [Account linkin
 
 ## Components
 
-| Piece                 | Location                                                                                      | Responsibility                                                                                                                 |
-| --------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `@nebula-chat/auth`   | [`libs/auth`](../libs/auth)                                                                   | Builds the configured better-auth instance. Takes all dependencies as injected config; never reads `process.env`.              |
-| Server auth singleton | [`src/auth.ts`](../apps/nebula-chat-server/src/auth.ts)                                       | Constructs the one instance, injecting the resolved env, the `@nebula-chat/db` client, `redis.authStore`, and the Pino logger. |
-| `authGate` plugin     | [`src/plugins/authGate.plugin.ts`](../apps/nebula-chat-server/src/plugins/authGate.plugin.ts) | Mounts the `/api/auth/*` handler and exposes the route gates.                                                                  |
+| Piece                 | Location                                                                                      | Responsibility                                                                                                                                    |
+| --------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@nebula-chat/auth`   | [`libs/auth`](../libs/auth)                                                                   | Builds the configured better-auth instance. Takes all dependencies as injected config; never reads `process.env`.                                 |
+| Server auth singleton | [`src/auth.ts`](../apps/nebula-chat-server/src/auth.ts)                                       | Constructs the one instance, injecting the resolved env, the `@nebula-chat/db` client, `redis.authStore`, the Pino logger, and the Resend sender. |
+| `authGate` plugin     | [`src/plugins/authGate.plugin.ts`](../apps/nebula-chat-server/src/plugins/authGate.plugin.ts) | Mounts the `/api/auth/*` handler and exposes the route gates.                                                                                     |
 
 `createAuth()` receives its dependencies rather than importing them, matching the
 convention `@nebula-chat/otel` and `@nebula-chat/redis` follow:
@@ -41,6 +41,7 @@ export const auth = createAuth({
   secret, // BETTER_AUTH_SECRET
   baseURL, // BETTER_AUTH_URL
   trustedOrigins, // origins allowed to call the auth endpoints
+  sendEmail, // createResendEmailSender({ apiKey: RESEND_API_KEY, from: EMAIL_FROM })
 });
 ```
 
@@ -54,7 +55,8 @@ The instance is configured with:
 | Setting                  | Value                                                                                                                                                                |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Database adapter         | Drizzle over `@nebula-chat/db` (`provider: 'pg'`). `advanced.database.generateId: 'uuid'` so Postgres generates ids, keeping `conversations.userId` a plain uuid FK. |
-| Email / password         | Enabled. Password hashing is better-auth's built-in default (scrypt).                                                                                                |
+| Email / password         | Enabled. Password hashing is better-auth's built-in default (scrypt). Password reset enabled; a reset revokes the user's other sessions.                             |
+| Email verification       | Sent on sign-up (`sendOnSignUp`), **not required** to sign in; following the link verifies and signs the user in. See [Email](#email).                               |
 | Anonymous plugin         | `POST /sign-in/anonymous` mints a Guest. Its `onLinkAccount` hook runs the claim.                                                                                    |
 | Have I Been Pwned plugin | Rejects sign-up with a known-breached password (`400 PASSWORD_COMPROMISED`).                                                                                         |
 | openAPI plugin           | Serves the auth API reference — see [API reference](#api-reference).                                                                                                 |
@@ -79,8 +81,8 @@ logs it as `http.request.failed` and answers `500` `Internal` itself, or drops t
 connection if the headers were already sent.
 
 All authentication happens by calling better-auth's endpoints under `/api/auth`.
-This instance exposes the following, given its configuration (email/password +
-anonymous). The examples use a cookie jar (`jar.txt`) because auth is cookie-based —
+This instance exposes the following, given its configuration (email/password with
+verification and reset + anonymous). The examples use a cookie jar (`jar.txt`) because auth is cookie-based —
 `-c` writes the session cookies, `-b` sends them on the next call — and assume the
 server is at `http://localhost:3000` (`BETTER_AUTH_URL`).
 
@@ -131,6 +133,43 @@ Invalidates the current session and clears the session cookies.
 curl -i -b jar.txt -X POST http://localhost:3000/api/auth/sign-out
 ```
 
+#### `POST /api/auth/send-verification-email` — resend the verification email
+
+Emails a fresh verification link. With a session, `email` must be the session user's,
+and an already-verified email is rejected (`400 EMAIL_ALREADY_VERIFIED`). `callbackURL`
+is where the link lands afterwards — the client passes its `/auth/verify-email` page.
+
+```bash
+curl -i -b jar.txt -X POST http://localhost:3000/api/auth/send-verification-email   -H 'content-type: application/json'   -d '{"email":"you@example.com","callbackURL":"http://localhost:5173/auth/verify-email"}'
+```
+
+#### `GET /api/auth/verify-email` — follow the verification link
+
+The emailed link. Verifies the email, refreshes the session cookie (or creates a session),
+and redirects to `callbackURL`; on a bad token it redirects there with
+`?error=TOKEN_EXPIRED` or `?error=INVALID_TOKEN`.
+
+#### `POST /api/auth/request-password-reset` — forgot password
+
+Emails a reset link when an account exists, and answers the same `200` either way.
+`redirectTo` is the client's `/auth/reset-password` page.
+
+```bash
+curl -i -X POST http://localhost:3000/api/auth/request-password-reset   -H 'content-type: application/json'   -d '{"email":"you@example.com","redirectTo":"http://localhost:5173/auth/reset-password"}'
+```
+
+The emailed link (`GET /api/auth/reset-password/:token`) redirects to `redirectTo?token=…`,
+or `redirectTo?error=INVALID_TOKEN` when the token is unknown or expired.
+
+#### `POST /api/auth/reset-password` — set the new password
+
+Consumes the token and sets the password, then revokes the user's sessions. An unknown,
+expired or already-used token is rejected with `400 INVALID_TOKEN`.
+
+```bash
+curl -i -X POST http://localhost:3000/api/auth/reset-password   -H 'content-type: application/json'   -d '{"token":"<token from the link>","newPassword":"another-long-passphrase"}'
+```
+
 #### `POST /api/auth/delete-anonymous-user` — delete the Guest
 
 Deletes the current anonymous user (anonymous plugin). Only reachable while signed in
@@ -147,8 +186,8 @@ application's own `openapi.yaml`. better-auth's `openAPI` plugin serves an inter
 [Scalar](https://scalar.com/) reference at `/api/auth/reference`, backed by the
 OpenAPI 3.1 schema at `/api/auth/open-api/generate-schema` (the reference UI fetches
 that schema). The reference lists better-auth's full core catalogue — including
-endpoints for features this instance does not enable (social sign-in, password reset,
-email verification) — so the hand-written list above is the authoritative set of
+endpoints for features this instance does not enable (social sign-in, account
+deletion, email change) — so the hand-written list above is the authoritative set of
 active endpoints.
 
 ## Sessions and cookies
@@ -247,6 +286,33 @@ is also a `403`. No generated type exists for it — the `Chat` tag is
 excluded from the Orval client, so the chat SSE endpoint is consumed by hand-written
 code.
 
+## Email
+
+Verification and password-reset emails go through **Resend** (ADR-0021). The lib builds
+the message from its own templates
+([`libs/auth/src/authEmails.ts`](../libs/auth/src/authEmails.ts)) and hands it to the
+injected `sendEmail` (`EmailSender`); `createResendEmailSender`
+([`libs/auth/src/resend.ts`](../libs/auth/src/resend.ts)) is the Resend implementation the
+server passes in. Sends run as better-auth background tasks, so a response never waits on
+Resend (no timing signal about which emails have accounts) and a failed send is logged as
+`auth.library.log` rather than failing the request. Both links expire after an hour.
+
+Verification is a prompt, not a gate: requiring it would stop sign-up from creating a
+session, and the claim below runs on that session. The client reads `user.emailVerified`
+and shows an unverified Registered user a "verify your email" prompt with a resend button.
+
+Following a verification link signs its owner in. In a browser holding a different
+Guest's session, that is a sign-in like any other, so the claim below moves that Guest's
+conversations into the account.
+
+The client pages better-auth redirects to:
+
+| Page                    | Reached from                         | Shows                                                                            |
+| ----------------------- | ------------------------------------ | -------------------------------------------------------------------------------- |
+| `/auth/forgot-password` | "Forgot your password?" on sign-in   | Email form → "check your inbox" (same message whether or not the account exists) |
+| `/auth/reset-password`  | The reset link (`?token` / `?error`) | New-password form, or "invalid or expired" with a link to request another        |
+| `/auth/verify-email`    | The verification link (`?error`)     | Verified, or expired / invalid with a resend button                              |
+
 ## Account linking
 
 When a Guest signs up or signs in, better-auth's anonymous plugin fires
@@ -272,11 +338,13 @@ Schema changes go through the normal `pnpm --filter @nebula-chat/db db:generate`
 Declared and validated in
 [`apps/nebula-chat-server/src/env.ts`](../apps/nebula-chat-server/src/env.ts):
 
-| Variable                  | Purpose                                                                 |
-| ------------------------- | ----------------------------------------------------------------------- |
-| `BETTER_AUTH_SECRET`      | Signs sessions and the session cookie cache (required)                  |
-| `BETTER_AUTH_URL`         | App base URL for better-auth cookies/redirects (required)               |
-| `GUEST_MESSAGE_ALLOWANCE` | Guest `user`-message cap before registration is required (default `10`) |
+| Variable                  | Purpose                                                                     |
+| ------------------------- | --------------------------------------------------------------------------- |
+| `BETTER_AUTH_SECRET`      | Signs sessions and the session cookie cache (required)                      |
+| `BETTER_AUTH_URL`         | App base URL for better-auth cookies/redirects (required)                   |
+| `RESEND_API_KEY`          | Resend API key for the verification and reset emails (required)             |
+| `EMAIL_FROM`              | Their sender, `address` or `Name <address>` on a verified domain (required) |
+| `GUEST_MESSAGE_ALLOWANCE` | Guest `user`-message cap before registration is required (default `10`)     |
 
 ## Not implemented
 
@@ -284,6 +352,5 @@ The following are configured on the same instance when added, and are deliberate
 outside the current scope:
 
 - Social OAuth (Google/GitHub).
-- Email verification and password reset.
 - Captcha on the anonymous / sign-up path.
 - `@fastify/helmet` / CSRF hardening beyond better-auth's defaults.

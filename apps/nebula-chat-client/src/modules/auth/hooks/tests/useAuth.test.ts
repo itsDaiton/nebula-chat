@@ -31,6 +31,26 @@ describe('useAuth', () => {
     expect(result.current.user?.email).toBe('ada@example.com');
   });
 
+  it('asks a Registered user with an unverified email to verify it', async () => {
+    const { result } = await renderAuth(aSession({ isAnonymous: false, emailVerified: false }));
+
+    await waitFor(() => expect(result.current.needsEmailVerification).toBe(true));
+  });
+
+  it('stops asking once the email is verified', async () => {
+    const { result } = await renderAuth(aSession({ isAnonymous: false, emailVerified: true }));
+
+    await waitFor(() => expect(result.current.isRegistered).toBe(true));
+    expect(result.current.needsEmailVerification).toBe(false);
+  });
+
+  it('never asks a Guest to verify', async () => {
+    const { result } = await renderAuth(aSession({ isAnonymous: true }));
+
+    await waitFor(() => expect(result.current.isGuest).toBe(true));
+    expect(result.current.needsEmailVerification).toBe(false);
+  });
+
   it('reports no user when there is no session', async () => {
     const { result } = await renderAuth(null);
 

@@ -48,7 +48,7 @@ const renderStatus = async (initialRoute: string = route.chat.root()) => {
             </>
           }
         />
-        <Route path={route.auth()} element={AUTH_PAGE} />
+        <Route path={route.auth.root()} element={AUTH_PAGE} />
       </Routes>
     </AuthGate>,
     { route: initialRoute },

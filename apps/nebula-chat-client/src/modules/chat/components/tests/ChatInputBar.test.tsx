@@ -102,7 +102,7 @@ describe('ChatInputBar', () => {
     expect(prompt).toHaveTextContent(resources.chat.messageAllowance.title);
     expect(
       screen.getByRole('link', { name: resources.chat.messageAllowance.action }),
-    ).toHaveAttribute('href', route.auth());
+    ).toHaveAttribute('href', route.auth.root());
     expect(screen.getByRole('textbox')).toHaveValue('hello');
 
     isRegistered = true;

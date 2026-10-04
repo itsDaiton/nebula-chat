@@ -13,6 +13,11 @@ const email = z
   .min(1, validation.emailRequired)
   .pipe(z.email(validation.emailInvalid));
 
+const newPassword = z
+  .string()
+  .min(PASSWORD_MIN_LENGTH, validation.passwordTooShort)
+  .max(PASSWORD_MAX_LENGTH, validation.passwordTooLong);
+
 export const signInSchema = z.object({
   email,
   password: z.string().min(1, validation.passwordRequired),
@@ -21,8 +26,9 @@ export const signInSchema = z.object({
 export const signUpSchema = z.object({
   name: z.string().trim().min(1, validation.nameRequired),
   email,
-  password: z
-    .string()
-    .min(PASSWORD_MIN_LENGTH, validation.passwordTooShort)
-    .max(PASSWORD_MAX_LENGTH, validation.passwordTooLong),
+  password: newPassword,
 });
+
+export const forgotPasswordSchema = z.object({ email });
+
+export const resetPasswordSchema = z.object({ password: newPassword });
