@@ -210,10 +210,13 @@ active endpoints.
 Authentication is **cookie-based**; the application does not issue JWTs or bearer
 tokens. On a successful sign-in better-auth sets:
 
-| Cookie                      | Contents                                                                                                                     | Attributes                                     |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `better-auth.session_token` | An opaque, secret-signed session identifier. The session record itself lives in Redis.                                       | `httpOnly`, `secure` in production, `SameSite` |
-| `better-auth.session_data`  | A signed cache of the session + user (base64url + HMAC with `BETTER_AUTH_SECRET`), present because `cookieCache` is enabled. | `httpOnly`, `secure` in production             |
+| Cookie                      | Contents                                                                                                                     | Attributes                                         |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `better-auth.session_token` | An opaque, secret-signed session identifier. The session record itself lives in Redis.                                       | `httpOnly`, `SameSite=Lax`, `secure` in production |
+| `better-auth.session_data`  | A signed cache of the session + user (base64url + HMAC with `BETTER_AUTH_SECRET`), present because `cookieCache` is enabled. | `httpOnly`, `SameSite=Lax`, `secure` in production |
+
+Over HTTPS better-auth adds the `__Secure-` prefix, so production names are
+`__Secure-better-auth.session_token` and `__Secure-better-auth.session_data`.
 
 The session identifier is opaque and carries no claims: the source of truth is the
 session record in Redis, keyed by that identifier. The `session_data` cookie is a
@@ -227,6 +230,23 @@ Because both cookies are `httpOnly`, client-side JavaScript cannot read them. Th
 are visible in the browser under **DevTools → Application → Cookies**, and the client
 learns its auth state by calling `GET /api/auth/get-session`, not by inspecting the
 cookie.
+
+### The client and the API must share a site
+
+Browsers neither store nor send a `SameSite=Lax` cookie on a request between two
+different _sites_ (registrable domains). The client and the API therefore have to be
+the same site in every environment, or sign-in silently fails: the anonymous sign-in
+answers `200`, the browser drops its cookie, and every later request is a `401`.
+
+| Environment | Client                       | API                          |
+| ----------- | ---------------------------- | ---------------------------- |
+| Local       | `http://localhost:5173`      | `http://localhost:3000`      |
+| Production  | `https://www.nebula-chat.cz` | `https://api.nebula-chat.cz` |
+
+Two `onrender.com` subdomains do **not** qualify: `onrender.com` is on the Public
+Suffix List, so `x.onrender.com` and `y.onrender.com` are different sites. Production
+needs the API on a subdomain of the client's own domain. Loosening the cookies to
+`SameSite=None` is not a substitute — Safari and Brave block cross-site cookies outright.
 
 ## Storage
 
