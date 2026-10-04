@@ -440,6 +440,8 @@ be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-fi
 | `SERVER_URL`                  | Backend public URL, allowed as a CORS origin alongside `CLIENT_URL` (e.g. for Swagger UI at `/docs`)                    |
 | `BETTER_AUTH_SECRET`          | better-auth secret — signs sessions and the session cookie cache (required)                                             |
 | `BETTER_AUTH_URL`             | App base URL for better-auth cookies/redirects (required, e.g. `http://localhost:3000`)                                 |
+| `RESEND_API_KEY`              | Resend API key for the verification and password-reset emails (required; ADR-0021)                                      |
+| `EMAIL_FROM`                  | Sender for those emails — `address` or `Name <address>` on a Resend-verified domain (required)                          |
 | `GUEST_MESSAGE_ALLOWANCE`     | Guest `user`-message cap before registration is required (int, default `10`; ADR-0010)                                  |
 | `PORT`                        | Port to listen on (default `3000`)                                                                                      |
 | `LOG_LEVEL`                   | Log verbosity (default `info`; set to `debug`/`warn` etc. in prod)                                                      |

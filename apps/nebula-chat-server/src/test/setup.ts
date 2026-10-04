@@ -9,6 +9,8 @@ process.env['CORS_ORIGIN'] ??= 'http://localhost:5173';
 // `@backend/auth`, so no real better-auth instance is built from them.
 process.env['BETTER_AUTH_SECRET'] ??= 'test-better-auth-secret-not-used';
 process.env['BETTER_AUTH_URL'] ??= 'http://localhost:3000';
+process.env['RESEND_API_KEY'] ??= 're_test_key_not_used';
+process.env['EMAIL_FROM'] ??= 'Nebula Chat <test@example.com>';
 // 'fatal' is the quietest level env.ts's Zod enum accepts — Pino's 'silent' is
 // not in that union, and using it fails env parsing before any test runs.
 process.env['LOG_LEVEL'] ??= 'fatal';

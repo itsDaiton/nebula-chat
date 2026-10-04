@@ -1,4 +1,4 @@
-import { createAuth } from '@nebula-chat/auth';
+import { createAuth, createResendEmailSender } from '@nebula-chat/auth';
 import type { AuthInstance } from '@nebula-chat/auth';
 import { db } from '@backend/db';
 import { env } from '@backend/env';
@@ -10,7 +10,7 @@ import { redis } from '@backend/redis';
  * `src/redis.ts`. Config lives here — consumers import `auth` from `@backend/auth`
  * rather than constructing their own. The lib (`@nebula-chat/auth`) owns the
  * better-auth configuration; the server only injects its resolved env, the DB
- * client, and the Redis-backed `authStore` (ADR-0010).
+ * client, the Redis-backed `authStore` (ADR-0010) and the Resend sender (ADR-0021).
  */
 export const auth: AuthInstance = createAuth({
   db,
@@ -19,4 +19,5 @@ export const auth: AuthInstance = createAuth({
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
   trustedOrigins: [env.CLIENT_URL],
+  sendEmail: createResendEmailSender({ apiKey: env.RESEND_API_KEY, from: env.EMAIL_FROM }),
 });

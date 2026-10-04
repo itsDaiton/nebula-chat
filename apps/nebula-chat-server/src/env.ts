@@ -6,6 +6,14 @@ import { operatorTokenSchema } from '@backend/utils/operatorToken';
 // CORS and better-auth match the browser's `Origin` header exactly, so keep only scheme://host:port.
 const originSchema = z.url({ protocol: /^https?$/ }).transform((url) => new URL(url).origin);
 
+// Resend takes a bare address or `Name <address>`; validate the address either way.
+const emailFromSchema = z
+  .string()
+  .trim()
+  .refine((raw) => z.email().safeParse(/<([^<>]+)>$/.exec(raw)?.[1] ?? raw).success, {
+    message: 'Expected an email address or "Name <address>"',
+  });
+
 export const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -22,6 +30,9 @@ export const envSchema = z
     TRUST_PROXY: z.string().optional(),
     BETTER_AUTH_SECRET: z.string().min(1),
     BETTER_AUTH_URL: z.url(),
+    // Transactional email (verification + password reset) via Resend, ADR-0021.
+    RESEND_API_KEY: z.string().min(1),
+    EMAIL_FROM: emailFromSchema,
     GUEST_MESSAGE_ALLOWANCE: z.coerce.number().int().default(10),
     // Shared operator secret for /api/internal/*; unset turns those routes off.
     OPERATOR_TOKEN: operatorTokenSchema,

@@ -71,11 +71,12 @@ describe('ChatInputBar', () => {
     expect(onSend).toHaveBeenCalledWith('hello');
   });
 
-  it('asks a Guest at the message allowance to register, then sends once they have', async () => {
+  it('asks a Guest at the message allowance to register, then sends once verified', async () => {
     let isRegistered = false;
     let sends = 0;
     server.use(
-      mockGetSession(() => aSession({ isAnonymous: !isRegistered })),
+      // Only a verified Registered user is uncapped (ADR-0021).
+      mockGetSession(() => aSession({ isAnonymous: !isRegistered, emailVerified: isRegistered })),
       http.post(API_ROUTE.chatStream, () => {
         sends += 1;
         return isRegistered
@@ -102,7 +103,7 @@ describe('ChatInputBar', () => {
     expect(prompt).toHaveTextContent(resources.chat.messageAllowance.title);
     expect(
       screen.getByRole('link', { name: resources.chat.messageAllowance.action }),
-    ).toHaveAttribute('href', route.auth());
+    ).toHaveAttribute('href', route.auth.root());
     expect(screen.getByRole('textbox')).toHaveValue('hello');
 
     isRegistered = true;

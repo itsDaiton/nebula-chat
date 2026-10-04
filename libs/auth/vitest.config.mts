@@ -7,7 +7,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text-summary', 'lcov'],
-      include: ['src/**/*.ts'],
+      include: ['src/**/*.{ts,tsx}'],
       // `index.ts` re-exports only. `auth.ts` is pure better-auth SDK wiring: it
       // builds the configured instance and cannot be asserted without standing up
       // the library (ADR-0008 keeps this lib unit-only, no testcontainers). The

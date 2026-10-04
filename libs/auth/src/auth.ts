@@ -1,13 +1,18 @@
 import { betterAuth } from 'better-auth';
 import type { Auth, User as BetterAuthUser, Session as BetterAuthSession } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { anonymous, haveIBeenPwned, openAPI } from 'better-auth/plugins';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
+import { anonymous, haveIBeenPwned, isPasswordCompromised, openAPI } from 'better-auth/plugins';
 import { users, session, account, verification } from '@nebula-chat/db';
 import type { DbClient } from '@nebula-chat/db';
 import type { AuthStore } from '@nebula-chat/redis';
 import type { Logger } from '@nebula-chat/otel';
+import { passwordResetEmail, verificationEmail } from './authEmails';
 import { claimConversations } from './claim';
 import { toBetterAuthLogHandler } from './logger';
+import { markEmailVerified } from './markEmailVerified';
+import { RESET_PASSWORD_REJECTION_MESSAGES, findResetPasswordRejection } from './resetPassword';
+import type { EmailSender } from './resend';
 
 /**
  * Everything the lib needs to build a configured better-auth instance. The lib
@@ -39,6 +44,8 @@ export type CreateAuthConfig = {
   baseURL: string;
   /** Origins allowed to call the auth endpoints (CSRF protection). */
   trustedOrigins?: string[];
+  /** Delivers the verification and reset emails — Resend in production (ADR-0021). */
+  sendEmail: EmailSender;
 };
 
 /**
@@ -61,7 +68,8 @@ export type CreateAuthConfig = {
  *   `/api/auth/open-api/generate-schema`. The Fastify `/api/auth/*` route is
  *   `hide: true`, so this is the only machine-readable description of these
  *   endpoints (importable into Bruno/Postman, etc.).
- * - email/password enabled. No OAuth / email verification / reset in this slice.
+ * - email/password with password reset; verification is sent on sign-up but not
+ *   required to sign in, sent in the background via `sendEmail` (ADR-0021).
  */
 export const createAuth = ({
   db,
@@ -70,6 +78,7 @@ export const createAuth = ({
   secret,
   baseURL,
   trustedOrigins,
+  sendEmail,
 }: CreateAuthConfig): Auth =>
   // better-auth 1.7 made `Auth` generic (`Auth<Options>`) and invariant, so the
   // instance `betterAuth()` infers no longer widens to the base `Auth` we expose.
@@ -94,15 +103,66 @@ export const createAuth = ({
       database: {
         generateId: 'uuid',
       },
+      // Fire-and-forget on a long-lived Node server; better-auth catches and logs a rejection.
+      backgroundTasks: {
+        handler: (promise) => {
+          void promise;
+        },
+      },
     },
     emailAndPassword: {
       enabled: true,
+      sendResetPassword: async ({ user, url }) =>
+        sendEmail(await passwordResetEmail({ user, url })),
+      revokeSessionsOnPasswordReset: true,
+      // The reset link was emailed to this address, so following it proves ownership.
+      onPasswordReset: ({ user }) => markEmailVerified(db, user.id),
+    },
+    emailVerification: {
+      sendOnSignUp: true,
+      autoSignInAfterVerification: true,
+      sendVerificationEmail: async ({ user, url }) =>
+        sendEmail(await verificationEmail({ user, url })),
     },
     // Adapt the Redis-backed authStore to better-auth's SecondaryStorage. As of
     // @better-auth/core 1.7 (src/db/type.ts) the interface is
     // get/getAndDelete/increment/set/delete; `ttl` is in seconds, which authStore
     // maps to `SET ... EX` (set) and `INCR` + create-only `EXPIRE` (increment, the
     // fixed-window semantics the secondary-storage rate limiter requires).
+    hooks: {
+      // Refuse a breached or unchanged password before /reset-password consumes the token.
+      before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path !== '/reset-password') return;
+        const body = ctx.body as { token?: string; newPassword?: string } | undefined;
+        const token = body?.token ?? (ctx.query?.['token'] as string | undefined);
+        if (!token || !body?.newPassword) return;
+
+        const { internalAdapter, password } = ctx.context;
+        const rejection = await findResetPasswordRejection(
+          { token, newPassword: body.newPassword },
+          {
+            findResetToken: async (resetToken) => {
+              const record = await internalAdapter.findVerificationValue(
+                `reset-password:${resetToken}`,
+              );
+              return record && { userId: record.value, expiresAt: record.expiresAt };
+            },
+            findPasswordHash: async (userId) =>
+              (await internalAdapter.findAccounts(userId)).find(
+                (linked) => linked.providerId === 'credential',
+              )?.password ?? null,
+            verifyPassword: (hash, candidate) => password.verify({ hash, password: candidate }),
+            isPasswordCompromised,
+          },
+        );
+        if (rejection) {
+          throw APIError.from('BAD_REQUEST', {
+            code: rejection,
+            message: RESET_PASSWORD_REJECTION_MESSAGES[rejection],
+          });
+        }
+      }),
+    },
     secondaryStorage: {
       get: (key) => authStore.get(key),
       getAndDelete: (key) => authStore.getAndDelete(key),
@@ -130,7 +190,8 @@ export const createAuth = ({
           });
         },
       }),
-      haveIBeenPwned(),
+      // /reset-password is breach-checked by the before hook, ahead of token consumption.
+      haveIBeenPwned({ paths: ['/sign-up/email', '/change-password'] }),
       // Serves a Scalar reference UI at `/api/auth/reference` and the OpenAPI 3.1
       // schema at `/api/auth/open-api/generate-schema`, both reached through the
       // server's `/api/auth/*` passthrough. Documents every endpoint the core and

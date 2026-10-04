@@ -26,11 +26,17 @@
     "@nebula-chat/db": "workspace:*",
     "@nebula-chat/otel": "workspace:*",
     "@nebula-chat/redis": "workspace:*",
+    "@react-email/components": "^1.0.12",
     "better-auth": "catalog:",
-    "drizzle-orm": "catalog:"
+    "drizzle-orm": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "resend": "^6.28.1"
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",

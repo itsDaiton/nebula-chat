@@ -24,6 +24,6 @@ describe('routes', () => {
   });
 
   it('builds the auth path', () => {
-    expect(route.auth()).toBe('/auth');
+    expect(route.auth.root()).toBe('/auth');
   });
 });

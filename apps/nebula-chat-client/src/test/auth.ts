@@ -1,10 +1,16 @@
-import { act } from '@testing-library/react';
-import { HttpResponse, http, type HttpHandler } from 'msw';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { HttpResponse, http, type HttpHandler, type JsonBodyType } from 'msw';
+import { expect } from 'vitest';
 import { authClient } from '@/libs/auth/client';
+import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { API_ROUTE } from '@/test/api';
+import { server } from '@/test/msw';
 
-/** A better-auth `get-session` body; a Guest unless `isAnonymous` is false. */
-export const aSession = ({ isAnonymous = true }: { isAnonymous?: boolean } = {}) => ({
+/** A better-auth `get-session` body; a Guest unless `isAnonymous` is false, unverified unless `emailVerified`. */
+export const aSession = ({
+  isAnonymous = true,
+  emailVerified = false,
+}: { isAnonymous?: boolean; emailVerified?: boolean } = {}) => ({
   session: {
     id: 'session-1',
     userId: 'user-1',
@@ -17,7 +23,7 @@ export const aSession = ({ isAnonymous = true }: { isAnonymous?: boolean } = {})
     id: 'user-1',
     name: isAnonymous ? 'Anonymous' : 'Ada',
     email: isAnonymous ? 'temp@anonymous.local' : 'ada@example.com',
-    emailVerified: false,
+    emailVerified,
     image: null,
     isAnonymous,
     createdAt: '2026-01-01T00:00:00.000Z',
@@ -26,6 +32,8 @@ export const aSession = ({ isAnonymous = true }: { isAnonymous?: boolean } = {})
 });
 
 type SessionBody = ReturnType<typeof aSession> | null;
+
+type SessionOptions = Parameters<typeof aSession>[0];
 
 type OnRequest = (request: Request) => void | Promise<void>;
 
@@ -37,39 +45,59 @@ export const mockGetSession = (
     HttpResponse.json(typeof body === 'function' ? body(request) : body),
   );
 
+/** Answers a POST to `route` with `body`, calling `onRequest` first. */
+const mockAuthPost =
+  (route: string, body: JsonBodyType) =>
+  (onRequest: OnRequest = () => {}): HttpHandler =>
+    http.post(route, async ({ request }) => {
+      await onRequest(request);
+      return HttpResponse.json(body);
+    });
+
 /** Mints a Guest on `sign-in/anonymous`, calling `onRequest` first. */
-export const mockAnonymousSignIn = (
-  onRequest: (request: Request) => void = () => {},
-): HttpHandler =>
-  http.post(API_ROUTE.authSignInAnonymous, ({ request }) => {
-    onRequest(request);
-    return HttpResponse.json({ token: 'token-1', user: aSession().user });
-  });
+export const mockAnonymousSignIn = mockAuthPost(API_ROUTE.authSignInAnonymous, {
+  token: 'token-1',
+  user: aSession().user,
+});
 
 /** Signs in a Registered user on `sign-in/email`, calling `onRequest` first. */
-export const mockEmailSignIn = (onRequest: OnRequest = () => {}): HttpHandler =>
-  http.post(API_ROUTE.authSignInEmail, async ({ request }) => {
-    await onRequest(request);
-    return HttpResponse.json({
-      redirect: false,
-      token: 'token-1',
-      user: aSession({ isAnonymous: false }).user,
-    });
-  });
+export const mockEmailSignIn = mockAuthPost(API_ROUTE.authSignInEmail, {
+  redirect: false,
+  token: 'token-1',
+  user: aSession({ isAnonymous: false }).user,
+});
 
 /** Registers a user on `sign-up/email`, calling `onRequest` first. */
-export const mockEmailSignUp = (onRequest: OnRequest = () => {}): HttpHandler =>
-  http.post(API_ROUTE.authSignUpEmail, async ({ request }) => {
-    await onRequest(request);
-    return HttpResponse.json({ token: 'token-1', user: aSession({ isAnonymous: false }).user });
-  });
+export const mockEmailSignUp = mockAuthPost(API_ROUTE.authSignUpEmail, {
+  token: 'token-1',
+  user: aSession({ isAnonymous: false }).user,
+});
 
 /** Ends the session on `sign-out`, calling `onRequest` first. */
-export const mockSignOut = (onRequest: OnRequest = () => {}): HttpHandler =>
-  http.post(API_ROUTE.authSignOut, async ({ request }) => {
-    await onRequest(request);
-    return HttpResponse.json({ success: true });
-  });
+export const mockSignOut = mockAuthPost(API_ROUTE.authSignOut, { success: true });
+
+/** Accepts a `request-password-reset`; better-auth answers the same whether or not the email exists. */
+export const mockRequestPasswordReset = mockAuthPost(API_ROUTE.authRequestPasswordReset, {
+  status: true,
+});
+
+/** Sets the new password on `reset-password`. */
+export const mockResetPassword = mockAuthPost(API_ROUTE.authResetPassword, { status: true });
+
+/** Resends the verification email on `send-verification-email`. */
+export const mockSendVerificationEmail = mockAuthPost(API_ROUTE.authSendVerificationEmail, {
+  status: true,
+});
 
 /** Refetches the session the way better-auth's own auth calls do; its store outlives a test. */
 export const refreshSession = () => act(() => authClient.$store.notify('$sessionSignal'));
+
+/** Serves `aSession(options)` and waits until better-auth's singleton session store holds it. */
+export const holdSession = async (options: SessionOptions) => {
+  const body = aSession(options);
+  const { isAnonymous, emailVerified } = body.user;
+  server.use(mockGetSession(body));
+  const { result } = renderHook(() => useAuth());
+  refreshSession();
+  await waitFor(() => expect(result.current.user).toMatchObject({ isAnonymous, emailVerified }));
+};

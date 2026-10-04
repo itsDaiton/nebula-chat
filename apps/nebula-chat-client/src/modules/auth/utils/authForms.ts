@@ -2,13 +2,22 @@ import { authClient } from '@/libs/auth/client';
 import type {
   AuthFieldConfig,
   AuthFormConfig,
+  ForgotPasswordValues,
+  ResetPasswordValues,
   SignInCredentials,
   SignUpCredentials,
 } from '@/modules/auth/types/types';
-import { signInSchema, signUpSchema } from '@/modules/auth/utils/authSchemas';
+import { authCallbackUrl, verifyEmailCallbackUrl } from '@/modules/auth/utils/authCallbackUrl';
+import {
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  signInSchema,
+  signUpSchema,
+} from '@/modules/auth/utils/authSchemas';
 import { resources } from '@/resources';
+import { route } from '@/routing/routes';
 
-const { fields, tabs, actions, signIn, signUp } = resources.auth;
+const { fields, tabs, actions, signIn, signUp, forgotPassword, resetPassword } = resources.auth;
 
 const emailField = {
   name: 'email',
@@ -46,5 +55,33 @@ export const SIGN_UP_FORM: AuthFormConfig<SignUpCredentials> = {
     emailField,
     passwordField('new-password'),
   ],
-  request: (credentials) => authClient.signUp.email(credentials),
+  request: (credentials) =>
+    authClient.signUp.email({ ...credentials, callbackURL: verifyEmailCallbackUrl() }),
 };
+
+export const FORGOT_PASSWORD_FORM: AuthFormConfig<ForgotPasswordValues> = {
+  label: forgotPassword.title,
+  title: forgotPassword.title,
+  description: forgotPassword.description,
+  submitLabel: forgotPassword.submit,
+  schema: forgotPasswordSchema,
+  fields: [emailField],
+  request: ({ email }) =>
+    authClient.requestPasswordReset({
+      email,
+      redirectTo: authCallbackUrl(route.auth.resetPassword()),
+    }),
+  successMessage: forgotPassword.sent,
+};
+
+/** The reset form for the token better-auth put in the emailed link. */
+export const resetPasswordForm = (token: string): AuthFormConfig<ResetPasswordValues> => ({
+  label: resetPassword.title,
+  title: resetPassword.title,
+  description: resetPassword.description,
+  submitLabel: resetPassword.submit,
+  schema: resetPasswordSchema,
+  fields: [{ ...passwordField('new-password'), label: fields.newPassword }],
+  request: ({ password }) => authClient.resetPassword({ newPassword: password, token }),
+  successMessage: resetPassword.done,
+});

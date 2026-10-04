@@ -5,3 +5,12 @@ export type { CreateAuthConfig, AuthInstance, SessionData, Session, User } from 
 // Conversation claim (the anonymous → registered handoff, ADR-0010 §2)
 export { claimConversations } from './claim';
 export type { ClaimConversationsParams } from './claim';
+
+// Transactional email (verification + password reset, ADR-0021)
+export { createResendEmailSender } from './resend';
+export type {
+  CreateResendEmailSenderConfig,
+  EmailMessage,
+  EmailSender,
+  InlineImage,
+} from './resend';

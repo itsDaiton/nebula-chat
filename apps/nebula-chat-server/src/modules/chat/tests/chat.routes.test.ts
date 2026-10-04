@@ -4,7 +4,12 @@ import { sseToken, sseUsage } from '@nebula-chat/langchain';
 import { env } from '@backend/env';
 import { createTestApp } from '@backend/test/app';
 import { captureLogger, eventLines, LEVEL } from '@backend/test/logCapture';
-import { guestSession, registeredSession, REGISTERED_USER_ID } from '@backend/test/session';
+import {
+  guestSession,
+  registeredSession,
+  REGISTERED_USER_ID,
+  unverifiedSession,
+} from '@backend/test/session';
 
 vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
@@ -394,7 +399,29 @@ describe('POST /api/chat/stream — Guest message allowance', () => {
     expect(chat.streamResponse).toHaveBeenCalled();
   });
 
-  it('leaves a Registered user uncapped, never counting their messages', async () => {
+  it('caps a Registered user whose email is unverified like a Guest', async () => {
+    mockedGetSession.mockResolvedValue(unverifiedSession() as never);
+    mockedCountUserMessages.mockResolvedValue(CAP);
+
+    const res = await post(validBody, app);
+
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toMatchObject({ error: 'MessageAllowanceReached' });
+    expect(chat.streamResponse).not.toHaveBeenCalled();
+  });
+
+  it('lets an unverified Registered user under the cap send', async () => {
+    mockedGetSession.mockResolvedValue(unverifiedSession() as never);
+    mockedCountUserMessages.mockResolvedValue(CAP - 1);
+
+    const res = await post(validBody, app);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(res.statusCode).toBe(200);
+    expect(chat.streamResponse).toHaveBeenCalled();
+  });
+
+  it('leaves a verified Registered user uncapped, never counting their messages', async () => {
     mockedGetSession.mockResolvedValue(registeredSession() as never);
     mockedCountUserMessages.mockResolvedValue(CAP + 100);
 

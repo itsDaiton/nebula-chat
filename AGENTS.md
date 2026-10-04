@@ -202,7 +202,7 @@ nebula-chat/
 │   ├── nebula-chat-client/   # React SPA (frontend) — see its AGENTS.md
 │   └── nebula-chat-server/   # Fastify API (backend) — see its AGENTS.md
 ├── libs/
-│   ├── auth/                 # @nebula-chat/auth — better-auth substrate (sessions, anonymous, claim)
+│   ├── auth/                 # @nebula-chat/auth — better-auth substrate (sessions, anonymous, claim, auth email)
 │   ├── db/                   # @nebula-chat/db — Drizzle ORM schema + migrations
 │   ├── errors/               # @nebula-chat/errors — isomorphic error codes, envelope schema, AppError classes
 │   ├── langchain/            # @nebula-chat/langchain — LLM providers, tokens, streaming, SSE

@@ -3,15 +3,21 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, type FieldValues } from 'react-hook-form';
 import { AuthFormAlert } from '@/modules/auth/components/AuthFormAlert';
 import { AuthFormField } from '@/modules/auth/components/AuthFormField';
+import { AuthStatus } from '@/modules/auth/components/AuthStatus';
 import { useAuthMutation } from '@/modules/auth/hooks/useAuthMutation';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import type { AuthFormProps } from '@/modules/auth/types/types';
 import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
 
-/** The sign-in or sign-up form, as its config describes it. */
-export const AuthForm = <Values extends FieldValues>({ config }: AuthFormProps<Values>) => {
-  const { label, title, description, submitLabel, schema, fields, request } = config;
-  const { mutate, isPending } = useAuthMutation(request);
+/** One auth form — sign-in, sign-up, forgot or reset password — as its config describes it. */
+export const AuthForm = <Values extends FieldValues>({
+  config,
+  onSuccess,
+  onError,
+}: AuthFormProps<Values>) => {
+  const { label, title, description, submitLabel, schema, fields, request, successMessage } =
+    config;
+  const { mutate, isPending, isSuccess } = useAuthMutation(request, onSuccess);
   const { hidePassword } = usePasswordVisibilityStore();
   const {
     register,
@@ -24,10 +30,15 @@ export const AuthForm = <Values extends FieldValues>({ config }: AuthFormProps<V
     const target = error instanceof AuthRequestError ? error.field : 'root';
     const field = fields.find(({ name }) => name === target);
     setError(field?.name ?? 'root.server', { message: error.message });
+    onError?.(error);
   };
 
   const onSubmit = (values: Values) =>
     mutate(values, { onSuccess: hidePassword, onError: showServerError });
+
+  if (isSuccess && successMessage) {
+    return <AuthStatus title={title} status="success" message={successMessage} />;
+  }
 
   return (
     <form onSubmit={(event) => void handleSubmit(onSubmit)(event)} aria-label={label} noValidate>

@@ -7,9 +7,11 @@ const baseEnv = {
   OPENAI_API_KEY: 'sk-test-key-not-used',
   BETTER_AUTH_SECRET: 'test-better-auth-secret-not-used',
   BETTER_AUTH_URL: 'http://localhost:3000',
+  RESEND_API_KEY: 're_test_key_not_used',
+  EMAIL_FROM: 'Nebula Chat <hello@example.com>',
 };
 
-const parse = (overrides: Record<string, string>) =>
+const parse = (overrides: Record<string, string | undefined>) =>
   envSchema.safeParse({ ...baseEnv, ...overrides });
 
 describe.each(['CLIENT_URL', 'SERVER_URL'] as const)('envSchema %s', (key) => {
@@ -46,5 +48,32 @@ describe('envSchema defaults', () => {
 
     expect(result.success).toBe(true);
     expect(result.data?.SERVER_URL).toBeUndefined();
+  });
+});
+
+describe('envSchema EMAIL_FROM', () => {
+  it.each([
+    ['a bare address', 'hello@example.com'],
+    ['a display name and address', 'Nebula Chat <hello@example.com>'],
+  ])('accepts %s', (_case, raw) => {
+    expect(parse({ EMAIL_FROM: raw }).success).toBe(true);
+  });
+
+  it.each([
+    ['a missing value', undefined],
+    ['an empty value', ''],
+    ['a name with no address', 'Nebula Chat'],
+    ['a malformed address', 'Nebula Chat <hello@>'],
+  ])('rejects %s', (_case, raw) => {
+    expect(parse({ EMAIL_FROM: raw }).success).toBe(false);
+  });
+});
+
+describe('envSchema RESEND_API_KEY', () => {
+  it.each([
+    ['a missing key', undefined],
+    ['an empty key', ''],
+  ])('rejects %s', (_case, raw) => {
+    expect(parse({ RESEND_API_KEY: raw }).success).toBe(false);
   });
 });

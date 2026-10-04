@@ -14,7 +14,7 @@ export const AccountStatus = () => {
   if (isGuest) {
     return (
       <Button asChild size="sm" variant="solid" borderRadius="full" px={4}>
-        <Link to={route.auth()}>
+        <Link to={route.auth.root()}>
           <LuLogIn />
           {resources.auth.actions.signIn}
         </Link>

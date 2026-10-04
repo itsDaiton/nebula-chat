@@ -17,6 +17,10 @@ export default defineConfig({
       '@nebula-chat/db',
       '@nebula-chat/redis',
       '@nebula-chat/otel',
+      'resend',
+      'react',
+      'react-dom',
+      '@react-email/components',
     ],
   },
 });

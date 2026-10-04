@@ -43,26 +43,36 @@ apps/nebula-chat-client/src/
 ├── modules/                       # Feature modules
 │   ├── auth/
 │   │   ├── AuthPage.tsx           # /auth — sign-in and sign-up tabs; opt-in, never a wall
+│   │   ├── ForgotPasswordPage.tsx # /auth/forgot-password — emails a reset link
+│   │   ├── ResetPasswordPage.tsx  # /auth/reset-password — new password from the emailed link's token
+│   │   ├── VerifyEmailPage.tsx    # /auth/verify-email — where the verification link lands (verified / expired / invalid)
 │   │   ├── types/types.ts         # Auth props, credentials (inferred from the schemas), better-auth result shape
 │   │   ├── stores/
 │   │   │   └── usePasswordVisibilityStore.ts
 │   │   ├── utils/
-│   │   │   ├── authSchemas.ts         # zod schemas for the sign-in / sign-up forms
-│   │   │   ├── authForms.ts           # SIGN_IN_FORM / SIGN_UP_FORM: schema, fields, copy, better-auth call
+│   │   │   ├── authSchemas.ts         # zod schemas for the sign-in / sign-up / forgot / reset forms
+│   │   │   ├── authForms.ts           # Form configs (sign-in, sign-up, forgot, reset): schema, fields, copy, better-auth call
+│   │   │   ├── authCallbackUrl.ts     # Absolute client URL an emailed link redirects back to
 │   │   │   ├── runAuthRequest.ts      # better-auth call → AuthRequestError (copy + field) from its error code
 │   │   │   └── AuthRequestError.ts    # AppError carrying the form field its message belongs under
 │   │   ├── hooks/
-│   │   │   ├── useAuth.ts             # Current session (Guest vs Registered) from better-auth's useSession
+│   │   │   ├── useAuth.ts             # Current session (Guest vs Registered, needsEmailVerification) from useSession
 │   │   │   ├── useSessionBootstrap.ts # Query that runs ensureSession once per page load
-│   │   │   ├── useAuthMutation.ts     # Email sign-in / sign-up mutation for a form config's request
+│   │   │   ├── useAuthMutation.ts     # An auth form's mutation for its config's request
+│   │   │   ├── useResendVerification.ts # Re-sends the verification email; toasts on success
 │   │   │   ├── useSignOut.ts          # Sign-out; resets the bootstrap so AuthGate re-mints a Guest
 │   │   │   └── useIdentityChange.ts   # After any of them: reset server state, go to the chat root
 │   │   └── components/
 │   │       ├── AuthGate.tsx       # Wraps the routes; renders nothing until a session (Guest at least) exists
 │   │       ├── AccountStatus.tsx  # Nav: sign-in link for a Guest, or email + sign-out button
+│   │       ├── AuthLayout.tsx     # Shell every auth page shares: app mark + card (+ footer)
 │   │       ├── AuthForm.tsx       # One react-hook-form + zod form, driven by an AuthFormConfig
 │   │       ├── AuthFormField.tsx  # Label, input (or PasswordInput) and its error text
-│   │       └── AuthFormAlert.tsx  # Failure that belongs to the whole form
+│   │       ├── AuthFormAlert.tsx  # Outcome (error or success) that belongs to the whole form
+│   │       ├── AuthStatus.tsx     # Titled outcome in place of a form (sent, reset, link invalid)
+│   │       ├── BackToSignIn.tsx   # Footer link back to /auth
+│   │       ├── EmailVerificationPrompt.tsx  # Above the chat input: unverified Registered user → resend (→ "keep chatting" at the allowance)
+│   │       └── ResendVerificationButton.tsx
 │   ├── chat/
 │   │   ├── ChatPage.tsx
 │   │   ├── types/types.ts         # All chat types
@@ -381,8 +391,9 @@ context is genuinely needed, split it across two files:
 ## Forms
 
 Forms use [react-hook-form](https://react-hook-form.com) with a [zod](https://zod.dev) schema through
-`zodResolver`. `AuthForm` in `modules/auth/components/` is the reference: sign-in and sign-up are one
-component fed two configs (`utils/authForms.ts`), not two copies — variants of a form differ by config.
+`zodResolver`. `AuthForm` in `modules/auth/components/` is the reference: sign-in, sign-up, forgot and
+reset password are one component fed four configs (`utils/authForms.ts`), not four copies — variants of a
+form differ by config. A config with a `successMessage` replaces the form with it once submitted.
 
 - **The schema is the source of truth.** It lives in the owning module's `utils/` (`authSchemas.ts`), its
   messages come from `resources.ts`, and the form's value type is `z.infer<typeof schema>` in
@@ -504,8 +515,9 @@ pnpm frontend test:coverage
   `/api/chat/stream` (excluded from Orval by tag — it streams SSE) and better-auth's `/api/auth/*`. Their
   routes live in `@/test/api`, the one place route strings are written; `@/test/auth` holds the auth
   fixture and handlers (`aSession`, `mockGetSession`, `mockAnonymousSignIn`, `mockEmailSignIn`,
-  `mockEmailSignUp`, `mockSignOut`) plus `refreshSession`, which refetches better-auth's module-level session
-  store after a render. Regenerate with `pnpm frontend generate:api` after any backend change.
+  `mockEmailSignUp`, `mockSignOut`, `mockRequestPasswordReset`, `mockResetPassword`,
+  `mockSendVerificationEmail`) plus `refreshSession`, which refetches better-auth's module-level session
+  store after a render, and `holdSession`, which serves a session and waits until that store holds it. Regenerate with `pnpm frontend generate:api` after any backend change.
 
 - **One test file per source file, in a `tests/` folder beside it**: `ChatInput.tsx` is tested by
   `components/tests/ChatInput.test.tsx`. Never group several modules into one file.
