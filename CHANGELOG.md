@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.7.0...nebula-chat-v2.8.0) (2026-10-04)
+
+
+### Features
+
+* **client:** NEB-340 prompt registration when a Guest hits the message allowance ([#441](https://github.com/itsDaiton/nebula-chat/issues/441)) ([be16e63](https://github.com/itsDaiton/nebula-chat/commit/be16e63da2e6bafa529aa159b5fc09e1f9671deb))
+
 ## [2.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.6.1...nebula-chat-v2.7.0) (2026-10-04)
 
 
