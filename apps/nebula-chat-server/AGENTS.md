@@ -429,26 +429,26 @@ the shell, CI or Render wins over the file, and a missing file is silent. `test`
 read no `.env`, so a test run behaves the same on a developer machine as in CI. A new script that needs the file must
 be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-files-in-package-scripts.md).
 
-| Variable                      | Purpose                                                                                                                 |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `OPENAI_API_KEY`              | OpenAI API key (optional — set at least one of this or `ANTHROPIC_API_KEY`)                                             |
-| `ANTHROPIC_API_KEY`           | Anthropic API key (optional — set at least one of this or `OPENAI_API_KEY`)                                             |
-| `DATABASE_URL`                | PostgreSQL connection string                                                                                            |
-| `REDIS_URL`                   | Redis connection (e.g. `redis://localhost:6380`)                                                                        |
-| `REDIS_PASSWORD`              | Redis password (if set)                                                                                                 |
-| `CLIENT_URL`                  | Frontend origin for CORS (e.g. `http://localhost:5173`)                                                                 |
-| `SERVER_URL`                  | Backend public URL, allowed as a CORS origin alongside `CLIENT_URL` (e.g. for Swagger UI at `/docs`)                    |
-| `BETTER_AUTH_SECRET`          | better-auth secret — signs sessions and the session cookie cache (required)                                             |
-| `BETTER_AUTH_URL`             | App base URL for better-auth cookies/redirects (required, e.g. `http://localhost:3000`)                                 |
-| `RESEND_API_KEY`              | Resend API key for the verification and password-reset emails (required; ADR-0021)                                      |
-| `EMAIL_FROM`                  | Sender for those emails — `address` or `Name <address>` on a Resend-verified domain (required)                          |
-| `GUEST_MESSAGE_ALLOWANCE`     | Guest `user`-message cap before registration is required (int, default `10`; ADR-0010)                                  |
-| `PORT`                        | Port to listen on (default `3000`)                                                                                      |
-| `LOG_LEVEL`                   | Log verbosity (default `info`; set to `debug`/`warn` etc. in prod)                                                      |
-| `LOG_LEVEL_OVERRIDES`         | Per-component levels, comma-separated `component=level` (e.g. `redis=debug,auth=warn`); unknown level fails boot        |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector URL. Unset = spans are not exported (the tracer still runs, so lines keep their `trace_id`)              |
-| `OTEL_LOG_LEVEL`              | Verbosity of the OTel SDK's own diagnostics (default `error`; `none`/`warn`/`info`/`debug`/`verbose`/`all`)             |
-| `OPERATOR_TOKEN`              | Shared operator secret (32+ chars) for `/api/internal/*`, e.g. changing log levels at runtime. Unset = those routes 404 |
+| Variable                      | Purpose                                                                                                                   |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `OPENAI_API_KEY`              | OpenAI API key (optional — set at least one of this or `ANTHROPIC_API_KEY`)                                               |
+| `ANTHROPIC_API_KEY`           | Anthropic API key (optional — set at least one of this or `OPENAI_API_KEY`)                                               |
+| `DATABASE_URL`                | PostgreSQL connection string                                                                                              |
+| `REDIS_URL`                   | Redis connection (e.g. `redis://localhost:6380`)                                                                          |
+| `REDIS_PASSWORD`              | Redis password (if set)                                                                                                   |
+| `CLIENT_URL`                  | Frontend origin for CORS (e.g. `http://localhost:5173`); must be the same site as the API ([auth.md](../../docs/auth.md)) |
+| `SERVER_URL`                  | Backend public URL, allowed as a CORS origin alongside `CLIENT_URL` (e.g. for Swagger UI at `/docs`)                      |
+| `BETTER_AUTH_SECRET`          | better-auth secret — signs sessions and the session cookie cache (required)                                               |
+| `BETTER_AUTH_URL`             | App base URL for better-auth cookies/redirects (required, e.g. `http://localhost:3000`)                                   |
+| `RESEND_API_KEY`              | Resend API key for the verification and password-reset emails (required; ADR-0021)                                        |
+| `EMAIL_FROM`                  | Sender for those emails — `address` or `Name <address>` on a Resend-verified domain (required)                            |
+| `GUEST_MESSAGE_ALLOWANCE`     | Guest `user`-message cap before registration is required (int, default `10`; ADR-0010)                                    |
+| `PORT`                        | Port to listen on (default `3000`)                                                                                        |
+| `LOG_LEVEL`                   | Log verbosity (default `info`; set to `debug`/`warn` etc. in prod)                                                        |
+| `LOG_LEVEL_OVERRIDES`         | Per-component levels, comma-separated `component=level` (e.g. `redis=debug,auth=warn`); unknown level fails boot          |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector URL. Unset = spans are not exported (the tracer still runs, so lines keep their `trace_id`)                |
+| `OTEL_LOG_LEVEL`              | Verbosity of the OTel SDK's own diagnostics (default `error`; `none`/`warn`/`info`/`debug`/`verbose`/`all`)               |
+| `OPERATOR_TOKEN`              | Shared operator secret (32+ chars) for `/api/internal/*`, e.g. changing log levels at runtime. Unset = those routes 404   |
 
 > **`env.ts` rule:** All env vars are Zod-validated in `src/env.ts` and fail loudly at startup before any listener is bound. Never read `process.env.*` directly anywhere in the backend — always import from `@backend/env`. The only code that touches `process.env` is what runs before `env.ts` parses it: `src/test/setup.ts` and `src/scripts/generate-openapi.ts`, which fill placeholders with `??=`.
 >
