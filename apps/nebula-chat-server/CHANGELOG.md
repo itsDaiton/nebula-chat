@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.7](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.3.6...nebula-chat-server-v2.3.7) (2026-10-04)
+
+
+### Bug Fixes
+
+* **server:** grant redis DAC_OVERRIDE so the entrypoint can traverse appendonlydir ([#442](https://github.com/itsDaiton/nebula-chat/issues/442)) ([df5d437](https://github.com/itsDaiton/nebula-chat/commit/df5d43703b3ed5dcfa01531a19d3595e6871d7d1))
+
 ## [2.3.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.3.5...nebula-chat-server-v2.3.6) (2026-10-03)
 
 

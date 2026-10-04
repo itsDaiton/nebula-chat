@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.6.1...nebula-chat-v2.7.0) (2026-10-04)
+
+
+### Features
+
+* **client:** NEB-339 add sign-up, sign-in and sign-out on a dedicated auth page ([#438](https://github.com/itsDaiton/nebula-chat/issues/438)) ([a757005](https://github.com/itsDaiton/nebula-chat/commit/a757005c87d5d99c02069e0169bd635d6e8c2cdf))
+
+
+### Bug Fixes
+
+* **server:** grant redis DAC_OVERRIDE so the entrypoint can traverse appendonlydir ([#442](https://github.com/itsDaiton/nebula-chat/issues/442)) ([df5d437](https://github.com/itsDaiton/nebula-chat/commit/df5d43703b3ed5dcfa01531a19d3595e6871d7d1))
+
 ## [2.6.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.6.0...nebula-chat-v2.6.1) (2026-10-03)
 
 

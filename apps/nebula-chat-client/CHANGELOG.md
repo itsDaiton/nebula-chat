@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.19.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.18.0...nebula-chat-client-v1.19.0) (2026-10-04)
+
+
+### Features
+
+* **client:** NEB-339 add sign-up, sign-in and sign-out on a dedicated auth page ([#438](https://github.com/itsDaiton/nebula-chat/issues/438)) ([a757005](https://github.com/itsDaiton/nebula-chat/commit/a757005c87d5d99c02069e0169bd635d6e8c2cdf))
+
 ## [1.18.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.17.0...nebula-chat-client-v1.18.0) (2026-10-03)
 
 
