@@ -363,6 +363,9 @@ importers:
       msw:
         specifier: ^2.15.0
         version: 2.15.0(@types/node@26.5.1)(typescript@6.0.3)
+      nanostores:
+        specifier: ^1.5.3
+        version: 1.5.3
       orval:
         specifier: ^8.22.0
         version: 8.27.0(@faker-js/faker@10.6.0)(prettier@3.9.6)(typescript@6.0.3)

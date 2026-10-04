@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
+import { cleanStores } from 'nanostores';
 import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 import { server } from '@/test/msw';
 
@@ -13,7 +14,13 @@ afterEach(() => {
   cleanup();
 });
 
-afterAll(() => server.close());
+afterAll(async () => {
+  server.close();
+  // better-auth's atoms unmount a second late and touch `window`; run it before jsdom goes.
+  // Imported here, not at the top, so better-auth captures `fetch` only after msw patches it.
+  const { authClient } = await import('@/libs/auth/client');
+  cleanStores(...Object.values(authClient.$store.atoms));
+});
 
 // jsdom implements neither of these, and Chakra UI reaches for both during layout.
 beforeAll(() => {
