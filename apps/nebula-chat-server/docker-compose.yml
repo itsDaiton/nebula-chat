@@ -60,7 +60,7 @@ services:
   # speaks OTLP to OTEL_EXPORTER_OTLP_ENDPOINT, so swapping this for Jaeger or a
   # hosted vendor is an env var, not a code change. See ADR-0007.
   otel-lgtm:
-    image: grafana/otel-lgtm:0.11.15
+    image: grafana/otel-lgtm:0.34.0
     container_name: otel-lgtm
     ports:
       # Grafana UI — 3001 on the host because the server itself defaults to 3000.
