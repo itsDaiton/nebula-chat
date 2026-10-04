@@ -11,6 +11,7 @@ import { SERVER_CONFIG } from '@/shared/config/serverConfig';
 import { useNavigate } from 'react-router';
 import { route } from '@/routing/routes';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
+import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
 import { SSE_EVENTS } from '@/modules/chat/utils/sseEvents';
 import { resources } from '@/resources';
 
@@ -98,6 +99,7 @@ export const useChatStream = () => {
         isStreaming: true,
         error: null,
         usage: null,
+        isMessageAllowanceReached: false,
         history: [...messages, { id: crypto.randomUUID(), role: 'assistant', content: '' }],
       });
 
@@ -108,6 +110,20 @@ export const useChatStream = () => {
           // A rejection before streaming starts (auth, allowance, validation,
           // rate limit) arrives as the JSON error envelope.
           const envelope = parseErrorEnvelope(await response.json().catch(() => null));
+          // Matched on the code, since a plain Forbidden is a 403 too; a bare 403 counts as reached.
+          const isMessageAllowanceReached = envelope
+            ? envelope.error === 'MessageAllowanceReached'
+            : response.status === 403;
+          if (isMessageAllowanceReached) {
+            // Nothing was persisted, so the refused message goes back to the composer to resend.
+            useChatStreamStore.setState({
+              history: messages.slice(0, -1),
+              isStreaming: false,
+              isMessageAllowanceReached: true,
+            });
+            useMessageStore.getState().setMessage(newUserMessage?.content ?? '');
+            return;
+          }
           throw new Error(envelope?.message ?? resources.chat.streamError);
         }
 

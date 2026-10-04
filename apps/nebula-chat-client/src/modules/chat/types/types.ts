@@ -78,12 +78,15 @@ export type ChatStreamState = {
   error: string | null;
   usage: Usage;
   conversationId?: string;
+  /** A Guest's send was refused because their message allowance is spent. */
+  isMessageAllowanceReached: boolean;
   setHistory: Dispatch<SetStateAction<ChatMessage[]>>;
   setIsStreaming: (isStreaming: boolean) => void;
   setIsPostStreamNavigation: (v: boolean) => void;
   setError: (error: string | null) => void;
   setUsage: (usage: Usage) => void;
   setConversationId: (id: string | undefined) => void;
+  clearMessageAllowanceReached: () => void;
 };
 
 export type MessageState = {
