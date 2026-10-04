@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.8.0...nebula-chat-v2.9.0) (2026-10-04)
+
+
+### Features
+
+* **auth:** NEB-341 add email verification and password reset via Resend ([#445](https://github.com/itsDaiton/nebula-chat/issues/445)) ([2314bb8](https://github.com/itsDaiton/nebula-chat/commit/2314bb881fd672457e65a7ebf56e780d6a91e7e8))
+
 ## [2.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.7.0...nebula-chat-v2.8.0) (2026-10-04)
 
 
