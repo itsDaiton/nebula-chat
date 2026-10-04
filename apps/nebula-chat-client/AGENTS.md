@@ -71,7 +71,7 @@ apps/nebula-chat-client/src/
 │   │       ├── AuthFormAlert.tsx  # Outcome (error or success) that belongs to the whole form
 │   │       ├── AuthStatus.tsx     # Titled outcome in place of a form (sent, reset, link invalid)
 │   │       ├── BackToSignIn.tsx   # Footer link back to /auth
-│   │       ├── EmailVerificationPrompt.tsx  # Above the chat input: unverified Registered user → resend
+│   │       ├── EmailVerificationPrompt.tsx  # Above the chat input: unverified Registered user → resend (→ "keep chatting" at the allowance)
 │   │       └── ResendVerificationButton.tsx
 │   ├── chat/
 │   │   ├── ChatPage.tsx

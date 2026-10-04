@@ -155,7 +155,7 @@ export default [
     },
   },
   {
-    files: ['libs/auth/**/*.{ts,js}'],
+    files: ['libs/auth/**/*.{ts,tsx,js}'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -225,7 +225,7 @@ export default [
     // the cause — and `{ error: err.message }` throws them away on purpose.
     files: [
       'apps/nebula-chat-server/**/*.{ts,js}',
-      'libs/{auth,db,errors,langchain,otel,redis}/**/*.{ts,js}',
+      'libs/{auth,db,errors,langchain,otel,redis}/**/*.{ts,tsx,js}',
     ],
     rules: {
       'no-restricted-syntax': [

@@ -1,3 +1,6 @@
+import { render } from '@react-email/components';
+import { AuthEmail } from './AuthEmail';
+import { LOGO } from './logo';
 import type { EmailMessage } from './resend';
 
 /** What better-auth hands its send callbacks, narrowed to what the templates read. */
@@ -15,28 +18,26 @@ type AuthEmailCopy = {
 
 const APP_NAME = 'Nebula Chat';
 
-const escapeHtml = (value: string) =>
-  value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-
 const buildAuthEmail =
   ({ subject, intro, action, outro }: AuthEmailCopy) =>
-  ({ user, url }: AuthEmailParams): EmailMessage => {
-    const greeting = `Hi ${user.name},`;
+  async ({ user, url }: AuthEmailParams): Promise<EmailMessage> => {
+    const email = (
+      <AuthEmail
+        preview={intro}
+        heading={subject}
+        greeting={`Hi ${user.name},`}
+        intro={intro}
+        action={action}
+        url={url}
+        outro={outro}
+      />
+    );
     return {
       to: user.email,
       subject: `${subject} — ${APP_NAME}`,
-      text: [greeting, intro, `${action}: ${url}`, outro].join('\n\n'),
-      html: [
-        `<p>${escapeHtml(greeting)}</p>`,
-        `<p>${intro}</p>`,
-        `<p><a href="${escapeHtml(url)}">${action}</a></p>`,
-        `<p>${outro}</p>`,
-      ].join('\n'),
+      html: await render(email),
+      text: await render(email, { plainText: true }),
+      inlineImages: [LOGO],
     };
   };
 

@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { EmailVerificationPrompt } from '@/modules/auth/components/EmailVerificationPrompt';
+import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
@@ -23,6 +24,7 @@ const resend = () =>
 
 beforeEach(() => {
   vi.restoreAllMocks();
+  useChatStreamStore.setState({ isMessageAllowanceReached: false });
 });
 
 describe('EmailVerificationPrompt', () => {
@@ -32,6 +34,16 @@ describe('EmailVerificationPrompt', () => {
     const prompt = screen.getByRole('status');
     expect(prompt).toHaveTextContent(emailVerification.title);
     expect(prompt).toHaveTextContent(emailVerification.description);
+  });
+
+  it('tells an unverified user at the message allowance that verifying lifts it', async () => {
+    useChatStreamStore.setState({ isMessageAllowanceReached: true });
+    await renderPrompt({ isAnonymous: false, emailVerified: false });
+
+    const prompt = screen.getByRole('alert');
+    expect(prompt).toHaveTextContent(emailVerification.allowanceReachedTitle);
+    expect(prompt).toHaveTextContent(emailVerification.allowanceReachedDescription);
+    expect(screen.getByRole('button', { name: emailVerification.resend })).toBeInTheDocument();
   });
 
   it('resends the verification email, returning to the verify page', async () => {

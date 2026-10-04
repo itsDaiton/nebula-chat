@@ -8,4 +8,9 @@ export type { ClaimConversationsParams } from './claim';
 
 // Transactional email (verification + password reset, ADR-0021)
 export { createResendEmailSender } from './resend';
-export type { CreateResendEmailSenderConfig, EmailMessage, EmailSender } from './resend';
+export type {
+  CreateResendEmailSenderConfig,
+  EmailMessage,
+  EmailSender,
+  InlineImage,
+} from './resend';

@@ -71,11 +71,12 @@ describe('ChatInputBar', () => {
     expect(onSend).toHaveBeenCalledWith('hello');
   });
 
-  it('asks a Guest at the message allowance to register, then sends once they have', async () => {
+  it('asks a Guest at the message allowance to register, then sends once verified', async () => {
     let isRegistered = false;
     let sends = 0;
     server.use(
-      mockGetSession(() => aSession({ isAnonymous: !isRegistered })),
+      // Only a verified Registered user is uncapped (ADR-0021).
+      mockGetSession(() => aSession({ isAnonymous: !isRegistered, emailVerified: isRegistered })),
       http.post(API_ROUTE.chatStream, () => {
         sends += 1;
         return isRegistered

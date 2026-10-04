@@ -109,13 +109,15 @@ export const createAuth = ({
     },
     emailAndPassword: {
       enabled: true,
-      sendResetPassword: ({ user, url }) => sendEmail(passwordResetEmail({ user, url })),
+      sendResetPassword: async ({ user, url }) =>
+        sendEmail(await passwordResetEmail({ user, url })),
       revokeSessionsOnPasswordReset: true,
     },
     emailVerification: {
       sendOnSignUp: true,
       autoSignInAfterVerification: true,
-      sendVerificationEmail: ({ user, url }) => sendEmail(verificationEmail({ user, url })),
+      sendVerificationEmail: async ({ user, url }) =>
+        sendEmail(await verificationEmail({ user, url })),
     },
     // Adapt the Redis-backed authStore to better-auth's SecondaryStorage. As of
     // @better-auth/core 1.7 (src/db/type.ts) the interface is

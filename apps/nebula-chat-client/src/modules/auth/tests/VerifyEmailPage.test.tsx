@@ -28,13 +28,13 @@ const renderPage = async (search: string, session: Parameters<typeof holdSession
 const unverified = { isAnonymous: false, emailVerified: false };
 
 describe('VerifyEmailPage', () => {
-  it('confirms a verified email and continues to the chat', async () => {
+  it('confirms a verified email and starts a chat', async () => {
     await renderPage('', { isAnonymous: false, emailVerified: true });
 
     expect(screen.getByRole('heading', { name: verifyEmail.verifiedTitle })).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(verifyEmail.verified);
 
-    await userEvent.click(screen.getByRole('link', { name: verifyEmail.continueToChat }));
+    await userEvent.click(screen.getByRole('link', { name: verifyEmail.startChatting }));
 
     expect(screen.getByText(CHAT_PAGE)).toBeInTheDocument();
   });

@@ -45,6 +45,25 @@ describe('createResendEmailSender', () => {
     expect(send).toHaveBeenCalledWith({ from: 'Nebula Chat <hello@example.com>', ...MESSAGE });
   });
 
+  it('sends inline images as Resend inline attachments', async () => {
+    send.mockResolvedValue({ data: { id: 'email-1' }, error: null });
+    const sendEmail = createResendEmailSender({ apiKey: 're_test_key', from: 'a@example.com' });
+    const logo = {
+      contentId: 'logo',
+      filename: 'logo.png',
+      contentType: 'image/png',
+      content: 'iVBORw0KGgo=',
+    };
+
+    await sendEmail({ ...MESSAGE, inlineImages: [logo] });
+
+    expect(send).toHaveBeenCalledWith({
+      from: 'a@example.com',
+      ...MESSAGE,
+      attachments: [logo],
+    });
+  });
+
   it('rejects when Resend refuses the email, so better-auth logs the failure', async () => {
     send.mockResolvedValue({
       data: null,

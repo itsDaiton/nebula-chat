@@ -259,9 +259,10 @@ the chat-send `preHandler`
 which runs after `requireAuthentication` (so the session is attached) and before the
 cache hook, so a capped Guest is rejected before any model or cache work:
 
-- Registered users are uncapped — the check is skipped.
+- Verified Registered users are uncapped — the check is skipped. A Registered user whose
+  email is still unverified is metered exactly like a Guest until they verify.
 - Regenerations do not count — they replay an existing exchange.
-- Otherwise the Guest's live `role='user'` message count (a Postgres `count` joined to
+- Otherwise the user's live `role='user'` message count (a Postgres `count` joined to
   their conversations) is compared against `GUEST_MESSAGE_ALLOWANCE`. At or above the
   cap, the send is rejected.
 
@@ -289,17 +290,22 @@ code.
 ## Email
 
 Verification and password-reset emails go through **Resend** (ADR-0021). The lib builds
-the message from its own templates
-([`libs/auth/src/authEmails.ts`](../libs/auth/src/authEmails.ts)) and hands it to the
+each message from one [React Email](https://react.email) layout
+([`libs/auth/src/AuthEmail.tsx`](../libs/auth/src/AuthEmail.tsx)), configured per email in
+[`libs/auth/src/authEmails.tsx`](../libs/auth/src/authEmails.tsx) and rendered to HTML plus a
+plain-text part. The logo travels as an inline attachment (`cid:`) rather than a remote
+image, so it shows without a hosted asset. The message goes to the
 injected `sendEmail` (`EmailSender`); `createResendEmailSender`
 ([`libs/auth/src/resend.ts`](../libs/auth/src/resend.ts)) is the Resend implementation the
 server passes in. Sends run as better-auth background tasks, so a response never waits on
 Resend (no timing signal about which emails have accounts) and a failed send is logged as
 `auth.library.log` rather than failing the request. Both links expire after an hour.
 
-Verification is a prompt, not a gate: requiring it would stop sign-up from creating a
-session, and the claim below runs on that session. The client reads `user.emailVerified`
-and shows an unverified Registered user a "verify your email" prompt with a resend button.
+Verification does not block sign-in: requiring it would stop sign-up from creating a
+session, and the claim below runs on that session. Instead an unverified Registered user
+keeps the Guest [message allowance](#message-allowance) until they verify. The client reads
+`user.emailVerified` and shows them a "verify your email" prompt with a resend button,
+which turns into "verify your email to keep chatting" once the allowance is spent.
 
 Following a verification link signs its owner in. In a browser holding a different
 Guest's session, that is a sign-in like any other, so the claim below moves that Guest's

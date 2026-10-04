@@ -37,11 +37,11 @@ An anonymous User, auto-created on first use without any credentials, allowed a 
 _Avoid_: Anonymous user (that names a state; the Guest is the actor), visitor.
 
 **Registered user**:
-A User who has authenticated with a credential (email/password today; social providers later). Not subject to the message allowance. Their email starts **unverified** until they follow the emailed verification link; verification is prompted, never required.
+A User who has authenticated with a credential (email/password today; social providers later). Not subject to the message allowance. Their email starts **unverified** until they follow the emailed verification link; until then they keep the Guest message allowance.
 _Avoid_: Member, authenticated user.
 
 **Message allowance**:
-The maximum number of `user`-authored messages a Guest may send before they must register. Counted per Guest across all their Sessions; assistant messages and regenerations do not count against it. Removed once the Guest becomes a Registered user.
+The maximum number of `user`-authored messages a Guest may send before they must register. Counted per Guest across all their Sessions; assistant messages and regenerations do not count against it. Removed once the Guest becomes a Registered user and verifies their email.
 _Avoid_: Quota, rate limit (rate limiting is auth-endpoint abuse throttling — a separate concern).
 
 **Claim**:

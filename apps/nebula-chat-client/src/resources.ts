@@ -60,11 +60,14 @@ export const resources = {
       failedTitle: "We couldn't verify your email",
       linkExpired: 'This verification link has expired. Send yourself a new one.',
       linkInvalid: 'This verification link is invalid or no longer works.',
-      continueToChat: 'Continue to chat',
+      startChatting: 'Start chatting',
     },
     emailVerification: {
       title: 'Verify your email',
-      description: 'Follow the link we emailed you to confirm your address.',
+      description: 'Follow the link we emailed you to remove the message limit.',
+      allowanceReachedTitle: 'Verify your email to keep chatting',
+      allowanceReachedDescription:
+        "You've used the messages available before verification. Follow the link we emailed you to keep going.",
       resend: 'Resend email',
       sent: 'Verification email sent. Check your inbox.',
     },

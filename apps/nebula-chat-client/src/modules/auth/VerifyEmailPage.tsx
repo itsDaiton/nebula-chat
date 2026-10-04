@@ -33,7 +33,7 @@ export const VerifyEmailPage = () => {
       >
         {needsEmailVerification && <ResendVerificationButton />}
         <Button asChild variant={isVerified ? 'solid' : 'outline'}>
-          <Link to={route.chat.root()}>{verifyEmail.continueToChat}</Link>
+          <Link to={route.chat.root()}>{verifyEmail.startChatting}</Link>
         </Button>
       </AuthStatus>
     </AuthLayout>
