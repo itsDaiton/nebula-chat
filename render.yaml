@@ -27,6 +27,12 @@ services:
     rootDir: .
     buildCommand: npm install -g pnpm@12.4.1 && pnpm install --frozen-lockfile && pnpm turbo run build --filter=nebula-chat-client
     staticPublishPath: apps/nebula-chat-client/build
+    # SPA fallback: deep links (/c/:id, and the emailed /auth/verify-email and
+    # /auth/reset-password links) must serve index.html, not a 404.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     pullRequestPreviewsEnabled: true
     autoDeployTrigger: off
 

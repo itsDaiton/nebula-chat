@@ -106,7 +106,7 @@ pnpm --filter nebula-chat-server run typecheck
 
 ## Deployment URLs
 
-- Application: https://nebula-chat-p3c3.onrender.com/
+- Application: https://www.nebula-chat.cz
 - API: https://nebula-chat-api.onrender.com
 
 ## Notes
