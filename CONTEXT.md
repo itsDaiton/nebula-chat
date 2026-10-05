@@ -48,6 +48,14 @@ _Avoid_: Quota, rate limit (rate limiting is auth-endpoint abuse throttling — 
 Reassigning a Guest's Sessions to a Registered account at the moment they sign up or sign in, so that authenticating upgrades the Guest in place rather than resetting their history.
 _Avoid_: Merge, migrate.
 
+**Password change**:
+A signed-in Registered user replacing their password by proving the current one. Signs out every other auth session of theirs; the one they changed it from stays signed in. The new password must differ from the current one.
+_Avoid_: Password update, password reset (that is the signed-out flow).
+
+**Password reset**:
+A User who has forgotten their password setting a new one through an emailed link, without being signed in. Proves ownership of the email, so it also verifies it, and signs out every auth session.
+_Avoid_: Password recovery, password change (that is the signed-in flow).
+
 **Operator**:
 Someone running a deployment rather than using it: holds the operator token and can change operational settings, such as log levels at runtime. Not a User — an Operator owns no Sessions, and no Guest or Registered user can act as one.
 _Avoid_: Admin (there is no admin role; operating is not a kind of User).
