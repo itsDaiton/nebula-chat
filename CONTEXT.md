@@ -45,7 +45,7 @@ A User currently subject to the Message allowance: a Guest, or a Registered user
 _Avoid_: Capped user (that is a Metered user who has spent the allowance), limited user.
 
 **Message allowance**:
-The maximum number of `user`-authored messages a Metered user may send before they must register (Guest) or verify their email (unverified Registered user). Counted per User across all their Sessions; assistant messages and regenerations do not count against it. Metered users can see how many of their allowance they have left; once it reaches zero they are blocked from sending until they register or verify. Removed once the User is a verified Registered user.
+The maximum number of `user`-authored messages a Metered user may send before they must register (Guest) or verify their email (unverified Registered user). Counted per User across all their Sessions; assistant messages and regenerations do not count against it. A Metered user can see how much is left; at zero they cannot send until they register or verify. Lifted once verified.
 _Avoid_: Quota, rate limit (rate limiting is auth-endpoint abuse throttling — a separate concern).
 
 **Claim**:
