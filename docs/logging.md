@@ -392,7 +392,7 @@ is instrumented. Use it when you need traces locally.
 Collector needed — and bundles Grafana and Tempo:
 
 ```bash
-docker compose --env-file apps/nebula-chat-server/.env up -d otel-lgtm
+podman compose --env-file apps/nebula-chat-server/.env up -d otel-lgtm
 ```
 
 Then set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` in

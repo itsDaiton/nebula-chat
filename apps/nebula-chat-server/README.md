@@ -12,7 +12,7 @@ It is responsible for:
 
 - Node.js `26.8.2` (repo `.nvmrc`)
 - pnpm `>=12` (pinned to `12.4.1` via `packageManager`)
-- Docker (recommended for local PostgreSQL + Redis)
+- Podman (recommended for local PostgreSQL + Redis)
 - OpenAI API key
 
 ## Local setup
@@ -43,7 +43,7 @@ It is responsible for:
 
    ```bash
    cd apps/nebula-chat-server
-   docker-compose -f ../../docker-compose.yml --env-file .env up -d
+   podman compose -f ../../docker-compose.yml --env-file .env up -d
    ```
 
 5. Run DB migrations:

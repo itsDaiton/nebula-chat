@@ -18,7 +18,7 @@ nebula-chat/
 
 - Node.js `26.8.2` (see `.nvmrc`)
 - pnpm `>=12` (pinned to `12.4.1` via `packageManager`)
-- Docker (recommended for local PostgreSQL + Redis)
+- Podman (recommended for local PostgreSQL + Redis)
 - OpenAI API key
 
 ### Selecting the toolchain
@@ -71,7 +71,7 @@ default).
 4. Start local infrastructure:
 
    ```bash
-   docker-compose --env-file apps/nebula-chat-server/.env up -d
+   podman compose --env-file apps/nebula-chat-server/.env up -d
    ```
 
 5. Run DB migrations:
