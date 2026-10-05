@@ -58,20 +58,23 @@ default).
 2. Create environment files:
 
    ```bash
+   cp .env.example .env # credentials for the local Postgres/Redis containers
    cp apps/nebula-chat-server/.env.example apps/nebula-chat-server/.env
    cp apps/nebula-chat-client/.env.example apps/nebula-chat-client/.env
    ```
 
 3. Fill required values:
-   - `apps/nebula-chat-server/.env`: at least `OPENAI_API_KEY`, `SERVER_URL`, `CLIENT_URL`, and
-     local DB/Redis values.
+   - `.env` (root): Postgres/Redis container credentials. `DATABASE_URL` and `REDIS_URL` in the
+     server `.env` must use the same ones.
+   - `apps/nebula-chat-server/.env`: at least `OPENAI_API_KEY`, `SERVER_URL`, `CLIENT_URL`,
+     `DATABASE_URL` and `REDIS_URL`.
    - `apps/nebula-chat-client/.env`: `VITE_API_URL` (usually `http://localhost:3000` in local
      development).
 
 4. Start local infrastructure:
 
    ```bash
-   podman compose --env-file apps/nebula-chat-server/.env up -d
+   podman compose up -d
    ```
 
 5. Run DB migrations:

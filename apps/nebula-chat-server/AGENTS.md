@@ -435,7 +435,6 @@ be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-fi
 | `ANTHROPIC_API_KEY`           | Anthropic API key (optional — set at least one of this or `OPENAI_API_KEY`)                                               |
 | `DATABASE_URL`                | PostgreSQL connection string                                                                                              |
 | `REDIS_URL`                   | Redis connection (e.g. `redis://localhost:6380`)                                                                          |
-| `REDIS_PASSWORD`              | Redis password (if set)                                                                                                   |
 | `CLIENT_URL`                  | Frontend origin for CORS (e.g. `http://localhost:5173`); must be the same site as the API ([auth.md](../../docs/auth.md)) |
 | `SERVER_URL`                  | Backend public URL, allowed as a CORS origin alongside `CLIENT_URL` (e.g. for Swagger UI at `/docs`)                      |
 | `BETTER_AUTH_SECRET`          | better-auth secret — signs sessions and the session cookie cache (required)                                               |

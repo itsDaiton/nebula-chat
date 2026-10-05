@@ -1,5 +1,8 @@
 /data
 
+# local compose env (see .env.example)
+/.env
+
 # dependencies
 /node_modules
 /.pnp
