@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.9.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.9.3...nebula-chat-v2.9.4) (2026-10-05)
+
+
+### Bug Fixes
+
+* **docs:** add Metered user to the glossary and tighten Message allowance ([#456](https://github.com/itsDaiton/nebula-chat/issues/456)) ([7356d75](https://github.com/itsDaiton/nebula-chat/commit/7356d75e10f34e0a135ac2091d8b7408aa9b4848))
+* **docs:** define password change and password reset in the glossary ([#455](https://github.com/itsDaiton/nebula-chat/issues/455)) ([d42f07d](https://github.com/itsDaiton/nebula-chat/commit/d42f07d68494573071b46b39796f7dcace821923))
+
+## [2.9.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.9.2...nebula-chat-v2.9.3) (2026-10-05)
+
+
+### Bug Fixes
+
+* **dev:** drop password segment from example DB URLs for secretlint ([#457](https://github.com/itsDaiton/nebula-chat/issues/457)) ([2c398f4](https://github.com/itsDaiton/nebula-chat/commit/2c398f457a7001566418326fccb54b56be3d245b))
+
+## [2.9.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.9.1...nebula-chat-v2.9.2) (2026-10-05)
+
+
+### Bug Fixes
+
+* **dev:** move docker-compose.yml to the repo root ([#451](https://github.com/itsDaiton/nebula-chat/issues/451)) ([e50a462](https://github.com/itsDaiton/nebula-chat/commit/e50a46230f9795908782ae59c6d31bc43d0b90e6))
+
 ## [2.9.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.9.0...nebula-chat-v2.9.1) (2026-10-04)
 
 

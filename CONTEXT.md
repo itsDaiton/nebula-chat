@@ -40,13 +40,33 @@ _Avoid_: Anonymous user (that names a state; the Guest is the actor), visitor.
 A User who has authenticated with a credential (email/password today; social providers later). Not subject to the message allowance. Their email starts **unverified** until they follow the emailed verification link; until then they keep the Guest message allowance.
 _Avoid_: Member, authenticated user.
 
+**Metered user**:
+A User currently subject to the Message allowance: a Guest, or a Registered user whose email is still unverified. Stops being metered once they are a verified Registered user. Being metered says nothing about having hit the allowance — a Metered user with messages left can still send.
+_Avoid_: Capped user (that is a Metered user who has spent the allowance), limited user.
+
 **Message allowance**:
-The maximum number of `user`-authored messages a Guest may send before they must register. Counted per Guest across all their Sessions; assistant messages and regenerations do not count against it. Removed once the Guest becomes a Registered user and verifies their email.
+The maximum number of `user`-authored messages a Metered user may send before they must register (Guest) or verify their email (unverified Registered user). Counted per User across all their Sessions; assistant messages and regenerations do not count against it. A Metered user can see how much is left; at zero they cannot send until they register or verify. Lifted once verified.
 _Avoid_: Quota, rate limit (rate limiting is auth-endpoint abuse throttling — a separate concern).
 
 **Claim**:
 Reassigning a Guest's Sessions to a Registered account at the moment they sign up or sign in, so that authenticating upgrades the Guest in place rather than resetting their history.
 _Avoid_: Merge, migrate.
+
+**Password change**:
+A signed-in Registered user replacing their password by proving the current one. Signs out every other auth session of theirs; the one they changed it from stays signed in. The new password must differ from the current one.
+_Avoid_: Password update, password reset (that is the signed-out flow).
+
+**Password reset**:
+A User who has forgotten their password setting a new one through an emailed link, without being signed in. Proves ownership of the email, so it also verifies it, and signs out every auth session.
+_Avoid_: Password recovery, password change (that is the signed-in flow).
+
+**Avatar**:
+The visual that stands for a User in the interface. For a Registered user it is their Profile image if they have one, otherwise their initials; a Guest's is always a generic anonymous one.
+_Avoid_: Icon, profile picture (that is the Profile image, one possible content of an Avatar).
+
+**Profile image**:
+The picture a Registered user is represented by, either one they uploaded or one their social provider supplied; an upload replaces a provider-supplied one. Guests have none.
+_Avoid_: Profile picture, photo, avatar (the Avatar falls back to initials when there is no Profile image).
 
 **Operator**:
 Someone running a deployment rather than using it: holds the operator token and can change operational settings, such as log levels at runtime. Not a User — an Operator owns no Sessions, and no Guest or Registered user can act as one.
