@@ -25,7 +25,7 @@ pnpm turbo run build|typecheck --filter=<pkg>  # builds workspace lib artifacts 
 Start local infrastructure (PostgreSQL on `:5332`, Redis on `:6380`):
 
 ```bash
-cd apps/nebula-chat-server && docker-compose up
+docker-compose --env-file apps/nebula-chat-server/.env up
 ```
 
 Package-specific scripts live with the package: frontend `dev`/`build`/`typecheck` in the [frontend AGENTS.md](./apps/nebula-chat-client/AGENTS.md#commands); backend `dev`/`start`/`generate:openapi` and the `@nebula-chat/db` `db:*` migration commands in the [backend AGENTS.md](./apps/nebula-chat-server/AGENTS.md#commands).
@@ -243,7 +243,7 @@ Never skip steps 1 or 2, even for small utility libs. If the lib is substantial 
 pnpm install
 
 # 2. Start infrastructure (PostgreSQL on :5332, Redis on :6380)
-cd apps/nebula-chat-server && docker-compose up -d
+docker-compose --env-file apps/nebula-chat-server/.env up -d
 
 # 3. Run DB migrations
 pnpm --filter @nebula-chat/db db:migrate

@@ -43,7 +43,7 @@ It is responsible for:
 
    ```bash
    cd apps/nebula-chat-server
-   docker-compose up -d
+   docker-compose -f ../../docker-compose.yml --env-file .env up -d
    ```
 
 5. Run DB migrations:

@@ -71,7 +71,7 @@ default).
 4. Start local infrastructure:
 
    ```bash
-   cd apps/nebula-chat-server && docker-compose up -d
+   docker-compose --env-file apps/nebula-chat-server/.env up -d
    ```
 
 5. Run DB migrations:
