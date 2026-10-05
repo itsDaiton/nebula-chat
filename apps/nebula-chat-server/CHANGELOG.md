@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.4.3...nebula-chat-server-v2.4.4) (2026-10-05)
+
+
+### Bug Fixes
+
+* **docs:** add Metered user to the glossary and tighten Message allowance ([#456](https://github.com/itsDaiton/nebula-chat/issues/456)) ([7356d75](https://github.com/itsDaiton/nebula-chat/commit/7356d75e10f34e0a135ac2091d8b7408aa9b4848))
+
 ## [2.4.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.4.2...nebula-chat-server-v2.4.3) (2026-10-05)
 
 
