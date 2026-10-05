@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.4.2...nebula-chat-server-v2.4.3) (2026-10-05)
+
+
+### Bug Fixes
+
+* **dev:** drop password segment from example DB URLs for secretlint ([#457](https://github.com/itsDaiton/nebula-chat/issues/457)) ([2c398f4](https://github.com/itsDaiton/nebula-chat/commit/2c398f457a7001566418326fccb54b56be3d245b))
+
 ## [2.4.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.4.1...nebula-chat-server-v2.4.2) (2026-10-05)
 
 
