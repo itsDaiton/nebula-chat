@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.9.1...nebula-chat-v2.9.2) (2026-10-05)
+
+
+### Bug Fixes
+
+* **dev:** move docker-compose.yml to the repo root ([#451](https://github.com/itsDaiton/nebula-chat/issues/451)) ([e50a462](https://github.com/itsDaiton/nebula-chat/commit/e50a46230f9795908782ae59c6d31bc43d0b90e6))
+
 ## [2.9.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.9.0...nebula-chat-v2.9.1) (2026-10-04)
 
 
