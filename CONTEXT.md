@@ -60,6 +60,14 @@ _Avoid_: Password update, password reset (that is the signed-out flow).
 A User who has forgotten their password setting a new one through an emailed link, without being signed in. Proves ownership of the email, so it also verifies it, and signs out every auth session.
 _Avoid_: Password recovery, password change (that is the signed-in flow).
 
+**Avatar**:
+The visual that stands for a User in the interface. For a Registered user it is their Profile image if they have one, otherwise their initials; a Guest's is always a generic anonymous one.
+_Avoid_: Icon, profile picture (that is the Profile image, one possible content of an Avatar).
+
+**Profile image**:
+The picture a Registered user is represented by, either one they uploaded or one their social provider supplied; an upload replaces a provider-supplied one. Guests have none.
+_Avoid_: Profile picture, photo, avatar (the Avatar falls back to initials when there is no Profile image).
+
 **Operator**:
 Someone running a deployment rather than using it: holds the operator token and can change operational settings, such as log levels at runtime. Not a User — an Operator owns no Sessions, and no Guest or Registered user can act as one.
 _Avoid_: Admin (there is no admin role; operating is not a kind of User).
