@@ -40,8 +40,12 @@ _Avoid_: Anonymous user (that names a state; the Guest is the actor), visitor.
 A User who has authenticated with a credential (email/password today; social providers later). Not subject to the message allowance. Their email starts **unverified** until they follow the emailed verification link; until then they keep the Guest message allowance.
 _Avoid_: Member, authenticated user.
 
+**Metered user**:
+A User currently subject to the Message allowance: a Guest, or a Registered user whose email is still unverified. Stops being metered once they are a verified Registered user. Being metered says nothing about having hit the allowance — a Metered user with messages left can still send.
+_Avoid_: Capped user (that is a Metered user who has spent the allowance), limited user.
+
 **Message allowance**:
-The maximum number of `user`-authored messages a Guest may send before they must register. Counted per Guest across all their Sessions; assistant messages and regenerations do not count against it. Removed once the Guest becomes a Registered user and verifies their email.
+The maximum number of `user`-authored messages a Metered user may send before they must register (Guest) or verify their email (unverified Registered user). Counted per User across all their Sessions; assistant messages and regenerations do not count against it. A Metered user can see how much is left; at zero they cannot send until they register or verify. Lifted once verified.
 _Avoid_: Quota, rate limit (rate limiting is auth-endpoint abuse throttling — a separate concern).
 
 **Claim**:
