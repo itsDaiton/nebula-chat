@@ -104,3 +104,9 @@ overrides:
   # which is still inside the minimumReleaseAge cooldown above). Stay on the
   # 4.x line — js-yaml 5 is a breaking change orval has not adopted.
   js-yaml: ^4.3.2
+  # orval 8.37 pulls @scalar/json-magic, which pins undici to an exact 7.24.4 /
+  # 7.29.0 — both below 7.29.1, the release fixing GHSA-rfgv-xxqx-mfg5 and the
+  # rest of the advisories grype reports. Scoped to that parent: a bare
+  # `undici@7` selector also rewrites openai's optional `undici: >=5 <9` peer
+  # range and unlinks the undici 8 it resolves today.
+  '@scalar/json-magic>undici': ^7.29.1
