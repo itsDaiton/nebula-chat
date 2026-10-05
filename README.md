@@ -103,9 +103,14 @@ pnpm run lint
 pnpm run lint:fix
 pnpm run format
 pnpm run format:check
+pnpm turbo run build --filter='./libs/*' # build all workspace libs (libs/*)
 pnpm --filter nebula-chat-client run typecheck
 pnpm --filter nebula-chat-server run typecheck
 ```
+
+Build the libs after a fresh clone or after pulling lib changes. The apps typecheck against the libs' built `dist/`,
+so running `typecheck` on a stale build fails with errors like `no exported member`. `pnpm turbo run typecheck --filter=<pkg>`
+builds the libs it needs first.
 
 ## Deployment URLs
 
