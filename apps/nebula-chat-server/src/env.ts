@@ -22,7 +22,6 @@ export const envSchema = z
     PORT: z.coerce.number().default(3000),
     DATABASE_URL: z.url(),
     REDIS_URL: z.url(),
-    REDIS_PASSWORD: z.string().optional(),
     OPENAI_API_KEY: z.string().min(1).optional(),
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
     CLIENT_URL: originSchema.default('http://localhost:5173'),

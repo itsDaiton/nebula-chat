@@ -18,7 +18,7 @@ nebula-chat/
 
 - Node.js `26.8.2` (see `.nvmrc`)
 - pnpm `>=12` (pinned to `12.4.1` via `packageManager`)
-- Docker (recommended for local PostgreSQL + Redis)
+- Podman (recommended for local PostgreSQL + Redis)
 - OpenAI API key
 
 ### Selecting the toolchain
@@ -58,20 +58,23 @@ default).
 2. Create environment files:
 
    ```bash
+   cp .env.example .env # credentials for the local Postgres/Redis containers
    cp apps/nebula-chat-server/.env.example apps/nebula-chat-server/.env
    cp apps/nebula-chat-client/.env.example apps/nebula-chat-client/.env
    ```
 
 3. Fill required values:
-   - `apps/nebula-chat-server/.env`: at least `OPENAI_API_KEY`, `SERVER_URL`, `CLIENT_URL`, and
-     local DB/Redis values.
+   - `.env` (root): Postgres/Redis container credentials. `DATABASE_URL` and `REDIS_URL` in the
+     server `.env` must use the same ones.
+   - `apps/nebula-chat-server/.env`: at least `OPENAI_API_KEY`, `SERVER_URL`, `CLIENT_URL`,
+     `DATABASE_URL` and `REDIS_URL`.
    - `apps/nebula-chat-client/.env`: `VITE_API_URL` (usually `http://localhost:3000` in local
      development).
 
 4. Start local infrastructure:
 
    ```bash
-   cd apps/nebula-chat-server && docker-compose up -d
+   podman compose up -d
    ```
 
 5. Run DB migrations:
@@ -100,9 +103,14 @@ pnpm run lint
 pnpm run lint:fix
 pnpm run format
 pnpm run format:check
+pnpm turbo run build --filter='./libs/*' # build all workspace libs (libs/*)
 pnpm --filter nebula-chat-client run typecheck
 pnpm --filter nebula-chat-server run typecheck
 ```
+
+Build the libs after a fresh clone or after pulling lib changes. The apps typecheck against the libs' built `dist/`,
+so running `typecheck` on a stale build fails with errors like `no exported member`. `pnpm turbo run typecheck --filter=<pkg>`
+builds the libs it needs first.
 
 ## Deployment URLs
 

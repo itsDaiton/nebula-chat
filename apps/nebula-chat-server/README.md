@@ -12,7 +12,7 @@ It is responsible for:
 
 - Node.js `26.8.2` (repo `.nvmrc`)
 - pnpm `>=12` (pinned to `12.4.1` via `packageManager`)
-- Docker (recommended for local PostgreSQL + Redis)
+- Podman (recommended for local PostgreSQL + Redis)
 - OpenAI API key
 
 ## Local setup
@@ -33,17 +33,17 @@ It is responsible for:
    - `OPENAI_API_KEY`
    - `SERVER_URL` (for local use: `http://localhost:3000`), allowed as a CORS origin (e.g. for Swagger UI at `/docs`)
    - `CLIENT_URL` (for local use: `http://localhost:5173`)
-   - `DATABASE_URL` (if using external DB) or local Postgres values (`POSTGRES_*`)
-   - `REDIS_URL` (if using external Redis) or `REDIS_PASSWORD` for local Redis
+   - `DATABASE_URL` and `REDIS_URL` (for the local containers, build them from the credentials in the root `.env`)
 
    The `dev`, `start` and `db:*` scripts load this file through `dotenvx run`; a variable already set in your shell
    wins over the file. Running `node` or `tsx` directly skips it.
 
-4. Start local PostgreSQL + Redis:
+4. Start local PostgreSQL + Redis. Their credentials live in a separate root `.env`
+   (see `.env.example` in the repo root), which `podman compose` reads automatically:
 
    ```bash
-   cd apps/nebula-chat-server
-   docker-compose up -d
+   cp ../../.env.example ../../.env
+   podman compose -f ../../docker-compose.yml up -d
    ```
 
 5. Run DB migrations:
