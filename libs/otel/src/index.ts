@@ -30,4 +30,4 @@ export { bindAttributes } from './bindAttributes';
 export { componentLogger } from './componentLogger';
 
 // Tracing
-export { initTelemetry } from './tracing';
+export { initTelemetry, shutdownTelemetry } from './tracing';

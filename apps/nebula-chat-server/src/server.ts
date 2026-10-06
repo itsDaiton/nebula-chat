@@ -1,4 +1,9 @@
-import { initTelemetry, listenForLogLevelChanges, logEvent } from '@nebula-chat/otel';
+import {
+  initTelemetry,
+  listenForLogLevelChanges,
+  logEvent,
+  shutdownTelemetry,
+} from '@nebula-chat/otel';
 import { env } from '@backend/env';
 import { logger, SERVICE_NAME } from '@backend/logger';
 
@@ -6,6 +11,7 @@ initTelemetry(SERVICE_NAME, { logger, diagLevel: env.OTEL_LOG_LEVEL });
 
 import { buildApp } from '@backend/app';
 import { redis } from '@backend/redis';
+import { createShutdown } from '@backend/shutdown';
 
 const start = async (): Promise<void> => {
   // Open Redis while the app builds, so the first request does not race the connect.
@@ -47,12 +53,14 @@ const start = async (): Promise<void> => {
   // Not awaited: it never rejects, and a Redis that is down must not hold up boot.
   void listenForLogLevelChanges({ logger, pubsub: redis.pubsub, serviceName: SERVICE_NAME });
 
-  const shutdown = (): void => {
-    app.close().catch((err: unknown) => {
-      logEvent(logger, 'error', 'server.shutdown.failed', { err }, 'Error during shutdown');
-      process.exit(1);
-    });
-  };
+  const shutdown = createShutdown({
+    logger,
+    close: async () => {
+      await Promise.all([app.close(), shutdownTelemetry()]);
+    },
+    // Dev keeps it short: `tsx watch` waits on this exit before every restart.
+    timeoutMs: env.NODE_ENV === 'development' ? 1_000 : 10_000,
+  });
 
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);

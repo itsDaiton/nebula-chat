@@ -46,6 +46,17 @@ const exportConfiguration = (endpoint: string | undefined): Partial<NodeSDKConfi
     : { spanProcessors: [discardingSpanProcessor], metricReaders: [], logRecordProcessors: [] };
 
 let sdk: NodeSDK | null = null;
+let shutdownPromise: Promise<void> | null = null;
+
+/**
+ * Flushes pending spans and stops the SDK. Idempotent — the lib's own SIGTERM
+ * handler and a consumer awaiting it in its shutdown sequence share one flush.
+ * Resolves at once when the SDK never started.
+ */
+export const shutdownTelemetry = (): Promise<void> => {
+  shutdownPromise ??= sdk ? sdk.shutdown() : Promise.resolve();
+  return shutdownPromise;
+};
 
 /**
  * Starts the OpenTelemetry Node SDK with auto-instrumentations. The tracer is
@@ -103,6 +114,6 @@ export const initTelemetry = (serviceName: string, options: InitTelemetryOptions
   sdk = instance;
 
   process.on('SIGTERM', () => {
-    void sdk?.shutdown();
+    void shutdownTelemetry();
   });
 };
