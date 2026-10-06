@@ -92,6 +92,7 @@ apps/nebula-chat-server/src/
 │   ├── isoDateTimeSchema.ts       # Response timestamp codec: a Date in the handler, an ISO date-time string on the wire
 │   ├── jsonResponse.ts            # One `response:` entry: its description + application/json schema
 │   ├── forwardReplyHeaders.ts     # Copies a hijacked reply's buffered headers (@fastify/cors's) onto reply.raw
+│   ├── socialProviders.ts         # GOOGLE_*/GITHUB_* OAuth credentials → createAuth's socialProviders
 │   └── trustProxy.ts
 └── plugins/
     ├── requestLogging.plugin.ts   # Root hooks: http.request.received (debug) + one http.request.completed (info)
@@ -442,6 +443,10 @@ be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-fi
 | `RESEND_API_KEY`              | Resend API key for the verification and password-reset emails (required; ADR-0021)                                        |
 | `EMAIL_FROM`                  | Sender for those emails — `address` or `Name <address>` on a Resend-verified domain (required)                            |
 | `GUEST_MESSAGE_ALLOWANCE`     | Guest `user`-message cap before registration is required (int, default `10`; ADR-0010)                                    |
+| `GOOGLE_CLIENT_ID`            | Google OAuth client id for social sign-in. Set with `GOOGLE_CLIENT_SECRET`, or leave both unset to turn Google off        |
+| `GOOGLE_CLIENT_SECRET`        | Google OAuth client secret (paired with `GOOGLE_CLIENT_ID`; only one of the two set fails boot)                           |
+| `GITHUB_CLIENT_ID`            | GitHub OAuth app client id for social sign-in. Set with `GITHUB_CLIENT_SECRET`, or leave both unset to turn GitHub off    |
+| `GITHUB_CLIENT_SECRET`        | GitHub OAuth app client secret (paired with `GITHUB_CLIENT_ID`; only one of the two set fails boot)                       |
 | `PORT`                        | Port to listen on (default `3000`)                                                                                        |
 | `LOG_LEVEL`                   | Log verbosity (default `info`; set to `debug`/`warn` etc. in prod)                                                        |
 | `LOG_LEVEL_OVERRIDES`         | Per-component levels, comma-separated `component=level` (e.g. `redis=debug,auth=warn`); unknown level fails boot          |
@@ -453,7 +458,7 @@ be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-fi
 >
 > **One exception:** `@nebula-chat/otel` reads `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_LOG_LEVEL` from `process.env` itself — a published lib can't depend on one consumer's env schema. Both are still declared in `src/env.ts`. See [ADR-0007](../../docs/adr/0007-otel-lib-and-fastify-native-logger.md) for why, and [docs/logging.md](../../docs/logging.md) for how logging works.
 
-The `BETTER_AUTH_*` and `GUEST_MESSAGE_ALLOWANCE` vars feed `@nebula-chat/auth`. See [docs/auth.md](../../docs/auth.md) for how authentication works (the route gates, the message allowance, and the claim) and [ADR-0010](../../docs/adr/0010-better-auth-for-auth.md) for the decisions behind it.
+The `BETTER_AUTH_*`, `GUEST_MESSAGE_ALLOWANCE` and `GOOGLE_*`/`GITHUB_*` vars feed `@nebula-chat/auth`. See [docs/auth.md](../../docs/auth.md) for how authentication works (the route gates, the message allowance, and the claim) and [ADR-0010](../../docs/adr/0010-better-auth-for-auth.md) for the decisions behind it.
 
 ---
 

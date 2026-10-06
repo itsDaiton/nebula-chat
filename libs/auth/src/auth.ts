@@ -46,6 +46,22 @@ export type CreateAuthConfig = {
   trustedOrigins?: string[];
   /** Delivers the verification and reset emails — Resend in production (ADR-0021). */
   sendEmail: EmailSender;
+  /** Client page an OAuth callback that cannot reach its own `errorCallbackURL` redirects to. */
+  errorURL?: string;
+  /** OAuth apps for social sign-in; a provider left out is not offered (`PROVIDER_NOT_FOUND`). */
+  socialProviders?: SocialProviderCredentials;
+};
+
+/** A provider's OAuth app; it redirects back to `${baseURL}/api/auth/callback/<provider>`. */
+export type OAuthCredentials = {
+  clientId: string;
+  clientSecret: string;
+};
+
+/** The social sign-in providers Nebula Chat supports, each enabled by its credentials. */
+export type SocialProviderCredentials = {
+  google?: OAuthCredentials;
+  github?: OAuthCredentials;
 };
 
 /**
@@ -70,6 +86,8 @@ export type CreateAuthConfig = {
  *   endpoints (importable into Bruno/Postman, etc.).
  * - email/password with password reset; verification is sent on sign-up but not
  *   required to sign in, sent in the background via `sendEmail` (ADR-0021).
+ * - Google / GitHub social sign-in for each provider in `socialProviders`; its
+ *   `/callback/*` runs the same anonymous `onLinkAccount` claim as email.
  */
 export const createAuth = ({
   db,
@@ -79,6 +97,8 @@ export const createAuth = ({
   baseURL,
   trustedOrigins,
   sendEmail,
+  errorURL,
+  socialProviders = {},
 }: CreateAuthConfig): Auth =>
   // better-auth 1.7 made `Auth` generic (`Auth<Options>`) and invariant, so the
   // instance `betterAuth()` infers no longer widens to the base `Auth` we expose.
@@ -118,6 +138,9 @@ export const createAuth = ({
       // The reset link was emailed to this address, so following it proves ownership.
       onPasswordReset: ({ user }) => markEmailVerified(db, user.id),
     },
+    socialProviders,
+    // Without it, a callback with no usable OAuth state lands on better-auth's own error page.
+    ...(errorURL && { onAPIError: { errorURL } }),
     emailVerification: {
       sendOnSignUp: true,
       autoSignInAfterVerification: true,

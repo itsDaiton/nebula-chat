@@ -3,9 +3,9 @@ import type { AuthErrorDescription, AuthResult } from '@/modules/auth/types/type
 import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
 import { resources } from '@/resources';
 
-const { errors, validation, resetPassword } = resources.auth;
+const { errors, validation, resetPassword, social } = resources.auth;
 
-// better-auth's codes (core + Have I Been Pwned), each placed under the field it concerns.
+// better-auth's codes (core, social sign-in + Have I Been Pwned), each placed under the field it concerns.
 const AUTH_ERRORS: Partial<Record<string, AuthErrorDescription>> = {
   PASSWORD_COMPROMISED: { field: 'password', message: errors.passwordCompromised },
   PASSWORD_REUSED: { field: 'password', message: errors.passwordReused },
@@ -16,6 +16,8 @@ const AUTH_ERRORS: Partial<Record<string, AuthErrorDescription>> = {
   INVALID_EMAIL: { field: 'email', message: validation.emailInvalid },
   INVALID_EMAIL_OR_PASSWORD: { field: 'root', message: errors.invalidCredentials },
   INVALID_TOKEN: { field: 'root', message: resetPassword.linkInvalid },
+  // The server has no credentials for the provider (it is configured per environment).
+  PROVIDER_NOT_FOUND: { field: 'root', message: social.errors.unavailable },
 };
 
 const UNKNOWN_ERROR: AuthErrorDescription = { field: 'root', message: errors.unknown };

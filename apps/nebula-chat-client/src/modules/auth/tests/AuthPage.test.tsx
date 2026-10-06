@@ -18,6 +18,8 @@ import {
   mockEmailSignIn,
   mockEmailSignUp,
   mockGetSession,
+  mockSocialSignIn,
+  providerConsentUrl,
   refreshSession,
 } from '@/test/auth';
 import { server } from '@/test/msw';
@@ -90,8 +92,11 @@ const fillSignIn = async () => {
   await userEvent.type(passwordField(), 'hunter22hunter');
 };
 
+const socialButton = (provider: string) => screen.getByRole('button', { name: provider });
+
 beforeEach(() => {
   vi.restoreAllMocks();
+  window.location.hash = '';
   usePasswordVisibilityStore.setState({ isPasswordVisible: false });
   session = aSession();
   server.use(
@@ -379,5 +384,114 @@ describe('AuthPage', () => {
     );
 
     expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
+  });
+
+  describe('social sign-in', () => {
+    const { social } = resources.auth;
+
+    /** Serves `sign-in/social` and returns a reader for the body the client last sent it. */
+    const captureSocialSignIn = () => {
+      let body: { provider?: string; callbackURL?: string; errorCallbackURL?: string } = {};
+      server.use(
+        mockSocialSignIn(async (request) => {
+          body = (await request.clone().json()) as typeof body;
+        }),
+      );
+      return () => body;
+    };
+
+    it('offers Google and GitHub alongside email, on either tab', async () => {
+      renderAuthFlow();
+
+      expect(socialButton(social.google)).toBeInTheDocument();
+      expect(socialButton(social.github)).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
+
+      expect(socialButton(social.google)).toBeInTheDocument();
+      expect(socialButton(social.github)).toBeInTheDocument();
+    });
+
+    it.each([
+      ['google', social.google],
+      ['github', social.github],
+    ])('hands off to %s and follows its redirect', async (provider, label) => {
+      const sent = captureSocialSignIn();
+      renderAuthFlow();
+
+      await userEvent.click(socialButton(label));
+
+      await waitFor(() => expect(window.location.href).toBe(providerConsentUrl()));
+      expect(sent()).toMatchObject({ provider });
+    });
+
+    it('returns to the chat on success and to this page on failure', async () => {
+      const sent = captureSocialSignIn();
+      renderAuthFlow();
+
+      await userEvent.click(socialButton(social.google));
+
+      await waitFor(() => expect(sent().callbackURL).toBeDefined());
+      expect(new URL(sent().callbackURL ?? '').pathname).toBe(route.chat.root());
+      expect(new URL(sent().errorCallbackURL ?? '').pathname).toBe(route.auth.root());
+    });
+
+    // The claim itself runs on the server's provider callback; the client only has to reload as the new user.
+    it('lands back in the chat signed in, listing their conversations afresh', async () => {
+      let listRequests = 0;
+      server.use(
+        getListConversationsMockHandler(() => {
+          listRequests += 1;
+          return { conversations: GUEST_CONVERSATIONS, nextCursor: null, hasMore: false };
+        }),
+      );
+      const sent = captureSocialSignIn();
+      const view = renderAuthFlow();
+      await userEvent.click(socialButton(social.github));
+      await waitFor(() => expect(sent().callbackURL).toBeDefined());
+      view.unmount();
+
+      // The provider's callback signs the user in on the server, then loads the app afresh.
+      becomeRegistered();
+      renderAuthFlow(new URL(sent().callbackURL ?? '').pathname);
+
+      expect(await findSignOut()).toBeInTheDocument();
+      expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
+      expect(screen.getByText('Sourdough tips')).toBeInTheDocument();
+      expect(listRequests).toBe(1);
+    });
+
+    it('says when a provider is not available', async () => {
+      server.use(
+        mockApiError('post', API_ROUTE.authSignInSocial, 404, { code: 'PROVIDER_NOT_FOUND' }),
+      );
+      renderAuthFlow();
+
+      await userEvent.click(socialButton(social.github));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(social.errors.unavailable);
+      expect(socialButton(social.github)).toBeEnabled();
+    });
+
+    it.each([
+      ['access_denied', social.errors.cancelled],
+      ['account_not_linked', social.errors.accountNotLinked],
+      ['email_not_found', social.errors.emailNotFound],
+      ['state_not_found', social.errors.failed],
+    ])('explains a %s returned by the provider callback', async (error, message) => {
+      renderAuthFlow(`${route.auth.root()}?error=${error}`);
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(message);
+    });
+
+    it("drops the last callback's error once the user tries again", async () => {
+      captureSocialSignIn();
+      renderAuthFlow(`${route.auth.root()}?error=access_denied`);
+      expect(await screen.findByRole('alert')).toBeInTheDocument();
+
+      await userEvent.click(socialButton(social.google));
+
+      await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+    });
   });
 });
