@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.9.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.9.4...nebula-chat-v2.9.5) (2026-10-06)
+
+
+### Bug Fixes
+
+* **deps:** override undici under @scalar/json-magic to clear grype advisories ([#474](https://github.com/itsDaiton/nebula-chat/issues/474)) ([f2b9855](https://github.com/itsDaiton/nebula-chat/commit/f2b98553e6222e60558518c639c746106656371c))
+* **docs:** add Avatar and Profile image to the glossary ([#468](https://github.com/itsDaiton/nebula-chat/issues/468)) ([90f1217](https://github.com/itsDaiton/nebula-chat/commit/90f12178a1a1c2663bdbd190b883947d4a50ed9f))
+
 ## [2.9.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.9.3...nebula-chat-v2.9.4) (2026-10-05)
 
 
