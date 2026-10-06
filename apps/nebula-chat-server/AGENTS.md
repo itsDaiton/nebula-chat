@@ -9,7 +9,7 @@ Conventions specific to the Fastify API. See the [root AGENTS.md](../../AGENTS.m
 Run from `apps/nebula-chat-server` (or `pnpm --filter nebula-chat-server run <cmd>` from the root):
 
 ```bash
-pnpm dev              # tsx watch mode (auto-restart) — assumes lib artifacts already built
+pnpm dev              # tsx watch mode (auto-restart, keeps earlier logs) — assumes lib artifacts already built
 pnpm start            # node dist/src/server.js (production)
 pnpm generate:openapi # regenerate openapi/openapi.yaml from live route schemas
 ```
