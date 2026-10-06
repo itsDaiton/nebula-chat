@@ -2,6 +2,7 @@ import { Button, HStack, Link as ChakraLink, Separator, Tabs, Text } from '@chak
 import { Link } from 'react-router';
 import { AuthForm } from '@/modules/auth/components/AuthForm';
 import { AuthLayout } from '@/modules/auth/components/AuthLayout';
+import { SocialSignIn } from '@/modules/auth/components/SocialSignIn';
 import { useIdentityChange } from '@/modules/auth/hooks/useIdentityChange';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import { SIGN_IN_FORM, SIGN_UP_FORM } from '@/modules/auth/utils/authForms';
@@ -25,6 +26,7 @@ export const AuthPage = () => {
             </Text>
             <Separator flex="1" />
           </HStack>
+          <SocialSignIn />
           <Button asChild variant="outline" borderColor="border.emphasized" w="full">
             <Link to={route.chat.root()} onClick={hidePassword}>
               {resources.auth.page.continueWithoutAccount}

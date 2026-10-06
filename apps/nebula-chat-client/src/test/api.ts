@@ -25,6 +25,7 @@ export const API_ROUTE = {
   authSignInAnonymous: '*/api/auth/sign-in/anonymous',
   authSignInEmail: '*/api/auth/sign-in/email',
   authSignUpEmail: '*/api/auth/sign-up/email',
+  authSignInSocial: '*/api/auth/sign-in/social',
   authSignOut: '*/api/auth/sign-out',
   authRequestPasswordReset: '*/api/auth/request-password-reset',
   authResetPassword: '*/api/auth/reset-password',

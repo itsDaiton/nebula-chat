@@ -12,11 +12,11 @@ the rationale behind the design, see
 
 There is no sign-up wall. Access has three states:
 
-| State           | How it is reached                               | Capability                                                            |
-| --------------- | ----------------------------------------------- | --------------------------------------------------------------------- |
-| Unauthenticated | No session cookie                               | Nothing — every API route returns `401`                               |
-| Guest           | Client calls `POST /api/auth/sign-in/anonymous` | Full read/write, but streaming is capped at `GUEST_MESSAGE_ALLOWANCE` |
-| Registered      | Guest or visitor signs up / signs in with email | Uncapped; inherits the Guest's conversations via the claim            |
+| State           | How it is reached                                                 | Capability                                                            |
+| --------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Unauthenticated | No session cookie                                                 | Nothing — every API route returns `401`                               |
+| Guest           | Client calls `POST /api/auth/sign-in/anonymous`                   | Full read/write, but streaming is capped at `GUEST_MESSAGE_ALLOWANCE` |
+| Registered      | Guest or visitor signs up / signs in with email, Google or GitHub | Uncapped; inherits the Guest's conversations via the claim            |
 
 A visitor becomes a Guest **only when the client explicitly requests an anonymous
 session** — the server never mints one implicitly. On the first sign-up or sign-in,
@@ -42,6 +42,7 @@ export const auth = createAuth({
   baseURL, // BETTER_AUTH_URL
   trustedOrigins, // origins allowed to call the auth endpoints
   sendEmail, // createResendEmailSender({ apiKey: RESEND_API_KEY, from: EMAIL_FROM })
+  socialProviders, // socialProvidersFromEnv(env) — Google / GitHub OAuth apps that are configured
 });
 ```
 
@@ -57,6 +58,7 @@ The instance is configured with:
 | Database adapter         | Drizzle over `@nebula-chat/db` (`provider: 'pg'`). `advanced.database.generateId: 'uuid'` so Postgres generates ids, keeping `conversations.userId` a plain uuid FK. |
 | Email / password         | Enabled. Password hashing is better-auth's built-in default (scrypt). Password reset enabled; a reset revokes the user's other sessions.                             |
 | Email verification       | Sent on sign-up (`sendOnSignUp`), **not required** to sign in; following the link verifies and signs the user in. See [Email](#email).                               |
+| Social providers         | Google and GitHub, each enabled only when the server is given its OAuth client id + secret. See [Social sign-in](#social-sign-in).                                   |
 | Anonymous plugin         | `POST /sign-in/anonymous` mints a Guest. Its `onLinkAccount` hook runs the claim.                                                                                    |
 | Have I Been Pwned plugin | Rejects sign-up with a known-breached password (`400 PASSWORD_COMPROMISED`); a reset is checked by the reset guard instead.                                          |
 | openAPI plugin           | Serves the auth API reference — see [API reference](#api-reference).                                                                                                 |
@@ -82,7 +84,7 @@ connection if the headers were already sent.
 
 All authentication happens by calling better-auth's endpoints under `/api/auth`.
 This instance exposes the following, given its configuration (email/password with
-verification and reset + anonymous). The examples use a cookie jar (`jar.txt`) because auth is cookie-based —
+verification and reset + social + anonymous). The examples use a cookie jar (`jar.txt`) because auth is cookie-based —
 `-c` writes the session cookies, `-b` sends them on the next call — and assume the
 server is at `http://localhost:3000` (`BETTER_AUTH_URL`).
 
@@ -115,6 +117,25 @@ curl -i -c jar.txt -X POST http://localhost:3000/api/auth/sign-in/email \
   -H 'content-type: application/json' \
   -d '{"email":"you@example.com","password":"a-long-unique-passphrase"}'
 ```
+
+#### `POST /api/auth/sign-in/social` — sign in with Google or GitHub
+
+Starts the OAuth flow and answers `{ url, redirect: true }`; the client sends the browser to
+`url`, the provider's consent screen. `callbackURL` and `errorCallbackURL` must be trusted
+origins (`CLIENT_URL`). A provider the server has no credentials for answers
+`404 PROVIDER_NOT_FOUND`. See [Social sign-in](#social-sign-in) for the rest of the round trip.
+
+```bash
+curl -i -b jar.txt -c jar.txt -X POST http://localhost:3000/api/auth/sign-in/social \
+  -H 'content-type: application/json' \
+  -d '{"provider":"github","callbackURL":"http://localhost:5173/","errorCallbackURL":"http://localhost:5173/auth"}'
+```
+
+#### `GET /api/auth/callback/:provider` — the provider's redirect back
+
+Where Google or GitHub returns the browser. Exchanges the code, signs the user in (creating
+the account on first use), runs the claim if a Guest started the flow, and redirects to
+`callbackURL`; on failure it redirects to `errorCallbackURL?error=<code>`.
 
 #### `GET /api/auth/get-session` — current session
 
@@ -201,8 +222,8 @@ application's own `openapi.yaml`. better-auth's `openAPI` plugin serves an inter
 [Scalar](https://scalar.com/) reference at `/api/auth/reference`, backed by the
 OpenAPI 3.1 schema at `/api/auth/open-api/generate-schema` (the reference UI fetches
 that schema). The reference lists better-auth's full core catalogue — including
-endpoints for features this instance does not enable (social sign-in, account
-deletion, email change) — so the hand-written list above is the authoritative set of
+endpoints for features this instance does not enable (account deletion, email
+change) — so the hand-written list above is the authoritative set of
 active endpoints.
 
 ## Sessions and cookies
@@ -356,9 +377,37 @@ The client pages better-auth redirects to:
 | `/auth/reset-password`  | The reset link (`?token` / `?error`) | New-password form, or "invalid or expired" with a link to request another        |
 | `/auth/verify-email`    | The verification link (`?error`)     | Verified, or expired / invalid with a resend button                              |
 
+## Social sign-in
+
+Google and GitHub sign-in are better-auth `socialProviders`. The lib takes their OAuth
+credentials as `socialProviders` in `createAuth()`; the server builds that from the
+`GOOGLE_*` / `GITHUB_*` env vars ([`src/utils/socialProviders.ts`](../apps/nebula-chat-server/src/utils/socialProviders.ts)),
+enabling a provider only when both its id and secret are set. Either one alone fails boot.
+
+Each provider's OAuth app registers the redirect URI
+`<BETTER_AUTH_URL>/api/auth/callback/<provider>` — locally
+`http://localhost:3000/api/auth/callback/google` and `…/github`.
+
+The round trip, from the auth page's "Continue with Google / GitHub":
+
+1. The client calls `signIn.social({ provider, callbackURL, errorCallbackURL })` with the
+   chat root and `/auth` as absolute client URLs, and follows the returned `url`. A Guest's
+   session cookie rides along; the anonymous plugin records the Guest in the OAuth state.
+2. The provider redirects to `/api/auth/callback/<provider>`, which signs the user in and
+   runs `onLinkAccount` — the same [claim](#account-linking) as email sign-in.
+3. better-auth redirects to the chat root. The app loads afresh, `get-session` returns the
+   Registered user, and the Guest's conversations are theirs.
+
+A failure lands on `/auth?error=<code>`, which the page explains: `access_denied` (the user
+cancelled at the provider), `account_not_linked` (the email already belongs to an account
+the provider cannot be linked to automatically), `email_not_found` (the provider shared no
+email); any other code gets a generic message. The email a provider reports as verified
+arrives verified, so that user is uncapped at once.
+
 ## Account linking
 
-When a Guest signs up or signs in, better-auth's anonymous plugin fires
+When a Guest signs up or signs in — with email or through a social provider's callback —
+better-auth's anonymous plugin fires
 `onLinkAccount`, which calls `claimConversations(db, { fromUserId, toUserId })`
 ([`libs/auth/src/claim.ts`](../libs/auth/src/claim.ts)). It reassigns every
 `conversations.userId` from the anonymous user to the newly linked account **before**
@@ -388,12 +437,15 @@ Declared and validated in
 | `RESEND_API_KEY`          | Resend API key for the verification and reset emails (required)             |
 | `EMAIL_FROM`              | Their sender, `address` or `Name <address>` on a verified domain (required) |
 | `GUEST_MESSAGE_ALLOWANCE` | Guest `user`-message cap before registration is required (default `10`)     |
+| `GOOGLE_CLIENT_ID`        | Google OAuth client id; with its secret, enables Google sign-in (optional)  |
+| `GOOGLE_CLIENT_SECRET`    | Google OAuth client secret (set both Google vars, or neither)               |
+| `GITHUB_CLIENT_ID`        | GitHub OAuth app client id; with its secret, enables GitHub sign-in         |
+| `GITHUB_CLIENT_SECRET`    | GitHub OAuth app client secret (set both GitHub vars, or neither)           |
 
 ## Not implemented
 
 The following are configured on the same instance when added, and are deliberately
 outside the current scope:
 
-- Social OAuth (Google/GitHub).
 - Captcha on the anonymous / sign-up path.
 - `@fastify/helmet` / CSRF hardening beyond better-auth's defaults.

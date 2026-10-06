@@ -18,6 +18,8 @@ import {
   mockEmailSignIn,
   mockEmailSignUp,
   mockGetSession,
+  mockSocialSignIn,
+  providerConsentUrl,
   refreshSession,
 } from '@/test/auth';
 import { server } from '@/test/msw';
@@ -90,8 +92,11 @@ const fillSignIn = async () => {
   await userEvent.type(passwordField(), 'hunter22hunter');
 };
 
+const socialButton = (provider: string) => screen.getByRole('button', { name: provider });
+
 beforeEach(() => {
   vi.restoreAllMocks();
+  window.location.hash = '';
   usePasswordVisibilityStore.setState({ isPasswordVisible: false });
   session = aSession();
   server.use(
@@ -379,5 +384,99 @@ describe('AuthPage', () => {
     );
 
     expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
+  });
+
+  describe('social sign-in', () => {
+    const { social } = resources.auth;
+
+    it('offers Google and GitHub alongside email, on either tab', async () => {
+      renderAuthFlow();
+
+      expect(socialButton(social.google)).toBeInTheDocument();
+      expect(socialButton(social.github)).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
+
+      expect(socialButton(social.google)).toBeInTheDocument();
+      expect(socialButton(social.github)).toBeInTheDocument();
+    });
+
+    it.each([
+      ['google', social.google],
+      ['github', social.github],
+    ])('hands off to %s and follows its redirect', async (provider, label) => {
+      let body: unknown;
+      server.use(
+        mockSocialSignIn(async (request) => {
+          body = await request.clone().json();
+        }),
+      );
+      renderAuthFlow();
+
+      await userEvent.click(socialButton(label));
+
+      await waitFor(() => expect(window.location.href).toBe(providerConsentUrl()));
+      expect(body).toMatchObject({ provider });
+    });
+
+    it('returns to the chat on success and to this page on failure', async () => {
+      let body: { callbackURL?: string; errorCallbackURL?: string } = {};
+      server.use(
+        mockSocialSignIn(async (request) => {
+          body = (await request.clone().json()) as typeof body;
+        }),
+      );
+      renderAuthFlow();
+
+      await userEvent.click(socialButton(social.google));
+
+      await waitFor(() => expect(body.callbackURL).toBeDefined());
+      expect(new URL(body.callbackURL ?? '').pathname).toBe(route.chat.root());
+      expect(new URL(body.errorCallbackURL ?? '').pathname).toBe(route.auth.root());
+    });
+
+    it('lands a Guest back in the chat as Registered, keeping their conversations (the claim)', async () => {
+      let callbackURL = '';
+      server.use(
+        mockSocialSignIn(async (request) => {
+          ({ callbackURL } = (await request.clone().json()) as { callbackURL: string });
+        }),
+      );
+      const view = renderAuthFlow();
+      await userEvent.click(socialButton(social.github));
+      await waitFor(() => expect(callbackURL).not.toBe(''));
+      view.unmount();
+
+      // The provider's callback signs the user in on the server, then loads the app afresh.
+      becomeRegistered();
+      renderAuthFlow(new URL(callbackURL).pathname);
+
+      expect(await findSignOut()).toBeInTheDocument();
+      expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
+      expect(screen.getByText('Sourdough tips')).toBeInTheDocument();
+    });
+
+    it('says when a provider is not available', async () => {
+      server.use(
+        mockApiError('post', API_ROUTE.authSignInSocial, 404, { code: 'PROVIDER_NOT_FOUND' }),
+      );
+      renderAuthFlow();
+
+      await userEvent.click(socialButton(social.github));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(social.errors.unavailable);
+      expect(socialButton(social.github)).toBeEnabled();
+    });
+
+    it.each([
+      ['access_denied', social.errors.cancelled],
+      ['account_not_linked', social.errors.accountNotLinked],
+      ['email_not_found', social.errors.emailNotFound],
+      ['state_mismatch', social.errors.failed],
+    ])('explains a %s returned by the provider callback', async (error, message) => {
+      renderAuthFlow(`${route.auth.root()}?error=${error}`);
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(message);
+    });
   });
 });

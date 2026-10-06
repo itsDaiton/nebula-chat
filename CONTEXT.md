@@ -37,7 +37,7 @@ An anonymous User, auto-created on first use without any credentials, allowed a 
 _Avoid_: Anonymous user (that names a state; the Guest is the actor), visitor.
 
 **Registered user**:
-A User who has authenticated with a credential (email/password today; social providers later). Not subject to the message allowance. Their email starts **unverified** until they follow the emailed verification link; until then they keep the Guest message allowance.
+A User who has authenticated with a credential: email/password, or a Google or GitHub account (social sign-in). Not subject to the message allowance. An email/password user's email starts **unverified** until they follow the emailed verification link, and until then they keep the Guest message allowance; an email the social provider has verified arrives verified.
 _Avoid_: Member, authenticated user.
 
 **Metered user**:

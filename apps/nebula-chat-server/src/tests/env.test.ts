@@ -77,3 +77,33 @@ describe('envSchema RESEND_API_KEY', () => {
     expect(parse({ RESEND_API_KEY: raw }).success).toBe(false);
   });
 });
+
+describe.each(['GOOGLE', 'GITHUB'] as const)('envSchema %s social sign-in', (provider) => {
+  const clientId = `${provider}_CLIENT_ID` as const;
+  const clientSecret = `${provider}_CLIENT_SECRET` as const;
+
+  it('accepts a client id and secret together', () => {
+    const result = parse({ [clientId]: 'client-id', [clientSecret]: 'client-secret' });
+
+    expect(result.success).toBe(true);
+    expect(result.data).toMatchObject({ [clientId]: 'client-id', [clientSecret]: 'client-secret' });
+  });
+
+  it.each([
+    ['unset', undefined],
+    ['empty', ''],
+  ])('leaves the provider off when both are %s', (_case, raw) => {
+    const result = parse({ [clientId]: raw, [clientSecret]: raw });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.[clientId]).toBeUndefined();
+    expect(result.data?.[clientSecret]).toBeUndefined();
+  });
+
+  it.each([
+    ['a client id without a secret', { [clientId]: 'client-id' }],
+    ['a secret without a client id', { [clientSecret]: 'client-secret' }],
+  ])('rejects %s', (_case, overrides) => {
+    expect(parse(overrides).success).toBe(false);
+  });
+});
