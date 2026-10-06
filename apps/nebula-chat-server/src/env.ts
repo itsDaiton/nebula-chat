@@ -33,6 +33,11 @@ export const envSchema = z
     RESEND_API_KEY: z.string().min(1),
     EMAIL_FROM: emailFromSchema,
     GUEST_MESSAGE_ALLOWANCE: z.coerce.number().int().default(10),
+    // How long SIGTERM/SIGINT waits for in-flight requests and the span flush
+    // before exiting anyway. The default sits inside Render's 30s grace period;
+    // `.env.example` drops it to 1s, since `tsx watch` waits on this exit before
+    // every restart. Not keyed on NODE_ENV, which defaults to `development`.
+    SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(25_000),
     // Shared operator secret for /api/internal/*; unset turns those routes off.
     OPERATOR_TOKEN: operatorTokenSchema,
     OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),

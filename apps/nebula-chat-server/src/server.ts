@@ -56,10 +56,13 @@ const start = async (): Promise<void> => {
   const shutdown = createShutdown({
     logger,
     close: async () => {
-      await Promise.all([app.close(), shutdownTelemetry()]);
+      // Settle both before exiting, so a failed close still flushes the spans
+      // that explain it. A failed flush is the SDK's to report (via its diag
+      // logger), not a failed shutdown: observability never fails the service.
+      const [closed] = await Promise.allSettled([app.close(), shutdownTelemetry()]);
+      if (closed.status === 'rejected') throw closed.reason;
     },
-    // Dev keeps it short: `tsx watch` waits on this exit before every restart.
-    timeoutMs: env.NODE_ENV === 'development' ? 1_000 : 10_000,
+    timeoutMs: env.SHUTDOWN_TIMEOUT_MS,
   });
 
   process.on('SIGTERM', shutdown);

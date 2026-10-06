@@ -34,7 +34,7 @@ export const createShutdown = ({
     setTimeout(() => {
       logEvent(
         logger,
-        'warn',
+        'error',
         'server.shutdown.timed_out',
         {},
         `Shutdown did not finish within ${timeoutMs}ms; exiting anyway`,

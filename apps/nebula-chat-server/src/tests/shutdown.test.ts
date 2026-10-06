@@ -54,14 +54,13 @@ describe('createShutdown', () => {
     await vi.advanceTimersByTimeAsync(1);
     expect(exit).toHaveBeenCalledExactlyOnceWith(1);
     expect(eventLines(lines, 'server.shutdown.timed_out')).toEqual([
-      expect.objectContaining({ level: LEVEL.warn }),
+      expect.objectContaining({ level: LEVEL.error }),
     ]);
   });
 
   it('closes once when a second signal arrives mid-shutdown', async () => {
     const close = vi.fn(() => Promise.resolve());
-    const { logger } = captureLogger();
-    const shutdown = createShutdown({ logger, close, timeoutMs: TIMEOUT_MS, exit: vi.fn() });
+    const { shutdown } = setup(close);
 
     shutdown();
     shutdown();

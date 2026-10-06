@@ -420,6 +420,17 @@ only while it is awake; and export is gated on `OTEL_EXPORTER_OTLP_ENDPOINT`
 specifically — setting only the more specific
 `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` exports nothing.
 
+### Shutdown
+
+`shutdownTelemetry()` flushes pending spans and stops the SDK. It is idempotent:
+the lib's own `SIGTERM` hook and the server's shutdown sequence (`src/shutdown.ts`)
+share one flush. The server awaits it alongside `app.close()` and then exits,
+capped by `SHUTDOWN_TIMEOUT_MS`. Without the cap, an exporter retrying a collector
+that is down holds the process for several seconds. That delays every `tsx watch`
+restart, which waits for the old process to exit. A cap that cuts the flush logs
+`server.shutdown.timed_out`. A flush that fails is reported by the SDK through
+`otel.diag.log`, and the shutdown still counts as clean.
+
 ### If tracing seems broken
 
 The SDK reports its own failures through OpenTelemetry's `diag` channel, which is
