@@ -40,7 +40,7 @@ script load through `dotenvx run` — single source of truth (see [Environment V
 apps/nebula-chat-server/src/
 ├── app.ts                         # buildApp() factory — registers plugins, routes, compilers
 ├── server.ts                      # Thin entry point — calls buildApp() then app.listen(), wires SIGTERM/SIGINT
-├── shutdown.ts                    # createShutdown() — close + span flush, then exit; force-exits after SHUTDOWN_TIMEOUT_MS
+├── shutdown.ts                    # createShutdown() — close + span flush, then exit (no waiting for the event loop to drain)
 ├── env.ts                         # Zod-validated env schema — single source for all process.env reads
 ├── health.validation.ts           # ApiRoot / Health response schemas for the `/` and `/health` routes
 ├── db.ts                          # DB client singleton (createDbClient from @nebula-chat/db)
@@ -449,7 +449,6 @@ be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-fi
 | `GITHUB_CLIENT_ID`            | GitHub OAuth app client id for social sign-in. Set with `GITHUB_CLIENT_SECRET`, or leave both unset to turn GitHub off    |
 | `GITHUB_CLIENT_SECRET`        | GitHub OAuth app client secret (paired with `GITHUB_CLIENT_ID`; only one of the two set fails boot)                       |
 | `PORT`                        | Port to listen on (default `3000`)                                                                                        |
-| `SHUTDOWN_TIMEOUT_MS`         | Max wait (ms) for requests + span flush on shutdown before exiting anyway (default `25000`; `.env.example`: `1000`)       |
 | `LOG_LEVEL`                   | Log verbosity (default `info`; set to `debug`/`warn` etc. in prod)                                                        |
 | `LOG_LEVEL_OVERRIDES`         | Per-component levels, comma-separated `component=level` (e.g. `redis=debug,auth=warn`); unknown level fails boot          |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector URL. Unset = spans are not exported (the tracer still runs, so lines keep their `trace_id`)                |

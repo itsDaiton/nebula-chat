@@ -55,14 +55,11 @@ const start = async (): Promise<void> => {
 
   const shutdown = createShutdown({
     logger,
+    // `shutdownTelemetry` never rejects and gives up on a dead collector after a
+    // fixed cap, so only `app.close()` can fail or hold the exit — as before.
     close: async () => {
-      // Settle both before exiting, so a failed close still flushes the spans
-      // that explain it. A failed flush is the SDK's to report (via its diag
-      // logger), not a failed shutdown: observability never fails the service.
-      const [closed] = await Promise.allSettled([app.close(), shutdownTelemetry()]);
-      if (closed.status === 'rejected') throw closed.reason;
+      await Promise.all([app.close(), shutdownTelemetry()]);
     },
-    timeoutMs: env.SHUTDOWN_TIMEOUT_MS,
   });
 
   process.on('SIGTERM', shutdown);

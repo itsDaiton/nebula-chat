@@ -78,20 +78,6 @@ describe('envSchema RESEND_API_KEY', () => {
   });
 });
 
-describe('envSchema SHUTDOWN_TIMEOUT_MS', () => {
-  it('defaults inside Render’s 30s grace period, so in-flight streams can drain', () => {
-    expect(parse({}).data?.SHUTDOWN_TIMEOUT_MS).toBe(25_000);
-  });
-
-  it('reads a value from the env as a number', () => {
-    expect(parse({ SHUTDOWN_TIMEOUT_MS: '1000' }).data?.SHUTDOWN_TIMEOUT_MS).toBe(1_000);
-  });
-
-  it.each(['0', '-1', 'soon'])('rejects %s', (raw) => {
-    expect(parse({ SHUTDOWN_TIMEOUT_MS: raw }).success).toBe(false);
-  });
-});
-
 describe.each(['GOOGLE', 'GITHUB'] as const)('envSchema %s social sign-in', (provider) => {
   const clientId = `${provider}_CLIENT_ID` as const;
   const clientSecret = `${provider}_CLIENT_SECRET` as const;

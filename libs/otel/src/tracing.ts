@@ -49,12 +49,29 @@ let sdk: NodeSDK | null = null;
 let shutdownPromise: Promise<void> | null = null;
 
 /**
- * Flushes pending spans and stops the SDK. Idempotent — the lib's own SIGTERM
- * handler and a consumer awaiting it in its shutdown sequence share one flush.
+ * How long a shutdown waits on the span flush. A reachable collector takes well
+ * under this; an unreachable one makes the exporter retry for ~8s, holding the
+ * process open — and `tsx watch` waits on that exit before every restart.
+ */
+export const SHUTDOWN_FLUSH_CAP_MS = 2_000;
+
+/**
+ * Flushes pending spans and stops the SDK, giving up after
+ * `SHUTDOWN_FLUSH_CAP_MS`. Never rejects: a failed flush is the SDK's to report
+ * through `diag`, and observability must never fail the shutdown. Idempotent —
+ * the lib's own SIGTERM handler and a consumer awaiting it share one flush.
  * Resolves at once when the SDK never started.
  */
 export const shutdownTelemetry = (): Promise<void> => {
-  shutdownPromise ??= sdk ? sdk.shutdown() : Promise.resolve();
+  if (!sdk) return Promise.resolve();
+  if (!shutdownPromise) {
+    let timer: NodeJS.Timeout | undefined;
+    const cap = new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, SHUTDOWN_FLUSH_CAP_MS);
+    });
+    const flush = sdk.shutdown().catch(() => undefined);
+    shutdownPromise = Promise.race([flush, cap]).finally(() => clearTimeout(timer));
+  }
   return shutdownPromise;
 };
 

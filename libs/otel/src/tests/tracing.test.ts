@@ -151,4 +151,37 @@ describe('initTelemetry against a stubbed SDK', () => {
     await expect(shutdownTelemetry()).resolves.toBeUndefined();
     expect(sdkShutdown).not.toHaveBeenCalled();
   });
+
+  it('stops waiting on a flush that outlives the cap, so a dead collector cannot hold up exit', async () => {
+    vi.useFakeTimers();
+    try {
+      delete process.env[ENDPOINT];
+      const {
+        initTelemetry: init,
+        shutdownTelemetry,
+        SHUTDOWN_FLUSH_CAP_MS,
+      } = await stubSdk(() => undefined);
+      sdkShutdown.mockImplementationOnce(() => new Promise<void>(() => undefined));
+      init('test-service', { logger: capture().logger });
+
+      const settled = vi.fn();
+      void shutdownTelemetry().then(settled);
+      await vi.advanceTimersByTimeAsync(SHUTDOWN_FLUSH_CAP_MS - 1);
+      expect(settled).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(settled).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('resolves when the flush fails: observability never fails the shutdown', async () => {
+    delete process.env[ENDPOINT];
+    const { initTelemetry: init, shutdownTelemetry } = await stubSdk(() => undefined);
+    sdkShutdown.mockImplementationOnce(() => Promise.reject(new Error('collector refused')));
+    init('test-service', { logger: capture().logger });
+
+    await expect(shutdownTelemetry()).resolves.toBeUndefined();
+  });
 });

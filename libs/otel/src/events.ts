@@ -33,7 +33,6 @@ export const LOG_EVENTS = [
   'server.started',
   'server.start.failed',
   'server.shutdown.failed',
-  'server.shutdown.timed_out',
   'redis.connect.failed',
   'otel.start.failed',
   'env.file.missing',

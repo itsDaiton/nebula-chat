@@ -424,12 +424,13 @@ specifically — setting only the more specific
 
 `shutdownTelemetry()` flushes pending spans and stops the SDK. It is idempotent:
 the lib's own `SIGTERM` hook and the server's shutdown sequence (`src/shutdown.ts`)
-share one flush. The server awaits it alongside `app.close()` and then exits,
-capped by `SHUTDOWN_TIMEOUT_MS`. Without the cap, an exporter retrying a collector
-that is down holds the process for several seconds. That delays every `tsx watch`
-restart, which waits for the old process to exit. A cap that cuts the flush logs
-`server.shutdown.timed_out`. A flush that fails is reported by the SDK through
-`otel.diag.log`, and the shutdown still counts as clean.
+share one flush. It never rejects, and it stops waiting after a fixed 2s
+(`SHUTDOWN_FLUSH_CAP_MS`). A reachable collector finishes well within that. An
+unreachable one makes the exporter retry for about 8s, which would hold the
+process open and delay every `tsx watch` restart, since tsx waits for the old
+process to exit. A flush that fails or is cut off is reported by the SDK through
+`otel.diag.log`. The server awaits the flush alongside `app.close()` and then
+exits.
 
 ### If tracing seems broken
 
