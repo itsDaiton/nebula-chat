@@ -36,7 +36,7 @@
     "@types/node": "catalog:",
     "@types/pg": "^8.11.0",
     "@vitest/coverage-v8": "catalog:",
-    "drizzle-kit": "^0.31.0",
+    "drizzle-kit": "^0.31.11",
     "tsdown": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
