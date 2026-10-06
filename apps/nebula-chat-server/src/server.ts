@@ -47,7 +47,8 @@ const start = async (): Promise<void> => {
     'info',
     'server.started',
     { 'server.address': new URL(address).hostname, 'server.port': env.PORT },
-    `Server listening at ${address}`,
+    // Uptime, not time since this line's module loaded: boot is mostly the import graph.
+    `Server listening at ${address} (ready in ${process.uptime().toFixed(1)}s)`,
   );
 
   // Not awaited: it never rejects, and a Redis that is down must not hold up boot.

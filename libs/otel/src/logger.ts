@@ -42,7 +42,8 @@ const prettyTransport = {
   target: 'pino-pretty',
   options: {
     colorize: true,
-    translateTime: 'HH:MM:ss',
+    // `SYS:` = local time, matching the clock `tsx watch` prints its restart line in.
+    translateTime: 'SYS:HH:MM:ss',
     ignore: PRETTY_IGNORE,
     messageFormat: PRETTY_MESSAGE_FORMAT,
   },

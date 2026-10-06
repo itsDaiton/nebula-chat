@@ -335,7 +335,8 @@ dots for _nesting_, so a flat dotted key needs bracket notation
 ## Development format
 
 In development, `pino-pretty` renders `event.name · msg` as the headline and
-hides the service fields and `pid`:
+hides the service fields and `pid`. The timestamp is local time, the same clock
+`tsx watch` uses for its restart line. The JSON `time` field stays epoch ms:
 
 ```text
 [13:50:04] INFO: http.request.completed · GET /nope 404 NotFound · 0.55 ms
