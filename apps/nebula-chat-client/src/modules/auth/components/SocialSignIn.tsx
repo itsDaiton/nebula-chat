@@ -7,13 +7,15 @@ import { SOCIAL_PROVIDERS, socialCallbackError } from '@/modules/auth/utils/soci
 /** "Continue with Google / GitHub", plus why the last attempt failed if it did. */
 export const SocialSignIn = () => {
   const [searchParams] = useSearchParams();
-  const { mutate: signIn, error, isPending, isSuccess, variables } = useSocialSignIn();
+  const { mutate: signIn, error, isIdle, isPending, isSuccess, variables } = useSocialSignIn();
   // Success means the browser is leaving for the provider, so the buttons stay busy until it does.
   const isLeaving = isPending || isSuccess;
+  // The callback's `?error=` describes the last attempt, so a new one replaces it.
+  const callbackError = isIdle ? socialCallbackError(searchParams.get('error')) : undefined;
 
   return (
     <Stack w="full" gap={3}>
-      <AuthFormAlert message={error?.message ?? socialCallbackError(searchParams.get('error'))} />
+      <AuthFormAlert message={error?.message ?? callbackError} />
       {SOCIAL_PROVIDERS.map(({ provider, label, icon }) => (
         <Button
           key={provider}

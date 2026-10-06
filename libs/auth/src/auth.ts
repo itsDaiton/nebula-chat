@@ -46,6 +46,8 @@ export type CreateAuthConfig = {
   trustedOrigins?: string[];
   /** Delivers the verification and reset emails — Resend in production (ADR-0021). */
   sendEmail: EmailSender;
+  /** Client page an OAuth callback that cannot reach its own `errorCallbackURL` redirects to. */
+  errorURL?: string;
   /** OAuth apps for social sign-in; a provider left out is not offered (`PROVIDER_NOT_FOUND`). */
   socialProviders?: SocialProviderCredentials;
 };
@@ -95,6 +97,7 @@ export const createAuth = ({
   baseURL,
   trustedOrigins,
   sendEmail,
+  errorURL,
   socialProviders = {},
 }: CreateAuthConfig): Auth =>
   // better-auth 1.7 made `Auth` generic (`Auth<Options>`) and invariant, so the
@@ -136,6 +139,8 @@ export const createAuth = ({
       onPasswordReset: ({ user }) => markEmailVerified(db, user.id),
     },
     socialProviders,
+    // Without it, a callback with no usable OAuth state lands on better-auth's own error page.
+    ...(errorURL && { onAPIError: { errorURL } }),
     emailVerification: {
       sendOnSignUp: true,
       autoSignInAfterVerification: true,

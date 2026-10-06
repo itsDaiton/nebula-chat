@@ -42,6 +42,7 @@ export const auth = createAuth({
   baseURL, // BETTER_AUTH_URL
   trustedOrigins, // origins allowed to call the auth endpoints
   sendEmail, // createResendEmailSender({ apiKey: RESEND_API_KEY, from: EMAIL_FROM })
+  errorURL, // `${CLIENT_URL}/auth` — where a failed social sign-in lands
   socialProviders, // socialProvidersFromEnv(env) — Google / GitHub OAuth apps that are configured
 });
 ```
@@ -400,8 +401,11 @@ The round trip, from the auth page's "Continue with Google / GitHub":
 
 A failure lands on `/auth?error=<code>`, which the page explains: `access_denied` (the user
 cancelled at the provider), `account_not_linked` (the email already belongs to an account
-the provider cannot be linked to automatically), `email_not_found` (the provider shared no
-email); any other code gets a generic message. The email a provider reports as verified
+better-auth will not link automatically — say, one whose email is unverified),
+`email_not_found` (the provider shared no email); any other code gets a generic message.
+A callback with no usable OAuth state (`state_not_found`, …) never knew the client's
+`errorCallbackURL`, so `createAuth`'s `errorURL` (better-auth's `onAPIError.errorURL`)
+sends it to `/auth` too, instead of better-auth's own error page. The email a provider reports as verified
 arrives verified, so that user is uncapped at once.
 
 ## Account linking
@@ -430,17 +434,17 @@ Schema changes go through the normal `pnpm --filter @nebula-chat/db db:generate`
 Declared and validated in
 [`apps/nebula-chat-server/src/env.ts`](../apps/nebula-chat-server/src/env.ts):
 
-| Variable                  | Purpose                                                                     |
-| ------------------------- | --------------------------------------------------------------------------- |
-| `BETTER_AUTH_SECRET`      | Signs sessions and the session cookie cache (required)                      |
-| `BETTER_AUTH_URL`         | App base URL for better-auth cookies/redirects (required)                   |
-| `RESEND_API_KEY`          | Resend API key for the verification and reset emails (required)             |
-| `EMAIL_FROM`              | Their sender, `address` or `Name <address>` on a verified domain (required) |
-| `GUEST_MESSAGE_ALLOWANCE` | Guest `user`-message cap before registration is required (default `10`)     |
-| `GOOGLE_CLIENT_ID`        | Google OAuth client id; with its secret, enables Google sign-in (optional)  |
-| `GOOGLE_CLIENT_SECRET`    | Google OAuth client secret (set both Google vars, or neither)               |
-| `GITHUB_CLIENT_ID`        | GitHub OAuth app client id; with its secret, enables GitHub sign-in         |
-| `GITHUB_CLIENT_SECRET`    | GitHub OAuth app client secret (set both GitHub vars, or neither)           |
+| Variable                  | Purpose                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------ |
+| `BETTER_AUTH_SECRET`      | Signs sessions and the session cookie cache (required)                         |
+| `BETTER_AUTH_URL`         | App base URL for better-auth cookies/redirects (required)                      |
+| `RESEND_API_KEY`          | Resend API key for the verification and reset emails (required)                |
+| `EMAIL_FROM`              | Their sender, `address` or `Name <address>` on a verified domain (required)    |
+| `GUEST_MESSAGE_ALLOWANCE` | Guest `user`-message cap before registration is required (default `10`)        |
+| `GOOGLE_CLIENT_ID`        | Google OAuth client id; with its secret, enables Google sign-in (optional)     |
+| `GOOGLE_CLIENT_SECRET`    | Google OAuth client secret (optional; set both Google vars, or neither)        |
+| `GITHUB_CLIENT_ID`        | GitHub OAuth app client id; with its secret, enables GitHub sign-in (optional) |
+| `GITHUB_CLIENT_SECRET`    | GitHub OAuth app client secret (optional; set both GitHub vars, or neither)    |
 
 ## Not implemented
 

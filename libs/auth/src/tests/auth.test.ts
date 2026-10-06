@@ -26,7 +26,7 @@ const makeAuthStore = (): AuthStore => {
     delete: async (key) => {
       entries.delete(key);
     },
-  } as AuthStore;
+  };
 };
 
 const logger = {
@@ -47,6 +47,7 @@ const buildAuth = (socialProviders?: CreateAuthConfig['socialProviders']) =>
     baseURL: 'http://localhost:3000',
     trustedOrigins: ['http://localhost:5173'],
     sendEmail: vi.fn(),
+    errorURL: 'http://localhost:5173/auth',
     socialProviders,
   });
 
@@ -98,5 +99,16 @@ describe('createAuth social sign-in', () => {
     const response = await startSocialSignIn(buildAuth(), 'google');
 
     expect(response.status).toBe(404);
+  });
+
+  it('sends a callback it cannot trace to a sign-in back to the client error page', async () => {
+    const response = await buildAuth(CREDENTIALS).handler(
+      new Request('http://localhost:3000/api/auth/callback/google?code=abc'),
+    );
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get('location')).toBe(
+      'http://localhost:5173/auth?error=state_not_found',
+    );
   });
 });

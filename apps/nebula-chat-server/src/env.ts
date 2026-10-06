@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { LOG_LEVELS } from '@nebula-chat/otel';
 import { logLevelOverridesSchema } from '@backend/utils/logLevelOverrides';
 import { operatorTokenSchema } from '@backend/utils/operatorToken';
-import { oauthCredentialSchema } from '@backend/utils/socialProviders';
+import { checkSocialProviderPairs, oauthCredentialSchema } from '@backend/utils/socialProviders';
 
 // CORS and better-auth match the browser's `Origin` header exactly, so keep only scheme://host:port.
 const originSchema = z.url({ protocol: /^https?$/ }).transform((url) => new URL(url).origin);
@@ -49,17 +49,6 @@ export const envSchema = z
   .refine((data) => data.OPENAI_API_KEY !== undefined || data.ANTHROPIC_API_KEY !== undefined, {
     message: 'At least one of OPENAI_API_KEY or ANTHROPIC_API_KEY must be set',
   })
-  .refine(
-    (data) => (data.GOOGLE_CLIENT_ID === undefined) === (data.GOOGLE_CLIENT_SECRET === undefined),
-    {
-      message: 'Set both GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, or neither',
-    },
-  )
-  .refine(
-    (data) => (data.GITHUB_CLIENT_ID === undefined) === (data.GITHUB_CLIENT_SECRET === undefined),
-    {
-      message: 'Set both GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET, or neither',
-    },
-  );
+  .check(checkSocialProviderPairs);
 
 export const env = envSchema.parse(process.env);
