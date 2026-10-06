@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.1.2...nebula-chat-otel-v2.1.3) (2026-10-06)
+
+
+### Bug Fixes
+
+* **server:** exit promptly on shutdown so dev reloads are not stalled ([#478](https://github.com/itsDaiton/nebula-chat/issues/478)) ([520c0a7](https://github.com/itsDaiton/nebula-chat/commit/520c0a7d6954e934e4cfc5532ce03c25fbe5344b))
+
 ## [2.1.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.1.1...nebula-chat-otel-v2.1.2) (2026-10-02)
 
 

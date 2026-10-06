@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.10.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.10.0...nebula-chat-v2.10.1) (2026-10-06)
+
+
+### Bug Fixes
+
+* **server:** exit promptly on shutdown so dev reloads are not stalled ([#478](https://github.com/itsDaiton/nebula-chat/issues/478)) ([520c0a7](https://github.com/itsDaiton/nebula-chat/commit/520c0a7d6954e934e4cfc5532ce03c25fbe5344b))
+
 ## [2.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.9.5...nebula-chat-v2.10.0) (2026-10-06)
 
 
