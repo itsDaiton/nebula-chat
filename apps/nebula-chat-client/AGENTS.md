@@ -42,7 +42,7 @@ apps/nebula-chat-client/src/
 │   └── ThemeProvider.tsx          # next-themes wrapper
 ├── modules/                       # Feature modules
 │   ├── auth/
-│   │   ├── AuthPage.tsx           # /auth — sign-in and sign-up tabs; opt-in, never a wall
+│   │   ├── AuthPage.tsx           # /auth — sign-in and sign-up tabs plus social sign-in; opt-in, never a wall
 │   │   ├── ForgotPasswordPage.tsx # /auth/forgot-password — emails a reset link
 │   │   ├── ResetPasswordPage.tsx  # /auth/reset-password — new password from the emailed link's token
 │   │   ├── VerifyEmailPage.tsx    # /auth/verify-email — where the verification link lands (verified / expired / invalid)
@@ -52,7 +52,8 @@ apps/nebula-chat-client/src/
 │   │   ├── utils/
 │   │   │   ├── authSchemas.ts         # zod schemas for the sign-in / sign-up / forgot / reset forms
 │   │   │   ├── authForms.ts           # Form configs (sign-in, sign-up, forgot, reset): schema, fields, copy, better-auth call
-│   │   │   ├── authCallbackUrl.ts     # Absolute client URL an emailed link redirects back to
+│   │   │   ├── authCallbackUrl.ts     # Absolute client URL an emailed link or social sign-in redirects back to
+│   │   │   ├── socialSignIn.ts        # Google/GitHub button configs + copy for the OAuth callback's ?error= code
 │   │   │   ├── runAuthRequest.ts      # better-auth call → AuthRequestError (copy + field) from its error code
 │   │   │   └── AuthRequestError.ts    # AppError carrying the form field its message belongs under
 │   │   ├── hooks/
@@ -60,6 +61,7 @@ apps/nebula-chat-client/src/
 │   │   │   ├── useSessionBootstrap.ts # Query that runs ensureSession once per page load
 │   │   │   ├── useAuthMutation.ts     # An auth form's mutation for its config's request
 │   │   │   ├── useResendVerification.ts # Re-sends the verification email; toasts on success
+│   │   │   ├── useSocialSignIn.ts     # Starts a Google/GitHub sign-in; better-auth then leaves for the provider
 │   │   │   ├── useSignOut.ts          # Sign-out; resets the bootstrap so AuthGate re-mints a Guest
 │   │   │   └── useIdentityChange.ts   # After any of them: reset server state, go to the chat root
 │   │   └── components/
@@ -70,6 +72,7 @@ apps/nebula-chat-client/src/
 │   │       ├── AuthFormField.tsx  # Label, input (or PasswordInput) and its error text
 │   │       ├── AuthFormAlert.tsx  # Outcome (error or success) that belongs to the whole form
 │   │       ├── AuthStatus.tsx     # Titled outcome in place of a form (sent, reset, link invalid)
+│   │       ├── SocialSignIn.tsx   # "Continue with Google / GitHub" + why the last attempt failed
 │   │       ├── BackToSignIn.tsx   # Footer link back to /auth
 │   │       ├── EmailVerificationPrompt.tsx  # Above the chat input: unverified Registered user → resend (→ "keep chatting" at the allowance)
 │   │       └── ResendVerificationButton.tsx
@@ -515,7 +518,8 @@ pnpm frontend test:coverage
   `/api/chat/stream` (excluded from Orval by tag — it streams SSE) and better-auth's `/api/auth/*`. Their
   routes live in `@/test/api`, the one place route strings are written; `@/test/auth` holds the auth
   fixture and handlers (`aSession`, `mockGetSession`, `mockAnonymousSignIn`, `mockEmailSignIn`,
-  `mockEmailSignUp`, `mockSignOut`, `mockRequestPasswordReset`, `mockResetPassword`,
+  `mockEmailSignUp`, `mockSocialSignIn` (its redirect is a hash change to `providerConsentUrl()`, the one
+  navigation jsdom performs), `mockSignOut`, `mockRequestPasswordReset`, `mockResetPassword`,
   `mockSendVerificationEmail`) plus `refreshSession`, which refetches better-auth's module-level session
   store after a render, and `holdSession`, which serves a session and waits until that store holds it. Regenerate with `pnpm frontend generate:api` after any backend change.
 

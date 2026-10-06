@@ -4,6 +4,7 @@ import { db } from '@backend/db';
 import { env } from '@backend/env';
 import { logger } from '@backend/logger';
 import { redis } from '@backend/redis';
+import { socialProvidersFromEnv } from '@backend/utils/socialProviders';
 
 /**
  * The server's single configured better-auth instance, mirroring `src/db.ts` and
@@ -20,4 +21,7 @@ export const auth: AuthInstance = createAuth({
   baseURL: env.BETTER_AUTH_URL,
   trustedOrigins: [env.CLIENT_URL],
   sendEmail: createResendEmailSender({ apiKey: env.RESEND_API_KEY, from: env.EMAIL_FROM }),
+  // A failed social sign-in lands on the client's auth page, which explains its `?error=`.
+  errorURL: new URL('/auth', env.CLIENT_URL).href,
+  socialProviders: socialProvidersFromEnv(env),
 });

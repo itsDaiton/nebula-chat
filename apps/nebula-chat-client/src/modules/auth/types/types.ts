@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { IconType } from 'react-icons';
 import type { FieldValues, Path, UseFormRegisterReturn } from 'react-hook-form';
 import type { z } from 'zod';
 import type {
@@ -92,4 +93,13 @@ export type PasswordVisibilityState = {
   isPasswordVisible: boolean;
   togglePasswordVisibility: () => void;
   hidePassword: () => void;
+};
+
+/** The social sign-in providers the server can enable (`socialProviders` in `@nebula-chat/auth`). */
+export type SocialProvider = 'google' | 'github';
+
+export type SocialProviderConfig = {
+  provider: SocialProvider;
+  label: string;
+  icon: IconType;
 };

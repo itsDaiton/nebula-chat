@@ -85,6 +85,9 @@ silent omission. The message-allowance counter is a **live Postgres
 exact, needs no seeding, and adds no second source of truth. Redis is reserved for better-auth's own
 disposable state (sub-decision 3), not the allowance.
 
+_Update (NEB-342):_ Google and GitHub sign-in shipped on better-auth's defaults — a provider-verified email
+arrives verified, and no automatic linking to an existing account the provider can't vouch for. See `docs/auth.md`.
+
 ## Consequences
 
 - `@nebula-chat/db` gains `session`/`account`/`verification` and a reshaped `users`; `conversations.userId`

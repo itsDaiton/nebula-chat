@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { LOG_LEVELS } from '@nebula-chat/otel';
 import { logLevelOverridesSchema } from '@backend/utils/logLevelOverrides';
 import { operatorTokenSchema } from '@backend/utils/operatorToken';
+import { checkSocialProviderPairs, oauthCredentialSchema } from '@backend/utils/socialProviders';
 
 // CORS and better-auth match the browser's `Origin` header exactly, so keep only scheme://host:port.
 const originSchema = z.url({ protocol: /^https?$/ }).transform((url) => new URL(url).origin);
@@ -38,6 +39,11 @@ export const envSchema = z
     // `.env.example` drops it to 1s, since `tsx watch` waits on this exit before
     // every restart. Not keyed on NODE_ENV, which defaults to `development`.
     SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(25_000),
+    // Social sign-in OAuth apps; each provider is offered only when both its values are set.
+    GOOGLE_CLIENT_ID: oauthCredentialSchema,
+    GOOGLE_CLIENT_SECRET: oauthCredentialSchema,
+    GITHUB_CLIENT_ID: oauthCredentialSchema,
+    GITHUB_CLIENT_SECRET: oauthCredentialSchema,
     // Shared operator secret for /api/internal/*; unset turns those routes off.
     OPERATOR_TOKEN: operatorTokenSchema,
     OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),
@@ -47,6 +53,7 @@ export const envSchema = z
   })
   .refine((data) => data.OPENAI_API_KEY !== undefined || data.ANTHROPIC_API_KEY !== undefined, {
     message: 'At least one of OPENAI_API_KEY or ANTHROPIC_API_KEY must be set',
-  });
+  })
+  .check(checkSocialProviderPairs);
 
 export const env = envSchema.parse(process.env);

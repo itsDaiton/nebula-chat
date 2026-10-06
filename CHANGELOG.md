@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.9.5...nebula-chat-v2.10.0) (2026-10-06)
+
+
+### Features
+
+* **auth:** NEB-342 add Google and GitHub social sign-in ([#475](https://github.com/itsDaiton/nebula-chat/issues/475)) ([de3bdd8](https://github.com/itsDaiton/nebula-chat/commit/de3bdd8d2a01730b76ad51ab3e4a874439af9c36))
+
 ## [2.9.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.9.4...nebula-chat-v2.9.5) (2026-10-06)
 
 

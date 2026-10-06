@@ -73,6 +73,16 @@ export const mockEmailSignUp = mockAuthPost(API_ROUTE.authSignUpEmail, {
   user: aSession({ isAnonymous: false }).user,
 });
 
+/** Stands in for the provider's consent screen: a hash change, the one navigation jsdom performs. */
+export const providerConsentUrl = () => new URL('#provider-consent', window.location.href).href;
+
+/** Starts a social sign-in on `sign-in/social`, calling `onRequest` first; the client then redirects. */
+export const mockSocialSignIn = (onRequest: OnRequest = () => {}): HttpHandler =>
+  http.post(API_ROUTE.authSignInSocial, async ({ request }) => {
+    await onRequest(request);
+    return HttpResponse.json({ url: providerConsentUrl(), redirect: true });
+  });
+
 /** Ends the session on `sign-out`, calling `onRequest` first. */
 export const mockSignOut = mockAuthPost(API_ROUTE.authSignOut, { success: true });
 

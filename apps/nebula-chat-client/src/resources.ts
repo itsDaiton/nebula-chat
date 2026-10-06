@@ -76,6 +76,19 @@ export const resources = {
       title: 'Create your account',
       description: "Chat as much as you like, and keep the conversations you've already started.",
     },
+    social: {
+      google: 'Continue with Google',
+      github: 'Continue with GitHub',
+      errors: {
+        cancelled: 'Sign-in was cancelled. Choose a way to continue whenever you are ready.',
+        accountNotLinked:
+          'An account with this email already exists. Sign in the way you did when you created it.',
+        emailNotFound:
+          "We couldn't get an email address from that account, so we can't sign you in with it.",
+        unavailable: "That sign-in option isn't available right now. Try another way.",
+        failed: "We couldn't sign you in with that account. Please try again.",
+      },
+    },
     tabs: {
       signIn: 'Sign in',
       signUp: 'Sign up',
