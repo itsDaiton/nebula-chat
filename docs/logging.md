@@ -335,7 +335,8 @@ dots for _nesting_, so a flat dotted key needs bracket notation
 ## Development format
 
 In development, `pino-pretty` renders `event.name · msg` as the headline and
-hides the service fields and `pid`:
+hides the service fields and `pid`. The timestamp is local time, the same clock
+`tsx watch` uses for its restart line. The JSON `time` field stays epoch ms:
 
 ```text
 [13:50:04] INFO: http.request.completed · GET /nope 404 NotFound · 0.55 ms
@@ -419,6 +420,18 @@ Two caveats on Render's free plan: the service sleeps when idle, so traces exist
 only while it is awake; and export is gated on `OTEL_EXPORTER_OTLP_ENDPOINT`
 specifically — setting only the more specific
 `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` exports nothing.
+
+### Shutdown
+
+`shutdownTelemetry()` flushes pending spans and stops the SDK. It is idempotent:
+the lib's own `SIGTERM` hook and the server's shutdown sequence (`src/shutdown.ts`)
+share one flush. It never rejects, and it stops waiting after a fixed 2s
+(`SHUTDOWN_FLUSH_CAP_MS`). A reachable collector finishes well within that. An
+unreachable one makes the exporter retry for about 8s, which would hold the
+process open and delay every `tsx watch` restart, since tsx waits for the old
+process to exit. A flush that fails or is cut off is reported by the SDK through
+`otel.diag.log`. The server awaits the flush alongside `app.close()` and then
+exits.
 
 ### If tracing seems broken
 

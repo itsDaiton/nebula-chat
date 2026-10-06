@@ -83,14 +83,14 @@ describe('initTelemetry with no OTLP endpoint', () => {
 });
 
 describe('initTelemetry against a stubbed SDK', () => {
+  const sdkShutdown = vi.fn(() => Promise.resolve());
+
   const stubSdk = (start: () => void) => {
     vi.resetModules();
     vi.doMock('@opentelemetry/sdk-node', () => ({
       NodeSDK: class {
         start = start;
-        shutdown() {
-          return Promise.resolve();
-        }
+        shutdown = sdkShutdown;
       },
     }));
     return import('../tracing');
@@ -100,6 +100,7 @@ describe('initTelemetry against a stubbed SDK', () => {
     vi.doUnmock('@opentelemetry/sdk-node');
     restoreEndpoint();
     exporterConstructed.mockClear();
+    sdkShutdown.mockClear();
   });
 
   it('builds the OTLP exporter when an endpoint is set', async () => {
@@ -128,5 +129,59 @@ describe('initTelemetry against a stubbed SDK', () => {
         err: expect.objectContaining({ message: 'instrumentation exploded' }),
       }),
     ]);
+  });
+
+  it('shuts the SDK down once, however many times shutdownTelemetry is called', async () => {
+    delete process.env[ENDPOINT];
+    const { initTelemetry: init, shutdownTelemetry } = await stubSdk(() => undefined);
+    init('test-service', { logger: capture().logger });
+
+    await Promise.all([shutdownTelemetry(), shutdownTelemetry()]);
+
+    expect(sdkShutdown).toHaveBeenCalledOnce();
+  });
+
+  it('resolves without touching the SDK when it never started', async () => {
+    delete process.env[ENDPOINT];
+    const { initTelemetry: init, shutdownTelemetry } = await stubSdk(() => {
+      throw new Error('instrumentation exploded');
+    });
+    init('test-service', { logger: capture().logger });
+
+    await expect(shutdownTelemetry()).resolves.toBeUndefined();
+    expect(sdkShutdown).not.toHaveBeenCalled();
+  });
+
+  it('stops waiting on a flush that outlives the cap, so a dead collector cannot hold up exit', async () => {
+    vi.useFakeTimers();
+    try {
+      delete process.env[ENDPOINT];
+      const {
+        initTelemetry: init,
+        shutdownTelemetry,
+        SHUTDOWN_FLUSH_CAP_MS,
+      } = await stubSdk(() => undefined);
+      sdkShutdown.mockImplementationOnce(() => new Promise<void>(() => undefined));
+      init('test-service', { logger: capture().logger });
+
+      const settled = vi.fn();
+      void shutdownTelemetry().then(settled);
+      await vi.advanceTimersByTimeAsync(SHUTDOWN_FLUSH_CAP_MS - 1);
+      expect(settled).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(settled).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('resolves when the flush fails: observability never fails the shutdown', async () => {
+    delete process.env[ENDPOINT];
+    const { initTelemetry: init, shutdownTelemetry } = await stubSdk(() => undefined);
+    sdkShutdown.mockImplementationOnce(() => Promise.reject(new Error('collector refused')));
+    init('test-service', { logger: capture().logger });
+
+    await expect(shutdownTelemetry()).resolves.toBeUndefined();
   });
 });
