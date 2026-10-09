@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -17,11 +17,13 @@ import {
   mockSignOut,
   refreshSession,
 } from '@/test/auth';
+import { selectMenuItem } from '@/test/menu';
 import { server } from '@/test/msw';
 import { renderWithChakra } from '@/test/render';
 
 const AUTH_PAGE = 'auth page';
 const CHAT_PAGE = 'chat page';
+const SETTINGS_PAGE = 'settings page';
 
 let session: ReturnType<typeof aSession> | null = aSession();
 
@@ -49,6 +51,7 @@ const renderStatus = async (initialRoute: string = route.chat.root()) => {
           }
         />
         <Route path={route.auth.root()} element={AUTH_PAGE} />
+        <Route path={route.settings.root()} element={SETTINGS_PAGE} />
       </Routes>
     </AuthGate>,
     { route: initialRoute },
@@ -66,33 +69,78 @@ beforeEach(() => {
   server.use(mockGetSession(() => session));
 });
 
+const openMenu = async () =>
+  userEvent.click(await screen.findByRole('button', { name: resources.account.menu }));
+
+const signOutItem = () => screen.findByRole('menuitem', { name: resources.auth.actions.signOut });
+
 describe('AccountStatus', () => {
-  it('offers a Guest a sign-in link to the auth page', async () => {
+  it('gives a Guest a generic avatar menu that offers sign-in', async () => {
     await renderStatus();
 
+    // The Guest's name is "Anonymous", so initials would read "A".
+    const trigger = await screen.findByRole('button', { name: resources.account.menu });
+    expect(within(trigger).queryByText('A')).not.toBeInTheDocument();
+
+    await openMenu();
+
+    expect(await screen.findByText(resources.account.guest)).toBeInTheDocument();
     expect(
-      await screen.findByRole('link', { name: resources.auth.actions.signIn }),
-    ).toBeInTheDocument();
+      screen.queryByRole('menuitem', { name: resources.account.settings }),
+    ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: resources.auth.actions.signOut }),
+      screen.queryByRole('menuitem', { name: resources.auth.actions.signOut }),
     ).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('link', { name: resources.auth.actions.signIn }));
+    await selectMenuItem(screen.getByRole('menuitem', { name: resources.auth.actions.signIn }));
 
-    expect(screen.getByText(AUTH_PAGE)).toBeInTheDocument();
+    expect(await screen.findByText(AUTH_PAGE)).toBeInTheDocument();
   });
 
-  it('shows a Registered user their email and a sign-out control', async () => {
+  it("shows a Registered user's initials, keeping their email out of the bar", async () => {
     session = aSession({ isAnonymous: false });
     await renderStatus();
 
-    expect(await screen.findByText('ada@example.com')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: resources.auth.actions.signOut }),
-    ).toBeInTheDocument();
+    const trigger = await screen.findByRole('button', { name: resources.account.menu });
+
+    await waitFor(() => expect(within(trigger).getByText('A')).toBeInTheDocument());
+    expect(screen.queryByText('ada@example.com')).not.toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: resources.auth.actions.signIn }),
     ).not.toBeInTheDocument();
+  });
+
+  it("lists a Registered user's name and email, Settings and Sign out", async () => {
+    session = aSession({ isAnonymous: false });
+    await renderStatus();
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('button', { name: resources.account.menu })).getByText('A'),
+      ).toBeInTheDocument(),
+    );
+
+    await openMenu();
+
+    const menu = screen.getByRole('menu');
+    expect(within(menu).getByText('Ada')).toBeInTheDocument();
+    expect(within(menu).getByText('ada@example.com')).toBeInTheDocument();
+    expect(within(menu).getByRole('menuitem', { name: resources.account.settings })).toBeVisible();
+    expect(
+      within(menu).getByRole('menuitem', { name: resources.auth.actions.signOut }),
+    ).toBeVisible();
+    expect(
+      within(menu).queryByRole('menuitem', { name: resources.auth.actions.signIn }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('takes a Registered user to the settings page', async () => {
+    session = aSession({ isAnonymous: false });
+    await renderStatus();
+
+    await openMenu();
+    await selectMenuItem(await screen.findByRole('menuitem', { name: resources.account.settings }));
+
+    expect(await screen.findByText(SETTINGS_PAGE)).toBeInTheDocument();
   });
 
   it('signs out to a fresh Guest on the chat root without fetching as nobody', async () => {
@@ -114,13 +162,13 @@ describe('AccountStatus', () => {
     );
     await renderStatus(route.chat.conversation('abc'));
 
-    await userEvent.click(
-      await screen.findByRole('button', { name: resources.auth.actions.signOut }),
-    );
+    await openMenu();
+    await selectMenuItem(await signOutItem());
 
     expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
+    await openMenu();
     expect(
-      await screen.findByRole('link', { name: resources.auth.actions.signIn }),
+      await screen.findByRole('menuitem', { name: resources.auth.actions.signIn }),
     ).toBeInTheDocument();
     expect(signIns).toBe(1);
     expect(unauthenticatedRequests).toBe(0);
@@ -136,9 +184,8 @@ describe('AccountStatus', () => {
     );
     await renderStatus();
 
-    await userEvent.click(
-      await screen.findByRole('button', { name: resources.auth.actions.signOut }),
-    );
+    await openMenu();
+    await selectMenuItem(await signOutItem());
 
     expect(await screen.findByRole('alert')).toHaveTextContent(resources.auth.sessionFailed);
   });
@@ -149,17 +196,15 @@ describe('AccountStatus', () => {
     server.use(mockApiError('post', API_ROUTE.authSignOut, 500));
     await renderStatus();
 
-    await userEvent.click(
-      await screen.findByRole('button', { name: resources.auth.actions.signOut }),
-    );
+    await openMenu();
+    await selectMenuItem(await signOutItem());
 
     await waitFor(() =>
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({ description: resources.auth.errors.unknown }),
       ),
     );
-    expect(
-      screen.getByRole('button', { name: resources.auth.actions.signOut }),
-    ).toBeInTheDocument();
+    await openMenu();
+    expect(await signOutItem()).toBeInTheDocument();
   });
 });

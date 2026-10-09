@@ -66,7 +66,8 @@ apps/nebula-chat-client/src/
 │   │   │   └── useIdentityChange.ts   # After any of them: reset server state, go to the chat root
 │   │   └── components/
 │   │       ├── AuthGate.tsx       # Wraps the routes; renders nothing until a session (Guest at least) exists
-│   │       ├── AccountStatus.tsx  # Nav: sign-in link for a Guest, or email + sign-out button
+│   │       ├── AccountStatus.tsx  # Header user menu: Guest → Sign in; Registered → name/email, Settings, Sign out
+│   │       ├── AccountMenu.tsx    # Avatar trigger (initials, or a generic person for a Guest) + the menu it opens
 │   │       ├── AuthLayout.tsx     # Shell every auth page shares: app mark + card (+ footer)
 │   │       ├── AuthForm.tsx       # One react-hook-form + zod form, driven by an AuthFormConfig
 │   │       ├── AuthFormField.tsx  # Label, input (or PasswordInput) and its error text
@@ -101,6 +102,8 @@ apps/nebula-chat-client/src/
 │   │       ├── ModelSelect.tsx
 │   │       ├── SendButton.tsx
 │   │       └── ...
+│   ├── settings/
+│   │   └── SettingsPage.tsx       # /settings — Registered-only (others → /auth), in the app shell; Password section
 │   └── conversations/
 │       ├── types/types.ts         # All conversation types
 │       ├── utils/                 # navigationActions
@@ -147,7 +150,6 @@ apps/nebula-chat-client/src/
     ├── components/
     │   ├── navigation/
     │   │   ├── NebulaButton.tsx
-    │   │   ├── NebulaMenu.tsx
     │   │   └── BadgeActionButton.tsx
     │   └── ui/                    # Chakra UI primitives & adapters
     │       ├── color-mode.tsx
@@ -159,7 +161,6 @@ apps/nebula-chat-client/src/
     └── utils/
         ├── dateUtils.ts
         ├── scrollUtils.ts
-        ├── menuUtils.ts
         ├── urlUtils.ts
         └── index.ts
 ```
@@ -522,6 +523,11 @@ pnpm frontend test:coverage
   navigation jsdom performs), `mockSignOut`, `mockRequestPasswordReset`, `mockResetPassword`,
   `mockSendVerificationEmail`) plus `refreshSession`, which refetches better-auth's module-level session
   store after a render, and `holdSession`, which serves a session and waits until that store holds it. Regenerate with `pnpm frontend generate:api` after any backend change.
+
+- **Pick a Chakra menu item with `selectMenuItem` (`@/test/menu`)**, not `userEvent.click`: Zag only
+  selects a pointer-highlighted item, and jsdom's (0, 0) pointer events stop highlighting once anything
+  switches its interaction modality, so a click can silently select nothing. Selection navigates a tick
+  later, so assert the destination with `findBy*`.
 
 - **One test file per source file, in a `tests/` folder beside it**: `ChatInput.tsx` is tested by
   `components/tests/ChatInput.test.tsx`. Never group several modules into one file.

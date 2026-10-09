@@ -50,13 +50,13 @@ describe('Header', () => {
     layout.isMobile = true;
   });
 
-  it('shows the account status in the nav', async () => {
+  it('shows the account menu and the theme toggle, without the old gear menu', async () => {
     renderWithChakra(<Header />);
     refreshSession();
 
-    expect(
-      await screen.findByRole('link', { name: resources.auth.actions.signIn }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: resources.account.menu })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /toggle color mode/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Settings' })).not.toBeInTheDocument();
   });
 
   it('renders without a menu handler', () => {
