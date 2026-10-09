@@ -13,8 +13,8 @@ export type AuthGateProps = {
   children: ReactNode;
 };
 
-export type AccountMenuProps = {
-  /** Shown as initials on the avatar; without one (a Guest) the avatar is a generic person. */
+export type UserMenuProps = {
+  /** Shown as initials on the Avatar; a Guest passes none and gets the generic anonymous one. */
   name?: string;
   /** The menu's heading and items. */
   children: ReactNode;

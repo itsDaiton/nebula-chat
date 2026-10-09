@@ -122,8 +122,8 @@ export const resources = {
       unknown: 'Something went wrong on our end. Please try again.',
     },
   },
-  account: {
-    menu: 'Account menu',
+  userMenu: {
+    label: 'Account menu',
     guest: 'Guest',
     settings: 'Settings',
   },

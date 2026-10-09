@@ -54,7 +54,9 @@ describe('Header', () => {
     renderWithChakra(<Header />);
     refreshSession();
 
-    expect(await screen.findByRole('button', { name: resources.account.menu })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: resources.userMenu.label }),
+    ).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: /toggle color mode/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Settings' })).not.toBeInTheDocument();
   });

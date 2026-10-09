@@ -7,7 +7,7 @@ import { Layout } from '@/shared/components/layout/Layout';
 
 const PASSWORD_SECTION_ID = 'settings-password';
 
-/** A Registered user's account settings, in the app shell; anyone else is sent to sign in. */
+/** A Registered user's settings, in the app shell; anyone else is sent to sign in. */
 export const SettingsPage = () => {
   const { isPending, isRegistered } = useAuth();
 

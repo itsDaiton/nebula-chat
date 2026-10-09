@@ -1,7 +1,7 @@
 import { Box, Menu, Text } from '@chakra-ui/react';
 import { LuLogIn, LuLogOut, LuSettings } from 'react-icons/lu';
 import { useNavigate } from 'react-router';
-import { AccountMenu } from '@/modules/auth/components/AccountMenu';
+import { UserMenu } from '@/modules/auth/components/UserMenu';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { useSignOut } from '@/modules/auth/hooks/useSignOut';
 import { resources } from '@/resources';
@@ -16,24 +16,23 @@ export const AccountStatus = () => {
 
   if (isGuest) {
     return (
-      <AccountMenu>
+      <UserMenu>
         <Box px={2} py={1.5}>
           <Text fontSize="sm" fontWeight="medium">
-            {resources.account.guest}
+            {resources.userMenu.guest}
           </Text>
         </Box>
-        <Menu.Separator />
         <Menu.Item value="sign-in" onSelect={() => void navigate(route.auth.root())}>
           <LuLogIn />
           {resources.auth.actions.signIn}
         </Menu.Item>
-      </AccountMenu>
+      </UserMenu>
     );
   }
 
   if (isRegistered) {
     return (
-      <AccountMenu name={user?.name}>
+      <UserMenu name={user?.name}>
         <Box px={2} py={1.5}>
           <Text fontSize="sm" fontWeight="medium" truncate>
             {user?.name}
@@ -42,17 +41,16 @@ export const AccountStatus = () => {
             {user?.email}
           </Text>
         </Box>
-        <Menu.Separator />
         <Menu.Item value="settings" onSelect={() => void navigate(route.settings.root())}>
           <LuSettings />
-          {resources.account.settings}
+          {resources.userMenu.settings}
         </Menu.Item>
         <Menu.Separator />
         <Menu.Item value="sign-out" disabled={isPending} onSelect={() => signOut()}>
           <LuLogOut />
           {resources.auth.actions.signOut}
         </Menu.Item>
-      </AccountMenu>
+      </UserMenu>
     );
   }
 

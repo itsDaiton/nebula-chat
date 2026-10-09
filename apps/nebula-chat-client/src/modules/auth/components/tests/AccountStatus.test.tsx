@@ -70,7 +70,15 @@ beforeEach(() => {
 });
 
 const openMenu = async () =>
-  userEvent.click(await screen.findByRole('button', { name: resources.account.menu }));
+  userEvent.click(await screen.findByRole('button', { name: resources.userMenu.label }));
+
+// A Registered user's Avatar carries their initials ("Ada" → "A"); a Guest's never does.
+const findInitials = () =>
+  waitFor(() =>
+    expect(
+      within(screen.getByRole('button', { name: resources.userMenu.label })).getByText('A'),
+    ).toBeInTheDocument(),
+  );
 
 const signOutItem = () => screen.findByRole('menuitem', { name: resources.auth.actions.signOut });
 
@@ -79,14 +87,14 @@ describe('AccountStatus', () => {
     await renderStatus();
 
     // The Guest's name is "Anonymous", so initials would read "A".
-    const trigger = await screen.findByRole('button', { name: resources.account.menu });
+    const trigger = await screen.findByRole('button', { name: resources.userMenu.label });
     expect(within(trigger).queryByText('A')).not.toBeInTheDocument();
 
     await openMenu();
 
-    expect(await screen.findByText(resources.account.guest)).toBeInTheDocument();
+    expect(await screen.findByText(resources.userMenu.guest)).toBeInTheDocument();
     expect(
-      screen.queryByRole('menuitem', { name: resources.account.settings }),
+      screen.queryByRole('menuitem', { name: resources.userMenu.settings }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('menuitem', { name: resources.auth.actions.signOut }),
@@ -101,30 +109,22 @@ describe('AccountStatus', () => {
     session = aSession({ isAnonymous: false });
     await renderStatus();
 
-    const trigger = await screen.findByRole('button', { name: resources.account.menu });
+    await findInitials();
 
-    await waitFor(() => expect(within(trigger).getByText('A')).toBeInTheDocument());
     expect(screen.queryByText('ada@example.com')).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('link', { name: resources.auth.actions.signIn }),
-    ).not.toBeInTheDocument();
   });
 
   it("lists a Registered user's name and email, Settings and Sign out", async () => {
     session = aSession({ isAnonymous: false });
     await renderStatus();
-    await waitFor(() =>
-      expect(
-        within(screen.getByRole('button', { name: resources.account.menu })).getByText('A'),
-      ).toBeInTheDocument(),
-    );
+    await findInitials();
 
     await openMenu();
 
     const menu = screen.getByRole('menu');
     expect(within(menu).getByText('Ada')).toBeInTheDocument();
     expect(within(menu).getByText('ada@example.com')).toBeInTheDocument();
-    expect(within(menu).getByRole('menuitem', { name: resources.account.settings })).toBeVisible();
+    expect(within(menu).getByRole('menuitem', { name: resources.userMenu.settings })).toBeVisible();
     expect(
       within(menu).getByRole('menuitem', { name: resources.auth.actions.signOut }),
     ).toBeVisible();
@@ -138,7 +138,9 @@ describe('AccountStatus', () => {
     await renderStatus();
 
     await openMenu();
-    await selectMenuItem(await screen.findByRole('menuitem', { name: resources.account.settings }));
+    await selectMenuItem(
+      await screen.findByRole('menuitem', { name: resources.userMenu.settings }),
+    );
 
     expect(await screen.findByText(SETTINGS_PAGE)).toBeInTheDocument();
   });

@@ -1,12 +1,12 @@
 import { Avatar, IconButton, Menu, Portal } from '@chakra-ui/react';
-import type { AccountMenuProps } from '@/modules/auth/types/types';
+import type { UserMenuProps } from '@/modules/auth/types/types';
 import { resources } from '@/resources';
 
 /** The header's avatar button and the menu it opens; the caller supplies the heading and items. */
-export const AccountMenu = ({ name, children }: AccountMenuProps) => (
+export const UserMenu = ({ name, children }: UserMenuProps) => (
   <Menu.Root positioning={{ placement: 'bottom-end' }} lazyMount unmountOnExit>
     <Menu.Trigger asChild>
-      <IconButton aria-label={resources.account.menu} variant="ghost" size="sm" rounded="full">
+      <IconButton aria-label={resources.userMenu.label} variant="ghost" size="sm" rounded="full">
         <Avatar.Root size="sm">
           {/* Avatar.Image goes here once Profile images arrive. */}
           <Avatar.Fallback name={name} />

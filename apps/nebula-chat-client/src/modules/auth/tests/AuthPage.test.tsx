@@ -77,7 +77,7 @@ const passwordField = () => screen.getByLabelText(resources.auth.fields.password
 const findRegisteredMenu = () =>
   waitFor(
     () => {
-      const trigger = screen.getByRole('button', { name: resources.account.menu });
+      const trigger = screen.getByRole('button', { name: resources.userMenu.label });
       expect(within(trigger).getByText('A')).toBeInTheDocument();
       return trigger;
     },
@@ -360,7 +360,7 @@ describe('AuthPage', () => {
     renderAuthFlow(route.chat.root());
 
     expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: resources.account.menu }));
+    await userEvent.click(screen.getByRole('button', { name: resources.userMenu.label }));
 
     await selectMenuItem(
       await screen.findByRole('menuitem', { name: resources.auth.actions.signIn }),
