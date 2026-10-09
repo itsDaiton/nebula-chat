@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.10.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.10.1...nebula-chat-v2.10.2) (2026-10-09)
+
+
+### Bug Fixes
+
+* **auth:** NEB-469 replace deprecated @react-email/components with react-email ([#480](https://github.com/itsDaiton/nebula-chat/issues/480)) ([a9b99f3](https://github.com/itsDaiton/nebula-chat/commit/a9b99f3a15804aa613918b081b433872228e5b52))
+
 ## [2.10.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.10.0...nebula-chat-v2.10.1) (2026-10-06)
 
 
