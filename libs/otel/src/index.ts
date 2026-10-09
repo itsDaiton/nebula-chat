@@ -28,6 +28,7 @@ export { LOG_LEVELS } from './logLevels';
 export type { LogLevel } from './logLevels';
 export { bindAttributes } from './bindAttributes';
 export { componentLogger } from './componentLogger';
+export { REDACT_CENSOR } from './redaction';
 
 // Tracing
 export { initTelemetry, shutdownTelemetry } from './tracing';

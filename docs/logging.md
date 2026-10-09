@@ -194,7 +194,7 @@ rejects an `error` key in a log call's object across the backend packages.
 | Concern     | Keys                                                                                                                                                                                     |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Service     | `service.name`, `service.version`, `deployment.environment.name`, `pid` (base fields); no `hostname`                                                                                     |
-| Request     | `http.request.method`, `url.path` (no query string), `http.route`, `http.response.status_code`, `http.request.id`, `server.address`, `server.port`                                       |
+| Request     | `http.request.method`, `url.path` (no query string, path tokens redacted), `http.route`, `http.response.status_code`, `http.request.id`, `server.address`, `server.port`                 |
 | Error       | `err` (object; `err.type` is the class name), `error.type` (the classification: the `AppError` code, `Internal` when unclassified)                                                       |
 | LLM         | `gen_ai.provider.name`, `gen_ai.request.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`                                                                                |
 | User        | `user.id`, `nebula.user.kind` (`guest` \| `registered`)                                                                                                                                  |
@@ -331,6 +331,13 @@ keys at any of the first three nesting depths (`req.headers.cookie`,
 dots for _nesting_, so a flat dotted key needs bracket notation
 (`["user.email"]`) to match at all. The list lives in
 [`libs/otel/src/redaction.ts`](../libs/otel/src/redaction.ts).
+
+Key-based redaction cannot reach a token inside a value, so `url.path` is
+cleaned before it is logged
+([`requestPath.ts`](../apps/nebula-chat-server/src/utils/requestPath.ts)): the
+query string is dropped, and a token carried as a path segment is replaced with
+`[Redacted]`, e.g. `/api/auth/reset-password/[Redacted]`. A new route with a
+token in its path adds one pattern there.
 
 ## Development format
 

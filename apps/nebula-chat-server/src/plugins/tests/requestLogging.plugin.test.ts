@@ -219,4 +219,27 @@ describe('sensitive request data', () => {
     expect(logged).not.toContain('SECRET-TOKEN');
     expect(logged).not.toContain('SECRET-BODY');
   });
+
+  it('redacts the password-reset token from the emailed link, in url.path and msg', async () => {
+    vi.mocked(auth.handler).mockResolvedValue(
+      new Response(null, { status: 302, headers: { location: '/auth/reset-password' } }),
+    );
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/auth/reset-password/SECRET-RESET-TOKEN?callbackURL=%2Fauth%2Freset-password',
+    });
+
+    expect(res.statusCode).toBe(302);
+    const logged = [
+      ...eventLines(lines, 'http.request.received'),
+      ...eventLines(lines, 'http.request.completed'),
+    ];
+    const redacted = expect.objectContaining({
+      'url.path': '/api/auth/reset-password/[Redacted]',
+      msg: expect.stringContaining('GET /api/auth/reset-password/[Redacted]'),
+    });
+    expect(logged).toEqual([redacted, redacted]);
+    expect(JSON.stringify(lines)).not.toContain('SECRET-RESET-TOKEN');
+  });
 });
