@@ -69,7 +69,7 @@ export type AuthFormFieldProps = {
   error?: string;
 };
 
-type AuthAlertStatus ='error' | 'success';
+type AuthAlertStatus = 'error' | 'success';
 
 export type AuthFormAlertProps = {
   message?: string;
