@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.1.3...nebula-chat-otel-v2.1.4) (2026-10-09)
+
+
+### Bug Fixes
+
+* **server:** NEB-447 redact the password-reset token from request logs ([#483](https://github.com/itsDaiton/nebula-chat/issues/483)) ([fd85730](https://github.com/itsDaiton/nebula-chat/commit/fd85730290bee58b8ee512aedf23c1b78a5bcaa1))
+
 ## [2.1.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.1.2...nebula-chat-otel-v2.1.3) (2026-10-06)
 
 

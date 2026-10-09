@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.10.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.10.2...nebula-chat-v2.10.3) (2026-10-09)
+
+
+### Bug Fixes
+
+* **server:** NEB-447 redact the password-reset token from request logs ([#483](https://github.com/itsDaiton/nebula-chat/issues/483)) ([fd85730](https://github.com/itsDaiton/nebula-chat/commit/fd85730290bee58b8ee512aedf23c1b78a5bcaa1))
+
 ## [2.10.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.10.1...nebula-chat-v2.10.2) (2026-10-09)
 
 
