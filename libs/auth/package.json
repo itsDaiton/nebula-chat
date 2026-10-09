@@ -26,11 +26,11 @@
     "@nebula-chat/db": "workspace:*",
     "@nebula-chat/otel": "workspace:*",
     "@nebula-chat/redis": "workspace:*",
-    "@react-email/components": "^1.0.12",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "react-email": "^6.11.0",
     "resend": "^6.30.0"
   },
   "devDependencies": {
