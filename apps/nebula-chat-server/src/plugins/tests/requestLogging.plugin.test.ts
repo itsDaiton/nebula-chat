@@ -235,10 +235,11 @@ describe('sensitive request data', () => {
       ...eventLines(lines, 'http.request.received'),
       ...eventLines(lines, 'http.request.completed'),
     ];
-    expect(logged).toEqual([
-      expect.objectContaining({ 'url.path': '/api/auth/reset-password/[Redacted]' }),
-      expect.objectContaining({ 'url.path': '/api/auth/reset-password/[Redacted]' }),
-    ]);
+    const redacted = expect.objectContaining({
+      'url.path': '/api/auth/reset-password/[Redacted]',
+      msg: expect.stringContaining('GET /api/auth/reset-password/[Redacted]'),
+    });
+    expect(logged).toEqual([redacted, redacted]);
     expect(JSON.stringify(lines)).not.toContain('SECRET-RESET-TOKEN');
   });
 });

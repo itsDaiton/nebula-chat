@@ -1,14 +1,13 @@
 import type { FastifyRequest } from 'fastify';
 import { REDACT_CENSOR } from '@nebula-chat/otel';
 
-/** Routes that carry a bearer token as a path segment; capture group 1 is the prefix kept. */
-const PATH_TOKEN_PATTERNS: readonly RegExp[] = [/^(\/api\/auth\/reset-password\/)[^/]+$/];
+/** Routes that carry a bearer token in their path: everything after the prefix is redacted. */
+const PATH_TOKEN_PREFIXES: readonly string[] = ['/api/auth/reset-password/'];
 
-const redactPathTokens = (path: string): string =>
-  PATH_TOKEN_PATTERNS.reduce(
-    (redacted, pattern) => redacted.replace(pattern, `$1${REDACT_CENSOR}`),
-    path,
-  );
+const redactPathTokens = (path: string): string => {
+  const prefix = PATH_TOKEN_PREFIXES.find((p) => path.startsWith(p) && path.length > p.length);
+  return prefix ? `${prefix}${REDACT_CENSOR}` : path;
+};
 
 /**
  * `url.path`: the request path without its query string, with path-borne tokens

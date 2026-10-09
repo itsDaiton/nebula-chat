@@ -12,6 +12,11 @@ describe('requestPath', () => {
       '/api/auth/reset-password/[Redacted]',
     ],
     ['/api/auth/reset-password/not-a-real-token!', '/api/auth/reset-password/[Redacted]'],
+    ['/api/auth/reset-password/Rm8Aaya7lfP9EkO2xUInKVBfT/', '/api/auth/reset-password/[Redacted]'],
+    [
+      '/api/auth/reset-password/Rm8Aaya7lfP9EkO2xUInKVBfT/extra',
+      '/api/auth/reset-password/[Redacted]',
+    ],
   ])('redacts the reset token in %s', (url, expected) => {
     expect(pathOf(url)).toBe(expected);
   });

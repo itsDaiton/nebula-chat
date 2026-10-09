@@ -89,7 +89,7 @@ apps/nebula-chat-server/src/
 ├── utils/
 │   ├── logController.ts           # Fastify logController: request lines off, framework faults stamped fastify.log
 │   ├── logLevelOverrides.ts       # LOG_LEVEL_OVERRIDES parser (component=level pairs)
-│   ├── requestPath.ts             # url.path: the request path without its query string
+│   ├── requestPath.ts             # url.path: the request path, query dropped and path tokens redacted
 │   ├── isoDateTimeSchema.ts       # Response timestamp codec: a Date in the handler, an ISO date-time string on the wire
 │   ├── jsonResponse.ts            # One `response:` entry: its description + application/json schema
 │   ├── forwardReplyHeaders.ts     # Copies a hijacked reply's buffered headers (@fastify/cors's) onto reply.raw
