@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.22.0...nebula-chat-client-v1.22.1) (2026-10-09)
+
+
+### Bug Fixes
+
+* **client:** drop unused export of AuthAlertStatus ([#487](https://github.com/itsDaiton/nebula-chat/issues/487)) ([90f8b87](https://github.com/itsDaiton/nebula-chat/commit/90f8b873e36544d14d1449af4710a220675f0aa9))
+
 ## [1.22.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.21.0...nebula-chat-client-v1.22.0) (2026-10-06)
 
 
