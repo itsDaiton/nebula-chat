@@ -1,4 +1,4 @@
-import { render } from '@react-email/components';
+import { render } from 'react-email';
 import { AuthEmail } from './AuthEmail';
 import { LOGO } from './logo';
 import type { EmailMessage } from './resend';

@@ -20,7 +20,7 @@ export default defineConfig({
       'resend',
       'react',
       'react-dom',
-      '@react-email/components',
+      'react-email',
     ],
   },
 });
