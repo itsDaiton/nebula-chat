@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.10.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.10.3...nebula-chat-v2.10.4) (2026-10-09)
+
+
+### Bug Fixes
+
+* **deps:** NEB-481 bump smol-toml to 1.9.0 ([#485](https://github.com/itsDaiton/nebula-chat/issues/485)) ([f21415c](https://github.com/itsDaiton/nebula-chat/commit/f21415c5b132031572df83d045722533155ca8ac))
+
 ## [2.10.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.10.2...nebula-chat-v2.10.3) (2026-10-09)
 
 
