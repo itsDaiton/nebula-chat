@@ -80,10 +80,7 @@ const config = defineConfig({
       },
       fonts: {
         body: { value: 'Inter, -apple-system, system-ui, sans-serif' },
-        // Claude-style pairing: a sans for the interface, a serif for headings and replies. Newsreader is an open
-        // stand-in for Claude's proprietary Anthropic Serif, with the same text and display optical sizes.
-        heading: { value: 'Newsreader, Georgia, serif' },
-        serif: { value: 'Newsreader, Georgia, serif' },
+        heading: { value: 'Inter, -apple-system, system-ui, sans-serif' },
       },
       radii: {
         sm: { value: '0.375rem' },
