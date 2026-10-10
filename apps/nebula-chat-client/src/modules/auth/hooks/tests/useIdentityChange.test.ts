@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useIdentityChange } from '@/modules/auth/hooks/useIdentityChange';
 import { SESSION_BOOTSTRAP_KEY } from '@/modules/auth/hooks/useSessionBootstrap';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
+import { useSettingsSearchStore } from '@/modules/settings/stores/useSettingsSearchStore';
 import { route } from '@/routing/routes';
 import { createTestQueryClient, renderHookWithQueryClient } from '@/test/render';
 
@@ -43,5 +44,14 @@ describe('useIdentityChange', () => {
     act(() => result.current());
 
     expect(useChatStreamStore.getState().isMessageAllowanceReached).toBe(false);
+  });
+
+  it("forgets the previous user's settings search", () => {
+    useSettingsSearchStore.setState({ query: 'delete' });
+    const { result } = renderHookWithQueryClient(() => useIdentityChange());
+
+    act(() => result.current());
+
+    expect(useSettingsSearchStore.getState().query).toBe('');
   });
 });

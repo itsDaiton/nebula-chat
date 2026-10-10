@@ -10,8 +10,8 @@ export const SettingsNav = () => (
     as="nav"
     aria-label={resources.settings.title}
     flexShrink={0}
-    w={{ base: 'full', md: 64 }}
-    p={{ base: 3, md: 4 }}
+    w={{ base: 'full', md: 80 }}
+    p={{ base: 3, md: 5 }}
     borderColor="border.default"
     borderBottomWidth={{ base: '1px', md: 0 }}
     borderRightWidth={{ base: 0, md: '1px' }}
@@ -38,6 +38,7 @@ export const SettingsNav = () => (
           key={path}
           asChild
           variant="ghost"
+          size={{ base: 'md', md: 'lg' }}
           justifyContent="flex-start"
           gap={3}
           _currentPage={{ bg: 'bg.muted', fontWeight: 'semibold' }}

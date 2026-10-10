@@ -1,4 +1,4 @@
-import { Heading, Text } from '@chakra-ui/react';
+import { Box, Heading, Text } from '@chakra-ui/react';
 import { Navigate } from 'react-router';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { AccountIdSetting } from '@/modules/settings/components/AccountIdSetting';
@@ -28,24 +28,40 @@ export const SettingsPage = () => {
       <Heading as="h1" size="xl">
         {resources.settings.sections.account}
       </Heading>
-      {isSectionVisible('profile') && (
-        <SettingsSection title={SETTINGS_SECTION_TITLES.profile}>
-          {isEntryVisible('name') && <ProfileNameForm name={user?.name ?? ''} />}
-        </SettingsSection>
-      )}
-      {isSectionVisible('security') && (
-        <SettingsSection title={SETTINGS_SECTION_TITLES.security}>
-          {isEntryVisible('password') && <PasswordSetting />}
-        </SettingsSection>
-      )}
-      {isSectionVisible('account') && (
-        <SettingsSection title={SETTINGS_SECTION_TITLES.account}>
-          {isEntryVisible('signOutEverywhere') && <SignOutEverywhereSetting />}
-          {isEntryVisible('deleteAccount') && <DeleteAccountSetting />}
-          {isEntryVisible('accountId') && <AccountIdSetting id={user?.id ?? ''} />}
-        </SettingsSection>
-      )}
-      {!hasMatches && <Text color="fg.muted">{resources.settings.search.empty}</Text>}
+      {/* Filtered out, not unmounted: a half-typed name or password survives a search. */}
+      <SettingsSection
+        title={SETTINGS_SECTION_TITLES.profile}
+        hidden={!isSectionVisible('profile')}
+      >
+        <Box hidden={!isEntryVisible('name')}>
+          <ProfileNameForm name={user?.name ?? ''} />
+        </Box>
+      </SettingsSection>
+      <SettingsSection
+        title={SETTINGS_SECTION_TITLES.security}
+        hidden={!isSectionVisible('security')}
+      >
+        <Box hidden={!isEntryVisible('password')}>
+          <PasswordSetting />
+        </Box>
+      </SettingsSection>
+      <SettingsSection
+        title={SETTINGS_SECTION_TITLES.account}
+        hidden={!isSectionVisible('account')}
+      >
+        <Box hidden={!isEntryVisible('signOutEverywhere')}>
+          <SignOutEverywhereSetting />
+        </Box>
+        <Box hidden={!isEntryVisible('deleteAccount')}>
+          <DeleteAccountSetting />
+        </Box>
+        <Box hidden={!isEntryVisible('accountId')}>
+          <AccountIdSetting id={user?.id ?? ''} />
+        </Box>
+      </SettingsSection>
+      <Text role="status" color="fg.muted">
+        {hasMatches ? '' : resources.settings.search.empty}
+      </Text>
     </SettingsLayout>
   );
 };

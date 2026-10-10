@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth';
 import type { Auth, User as BetterAuthUser, Session as BetterAuthSession } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { APIError, createAuthMiddleware } from 'better-auth/api';
+import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api';
 import { anonymous, haveIBeenPwned, isPasswordCompromised, openAPI } from 'better-auth/plugins';
 import { users, session, account, verification } from '@nebula-chat/db';
 import type { DbClient } from '@nebula-chat/db';
@@ -17,6 +17,7 @@ import {
   findResetPasswordRejection,
 } from './resetPassword';
 import type { ChangePasswordAttempt, ResetPasswordRejection } from './resetPassword';
+import { DELETE_ACCOUNT_REJECTION_MESSAGES, findDeleteAccountRejection } from './deleteAccount';
 import type { EmailSender } from './resend';
 
 /**
@@ -98,7 +99,8 @@ const toRejectionError = (rejection: ResetPasswordRejection) =>
  *   endpoints (importable into Bruno/Postman, etc.).
  * - email/password with password reset; verification is sent on sign-up but not
  *   required to sign in, sent in the background via `sendEmail` (ADR-0021).
- * - `user.deleteUser` enabled for Settings → Delete account.
+ * - `user.deleteUser` enabled for Settings → Delete account; the `before` hook makes a user
+ *   with a password send it (better-auth would accept a recent sign-in instead).
  * - a `before` hook refusing an unchanged password (`PASSWORD_REUSED`) on
  *   `/change-password`, and a breached or unchanged one on `/reset-password`.
  * - Google / GitHub social sign-in for each provider in `socialProviders`; its
@@ -133,8 +135,8 @@ export const createAuth = ({
     }),
     user: {
       modelName: 'users',
-      // Settings → Delete account. A password, or a sign-in under a day old, confirms it;
-      // the user's conversations and messages go with them (FK cascades).
+      // Settings → Delete account: the password confirms it, or for a user without one a
+      // sign-in under a day old. Conversations and messages go with them (FK cascades).
       deleteUser: { enabled: true },
     },
     advanced: {
@@ -171,9 +173,26 @@ export const createAuth = ({
     // maps to `SET ... EX` (set) and `INCR` + create-only `EXPIRE` (increment, the
     // fixed-window semantics the secondary-storage rate limiter requires).
     hooks: {
-      // Refuse an unchanged password on /change-password, and a breached or unchanged one
-      // before /reset-password consumes the token.
+      // Require the password on /delete-user, refuse an unchanged one on /change-password,
+      // and a breached or unchanged one before /reset-password consumes the token.
       before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path === '/delete-user') {
+          const authSession = await getSessionFromCtx(ctx);
+          // No session is better-auth's own 401.
+          if (!authSession) return;
+          const accounts = await ctx.context.internalAdapter.findAccounts(authSession.user.id);
+          const rejection = findDeleteAccountRejection({
+            password: (ctx.body as { password?: string } | undefined)?.password,
+            hasPassword: accounts.some(({ providerId }) => providerId === 'credential'),
+          });
+          if (rejection) {
+            throw APIError.from('BAD_REQUEST', {
+              code: rejection,
+              message: DELETE_ACCOUNT_REJECTION_MESSAGES[rejection],
+            });
+          }
+          return;
+        }
         if (ctx.path === '/change-password') {
           const rejection = findChangePasswordRejection(
             (ctx.body as ChangePasswordAttempt | undefined) ?? {},

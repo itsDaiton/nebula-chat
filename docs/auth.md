@@ -234,9 +234,11 @@ cookie cache stay signed in until it expires (up to 5 minutes).
 #### `POST /api/auth/delete-user` — Account deletion
 
 Enabled by `user.deleteUser.enabled` in `@nebula-chat/auth`. Body `{ password? }`: a user with
-a credential password must send it (`400 INVALID_PASSWORD` if wrong); one without (Google/GitHub
-only) sends nothing and needs an auth session younger than a day (`400 SESSION_EXPIRED`
-otherwise). Deletes the user's accounts, sessions and user row; their conversations and
+a credential password must send it — the `before` hook answers `400 PASSWORD_REQUIRED` when they
+don't (better-auth alone would accept a sign-in under a day old), and better-auth `400
+INVALID_PASSWORD` when it's wrong. A user without one (Google/GitHub only) sends nothing and
+needs an auth session younger than a day (`400 SESSION_EXPIRED` otherwise). The guard is
+[`libs/auth/src/deleteAccount.ts`](../libs/auth/src/deleteAccount.ts). Deletes the user's accounts, sessions and user row; their conversations and
 messages go with it through the `ON DELETE CASCADE` foreign keys. Clears the session cookie.
 
 #### `POST /api/auth/delete-anonymous-user` — delete the Guest

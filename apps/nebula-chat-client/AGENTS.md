@@ -64,7 +64,7 @@ apps/nebula-chat-client/src/
 │   │   │   ├── useSocialSignIn.ts     # Starts a Google/GitHub sign-in; better-auth then leaves for the provider
 │   │   │   ├── useSignOut.ts          # Sign-out, then useAfterSignOut
 │   │   │   ├── useAfterSignOut.ts     # Once the auth session is gone: reset the bootstrap so AuthGate re-mints a Guest
-│   │   │   └── useIdentityChange.ts   # After any of them: reset server state, go to the chat root
+│   │   │   └── useIdentityChange.ts   # After any of them: reset server state and per-user UI state (allowance, settings search), go to the chat root
 │   │   └── components/
 │   │       ├── AuthGate.tsx       # Wraps the routes; renders nothing until a session (Guest at least) exists
 │   │       ├── AccountStatus.tsx  # Header: Sign in button for a Guest; UserMenu (name/email, Settings, Sign out) for a Registered user

@@ -124,6 +124,7 @@ export const resources = {
       passwordReused: 'Choose a password different from your current one.',
       currentPasswordInvalid: 'Current password is incorrect.',
       sessionExpired: 'For your security, sign out and sign back in, then try again.',
+      noPassword: "Your account doesn't use a password. Reload the page and try again.",
       tooManyRequests: 'Too many attempts. Wait a minute, then try again.',
       unknown: 'Something went wrong on our end. Please try again.',
     },

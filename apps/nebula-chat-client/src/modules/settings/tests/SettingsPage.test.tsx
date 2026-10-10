@@ -188,12 +188,13 @@ describe('SettingsPage', () => {
 
       await userEvent.type(searchField(), 'zebra');
 
-      expect(screen.getByText(resources.settings.search.empty)).toBeInTheDocument();
+      expect(screen.getByRole('status')).toHaveTextContent(resources.settings.search.empty);
       expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: resources.settings.search.clear }));
 
       expect(searchField()).toHaveValue('');
+      expect(searchField()).toHaveFocus();
       expect(nameField()).toBeInTheDocument();
       expect(screen.getByRole('button', { name: changePassword.open })).toBeInTheDocument();
     });
@@ -291,6 +292,25 @@ describe('SettingsPage', () => {
     });
   });
 
+  describe('search keeps hidden settings as they were', () => {
+    beforeEach(async () => {
+      await holdSession({ isAnonymous: false });
+    });
+
+    it('keeps an unsaved name and an open password form through a search', async () => {
+      renderPage();
+      await userEvent.type(nameField(), ' Lovelace');
+      await openPasswordForm();
+      await userEvent.type(currentPasswordField(), 'half-typed');
+
+      await userEvent.type(searchField(), 'account id');
+      await userEvent.clear(searchField());
+
+      expect(nameField()).toHaveValue('Ada Lovelace');
+      expect(currentPasswordField()).toHaveValue('half-typed');
+    });
+  });
+
   describe('Account', () => {
     beforeEach(async () => {
       await holdSession({ isAnonymous: false });
@@ -319,6 +339,36 @@ describe('SettingsPage', () => {
 
       expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
       expect(calls).toEqual(['revoke-sessions', 'sign-out']);
+    });
+
+    it('finishes signing out when the sessions were already revoked by an earlier try', async () => {
+      server.use(mockApiError('post', API_ROUTE.authRevokeSessions, 401), mockSignOut());
+      renderPage();
+
+      await userEvent.click(screen.getByRole('button', { name: account.signOutEverywhere.action }));
+
+      expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
+    });
+
+    it('stays put, signed in, when revoking fails for another reason', async () => {
+      let signOuts = 0;
+      server.use(
+        mockApiError('post', API_ROUTE.authRevokeSessions, 500),
+        mockSignOut(() => {
+          signOuts += 1;
+        }),
+      );
+      renderPage();
+
+      await userEvent.click(screen.getByRole('button', { name: account.signOutEverywhere.action }));
+
+      await waitFor(() =>
+        expect(
+          screen.getByRole('button', { name: account.signOutEverywhere.action }),
+        ).toBeEnabled(),
+      );
+      expect(signOuts).toBe(0);
+      expect(screen.queryByText(CHAT_PAGE)).not.toBeInTheDocument();
     });
 
     describe('deleting it', () => {
@@ -433,6 +483,24 @@ describe('SettingsPage', () => {
         );
       });
 
+      it('explains a password sent for an account that has none', async () => {
+        server.use(
+          mockApiError('get', API_ROUTE.authListAccounts, 500),
+          mockApiError('post', API_ROUTE.authDeleteUser, 400, {
+            code: 'CREDENTIAL_ACCOUNT_NOT_FOUND',
+          }),
+        );
+        renderPage();
+
+        const dialog = await openDeleteDialog();
+        await userEvent.type(await within(dialog).findByLabelText(fields.password), 'anything');
+        await confirmDelete(dialog);
+
+        expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+          resources.auth.errors.noPassword,
+        );
+      });
+
       it('keeps the account when the user cancels', async () => {
         server.use(mockListAccounts(['credential']));
         renderPage();
@@ -504,7 +572,8 @@ describe('SettingsPage', () => {
       await waitFor(() =>
         expect(screen.queryByLabelText(fields.currentPassword)).not.toBeInTheDocument(),
       );
-      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      // The only status region is the search's, and it has nothing to say: no in-place success panel.
+      expect(screen.getByRole('status')).toBeEmptyDOMElement();
       expect(screen.queryByText(AUTH_PAGE)).not.toBeInTheDocument();
     });
 

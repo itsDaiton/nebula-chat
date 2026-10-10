@@ -17,6 +17,8 @@ export type SettingsSection = {
 /** A titled group of settings rows. */
 export type SettingsSectionProps = {
   title: string;
+  /** Filtered out by the search: kept mounted so its rows keep what was typed. */
+  hidden?: boolean;
   children: ReactNode;
 };
 

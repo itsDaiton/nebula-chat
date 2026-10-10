@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { AppError } from '@nebula-chat/errors';
 import { authClient } from '@/libs/auth/client';
 import { useAfterSignOut } from '@/modules/auth/hooks/useAfterSignOut';
 import { runAuthRequest } from '@/modules/auth/utils/runAuthRequest';
@@ -9,7 +10,10 @@ export const useSignOutEverywhere = () => {
 
   return useMutation({
     mutationFn: async () => {
-      await runAuthRequest(() => authClient.revokeSessions());
+      await runAuthRequest(() => authClient.revokeSessions()).catch((error: unknown) => {
+        // 401: an earlier try revoked everything, then failed to sign out. Finish the job.
+        if (!(error instanceof AppError && error.code === 'Unauthorized')) throw error;
+      });
       await runAuthRequest(() => authClient.signOut());
     },
     onSuccess: afterSignOut,
