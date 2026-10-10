@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.12.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.11.1...nebula-chat-v2.12.0) (2026-10-10)
+
+
+### Features
+
+* **repo:** add build:libs script for workspace libs ([#497](https://github.com/itsDaiton/nebula-chat/issues/497)) ([b9bb3ca](https://github.com/itsDaiton/nebula-chat/commit/b9bb3cad5af18d0ff07f1cddb5d263ff8bd01f25))
+
+
+### Bug Fixes
+
+* **client:** clean better-auth atoms before jsdom teardown ([#498](https://github.com/itsDaiton/nebula-chat/issues/498)) ([01b283f](https://github.com/itsDaiton/nebula-chat/commit/01b283f4f8d599533539c5e5892db6ed23699303))
+
 ## [2.11.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.11.0...nebula-chat-v2.11.1) (2026-10-10)
 
 
