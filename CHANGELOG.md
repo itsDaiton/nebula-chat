@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.10.5...nebula-chat-v2.11.0) (2026-10-10)
+
+
+### Features
+
+* **client:** NEB-466 user menu and Settings area ([#489](https://github.com/itsDaiton/nebula-chat/issues/489)) ([4d9d239](https://github.com/itsDaiton/nebula-chat/commit/4d9d2397452eb40d5515aaaeee0d878569b36b93))
+
 ## [2.10.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.10.4...nebula-chat-v2.10.5) (2026-10-09)
 
 
