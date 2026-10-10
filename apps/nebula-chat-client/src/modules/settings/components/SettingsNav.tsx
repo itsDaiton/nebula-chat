@@ -10,7 +10,7 @@ export const SettingsNav = () => (
     as="nav"
     aria-label={resources.settings.title}
     flexShrink={0}
-    w={{ base: 'full', md: 80 }}
+    w={{ base: 'full', md: 64, lg: 72, xl: 80 }}
     p={{ base: 3, md: 5 }}
     borderColor="border.default"
     borderBottomWidth={{ base: '1px', md: 0 }}
