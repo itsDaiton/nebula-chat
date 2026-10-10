@@ -553,11 +553,13 @@ describe('SettingsPage', () => {
 
         await openDeleteDialog();
         // The open dialog makes the page behind it inert, the way a backdrop click reaches it.
-        await userEvent
-          .setup({ pointerEventsCheck: PointerEventsCheckLevel.Never })
-          .click(document.body);
+        const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
-        await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+        // The dialog listens for outside clicks only a frame after it opens, so click until it does.
+        await waitFor(async () => {
+          await user.click(document.body);
+          expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+        });
         expect(deletions.requests).toBe(0);
       });
     });
