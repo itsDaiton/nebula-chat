@@ -13,6 +13,13 @@ export type AuthGateProps = {
   children: ReactNode;
 };
 
+export type UserMenuProps = {
+  /** The Registered user's name, shown as initials on their Avatar. */
+  name: string;
+  /** The menu's heading and items. */
+  children: ReactNode;
+};
+
 /** What better-auth's client resolves with; only the failure matters to the forms. */
 export type AuthResult = {
   error: { code?: string; status: number } | null;

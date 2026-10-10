@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router';
@@ -72,8 +72,16 @@ const emailField = () => screen.getByRole('textbox', { name: resources.auth.fiel
 const passwordField = () => screen.getByLabelText(resources.auth.fields.password);
 
 // Submitting validates, calls the API, refetches the session and navigates: slower than one tick.
-const findSignOut = () =>
-  screen.findByRole('button', { name: resources.auth.actions.signOut }, { timeout: 3000 });
+// Signed in shows as the account menu's avatar carrying the Registered user's initials.
+const findRegisteredMenu = () =>
+  waitFor(
+    () => {
+      const trigger = screen.getByRole('button', { name: resources.userMenu.label });
+      expect(within(trigger).getByText('A')).toBeInTheDocument();
+      return trigger;
+    },
+    { timeout: 3000 },
+  );
 
 const submitSignIn = () =>
   userEvent.click(screen.getByRole('button', { name: resources.auth.actions.signIn }));
@@ -139,7 +147,7 @@ describe('AuthPage', () => {
     await fillSignUp();
     await submitSignUp();
 
-    expect(await findSignOut()).toBeInTheDocument();
+    expect(await findRegisteredMenu()).toBeInTheDocument();
     expect(body).toMatchObject({
       name: 'Ada',
       email: 'ada@example.com',
@@ -160,7 +168,7 @@ describe('AuthPage', () => {
     await fillSignUp();
     await submitSignUp();
 
-    await findSignOut();
+    await findRegisteredMenu();
     expect(body).toMatchObject({
       callbackURL: expect.stringMatching(new RegExp(`${route.auth.verifyEmail()}$`)),
     });
@@ -258,7 +266,7 @@ describe('AuthPage', () => {
     await fillSignIn();
     await submitSignIn();
 
-    expect(await findSignOut()).toBeInTheDocument();
+    expect(await findRegisteredMenu()).toBeInTheDocument();
     expect(body).toMatchObject({ email: 'ada@example.com', password: 'hunter22hunter' });
   });
 
@@ -351,15 +359,15 @@ describe('AuthPage', () => {
     renderAuthFlow(route.chat.root());
 
     expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
-    expect(
-      await screen.findByRole('link', { name: resources.auth.actions.signIn }),
-    ).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('link', { name: resources.auth.actions.signIn }));
+    await userEvent.click(await screen.findByRole('link', { name: resources.auth.actions.signIn }));
+    expect(
+      await screen.findByRole('heading', { name: resources.auth.signIn.title }),
+    ).toBeInTheDocument();
     await fillSignIn();
     await submitSignIn();
 
-    expect(await findSignOut()).toBeInTheDocument();
+    expect(await findRegisteredMenu()).toBeInTheDocument();
     expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
     expect(screen.getByText('Sourdough tips')).toBeInTheDocument();
     // Re-read for the new account rather than served from the Guest's cache.
@@ -455,7 +463,7 @@ describe('AuthPage', () => {
       becomeRegistered();
       renderAuthFlow(new URL(sent().callbackURL ?? '').pathname);
 
-      expect(await findSignOut()).toBeInTheDocument();
+      expect(await findRegisteredMenu()).toBeInTheDocument();
       expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
       expect(screen.getByText('Sourdough tips')).toBeInTheDocument();
       expect(listRequests).toBe(1);

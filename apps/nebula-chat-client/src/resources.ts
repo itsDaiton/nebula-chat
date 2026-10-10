@@ -122,6 +122,16 @@ export const resources = {
       unknown: 'Something went wrong on our end. Please try again.',
     },
   },
+  userMenu: {
+    label: 'Account menu',
+    settings: 'Settings',
+  },
+  settings: {
+    title: 'Settings',
+    password: {
+      title: 'Password',
+    },
+  },
   passwordInput: {
     showPassword: 'Show password',
     hidePassword: 'Hide password',

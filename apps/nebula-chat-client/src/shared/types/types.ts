@@ -30,13 +30,6 @@ export type ColorModeProviderProps = ThemeProviderProps;
 
 export type NebulaButtonProps = ButtonProps;
 
-export type NebulaMenuItemProps = {
-  id: number;
-  value: string;
-  label: string;
-  onClick?: () => void;
-};
-
 type BadgeConfig = {
   text: string;
   colorPalette?: string;

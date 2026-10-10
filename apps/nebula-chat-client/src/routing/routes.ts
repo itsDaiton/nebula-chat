@@ -9,4 +9,7 @@ export const route = {
     resetPassword: () => '/auth/reset-password',
     verifyEmail: () => '/auth/verify-email',
   },
+  settings: {
+    root: () => '/settings',
+  },
 };

@@ -38,17 +38,17 @@ beforeAll(() => {
     })),
   );
 
+  // Both observers must be real constructors: an open menu's positioner constructs a
+  // ResizeObserver, and the infinite-scroll sentinel an IntersectionObserver, on mount.
   vi.stubGlobal(
     'ResizeObserver',
-    vi.fn().mockImplementation(() => ({
-      observe: vi.fn(),
-      unobserve: vi.fn(),
-      disconnect: vi.fn(),
-    })),
+    class {
+      observe = vi.fn();
+      unobserve = vi.fn();
+      disconnect = vi.fn();
+    },
   );
 
-  // jsdom implements none of these; the infinite-scroll sentinel constructs an
-  // IntersectionObserver on mount, so it must be a real constructor.
   vi.stubGlobal(
     'IntersectionObserver',
     class {
