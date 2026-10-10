@@ -66,8 +66,8 @@ apps/nebula-chat-client/src/
 │   │   │   └── useIdentityChange.ts   # After any of them: reset server state, go to the chat root
 │   │   └── components/
 │   │       ├── AuthGate.tsx       # Wraps the routes; renders nothing until a session (Guest at least) exists
-│   │       ├── AccountStatus.tsx  # Header user menu: Guest → Sign in; Registered → name/email, Settings, Sign out
-│   │       ├── UserMenu.tsx       # Avatar trigger (initials, or a generic anonymous one for a Guest) + the menu it opens
+│   │       ├── AccountStatus.tsx  # Header: Sign in button for a Guest; UserMenu (name/email, Settings, Sign out) for a Registered user
+│   │       ├── UserMenu.tsx       # Registered user's Avatar trigger (initials) + the menu it opens
 │   │       ├── AuthLayout.tsx     # Shell every auth page shares: app mark + card (+ footer)
 │   │       ├── AuthForm.tsx       # One react-hook-form + zod form, driven by an AuthFormConfig
 │   │       ├── AuthFormField.tsx  # Label, input (or PasswordInput) and its error text

@@ -50,13 +50,16 @@ describe('Header', () => {
     layout.isMobile = true;
   });
 
-  it('shows the account menu and the theme toggle, without the old gear menu', async () => {
+  it("shows a Guest's sign-in link and the theme toggle, without the old gear menu", async () => {
     renderWithChakra(<Header />);
     refreshSession();
 
     expect(
-      await screen.findByRole('button', { name: resources.userMenu.label }),
+      await screen.findByRole('link', { name: resources.auth.actions.signIn }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: resources.userMenu.label }),
+    ).not.toBeInTheDocument();
     expect(await screen.findByRole('button', { name: /toggle color mode/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Settings' })).not.toBeInTheDocument();
   });

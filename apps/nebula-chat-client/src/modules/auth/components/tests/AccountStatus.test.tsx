@@ -72,7 +72,7 @@ beforeEach(() => {
 const openMenu = async () =>
   userEvent.click(await screen.findByRole('button', { name: resources.userMenu.label }));
 
-// A Registered user's Avatar carries their initials ("Ada" → "A"); a Guest's never does.
+// A Registered user's Avatar carries their initials ("Ada" → "A").
 const findInitials = () =>
   waitFor(() =>
     expect(
@@ -83,24 +83,15 @@ const findInitials = () =>
 const signOutItem = () => screen.findByRole('menuitem', { name: resources.auth.actions.signOut });
 
 describe('AccountStatus', () => {
-  it('gives a Guest a generic avatar menu that offers sign-in', async () => {
+  it('offers a Guest a sign-in link to the auth page, with no user menu', async () => {
     await renderStatus();
 
-    // The Guest's name is "Anonymous", so initials would read "A".
-    const trigger = await screen.findByRole('button', { name: resources.userMenu.label });
-    expect(within(trigger).queryByText('A')).not.toBeInTheDocument();
-
-    await openMenu();
-
-    expect(await screen.findByText(resources.userMenu.guest)).toBeInTheDocument();
+    const signIn = await screen.findByRole('link', { name: resources.auth.actions.signIn });
     expect(
-      screen.queryByRole('menuitem', { name: resources.userMenu.settings }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('menuitem', { name: resources.auth.actions.signOut }),
+      screen.queryByRole('button', { name: resources.userMenu.label }),
     ).not.toBeInTheDocument();
 
-    await selectMenuItem(screen.getByRole('menuitem', { name: resources.auth.actions.signIn }));
+    await userEvent.click(signIn);
 
     expect(await screen.findByText(AUTH_PAGE)).toBeInTheDocument();
   });
@@ -168,9 +159,8 @@ describe('AccountStatus', () => {
     await selectMenuItem(await signOutItem());
 
     expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
-    await openMenu();
     expect(
-      await screen.findByRole('menuitem', { name: resources.auth.actions.signIn }),
+      await screen.findByRole('link', { name: resources.auth.actions.signIn }),
     ).toBeInTheDocument();
     expect(signIns).toBe(1);
     expect(unauthenticatedRequests).toBe(0);

@@ -124,7 +124,6 @@ export const resources = {
   },
   userMenu: {
     label: 'Account menu',
-    guest: 'Guest',
     settings: 'Settings',
   },
   settings: {

@@ -22,7 +22,6 @@ import {
   providerConsentUrl,
   refreshSession,
 } from '@/test/auth';
-import { selectMenuItem } from '@/test/menu';
 import { server } from '@/test/msw';
 import { renderWithChakra } from '@/test/render';
 
@@ -360,11 +359,8 @@ describe('AuthPage', () => {
     renderAuthFlow(route.chat.root());
 
     expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: resources.userMenu.label }));
 
-    await selectMenuItem(
-      await screen.findByRole('menuitem', { name: resources.auth.actions.signIn }),
-    );
+    await userEvent.click(await screen.findByRole('link', { name: resources.auth.actions.signIn }));
     expect(
       await screen.findByRole('heading', { name: resources.auth.signIn.title }),
     ).toBeInTheDocument();
