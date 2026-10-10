@@ -34,7 +34,7 @@ export const PasswordSetting = () => {
       </SettingsRow>
       {isPasswordFormOpen && (
         <Box maxW="md" py={4}>
-          <AuthForm config={CHANGE_PASSWORD_FORM} showHeader={false} onSuccess={onChanged} />
+          <AuthForm config={CHANGE_PASSWORD_FORM} header="none" onSuccess={onChanged} />
         </Box>
       )}
     </>

@@ -13,9 +13,11 @@ export const SettingsRow = ({ label, description, children }: SettingsRowProps) 
     borderColor="border.default"
   >
     <Box>
-      <Text fontWeight="medium">{label}</Text>
+      <Text fontSize={{ base: 'sm', '2xl': 'md' }} fontWeight="medium">
+        {label}
+      </Text>
       {description && (
-        <Text fontSize="sm" color="fg.muted">
+        <Text fontSize={{ base: 'xs', md: 'sm' }} color="fg.muted">
           {description}
         </Text>
       )}

@@ -5,10 +5,10 @@ import { resources } from '@/resources';
 
 const { deleteAccount } = resources.settings.account;
 
-/** The Delete account row; its button opens a confirmation that can't be skipped. */
+/** The Delete account row; its button opens a confirmation, which a click outside dismisses. */
 export const DeleteAccountSetting = () => (
   <SettingsRow label={deleteAccount.label} description={deleteAccount.description}>
-    <Dialog.Root lazyMount unmountOnExit role="alertdialog">
+    <Dialog.Root lazyMount unmountOnExit role="alertdialog" closeOnInteractOutside>
       <Dialog.Trigger asChild>
         <Button variant="solid" colorPalette="red">
           {deleteAccount.action}

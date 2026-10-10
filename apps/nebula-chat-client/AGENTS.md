@@ -427,7 +427,8 @@ Forms use [react-hook-form](https://react-hook-form.com) with a [zod](https://zo
 reset, change password and delete account are one component fed its configs (`utils/authForms.ts`), not copies —
 variants of a form differ by config. A config with a `successMessage` replaces the form with it once
 submitted; one without clears its fields and calls `onSuccess` (the change-password form stays on `/settings`
-and toasts). `showHeader={false}` drops the form's own title and description where the page already labels it.
+and toasts). `header` trims the form's own heading where the page already labels it: `description` under a
+dialog's title, `none` inside a labelled settings row.
 
 - **The schema is the source of truth.** It lives in the owning module's `utils/` (`authSchemas.ts`), its
   messages come from `resources.ts`, and the form's value type is `z.infer<typeof schema>` in

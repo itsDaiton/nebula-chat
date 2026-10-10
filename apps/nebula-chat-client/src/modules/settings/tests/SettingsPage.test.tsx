@@ -1,5 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
@@ -316,11 +316,14 @@ describe('SettingsPage', () => {
       await holdSession({ isAnonymous: false });
     });
 
-    it("shows the user's account ID", () => {
+    it("shows the user's account ID and copies it", async () => {
+      const user = userEvent.setup();
       renderPage();
 
       expect(screen.getByText('user-1')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: account.accountId.copy })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: account.accountId.copy }));
+
+      expect(await navigator.clipboard.readText()).toBe('user-1');
     });
 
     it('logs out of every device, this one included, and returns to the chat', async () => {
@@ -512,6 +515,26 @@ describe('SettingsPage', () => {
 
         await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
       });
+
+      it('closes without deleting when the user clicks outside it', async () => {
+        const deletions = { requests: 0 };
+        server.use(
+          mockListAccounts(['credential']),
+          mockDeleteUser(() => {
+            deletions.requests += 1;
+          }),
+        );
+        renderPage();
+
+        await openDeleteDialog();
+        // The open dialog makes the page behind it inert, the way a backdrop click reaches it.
+        await userEvent
+          .setup({ pointerEventsCheck: PointerEventsCheckLevel.Never })
+          .click(document.body);
+
+        await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+        expect(deletions.requests).toBe(0);
+      });
     });
   });
 
@@ -575,6 +598,12 @@ describe('SettingsPage', () => {
       // The only status region is the search's, and it has nothing to say: no in-place success panel.
       expect(screen.getByRole('status')).toBeEmptyDOMElement();
       expect(screen.queryByText(AUTH_PAGE)).not.toBeInTheDocument();
+
+      // Opened again, the form doesn't bring back the passwords it sent.
+      await openPasswordForm();
+      expect(currentPasswordField()).toHaveValue('');
+      expect(newPasswordField()).toHaveValue('');
+      expect(confirmPasswordField()).toHaveValue('');
     });
 
     it('shows a wrong current password under its field', async () => {
@@ -687,6 +716,22 @@ describe('SettingsPage', () => {
       );
       expect(newPasswordField()).toHaveAccessibleErrorMessage(
         resources.auth.validation.passwordTooShort,
+      );
+      expect(counter.requests).toBe(0);
+    });
+
+    it('refuses a new password longer than 128 characters without sending it', async () => {
+      const counter = countRequests();
+      renderPage();
+      await openPasswordForm();
+
+      await fillForm({ next: 'a'.repeat(129) });
+      await submit();
+
+      await waitFor(() =>
+        expect(newPasswordField()).toHaveAccessibleErrorMessage(
+          resources.auth.validation.passwordTooLong,
+        ),
       );
       expect(counter.requests).toBe(0);
     });

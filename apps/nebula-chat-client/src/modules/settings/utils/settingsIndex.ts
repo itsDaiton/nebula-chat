@@ -59,3 +59,12 @@ export const matchesSettingsQuery = (entry: SettingsEntry, query: string) => {
     .toLowerCase();
   return terms.every((term) => haystack.includes(term));
 };
+
+/** The Account page's sections, in page order. */
+export const SETTINGS_SECTION_IDS = Object.keys(SETTINGS_SECTION_TITLES) as SettingsSectionId[];
+
+const SETTINGS_ENTRY_IDS = Object.keys(SETTINGS_INDEX) as SettingsEntryId[];
+
+/** The rows of one section, in page order. */
+export const settingsEntriesIn = (section: SettingsSectionId) =>
+  SETTINGS_ENTRY_IDS.filter((id) => SETTINGS_INDEX[id].section === section);

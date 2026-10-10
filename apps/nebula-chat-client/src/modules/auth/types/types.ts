@@ -85,8 +85,11 @@ export type AuthFormConfig<Values extends FieldValues> = {
 
 export type AuthFormProps<Values extends FieldValues> = {
   config: AuthFormConfig<Values>;
-  /** Whether the form shows its own title and description; off where the page already labels it. */
-  showHeader?: boolean;
+  /**
+   * How much of its own heading the form shows, less where the page already labels it: `full` is title and
+   * description, `description` sits under a dialog's own title, `none` sits inside a labelled settings row.
+   */
+  header?: 'full' | 'description' | 'none';
   onSuccess?: () => void;
   /** Called after the failure is shown, for a page that reacts to a specific one. */
   onError?: (error: Error) => void;

@@ -38,7 +38,7 @@ export const SettingsNav = () => (
           key={path}
           asChild
           variant="ghost"
-          size={{ base: 'md', md: 'lg' }}
+          size={{ base: 'sm', md: 'md' }}
           justifyContent="flex-start"
           gap={3}
           _currentPage={{ bg: 'bg.muted', fontWeight: 'semibold' }}

@@ -12,7 +12,7 @@ import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
 /** One auth form — sign-in, sign-up, forgot, reset or change password — as its config describes it. */
 export const AuthForm = <Values extends FieldValues>({
   config,
-  showHeader = true,
+  header = 'full',
   onSuccess,
   onError,
 }: AuthFormProps<Values>) => {
@@ -70,11 +70,13 @@ export const AuthForm = <Values extends FieldValues>({
   return (
     <form onSubmit={(event) => void handleSubmit(onSubmit)(event)} aria-label={label} noValidate>
       <Stack gap={4}>
-        {showHeader && (
+        {header !== 'none' && (
           <Stack gap={1} mb={2}>
-            <Heading as="h1" size="xl">
-              {title}
-            </Heading>
+            {header === 'full' && (
+              <Heading as="h1" size="xl">
+                {title}
+              </Heading>
+            )}
             <Text color="fg.muted" fontSize="sm">
               {description}
             </Text>
