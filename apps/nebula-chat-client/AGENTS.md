@@ -107,14 +107,18 @@ apps/nebula-chat-client/src/
 │   │   ├── types/types.ts
 │   │   ├── utils/
 │   │   │   ├── settingsSections.ts    # The settings navigation's sections (label, icon, route)
-│   │   │   └── settingsSchemas.ts     # zod schema for the profile name
+│   │   │   ├── settingsSchemas.ts     # zod schema for the profile name
+│   │   │   └── settingsIndex.ts       # Searchable settings (copy + keywords) and the match rule
 │   │   ├── stores/
-│   │   │   └── usePasswordChangeStore.ts  # Whether the Password row's change form is unfolded
+│   │   │   ├── usePasswordChangeStore.ts  # Whether the Password row's change form is unfolded
+│   │   │   └── useSettingsSearchStore.ts  # The settings search text
 │   │   ├── hooks/
-│   │   │   └── useUpdateName.ts       # better-auth update-user; the session refetch updates the header
+│   │   │   ├── useUpdateName.ts       # better-auth update-user; the session refetch updates the header
+│   │   │   └── useSettingsSearch.ts   # Which rows/sections the search leaves visible
 │   │   └── components/
-│   │       ├── SettingsLayout.tsx # App Header over Settings' own shell in place of the chat (no conversations): nav, open section, close (X)
-│   │       ├── SettingsNav.tsx    # "Settings" section links; a sidebar on desktop, a top bar on mobile
+│   │       ├── SettingsLayout.tsx # App Header over Settings' own shell in place of the chat (no conversations): nav + open section
+│   │       ├── SettingsNav.tsx    # Search + "Settings" section links; a sidebar on desktop, a top bar on mobile
+│   │       ├── SettingsSearch.tsx # Front-end-only filter over the settings rows
 │   │       ├── SettingsSection.tsx # Titled group of rows (h2)
 │   │       ├── SettingsRow.tsx    # Label/description left, control right; stacked on mobile
 │   │       ├── ProfileNameForm.tsx # Full name row: edit in place, Save once changed
@@ -394,6 +398,7 @@ context is genuinely needed, split it across two files:
 | `useMultiLineStore`           | `shared/stores/`                | Per-content multi-line detection map (`Record<string, boolean>`) |
 | `usePasswordVisibilityStore`  | `modules/auth/stores/`          | Which password fields are unmasked, per field name               |
 | `usePasswordChangeStore`      | `modules/settings/stores/`      | Whether the Settings Password row's change form is unfolded      |
+| `useSettingsSearchStore`      | `modules/settings/stores/`      | The settings search text                                         |
 
 ---
 

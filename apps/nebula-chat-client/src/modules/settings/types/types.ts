@@ -39,3 +39,23 @@ export type PasswordChangeState = {
   togglePasswordForm: () => void;
   closePasswordForm: () => void;
 };
+
+/** The Account page's sections, in order. */
+export type SettingsSectionId = 'profile' | 'security';
+
+/** The searchable rows on the Account page. */
+export type SettingsEntryId = 'name' | 'password';
+
+/** A setting the search can find: its row's copy plus words people might search for instead. */
+export type SettingsEntry = {
+  section: SettingsSectionId;
+  label: string;
+  description?: string;
+  keywords: string[];
+};
+
+export type SettingsSearchState = {
+  query: string;
+  searchSettings: (query: string) => void;
+  clearSearch: () => void;
+};

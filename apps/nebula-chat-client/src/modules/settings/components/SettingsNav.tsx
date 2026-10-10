@@ -1,9 +1,10 @@
 import { Box, Button, Stack, Text } from '@chakra-ui/react';
 import { NavLink } from 'react-router';
+import { SettingsSearch } from '@/modules/settings/components/SettingsSearch';
 import { SETTINGS_SECTIONS } from '@/modules/settings/utils/settingsSections';
 import { resources } from '@/resources';
 
-/** The settings sections, beside the open one on desktop and above it on mobile. */
+/** Search plus the settings sections, beside the open one on desktop and above it on mobile. */
 export const SettingsNav = () => (
   <Box
     as="nav"
@@ -15,10 +16,23 @@ export const SettingsNav = () => (
     borderBottomWidth={{ base: '1px', md: 0 }}
     borderRightWidth={{ base: 0, md: '1px' }}
   >
-    <Text px={3} mb={2} fontSize="sm" color="fg.muted" display={{ base: 'none', md: 'block' }}>
+    <SettingsSearch />
+    <Text
+      px={3}
+      mt={5}
+      mb={2}
+      fontSize="sm"
+      color="fg.muted"
+      display={{ base: 'none', md: 'block' }}
+    >
       {resources.settings.title}
     </Text>
-    <Stack direction={{ base: 'row', md: 'column' }} gap={1} overflowX="auto">
+    <Stack
+      direction={{ base: 'row', md: 'column' }}
+      gap={1}
+      mt={{ base: 3, md: 0 }}
+      overflowX="auto"
+    >
       {SETTINGS_SECTIONS.map(({ label, icon: SectionIcon, path }) => (
         <Button
           key={path}

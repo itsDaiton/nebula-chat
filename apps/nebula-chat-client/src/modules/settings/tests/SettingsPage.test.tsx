@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import { SettingsPage } from '@/modules/settings/SettingsPage';
 import { usePasswordChangeStore } from '@/modules/settings/stores/usePasswordChangeStore';
+import { useSettingsSearchStore } from '@/modules/settings/stores/useSettingsSearchStore';
 import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
@@ -75,7 +76,10 @@ beforeEach(() => {
   vi.restoreAllMocks();
   usePasswordVisibilityStore.setState({ visibleFields: {} });
   usePasswordChangeStore.setState({ isPasswordFormOpen: false });
+  useSettingsSearchStore.setState({ query: '' });
 });
+
+const searchField = () => screen.getByRole('searchbox', { name: resources.settings.search.label });
 
 describe('SettingsPage', () => {
   describe('layout', () => {
@@ -115,13 +119,62 @@ describe('SettingsPage', () => {
       ).toHaveAttribute('aria-current', 'page');
     });
 
-    it('closes back to the chat', async () => {
+    it('goes back to the chat through the navbar, not a close button', async () => {
       await holdSession({ isAnonymous: false });
       renderPage();
 
-      await userEvent.click(screen.getByRole('link', { name: resources.settings.close }));
+      expect(screen.queryByRole('link', { name: /close/i })).not.toBeInTheDocument();
+      await userEvent.click(screen.getByText(resources.chat.appName));
 
       expect(screen.getByText(CHAT_PAGE)).toBeInTheDocument();
+    });
+  });
+
+  describe('search', () => {
+    beforeEach(async () => {
+      await holdSession({ isAnonymous: false });
+    });
+
+    it('narrows the page to the settings that match, hiding empty sections', async () => {
+      renderPage();
+
+      await userEvent.type(searchField(), 'password');
+
+      expect(screen.getByRole('button', { name: changePassword.open })).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { level: 2, name: resources.settings.security.title }),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: profile.name.label })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('heading', { level: 2, name: profile.title }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('matches regardless of case, on every word, including related terms', async () => {
+      renderPage();
+
+      await userEvent.type(searchField(), 'FULL  Name');
+      expect(nameField()).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: changePassword.open })).not.toBeInTheDocument();
+
+      await userEvent.clear(searchField());
+      await userEvent.type(searchField(), 'login');
+      expect(screen.getByRole('button', { name: changePassword.open })).toBeInTheDocument();
+    });
+
+    it('says so when nothing matches, and shows everything again once cleared', async () => {
+      renderPage();
+
+      await userEvent.type(searchField(), 'zebra');
+
+      expect(screen.getByText(resources.settings.search.empty)).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: resources.settings.search.clear }));
+
+      expect(searchField()).toHaveValue('');
+      expect(nameField()).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: changePassword.open })).toBeInTheDocument();
     });
   });
 

@@ -27,7 +27,8 @@ export const PasswordSetting = () => {
   return (
     <>
       <SettingsRow label={changePassword.title} description={changePassword.description}>
-        <Button variant="outline" onClick={toggle} aria-expanded={isPasswordFormOpen}>
+        {/* Fixed width, so swapping its label doesn't reflow the description beside it. */}
+        <Button variant="outline" minW="36" onClick={toggle} aria-expanded={isPasswordFormOpen}>
           {isPasswordFormOpen ? changePassword.cancel : changePassword.open}
         </Button>
       </SettingsRow>

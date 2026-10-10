@@ -1,16 +1,19 @@
-import { Heading } from '@chakra-ui/react';
+import { Heading, Text } from '@chakra-ui/react';
 import { Navigate } from 'react-router';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { PasswordSetting } from '@/modules/settings/components/PasswordSetting';
 import { ProfileNameForm } from '@/modules/settings/components/ProfileNameForm';
 import { SettingsLayout } from '@/modules/settings/components/SettingsLayout';
 import { SettingsSection } from '@/modules/settings/components/SettingsSection';
+import { useSettingsSearch } from '@/modules/settings/hooks/useSettingsSearch';
+import { SETTINGS_SECTION_TITLES } from '@/modules/settings/utils/settingsIndex';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 
 /** A Registered user's Account settings, in their own shell; anyone else is sent to sign in. */
 export const SettingsPage = () => {
   const { isPending, isRegistered, user } = useAuth();
+  const { isEntryVisible, isSectionVisible, hasMatches } = useSettingsSearch();
 
   // AuthGate has normally resolved the session already; never redirect on a read still in flight.
   if (isPending) return null;
@@ -22,12 +25,17 @@ export const SettingsPage = () => {
       <Heading as="h1" size="xl">
         {resources.settings.sections.account}
       </Heading>
-      <SettingsSection title={resources.settings.profile.title}>
-        <ProfileNameForm name={user?.name ?? ''} />
-      </SettingsSection>
-      <SettingsSection title={resources.settings.security.title}>
-        <PasswordSetting />
-      </SettingsSection>
+      {isSectionVisible('profile') && (
+        <SettingsSection title={SETTINGS_SECTION_TITLES.profile}>
+          {isEntryVisible('name') && <ProfileNameForm name={user?.name ?? ''} />}
+        </SettingsSection>
+      )}
+      {isSectionVisible('security') && (
+        <SettingsSection title={SETTINGS_SECTION_TITLES.security}>
+          {isEntryVisible('password') && <PasswordSetting />}
+        </SettingsSection>
+      )}
+      {!hasMatches && <Text color="fg.muted">{resources.settings.search.empty}</Text>}
     </SettingsLayout>
   );
 };

@@ -133,7 +133,12 @@ export const resources = {
   },
   settings: {
     title: 'Settings',
-    close: 'Close settings',
+    search: {
+      label: 'Search settings',
+      placeholder: 'Search',
+      clear: 'Clear search',
+      empty: 'No settings match your search.',
+    },
     sections: {
       account: 'Account',
     },
@@ -150,8 +155,7 @@ export const resources = {
     },
     changePassword: {
       title: 'Password',
-      description:
-        'Change the password you sign in with. Your other devices are signed out; this one stays signed in.',
+      description: 'Change the password you sign in with. Other devices get signed out.',
       open: 'Change password',
       cancel: 'Cancel',
       submit: 'Save new password',
