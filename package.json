@@ -15,6 +15,7 @@
     "lint:fix": "eslint --report-unused-disable-directives --max-warnings=0 . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "build:libs": "turbo run build --filter='./libs/*...'",
     "knip": "knip",
     "test": "turbo run test",
     "test:coverage": "turbo run test -- --coverage"
