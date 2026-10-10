@@ -137,11 +137,24 @@ export const resources = {
     sections: {
       account: 'Account',
     },
+    profile: {
+      title: 'Profile',
+      name: {
+        label: 'Full name',
+        save: 'Save',
+        saved: 'Name updated.',
+      },
+    },
+    security: {
+      title: 'Security',
+    },
     changePassword: {
       title: 'Password',
       description:
         'Change the password you sign in with. Your other devices are signed out; this one stays signed in.',
-      submit: 'Change password',
+      open: 'Change password',
+      cancel: 'Cancel',
+      submit: 'Save new password',
       done: 'Password changed. Other devices have been signed out.',
     },
   },

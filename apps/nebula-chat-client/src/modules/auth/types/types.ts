@@ -77,8 +77,8 @@ export type AuthFormConfig<Values extends FieldValues> = {
 
 export type AuthFormProps<Values extends FieldValues> = {
   config: AuthFormConfig<Values>;
-  /** The title's heading level: a page of its own by default, or a section of a larger page. */
-  titleAs?: 'h1' | 'h2';
+  /** Whether the form shows its own title and description; off where the page already labels it. */
+  showHeader?: boolean;
   onSuccess?: () => void;
   /** Called after the failure is shown, for a page that reacts to a specific one. */
   onError?: (error: Error) => void;

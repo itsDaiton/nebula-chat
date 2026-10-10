@@ -1,19 +1,16 @@
-import { Box, Heading, Separator } from '@chakra-ui/react';
+import { Heading } from '@chakra-ui/react';
 import { Navigate } from 'react-router';
-import { AuthForm } from '@/modules/auth/components/AuthForm';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
-import { CHANGE_PASSWORD_FORM } from '@/modules/auth/utils/authForms';
+import { PasswordSetting } from '@/modules/settings/components/PasswordSetting';
+import { ProfileNameForm } from '@/modules/settings/components/ProfileNameForm';
 import { SettingsLayout } from '@/modules/settings/components/SettingsLayout';
+import { SettingsSection } from '@/modules/settings/components/SettingsSection';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
-import { toaster } from '@/shared/components/ui/toaster';
 
-const showPasswordChanged = () =>
-  toaster.create({ type: 'success', title: resources.settings.changePassword.done });
-
-/** A Registered user's settings, in their own shell; anyone else is sent to sign in. */
+/** A Registered user's Account settings, in their own shell; anyone else is sent to sign in. */
 export const SettingsPage = () => {
-  const { isPending, isRegistered } = useAuth();
+  const { isPending, isRegistered, user } = useAuth();
 
   // AuthGate has normally resolved the session already; never redirect on a read still in flight.
   if (isPending) return null;
@@ -25,10 +22,12 @@ export const SettingsPage = () => {
       <Heading as="h1" size="xl">
         {resources.settings.sections.account}
       </Heading>
-      <Separator />
-      <Box maxW="md">
-        <AuthForm config={CHANGE_PASSWORD_FORM} titleAs="h2" onSuccess={showPasswordChanged} />
-      </Box>
+      <SettingsSection title={resources.settings.profile.title}>
+        <ProfileNameForm name={user?.name ?? ''} />
+      </SettingsSection>
+      <SettingsSection title={resources.settings.security.title}>
+        <PasswordSetting />
+      </SettingsSection>
     </SettingsLayout>
   );
 };

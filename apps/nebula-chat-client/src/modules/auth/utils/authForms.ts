@@ -107,7 +107,7 @@ export const resetPasswordForm = (token: string): AuthFormConfig<ResetPasswordVa
 
 /** A Registered user's Password change; the new password keeps the name `password` the error map targets. */
 export const CHANGE_PASSWORD_FORM: AuthFormConfig<ChangePasswordValues> = {
-  label: changePassword.submit,
+  label: changePassword.open,
   title: changePassword.title,
   description: changePassword.description,
   submitLabel: changePassword.submit,

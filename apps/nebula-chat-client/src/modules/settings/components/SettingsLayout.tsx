@@ -34,7 +34,8 @@ export const SettingsLayout = ({ children }: SettingsLayoutProps) => {
               <LuX />
             </Link>
           </IconButton>
-          <Stack gap={8} maxW="3xl" mx="auto" px={{ base: 4, md: 8 }} py={{ base: 6, md: 12 }}>
+          {/* Anchored left, like the nav beside it; the cap keeps rows readable on wide screens. */}
+          <Stack gap={10} maxW="4xl" px={{ base: 4, md: 8 }} py={{ base: 6, md: 8 }}>
             {children}
           </Stack>
         </Box>

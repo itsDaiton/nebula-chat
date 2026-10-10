@@ -100,6 +100,9 @@ export const mockChangePassword = mockAuthPost(API_ROUTE.authChangePassword, {
   user: aSession({ isAnonymous: false }).user,
 });
 
+/** Saves the signed-in user's profile fields (their name) on `update-user`. */
+export const mockUpdateUser = mockAuthPost(API_ROUTE.authUpdateUser, { status: true });
+
 /** Resends the verification email on `send-verification-email`. */
 export const mockSendVerificationEmail = mockAuthPost(API_ROUTE.authSendVerificationEmail, {
   status: true,

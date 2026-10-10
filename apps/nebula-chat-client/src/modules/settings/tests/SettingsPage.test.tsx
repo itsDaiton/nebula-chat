@@ -4,11 +4,18 @@ import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import { SettingsPage } from '@/modules/settings/SettingsPage';
+import { usePasswordChangeStore } from '@/modules/settings/stores/usePasswordChangeStore';
 import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 import { API_ROUTE, mockApiError } from '@/test/api';
-import { holdSession, mockChangePassword, mockGetSession, refreshSession } from '@/test/auth';
+import {
+  holdSession,
+  mockChangePassword,
+  mockGetSession,
+  mockUpdateUser,
+  refreshSession,
+} from '@/test/auth';
 import { server } from '@/test/msw';
 import { renderWithChakra } from '@/test/render';
 
@@ -19,7 +26,7 @@ vi.mock('@/theme/hooks/useColorMode', () => ({
 const AUTH_PAGE = 'auth page';
 const CHAT_PAGE = 'chat page';
 const { fields } = resources.auth;
-const { changePassword } = resources.settings;
+const { changePassword, profile } = resources.settings;
 
 const renderPage = () =>
   renderWithChakra(
@@ -46,7 +53,12 @@ const fillForm = async ({
   await userEvent.type(confirmPasswordField(), confirmation);
 };
 
+const openPasswordForm = () =>
+  userEvent.click(screen.getByRole('button', { name: changePassword.open }));
 const submit = () => userEvent.click(screen.getByRole('button', { name: changePassword.submit }));
+
+const nameField = () => screen.getByRole('textbox', { name: profile.name.label });
+const saveName = () => userEvent.click(screen.getByRole('button', { name: profile.name.save }));
 
 /** Counts the change-password requests that reach the server. */
 const countRequests = () => {
@@ -62,6 +74,7 @@ const countRequests = () => {
 beforeEach(() => {
   vi.restoreAllMocks();
   usePasswordVisibilityStore.setState({ visibleFields: {} });
+  usePasswordChangeStore.setState({ isPasswordFormOpen: false });
 });
 
 describe('SettingsPage', () => {
@@ -78,6 +91,17 @@ describe('SettingsPage', () => {
         within(screen.getByRole('banner')).getByRole('button', { name: resources.userMenu.label }),
       ).toBeInTheDocument();
       expect(screen.queryByText(resources.conversations.title)).not.toBeInTheDocument();
+    });
+
+    it('groups the Account page into Profile and Security sections', async () => {
+      await holdSession({ isAnonymous: false });
+
+      renderPage();
+
+      expect(screen.getByRole('heading', { level: 2, name: profile.title })).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { level: 2, name: resources.settings.security.title }),
+      ).toBeInTheDocument();
     });
 
     it('lists its sections in a Settings navigation, marking the open one', async () => {
@@ -121,24 +145,109 @@ describe('SettingsPage', () => {
     });
   });
 
+  describe('Profile name', () => {
+    beforeEach(async () => {
+      await holdSession({ isAnonymous: false });
+    });
+
+    it("shows the user's name, with Save idle until it changes", async () => {
+      renderPage();
+
+      expect(nameField()).toHaveValue('Ada');
+      expect(screen.getByRole('button', { name: profile.name.save })).toBeDisabled();
+
+      await userEvent.type(nameField(), ' Lovelace');
+
+      expect(screen.getByRole('button', { name: profile.name.save })).toBeEnabled();
+    });
+
+    it('saves the new name and confirms it', async () => {
+      const toast = vi.spyOn(toaster, 'create');
+      let body: unknown;
+      server.use(
+        mockUpdateUser(async (request) => {
+          body = await request.clone().json();
+        }),
+      );
+      renderPage();
+
+      await userEvent.clear(nameField());
+      await userEvent.type(nameField(), '  Ada Lovelace ');
+      await saveName();
+
+      await waitFor(() =>
+        expect(toast).toHaveBeenCalledWith(
+          expect.objectContaining({ type: 'success', title: profile.name.saved }),
+        ),
+      );
+      expect(body).toEqual({ name: 'Ada Lovelace' });
+      expect(nameField()).toHaveValue('Ada Lovelace');
+      expect(screen.getByRole('button', { name: profile.name.save })).toBeDisabled();
+    });
+
+    it('refuses an empty name without sending it', async () => {
+      let requests = 0;
+      server.use(
+        mockUpdateUser(() => {
+          requests += 1;
+        }),
+      );
+      renderPage();
+
+      await userEvent.clear(nameField());
+      await userEvent.type(nameField(), '   ');
+      await saveName();
+
+      await waitFor(() =>
+        expect(nameField()).toHaveAccessibleErrorMessage(resources.auth.validation.nameRequired),
+      );
+      expect(requests).toBe(0);
+    });
+
+    it('shows a failed save under the name field', async () => {
+      server.use(mockApiError('post', API_ROUTE.authUpdateUser, 500));
+      renderPage();
+
+      await userEvent.type(nameField(), ' Lovelace');
+      await saveName();
+
+      await waitFor(() =>
+        expect(nameField()).toHaveAccessibleErrorMessage(resources.auth.errors.unknown),
+      );
+    });
+  });
+
   describe('Password change', () => {
     beforeEach(async () => {
       await holdSession({ isAnonymous: false });
     });
 
-    it('asks for the current password and the new one twice', () => {
+    it('keeps the form folded away until the user asks to change their password', async () => {
       renderPage();
 
-      const form = screen.getByRole('form', { name: changePassword.submit });
-      expect(
-        within(form).getByRole('heading', { level: 2, name: changePassword.title }),
-      ).toBeInTheDocument();
+      expect(screen.queryByLabelText(fields.currentPassword)).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: changePassword.open })).toHaveAttribute(
+        'aria-expanded',
+        'false',
+      );
+
+      await openPasswordForm();
+
+      expect(screen.getByRole('form', { name: changePassword.open })).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: changePassword.cancel }));
+      expect(screen.queryByLabelText(fields.currentPassword)).not.toBeInTheDocument();
+    });
+
+    it('asks for the current password and the new one twice', async () => {
+      renderPage();
+      await openPasswordForm();
+
       expect(currentPasswordField()).toHaveAttribute('autocomplete', 'current-password');
       expect(newPasswordField()).toHaveAttribute('autocomplete', 'new-password');
       expect(confirmPasswordField()).toHaveAttribute('autocomplete', 'new-password');
     });
 
-    it('changes the password, signing out other devices, and clears the form', async () => {
+    it('changes the password, signing out other devices, and folds the form away', async () => {
       const toast = vi.spyOn(toaster, 'create');
       let body: unknown;
       server.use(
@@ -147,6 +256,7 @@ describe('SettingsPage', () => {
         }),
       );
       renderPage();
+      await openPasswordForm();
 
       await fillForm();
       await submit();
@@ -161,9 +271,9 @@ describe('SettingsPage', () => {
         newPassword: 'a-new-long-passphrase',
         revokeOtherSessions: true,
       });
-      await waitFor(() => expect(currentPasswordField()).toHaveValue(''));
-      expect(newPasswordField()).toHaveValue('');
-      expect(confirmPasswordField()).toHaveValue('');
+      await waitFor(() =>
+        expect(screen.queryByLabelText(fields.currentPassword)).not.toBeInTheDocument(),
+      );
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
       expect(screen.queryByText(AUTH_PAGE)).not.toBeInTheDocument();
     });
@@ -176,6 +286,7 @@ describe('SettingsPage', () => {
         }),
       );
       renderPage();
+      await openPasswordForm();
 
       await fillForm();
       await submit();
@@ -196,6 +307,7 @@ describe('SettingsPage', () => {
     ])('shows %s under the new-password field', async (code, message) => {
       server.use(mockApiError('post', API_ROUTE.authChangePassword, 400, { code }));
       renderPage();
+      await openPasswordForm();
 
       await fillForm();
       await submit();
@@ -206,6 +318,7 @@ describe('SettingsPage', () => {
     it('says when there have been too many attempts', async () => {
       server.use(mockApiError('post', API_ROUTE.authChangePassword, 429));
       renderPage();
+      await openPasswordForm();
 
       await fillForm();
       await submit();
@@ -220,6 +333,7 @@ describe('SettingsPage', () => {
         mockApiError('post', API_ROUTE.authChangePassword, 500, { code: 'SOMETHING_NEW' }),
       );
       renderPage();
+      await openPasswordForm();
 
       await fillForm();
       await submit();
@@ -230,6 +344,7 @@ describe('SettingsPage', () => {
     it('sends nothing while the confirmation does not match', async () => {
       const counter = countRequests();
       renderPage();
+      await openPasswordForm();
 
       await fillForm({ confirmation: 'a-new-long-passphrasE' });
       await submit();
@@ -245,6 +360,7 @@ describe('SettingsPage', () => {
     it('sends nothing when the new password is the current one', async () => {
       const counter = countRequests();
       renderPage();
+      await openPasswordForm();
 
       await fillForm({ current: 'old-passphrase', next: 'old-passphrase' });
       await submit();
@@ -260,6 +376,7 @@ describe('SettingsPage', () => {
     it('requires the current password and a long enough new one', async () => {
       const counter = countRequests();
       renderPage();
+      await openPasswordForm();
 
       await userEvent.type(newPasswordField(), 'short');
       await submit();
@@ -277,6 +394,7 @@ describe('SettingsPage', () => {
 
     it('reveals only the password field whose toggle is clicked', async () => {
       renderPage();
+      await openPasswordForm();
 
       const [, newPasswordToggle] = screen.getAllByRole('button', {
         name: resources.passwordInput.showPassword,

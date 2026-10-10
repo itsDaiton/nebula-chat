@@ -103,12 +103,22 @@ apps/nebula-chat-client/src/
 │   │       ├── SendButton.tsx
 │   │       └── ...
 │   ├── settings/
-│   │   ├── SettingsPage.tsx       # /settings — Registered-only (others → /auth); Account section: Password change form
+│   │   ├── SettingsPage.tsx       # /settings — Registered-only (others → /auth); Account: Profile (name) + Security (password)
 │   │   ├── types/types.ts
-│   │   ├── utils/settingsSections.ts  # The settings navigation's sections (label, icon, route)
+│   │   ├── utils/
+│   │   │   ├── settingsSections.ts    # The settings navigation's sections (label, icon, route)
+│   │   │   └── settingsSchemas.ts     # zod schema for the profile name
+│   │   ├── stores/
+│   │   │   └── usePasswordChangeStore.ts  # Whether the Password row's change form is unfolded
+│   │   ├── hooks/
+│   │   │   └── useUpdateName.ts       # better-auth update-user; the session refetch updates the header
 │   │   └── components/
 │   │       ├── SettingsLayout.tsx # App Header over Settings' own shell in place of the chat (no conversations): nav, open section, close (X)
-│   │       └── SettingsNav.tsx    # "Settings" section links; a sidebar on desktop, a top bar on mobile
+│   │       ├── SettingsNav.tsx    # "Settings" section links; a sidebar on desktop, a top bar on mobile
+│   │       ├── SettingsSection.tsx # Titled group of rows (h2)
+│   │       ├── SettingsRow.tsx    # Label/description left, control right; stacked on mobile
+│   │       ├── ProfileNameForm.tsx # Full name row: edit in place, Save once changed
+│   │       └── PasswordSetting.tsx # Password row whose button unfolds the change-password AuthForm
 │   └── conversations/
 │       ├── types/types.ts         # All conversation types
 │       ├── utils/                 # navigationActions
@@ -383,6 +393,7 @@ context is genuinely needed, split it across two files:
 | `useViewportStore`            | `shared/stores/`                | Viewport height string (updated on resize)                       |
 | `useMultiLineStore`           | `shared/stores/`                | Per-content multi-line detection map (`Record<string, boolean>`) |
 | `usePasswordVisibilityStore`  | `modules/auth/stores/`          | Which password fields are unmasked, per field name               |
+| `usePasswordChangeStore`      | `modules/settings/stores/`      | Whether the Settings Password row's change form is unfolded      |
 
 ---
 
@@ -404,7 +415,7 @@ Forms use [react-hook-form](https://react-hook-form.com) with a [zod](https://zo
 reset and change password are one component fed five configs (`utils/authForms.ts`), not five copies —
 variants of a form differ by config. A config with a `successMessage` replaces the form with it once
 submitted; one without clears its fields and calls `onSuccess` (the change-password form stays on `/settings`
-and toasts). `titleAs="h2"` renders the title as a section heading inside a page that has its own `h1`.
+and toasts). `showHeader={false}` drops the form's own title and description where the page already labels it.
 
 - **The schema is the source of truth.** It lives in the owning module's `utils/` (`authSchemas.ts`), its
   messages come from `resources.ts`, and the form's value type is `z.infer<typeof schema>` in
@@ -531,7 +542,7 @@ pnpm frontend test:coverage
   routes live in `@/test/api`, the one place route strings are written; `@/test/auth` holds the auth
   fixture and handlers (`aSession`, `mockGetSession`, `mockAnonymousSignIn`, `mockEmailSignIn`,
   `mockEmailSignUp`, `mockSocialSignIn` (its redirect is a hash change to `providerConsentUrl()`, the one
-  navigation jsdom performs), `mockSignOut`, `mockRequestPasswordReset`, `mockResetPassword`, `mockChangePassword`,
+  navigation jsdom performs), `mockSignOut`, `mockRequestPasswordReset`, `mockResetPassword`, `mockChangePassword`, `mockUpdateUser`,
   `mockSendVerificationEmail`) plus `refreshSession`, which refetches better-auth's module-level session
   store after a render, and `holdSession`, which serves a session and waits until that store holds it. Regenerate with `pnpm frontend generate:api` after any backend change.
 

@@ -30,6 +30,7 @@ export const API_ROUTE = {
   authRequestPasswordReset: '*/api/auth/request-password-reset',
   authResetPassword: '*/api/auth/reset-password',
   authChangePassword: '*/api/auth/change-password',
+  authUpdateUser: '*/api/auth/update-user',
   authSendVerificationEmail: '*/api/auth/send-verification-email',
 } as const;
 
