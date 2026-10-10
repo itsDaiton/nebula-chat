@@ -1,13 +1,17 @@
-import { Heading, Stack } from '@chakra-ui/react';
+import { Box, Heading, Separator } from '@chakra-ui/react';
 import { Navigate } from 'react-router';
+import { AuthForm } from '@/modules/auth/components/AuthForm';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
+import { CHANGE_PASSWORD_FORM } from '@/modules/auth/utils/authForms';
+import { SettingsLayout } from '@/modules/settings/components/SettingsLayout';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
-import { Layout } from '@/shared/components/layout/Layout';
+import { toaster } from '@/shared/components/ui/toaster';
 
-const PASSWORD_SECTION_ID = 'settings-password';
+const showPasswordChanged = () =>
+  toaster.create({ type: 'success', title: resources.settings.changePassword.done });
 
-/** A Registered user's settings, in the app shell; anyone else is sent to sign in. */
+/** A Registered user's settings, in their own shell; anyone else is sent to sign in. */
 export const SettingsPage = () => {
   const { isPending, isRegistered } = useAuth();
 
@@ -17,17 +21,14 @@ export const SettingsPage = () => {
   if (!isRegistered) return <Navigate to={route.auth.root()} replace />;
 
   return (
-    <Layout>
-      <Stack gap={8} maxW="2xl" mx="auto" w="full">
-        <Heading as="h1" size="2xl">
-          {resources.settings.title}
-        </Heading>
-        <Stack as="section" gap={4} aria-labelledby={PASSWORD_SECTION_ID}>
-          <Heading as="h2" size="lg" id={PASSWORD_SECTION_ID}>
-            {resources.settings.password.title}
-          </Heading>
-        </Stack>
-      </Stack>
-    </Layout>
+    <SettingsLayout>
+      <Heading as="h1" size="xl">
+        {resources.settings.sections.account}
+      </Heading>
+      <Separator />
+      <Box maxW="md">
+        <AuthForm config={CHANGE_PASSWORD_FORM} titleAs="h2" onSuccess={showPasswordChanged} />
+      </Box>
+    </SettingsLayout>
   );
 };

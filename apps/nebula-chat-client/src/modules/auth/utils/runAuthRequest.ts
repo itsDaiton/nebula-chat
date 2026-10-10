@@ -7,6 +7,7 @@ const { errors, validation, resetPassword, social } = resources.auth;
 
 // better-auth's codes (core, social sign-in + Have I Been Pwned), each placed under the field it concerns.
 const AUTH_ERRORS: Partial<Record<string, AuthErrorDescription>> = {
+  INVALID_PASSWORD: { field: 'currentPassword', message: errors.currentPasswordInvalid },
   PASSWORD_COMPROMISED: { field: 'password', message: errors.passwordCompromised },
   PASSWORD_REUSED: { field: 'password', message: errors.passwordReused },
   PASSWORD_TOO_SHORT: { field: 'password', message: validation.passwordTooShort },

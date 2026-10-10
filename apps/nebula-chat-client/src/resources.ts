@@ -97,7 +97,10 @@ export const resources = {
       name: 'Name',
       email: 'Email',
       password: 'Password',
+      confirmPassword: 'Confirm password',
+      currentPassword: 'Current password',
       newPassword: 'New password',
+      confirmNewPassword: 'Confirm new password',
     },
     actions: {
       signIn: 'Sign in',
@@ -111,6 +114,7 @@ export const resources = {
       passwordRequired: 'Enter your password.',
       passwordTooShort: 'Your password needs at least 8 characters.',
       passwordTooLong: 'Your password can be at most 128 characters.',
+      passwordMismatch: "Passwords don't match.",
     },
     errors: {
       passwordCompromised:
@@ -118,6 +122,7 @@ export const resources = {
       userExists: 'You already have an account with this email. Try signing in instead.',
       invalidCredentials: "That email and password don't match. Please try again.",
       passwordReused: 'Choose a password different from your current one.',
+      currentPasswordInvalid: 'Current password is incorrect.',
       tooManyRequests: 'Too many attempts. Wait a minute, then try again.',
       unknown: 'Something went wrong on our end. Please try again.',
     },
@@ -128,8 +133,16 @@ export const resources = {
   },
   settings: {
     title: 'Settings',
-    password: {
+    close: 'Close settings',
+    sections: {
+      account: 'Account',
+    },
+    changePassword: {
       title: 'Password',
+      description:
+        'Change the password you sign in with. Your other devices are signed out; this one stays signed in.',
+      submit: 'Change password',
+      done: 'Password changed. Other devices have been signed out.',
     },
   },
   passwordInput: {

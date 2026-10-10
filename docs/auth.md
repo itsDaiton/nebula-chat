@@ -207,6 +207,24 @@ curl -i -X POST http://localhost:3000/api/auth/reset-password \
   -d '{"token":"<token from the link>","newPassword":"another-long-passphrase"}'
 ```
 
+#### `POST /api/auth/change-password` — Password change (signed in)
+
+A Registered user replaces their password by proving the current one. Body
+`{ currentPassword, newPassword, revokeOtherSessions? }`; the client always sends
+`revokeOtherSessions: true`, so every other auth session is deleted and the current device
+gets a fresh session cookie (devices holding a still-valid cookie cache stay signed in until
+it expires). better-auth answers `400 INVALID_PASSWORD` for a wrong current password,
+`PASSWORD_TOO_SHORT` / `PASSWORD_TOO_LONG`, and `PASSWORD_COMPROMISED` (Have I Been Pwned).
+The `before` hook in `@nebula-chat/auth` adds `400 PASSWORD_REUSED` when the new password
+equals the current one (`findChangePasswordRejection` in
+[`libs/auth/src/resetPassword.ts`](../libs/auth/src/resetPassword.ts)). No email is sent.
+
+```bash
+curl -i -X POST http://localhost:3000/api/auth/change-password \
+  -H 'content-type: application/json' -b cookies.txt \
+  -d '{"currentPassword":"old-passphrase","newPassword":"another-long-passphrase","revokeOtherSessions":true}'
+```
+
 #### `POST /api/auth/delete-anonymous-user` — delete the Guest
 
 Deletes the current anonymous user (anonymous plugin). Only reachable while signed in

@@ -50,8 +50,8 @@ apps/nebula-chat-client/src/
 │   │   ├── stores/
 │   │   │   └── usePasswordVisibilityStore.ts
 │   │   ├── utils/
-│   │   │   ├── authSchemas.ts         # zod schemas for the sign-in / sign-up / forgot / reset forms
-│   │   │   ├── authForms.ts           # Form configs (sign-in, sign-up, forgot, reset): schema, fields, copy, better-auth call
+│   │   │   ├── authSchemas.ts         # zod schemas for the sign-in / sign-up / forgot / reset / change-password forms
+│   │   │   ├── authForms.ts           # Form configs (sign-in, sign-up, forgot, reset, change password): schema, fields, copy, better-auth call
 │   │   │   ├── authCallbackUrl.ts     # Absolute client URL an emailed link or social sign-in redirects back to
 │   │   │   ├── socialSignIn.ts        # Google/GitHub button configs + copy for the OAuth callback's ?error= code
 │   │   │   ├── runAuthRequest.ts      # better-auth call → AuthRequestError (copy + field) from its error code
@@ -103,7 +103,12 @@ apps/nebula-chat-client/src/
 │   │       ├── SendButton.tsx
 │   │       └── ...
 │   ├── settings/
-│   │   └── SettingsPage.tsx       # /settings — Registered-only (others → /auth), in the app shell; Password section
+│   │   ├── SettingsPage.tsx       # /settings — Registered-only (others → /auth); Account section: Password change form
+│   │   ├── types/types.ts
+│   │   ├── utils/settingsSections.ts  # The settings navigation's sections (label, icon, route)
+│   │   └── components/
+│   │       ├── SettingsLayout.tsx # Full-screen shell apart from the chat (no Header/drawer): nav, open section, close (X)
+│   │       └── SettingsNav.tsx    # "Settings" section links; a sidebar on desktop, a top bar on mobile
 │   └── conversations/
 │       ├── types/types.ts         # All conversation types
 │       ├── utils/                 # navigationActions
@@ -396,8 +401,10 @@ context is genuinely needed, split it across two files:
 
 Forms use [react-hook-form](https://react-hook-form.com) with a [zod](https://zod.dev) schema through
 `zodResolver`. `AuthForm` in `modules/auth/components/` is the reference: sign-in, sign-up, forgot and
-reset password are one component fed four configs (`utils/authForms.ts`), not four copies — variants of a
-form differ by config. A config with a `successMessage` replaces the form with it once submitted.
+reset and change password are one component fed five configs (`utils/authForms.ts`), not five copies —
+variants of a form differ by config. A config with a `successMessage` replaces the form with it once
+submitted; one without clears its fields and calls `onSuccess` (the change-password form stays on `/settings`
+and toasts). `titleAs="h2"` renders the title as a section heading inside a page that has its own `h1`.
 
 - **The schema is the source of truth.** It lives in the owning module's `utils/` (`authSchemas.ts`), its
   messages come from `resources.ts`, and the form's value type is `z.infer<typeof schema>` in
@@ -405,6 +412,10 @@ form differ by config. A config with a `successMessage` replaces the form with i
 - `useForm({ resolver: zodResolver(schema), mode: 'onTouched' })`: a field validates on first blur, then
   on every change, so an error clears as soon as it is fixed. Set `noValidate` on the `<form>` so the
   browser's own bubbles never pre-empt the schema.
+- **A field checked against another** (a confirmation, new ≠ current) sets `comparedWith` in its field
+  config, so it re-validates once touched as that other field changes; the rule itself is an object
+  refinement in the schema (`compareFields` in `authSchemas.ts`), which zod otherwise skips while any field
+  is invalid.
 - **Errors render under their field.** Wrap each input in Chakra's `Field.Root invalid={…}` with a
   `Field.ErrorText`; Field wires `aria-invalid` and `aria-errormessage`, so tests assert with
   `toHaveAccessibleErrorMessage`.
@@ -520,7 +531,7 @@ pnpm frontend test:coverage
   routes live in `@/test/api`, the one place route strings are written; `@/test/auth` holds the auth
   fixture and handlers (`aSession`, `mockGetSession`, `mockAnonymousSignIn`, `mockEmailSignIn`,
   `mockEmailSignUp`, `mockSocialSignIn` (its redirect is a hash change to `providerConsentUrl()`, the one
-  navigation jsdom performs), `mockSignOut`, `mockRequestPasswordReset`, `mockResetPassword`,
+  navigation jsdom performs), `mockSignOut`, `mockRequestPasswordReset`, `mockResetPassword`, `mockChangePassword`,
   `mockSendVerificationEmail`) plus `refreshSession`, which refetches better-auth's module-level session
   store after a render, and `holdSession`, which serves a session and waits until that store holds it. Regenerate with `pnpm frontend generate:api` after any backend change.
 

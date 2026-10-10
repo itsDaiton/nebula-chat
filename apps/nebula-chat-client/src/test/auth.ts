@@ -94,6 +94,12 @@ export const mockRequestPasswordReset = mockAuthPost(API_ROUTE.authRequestPasswo
 /** Sets the new password on `reset-password`. */
 export const mockResetPassword = mockAuthPost(API_ROUTE.authResetPassword, { status: true });
 
+/** Changes a Registered user's password on `change-password`; revoking other sessions issues a new token. */
+export const mockChangePassword = mockAuthPost(API_ROUTE.authChangePassword, {
+  token: 'token-2',
+  user: aSession({ isAnonymous: false }).user,
+});
+
 /** Resends the verification email on `send-verification-email`. */
 export const mockSendVerificationEmail = mockAuthPost(API_ROUTE.authSendVerificationEmail, {
   status: true,

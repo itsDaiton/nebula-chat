@@ -2,6 +2,7 @@ import { authClient } from '@/libs/auth/client';
 import type {
   AuthFieldConfig,
   AuthFormConfig,
+  ChangePasswordValues,
   ForgotPasswordValues,
   ResetPasswordValues,
   SignInCredentials,
@@ -9,6 +10,7 @@ import type {
 } from '@/modules/auth/types/types';
 import { authCallbackUrl, verifyEmailCallbackUrl } from '@/modules/auth/utils/authCallbackUrl';
 import {
+  changePasswordSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
   signInSchema,
@@ -18,6 +20,7 @@ import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 
 const { fields, tabs, actions, signIn, signUp, forgotPassword, resetPassword } = resources.auth;
+const { changePassword } = resources.settings;
 
 const emailField = {
   name: 'email',
@@ -33,6 +36,16 @@ const passwordField = (autoComplete: 'current-password' | 'new-password') =>
     type: 'password',
     autoComplete,
   }) satisfies AuthFieldConfig<SignInCredentials>;
+
+/** Repeats the new password; the schema rule `confirmsPassword` checks the two match. */
+const confirmPasswordField = (label: string) =>
+  ({
+    name: 'confirmPassword',
+    label,
+    type: 'password',
+    autoComplete: 'new-password',
+    comparedWith: 'password',
+  }) satisfies AuthFieldConfig<ResetPasswordValues>;
 
 export const SIGN_IN_FORM: AuthFormConfig<SignInCredentials> = {
   label: tabs.signIn,
@@ -54,9 +67,11 @@ export const SIGN_UP_FORM: AuthFormConfig<SignUpCredentials> = {
     { name: 'name', label: fields.name, type: 'text', autoComplete: 'name' },
     emailField,
     passwordField('new-password'),
+    confirmPasswordField(fields.confirmPassword),
   ],
-  request: (credentials) =>
-    authClient.signUp.email({ ...credentials, callbackURL: verifyEmailCallbackUrl() }),
+  // The confirmation only guards against a typo; it never leaves the browser.
+  request: ({ name, email, password }) =>
+    authClient.signUp.email({ name, email, password, callbackURL: verifyEmailCallbackUrl() }),
 };
 
 export const FORGOT_PASSWORD_FORM: AuthFormConfig<ForgotPasswordValues> = {
@@ -81,7 +96,39 @@ export const resetPasswordForm = (token: string): AuthFormConfig<ResetPasswordVa
   description: resetPassword.description,
   submitLabel: resetPassword.submit,
   schema: resetPasswordSchema,
-  fields: [{ ...passwordField('new-password'), label: fields.newPassword }],
+  fields: [
+    { ...passwordField('new-password'), label: fields.newPassword },
+    confirmPasswordField(fields.confirmNewPassword),
+  ],
   request: ({ password }) => authClient.resetPassword({ newPassword: password, token }),
   successMessage: resetPassword.done,
 });
+
+/** A Registered user's Password change; the new password keeps the name `password` the error map targets. */
+export const CHANGE_PASSWORD_FORM: AuthFormConfig<ChangePasswordValues> = {
+  label: changePassword.submit,
+  title: changePassword.title,
+  description: changePassword.description,
+  submitLabel: changePassword.submit,
+  schema: changePasswordSchema,
+  fields: [
+    {
+      name: 'currentPassword',
+      label: fields.currentPassword,
+      type: 'password',
+      autoComplete: 'current-password',
+    },
+    {
+      ...passwordField('new-password'),
+      label: fields.newPassword,
+      comparedWith: 'currentPassword',
+    },
+    confirmPasswordField(fields.confirmNewPassword),
+  ],
+  request: ({ currentPassword, password }) =>
+    authClient.changePassword({
+      currentPassword,
+      newPassword: password,
+      revokeOtherSessions: true,
+    }),
+};

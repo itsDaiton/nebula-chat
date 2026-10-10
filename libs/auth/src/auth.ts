@@ -11,7 +11,12 @@ import { passwordResetEmail, verificationEmail } from './authEmails';
 import { claimConversations } from './claim';
 import { toBetterAuthLogHandler } from './logger';
 import { markEmailVerified } from './markEmailVerified';
-import { RESET_PASSWORD_REJECTION_MESSAGES, findResetPasswordRejection } from './resetPassword';
+import {
+  RESET_PASSWORD_REJECTION_MESSAGES,
+  findChangePasswordRejection,
+  findResetPasswordRejection,
+} from './resetPassword';
+import type { ResetPasswordRejection } from './resetPassword';
 import type { EmailSender } from './resend';
 
 /**
@@ -64,6 +69,15 @@ export type SocialProviderCredentials = {
   github?: OAuthCredentials;
 };
 
+/** Refuses the request with the rejection's code and message, as better-auth's own errors look. */
+const rejectPassword = (rejection: ResetPasswordRejection | null) => {
+  if (!rejection) return;
+  throw APIError.from('BAD_REQUEST', {
+    code: rejection,
+    message: RESET_PASSWORD_REJECTION_MESSAGES[rejection],
+  });
+};
+
 /**
  * Build the configured better-auth instance for Nebula Chat.
  *
@@ -86,6 +100,8 @@ export type SocialProviderCredentials = {
  *   endpoints (importable into Bruno/Postman, etc.).
  * - email/password with password reset; verification is sent on sign-up but not
  *   required to sign in, sent in the background via `sendEmail` (ADR-0021).
+ * - a `before` hook refusing an unchanged password (`PASSWORD_REUSED`) on
+ *   `/change-password`, and a breached or unchanged one on `/reset-password`.
  * - Google / GitHub social sign-in for each provider in `socialProviders`; its
  *   `/callback/*` runs the same anonymous `onLinkAccount` claim as email.
  */
@@ -153,8 +169,14 @@ export const createAuth = ({
     // maps to `SET ... EX` (set) and `INCR` + create-only `EXPIRE` (increment, the
     // fixed-window semantics the secondary-storage rate limiter requires).
     hooks: {
-      // Refuse a breached or unchanged password before /reset-password consumes the token.
+      // Refuse an unchanged password on /change-password, and a breached or unchanged one
+      // before /reset-password consumes the token.
       before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path === '/change-password') {
+          const body = ctx.body as { currentPassword?: string; newPassword?: string } | undefined;
+          rejectPassword(findChangePasswordRejection(body ?? {}));
+          return;
+        }
         if (ctx.path !== '/reset-password') return;
         const body = ctx.body as { token?: string; newPassword?: string } | undefined;
         const token = body?.token ?? (ctx.query?.['token'] as string | undefined);
@@ -178,12 +200,7 @@ export const createAuth = ({
             isPasswordCompromised,
           },
         );
-        if (rejection) {
-          throw APIError.from('BAD_REQUEST', {
-            code: rejection,
-            message: RESET_PASSWORD_REJECTION_MESSAGES[rejection],
-          });
-        }
+        rejectPassword(rejection);
       }),
     },
     secondaryStorage: {

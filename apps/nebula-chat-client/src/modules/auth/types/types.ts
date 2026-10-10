@@ -3,6 +3,7 @@ import type { IconType } from 'react-icons';
 import type { FieldValues, Path, UseFormRegisterReturn } from 'react-hook-form';
 import type { z } from 'zod';
 import type {
+  changePasswordSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
   signInSchema,
@@ -33,8 +34,10 @@ export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 
 export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
+export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
+
 /** The form field an auth failure belongs to; `root` is the form as a whole. */
-export type AuthErrorField = 'email' | 'password' | 'root';
+export type AuthErrorField = 'email' | 'currentPassword' | 'password' | 'root';
 
 export type AuthErrorDescription = {
   field: AuthErrorField;
@@ -46,6 +49,8 @@ export type AuthFieldConfig<Values extends FieldValues> = {
   label: string;
   type: 'text' | 'email' | 'password';
   autoComplete: string;
+  /** A field this one is checked against: once touched, it re-validates as that one changes. */
+  comparedWith?: Path<Values>;
 };
 
 /** Everything that tells one auth form from another. */
@@ -57,12 +62,14 @@ export type AuthFormConfig<Values extends FieldValues> = {
   schema: z.ZodType<Values, Values>;
   fields: AuthFieldConfig<Values>[];
   request: (values: Values) => Promise<AuthResult>;
-  /** Shown in place of the form once it succeeds; without one, `onSuccess` moves on. */
+  /** Shown in place of the form once it succeeds; without one, the fields clear and `onSuccess` runs. */
   successMessage?: string;
 };
 
 export type AuthFormProps<Values extends FieldValues> = {
   config: AuthFormConfig<Values>;
+  /** The title's heading level: a page of its own by default, or a section of a larger page. */
+  titleAs?: 'h1' | 'h2';
   onSuccess?: () => void;
   /** Called after the failure is shown, for a page that reacts to a specific one. */
   onError?: (error: Error) => void;

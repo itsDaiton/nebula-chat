@@ -40,3 +40,19 @@ export const findResetPasswordRejection = async (
 
   return null;
 };
+
+/**
+ * Why a Password change's new password must be refused, or null. The request carries the
+ * current password, which better-auth verifies anyway, so a plain comparison is enough.
+ */
+export const findChangePasswordRejection = ({
+  currentPassword,
+  newPassword,
+}: {
+  currentPassword?: string;
+  newPassword?: string;
+}): ResetPasswordRejection | null => {
+  // A missing field is better-auth's own validation error.
+  if (!currentPassword || !newPassword) return null;
+  return newPassword === currentPassword ? 'PASSWORD_REUSED' : null;
+};
