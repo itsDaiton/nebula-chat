@@ -103,7 +103,7 @@ pnpm run lint
 pnpm run lint:fix
 pnpm run format
 pnpm run format:check
-pnpm turbo run build --filter='./libs/*' # build all workspace libs (libs/*)
+pnpm run build:libs                      # build all workspace libs (libs/*) and their dependencies
 pnpm --filter nebula-chat-client run typecheck
 pnpm --filter nebula-chat-server run typecheck
 ```
