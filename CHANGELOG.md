@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.11.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.11.0...nebula-chat-v2.11.1) (2026-10-10)
+
+
+### Bug Fixes
+
+* **server:** restart dev server on .env changes via nodemon ([#493](https://github.com/itsDaiton/nebula-chat/issues/493)) ([2b90ee8](https://github.com/itsDaiton/nebula-chat/commit/2b90ee82358628eafa51882ad70bafceb929cb6b))
+
 ## [2.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.10.5...nebula-chat-v2.11.0) (2026-10-10)
 
 
