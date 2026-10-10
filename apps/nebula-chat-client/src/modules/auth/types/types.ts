@@ -113,8 +113,9 @@ export type AuthStatusProps = {
 };
 
 export type PasswordVisibilityState = {
-  isPasswordVisible: boolean;
-  togglePasswordVisibility: () => void;
+  /** Unmasked password fields by name; each field's toggle reveals only that field. */
+  visibleFields: Record<string, boolean>;
+  togglePasswordVisibility: (field: string) => void;
   hidePassword: () => void;
 };
 

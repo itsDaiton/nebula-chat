@@ -11,7 +11,7 @@ export const AuthFormField = ({
   registration,
   error,
 }: AuthFormFieldProps) => {
-  const { isPasswordVisible, togglePasswordVisibility } = usePasswordVisibilityStore();
+  const { visibleFields, togglePasswordVisibility } = usePasswordVisibilityStore();
 
   return (
     <Field.Root invalid={Boolean(error)}>
@@ -19,8 +19,8 @@ export const AuthFormField = ({
       {type === 'password' ? (
         <PasswordInput
           autoComplete={autoComplete}
-          visible={isPasswordVisible}
-          onToggleVisibility={togglePasswordVisibility}
+          visible={Boolean(visibleFields[registration.name])}
+          onToggleVisibility={() => togglePasswordVisibility(registration.name)}
           {...registration}
         />
       ) : (

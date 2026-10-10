@@ -61,7 +61,7 @@ const countRequests = () => {
 
 beforeEach(() => {
   vi.restoreAllMocks();
-  usePasswordVisibilityStore.setState({ isPasswordVisible: false });
+  usePasswordVisibilityStore.setState({ visibleFields: {} });
 });
 
 describe('SettingsPage', () => {
@@ -275,17 +275,17 @@ describe('SettingsPage', () => {
       expect(counter.requests).toBe(0);
     });
 
-    it('reveals all three password fields with one toggle', async () => {
+    it('reveals only the password field whose toggle is clicked', async () => {
       renderPage();
 
-      const [firstToggle] = screen.getAllByRole('button', {
+      const [, newPasswordToggle] = screen.getAllByRole('button', {
         name: resources.passwordInput.showPassword,
       });
-      await userEvent.click(firstToggle!);
+      await userEvent.click(newPasswordToggle!);
 
-      expect(currentPasswordField()).toHaveAttribute('type', 'text');
       expect(newPasswordField()).toHaveAttribute('type', 'text');
-      expect(confirmPasswordField()).toHaveAttribute('type', 'text');
+      expect(currentPasswordField()).toHaveAttribute('type', 'password');
+      expect(confirmPasswordField()).toHaveAttribute('type', 'password');
     });
   });
 });

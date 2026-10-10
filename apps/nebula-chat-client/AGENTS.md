@@ -382,7 +382,7 @@ context is genuinely needed, split it across two files:
 | `useDrawerStore`              | `shared/stores/`                | Mobile drawer open/closed                                        |
 | `useViewportStore`            | `shared/stores/`                | Viewport height string (updated on resize)                       |
 | `useMultiLineStore`           | `shared/stores/`                | Per-content multi-line detection map (`Record<string, boolean>`) |
-| `usePasswordVisibilityStore`  | `modules/auth/stores/`          | Whether the auth form's password is unmasked                     |
+| `usePasswordVisibilityStore`  | `modules/auth/stores/`          | Which password fields are unmasked, per field name               |
 
 ---
 

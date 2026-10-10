@@ -36,7 +36,7 @@ const fillPasswords = async (password: string, confirmation = password) => {
 const submit = () => userEvent.click(screen.getByRole('button', { name: resetPassword.submit }));
 
 beforeEach(() => {
-  usePasswordVisibilityStore.setState({ isPasswordVisible: false });
+  usePasswordVisibilityStore.setState({ visibleFields: {} });
 });
 
 describe('ResetPasswordPage', () => {
@@ -172,16 +172,16 @@ describe('ResetPasswordPage', () => {
     await waitFor(() => expect(confirmPasswordField()).not.toBeInvalid());
   });
 
-  it('reveals both password fields with one toggle', async () => {
+  it('reveals only the password field whose toggle is clicked', async () => {
     renderPage('?token=reset-token');
 
-    const [firstToggle] = screen.getAllByRole('button', {
+    const [newPasswordToggle] = screen.getAllByRole('button', {
       name: resources.passwordInput.showPassword,
     });
-    await userEvent.click(firstToggle!);
+    await userEvent.click(newPasswordToggle!);
 
     expect(passwordField()).toHaveAttribute('type', 'text');
-    expect(confirmPasswordField()).toHaveAttribute('type', 'text');
+    expect(confirmPasswordField()).toHaveAttribute('type', 'password');
   });
 
   it('validates the new password before sending anything', async () => {

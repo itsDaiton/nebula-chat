@@ -110,7 +110,7 @@ const socialButton = (provider: string) => screen.getByRole('button', { name: pr
 beforeEach(() => {
   vi.restoreAllMocks();
   window.location.hash = '';
-  usePasswordVisibilityStore.setState({ isPasswordVisible: false });
+  usePasswordVisibilityStore.setState({ visibleFields: {} });
   session = aSession();
   server.use(
     mockGetSession(() => session),
@@ -208,17 +208,17 @@ describe('AuthPage', () => {
     expect(confirmPasswordField()).not.toBeInvalid();
   });
 
-  it('reveals both password fields with one toggle', async () => {
+  it('reveals only the password field whose toggle is clicked', async () => {
     renderAuthFlow();
     await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
 
-    const [firstToggle] = screen.getAllByRole('button', {
+    const [, confirmToggle] = screen.getAllByRole('button', {
       name: resources.passwordInput.showPassword,
     });
-    await userEvent.click(firstToggle!);
+    await userEvent.click(confirmToggle!);
 
-    expect(passwordField()).toHaveAttribute('type', 'text');
     expect(confirmPasswordField()).toHaveAttribute('type', 'text');
+    expect(passwordField()).toHaveAttribute('type', 'password');
   });
 
   it("sends the verification email's link back to the verify page", async () => {
