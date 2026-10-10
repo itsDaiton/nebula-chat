@@ -1,5 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
@@ -408,6 +409,30 @@ describe('SettingsPage', () => {
         expect(toast).toHaveBeenCalledWith(
           expect.objectContaining({ type: 'success', title: account.deleteAccount.done }),
         );
+      });
+
+      it('shows no error once the deleted account has no session left', async () => {
+        const toast = vi.spyOn(toaster, 'create');
+        const state = { deleted: false };
+        server.use(
+          // As the server does: once the user is gone, every authenticated call is a 401.
+          http.get(API_ROUTE.authListAccounts, () =>
+            state.deleted
+              ? HttpResponse.json({ code: 'UNAUTHORIZED' }, { status: 401 })
+              : HttpResponse.json([]),
+          ),
+          mockDeleteUser(() => {
+            state.deleted = true;
+          }),
+        );
+        renderPage();
+
+        await confirmDelete(await openDeleteDialog());
+
+        expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
+        // Give a stray refetch the time to land.
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        expect(toast).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
       });
 
       it('requires the password before sending anything', async () => {

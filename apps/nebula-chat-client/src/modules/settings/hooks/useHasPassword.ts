@@ -15,4 +15,7 @@ export const useHasPassword = () =>
         throw new AppError(errorCodeForStatus(error.status), resources.auth.errors.unknown);
       return data.some(({ providerId }) => providerId === 'credential');
     },
+    // A failed lookup falls back to the password form. It also fails once the account is deleted,
+    // when the dialog renders again before it unmounts.
+    meta: { inlineError: true },
   });

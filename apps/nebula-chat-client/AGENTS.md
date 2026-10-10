@@ -320,7 +320,7 @@ generate:api` after any backend change; generated files are never hand-edited.
   `AppError` from `@nebula-chat/errors`, built by `libs/api/utils/toAppError.ts`: an envelope keeps its code
   and message, anything else gets a code from its status and a generic message. `query.error` is therefore an `AppError` whose `message` is safe to
   show. The global `onError` in `libs/api/queryClient.ts` toasts every failure once; a component reads
-  `query.error` only for an inline state. A mutation whose form shows its failure inline sets
+  `query.error` only for an inline state. A query or mutation whose component shows its failure inline sets
   `meta: { inlineError: true }` and is not toasted.
 - **After a write the cache cannot see, invalidate** with the generated key helpers:
   `queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() })`. `useChatStream` invalidates the
