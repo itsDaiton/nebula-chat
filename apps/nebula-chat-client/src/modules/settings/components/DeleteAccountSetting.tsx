@@ -10,7 +10,7 @@ export const DeleteAccountSetting = () => (
   <SettingsRow label={deleteAccount.label} description={deleteAccount.description}>
     <Dialog.Root lazyMount unmountOnExit role="alertdialog">
       <Dialog.Trigger asChild>
-        <Button variant="outline" colorPalette="red">
+        <Button variant="solid" colorPalette="red">
           {deleteAccount.action}
         </Button>
       </Dialog.Trigger>

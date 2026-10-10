@@ -15,7 +15,8 @@ export const SettingsLayout = ({ children }: SettingsLayoutProps) => {
       <Flex direction={{ base: 'column', md: 'row' }} flex="1" minH={0} mt="80px">
         <SettingsNav />
         <Box as="main" flex="1" overflowY="auto">
-          <Stack gap={10} px={{ base: 4, md: 8, xl: 12 }} py={{ base: 6, md: 8 }}>
+          {/* Left-aligned with the nav; capped so a row's label and control stay within one glance. */}
+          <Stack gap={10} maxW="4xl" px={{ base: 4, md: 8, xl: 12 }} py={{ base: 6, md: 8 }}>
             {children}
           </Stack>
         </Box>

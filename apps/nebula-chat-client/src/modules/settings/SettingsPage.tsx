@@ -1,4 +1,4 @@
-import { Box, Heading, Text } from '@chakra-ui/react';
+import { Box, Text, VisuallyHidden } from '@chakra-ui/react';
 import { Navigate } from 'react-router';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { AccountIdSetting } from '@/modules/settings/components/AccountIdSetting';
@@ -25,9 +25,8 @@ export const SettingsPage = () => {
 
   return (
     <SettingsLayout>
-      <Heading as="h1" size="xl">
-        {resources.settings.sections.account}
-      </Heading>
+      {/* The nav already names the page; the heading stays for screen readers. */}
+      <VisuallyHidden as="h1">{resources.settings.sections.account}</VisuallyHidden>
       {/* Filtered out, not unmounted: a half-typed name or password survives a search. */}
       <SettingsSection
         title={SETTINGS_SECTION_TITLES.profile}
