@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.23.0...nebula-chat-client-v1.23.1) (2026-10-10)
+
+
+### Bug Fixes
+
+* **client:** clean better-auth atoms before jsdom teardown ([#498](https://github.com/itsDaiton/nebula-chat/issues/498)) ([01b283f](https://github.com/itsDaiton/nebula-chat/commit/01b283f4f8d599533539c5e5892db6ed23699303))
+
 ## [1.23.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.22.1...nebula-chat-client-v1.23.0) (2026-10-10)
 
 
