@@ -62,7 +62,8 @@ apps/nebula-chat-client/src/
 │   │   │   ├── useAuthMutation.ts     # An auth form's mutation for its config's request
 │   │   │   ├── useResendVerification.ts # Re-sends the verification email; toasts on success
 │   │   │   ├── useSocialSignIn.ts     # Starts a Google/GitHub sign-in; better-auth then leaves for the provider
-│   │   │   ├── useSignOut.ts          # Sign-out; resets the bootstrap so AuthGate re-mints a Guest
+│   │   │   ├── useSignOut.ts          # Sign-out, then useAfterSignOut
+│   │   │   ├── useAfterSignOut.ts     # Once the auth session is gone: reset the bootstrap so AuthGate re-mints a Guest
 │   │   │   └── useIdentityChange.ts   # After any of them: reset server state, go to the chat root
 │   │   └── components/
 │   │       ├── AuthGate.tsx       # Wraps the routes; renders nothing until a session (Guest at least) exists
@@ -103,7 +104,7 @@ apps/nebula-chat-client/src/
 │   │       ├── SendButton.tsx
 │   │       └── ...
 │   ├── settings/
-│   │   ├── SettingsPage.tsx       # /settings — Registered-only (others → /auth); Account: Profile (name) + Security (password)
+│   │   ├── SettingsPage.tsx       # /settings — Registered-only (others → /auth); Account: Profile, Security, Account sections
 │   │   ├── types/types.ts
 │   │   ├── utils/
 │   │   │   ├── settingsSections.ts    # The settings navigation's sections (label, icon, route)
@@ -114,7 +115,9 @@ apps/nebula-chat-client/src/
 │   │   │   └── useSettingsSearchStore.ts  # The settings search text
 │   │   ├── hooks/
 │   │   │   ├── useUpdateName.ts       # better-auth update-user; the session refetch updates the header
-│   │   │   └── useSettingsSearch.ts   # Which rows/sections the search leaves visible
+│   │   │   ├── useSettingsSearch.ts   # Which rows/sections the search leaves visible
+│   │   │   ├── useSignOutEverywhere.ts # revoke-sessions, then sign-out on this device
+│   │   │   └── useHasPassword.ts      # list-accounts → has a credential password (delete-account confirm)
 │   │   └── components/
 │   │       ├── SettingsLayout.tsx # App Header over Settings' own shell in place of the chat (no conversations): nav + open section
 │   │       ├── SettingsNav.tsx    # Search + "Settings" section links; a sidebar on desktop, a top bar on mobile
@@ -122,7 +125,11 @@ apps/nebula-chat-client/src/
 │   │       ├── SettingsSection.tsx # Titled group of rows (h2)
 │   │       ├── SettingsRow.tsx    # Label/description left, control right; stacked on mobile
 │   │       ├── ProfileNameForm.tsx # Full name row: edit in place, Save once changed
-│   │       └── PasswordSetting.tsx # Password row whose button unfolds the change-password AuthForm
+│   │       ├── PasswordSetting.tsx # Password row whose button unfolds the change-password AuthForm
+│   │       ├── SignOutEverywhereSetting.tsx # Sign out of all devices row
+│   │       ├── DeleteAccountSetting.tsx # Delete account row + its alertdialog
+│   │       ├── DeleteAccountForm.tsx # Password confirm, or none for a Google/GitHub-only user
+│   │       └── AccountIdSetting.tsx # The user's UUID with a copy button
 │   └── conversations/
 │       ├── types/types.ts         # All conversation types
 │       ├── utils/                 # navigationActions
@@ -417,7 +424,7 @@ context is genuinely needed, split it across two files:
 
 Forms use [react-hook-form](https://react-hook-form.com) with a [zod](https://zod.dev) schema through
 `zodResolver`. `AuthForm` in `modules/auth/components/` is the reference: sign-in, sign-up, forgot and
-reset and change password are one component fed five configs (`utils/authForms.ts`), not five copies —
+reset, change password and delete account are one component fed its configs (`utils/authForms.ts`), not copies —
 variants of a form differ by config. A config with a `successMessage` replaces the form with it once
 submitted; one without clears its fields and calls `onSuccess` (the change-password form stays on `/settings`
 and toasts). `showHeader={false}` drops the form's own title and description where the page already labels it.
@@ -547,7 +554,7 @@ pnpm frontend test:coverage
   routes live in `@/test/api`, the one place route strings are written; `@/test/auth` holds the auth
   fixture and handlers (`aSession`, `mockGetSession`, `mockAnonymousSignIn`, `mockEmailSignIn`,
   `mockEmailSignUp`, `mockSocialSignIn` (its redirect is a hash change to `providerConsentUrl()`, the one
-  navigation jsdom performs), `mockSignOut`, `mockRequestPasswordReset`, `mockResetPassword`, `mockChangePassword`, `mockUpdateUser`,
+  navigation jsdom performs), `mockSignOut`, `mockRequestPasswordReset`, `mockResetPassword`, `mockChangePassword`, `mockUpdateUser`, `mockRevokeSessions`, `mockDeleteUser`, `mockListAccounts`,
   `mockSendVerificationEmail`) plus `refreshSession`, which refetches better-auth's module-level session
   store after a render, and `holdSession`, which serves a session and waits until that store holds it. Regenerate with `pnpm frontend generate:api` after any backend change.
 

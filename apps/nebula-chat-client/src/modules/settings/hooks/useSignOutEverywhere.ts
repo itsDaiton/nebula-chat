@@ -3,12 +3,15 @@ import { authClient } from '@/libs/auth/client';
 import { useAfterSignOut } from '@/modules/auth/hooks/useAfterSignOut';
 import { runAuthRequest } from '@/modules/auth/utils/runAuthRequest';
 
-/** Ends the session; AuthGate's bootstrap then re-mints a Guest so the app stays usable. */
-export const useSignOut = () => {
+/** Revokes every auth session of the user, then signs this device out, which revoking leaves holding a dead cookie. */
+export const useSignOutEverywhere = () => {
   const afterSignOut = useAfterSignOut();
 
   return useMutation({
-    mutationFn: () => runAuthRequest(() => authClient.signOut()),
+    mutationFn: async () => {
+      await runAuthRequest(() => authClient.revokeSessions());
+      await runAuthRequest(() => authClient.signOut());
+    },
     onSuccess: afterSignOut,
   });
 };

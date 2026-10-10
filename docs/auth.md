@@ -225,6 +225,20 @@ curl -i -X POST http://localhost:3000/api/auth/change-password \
   -d '{"currentPassword":"old-passphrase","newPassword":"another-long-passphrase","revokeOtherSessions":true}'
 ```
 
+#### `POST /api/auth/revoke-sessions` — sign out everywhere
+
+Deletes every auth session of the signed-in user, the current one included, but leaves this
+device's cookie in place, so Settings follows it with `sign-out`. Devices holding a still-valid
+cookie cache stay signed in until it expires (up to 5 minutes).
+
+#### `POST /api/auth/delete-user` — Account deletion
+
+Enabled by `user.deleteUser.enabled` in `@nebula-chat/auth`. Body `{ password? }`: a user with
+a credential password must send it (`400 INVALID_PASSWORD` if wrong); one without (Google/GitHub
+only) sends nothing and needs an auth session younger than a day (`400 SESSION_EXPIRED`
+otherwise). Deletes the user's accounts, sessions and user row; their conversations and
+messages go with it through the `ON DELETE CASCADE` foreign keys. Clears the session cookie.
+
 #### `POST /api/auth/delete-anonymous-user` — delete the Guest
 
 Deletes the current anonymous user (anonymous plugin). Only reachable while signed in

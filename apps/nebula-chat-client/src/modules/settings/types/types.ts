@@ -32,6 +32,11 @@ export type ProfileNameFormProps = {
   name: string;
 };
 
+export type AccountIdSettingProps = {
+  /** The user's id, a UUID. */
+  id: string;
+};
+
 export type ProfileNameValues = z.infer<typeof profileNameSchema>;
 
 export type PasswordChangeState = {
@@ -41,10 +46,11 @@ export type PasswordChangeState = {
 };
 
 /** The Account page's sections, in order. */
-export type SettingsSectionId = 'profile' | 'security';
+export type SettingsSectionId = 'profile' | 'security' | 'account';
 
 /** The searchable rows on the Account page. */
-export type SettingsEntryId = 'name' | 'password';
+export type SettingsEntryId =
+  'name' | 'password' | 'signOutEverywhere' | 'deleteAccount' | 'accountId';
 
 /** A setting the search can find: its row's copy plus words people might search for instead. */
 export type SettingsEntry = {

@@ -16,8 +16,17 @@ export const AuthForm = <Values extends FieldValues>({
   onSuccess,
   onError,
 }: AuthFormProps<Values>) => {
-  const { label, title, description, submitLabel, schema, fields, request, successMessage } =
-    config;
+  const {
+    label,
+    title,
+    description,
+    submitLabel,
+    schema,
+    fields,
+    request,
+    successMessage,
+    destructive,
+  } = config;
   const { mutate, isPending, isSuccess } = useAuthMutation(request, onSuccess);
   const { hidePassword } = usePasswordVisibilityStore();
   const {
@@ -84,7 +93,12 @@ export const AuthForm = <Values extends FieldValues>({
             error={errors[field.name]?.message?.toString()}
           />
         ))}
-        <Button type="submit" loading={isPending} mt={2}>
+        <Button
+          type="submit"
+          loading={isPending}
+          mt={2}
+          colorPalette={destructive ? 'red' : undefined}
+        >
           {submitLabel}
         </Button>
       </Stack>

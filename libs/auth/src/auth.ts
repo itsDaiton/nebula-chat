@@ -98,6 +98,7 @@ const toRejectionError = (rejection: ResetPasswordRejection) =>
  *   endpoints (importable into Bruno/Postman, etc.).
  * - email/password with password reset; verification is sent on sign-up but not
  *   required to sign in, sent in the background via `sendEmail` (ADR-0021).
+ * - `user.deleteUser` enabled for Settings → Delete account.
  * - a `before` hook refusing an unchanged password (`PASSWORD_REUSED`) on
  *   `/change-password`, and a breached or unchanged one on `/reset-password`.
  * - Google / GitHub social sign-in for each provider in `socialProviders`; its
@@ -132,6 +133,9 @@ export const createAuth = ({
     }),
     user: {
       modelName: 'users',
+      // Settings → Delete account. A password, or a sign-in under a day old, confirms it;
+      // the user's conversations and messages go with them (FK cascades).
+      deleteUser: { enabled: true },
     },
     advanced: {
       database: {

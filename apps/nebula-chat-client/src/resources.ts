@@ -123,6 +123,7 @@ export const resources = {
       invalidCredentials: "That email and password don't match. Please try again.",
       passwordReused: 'Choose a password different from your current one.',
       currentPasswordInvalid: 'Current password is incorrect.',
+      sessionExpired: 'For your security, sign out and sign back in, then try again.',
       tooManyRequests: 'Too many attempts. Wait a minute, then try again.',
       unknown: 'Something went wrong on our end. Please try again.',
     },
@@ -152,6 +153,32 @@ export const resources = {
     },
     security: {
       title: 'Security',
+    },
+    account: {
+      title: 'Account',
+      signOutEverywhere: {
+        label: 'Sign out of all devices',
+        description: 'Signs you out everywhere, including this device.',
+        action: 'Sign out',
+      },
+      deleteAccount: {
+        label: 'Delete account',
+        description: 'Permanently delete your account and all of your conversations.',
+        action: 'Delete account',
+        dialogTitle: 'Delete your account?',
+        warning:
+          "This permanently deletes your account and all of your conversations. It can't be undone.",
+        passwordHint: 'Enter your password to confirm.',
+        noPasswordHint: "You signed in with Google or GitHub, so there's no password to enter.",
+        confirm: 'Delete my account',
+        cancel: 'Cancel',
+        done: 'Your account has been deleted.',
+      },
+      accountId: {
+        label: 'Account ID',
+        description: 'Quote this if you contact support.',
+        copy: 'Copy account ID',
+      },
     },
     changePassword: {
       title: 'Password',

@@ -70,6 +70,13 @@ export const resetPasswordSchema = z
   .object({ password: newPassword, confirmPassword: z.string() })
   .refine(...confirmsPassword);
 
+export const deleteAccountSchema = z.object({
+  currentPassword: z.string().min(1, validation.passwordRequired),
+});
+
+// A user with no password confirms with their recent sign-in; there is nothing to fill in.
+export const confirmDeleteAccountSchema = z.object({});
+
 export const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, validation.passwordRequired),

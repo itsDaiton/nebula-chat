@@ -3,6 +3,8 @@ import type {
   AuthFieldConfig,
   AuthFormConfig,
   ChangePasswordValues,
+  ConfirmDeleteAccountValues,
+  DeleteAccountValues,
   ForgotPasswordValues,
   PasswordConfirmation,
   ResetPasswordValues,
@@ -12,6 +14,8 @@ import type {
 import { authCallbackUrl, verifyEmailCallbackUrl } from '@/modules/auth/utils/authCallbackUrl';
 import {
   changePasswordSchema,
+  confirmDeleteAccountSchema,
+  deleteAccountSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
   signInSchema,
@@ -21,7 +25,8 @@ import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 
 const { fields, tabs, actions, signIn, signUp, forgotPassword, resetPassword } = resources.auth;
-const { changePassword } = resources.settings;
+const { changePassword, account } = resources.settings;
+const { deleteAccount } = account;
 
 const emailField = {
   name: 'email',
@@ -132,4 +137,35 @@ export const CHANGE_PASSWORD_FORM: AuthFormConfig<ChangePasswordValues> = {
       newPassword: password,
       revokeOtherSessions: true,
     }),
+};
+
+/** Deleting the account of a user with a password; field name matches INVALID_PASSWORD's mapping. */
+export const DELETE_ACCOUNT_FORM: AuthFormConfig<DeleteAccountValues> = {
+  label: deleteAccount.label,
+  title: deleteAccount.dialogTitle,
+  description: deleteAccount.passwordHint,
+  submitLabel: deleteAccount.confirm,
+  schema: deleteAccountSchema,
+  fields: [
+    {
+      name: 'currentPassword',
+      label: fields.password,
+      type: 'password',
+      autoComplete: 'current-password',
+    },
+  ],
+  request: ({ currentPassword }) => authClient.deleteUser({ password: currentPassword }),
+  destructive: true,
+};
+
+/** Deleting the account of a Google/GitHub-only user: their recent sign-in confirms it. */
+export const CONFIRM_DELETE_ACCOUNT_FORM: AuthFormConfig<ConfirmDeleteAccountValues> = {
+  label: deleteAccount.label,
+  title: deleteAccount.dialogTitle,
+  description: deleteAccount.noPasswordHint,
+  submitLabel: deleteAccount.confirm,
+  schema: confirmDeleteAccountSchema,
+  fields: [],
+  request: () => authClient.deleteUser({}),
+  destructive: true,
 };

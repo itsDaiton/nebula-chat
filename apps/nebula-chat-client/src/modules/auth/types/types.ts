@@ -4,6 +4,8 @@ import type { FieldValues, Path, UseFormRegisterReturn } from 'react-hook-form';
 import type { z } from 'zod';
 import type {
   changePasswordSchema,
+  confirmDeleteAccountSchema,
+  deleteAccountSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
   signInSchema,
@@ -35,6 +37,10 @@ export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
 export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
+
+export type DeleteAccountValues = z.infer<typeof deleteAccountSchema>;
+
+export type ConfirmDeleteAccountValues = z.infer<typeof confirmDeleteAccountSchema>;
 
 /** A new password and its confirmation, as every form that sets one holds them. */
 export type PasswordConfirmation = { password: string; confirmPassword: string };
@@ -73,6 +79,8 @@ export type AuthFormConfig<Values extends FieldValues> = {
   request: (values: Values) => Promise<AuthResult>;
   /** Shown in place of the form once it succeeds; without one, the fields clear and `onSuccess` runs. */
   successMessage?: string;
+  /** The submit button warns that the action can't be undone. */
+  destructive?: boolean;
 };
 
 export type AuthFormProps<Values extends FieldValues> = {

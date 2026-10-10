@@ -5,11 +5,12 @@ import type {
 } from '@/modules/settings/types/types';
 import { resources } from '@/resources';
 
-const { profile, security, changePassword } = resources.settings;
+const { profile, security, changePassword, account } = resources.settings;
 
 export const SETTINGS_SECTION_TITLES: Record<SettingsSectionId, string> = {
   profile: profile.title,
   security: security.title,
+  account: account.title,
 };
 
 /** Every searchable setting on the Account page, keyed by the row that renders it. */
@@ -24,6 +25,24 @@ export const SETTINGS_INDEX: Record<SettingsEntryId, SettingsEntry> = {
     label: changePassword.title,
     description: changePassword.description,
     keywords: ['change password', 'credentials', 'login', 'sign in', 'security'],
+  },
+  signOutEverywhere: {
+    section: 'account',
+    label: account.signOutEverywhere.label,
+    description: account.signOutEverywhere.description,
+    keywords: ['log out', 'logout', 'sessions', 'other devices'],
+  },
+  deleteAccount: {
+    section: 'account',
+    label: account.deleteAccount.label,
+    description: account.deleteAccount.description,
+    keywords: ['remove', 'close account', 'erase'],
+  },
+  accountId: {
+    section: 'account',
+    label: account.accountId.label,
+    description: account.accountId.description,
+    keywords: ['user id', 'identifier', 'support'],
   },
 };
 

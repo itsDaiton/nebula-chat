@@ -13,7 +13,11 @@ import { API_ROUTE, mockApiError } from '@/test/api';
 import {
   holdSession,
   mockChangePassword,
+  mockDeleteUser,
   mockGetSession,
+  mockListAccounts,
+  mockRevokeSessions,
+  mockSignOut,
   mockUpdateUser,
   refreshSession,
 } from '@/test/auth';
@@ -27,7 +31,7 @@ vi.mock('@/theme/hooks/useColorMode', () => ({
 const AUTH_PAGE = 'auth page';
 const CHAT_PAGE = 'chat page';
 const { fields } = resources.auth;
-const { changePassword, profile } = resources.settings;
+const { changePassword, profile, account } = resources.settings;
 
 const renderPage = () =>
   renderWithChakra(
@@ -108,6 +112,14 @@ describe('SettingsPage', () => {
       ).toBeInTheDocument();
     });
 
+    it('ends the page with an Account section', async () => {
+      await holdSession({ isAnonymous: false });
+
+      renderPage();
+
+      expect(screen.getByRole('heading', { level: 2, name: account.title })).toBeInTheDocument();
+    });
+
     it('lists its sections in a Settings navigation, marking the open one', async () => {
       await holdSession({ isAnonymous: false });
 
@@ -160,6 +172,15 @@ describe('SettingsPage', () => {
       await userEvent.clear(searchField());
       await userEvent.type(searchField(), 'login');
       expect(screen.getByRole('button', { name: changePassword.open })).toBeInTheDocument();
+
+      await userEvent.clear(searchField());
+      await userEvent.type(searchField(), 'delete');
+      expect(
+        screen.getByRole('button', { name: account.deleteAccount.action }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: account.signOutEverywhere.action }),
+      ).not.toBeInTheDocument();
     });
 
     it('says so when nothing matches, and shows everything again once cleared', async () => {
@@ -267,6 +288,162 @@ describe('SettingsPage', () => {
       await waitFor(() =>
         expect(nameField()).toHaveAccessibleErrorMessage(resources.auth.errors.unknown),
       );
+    });
+  });
+
+  describe('Account', () => {
+    beforeEach(async () => {
+      await holdSession({ isAnonymous: false });
+    });
+
+    it("shows the user's account ID", () => {
+      renderPage();
+
+      expect(screen.getByText('user-1')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: account.accountId.copy })).toBeInTheDocument();
+    });
+
+    it('logs out of every device, this one included, and returns to the chat', async () => {
+      const calls: string[] = [];
+      server.use(
+        mockRevokeSessions(() => {
+          calls.push('revoke-sessions');
+        }),
+        mockSignOut(() => {
+          calls.push('sign-out');
+        }),
+      );
+      renderPage();
+
+      await userEvent.click(screen.getByRole('button', { name: account.signOutEverywhere.action }));
+
+      expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
+      expect(calls).toEqual(['revoke-sessions', 'sign-out']);
+    });
+
+    describe('deleting it', () => {
+      const openDeleteDialog = async () => {
+        await userEvent.click(screen.getByRole('button', { name: account.deleteAccount.action }));
+        return screen.findByRole('alertdialog', { name: account.deleteAccount.dialogTitle });
+      };
+      const confirmDelete = (dialog: HTMLElement) =>
+        userEvent.click(
+          within(dialog).getByRole('button', { name: account.deleteAccount.confirm }),
+        );
+
+      it('asks for the password, deletes the account and returns to the chat', async () => {
+        const toast = vi.spyOn(toaster, 'create');
+        let body: unknown;
+        server.use(
+          mockListAccounts(['credential']),
+          mockDeleteUser(async (request) => {
+            body = await request.clone().json();
+          }),
+        );
+        renderPage();
+
+        const dialog = await openDeleteDialog();
+        expect(within(dialog).getByText(account.deleteAccount.warning)).toBeInTheDocument();
+        await userEvent.type(
+          await within(dialog).findByLabelText(fields.password),
+          'my-passphrase',
+        );
+        await confirmDelete(dialog);
+
+        expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
+        expect(body).toEqual({ password: 'my-passphrase' });
+        expect(toast).toHaveBeenCalledWith(
+          expect.objectContaining({ type: 'success', title: account.deleteAccount.done }),
+        );
+      });
+
+      it('requires the password before sending anything', async () => {
+        let requests = 0;
+        server.use(
+          mockListAccounts(['credential']),
+          mockDeleteUser(() => {
+            requests += 1;
+          }),
+        );
+        renderPage();
+
+        const dialog = await openDeleteDialog();
+        await within(dialog).findByLabelText(fields.password);
+        await confirmDelete(dialog);
+
+        await waitFor(() =>
+          expect(within(dialog).getByLabelText(fields.password)).toHaveAccessibleErrorMessage(
+            resources.auth.validation.passwordRequired,
+          ),
+        );
+        expect(requests).toBe(0);
+      });
+
+      it('shows a wrong password under the field and keeps the account', async () => {
+        server.use(
+          mockListAccounts(['credential']),
+          mockApiError('post', API_ROUTE.authDeleteUser, 400, { code: 'INVALID_PASSWORD' }),
+        );
+        renderPage();
+
+        const dialog = await openDeleteDialog();
+        await userEvent.type(await within(dialog).findByLabelText(fields.password), 'wrong-one');
+        await confirmDelete(dialog);
+
+        await waitFor(() =>
+          expect(within(dialog).getByLabelText(fields.password)).toHaveAccessibleErrorMessage(
+            resources.auth.errors.currentPasswordInvalid,
+          ),
+        );
+        expect(screen.queryByText(CHAT_PAGE)).not.toBeInTheDocument();
+      });
+
+      it('lets a user without a password confirm with their recent sign-in', async () => {
+        let body: unknown;
+        server.use(
+          mockListAccounts(['google']),
+          mockDeleteUser(async (request) => {
+            body = await request.clone().json();
+          }),
+        );
+        renderPage();
+
+        const dialog = await openDeleteDialog();
+        await within(dialog).findByText(account.deleteAccount.noPasswordHint);
+        expect(within(dialog).queryByLabelText(fields.password)).not.toBeInTheDocument();
+        await confirmDelete(dialog);
+
+        expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
+        expect(body).toEqual({});
+      });
+
+      it('asks a user without a password to sign in again once that sign-in is old', async () => {
+        server.use(
+          mockListAccounts(['github']),
+          mockApiError('post', API_ROUTE.authDeleteUser, 400, { code: 'SESSION_EXPIRED' }),
+        );
+        renderPage();
+
+        const dialog = await openDeleteDialog();
+        await within(dialog).findByText(account.deleteAccount.noPasswordHint);
+        await confirmDelete(dialog);
+
+        expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+          resources.auth.errors.sessionExpired,
+        );
+      });
+
+      it('keeps the account when the user cancels', async () => {
+        server.use(mockListAccounts(['credential']));
+        renderPage();
+
+        const dialog = await openDeleteDialog();
+        await userEvent.click(
+          within(dialog).getByRole('button', { name: account.deleteAccount.cancel }),
+        );
+
+        await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+      });
     });
   });
 
