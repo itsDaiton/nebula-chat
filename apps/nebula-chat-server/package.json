@@ -4,7 +4,7 @@
   "packageManager": "pnpm@12.4.1",
   "main": "dist/src/server.js",
   "scripts": {
-    "dev": "dotenvx run -f .env --ignore=MISSING_ENV_FILE -- tsx watch --clear-screen=false src/server.ts",
+    "dev": "nodemon",
     "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "start": "dotenvx run -f .env --ignore=MISSING_ENV_FILE -- node dist/src/server.js",
     "typecheck": "tsc --noEmit",
@@ -38,6 +38,7 @@
     "@total-typescript/shoehorn": "^0.1.2",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
+    "nodemon": "^3.1.14",
     "tsc-alias": "^1.9.5",
     "typescript": "catalog:",
     "vitest": "catalog:"
