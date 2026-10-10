@@ -209,6 +209,18 @@ describe('SettingsPage', () => {
       );
     });
 
+    it('falls back to a generic alert for an unrecognised error', async () => {
+      server.use(
+        mockApiError('post', API_ROUTE.authChangePassword, 500, { code: 'SOMETHING_NEW' }),
+      );
+      renderPage();
+
+      await fillForm();
+      await submit();
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(resources.auth.errors.unknown);
+    });
+
     it('sends nothing while the confirmation does not match', async () => {
       const counter = countRequests();
       renderPage();

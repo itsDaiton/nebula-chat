@@ -36,6 +36,15 @@ export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
 export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
 
+/** A new password and its confirmation, as every form that sets one holds them. */
+export type PasswordConfirmation = { password: string; confirmPassword: string };
+
+/** The current password and its replacement, as the Password change form holds them. */
+export type PasswordReplacement = { currentPassword: string; password: string };
+
+/** Where a rule comparing two fields reports, and what it says. */
+export type FieldComparisonError<Values> = { path: keyof Values & string; message: string };
+
 /** The form field an auth failure belongs to; `root` is the form as a whole. */
 export type AuthErrorField = 'email' | 'currentPassword' | 'password' | 'root';
 

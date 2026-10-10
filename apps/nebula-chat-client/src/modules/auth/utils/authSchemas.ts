@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import type {
+  FieldComparisonError,
+  PasswordConfirmation,
+  PasswordReplacement,
+} from '@/modules/auth/types/types';
 import { resources } from '@/resources';
 
 const { validation, errors } = resources.auth;
@@ -25,7 +30,7 @@ const newPassword = z
 const compareFields = <Values extends Record<string, unknown>>(
   [first, second]: [keyof Values & string, keyof Values & string],
   isValid: (first: string, second: string) => boolean,
-  { path, message }: { path: keyof Values & string; message: string },
+  { path, message }: FieldComparisonError<Values>,
 ): Parameters<z.ZodType<Values>['refine']> => [
   (values) => isValid(values[first] as string, values[second] as string),
   {
@@ -39,7 +44,7 @@ const compareFields = <Values extends Record<string, unknown>>(
 ];
 
 /** The confirmation must repeat `password`; the mismatch shows under `confirmPassword`. */
-const confirmsPassword = compareFields<{ password: string; confirmPassword: string }>(
+const confirmsPassword = compareFields<PasswordConfirmation>(
   ['password', 'confirmPassword'],
   (password, confirmation) => password === confirmation,
   { path: 'confirmPassword', message: validation.passwordMismatch },
@@ -72,7 +77,7 @@ export const changePasswordSchema = z
     confirmPassword: z.string(),
   })
   .refine(
-    ...compareFields<{ currentPassword: string; password: string }>(
+    ...compareFields<PasswordReplacement>(
       ['currentPassword', 'password'],
       (current, next) => !current || current !== next,
       { path: 'password', message: errors.passwordReused },

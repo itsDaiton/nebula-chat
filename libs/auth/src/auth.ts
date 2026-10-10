@@ -16,7 +16,7 @@ import {
   findChangePasswordRejection,
   findResetPasswordRejection,
 } from './resetPassword';
-import type { ResetPasswordRejection } from './resetPassword';
+import type { ChangePasswordAttempt, ResetPasswordRejection } from './resetPassword';
 import type { EmailSender } from './resend';
 
 /**
@@ -69,14 +69,12 @@ export type SocialProviderCredentials = {
   github?: OAuthCredentials;
 };
 
-/** Refuses the request with the rejection's code and message, as better-auth's own errors look. */
-const rejectPassword = (rejection: ResetPasswordRejection | null) => {
-  if (!rejection) return;
-  throw APIError.from('BAD_REQUEST', {
+/** The rejection as better-auth's own errors look: its code and message, with a 400. */
+const toRejectionError = (rejection: ResetPasswordRejection) =>
+  APIError.from('BAD_REQUEST', {
     code: rejection,
     message: RESET_PASSWORD_REJECTION_MESSAGES[rejection],
   });
-};
 
 /**
  * Build the configured better-auth instance for Nebula Chat.
@@ -173,8 +171,10 @@ export const createAuth = ({
       // before /reset-password consumes the token.
       before: createAuthMiddleware(async (ctx) => {
         if (ctx.path === '/change-password') {
-          const body = ctx.body as { currentPassword?: string; newPassword?: string } | undefined;
-          rejectPassword(findChangePasswordRejection(body ?? {}));
+          const rejection = findChangePasswordRejection(
+            (ctx.body as ChangePasswordAttempt | undefined) ?? {},
+          );
+          if (rejection) throw toRejectionError(rejection);
           return;
         }
         if (ctx.path !== '/reset-password') return;
@@ -200,7 +200,7 @@ export const createAuth = ({
             isPasswordCompromised,
           },
         );
-        rejectPassword(rejection);
+        if (rejection) throw toRejectionError(rejection);
       }),
     },
     secondaryStorage: {

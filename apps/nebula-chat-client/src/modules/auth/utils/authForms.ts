@@ -4,6 +4,7 @@ import type {
   AuthFormConfig,
   ChangePasswordValues,
   ForgotPasswordValues,
+  PasswordConfirmation,
   ResetPasswordValues,
   SignInCredentials,
   SignUpCredentials,
@@ -45,7 +46,7 @@ const confirmPasswordField = (label: string) =>
     type: 'password',
     autoComplete: 'new-password',
     comparedWith: 'password',
-  }) satisfies AuthFieldConfig<ResetPasswordValues>;
+  }) satisfies AuthFieldConfig<PasswordConfirmation>;
 
 export const SIGN_IN_FORM: AuthFormConfig<SignInCredentials> = {
   label: tabs.signIn,

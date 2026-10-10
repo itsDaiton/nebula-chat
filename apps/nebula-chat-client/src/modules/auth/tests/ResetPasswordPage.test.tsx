@@ -159,6 +159,19 @@ describe('ResetPasswordPage', () => {
     expect(requests).toBe(0);
   });
 
+  it('clears a mismatch when the first password is fixed to match', async () => {
+    renderPage('?token=reset-token');
+
+    await fillPasswords('a-new-long-passphrasE', 'a-new-long-passphrase');
+    await submit();
+    await waitFor(() => expect(confirmPasswordField()).toBeInvalid());
+
+    await userEvent.clear(passwordField());
+    await userEvent.type(passwordField(), 'a-new-long-passphrase');
+
+    await waitFor(() => expect(confirmPasswordField()).not.toBeInvalid());
+  });
+
   it('reveals both password fields with one toggle', async () => {
     renderPage('?token=reset-token');
 
