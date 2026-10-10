@@ -19,6 +19,8 @@ export const ChatMessage = memo(({ message }: ChatMessageProps) => {
         maxW={isUserMessage && !isMultiLine ? 'fit-content' : { base: '100%', md: '70%' }}
         bg={getMessageBg(isUserMessage)}
         color="fg.soft"
+        // Replies read in the serif, as in Claude; the user's own messages stay in the interface sans.
+        fontFamily={isUserMessage ? undefined : 'serif'}
         borderRadius="lg"
         px={4}
         py={3}

@@ -80,7 +80,9 @@ const config = defineConfig({
       },
       fonts: {
         body: { value: 'Inter, -apple-system, system-ui, sans-serif' },
-        heading: { value: 'Inter, -apple-system, system-ui, sans-serif' },
+        // Claude-style pairing: a sans for the interface, a serif (in place of Claude's Tiempos) for headings and replies.
+        heading: { value: "'Source Serif 4', Georgia, serif" },
+        serif: { value: "'Source Serif 4', Georgia, serif" },
       },
       radii: {
         sm: { value: '0.375rem' },
