@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.24.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.23.1...nebula-chat-client-v1.24.0) (2026-10-10)
+
+
+### Features
+
+* **auth:** NEB-460 password change from a new Settings area ([#492](https://github.com/itsDaiton/nebula-chat/issues/492)) ([22b57ed](https://github.com/itsDaiton/nebula-chat/commit/22b57ed38737d9af2540c5ebb37cdd37a40dcc75))
+
 ## [1.23.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.23.0...nebula-chat-client-v1.23.1) (2026-10-10)
 
 
