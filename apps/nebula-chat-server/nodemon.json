@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json.schemastore.org/nodemon.json",
+  "watch": ["src", ".env", "../../libs"],
+  "ignore": ["**/libs/*/src/**", "src/**/*.test.ts"],
+  "ext": "ts,js,mjs,cjs,json",
+  "signal": "SIGTERM",
+  "delay": 200,
+  "exec": "dotenvx run -f .env --ignore=MISSING_ENV_FILE -- tsx src/server.ts"
+}
