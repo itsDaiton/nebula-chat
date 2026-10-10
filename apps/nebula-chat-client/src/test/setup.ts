@@ -19,7 +19,14 @@ afterAll(async () => {
   // better-auth's atoms unmount a second late and touch `window`; run it before jsdom goes.
   // Imported here, not at the top, so better-auth captures `fetch` only after msw patches it.
   const { authClient } = await import('@/libs/auth/client');
-  cleanStores(...Object.values(authClient.$store.atoms));
+  // `authClient` is a path proxy: `$store.atoms` enumerates as empty, and an unknown name
+  // comes back as another proxy (a function), so each atom is named and checked.
+  const { atoms } = authClient.$store;
+  const authAtoms = [atoms.session, atoms.$sessionSignal];
+  if (authAtoms.some((atom) => typeof atom !== 'object')) {
+    throw new Error('better-auth atoms not found; their unmount would outlive jsdom');
+  }
+  cleanStores(...authAtoms);
 });
 
 // jsdom implements neither of these, and Chakra UI reaches for both during layout.
