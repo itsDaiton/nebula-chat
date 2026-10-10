@@ -31,7 +31,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-email": "^6.11.0",
-    "resend": "^6.30.0"
+    "resend": "^6.31.0"
   },
   "devDependencies": {
     "@types/node": "catalog:",
