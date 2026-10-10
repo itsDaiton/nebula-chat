@@ -94,6 +94,40 @@ export const mockRequestPasswordReset = mockAuthPost(API_ROUTE.authRequestPasswo
 /** Sets the new password on `reset-password`. */
 export const mockResetPassword = mockAuthPost(API_ROUTE.authResetPassword, { status: true });
 
+/** Changes a Registered user's password on `change-password`; revoking other sessions issues a new token. */
+export const mockChangePassword = mockAuthPost(API_ROUTE.authChangePassword, {
+  token: 'token-2',
+  user: aSession({ isAnonymous: false }).user,
+});
+
+/** Saves the signed-in user's profile fields (their name) on `update-user`. */
+export const mockUpdateUser = mockAuthPost(API_ROUTE.authUpdateUser, { status: true });
+
+/** Revokes every auth session of the user, this one included, on `revoke-sessions`. */
+export const mockRevokeSessions = mockAuthPost(API_ROUTE.authRevokeSessions, { status: true });
+
+/** Deletes the signed-in user on `delete-user`. */
+export const mockDeleteUser = mockAuthPost(API_ROUTE.authDeleteUser, {
+  success: true,
+  message: 'User deleted',
+});
+
+/** Lists the user's linked accounts by provider (`credential` is the email/password one). */
+export const mockListAccounts = (providers: string[]): HttpHandler =>
+  http.get(API_ROUTE.authListAccounts, () =>
+    HttpResponse.json(
+      providers.map((providerId, index) => ({
+        id: `account-${index}`,
+        providerId,
+        accountId: 'user-1',
+        userId: 'user-1',
+        scopes: [],
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      })),
+    ),
+  );
+
 /** Resends the verification email on `send-verification-email`. */
 export const mockSendVerificationEmail = mockAuthPost(API_ROUTE.authSendVerificationEmail, {
   status: true,

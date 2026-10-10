@@ -1,0 +1,69 @@
+import type { ReactNode } from 'react';
+import type { IconType } from 'react-icons';
+import type { z } from 'zod';
+import type { profileNameSchema } from '@/modules/settings/utils/settingsSchemas';
+
+export type SettingsLayoutProps = {
+  children: ReactNode;
+};
+
+/** One entry in the settings navigation, and the route that renders it. */
+export type SettingsSection = {
+  label: string;
+  icon: IconType;
+  path: string;
+};
+
+/** A titled group of settings rows. */
+export type SettingsSectionProps = {
+  title: string;
+  /** Filtered out by the search: kept mounted so its rows keep what was typed. */
+  hidden?: boolean;
+  children: ReactNode;
+};
+
+/** One setting: what it is on the left, its control on the right. */
+export type SettingsRowProps = {
+  label: string;
+  description?: string;
+  children: ReactNode;
+};
+
+export type ProfileNameFormProps = {
+  /** The Registered user's current name. */
+  name: string;
+};
+
+export type AccountIdSettingProps = {
+  /** The user's id, a UUID. */
+  id: string;
+};
+
+export type ProfileNameValues = z.infer<typeof profileNameSchema>;
+
+export type PasswordChangeState = {
+  isPasswordFormOpen: boolean;
+  togglePasswordForm: () => void;
+  closePasswordForm: () => void;
+};
+
+/** The Account page's sections, in order. */
+export type SettingsSectionId = 'profile' | 'security' | 'account';
+
+/** The searchable rows on the Account page. */
+export type SettingsEntryId =
+  'name' | 'password' | 'signOutEverywhere' | 'deleteAccount' | 'accountId';
+
+/** A setting the search can find: its row's copy plus words people might search for instead. */
+export type SettingsEntry = {
+  section: SettingsSectionId;
+  label: string;
+  description?: string;
+  keywords: string[];
+};
+
+export type SettingsSearchState = {
+  query: string;
+  searchSettings: (query: string) => void;
+  clearSearch: () => void;
+};

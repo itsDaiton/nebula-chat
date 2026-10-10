@@ -97,7 +97,10 @@ export const resources = {
       name: 'Name',
       email: 'Email',
       password: 'Password',
+      confirmPassword: 'Confirm password',
+      currentPassword: 'Current password',
       newPassword: 'New password',
+      confirmNewPassword: 'Confirm new password',
     },
     actions: {
       signIn: 'Sign in',
@@ -111,6 +114,7 @@ export const resources = {
       passwordRequired: 'Enter your password.',
       passwordTooShort: 'Your password needs at least 8 characters.',
       passwordTooLong: 'Your password can be at most 128 characters.',
+      passwordMismatch: "Passwords don't match.",
     },
     errors: {
       passwordCompromised:
@@ -118,6 +122,9 @@ export const resources = {
       userExists: 'You already have an account with this email. Try signing in instead.',
       invalidCredentials: "That email and password don't match. Please try again.",
       passwordReused: 'Choose a password different from your current one.',
+      currentPasswordInvalid: 'Current password is incorrect.',
+      sessionExpired: 'For your security, sign out and sign back in, then try again.',
+      noPassword: "Your account doesn't use a password. Reload the page and try again.",
       tooManyRequests: 'Too many attempts. Wait a minute, then try again.',
       unknown: 'Something went wrong on our end. Please try again.',
     },
@@ -128,8 +135,59 @@ export const resources = {
   },
   settings: {
     title: 'Settings',
-    password: {
+    search: {
+      label: 'Search settings',
+      placeholder: 'Search',
+      clear: 'Clear search',
+      empty: 'No settings match your search.',
+    },
+    sections: {
+      account: 'Account',
+    },
+    profile: {
+      title: 'Profile',
+      name: {
+        label: 'Full name',
+        save: 'Save',
+        saved: 'Name updated.',
+      },
+    },
+    security: {
+      title: 'Security',
+    },
+    account: {
+      title: 'Account',
+      signOutEverywhere: {
+        label: 'Sign out of all devices',
+        description: 'Signs you out everywhere, including this device.',
+        action: 'Sign out',
+      },
+      deleteAccount: {
+        label: 'Delete account',
+        description: 'Permanently delete your account and all of your conversations.',
+        action: 'Delete account',
+        dialogTitle: 'Delete your account?',
+        warning:
+          "This permanently deletes your account and all of your conversations. It can't be undone.",
+        passwordHint: 'Enter your password to confirm.',
+        noPasswordHint: "You signed in with Google or GitHub, so there's no password to enter.",
+        confirm: 'Delete my account',
+        cancel: 'Cancel',
+        done: 'Your account has been deleted.',
+      },
+      accountId: {
+        label: 'Account ID',
+        description: 'Quote this if you contact support.',
+        copy: 'Copy account ID',
+      },
+    },
+    changePassword: {
       title: 'Password',
+      description: 'Change the password you sign in with. Other devices get signed out.',
+      open: 'Change password',
+      cancel: 'Cancel',
+      submit: 'Save new password',
+      done: 'Password changed. Other devices have been signed out.',
     },
   },
   passwordInput: {

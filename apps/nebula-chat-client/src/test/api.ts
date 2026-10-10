@@ -29,6 +29,11 @@ export const API_ROUTE = {
   authSignOut: '*/api/auth/sign-out',
   authRequestPasswordReset: '*/api/auth/request-password-reset',
   authResetPassword: '*/api/auth/reset-password',
+  authChangePassword: '*/api/auth/change-password',
+  authUpdateUser: '*/api/auth/update-user',
+  authRevokeSessions: '*/api/auth/revoke-sessions',
+  authDeleteUser: '*/api/auth/delete-user',
+  authListAccounts: '*/api/auth/list-accounts',
   authSendVerificationEmail: '*/api/auth/send-verification-email',
 } as const;
 

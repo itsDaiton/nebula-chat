@@ -5,9 +5,13 @@ import { notifyError } from '@/libs/api/utils/notifyError';
 // The single place a failure is reported; components read `query.error` for inline states.
 export const createQueryClient = ({ retry = 1 }: CreateQueryClientOptions = {}) =>
   new QueryClient({
-    queryCache: new QueryCache({ onError: notifyError }),
+    // A query or mutation flagged `meta.inlineError` renders its own failure, so it is not toasted twice.
+    queryCache: new QueryCache({
+      onError: (error, query) => {
+        if (query.meta?.inlineError !== true) notifyError(error);
+      },
+    }),
     mutationCache: new MutationCache({
-      // A mutation flagged `meta.inlineError` renders its own failure, so it is not toasted twice.
       onError: (error, _variables, _context, mutation) => {
         if (mutation.meta?.inlineError !== true) notifyError(error);
       },

@@ -7,6 +7,7 @@ const { errors, validation, resetPassword, social } = resources.auth;
 
 // better-auth's codes (core, social sign-in + Have I Been Pwned), each placed under the field it concerns.
 const AUTH_ERRORS: Partial<Record<string, AuthErrorDescription>> = {
+  INVALID_PASSWORD: { field: 'currentPassword', message: errors.currentPasswordInvalid },
   PASSWORD_COMPROMISED: { field: 'password', message: errors.passwordCompromised },
   PASSWORD_REUSED: { field: 'password', message: errors.passwordReused },
   PASSWORD_TOO_SHORT: { field: 'password', message: validation.passwordTooShort },
@@ -16,6 +17,11 @@ const AUTH_ERRORS: Partial<Record<string, AuthErrorDescription>> = {
   INVALID_EMAIL: { field: 'email', message: validation.emailInvalid },
   INVALID_EMAIL_OR_PASSWORD: { field: 'root', message: errors.invalidCredentials },
   INVALID_TOKEN: { field: 'root', message: resetPassword.linkInvalid },
+  // A sensitive action without a password needs a sign-in under a day old.
+  SESSION_EXPIRED: { field: 'root', message: errors.sessionExpired },
+  // Account deletion: a password sent for a Google/GitHub-only user, or none sent for one with a password.
+  CREDENTIAL_ACCOUNT_NOT_FOUND: { field: 'root', message: errors.noPassword },
+  PASSWORD_REQUIRED: { field: 'currentPassword', message: validation.passwordRequired },
   // The server has no credentials for the provider (it is configured per environment).
   PROVIDER_NOT_FOUND: { field: 'root', message: social.errors.unavailable },
 };

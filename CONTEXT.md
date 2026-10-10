@@ -60,6 +60,14 @@ _Avoid_: Password update, password reset (that is the signed-out flow).
 A User who has forgotten their password setting a new one through an emailed link, without being signed in. Proves ownership of the email, so it also verifies it, and signs out every auth session.
 _Avoid_: Password recovery, password change (that is the signed-in flow).
 
+**Sign out everywhere**:
+A Registered user ending every auth session of theirs at once, the one they are using included; that device then carries on as a fresh Guest. Devices holding a still-valid auth cookie cache may stay signed in for up to five minutes.
+_Avoid_: Log out of all devices (UI-copy only), revoke sessions.
+
+**Account deletion**:
+A Registered user permanently removing their User, with every Session and Message they own. Confirmed with their password, or, for a User without one, a sign-in less than a day old. The device carries on as a fresh Guest.
+_Avoid_: Account closure, deactivation (nothing is kept).
+
 **Avatar**:
 The visual that stands for a User in the interface. For a Registered user it is their Profile image if they have one, otherwise their initials; a Guest's is always a generic anonymous one.
 _Avoid_: Icon, profile picture (that is the Profile image, one possible content of an Avatar).

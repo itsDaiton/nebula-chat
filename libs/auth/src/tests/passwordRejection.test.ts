@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { findResetPasswordRejection } from '../resetPassword';
-import type { ResetPasswordChecks } from '../resetPassword';
+import { findChangePasswordRejection, findPasswordRejection } from '../passwordRejection';
+import type { ResetPasswordChecks } from '../passwordRejection';
 
 const NOW = new Date('2026-10-04T12:00:00.000Z');
 const IN_AN_HOUR = new Date('2026-10-04T13:00:00.000Z');
@@ -16,9 +16,9 @@ const makeChecks = (overrides: Partial<ResetPasswordChecks> = {}): ResetPassword
 });
 
 const attempt = (newPassword: string, checks: ResetPasswordChecks) =>
-  findResetPasswordRejection({ token: 'token-1', newPassword }, checks);
+  findPasswordRejection({ token: 'token-1', newPassword }, checks);
 
-describe('findResetPasswordRejection', () => {
+describe('findPasswordRejection', () => {
   it('accepts a fresh password on a live token', async () => {
     expect(await attempt('a-brand-new-passphrase', makeChecks())).toBeNull();
   });
@@ -66,5 +66,33 @@ describe('findResetPasswordRejection', () => {
 
     expect(await attempt('old-passphrase', checks)).toBeNull();
     expect(checks.verifyPassword).not.toHaveBeenCalled();
+  });
+});
+
+describe('findChangePasswordRejection', () => {
+  it('refuses a new password equal to the current one', () => {
+    expect(
+      findChangePasswordRejection({
+        currentPassword: 'old-passphrase',
+        newPassword: 'old-passphrase',
+      }),
+    ).toBe('PASSWORD_REUSED');
+  });
+
+  it('accepts a different new password', () => {
+    expect(
+      findChangePasswordRejection({
+        currentPassword: 'old-passphrase',
+        newPassword: 'a-brand-new-passphrase',
+      }),
+    ).toBeNull();
+  });
+
+  it.each([
+    ['the current password', { newPassword: 'old-passphrase' }],
+    ['the new password', { currentPassword: 'old-passphrase' }],
+    ['both passwords', {}],
+  ])("leaves a request missing %s to better-auth's own validation", (_case, body) => {
+    expect(findChangePasswordRejection(body)).toBeNull();
   });
 });

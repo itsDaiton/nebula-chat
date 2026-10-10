@@ -1,8 +1,9 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ResetPasswordPage } from '@/modules/auth/ResetPasswordPage';
+import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 import { API_ROUTE, mockApiError } from '@/test/api';
@@ -27,7 +28,16 @@ const renderPage = (search: string) =>
 
 // A masked password input has no ARIA role, so it is found by its label.
 const passwordField = () => screen.getByLabelText(resources.auth.fields.newPassword);
+const confirmPasswordField = () => screen.getByLabelText(resources.auth.fields.confirmNewPassword);
+const fillPasswords = async (password: string, confirmation = password) => {
+  await userEvent.type(passwordField(), password);
+  await userEvent.type(confirmPasswordField(), confirmation);
+};
 const submit = () => userEvent.click(screen.getByRole('button', { name: resetPassword.submit }));
+
+beforeEach(() => {
+  usePasswordVisibilityStore.setState({ visibleFields: {} });
+});
 
 describe('ResetPasswordPage', () => {
   it("sets the new password with the link's token", async () => {
@@ -39,7 +49,7 @@ describe('ResetPasswordPage', () => {
     );
     renderPage('?token=reset-token');
 
-    await userEvent.type(passwordField(), 'a-new-long-passphrase');
+    await fillPasswords('a-new-long-passphrase');
     await submit();
 
     expect(await screen.findByRole('status')).toHaveTextContent(resetPassword.done);
@@ -50,7 +60,7 @@ describe('ResetPasswordPage', () => {
     server.use(mockResetPassword());
     renderPage('?token=reset-token');
 
-    await userEvent.type(passwordField(), 'a-new-long-passphrase');
+    await fillPasswords('a-new-long-passphrase');
     await submit();
     await screen.findByRole('status');
     await userEvent.click(screen.getByRole('link', { name: resources.auth.page.backToSignIn }));
@@ -67,7 +77,7 @@ describe('ResetPasswordPage', () => {
     );
     renderPage('?token=stale-token');
 
-    await userEvent.type(passwordField(), 'a-new-long-passphrase');
+    await fillPasswords('a-new-long-passphrase');
     await submit();
 
     expect(
@@ -86,7 +96,7 @@ describe('ResetPasswordPage', () => {
     );
     renderPage('?token=reset-token');
 
-    await userEvent.type(passwordField(), 'my-current-passphrase');
+    await fillPasswords('my-current-passphrase');
     await submit();
 
     await waitFor(() =>
@@ -101,7 +111,7 @@ describe('ResetPasswordPage', () => {
     );
     renderPage('?token=reset-token');
 
-    await userEvent.type(passwordField(), 'password1234');
+    await fillPasswords('password1234');
     await submit();
 
     await waitFor(() =>
@@ -128,6 +138,52 @@ describe('ResetPasswordPage', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(resetPassword.linkInvalid);
   });
 
+  it('asks for the new password twice, sending nothing until both match', async () => {
+    let requests = 0;
+    server.use(
+      mockResetPassword(() => {
+        requests += 1;
+      }),
+    );
+    renderPage('?token=reset-token');
+
+    await fillPasswords('a-new-long-passphrase', 'a-new-long-passphrasE');
+    await submit();
+
+    await waitFor(() =>
+      expect(confirmPasswordField()).toHaveAccessibleErrorMessage(
+        resources.auth.validation.passwordMismatch,
+      ),
+    );
+    expect(confirmPasswordField()).toHaveAttribute('autocomplete', 'new-password');
+    expect(requests).toBe(0);
+  });
+
+  it('clears a mismatch when the first password is fixed to match', async () => {
+    renderPage('?token=reset-token');
+
+    await fillPasswords('a-new-long-passphrasE', 'a-new-long-passphrase');
+    await submit();
+    await waitFor(() => expect(confirmPasswordField()).toBeInvalid());
+
+    await userEvent.clear(passwordField());
+    await userEvent.type(passwordField(), 'a-new-long-passphrase');
+
+    await waitFor(() => expect(confirmPasswordField()).not.toBeInvalid());
+  });
+
+  it('reveals only the password field whose toggle is clicked', async () => {
+    renderPage('?token=reset-token');
+
+    const [newPasswordToggle] = screen.getAllByRole('button', {
+      name: resources.passwordInput.showPassword,
+    });
+    await userEvent.click(newPasswordToggle!);
+
+    expect(passwordField()).toHaveAttribute('type', 'text');
+    expect(confirmPasswordField()).toHaveAttribute('type', 'password');
+  });
+
   it('validates the new password before sending anything', async () => {
     let requests = 0;
     server.use(
@@ -137,7 +193,7 @@ describe('ResetPasswordPage', () => {
     );
     renderPage('?token=reset-token');
 
-    await userEvent.type(passwordField(), 'short');
+    await fillPasswords('short');
     await submit();
 
     await waitFor(() =>

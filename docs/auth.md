@@ -199,13 +199,47 @@ A `before` hook in `@nebula-chat/auth` vets the new password while the token is 
 unspent, because better-auth consumes the token before it hashes the password. It answers
 `400 PASSWORD_COMPROMISED` (Have I Been Pwned) or `400 PASSWORD_REUSED` (the current
 password), and the same link can be retried with a different password. The guard is
-[`libs/auth/src/resetPassword.ts`](../libs/auth/src/resetPassword.ts).
+[`libs/auth/src/passwordRejection.ts`](../libs/auth/src/passwordRejection.ts).
 
 ```bash
 curl -i -X POST http://localhost:3000/api/auth/reset-password \
   -H 'content-type: application/json' \
   -d '{"token":"<token from the link>","newPassword":"another-long-passphrase"}'
 ```
+
+#### `POST /api/auth/change-password` — Password change (signed in)
+
+A Registered user replaces their password by proving the current one. Body
+`{ currentPassword, newPassword, revokeOtherSessions? }`; the client always sends
+`revokeOtherSessions: true`, so every other auth session is deleted and the current device
+gets a fresh session cookie (devices holding a still-valid cookie cache stay signed in until
+it expires). better-auth answers `400 INVALID_PASSWORD` for a wrong current password,
+`PASSWORD_TOO_SHORT` / `PASSWORD_TOO_LONG`, and `PASSWORD_COMPROMISED` (Have I Been Pwned).
+The `before` hook in `@nebula-chat/auth` adds `400 PASSWORD_REUSED` when the new password
+equals the current one (`findChangePasswordRejection` in
+[`libs/auth/src/passwordRejection.ts`](../libs/auth/src/passwordRejection.ts)). No email is sent.
+
+```bash
+curl -i -X POST http://localhost:3000/api/auth/change-password \
+  -H 'content-type: application/json' -b cookies.txt \
+  -d '{"currentPassword":"old-passphrase","newPassword":"another-long-passphrase","revokeOtherSessions":true}'
+```
+
+#### `POST /api/auth/revoke-sessions` — sign out everywhere
+
+Deletes every auth session of the signed-in user, the current one included, but leaves this
+device's cookie in place, so Settings follows it with `sign-out`. Devices holding a still-valid
+cookie cache stay signed in until it expires (up to 5 minutes).
+
+#### `POST /api/auth/delete-user` — Account deletion
+
+Enabled by `user.deleteUser.enabled` in `@nebula-chat/auth`. Body `{ password? }`: a user with
+a credential password must send it — the `before` hook answers `400 PASSWORD_REQUIRED` when they
+don't (better-auth alone would accept a sign-in under a day old), and better-auth `400
+INVALID_PASSWORD` when it's wrong. A user without one (Google/GitHub only) sends nothing and
+needs an auth session younger than a day (`400 SESSION_EXPIRED` otherwise). The guard is
+[`libs/auth/src/deleteAccount.ts`](../libs/auth/src/deleteAccount.ts). Deletes the user's accounts, sessions and user row; their conversations and
+messages go with it through the `ON DELETE CASCADE` foreign keys. Clears the session cookie.
 
 #### `POST /api/auth/delete-anonymous-user` — delete the Guest
 

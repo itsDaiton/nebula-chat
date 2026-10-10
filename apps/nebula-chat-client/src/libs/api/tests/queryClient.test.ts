@@ -58,6 +58,21 @@ describe('createQueryClient', () => {
     expect(toast).not.toHaveBeenCalled();
   });
 
+  it('leaves a query that renders its own error inline untoasted', async () => {
+    const toast = vi.spyOn(toaster, 'create');
+    const client = createQueryClient({ retry: false });
+
+    await client
+      .fetchQuery({
+        queryKey: ['inline'],
+        queryFn: () => Promise.reject(new Error('boom')),
+        meta: { inlineError: true },
+      })
+      .catch(() => {});
+
+    expect(toast).not.toHaveBeenCalled();
+  });
+
   it('does not toast a query that succeeds', async () => {
     const toast = vi.spyOn(toaster, 'create');
     const client = createQueryClient({ retry: false });

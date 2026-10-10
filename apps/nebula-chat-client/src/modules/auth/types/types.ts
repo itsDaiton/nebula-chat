@@ -3,6 +3,9 @@ import type { IconType } from 'react-icons';
 import type { FieldValues, Path, UseFormRegisterReturn } from 'react-hook-form';
 import type { z } from 'zod';
 import type {
+  changePasswordSchema,
+  confirmDeleteAccountSchema,
+  deleteAccountSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
   signInSchema,
@@ -33,8 +36,23 @@ export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 
 export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
+export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
+
+export type DeleteAccountValues = z.infer<typeof deleteAccountSchema>;
+
+export type ConfirmDeleteAccountValues = z.infer<typeof confirmDeleteAccountSchema>;
+
+/** A new password and its confirmation, as every form that sets one holds them. */
+export type PasswordConfirmation = { password: string; confirmPassword: string };
+
+/** The current password and its replacement, as the Password change form holds them. */
+export type PasswordReplacement = { currentPassword: string; password: string };
+
+/** Where a rule comparing two fields reports, and what it says. */
+export type FieldComparisonError<Values> = { path: keyof Values & string; message: string };
+
 /** The form field an auth failure belongs to; `root` is the form as a whole. */
-export type AuthErrorField = 'email' | 'password' | 'root';
+export type AuthErrorField = 'email' | 'currentPassword' | 'password' | 'root';
 
 export type AuthErrorDescription = {
   field: AuthErrorField;
@@ -46,6 +64,8 @@ export type AuthFieldConfig<Values extends FieldValues> = {
   label: string;
   type: 'text' | 'email' | 'password';
   autoComplete: string;
+  /** A field this one is checked against: once touched, it re-validates as that one changes. */
+  comparedWith?: Path<Values>;
 };
 
 /** Everything that tells one auth form from another. */
@@ -57,12 +77,19 @@ export type AuthFormConfig<Values extends FieldValues> = {
   schema: z.ZodType<Values, Values>;
   fields: AuthFieldConfig<Values>[];
   request: (values: Values) => Promise<AuthResult>;
-  /** Shown in place of the form once it succeeds; without one, `onSuccess` moves on. */
+  /** Shown in place of the form once it succeeds; without one, the fields clear and `onSuccess` runs. */
   successMessage?: string;
+  /** The submit button warns that the action can't be undone. */
+  destructive?: boolean;
 };
 
 export type AuthFormProps<Values extends FieldValues> = {
   config: AuthFormConfig<Values>;
+  /**
+   * How much of its own heading the form shows, less where the page already labels it: `full` is title and
+   * description, `description` sits under a dialog's own title, `none` sits inside a labelled settings row.
+   */
+  header?: 'full' | 'description' | 'none';
   onSuccess?: () => void;
   /** Called after the failure is shown, for a page that reacts to a specific one. */
   onError?: (error: Error) => void;
@@ -97,8 +124,9 @@ export type AuthStatusProps = {
 };
 
 export type PasswordVisibilityState = {
-  isPasswordVisible: boolean;
-  togglePasswordVisibility: () => void;
+  /** Unmasked password fields by name; each field's toggle reveals only that field. */
+  visibleFields: Record<string, boolean>;
+  togglePasswordVisibility: (field: string) => void;
   hidePassword: () => void;
 };
 

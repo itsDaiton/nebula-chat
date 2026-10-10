@@ -70,6 +70,7 @@ const nameField = () => screen.getByRole('textbox', { name: resources.auth.field
 const emailField = () => screen.getByRole('textbox', { name: resources.auth.fields.email });
 // A masked password input has no ARIA role, so it is found by its label.
 const passwordField = () => screen.getByLabelText(resources.auth.fields.password);
+const confirmPasswordField = () => screen.getByLabelText(resources.auth.fields.confirmPassword);
 
 // Submitting validates, calls the API, refetches the session and navigates: slower than one tick.
 // Signed in shows as the account menu's avatar carrying the Registered user's initials.
@@ -88,11 +89,15 @@ const submitSignIn = () =>
 const submitSignUp = () =>
   userEvent.click(screen.getByRole('button', { name: resources.auth.actions.signUp }));
 
-const fillSignUp = async ({ password = 'hunter22hunter' } = {}) => {
+const fillSignUp = async ({
+  password = 'hunter22hunter',
+  confirmPassword = password,
+}: { password?: string; confirmPassword?: string } = {}) => {
   await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
   await userEvent.type(nameField(), 'Ada');
   await userEvent.type(emailField(), 'ada@example.com');
   await userEvent.type(passwordField(), password);
+  await userEvent.type(confirmPasswordField(), confirmPassword);
 };
 
 const fillSignIn = async () => {
@@ -105,7 +110,7 @@ const socialButton = (provider: string) => screen.getByRole('button', { name: pr
 beforeEach(() => {
   vi.restoreAllMocks();
   window.location.hash = '';
-  usePasswordVisibilityStore.setState({ isPasswordVisible: false });
+  usePasswordVisibilityStore.setState({ visibleFields: {} });
   session = aSession();
   server.use(
     mockGetSession(() => session),
@@ -148,11 +153,72 @@ describe('AuthPage', () => {
     await submitSignUp();
 
     expect(await findRegisteredMenu()).toBeInTheDocument();
-    expect(body).toMatchObject({
+    // The confirmation never leaves the browser.
+    expect(body).toEqual({
       name: 'Ada',
       email: 'ada@example.com',
       password: 'hunter22hunter',
+      callbackURL: expect.any(String),
     });
+  });
+
+  it('asks for the password twice, sending nothing until both match', async () => {
+    let signUps = 0;
+    server.use(
+      mockEmailSignUp(() => {
+        signUps += 1;
+      }),
+    );
+    renderAuthFlow();
+
+    await fillSignUp({ confirmPassword: 'hunter22hunteR' });
+    await submitSignUp();
+
+    await waitFor(() =>
+      expect(confirmPasswordField()).toHaveAccessibleErrorMessage(
+        resources.auth.validation.passwordMismatch,
+      ),
+    );
+    expect(confirmPasswordField()).toHaveAttribute('autocomplete', 'new-password');
+    expect(passwordField()).not.toBeInvalid();
+    expect(signUps).toBe(0);
+  });
+
+  it('clears a mismatch when the first password is fixed to match', async () => {
+    renderAuthFlow();
+
+    await fillSignUp({ password: 'hunter22hunteR', confirmPassword: 'hunter22hunter' });
+    await submitSignUp();
+    await waitFor(() => expect(confirmPasswordField()).toBeInvalid());
+
+    await userEvent.clear(passwordField());
+    await userEvent.type(passwordField(), 'hunter22hunter');
+
+    await waitFor(() => expect(confirmPasswordField()).not.toBeInvalid());
+  });
+
+  it('does not flag the confirmation before the user has filled it in', async () => {
+    renderAuthFlow();
+    await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
+
+    await userEvent.type(passwordField(), 'hunter22hunter');
+    await userEvent.click(nameField());
+    await userEvent.type(passwordField(), '!');
+
+    expect(confirmPasswordField()).not.toBeInvalid();
+  });
+
+  it('reveals only the password field whose toggle is clicked', async () => {
+    renderAuthFlow();
+    await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
+
+    const [, confirmToggle] = screen.getAllByRole('button', {
+      name: resources.passwordInput.showPassword,
+    });
+    await userEvent.click(confirmToggle!);
+
+    expect(confirmPasswordField()).toHaveAttribute('type', 'text');
+    expect(passwordField()).toHaveAttribute('type', 'password');
   });
 
   it("sends the verification email's link back to the verify page", async () => {

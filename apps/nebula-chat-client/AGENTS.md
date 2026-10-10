@@ -50,8 +50,8 @@ apps/nebula-chat-client/src/
 │   │   ├── stores/
 │   │   │   └── usePasswordVisibilityStore.ts
 │   │   ├── utils/
-│   │   │   ├── authSchemas.ts         # zod schemas for the sign-in / sign-up / forgot / reset forms
-│   │   │   ├── authForms.ts           # Form configs (sign-in, sign-up, forgot, reset): schema, fields, copy, better-auth call
+│   │   │   ├── authSchemas.ts         # zod schemas for the sign-in / sign-up / forgot / reset / change-password forms
+│   │   │   ├── authForms.ts           # Form configs (sign-in, sign-up, forgot, reset, change password): schema, fields, copy, better-auth call
 │   │   │   ├── authCallbackUrl.ts     # Absolute client URL an emailed link or social sign-in redirects back to
 │   │   │   ├── socialSignIn.ts        # Google/GitHub button configs + copy for the OAuth callback's ?error= code
 │   │   │   ├── runAuthRequest.ts      # better-auth call → AuthRequestError (copy + field) from its error code
@@ -62,8 +62,9 @@ apps/nebula-chat-client/src/
 │   │   │   ├── useAuthMutation.ts     # An auth form's mutation for its config's request
 │   │   │   ├── useResendVerification.ts # Re-sends the verification email; toasts on success
 │   │   │   ├── useSocialSignIn.ts     # Starts a Google/GitHub sign-in; better-auth then leaves for the provider
-│   │   │   ├── useSignOut.ts          # Sign-out; resets the bootstrap so AuthGate re-mints a Guest
-│   │   │   └── useIdentityChange.ts   # After any of them: reset server state, go to the chat root
+│   │   │   ├── useSignOut.ts          # Sign-out, then useAfterSignOut
+│   │   │   ├── useAfterSignOut.ts     # Once the auth session is gone: reset the bootstrap so AuthGate re-mints a Guest
+│   │   │   └── useIdentityChange.ts   # After any of them: reset server state and per-user UI state (allowance, settings search), go to the chat root
 │   │   └── components/
 │   │       ├── AuthGate.tsx       # Wraps the routes; renders nothing until a session (Guest at least) exists
 │   │       ├── AccountStatus.tsx  # Header: Sign in button for a Guest; UserMenu (name/email, Settings, Sign out) for a Registered user
@@ -103,7 +104,32 @@ apps/nebula-chat-client/src/
 │   │       ├── SendButton.tsx
 │   │       └── ...
 │   ├── settings/
-│   │   └── SettingsPage.tsx       # /settings — Registered-only (others → /auth), in the app shell; Password section
+│   │   ├── SettingsPage.tsx       # /settings — Registered-only (others → /auth); Account: Profile, Security, Account sections
+│   │   ├── types/types.ts
+│   │   ├── utils/
+│   │   │   ├── settingsSections.ts    # The settings navigation's sections (label, icon, route)
+│   │   │   ├── settingsSchemas.ts     # zod schema for the profile name
+│   │   │   └── settingsIndex.ts       # Searchable settings (copy + keywords) and the match rule
+│   │   ├── stores/
+│   │   │   ├── usePasswordChangeStore.ts  # Whether the Password row's change form is unfolded
+│   │   │   └── useSettingsSearchStore.ts  # The settings search text
+│   │   ├── hooks/
+│   │   │   ├── useUpdateName.ts       # better-auth update-user; the session refetch updates the header
+│   │   │   ├── useSettingsSearch.ts   # Which rows/sections the search leaves visible
+│   │   │   ├── useSignOutEverywhere.ts # revoke-sessions, then sign-out on this device
+│   │   │   └── useHasPassword.ts      # list-accounts → has a credential password (delete-account confirm)
+│   │   └── components/
+│   │       ├── SettingsLayout.tsx # App Header over Settings' own shell in place of the chat (no conversations): nav + open section
+│   │       ├── SettingsNav.tsx    # Search + "Settings" section links; a sidebar on desktop, a top bar on mobile
+│   │       ├── SettingsSearch.tsx # Front-end-only filter over the settings rows
+│   │       ├── SettingsSection.tsx # Titled group of rows (h2)
+│   │       ├── SettingsRow.tsx    # Label/description left, control right; stacked on mobile
+│   │       ├── ProfileNameForm.tsx # Full name row: edit in place, Save once changed
+│   │       ├── PasswordSetting.tsx # Password row whose button unfolds the change-password AuthForm
+│   │       ├── SignOutEverywhereSetting.tsx # Sign out of all devices row
+│   │       ├── DeleteAccountSetting.tsx # Delete account row + its alertdialog
+│   │       ├── DeleteAccountForm.tsx # Password confirm, or none for a Google/GitHub-only user
+│   │       └── AccountIdSetting.tsx # The user's UUID with a copy button
 │   └── conversations/
 │       ├── types/types.ts         # All conversation types
 │       ├── utils/                 # navigationActions
@@ -294,7 +320,7 @@ generate:api` after any backend change; generated files are never hand-edited.
   `AppError` from `@nebula-chat/errors`, built by `libs/api/utils/toAppError.ts`: an envelope keeps its code
   and message, anything else gets a code from its status and a generic message. `query.error` is therefore an `AppError` whose `message` is safe to
   show. The global `onError` in `libs/api/queryClient.ts` toasts every failure once; a component reads
-  `query.error` only for an inline state. A mutation whose form shows its failure inline sets
+  `query.error` only for an inline state. A query or mutation whose component shows its failure inline sets
   `meta: { inlineError: true }` and is not toasted.
 - **After a write the cache cannot see, invalidate** with the generated key helpers:
   `queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() })`. `useChatStream` invalidates the
@@ -377,7 +403,9 @@ context is genuinely needed, split it across two files:
 | `useDrawerStore`              | `shared/stores/`                | Mobile drawer open/closed                                        |
 | `useViewportStore`            | `shared/stores/`                | Viewport height string (updated on resize)                       |
 | `useMultiLineStore`           | `shared/stores/`                | Per-content multi-line detection map (`Record<string, boolean>`) |
-| `usePasswordVisibilityStore`  | `modules/auth/stores/`          | Whether the auth form's password is unmasked                     |
+| `usePasswordVisibilityStore`  | `modules/auth/stores/`          | Which password fields are unmasked, per field name               |
+| `usePasswordChangeStore`      | `modules/settings/stores/`      | Whether the Settings Password row's change form is unfolded      |
+| `useSettingsSearchStore`      | `modules/settings/stores/`      | The settings search text                                         |
 
 ---
 
@@ -396,8 +424,11 @@ context is genuinely needed, split it across two files:
 
 Forms use [react-hook-form](https://react-hook-form.com) with a [zod](https://zod.dev) schema through
 `zodResolver`. `AuthForm` in `modules/auth/components/` is the reference: sign-in, sign-up, forgot and
-reset password are one component fed four configs (`utils/authForms.ts`), not four copies — variants of a
-form differ by config. A config with a `successMessage` replaces the form with it once submitted.
+reset, change password and delete account are one component fed its configs (`utils/authForms.ts`), not copies —
+variants of a form differ by config. A config with a `successMessage` replaces the form with it once
+submitted; one without clears its fields and calls `onSuccess` (the change-password form stays on `/settings`
+and toasts). `header` trims the form's own heading where the page already labels it: `description` under a
+dialog's title, `none` inside a labelled settings row.
 
 - **The schema is the source of truth.** It lives in the owning module's `utils/` (`authSchemas.ts`), its
   messages come from `resources.ts`, and the form's value type is `z.infer<typeof schema>` in
@@ -405,6 +436,10 @@ form differ by config. A config with a `successMessage` replaces the form with i
 - `useForm({ resolver: zodResolver(schema), mode: 'onTouched' })`: a field validates on first blur, then
   on every change, so an error clears as soon as it is fixed. Set `noValidate` on the `<form>` so the
   browser's own bubbles never pre-empt the schema.
+- **A field checked against another** (a confirmation, new ≠ current) sets `comparedWith` in its field
+  config, so it re-validates once touched as that other field changes; the rule itself is an object
+  refinement in the schema (`compareFields` in `authSchemas.ts`), which zod otherwise skips while any field
+  is invalid.
 - **Errors render under their field.** Wrap each input in Chakra's `Field.Root invalid={…}` with a
   `Field.ErrorText`; Field wires `aria-invalid` and `aria-errormessage`, so tests assert with
   `toHaveAccessibleErrorMessage`.
@@ -520,7 +555,7 @@ pnpm frontend test:coverage
   routes live in `@/test/api`, the one place route strings are written; `@/test/auth` holds the auth
   fixture and handlers (`aSession`, `mockGetSession`, `mockAnonymousSignIn`, `mockEmailSignIn`,
   `mockEmailSignUp`, `mockSocialSignIn` (its redirect is a hash change to `providerConsentUrl()`, the one
-  navigation jsdom performs), `mockSignOut`, `mockRequestPasswordReset`, `mockResetPassword`,
+  navigation jsdom performs), `mockSignOut`, `mockRequestPasswordReset`, `mockResetPassword`, `mockChangePassword`, `mockUpdateUser`, `mockRevokeSessions`, `mockDeleteUser`, `mockListAccounts`,
   `mockSendVerificationEmail`) plus `refreshSession`, which refetches better-auth's module-level session
   store after a render, and `holdSession`, which serves a session and waits until that store holds it. Regenerate with `pnpm frontend generate:api` after any backend change.
 

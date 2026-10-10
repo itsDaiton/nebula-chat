@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth';
 import type { Auth, User as BetterAuthUser, Session as BetterAuthSession } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { APIError, createAuthMiddleware } from 'better-auth/api';
+import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api';
 import { anonymous, haveIBeenPwned, isPasswordCompromised, openAPI } from 'better-auth/plugins';
 import { users, session, account, verification } from '@nebula-chat/db';
 import type { DbClient } from '@nebula-chat/db';
@@ -11,7 +11,13 @@ import { passwordResetEmail, verificationEmail } from './authEmails';
 import { claimConversations } from './claim';
 import { toBetterAuthLogHandler } from './logger';
 import { markEmailVerified } from './markEmailVerified';
-import { RESET_PASSWORD_REJECTION_MESSAGES, findResetPasswordRejection } from './resetPassword';
+import {
+  PASSWORD_REJECTION_MESSAGES,
+  findChangePasswordRejection,
+  findPasswordRejection,
+} from './passwordRejection';
+import type { ChangePasswordAttempt, PasswordRejection } from './passwordRejection';
+import { DELETE_ACCOUNT_REJECTION_MESSAGES, findDeleteAccountRejection } from './deleteAccount';
 import type { EmailSender } from './resend';
 
 /**
@@ -64,6 +70,13 @@ export type SocialProviderCredentials = {
   github?: OAuthCredentials;
 };
 
+/** The rejection as better-auth's own errors look: its code and message, with a 400. */
+const toRejectionError = (rejection: PasswordRejection) =>
+  APIError.from('BAD_REQUEST', {
+    code: rejection,
+    message: PASSWORD_REJECTION_MESSAGES[rejection],
+  });
+
 /**
  * Build the configured better-auth instance for Nebula Chat.
  *
@@ -86,6 +99,10 @@ export type SocialProviderCredentials = {
  *   endpoints (importable into Bruno/Postman, etc.).
  * - email/password with password reset; verification is sent on sign-up but not
  *   required to sign in, sent in the background via `sendEmail` (ADR-0021).
+ * - `user.deleteUser` enabled for Settings → Delete account; the `before` hook makes a user
+ *   with a password send it (better-auth would accept a recent sign-in instead).
+ * - a `before` hook refusing an unchanged password (`PASSWORD_REUSED`) on
+ *   `/change-password`, and a breached or unchanged one on `/reset-password`.
  * - Google / GitHub social sign-in for each provider in `socialProviders`; its
  *   `/callback/*` runs the same anonymous `onLinkAccount` claim as email.
  */
@@ -118,6 +135,9 @@ export const createAuth = ({
     }),
     user: {
       modelName: 'users',
+      // Settings → Delete account: the password confirms it, or for a user without one a
+      // sign-in under a day old. Conversations and messages go with them (FK cascades).
+      deleteUser: { enabled: true },
     },
     advanced: {
       database: {
@@ -153,15 +173,40 @@ export const createAuth = ({
     // maps to `SET ... EX` (set) and `INCR` + create-only `EXPIRE` (increment, the
     // fixed-window semantics the secondary-storage rate limiter requires).
     hooks: {
-      // Refuse a breached or unchanged password before /reset-password consumes the token.
+      // Require the password on /delete-user, refuse an unchanged one on /change-password,
+      // and a breached or unchanged one before /reset-password consumes the token.
       before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path === '/delete-user') {
+          const authSession = await getSessionFromCtx(ctx);
+          // No session is better-auth's own 401.
+          if (!authSession) return;
+          const accounts = await ctx.context.internalAdapter.findAccounts(authSession.user.id);
+          const rejection = findDeleteAccountRejection({
+            password: (ctx.body as { password?: string } | undefined)?.password,
+            hasPassword: accounts.some(({ providerId }) => providerId === 'credential'),
+          });
+          if (rejection) {
+            throw APIError.from('BAD_REQUEST', {
+              code: rejection,
+              message: DELETE_ACCOUNT_REJECTION_MESSAGES[rejection],
+            });
+          }
+          return;
+        }
+        if (ctx.path === '/change-password') {
+          const rejection = findChangePasswordRejection(
+            (ctx.body as ChangePasswordAttempt | undefined) ?? {},
+          );
+          if (rejection) throw toRejectionError(rejection);
+          return;
+        }
         if (ctx.path !== '/reset-password') return;
         const body = ctx.body as { token?: string; newPassword?: string } | undefined;
         const token = body?.token ?? (ctx.query?.['token'] as string | undefined);
         if (!token || !body?.newPassword) return;
 
         const { internalAdapter, password } = ctx.context;
-        const rejection = await findResetPasswordRejection(
+        const rejection = await findPasswordRejection(
           { token, newPassword: body.newPassword },
           {
             findResetToken: async (resetToken) => {
@@ -178,12 +223,7 @@ export const createAuth = ({
             isPasswordCompromised,
           },
         );
-        if (rejection) {
-          throw APIError.from('BAD_REQUEST', {
-            code: rejection,
-            message: RESET_PASSWORD_REJECTION_MESSAGES[rejection],
-          });
-        }
+        if (rejection) throw toRejectionError(rejection);
       }),
     },
     secondaryStorage: {

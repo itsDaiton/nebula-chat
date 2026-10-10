@@ -104,6 +104,9 @@ overrides:
   # which is still inside the minimumReleaseAge cooldown above). Stay on the
   # 4.x line — js-yaml 5 is a breaking change orval has not adopted.
   js-yaml: ^4.3.2
+  # css-tree (via jsdom, test-only) asks for source-map-js ^1.2.1; 1.2.2 fixes the DoS in
+  # malformed indexed source maps (GHSA-68fv-2mgg-jv7q, CVE-2026-93749).
+  source-map-js: ^1.2.2
   # orval 8.37 pulls @scalar/json-magic, which pins undici to an exact 7.24.4 /
   # 7.29.0 — both below 7.29.1, the release fixing GHSA-rfgv-xxqx-mfg5 and the
   # rest of the advisories grype reports. Scoped to that parent: a bare
