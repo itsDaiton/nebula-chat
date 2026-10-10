@@ -107,7 +107,7 @@ apps/nebula-chat-client/src/
 │   │   ├── types/types.ts
 │   │   ├── utils/settingsSections.ts  # The settings navigation's sections (label, icon, route)
 │   │   └── components/
-│   │       ├── SettingsLayout.tsx # Full-screen shell apart from the chat (no Header/drawer): nav, open section, close (X)
+│   │       ├── SettingsLayout.tsx # App Header over Settings' own shell in place of the chat (no conversations): nav, open section, close (X)
 │   │       └── SettingsNav.tsx    # "Settings" section links; a sidebar on desktop, a top bar on mobile
 │   └── conversations/
 │       ├── types/types.ts         # All conversation types

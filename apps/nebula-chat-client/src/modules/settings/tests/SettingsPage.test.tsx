@@ -12,6 +12,10 @@ import { holdSession, mockChangePassword, mockGetSession, refreshSession } from 
 import { server } from '@/test/msw';
 import { renderWithChakra } from '@/test/render';
 
+vi.mock('@/theme/hooks/useColorMode', () => ({
+  useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
+}));
+
 const AUTH_PAGE = 'auth page';
 const CHAT_PAGE = 'chat page';
 const { fields } = resources.auth;
@@ -62,7 +66,7 @@ beforeEach(() => {
 
 describe('SettingsPage', () => {
   describe('layout', () => {
-    it('opens on its own, without the chat header or conversations', async () => {
+    it("keeps the app's navbar but replaces the chat, conversations included", async () => {
       await holdSession({ isAnonymous: false });
 
       renderPage();
@@ -70,7 +74,9 @@ describe('SettingsPage', () => {
       expect(
         screen.getByRole('heading', { level: 1, name: resources.settings.sections.account }),
       ).toBeInTheDocument();
-      expect(screen.queryByRole('banner')).not.toBeInTheDocument();
+      expect(
+        within(screen.getByRole('banner')).getByRole('button', { name: resources.userMenu.label }),
+      ).toBeInTheDocument();
       expect(screen.queryByText(resources.conversations.title)).not.toBeInTheDocument();
     });
 
