@@ -12,11 +12,11 @@ import { claimConversations } from './claim';
 import { toBetterAuthLogHandler } from './logger';
 import { markEmailVerified } from './markEmailVerified';
 import {
-  RESET_PASSWORD_REJECTION_MESSAGES,
+  PASSWORD_REJECTION_MESSAGES,
   findChangePasswordRejection,
-  findResetPasswordRejection,
-} from './resetPassword';
-import type { ChangePasswordAttempt, ResetPasswordRejection } from './resetPassword';
+  findPasswordRejection,
+} from './passwordRejection';
+import type { ChangePasswordAttempt, PasswordRejection } from './passwordRejection';
 import { DELETE_ACCOUNT_REJECTION_MESSAGES, findDeleteAccountRejection } from './deleteAccount';
 import type { EmailSender } from './resend';
 
@@ -71,10 +71,10 @@ export type SocialProviderCredentials = {
 };
 
 /** The rejection as better-auth's own errors look: its code and message, with a 400. */
-const toRejectionError = (rejection: ResetPasswordRejection) =>
+const toRejectionError = (rejection: PasswordRejection) =>
   APIError.from('BAD_REQUEST', {
     code: rejection,
-    message: RESET_PASSWORD_REJECTION_MESSAGES[rejection],
+    message: PASSWORD_REJECTION_MESSAGES[rejection],
   });
 
 /**
@@ -206,7 +206,7 @@ export const createAuth = ({
         if (!token || !body?.newPassword) return;
 
         const { internalAdapter, password } = ctx.context;
-        const rejection = await findResetPasswordRejection(
+        const rejection = await findPasswordRejection(
           { token, newPassword: body.newPassword },
           {
             findResetToken: async (resetToken) => {

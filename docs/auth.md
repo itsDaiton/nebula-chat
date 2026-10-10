@@ -199,7 +199,7 @@ A `before` hook in `@nebula-chat/auth` vets the new password while the token is 
 unspent, because better-auth consumes the token before it hashes the password. It answers
 `400 PASSWORD_COMPROMISED` (Have I Been Pwned) or `400 PASSWORD_REUSED` (the current
 password), and the same link can be retried with a different password. The guard is
-[`libs/auth/src/resetPassword.ts`](../libs/auth/src/resetPassword.ts).
+[`libs/auth/src/passwordRejection.ts`](../libs/auth/src/passwordRejection.ts).
 
 ```bash
 curl -i -X POST http://localhost:3000/api/auth/reset-password \
@@ -217,7 +217,7 @@ it expires). better-auth answers `400 INVALID_PASSWORD` for a wrong current pass
 `PASSWORD_TOO_SHORT` / `PASSWORD_TOO_LONG`, and `PASSWORD_COMPROMISED` (Have I Been Pwned).
 The `before` hook in `@nebula-chat/auth` adds `400 PASSWORD_REUSED` when the new password
 equals the current one (`findChangePasswordRejection` in
-[`libs/auth/src/resetPassword.ts`](../libs/auth/src/resetPassword.ts)). No email is sent.
+[`libs/auth/src/passwordRejection.ts`](../libs/auth/src/passwordRejection.ts)). No email is sent.
 
 ```bash
 curl -i -X POST http://localhost:3000/api/auth/change-password \

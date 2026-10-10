@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { findChangePasswordRejection, findResetPasswordRejection } from '../resetPassword';
-import type { ResetPasswordChecks } from '../resetPassword';
+import { findChangePasswordRejection, findPasswordRejection } from '../passwordRejection';
+import type { ResetPasswordChecks } from '../passwordRejection';
 
 const NOW = new Date('2026-10-04T12:00:00.000Z');
 const IN_AN_HOUR = new Date('2026-10-04T13:00:00.000Z');
@@ -16,9 +16,9 @@ const makeChecks = (overrides: Partial<ResetPasswordChecks> = {}): ResetPassword
 });
 
 const attempt = (newPassword: string, checks: ResetPasswordChecks) =>
-  findResetPasswordRejection({ token: 'token-1', newPassword }, checks);
+  findPasswordRejection({ token: 'token-1', newPassword }, checks);
 
-describe('findResetPasswordRejection', () => {
+describe('findPasswordRejection', () => {
   it('accepts a fresh password on a live token', async () => {
     expect(await attempt('a-brand-new-passphrase', makeChecks())).toBeNull();
   });
