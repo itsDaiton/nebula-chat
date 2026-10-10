@@ -16,8 +16,8 @@
   "dependencies": {
     "@fastify/cors": "^11.3.0",
     "@fastify/rate-limit": "^11.2.0",
-    "@fastify/sensible": "^6.0.0",
-    "@fastify/swagger": "^9.9.0",
+    "@fastify/sensible": "^6.0.6",
+    "@fastify/swagger": "^9.9.1",
     "@fastify/swagger-ui": "^6.1.1",
     "@fastify/under-pressure": "^9.2.0",
     "@nebula-chat/auth": "workspace:*",
@@ -39,7 +39,7 @@
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "nodemon": "^3.1.14",
-    "tsc-alias": "^1.9.5",
+    "tsc-alias": "^1.9.7",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
