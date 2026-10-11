@@ -23,6 +23,7 @@ import chatRoutes from '@backend/modules/chat/chat.routes';
 import conversationRoutes from '@backend/modules/conversation/conversation.routes';
 import logLevelRoutes from '@backend/modules/logLevel/logLevel.routes';
 import messageRoutes from '@backend/modules/message/message.routes';
+import profileImageRoutes from '@backend/modules/profileImage/profileImage.routes';
 import authGate from '@backend/plugins/authGate.plugin';
 import dbPlugin from '@backend/plugins/db.plugin';
 import redisPlugin from '@backend/plugins/redis.plugin';
@@ -98,6 +99,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
         { name: 'Chat', description: 'Chat streaming endpoints' },
         { name: 'Conversations', description: 'Conversation management' },
         { name: 'Messages', description: 'Message management' },
+        { name: 'Profile image', description: "A Registered user's Profile image" },
         { name: 'Operator', description: 'Operations for whoever runs the deployment' },
       ],
       components: {
@@ -162,6 +164,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   await app.register(chatRoutes, { prefix: '/api/chat' });
   await app.register(conversationRoutes, { prefix: '/api/conversations' });
   await app.register(messageRoutes, { prefix: '/api/messages' });
+  await app.register(profileImageRoutes, { prefix: '/api/profile-image' });
   await app.register(logLevelRoutes, { prefix: '/api/internal/log-level' });
 
   return app;

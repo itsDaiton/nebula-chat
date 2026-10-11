@@ -1,3 +1,4 @@
+import { parseUserInput, parseUserOutput } from 'better-auth/db';
 import { describe, expect, it, vi } from 'vitest';
 import type { DbClient } from '@nebula-chat/db';
 import type { Logger } from '@nebula-chat/otel';
@@ -109,6 +110,52 @@ describe('createAuth social sign-in', () => {
     expect(response.status).toBe(302);
     expect(response.headers.get('location')).toBe(
       'http://localhost:5173/auth?error=state_not_found',
+    );
+  });
+});
+
+describe('createAuth Profile image', () => {
+  it('refuses a client that sets the storage key through update-user', () => {
+    const { options } = buildAuth();
+
+    expect(() => parseUserInput(options, { profileImageKey: 'user-1/x.webp' }, 'update')).toThrow(
+      'profileImageKey is not allowed to be set',
+    );
+  });
+
+  it('keeps the storage key out of the user it sends the client', () => {
+    const { options } = buildAuth();
+
+    const user = parseUserOutput(options, {
+      id: 'user-1',
+      name: 'Ada',
+      email: 'ada@example.com',
+      emailVerified: true,
+      image: 'https://cdn.example.com/user-1/x.webp',
+      profileImageKey: 'user-1/x.webp',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    expect(user).toMatchObject({ image: 'https://cdn.example.com/user-1/x.webp' });
+    expect(user).not.toHaveProperty('profileImageKey');
+  });
+
+  it.each(['google', 'github'] as const)(
+    'never refreshes the %s picture on a later sign-in, so an upload sticks',
+    (provider) => {
+      const { options } = buildAuth(CREDENTIALS);
+
+      expect(options.socialProviders?.[provider]).toMatchObject({
+        clientId: CREDENTIALS[provider].clientId,
+        overrideUserInfoOnSignIn: false,
+      });
+    },
+  );
+
+  it('never copies a linked provider profile onto the user', () => {
+    expect(buildAuth(CREDENTIALS).options.account?.accountLinking?.updateUserInfoOnLink).toBe(
+      false,
     );
   });
 });

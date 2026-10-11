@@ -26,6 +26,9 @@ export const LOG_EVENTS = [
   'cache.check.failed',
   'cache.capture.failed',
   'cache.entry.unparseable',
+  // Profile image storage
+  'profile_image.delete.failed',
+  'profile_image.orphaned',
   // Redis
   'redis.connection.failed',
   'redis.connection.restored',

@@ -3,6 +3,11 @@ import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  getGetProfileImageSettingsMockHandler,
+  getRemoveProfileImageMockHandler,
+  getUploadProfileImageMockHandler,
+} from '@/libs/api/generated/profile-image/profile-image.msw';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import { SettingsPage } from '@/modules/settings/SettingsPage';
 import { usePasswordChangeStore } from '@/modules/settings/stores/usePasswordChangeStore';
@@ -12,6 +17,7 @@ import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import {
+  aSession,
   holdSession,
   mockChangePassword,
   mockDeleteUser,
@@ -22,6 +28,7 @@ import {
   mockUpdateUser,
   refreshSession,
 } from '@/test/auth';
+import { aSendableFile } from '@/test/files';
 import { server } from '@/test/msw';
 import { renderWithChakra } from '@/test/render';
 
@@ -79,6 +86,7 @@ const countRequests = () => {
 
 beforeEach(() => {
   vi.restoreAllMocks();
+  server.use(getGetProfileImageSettingsMockHandler({ uploadsEnabled: true }));
   usePasswordVisibilityStore.setState({ visibleFields: {} });
   usePasswordChangeStore.setState({ isPasswordFormOpen: false });
   useSettingsSearchStore.setState({ query: '' });
@@ -290,6 +298,200 @@ describe('SettingsPage', () => {
       await waitFor(() =>
         expect(nameField()).toHaveAccessibleErrorMessage(resources.auth.errors.unknown),
       );
+    });
+  });
+
+  describe('Profile image', () => {
+    const IMAGE_URL = 'https://storage.test/profile-images/user-1/new.webp';
+    const { image: copy } = profile;
+
+    // Rendered once the server says uploads are on.
+    const imageInput = () => screen.findByLabelText<HTMLInputElement>(copy.label);
+    const uploadButton = () => screen.queryByRole('button', { name: copy.upload });
+    const removeButton = () => screen.queryByRole('button', { name: copy.remove });
+    // jsdom loads no image, so Chakra keeps it hidden; the element still says which one it is.
+    const avatarImages = () => screen.queryAllByAltText('Ada');
+
+    const pick = async (file: Promise<File>) =>
+      userEvent.setup({ applyAccept: false }).upload(await imageInput(), await file);
+
+    const aFile = (type = 'image/png', size = 1024) =>
+      aSendableFile(`me.${type.split('/')[1]}`, type, size);
+
+    /** Serves the session with `image` once the server has it, recording each read past the cache. */
+    const serveSession = (initialImage: string | null) => {
+      const state = { image: initialImage, uncachedReads: 0 };
+      server.use(
+        mockGetSession((request) => {
+          if (new URL(request.url).searchParams.get('disableCookieCache') === 'true') {
+            state.uncachedReads += 1;
+          }
+          return aSession({ isAnonymous: false, image: state.image });
+        }),
+      );
+      return state;
+    };
+
+    it('shows initials, Upload image and no Remove for a user without one', async () => {
+      await holdSession({ isAnonymous: false });
+      renderPage();
+
+      expect(await screen.findByRole('button', { name: copy.upload })).toBeInTheDocument();
+      expect(removeButton()).not.toBeInTheDocument();
+      expect(avatarImages()).toEqual([]);
+    });
+
+    it('sits above the name in the Profile section', async () => {
+      await holdSession({ isAnonymous: false });
+      renderPage();
+
+      const label = screen.getByText(copy.label);
+      expect(label.compareDocumentPosition(nameField())).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    });
+
+    it('uploads the picked file as it is, then shows it in Settings and the header', async () => {
+      await holdSession({ isAnonymous: false });
+      const session = serveSession(null);
+      const toast = vi.spyOn(toaster, 'create');
+      const sent: { type: string | null; size: number }[] = [];
+      server.use(
+        getUploadProfileImageMockHandler(async ({ request }) => {
+          sent.push({
+            type: request.headers.get('content-type'),
+            size: (await request.arrayBuffer()).byteLength,
+          });
+          session.image = IMAGE_URL;
+          return { image: IMAGE_URL };
+        }),
+      );
+      renderPage();
+
+      await pick(aFile('image/webp', 2048));
+
+      await waitFor(() => expect(avatarImages()).toHaveLength(2));
+      for (const img of avatarImages()) expect(img).toHaveAttribute('src', IMAGE_URL);
+      expect(sent).toEqual([{ type: 'image/webp', size: 2048 }]);
+      expect(session.uncachedReads).toBe(1);
+      expect(toast).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'success', title: copy.uploaded }),
+      );
+    });
+
+    it('shows the upload as pending on the Avatar', async () => {
+      await holdSession({ isAnonymous: false });
+      let finish: () => void = () => {};
+      server.use(
+        getUploadProfileImageMockHandler(
+          () =>
+            new Promise((resolve) => {
+              finish = () => resolve({ image: IMAGE_URL });
+            }),
+        ),
+      );
+      renderPage();
+
+      await pick(aFile());
+
+      expect(await screen.findByLabelText(copy.uploading)).toBeInTheDocument();
+      finish();
+      await waitFor(() => expect(screen.queryByLabelText(copy.uploading)).not.toBeInTheDocument());
+    });
+
+    it.each([
+      ['a file of another type', aFile('image/gif'), copy.errors.wrongType],
+      ['a file over 5 MB', aFile('image/png', 5 * 1024 * 1024 + 1), copy.errors.tooLarge],
+    ])('refuses %s without sending it', async (_case, file, message) => {
+      await holdSession({ isAnonymous: false });
+      let requests = 0;
+      server.use(
+        getUploadProfileImageMockHandler(() => {
+          requests += 1;
+          return { image: IMAGE_URL };
+        }),
+      );
+      renderPage();
+
+      await pick(file);
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(message);
+      expect(requests).toBe(0);
+    });
+
+    it.each([
+      [400, 'BadRequest', copy.errors.wrongType],
+      [413, 'PayloadTooLarge', copy.errors.tooLarge],
+      [429, 'TooManyRequests', copy.errors.rateLimited],
+      [500, 'Internal', copy.errors.failed],
+    ])('explains a %i from the server', async (status, error, message) => {
+      await holdSession({ isAnonymous: false });
+      server.use(
+        mockApiError('put', API_ROUTE.profileImage, status, {
+          success: false,
+          error,
+          message: 'from the server',
+        }),
+      );
+      renderPage();
+
+      await pick(aFile());
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(message);
+    });
+
+    it('hides Upload image while uploads are switched off', async () => {
+      server.use(getGetProfileImageSettingsMockHandler({ uploadsEnabled: false }));
+      await holdSession({ isAnonymous: false });
+      renderPage();
+
+      expect(await screen.findByText(copy.label)).toBeInTheDocument();
+      await waitFor(() => expect(uploadButton()).not.toBeInTheDocument());
+    });
+
+    it('removes the image, going back to initials in Settings and the header', async () => {
+      await holdSession({ isAnonymous: false, image: IMAGE_URL });
+      const session = serveSession(IMAGE_URL);
+      const toast = vi.spyOn(toaster, 'create');
+      let removals = 0;
+      server.use(
+        getRemoveProfileImageMockHandler(() => {
+          removals += 1;
+          session.image = null;
+        }),
+      );
+      renderPage();
+      expect(avatarImages()).toHaveLength(2);
+
+      await userEvent.click(removeButton()!);
+
+      await waitFor(() => expect(avatarImages()).toEqual([]));
+      expect(removals).toBe(1);
+      expect(session.uncachedReads).toBe(1);
+      expect(removeButton()).not.toBeInTheDocument();
+      expect(toast).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'success', title: copy.removed }),
+      );
+    });
+
+    it('keeps a provider picture removable while uploads are switched off', async () => {
+      server.use(getGetProfileImageSettingsMockHandler({ uploadsEnabled: false }));
+      await holdSession({ isAnonymous: false, image: 'https://avatars.githubusercontent.com/u/1' });
+      renderPage();
+
+      expect(removeButton()).toBeInTheDocument();
+      for (const img of avatarImages()) {
+        expect(img).toHaveAttribute('src', 'https://avatars.githubusercontent.com/u/1');
+      }
+    });
+
+    it('shows a failed removal', async () => {
+      await holdSession({ isAnonymous: false, image: IMAGE_URL });
+      server.use(mockApiError('delete', API_ROUTE.profileImage, 500));
+      renderPage();
+
+      await userEvent.click(removeButton()!);
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(copy.errors.failed);
+      expect(avatarImages()).toHaveLength(2);
     });
   });
 

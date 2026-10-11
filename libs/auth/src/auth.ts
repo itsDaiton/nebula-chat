@@ -78,6 +78,18 @@ const toRejectionError = (rejection: PasswordRejection) =>
   });
 
 /**
+ * Each provider with `overrideUserInfoOnSignIn` off: its picture fills `image` when the user is
+ * created and a later sign-in never refreshes it, so an uploaded Profile image sticks (NEB-473).
+ */
+const withProviderPictureKept = (providers: SocialProviderCredentials) =>
+  Object.fromEntries(
+    Object.entries(providers).map(([provider, credentials]) => [
+      provider,
+      { ...credentials, overrideUserInfoOnSignIn: false },
+    ]),
+  );
+
+/**
  * Build the configured better-auth instance for Nebula Chat.
  *
  * - Drizzle adapter over `@nebula-chat/db` (`provider: 'pg'`), with the schema
@@ -105,6 +117,7 @@ const toRejectionError = (rejection: PasswordRejection) =>
  *   `/change-password`, and a breached or unchanged one on `/reset-password`.
  * - Google / GitHub social sign-in for each provider in `socialProviders`; its
  *   `/callback/*` runs the same anonymous `onLinkAccount` claim as email.
+ * - `profileImageKey`, a server-only user field clients can neither write nor read (ADR-0022).
  */
 export const createAuth = ({
   db,
@@ -138,6 +151,10 @@ export const createAuth = ({
       // Settings → Delete account: the password confirms it, or for a user without one a
       // sign-in under a day old. Conversations and messages go with them (FK cascades).
       deleteUser: { enabled: true },
+      additionalFields: {
+        // Where our upload sits in storage; unset means `image` is a provider URL or empty.
+        profileImageKey: { type: 'string', required: false, input: false, returned: false },
+      },
     },
     advanced: {
       database: {
@@ -158,7 +175,11 @@ export const createAuth = ({
       // The reset link was emailed to this address, so following it proves ownership.
       onPasswordReset: ({ user }) => markEmailVerified(db, user.id),
     },
-    socialProviders,
+    socialProviders: withProviderPictureKept(socialProviders),
+    account: {
+      // A link never copies the provider's profile, so it can't replace an uploaded Profile image.
+      accountLinking: { updateUserInfoOnLink: false },
+    },
     // Without it, a callback with no usable OAuth state lands on better-auth's own error page.
     ...(errorURL && { onAPIError: { errorURL } }),
     emailVerification: {

@@ -19,8 +19,18 @@ export type AuthGateProps = {
 export type UserMenuProps = {
   /** The Registered user's name, shown as initials on their Avatar. */
   name: string;
+  /** Their Profile image URL, if they have one. */
+  image?: string | null;
   /** The menu's heading and items. */
   children: ReactNode;
+};
+
+export type UserAvatarProps = {
+  /** The Registered user's name, shown as initials without a Profile image. */
+  name: string;
+  /** Their Profile image URL, if they have one. */
+  image?: string | null;
+  size?: 'sm' | '2xl';
 };
 
 /** What better-auth's client resolves with; only the failure matters to the forms. */

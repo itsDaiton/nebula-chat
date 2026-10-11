@@ -15,6 +15,12 @@ export const SETTINGS_SECTION_TITLES: Record<SettingsSectionId, string> = {
 
 /** Every searchable setting on the Account page, keyed by the row that renders it. */
 export const SETTINGS_INDEX: Record<SettingsEntryId, SettingsEntry> = {
+  image: {
+    section: 'profile',
+    label: profile.image.label,
+    description: profile.image.description,
+    keywords: ['avatar', 'picture', 'photo', 'upload', 'remove'],
+  },
   name: {
     section: 'profile',
     label: profile.name.label,

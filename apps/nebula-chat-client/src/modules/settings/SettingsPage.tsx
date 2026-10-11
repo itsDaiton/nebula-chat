@@ -5,6 +5,7 @@ import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { AccountIdSetting } from '@/modules/settings/components/AccountIdSetting';
 import { DeleteAccountSetting } from '@/modules/settings/components/DeleteAccountSetting';
 import { PasswordSetting } from '@/modules/settings/components/PasswordSetting';
+import { ProfileImageSetting } from '@/modules/settings/components/ProfileImageSetting';
 import { ProfileNameForm } from '@/modules/settings/components/ProfileNameForm';
 import { SettingsLayout } from '@/modules/settings/components/SettingsLayout';
 import { SettingsSection } from '@/modules/settings/components/SettingsSection';
@@ -31,6 +32,7 @@ export const SettingsPage = () => {
 
   // Every searchable entry has exactly one row.
   const rows: Record<SettingsEntryId, ReactNode> = {
+    image: <ProfileImageSetting name={user?.name ?? ''} image={user?.image ?? null} />,
     name: <ProfileNameForm name={user?.name ?? ''} />,
     password: <PasswordSetting />,
     signOutEverywhere: <SignOutEverywhereSetting />,

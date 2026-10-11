@@ -146,6 +146,21 @@ export const resources = {
     },
     profile: {
       title: 'Profile',
+      image: {
+        label: 'Profile image',
+        description: 'A JPEG, PNG or WebP of up to 5 MB, cropped to a square.',
+        upload: 'Upload image',
+        remove: 'Remove',
+        uploading: 'Uploading your Profile image',
+        uploaded: 'Profile image updated.',
+        removed: 'Profile image removed.',
+        errors: {
+          wrongType: 'Choose a still JPEG, PNG or WebP image.',
+          tooLarge: 'Choose an image of 5 MB or less.',
+          rateLimited: "You've changed your Profile image too often. Try again in an hour.",
+          failed: "Your Profile image couldn't be saved. Please try again.",
+        },
+      },
       name: {
         label: 'Full name',
         save: 'Save',

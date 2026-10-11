@@ -177,6 +177,11 @@ once, and nobody else does:
   `cache.clear.failed`, `cache.check.failed`, `cache.capture.failed`) with `err`
   and the key or pattern. A cached token line that cannot be parsed is skipped
   with a `cache.entry.unparseable` warning.
+- **Profile image storage.** A replaced or removed Profile image's file is
+  deleted after the user is saved, so a failed delete never fails the request:
+  it is a `warn`, `profile_image.delete.failed` with `err` and
+  `nebula.profile_image.key`. Removing an uploaded image while no storage is
+  configured leaves its file behind, logged as `profile_image.orphaned`.
 - **Redis connection.** `@nebula-chat/redis` listens for ioredis's `error`
   event, which fires on every failed (re)connect, so nothing reaches
   `console.error`. The first failure of an outage is one `error` line,
@@ -191,19 +196,19 @@ rejects an `error` key in a log call's object across the backend packages.
 
 ## The attribute catalogue
 
-| Concern     | Keys                                                                                                                                                                                     |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Service     | `service.name`, `service.version`, `deployment.environment.name`, `pid` (base fields); no `hostname`                                                                                     |
-| Request     | `http.request.method`, `url.path` (no query string, path tokens redacted), `http.route`, `http.response.status_code`, `http.request.id`, `server.address`, `server.port`                 |
-| Error       | `err` (object; `err.type` is the class name), `error.type` (the classification: the `AppError` code, `Internal` when unclassified)                                                       |
-| LLM         | `gen_ai.provider.name`, `gen_ai.request.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`                                                                                |
-| User        | `user.id`, `nebula.user.kind` (`guest` \| `registered`)                                                                                                                                  |
-| Domain      | `nebula.session.id`, `nebula.message.id`, `nebula.reply.message.id`, `nebula.run.id`, `nebula.step.id`, `nebula.agent.name`, `nebula.job.id`, `nebula.cache.key`, `nebula.cache.pattern` |
-| Subsystem   | `nebula.component` (`auth`, `chat`, `http`, `llm`, `otel`, `redis`)                                                                                                                      |
-| Log control | `nebula.log.target` (`root` or a component), `nebula.log.level.from`, `nebula.log.level.to`, `nebula.log.level.expires_at`, `nebula.operator`                                            |
-| Outcome     | `nebula.duration_ms`, `nebula.outcome`                                                                                                                                                   |
-| Trace       | `trace_id`, `span_id`                                                                                                                                                                    |
-| Adapters    | `args` (a third-party logger's extra arguments)                                                                                                                                          |
+| Concern     | Keys                                                                                                                                                                                                                 |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Service     | `service.name`, `service.version`, `deployment.environment.name`, `pid` (base fields); no `hostname`                                                                                                                 |
+| Request     | `http.request.method`, `url.path` (no query string, path tokens redacted), `http.route`, `http.response.status_code`, `http.request.id`, `server.address`, `server.port`                                             |
+| Error       | `err` (object; `err.type` is the class name), `error.type` (the classification: the `AppError` code, `Internal` when unclassified)                                                                                   |
+| LLM         | `gen_ai.provider.name`, `gen_ai.request.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`                                                                                                            |
+| User        | `user.id`, `nebula.user.kind` (`guest` \| `registered`)                                                                                                                                                              |
+| Domain      | `nebula.session.id`, `nebula.message.id`, `nebula.reply.message.id`, `nebula.run.id`, `nebula.step.id`, `nebula.agent.name`, `nebula.job.id`, `nebula.cache.key`, `nebula.cache.pattern`, `nebula.profile_image.key` |
+| Subsystem   | `nebula.component` (`auth`, `chat`, `http`, `llm`, `otel`, `redis`)                                                                                                                                                  |
+| Log control | `nebula.log.target` (`root` or a component), `nebula.log.level.from`, `nebula.log.level.to`, `nebula.log.level.expires_at`, `nebula.operator`                                                                        |
+| Outcome     | `nebula.duration_ms`, `nebula.outcome`                                                                                                                                                                               |
+| Trace       | `trace_id`, `span_id`                                                                                                                                                                                                |
+| Adapters    | `args` (a third-party logger's extra arguments)                                                                                                                                                                      |
 
 Keys follow [OpenTelemetry semantic conventions](https://opentelemetry.io/docs/specs/semconv/)
 where one exists, and `nebula.*` for domain concepts.

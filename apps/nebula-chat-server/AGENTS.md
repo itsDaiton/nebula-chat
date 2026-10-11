@@ -46,6 +46,7 @@ apps/nebula-chat-server/src/
 ├── db.ts                          # DB client singleton (createDbClient from @nebula-chat/db)
 ├── redis.ts                       # Redis toolkit singleton + chat cache helpers (createRedis from @nebula-chat/redis)
 ├── auth.ts                        # better-auth instance singleton (createAuth from @nebula-chat/auth)
+├── profileImageStore.ts           # Profile image store singleton: Supabase Storage from env, or null (uploads off)
 ├── config/
 │   ├── cors.config.ts             # Allowed origins, CORS options
 │   ├── headers.config.ts          # Opens a hijacked SSE response: forwards the reply's CORS headers, sets the SSE ones
@@ -78,6 +79,16 @@ apps/nebula-chat-server/src/
 │   │   ├── message.service.ts
 │   │   ├── message.controller.ts
 │   │   └── message.routes.ts
+│   ├── profileImage/              # GET /settings, PUT and DELETE /api/profile-image (ADR-0022)
+│   │   ├── profileImage.types.ts  # incl. the ProfileImageStore interface (put/delete)
+│   │   ├── profileImage.validation.ts
+│   │   ├── profileImage.repository.ts   # Through better-auth's internal adapter, so session copies in Redis refresh
+│   │   ├── profileImage.processing.ts   # sharp: JPEG/PNG/WebP in, 256×256 metadata-free WebP out
+│   │   ├── profileImage.supabaseStore.ts # The Supabase Storage ProfileImageStore
+│   │   ├── profileImage.uploadLimit.hook.ts # preHandler — 10 uploads per user per hour, counted in Redis
+│   │   ├── profileImage.service.ts
+│   │   ├── profileImage.controller.ts
+│   │   └── profileImage.routes.ts # Raw image body: scoped content-type parsers, 5 MB bodyLimit
 │   └── logLevel/                  # Operator route: POST /api/internal/log-level (spec tag `Operator`, left out of the Orval client; ADR-0020)
 │       ├── logLevel.types.ts
 │       ├── logLevel.validation.ts
@@ -85,7 +96,7 @@ apps/nebula-chat-server/src/
 │       ├── logLevel.controller.ts
 │       ├── logLevel.operatorGate.hook.ts # onRequest — admits only `Authorization: Bearer <OPERATOR_TOKEN>`
 │       └── logLevel.routes.ts
-├── test/                          # Shared test harness: createTestApp, session fixtures, logCapture (in-memory logger), memoryPubSub
+├── test/                          # Shared test harness: createTestApp, session fixtures, logCapture (in-memory logger), memoryPubSub, memoryProfileImageStore
 ├── utils/
 │   ├── logController.ts           # Fastify logController: request lines off, framework faults stamped fastify.log
 │   ├── logLevelOverrides.ts       # LOG_LEVEL_OVERRIDES parser (component=level pairs)
@@ -454,6 +465,9 @@ be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-fi
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector URL. Unset = spans are not exported (the tracer still runs, so lines keep their `trace_id`)                |
 | `OTEL_LOG_LEVEL`              | Verbosity of the OTel SDK's own diagnostics (default `error`; `none`/`warn`/`info`/`debug`/`verbose`/`all`)               |
 | `OPERATOR_TOKEN`              | Shared operator secret (32+ chars) for `/api/internal/*`, e.g. changing log levels at runtime. Unset = those routes 404   |
+| `SUPABASE_URL`                | Supabase project URL for Profile image storage (ADR-0022). Set all three storage vars or none; none = uploads off         |
+| `SUPABASE_SECRET_KEY`         | Supabase secret key; server-only, writes the Profile image bucket                                                         |
+| `PROFILE_IMAGE_BUCKET`        | Public bucket for Profile images: `profile-images-dev` locally, `profile-images` in production                            |
 
 > **`env.ts` rule:** All env vars are Zod-validated in `src/env.ts` and fail loudly at startup before any listener is bound. Never read `process.env.*` directly anywhere in the backend — always import from `@backend/env`. The only code that touches `process.env` is what runs before `env.ts` parses it: `src/test/setup.ts` and `src/scripts/generate-openapi.ts`, which fill placeholders with `??=`.
 >
