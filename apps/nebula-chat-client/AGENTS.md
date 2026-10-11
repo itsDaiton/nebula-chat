@@ -566,7 +566,8 @@ pnpm frontend test:coverage
   store after a render, and `holdSession`, which serves a session and waits until that store holds it. Regenerate with `pnpm frontend generate:api` after any backend change.
 
 - **Upload a file with `aSendableFile` (`@/test/files`)**, not `new File(...)`: vitest's bridge from jsdom's
-  Blob to Node's fetch fails on this jsdom, so a jsdom File never reaches an MSW handler.
+  Blob to Node's fetch fails on this jsdom (and on Node 26 even Node's own Blob goes through it), so a Blob
+  body never reaches an MSW handler. It is a byte array carrying a File's `name`, `type` and `size`.
 
 - **Pick a Chakra menu item with `selectMenuItem` (`@/test/menu`)**, not `userEvent.click`: Zag only
   selects a pointer-highlighted item, and jsdom's (0, 0) pointer events stop highlighting once anything

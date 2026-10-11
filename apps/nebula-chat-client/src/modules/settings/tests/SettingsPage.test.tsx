@@ -312,8 +312,8 @@ describe('SettingsPage', () => {
     // jsdom loads no image, so Chakra keeps it hidden; the element still says which one it is.
     const avatarImages = () => screen.queryAllByAltText('Ada');
 
-    const pick = async (file: Promise<File>) =>
-      userEvent.setup({ applyAccept: false }).upload(await imageInput(), await file);
+    const pick = async (file: File) =>
+      userEvent.setup({ applyAccept: false }).upload(await imageInput(), file);
 
     const aFile = (type = 'image/png', size = 1024) =>
       aSendableFile(`me.${type.split('/')[1]}`, type, size);

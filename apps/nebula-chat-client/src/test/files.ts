@@ -1,7 +1,3 @@
-/** A picked file MSW can receive: Node's own Blob, as vitest can't bridge this jsdom's Blob to fetch. */
-export const aSendableFile = async (name: string, type: string, size: number): Promise<File> => {
-  const blob = await new Response(new Uint8Array(size), {
-    headers: { 'content-type': type },
-  }).blob();
-  return Object.assign(blob, { name, lastModified: 0, webkitRelativePath: '' }) as File;
-};
+/** A picked file MSW can receive: bytes posing as a File, as vitest can't send this jsdom's Blobs. */
+export const aSendableFile = (name: string, type: string, size: number): File =>
+  Object.assign(new Uint8Array(size), { name, type, size, lastModified: 0 }) as unknown as File;
