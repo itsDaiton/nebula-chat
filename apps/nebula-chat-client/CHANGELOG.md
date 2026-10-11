@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.25.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.25.0...nebula-chat-client-v1.25.1) (2026-10-11)
+
+
+### Bug Fixes
+
+* **client:** NEB-461 generate the chat stream request through Orval ([#507](https://github.com/itsDaiton/nebula-chat/issues/507)) ([197642f](https://github.com/itsDaiton/nebula-chat/commit/197642f29f23dc83bab2a688be90598216e42d12))
+
 ## [1.25.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.24.0...nebula-chat-client-v1.25.0) (2026-10-11)
 
 
