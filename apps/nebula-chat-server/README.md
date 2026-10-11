@@ -6,6 +6,7 @@ It is responsible for:
 - Streaming AI chat responses from OpenAI
 - Persisting conversations/messages in PostgreSQL via Drizzle
 - Caching chat streams in Redis
+- Storing Profile images in Supabase Storage (optional)
 - Exposing OpenAPI docs (`/docs`, `/openapi.json`)
 
 ## Prerequisites
@@ -60,6 +61,37 @@ It is responsible for:
    ```
 
 Server starts on `http://localhost:3000` by default.
+
+## Profile image storage (optional)
+
+Profile image uploads store one processed 256×256 WebP per upload in a public Supabase Storage
+bucket ([ADR-0022](../../docs/adr/0022-supabase-storage-for-profile-images.md)). Only the server
+writes to it, with the project's secret key; the browser only loads the public image URL.
+
+Set all three variables, or none. With none, the server boots with uploads switched off: the
+Settings page hides **Upload image**, and removing an image still works. Setting only some fails
+env validation at boot.
+
+| Variable               | Value                                                                                  |
+| ---------------------- | -------------------------------------------------------------------------------------- |
+| `SUPABASE_URL`         | The project URL, `https://<project-ref>.supabase.co` (Project Settings → API)          |
+| `SUPABASE_SECRET_KEY`  | A secret key (`sb_secret_…`, Project Settings → API Keys). Server-only; never logged   |
+| `PROFILE_IMAGE_BUCKET` | `profile-images-dev` for local development, `profile-images` in production             |
+
+Both buckets already exist in the `nebula-chat` Supabase project, with the same settings:
+**public**, allowed MIME types `image/webp` only, a file size limit of 1 MB, and **no access
+policies** (the secret key bypasses them, and Supabase's policies can't identify better-auth
+users anyway). To recreate one, use Storage → New bucket in the dashboard with those settings, or
+run in the SQL editor:
+
+```sql
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('profile-images-dev', 'profile-images-dev', true, 1048576, array['image/webp']);
+```
+
+**On Render**, set the three variables on the `nebula-chat-server` service (Environment), with
+`PROFILE_IMAGE_BUCKET=profile-images`, then redeploy. `sharp` installs from prebuilt binaries for
+Render's Linux x64 Node runtime, so the build needs nothing extra.
 
 ## Scripts
 

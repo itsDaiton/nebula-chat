@@ -2,6 +2,11 @@ import { z } from 'zod';
 import { LOG_LEVELS } from '@nebula-chat/otel';
 import { logLevelOverridesSchema } from '@backend/utils/logLevelOverrides';
 import { operatorTokenSchema } from '@backend/utils/operatorToken';
+import {
+  checkProfileImageStorage,
+  storageSettingSchema,
+  supabaseUrlSchema,
+} from '@backend/utils/profileImageStorage';
 import { checkSocialProviderPairs, oauthCredentialSchema } from '@backend/utils/socialProviders';
 
 // CORS and better-auth match the browser's `Origin` header exactly, so keep only scheme://host:port.
@@ -41,6 +46,10 @@ export const envSchema = z
     GITHUB_CLIENT_SECRET: oauthCredentialSchema,
     // Shared operator secret for /api/internal/*; unset turns those routes off.
     OPERATOR_TOKEN: operatorTokenSchema,
+    // Supabase Storage for Profile images (ADR-0022); all three or none, none turns uploads off.
+    SUPABASE_URL: supabaseUrlSchema,
+    SUPABASE_SECRET_KEY: storageSettingSchema,
+    PROFILE_IMAGE_BUCKET: storageSettingSchema,
     OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),
     OTEL_LOG_LEVEL: z
       .enum(['none', 'error', 'warn', 'info', 'debug', 'verbose', 'all'])
@@ -49,6 +58,7 @@ export const envSchema = z
   .refine((data) => data.OPENAI_API_KEY !== undefined || data.ANTHROPIC_API_KEY !== undefined, {
     message: 'At least one of OPENAI_API_KEY or ANTHROPIC_API_KEY must be set',
   })
-  .check(checkSocialProviderPairs);
+  .check(checkSocialProviderPairs)
+  .check(checkProfileImageStorage);
 
 export const env = envSchema.parse(process.env);

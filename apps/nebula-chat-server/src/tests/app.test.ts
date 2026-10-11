@@ -20,6 +20,7 @@ type ResponseObject = { content?: Record<string, { schema?: SchemaObject }> };
 type OperationObject = {
   tags?: string[];
   security?: Record<string, string[]>[];
+  requestBody?: { content?: Record<string, { schema?: SchemaObject & { format?: string } }> };
   responses?: Record<string, ResponseObject>;
 };
 
@@ -79,7 +80,17 @@ describe('OpenAPI document', () => {
       'Health',
       'LogLevelChange',
       'Message',
+      'ProfileImage',
+      'ProfileImageSettings',
     ]);
+  });
+
+  // Orval turns a binary body into a Blob parameter on the upload hook.
+  it('documents the Profile image upload as a raw binary body', () => {
+    const body = document.paths['/api/profile-image']?.['put']?.requestBody?.content;
+
+    expect(Object.keys(body ?? {})).toEqual(['image/jpeg', 'image/png', 'image/webp']);
+    expect(body?.['image/png']?.schema).toEqual({ type: 'string', format: 'binary' });
   });
 
   // Tagged so orval.config.ts can leave it out of the browser client.

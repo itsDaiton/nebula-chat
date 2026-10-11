@@ -10,7 +10,8 @@ import { server } from '@/test/msw';
 export const aSession = ({
   isAnonymous = true,
   emailVerified = false,
-}: { isAnonymous?: boolean; emailVerified?: boolean } = {}) => ({
+  image = null,
+}: { isAnonymous?: boolean; emailVerified?: boolean; image?: string | null } = {}) => ({
   session: {
     id: 'session-1',
     userId: 'user-1',
@@ -24,7 +25,7 @@ export const aSession = ({
     name: isAnonymous ? 'Anonymous' : 'Ada',
     email: isAnonymous ? 'temp@anonymous.local' : 'ada@example.com',
     emailVerified,
-    image: null,
+    image,
     isAnonymous,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
@@ -139,9 +140,11 @@ export const refreshSession = () => act(() => authClient.$store.notify('$session
 /** Serves `aSession(options)` and waits until better-auth's singleton session store holds it. */
 export const holdSession = async (options: SessionOptions) => {
   const body = aSession(options);
-  const { isAnonymous, emailVerified } = body.user;
+  const { isAnonymous, emailVerified, image } = body.user;
   server.use(mockGetSession(body));
   const { result } = renderHook(() => useAuth());
   refreshSession();
-  await waitFor(() => expect(result.current.user).toMatchObject({ isAnonymous, emailVerified }));
+  await waitFor(() =>
+    expect(result.current.user).toMatchObject({ isAnonymous, emailVerified, image }),
+  );
 };

@@ -13,7 +13,7 @@ export const corsOptions = {
     }
   },
   credentials: true,
-  methods: ['GET', 'HEAD', 'POST', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
   maxAge: 86400,
 };

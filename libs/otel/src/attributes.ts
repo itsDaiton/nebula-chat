@@ -67,6 +67,8 @@ export type LogAttributeValues = {
   'nebula.job.id': string;
   'nebula.cache.key': string;
   'nebula.cache.pattern': string;
+  /** A Profile image file's path inside its storage bucket. */
+  'nebula.profile_image.key': string;
   // Subsystem
   'nebula.component': LogComponent;
   // Log control
@@ -130,6 +132,7 @@ export const ATTR = {
   NEBULA_JOB_ID: 'nebula.job.id',
   NEBULA_CACHE_KEY: 'nebula.cache.key',
   NEBULA_CACHE_PATTERN: 'nebula.cache.pattern',
+  NEBULA_PROFILE_IMAGE_KEY: 'nebula.profile_image.key',
   NEBULA_COMPONENT: 'nebula.component',
   NEBULA_LOG_TARGET: 'nebula.log.target',
   NEBULA_LOG_LEVEL_FROM: 'nebula.log.level.from',

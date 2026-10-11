@@ -27,7 +27,7 @@ export const AccountStatus = () => {
 
   if (isRegistered) {
     return (
-      <UserMenu name={user?.name ?? ''}>
+      <UserMenu name={user?.name ?? ''} image={user?.image}>
         <Box px={2} py={1.5}>
           <Text fontSize="sm" fontWeight="medium" truncate>
             {user?.name}

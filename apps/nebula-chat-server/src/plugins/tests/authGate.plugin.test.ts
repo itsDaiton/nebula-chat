@@ -347,7 +347,7 @@ describe('auth catch-all CORS (GET|POST /api/auth/*)', () => {
     expect(res.headers).toMatchObject({
       'access-control-allow-origin': allowedOrigin,
       'access-control-allow-credentials': 'true',
-      'access-control-allow-methods': 'GET, HEAD, POST, DELETE, OPTIONS',
+      'access-control-allow-methods': 'GET, HEAD, POST, PUT, DELETE, OPTIONS',
       'access-control-allow-headers': 'Content-Type',
       'access-control-max-age': '86400',
     });

@@ -442,6 +442,17 @@ A callback with no usable OAuth state (`state_not_found`, …) never knew the cl
 sends it to `/auth` too, instead of better-auth's own error page. The email a provider reports as verified
 arrives verified, so that user is uncapped at once.
 
+### The provider's Profile image
+
+A user created through Google or GitHub gets the provider's profile image URL in `users.image`,
+linked directly, never copied: it is their Profile image until they upload or remove one.
+Nothing refreshes it later. `createAuth` sets each provider's `overrideUserInfoOnSignIn: false`
+and `account.accountLinking.updateUserInfoOnLink: false` explicitly, so neither a later sign-in
+nor linking a provider to an existing user can replace an uploaded Profile image. A Guest who
+signs in socially becomes that provider's user, image included. An `image` with no
+`profileImageKey` is a provider's: removing it clears the column and deletes no file
+([ADR-0022](./adr/0022-supabase-storage-for-profile-images.md)).
+
 ## Account linking
 
 When a Guest signs up or signs in — with email or through a social provider's callback —
@@ -457,7 +468,8 @@ instead of discarding it.
 better-auth owns the `user`, `session`, `account`, and `verification` models. In
 [`libs/db/src/schema.ts`](../libs/db/src/schema.ts) the `users` table keeps its name
 (`modelName: 'users'`) and carries better-auth's shape (`name`, `email`,
-`emailVerified`, `image`, `isAnonymous`); `session`, `account`, and `verification` are
+`emailVerified`, `image`, `isAnonymous`), plus `profileImageKey`, a server-only extra field
+(`input: false`, `returned: false`) holding an uploaded Profile image's storage path; `session`, `account`, and `verification` are
 new. `conversations.userId` is `NOT NULL` — every conversation has an owner. Migration
 `0002` relocates existing password hashes into `account` and backfills `name`/`image`.
 Schema changes go through the normal `pnpm --filter @nebula-chat/db db:generate` /

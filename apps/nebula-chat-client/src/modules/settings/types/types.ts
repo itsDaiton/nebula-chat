@@ -34,6 +34,13 @@ export type ProfileNameFormProps = {
   name: string;
 };
 
+export type ProfileImageSettingProps = {
+  /** The Registered user's name, for the initials shown without a Profile image. */
+  name: string;
+  /** Their Profile image URL, if they have one. */
+  image: string | null;
+};
+
 export type AccountIdSettingProps = {
   /** The user's id, a UUID. */
   id: string;
@@ -52,7 +59,7 @@ export type SettingsSectionId = 'profile' | 'security' | 'account';
 
 /** The searchable rows on the Account page. */
 export type SettingsEntryId =
-  'name' | 'password' | 'signOutEverywhere' | 'deleteAccount' | 'accountId';
+  'image' | 'name' | 'password' | 'signOutEverywhere' | 'deleteAccount' | 'accountId';
 
 /** A setting the search can find: its row's copy plus words people might search for instead. */
 export type SettingsEntry = {

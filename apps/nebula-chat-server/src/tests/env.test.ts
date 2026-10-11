@@ -107,3 +107,43 @@ describe.each(['GOOGLE', 'GITHUB'] as const)('envSchema %s social sign-in', (pro
     expect(parse(overrides).success).toBe(false);
   });
 });
+
+describe('envSchema Profile image storage', () => {
+  const STORAGE = {
+    SUPABASE_URL: 'https://project.supabase.co',
+    SUPABASE_SECRET_KEY: 'sb_secret_test',
+    PROFILE_IMAGE_BUCKET: 'profile-images-dev',
+  };
+
+  it('accepts all three settings together', () => {
+    const result = parse(STORAGE);
+
+    expect(result.success).toBe(true);
+    expect(result.data).toMatchObject(STORAGE);
+  });
+
+  it.each([
+    ['unset', undefined],
+    ['empty', ''],
+  ])('switches uploads off when all three are %s', (_case, raw) => {
+    const result = parse({
+      SUPABASE_URL: raw,
+      SUPABASE_SECRET_KEY: raw,
+      PROFILE_IMAGE_BUCKET: raw,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.SUPABASE_URL).toBeUndefined();
+  });
+
+  it.each(Object.keys(STORAGE))('rejects a partial set missing %s', (missing) => {
+    const result = parse({ ...STORAGE, [missing]: undefined });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toContain('or none');
+  });
+
+  it('rejects a Supabase URL that is not a URL', () => {
+    expect(parse({ ...STORAGE, SUPABASE_URL: 'project.supabase' }).success).toBe(false);
+  });
+});

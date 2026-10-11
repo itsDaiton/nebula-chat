@@ -35,6 +35,8 @@ export default defineConfig({
         // there is no behavior of its own to cover (the gates in authGate.plugin.ts
         // and the lib's own tests carry that). Mirrored in build.yml matrix.coverage.
         'src/auth.ts',
+        // Pure wiring like auth.ts: picks the Supabase store from env; route tests mock it.
+        'src/profileImageStore.ts',
         'src/generated/**',
         'src/scripts/**',
         'src/test/**',

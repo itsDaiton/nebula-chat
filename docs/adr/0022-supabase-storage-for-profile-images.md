@@ -1,6 +1,6 @@
 # ADR-0022: Profile images live in Supabase Storage, uploaded through the server
 
-- **Status:** Proposed — profile images epic (ticket to follow)
+- **Status:** Accepted — implemented by NEB-471, NEB-472 and NEB-473 (epic NEB-470)
 - **Date:** 2026-10-05
 - **Deciders:** @itsDaiton
 - **Related:** [ADR-0010](./0010-better-auth-for-auth.md) — better-auth owns the `users` table and its `image` field
@@ -15,7 +15,7 @@ Production Postgres already runs on a Supabase project (`nebula-chat`), so Supab
 
 **Profile image files live in a public Supabase Storage bucket; the server is the only thing that writes to it, and the database holds references only.**
 
-1. The browser uploads to our server (`modules/profile-image/`), never to Supabase. The server checks the type (JPEG, PNG or WebP) and size (5 MB), center-crops and resizes to one 256×256 WebP with `sharp`, re-encoding every time (strips EXIF/GPS, disarms crafted files), and puts it in the bucket with the project's secret key. The key never reaches the client.
+1. The browser uploads to our server (`modules/profileImage/`), never to Supabase. The server checks the type (JPEG, PNG or WebP) and size (5 MB), center-crops and resizes to one 256×256 WebP with `sharp`, re-encoding every time (strips EXIF/GPS, disarms crafted files), and puts it in the bucket with the project's secret key. The key never reaches the client.
 2. The bucket is **public**. Each upload gets a fresh random path (`<userId>/<random>.webp`), so URLs are unguessable and immutable, cache well on Supabase's CDN, and never serve a stale image after a change. The bucket itself only accepts WebP up to about 1 MB.
 3. `users.image` keeps the public URL, which better-auth already ships to the client on the session. A new nullable, server-only storage key column on `users` (a better-auth extra field clients cannot write) records that the current image is our upload; it is how the old file gets deleted on replace or remove. An `image` with no key is a provider URL, hotlinked and never copied.
 4. Storage sits behind a small `ProfileImageStore` interface (`put`, `delete`) inside the server, with a Supabase implementation. Tests use an in-memory store; local dev uses a `profile-images-dev` bucket and production `profile-images`, chosen by env. Without the Supabase env vars the server still boots with uploads disabled.

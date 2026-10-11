@@ -21,6 +21,7 @@ export const API_ROUTE = {
   conversationsSearch: '*/api/conversations/search',
   conversation: '*/api/conversations/:conversationId',
   chatStream: '*/api/chat/stream',
+  profileImage: '*/api/profile-image',
   authSession: '*/api/auth/get-session',
   authSignInAnonymous: '*/api/auth/sign-in/anonymous',
   authSignInEmail: '*/api/auth/sign-in/email',
