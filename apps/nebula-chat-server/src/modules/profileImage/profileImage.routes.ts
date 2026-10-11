@@ -40,7 +40,7 @@ const profileImageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },
-    preHandler: requireAuthentication,
+    onRequest: requireAuthentication,
     handler: profileImageController.settings,
   });
 
@@ -84,7 +84,7 @@ const profileImageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },
-    preHandler: requireRegistered,
+    onRequest: requireRegistered,
     handler: profileImageController.remove,
   });
   done();

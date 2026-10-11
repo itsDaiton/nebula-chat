@@ -75,8 +75,8 @@ export const profileImageService = {
   },
 
   /**
-   * Clears the user's Profile image, then deletes its file when it was our upload. A provider
-   * picture has no key and no file, so the store is never asked about it.
+   * Clears the user's Profile image, then deletes its file when it was our upload. A provider's
+   * Profile image has no key and no file, so the store is never asked about it.
    */
   async remove(userId: string, log: ServiceLogger): Promise<void> {
     const previous = await profileImageRepository.find(userId);

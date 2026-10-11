@@ -80,7 +80,7 @@ apps/nebula-chat-server/src/
 │   │   ├── message.controller.ts
 │   │   └── message.routes.ts
 │   ├── profileImage/              # GET /settings, PUT and DELETE /api/profile-image (ADR-0022)
-│   │   ├── profileImage.types.ts  # incl. the ProfileImageStore interface (put/delete)
+│   │   ├── profileImage.types.ts  # incl. the ProfileImageStore type (put/delete)
 │   │   ├── profileImage.validation.ts
 │   │   ├── profileImage.repository.ts   # Through better-auth's internal adapter, so session copies in Redis refresh
 │   │   ├── profileImage.processing.ts   # sharp: JPEG/PNG/WebP in, 256×256 metadata-free WebP out

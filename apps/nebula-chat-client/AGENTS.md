@@ -55,6 +55,7 @@ apps/nebula-chat-client/src/
 │   │   │   ├── authCallbackUrl.ts     # Absolute client URL an emailed link or social sign-in redirects back to
 │   │   │   ├── socialSignIn.ts        # Google/GitHub button configs + copy for the OAuth callback's ?error= code
 │   │   │   ├── runAuthRequest.ts      # better-auth call → AuthRequestError (copy + field) from its error code
+│   │   │   ├── refreshSessionPastCache.ts # get-session past the cookie cache, then refetch useAuth (after a Profile image change)
 │   │   │   └── AuthRequestError.ts    # AppError carrying the form field its message belongs under
 │   │   ├── hooks/
 │   │   │   ├── useAuth.ts             # Current session (Guest vs Registered, needsEmailVerification) from useSession
@@ -68,7 +69,8 @@ apps/nebula-chat-client/src/
 │   │   └── components/
 │   │       ├── AuthGate.tsx       # Wraps the routes; renders nothing until a session (Guest at least) exists
 │   │       ├── AccountStatus.tsx  # Header: Sign in button for a Guest; UserMenu (name/email, Settings, Sign out) for a Registered user
-│   │       ├── UserMenu.tsx       # Registered user's Avatar trigger (initials) + the menu it opens
+│   │       ├── UserMenu.tsx       # Registered user's Avatar trigger + the menu it opens
+│   │       ├── UserAvatar.tsx     # Avatar: the Profile image over initials (shown while it loads or fails)
 │   │       ├── AuthLayout.tsx     # Shell every auth page shares: app mark + card (+ footer)
 │   │       ├── AuthForm.tsx       # One react-hook-form + zod form, driven by an AuthFormConfig
 │   │       ├── AuthFormField.tsx  # Label, input (or PasswordInput) and its error text
@@ -109,12 +111,15 @@ apps/nebula-chat-client/src/
 │   │   ├── utils/
 │   │   │   ├── settingsSections.ts    # The settings navigation's sections (label, icon, route)
 │   │   │   ├── settingsSchemas.ts     # zod schema for the profile name
-│   │   │   └── settingsIndex.ts       # Searchable settings (copy + keywords) and the match rule
+│   │   │   ├── settingsIndex.ts       # Searchable settings (copy + keywords) and the match rule
+│   │   │   └── profileImage.ts        # Profile image file checks before upload, and error code → message
 │   │   ├── stores/
 │   │   │   ├── usePasswordChangeStore.ts  # Whether the Password row's change form is unfolded
 │   │   │   └── useSettingsSearchStore.ts  # The settings search text
 │   │   ├── hooks/
 │   │   │   ├── useUpdateName.ts       # better-auth update-user; the session refetch updates the header
+│   │   │   ├── useProfileImageUpload.ts  # Checks the file, PUTs it with its own type, refreshes the session past the cookie cache
+│   │   │   ├── useProfileImageRemoval.ts # DELETE, then the same session refresh
 │   │   │   ├── useSettingsSearch.ts   # Which rows/sections the search leaves visible
 │   │   │   ├── useSignOutEverywhere.ts # revoke-sessions, then sign-out on this device
 │   │   │   └── useHasPassword.ts      # list-accounts → has a credential password (delete-account confirm)
@@ -124,6 +129,7 @@ apps/nebula-chat-client/src/
 │   │       ├── SettingsSearch.tsx # Front-end-only filter over the settings rows
 │   │       ├── SettingsSection.tsx # Titled group of rows (h2)
 │   │       ├── SettingsRow.tsx    # Label/description left, control right; stacked on mobile
+│   │       ├── ProfileImageSetting.tsx # Profile image row: large Avatar, Upload image (when uploads are on), Remove (when set)
 │   │       ├── ProfileNameForm.tsx # Full name row: edit in place, Save once changed
 │   │       ├── PasswordSetting.tsx # Password row whose button unfolds the change-password AuthForm
 │   │       ├── SignOutEverywhereSetting.tsx # Sign out of all devices row
@@ -553,11 +559,14 @@ pnpm frontend test:coverage
   things have no generated handler: failure responses (Orval emits only the documented success),
   `/api/chat/stream` (excluded from Orval by tag — it streams SSE) and better-auth's `/api/auth/*`. Their
   routes live in `@/test/api`, the one place route strings are written; `@/test/auth` holds the auth
-  fixture and handlers (`aSession`, `mockGetSession`, `mockAnonymousSignIn`, `mockEmailSignIn`,
+  fixture and handlers (`aSession` (pass `image` for a Profile image), `mockGetSession`, `mockAnonymousSignIn`, `mockEmailSignIn`,
   `mockEmailSignUp`, `mockSocialSignIn` (its redirect is a hash change to `providerConsentUrl()`, the one
   navigation jsdom performs), `mockSignOut`, `mockRequestPasswordReset`, `mockResetPassword`, `mockChangePassword`, `mockUpdateUser`, `mockRevokeSessions`, `mockDeleteUser`, `mockListAccounts`,
   `mockSendVerificationEmail`) plus `refreshSession`, which refetches better-auth's module-level session
   store after a render, and `holdSession`, which serves a session and waits until that store holds it. Regenerate with `pnpm frontend generate:api` after any backend change.
+
+- **Upload a file with `aSendableFile` (`@/test/files`)**, not `new File(...)`: vitest's bridge from jsdom's
+  Blob to Node's fetch fails on this jsdom, so a jsdom File never reaches an MSW handler.
 
 - **Pick a Chakra menu item with `selectMenuItem` (`@/test/menu`)**, not `userEvent.click`: Zag only
   selects a pointer-highlighted item, and jsdom's (0, 0) pointer events stop highlighting once anything

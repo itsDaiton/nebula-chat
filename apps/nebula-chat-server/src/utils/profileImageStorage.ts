@@ -1,10 +1,12 @@
 import { z } from 'zod';
 
-/** One Supabase Storage setting; empty counts as unset, since `.env.example` ships them blank. */
-export const storageSettingSchema = z.preprocess(
-  (raw) => (raw === '' ? undefined : raw),
-  z.string().min(1).optional(),
-);
+/** An optional setting where empty counts as unset, since `.env.example` ships them blank. */
+const blankAsUnset = <T extends z.ZodType>(schema: T) =>
+  z.preprocess((raw) => (raw === '' ? undefined : raw), schema.optional());
+
+export const supabaseUrlSchema = blankAsUnset(z.url());
+
+export const storageSettingSchema = blankAsUnset(z.string().min(1));
 
 /** The Supabase Storage settings that together switch Profile image uploads on (ADR-0022). */
 const PROFILE_IMAGE_STORAGE_ENV = [

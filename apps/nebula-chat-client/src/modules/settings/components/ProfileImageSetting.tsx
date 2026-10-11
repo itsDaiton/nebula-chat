@@ -77,7 +77,7 @@ export const ProfileImageSetting = ({ name, image }: ProfileImageSettingProps) =
               </Button>
             </>
           )}
-          {/* A provider picture stays removable without uploads switched on. */}
+          {/* A provider's Profile image stays removable with uploads switched off. */}
           {image && (
             <Button
               variant="ghost"
