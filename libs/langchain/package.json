@@ -24,11 +24,11 @@
   },
   "dependencies": {
     "@langchain/anthropic": "^1.5.11",
-    "@langchain/core": "^1.2.12",
-    "@langchain/openai": "^1.5.13",
+    "@langchain/core": "^1.2.14",
+    "@langchain/openai": "^1.6.1",
     "@nebula-chat/errors": "workspace:*",
-    "langchain": "^1.5.12",
-    "langsmith": "^0.10.5",
+    "langchain": "^1.5.15",
+    "langsmith": "^0.10.6",
     "p-limit": "^7.3.3",
     "tiktoken": "^1.0.0"
   },
