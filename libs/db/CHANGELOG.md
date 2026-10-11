@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v0.5.2...nebula-chat-db-v0.6.0) (2026-10-11)
+
+
+### Features
+
+* **auth:** NEB-471 NEB-472 NEB-473 Profile images ([#502](https://github.com/itsDaiton/nebula-chat/issues/502)) ([f6c1da5](https://github.com/itsDaiton/nebula-chat/commit/f6c1da596344946fd4c3cb5f93db38ac3df23046))
+
 ## [0.5.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v0.5.1...nebula-chat-db-v0.5.2) (2026-09-29)
 
 
