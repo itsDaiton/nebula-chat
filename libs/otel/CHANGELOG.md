@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.1.4...nebula-chat-otel-v2.2.0) (2026-10-11)
+
+
+### Features
+
+* **auth:** NEB-471 NEB-472 NEB-473 Profile images ([#502](https://github.com/itsDaiton/nebula-chat/issues/502)) ([f6c1da5](https://github.com/itsDaiton/nebula-chat/commit/f6c1da596344946fd4c3cb5f93db38ac3df23046))
+
 ## [2.1.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.1.3...nebula-chat-otel-v2.1.4) (2026-10-09)
 
 
