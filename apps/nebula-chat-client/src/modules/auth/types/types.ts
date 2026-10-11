@@ -17,8 +17,8 @@ export type AuthGateProps = {
 };
 
 export type UserMenuProps = {
-  /** The Registered user's name, shown as initials on their Avatar. */
-  name: string;
+  /** The Registered user's name, shown as initials on their Avatar; none for a Guest. */
+  name?: string;
   /** Their Profile image URL, if they have one. */
   image?: string | null;
   /** The menu's heading and items. */
@@ -26,8 +26,8 @@ export type UserMenuProps = {
 };
 
 export type UserAvatarProps = {
-  /** The Registered user's name, shown as initials without a Profile image. */
-  name: string;
+  /** The Registered user's name, shown as initials without a Profile image; none for a Guest. */
+  name?: string;
   /** Their Profile image URL, if they have one. */
   image?: string | null;
   size?: 'sm' | '2xl';

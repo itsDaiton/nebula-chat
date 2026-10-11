@@ -83,15 +83,44 @@ const findInitials = () =>
 const signOutItem = () => screen.findByRole('menuitem', { name: resources.auth.actions.signOut });
 
 describe('AccountStatus', () => {
-  it('offers a Guest a sign-in link to the auth page, with no user menu', async () => {
+  it('gives a Guest a generic Avatar: no initials and no image', async () => {
     await renderStatus();
 
-    const signIn = await screen.findByRole('link', { name: resources.auth.actions.signIn });
-    expect(
-      screen.queryByRole('button', { name: resources.userMenu.label }),
-    ).not.toBeInTheDocument();
+    const trigger = await screen.findByRole('button', { name: resources.userMenu.label });
 
-    await userEvent.click(signIn);
+    // The Guest's name is "Anonymous", which would otherwise read as "A".
+    expect(within(trigger).queryByText('A')).not.toBeInTheDocument();
+    expect(within(trigger).queryByRole('img', { hidden: true })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: resources.auth.actions.signIn }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('lists a Guest heading and Sign in, with no Settings or Sign out', async () => {
+    await renderStatus();
+
+    await openMenu();
+
+    const menu = screen.getByRole('menu');
+    expect(within(menu).getByText(resources.userMenu.guest)).toBeInTheDocument();
+    expect(
+      within(menu).getByRole('menuitem', { name: resources.auth.actions.signIn }),
+    ).toBeVisible();
+    expect(
+      within(menu).queryByRole('menuitem', { name: resources.userMenu.settings }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(menu).queryByRole('menuitem', { name: resources.auth.actions.signOut }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('takes a Guest to the auth page from Sign in', async () => {
+    await renderStatus();
+
+    await openMenu();
+    await selectMenuItem(
+      await screen.findByRole('menuitem', { name: resources.auth.actions.signIn }),
+    );
 
     expect(await screen.findByText(AUTH_PAGE)).toBeInTheDocument();
   });
@@ -174,9 +203,12 @@ describe('AccountStatus', () => {
     await selectMenuItem(await signOutItem());
 
     expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
-    expect(
-      await screen.findByRole('link', { name: resources.auth.actions.signIn }),
-    ).toBeInTheDocument();
+    // The fresh Guest's generic Avatar: the Registered user's initials are gone.
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('button', { name: resources.userMenu.label })).queryByText('A'),
+      ).not.toBeInTheDocument(),
+    );
     expect(signIns).toBe(1);
     expect(unauthenticatedRequests).toBe(0);
   });

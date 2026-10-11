@@ -1,13 +1,13 @@
-import { Box, Button, Menu, Text } from '@chakra-ui/react';
+import { Box, Menu, Text } from '@chakra-ui/react';
 import { LuLogIn, LuLogOut, LuSettings } from 'react-icons/lu';
-import { Link, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { UserMenu } from '@/modules/auth/components/UserMenu';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { useSignOut } from '@/modules/auth/hooks/useSignOut';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 
-/** The header's account control: a Guest is nudged to sign in, a Registered user gets their user menu. */
+/** The header's account menu: a Guest's offers Sign in, a Registered user's Settings and Sign out. */
 export const AccountStatus = () => {
   const { user, isGuest, isRegistered } = useAuth();
   const { mutate: signOut, isPending } = useSignOut();
@@ -16,12 +16,15 @@ export const AccountStatus = () => {
 
   if (isGuest) {
     return (
-      <Button asChild size="sm" variant="solid" borderRadius="full" px={4}>
-        <Link to={route.auth.root()}>
+      <UserMenu>
+        <Text px={2} py={1.5} fontSize="sm" fontWeight="medium">
+          {resources.userMenu.guest}
+        </Text>
+        <Menu.Item value="sign-in" onSelect={() => void navigate(route.auth.root())}>
           <LuLogIn />
           {resources.auth.actions.signIn}
-        </Link>
-      </Button>
+        </Menu.Item>
+      </UserMenu>
     );
   }
 
