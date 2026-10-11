@@ -1,8 +1,11 @@
 import type { EventLogger } from '@nebula-chat/otel';
 import type { z } from 'zod';
-import type { createChatStreamSchema } from './chat.validation';
+import type { createChatStreamSchema, messageAllowanceSchema } from './chat.validation';
 
 export type CreateChatStreamDTO = z.infer<typeof createChatStreamSchema>;
+
+/** What is left of the caller's Message allowance; `metered: false` for a verified Registered user. */
+export type MessageAllowance = z.infer<typeof messageAllowanceSchema>;
 
 export type UsageData = {
   promptTokens: number;

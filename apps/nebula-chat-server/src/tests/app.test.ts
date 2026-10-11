@@ -80,8 +80,11 @@ describe('OpenAPI document', () => {
       'Health',
       'LogLevelChange',
       'Message',
+      'MessageAllowance',
+      'MeteredMessageAllowance',
       'ProfileImage',
       'ProfileImageSettings',
+      'UnmeteredMessageAllowance',
     ]);
   });
 

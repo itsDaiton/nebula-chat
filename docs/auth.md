@@ -359,6 +359,35 @@ cache hook, so a capped Guest is rejected before any model or cache work:
 
 No Redis counter is involved; at a cap of ~10 the live count is exact and stateless.
 
+The metered decision and the count live in one function,
+[`getMessageAllowance`](../apps/nebula-chat-server/src/modules/chat/chat.messageAllowance.service.ts),
+which both the hook and the read endpoint below call, so what the client displays and what
+the server enforces cannot drift.
+
+### Reading the allowance
+
+`GET /api/chat/message-allowance` (operation `getMessageAllowance`, so the generated
+client exposes `useGetMessageAllowance`) tells the caller how much is left. It answers
+`200` for any authenticated user and the standard `401` envelope with no session. The
+response is a discriminated union on `metered`:
+
+```json
+{ "metered": true, "limit": 10, "used": 3, "remaining": 7 }
+```
+
+for a Metered user (a Guest, or a Registered user still unverified), and
+
+```json
+{ "metered": false }
+```
+
+for a verified Registered user, which never touches the database. `limit` is
+`GUEST_MESSAGE_ALLOWANCE`, `used` is the raw live count, and `remaining` is
+`max(0, limit - used)`: lowering the configured cap can leave `used` above `limit`, but
+`remaining` never goes negative. `remaining: 0` is exactly the state in which a send is
+refused with `MessageAllowanceReached`. The route is a plain read: it carries no rate-limit
+override and runs none of the send-path hooks, so it never spends the allowance.
+
 ### Client contract
 
 A capped Guest receives a `403` carrying the shared error envelope (ADR-0011) with the
