@@ -10,7 +10,38 @@ import { faker } from '@faker-js/faker';
 import { HttpResponse, http } from 'msw';
 import type { RequestHandlerOptions } from 'msw';
 
+import type {
+  MessageAllowance,
+  MeteredMessageAllowance,
+  UnmeteredMessageAllowance,
+} from '../model';
+
 export const getStreamChatResponseMock = (): string => faker.word.sample();
+
+export const getGetMessageAllowanceResponseMeteredMessageAllowanceMock = (
+  overrideResponse: Partial<MeteredMessageAllowance> = {},
+): MeteredMessageAllowance => ({
+  ...{
+    metered: faker.helpers.arrayElement([true] as const),
+    limit: faker.number.int({ min: 0, max: 9007199254740991 }),
+    used: faker.number.int({ min: 0, max: 9007199254740991 }),
+    remaining: faker.number.int({ min: 0, max: 9007199254740991 }),
+  },
+  ...overrideResponse,
+});
+
+export const getGetMessageAllowanceResponseUnmeteredMessageAllowanceMock = (
+  overrideResponse: Partial<UnmeteredMessageAllowance> = {},
+): UnmeteredMessageAllowance => ({
+  ...{ metered: faker.helpers.arrayElement([false] as const) },
+  ...overrideResponse,
+});
+
+export const getGetMessageAllowanceResponseMock = (): MessageAllowance =>
+  faker.helpers.arrayElement([
+    { ...getGetMessageAllowanceResponseMeteredMessageAllowanceMock() },
+    { ...getGetMessageAllowanceResponseUnmeteredMessageAllowanceMock() },
+  ]);
 
 export const getStreamChatMockHandler = (
   overrideResponse?:
@@ -32,4 +63,28 @@ export const getStreamChatMockHandler = (
     options,
   );
 };
-export const getChatMock = () => [getStreamChatMockHandler()];
+
+export const getGetMessageAllowanceMockHandler = (
+  overrideResponse?:
+    | MessageAllowance
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<MessageAllowance> | MessageAllowance),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/chat/message-allowance',
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetMessageAllowanceResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+export const getChatMock = () => [getStreamChatMockHandler(), getGetMessageAllowanceMockHandler()];

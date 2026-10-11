@@ -1,5 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { setSseHeaders } from '@backend/config/headers.config';
+import { getMessageAllowance } from '@backend/modules/chat/chat.messageAllowance.service';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { chatService } from '@backend/modules/chat/chat.service';
 import { getSessionData } from '@backend/plugins/authGate.plugin';
@@ -31,5 +32,11 @@ export const chatController = {
 
     raw.write(sseEnd());
     raw.end();
+  },
+
+  async getMessageAllowance(req: FastifyRequest, reply: FastifyReply) {
+    const { user } = getSessionData(req);
+    const allowance = await getMessageAllowance(user);
+    return reply.status(200).send(allowance);
   },
 };

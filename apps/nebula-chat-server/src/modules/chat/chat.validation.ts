@@ -18,3 +18,24 @@ export const createChatStreamSchema = z.object({
     .default(false)
     .describe('Bypass and overwrite any cached response, forcing a fresh completion'),
 });
+
+const meteredMessageAllowanceSchema = z
+  .object({
+    metered: z.literal(true),
+    limit: z.number().int().nonnegative().describe('The configured message allowance'),
+    used: z.number().int().nonnegative().describe("The caller's live user-message count"),
+    remaining: z
+      .number()
+      .int()
+      .nonnegative()
+      .describe('Messages left before the wall, clamped at 0'),
+  })
+  .meta({ id: 'MeteredMessageAllowance' });
+
+const unmeteredMessageAllowanceSchema = z
+  .object({ metered: z.literal(false) })
+  .meta({ id: 'UnmeteredMessageAllowance' });
+
+export const messageAllowanceSchema = z
+  .discriminatedUnion('metered', [meteredMessageAllowanceSchema, unmeteredMessageAllowanceSchema])
+  .meta({ id: 'MessageAllowance' });

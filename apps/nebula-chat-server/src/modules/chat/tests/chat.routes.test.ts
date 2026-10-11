@@ -443,6 +443,77 @@ describe('POST /api/chat/stream — Guest message allowance', () => {
   });
 });
 
+describe('GET /api/chat/message-allowance', () => {
+  // GUEST_MESSAGE_ALLOWANCE defaults to 10 (env.ts); the count comes live from
+  // Postgres via the mocked repository, through the same shared function the
+  // send-path hook calls.
+  const CAP = env.GUEST_MESSAGE_ALLOWANCE;
+
+  const getAllowance = async (): Promise<LightMyRequestResponse> =>
+    app.inject({ method: 'GET', url: '/api/chat/message-allowance', remoteAddress: uniqueIp() });
+
+  it('reports a Guest’s limit, live count and what is left', async () => {
+    mockedGetSession.mockResolvedValue(guestSession() as never);
+    mockedCountUserMessages.mockResolvedValue(3);
+
+    const res = await getAllowance();
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ metered: true, limit: CAP, used: 3, remaining: CAP - 3 });
+  });
+
+  it('meters a Registered user whose email is unverified like a Guest', async () => {
+    mockedGetSession.mockResolvedValue(unverifiedSession() as never);
+    mockedCountUserMessages.mockResolvedValue(1);
+
+    const res = await getAllowance();
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ metered: true, limit: CAP, used: 1, remaining: CAP - 1 });
+  });
+
+  it('answers metered false for a verified Registered user, never counting', async () => {
+    mockedGetSession.mockResolvedValue(registeredSession() as never);
+
+    const res = await getAllowance();
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ metered: false });
+    expect(mockedCountUserMessages).not.toHaveBeenCalled();
+  });
+
+  it('clamps remaining at 0 when the count is above the limit', async () => {
+    mockedGetSession.mockResolvedValue(guestSession() as never);
+    mockedCountUserMessages.mockResolvedValue(CAP + 4);
+
+    const res = await getAllowance();
+
+    expect(res.json()).toEqual({ metered: true, limit: CAP, used: CAP + 4, remaining: 0 });
+  });
+
+  it('agrees with the send path: 0 remaining here is a 403 there', async () => {
+    mockedGetSession.mockResolvedValue(guestSession() as never);
+    mockedCountUserMessages.mockResolvedValue(CAP);
+
+    const read = await getAllowance();
+    const send = await post(validBody, app);
+
+    expect(read.json()).toMatchObject({ metered: true, remaining: 0 });
+    expect(send.statusCode).toBe(403);
+    expect(send.json()).toMatchObject({ error: 'MessageAllowanceReached' });
+  });
+
+  it('rejects a request with no authenticated session with the 401 envelope', async () => {
+    mockedGetSession.mockResolvedValue(null);
+
+    const res = await getAllowance();
+
+    expect(res.statusCode).toBe(401);
+    expect(res.json()).toMatchObject({ success: false, error: 'Unauthorized' });
+    expect(mockedCountUserMessages).not.toHaveBeenCalled();
+  });
+});
+
 /**
  * Both paths hijack the reply and write to the raw response, so the CORS headers
  * `@fastify/cors` buffered on the reply only reach the client if they are forwarded.

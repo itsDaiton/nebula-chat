@@ -1,8 +1,7 @@
 import type { FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
-import { env } from '@backend/env';
 import { MessageAllowanceReachedError } from '@nebula-chat/errors';
+import { getMessageAllowance } from '@backend/modules/chat/chat.messageAllowance.service';
 import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
-import { messageRepository } from '@backend/modules/message/message.repository';
 import { getSessionData } from '@backend/plugins/authGate.plugin';
 
 /**
@@ -17,21 +16,18 @@ import { getSessionData } from '@backend/plugins/authGate.plugin';
  *   exchange rather than authoring a new `user` message).
  * - Otherwise the user's live `role='user'` message count is compared against
  *   `GUEST_MESSAGE_ALLOWANCE`; at or above the cap the send is rejected.
+ *
+ * The metered decision and the count come from `getMessageAllowance`, the same
+ * function `GET /api/chat/message-allowance` answers with, so the two cannot drift.
  */
 export const messageAllowanceHook: preHandlerAsyncHookHandler = async (req: FastifyRequest) => {
-  const { user } = getSessionData(req);
-
-  if (!user.isAnonymous && user.emailVerified) {
-    return;
-  }
-
   const body = req.body as CreateChatStreamDTO;
   if (body.regenerate) {
     return;
   }
 
-  const userMessageCount = await messageRepository.countUserMessagesByOwner(user.id);
-  if (userMessageCount >= env.GUEST_MESSAGE_ALLOWANCE) {
-    throw new MessageAllowanceReachedError(env.GUEST_MESSAGE_ALLOWANCE);
+  const allowance = await getMessageAllowance(getSessionData(req).user);
+  if (allowance.metered && allowance.remaining === 0) {
+    throw new MessageAllowanceReachedError(allowance.limit);
   }
 };

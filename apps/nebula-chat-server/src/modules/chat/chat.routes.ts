@@ -5,7 +5,10 @@ import { cacheCheckHook } from '@backend/modules/chat/chat.cacheCheck.hook';
 import { chatController } from '@backend/modules/chat/chat.controller';
 import { messageAllowanceHook } from '@backend/modules/chat/chat.messageAllowance.hook';
 import { streamCaptureHook } from '@backend/modules/chat/chat.streamCapture.hook';
-import { createChatStreamSchema } from '@backend/modules/chat/chat.validation';
+import {
+  createChatStreamSchema,
+  messageAllowanceSchema,
+} from '@backend/modules/chat/chat.validation';
 import { requireAuthentication } from '@backend/plugins/authGate.plugin';
 import { jsonResponse } from '@backend/utils/jsonResponse';
 
@@ -42,6 +45,25 @@ const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
     // model work, then the cache-replay/capture hooks (ADR-0010 §4).
     preHandler: [requireAuthentication, messageAllowanceHook, cacheCheckHook, streamCaptureHook],
     handler: chatController.streamMessage,
+  });
+
+  // A plain read: no rate-limit override, and not the allowance or cache hooks —
+  // it reports the allowance, it never spends it.
+  app.get('/message-allowance', {
+    schema: {
+      description:
+        "How much of the caller's message allowance is left. Metered users (Guests and unverified Registered users) get their limit, live count and remaining sends; verified Registered users get `metered: false`.",
+      summary: 'Get message allowance',
+      tags: ['Chat'],
+      operationId: 'getMessageAllowance',
+      response: {
+        200: jsonResponse('The caller’s message allowance', messageAllowanceSchema),
+        401: jsonResponse('No authenticated session', errorEnvelopeSchema),
+        500: jsonResponse('Internal server error', errorEnvelopeSchema),
+      },
+    },
+    preHandler: [requireAuthentication],
+    handler: chatController.getMessageAllowance,
   });
   done();
 };

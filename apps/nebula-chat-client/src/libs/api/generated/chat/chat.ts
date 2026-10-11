@@ -5,20 +5,44 @@
  * REST API for Nebula Chat
  * OpenAPI spec version: 1.11.0
  */
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { ErrorEnvelope, StreamChatBody } from '../model';
+import type { ErrorEnvelope, MessageAllowance, StreamChatBody } from '../model';
 
 import { streamClient } from '../../streamClient';
 import type { ErrorType, BodyType } from '../../streamClient';
+import { axiosClient } from '../../client';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
+  const result = { queryKey } as T & { queryKey: K };
+  for (const key of Object.keys(query)) {
+    // The explicit queryKey always wins, matching the previous
+    // `{ ...query, queryKey }` spread where it was set last.
+    if (key === 'queryKey') continue;
+    Object.defineProperty(result, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => (query as Record<string, unknown>)[key],
+    });
+  }
+  return result;
+};
 
 /**
  * Stream a chat completion response from an AI model with automatic conversation and message persistence.
@@ -106,3 +130,123 @@ export const useStreamChat = <TError = ErrorType<ErrorEnvelope>, TContext = unkn
 > => {
   return useMutation(getStreamChatMutationOptions(options), queryClient);
 };
+/**
+ * How much of the caller's message allowance is left. Metered users (Guests and unverified Registered users) get their limit, live count and remaining sends; verified Registered users get `metered: false`.
+ * @summary Get message allowance
+ */
+export const getMessageAllowance = (
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<MessageAllowance>(
+    { url: `/api/chat/message-allowance`, method: 'GET', signal },
+    options,
+  );
+};
+
+export const getGetMessageAllowanceQueryKey = () => {
+  return [`/api/chat/message-allowance`] as const;
+};
+
+export const getGetMessageAllowanceQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMessageAllowance>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessageAllowance>>, TError, TData>>;
+  request?: SecondParameter<typeof axiosClient>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMessageAllowanceQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMessageAllowance>>> = ({ signal }) =>
+    getMessageAllowance(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMessageAllowance>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetMessageAllowanceQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMessageAllowance>>
+>;
+export type GetMessageAllowanceQueryError = ErrorType<ErrorEnvelope>;
+
+export function useGetMessageAllowance<
+  TData = Awaited<ReturnType<typeof getMessageAllowance>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getMessageAllowance>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMessageAllowance>>,
+          TError,
+          Awaited<ReturnType<typeof getMessageAllowance>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMessageAllowance<
+  TData = Awaited<ReturnType<typeof getMessageAllowance>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getMessageAllowance>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMessageAllowance>>,
+          TError,
+          Awaited<ReturnType<typeof getMessageAllowance>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMessageAllowance<
+  TData = Awaited<ReturnType<typeof getMessageAllowance>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getMessageAllowance>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get message allowance
+ */
+
+export function useGetMessageAllowance<
+  TData = Awaited<ReturnType<typeof getMessageAllowance>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getMessageAllowance>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetMessageAllowanceQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
