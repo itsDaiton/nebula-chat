@@ -21,7 +21,7 @@ export interface MeteredMessageAllowance {
    */
   used: number;
   /**
-   * Messages left before the wall, clamped at 0
+   * Messages left before the allowance is spent, clamped at 0
    * @minimum 0
    * @maximum 9007199254740991
    */

@@ -63,7 +63,7 @@ apps/nebula-chat-server/src/
 │   │   ├── chat.controller.ts
 │   │   ├── chat.cacheCheck.hook.ts     # preHandler — replays a cached SSE stream on a hit
 │   │   ├── chat.streamCapture.hook.ts  # preHandler — captures the SSE stream for caching
-│   │   ├── chat.messageAllowance.hook.ts # preHandler — rejects a Guest over the message allowance
+│   │   ├── chat.messageAllowance.hook.ts # preHandler — rejects a Metered user over the message allowance
 │   │   ├── chat.messageAllowance.service.ts # getMessageAllowance — shared metered decision + live count
 │   │   └── chat.routes.ts         # FastifyPluginCallbackZodOpenApi; schema blocks + hook chain
 │   ├── conversation/

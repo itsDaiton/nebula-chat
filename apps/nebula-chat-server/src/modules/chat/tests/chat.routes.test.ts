@@ -452,7 +452,7 @@ describe('GET /api/chat/message-allowance', () => {
   const getAllowance = async (): Promise<LightMyRequestResponse> =>
     app.inject({ method: 'GET', url: '/api/chat/message-allowance', remoteAddress: uniqueIp() });
 
-  it('reports a Guest’s limit, live count and what is left', async () => {
+  it("reports a Guest's limit, live count and what is left", async () => {
     mockedGetSession.mockResolvedValue(guestSession() as never);
     mockedCountUserMessages.mockResolvedValue(3);
 

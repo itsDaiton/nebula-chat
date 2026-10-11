@@ -28,7 +28,7 @@ const meteredMessageAllowanceSchema = z
       .number()
       .int()
       .nonnegative()
-      .describe('Messages left before the wall, clamped at 0'),
+      .describe('Messages left before the allowance is spent, clamped at 0'),
   })
   .meta({ id: 'MeteredMessageAllowance' });
 

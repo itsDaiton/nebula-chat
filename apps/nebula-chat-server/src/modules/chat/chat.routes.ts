@@ -57,7 +57,7 @@ const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
       tags: ['Chat'],
       operationId: 'getMessageAllowance',
       response: {
-        200: jsonResponse('The caller’s message allowance', messageAllowanceSchema),
+        200: jsonResponse("The caller's message allowance", messageAllowanceSchema),
         401: jsonResponse('No authenticated session', errorEnvelopeSchema),
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
