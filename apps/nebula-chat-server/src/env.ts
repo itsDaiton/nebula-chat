@@ -2,7 +2,11 @@ import { z } from 'zod';
 import { LOG_LEVELS } from '@nebula-chat/otel';
 import { logLevelOverridesSchema } from '@backend/utils/logLevelOverrides';
 import { operatorTokenSchema } from '@backend/utils/operatorToken';
-import { checkProfileImageStorage, storageSettingSchema } from '@backend/utils/profileImageStorage';
+import {
+  checkProfileImageStorage,
+  storageSettingSchema,
+  supabaseUrlSchema,
+} from '@backend/utils/profileImageStorage';
 import { checkSocialProviderPairs, oauthCredentialSchema } from '@backend/utils/socialProviders';
 
 // CORS and better-auth match the browser's `Origin` header exactly, so keep only scheme://host:port.
@@ -43,7 +47,7 @@ export const envSchema = z
     // Shared operator secret for /api/internal/*; unset turns those routes off.
     OPERATOR_TOKEN: operatorTokenSchema,
     // Supabase Storage for Profile images (ADR-0022); all three or none, none turns uploads off.
-    SUPABASE_URL: z.preprocess((raw) => (raw === '' ? undefined : raw), z.url().optional()),
+    SUPABASE_URL: supabaseUrlSchema,
     SUPABASE_SECRET_KEY: storageSettingSchema,
     PROFILE_IMAGE_BUCKET: storageSettingSchema,
     OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),

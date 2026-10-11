@@ -78,10 +78,10 @@ const toRejectionError = (rejection: PasswordRejection) =>
   });
 
 /**
- * Each provider with `overrideUserInfoOnSignIn` off: its picture fills `image` when the user is
+ * Each provider with `overrideUserInfoOnSignIn` off: its profile image fills `image` when the user is
  * created and a later sign-in never refreshes it, so an uploaded Profile image sticks (NEB-473).
  */
-const withProviderPictureKept = (providers: SocialProviderCredentials) =>
+const withProviderImageKept = (providers: SocialProviderCredentials) =>
   Object.fromEntries(
     Object.entries(providers).map(([provider, credentials]) => [
       provider,
@@ -175,7 +175,7 @@ export const createAuth = ({
       // The reset link was emailed to this address, so following it proves ownership.
       onPasswordReset: ({ user }) => markEmailVerified(db, user.id),
     },
-    socialProviders: withProviderPictureKept(socialProviders),
+    socialProviders: withProviderImageKept(socialProviders),
     account: {
       // A link never copies the provider's profile, so it can't replace an uploaded Profile image.
       accountLinking: { updateUserInfoOnLink: false },

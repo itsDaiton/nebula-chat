@@ -1,5 +1,8 @@
 import { auth } from '@backend/auth';
-import type { StoredProfileImage } from '@backend/modules/profileImage/profileImage.types';
+import type {
+  ProfileImageUserFields,
+  StoredProfileImage,
+} from '@backend/modules/profileImage/profileImage.types';
 
 /**
  * Reads and writes go through better-auth's internal adapter, not Drizzle: its `updateUser`
@@ -8,10 +11,7 @@ import type { StoredProfileImage } from '@backend/modules/profileImage/profileIm
 export const profileImageRepository = {
   async find(userId: string): Promise<StoredProfileImage | null> {
     const { internalAdapter } = await auth.$context;
-    const user = (await internalAdapter.findUserById(userId)) as {
-      image?: string | null;
-      profileImageKey?: string | null;
-    } | null;
+    const user = (await internalAdapter.findUserById(userId)) as ProfileImageUserFields | null;
     return user && { image: user.image ?? null, key: user.profileImageKey ?? null };
   },
 
