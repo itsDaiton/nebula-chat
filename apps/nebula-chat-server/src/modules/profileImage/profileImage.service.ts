@@ -13,10 +13,12 @@ import { profileImageStore } from '@backend/profileImageStore';
 
 type ServiceLogger = EventLogger<'warn'>;
 
-/** The configured store, or the 404 an upload gets while uploads are switched off. */
+/** What an upload gets while uploads are switched off. */
+export const uploadsOffError = () => new NotFoundError('Profile image storage');
+
 const requireStore = (): ProfileImageStore => {
   if (!profileImageStore) {
-    throw new NotFoundError('Profile image storage');
+    throw uploadsOffError();
   }
   return profileImageStore;
 };
@@ -39,11 +41,6 @@ const deleteUnused = async (store: ProfileImageStore, key: string, log: ServiceL
 export const profileImageService = {
   settings(): ProfileImageSettingsDTO {
     return { uploadsEnabled: profileImageStore !== null };
-  },
-
-  /** Throws the uploads-off 404, for a gate that runs before the body is read. */
-  assertUploadsEnabled(): void {
-    requireStore();
   },
 
   /**

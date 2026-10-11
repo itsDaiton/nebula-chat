@@ -1,8 +1,11 @@
-import type { onRequestAsyncHookHandler } from 'fastify';
+import type { onRequestHookHandler } from 'fastify';
 import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { profileImageController } from '@backend/modules/profileImage/profileImage.controller';
-import { profileImageService } from '@backend/modules/profileImage/profileImage.service';
+import {
+  profileImageService,
+  uploadsOffError,
+} from '@backend/modules/profileImage/profileImage.service';
 import { limitProfileImageUploads } from '@backend/modules/profileImage/profileImage.uploadLimit.hook';
 import {
   MAX_PROFILE_IMAGE_BYTES,
@@ -15,8 +18,8 @@ import { requireAuthentication, requireRegistered } from '@backend/plugins/authG
 import { jsonResponse } from '@backend/utils/jsonResponse';
 
 // onRequest, so a Guest or a server without storage is turned away before the body is read.
-const requireUploadsEnabled: onRequestAsyncHookHandler = async () => {
-  profileImageService.assertUploadsEnabled();
+const requireUploadsEnabled: onRequestHookHandler = (_req, _reply, done) => {
+  done(profileImageService.settings().uploadsEnabled ? undefined : uploadsOffError());
 };
 
 const profileImageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
