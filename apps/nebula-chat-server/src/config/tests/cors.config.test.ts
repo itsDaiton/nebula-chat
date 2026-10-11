@@ -55,7 +55,7 @@ describe('corsOptions', () => {
     const options = await loadCorsOptions({ CLIENT_URL: 'https://app.example.com' });
 
     expect(options.credentials).toBe(true);
-    expect(options.methods).toEqual(['GET', 'HEAD', 'POST', 'DELETE', 'OPTIONS']);
+    expect(options.methods).toEqual(['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS']);
     expect(options.allowedHeaders).toEqual(['Content-Type']);
   });
 

@@ -62,6 +62,7 @@ vi.mock('@backend/profileImageStore', () => ({
 }));
 
 import { auth } from '@backend/auth';
+import { env } from '@backend/env';
 import { profileImageRepository } from '@backend/modules/profileImage/profileImage.repository';
 
 const ROUTE = '/api/profile-image';
@@ -156,6 +157,23 @@ describe('GET /api/profile-image/settings', () => {
 });
 
 describe('PUT /api/profile-image', () => {
+  // inject() skips the browser's CORS check, so the preflight a browser sends first is tested here.
+  it('lets the client origin send the upload past its CORS preflight', async () => {
+    const res = await app.inject({
+      method: 'OPTIONS',
+      url: ROUTE,
+      headers: {
+        origin: env.CLIENT_URL,
+        'access-control-request-method': 'PUT',
+        'access-control-request-headers': 'content-type',
+      },
+    });
+
+    expect(res.statusCode).toBe(204);
+    expect(res.headers['access-control-allow-origin']).toBe(env.CLIENT_URL);
+    expect(String(res.headers['access-control-allow-methods']).split(/,\s*/)).toContain('PUT');
+  });
+
   it('stores a 256×256 WebP under the user and points the user at it', async () => {
     const res = await upload(await photo());
 
