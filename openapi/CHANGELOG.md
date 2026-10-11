@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v1.11.0...nebula-chat-openapi-v1.12.0) (2026-10-11)
+
+
+### Features
+
+* **server:** NEB-462 expose the message allowance as a read endpoint ([#509](https://github.com/itsDaiton/nebula-chat/issues/509)) ([3177464](https://github.com/itsDaiton/nebula-chat/commit/3177464f5f8abd7f61382e6d2d87a3ea6cb581b9))
+
 ## [1.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v1.10.0...nebula-chat-openapi-v1.11.0) (2026-10-11)
 
 
