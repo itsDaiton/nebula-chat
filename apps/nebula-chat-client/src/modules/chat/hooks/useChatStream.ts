@@ -5,9 +5,11 @@ import {
   getGetConversationQueryKey,
   getListConversationsInfiniteQueryKey,
 } from '@/libs/api/generated/conversations/conversations';
+import { streamChat } from '@/libs/api/generated/chat/chat';
 import { getListMessagesQueryKey } from '@/libs/api/generated/messages/messages';
+import { ErrorCode } from '@/libs/api/generated/model/errorCode';
+import type { StreamChatBody } from '@/libs/api/generated/model/streamChatBody';
 import type { ChatHistoryStreamOptions, SseEvent } from '@/modules/chat/types/types';
-import { SERVER_CONFIG } from '@/shared/config/serverConfig';
 import { useNavigate } from 'react-router';
 import { route } from '@/routing/routes';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
@@ -76,23 +78,22 @@ export const useChatStream = () => {
 
       // Build the request body synchronously before any state updates.
       const newUserMessage = messages.at(-1);
-      const requestBody: any = { messages: [newUserMessage], model };
       const activeConversationId = customConversationId ?? conversationIdRef.current;
-      if (activeConversationId) {
-        requestBody.conversationId = activeConversationId;
-      }
+      const requestBody: StreamChatBody = {
+        messages: messages.slice(-1),
+        model,
+        ...(activeConversationId && { conversationId: activeConversationId }),
+      };
 
-      // Start the fetch BEFORE the state update. useChatStreamStore.setState uses
+      // Start the request BEFORE the state update. useChatStreamStore.setState uses
       // useSyncExternalStore which can trigger synchronous renders — doing it before
-      // fetch() would delay the HTTP request by the cost of that render pass.
-      const responseFetch = fetch(SERVER_CONFIG.getApiEndpoint('/api/chat/stream'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // Carries the better-auth session cookie cross-origin, as the axios client does.
-        credentials: 'include',
-        body: JSON.stringify(requestBody),
-        signal: controller.signal,
-      });
+      // the call would delay the HTTP request by the cost of that render pass.
+      // The stream mutator resolves with the raw Response, though the generated type says string.
+      const responseFetch = streamChat(
+        requestBody,
+        undefined,
+        controller.signal,
+      ) as unknown as Promise<Response>;
 
       // Now update UI state. The network request is already in flight.
       useChatStreamStore.setState({
@@ -112,7 +113,7 @@ export const useChatStream = () => {
           const envelope = parseErrorEnvelope(await response.json().catch(() => null));
           // Matched on the code, since a plain Forbidden is a 403 too; a bare 403 counts as reached.
           const isMessageAllowanceReached = envelope
-            ? envelope.error === 'MessageAllowanceReached'
+            ? envelope.error === ErrorCode.MessageAllowanceReached
             : response.status === 403;
           if (isMessageAllowanceReached) {
             // Nothing was persisted, so the refused message goes back to the composer to resend.

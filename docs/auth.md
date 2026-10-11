@@ -374,9 +374,9 @@ A capped Guest receives a `403` carrying the shared error envelope (ADR-0011) wi
 
 The client treats the `MessageAllowanceReached` code as the allowance wall and prompts the
 Guest to register or sign in. It switches on the code, not the status: a plain `Forbidden`
-is also a `403`. No generated type exists for it — the `Chat` tag is
-excluded from the Orval client, so the chat SSE endpoint is consumed by hand-written
-code.
+is also a `403`. The stream request goes out through the generated `streamChat`, whose
+fetch mutator returns the raw `Response` without throwing on a non-2xx, so `useChatStream`
+reads the error envelope itself and matches the generated `ErrorCode`.
 
 ## Email
 

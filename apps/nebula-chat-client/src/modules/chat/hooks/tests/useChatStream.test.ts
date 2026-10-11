@@ -475,6 +475,55 @@ describe('useChatStream — lifecycle', () => {
     expect(credentials).toBe('include');
   });
 
+  it('sends the request body exactly as built from the newest message', async () => {
+    let received: unknown;
+    server.use(
+      http.post(ENDPOINT, async ({ request }) => {
+        received = await request.json();
+        return new HttpResponse(frame('end', {}), {
+          headers: { 'Content-Type': 'text/event-stream' },
+        });
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream());
+
+    await act(async () => {
+      await result.current.streamMessage({
+        model: 'gpt-4o',
+        conversationId: '44444444-4444-4444-8444-444444444444',
+        messages: [{ id: 'u1', role: 'user', content: 'hi' }],
+      });
+    });
+
+    expect(received).toEqual({
+      messages: [{ id: 'u1', role: 'user', content: 'hi' }],
+      model: 'gpt-4o',
+      conversationId: '44444444-4444-4444-8444-444444444444',
+    });
+  });
+
+  it('aborting an in-flight request ends the stream without recording an error', async () => {
+    server.use(http.post(ENDPOINT, () => new Promise<Response>(() => {})));
+    const { result } = renderHookWithQueryClient(() => useChatStream());
+
+    let sent: Promise<void> | undefined;
+    act(() => {
+      sent = result.current.streamMessage({
+        model: 'gpt-4o-mini',
+        messages: [{ id: 'u1', role: 'user', content: 'hi' }],
+      });
+    });
+    expect(useChatStreamStore.getState().isStreaming).toBe(true);
+
+    act(() => result.current.abort());
+    await act(async () => {
+      await sent;
+    });
+
+    expect(useChatStreamStore.getState().isStreaming).toBe(false);
+    expect(useChatStreamStore.getState().error).toBeNull();
+  });
+
   it('includes the conversation id when one is already active', async () => {
     let received: { conversationId?: string } | undefined;
     server.use(
