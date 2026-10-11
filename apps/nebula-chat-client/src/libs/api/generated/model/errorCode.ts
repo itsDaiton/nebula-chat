@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.10.0
+ * OpenAPI spec version: 1.11.0
  */
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

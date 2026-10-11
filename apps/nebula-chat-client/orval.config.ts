@@ -8,7 +8,7 @@ export default defineConfig({
         mode: 'exclude',
         // Operator routes are called with OPERATOR_TOKEN by whoever runs the
         // deployment, never by the browser.
-        tags: ['Chat', 'Operator'],
+        tags: ['Operator'],
       },
     },
     output: {
@@ -49,6 +49,13 @@ export default defineConfig({
             query: {
               useInfinite: true,
               useInfiniteQueryParam: 'cursor',
+            },
+          },
+          // Streams SSE, so the request goes through a fetch mutator that hands back the raw Response.
+          streamChat: {
+            mutator: {
+              path: './src/libs/api/streamClient.ts',
+              name: 'streamClient',
             },
           },
         },
