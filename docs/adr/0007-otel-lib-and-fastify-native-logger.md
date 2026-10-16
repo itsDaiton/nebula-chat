@@ -100,7 +100,8 @@ Verified on `feat/m-5-otel`:
 
 Not verified, and why:
 
-- **The local `otel-lgtm` service end to end.** No container runtime was available when this landed, so the compose service and its `cap_drop: ALL` hardening are unexercised. A span has never actually been seen arriving in Tempo. This is the weakest part of the change. _Since exercised end to end under NEB-371 ([ADR-0023](./0023-otlp-log-export-through-the-logs-sdk.md)): the hardened container starts healthy, and spans reach Tempo and log lines Loki._
+- **The local `otel-lgtm` service end to end.** No container runtime was available when this landed, so the compose service and its `cap_drop: ALL` hardening are unexercised. A span has never actually been seen arriving in Tempo. This is the weakest part of the change.
+  _Since exercised end to end under NEB-371 ([ADR-0023](./0023-otlp-log-export-through-the-logs-sdk.md)): the hardened container starts healthy, and spans reach Tempo and log lines Loki._
 - **Diag routing at the current code.** The five `diag` levels were confirmed reaching Pino tagged `component: 'otel'`, with `verbose` arriving as `trace` and `OTEL_LOG_LEVEL=none` silencing — but that was measured _before_ the diag child was given its own Pino level, and before `sdk.start()` was wrapped. Those two changes are typechecked and linted, not re-exercised at runtime.
 - **`initTelemetry`'s failure path.** The `try/catch` around `sdk.start()` has never been triggered.
 

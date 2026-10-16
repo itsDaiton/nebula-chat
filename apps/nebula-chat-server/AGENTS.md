@@ -479,7 +479,8 @@ be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-fi
 
 > **`env.ts` rule:** All env vars are Zod-validated in `src/env.ts` and fail loudly at startup before any listener is bound. Never read `process.env.*` directly anywhere in the backend — always import from `@backend/env`. The only code that touches `process.env` is what runs before `env.ts` parses it: `src/test/setup.ts` and `src/scripts/generate-openapi.ts`, which fill placeholders with `??=`.
 >
-> **One exception:** `@nebula-chat/otel` reads the `OTEL_*` variables (`OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_LOGS_EXPORTER`, `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`, `OTEL_LOG_LEVEL`) from `process.env` itself — a published lib can't depend on one consumer's env schema. They are still declared in `src/env.ts`. See [ADR-0007](../../docs/adr/0007-otel-lib-and-fastify-native-logger.md) for why, and [docs/logging.md](../../docs/logging.md) for how logging works.
+> **One exception:** `@nebula-chat/otel` reads the `OTEL_*` variables (`OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_LOGS_EXPORTER`, `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`, `OTEL_LOG_LEVEL`) from `process.env` itself — a published lib can't depend on one consumer's env schema.
+> They are still declared in `src/env.ts`. See [ADR-0007](../../docs/adr/0007-otel-lib-and-fastify-native-logger.md) for why, and [docs/logging.md](../../docs/logging.md) for how logging works.
 
 The `BETTER_AUTH_*`, `GUEST_MESSAGE_ALLOWANCE` and `GOOGLE_*`/`GITHUB_*` vars feed `@nebula-chat/auth`. See [docs/auth.md](../../docs/auth.md) for how authentication works (the route gates, the message allowance, and the claim) and [ADR-0010](../../docs/adr/0010-better-auth-for-auth.md) for the decisions behind it.
 
