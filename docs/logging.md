@@ -474,7 +474,7 @@ line:
 Two kinds of line stay on stdout only:
 
 - **The export pipeline's own**, anything from `nebula.component: otel`
-  (`otel.diag.log`, `otel.start.failed`, the lines below). Exported, every failed
+  (`otel.started`, `otel.diag.log`, `otel.start.failed`, the lines below). Exported, every failed
   export would write a line that becomes the next failed export.
 - **Lines written before `initTelemetry`.** None today.
 
@@ -511,8 +511,16 @@ OTEL_LOGS_EXPORTER=otlp
 
 Run the compiled server, `pnpm --filter nebula-chat-server start` (which loads
 that file); `pnpm dev` exports logs but no traces (see
-[the import-ordering trap](#the-import-ordering-trap)). Open Grafana at
-<http://localhost:3001> (3001, because the server itself uses 3000):
+[the import-ordering trap](#the-import-ordering-trap)).
+
+On boot the server writes one `otel.started` line saying what it exports and
+where, e.g. `Exporting traces and logs over OTLP to http://localhost:4318`. No
+such line means nothing leaves the process: the two variables are still
+commented out, or `libs/otel` is an old build (`pnpm build:libs` after pulling).
+`logs stay on stdout` means `OTEL_LOGS_EXPORTER=otlp` is missing.
+
+Open Grafana at <http://localhost:3001> (3001, because the server itself uses
+3000):
 
 - **Nebula Chat · Server** opens as the home page, provisioned from the repo
   (see [The dashboard](#the-dashboard)); it is also under **Dashboards → Nebula

@@ -131,7 +131,7 @@ describe('OTLP log export', () => {
       },
     });
     const [seconds, nanos] = record?.hrTime ?? [0, 0];
-    expect(seconds * 1000 + nanos / 1e6).toBe(lines[0]?.time);
+    expect(seconds * 1000 + nanos / 1e6).toBe(linesOf(lines, 'http.request.completed')[0]?.time);
   });
 
   it('carries the line’s trace_id and span_id as the record’s trace context', async () => {

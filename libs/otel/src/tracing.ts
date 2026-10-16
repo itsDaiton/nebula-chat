@@ -51,6 +51,36 @@ const exportConfiguration = (logger: Logger): Partial<NodeSDKConfiguration> => (
     : [],
 });
 
+// Where an endpoint points, without the userinfo or path a URL can carry. A bare
+// `localhost:4318` parses with the scheme `localhost:` and the origin "null".
+const destination = (endpoint: string): string => {
+  const origin = URL.canParse(endpoint) ? new URL(endpoint).origin : 'null';
+  return origin === 'null' ? 'an endpoint with no http(s) origin' : origin;
+};
+
+/** What `exportConfiguration` set up, in words; `undefined` when nothing is exported. */
+const exportSummary = (): string | undefined => {
+  const env = process.env;
+  const traces =
+    env.OTEL_EXPORTER_OTLP_ENDPOINT &&
+    destination(env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || env.OTEL_EXPORTER_OTLP_ENDPOINT);
+  const logs =
+    isLogExportEnabled() &&
+    destination(env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT || env.OTEL_EXPORTER_OTLP_ENDPOINT || '');
+  if (traces && logs) {
+    return traces === logs
+      ? `Exporting traces and logs over OTLP to ${traces}`
+      : `Exporting traces over OTLP to ${traces} and logs to ${logs}`;
+  }
+  if (traces) {
+    return `Exporting traces over OTLP to ${traces}; logs stay on stdout until OTEL_LOGS_EXPORTER=otlp`;
+  }
+  if (logs) {
+    return `Exporting logs over OTLP to ${logs}; traces are not exported without OTEL_EXPORTER_OTLP_ENDPOINT`;
+  }
+  return undefined;
+};
+
 let sdk: NodeSDK | null = null;
 let shutdownPromise: Promise<void> | null = null;
 
@@ -134,6 +164,11 @@ export const initTelemetry = (serviceName: string, options: InitTelemetryOptions
   }
 
   sdk = instance;
+
+  // One line that answers "is anything leaving?" at boot. None when nothing is
+  // exported, so a process without an endpoint writes exactly what it did before.
+  const summary = exportSummary();
+  if (summary) logEvent(componentLogger(logger, 'otel'), 'info', 'otel.started', {}, summary);
 
   process.on('SIGTERM', () => {
     void shutdownTelemetry();
