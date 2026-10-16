@@ -20,12 +20,30 @@ vi.mock('@opentelemetry/exporter-trace-otlp-http', () => ({
   },
 }));
 
+const logExporterConstructed = vi.fn();
+vi.mock('@opentelemetry/exporter-logs-otlp-http', () => ({
+  OTLPLogExporter: class {
+    constructor() {
+      logExporterConstructed();
+    }
+    export() {}
+    shutdown() {
+      return Promise.resolve();
+    }
+  },
+}));
+
 const ENDPOINT = 'OTEL_EXPORTER_OTLP_ENDPOINT';
-const originalEndpoint = process.env[ENDPOINT];
+const LOGS_ENDPOINT = 'OTEL_EXPORTER_OTLP_LOGS_ENDPOINT';
+const LOGS_EXPORTER = 'OTEL_LOGS_EXPORTER';
+const EXPORT_VARS = [ENDPOINT, LOGS_ENDPOINT, LOGS_EXPORTER];
+const originalEnv = EXPORT_VARS.map((key) => [key, process.env[key]] as const);
 
 const restoreEndpoint = () => {
-  if (originalEndpoint === undefined) delete process.env[ENDPOINT];
-  else process.env[ENDPOINT] = originalEndpoint;
+  for (const [key, value] of originalEnv) {
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
 };
 
 const capture = () => {
@@ -79,6 +97,7 @@ describe('initTelemetry with no OTLP endpoint', () => {
 
   it('builds no exporter, so nothing tries to connect', () => {
     expect(exporterConstructed).not.toHaveBeenCalled();
+    expect(logExporterConstructed).not.toHaveBeenCalled();
   });
 });
 
@@ -100,6 +119,7 @@ describe('initTelemetry against a stubbed SDK', () => {
     vi.doUnmock('@opentelemetry/sdk-node');
     restoreEndpoint();
     exporterConstructed.mockClear();
+    logExporterConstructed.mockClear();
     sdkShutdown.mockClear();
   });
 
@@ -110,6 +130,40 @@ describe('initTelemetry against a stubbed SDK', () => {
     init('test-service', { logger: capture().logger });
 
     expect(exporterConstructed).toHaveBeenCalledOnce();
+  });
+
+  it('builds no log exporter for an endpoint alone: log export is opt-in', async () => {
+    process.env[ENDPOINT] = 'http://collector.invalid:4318';
+    delete process.env[LOGS_EXPORTER];
+    const { initTelemetry: init } = await stubSdk(() => undefined);
+
+    init('test-service', { logger: capture().logger });
+
+    expect(logExporterConstructed).not.toHaveBeenCalled();
+  });
+
+  it('builds no log exporter for the opt-in alone, with nowhere to send to', async () => {
+    delete process.env[ENDPOINT];
+    delete process.env[LOGS_ENDPOINT];
+    process.env[LOGS_EXPORTER] = 'otlp';
+    const { initTelemetry: init } = await stubSdk(() => undefined);
+
+    init('test-service', { logger: capture().logger });
+
+    expect(logExporterConstructed).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['the shared endpoint', ENDPOINT],
+    ['a logs-only endpoint', LOGS_ENDPOINT],
+  ])('builds the OTLP log exporter for OTEL_LOGS_EXPORTER=otlp and %s', async (_label, key) => {
+    process.env[key] = 'http://collector.invalid:4318';
+    process.env[LOGS_EXPORTER] = 'otlp';
+    const { initTelemetry: init } = await stubSdk(() => undefined);
+
+    init('test-service', { logger: capture().logger });
+
+    expect(logExporterConstructed).toHaveBeenCalledOnce();
   });
 
   it('logs a warning and carries on when the SDK fails to start', async () => {

@@ -12,6 +12,9 @@ import { checkSocialProviderPairs, oauthCredentialSchema } from '@backend/utils/
 // CORS and better-auth match the browser's `Origin` header exactly, so keep only scheme://host:port.
 const originSchema = z.url({ protocol: /^https?$/ }).transform((url) => new URL(url).origin);
 
+// The OTLP/HTTP exporters need a scheme; a bare `localhost:4318` parses as one called `localhost:`.
+const otlpEndpointSchema = z.url({ protocol: /^https?$/ });
+
 // Resend takes a bare address or `Name <address>`; validate the address either way.
 const emailFromSchema = z
   .string()
@@ -50,7 +53,10 @@ export const envSchema = z
     SUPABASE_URL: supabaseUrlSchema,
     SUPABASE_SECRET_KEY: storageSettingSchema,
     PROFILE_IMAGE_BUCKET: storageSettingSchema,
-    OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),
+    OTEL_EXPORTER_OTLP_ENDPOINT: otlpEndpointSchema.optional(),
+    // Log export over OTLP is opt-in (ADR-0023): `otlp` plus an endpoint, this one or the shared one.
+    OTEL_LOGS_EXPORTER: z.enum(['otlp', 'none']).optional(),
+    OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: otlpEndpointSchema.optional(),
     OTEL_LOG_LEVEL: z
       .enum(['none', 'error', 'warn', 'info', 'debug', 'verbose', 'all'])
       .default('error'),

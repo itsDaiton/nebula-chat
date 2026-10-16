@@ -17,6 +17,8 @@ For the decisions behind them, see
 - An error is logged **once, by whoever handles it**, under `err`.
 - Each unit of work writes **one** summary line at `info`. Progress inside it is
   `debug`.
+- Lines go to stdout, and also to Loki over OTLP when `OTEL_LOGS_EXPORTER=otlp`
+  ([Exporting logs](#exporting-logs)). Grafana links them to their traces.
 
 ## What a line looks like
 
@@ -370,16 +372,19 @@ auto-instrumentation for HTTP, Postgres and Redis. **The tracer is always on.**
 | `OTEL_LOG_LEVEL`              | Verbosity of the SDK's _own_ diagnostics (default `error`)              |
 
 With the endpoint unset, the SDK starts with a span processor that discards
-every span, and with metrics and log exporting pinned to nothing. Both matter:
-with zero span processors `NodeSDK` installs no tracer provider, so spans stay
+every span, and with metrics exporting pinned to nothing. Both matter: with zero
+span processors `NodeSDK` installs no tracer provider, so spans stay
 non-recording and no line gets a `trace_id`; and with those options simply left
-out, it falls back to env-driven OTLP exporters pointed at localhost.
+out, it falls back to env-driven OTLP exporters pointed at localhost. Log
+exporting is always set explicitly, and is on only when opted into (see
+[Exporting logs](#exporting-logs)).
 
 `trace_id`/`span_id` come from a Pino `mixin` that reads the active span through
 `@opentelemetry/api` at write time. Not from `@opentelemetry/instrumentation-pino`,
 which is disabled: Pino is loaded through `@nebula-chat/otel` _before_
 `initTelemetry` runs, so that instrumentation could never patch it, and it could
-only add duplicate keys or ship logs over OTLP. stdout JSON is the log sink.
+only add duplicate keys. stdout JSON stays the source of truth; exporting logs
+over OTLP is a second destination next to it (see [Exporting logs](#exporting-logs)).
 
 ### The import-ordering trap
 
@@ -396,46 +401,13 @@ spans. If the server ever moves to ESM, `initTelemetry` has to move into its own
 first-imported module. Don't let an import sorter reorder that file.
 
 The same trap bites `pnpm dev` today: under `tsx` nothing is instrumented, so
-dev lines carry no `trace_id`. The compiled build (`pnpm build && pnpm start`)
-is instrumented. Use it when you need traces locally.
-
-### Local development
-
-`docker-compose.yml` runs `grafana/otel-lgtm`, which accepts OTLP directly — no
-Collector needed — and bundles Grafana and Tempo:
-
-```bash
-podman compose up -d otel-lgtm
-```
-
-Then set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` in
-`apps/nebula-chat-server/.env`, run the compiled server with
-`pnpm --filter nebula-chat-server start` (which loads that file), and open Grafana at
-<http://localhost:3001> (3001, because the server itself uses 3000). A line's
-`trace_id` is the id to search for in Tempo.
-
-### Production
-
-Nothing to deploy. The app speaks plain OTLP, so you point it at a hosted
-endpoint and set the auth header — no Collector, no sidecar:
-
-```bash
-OTEL_EXPORTER_OTLP_ENDPOINT=<vendor OTLP endpoint>
-OTEL_EXPORTER_OTLP_HEADERS=<vendor auth header>
-```
-
-The exporter is constructed with no arguments and reads those standard `OTEL_*`
-vars itself, so switching vendors needs no code change. The intended target is
-Grafana Cloud's free tier, which is hard-capped rather than overage-billed.
-
-Two caveats on Render's free plan: the service sleeps when idle, so traces exist
-only while it is awake; and export is gated on `OTEL_EXPORTER_OTLP_ENDPOINT`
-specifically — setting only the more specific
-`OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` exports nothing.
+dev lines carry no `trace_id`, and no request spans reach Tempo. Logs are still
+exported, just without a trace to link to. The compiled build
+(`pnpm build && pnpm start`) is instrumented. Use it when you need traces locally.
 
 ### Shutdown
 
-`shutdownTelemetry()` flushes pending spans and stops the SDK. It is idempotent:
+`shutdownTelemetry()` flushes pending spans (and exported log records) and stops the SDK. It is idempotent:
 the lib's own `SIGTERM` hook and the server's shutdown sequence (`src/shutdown.ts`)
 share one flush. It never rejects, and it stops waiting after a fixed 2s
 (`SHUTDOWN_FLUSH_CAP_MS`). A reachable collector finishes well within that. An
@@ -459,6 +431,153 @@ OTEL_LOG_LEVEL=debug pnpm --filter nebula-chat-server start
 A failed `sdk.start()` logs `otel.start.failed` at `warn` and leaves the server
 running without tracing: observability never takes the service down.
 
+## Exporting logs
+
+Every line can also go over OTLP to a log backend: Grafana Cloud Loki in
+production, the `otel-lgtm` container locally. stdout JSON stays the source of
+truth, and export is **opt-in**
+([ADR-0023](./adr/0023-otlp-log-export-through-the-logs-sdk.md)):
+
+| Variable                           | Effect                                                                     |
+| ---------------------------------- | -------------------------------------------------------------------------- |
+| `OTEL_LOGS_EXPORTER`               | `otlp` turns export on. Unset or `none` = stdout only                      |
+| `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` | Where to send logs, if not to the shared endpoint                          |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`      | The shared endpoint (as for traces). Used for logs when the above is unset |
+
+Both an opt-in and an endpoint are needed. Unlike the OTel default,
+`OTEL_LOGS_EXPORTER` unset means off: an endpoint set for traces does not start
+spending log quota. With export off there is no exporter, no connection, and
+stdout is byte-for-byte what it was.
+
+How it works: `createLogger` writes to a Pino multistream, stdout first, then a
+destination that hands each serialized line to the OpenTelemetry logs SDK, which
+`initTelemetry` registers and batches over OTLP. Because it takes the serialized
+line:
+
+- **Redaction applies to the export too.** A censored key is `[Redacted]` in Loki.
+- **The record links to its trace.** It carries the active span the
+  `trace_id`/`span_id` mixin stamped, as OTLP trace context.
+- **The line keeps its shape.** `msg` is the body, the level the severity
+  (`info` → `INFO`, severity text `info`), `time` the timestamp. Every other key
+  is an attribute, `event.name` and `err` (as a nested map) included. Left out:
+  `trace_id`/`span_id` (the record's trace context), and `service.name` and `pid`,
+  which the resource carries with the process and host attributes.
+
+Two kinds of line stay on stdout only:
+
+- **The export pipeline's own**, anything from `nebula.component: otel`
+  (`otel.diag.log`, `otel.start.failed`, the lines below). Exported, every failed
+  export would write a line that becomes the next failed export.
+- **Lines written before `initTelemetry`.** None today.
+
+A backend that is down or refuses a batch never blocks or fails a request. The
+first failed batch writes one `warn`, `otel.log_export.failed` with `err`; the
+first batch delivered after it writes `otel.log_export.restored` at `info`.
+Batches lost in between are on stdout only.
+
+**Volume.** An exported line comes to about 1.4 KB in Loki once structured
+metadata is counted. Grafana Cloud's free tier caps logs at 50 GB a month,
+around 35 million lines or 13 a second sustained, against roughly one `info`
+line per request today. A runtime switch to `debug` (see
+[Changing levels at runtime](#changing-levels-at-runtime)) multiplies that while
+it lasts.
+
+## Reading it in Grafana
+
+### Locally
+
+`docker-compose.yml` runs `grafana/otel-lgtm`, which accepts OTLP directly — no
+Collector needed — and bundles Grafana, Tempo and Loki, with the datasources
+already linking a trace to its log lines and back:
+
+```bash
+podman compose up -d otel-lgtm
+```
+
+Then in `apps/nebula-chat-server/.env` set:
+
+```bash
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+OTEL_LOGS_EXPORTER=otlp
+```
+
+Run the compiled server, `pnpm --filter nebula-chat-server start` (which loads
+that file); `pnpm dev` exports logs but no traces (see
+[the import-ordering trap](#the-import-ordering-trap)). Open Grafana at
+<http://localhost:3001> (3001, because the server itself uses 3000):
+
+- **Dashboards → Nebula Chat → Nebula Chat · Server**, provisioned from the repo
+  (see [The dashboard](#the-dashboard)).
+- **Explore → Tempo**: open a trace, then **Logs for this span** for its lines in
+  Loki.
+- **Explore → Loki**: open a line; its `trace_id` links to the trace in Tempo.
+
+### In production
+
+Nothing to deploy. The app speaks plain OTLP, so you point it at a hosted
+endpoint and set the auth header — no Collector, no sidecar. On Render:
+
+```bash
+OTEL_EXPORTER_OTLP_ENDPOINT=<vendor OTLP endpoint>
+OTEL_EXPORTER_OTLP_HEADERS=<vendor auth header>
+OTEL_LOGS_EXPORTER=otlp   # leave unset to export traces only
+```
+
+The exporters are constructed with no arguments and read those standard
+`OTEL_*` vars themselves, so switching vendors needs no code change. The target
+is Grafana Cloud's free tier, which is hard-capped rather than overage-billed:
+its OTLP gateway takes traces and logs at the one endpoint.
+
+In Grafana Cloud, import the dashboard once: **Dashboards → New → Import**, upload
+`grafana/dashboards/nebula-chat-server.json`. Its datasources are variables, so it
+picks the stack's logs and traces datasources without editing. If a trace's
+**Logs for this span** finds nothing, give the stack's Tempo datasource the
+settings `otel-lgtm` ships with: under **Trace to logs**, the logs datasource, the
+tag `service.name` mapped to `service_name`, and the query
+`{${__tags}} | trace_id = "${__trace.traceId}"`.
+
+Two caveats on Render's free plan: the service sleeps when idle, so telemetry
+exists only while it is awake; and span export is gated on
+`OTEL_EXPORTER_OTLP_ENDPOINT` specifically — setting only the more specific
+`OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` exports no spans.
+
+### Querying logs
+
+Loki stores each exported line's attributes as structured metadata, with dots
+turned into underscores: `event.name` is `event_name`, `http.response.status_code`
+is `http_response_status_code`. Only `service_name` is a stream label, so every
+query starts from it:
+
+```logql
+{service_name="nebula-chat-server"} | event_name="chat.reply.completed" | nebula_outcome="failed"
+
+sum by (http_route) (count_over_time({service_name="nebula-chat-server"} | event_name="http.request.completed" [5m]))
+
+quantile_over_time(0.95, {service_name="nebula-chat-server"} | event_name="http.request.completed" | unwrap nebula_duration_ms [5m]) by (service_name)
+```
+
+The level is `severity_text` (`info`, `warn`, …). A line filter (`|= "…"`)
+searches `msg` only; filter attributes by name instead.
+
+### The dashboard
+
+`grafana/dashboards/nebula-chat-server.json` reads the server's logs and traces:
+request rate, 5xx rate and latency per route; Direct replies by outcome, tokens
+and duration per model; lines by level, warnings and errors by event, the log
+lines themselves; and failed and slow traces. Server starts are annotations.
+Every panel is LogQL or TraceQL, so it needs no metrics.
+
+The same JSON runs locally and in Grafana Cloud because no panel names a
+datasource: they use the **Logs** and **Traces** variables, which default to
+the instance's Loki and Tempo. Keep it that way when editing:
+
+1. Edit it in local Grafana; the provisioning allows saving from the UI.
+2. **Export → Export as code**. Under _Advanced options_ pick the **Classic**
+   model and **JSON**, and leave _Share dashboard with another instance_ off, so
+   the datasource variables stay variables.
+3. Save it over the file in `grafana/dashboards/`. Local Grafana reloads it
+   within 10 seconds; re-import it in Grafana Cloud.
+
 ## Deliberately outside this pipeline
 
 Three things do not go through Pino, on purpose. Don't "fix" them:
@@ -473,6 +592,9 @@ Three things do not go through Pino, on purpose. Don't "fix" them:
 ## Known gaps
 
 - **No traces under `tsx`.** See [the import-ordering trap](#the-import-ordering-trap).
+  Exported logs from `pnpm dev` have no trace to link to.
+- **SDK diagnostics are not in Loki.** `otel.diag.log` and the other `otel`
+  component lines stay on stdout (see [Exporting logs](#exporting-logs)).
 - **`@nebula-chat/redis` failures carry no request context.** The lib logs
   through the logger `src/redis.ts` built it with at startup, so a
   `cache.*.failed` line has no `http.request.id` or `user.id`. The server's own
@@ -480,8 +602,9 @@ Three things do not go through Pino, on purpose. Don't "fix" them:
   through `req.log` and carry both.
 - **Drizzle query logging is off.** The db client passes no `logger` option, so
   SQL is never logged. Wiring it to Pino is a reasonable follow-up ticket.
-- **No metrics.** Traces and logs only. `@fastify/under-pressure` exposes
-  event-loop health in the meantime.
+- **No metrics.** Traces and logs only; the dashboard derives its rates and
+  percentiles from log lines. `@fastify/under-pressure` exposes event-loop health
+  in the meantime.
 - **A runtime level change is fire-and-forget.** Redis pub/sub keeps nothing,
   so an instance that starts, or reconnects to Redis, after the change was sent
   never gets it, and a restart drops it. An instance that boots while Redis is

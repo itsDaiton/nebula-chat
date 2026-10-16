@@ -208,6 +208,7 @@ nebula-chat/
 │   ├── langchain/            # @nebula-chat/langchain — LLM providers, tokens, streaming, SSE
 │   ├── otel/                 # @nebula-chat/otel — Pino logger factory + OpenTelemetry tracing
 │   └── redis/                # @nebula-chat/redis — shared Redis connection + cache, auth store and pub/sub primitives
+├── grafana/                  # Grafana dashboards as code, provisioned into local otel-lgtm (docs/logging.md)
 ├── openapi/                  # Generated OpenAPI spec — its own workspace package
 ├── CLAUDE.md                 # Claude Code operating instructions
 ├── CONTEXT.md                # Domain vocabulary glossary

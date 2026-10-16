@@ -1,9 +1,12 @@
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import type { NodeSDKConfiguration } from '@opentelemetry/sdk-node';
 import { componentLogger } from './componentLogger';
 import { attachDiagLogger } from './diag';
+import { isLogExportEnabled, reportExportFailures } from './logExport';
 import { logEvent } from './logEvent';
 import { createLogger } from './logger';
 import type { Logger } from './logger';
@@ -34,16 +37,24 @@ const discardingSpanProcessor: SpanProcessor = {
 };
 
 /**
- * What the SDK exports to. With an endpoint, spans go over OTLP as before (the
- * exporter reads `OTEL_EXPORTER_OTLP_*` itself; metrics and logs keep the
- * SDK's env-driven defaults). Without one, every signal is pinned to *nothing*
- * explicitly: left unset, `NodeSDK` falls back to its env-driven defaults,
- * which are OTLP exporters pointed at localhost.
+ * What the SDK exports to. The exporters read `OTEL_EXPORTER_OTLP_*` themselves.
+ * With an endpoint, spans go over OTLP and metrics keep the SDK's env-driven
+ * defaults; without one, spans and metrics are pinned to *nothing* explicitly,
+ * since left unset `NodeSDK` falls back to OTLP exporters pointed at localhost.
+ * Logs are always explicit: exported only on the opt-in (`isLogExportEnabled`).
  */
-const exportConfiguration = (endpoint: string | undefined): Partial<NodeSDKConfiguration> =>
-  endpoint
+const exportConfiguration = (logger: Logger): Partial<NodeSDKConfiguration> => ({
+  ...(process.env.OTEL_EXPORTER_OTLP_ENDPOINT
     ? { traceExporter: new OTLPTraceExporter() }
-    : { spanProcessors: [discardingSpanProcessor], metricReaders: [], logRecordProcessors: [] };
+    : { spanProcessors: [discardingSpanProcessor], metricReaders: [] }),
+  logRecordProcessors: isLogExportEnabled()
+    ? [
+        new BatchLogRecordProcessor({
+          exporter: reportExportFailures(new OTLPLogExporter(), logger),
+        }),
+      ]
+    : [],
+});
 
 let sdk: NodeSDK | null = null;
 let shutdownPromise: Promise<void> | null = null;
@@ -92,12 +103,12 @@ export const initTelemetry = (serviceName: string, options: InitTelemetryOptions
   const logger = options.logger ?? createLogger({ serviceName });
   const instance = new NodeSDK({
     serviceName,
-    ...exportConfiguration(process.env.OTEL_EXPORTER_OTLP_ENDPOINT),
+    ...exportConfiguration(logger),
     instrumentations: [
       getNodeAutoInstrumentations({
-        // `createLogger` stamps trace ids itself (a mixin), and Pino is loaded
-        // before this runs, so the Pino instrumentation could only ever add
-        // duplicate keys or ship logs over OTLP. stdout JSON is the log sink.
+        // `createLogger` stamps trace ids itself (a mixin) and exports lines
+        // itself (`logExport.ts`), and Pino is loaded before this runs, so the
+        // Pino instrumentation could only ever add duplicate keys.
         '@opentelemetry/instrumentation-pino': { enabled: false },
       }),
     ],

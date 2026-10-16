@@ -147,3 +147,22 @@ describe('envSchema Profile image storage', () => {
     expect(parse({ ...STORAGE, SUPABASE_URL: 'project.supabase' }).success).toBe(false);
   });
 });
+
+describe('envSchema log export', () => {
+  it.each(['otlp', 'none'])('accepts OTEL_LOGS_EXPORTER=%s', (value) => {
+    expect(parse({ OTEL_LOGS_EXPORTER: value }).success).toBe(true);
+  });
+
+  it('rejects an exporter the lib does not speak, so a typo fails boot instead of exporting nothing', () => {
+    expect(parse({ OTEL_LOGS_EXPORTER: 'otpl' }).success).toBe(false);
+  });
+
+  it.each(['OTEL_EXPORTER_OTLP_ENDPOINT', 'OTEL_EXPORTER_OTLP_LOGS_ENDPOINT'])(
+    'accepts an http(s) %s and rejects one with no scheme',
+    (key) => {
+      expect(parse({ [key]: 'http://localhost:4318' }).success).toBe(true);
+      expect(parse({ [key]: 'https://otlp-gateway.example.net/otlp' }).success).toBe(true);
+      expect(parse({ [key]: 'localhost:4318' }).success).toBe(false);
+    },
+  );
+});

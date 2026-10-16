@@ -54,11 +54,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  # Local trace backend. Accepts OTLP directly — no separate Collector needed —
-  # and bundles Grafana + Tempo, so the trace UI here is the same one Grafana
-  # Cloud serves in production. The app itself stays vendor-neutral: it only ever
+  # Local trace and log backend. Accepts OTLP directly — no separate Collector
+  # needed — and bundles Grafana, Tempo and Loki, so the UI here is the same one
+  # Grafana Cloud serves in production, with its datasources already linking a
+  # trace to its log lines. The app itself stays vendor-neutral: it only ever
   # speaks OTLP to OTEL_EXPORTER_OTLP_ENDPOINT, so swapping this for Jaeger or a
-  # hosted vendor is an env var, not a code change. See ADR-0007.
+  # hosted vendor is an env var, not a code change. See ADR-0007 and ADR-0023.
   otel-lgtm:
     image: grafana/otel-lgtm:0.35.0
     container_name: otel-lgtm
@@ -69,13 +70,14 @@ services:
       - "127.0.0.1:4318:4318"
     volumes: # kics-scan ignore-line
       - otel-lgtm-data:/data
+      # The repo's dashboards (grafana/), provisioned into a "Nebula Chat" folder.
+      - ./grafana/provisioning/dashboards.yml:/otel-lgtm/grafana/conf/provisioning/dashboards/nebula-chat.yml:ro
+      - ./grafana/dashboards:/otel-lgtm/nebula-chat-dashboards:ro
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
     # Matches the hardening on db/redis. Every process in this image binds an
-    # unprivileged port, so dropping all caps should be safe — but it is
-    # untested here (no container runtime available when this landed). If the
-    # container fails to start, this block is the first thing to try removing.
+    # unprivileged port, so it starts and goes healthy with no capabilities.
     cap_drop:
       - ALL
     healthcheck:

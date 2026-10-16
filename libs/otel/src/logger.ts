@@ -2,6 +2,7 @@ import pino from 'pino';
 import type { DestinationStream, LoggerOptions } from 'pino';
 import { attachLevelControl } from './levelControl';
 import type { LevelOverrides } from './levelControl';
+import { isLogExportEnabled, logExportStream } from './logExport';
 import { REDACT_CENSOR, REDACT_PATHS } from './redaction';
 import { serializeErr } from './serializeErr';
 import { traceFields } from './traceFields';
@@ -49,6 +50,28 @@ const prettyTransport = {
   },
 };
 
+const pinoFor = (config: LoggerOptions, options: CreateLoggerOptions): Logger => {
+  if (isLogExportEnabled()) return pino(config, exportingDestination(options));
+  // Pino rejects a transport and a destination together; a caller-supplied
+  // destination wins, since only tests and tools ask for one.
+  if (options.destination) return pino(config, options.destination);
+  return pino({ ...config, transport: options.pretty ? prettyTransport : undefined });
+};
+
+/**
+ * stdout (or the caller's destination) first, then the OTLP export. Both take every
+ * level: filtering stays with each logger, whose level a component override or a
+ * runtime change may set below the root's.
+ */
+const exportingDestination = (options: CreateLoggerOptions): DestinationStream => {
+  const primary =
+    options.destination ?? (options.pretty ? pino.transport(prettyTransport) : pino.destination(1));
+  return pino.multistream([
+    { level: 'trace', stream: primary },
+    { level: 'trace', stream: logExportStream() },
+  ]);
+};
+
 /**
  * The only way a logger is constructed in this system. Every line it (or any
  * child) writes carries the service fields and `pid` — an explicit `base` is
@@ -71,12 +94,7 @@ export const createLogger = (options: CreateLoggerOptions): Logger => {
     mixin: traceFields,
   };
 
-  // Pino rejects a transport and a destination together; a caller-supplied
-  // destination wins, since only tests and tools ask for one.
-  const logger = options.destination
-    ? pino(config, options.destination)
-    : pino({ ...config, transport: options.pretty ? prettyTransport : undefined });
-
+  const logger = pinoFor(config, options);
   attachLevelControl(logger, options.levelOverrides ?? {});
   return logger;
 };

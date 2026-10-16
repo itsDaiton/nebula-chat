@@ -38,6 +38,8 @@ export const LOG_EVENTS = [
   'server.shutdown.failed',
   'redis.connect.failed',
   'otel.start.failed',
+  'otel.log_export.failed',
+  'otel.log_export.restored',
   'env.file.missing',
   // Log control
   'log.level.changed',
