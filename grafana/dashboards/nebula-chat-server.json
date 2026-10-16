@@ -186,7 +186,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({service_name=\"$service\"} | event_name=\"http.request.completed\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"$service\"} | event_name=\"http.request.completed\" [$__range])) or vector(0)",
           "queryType": "instant"
         }
       ],
@@ -377,7 +377,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({service_name=\"$service\"} | event_name=\"chat.reply.completed\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"$service\"} | event_name=\"chat.reply.completed\" [$__range])) or vector(0)",
           "queryType": "instant"
         }
       ],
