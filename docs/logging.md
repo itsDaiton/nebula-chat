@@ -514,8 +514,11 @@ that file); `pnpm dev` exports logs but no traces (see
 [the import-ordering trap](#the-import-ordering-trap)). Open Grafana at
 <http://localhost:3001> (3001, because the server itself uses 3000):
 
-- **Dashboards → Nebula Chat → Nebula Chat · Server**, provisioned from the repo
-  (see [The dashboard](#the-dashboard)).
+- **Nebula Chat · Server** opens as the home page, provisioned from the repo
+  (see [The dashboard](#the-dashboard)); it is also under **Dashboards → Nebula
+  Chat**. You are an anonymous admin, so there is no login. Grafana's own
+  welcome page is skipped because its per-user panels answer an anonymous
+  visitor with an "Unauthorized" toast.
 - **Explore → Tempo**: open a trace, then **Logs for this span** for its lines in
   Loki.
 - **Explore → Loki**: open a line; its `trace_id` links to the trace in Tempo.
