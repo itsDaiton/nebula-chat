@@ -206,7 +206,7 @@ nebula-chat/
 │   ├── db/                   # @nebula-chat/db — Drizzle ORM schema + migrations
 │   ├── errors/               # @nebula-chat/errors — isomorphic error codes, envelope schema, AppError classes
 │   ├── langchain/            # @nebula-chat/langchain — LLM providers, tokens, streaming, SSE
-│   ├── otel/                 # @nebula-chat/otel — Pino logger factory + OpenTelemetry tracing
+│   ├── otel/                 # @nebula-chat/otel — Pino logger factory, OpenTelemetry tracing and OTLP log export
 │   └── redis/                # @nebula-chat/redis — shared Redis connection + cache, auth store and pub/sub primitives
 ├── grafana/                  # Grafana dashboards as code, provisioned into local otel-lgtm (docs/logging.md)
 ├── openapi/                  # Generated OpenAPI spec — its own workspace package

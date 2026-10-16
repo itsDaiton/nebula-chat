@@ -50,26 +50,19 @@ const prettyTransport = {
   },
 };
 
-const pinoFor = (config: LoggerOptions, options: CreateLoggerOptions): Logger => {
-  if (isLogExportEnabled()) return pino(config, exportingDestination(options));
-  // Pino rejects a transport and a destination together; a caller-supplied
-  // destination wins, since only tests and tools ask for one.
-  if (options.destination) return pino(config, options.destination);
-  return pino({ ...config, transport: options.pretty ? prettyTransport : undefined });
-};
+// The caller's destination (tests, tools), else pino-pretty; undefined = Pino's own stdout.
+const mainStream = (options: CreateLoggerOptions): DestinationStream | undefined =>
+  options.destination ?? (options.pretty ? pino.transport(prettyTransport) : undefined);
 
-/**
- * stdout (or the caller's destination) first, then the OTLP export. Both take every
- * level: filtering stays with each logger, whose level a component override or a
- * runtime change may set below the root's.
- */
-const exportingDestination = (options: CreateLoggerOptions): DestinationStream => {
-  const primary =
-    options.destination ?? (options.pretty ? pino.transport(prettyTransport) : pino.destination(1));
-  return pino.multistream([
-    { level: 'trace', stream: primary },
+const buildPino = (config: LoggerOptions, options: CreateLoggerOptions): Logger => {
+  const main = mainStream(options);
+  if (!isLogExportEnabled()) return main ? pino(config, main) : pino(config);
+  // Both take every level: each logger filters, and a component's may sit below the root's.
+  const streams = pino.multistream([
+    { level: 'trace', stream: main ?? pino.destination(1) },
     { level: 'trace', stream: logExportStream() },
   ]);
+  return pino(config, streams);
 };
 
 /**
@@ -94,7 +87,7 @@ export const createLogger = (options: CreateLoggerOptions): Logger => {
     mixin: traceFields,
   };
 
-  const logger = pinoFor(config, options);
+  const logger = buildPino(config, options);
   attachLevelControl(logger, options.levelOverrides ?? {});
   return logger;
 };

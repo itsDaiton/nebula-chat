@@ -3,16 +3,17 @@ import { logs, SeverityNumber } from '@opentelemetry/api-logs';
 import { LoggerProvider } from '@opentelemetry/sdk-logs';
 import type { ReadableLogRecord } from '@opentelemetry/sdk-logs';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { LOG_EXPORT_TIMEOUT_MS } from '../logExport';
 import { logEvent } from '../logEvent';
 import { createLogger } from '../logger';
 import { initTelemetry } from '../tracing';
 import { captureDestination } from './capture';
 import type { LogLine } from './capture';
+import { setEnv } from './processEnv';
 
-// The OTLP exporters are the network boundary. The log exporter is faked into
-// an in-memory one whose outcome each test picks; the trace exporter is faked
-// only so that setting an endpoint never dials a collector.
-type ExportOutcome = 'succeed' | 'fail' | 'throw';
+// The OTLP exporters are the network boundary: the log one becomes an in-memory one whose
+// outcome each test picks, the trace one is faked so an endpoint never dials a collector.
+type ExportOutcome = 'succeed' | 'fail' | 'throw' | 'hang';
 const exporter = vi.hoisted(() => ({
   outcome: 'succeed' as ExportOutcome,
   records: [] as ReadableLogRecord[],
@@ -22,6 +23,7 @@ vi.mock('@opentelemetry/exporter-logs-otlp-http', () => ({
   OTLPLogExporter: class {
     export(batch: ReadableLogRecord[], done: (result: { code: number; error?: Error }) => void) {
       if (exporter.outcome === 'throw') throw new Error('exporter exploded');
+      if (exporter.outcome === 'hang') return;
       if (exporter.outcome === 'fail') {
         done({ code: 1, error: new Error('collector unreachable') });
         return;
@@ -44,27 +46,25 @@ vi.mock('@opentelemetry/exporter-trace-otlp-http', () => ({
   },
 }));
 
-const EXPORT_ENV = {
+const NO_EXPORT_ENV = {
+  OTEL_LOGS_EXPORTER: undefined,
+  OTEL_EXPORTER_OTLP_ENDPOINT: undefined,
+  OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: undefined,
+};
+type ExportEnv = Partial<Record<keyof typeof NO_EXPORT_ENV, string>>;
+
+const EXPORT_ENV: ExportEnv = {
   OTEL_LOGS_EXPORTER: 'otlp',
   OTEL_EXPORTER_OTLP_ENDPOINT: 'http://collector.invalid:4318',
 };
-type ExportEnv = Partial<typeof EXPORT_ENV>;
 
-/** Runs `run` with exactly `values` set among the export variables, then restores them. */
+/** Runs `run` with exactly `values` set among the export variables. */
 const withEnv = <T>(values: ExportEnv, run: () => T): T => {
-  const keys = Object.keys(EXPORT_ENV) as (keyof ExportEnv)[];
-  const original = keys.map((key) => [key, process.env[key]] as const);
-  for (const key of keys) {
-    if (values[key] === undefined) delete process.env[key];
-    else process.env[key] = values[key];
-  }
+  const restore = setEnv({ ...NO_EXPORT_ENV, ...values });
   try {
     return run();
   } finally {
-    for (const [key, value] of original) {
-      if (value === undefined) delete process.env[key];
-      else process.env[key] = value;
-    }
+    restore();
   }
 };
 
@@ -248,6 +248,26 @@ describe('OTLP log export', () => {
         ]);
       },
     );
+
+    it('treats an export that never answers as failed once it times out', async () => {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      try {
+        exporter.outcome = 'hang';
+        logEvent(logger, 'info', 'cache.hit', {}, 'stuck');
+        const flushed = flushLogs();
+        await vi.advanceTimersByTimeAsync(LOG_EXPORT_TIMEOUT_MS);
+        await flushed;
+      } finally {
+        vi.useRealTimers();
+      }
+
+      expect(linesOf(lines, 'cache.hit')).toHaveLength(1);
+      expect(linesOf(lines, 'otel.log_export.failed')).toEqual([
+        expect.objectContaining({
+          err: expect.objectContaining({ message: expect.stringContaining('timed out') }),
+        }),
+      ]);
+    });
 
     it('writes its outage lines outside any trace, even when the export runs inside a request’s', async () => {
       exporter.outcome = 'fail';

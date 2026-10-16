@@ -54,12 +54,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  # Local trace and log backend. Accepts OTLP directly — no separate Collector
-  # needed — and bundles Grafana, Tempo and Loki, so the UI here is the same one
-  # Grafana Cloud serves in production, with its datasources already linking a
-  # trace to its log lines. The app itself stays vendor-neutral: it only ever
-  # speaks OTLP to OTEL_EXPORTER_OTLP_ENDPOINT, so swapping this for Jaeger or a
-  # hosted vendor is an env var, not a code change. See ADR-0007 and ADR-0023.
+  # Local OTLP backend: Grafana, Tempo and Loki, no Collector, traces linked to their log lines.
+  # The app only speaks OTLP to OTEL_EXPORTER_OTLP_ENDPOINT, so swapping it is env (ADR-0007/0023).
   otel-lgtm:
     image: grafana/otel-lgtm:0.35.0
     container_name: otel-lgtm

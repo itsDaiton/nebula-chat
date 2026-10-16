@@ -470,7 +470,7 @@ be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-fi
 | `LOG_LEVEL_OVERRIDES`              | Per-component levels, comma-separated `component=level` (e.g. `redis=debug,auth=warn`); unknown level fails boot          |
 | `OTEL_EXPORTER_OTLP_ENDPOINT`      | OTLP collector URL. Unset = spans are not exported (the tracer still runs, so lines keep their `trace_id`)                |
 | `OTEL_LOGS_EXPORTER`               | `otlp` also exports every log line over OTLP (to Loki), given an endpoint. Unset/`none` = stdout only (ADR-0023)          |
-| `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` | Logs-only OTLP endpoint; unset = logs go to `OTEL_EXPORTER_OTLP_ENDPOINT`                                                 |
+| `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` | Logs-only OTLP URL, used as is (`…/v1/logs`); unset = logs go to `OTEL_EXPORTER_OTLP_ENDPOINT` + `/v1/logs`               |
 | `OTEL_LOG_LEVEL`                   | Verbosity of the OTel SDK's own diagnostics (default `error`; `none`/`warn`/`info`/`debug`/`verbose`/`all`)               |
 | `OPERATOR_TOKEN`                   | Shared operator secret (32+ chars) for `/api/internal/*`, e.g. changing log levels at runtime. Unset = those routes 404   |
 | `SUPABASE_URL`                     | Supabase project URL for Profile image storage (ADR-0022). Set all three storage vars or none; none = uploads off         |

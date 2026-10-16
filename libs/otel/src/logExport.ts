@@ -10,18 +10,13 @@ import { componentLogger } from './componentLogger';
 import { logEvent } from './logEvent';
 import type { Logger } from './logger';
 
-/**
- * Whether lines are exported over OTLP as well as written to stdout. Opt-in, unlike
- * the OTel default, so log volume against Grafana Cloud's hard cap is a deliberate
- * choice: `OTEL_LOGS_EXPORTER=otlp` plus somewhere to send them.
- */
-export const isLogExportEnabled = (env: NodeJS.ProcessEnv = process.env): boolean => {
-  const exporters = (env.OTEL_LOGS_EXPORTER ?? '')
-    .split(',')
-    .map((name) => name.trim().toLowerCase());
-  const endpoint = env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT || env.OTEL_EXPORTER_OTLP_ENDPOINT;
-  return exporters.includes('otlp') && Boolean(endpoint);
-};
+/** Opt-in, unlike the OTel default, so spending log quota is a choice (ADR-0023). */
+export const isLogExportEnabled = (): boolean =>
+  process.env.OTEL_LOGS_EXPORTER?.trim() === 'otlp' &&
+  Boolean(process.env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT || process.env.OTEL_EXPORTER_OTLP_ENDPOINT);
+
+/** Above the OTLP exporter's own 10 s timeout, below the batch processor's 30 s. */
+export const LOG_EXPORT_TIMEOUT_MS = 15_000;
 
 const SEVERITY: Readonly<Record<number, SeverityNumber>> = {
   10: SeverityNumber.TRACE,
@@ -32,8 +27,7 @@ const SEVERITY: Readonly<Record<number, SeverityNumber>> = {
   60: SeverityNumber.FATAL,
 };
 
-// The record's own fields (timestamp, severity, body, trace context), and what the
-// resource already says: `service.name`, and `pid` as `process.pid`.
+// The record's own fields, and what the resource carries (`pid` as `process.pid`).
 const NOT_ATTRIBUTES = new Set([
   'level',
   'time',
@@ -47,13 +41,8 @@ const NOT_ATTRIBUTES = new Set([
 type PinoLine = AnyValueMap & { level: number; time: number; msg?: string };
 
 /**
- * The Pino destination that feeds each line into the OpenTelemetry logs SDK, next
- * to stdout in a multistream. It gets the serialized line, so redaction has already
- * run. The record's trace context is the active span, the same one the `traceFields`
- * mixin stamped: Pino writes synchronously inside the logging call.
- *
- * Emits through the global logger provider, which `initTelemetry` registers; lines
- * written before that go nowhere but stdout.
+ * Feeds each serialized (so already redacted) line to the global logger provider
+ * `initTelemetry` registers. Pino writes synchronously, so the active span is the line's.
  */
 export const logExportStream = (): DestinationStream => {
   const otelLogger = logs.getLogger('@nebula-chat/otel');
@@ -61,8 +50,7 @@ export const logExportStream = (): DestinationStream => {
     write: (chunk: string) => {
       try {
         const line = JSON.parse(chunk) as PinoLine;
-        // The export pipeline's own lines (SDK diagnostics, export failures) stay on
-        // stdout: exporting them would feed every failure back into the exporter.
+        // Exported, the pipeline's own lines would feed each failure back into it.
         if (line['nebula.component'] === 'otel') return;
         const attributes = Object.fromEntries(
           Object.entries(line).filter(([key]) => !NOT_ATTRIBUTES.has(key)),
@@ -82,10 +70,8 @@ export const logExportStream = (): DestinationStream => {
 };
 
 /**
- * Wraps the OTLP exporter so a failing backend is one `warn` per outage, written
- * to stdout, and an `info` when it recovers. Every batch is answered as a success:
- * a failure reported to the batch processor would be logged again, per batch,
- * through `diag`. A failed batch is dropped either way.
+ * One `warn` per outage, an `info` on recovery. Every batch is answered as a success,
+ * or the batch processor would report each failed one again through `diag`.
  */
 export const reportExportFailures = (
   exporter: LogRecordExporter,
@@ -94,34 +80,44 @@ export const reportExportFailures = (
   const log = componentLogger(logger, 'otel');
   let failing = false;
 
-  // The batch timer runs in the context of whichever request started it, so
-  // without the root context these lines would claim that request's trace.
-  const settle = (result: ExportResult, done: (result: ExportResult) => void): void => {
-    context.with(ROOT_CONTEXT, () => {
-      if (result.code !== ExportResultCode.SUCCESS && !failing) {
-        failing = true;
-        logEvent(
-          log,
-          'warn',
-          'otel.log_export.failed',
-          { err: result.error },
-          'Log export failed; logs continue on stdout only',
-        );
-      } else if (result.code === ExportResultCode.SUCCESS && failing) {
-        failing = false;
-        logEvent(log, 'info', 'otel.log_export.restored', {}, 'Log export restored');
-      }
-    });
-    done({ code: ExportResultCode.SUCCESS });
+  const report = (result: ExportResult): void => {
+    if (result.code !== ExportResultCode.SUCCESS && !failing) {
+      failing = true;
+      logEvent(
+        log,
+        'warn',
+        'otel.log_export.failed',
+        { err: result.error },
+        'Log export failed; logs continue on stdout only',
+      );
+    } else if (result.code === ExportResultCode.SUCCESS && failing) {
+      failing = false;
+      logEvent(log, 'info', 'otel.log_export.restored', {}, 'Log export restored');
+    }
   };
 
   return {
     export: (records: ReadableLogRecord[], done: (result: ExportResult) => void) => {
+      let settled = false;
+      const settle = (result: ExportResult): void => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        // The batch timer runs in whichever request's context started it; not that trace.
+        context.with(ROOT_CONTEXT, () => report(result));
+        done({ code: ExportResultCode.SUCCESS });
+      };
+      const timer = setTimeout(() => {
+        const error = new Error(`Log export timed out after ${LOG_EXPORT_TIMEOUT_MS} ms`);
+        settle({ code: ExportResultCode.FAILED, error });
+      }, LOG_EXPORT_TIMEOUT_MS);
+      timer.unref();
+
       try {
-        exporter.export(records, (result) => settle(result, done));
+        exporter.export(records, settle);
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
-        settle({ code: ExportResultCode.FAILED, error }, done);
+        settle({ code: ExportResultCode.FAILED, error });
       }
     },
     shutdown: () => exporter.shutdown(),

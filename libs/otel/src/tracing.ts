@@ -36,13 +36,8 @@ const discardingSpanProcessor: SpanProcessor = {
   shutdown: () => Promise.resolve(),
 };
 
-/**
- * What the SDK exports to. The exporters read `OTEL_EXPORTER_OTLP_*` themselves.
- * With an endpoint, spans go over OTLP and metrics keep the SDK's env-driven
- * defaults; without one, spans and metrics are pinned to *nothing* explicitly,
- * since left unset `NodeSDK` falls back to OTLP exporters pointed at localhost.
- * Logs are always explicit: exported only on the opt-in (`isLogExportEnabled`).
- */
+// No endpoint pins spans and metrics to nothing (unset, `NodeSDK` defaults to OTLP at
+// localhost). Logs are always explicit and go out only on the opt-in (ADR-0023).
 const exportConfiguration = (logger: Logger): Partial<NodeSDKConfiguration> => ({
   ...(process.env.OTEL_EXPORTER_OTLP_ENDPOINT
     ? { traceExporter: new OTLPTraceExporter() }
@@ -106,9 +101,8 @@ export const initTelemetry = (serviceName: string, options: InitTelemetryOptions
     ...exportConfiguration(logger),
     instrumentations: [
       getNodeAutoInstrumentations({
-        // `createLogger` stamps trace ids itself (a mixin) and exports lines
-        // itself (`logExport.ts`), and Pino is loaded before this runs, so the
-        // Pino instrumentation could only ever add duplicate keys.
+        // Pino loads before this runs, and `createLogger` stamps trace ids and exports
+        // lines itself, so this instrumentation could only add duplicate keys.
         '@opentelemetry/instrumentation-pino': { enabled: false },
       }),
     ],

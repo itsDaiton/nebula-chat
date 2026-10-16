@@ -438,11 +438,11 @@ production, the `otel-lgtm` container locally. stdout JSON stays the source of
 truth, and export is **opt-in**
 ([ADR-0023](./adr/0023-otlp-log-export-through-the-logs-sdk.md)):
 
-| Variable                           | Effect                                                                     |
-| ---------------------------------- | -------------------------------------------------------------------------- |
-| `OTEL_LOGS_EXPORTER`               | `otlp` turns export on. Unset or `none` = stdout only                      |
-| `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` | Where to send logs, if not to the shared endpoint                          |
-| `OTEL_EXPORTER_OTLP_ENDPOINT`      | The shared endpoint (as for traces). Used for logs when the above is unset |
+| Variable                           | Effect                                                                                 |
+| ---------------------------------- | -------------------------------------------------------------------------------------- |
+| `OTEL_LOGS_EXPORTER`               | `otlp` turns export on. Unset or `none` = stdout only                                  |
+| `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` | Where to send logs instead: the full URL, used as is (`http://localhost:4318/v1/logs`) |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`      | The shared endpoint (as for traces); logs go to its `/v1/logs` when the above is unset |
 
 Both an opt-in and an endpoint are needed. Unlike the OTel default,
 `OTEL_LOGS_EXPORTER` unset means off: an endpoint set for traces does not start
@@ -470,10 +470,10 @@ Two kinds of line stay on stdout only:
   export would write a line that becomes the next failed export.
 - **Lines written before `initTelemetry`.** None today.
 
-A backend that is down or refuses a batch never blocks or fails a request. The
-first failed batch writes one `warn`, `otel.log_export.failed` with `err`; the
-first batch delivered after it writes `otel.log_export.restored` at `info`.
-Batches lost in between are on stdout only.
+A backend that is down, refuses a batch or does not answer within 15 seconds
+never blocks or fails a request. The first failed batch writes one `warn`,
+`otel.log_export.failed` with `err`; the first batch delivered after it writes
+`otel.log_export.restored` at `info`. Batches lost in between are on stdout only.
 
 **Volume.** An exported line comes to about 1.4 KB in Loki once structured
 metadata is counted. Grafana Cloud's free tier caps logs at 50 GB a month,

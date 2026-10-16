@@ -1,8 +1,9 @@
 import { trace } from '@opentelemetry/api';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createLogger } from '../logger';
 import { initTelemetry } from '../tracing';
 import { captureDestination } from './capture';
+import { setEnv } from './processEnv';
 
 // The OTLP exporter is the network boundary: constructing one is what would
 // open a connection. Faked so the tests can see whether one was built, and so
@@ -36,15 +37,8 @@ vi.mock('@opentelemetry/exporter-logs-otlp-http', () => ({
 const ENDPOINT = 'OTEL_EXPORTER_OTLP_ENDPOINT';
 const LOGS_ENDPOINT = 'OTEL_EXPORTER_OTLP_LOGS_ENDPOINT';
 const LOGS_EXPORTER = 'OTEL_LOGS_EXPORTER';
-const EXPORT_VARS = [ENDPOINT, LOGS_ENDPOINT, LOGS_EXPORTER];
-const originalEnv = EXPORT_VARS.map((key) => [key, process.env[key]] as const);
-
-const restoreEndpoint = () => {
-  for (const [key, value] of originalEnv) {
-    if (value === undefined) delete process.env[key];
-    else process.env[key] = value;
-  }
-};
+// Each test starts with nothing configured to export; the real values come back after.
+const NO_EXPORT = { [ENDPOINT]: undefined, [LOGS_ENDPOINT]: undefined, [LOGS_EXPORTER]: undefined };
 
 const capture = () => {
   const { lines, destination } = captureDestination();
@@ -58,9 +52,9 @@ describe('initTelemetry with no OTLP endpoint', () => {
   const { logger, lines } = capture();
 
   beforeAll(() => {
-    delete process.env[ENDPOINT];
+    const restoreExportEnv = setEnv(NO_EXPORT);
     initTelemetry('test-service', { logger });
-    restoreEndpoint();
+    restoreExportEnv();
   });
 
   afterEach(() => {
@@ -115,9 +109,15 @@ describe('initTelemetry against a stubbed SDK', () => {
     return import('../tracing');
   };
 
+  let restoreExportEnv = (): void => undefined;
+
+  beforeEach(() => {
+    restoreExportEnv = setEnv(NO_EXPORT);
+  });
+
   afterEach(() => {
     vi.doUnmock('@opentelemetry/sdk-node');
-    restoreEndpoint();
+    restoreExportEnv();
     exporterConstructed.mockClear();
     logExporterConstructed.mockClear();
     sdkShutdown.mockClear();
@@ -134,7 +134,6 @@ describe('initTelemetry against a stubbed SDK', () => {
 
   it('builds no log exporter for an endpoint alone: log export is opt-in', async () => {
     process.env[ENDPOINT] = 'http://collector.invalid:4318';
-    delete process.env[LOGS_EXPORTER];
     const { initTelemetry: init } = await stubSdk(() => undefined);
 
     init('test-service', { logger: capture().logger });
@@ -143,8 +142,6 @@ describe('initTelemetry against a stubbed SDK', () => {
   });
 
   it('builds no log exporter for the opt-in alone, with nowhere to send to', async () => {
-    delete process.env[ENDPOINT];
-    delete process.env[LOGS_ENDPOINT];
     process.env[LOGS_EXPORTER] = 'otlp';
     const { initTelemetry: init } = await stubSdk(() => undefined);
 
@@ -167,7 +164,6 @@ describe('initTelemetry against a stubbed SDK', () => {
   });
 
   it('logs a warning and carries on when the SDK fails to start', async () => {
-    delete process.env[ENDPOINT];
     const { initTelemetry: init } = await stubSdk(() => {
       throw new Error('instrumentation exploded');
     });
@@ -186,7 +182,6 @@ describe('initTelemetry against a stubbed SDK', () => {
   });
 
   it('shuts the SDK down once, however many times shutdownTelemetry is called', async () => {
-    delete process.env[ENDPOINT];
     const { initTelemetry: init, shutdownTelemetry } = await stubSdk(() => undefined);
     init('test-service', { logger: capture().logger });
 
@@ -196,7 +191,6 @@ describe('initTelemetry against a stubbed SDK', () => {
   });
 
   it('resolves without touching the SDK when it never started', async () => {
-    delete process.env[ENDPOINT];
     const { initTelemetry: init, shutdownTelemetry } = await stubSdk(() => {
       throw new Error('instrumentation exploded');
     });
@@ -209,7 +203,6 @@ describe('initTelemetry against a stubbed SDK', () => {
   it('stops waiting on a flush that outlives the cap, so a dead collector cannot hold up exit', async () => {
     vi.useFakeTimers();
     try {
-      delete process.env[ENDPOINT];
       const {
         initTelemetry: init,
         shutdownTelemetry,
@@ -231,7 +224,6 @@ describe('initTelemetry against a stubbed SDK', () => {
   });
 
   it('resolves when the flush fails: observability never fails the shutdown', async () => {
-    delete process.env[ENDPOINT];
     const { initTelemetry: init, shutdownTelemetry } = await stubSdk(() => undefined);
     sdkShutdown.mockImplementationOnce(() => Promise.reject(new Error('collector refused')));
     init('test-service', { logger: capture().logger });

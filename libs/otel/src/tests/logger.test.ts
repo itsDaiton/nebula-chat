@@ -1,7 +1,8 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createLogger } from '../logger';
 import type { CreateLoggerOptions } from '../logger';
 import { captureDestination } from './capture';
+import { setEnv } from './processEnv';
 
 const originalLogLevel = process.env.LOG_LEVEL;
 
@@ -194,5 +195,43 @@ describe('createLogger', () => {
 
   it('builds a pretty-transport logger without throwing', () => {
     expect(() => createLogger({ serviceName: 's', pretty: true, level: 'silent' })).not.toThrow();
+  });
+
+  describe('with log export opted in', () => {
+    let restoreEnv = (): void => undefined;
+
+    beforeEach(() => {
+      restoreEnv = setEnv({
+        OTEL_LOGS_EXPORTER: 'otlp',
+        OTEL_EXPORTER_OTLP_ENDPOINT: 'http://collector.invalid:4318',
+      });
+    });
+
+    afterEach(() => {
+      restoreEnv();
+    });
+
+    it('still writes every line, unchanged, to its destination', () => {
+      const { logger, lines } = capture();
+
+      logger.child({ 'user.id': 'u-1' }).debug({ apiKey: 'SECRET' }, 'hello');
+
+      expect(lines).toEqual([
+        expect.objectContaining({
+          level: 20,
+          msg: 'hello',
+          'service.name': 'test-service',
+          'user.id': 'u-1',
+          apiKey: '[Redacted]',
+        }),
+      ]);
+    });
+
+    it.each([
+      ['stdout', {}],
+      ['pino-pretty', { pretty: true }],
+    ])('builds one writing to %s without throwing', (_label, options) => {
+      expect(() => createLogger({ serviceName: 's', level: 'silent', ...options })).not.toThrow();
+    });
   });
 });

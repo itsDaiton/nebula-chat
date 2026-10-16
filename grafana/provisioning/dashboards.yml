@@ -1,6 +1,5 @@
-# Loads grafana/dashboards/*.json into the local otel-lgtm Grafana (docker-compose.yml
-# mounts this file into its provisioning directory). Grafana Cloud imports the
-# same JSON by hand; see docs/logging.md.
+# Loads grafana/dashboards/*.json into local otel-lgtm (mounted by docker-compose.yml).
+# Grafana Cloud imports the same JSON by hand: docs/logging.md → The dashboard.
 apiVersion: 1
 
 providers:

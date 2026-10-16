@@ -33,14 +33,16 @@ The constraints:
    unchanged, `err` as a nested map, except what the record or the resource already
    carries: `trace_id`/`span_id`, `service.name` and `pid` (`process.pid`).
 3. **Opt-in, by standard variables.** Export is on only with `OTEL_LOGS_EXPORTER=otlp` and an
-   endpoint: `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`, else `OTEL_EXPORTER_OTLP_ENDPOINT`. The OTel
+   endpoint: `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` (a full URL, used as is), else
+   `OTEL_EXPORTER_OTLP_ENDPOINT` (which gets `/v1/logs`). The OTel
    default for `OTEL_LOGS_EXPORTER` is `otlp`; ours is off, so a deploy that already exports
    traces does not start spending log quota unannounced. Off means no multistream, no
    exporter and no connection: stdout is byte-for-byte what it was.
 4. **Failures are reported once per outage.** The OTLP exporter is wrapped: the first failed
    batch writes `otel.log_export.failed` (`warn`, with `err`), the first success after it
-   `otel.log_export.restored` (`info`). Every batch is answered as a success to the batch
-   processor, which would otherwise report each failed batch again through `diag`. Both
+   `otel.log_export.restored` (`info`). An export with no answer after 15 seconds counts as
+   failed, ahead of the batch processor's own 30-second timeout. Every batch is answered as
+   a success to the batch processor, which would otherwise report each failed batch again through `diag`. Both
    lines are written under the root context, since the batch timer runs in whichever
    request's context started it.
 5. **The pipeline's own lines are not exported.** Lines from `nebula.component: otel` (SDK
