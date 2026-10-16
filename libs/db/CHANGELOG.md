@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v0.6.0...nebula-chat-db-v0.6.1) (2026-10-16)
+
+
+### Bug Fixes
+
+* **db:** log and survive idle Postgres connection errors ([#512](https://github.com/itsDaiton/nebula-chat/issues/512)) ([32e170f](https://github.com/itsDaiton/nebula-chat/commit/32e170f5c7a44cc3bb52a7dff3b4de3a4db5af3a))
+
 ## [0.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v0.5.2...nebula-chat-db-v0.6.0) (2026-10-11)
 
 
