@@ -535,6 +535,9 @@ importers:
 
   libs/db:
     dependencies:
+      '@nebula-chat/otel':
+        specifier: workspace:*
+        version: link:../otel
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.3(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(kysely@0.28.17)(pg@8.23.0)

@@ -80,14 +80,15 @@ export const logger: Logger = createLogger({
 `buildApp({ logger })`, which passes it to Fastify's `loggerInstance`. So
 `app.log`, every `req.log`, and every import of `@backend/logger` share it.
 
-| Where you are              | Use               | Why                                                         |
-| -------------------------- | ----------------- | ----------------------------------------------------------- |
-| Inside a request           | `req.log`         | Carries `http.request.id`, and the User once a gate has run |
-| No request in scope at all | `@backend/logger` | Startup, shutdown, and the Redis/better-auth singletons     |
+| Where you are              | Use               | Why                                                              |
+| -------------------------- | ----------------- | ---------------------------------------------------------------- |
+| Inside a request           | `req.log`         | Carries `http.request.id`, and the User once a gate has run      |
+| No request in scope at all | `@backend/logger` | Startup, shutdown, and the Redis/Postgres/better-auth singletons |
 
-The libs never create a logger: `@nebula-chat/redis` and `@nebula-chat/auth` log
-only through the one they are given, and `@nebula-chat/langchain` through the
-duck-typed `LLMLogger` it is handed per call.
+The libs never create a logger: `@nebula-chat/redis`, `@nebula-chat/db` and
+`@nebula-chat/auth` log only through the one they are given, and
+`@nebula-chat/langchain` through the duck-typed `LLMLogger` it is handed per
+call.
 
 ## Writing a line
 
@@ -189,6 +190,13 @@ once, and nobody else does:
   at `debug` (`LOG_LEVEL_OVERRIDES=redis=debug` shows them). Reconnecting logs
   `redis.connection.restored` at `info`, with the outage length as
   `nebula.duration_ms`.
+- **Postgres pool.** When Postgres drops an idle pooled connection (a restart,
+  a failover, `pg_terminate_backend`), `pg` emits `error` on the pool; with no
+  listener that would exit the process. `@nebula-chat/db` listens and logs one
+  `error` line per dropped connection, `db.connection.failed` with `err`. The
+  pool has already discarded that client and opens a new one on the next query.
+  A query made while Postgres is down fails on its own, so its request answers
+  5xx; the process stays up and recovers once Postgres is back.
 
 Log an error under **`err`**, never `error`. Pino's error serializer runs only for
 `err`; `{ error: err.message }` throws away the stack and the cause. ESLint
@@ -478,8 +486,9 @@ Three things do not go through Pino, on purpose. Don't "fix" them:
   `cache.*.failed` line has no `http.request.id` or `user.id`. The server's own
   cache lines (`cache.hit`, `cache.saved`, `cache.check.failed`) are written
   through `req.log` and carry both.
-- **Drizzle query logging is off.** The db client passes no `logger` option, so
-  SQL is never logged. Wiring it to Pino is a reasonable follow-up ticket.
+- **Drizzle query logging is off.** `createDbClient` gives Drizzle no `logger`
+  option, so SQL is never logged. Wiring it to Pino is a reasonable follow-up
+  ticket.
 - **No metrics.** Traces and logs only. `@fastify/under-pressure` exposes
   event-loop health in the meantime.
 - **A runtime level change is fire-and-forget.** Redis pub/sub keeps nothing,
