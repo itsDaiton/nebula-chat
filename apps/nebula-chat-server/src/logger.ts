@@ -22,8 +22,9 @@ export const SERVICE_NAME = 'nebula-chat-server';
  * carries `service.name`, `service.version` and `deployment.environment.name`.
  *
  * Import it only where there is no `req.log` in scope: startup and shutdown,
- * the Redis toolkit and better-auth (both built at module load). Inside a
- * request, always prefer `req.log` so lines carry the request id and the User.
+ * the Redis toolkit, the Postgres pool and better-auth (all built at module
+ * load). Inside a request, always prefer `req.log` so lines carry the request
+ * id and the User.
  *
  * This is not a return of the M-1-era file that used to live at this path. That
  * one was a *second* Pino, with its own hardcoded config, competing with

@@ -32,6 +32,8 @@ export const LOG_EVENTS = [
   // Redis
   'redis.connection.failed',
   'redis.connection.restored',
+  // Postgres
+  'db.connection.failed',
   // Lifecycle
   'server.started',
   'server.start.failed',
