@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.15.1...nebula-chat-v2.16.0) (2026-10-17)
+
+
+### Features
+
+* **otel:** NEB-371 export logs over OTLP to Grafana Loki ([#513](https://github.com/itsDaiton/nebula-chat/issues/513)) ([aa17553](https://github.com/itsDaiton/nebula-chat/commit/aa17553081239abfd33b9bb9bc82a4bd379ca7e8))
+
 ## [2.15.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.15.0...nebula-chat-v2.15.1) (2026-10-16)
 
 
