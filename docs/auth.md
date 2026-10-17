@@ -407,6 +407,28 @@ is also a `403`. The stream request goes out through the generated `streamChat`,
 fetch mutator returns the raw `Response` without throwing on a non-2xx, so `useChatStream`
 reads the error envelope itself and matches the generated `ErrorCode`.
 
+A Metered user (a Guest, or an unverified Registered user) sees the allowance before the
+wall: `MessageAllowanceCounter`, directly above the chat input, reads "N of M messages
+left" from `useMessageAllowance`, which wraps `useGetMessageAllowance`. The query runs only
+for a Metered user, so a verified Registered user makes no request and sees nothing. While it
+loads, or if it fails, the counter renders nothing and is not toasted (`meta.inlineError`):
+the `403` stays the authority, so a failed read never blocks a send. At or below 30% of
+`limit` remaining (at least one message), the counter turns into a warning, and a Guest gets
+an inline "Sign up" link; an unverified user already has the resend button in the
+verify-email reminder above it, so the counter adds none.
+
+The wall is proactive. The Guest wall and the unverified user's "keep chatting" prompt both
+key off one signal: `remaining` is `0`, or the last send was refused with
+`MessageAllowanceReached`. At zero the wall takes the counter's place without waiting for a
+refused send, and the `403` path stays the backstop for a stale count (another tab). The
+composer is never disabled and a typed draft is kept.
+
+The count is the server's live count, so the client keeps no counter of its own. The query is
+never stale (`staleTime: 0`) and refetches on mount, on window focus (a second tab, a verified
+email), when the stream's `user-message-created` event arrives (the moment the server counts
+the message, so a reply that later fails still counts), and after a refused send. An identity
+change removes every query, so the next identity's allowance is read afresh.
+
 ## Email
 
 Verification and password-reset emails go through **Resend** (ADR-0021). The lib builds

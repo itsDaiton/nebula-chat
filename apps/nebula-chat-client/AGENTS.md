@@ -84,7 +84,7 @@ apps/nebula-chat-client/src/
 │   ├── chat/
 │   │   ├── ChatPage.tsx
 │   │   ├── types/types.ts         # All chat types
-│   │   ├── utils/                 # Model options, SSE event names, message mapping
+│   │   ├── utils/                 # Model options, SSE event names, message mapping, isMessageAllowanceLow
 │   │   ├── stores/                # Zustand stores (client state)
 │   │   │   ├── useChatStreamStore.ts
 │   │   │   ├── useMessageStore.ts
@@ -94,6 +94,7 @@ apps/nebula-chat-client/src/
 │   │   │   ├── useChatStream.ts
 │   │   │   ├── useHandleSendMessage.ts
 │   │   │   ├── useMessageHandler.ts
+│   │   │   ├── useMessageAllowance.ts # Metered user's live allowance (query) + low/spent signals
 │   │   │   ├── useModel.ts
 │   │   │   └── useModelSelector.ts
 │   │   └── components/
@@ -102,7 +103,8 @@ apps/nebula-chat-client/src/
 │   │       ├── ChatInputArea.tsx
 │   │       ├── ChatMessage.tsx
 │   │       ├── ChatStreaming.tsx
-│   │       ├── MessageAllowancePrompt.tsx # Guest's send refused at the message allowance → register
+│   │       ├── MessageAllowanceCounter.tsx # Above the chat input: Metered user's "N of M messages left" (+ Sign up when low)
+│   │       ├── MessageAllowancePrompt.tsx # Guest's message allowance spent (or a send refused at it) → register
 │   │       ├── ModelSelect.tsx
 │   │       ├── SendButton.tsx
 │   │       └── ...
