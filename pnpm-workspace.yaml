@@ -3,19 +3,14 @@ packages:
   - libs/*
   - openapi
 
-# Versions shared by more than one package live here so a bump happens once.
-# `catalog:` in a package.json resolves to the entry below.
 catalog:
   '@dotenvx/dotenvx': ^2.30.0
   '@types/node': ^26.6.2
   '@types/react': ^19.3.0
   '@types/react-dom': ^19.3.0
   '@vitest/coverage-v8': ^5.0.2
-  # Exact-pinned (not caret) so the auth substrate's version is deliberate, not
-  # floated by a later resolve; shared by @nebula-chat/auth and the server.
   better-auth: 1.7.6
   drizzle-orm: ^0.45.3
-  # Shared by the client and @nebula-chat/auth's React Email templates.
   react: ^19.3.0
   react-dom: ^19.3.0
   tsdown: ^0.23.0
@@ -24,57 +19,22 @@ catalog:
   vitest: ^5.0.2
   zod: ^4.6.5
 
-# --- pnpm settings -----------------------------------------------------------
-# Since pnpm v11 this file is the only place pnpm reads configuration from.
-# `.npmrc` is limited to auth/registry entries, and the `pnpm` field in
-# package.json is no longer read at all. See https://pnpm.io/settings
-
 # CLI & Node.js ---------------------------------------------------------------
-# Refuse to install a dependency that declares it cannot run on our Node line,
-# resolved against `nodeVersion` rather than whatever Node the contributor
-# happens to have on PATH. Keep `nodeVersion` in lockstep with `.nvmrc` and
-# `engines.node` in the root package.json.
 engineStrict: true
 nodeVersion: 26.8.2
 
 # Build -----------------------------------------------------------------------
-# Replaces the removed `onlyBuiltDependencies`. Packages absent from this map
-# are treated as unreviewed, and `strictDepBuilds` (on by default) fails the
-# install rather than silently skipping their scripts.
 allowBuilds:
   argon2: true
   esbuild: true
-  # msw's postinstall writes the browser service-worker shim. The tests use
-  # msw/node, which does not need it, but strictDepBuilds fails the install
-  # rather than skipping an unreviewed script.
   msw: true
   protobufjs: true
 
 # Dependency resolution -------------------------------------------------------
-# 10-day cooldown before a freshly published version is installable, matching
-# the dependabot `cooldown.default-days` in .github/dependabot.yml. Explicitly
-# setting it also turns on `minimumReleaseAgeStrict`, so resolution fails
-# instead of quietly falling back to a version inside the cooldown window.
 minimumReleaseAge: 14400
-
-# `minimumReleaseAgeStrict` (auto-on above) makes resolution *fail* rather than
-# fall back when the newest in-range version is inside the cooldown window. That
-# is what we want for our own installs, but it also breaks Dependabot: its
-# `pnpm update <dep> --lockfile-only` re-resolves the whole tree, and when a
-# transitive dep like remeda (pulled in by orval) publishes a release inside the
-# window, pnpm hard-errors with ERR_PNPM_NO_MATURE_MATCHING_VERSION and *every*
-# dependency in the group fails to update. remeda ships frequent point releases
-# we never pin directly, so exempt it from the age gate — the packages that pull
-# it in are already covered by the cooldown. Add further offenders here as they
-# surface rather than relaxing the gate globally.
 minimumReleaseAgeExclude:
   - remeda
 
-# drizzle-orm declares every driver it can speak to as an optional peer, which
-# drags the whole Prisma toolchain into the dev tree. ADR 0004 replaced Prisma
-# with Drizzle, so nothing here needs it. Skipping it also sidesteps
-# @prisma/studio-core, which caps itself at Node 24 and therefore fails the
-# engineStrict check on Node 26.
 ignoredOptionalDependencies:
   - prisma
   - '@prisma/client'
@@ -85,13 +45,6 @@ overrides:
   '@hono/node-server': ^1.19.13
   hono: 4.12.25
   path-to-regexp: 8.4.0
-  # msw declares `path-to-regexp: ^6.3.0` and builds wildcard paths ('*/api/...')
-  # with it. v8 removed unnamed wildcards — every such handler throws
-  # `PathError: Missing parameter name` — so the blanket override above silently
-  # broke msw's path matching, and with it the MSW handlers Orval generates from
-  # the OpenAPI spec. 6.3.0 is the release that fixes GHSA-9wv6-86v2-598j, so
-  # pinning msw to the patched 6.x line keeps the vulnerability closed while
-  # every other consumer stays on 8.4.0.
   msw>path-to-regexp: ^6.3.0
   fast-xml-parser: '>=5.7.0'
   flatted: 3.4.2
@@ -99,17 +52,6 @@ overrides:
   langsmith: '>=0.5.19'
   esbuild: 0.28.1
   '@anthropic-ai/sdk': '>=0.91.1'
-  # orval pins js-yaml to an exact 4.3.1, so no installable orval release
-  # lifts it past GHSA-2883-xcg3-v3hh (the fix first ships in orval 8.31.0,
-  # which is still inside the minimumReleaseAge cooldown above). Stay on the
-  # 4.x line — js-yaml 5 is a breaking change orval has not adopted.
   js-yaml: ^4.3.2
-  # css-tree (via jsdom, test-only) asks for source-map-js ^1.2.1; 1.2.2 fixes the DoS in
-  # malformed indexed source maps (GHSA-68fv-2mgg-jv7q, CVE-2026-93749).
   source-map-js: ^1.2.2
-  # orval 8.37 pulls @scalar/json-magic, which pins undici to an exact 7.24.4 /
-  # 7.29.0 — both below 7.29.1, the release fixing GHSA-rfgv-xxqx-mfg5 and the
-  # rest of the advisories grype reports. Scoped to that parent: a bare
-  # `undici@7` selector also rewrites openai's optional `undici: >=5 <9` peer
-  # range and unlinks the undici 8 it resolves today.
   '@scalar/json-magic>undici': ^7.29.1

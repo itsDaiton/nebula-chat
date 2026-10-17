@@ -1,0 +1,13 @@
+# Loads grafana/dashboards/*.json into local otel-lgtm (mounted by docker-compose.yml).
+# Grafana Cloud imports the same JSON by hand: docs/logging.md → The dashboard.
+apiVersion: 1
+
+providers:
+  - name: Nebula Chat
+    folder: Nebula Chat
+    type: file
+    # Lets a dashboard be edited in the UI; export it back over the JSON file to keep it.
+    allowUiUpdates: true
+    updateIntervalSeconds: 10
+    options:
+      path: /otel-lgtm/nebula-chat-dashboards

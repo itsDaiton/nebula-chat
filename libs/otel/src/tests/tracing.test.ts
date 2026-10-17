@@ -1,8 +1,10 @@
 import { trace } from '@opentelemetry/api';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createLogger } from '../logger';
 import { initTelemetry } from '../tracing';
 import { captureDestination } from './capture';
+import type { LogLine } from './capture';
+import { setEnv } from './processEnv';
 
 // The OTLP exporter is the network boundary: constructing one is what would
 // open a connection. Faked so the tests can see whether one was built, and so
@@ -20,12 +22,29 @@ vi.mock('@opentelemetry/exporter-trace-otlp-http', () => ({
   },
 }));
 
-const ENDPOINT = 'OTEL_EXPORTER_OTLP_ENDPOINT';
-const originalEndpoint = process.env[ENDPOINT];
+const logExporterConstructed = vi.fn();
+vi.mock('@opentelemetry/exporter-logs-otlp-http', () => ({
+  OTLPLogExporter: class {
+    constructor() {
+      logExporterConstructed();
+    }
+    export() {}
+    shutdown() {
+      return Promise.resolve();
+    }
+  },
+}));
 
-const restoreEndpoint = () => {
-  if (originalEndpoint === undefined) delete process.env[ENDPOINT];
-  else process.env[ENDPOINT] = originalEndpoint;
+const ENDPOINT = 'OTEL_EXPORTER_OTLP_ENDPOINT';
+const LOGS_ENDPOINT = 'OTEL_EXPORTER_OTLP_LOGS_ENDPOINT';
+const LOGS_EXPORTER = 'OTEL_LOGS_EXPORTER';
+const TRACES_ENDPOINT = 'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT';
+// Each test starts with nothing configured to export; the real values come back after.
+const NO_EXPORT = {
+  [ENDPOINT]: undefined,
+  [TRACES_ENDPOINT]: undefined,
+  [LOGS_ENDPOINT]: undefined,
+  [LOGS_EXPORTER]: undefined,
 };
 
 const capture = () => {
@@ -40,9 +59,9 @@ describe('initTelemetry with no OTLP endpoint', () => {
   const { logger, lines } = capture();
 
   beforeAll(() => {
-    delete process.env[ENDPOINT];
+    const restoreExportEnv = setEnv(NO_EXPORT);
     initTelemetry('test-service', { logger });
-    restoreEndpoint();
+    restoreExportEnv();
   });
 
   afterEach(() => {
@@ -79,6 +98,7 @@ describe('initTelemetry with no OTLP endpoint', () => {
 
   it('builds no exporter, so nothing tries to connect', () => {
     expect(exporterConstructed).not.toHaveBeenCalled();
+    expect(logExporterConstructed).not.toHaveBeenCalled();
   });
 });
 
@@ -96,10 +116,17 @@ describe('initTelemetry against a stubbed SDK', () => {
     return import('../tracing');
   };
 
+  let restoreExportEnv = (): void => undefined;
+
+  beforeEach(() => {
+    restoreExportEnv = setEnv(NO_EXPORT);
+  });
+
   afterEach(() => {
     vi.doUnmock('@opentelemetry/sdk-node');
-    restoreEndpoint();
+    restoreExportEnv();
     exporterConstructed.mockClear();
+    logExporterConstructed.mockClear();
     sdkShutdown.mockClear();
   });
 
@@ -112,8 +139,119 @@ describe('initTelemetry against a stubbed SDK', () => {
     expect(exporterConstructed).toHaveBeenCalledOnce();
   });
 
+  it('builds no log exporter for an endpoint alone: log export is opt-in', async () => {
+    process.env[ENDPOINT] = 'http://collector.invalid:4318';
+    const { initTelemetry: init } = await stubSdk(() => undefined);
+
+    init('test-service', { logger: capture().logger });
+
+    expect(logExporterConstructed).not.toHaveBeenCalled();
+  });
+
+  it('builds no log exporter for the opt-in alone, with nowhere to send to', async () => {
+    process.env[LOGS_EXPORTER] = 'otlp';
+    const { initTelemetry: init } = await stubSdk(() => undefined);
+
+    init('test-service', { logger: capture().logger });
+
+    expect(logExporterConstructed).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['the shared endpoint', ENDPOINT],
+    ['a logs-only endpoint', LOGS_ENDPOINT],
+  ])('builds the OTLP log exporter for OTEL_LOGS_EXPORTER=otlp and %s', async (_label, key) => {
+    process.env[key] = 'http://collector.invalid:4318';
+    process.env[LOGS_EXPORTER] = 'otlp';
+    const { initTelemetry: init } = await stubSdk(() => undefined);
+
+    init('test-service', { logger: capture().logger });
+
+    expect(logExporterConstructed).toHaveBeenCalledOnce();
+  });
+
+  describe('says where it exports once started', () => {
+    const startedLines = (lines: LogLine[]) =>
+      lines.filter((l) => l['event.name'] === 'otel.started');
+
+    const start = async (env: Partial<Record<string, string>>) => {
+      Object.assign(process.env, env);
+      const { initTelemetry: init } = await stubSdk(() => undefined);
+      const { logger, lines } = capture();
+      init('test-service', { logger });
+      return startedLines(lines);
+    };
+
+    it('names both signals and the collector when traces and logs go out', async () => {
+      const started = await start({
+        [ENDPOINT]: 'http://collector.invalid:4318',
+        [LOGS_EXPORTER]: 'otlp',
+      });
+
+      expect(started).toEqual([
+        expect.objectContaining({
+          level: 30,
+          'nebula.component': 'otel',
+          msg: 'Exporting traces and logs over OTLP to http://collector.invalid:4318',
+        }),
+      ]);
+    });
+
+    it('says logs stay on stdout, and how to send them, when only traces go out', async () => {
+      const started = await start({ [ENDPOINT]: 'http://collector.invalid:4318' });
+
+      expect(started).toEqual([
+        expect.objectContaining({
+          msg: 'Exporting traces over OTLP to http://collector.invalid:4318; logs stay on stdout until OTEL_LOGS_EXPORTER=otlp',
+        }),
+      ]);
+    });
+
+    it('names each destination when traces and logs go to different places', async () => {
+      const started = await start({
+        [ENDPOINT]: 'http://collector.invalid:4318',
+        [LOGS_ENDPOINT]: 'https://logs.invalid/otlp/v1/logs',
+        [LOGS_EXPORTER]: 'otlp',
+      });
+
+      expect(started[0]?.msg).toBe(
+        'Exporting traces over OTLP to http://collector.invalid:4318 and logs to https://logs.invalid',
+      );
+    });
+
+    it('says traces are not exported when only logs go out', async () => {
+      const started = await start({
+        [LOGS_ENDPOINT]: 'https://logs.invalid/otlp/v1/logs',
+        [LOGS_EXPORTER]: 'otlp',
+      });
+
+      expect(started[0]?.msg).toBe(
+        'Exporting logs over OTLP to https://logs.invalid; traces are not exported without OTEL_EXPORTER_OTLP_ENDPOINT',
+      );
+    });
+
+    it('shows only where an endpoint points, never credentials or a path in it', async () => {
+      const started = await start({ [ENDPOINT]: 'https://user:s3cret@collector.invalid/otlp' });
+
+      expect(started[0]?.msg).toContain('to https://collector.invalid;');
+      expect(JSON.stringify(started)).not.toContain('s3cret');
+    });
+
+    it.each(['localhost:4318', 'not a url'])(
+      'flags %s as an endpoint with no http(s) origin, which the exporter cannot reach',
+      async (endpoint) => {
+        const started = await start({ [ENDPOINT]: endpoint });
+
+        expect(started[0]?.msg).toContain('to an endpoint with no http(s) origin;');
+      },
+    );
+
+    it('writes nothing with no endpoint, so stdout stays as it was', async () => {
+      expect(await start({})).toEqual([]);
+    });
+  });
+
   it('logs a warning and carries on when the SDK fails to start', async () => {
-    delete process.env[ENDPOINT];
     const { initTelemetry: init } = await stubSdk(() => {
       throw new Error('instrumentation exploded');
     });
@@ -122,6 +260,7 @@ describe('initTelemetry against a stubbed SDK', () => {
     expect(() => init('test-service', { logger })).not.toThrow();
 
     const failures = lines.filter((l) => l['event.name'] === 'otel.start.failed');
+    expect(lines.filter((l) => l['event.name'] === 'otel.started')).toEqual([]);
     expect(failures).toEqual([
       expect.objectContaining({
         level: 40,
@@ -132,7 +271,6 @@ describe('initTelemetry against a stubbed SDK', () => {
   });
 
   it('shuts the SDK down once, however many times shutdownTelemetry is called', async () => {
-    delete process.env[ENDPOINT];
     const { initTelemetry: init, shutdownTelemetry } = await stubSdk(() => undefined);
     init('test-service', { logger: capture().logger });
 
@@ -142,7 +280,6 @@ describe('initTelemetry against a stubbed SDK', () => {
   });
 
   it('resolves without touching the SDK when it never started', async () => {
-    delete process.env[ENDPOINT];
     const { initTelemetry: init, shutdownTelemetry } = await stubSdk(() => {
       throw new Error('instrumentation exploded');
     });
@@ -155,7 +292,6 @@ describe('initTelemetry against a stubbed SDK', () => {
   it('stops waiting on a flush that outlives the cap, so a dead collector cannot hold up exit', async () => {
     vi.useFakeTimers();
     try {
-      delete process.env[ENDPOINT];
       const {
         initTelemetry: init,
         shutdownTelemetry,
@@ -177,7 +313,6 @@ describe('initTelemetry against a stubbed SDK', () => {
   });
 
   it('resolves when the flush fails: observability never fails the shutdown', async () => {
-    delete process.env[ENDPOINT];
     const { initTelemetry: init, shutdownTelemetry } = await stubSdk(() => undefined);
     sdkShutdown.mockImplementationOnce(() => Promise.reject(new Error('collector refused')));
     init('test-service', { logger: capture().logger });

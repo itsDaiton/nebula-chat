@@ -121,7 +121,7 @@ An ESLint `no-restricted-syntax` rule rejects an `error:` key in a log call.
 - **Keep Fastify's request lines and reshape them with custom `req`/`res` serializers.** Rejected: more code than an `onResponse` hook, and still leaves `incoming request` at `info`.
 - **Keep the tracer a full no-op without an endpoint.** Rejected: it leaves production with no cross-process correlation ID; `http.request.id` stops at the server.
 - **Runtime level switching** (authenticated endpoint or signal). Deferred, not rejected — it needs an authorization model there is no admin role for, and a Redis pub/sub broadcast once there are several instances. Revisit when a restart starts costing in-flight Runs. _Since decided in [ADR-0020](./0020-runtime-log-level-switching.md)._
-- **OTLP log export to Grafana Loki.** Deferred: stdout JSON stays the source of truth; the attribute choices above make export a later env switch.
+- **OTLP log export to Grafana Loki.** Deferred: stdout JSON stays the source of truth; the attribute choices above make export a later env switch. _Since decided in [ADR-0023](./0023-otlp-log-export-through-the-logs-sdk.md)._
 - **Convention in docs only, no typed helper.** Rejected: field names become the interface of queries and alerts, so a typo is a silent break.
 
 ## Consequences
@@ -160,5 +160,5 @@ See [docs/logging.md](../logging.md) for the conventions as built.
 ## Follow-ups
 
 - Runtime log-level switching (deferred above) — decided in [ADR-0020](./0020-runtime-log-level-switching.md).
-- OTLP log export to Grafana Loki (deferred above).
+- OTLP log export to Grafana Loki (deferred above) — decided in [ADR-0023](./0023-otlp-log-export-through-the-logs-sdk.md).
 - Decision 8 as a requirement on the v2 `@nebula-chat/contracts` and worker tickets under NEB-349.

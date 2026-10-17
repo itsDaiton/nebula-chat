@@ -1,9 +1,12 @@
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import type { NodeSDKConfiguration } from '@opentelemetry/sdk-node';
 import { componentLogger } from './componentLogger';
 import { attachDiagLogger } from './diag';
+import { isLogExportEnabled, reportExportFailures } from './logExport';
 import { logEvent } from './logEvent';
 import { createLogger } from './logger';
 import type { Logger } from './logger';
@@ -33,17 +36,50 @@ const discardingSpanProcessor: SpanProcessor = {
   shutdown: () => Promise.resolve(),
 };
 
-/**
- * What the SDK exports to. With an endpoint, spans go over OTLP as before (the
- * exporter reads `OTEL_EXPORTER_OTLP_*` itself; metrics and logs keep the
- * SDK's env-driven defaults). Without one, every signal is pinned to *nothing*
- * explicitly: left unset, `NodeSDK` falls back to its env-driven defaults,
- * which are OTLP exporters pointed at localhost.
- */
-const exportConfiguration = (endpoint: string | undefined): Partial<NodeSDKConfiguration> =>
-  endpoint
+// No endpoint pins spans and metrics to nothing (unset, `NodeSDK` defaults to OTLP at
+// localhost). Logs are always explicit and go out only on the opt-in (ADR-0023).
+const exportConfiguration = (logger: Logger): Partial<NodeSDKConfiguration> => ({
+  ...(process.env.OTEL_EXPORTER_OTLP_ENDPOINT
     ? { traceExporter: new OTLPTraceExporter() }
-    : { spanProcessors: [discardingSpanProcessor], metricReaders: [], logRecordProcessors: [] };
+    : { spanProcessors: [discardingSpanProcessor], metricReaders: [] }),
+  logRecordProcessors: isLogExportEnabled()
+    ? [
+        new BatchLogRecordProcessor({
+          exporter: reportExportFailures(new OTLPLogExporter(), logger),
+        }),
+      ]
+    : [],
+});
+
+// Where an endpoint points, without the userinfo or path a URL can carry. A bare
+// `localhost:4318` parses with the scheme `localhost:` and the origin "null".
+const destination = (endpoint: string): string => {
+  const origin = URL.canParse(endpoint) ? new URL(endpoint).origin : 'null';
+  return origin === 'null' ? 'an endpoint with no http(s) origin' : origin;
+};
+
+/** What `exportConfiguration` set up, in words; `undefined` when nothing is exported. */
+const exportSummary = (): string | undefined => {
+  const env = process.env;
+  const traces =
+    env.OTEL_EXPORTER_OTLP_ENDPOINT &&
+    destination(env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || env.OTEL_EXPORTER_OTLP_ENDPOINT);
+  const logs =
+    isLogExportEnabled() &&
+    destination(env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT || env.OTEL_EXPORTER_OTLP_ENDPOINT || '');
+  if (traces && logs) {
+    return traces === logs
+      ? `Exporting traces and logs over OTLP to ${traces}`
+      : `Exporting traces over OTLP to ${traces} and logs to ${logs}`;
+  }
+  if (traces) {
+    return `Exporting traces over OTLP to ${traces}; logs stay on stdout until OTEL_LOGS_EXPORTER=otlp`;
+  }
+  if (logs) {
+    return `Exporting logs over OTLP to ${logs}; traces are not exported without OTEL_EXPORTER_OTLP_ENDPOINT`;
+  }
+  return undefined;
+};
 
 let sdk: NodeSDK | null = null;
 let shutdownPromise: Promise<void> | null = null;
@@ -92,12 +128,11 @@ export const initTelemetry = (serviceName: string, options: InitTelemetryOptions
   const logger = options.logger ?? createLogger({ serviceName });
   const instance = new NodeSDK({
     serviceName,
-    ...exportConfiguration(process.env.OTEL_EXPORTER_OTLP_ENDPOINT),
+    ...exportConfiguration(logger),
     instrumentations: [
       getNodeAutoInstrumentations({
-        // `createLogger` stamps trace ids itself (a mixin), and Pino is loaded
-        // before this runs, so the Pino instrumentation could only ever add
-        // duplicate keys or ship logs over OTLP. stdout JSON is the log sink.
+        // Pino loads before this runs, and `createLogger` stamps trace ids and exports
+        // lines itself, so this instrumentation could only add duplicate keys.
         '@opentelemetry/instrumentation-pino': { enabled: false },
       }),
     ],
@@ -129,6 +164,11 @@ export const initTelemetry = (serviceName: string, options: InitTelemetryOptions
   }
 
   sdk = instance;
+
+  // One line that answers "is anything leaving?" at boot. None when nothing is
+  // exported, so a process without an endpoint writes exactly what it did before.
+  const summary = exportSummary();
+  if (summary) logEvent(componentLogger(logger, 'otel'), 'info', 'otel.started', {}, summary);
 
   process.on('SIGTERM', () => {
     void shutdownTelemetry();

@@ -2,6 +2,7 @@ import pino from 'pino';
 import type { DestinationStream, LoggerOptions } from 'pino';
 import { attachLevelControl } from './levelControl';
 import type { LevelOverrides } from './levelControl';
+import { isLogExportEnabled, logExportStream } from './logExport';
 import { REDACT_CENSOR, REDACT_PATHS } from './redaction';
 import { serializeErr } from './serializeErr';
 import { traceFields } from './traceFields';
@@ -49,6 +50,21 @@ const prettyTransport = {
   },
 };
 
+// The caller's destination (tests, tools), else pino-pretty; undefined = Pino's own stdout.
+const mainStream = (options: CreateLoggerOptions): DestinationStream | undefined =>
+  options.destination ?? (options.pretty ? pino.transport(prettyTransport) : undefined);
+
+const buildPino = (config: LoggerOptions, options: CreateLoggerOptions): Logger => {
+  const main = mainStream(options);
+  if (!isLogExportEnabled()) return main ? pino(config, main) : pino(config);
+  // Both take every level: each logger filters, and a component's may sit below the root's.
+  const streams = pino.multistream([
+    { level: 'trace', stream: main ?? pino.destination(1) },
+    { level: 'trace', stream: logExportStream() },
+  ]);
+  return pino(config, streams);
+};
+
 /**
  * The only way a logger is constructed in this system. Every line it (or any
  * child) writes carries the service fields and `pid` — an explicit `base` is
@@ -71,12 +87,7 @@ export const createLogger = (options: CreateLoggerOptions): Logger => {
     mixin: traceFields,
   };
 
-  // Pino rejects a transport and a destination together; a caller-supplied
-  // destination wins, since only tests and tools ask for one.
-  const logger = options.destination
-    ? pino(config, options.destination)
-    : pino({ ...config, transport: options.pretty ? prettyTransport : undefined });
-
+  const logger = buildPino(config, options);
   attachLevelControl(logger, options.levelOverrides ?? {});
   return logger;
 };
