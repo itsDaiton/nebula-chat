@@ -53,25 +53,15 @@ beforeEach(() => {
 });
 
 describe('MessageAllowanceCounter', () => {
-  it('tells a Guest how many of their messages are left', async () => {
-    serveAllowance(aMeteredAllowance(7));
+  it.each([
+    ['how many of their messages are left', 7, '7 of 10 messages left'],
+    ['the full allowance on their first visit', 10, '10 of 10 messages left'],
+    ['the singular for one message left', 1, '1 of 10 message left'],
+  ])('tells a Guest %s', async (_case, remaining, text) => {
+    serveAllowance(aMeteredAllowance(remaining));
     await renderCounter(GUEST);
 
-    expect(await screen.findByRole('status')).toHaveTextContent('7 of 10 messages left');
-  });
-
-  it('shows a Guest on their first visit the full allowance', async () => {
-    serveAllowance(aMeteredAllowance(10));
-    await renderCounter(GUEST);
-
-    expect(await screen.findByRole('status')).toHaveTextContent('10 of 10 messages left');
-  });
-
-  it('uses the singular for one message left', async () => {
-    serveAllowance(aMeteredAllowance(1));
-    await renderCounter(GUEST);
-
-    expect(await screen.findByRole('status')).toHaveTextContent('1 of 10 message left');
+    expect(await screen.findByRole('status')).toHaveTextContent(text);
   });
 
   it('shows an unverified Registered user the same count', async () => {
