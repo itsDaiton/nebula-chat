@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
-import type { MessageAllowance } from '@/libs/api/generated/model/messageAllowance';
 import { ChatInputBar } from '@/modules/chat/components/ChatInputBar';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
@@ -13,15 +12,9 @@ import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 import { API_ROUTE } from '@/test/api';
 import { aSession, mockGetSession, refreshSession } from '@/test/auth';
+import { aMeteredAllowance } from '@/test/allowance';
 import { server } from '@/test/msw';
 import { renderWithChakra } from '@/test/render';
-
-const metered = (remaining: number): MessageAllowance => ({
-  metered: true,
-  limit: 10,
-  used: 10 - remaining,
-  remaining,
-});
 
 const sseEnd = (...frames: string[]) =>
   new HttpResponse([...frames, 'event: end\ndata: {}\n\n'].join(''), {
@@ -33,7 +26,7 @@ beforeEach(() => {
   useMessageStore.setState({ message: '' });
   useModelSelectorStore.setState({ isSelectOpen: false, triggerWidth: 120 });
   useChatStreamStore.setState({ history: [], isMessageAllowanceReached: false });
-  server.use(mockGetSession(aSession()), getGetMessageAllowanceMockHandler(metered(5)));
+  server.use(mockGetSession(aSession()), getGetMessageAllowanceMockHandler(aMeteredAllowance(5)));
 });
 
 // The bar wired to the real chat-send path, as ChatContainer wires it.
@@ -132,7 +125,7 @@ describe('ChatInputBar', () => {
   it('counts a Guest down as messages are sent, then walls them off at zero with the draft kept', async () => {
     let remaining = 2;
     server.use(
-      getGetMessageAllowanceMockHandler(() => metered(remaining)),
+      getGetMessageAllowanceMockHandler(() => aMeteredAllowance(remaining)),
       http.post(API_ROUTE.chatStream, () => {
         remaining -= 1;
         return sseEnd('event: user-message-created\ndata: {"messageId":"m1"}\n\n');

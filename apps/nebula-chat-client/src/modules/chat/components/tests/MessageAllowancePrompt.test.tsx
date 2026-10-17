@@ -9,6 +9,7 @@ import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 import { aSession, mockGetSession, refreshSession } from '@/test/auth';
+import { aMeteredAllowance } from '@/test/allowance';
 import { server } from '@/test/msw';
 import { renderHookWithQueryClient, renderWithChakra } from '@/test/render';
 
@@ -30,16 +31,9 @@ const renderPrompt = async ({ isAnonymous }: { isAnonymous: boolean }) => {
   );
 };
 
-const metered = (remaining: number) => ({
-  metered: true,
-  limit: 10,
-  used: 10 - remaining,
-  remaining,
-});
-
 beforeEach(() => {
   useChatStreamStore.setState({ isMessageAllowanceReached: false });
-  server.use(getGetMessageAllowanceMockHandler(metered(4)));
+  server.use(getGetMessageAllowanceMockHandler(aMeteredAllowance(4)));
 });
 
 describe('MessageAllowancePrompt', () => {
@@ -62,7 +56,7 @@ describe('MessageAllowancePrompt', () => {
   });
 
   it('asks a Guest to register as soon as the allowance is spent, before any refused send', async () => {
-    server.use(getGetMessageAllowanceMockHandler(metered(0)));
+    server.use(getGetMessageAllowanceMockHandler(aMeteredAllowance(0)));
     await renderPrompt({ isAnonymous: true });
 
     expect(await screen.findByRole('alert')).toHaveTextContent(messageAllowance.title);

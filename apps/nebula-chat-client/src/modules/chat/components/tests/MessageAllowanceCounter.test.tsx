@@ -5,6 +5,7 @@ import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
 import type { MessageAllowance } from '@/libs/api/generated/model/messageAllowance';
+import { useIdentityChange } from '@/modules/auth/hooks/useIdentityChange';
 import { MessageAllowanceCounter } from '@/modules/chat/components/MessageAllowanceCounter';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { toaster } from '@/shared/components/ui/toaster';
@@ -12,6 +13,7 @@ import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 import { API_ROUTE } from '@/test/api';
 import { aSession, holdSession, mockGetSession, refreshSession } from '@/test/auth';
+import { aMeteredAllowance } from '@/test/allowance';
 import { server } from '@/test/msw';
 import { renderWithChakra } from '@/test/render';
 
@@ -21,13 +23,6 @@ const { messageAllowance } = resources.chat;
 const GUEST = { isAnonymous: true };
 const UNVERIFIED = { isAnonymous: false, emailVerified: false };
 const VERIFIED = { isAnonymous: false, emailVerified: true };
-
-const metered = (remaining: number, limit = 10): MessageAllowance => ({
-  metered: true,
-  limit,
-  used: limit - remaining,
-  remaining,
-});
 
 /** Serves `allowance` and counts the reads, so a test can assert none was made. */
 const serveAllowance = (allowance: MessageAllowance) => {
@@ -59,28 +54,28 @@ beforeEach(() => {
 
 describe('MessageAllowanceCounter', () => {
   it('tells a Guest how many of their messages are left', async () => {
-    serveAllowance(metered(7));
+    serveAllowance(aMeteredAllowance(7));
     await renderCounter(GUEST);
 
     expect(await screen.findByRole('status')).toHaveTextContent('7 of 10 messages left');
   });
 
   it('shows a Guest on their first visit the full allowance', async () => {
-    serveAllowance(metered(10));
+    serveAllowance(aMeteredAllowance(10));
     await renderCounter(GUEST);
 
     expect(await screen.findByRole('status')).toHaveTextContent('10 of 10 messages left');
   });
 
   it('uses the singular for one message left', async () => {
-    serveAllowance(metered(1));
+    serveAllowance(aMeteredAllowance(1));
     await renderCounter(GUEST);
 
     expect(await screen.findByRole('status')).toHaveTextContent('1 of 10 message left');
   });
 
   it('shows an unverified Registered user the same count', async () => {
-    serveAllowance(metered(6));
+    serveAllowance(aMeteredAllowance(6));
     await renderCounter(UNVERIFIED);
 
     expect(await screen.findByRole('status')).toHaveTextContent('6 of 10 messages left');
@@ -97,7 +92,7 @@ describe('MessageAllowanceCounter', () => {
   });
 
   it('offers a Guest running low a way to sign up', async () => {
-    serveAllowance(metered(3));
+    serveAllowance(aMeteredAllowance(3));
     await renderCounter(GUEST);
 
     await userEvent.click(await screen.findByRole('link', { name: messageAllowance.signUp }));
@@ -106,7 +101,7 @@ describe('MessageAllowanceCounter', () => {
   });
 
   it('offers no sign-up while plenty is left', async () => {
-    serveAllowance(metered(4));
+    serveAllowance(aMeteredAllowance(4));
     await renderCounter(GUEST);
 
     await screen.findByRole('status');
@@ -114,7 +109,7 @@ describe('MessageAllowanceCounter', () => {
   });
 
   it('scales the low state with a different configured cap', async () => {
-    serveAllowance(metered(30, 100));
+    serveAllowance(aMeteredAllowance(30, 100));
     await renderCounter(GUEST);
 
     expect(await screen.findByRole('status')).toHaveTextContent('30 of 100 messages left');
@@ -122,7 +117,7 @@ describe('MessageAllowanceCounter', () => {
   });
 
   it('is quiet above the low threshold of a different cap', async () => {
-    serveAllowance(metered(31, 100));
+    serveAllowance(aMeteredAllowance(31, 100));
     await renderCounter(GUEST);
 
     await screen.findByRole('status');
@@ -130,7 +125,7 @@ describe('MessageAllowanceCounter', () => {
   });
 
   it('leaves the resend action to the verify-email reminder for an unverified user running low', async () => {
-    serveAllowance(metered(2));
+    serveAllowance(aMeteredAllowance(2));
     await renderCounter(UNVERIFIED);
 
     expect(await screen.findByRole('status')).toHaveTextContent('2 of 10 messages left');
@@ -139,7 +134,7 @@ describe('MessageAllowanceCounter', () => {
   });
 
   it('gives way to the wall once the allowance is spent', async () => {
-    const reads = serveAllowance(metered(0));
+    const reads = serveAllowance(aMeteredAllowance(0));
     await renderCounter(GUEST);
 
     await waitFor(() => expect(reads.count).toBe(1));
@@ -147,11 +142,11 @@ describe('MessageAllowanceCounter', () => {
   });
 
   it('gives way to the wall after a refused send', async () => {
-    serveAllowance(metered(5));
+    const reads = serveAllowance(aMeteredAllowance(5));
     useChatStreamStore.setState({ isMessageAllowanceReached: true });
     await renderCounter(GUEST);
 
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await waitFor(() => expect(reads.count).toBe(1));
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
@@ -184,7 +179,9 @@ describe('MessageAllowanceCounter', () => {
     let isVerified = false;
     server.use(
       mockGetSession(() => aSession(isVerified ? VERIFIED : GUEST)),
-      getGetMessageAllowanceMockHandler(() => (isVerified ? { metered: false } : metered(5))),
+      getGetMessageAllowanceMockHandler(() =>
+        isVerified ? { metered: false } : aMeteredAllowance(5),
+      ),
     );
     renderWithChakra(<MessageAllowanceCounter />);
     expect(await screen.findByRole('status')).toHaveTextContent('5 of 10 messages left');
@@ -193,5 +190,35 @@ describe('MessageAllowanceCounter', () => {
     refreshSession();
 
     await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
+  });
+
+  it("shows the new identity's count once a spent Guest signs up", async () => {
+    await holdSession(GUEST);
+    let isSignedUp = false;
+    server.use(
+      mockGetSession(() => aSession(isSignedUp ? UNVERIFIED : GUEST)),
+      getGetMessageAllowanceMockHandler(() => aMeteredAllowance(isSignedUp ? 10 : 0)),
+    );
+    useChatStreamStore.setState({ isMessageAllowanceReached: true });
+    // The sign-up form's own identity change, as the auth page runs it after the session refetch.
+    const SignUpFlow = () => {
+      const onIdentityChange = useIdentityChange();
+      return (
+        <>
+          <MessageAllowanceCounter />
+          <button type="button" onClick={onIdentityChange}>
+            sign up
+          </button>
+        </>
+      );
+    };
+    renderWithChakra(<SignUpFlow />);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    isSignedUp = true;
+    refreshSession();
+    await userEvent.click(screen.getByRole('button', { name: 'sign up' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('10 of 10 messages left');
   });
 });

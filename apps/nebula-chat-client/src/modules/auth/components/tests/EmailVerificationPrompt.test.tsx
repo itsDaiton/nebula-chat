@@ -9,6 +9,7 @@ import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { holdSession, mockSendVerificationEmail } from '@/test/auth';
+import { aMeteredAllowance } from '@/test/allowance';
 import { server } from '@/test/msw';
 import { renderWithChakra } from '@/test/render';
 
@@ -23,17 +24,10 @@ const renderPrompt = async (session: Parameters<typeof holdSession>[0]) => {
 const resend = () =>
   userEvent.click(screen.getByRole('button', { name: emailVerification.resend }));
 
-const metered = (remaining: number) => ({
-  metered: true,
-  limit: 10,
-  used: 10 - remaining,
-  remaining,
-});
-
 beforeEach(() => {
   vi.restoreAllMocks();
   useChatStreamStore.setState({ isMessageAllowanceReached: false });
-  server.use(getGetMessageAllowanceMockHandler(metered(4)));
+  server.use(getGetMessageAllowanceMockHandler(aMeteredAllowance(4)));
 });
 
 describe('EmailVerificationPrompt', () => {
@@ -56,7 +50,7 @@ describe('EmailVerificationPrompt', () => {
   });
 
   it('tells an unverified user to verify as soon as the allowance is spent, before any refused send', async () => {
-    server.use(getGetMessageAllowanceMockHandler(metered(0)));
+    server.use(getGetMessageAllowanceMockHandler(aMeteredAllowance(0)));
     await renderPrompt({ isAnonymous: false, emailVerified: false });
 
     const prompt = await screen.findByRole('alert');
