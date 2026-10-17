@@ -588,7 +588,10 @@ Every panel is LogQL or TraceQL, so it needs no metrics.
 
 The same JSON runs locally and in Grafana Cloud because no panel names a
 datasource: they use the **Logs** and **Traces** variables, which default to
-the instance's Loki and Tempo. Keep it that way when editing:
+the instance's Loki and Tempo. **Service** defaults to _All_ (`.+`): with a
+single service picked before Loki holds any of its lines, every query would be
+`{service_name=~""}`, which Loki rejects, so each panel would show an error
+instead of "No data". Keep it that way when editing:
 
 1. Edit it in local Grafana; the provisioning allows saving from the UI.
 2. **Export → Export as code**. Under _Advanced options_ pick the **Classic**

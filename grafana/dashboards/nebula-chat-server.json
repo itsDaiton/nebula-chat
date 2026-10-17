@@ -39,7 +39,7 @@
         "hide": false,
         "iconColor": "purple",
         "name": "Server starts",
-        "expr": "{service_name=\"$service\"} | event_name=\"server.started\"",
+        "expr": "{service_name=~\"$service\"} | event_name=\"server.started\"",
         "instant": false,
         "textFormat": "{{service_version}} started",
         "titleFormat": "Server start",
@@ -86,11 +86,12 @@
         "definition": "label_values(service_name)",
         "query": "label_values(service_name)",
         "current": {
-          "text": "nebula-chat-server",
-          "value": "nebula-chat-server"
+          "text": "All",
+          "value": "$__all"
         },
         "hide": 0,
-        "includeAll": false,
+        "includeAll": true,
+        "allValue": ".+",
         "multi": false,
         "options": [],
         "refresh": 2,
@@ -186,7 +187,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({service_name=\"$service\"} | event_name=\"http.request.completed\" [$__range])) or vector(0)",
+          "expr": "sum(count_over_time({service_name=~\"$service\"} | event_name=\"http.request.completed\" [$__range])) or vector(0)",
           "queryType": "instant"
         }
       ],
@@ -244,7 +245,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "(sum(count_over_time({service_name=\"$service\"} | event_name=\"http.request.completed\" | http_response_status_code >= 500 [$__range])) or vector(0)) / sum(count_over_time({service_name=\"$service\"} | event_name=\"http.request.completed\" [$__range]))",
+          "expr": "(sum(count_over_time({service_name=~\"$service\"} | event_name=\"http.request.completed\" | http_response_status_code >= 500 [$__range])) or vector(0)) / sum(count_over_time({service_name=~\"$service\"} | event_name=\"http.request.completed\" [$__range]))",
           "queryType": "instant"
         }
       ],
@@ -311,7 +312,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.95, {service_name=\"$service\"} | event_name=\"http.request.completed\" | http_route != \"/api/chat/stream\" | unwrap nebula_duration_ms [$__range]) by (service_name)",
+          "expr": "quantile_over_time(0.95, {service_name=~\"$service\"} | event_name=\"http.request.completed\" | http_route != \"/api/chat/stream\" | unwrap nebula_duration_ms [$__range]) by (service_name)",
           "queryType": "instant"
         }
       ],
@@ -377,7 +378,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({service_name=\"$service\"} | event_name=\"chat.reply.completed\" [$__range])) or vector(0)",
+          "expr": "sum(count_over_time({service_name=~\"$service\"} | event_name=\"chat.reply.completed\" [$__range])) or vector(0)",
           "queryType": "instant"
         }
       ],
@@ -435,7 +436,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "(sum(count_over_time({service_name=\"$service\"} | event_name=\"chat.reply.completed\" | nebula_outcome=\"failed\" [$__range])) or vector(0)) / sum(count_over_time({service_name=\"$service\"} | event_name=\"chat.reply.completed\" [$__range]))",
+          "expr": "(sum(count_over_time({service_name=~\"$service\"} | event_name=\"chat.reply.completed\" | nebula_outcome=\"failed\" [$__range])) or vector(0)) / sum(count_over_time({service_name=~\"$service\"} | event_name=\"chat.reply.completed\" [$__range]))",
           "queryType": "instant"
         }
       ],
@@ -502,7 +503,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({service_name=\"$service\"} | severity_text=~\"error|fatal\" [$__range])) or vector(0)",
+          "expr": "sum(count_over_time({service_name=~\"$service\"} | severity_text=~\"error|fatal\" [$__range])) or vector(0)",
           "queryType": "instant"
         }
       ],
@@ -577,7 +578,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "sum by (http_response_status_code) (rate({service_name=\"$service\"} | event_name=\"http.request.completed\" [$__auto]))",
+          "expr": "sum by (http_response_status_code) (rate({service_name=~\"$service\"} | event_name=\"http.request.completed\" [$__auto]))",
           "queryType": "range",
           "legendFormat": "{{http_response_status_code}}"
         }
@@ -638,7 +639,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.5, {service_name=\"$service\"} | event_name=\"http.request.completed\" | http_route != \"/api/chat/stream\" | unwrap nebula_duration_ms [$__auto]) by (service_name)",
+          "expr": "quantile_over_time(0.5, {service_name=~\"$service\"} | event_name=\"http.request.completed\" | http_route != \"/api/chat/stream\" | unwrap nebula_duration_ms [$__auto]) by (service_name)",
           "queryType": "range",
           "legendFormat": "p50"
         },
@@ -649,7 +650,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.95, {service_name=\"$service\"} | event_name=\"http.request.completed\" | http_route != \"/api/chat/stream\" | unwrap nebula_duration_ms [$__auto]) by (service_name)",
+          "expr": "quantile_over_time(0.95, {service_name=~\"$service\"} | event_name=\"http.request.completed\" | http_route != \"/api/chat/stream\" | unwrap nebula_duration_ms [$__auto]) by (service_name)",
           "queryType": "range",
           "legendFormat": "p95"
         },
@@ -660,7 +661,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.99, {service_name=\"$service\"} | event_name=\"http.request.completed\" | http_route != \"/api/chat/stream\" | unwrap nebula_duration_ms [$__auto]) by (service_name)",
+          "expr": "quantile_over_time(0.99, {service_name=~\"$service\"} | event_name=\"http.request.completed\" | http_route != \"/api/chat/stream\" | unwrap nebula_duration_ms [$__auto]) by (service_name)",
           "queryType": "range",
           "legendFormat": "p99"
         }
@@ -721,7 +722,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (http_request_method, http_route) (count_over_time({service_name=\"$service\"} | event_name=\"http.request.completed\" | label_format http_route=`{{ or .http_route \"(no route)\" }}` [$__range])))",
+          "expr": "topk(10, sum by (http_request_method, http_route) (count_over_time({service_name=~\"$service\"} | event_name=\"http.request.completed\" | label_format http_route=`{{ or .http_route \"(no route)\" }}` [$__range])))",
           "queryType": "instant"
         }
       ],
@@ -798,7 +799,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "topk(10, quantile_over_time(0.95, {service_name=\"$service\"} | event_name=\"http.request.completed\" | http_route != \"\" | unwrap nebula_duration_ms [$__range]) by (http_request_method, http_route))",
+          "expr": "topk(10, quantile_over_time(0.95, {service_name=~\"$service\"} | event_name=\"http.request.completed\" | http_route != \"\" | unwrap nebula_duration_ms [$__range]) by (http_request_method, http_route))",
           "queryType": "instant"
         }
       ],
@@ -888,7 +889,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "sum by (nebula_outcome) (count_over_time({service_name=\"$service\"} | event_name=\"chat.reply.completed\" [$__auto]))",
+          "expr": "sum by (nebula_outcome) (count_over_time({service_name=~\"$service\"} | event_name=\"chat.reply.completed\" [$__auto]))",
           "queryType": "range",
           "legendFormat": "{{nebula_outcome}}"
         }
@@ -995,7 +996,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "sum by (gen_ai_request_model) (sum_over_time({service_name=\"$service\"} | event_name=\"chat.reply.completed\" | unwrap gen_ai_usage_input_tokens [$__auto]))",
+          "expr": "sum by (gen_ai_request_model) (sum_over_time({service_name=~\"$service\"} | event_name=\"chat.reply.completed\" | unwrap gen_ai_usage_input_tokens [$__auto]))",
           "queryType": "range",
           "legendFormat": "{{gen_ai_request_model}} · input"
         },
@@ -1006,7 +1007,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "sum by (gen_ai_request_model) (sum_over_time({service_name=\"$service\"} | event_name=\"chat.reply.completed\" | unwrap gen_ai_usage_output_tokens [$__auto]))",
+          "expr": "sum by (gen_ai_request_model) (sum_over_time({service_name=~\"$service\"} | event_name=\"chat.reply.completed\" | unwrap gen_ai_usage_output_tokens [$__auto]))",
           "queryType": "range",
           "legendFormat": "{{gen_ai_request_model}} · output"
         }
@@ -1067,7 +1068,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.95, {service_name=\"$service\"} | event_name=\"chat.reply.completed\" | unwrap nebula_duration_ms [$__auto]) by (gen_ai_request_model)",
+          "expr": "quantile_over_time(0.95, {service_name=~\"$service\"} | event_name=\"chat.reply.completed\" | unwrap nebula_duration_ms [$__auto]) by (gen_ai_request_model)",
           "queryType": "range",
           "legendFormat": "{{gen_ai_request_model}}"
         }
@@ -1141,7 +1142,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "sum by (severity_text) (count_over_time({service_name=\"$service\"} [$__auto]))",
+          "expr": "sum by (severity_text) (count_over_time({service_name=~\"$service\"} [$__auto]))",
           "queryType": "range",
           "legendFormat": "{{severity_text}}"
         }
@@ -1293,7 +1294,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (event_name, error_type) (count_over_time({service_name=\"$service\"} | severity_text=~\"warn|error|fatal\" [$__range])))",
+          "expr": "topk(10, sum by (event_name, error_type) (count_over_time({service_name=~\"$service\"} | severity_text=~\"warn|error|fatal\" [$__range])))",
           "queryType": "instant"
         }
       ],
@@ -1370,7 +1371,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "{service_name=\"$service\"} | severity_text=~\"${level:regex}\" |= \"$search\"",
+          "expr": "{service_name=~\"$service\"} | severity_text=~\"${level:regex}\" |= \"$search\"",
           "queryType": "range"
         }
       ],
@@ -1421,7 +1422,7 @@
             "uid": "${tempo}"
           },
           "queryType": "traceql",
-          "query": "{resource.service.name=\"$service\" && kind=server && status=error}",
+          "query": "{resource.service.name=~\"$service\" && kind=server && status=error}",
           "limit": 20,
           "tableType": "traces"
         }
@@ -1458,7 +1459,7 @@
             "uid": "${tempo}"
           },
           "queryType": "traceql",
-          "query": "{resource.service.name=\"$service\" && kind=server && duration > 1s}",
+          "query": "{resource.service.name=~\"$service\" && kind=server && duration > 1s}",
           "limit": 20,
           "tableType": "traces"
         }
