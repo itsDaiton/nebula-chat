@@ -519,6 +519,12 @@ such line means nothing leaves the process: the two variables are still
 commented out, or `libs/otel` is an old build (`pnpm build:libs` after pulling).
 `logs stay on stdout` means `OTEL_LOGS_EXPORTER=otlp` is missing.
 
+The compose file sets `GF_PLUGINS_PREINSTALL_AUTO_UPDATE=false`. With internet
+access, Grafana 13 otherwise stops its bundled Loki, Tempo and Prometheus plugins
+to update them, fails to write the update in the hardened container, and never
+starts them again ([grafana/grafana#132528](https://github.com/grafana/grafana/issues/132528)):
+the dashboard's **Logs** and **Traces** pickers come up empty.
+
 If Grafana still shows nothing, `pnpm otel:doctor` walks every link: the
 `.env`, the `libs/otel` build, Grafana and its Loki and Tempo datasources, a
 test line sent straight to the container and found again in Loki, and the

@@ -113,7 +113,7 @@ const checkDatasources = async (): Promise<{ loki?: Datasource; tempo?: Datasour
       report(
         'fail',
         `Grafana offers the dashboard no ${label} datasource, so its picker is empty`,
-        `docker compose up -d --force-recreate otel-lgtm; offered now: ${offered.map((d) => d.type).join(', ') || 'none'}`,
+        `Grafana unloaded its bundled plugins (grafana/grafana#132528): pull docker-compose.yml with GF_PLUGINS_PREINSTALL_AUTO_UPDATE=false, then docker compose up -d --force-recreate otel-lgtm`,
       );
   }
   for (const ds of [loki, tempo]) {

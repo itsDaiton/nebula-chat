@@ -68,6 +68,11 @@ services:
       # Open on the repo's dashboard, not Grafana's welcome page: its per-user panels
       # answer the anonymous visitor with an "Unauthorized" toast on every visit.
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /otel-lgtm/nebula-chat-dashboards/nebula-chat-server.json
+      # Grafana 13 stops a bundled datasource plugin (Loki, Tempo, ...) to update it from
+      # grafana.com and, when the update cannot be written (cap_drop leaves that folder
+      # read-only), never starts it again, so every datasource vanishes on a machine with
+      # internet. Keep the image's versions: grafana/grafana#132528.
+      GF_PLUGINS_PREINSTALL_AUTO_UPDATE: "false"
     volumes: # kics-scan ignore-line
       - otel-lgtm-data:/data
       # The repo's dashboards (grafana/), provisioned into a "Nebula Chat" folder.
