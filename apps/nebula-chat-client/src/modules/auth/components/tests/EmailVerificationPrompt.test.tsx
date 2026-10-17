@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
 import { EmailVerificationPrompt } from '@/modules/auth/components/EmailVerificationPrompt';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { toaster } from '@/shared/components/ui/toaster';
@@ -22,9 +23,17 @@ const renderPrompt = async (session: Parameters<typeof holdSession>[0]) => {
 const resend = () =>
   userEvent.click(screen.getByRole('button', { name: emailVerification.resend }));
 
+const metered = (remaining: number) => ({
+  metered: true,
+  limit: 10,
+  used: 10 - remaining,
+  remaining,
+});
+
 beforeEach(() => {
   vi.restoreAllMocks();
   useChatStreamStore.setState({ isMessageAllowanceReached: false });
+  server.use(getGetMessageAllowanceMockHandler(metered(4)));
 });
 
 describe('EmailVerificationPrompt', () => {
@@ -44,6 +53,15 @@ describe('EmailVerificationPrompt', () => {
     expect(prompt).toHaveTextContent(emailVerification.allowanceReachedTitle);
     expect(prompt).toHaveTextContent(emailVerification.allowanceReachedDescription);
     expect(screen.getByRole('button', { name: emailVerification.resend })).toBeInTheDocument();
+  });
+
+  it('tells an unverified user to verify as soon as the allowance is spent, before any refused send', async () => {
+    server.use(getGetMessageAllowanceMockHandler(metered(0)));
+    await renderPrompt({ isAnonymous: false, emailVerified: false });
+
+    const prompt = await screen.findByRole('alert');
+    expect(prompt).toHaveTextContent(emailVerification.allowanceReachedTitle);
+    expect(prompt).toHaveTextContent(emailVerification.allowanceReachedDescription);
   });
 
   it('resends the verification email, returning to the verify page', async () => {

@@ -1,7 +1,7 @@
 import { Alert } from '@chakra-ui/react';
 import { ResendVerificationButton } from '@/modules/auth/components/ResendVerificationButton';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
-import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
+import { useMessageAllowance } from '@/modules/chat/hooks/useMessageAllowance';
 import { resources } from '@/resources';
 
 const { emailVerification } = resources.auth;
@@ -9,14 +9,14 @@ const { emailVerification } = resources.auth;
 /** Reminds an unverified Registered user to verify; once they hit the allowance, verifying is the way on. */
 export const EmailVerificationPrompt = () => {
   const { needsEmailVerification } = useAuth();
-  const isMessageAllowanceReached = useChatStreamStore((state) => state.isMessageAllowanceReached);
+  const { isSpent } = useMessageAllowance();
 
   if (!needsEmailVerification) return null;
 
   return (
     <Alert.Root
-      status={isMessageAllowanceReached ? 'warning' : 'info'}
-      role={isMessageAllowanceReached ? 'alert' : 'status'}
+      status={isSpent ? 'warning' : 'info'}
+      role={isSpent ? 'alert' : 'status'}
       alignItems="center"
       mx={4}
       mt={4}
@@ -25,14 +25,10 @@ export const EmailVerificationPrompt = () => {
       <Alert.Indicator />
       <Alert.Content>
         <Alert.Title>
-          {isMessageAllowanceReached
-            ? emailVerification.allowanceReachedTitle
-            : emailVerification.title}
+          {isSpent ? emailVerification.allowanceReachedTitle : emailVerification.title}
         </Alert.Title>
         <Alert.Description>
-          {isMessageAllowanceReached
-            ? emailVerification.allowanceReachedDescription
-            : emailVerification.description}
+          {isSpent ? emailVerification.allowanceReachedDescription : emailVerification.description}
         </Alert.Description>
       </Alert.Content>
       <ResendVerificationButton />

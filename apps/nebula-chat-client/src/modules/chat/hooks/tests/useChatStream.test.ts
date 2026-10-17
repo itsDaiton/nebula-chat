@@ -6,6 +6,7 @@ import {
   getGetConversationQueryKey,
   getListConversationsInfiniteQueryKey,
 } from '@/libs/api/generated/conversations/conversations';
+import { getGetMessageAllowanceQueryKey } from '@/libs/api/generated/chat/chat';
 import { getListMessagesQueryKey } from '@/libs/api/generated/messages/messages';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
@@ -395,6 +396,56 @@ describe('useChatStream — query cache', () => {
     expect(isInvalidated(queryClient, getListConversationsInfiniteQueryKey())).toBe(true);
     expect(isInvalidated(queryClient, getGetConversationQueryKey(EXISTING_ID))).toBe(true);
     expect(isInvalidated(queryClient, getListMessagesQueryKey())).toBe(true);
+  });
+
+  it('refreshes the message allowance as soon as the server counts the message', async () => {
+    // No `end` frame: the counter must drop on the count, not only on completion.
+    streamFrames(frame('user-message-created', { messageId: 'm1' }));
+    const queryClient = primedClient(getGetMessageAllowanceQueryKey());
+    const { result } = renderHookWithQueryClient(() => useChatStream(), { queryClient });
+
+    await sendMessage(result);
+
+    expect(isInvalidated(queryClient, getGetMessageAllowanceQueryKey())).toBe(true);
+  });
+
+  it('refreshes the message allowance for a message whose reply then fails', async () => {
+    streamFrames(
+      frame('user-message-created', { messageId: 'm1' }),
+      frame('error', { success: false, error: 'Internal', message: 'boom' }),
+    );
+    const queryClient = primedClient(getGetMessageAllowanceQueryKey());
+    const { result } = renderHookWithQueryClient(() => useChatStream(), { queryClient });
+
+    await sendMessage(result);
+
+    expect(isInvalidated(queryClient, getGetMessageAllowanceQueryKey())).toBe(true);
+  });
+
+  it('refreshes the message allowance after a send refused at it', async () => {
+    server.use(
+      mockApiError('post', ENDPOINT, 403, {
+        success: false,
+        error: 'MessageAllowanceReached',
+        message: 'Message allowance exceeded: a Guest can send at most 10 messages.',
+      }),
+    );
+    const queryClient = primedClient(getGetMessageAllowanceQueryKey());
+    const { result } = renderHookWithQueryClient(() => useChatStream(), { queryClient });
+
+    await sendMessage(result);
+
+    expect(isInvalidated(queryClient, getGetMessageAllowanceQueryKey())).toBe(true);
+  });
+
+  it('leaves the message allowance alone when no message was counted', async () => {
+    server.use(mockApiError('post', ENDPOINT, 500, {}));
+    const queryClient = primedClient(getGetMessageAllowanceQueryKey());
+    const { result } = renderHookWithQueryClient(() => useChatStream(), { queryClient });
+
+    await sendMessage(result);
+
+    expect(isInvalidated(queryClient, getGetMessageAllowanceQueryKey())).toBe(false);
   });
 
   it('leaves the cache alone when the stream fails', async () => {
