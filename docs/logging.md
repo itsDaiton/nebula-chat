@@ -525,11 +525,6 @@ to update them, fails to write the update in the hardened container, and never
 starts them again ([grafana/grafana#132528](https://github.com/grafana/grafana/issues/132528)):
 the dashboard's **Logs** and **Traces** pickers come up empty.
 
-If Grafana still shows nothing, `pnpm otel:doctor` walks every link: the
-`.env`, the `libs/otel` build, Grafana and its Loki and Tempo datasources, a
-test line sent straight to the container and found again in Loki, and the
-server's own recent lines. It names the first broken one and how to fix it.
-
 Open Grafana at <http://localhost:3001> (3001, because the server itself uses
 3000):
 
