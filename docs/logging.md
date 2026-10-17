@@ -519,6 +519,11 @@ such line means nothing leaves the process: the two variables are still
 commented out, or `libs/otel` is an old build (`pnpm build:libs` after pulling).
 `logs stay on stdout` means `OTEL_LOGS_EXPORTER=otlp` is missing.
 
+If Grafana still shows nothing, `pnpm otel:doctor` walks every link: the
+`.env`, the `libs/otel` build, Grafana and its Loki and Tempo datasources, a
+test line sent straight to the container and found again in Loki, and the
+server's own recent lines. It names the first broken one and how to fix it.
+
 Open Grafana at <http://localhost:3001> (3001, because the server itself uses
 3000):
 
