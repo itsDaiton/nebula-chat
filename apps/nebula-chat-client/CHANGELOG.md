@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.27.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.27.0...nebula-chat-client-v1.27.1) (2026-10-18)
+
+
+### Bug Fixes
+
+* **client:** align the allowance counter's action and tidy its docs ([#520](https://github.com/itsDaiton/nebula-chat/issues/520)) ([5499fb7](https://github.com/itsDaiton/nebula-chat/commit/5499fb71b26102d23dfd7b3b7a4d86b6a3ced807))
+
 ## [1.27.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.26.0...nebula-chat-client-v1.27.0) (2026-10-18)
 
 
