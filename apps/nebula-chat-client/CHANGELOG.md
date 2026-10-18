@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.27.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.26.0...nebula-chat-client-v1.27.0) (2026-10-18)
+
+
+### Features
+
+* **client:** NEB-463 show the message allowance above the chat input ([#517](https://github.com/itsDaiton/nebula-chat/issues/517)) ([1c4a9a8](https://github.com/itsDaiton/nebula-chat/commit/1c4a9a8e5ccf38b73ca1ec002e6a316530087328))
+
 ## [1.26.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v1.25.1...nebula-chat-client-v1.26.0) (2026-10-11)
 
 
