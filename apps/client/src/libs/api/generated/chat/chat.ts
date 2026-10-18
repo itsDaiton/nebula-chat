@@ -3,7 +3,6 @@
  * Do not edit manually.
  * Nebula Chat API
  * REST API for Nebula Chat
- * OpenAPI spec version: 1.11.0
  */
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
