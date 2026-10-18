@@ -73,8 +73,20 @@ A Registered user ending every auth session of theirs at once, the one they are 
 _Avoid_: Log out of all devices (UI-copy only), revoke sessions.
 
 **Account deletion**:
-A Registered user permanently removing their User, with every Session and Message they own. Confirmed with their password, or, for a User without one, a sign-in less than a day old. The device carries on as a fresh Guest.
-_Avoid_: Account closure, deactivation (nothing is kept).
+A Registered user asking to remove their User. Confirmed with their password, or, for a User without one, a sign-in less than a day old. Puts the User into Pending deletion at once and signs out every auth session of theirs; the device carries on as a fresh Guest.
+_Avoid_: Account closure, deactivation, archiving (Archived is reserved for Sessions).
+
+**Pending deletion**:
+The 30 days between Account deletion and the Purge. The User is hidden and cannot act, but signing back in offers to restore them in full, and an Admin can restore them too. Their email stays taken, so signing up with it again points them to signing in instead.
+_Avoid_: Archived account, soft-deleted, deactivated.
+
+**Purge**:
+The irreversible end of Pending deletion: the User's Sessions and Messages are erased and their Model calls are kept only without anything that identifies them, so past usage totals don't change.
+_Avoid_: Hard delete, wipe, cleanup.
+
+**Ban**:
+An Admin barring a User from signing in, permanently or until a set time, with a reason the User is shown. Ends every auth session of theirs; their Sessions are kept. The same device can still carry on as a fresh Guest, held back by the Message allowance.
+_Avoid_: Block, suspension, lock.
 
 **Avatar**:
 The visual that stands for a User in the interface. For a Registered user it is their Profile image if they have one, otherwise their initials; a Guest's is always a generic anonymous one.
