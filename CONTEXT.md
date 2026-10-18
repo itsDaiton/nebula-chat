@@ -41,7 +41,7 @@ Anyone who owns Sessions. Every Session has exactly one owner — `userId` is no
 _Avoid_: Account (an Account is an auth-provider link belonging to a User, not the User themselves).
 
 **Guest**:
-An anonymous User, auto-created on first use without any credentials, allowed a bounded number of messages (the **message allowance**) before registration is required to continue. Becomes a Registered user by **claiming** their Sessions on sign-up or sign-in.
+An anonymous User, auto-created on first use without any credentials, allowed a bounded number of messages (the **message allowance**) before registration is required to continue. Becomes a Registered user by **claiming** their Sessions on sign-up or sign-in. A Guest with no activity for 30 days is Purged, since without credentials nobody can reach their Sessions again.
 _Avoid_: Anonymous user (that names a state; the Guest is the actor), visitor.
 
 **Registered user**:
