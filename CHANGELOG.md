@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.17.7](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.17.6...nebula-chat-v2.17.7) (2026-10-18)
+
+
+### Bug Fixes
+
+* **repo:** NEB-526 rename apps to apps/client and apps/server as @nebula-chat/&lt;app&gt; ([#577](https://github.com/itsDaiton/nebula-chat/issues/577)) ([fe5ab0a](https://github.com/itsDaiton/nebula-chat/commit/fe5ab0aa5fedb1a769a22d7cf7433d2c4e45921d)), closes [#526](https://github.com/itsDaiton/nebula-chat/issues/526)
+
 ## [2.17.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.17.5...nebula-chat-v2.17.6) (2026-10-18)
 
 
