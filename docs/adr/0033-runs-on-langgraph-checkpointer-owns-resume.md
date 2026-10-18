@@ -1,6 +1,6 @@
 # ADR-0033: Runs execute as a LangGraph graph, tool-using Agents are LangChain agents, and the checkpointer owns resume
 
-- **Status:** Proposed — to be implemented by the nebula-chat 2.0 epic (NEB-349) from NEB-359; a throwaway spike checks it before the tickets change
+- **Status:** Proposed — to be implemented by the nebula-chat 2.0 epic (NEB-349) from NEB-359; checked by a throwaway spike (see Consequences)
 - **Date:** 2026-10-18
 - **Deciders:** @itsDaiton
 - **Related:** [ADR-0015](./0015-run-model-intake-orchestrator-loop-output.md) — amended: the runtime, and the Clarifying question; [ADR-0016](./0016-one-job-per-run-resume-from-persisted-steps.md) — §1 amended, §3 superseded; [ADR-0013](./0013-worker-app-owns-all-llm-execution.md) — unchanged: the LLM code lives in the worker; [ADR-0014](./0014-redis-streams-delivery-and-split-send-stream-api.md) — stream events gain a Step `attempt` and a waiting event
@@ -26,7 +26,11 @@ ADR-0015 fixed the shape of a Run and ADR-0016 how it survives a crash, but left
 - A delegate that was running when the worker died re-runs as a whole; delegates that finished in the same turn keep their results. A model call cut off by a crash returns no usage and is missing from the Model call ledger.
 - The 3-minute wait plus the 5-minute Run timeout fit inside the free Render worker's 15-minute idle window, so the timeout job fires on time.
 - Tests keep the worker job seam with an in-memory checkpointer and a scripted fake chat model that supports tool binding. No test reaches Postgres.
-- The spike checks three facts before the tickets change: token streaming from the Output Agent with `createAgent` nested in the graph, resume skipping delegates that finished in a parallel turn, and the fake model under `createAgent`.
+- A throwaway spike (`langchain` 1.5, `@langchain/langgraph` 1.5, `PostgresSaver` 1.1, a scripted fake model, a scratch Postgres) confirmed the design:
+  - The fake model drives `createAgent` and the middleware sees every model call's usage and every tool call's ID. Intake nodes and delegates in one turn run in parallel, and the Output Agent's tokens stream from inside the graph.
+  - After a `SIGKILL` during one of two parallel delegates, a fresh process resumes the thread and re-runs only that delegate, under the same tool-call ID. Intake, the Brief, the Orchestrator's turn and the finished delegate are not repeated.
+  - A Clarifying question pauses the graph and the process exits cleanly. A fresh process resumes it with the answer without repeating the Orchestrator's turn. The asking tool re-runs from its start on resume, so anything it does before the interrupt must be idempotent. The interrupt reaches the stream once per graph level, so the worker reads it at the root.
+  - The checkpointer creates its four tables in the `langgraph` schema, and deleting a thread removes all of its rows.
 
 ## Alternatives considered
 
