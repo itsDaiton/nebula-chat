@@ -30,7 +30,7 @@
   "dependencies": {
     "@nebula-chat/otel": "workspace:*",
     "drizzle-orm": "catalog:",
-    "pg": "^8.16.0"
+    "pg": "^8.23.1"
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "catalog:",
