@@ -1,5 +1,5 @@
 {
-  ".": "2.17.2",
+  ".": "2.17.3",
   "apps/nebula-chat-client": "1.27.2",
   "apps/nebula-chat-server": "2.8.0",
   "libs/db": "0.6.1",
