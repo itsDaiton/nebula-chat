@@ -1,0 +1,34 @@
+{
+  "mcpServers": {
+    "shadcn": {
+      "command": "npx",
+      "args": ["-y", "shadcn@latest", "mcp"]
+    },
+    "better-auth": {
+      "type": "http",
+      "url": "https://mcp.better-auth.com/mcp"
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "langchain-docs": {
+      "type": "http",
+      "url": "https://docs.langchain.com/mcp"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest", "--headless", "--isolated", "--browser", "chromium"]
+    },
+    "redis-local": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "redis-mcp-server@latest",
+        "redis-mcp-server",
+        "--url",
+        "${NEBULA_MCP_REDIS_URL:-redis://localhost:6380/0}"
+      ]
+    }
+  }
+}

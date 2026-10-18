@@ -43,3 +43,6 @@ megalinter-reports/
 
 # Vitest coverage output (ADR-0008)
 coverage/
+
+# Playwright MCP snapshots and console logs
+.playwright-mcp/
