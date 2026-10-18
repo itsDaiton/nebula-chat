@@ -3,7 +3,7 @@
 - **Status:** Accepted — implemented by NEB-526 (#526)
 - **Date:** 2026-10-18
 - **Deciders:** @itsDaiton
-- **Related:** [ADR-0013](./0013-worker-app-owns-all-llm-execution.md) — amended: the worker is `apps/worker`; [ADR-0029](./0029-operator-cli-as-an-api-client.md) — `apps/cli`
+- **Related:** [ADR-0013](./0013-worker-app-owns-all-llm-execution.md) — amended: the worker is `apps/worker`; [ADR-0029](./0029-operator-cli-as-an-api-client.md) — `apps/cli`; [ADR-0017](./0017-structured-logging-conventions.md) and [ADR-0019](./0019-dotenvx-loads-env-files-in-package-scripts.md) — their current-state paths now name `apps/worker` and `apps/server`
 
 ## Context
 
