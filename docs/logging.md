@@ -620,7 +620,8 @@ instead of "No data". Keep it that way when editing:
    model and **JSON**, and leave _Share dashboard with another instance_ off, so
    the datasource variables stay variables.
 3. Save it over the file in `grafana/dashboards/`. Local Grafana reloads it
-   within 10 seconds; re-import it in Grafana Cloud.
+   within 10 seconds; merging it to `main` uploads it to Grafana Cloud (see
+   "In production").
 
 ## Deliberately outside this pipeline
 
