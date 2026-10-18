@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.17.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.17.4...nebula-chat-v2.17.5) (2026-10-18)
+
+
+### Bug Fixes
+
+* **auth:** rate-limit per client IP from CF-Connecting-IP ([#574](https://github.com/itsDaiton/nebula-chat/issues/574)) ([cc67f75](https://github.com/itsDaiton/nebula-chat/commit/cc67f75da9eb86cbfe11dfdab88c624fda430307))
+
 ## [2.17.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.17.3...nebula-chat-v2.17.4) (2026-10-18)
 
 
