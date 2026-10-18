@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.8.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.8.1...nebula-chat-server-v2.8.2) (2026-10-18)
+
+
+### Bug Fixes
+
+* **frontend:** improve URL safety with URL API parser ([75e2e4d](https://github.com/itsDaiton/nebula-chat/commit/75e2e4d9e6dfe1170eaf9e0149896dd7e78b8c63))
+* **repo:** NEB-526 rename apps to apps/client and apps/server as @nebula-chat/&lt;app&gt; ([#577](https://github.com/itsDaiton/nebula-chat/issues/577)) ([fe5ab0a](https://github.com/itsDaiton/nebula-chat/commit/fe5ab0aa5fedb1a769a22d7cf7433d2c4e45921d)), closes [#526](https://github.com/itsDaiton/nebula-chat/issues/526)
+
 ## [2.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.8.0...nebula-chat-server-v2.8.1) (2026-10-18)
 
 

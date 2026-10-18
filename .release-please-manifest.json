@@ -1,8 +1,8 @@
 {
   ".": "2.17.7",
-  "apps/client": "1.27.3",
-  "apps/server": "2.8.1",
-  "libs/db": "0.6.2",
+  "apps/client": "1.27.4",
+  "apps/server": "2.8.2",
+  "libs/db": "0.7.0",
   "openapi": "1.12.0",
   "libs/langchain": "2.0.2",
   "libs/otel": "2.3.0",

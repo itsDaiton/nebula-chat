@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v0.6.2...nebula-chat-db-v0.7.0) (2026-10-18)
+
+
+### Features
+
+* **auth:** add @nebula-chat/auth better-auth substrate (M-6) ([#322](https://github.com/itsDaiton/nebula-chat/issues/322)) ([a4ba239](https://github.com/itsDaiton/nebula-chat/commit/a4ba2392f879b97966a92978288cd64d1dc55b8d))
+* **auth:** NEB-471 NEB-472 NEB-473 Profile images ([#502](https://github.com/itsDaiton/nebula-chat/issues/502)) ([f6c1da5](https://github.com/itsDaiton/nebula-chat/commit/f6c1da596344946fd4c3cb5f93db38ac3df23046))
+* **db:** migrate from Prisma to Drizzle ORM ([#214](https://github.com/itsDaiton/nebula-chat/issues/214)) ([c6c543a](https://github.com/itsDaiton/nebula-chat/commit/c6c543a9ea85c7742083ff37e58739d5f391c715))
+* **test:** add Vitest unit testing across server, client and libs ([#305](https://github.com/itsDaiton/nebula-chat/issues/305)) ([e8c09ee](https://github.com/itsDaiton/nebula-chat/commit/e8c09eec1385c11ab1d6744ae7a75b79713b47fd))
+
+
+### Bug Fixes
+
+* **ci:** migrate monorepo builds to Turborepo ([#239](https://github.com/itsDaiton/nebula-chat/issues/239)) ([1a03d6f](https://github.com/itsDaiton/nebula-chat/commit/1a03d6fdbdb4c003abffa502cb3abe15802173cb))
+* **db:** log and survive idle Postgres connection errors ([#512](https://github.com/itsDaiton/nebula-chat/issues/512)) ([32e170f](https://github.com/itsDaiton/nebula-chat/commit/32e170f5c7a44cc3bb52a7dff3b4de3a4db5af3a))
+* **db:** surface migration errors and add a journal baseline ([#293](https://github.com/itsDaiton/nebula-chat/issues/293)) ([26b60b8](https://github.com/itsDaiton/nebula-chat/commit/26b60b8160ea3ae03ae51f340d9b45449bb830ae))
+* **deps:** NEB-398 migrate lib builds from tsup to tsdown ([#399](https://github.com/itsDaiton/nebula-chat/issues/399)) ([678284f](https://github.com/itsDaiton/nebula-chat/commit/678284fd43a580450dda1586802bd27eac1c06c0))
+* **frontend:** improve URL safety with URL API parser ([75e2e4d](https://github.com/itsDaiton/nebula-chat/commit/75e2e4d9e6dfe1170eaf9e0149896dd7e78b8c63))
+* **repo:** NEB-526 rename apps to apps/client and apps/server as @nebula-chat/&lt;app&gt; ([#577](https://github.com/itsDaiton/nebula-chat/issues/577)) ([fe5ab0a](https://github.com/itsDaiton/nebula-chat/commit/fe5ab0aa5fedb1a769a22d7cf7433d2c4e45921d)), closes [#526](https://github.com/itsDaiton/nebula-chat/issues/526)
+* **server:** NEB-388 load env files with dotenvx in package scripts ([#403](https://github.com/itsDaiton/nebula-chat/issues/403)) ([23792d3](https://github.com/itsDaiton/nebula-chat/commit/23792d342af65a151c9e30d26462c3efe237ec5a))
+
 ## [0.6.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v0.6.1...nebula-chat-db-v0.6.2) (2026-10-18)
 
 
