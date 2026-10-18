@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.17.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.17.3...nebula-chat-v2.17.4) (2026-10-18)
+
+
+### Bug Fixes
+
+* **repo:** project MCP servers for agents and an AGENTS.md guide to them ([#571](https://github.com/itsDaiton/nebula-chat/issues/571)) ([0cebdc1](https://github.com/itsDaiton/nebula-chat/commit/0cebdc1a808c76a7bd84ed70389276fb89215f1b))
+
 ## [2.17.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.17.2...nebula-chat-v2.17.3) (2026-10-18)
 
 
