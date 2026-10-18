@@ -57,3 +57,17 @@ also add an `F_<NAME>` env var and an `if` line in "Compute build matrix".
 That's it — the matrix picks up the new package automatically. Apps that need a
 runtime secret (e.g. the server's `DATABASE_URL`) already have it in the job
 `env`; add more there if a new package needs one.
+
+## Grafana dashboards (`deploy-grafana-dashboards.yml`)
+
+[`deploy-grafana-dashboards.yml`](./deploy-grafana-dashboards.yml) uploads every
+JSON in `grafana/dashboards/` to Grafana Cloud through its
+`/api/dashboards/db` endpoint, overwriting the dashboard with the same `uid`. It
+runs on pushes to `main` that touch `grafana/dashboards/**` or the workflow file,
+and on `workflow_dispatch`. Runs queue rather than cancel, so merges apply in
+order; the job summary lists each dashboard with its new version.
+
+It needs the `GRAFANA_API_TOKEN` secret (an Editor service account token, not the
+OTLP token) and the `GRAFANA_URL` variable; `GRAFANA_FOLDER_UID` is optional.
+The job fails up front if either required value is empty. Setup steps:
+[`docs/logging.md`](../../docs/logging.md) → "In production".

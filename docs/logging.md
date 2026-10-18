@@ -553,12 +553,28 @@ The exporters are constructed with no arguments and read those standard
 is Grafana Cloud's free tier, which is hard-capped rather than overage-billed:
 its OTLP gateway takes traces and logs at the one endpoint.
 
-In Grafana Cloud, import the dashboard once: **Dashboards → New → Import**, upload
-`grafana/dashboards/nebula-chat-server.json`. Its datasources are variables, so it
-picks the stack's logs and traces datasources without editing. If a trace's
-**Logs for this span** finds nothing, give the stack's Tempo datasource the
-settings `otel-lgtm` ships with: under **Trace to logs**, the logs datasource, the
-tag `service.name` mapped to `service_name`, and the query
+The dashboard deploys itself. On every push to `main` that changes
+`grafana/dashboards/`, the
+[`deploy-grafana-dashboards.yml`](../.github/workflows/deploy-grafana-dashboards.yml)
+workflow uploads each JSON there to Grafana Cloud by `uid`, overwriting the
+existing dashboard in place; run it from the Actions tab for an on-demand
+upload. Its datasources are variables, so it picks the stack's logs and traces
+datasources without editing. One-time setup before the first run:
+
+- In Grafana Cloud, **Administration → Users and access → Service accounts**:
+  create a service account with the **Editor** role (it writes dashboards) and
+  add a token to it.
+- In the GitHub repository settings, store that token as the
+  `GRAFANA_API_TOKEN` secret and set the `GRAFANA_URL` variable to the stack URL
+  (`https://<stack>.grafana.net`). An optional `GRAFANA_FOLDER_UID` variable
+  targets a folder; without it the dashboard lands in General.
+
+This token is not the OTLP token in `OTEL_EXPORTER_OTLP_HEADERS`; never reuse
+one for the other, and never paste either into an issue, PR or chat.
+
+If a trace's **Logs for this span** finds nothing, give the stack's Tempo
+datasource the settings `otel-lgtm` ships with: under **Trace to logs**, the logs
+datasource, the tag `service.name` mapped to `service_name`, and the query
 `{${__tags}} | trace_id = "${__trace.traceId}"`.
 
 Two caveats on Render's free plan: the service sleeps when idle, so telemetry
@@ -604,7 +620,8 @@ instead of "No data". Keep it that way when editing:
    model and **JSON**, and leave _Share dashboard with another instance_ off, so
    the datasource variables stay variables.
 3. Save it over the file in `grafana/dashboards/`. Local Grafana reloads it
-   within 10 seconds; re-import it in Grafana Cloud.
+   within 10 seconds; merging it to `main` uploads it to Grafana Cloud (see
+   "In production").
 
 ## Deliberately outside this pipeline
 

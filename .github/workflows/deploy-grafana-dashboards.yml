@@ -1,0 +1,95 @@
+name: Deploy Grafana dashboards
+
+# Grafana Cloud has no provisioning from the repo; without this the production
+# dashboard drifts until someone re-imports it. Setup: docs/logging.md.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'grafana/dashboards/**'
+      - .github/workflows/deploy-grafana-dashboards.yml
+  workflow_dispatch:
+
+permissions: {}
+
+# Two quick merges must apply in order: queue the second run rather than cancel
+# an upload that is already in flight.
+concurrency:
+  group: deploy-grafana-dashboards
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Upload dashboards to Grafana Cloud
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      # The token reaches curl only through a header file built from the env
+      # var, never on the command line. No `set -x` here: it would echo it.
+      - name: Upload dashboards
+        env:
+          GRAFANA_URL: ${{ vars.GRAFANA_URL }}
+          GRAFANA_API_TOKEN: ${{ secrets.GRAFANA_API_TOKEN }}
+          GRAFANA_FOLDER_UID: ${{ vars.GRAFANA_FOLDER_UID }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${GRAFANA_URL}" ]]; then
+            echo "::error::The GRAFANA_URL repository variable is not set. See docs/logging.md."
+            exit 1
+          fi
+          if [[ -z "${GRAFANA_API_TOKEN}" ]]; then
+            echo "::error::The GRAFANA_API_TOKEN repository secret is not set. See docs/logging.md."
+            exit 1
+          fi
+
+          # Variables are not masked; hide the host, which network errors print.
+          host="${GRAFANA_URL#*://}"
+          echo "::add-mask::${host%%/*}"
+
+          headers="$(mktemp)"
+          response="$(mktemp)"
+          trap 'rm -f "${headers}" "${response}"' EXIT
+          printf 'Authorization: Bearer %s\nContent-Type: application/json\n' "${GRAFANA_API_TOKEN}" > "${headers}"
+
+          echo "### Grafana dashboards uploaded" >> "${GITHUB_STEP_SUMMARY}"
+          echo "" >> "${GITHUB_STEP_SUMMARY}"
+
+          shopt -s nullglob
+          files=(grafana/dashboards/*.json)
+          if (( ${#files[@]} == 0 )); then
+            echo "::error::No dashboard JSON found in grafana/dashboards/."
+            exit 1
+          fi
+
+          for file in "${files[@]}"; do
+            # Grafana assigns the numeric `id` per instance; a stale one would
+            # target the wrong record, so null it and update by `uid` alone.
+            status="$(
+              jq --arg message "Deployed from ${COMMIT_SHA}" --arg folderUid "${GRAFANA_FOLDER_UID}" '
+                {
+                  dashboard: (.id = null),
+                  overwrite: true,
+                  message: $message
+                } + (if $folderUid == "" then {} else {folderUid: $folderUid} end)
+              ' "${file}" |
+                curl -sS -o "${response}" -w '%{http_code}' \
+                  -H @"${headers}" -X POST --data-binary @- \
+                  "${GRAFANA_URL%/}/api/dashboards/db"
+            )"
+
+            if [[ "${status}" != 2* ]]; then
+              echo "::error file=${file}::Grafana answered HTTP ${status}: $(jq -r '.message // "no message"' "${response}" 2>/dev/null || echo "non-JSON response")"
+              exit 1
+            fi
+
+            jq -r --arg file "${file}" '"- `\($file)` → `\(.uid)` version \(.version)"' "${response}" >> "${GITHUB_STEP_SUMMARY}"
+          done
