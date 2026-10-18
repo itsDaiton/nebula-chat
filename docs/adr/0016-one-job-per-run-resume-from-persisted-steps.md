@@ -1,6 +1,6 @@
 # ADR-0016: One BullMQ job per Run; durability comes from persisted Steps, not from the queue
 
-- **Status:** Proposed — to be implemented by the nebula-chat 2.0 epic (NEB-349)
+- **Status:** Proposed — to be implemented by the nebula-chat 2.0 epic (NEB-349). §1 amended and §3 superseded by [ADR-0033](./0033-runs-on-langgraph-checkpointer-owns-resume.md) (one job at a time per Run; the LangGraph checkpointer owns resume)
 - **Date:** 2026-09-22
 - **Deciders:** @itsDaiton
 

@@ -1,6 +1,6 @@
 # ADR-0015: The Run model — Intake, an Orchestrator tool-calling loop, then an Output Agent; Agents defined in code
 
-- **Status:** Proposed — to be implemented by the nebula-chat 2.0 epic (NEB-349)
+- **Status:** Proposed — to be implemented by the nebula-chat 2.0 epic (NEB-349). Amended by [ADR-0033](./0033-runs-on-langgraph-checkpointer-owns-resume.md) (Runs execute as a LangGraph graph; the Orchestrator may ask one Clarifying question)
 - **Date:** 2026-09-22
 - **Deciders:** @itsDaiton
 
