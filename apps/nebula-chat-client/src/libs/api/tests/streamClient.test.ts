@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { streamChat } from '@/libs/api/generated/chat/chat';
 import { API_ROUTE } from '@/test/api';
 import { server } from '@/test/msw';
@@ -13,11 +13,12 @@ const asResponse = (value: unknown) => value as Response;
 
 describe('streamClient', () => {
   it('posts the JSON body with the session cookie', async () => {
-    let received: { credentials: RequestCredentials; contentType: string | null; body: unknown };
+    let received: { contentType: string | null; body: unknown };
+    // msw 3 no longer exposes `credentials` on the intercepted request, so read it off `fetch`.
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
     server.use(
       http.post(API_ROUTE.chatStream, async ({ request }) => {
         received = {
-          credentials: request.credentials,
           contentType: request.headers.get('Content-Type'),
           body: await request.json(),
         };
@@ -27,7 +28,8 @@ describe('streamClient', () => {
 
     await streamChat(body);
 
-    expect(received!).toEqual({ credentials: 'include', contentType: 'application/json', body });
+    expect(fetchSpy.mock.calls[0]?.[1]?.credentials).toBe('include');
+    expect(received!).toEqual({ contentType: 'application/json', body });
   });
 
   it('returns the Response unread so the caller can stream its body', async () => {
