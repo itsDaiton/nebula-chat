@@ -510,20 +510,22 @@ describe('useChatStream — lifecycle', () => {
   });
 
   it('sends the session cookie with the stream request', async () => {
-    let credentials: RequestCredentials | undefined;
+    // msw 3 no longer exposes `credentials` on the intercepted request, so read it off `fetch`.
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
     server.use(
-      http.post(ENDPOINT, ({ request }) => {
-        credentials = request.credentials;
-        return new HttpResponse(frame('end', {}), {
-          headers: { 'Content-Type': 'text/event-stream' },
-        });
-      }),
+      http.post(
+        ENDPOINT,
+        () =>
+          new HttpResponse(frame('end', {}), {
+            headers: { 'Content-Type': 'text/event-stream' },
+          }),
+      ),
     );
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
-    expect(credentials).toBe('include');
+    expect(fetchSpy.mock.calls[0]?.[1]?.credentials).toBe('include');
   });
 
   it('sends the request body exactly as built from the newest message', async () => {

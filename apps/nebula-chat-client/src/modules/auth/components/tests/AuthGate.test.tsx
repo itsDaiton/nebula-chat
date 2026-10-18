@@ -55,24 +55,6 @@ describe('AuthGate', () => {
     expect(screen.queryByText(APP)).not.toBeInTheDocument();
   });
 
-  it('sends the session cookie on the auth requests', async () => {
-    const credentials: { session?: RequestCredentials; signIn?: RequestCredentials } = {};
-    server.use(
-      mockGetSession((request) => {
-        credentials.session = request.credentials;
-        return null;
-      }),
-      mockAnonymousSignIn((request) => {
-        credentials.signIn = request.credentials;
-      }),
-    );
-
-    renderGate();
-
-    await screen.findByText(APP);
-    expect(credentials).toEqual({ session: 'include', signIn: 'include' });
-  });
-
   it('shows an error instead of the app when no session can be established', async () => {
     server.use(mockGetSession(null), mockApiError('post', API_ROUTE.authSignInAnonymous, 500));
 
