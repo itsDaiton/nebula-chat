@@ -486,12 +486,34 @@ The round trip, from the auth page's "Continue with Google / GitHub":
 
 A failure lands on `/auth?error=<code>`, which the page explains: `access_denied` (the user
 cancelled at the provider), `account_not_linked` (the email already belongs to an account
-better-auth will not link automatically — say, one whose email is unverified),
-`email_not_found` (the provider shared no email); any other code gets a generic message.
+better-auth will not link automatically — see [Provider auto-linking](#provider-auto-linking)), `email_not_found` (the provider shared
+no email); any other code gets a generic message.
 A callback with no usable OAuth state (`state_not_found`, …) never knew the client's
 `errorCallbackURL`, so `createAuth`'s `errorURL` (better-auth's `onAPIError.errorURL`)
 sends it to `/auth` too, instead of better-auth's own error page. The email a provider reports as verified
 arrives verified, so that user is uncapped at once.
+
+### Provider auto-linking
+
+Not the Guest [claim](#account-linking): this is better-auth attaching a provider account to a
+user that already exists.
+
+When the provider's email matches an existing user with no account for that provider,
+better-auth links the provider to that user automatically only if the provider reports the
+email as verified **and** the local user's `emailVerified` is true. `createAuth` sets no
+`requireLocalEmailVerified` or `trustedProviders`, so better-auth 1.7's default
+(`requireLocalEmailVerified: true`, in `handleOAuthUserInfo`, `oauth2/link-account`) applies. Because verification is
+not required to sign in ([ADR-0021](./adr/0021-resend-for-transactional-auth-email.md)),
+an unverified email/password Registered user hits `account_not_linked`. Their way through:
+sign in with the password, verify the email (the verification banner's
+`ResendVerificationButton` resends the link if needed), then continue with Google or GitHub.
+The next social sign-in links automatically; there is no separate linking step.
+
+The local check stays on deliberately. Without it, an attacker could pre-register a victim's
+address with their own password; the victim's later Google sign-in would link into that
+account, and the attacker's password would still open it (a pre-account-takeover). The
+redirect carries only the error code, so `/auth` offers no resend of its own. If the pinned
+`better-auth` version changes, re-check that default before relying on this section.
 
 ### The provider's Profile image
 
