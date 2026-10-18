@@ -28,6 +28,10 @@ _Avoid_: Context window used alone to mean the whole budget — it's one part of
 A previously captured stream of Streaming tokens for a Direct reply, replayed into a repeat Direct reply's stream instead of calling the LLM again. Runs are never cached.
 _Avoid_: Cached response.
 
+**Model call**:
+One invocation of an LLM, recorded once it ends with its Model, token counts, estimated cost and outcome. A Direct reply makes one; a Run makes one per Step that calls a model (tool Steps make none). A replayed Cache entry counts as a Model call at zero cost. The unit that usage and spend are measured in.
+_Avoid_: Request, completion, generation.
+
 **User**:
 Anyone who owns Sessions. Every Session has exactly one owner — `userId` is non-null. A User is either a **Guest** or a **Registered user**.
 _Avoid_: Account (an Account is an auth-provider link belonging to a User, not the User themselves).
@@ -76,9 +80,17 @@ _Avoid_: Icon, profile picture (that is the Profile image, one possible content 
 The picture a Registered user is represented by, either one they uploaded or one their social provider supplied; an upload replaces a provider-supplied one. Guests have none.
 _Avoid_: Profile picture, photo, avatar (the Avatar falls back to initials when there is no Profile image).
 
+**Admin**:
+A verified Registered user who also holds the admin role: sees and acts on every User, Session and Run through the admin dashboard, including reading Message content. Must sign in with two-factor authentication to act as one. Still a User, and still chats like any other. A Guest or an unverified user can never be an Admin.
+_Avoid_: Operator (an Operator holds the operator token and is not a User), superuser, moderator.
+
+**Audit log**:
+The permanent, append-only record of every Admin action (changing a role, banning, archiving) and every time an Admin reads a User's Sessions or Runs.
+_Avoid_: Activity log, history.
+
 **Operator**:
 Someone running a deployment rather than using it: holds the operator token and can change operational settings, such as log levels at runtime. Not a User — an Operator owns no Sessions, and no Guest or Registered user can act as one.
-_Avoid_: Admin (there is no admin role; operating is not a kind of User).
+_Avoid_: Admin (an Admin is a User with elevated rights; operating is not a kind of User).
 
 ### Orchestration
 
