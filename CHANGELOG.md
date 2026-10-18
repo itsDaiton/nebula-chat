@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.17.8](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.17.7...nebula-chat-v2.17.8) (2026-10-18)
+
+
+### Bug Fixes
+
+* **client:** regenerate the API client and drop the spec version from its headers ([#582](https://github.com/itsDaiton/nebula-chat/issues/582)) ([d983e60](https://github.com/itsDaiton/nebula-chat/commit/d983e60efdf965535a7c3f85ceb39e4146b42711))
+
 ## [2.17.7](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.17.6...nebula-chat-v2.17.7) (2026-10-18)
 
 
