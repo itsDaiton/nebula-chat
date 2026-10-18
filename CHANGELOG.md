@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.17.9](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.17.8...nebula-chat-v2.17.9) (2026-10-18)
+
+
+### Bug Fixes
+
+* **docs:** glossary and ADR for LangGraph Runs and the Clarifying question ([#584](https://github.com/itsDaiton/nebula-chat/issues/584)) ([fe15183](https://github.com/itsDaiton/nebula-chat/commit/fe15183d9b5c622dfbc019243b9ece9f8b7cde54))
+
 ## [2.17.8](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.17.7...nebula-chat-v2.17.8) (2026-10-18)
 
 
