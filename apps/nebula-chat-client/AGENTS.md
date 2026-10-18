@@ -103,7 +103,7 @@ apps/nebula-chat-client/src/
 │   │       ├── ChatInputArea.tsx
 │   │       ├── ChatMessage.tsx
 │   │       ├── ChatStreaming.tsx
-│   │       ├── MessageAllowanceCounter.tsx # Above the chat input: Metered user's "N of M messages left" (+ Sign up when low)
+│   │       ├── MessageAllowanceCounter.tsx # Above the chat input: Metered user's "N of M messages left" (+ Register or sign in when low)
 │   │       ├── MessageAllowancePrompt.tsx # Guest's message allowance spent (or a send refused at it) → register
 │   │       ├── ModelSelect.tsx
 │   │       ├── SendButton.tsx
@@ -337,7 +337,9 @@ generate:api` after any backend change; generated files are never hand-edited.
 - **After a write the cache cannot see, invalidate** with the generated key helpers:
   `queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() })`. `useChatStream` invalidates the
   list on `conversation-created`, and the list, conversation detail and messages on `end` (a messages
-  refetch mid-stream would race the reply). Invalidate rather than hand-seed with `setQueryData`.
+  refetch mid-stream would race the reply). It also invalidates the message allowance on
+  `user-message-created`, the moment the server counts the message, and after a send refused at the allowance.
+  Invalidate rather than hand-seed with `setQueryData`.
 
 ### Auth state — better-auth
 
@@ -574,6 +576,9 @@ pnpm frontend test:coverage
 - **Upload a file with `aSendableFile` (`@/test/files`)**, not `new File(...)`: vitest's bridge from jsdom's
   Blob to Node's fetch fails on this jsdom (and on Node 26 even Node's own Blob goes through it), so a Blob
   body never reaches an MSW handler. It is a byte array carrying a File's `name`, `type` and `size`.
+
+- **Build a Metered user's allowance with `aMeteredAllowance` (`@/test/allowance`)**: `remaining` of
+  `limit` (10 by default) left, with `used` derived, for the generated `getGetMessageAllowanceMockHandler`.
 
 - **Pick a Chakra menu item with `selectMenuItem` (`@/test/menu`)**, not `userEvent.click`: Zag only
   selects a pointer-highlighted item, and jsdom's (0, 0) pointer events stop highlighting once anything

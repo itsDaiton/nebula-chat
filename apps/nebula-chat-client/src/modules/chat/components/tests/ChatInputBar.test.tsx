@@ -16,7 +16,7 @@ import { aMeteredAllowance } from '@/test/allowance';
 import { server } from '@/test/msw';
 import { renderWithChakra } from '@/test/render';
 
-const sseEnd = (...frames: string[]) =>
+const sseResponse = (...frames: string[]) =>
   new HttpResponse([...frames, 'event: end\ndata: {}\n\n'].join(''), {
     headers: { 'Content-Type': 'text/event-stream' },
   });
@@ -87,7 +87,7 @@ describe('ChatInputBar', () => {
       http.post(API_ROUTE.chatStream, () => {
         sends += 1;
         return isRegistered
-          ? sseEnd()
+          ? sseResponse()
           : HttpResponse.json(
               {
                 success: false,
@@ -128,7 +128,7 @@ describe('ChatInputBar', () => {
       getGetMessageAllowanceMockHandler(() => aMeteredAllowance(remaining)),
       http.post(API_ROUTE.chatStream, () => {
         remaining -= 1;
-        return sseEnd('event: user-message-created\ndata: {"messageId":"m1"}\n\n');
+        return sseResponse('event: user-message-created\ndata: {"messageId":"m1"}\n\n');
       }),
     );
     renderWithChakra(<ConnectedChatInputBar />);
