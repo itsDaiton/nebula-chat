@@ -17,6 +17,8 @@ Follow `AGENTS.md` for the full Git workflow; these are the agent-behaviour rule
 
 Main flow for any feature or non-trivial change: **`/grill-with-docs`** → **`/to-spec`** → **`/to-tickets`** → **`/implement`** per ticket (drives `/tdd`, finishes with `/code-review` before commit). Go straight to `/implement` only for a single-session change with nothing to split. On-ramps: **`/triage`** for incoming bug reports / feature requests you didn't create, **`/wayfinder`** for a multi-session effort too foggy for one `/grill-with-docs`. Unsure which fits? **`/ask-matt`**.
 
+Project MCP servers (shadcn, Better Auth, Context7, LangChain docs, Playwright, local Redis) load from `.mcp.json`. Which one to reach for, and which personal servers must never be committed, is in `AGENTS.md` → MCP Servers.
+
 ADRs and `CONTEXT.md` entries are produced upstream during `/grill-with-docs`/`/to-spec`/`/domain-modeling`, before a ticket reaches implementation. Repo scaffolding skills speed common tasks: `backend-module-scaffold`, `drizzle-migrate`, `regenerate-api-client`, `zustand-store-scaffold`, `lint-and-format`.
 
 ## Issues & domain docs
