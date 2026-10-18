@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.17.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.17.5...nebula-chat-v2.17.6) (2026-10-18)
+
+
+### Bug Fixes
+
+* **ci:** NEB-573 upload Grafana dashboards to Grafana Cloud when the JSON changes ([#576](https://github.com/itsDaiton/nebula-chat/issues/576)) ([d027c17](https://github.com/itsDaiton/nebula-chat/commit/d027c17d58cfb6eca07855105262ecc82b120a6d))
+
 ## [2.17.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.17.4...nebula-chat-v2.17.5) (2026-10-18)
 
 
