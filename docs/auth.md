@@ -62,7 +62,7 @@ The instance is configured with:
 | Social providers         | Google and GitHub, each enabled only when the server is given its OAuth client id + secret. See [Social sign-in](#social-sign-in).                                   |
 | Anonymous plugin         | `POST /sign-in/anonymous` mints a Guest. Its `onLinkAccount` hook runs the claim.                                                                                    |
 | Have I Been Pwned plugin | Rejects sign-up with a known-breached password (`400 PASSWORD_COMPROMISED`); a reset is checked by the reset guard instead.                                          |
-| openAPI plugin           | Serves the auth API reference — see [API reference](#api-reference).                                                                                                 |
+| openAPI plugin           | Serves the auth API reference — see [API reference](#interactive-reference).                                                                                         |
 | `secondaryStorage`       | The `@nebula-chat/redis` `authStore` — sessions, verification records, and rate-limit counters.                                                                      |
 | `session.cookieCache`    | Enabled — a short-lived signed cookie lets most requests validate without a store round-trip.                                                                        |
 | `rateLimit`              | Enabled, `storage: 'secondary-storage'` (Redis).                                                                                                                     |
@@ -89,7 +89,7 @@ verification and reset + social + anonymous). The examples use a cookie jar (`ja
 `-c` writes the session cookies, `-b` sends them on the next call — and assume the
 server is at `http://localhost:3000` (`BETTER_AUTH_URL`).
 
-#### `POST /api/auth/sign-in/anonymous` — become a Guest
+### `POST /api/auth/sign-in/anonymous` — become a Guest
 
 Creates a Guest user and session. Errors if the caller is already anonymous.
 
@@ -97,7 +97,7 @@ Creates a Guest user and session. Errors if the caller is already anonymous.
 curl -i -c jar.txt -X POST http://localhost:3000/api/auth/sign-in/anonymous
 ```
 
-#### `POST /api/auth/sign-up/email` — register
+### `POST /api/auth/sign-up/email` — register
 
 Registers with email + password. If a Guest session is present, the claim moves that
 Guest's conversations to the new account. A breached password is rejected with
@@ -109,7 +109,7 @@ curl -i -b jar.txt -c jar.txt -X POST http://localhost:3000/api/auth/sign-up/ema
   -d '{"email":"you@example.com","password":"a-long-unique-passphrase","name":"You"}'
 ```
 
-#### `POST /api/auth/sign-in/email` — sign in
+### `POST /api/auth/sign-in/email` — sign in
 
 Signs in with email + password. If a Guest session is present, the claim runs as above.
 
@@ -119,7 +119,7 @@ curl -i -c jar.txt -X POST http://localhost:3000/api/auth/sign-in/email \
   -d '{"email":"you@example.com","password":"a-long-unique-passphrase"}'
 ```
 
-#### `POST /api/auth/sign-in/social` — sign in with Google or GitHub
+### `POST /api/auth/sign-in/social` — sign in with Google or GitHub
 
 Starts the OAuth flow and answers `{ url, redirect: true }`; the client sends the browser to
 `url`, the provider's consent screen. `callbackURL` and `errorCallbackURL` must be trusted
@@ -132,13 +132,13 @@ curl -i -b jar.txt -c jar.txt -X POST http://localhost:3000/api/auth/sign-in/soc
   -d '{"provider":"github","callbackURL":"http://localhost:5173/","errorCallbackURL":"http://localhost:5173/auth"}'
 ```
 
-#### `GET /api/auth/callback/:provider` — the provider's redirect back
+### `GET /api/auth/callback/:provider` — the provider's redirect back
 
 Where Google or GitHub returns the browser. Exchanges the code, signs the user in (creating
 the account on first use), runs the claim if a Guest started the flow, and redirects to
 `callbackURL`; on failure it redirects to `errorCallbackURL?error=<code>`.
 
-#### `GET /api/auth/get-session` — current session
+### `GET /api/auth/get-session` — current session
 
 Returns `{ session, user }`, or `null` when there is no session. This is how the
 client learns its auth state.
@@ -147,7 +147,7 @@ client learns its auth state.
 curl -s -b jar.txt http://localhost:3000/api/auth/get-session
 ```
 
-#### `POST /api/auth/sign-out` — sign out
+### `POST /api/auth/sign-out` — sign out
 
 Invalidates the current session and clears the session cookies.
 
@@ -155,7 +155,7 @@ Invalidates the current session and clears the session cookies.
 curl -i -b jar.txt -X POST http://localhost:3000/api/auth/sign-out
 ```
 
-#### `POST /api/auth/send-verification-email` — resend the verification email
+### `POST /api/auth/send-verification-email` — resend the verification email
 
 Emails a fresh verification link. With a session, `email` must be the session user's,
 and an already-verified email is rejected (`400 EMAIL_ALREADY_VERIFIED`). `callbackURL`
@@ -167,13 +167,13 @@ curl -i -b jar.txt -X POST http://localhost:3000/api/auth/send-verification-emai
   -d '{"email":"you@example.com","callbackURL":"http://localhost:5173/auth/verify-email"}'
 ```
 
-#### `GET /api/auth/verify-email` — follow the verification link
+### `GET /api/auth/verify-email` — follow the verification link
 
 The emailed link. Verifies the email, refreshes the session cookie (or creates a session),
 and redirects to `callbackURL`; on a bad token it redirects there with
 `?error=TOKEN_EXPIRED` or `?error=INVALID_TOKEN`.
 
-#### `POST /api/auth/request-password-reset` — forgot password
+### `POST /api/auth/request-password-reset` — forgot password
 
 Emails a reset link when an account exists, and answers the same `200` either way.
 `redirectTo` is the client's `/auth/reset-password` page.
@@ -187,7 +187,7 @@ curl -i -X POST http://localhost:3000/api/auth/request-password-reset \
 The emailed link (`GET /api/auth/reset-password/:token`) redirects to `redirectTo?token=…`,
 or `redirectTo?error=INVALID_TOKEN` when the token is unknown or expired.
 
-#### `POST /api/auth/reset-password` — set the new password
+### `POST /api/auth/reset-password` — set the new password
 
 Consumes the token and sets the password, then revokes the user's sessions and marks the
 email verified (the emailed link proves ownership). A reset token works **once**, for **one
@@ -207,7 +207,7 @@ curl -i -X POST http://localhost:3000/api/auth/reset-password \
   -d '{"token":"<token from the link>","newPassword":"another-long-passphrase"}'
 ```
 
-#### `POST /api/auth/change-password` — Password change (signed in)
+### `POST /api/auth/change-password` — Password change (signed in)
 
 A Registered user replaces their password by proving the current one. Body
 `{ currentPassword, newPassword, revokeOtherSessions? }`; the client always sends
@@ -225,13 +225,13 @@ curl -i -X POST http://localhost:3000/api/auth/change-password \
   -d '{"currentPassword":"old-passphrase","newPassword":"another-long-passphrase","revokeOtherSessions":true}'
 ```
 
-#### `POST /api/auth/revoke-sessions` — sign out everywhere
+### `POST /api/auth/revoke-sessions` — sign out everywhere
 
 Deletes every auth session of the signed-in user, the current one included, but leaves this
 device's cookie in place, so Settings follows it with `sign-out`. Devices holding a still-valid
 cookie cache stay signed in until it expires (up to 5 minutes).
 
-#### `POST /api/auth/delete-user` — Account deletion
+### `POST /api/auth/delete-user` — Account deletion
 
 Enabled by `user.deleteUser.enabled` in `@nebula-chat/auth`. Body `{ password? }`: a user with
 a credential password must send it — the `before` hook answers `400 PASSWORD_REQUIRED` when they
@@ -241,7 +241,7 @@ needs an auth session younger than a day (`400 SESSION_EXPIRED` otherwise). The 
 [`libs/auth/src/deleteAccount.ts`](../libs/auth/src/deleteAccount.ts). Deletes the user's accounts, sessions and user row; their conversations and
 messages go with it through the `ON DELETE CASCADE` foreign keys. Clears the session cookie.
 
-#### `POST /api/auth/delete-anonymous-user` — delete the Guest
+### `POST /api/auth/delete-anonymous-user` — delete the Guest
 
 Deletes the current anonymous user (anonymous plugin). Only reachable while signed in
 anonymously.
@@ -414,8 +414,8 @@ for a Metered user, so a verified Registered user makes no request and sees noth
 loads, or if it fails, the counter renders nothing and is not toasted (`meta.inlineError`):
 the `403` stays the authority, so a failed read never blocks a send. At or below 30% of
 `limit` remaining (at least one message), the counter turns into a warning, and a Guest gets
-an inline "Sign up" link; an unverified user already has the resend button in the
-verify-email reminder above it, so the counter adds none.
+an inline "Register or sign in" link, the same action as the wall; an unverified user already
+has the resend button in the verify-email reminder above it, so the counter adds none.
 
 The wall is proactive. The Guest wall and the unverified user's "keep chatting" prompt both
 key off one signal: `remaining` is `0`, or the last send was refused with

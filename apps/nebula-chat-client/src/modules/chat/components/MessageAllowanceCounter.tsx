@@ -1,5 +1,5 @@
 import { Button, HStack, Text } from '@chakra-ui/react';
-import { LuTriangleAlert, LuUserPlus } from 'react-icons/lu';
+import { LuLogIn, LuTriangleAlert } from 'react-icons/lu';
 import { Link } from 'react-router';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { useMessageAllowance } from '@/modules/chat/hooks/useMessageAllowance';
@@ -31,8 +31,8 @@ export const MessageAllowanceCounter = () => {
       {isLow && isGuest && (
         <Button asChild size="xs" variant="outline" borderRadius="full">
           <Link to={route.auth.root()}>
-            <LuUserPlus />
-            {messageAllowance.signUp}
+            <LuLogIn />
+            {messageAllowance.action}
           </Link>
         </Button>
       )}

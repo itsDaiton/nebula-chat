@@ -81,11 +81,11 @@ describe('MessageAllowanceCounter', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
-  it('offers a Guest running low a way to sign up', async () => {
+  it('offers a Guest running low a way to register or sign in', async () => {
     serveAllowance(aMeteredAllowance(3));
     await renderCounter(GUEST);
 
-    await userEvent.click(await screen.findByRole('link', { name: messageAllowance.signUp }));
+    await userEvent.click(await screen.findByRole('link', { name: messageAllowance.action }));
 
     expect(screen.getByText(AUTH_PAGE)).toBeInTheDocument();
   });
@@ -103,7 +103,7 @@ describe('MessageAllowanceCounter', () => {
     await renderCounter(GUEST);
 
     expect(await screen.findByRole('status')).toHaveTextContent('30 of 100 messages left');
-    expect(screen.getByRole('link', { name: messageAllowance.signUp })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: messageAllowance.action })).toBeInTheDocument();
   });
 
   it('is quiet above the low threshold of a different cap', async () => {

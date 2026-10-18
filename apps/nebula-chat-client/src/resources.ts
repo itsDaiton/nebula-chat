@@ -13,7 +13,6 @@ export const resources = {
       action: 'Register or sign in',
       remaining: (remaining: number, limit: number) =>
         `${remaining} of ${limit} ${remaining === 1 ? 'message' : 'messages'} left`,
-      signUp: 'Sign up',
     },
   },
   conversations: {
