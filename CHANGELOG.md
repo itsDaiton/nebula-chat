@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.17.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.17.2...nebula-chat-v2.17.3) (2026-10-18)
+
+
+### Bug Fixes
+
+* **docs:** glossary and ADRs for roles, admin dashboard, redesign, CLI and usage ([#525](https://github.com/itsDaiton/nebula-chat/issues/525)) ([1d13294](https://github.com/itsDaiton/nebula-chat/commit/1d13294c60ab5a91715d4c6eb278a6cfa6015be9))
+
 ## [2.17.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.17.1...nebula-chat-v2.17.2) (2026-10-18)
 
 
