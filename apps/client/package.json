@@ -1,5 +1,5 @@
 {
-  "name": "nebula-chat-client",
+  "name": "@nebula-chat/client",
   "private": true,
   "version": "1.27.2",
   "packageManager": "pnpm@12.4.1",

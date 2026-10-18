@@ -4,8 +4,8 @@ Reference for AI agents (and contributors) working in this repository: monorepo-
 
 Package-specific conventions — directory layout, state management, module patterns, code examples — live in each package's own `AGENTS.md`, not here:
 
-- [apps/nebula-chat-client/AGENTS.md](./apps/nebula-chat-client/AGENTS.md) — frontend (React, TanStack Query, Zustand, Chakra UI)
-- [apps/nebula-chat-server/AGENTS.md](./apps/nebula-chat-server/AGENTS.md) — backend (Fastify, Drizzle, Zod)
+- [apps/client/AGENTS.md](./apps/client/AGENTS.md) — frontend (React, TanStack Query, Zustand, Chakra UI)
+- [apps/server/AGENTS.md](./apps/server/AGENTS.md) — backend (Fastify, Drizzle, Zod)
 
 Read this file for anything that spans the whole repo; read the relevant package's `AGENTS.md` before touching code inside it.
 
@@ -28,14 +28,18 @@ Start local infrastructure (PostgreSQL on `:5332`, Redis on `:6380`):
 podman compose up
 ```
 
-Package-specific scripts live with the package: frontend `dev`/`build`/`typecheck` in the [frontend AGENTS.md](./apps/nebula-chat-client/AGENTS.md#commands); backend `dev`/`start`/`generate:openapi` and the `@nebula-chat/db` `db:*` migration commands in the [backend AGENTS.md](./apps/nebula-chat-server/AGENTS.md#commands).
+Package-specific scripts live with the package: frontend `dev`/`build`/`typecheck` in the [frontend AGENTS.md](./apps/client/AGENTS.md#commands); backend `dev`/`start`/`generate:openapi` and the `@nebula-chat/db` `db:*` migration commands in the [backend AGENTS.md](./apps/server/AGENTS.md#commands).
 
 ---
 
 ## Git Workflow
 
 - **Never commit directly to `main`.** All work must go through a feature branch and pull request.
-- Branch naming: `feat/<short-description>`, `fix/<short-description>`, `chore/<short-description>`, `refactor/<short-description>` — or `type/neb-<n>-<slug>` when the work comes from a ticket (see [Referencing tickets](#referencing-tickets)). The branch prefix is free-form and independent of the commit type — a `chore/` branch still needs a `feat:` or `fix:` PR title, since only those reach Release Please.
+- Branch naming: `feat/<short-description>`, `fix/<short-description>`, `chore/<short-description>`,
+  `refactor/<short-description>` — or `type/neb-<n>-<slug>` when the work comes from a ticket (see
+  [Referencing tickets](#referencing-tickets)). The branch prefix is free-form and independent of
+  the commit type — a `chore/` branch still needs a `feat:` or `fix:` PR title, since only those
+  reach Release Please.
 - One logical change per branch. Don't bundle unrelated changes.
 - Always push the branch and open a PR when the work is complete.
 
@@ -56,9 +60,19 @@ Package-specific scripts live with the package: frontend `dev`/`build`/`typechec
 
 ### Referencing tickets
 
-Tickets from `/to-tickets` (and issues picked up via `/triage`) are GitHub issues. Each issue **is** a ticket, identified by the Jira-style key **`NEB-<issue-number>`** — issue `#329` is ticket `NEB-329`. The key is a human-friendly alias over the GitHub issue number; there is no separate counter to maintain, and it's the token you write in branches, commits, and PR titles (where a bare `#329` is ambiguous — GitHub shares that number space with PRs). A PR that implements a ticket must carry its ID, since nothing else links the two after merge:
+Tickets from `/to-tickets` (and issues picked up via `/triage`) are GitHub issues. Each issue **is**
+a ticket, identified by the Jira-style key **`NEB-<issue-number>`** — issue `#329` is ticket
+`NEB-329`. The key is a human-friendly alias over the GitHub issue number; there is no separate
+counter to maintain, and it's the token you write in branches, commits, and PR titles (where a bare
+`#329` is ambiguous — GitHub shares that number space with PRs). A PR that implements a ticket must
+carry its ID, since nothing else links the two after merge:
 
-- **The issue title is the PR title.** Once an issue is filed, edit its title to carry its ID — `type(scope): NEB-<n> summary` (the ID, a space, then the summary — no colon after it) — and the implementing PR reuses that exact string. Example: `feat(server): NEB-330 migrate the HTTP framework from Express to Fastify`; breaking: `feat(server)!: NEB-330 …`. The `NEB-<n>` sits in the description position, right after the Conventional Commit header.
+- **The issue title is the PR title.** Once an issue is filed, edit its title to carry its ID —
+  `type(scope): NEB-<n> summary` (the ID, a space, then the summary — no colon after it) — and the
+  implementing PR reuses that exact string. Example:
+  `feat(server): NEB-330 migrate the HTTP framework from Express to Fastify`; breaking:
+  `feat(server)!: NEB-330 …`. The `NEB-<n>` sits in the description position, right after the
+  Conventional Commit header.
 - **Branch**: `type/neb-<n>-<slug>`, e.g. `feat/neb-330-fastify`.
 - **Body**: include a `Closes #NN` (or `Fixes #NN`) line. GitHub's auto-close keys off the bare `#NN`, **not** the `NEB-` alias, so this line is what actually closes the ticket when the PR merges into `main`. Use `Part of #NN` only for the rare ticket that genuinely can't close in one PR — `/to-tickets` sizes tickets to close in one, so this should be uncommon.
 - A PR spanning more than one ticket (avoid where possible — prefer one PR per ticket) names each ID in the title and adds one `Closes #NN` line per ticket in the body.
@@ -77,8 +91,8 @@ Releases on `main` are fully automated by [release-please](https://github.com/go
 - **Do not use `chore`, `refactor`, `docs`, `style`, `test`, `build`, `ci`, or `perf`.** Release Please drops them. Pick `fix` or `feat` by the rule above instead — when in doubt, `fix`.
 - The cost of this rule is changelog noise: a CI tweak lands as a patch release. That is deliberate — a silently unreleased change is worse than an over-reported one.
 - **Scope should name the release-please component** the change belongs to, matching
-  `release-please-config.json`'s `packages` keys: `client` (`apps/nebula-chat-client`), `server`
-  (`apps/nebula-chat-server`), `db` (`libs/db`), `errors` (`libs/errors`), `langchain` (`libs/langchain`), `openapi`, or omit the scope
+  `release-please-config.json`'s `packages` keys: `client` (`apps/client`), `server`
+  (`apps/server`), `db` (`libs/db`), `errors` (`libs/errors`), `langchain` (`libs/langchain`), `openapi`, or omit the scope
   (or use a repo-wide one like `fix(agents): ...`) for root-level tooling/docs changes (`CLAUDE.md`,
   `AGENTS.md`, `CONTEXT.md`, `.claude/`, `docs/`) — those fall under the root `nebula-chat` component, which
   explicitly excludes `apps/**`, `libs/**`, and `openapi/**`.
@@ -99,8 +113,8 @@ pnpm run format        # Prettier format
 Also run typecheck in the affected package before committing:
 
 ```bash
-pnpm --filter nebula-chat-client run typecheck
-pnpm --filter nebula-chat-server run typecheck
+pnpm --filter @nebula-chat/client run typecheck
+pnpm --filter @nebula-chat/server run typecheck
 ```
 
 Do not disable ESLint rules with inline `// eslint-disable` comments unless absolutely necessary, and always document why.
@@ -187,7 +201,7 @@ These apply everywhere in the repo, frontend and backend alike. See each package
   hand-authored or hand-edited; and the single top-level `src/index.ts` of a package under `libs/`, which is
   that package's public surface — it is what `tsdown`'s `entry` and the `exports` map point at, so it is
   required, not optional. Every package under `libs/` has exactly one. Never nest a barrel below that.
-- **No relative imports.** Frontend uses `@/*` (→ `apps/nebula-chat-client/src/`); backend uses `@backend/*` (→ `apps/nebula-chat-server/src/`).
+- **No relative imports.** Frontend uses `@/*` (→ `apps/client/src/`); backend uses `@backend/*` (→ `apps/server/src/`).
 - **Comments are brief.** Comment only what the code can't say: the reason, constraint, or gotcha behind a
   choice. Keep each comment to one line, two at most. Names and types carry the what; history belongs in the
   commit message, rationale that spans files in an ADR.
@@ -199,8 +213,8 @@ These apply everywhere in the repo, frontend and backend alike. See each package
 ```text
 nebula-chat/
 ├── apps/
-│   ├── nebula-chat-client/   # React SPA (frontend) — see its AGENTS.md
-│   └── nebula-chat-server/   # Fastify API (backend) — see its AGENTS.md
+│   ├── client/               # React SPA (frontend) — see its AGENTS.md
+│   └── server/               # Fastify API (backend) — see its AGENTS.md
 ├── libs/
 │   ├── auth/                 # @nebula-chat/auth — better-auth substrate (sessions, anonymous, claim, auth email)
 │   ├── db/                   # @nebula-chat/db — Drizzle ORM schema + migrations
@@ -220,8 +234,8 @@ nebula-chat/
 Both apps are managed with pnpm workspaces. Run scripts scoped to a package:
 
 ```bash
-pnpm --filter nebula-chat-client run dev
-pnpm --filter nebula-chat-server run dev
+pnpm --filter @nebula-chat/client run dev
+pnpm --filter @nebula-chat/server run dev
 ```
 
 ### Creating a new lib
@@ -250,17 +264,17 @@ podman compose up -d
 pnpm --filter @nebula-chat/db db:migrate
 
 # 4. Start backend (watch mode)
-pnpm --filter nebula-chat-server run dev
+pnpm --filter @nebula-chat/server run dev
 
 # 5. Start frontend (Vite dev server on :5173)
-pnpm --filter nebula-chat-client run dev
+pnpm --filter @nebula-chat/client run dev
 ```
 
 ### API Docs (dev)
 
 Open `http://localhost:3000/docs` for the Swagger UI once the backend is running.
 
-Environment variables are documented per-package: see [Frontend Environment Variables](./apps/nebula-chat-client/AGENTS.md#environment-variables) and [Backend Environment Variables](./apps/nebula-chat-server/AGENTS.md#environment-variables).
+Environment variables are documented per-package: see [Frontend Environment Variables](./apps/client/AGENTS.md#environment-variables) and [Backend Environment Variables](./apps/server/AGENTS.md#environment-variables).
 
 ---
 

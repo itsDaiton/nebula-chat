@@ -1,6 +1,6 @@
 ---
 name: backend-module-scaffold
-description: Scaffold the 6 layered files for a new backend module following the strict convention (types → validation → repository → service → controller → routes). Use when adding a new feature module under apps/nebula-chat-server/src/modules/.
+description: Scaffold the 6 layered files for a new backend module following the strict convention (types → validation → repository → service → controller → routes). Use when adding a new feature module under apps/server/src/modules/.
 allowed-tools: Read, Write
 argument-hint: '<module-name>'
 ---
@@ -13,11 +13,11 @@ Creates all 6 layered files for a new module and registers it.
 
 - `$ARGUMENTS` is the module name in kebab-case (e.g. `user-profile`) and singular.
 - An ADR should already exist in `docs/adr/` for a new module (authored upstream via `/domain-modeling` during `/grill-with-docs`/`/to-spec`). If one is clearly missing and warranted, flag it to the user rather than blocking.
-- Read an existing module (e.g. `apps/nebula-chat-server/src/modules/conversation/`) as the live reference.
+- Read an existing module (e.g. `apps/server/src/modules/conversation/`) as the live reference.
 
 ## Files to create
 
-Under `apps/nebula-chat-server/src/modules/$ARGUMENTS/`:
+Under `apps/server/src/modules/$ARGUMENTS/`:
 
 1. `$ARGUMENTS.types.ts` — `type` definitions (domain + DTO shapes). No logic.
 2. `$ARGUMENTS.validation.ts` — Zod schemas for request bodies/params/queries and responses, using `.describe('...')` on every field. Every response resource schema carries `.meta({ id: '<PlainNoun>' })` (e.g. `Conversation`, no `…Response` suffix) so the spec names it; request schemas stay unnamed. Response timestamps use `isoDateTimeSchema` from `@backend/utils/isoDateTimeSchema`.
@@ -28,7 +28,7 @@ Under `apps/nebula-chat-server/src/modules/$ARGUMENTS/`:
 
 ## Registration
 
-- Mount the router in `apps/nebula-chat-server/src/app.ts` via `app.register(plugin, { prefix: '/api/$ARGUMENTS' })`.
+- Mount the router in `apps/server/src/app.ts` via `app.register(plugin, { prefix: '/api/$ARGUMENTS' })`.
 
 ## Post-scaffold
 

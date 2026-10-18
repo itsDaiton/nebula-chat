@@ -15,7 +15,7 @@ Every issue is a ticket with a Jira-style key: **`NEB-<issue-number>`** (issue `
 Every ticket gets, in addition to its triage state (see [triage-labels.md](./triage-labels.md)):
 
 - **One or more area/lib labels** naming what it touches:
-  - `app:server` — `apps/nebula-chat-server` (backend) · `app:client` — `apps/nebula-chat-client` (frontend)
+  - `app:server` — `apps/server` (backend) · `app:client` — `apps/client` (frontend)
   - `lib:auth`, `lib:db`, `lib:langchain`, `lib:otel`, `lib:redis` — the corresponding `libs/*` package
 - **`enhancement`** for a `feat`, **`bug`** for a `fix`.
 
@@ -28,7 +28,14 @@ A ticket is a **pre-implementation artifact** — the output of a `/grill-with-d
 - **Forward-looking, present/imperative tense.** Describe the work to be done, not work that was done. "Create `libs/db`…", "Replace Express with Fastify…" — never "Created…", "✅ Delivered", or a changelog voice. Acceptance criteria are **unchecked** (`- [ ]`).
 - **No ADR / decision-record framing in the body.** A ticket precedes the ADR; it doesn't cite one as already decided or link to a changelog. (The ADR is written from the grilling session, separately.)
 - **Detailed enough to implement cold.** Name the files, modules, and packages involved and the pattern to follow; call out gotchas and the seams to test. Do **not** paste implementation code or line numbers — they go stale. Prose, tables, and short lists over code blocks.
-- **Fill the template.** [`.github/ISSUE_TEMPLATE.md`](../../.github/ISSUE_TEMPLATE.md) is the one canonical skeleton — it pre-fills a new issue in the browser, and agents fill the same file. Keep every `## heading`. A **validate-ticket** GitHub Action ([`.github/workflows/validate-ticket.yml`](../../.github/workflows/validate-ticket.yml)) checks the title and these sections on every issue, auto-applies `needs-triage`, and labels `malformed-ticket` + comments when a ticket doesn't match. It **skips** non-ticket tracking issues — label a capability backlog or an umbrella epic `backlog` or `epic` and validate-ticket leaves it alone.
+- **Fill the template.** [`.github/ISSUE_TEMPLATE.md`](../../.github/ISSUE_TEMPLATE.md) is the one
+  canonical skeleton — it pre-fills a new issue in the browser, and agents fill the same file. Keep
+  every `## heading`. A **validate-ticket** GitHub Action
+  ([`.github/workflows/validate-ticket.yml`](../../.github/workflows/validate-ticket.yml)) checks
+  the title and these sections on every issue, auto-applies `needs-triage`, and labels
+  `malformed-ticket` + comments when a ticket doesn't match. It **skips** non-ticket tracking issues
+  — label a capability backlog or an umbrella epic `backlog` or `epic` and validate-ticket leaves it
+  alone.
 - **The standard sections:**
 
   | Section                        | Holds                                                                                                                                                                                                                                                                                                                                                                                                                    |
@@ -48,7 +55,11 @@ The closed issues `NEB-330`…`NEB-336` (the retired backend-migration work) are
 
 ## Dependencies
 
-A ticket's blocking relationships live in **GitHub's native issue dependency graph**, not only in the `## Depends on` prose. The prose is for a human reading the ticket; the graph is what tooling reads — the `/wayfinder` frontier query and any "what can I pick up now?" check gate on it. **Whenever a ticket names a blocker, add the matching native edge**, and keep the two in sync: add or remove one, do the other.
+A ticket's blocking relationships live in **GitHub's native issue dependency graph**, not only in
+the `## Depends on` prose. The prose is for a human reading the ticket; the graph is what tooling
+reads — the `/wayfinder` frontier query and any "what can I pick up now?" check gate on it.
+**Whenever a ticket names a blocker, add the matching native edge**, and keep the two in sync: add
+or remove one, do the other.
 
 - **Add an edge** (child blocked by another issue):
 

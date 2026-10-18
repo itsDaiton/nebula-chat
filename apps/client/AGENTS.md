@@ -1,4 +1,4 @@
-# AGENTS.md — Frontend (`nebula-chat-client`)
+# AGENTS.md — Frontend (`@nebula-chat/client`)
 
 Conventions specific to the React SPA. See the [root AGENTS.md](../../AGENTS.md) for monorepo-wide commands, git workflow, and cross-cutting rules (no barrels, `type` not `interface`, arrow functions) that also apply here.
 
@@ -6,7 +6,7 @@ Conventions specific to the React SPA. See the [root AGENTS.md](../../AGENTS.md)
 
 ## Commands
 
-Run from `apps/nebula-chat-client` (or `pnpm --filter nebula-chat-client run <cmd>` from the root):
+Run from `apps/client` (or `pnpm --filter @nebula-chat/client run <cmd>` from the root):
 
 ```bash
 pnpm dev        # Vite dev server on localhost:5173
@@ -21,7 +21,7 @@ Test commands are under [Testing](#testing); monorepo-wide lint/format/build liv
 ## Directory Layout
 
 ```text
-apps/nebula-chat-client/src/
+apps/client/src/
 ├── App.tsx                        # Root — mounts providers and router
 ├── main.tsx                       # Vite entry point
 ├── RouterProvider.tsx             # React Router setup
@@ -219,7 +219,7 @@ navigate(route.chat.conversation(id)); // /c/:id
 
 ## Imports
 
-Always use the `@/` path alias — never relative paths (`./`, `../../`, etc.). `@/` maps to `apps/nebula-chat-client/src/`. This applies to **every** import in every file — components, hooks, utils, and types — regardless of how close the files are to each other.
+Always use the `@/` path alias — never relative paths (`./`, `../../`, etc.). `@/` maps to `apps/client/src/`. This applies to **every** import in every file — components, hooks, utils, and types — regardless of how close the files are to each other.
 
 **Check every import in every file you touch.** If a relative path exists anywhere in a file you modify, fix it.
 
@@ -251,7 +251,7 @@ import { queryClient } from '@/libs/api/queryClient';
 import { ChatInput } from '@/modules/chat/components/ChatInput';
 
 // wrong — never re-export through an index.ts
-// apps/nebula-chat-client/src/libs/api/index.ts
+// apps/client/src/libs/api/index.ts
 export * from './client';
 export * from './queryClient';
 ```
@@ -530,7 +530,7 @@ reworked: `ChatContainer` (clearing the post-stream flags, scrolling to the newe
 
 ## Environment Variables
 
-`apps/nebula-chat-client/.env`:
+`apps/client/.env`:
 
 | Variable       | Purpose                                                    |
 | -------------- | ---------------------------------------------------------- |

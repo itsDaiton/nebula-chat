@@ -7,12 +7,14 @@
       "include-component-in-tag": true,
       "exclude-paths": ["apps/**", "libs/**", "openapi/**"]
     },
-    "apps/nebula-chat-client": {
+    "apps/client": {
       "release-type": "node",
+      "component": "nebula-chat-client",
       "include-component-in-tag": true
     },
-    "apps/nebula-chat-server": {
+    "apps/server": {
       "release-type": "node",
+      "component": "nebula-chat-server",
       "include-component-in-tag": true
     },
     "libs/auth": {

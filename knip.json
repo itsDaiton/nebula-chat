@@ -2,14 +2,14 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreFiles": [".claude/skills/**"],
   "workspaces": {
-    "apps/nebula-chat-client": {
+    "apps/client": {
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreFiles": ["src/libs/api/generated/**"],
       "ignoreIssues": {
         "src/libs/api/generated/**": ["exports", "types"]
       }
     },
-    "apps/nebula-chat-server": {
+    "apps/server": {
       "project": ["src/**/*.ts"]
     },
     "libs/db": {

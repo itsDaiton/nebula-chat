@@ -1,17 +1,17 @@
 ---
 name: zustand-store-scaffold
-description: Scaffold a new Zustand store file for client/UI state following project conventions (no useState, @/ aliases, one-file-per-store). Use when creating a new store in apps/nebula-chat-client/src/**/stores/. Not for server state — that is a generated react-query hook.
+description: Scaffold a new Zustand store file for client/UI state following project conventions (no useState, @/ aliases, one-file-per-store). Use when creating a new store in apps/client/src/**/stores/. Not for server state — that is a generated react-query hook.
 allowed-tools: Read, Write
 argument-hint: '<StoreName> <target-path>'
 ---
 
 # Zustand Store Scaffold
 
-Creates a conventional store file. Reads `apps/nebula-chat-client/AGENTS.md` first to pick up any updated conventions.
+Creates a conventional store file. Reads `apps/client/AGENTS.md` first to pick up any updated conventions.
 
 ## Preconditions
 
-- `$ARGUMENTS` includes the PascalCase store name (without the `use` prefix or `Store` suffix — e.g. `Example`) and the target directory (e.g. `apps/nebula-chat-client/src/modules/chat/stores`).
+- `$ARGUMENTS` includes the PascalCase store name (without the `use` prefix or `Store` suffix — e.g. `Example`) and the target directory (e.g. `apps/client/src/modules/chat/stores`).
 - A reference store (e.g. `useSearchStore`) exists — read it to match current style.
 - The state is **client/UI state** (ADR-0012). Anything read from or written to the API is server state: use the Orval-generated react-query hook instead of a store, and stop here.
 
