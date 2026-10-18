@@ -114,8 +114,8 @@ builds the libs it needs first.
 
 ## Deployment URLs
 
-- Application: https://www.nebula-chat.cz
-- API: https://api.nebula-chat.cz
+- Application: <https://www.nebula-chat.cz>
+- API: <https://api.nebula-chat.cz>
 
 ## Notes
 
