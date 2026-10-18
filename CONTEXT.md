@@ -115,7 +115,12 @@ An assistant Message produced by a single model call on the Session's Model, str
 _Avoid_: Plain chat, completion, simple mode.
 
 **Run**:
-One orchestrated response to one user Message, opted into per message by a Registered user: the durable record of every Step taken to produce the assistant's answer. Proceeds in three phases — Intake, the Orchestrator's loop, then the Output Agent — and may pause once, `waiting` on the answer to a Clarifying question. Ends `completed`, `partial` (a limit forced an early answer, a non-essential Step failed, or a Clarifying question went unanswered), `failed`, or `cancelled`. Started from a Session and inspectable on its own.
+One orchestrated response to one user Message, opted into per message by a Registered user: the
+durable record of every Step taken to produce the assistant's answer. Proceeds in three phases —
+Intake, the Orchestrator's loop, then the Output Agent — and may pause once, `waiting` on the answer
+to a Clarifying question. Ends `completed`, `partial` (a limit forced an early answer, a
+non-essential Step failed, or a Clarifying question went unanswered), `failed`, or `cancelled`.
+Started from a Session and inspectable on its own.
 _Avoid_: Workflow, task, job, execution, deep mode (that's a UI label, not the concept).
 
 **Agent**:
