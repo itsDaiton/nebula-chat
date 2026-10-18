@@ -12,12 +12,12 @@ services:
     # paid-plan only; on free the build is the one hook available before boot.
     # A migration failure therefore reports as "build failed" — check the tail
     # of the log for the Postgres error, which db:migrate prints in full.
-    buildCommand: npm install -g pnpm@12.4.1 && pnpm install --frozen-lockfile && pnpm turbo run build --filter=nebula-chat-server && pnpm --filter @nebula-chat/db db:migrate
+    buildCommand: npm install -g pnpm@12.4.1 && pnpm install --frozen-lockfile && pnpm turbo run build --filter=@nebula-chat/server && pnpm --filter @nebula-chat/db db:migrate
     # Start does not need pnpm: the build already produced dist/, so keep the
     # boot path free of a network install. The cd reproduces the working
     # directory "pnpm --filter" used to set, which the server relies on to
     # resolve ../../openapi/package.json.
-    startCommand: cd apps/nebula-chat-server && node dist/src/server.js
+    startCommand: cd apps/server && node dist/src/server.js
     healthCheckPath: /health
     autoDeployTrigger: off
 
@@ -25,8 +25,8 @@ services:
     name: nebula-chat-client
     runtime: static
     rootDir: .
-    buildCommand: npm install -g pnpm@12.4.1 && pnpm install --frozen-lockfile && pnpm turbo run build --filter=nebula-chat-client
-    staticPublishPath: apps/nebula-chat-client/build
+    buildCommand: npm install -g pnpm@12.4.1 && pnpm install --frozen-lockfile && pnpm turbo run build --filter=@nebula-chat/client
+    staticPublishPath: apps/client/build
     # SPA fallback: deep links (/c/:id, and the emailed /auth/verify-email and
     # /auth/reset-password links) must serve index.html, not a 404.
     routes:

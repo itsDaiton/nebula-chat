@@ -4,9 +4,9 @@
     "noEmit": true
   },
   "include": [
-    "apps/nebula-chat-client/src/**/*.ts",
-    "apps/nebula-chat-client/src/**/*.tsx",
-    "apps/nebula-chat-server/src/**/*.ts",
+    "apps/client/src/**/*.ts",
+    "apps/client/src/**/*.tsx",
+    "apps/server/src/**/*.ts",
     "libs/**/src/**/*.ts",
     "scripts/**/*.ts",
     "*.ts"

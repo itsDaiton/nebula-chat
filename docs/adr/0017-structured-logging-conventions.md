@@ -18,7 +18,7 @@ nebula-chat 2.0 (ADR-0013..0016) makes this acute: one user Message crosses serv
 
 ## Decision
 
-**Scope.** The server, every backend lib, and `apps/nebula-chat-worker` from its first commit. The client is out. `@nebula-chat/langchain` is dissolved in v2 (ADR-0013), so it gets only what it takes to stop double-logging.
+**Scope.** The server, every backend lib, and `apps/worker` (ADR-0032) from its first commit. The client is out. `@nebula-chat/langchain` is dissolved in v2 (ADR-0013), so it gets only what it takes to stop double-logging.
 
 ### 1. An error is logged once, where it is handled
 

@@ -19,10 +19,10 @@ export default [
       'eslint.config.ts',
       '**/vite.config.*',
       '**/vitest.config.*',
-      'apps/nebula-chat-client/orval.config.*',
-      'apps/nebula-chat-server/src/generated/**',
+      'apps/client/orval.config.*',
+      'apps/server/src/generated/**',
       'libs/db/migrations/**',
-      'apps/nebula-chat-client/src/libs/api/generated/**',
+      'apps/client/src/libs/api/generated/**',
     ],
   },
   {
@@ -69,11 +69,11 @@ export default [
     },
   },
   {
-    files: ['apps/nebula-chat-client/**/*.{ts,tsx,js,jsx}'],
+    files: ['apps/client/**/*.{ts,tsx,js,jsx}'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: './apps/nebula-chat-client/tsconfig.app.json',
+        project: './apps/client/tsconfig.app.json',
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -110,11 +110,11 @@ export default [
     },
   },
   {
-    files: ['apps/nebula-chat-server/**/*.{ts,js}'],
+    files: ['apps/server/**/*.{ts,js}'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: './apps/nebula-chat-server/tsconfig.json',
+        project: './apps/server/tsconfig.json',
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -224,7 +224,7 @@ export default [
     // error serializer runs only for `err`, so `{ error }` loses the stack and
     // the cause — and `{ error: err.message }` throws them away on purpose.
     files: [
-      'apps/nebula-chat-server/**/*.{ts,js}',
+      'apps/server/**/*.{ts,js}',
       'libs/{auth,db,errors,langchain,otel,redis}/**/*.{ts,tsx,js}',
     ],
     rules: {

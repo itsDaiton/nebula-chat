@@ -24,11 +24,11 @@ the Guest's conversations are reassigned to the new account (see [Account linkin
 
 ## Components
 
-| Piece                 | Location                                                                                      | Responsibility                                                                                                                                    |
-| --------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@nebula-chat/auth`   | [`libs/auth`](../libs/auth)                                                                   | Builds the configured better-auth instance. Takes all dependencies as injected config; never reads `process.env`.                                 |
-| Server auth singleton | [`src/auth.ts`](../apps/nebula-chat-server/src/auth.ts)                                       | Constructs the one instance, injecting the resolved env, the `@nebula-chat/db` client, `redis.authStore`, the Pino logger, and the Resend sender. |
-| `authGate` plugin     | [`src/plugins/authGate.plugin.ts`](../apps/nebula-chat-server/src/plugins/authGate.plugin.ts) | Mounts the `/api/auth/*` handler and exposes the route gates.                                                                                     |
+| Piece                 | Location                                                                          | Responsibility                                                                                                                                    |
+| --------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@nebula-chat/auth`   | [`libs/auth`](../libs/auth)                                                       | Builds the configured better-auth instance. Takes all dependencies as injected config; never reads `process.env`.                                 |
+| Server auth singleton | [`src/auth.ts`](../apps/server/src/auth.ts)                                       | Constructs the one instance, injecting the resolved env, the `@nebula-chat/db` client, `redis.authStore`, the Pino logger, and the Resend sender. |
+| `authGate` plugin     | [`src/plugins/authGate.plugin.ts`](../apps/server/src/plugins/authGate.plugin.ts) | Mounts the `/api/auth/*` handler and exposes the route gates.                                                                                     |
 
 `createAuth()` receives its dependencies rather than importing them, matching the
 convention `@nebula-chat/otel` and `@nebula-chat/redis` follow:
@@ -352,7 +352,7 @@ _streaming_; a capped Guest can still read their own conversations and messages.
 
 The allowance is application logic, not better-auth's rate limiter. It is enforced in
 the chat-send `preHandler`
-[`chat.messageAllowance.hook.ts`](../apps/nebula-chat-server/src/modules/chat/chat.messageAllowance.hook.ts),
+[`chat.messageAllowance.hook.ts`](../apps/server/src/modules/chat/chat.messageAllowance.hook.ts),
 which runs after `requireAuthentication` (so the session is attached) and before the
 cache hook, so a capped Guest is rejected before any model or cache work:
 
@@ -366,7 +366,7 @@ cache hook, so a capped Guest is rejected before any model or cache work:
 No Redis counter is involved; at a cap of ~10 the live count is exact and stateless.
 
 The metered decision and the count live in one function,
-[`getMessageAllowance`](../apps/nebula-chat-server/src/modules/chat/chat.messageAllowance.service.ts),
+[`getMessageAllowance`](../apps/server/src/modules/chat/chat.messageAllowance.service.ts),
 which both the hook and the read endpoint below call, so what the client displays and what
 the server enforces cannot drift.
 
@@ -473,7 +473,7 @@ The client pages better-auth redirects to:
 
 Google and GitHub sign-in are better-auth `socialProviders`. The lib takes their OAuth
 credentials as `socialProviders` in `createAuth()`; the server builds that from the
-`GOOGLE_*` / `GITHUB_*` env vars ([`src/utils/socialProviders.ts`](../apps/nebula-chat-server/src/utils/socialProviders.ts)),
+`GOOGLE_*` / `GITHUB_*` env vars ([`src/utils/socialProviders.ts`](../apps/server/src/utils/socialProviders.ts)),
 enabling a provider only when both its id and secret are set. Either one alone fails boot.
 
 Each provider's OAuth app registers the redirect URI
@@ -557,7 +557,7 @@ Schema changes go through the normal `pnpm --filter @nebula-chat/db db:generate`
 ## Environment variables
 
 Declared and validated in
-[`apps/nebula-chat-server/src/env.ts`](../apps/nebula-chat-server/src/env.ts):
+[`apps/server/src/env.ts`](../apps/server/src/env.ts):
 
 | Variable                  | Purpose                                                                        |
 | ------------------------- | ------------------------------------------------------------------------------ |

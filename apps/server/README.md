@@ -27,10 +27,10 @@ It is responsible for:
 2. Create backend env file:
 
    ```bash
-   cp apps/nebula-chat-server/.env.example apps/nebula-chat-server/.env
+   cp apps/server/.env.example apps/server/.env
    ```
 
-3. Configure required variables in `apps/nebula-chat-server/.env`:
+3. Configure required variables in `apps/server/.env`:
    - `OPENAI_API_KEY`
    - `SERVER_URL` (for local use: `http://localhost:3000`), allowed as a CORS origin (e.g. for Swagger UI at `/docs`)
    - `CLIENT_URL` (for local use: `http://localhost:5173`)
@@ -57,7 +57,7 @@ It is responsible for:
 6. Start backend in watch mode:
 
    ```bash
-   pnpm --filter nebula-chat-server run dev
+   pnpm --filter @nebula-chat/server run dev
    ```
 
 Server starts on `http://localhost:3000` by default.
@@ -98,10 +98,10 @@ Render's Linux x64 Node runtime, so the build needs nothing extra.
 Run from the repo root:
 
 ```bash
-pnpm --filter nebula-chat-server run dev
-pnpm --filter nebula-chat-server run build
-pnpm --filter nebula-chat-server run start
-pnpm --filter nebula-chat-server run typecheck
+pnpm --filter @nebula-chat/server run dev
+pnpm --filter @nebula-chat/server run build
+pnpm --filter @nebula-chat/server run start
+pnpm --filter @nebula-chat/server run typecheck
 pnpm --filter @nebula-chat/db db:generate
 pnpm --filter @nebula-chat/db db:migrate
 pnpm --filter @nebula-chat/db db:push

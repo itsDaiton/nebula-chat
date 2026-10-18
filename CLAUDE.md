@@ -2,7 +2,7 @@
 
 Guidance for Claude Code (claude.ai/code) working in this repository.
 
-`AGENTS.md` is the source of truth for technical conventions — the root file covers monorepo commands, git workflow, and cross-cutting rules; the per-app files ([client](./apps/nebula-chat-client/AGENTS.md), [server](./apps/nebula-chat-server/AGENTS.md)) cover package specifics; `CONTEXT.md` owns domain vocabulary. Read the relevant ones before a non-trivial change. This file covers only what's specific to operating as an agent here: how to ship, and which skills to reach for.
+`AGENTS.md` is the source of truth for technical conventions — the root file covers monorepo commands, git workflow, and cross-cutting rules; the per-app files ([client](./apps/client/AGENTS.md), [server](./apps/server/AGENTS.md)) cover package specifics; `CONTEXT.md` owns domain vocabulary. Read the relevant ones before a non-trivial change. This file covers only what's specific to operating as an agent here: how to ship, and which skills to reach for.
 
 ## Shipping (branch + PR)
 

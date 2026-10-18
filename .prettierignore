@@ -4,10 +4,10 @@ build
 coverage
 .vscode
 *.min.js
-apps/nebula-chat-client/build
-apps/nebula-chat-server/dist
-apps/nebula-chat-server/node_modules
-apps/nebula-chat-server/src/generated
+apps/client/build
+apps/server/dist
+apps/server/node_modules
+apps/server/src/generated
 libs/db/migrations
 
 *.log

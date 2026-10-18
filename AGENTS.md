@@ -4,8 +4,8 @@ Reference for AI agents (and contributors) working in this repository: monorepo-
 
 Package-specific conventions — directory layout, state management, module patterns, code examples — live in each package's own `AGENTS.md`, not here:
 
-- [apps/nebula-chat-client/AGENTS.md](./apps/nebula-chat-client/AGENTS.md) — frontend (React, TanStack Query, Zustand, Chakra UI)
-- [apps/nebula-chat-server/AGENTS.md](./apps/nebula-chat-server/AGENTS.md) — backend (Fastify, Drizzle, Zod)
+- [apps/client/AGENTS.md](./apps/client/AGENTS.md) — frontend (React, TanStack Query, Zustand, Chakra UI)
+- [apps/server/AGENTS.md](./apps/server/AGENTS.md) — backend (Fastify, Drizzle, Zod)
 
 Read this file for anything that spans the whole repo; read the relevant package's `AGENTS.md` before touching code inside it.
 
@@ -28,7 +28,7 @@ Start local infrastructure (PostgreSQL on `:5332`, Redis on `:6380`):
 podman compose up
 ```
 
-Package-specific scripts live with the package: frontend `dev`/`build`/`typecheck` in the [frontend AGENTS.md](./apps/nebula-chat-client/AGENTS.md#commands); backend `dev`/`start`/`generate:openapi` and the `@nebula-chat/db` `db:*` migration commands in the [backend AGENTS.md](./apps/nebula-chat-server/AGENTS.md#commands).
+Package-specific scripts live with the package: frontend `dev`/`build`/`typecheck` in the [frontend AGENTS.md](./apps/client/AGENTS.md#commands); backend `dev`/`start`/`generate:openapi` and the `@nebula-chat/db` `db:*` migration commands in the [backend AGENTS.md](./apps/server/AGENTS.md#commands).
 
 ---
 
@@ -77,8 +77,8 @@ Releases on `main` are fully automated by [release-please](https://github.com/go
 - **Do not use `chore`, `refactor`, `docs`, `style`, `test`, `build`, `ci`, or `perf`.** Release Please drops them. Pick `fix` or `feat` by the rule above instead — when in doubt, `fix`.
 - The cost of this rule is changelog noise: a CI tweak lands as a patch release. That is deliberate — a silently unreleased change is worse than an over-reported one.
 - **Scope should name the release-please component** the change belongs to, matching
-  `release-please-config.json`'s `packages` keys: `client` (`apps/nebula-chat-client`), `server`
-  (`apps/nebula-chat-server`), `db` (`libs/db`), `errors` (`libs/errors`), `langchain` (`libs/langchain`), `openapi`, or omit the scope
+  `release-please-config.json`'s `packages` keys: `client` (`apps/client`), `server`
+  (`apps/server`), `db` (`libs/db`), `errors` (`libs/errors`), `langchain` (`libs/langchain`), `openapi`, or omit the scope
   (or use a repo-wide one like `fix(agents): ...`) for root-level tooling/docs changes (`CLAUDE.md`,
   `AGENTS.md`, `CONTEXT.md`, `.claude/`, `docs/`) — those fall under the root `nebula-chat` component, which
   explicitly excludes `apps/**`, `libs/**`, and `openapi/**`.
@@ -99,8 +99,8 @@ pnpm run format        # Prettier format
 Also run typecheck in the affected package before committing:
 
 ```bash
-pnpm --filter nebula-chat-client run typecheck
-pnpm --filter nebula-chat-server run typecheck
+pnpm --filter @nebula-chat/client run typecheck
+pnpm --filter @nebula-chat/server run typecheck
 ```
 
 Do not disable ESLint rules with inline `// eslint-disable` comments unless absolutely necessary, and always document why.
@@ -187,7 +187,7 @@ These apply everywhere in the repo, frontend and backend alike. See each package
   hand-authored or hand-edited; and the single top-level `src/index.ts` of a package under `libs/`, which is
   that package's public surface — it is what `tsdown`'s `entry` and the `exports` map point at, so it is
   required, not optional. Every package under `libs/` has exactly one. Never nest a barrel below that.
-- **No relative imports.** Frontend uses `@/*` (→ `apps/nebula-chat-client/src/`); backend uses `@backend/*` (→ `apps/nebula-chat-server/src/`).
+- **No relative imports.** Frontend uses `@/*` (→ `apps/client/src/`); backend uses `@backend/*` (→ `apps/server/src/`).
 - **Comments are brief.** Comment only what the code can't say: the reason, constraint, or gotcha behind a
   choice. Keep each comment to one line, two at most. Names and types carry the what; history belongs in the
   commit message, rationale that spans files in an ADR.
@@ -199,8 +199,8 @@ These apply everywhere in the repo, frontend and backend alike. See each package
 ```text
 nebula-chat/
 ├── apps/
-│   ├── nebula-chat-client/   # React SPA (frontend) — see its AGENTS.md
-│   └── nebula-chat-server/   # Fastify API (backend) — see its AGENTS.md
+│   ├── client/               # React SPA (frontend) — see its AGENTS.md
+│   └── server/               # Fastify API (backend) — see its AGENTS.md
 ├── libs/
 │   ├── auth/                 # @nebula-chat/auth — better-auth substrate (sessions, anonymous, claim, auth email)
 │   ├── db/                   # @nebula-chat/db — Drizzle ORM schema + migrations
@@ -220,8 +220,8 @@ nebula-chat/
 Both apps are managed with pnpm workspaces. Run scripts scoped to a package:
 
 ```bash
-pnpm --filter nebula-chat-client run dev
-pnpm --filter nebula-chat-server run dev
+pnpm --filter @nebula-chat/client run dev
+pnpm --filter @nebula-chat/server run dev
 ```
 
 ### Creating a new lib
@@ -250,17 +250,17 @@ podman compose up -d
 pnpm --filter @nebula-chat/db db:migrate
 
 # 4. Start backend (watch mode)
-pnpm --filter nebula-chat-server run dev
+pnpm --filter @nebula-chat/server run dev
 
 # 5. Start frontend (Vite dev server on :5173)
-pnpm --filter nebula-chat-client run dev
+pnpm --filter @nebula-chat/client run dev
 ```
 
 ### API Docs (dev)
 
 Open `http://localhost:3000/docs` for the Swagger UI once the backend is running.
 
-Environment variables are documented per-package: see [Frontend Environment Variables](./apps/nebula-chat-client/AGENTS.md#environment-variables) and [Backend Environment Variables](./apps/nebula-chat-server/AGENTS.md#environment-variables).
+Environment variables are documented per-package: see [Frontend Environment Variables](./apps/client/AGENTS.md#environment-variables) and [Backend Environment Variables](./apps/server/AGENTS.md#environment-variables).
 
 ---
 
@@ -311,3 +311,14 @@ This repo's `.claude/` workspace (skills) and its documentation (`AGENTS.md` fil
 - Any `.claude/skills/**` whose steps or file paths reference the area that changed (e.g. a renamed directory, a retired ticket, a changed convention).
 
 A PR that changes how the codebase works but leaves these docs describing the old way is not done.
+
+<!-- BEGIN:turborepo-agent-rules -->
+
+# This is NOT the Turborepo you know
+
+Turborepo configuration, task behavior, and CLI commands can vary between installed versions and may differ from your training data. Resolve the `turbo` package from this file's directory or relevant workspace; in monorepos, it may not be visible from the repository root. For example, run `node -p "require.resolve('turbo/package.json')"` from a workspace that depends on `turbo`.
+
+Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
+
+This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
+<!-- END:turborepo-agent-rules -->

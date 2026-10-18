@@ -64,7 +64,7 @@ For the decisions behind them, see
 ## Where lines come from
 
 There is **one Pino instance** on the server's runtime path, created in
-[`apps/nebula-chat-server/src/logger.ts`](../apps/nebula-chat-server/src/logger.ts):
+[`apps/server/src/logger.ts`](../apps/server/src/logger.ts):
 
 ```ts
 export const logger: Logger = createLogger({
@@ -244,7 +244,7 @@ browsing session, and the codebase already has a separate _auth session_.
 ## Request logging
 
 Fastify's own `incoming request`/`request completed` lines are off. Instead,
-[`plugins/requestLogging.plugin.ts`](../apps/nebula-chat-server/src/plugins/requestLogging.plugin.ts)
+[`plugins/requestLogging.plugin.ts`](../apps/server/src/plugins/requestLogging.plugin.ts)
 adds two root-level hooks, so every route is covered:
 
 - `onRequest` writes `http.request.received` at `debug`.
@@ -259,7 +259,7 @@ where the reply's real outcome lives. The same goes for the better-auth
 catch-all.
 
 Request logging is switched off through Fastify's `logController` option (in
-[`utils/logController.ts`](../apps/nebula-chat-server/src/utils/logController.ts)),
+[`utils/logController.ts`](../apps/server/src/utils/logController.ts)),
 not the deprecated top-level `disableRequestLogging`. Switching it off would also
 silence Fastify's framework-fault lines (a failing serializer, a stream error
 after the headers), so the controller rewrites those as `fastify.log` instead.
@@ -278,7 +278,7 @@ lowers one `nebula.component` without touching the rest:
 
 ```bash
 # see every cache hit, save and failure; keep better-auth to warnings
-LOG_LEVEL_OVERRIDES=redis=debug,auth=warn pnpm --filter nebula-chat-server dev
+LOG_LEVEL_OVERRIDES=redis=debug,auth=warn pnpm --filter @nebula-chat/server dev
 ```
 
 It is comma-separated `component=level` pairs. `silent` mutes a component. An
@@ -349,7 +349,7 @@ dots for _nesting_, so a flat dotted key needs bracket notation
 
 Key-based redaction cannot reach a token inside a value, so `url.path` is
 cleaned before it is logged
-([`requestPath.ts`](../apps/nebula-chat-server/src/utils/requestPath.ts)): the
+([`requestPath.ts`](../apps/server/src/utils/requestPath.ts)): the
 query string is dropped, and a token carried as a path segment is replaced with
 `[Redacted]`, e.g. `/api/auth/reset-password/[Redacted]`. A new route with a
 token in its path adds one pattern there.
@@ -433,7 +433,7 @@ rather than to the console. So:
 
 ```bash
 # see what the SDK itself is complaining about
-OTEL_LOG_LEVEL=debug pnpm --filter nebula-chat-server start
+OTEL_LOG_LEVEL=debug pnpm --filter @nebula-chat/server start
 ```
 
 A failed `sdk.start()` logs `otel.start.failed` at `warn` and leaves the server
@@ -502,14 +502,14 @@ already linking a trace to its log lines and back:
 podman compose up -d otel-lgtm
 ```
 
-Then in `apps/nebula-chat-server/.env` set:
+Then in `apps/server/.env` set:
 
 ```bash
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 OTEL_LOGS_EXPORTER=otlp
 ```
 
-Run the compiled server, `pnpm --filter nebula-chat-server start` (which loads
+Run the compiled server, `pnpm --filter @nebula-chat/server start` (which loads
 that file); `pnpm dev` exports logs but no traces (see
 [the import-ordering trap](#the-import-ordering-trap)).
 

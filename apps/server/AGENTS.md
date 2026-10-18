@@ -1,4 +1,4 @@
-# AGENTS.md — Backend (`nebula-chat-server`)
+# AGENTS.md — Backend (`@nebula-chat/server`)
 
 Conventions specific to the Fastify API. See the [root AGENTS.md](../../AGENTS.md) for monorepo-wide commands, git workflow, and cross-cutting rules (no barrels, `type` not `interface`, arrow functions) that also apply here.
 
@@ -6,7 +6,7 @@ Conventions specific to the Fastify API. See the [root AGENTS.md](../../AGENTS.m
 
 ## Commands
 
-Run from `apps/nebula-chat-server` (or `pnpm --filter nebula-chat-server run <cmd>` from the root):
+Run from `apps/server` (or `pnpm --filter @nebula-chat/server run <cmd>` from the root):
 
 ```bash
 pnpm dev              # nodemon (see nodemon.json): restarts on src, .env and built lib changes — assumes lib artifacts already built
@@ -16,7 +16,7 @@ pnpm generate:openapi # regenerate openapi/openapi.yaml from live route schemas
 
 `generate:openapi` needs no `.env` and no env vars. It fills a placeholder for every var `src/env.ts` requires before loading the app, a real var always wins, and no database or Redis connection is opened. The output does not depend on the environment.
 
-`build` and `typecheck` must run via Turbo from the repo root, so workspace lib artifacts (`dist/*.d.ts`) build first: `pnpm turbo run build --filter=nebula-chat-server` (and `typecheck` likewise).
+`build` and `typecheck` must run via Turbo from the repo root, so workspace lib artifacts (`dist/*.d.ts`) build first: `pnpm turbo run build --filter=@nebula-chat/server` (and `typecheck` likewise).
 
 **`@nebula-chat/db` migrations** (`libs/db` has no separate AGENTS.md):
 
@@ -28,7 +28,7 @@ pnpm --filter @nebula-chat/db db:baseline  # report journal state; --apply marks
 pnpm --filter @nebula-chat/db db:studio    # open Drizzle Studio GUI
 ```
 
-`DATABASE_URL` lives in `apps/nebula-chat-server/.env`, which the server's `dev`/`start` scripts and every `db:*`
+`DATABASE_URL` lives in `apps/server/.env`, which the server's `dev`/`start` scripts and every `db:*`
 script load through `dotenvx run` — single source of truth (see [Environment Variables](#environment-variables)).
 `db:migrate` calls the drizzle-orm migrator directly (`src/migrate.ts`) rather than `drizzle-kit migrate`, which exits 1 without printing the underlying Postgres error. `db:baseline` is for a database whose schema predates the migration journal: it reports what it would do and only writes with `--apply`.
 
@@ -37,7 +37,7 @@ script load through `dotenvx run` — single source of truth (see [Environment V
 ## Directory Layout
 
 ```text
-apps/nebula-chat-server/src/
+apps/server/src/
 ├── app.ts                         # buildApp() factory — registers plugins, routes, compilers
 ├── server.ts                      # Thin entry point — calls buildApp() then app.listen(), wires SIGTERM/SIGINT
 ├── shutdown.ts                    # createShutdown() — close + span flush, then exit (no waiting for the event loop to drain)
@@ -404,24 +404,24 @@ The generated spec is served at `/openapi.json`; Swagger UI at `/docs`.
 To export the spec as a static YAML file for the frontend Orval client, run:
 
 ```bash
-pnpm --filter nebula-chat-server run generate:openapi  # writes openapi/openapi.yaml to repo root
+pnpm --filter @nebula-chat/server run generate:openapi  # writes openapi/openapi.yaml to repo root
 ```
 
 The script (`src/scripts/generate-openapi.ts`) calls `buildApp()` → `app.ready()` → `app.swagger({ yaml: true })` and writes the result. It needs no environment (see [Commands](#commands)).
 
 **Rule:** After every change to the backend, re-run this script to keep `openapi/openapi.yaml` in sync with the current API state. Always commit the updated `openapi/openapi.yaml` alongside backend changes.
 
-**Rule (API client regeneration):** Whenever `openapi/openapi.yaml` changes — whether you edited the backend and regenerated it, or the file changed for any other reason — immediately regenerate the typed frontend API client at `apps/nebula-chat-client/src/libs/api/generated/`:
+**Rule (API client regeneration):** Whenever `openapi/openapi.yaml` changes — whether you edited the backend and regenerated it, or the file changed for any other reason — immediately regenerate the typed frontend API client at `apps/client/src/libs/api/generated/`:
 
 ```bash
-pnpm --filter nebula-chat-client run generate:api
+pnpm --filter @nebula-chat/client run generate:api
 ```
 
-The generator is Orval, configured at `apps/nebula-chat-client/orval.config.ts`, driven by
-`openapi/openapi.yaml`, and using the axios mutator at `apps/nebula-chat-client/src/libs/api/client.ts`.
-Regenerated files in `apps/nebula-chat-client/src/libs/api/generated/` must be committed in the same PR as the
+The generator is Orval, configured at `apps/client/orval.config.ts`, driven by
+`openapi/openapi.yaml`, and using the axios mutator at `apps/client/src/libs/api/client.ts`.
+Regenerated files in `apps/client/src/libs/api/generated/` must be committed in the same PR as the
 backend/OpenAPI change — never ship an API change with a stale client. Do not hand-edit anything under
-`apps/nebula-chat-client/src/libs/api/generated/`; always regenerate. Use the `regenerate-api-client` skill for this.
+`apps/client/src/libs/api/generated/`; always regenerate. Use the `regenerate-api-client` skill for this.
 
 ---
 
@@ -442,7 +442,7 @@ Static imports stay extensionless. A dynamic `import()` needs a `.js` extension 
 
 ## Environment Variables
 
-`apps/nebula-chat-server/.env` is loaded by package scripts, never by code: `dev`, `start` and the `@nebula-chat/db`
+`apps/server/.env` is loaded by package scripts, never by code: `dev`, `start` and the `@nebula-chat/db`
 `db:*` scripts wrap their command in `dotenvx run -f <file> --ignore=MISSING_ENV_FILE --`. A variable already set by
 the shell, CI or Render wins over the file, and a missing file is silent. `test` and `generate:openapi` deliberately
 read no `.env`, so a test run behaves the same on a developer machine as in CI. A new script that needs the file must

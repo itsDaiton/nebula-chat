@@ -12,17 +12,17 @@ Syncs the backend↔frontend contract. Both artifacts must be committed together
 
 1. From repo root, regenerate the backend spec:
    ```
-   pnpm --filter nebula-chat-server run generate:openapi
+   pnpm --filter @nebula-chat/server run generate:openapi
    ```
    No `.env` or env vars are needed: the script fills placeholders for what `src/env.ts` requires, and the output does not depend on the environment.
 2. Diff the resulting `openapi.yaml` (or path reported by the script). Confirm only expected changes.
 3. Regenerate the frontend typed client:
    ```
-   pnpm --filter nebula-chat-client run generate:api
+   pnpm --filter @nebula-chat/client run generate:api
    ```
 4. Run frontend typecheck to surface any broken call sites:
    ```
-   pnpm --filter nebula-chat-client typecheck
+   pnpm --filter @nebula-chat/client typecheck
    ```
 5. Report the paths of the changed artifacts and any typecheck failures.
 

@@ -12,7 +12,7 @@ ignore:
   # affected and none is patched, so there is no version to bump to.
   #
   # node-forge reaches this repo only through @dotenvx/dotenvx, a devDependency
-  # of apps/nebula-chat-server and libs/db (`pnpm why node-forge -r`); the latest
+  # of apps/server and libs/db (`pnpm why node-forge -r`); the latest
   # dotenvx still depends on it. dotenvx is the env-file loader wrapped around the
   # dev and db:* scripts (including db:migrate in the Render build). The deployed
   # server starts with plain `node` (render.yaml), so it never loads dotenvx.
@@ -40,7 +40,7 @@ ignore:
   # release (<= 3.0.3) is affected and none is patched.
   #
   # braces reaches this repo only through tsc-alias (chokidar, fast-glob), a
-  # devDependency of apps/nebula-chat-server run by its `build` script
+  # devDependency of apps/server run by its `build` script
   # (`pnpm why braces -r`). It expands globs from the repo's own tsconfig, never
   # untrusted input, and the deployed server does not ship it.
   #

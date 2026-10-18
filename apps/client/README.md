@@ -23,10 +23,10 @@ It provides:
 2. Create frontend env file:
 
    ```bash
-   cp apps/nebula-chat-client/.env.example apps/nebula-chat-client/.env
+   cp apps/client/.env.example apps/client/.env
    ```
 
-3. Set `VITE_API_URL` in `apps/nebula-chat-client/.env`:
+3. Set `VITE_API_URL` in `apps/client/.env`:
 
    ```env
    VITE_API_URL=http://localhost:3000
@@ -35,7 +35,7 @@ It provides:
 4. Start the app:
 
    ```bash
-   pnpm --filter nebula-chat-client run dev
+   pnpm --filter @nebula-chat/client run dev
    ```
 
 The frontend runs at `http://localhost:5173`.
@@ -45,11 +45,11 @@ The frontend runs at `http://localhost:5173`.
 Run from the repo root:
 
 ```bash
-pnpm --filter nebula-chat-client run dev
-pnpm --filter nebula-chat-client run build
-pnpm --filter nebula-chat-client run preview
-pnpm --filter nebula-chat-client run typecheck
-pnpm --filter nebula-chat-client run generate:api  # Regenerate the Orval client from openapi/openapi.yaml
+pnpm --filter @nebula-chat/client run dev
+pnpm --filter @nebula-chat/client run build
+pnpm --filter @nebula-chat/client run preview
+pnpm --filter @nebula-chat/client run typecheck
+pnpm --filter @nebula-chat/client run generate:api  # Regenerate the Orval client from openapi/openapi.yaml
 ```
 
 ## Container notes
