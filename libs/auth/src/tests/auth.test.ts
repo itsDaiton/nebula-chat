@@ -159,3 +159,58 @@ describe('createAuth Profile image', () => {
     );
   });
 });
+
+describe('createAuth rate limiting', () => {
+  const signIn = (auth: ReturnType<typeof buildAuth>, headers: Record<string, string>) =>
+    auth.handler(
+      new Request('http://localhost:3000/api/auth/sign-in/email', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          origin: 'http://localhost:5173',
+          ...headers,
+        },
+        body: JSON.stringify({ email: 'a@example.com', password: 'wrong-password' }),
+      }),
+    );
+
+  // Rate limiting is off outside production, so the keys it writes are read from the store.
+  const keysFor = async (headers: Record<string, string>) => {
+    const authStore = makeAuthStore();
+    const incremented: string[] = [];
+    const increment = authStore.increment;
+    authStore.increment = async (key, ttl) => {
+      incremented.push(key);
+      return increment(key, ttl);
+    };
+    vi.stubEnv('NODE_ENV', 'production');
+    try {
+      const auth = createAuth({
+        db: {} as DbClient,
+        authStore,
+        logger: logger as unknown as Logger,
+        secret: 'test-secret-that-is-long-enough-for-better-auth',
+        baseURL: 'http://localhost:3000',
+        trustedOrigins: ['http://localhost:5173'],
+        sendEmail: vi.fn(),
+      });
+      await signIn(auth, headers).catch(() => undefined);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+    return incremented;
+  };
+
+  it('keys the limit on the Cloudflare client IP', async () => {
+    const keys = await keysFor({ 'cf-connecting-ip': '203.0.113.7' });
+    expect(keys.some((key) => key.includes('203.0.113.7'))).toBe(true);
+  });
+
+  it('ignores a client-supplied X-Forwarded-For', async () => {
+    const keys = await keysFor({
+      'cf-connecting-ip': '203.0.113.7',
+      'x-forwarded-for': '198.51.100.99',
+    });
+    expect(keys.some((key) => key.includes('198.51.100.99'))).toBe(false);
+  });
+});

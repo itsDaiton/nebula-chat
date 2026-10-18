@@ -101,7 +101,8 @@ const withProviderImageKept = (providers: SocialProviderCredentials) =>
  * - `session.cookieCache` enabled so most requests validate from a signed cookie
  *   without touching Redis. `storeSessionInDatabase` is intentionally NOT set —
  *   sessions live in Redis (flip it on later in one line to move them to Postgres).
- * - `rateLimit` enabled with `storage: 'secondary-storage'` (counters in Redis).
+ * - `rateLimit` enabled with `storage: 'secondary-storage'` (counters in Redis), keyed per
+ *   client by the `CF-Connecting-IP` header Render's Cloudflare edge sets.
  * - anonymous plugin with `onLinkAccount` claiming the Guest's conversations.
  * - Have I Been Pwned plugin rejecting breached passwords on sign-up.
  * - openAPI plugin documenting the whole auth surface: a Scalar reference UI at
@@ -160,6 +161,9 @@ export const createAuth = ({
       database: {
         generateId: 'uuid',
       },
+      // Render keeps a client-sent X-Forwarded-For, so it is spoofable; Cloudflare's edge
+      // sets CF-Connecting-IP itself, which keys the rate limiter per real client.
+      ipAddress: { ipAddressHeaders: ['cf-connecting-ip'] },
       // Fire-and-forget on a long-lived Node server; better-auth catches and logs a rejection.
       backgroundTasks: {
         handler: (promise) => {

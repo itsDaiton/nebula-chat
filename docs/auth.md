@@ -65,7 +65,13 @@ The instance is configured with:
 | openAPI plugin           | Serves the auth API reference — see [API reference](#interactive-reference).                                                                                         |
 | `secondaryStorage`       | The `@nebula-chat/redis` `authStore` — sessions, verification records, and rate-limit counters.                                                                      |
 | `session.cookieCache`    | Enabled — a short-lived signed cookie lets most requests validate without a store round-trip.                                                                        |
-| `rateLimit`              | Enabled, `storage: 'secondary-storage'` (Redis).                                                                                                                     |
+| `rateLimit`              | Enabled, `storage: 'secondary-storage'` (Redis). Keyed per client by `advanced.ipAddress.ipAddressHeaders: ['cf-connecting-ip']` — see below.                        |
+
+Rate limits are per client IP, read only from `CF-Connecting-IP`: Render fronts the API with
+Cloudflare, which sets that header itself, whereas `X-Forwarded-For` keeps whatever the client
+sent and would let anyone pick their own bucket. Without a resolvable IP better-auth falls back to
+one shared bucket per path (the `auth.library.log` WARN), so one burst of sign-ins would lock out
+everyone. Outside Render the header is absent, so run behind a proxy that sets it.
 
 Redis is a hard dependency for authentication. Unlike the chat cache (fail-open,
 ADR-0009), the `authStore` lets Redis errors propagate: durable identity survives in
