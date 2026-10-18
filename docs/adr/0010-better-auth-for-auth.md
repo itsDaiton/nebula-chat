@@ -1,6 +1,6 @@
 # ADR-0010: Adopt better-auth as the authentication substrate, owning the auth schema, with metered-anonymous access and sessions in Redis
 
-- **Status:** Accepted — to be implemented on `feat/m-6-better-auth`
+- **Status:** Accepted — to be implemented on `feat/m-6-better-auth`. Extended by [ADR-0027](./0027-admin-role-two-factor-full-read-and-audit-log.md) (Admin role, 2FA) and [ADR-0028](./0028-account-deletion-pending-deletion-and-purge.md) (Account deletion)
 - **Date:** 2026-09-19
 - **Deciders:** @itsDaiton
 
