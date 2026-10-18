@@ -51,7 +51,7 @@ jobs:
             exit 1
           fi
 
-          # A variable, not a secret: mask the host, which curl errors print.
+          # Variables are not masked; hide the host, which network errors print.
           host="${GRAFANA_URL#*://}"
           echo "::add-mask::${host%%/*}"
 
