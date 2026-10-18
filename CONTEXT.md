@@ -8,6 +8,10 @@ An AI chat application: users hold Sessions with an LLM assistant that answers e
 A titled thread between a user and the assistant, holding its Messages and the Runs behind them, with an optional system prompt for Direct replies. Not to be confused with an _auth session_ (Better Auth's sign-in session), which is always called that in full.
 _Avoid_: Conversation, chat, thread, workflow.
 
+**Archived Session**:
+A Session its owner has put away: hidden from their Session list and kept unchanged until they restore it. Archiving is the only way a User removes a Session themselves; nothing a User does to a single Session erases it. Admins still see archived Sessions, marked as such.
+_Avoid_: Deleted session, hidden session.
+
 **Message**:
 One thing said in a Session, authored by a `role` of `user` (the input) or `assistant` (the answer text). An assistant Message produced by a Run links to it: the Message is what was said, the Run is how it was made.
 _Avoid_: Turn.
