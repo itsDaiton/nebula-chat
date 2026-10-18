@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.17.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.17.1...nebula-chat-v2.17.2) (2026-10-18)
+
+
+### Bug Fixes
+
+* **auth:** NEB-490 explain how to link a social provider to an unverified email account ([#522](https://github.com/itsDaiton/nebula-chat/issues/522)) ([b89af90](https://github.com/itsDaiton/nebula-chat/commit/b89af9067f6b4a4e5f3ef2f4b966db76c11f447f))
+
 ## [2.17.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.17.0...nebula-chat-v2.17.1) (2026-10-18)
 
 
