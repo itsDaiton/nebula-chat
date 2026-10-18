@@ -13,7 +13,7 @@ A Session its owner has put away: hidden from their Session list and kept unchan
 _Avoid_: Deleted session, hidden session.
 
 **Message**:
-One thing said in a Session, authored by a `role` of `user` (the input) or `assistant` (the answer text). An assistant Message produced by a Run links to it: the Message is what was said, the Run is how it was made.
+One thing said in a Session, authored by a `role` of `user` (the input) or `assistant` (the answer text). An assistant Message produced by a Run links to it: the Message is what was said, the Run is how it was made. A Run's Clarifying question and the user Message that answers it link to the Run too.
 _Avoid_: Turn.
 
 **Model**:
@@ -115,7 +115,7 @@ An assistant Message produced by a single model call on the Session's Model, str
 _Avoid_: Plain chat, completion, simple mode.
 
 **Run**:
-One orchestrated response to one user Message, opted into per message by a Registered user: the durable record of every Step taken to produce the assistant's answer. Proceeds in three phases — Intake, the Orchestrator's loop, then the Output Agent. Ends `completed`, `partial` (a limit forced an early answer or a non-essential Step failed), `failed`, or `cancelled`. Started from a Session and inspectable on its own.
+One orchestrated response to one user Message, opted into per message by a Registered user: the durable record of every Step taken to produce the assistant's answer. Proceeds in three phases — Intake, the Orchestrator's loop, then the Output Agent — and may pause once, `waiting` on the answer to a Clarifying question. Ends `completed`, `partial` (a limit forced an early answer, a non-essential Step failed, or a Clarifying question went unanswered), `failed`, or `cancelled`. Started from a Session and inspectable on its own.
 _Avoid_: Workflow, task, job, execution, deep mode (that's a UI label, not the concept).
 
 **Agent**:
@@ -131,8 +131,12 @@ The structured merge of all Intake Agents' outputs — the Orchestrator's starti
 _Avoid_: Context, aggregated output, concatenation.
 
 **Orchestrator**:
-The Agent that directs a Run: working from the Brief, it decides which other Agents to delegate to, turn by turn, until it hands its findings to the Output Agent. The only Agent allowed to delegate; it calls no tools itself.
+The Agent that directs a Run: working from the Brief, it decides which other Agents to delegate to, turn by turn, until it hands its findings to the Output Agent. The only Agent allowed to delegate or to ask a Clarifying question; it calls no tools itself.
 _Avoid_: Planner, main model, router.
+
+**Clarifying question**:
+The one question an Orchestrator may put to the user during a Run, asked as an assistant Message; the user's next Message in that Session is the answer. Left unanswered, the Run carries on without it and ends `partial`; it is cancelled instead if its Session is Archived or its owner can no longer act.
+_Avoid_: Interrupt, pause, follow-up question, prompt.
 
 **Output Agent**:
 The Agent that writes the user-facing answer of a Run from the Brief and the Orchestrator's findings — deciding language, tone and form.
