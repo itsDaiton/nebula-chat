@@ -1,6 +1,6 @@
 {
-  ".": "2.17.0",
-  "apps/nebula-chat-client": "1.27.0",
+  ".": "2.17.1",
+  "apps/nebula-chat-client": "1.27.1",
   "apps/nebula-chat-server": "2.8.0",
   "libs/db": "0.6.1",
   "openapi": "1.12.0",
