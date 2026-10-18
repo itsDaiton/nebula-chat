@@ -8,6 +8,10 @@ An AI chat application: users hold Sessions with an LLM assistant that answers e
 A titled thread between a user and the assistant, holding its Messages and the Runs behind them, with an optional system prompt for Direct replies. Not to be confused with an _auth session_ (Better Auth's sign-in session), which is always called that in full.
 _Avoid_: Conversation, chat, thread, workflow.
 
+**Archived Session**:
+A Session its owner has put away: hidden from their Session list and kept unchanged until they restore it. Archiving is the only way a User removes a Session themselves; nothing a User does to a single Session erases it. Admins still see archived Sessions, marked as such.
+_Avoid_: Deleted session, hidden session.
+
 **Message**:
 One thing said in a Session, authored by a `role` of `user` (the input) or `assistant` (the answer text). An assistant Message produced by a Run links to it: the Message is what was said, the Run is how it was made.
 _Avoid_: Turn.
@@ -28,12 +32,16 @@ _Avoid_: Context window used alone to mean the whole budget — it's one part of
 A previously captured stream of Streaming tokens for a Direct reply, replayed into a repeat Direct reply's stream instead of calling the LLM again. Runs are never cached.
 _Avoid_: Cached response.
 
+**Model call**:
+One invocation of an LLM, recorded once it ends with its Model, token counts, estimated cost and outcome. A Direct reply makes one; a Run makes one per Step that calls a model (tool Steps make none). A replayed Cache entry counts as a Model call at zero cost. The unit that usage and spend are measured in.
+_Avoid_: Request, completion, generation.
+
 **User**:
 Anyone who owns Sessions. Every Session has exactly one owner — `userId` is non-null. A User is either a **Guest** or a **Registered user**.
 _Avoid_: Account (an Account is an auth-provider link belonging to a User, not the User themselves).
 
 **Guest**:
-An anonymous User, auto-created on first use without any credentials, allowed a bounded number of messages (the **message allowance**) before registration is required to continue. Becomes a Registered user by **claiming** their Sessions on sign-up or sign-in.
+An anonymous User, auto-created on first use without any credentials, allowed a bounded number of messages (the **message allowance**) before registration is required to continue. Becomes a Registered user by **claiming** their Sessions on sign-up or sign-in. A Guest with no activity for 30 days is Purged, since without credentials nobody can reach their Sessions again.
 _Avoid_: Anonymous user (that names a state; the Guest is the actor), visitor.
 
 **Registered user**:
@@ -65,8 +73,20 @@ A Registered user ending every auth session of theirs at once, the one they are 
 _Avoid_: Log out of all devices (UI-copy only), revoke sessions.
 
 **Account deletion**:
-A Registered user permanently removing their User, with every Session and Message they own. Confirmed with their password, or, for a User without one, a sign-in less than a day old. The device carries on as a fresh Guest.
-_Avoid_: Account closure, deactivation (nothing is kept).
+A Registered user asking to remove their User. Confirmed with their password, or, for a User without one, a sign-in less than a day old. Puts the User into Pending deletion at once and signs out every auth session of theirs; the device carries on as a fresh Guest.
+_Avoid_: Account closure, deactivation, archiving (Archived is reserved for Sessions).
+
+**Pending deletion**:
+The 30 days between Account deletion and the Purge. The User is hidden and cannot act, but signing back in offers to restore them in full, and an Admin can restore them too. Their email stays taken, so signing up with it again points them to signing in instead.
+_Avoid_: Archived account, soft-deleted, deactivated.
+
+**Purge**:
+The irreversible end of Pending deletion: the User's Sessions and Messages are erased and their Model calls are kept only without anything that identifies them, so past usage totals don't change.
+_Avoid_: Hard delete, wipe, cleanup.
+
+**Ban**:
+An Admin barring a User from signing in, permanently or until a set time, with a reason the User is shown. Ends every auth session of theirs; their Sessions are kept. The same device can still carry on as a fresh Guest, held back by the Message allowance.
+_Avoid_: Block, suspension, lock.
 
 **Avatar**:
 The visual that stands for a User in the interface. For a Registered user it is their Profile image if they have one, otherwise their initials; a Guest's is always a generic anonymous one.
@@ -76,9 +96,17 @@ _Avoid_: Icon, profile picture (that is the Profile image, one possible content 
 The picture a Registered user is represented by, either one they uploaded or one their social provider supplied; an upload replaces a provider-supplied one. Guests have none.
 _Avoid_: Profile picture, photo, avatar (the Avatar falls back to initials when there is no Profile image).
 
+**Admin**:
+A verified Registered user who also holds the admin role: sees and acts on every User, Session and Run through the admin dashboard, including reading Message content. Must sign in with two-factor authentication to act as one. Still a User, and still chats like any other. A Guest or an unverified user can never be an Admin.
+_Avoid_: Operator (an Operator holds the operator token and is not a User), superuser, moderator.
+
+**Audit log**:
+The permanent, append-only record of every Admin action (changing a role, banning, archiving) and every time an Admin reads a User's Sessions or Runs.
+_Avoid_: Activity log, history.
+
 **Operator**:
 Someone running a deployment rather than using it: holds the operator token and can change operational settings, such as log levels at runtime. Not a User — an Operator owns no Sessions, and no Guest or Registered user can act as one.
-_Avoid_: Admin (there is no admin role; operating is not a kind of User).
+_Avoid_: Admin (an Admin is a User with elevated rights; operating is not a kind of User).
 
 ### Orchestration
 
