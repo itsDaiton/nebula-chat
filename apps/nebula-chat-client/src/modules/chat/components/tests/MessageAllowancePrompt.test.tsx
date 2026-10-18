@@ -2,12 +2,14 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { MessageAllowancePrompt } from '@/modules/chat/components/MessageAllowancePrompt';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 import { aSession, mockGetSession, refreshSession } from '@/test/auth';
+import { aMeteredAllowance } from '@/test/allowance';
 import { server } from '@/test/msw';
 import { renderHookWithQueryClient, renderWithChakra } from '@/test/render';
 
@@ -31,6 +33,7 @@ const renderPrompt = async ({ isAnonymous }: { isAnonymous: boolean }) => {
 
 beforeEach(() => {
   useChatStreamStore.setState({ isMessageAllowanceReached: false });
+  server.use(getGetMessageAllowanceMockHandler(aMeteredAllowance(4)));
 });
 
 describe('MessageAllowancePrompt', () => {
@@ -50,6 +53,13 @@ describe('MessageAllowancePrompt', () => {
     await userEvent.click(await screen.findByRole('link', { name: messageAllowance.action }));
 
     expect(screen.getByText(AUTH_PAGE)).toBeInTheDocument();
+  });
+
+  it('asks a Guest to register as soon as the allowance is spent, before any refused send', async () => {
+    server.use(getGetMessageAllowanceMockHandler(aMeteredAllowance(0)));
+    await renderPrompt({ isAnonymous: true });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(messageAllowance.title);
   });
 
   it('stays hidden until the allowance is reached', async () => {

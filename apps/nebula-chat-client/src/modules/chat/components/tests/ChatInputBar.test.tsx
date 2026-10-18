@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
 import { ChatInputBar } from '@/modules/chat/components/ChatInputBar';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
@@ -11,15 +12,21 @@ import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 import { API_ROUTE } from '@/test/api';
 import { aSession, mockGetSession, refreshSession } from '@/test/auth';
+import { aMeteredAllowance } from '@/test/allowance';
 import { server } from '@/test/msw';
 import { renderWithChakra } from '@/test/render';
+
+const sseEnd = (...frames: string[]) =>
+  new HttpResponse([...frames, 'event: end\ndata: {}\n\n'].join(''), {
+    headers: { 'Content-Type': 'text/event-stream' },
+  });
 
 beforeEach(() => {
   vi.clearAllMocks();
   useMessageStore.setState({ message: '' });
   useModelSelectorStore.setState({ isSelectOpen: false, triggerWidth: 120 });
   useChatStreamStore.setState({ history: [], isMessageAllowanceReached: false });
-  server.use(mockGetSession(aSession()));
+  server.use(mockGetSession(aSession()), getGetMessageAllowanceMockHandler(aMeteredAllowance(5)));
 });
 
 // The bar wired to the real chat-send path, as ChatContainer wires it.
@@ -80,9 +87,7 @@ describe('ChatInputBar', () => {
       http.post(API_ROUTE.chatStream, () => {
         sends += 1;
         return isRegistered
-          ? new HttpResponse('event: end\ndata: {}\n\n', {
-              headers: { 'Content-Type': 'text/event-stream' },
-            })
+          ? sseEnd()
           : HttpResponse.json(
               {
                 success: false,
@@ -115,5 +120,38 @@ describe('ChatInputBar', () => {
     await waitFor(() => expect(useChatStreamStore.getState().isStreaming).toBe(false));
     expect(useChatStreamStore.getState().isMessageAllowanceReached).toBe(false);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('counts a Guest down as messages are sent, then walls them off at zero with the draft kept', async () => {
+    let remaining = 2;
+    server.use(
+      getGetMessageAllowanceMockHandler(() => aMeteredAllowance(remaining)),
+      http.post(API_ROUTE.chatStream, () => {
+        remaining -= 1;
+        return sseEnd('event: user-message-created\ndata: {"messageId":"m1"}\n\n');
+      }),
+    );
+    renderWithChakra(<ConnectedChatInputBar />);
+    refreshSession();
+
+    expect(await screen.findByRole('status')).toHaveTextContent('2 of 10 messages left');
+
+    await userEvent.type(screen.getByRole('textbox'), 'first');
+    await userEvent.click(screen.getByRole('button', { name: /send message/i }));
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent('1 of 10 message left'),
+    );
+    await waitFor(() => expect(useChatStreamStore.getState().isStreaming).toBe(false));
+
+    await userEvent.type(screen.getByRole('textbox'), 'second');
+    await userEvent.click(screen.getByRole('button', { name: /send message/i }));
+
+    const wall = await screen.findByRole('alert');
+    expect(wall).toHaveTextContent(resources.chat.messageAllowance.title);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    await userEvent.type(screen.getByRole('textbox'), 'draft');
+    expect(screen.getByRole('textbox')).toBeEnabled();
+    expect(screen.getByRole('textbox')).toHaveValue('draft');
   });
 });

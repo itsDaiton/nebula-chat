@@ -1,6 +1,7 @@
 import { Box } from '@chakra-ui/react';
 import { EmailVerificationPrompt } from '@/modules/auth/components/EmailVerificationPrompt';
 import { ChatInput } from '@/modules/chat/components/ChatInput';
+import { MessageAllowanceCounter } from '@/modules/chat/components/MessageAllowanceCounter';
 import { MessageAllowancePrompt } from '@/modules/chat/components/MessageAllowancePrompt';
 import type { ChatInputBarProps } from '@/modules/chat/types/types';
 
@@ -20,6 +21,7 @@ export const ChatInputBar = ({
   >
     <MessageAllowancePrompt />
     <EmailVerificationPrompt />
+    <MessageAllowanceCounter />
     <ChatInput
       onSendMessage={onSend}
       isLoading={isLoading}

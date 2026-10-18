@@ -5,7 +5,7 @@ import {
   getGetConversationQueryKey,
   getListConversationsInfiniteQueryKey,
 } from '@/libs/api/generated/conversations/conversations';
-import { streamChat } from '@/libs/api/generated/chat/chat';
+import { getGetMessageAllowanceQueryKey, streamChat } from '@/libs/api/generated/chat/chat';
 import { getListMessagesQueryKey } from '@/libs/api/generated/messages/messages';
 import { ErrorCode } from '@/libs/api/generated/model/errorCode';
 import type { StreamChatBody } from '@/libs/api/generated/model/streamChatBody';
@@ -47,6 +47,12 @@ export const useChatStream = () => {
   // SSE isn't a query, so the cache is invalidated rather than seeded (ADR-0012).
   const invalidateConversationList = useCallback(
     () => queryClient.invalidateQueries({ queryKey: getListConversationsInfiniteQueryKey() }),
+    [queryClient],
+  );
+
+  // The server counts a message against the allowance once it persists it, so the counter refetches then.
+  const invalidateMessageAllowance = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: getGetMessageAllowanceQueryKey() }),
     [queryClient],
   );
 
@@ -123,6 +129,8 @@ export const useChatStream = () => {
               isMessageAllowanceReached: true,
             });
             useMessageStore.getState().setMessage(newUserMessage?.content ?? '');
+            // The count shown may be stale (another tab), so resync it with the server's.
+            void invalidateMessageAllowance();
             return;
           }
           throw new Error(envelope?.message ?? resources.chat.streamError);
@@ -199,6 +207,7 @@ export const useChatStream = () => {
               }
 
               if (currentEvent === 'user-message-created') {
+                void invalidateMessageAllowance();
                 currentEvent = null;
                 continue;
               }
@@ -267,6 +276,7 @@ export const useChatStream = () => {
     [
       invalidateCompletedStream,
       invalidateConversationList,
+      invalidateMessageAllowance,
       navigate,
       setConversationId,
       setError,

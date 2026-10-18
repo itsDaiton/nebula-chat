@@ -7,6 +7,7 @@ import {
   getGetConversationMockHandler,
   getListConversationsMockHandler,
 } from '@/libs/api/generated/conversations/conversations.msw';
+import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
 import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
 import { ChatPage } from '@/modules/chat/ChatPage';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
@@ -68,6 +69,7 @@ beforeEach(() => {
     mockGetSession(aSession()),
     getGetConversationMockHandler(aConversation(CONVERSATION_ID, 'Chat')),
     getListMessagesMockHandler([]),
+    getGetMessageAllowanceMockHandler({ metered: false }),
   );
   useMessageStore.setState({ message: '' });
   useChatStreamStore.setState({

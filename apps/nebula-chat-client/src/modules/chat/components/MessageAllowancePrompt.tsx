@@ -2,16 +2,16 @@ import { Alert, Button } from '@chakra-ui/react';
 import { LuLogIn } from 'react-icons/lu';
 import { Link } from 'react-router';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
-import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
+import { useMessageAllowance } from '@/modules/chat/hooks/useMessageAllowance';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 
-/** Shown once a Guest's send is refused at the message allowance; registering lifts it. */
+/** Shown once a Guest's message allowance is spent (or a send was refused at it); registering lifts it. */
 export const MessageAllowancePrompt = () => {
   const { isGuest } = useAuth();
-  const isMessageAllowanceReached = useChatStreamStore((state) => state.isMessageAllowanceReached);
+  const { isSpent } = useMessageAllowance();
 
-  if (!isGuest || !isMessageAllowanceReached) return null;
+  if (!isGuest || !isSpent) return null;
 
   return (
     <Alert.Root status="info" role="alert" alignItems="center" mx={4} mt={4} width="auto">
