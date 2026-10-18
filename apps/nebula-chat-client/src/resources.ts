@@ -84,7 +84,7 @@ export const resources = {
       errors: {
         cancelled: 'Sign-in was cancelled. Choose a way to continue whenever you are ready.',
         accountNotLinked:
-          'An account with this email already exists. Sign in the way you did when you created it.',
+          'An account with this email already exists. Sign in the way you first did, such as with your password, then verify your email to also continue with Google or GitHub.',
         emailNotFound:
           "We couldn't get an email address from that account, so we can't sign you in with it.",
         unavailable: "That sign-in option isn't available right now. Try another way.",
