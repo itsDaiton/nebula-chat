@@ -52,9 +52,9 @@ export type PublishConnection = Pick<Redis, 'publish'>;
 
 /**
  * The subset of an ioredis client in subscriber mode that the pub/sub primitive
- * calls: it subscribes to channels and listens for their messages.
+ * calls: it subscribes to and unsubscribes from channels, and listens for their messages.
  */
-export type SubscribeConnection = Pick<Redis, 'subscribe'> & {
+export type SubscribeConnection = Pick<Redis, 'subscribe' | 'unsubscribe'> & {
   on(event: 'message', listener: (channel: string, message: string) => void): unknown;
 };
 

@@ -322,12 +322,27 @@ curl -X POST "$SERVER_URL/api/internal/log-level" \
   back after `ttlSeconds`. Changing the same target again restarts its expiry;
   the root and each component expire independently.
 
-The route is in the OpenAPI spec (Swagger UI at `/docs`, tag `Operator`, which
+To read the levels back, `GET` the same route with the same token. Every instance
+answers for itself, so one that missed a change shows as it is
+([ADR-0034](./adr/0034-reading-log-levels-from-every-instance.md)):
+
+```bash
+curl "$SERVER_URL/api/internal/log-level" -H "Authorization: Bearer $OPERATOR_TOKEN"
+# 200 {"receivers":2,"reports":[{"instance":"srv-a:1","levels":[{"target":"root","level":"info","expiresAt":null,"operator":null}, …]}, …]}
+```
+
+The route publishes `{ replyTo }` on `log-level-report:nebula-chat-server`. It
+waits for `receivers` reports, or 2 seconds. Fewer reports than `receivers` means
+an instance did not answer in time. `nebula log-level get` does the same from the
+terminal and warns when instances disagree.
+
+Both routes are in the OpenAPI spec (Swagger UI at `/docs`, tag `Operator`, which
 `orval.config.ts` leaves out of the browser client).
 
 In code, `changeLogLevel(logger, change)` from `@nebula-chat/otel` does the
-in-process part. `listenForLogLevelChanges` and `publishLogLevelChange` carry it
-over any pub/sub with `@nebula-chat/redis`'s `pubsub` shape. A new process (the
+in-process part, and `readLogLevels(logger)` reads it back.
+`listenForLogLevelChanges`, `publishLogLevelChange` and `collectLogLevelReports`
+carry it over any pub/sub with `@nebula-chat/redis`'s `pubsub` shape. A new process (the
 worker, NEB-354) listens with one call next to its `createLogger`.
 
 ## Never logged

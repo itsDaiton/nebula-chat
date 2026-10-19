@@ -32,3 +32,45 @@ export const logLevelChangeResponseSchema = z
     expiresAt: isoDateTimeSchema.describe('When the change reverts'),
   })
   .meta({ id: 'LogLevelChange' });
+
+const logLevelStateSchema = z
+  .object({
+    target: z
+      .enum(['root', ...LOG_COMPONENTS])
+      .describe('The root level, or the `nebula.component` this level applies to'),
+    level: z.enum([...LOG_LEVELS, 'silent']),
+    expiresAt: z.iso
+      .datetime()
+      .nullable()
+      .describe('When the runtime change reverts; `null` at the boot-time level'),
+    operator: z
+      .string()
+      .nullable()
+      .describe('Who asked for the runtime change; `null` at the boot-time level'),
+  })
+  .meta({ id: 'LogLevelState' });
+
+const logLevelReportSchema = z
+  .object({
+    instance: z.string().describe('The server instance, as its hostname and process id'),
+    levels: z
+      .array(logLevelStateSchema)
+      .max(LOG_COMPONENTS.length + 1)
+      .describe('The root level, then every component'),
+  })
+  .meta({ id: 'LogLevelReport' });
+
+export const logLevelReportsResponseSchema = z
+  .object({
+    receivers: z
+      .int()
+      .describe(
+        'How many server instances received the request; more than reports means some did not answer in time',
+      ),
+    // A bound for the spec (checkov CKV_OPENAPI_21), far above any instance count we run.
+    reports: z
+      .array(logLevelReportSchema)
+      .max(100)
+      .describe('One per instance that answered, by instance'),
+  })
+  .meta({ id: 'LogLevelReports' });

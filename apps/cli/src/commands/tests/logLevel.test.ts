@@ -2,7 +2,10 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { http, HttpResponse, type JsonBodyType } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getChangeLogLevelUrl } from '@cli/api/generated/operator/operator';
+import type { LogLevelReport } from '@cli/api/generated/model/logLevelReport';
+import type { LogLevelReports } from '@cli/api/generated/model/logLevelReports';
+import type { LogLevelState } from '@cli/api/generated/model/logLevelState';
+import { getChangeLogLevelUrl, getGetLogLevelsUrl } from '@cli/api/generated/operator/operator';
 import { createHarness, SERVER_URL } from '@cli/test/harness';
 import { server } from '@cli/test/msw';
 
@@ -263,5 +266,166 @@ describe('nebula log-level set', () => {
       expect(code).toBe(2);
       expect(cli.stderr()).toContain('No profile selected');
     });
+  });
+});
+
+describe('nebula log-level get', () => {
+  let cli: Awaited<ReturnType<typeof createHarness>>;
+
+  const atBoot = (
+    target: LogLevelState['target'],
+    level: LogLevelState['level'] = 'info',
+  ): LogLevelState => ({
+    target,
+    level,
+    expiresAt: null,
+    operator: null,
+  });
+
+  const report = (
+    instance: string,
+    rootLevel: LogLevelState['level'] = 'info',
+  ): LogLevelReport => ({
+    instance,
+    levels: [
+      atBoot('root', rootLevel),
+      atBoot('auth'),
+      { target: 'redis', level: 'debug', expiresAt: EXPIRES_AT, operator: 'ada' },
+    ],
+  });
+
+  const reportWith = (body: LogLevelReports, baseUrl = SERVER_URL) => {
+    const authorizations: (string | null)[] = [];
+    server.use(
+      http.get(`${baseUrl}${getGetLogLevelsUrl()}`, ({ request }) => {
+        authorizations.push(request.headers.get('authorization'));
+        return HttpResponse.json(body);
+      }),
+    );
+    return authorizations;
+  };
+
+  const answerGetWith = (status: number, body: JsonBodyType) =>
+    server.use(
+      http.get(`${SERVER_URL}${getGetLogLevelsUrl()}`, () => HttpResponse.json(body, { status })),
+    );
+
+  beforeEach(async () => {
+    cli = await withProfiles(await operatorCli());
+  });
+
+  it('prints every target of every instance with its level and expiry', async () => {
+    const authorizations = reportWith({ receivers: 1, reports: [report('web-1:42')] });
+
+    const code = await cli.run('log-level', 'get');
+
+    expect(code).toBe(0);
+    expect(authorizations).toEqual([`Bearer ${TOKEN}`]);
+    expect(cli.stdout()).toBe(
+      [
+        'INSTANCE  TARGET  LEVEL  EXPIRES                            OPERATOR',
+        'web-1:42  root    info   -                                  -',
+        'web-1:42  auth    info   -                                  -',
+        `web-1:42  redis   debug  ${EXPIRES_AT} (in 10m)  ada`,
+        '',
+      ].join('\n'),
+    );
+    expect(cli.stderr()).toBe('');
+  });
+
+  it('prints the server response as one JSON document with --json', async () => {
+    const body = { receivers: 2, reports: [report('web-1:42'), report('web-2:7')] };
+    reportWith(body);
+
+    const code = await cli.run('log-level', 'get', '--json');
+
+    expect(code).toBe(0);
+    expect(JSON.parse(cli.stdout())).toEqual(body);
+  });
+
+  it('asks the server of the profile named by --profile', async () => {
+    const authorizations = reportWith({ receivers: 1, reports: [report('web-1:42')] }, PROD_URL);
+
+    const code = await cli.run('--profile', 'prod', 'log-level', 'get');
+
+    expect(code).toBe(0);
+    expect(authorizations).toHaveLength(1);
+  });
+
+  it('warns on stderr when instances disagree on a level', async () => {
+    reportWith({ receivers: 2, reports: [report('web-1:42'), report('web-2:7', 'debug')] });
+
+    const code = await cli.run('log-level', 'get');
+
+    expect(code).toBe(0);
+    expect(cli.stderr()).toBe('warning: Server instances disagree on: root.\n');
+  });
+
+  it('warns on stderr when an instance did not answer in time', async () => {
+    reportWith({ receivers: 3, reports: [report('web-1:42')] });
+
+    const code = await cli.run('log-level', 'get');
+
+    expect(code).toBe(0);
+    expect(cli.stderr()).toContain('2 of 3 server instances did not answer in time');
+  });
+
+  it('says so when no instance is listening', async () => {
+    reportWith({ receivers: 0, reports: [] });
+
+    const code = await cli.run('log-level', 'get');
+
+    expect(code).toBe(0);
+    expect(cli.stdout()).toBe('No server instance is listening for log-level requests.\n');
+  });
+
+  it('says so when no instance answered in time', async () => {
+    reportWith({ receivers: 1, reports: [] });
+
+    await cli.run('log-level', 'get');
+
+    expect(cli.stdout()).toBe('No server instance answered in time.\n');
+  });
+
+  describe('auth failures exit 3 with a message on stderr', () => {
+    it('when NEBULA_OPERATOR_TOKEN is not set, without calling the server', async () => {
+      cli = await withProfiles(await operatorCli({ NEBULA_OPERATOR_TOKEN: undefined }));
+
+      const code = await cli.run('log-level', 'get');
+
+      expect(code).toBe(3);
+      expect(cli.stderr()).toContain('NEBULA_OPERATOR_TOKEN is not set');
+      expect(cli.stdout()).toBe('');
+    });
+
+    it('when the server rejects the token (403)', async () => {
+      answerGetWith(403, envelope('Forbidden', 'This action requires the operator token.'));
+
+      const code = await cli.run('log-level', 'get');
+
+      expect(code).toBe(3);
+      expect(cli.stderr()).toContain(`${SERVER_URL} rejected NEBULA_OPERATOR_TOKEN`);
+      expect(cli.stdout()).toBe('');
+    });
+
+    it('when the server has no operator token configured (404)', async () => {
+      answerGetWith(404, envelope('NotFound', 'Route GET:/api/internal/log-level not found'));
+
+      const code = await cli.run('log-level', 'get');
+
+      expect(code).toBe(3);
+      expect(cli.stderr()).toContain(`${SERVER_URL} has no operator token configured`);
+    });
+  });
+
+  it('exits 1 with the server message on a server error', async () => {
+    answerGetWith(500, envelope('Internal', 'Redis is down'));
+
+    const code = await cli.run('log-level', 'get');
+
+    expect(code).toBe(1);
+    expect(cli.stderr()).toContain('500');
+    expect(cli.stderr()).toContain('Redis is down');
+    expect(cli.stdout()).toBe('');
   });
 });

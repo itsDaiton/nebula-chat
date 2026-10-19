@@ -37,13 +37,17 @@ let app: FastifyInstance;
 /** The lines the one running server instance writes. */
 let lines: LogLine[];
 
+let instances = 0;
+
 /** Starts one more server instance listening for level changes. */
-const startInstance = async (): Promise<LogLine[]> => {
-  const instance = captureLogger('info');
+const startInstance = async (level: 'info' | 'debug' = 'info'): Promise<LogLine[]> => {
+  instances += 1;
+  const instance = captureLogger(level);
   await listenForLogLevelChanges({
     logger: instance.logger,
     pubsub: redis.pubsub,
     serviceName: 'nebula-chat-server',
+    instanceId: `web-${instances}`,
   });
   return instance.lines;
 };
@@ -60,6 +64,7 @@ beforeEach(async () => {
   vi.clearAllMocks();
   vi.useFakeTimers({ toFake: ['Date'], now: NOW });
   redis.pubsub = memoryPubSub();
+  instances = 0;
   lines = await startInstance();
 });
 
@@ -178,5 +183,100 @@ describe('POST /api/internal/log-level', () => {
 
     expect(res.statusCode).toBe(400);
     expect(eventLines(lines, 'log.level.changed')).toEqual([]);
+  });
+});
+
+describe('GET /api/internal/log-level', () => {
+  const atBoot = (target: string, level = 'info') => ({
+    target,
+    level,
+    expiresAt: null,
+    operator: null,
+  });
+
+  it('reports the root and every component from each server instance, with any runtime change', async () => {
+    await startInstance('debug');
+    await app.inject({
+      method: 'POST',
+      url: ROUTE,
+      headers: OPERATOR,
+      payload: { component: 'redis', level: 'trace', ttlSeconds: 600, operator: 'ada' },
+    });
+
+    const res = await app.inject({ method: 'GET', url: ROUTE, headers: OPERATOR });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      receivers: 2,
+      reports: [
+        {
+          instance: 'web-1',
+          levels: [
+            atBoot('root'),
+            atBoot('auth'),
+            atBoot('chat'),
+            atBoot('http'),
+            atBoot('llm'),
+            atBoot('otel'),
+            {
+              target: 'redis',
+              level: 'trace',
+              expiresAt: '2026-10-02T09:10:00.000Z',
+              operator: 'ada',
+            },
+          ],
+        },
+        expect.objectContaining({
+          instance: 'web-2',
+          levels: expect.arrayContaining([atBoot('root', 'debug')]),
+        }),
+      ],
+    });
+  });
+
+  it('changes nothing it reports on', async () => {
+    await app.inject({ method: 'GET', url: ROUTE, headers: OPERATOR });
+
+    expect(eventLines(lines, 'log.level.changed')).toEqual([]);
+  });
+
+  it.each([
+    ['a Guest', guestSession, {}],
+    ['a Registered user', registeredSession, {}],
+    ['a wrong operator token', registeredSession, { authorization: 'Bearer not-the-token' }],
+  ])('answers Forbidden to %s', async (_who, session, headers) => {
+    mockedGetSession.mockResolvedValue(session() as never);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: ROUTE,
+      headers: { cookie: 'better-auth.session_token=abc', ...headers },
+    });
+
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toMatchObject({ success: false, error: 'Forbidden' });
+  });
+
+  it('answers Not Found while no operator token is configured', async () => {
+    const token = env.OPERATOR_TOKEN;
+    env.OPERATOR_TOKEN = undefined;
+    try {
+      const res = await app.inject({ method: 'GET', url: ROUTE, headers: OPERATOR });
+
+      expect(res.statusCode).toBe(404);
+    } finally {
+      env.OPERATOR_TOKEN = token;
+    }
+  });
+
+  it('answers with an error when Redis cannot take the request', async () => {
+    redis.pubsub.publish = vi.fn(async () => {
+      throw new Error('redis down');
+    });
+
+    const res = await app.inject({ method: 'GET', url: ROUTE, headers: OPERATOR });
+
+    expect(res.statusCode).toBe(500);
+    expect(res.json()).toMatchObject({ success: false });
   });
 });

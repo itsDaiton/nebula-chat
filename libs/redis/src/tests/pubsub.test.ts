@@ -5,17 +5,28 @@ import type { PublishConnection, SubscribeConnection } from '../types';
 
 type Listener = (channel: string, message: string) => void;
 
-type FakeSubscriber = SubscribeConnection & { deliver: Listener; channels: Set<string> };
+type FakeSubscriber = SubscribeConnection & {
+  deliver: Listener;
+  channels: Set<string>;
+  unsubscribed: string[];
+};
 
 const fakeSubscriber = (): FakeSubscriber => {
   const channels = new Set<string>();
+  const unsubscribed: string[] = [];
   const listeners: Listener[] = [];
   const connection = {
     channels,
+    unsubscribed,
     subscribe: (async (...names: string[]) => {
       for (const name of names) channels.add(name);
       return channels.size;
     }) as SubscribeConnection['subscribe'],
+    unsubscribe: (async (...names: string[]) => {
+      for (const name of names) channels.delete(name);
+      unsubscribed.push(...names);
+      return channels.size;
+    }) as SubscribeConnection['unsubscribe'],
     on: (_event: 'message', listener: Listener) => {
       listeners.push(listener);
       return connection;
@@ -139,5 +150,42 @@ describe('createPubSub', () => {
     await pubsub.subscribe('log-level:server', () => undefined);
     await pubsub.subscribe('log-level:worker', () => undefined);
     expect(subscriber).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops delivering to a handler once it unsubscribes, and leaves the others', async () => {
+    const { pubsub } = fakeRedis().startProcess();
+    const received: string[] = [];
+    const first = (message: string) => received.push(`a:${message}`);
+    await pubsub.subscribe('log-level:server', first);
+    await pubsub.subscribe('log-level:server', (message) => received.push(`b:${message}`));
+
+    await pubsub.unsubscribe('log-level:server', first);
+    await pubsub.publish('log-level:server', 'hello');
+
+    expect(received).toEqual(['b:hello']);
+  });
+
+  it('leaves the channel once its last handler unsubscribes, so Redis stops counting the process', async () => {
+    const redis = fakeRedis();
+    const { pubsub } = redis.startProcess();
+    const onMessage = () => undefined;
+    await pubsub.subscribe('log-level-reply:server:1', onMessage);
+    expect(await pubsub.publish('log-level-reply:server:1', 'hello')).toBe(1);
+
+    await pubsub.unsubscribe('log-level-reply:server:1', onMessage);
+
+    expect(await pubsub.publish('log-level-reply:server:1', 'hello')).toBe(0);
+  });
+
+  it('ignores unsubscribing a handler that was never subscribed', async () => {
+    const { pubsub, subscriber } = fakeRedis().startProcess();
+    await pubsub.subscribe('log-level:server', () => undefined);
+
+    await pubsub.unsubscribe('log-level:server', () => undefined);
+    await pubsub.unsubscribe('log-level:worker', () => undefined);
+
+    const connection = subscriber.mock.results[0]?.value as FakeSubscriber;
+    expect(connection.unsubscribed).toEqual([]);
+    expect(await pubsub.publish('log-level:server', 'hello')).toBe(1);
   });
 });

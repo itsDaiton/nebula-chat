@@ -5,7 +5,7 @@ import {
   shutdownTelemetry,
 } from '@nebula-chat/otel';
 import { env } from '@backend/env';
-import { logger, SERVICE_NAME } from '@backend/logger';
+import { INSTANCE_ID, logger, SERVICE_NAME } from '@backend/logger';
 
 initTelemetry(SERVICE_NAME, { logger, diagLevel: env.OTEL_LOG_LEVEL });
 
@@ -52,7 +52,12 @@ const start = async (): Promise<void> => {
   );
 
   // Not awaited: it never rejects, and a Redis that is down must not hold up boot.
-  void listenForLogLevelChanges({ logger, pubsub: redis.pubsub, serviceName: SERVICE_NAME });
+  void listenForLogLevelChanges({
+    logger,
+    pubsub: redis.pubsub,
+    serviceName: SERVICE_NAME,
+    instanceId: INSTANCE_ID,
+  });
 
   const shutdown = createShutdown({
     logger,

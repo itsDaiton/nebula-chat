@@ -1,14 +1,15 @@
 // Logger
 export { createLogger } from './logger';
 export type { CreateLoggerOptions, Logger } from './logger';
-export type { LevelOverrides, LogLevelChange } from './levelControl';
+export type { LevelOverrides, LogLevelChange, LogLevelState } from './levelControl';
 export { changeLogLevel } from './changeLogLevel';
 export {
+  collectLogLevelReports,
   listenForLogLevelChanges,
   MAX_LOG_LEVEL_TTL_SECONDS,
   publishLogLevelChange,
 } from './logLevelBroadcast';
-export type { LogLevelPubSub } from './logLevelBroadcast';
+export type { LogLevelPubSub, LogLevelReport, LogLevelReports } from './logLevelBroadcast';
 
 // Line conventions: the attribute + event catalogue and the typed writers
 export { ATTR, LOG_COMPONENTS } from './attributes';

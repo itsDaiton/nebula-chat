@@ -115,15 +115,13 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         title:
           type: string
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - id
         - title
@@ -141,8 +139,7 @@ components:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             - type: 'null'
         hasMore:
           type: boolean
@@ -157,13 +154,11 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         sessionId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         content:
           type: string
         role:
@@ -179,8 +174,7 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - id
         - sessionId
@@ -195,8 +189,7 @@ components:
       properties:
         uploadsEnabled:
           type: boolean
-          description: >-
-            Whether this server can store uploads; removing an image works
+          description: Whether this server can store uploads; removing an image works
             either way
       required:
         - uploadsEnabled
@@ -211,6 +204,83 @@ components:
       required:
         - image
       additionalProperties: false
+    LogLevelReports:
+      type: object
+      properties:
+        receivers:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: How many server instances received the request; more than reports
+            means some did not answer in time
+        reports:
+          maxItems: 100
+          type: array
+          items:
+            $ref: '#/components/schemas/LogLevelReport'
+          description: One per instance that answered, by instance
+      required:
+        - receivers
+        - reports
+      additionalProperties: false
+    LogLevelReport:
+      type: object
+      properties:
+        instance:
+          type: string
+          description: The server instance, as its hostname and process id
+        levels:
+          maxItems: 7
+          type: array
+          items:
+            $ref: '#/components/schemas/LogLevelState'
+          description: The root level, then every component
+      required:
+        - instance
+        - levels
+      additionalProperties: false
+    LogLevelState:
+      type: object
+      properties:
+        target:
+          type: string
+          enum:
+            - root
+            - auth
+            - chat
+            - http
+            - llm
+            - otel
+            - redis
+          description: The root level, or the `nebula.component` this level applies to
+        level:
+          type: string
+          enum:
+            - fatal
+            - error
+            - warn
+            - info
+            - debug
+            - trace
+            - silent
+        expiresAt:
+          anyOf:
+            - type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: 'null'
+          description: When the runtime change reverts; `null` at the boot-time level
+        operator:
+          description: Who asked for the runtime change; `null` at the boot-time level
+          type:
+            - string
+            - 'null'
+      required:
+        - target
+        - level
+        - expiresAt
+        - operator
+      additionalProperties: false
     LogLevelChange:
       type: object
       properties:
@@ -223,8 +293,7 @@ components:
           description: When the change reverts
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - receivers
         - expiresAt
@@ -264,8 +333,7 @@ paths:
       summary: Stream chat completion
       tags:
         - Chat
-      description: >-
-        Stream a chat completion response from an AI model with automatic
+      description: Stream a chat completion response from an AI model with automatic
         session and message persistence.
       requestBody:
         required: true
@@ -298,12 +366,10 @@ paths:
                 sessionId:
                   type: string
                   format: uuid
-                  pattern: >-
-                    ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                 regenerate:
                   default: false
-                  description: >-
-                    Bypass and overwrite any cached response, forcing a fresh
+                  description: Bypass and overwrite any cached response, forcing a fresh
                     completion
                   type: boolean
               required:
@@ -364,10 +430,9 @@ paths:
       summary: Get message allowance
       tags:
         - Chat
-      description: >-
-        How much of the caller's message allowance is left. Metered users
+      description: "How much of the caller's message allowance is left. Metered users
         (Guests and unverified Registered users) get their limit, live count and
-        remaining sends; verified Registered users get `metered: false`.
+        remaining sends; verified Registered users get `metered: false`."
       responses:
         '200':
           description: The caller's message allowance
@@ -436,9 +501,8 @@ paths:
       summary: List sessions
       tags:
         - Sessions
-      description: >-
-        Retrieve the caller’s own sessions with cursor-based pagination. Returns
-        up to 10 sessions by default.
+      description: Retrieve the caller’s own sessions with cursor-based pagination.
+        Returns up to 10 sessions by default.
       parameters:
         - schema:
             default: 10
@@ -453,8 +517,7 @@ paths:
             description: Pagination cursor for fetching the next page of sessions
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
           description: Pagination cursor for fetching the next page of sessions
@@ -532,8 +595,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
@@ -585,8 +647,7 @@ paths:
                 sessionId:
                   type: string
                   format: uuid
-                  pattern: >-
-                    ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                 role:
                   type: string
                   enum:
@@ -642,17 +703,15 @@ paths:
       summary: List messages
       tags:
         - Messages
-      description: >-
-        Retrieve the messages across the caller’s own sessions, newest first.
-        Pass `sessionId` to list one session’s messages, oldest first; a session
-        the caller does not own lists as empty.
+      description: Retrieve the messages across the caller’s own sessions, newest
+        first. Pass `sessionId` to list one session’s messages, oldest first; a
+        session the caller does not own lists as empty.
       parameters:
         - schema:
             description: Only list the messages of this session, oldest first
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: sessionId
           description: Only list the messages of this session, oldest first
@@ -695,8 +754,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: messageId
           required: true
@@ -763,10 +821,9 @@ paths:
       summary: Upload Profile image
       tags:
         - Profile image
-      description: >-
-        Set the Registered user's Profile image from a JPEG, PNG or WebP of up
-        to 5 MB, sent as the raw request body. It is stored as a 256×256 WebP;
-        the previous upload is deleted.
+      description: Set the Registered user's Profile image from a JPEG, PNG or WebP of
+        up to 5 MB, sent as the raw request body. It is stored as a 256×256
+        WebP; the previous upload is deleted.
       requestBody:
         required: true
         content:
@@ -842,8 +899,7 @@ paths:
       summary: Remove Profile image
       tags:
         - Profile image
-      description: >-
-        Remove the Registered user's Profile image, so their Avatar shows
+      description: Remove the Registered user's Profile image, so their Avatar shows
         initials. Succeeds when there is none.
       responses:
         '204':
@@ -867,15 +923,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
   /api/internal/log-level:
+    get:
+      operationId: getLogLevels
+      summary: Get log levels
+      tags:
+        - Operator
+      description: Report the root log level and every component's, with the expiry
+        and operator of any runtime change, from every running server instance.
+        Each instance answers for itself; one that does not answer within 2
+        seconds is left out, so `receivers` exceeds the number of reports.
+        Requires the operator token, not a User session.
+      security:
+        - operatorToken: []
+      responses:
+        '200':
+          description: The levels each server instance applies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogLevelReports'
+        '403':
+          description: Missing or wrong operator token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: No operator token is configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
     post:
       operationId: changeLogLevel
       summary: Change log level
       tags:
         - Operator
-      description: >-
-        Change the root log level, or one component's, on every running server
-        instance. It reverts to the boot-time level after `ttlSeconds`. Requires
-        the operator token, not a User session.
+      description: Change the root log level, or one component's, on every running
+        server instance. It reverts to the boot-time level after `ttlSeconds`.
+        Requires the operator token, not a User session.
       requestBody:
         required: true
         content:
@@ -884,9 +976,7 @@ paths:
               type: object
               properties:
                 component:
-                  description: >-
-                    The `nebula.component` to change; omit it to change the root
-                    level
+                  description: The `nebula.component` to change; omit it to change the root level
                   type: string
                   enum:
                     - auth

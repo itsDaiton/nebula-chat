@@ -10,7 +10,57 @@ import type { ErrorEnvelope } from '../model/errorEnvelope';
 
 import type { LogLevelChange } from '../model/logLevelChange';
 
+import type { LogLevelReports } from '../model/logLevelReports';
+
 import { apiFetch } from '../../apiFetch';
+
+export type getLogLevelsResponse200 = {
+  data: LogLevelReports;
+  status: 200;
+};
+
+export type getLogLevelsResponse403 = {
+  data: ErrorEnvelope;
+  status: 403;
+};
+
+export type getLogLevelsResponse404 = {
+  data: ErrorEnvelope;
+  status: 404;
+};
+
+export type getLogLevelsResponse500 = {
+  data: ErrorEnvelope;
+  status: 500;
+};
+
+export type getLogLevelsResponseSuccess = getLogLevelsResponse200 & {
+  headers: Headers;
+};
+export type getLogLevelsResponseError = (
+  getLogLevelsResponse403 | getLogLevelsResponse404 | getLogLevelsResponse500
+) & {
+  headers: Headers;
+};
+
+export type getLogLevelsResponse = getLogLevelsResponseSuccess | getLogLevelsResponseError;
+
+export const getGetLogLevelsUrl = () => {
+  return `/api/internal/log-level`;
+};
+
+/**
+ * Report the root log level and every component's, with the expiry and operator of any runtime change, from every running server instance. Each instance answers for itself; one that does not answer within 2 seconds is left out, so `receivers` exceeds the number of reports. Requires the operator token, not a User session.
+ * @summary Get log levels
+ */
+export const getLogLevels = async (
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<getLogLevelsResponse> => {
+  return apiFetch<getLogLevelsResponse>(getGetLogLevelsUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
 
 export type changeLogLevelResponse202 = {
   data: LogLevelChange;

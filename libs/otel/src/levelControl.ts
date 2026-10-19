@@ -1,5 +1,6 @@
 import type pino from 'pino';
 import type { LevelWithSilent } from 'pino';
+import { LOG_COMPONENTS } from './attributes';
 import type { LogComponent, LogLevelTarget } from './attributes';
 import { logEvent } from './logEvent';
 import type { LogLevel } from './logLevels';
@@ -17,6 +18,16 @@ export type LogLevelChange = {
   operator: string;
 };
 
+/** The level one target is at right now, and the runtime change behind it if there is one. */
+export type LogLevelState = {
+  target: LogLevelTarget;
+  level: LevelWithSilent;
+  /** When the runtime change reverts, as an ISO 8601 timestamp; `null` at the boot-time level. */
+  expiresAt: string | null;
+  /** Who asked for the runtime change; `null` at the boot-time level. */
+  operator: string | null;
+};
+
 /** The level state of one logger tree: its boot-time levels plus any runtime change. */
 export type LevelControl = {
   /** The level a new child of `component` takes, or `undefined` to inherit its parent's. */
@@ -24,6 +35,8 @@ export type LevelControl = {
   /** Remembers a child `componentLogger` made, so a later change reaches it. */
   track: (component: LogComponent, child: object) => void;
   change: (change: LogLevelChange) => void;
+  /** The root's level, then every component's, as this process applies them now. */
+  snapshot: () => LogLevelState[];
 };
 
 const LEVEL_CONTROL = Symbol('nebula.levelControl');
@@ -32,7 +45,12 @@ type WithControl = { [LEVEL_CONTROL]?: LevelControl };
 
 type Tracked = { component: LogComponent; ref: WeakRef<pino.Logger> };
 
-type RuntimeLevel = { level: LogLevel; timer: ReturnType<typeof setTimeout> };
+type RuntimeLevel = {
+  level: LogLevel;
+  expiresAt: string;
+  operator: string;
+  timer: ReturnType<typeof setTimeout>;
+};
 
 const createLevelControl = (root: pino.Logger, boot: LevelOverrides): LevelControl => {
   const bootRoot = root.level;
@@ -100,9 +118,9 @@ const createLevelControl = (root: pino.Logger, boot: LevelOverrides): LevelContr
     clearTimeout(runtime.get(target)?.timer);
     // Unref'd: a pending revert must not keep a process alive that is shutting down.
     const timer = setTimeout(() => revert(target, level, operator), ttlSeconds * 1000).unref();
-    runtime.set(target, { level, timer });
-    apply();
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
+    runtime.set(target, { level, expiresAt, operator, timer });
+    apply();
     logEvent(
       auditLog(),
       'info',
@@ -118,7 +136,18 @@ const createLevelControl = (root: pino.Logger, boot: LevelOverrides): LevelContr
     );
   };
 
-  return { levelFor, track, change };
+  const snapshot = (): LogLevelState[] =>
+    (['root', ...LOG_COMPONENTS] as const).map((target) => {
+      const active = runtime.get(target);
+      return {
+        target,
+        level: levelOf(target),
+        expiresAt: active?.expiresAt ?? null,
+        operator: active?.operator ?? null,
+      };
+    });
+
+  return { levelFor, track, change, snapshot };
 };
 
 /**

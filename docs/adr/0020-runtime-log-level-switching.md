@@ -1,6 +1,6 @@
 # ADR-0020: Runtime log-level switching — an operator-token route, broadcast over Redis pub/sub, reverting on expiry
 
-- **Status:** Accepted — implemented by NEB-370 (#370)
+- **Status:** Accepted — implemented by NEB-370 (#370). Amended by [ADR-0034](./0034-reading-log-levels-from-every-instance.md): instances also answer report requests, and `LogLevelPubSub` gains `unsubscribe`
 - **Date:** 2026-10-02
 - **Deciders:** @itsDaiton
 - **Related:** [ADR-0017](./0017-structured-logging-conventions.md) — deferred this as "Runtime level switching"; [ADR-0009](./0009-nebula-chat-redis-lib.md) — `pubsub` was one of its designed-for seams

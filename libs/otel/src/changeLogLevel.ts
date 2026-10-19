@@ -1,6 +1,6 @@
 import type { Logger } from './logger';
 import { levelControlOf } from './levelControl';
-import type { LogLevelChange } from './levelControl';
+import type { LogLevelChange, LogLevelState } from './levelControl';
 
 /**
  * Changes the root level, or one component's, on a running logger tree, and
@@ -13,4 +13,13 @@ export const changeLogLevel = (logger: Logger, change: LogLevelChange): void => 
     throw new Error('changeLogLevel needs a logger built by createLogger');
   }
   control.change(change);
+};
+
+/** The root's level, then every component's, as this logger tree applies them now. */
+export const readLogLevels = (logger: Logger): LogLevelState[] => {
+  const control = levelControlOf(logger);
+  if (!control) {
+    throw new Error('readLogLevels needs a logger built by createLogger');
+  }
+  return control.snapshot();
 };
