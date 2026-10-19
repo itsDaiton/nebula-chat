@@ -225,7 +225,7 @@ jobs:
             -Dsonar.organization=itsdaiton
             -Dsonar.projectName=${{ matrix.project }}
             -Dsonar.sources=src
-            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/generated/**
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/generated/**,**/routeTree.gen.ts
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.tests=src
             -Dsonar.test.inclusions=**/tests/**,**/test/**,**/*.test.ts,**/*.test.tsx
