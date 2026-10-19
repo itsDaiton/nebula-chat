@@ -365,7 +365,6 @@ paths:
                         enum:
                           - user
                           - assistant
-                          - system
                       content:
                         type: string
                         minLength: 1
@@ -671,7 +670,6 @@ paths:
                   enum:
                     - user
                     - assistant
-                    - system
                 content:
                   type: string
                   minLength: 1
