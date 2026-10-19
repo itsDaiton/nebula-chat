@@ -3,7 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { Outlet, useRouteContext } from '@tanstack/react-router';
 import { AuthGate } from '@/modules/auth/components/AuthGate';
 import { LegacyRouter } from '@/routing/LegacyRouter';
-import { RouterDevtools } from '@/shared/components/RouterDevtools';
+import { RouterDevtools } from '@/routing/RouterDevtools';
 import { shikiAdapter } from '@/shared/components/ui/code-block-adapter';
 import { Toaster } from '@/shared/components/ui/toaster';
 import { ThemeProvider } from '@/theme/providers/ThemeProvider';

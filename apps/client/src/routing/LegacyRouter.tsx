@@ -5,12 +5,7 @@ import type { LegacyRouterProps } from '@/routing/types/types';
 
 const toHref = (to: To) => (typeof to === 'string' ? to : createPath(to));
 
-/**
- * react-router on TanStack Router's history, so the two never disagree about the URL: the legacy
- * tree and the components still on react-router hooks read TanStack's location, and their
- * navigations go through TanStack's history, which TanStack then matches. Goes once the last
- * route has moved (NEB-528).
- */
+/** react-router reading TanStack's location and navigating through its history, so both see one URL. */
 export const LegacyRouter = ({ children }: LegacyRouterProps) => {
   const { history } = useRouter();
   const { pathname, searchStr, hash, state } = useLocation();
@@ -32,7 +27,7 @@ export const LegacyRouter = ({ children }: LegacyRouterProps) => {
         search: searchStr,
         hash: hash ? `#${hash}` : '',
         state,
-        key: state.key,
+        key: state.__TSR_key,
       }}
       navigator={navigator}
     >

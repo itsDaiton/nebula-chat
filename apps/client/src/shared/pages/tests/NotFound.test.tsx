@@ -1,12 +1,10 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
-import { getListSessionsMockHandler } from '@/libs/api/generated/sessions/sessions.msw';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 import { holdSession } from '@/test/auth';
-import { server } from '@/test/msw';
+import { serveChatPage } from '@/test/chat';
 import { renderRoute } from '@/test/renderRoute';
 
 vi.mock('@/theme/hooks/useColorMode', () => ({
@@ -22,10 +20,7 @@ const UNKNOWN_URL = '/no-such-page';
 
 beforeEach(async () => {
   vi.clearAllMocks();
-  server.use(
-    getListSessionsMockHandler({ sessions: [], nextCursor: null, hasMore: false }),
-    getGetMessageAllowanceMockHandler({ metered: false }),
-  );
+  serveChatPage();
   await holdSession({});
 });
 

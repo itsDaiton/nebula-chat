@@ -3,6 +3,7 @@ import { RouterProvider, createMemoryHistory } from '@tanstack/react-router';
 import { render, type RenderOptions, type RenderResult } from '@testing-library/react';
 import { SESSION_BOOTSTRAP_KEY } from '@/modules/auth/hooks/useSessionBootstrap';
 import { createAppRouter } from '@/routing/router';
+import type { AppRouter } from '@/routing/types/types';
 import { createTestQueryClient } from '@/test/render';
 
 type Options = Omit<RenderOptions, 'wrapper'> & {
@@ -10,21 +11,11 @@ type Options = Omit<RenderOptions, 'wrapper'> & {
   queryClient?: QueryClient;
 };
 
-/**
- * Boots the app's real router at `path` on a memory history, with the root route's providers
- * around the page: the page seam, so a test drives a route as the app would.
- *
- * AuthGate's bootstrap is marked done, so the test serves the session itself (`holdSession`,
- * `mockGetSession`) and the page renders at once rather than behind the gate's spinner. The
- * router has loaded `path` before the first render; a navigation after it is awaited with
- * `findBy*`, or through the returned `router`.
- */
+/** The app's real router loaded at `path`; AuthGate is passed, so the test serves the session. */
 export const renderRoute = async (
   path: string,
   { queryClient = createTestQueryClient(), ...options }: Options = {},
-): Promise<
-  RenderResult & { router: ReturnType<typeof createAppRouter>; queryClient: QueryClient }
-> => {
+): Promise<RenderResult & { router: AppRouter; queryClient: QueryClient }> => {
   queryClient.setQueryData(SESSION_BOOTSTRAP_KEY, null);
   const router = createAppRouter({
     queryClient,

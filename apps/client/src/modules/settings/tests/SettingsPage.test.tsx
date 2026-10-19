@@ -2,13 +2,11 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
 import {
   getGetProfileImageSettingsMockHandler,
   getRemoveProfileImageMockHandler,
   getUploadProfileImageMockHandler,
 } from '@/libs/api/generated/profile-image/profile-image.msw';
-import { getListSessionsMockHandler } from '@/libs/api/generated/sessions/sessions.msw';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import { usePasswordChangeStore } from '@/modules/settings/stores/usePasswordChangeStore';
 import { useSettingsSearchStore } from '@/modules/settings/stores/useSettingsSearchStore';
@@ -28,6 +26,7 @@ import {
   mockUpdateUser,
   refreshSession,
 } from '@/test/auth';
+import { serveChatPage } from '@/test/chat';
 import { aSendableFile } from '@/test/files';
 import { server } from '@/test/msw';
 import { renderRoute } from '@/test/renderRoute';
@@ -79,12 +78,8 @@ const countRequests = () => {
 
 beforeEach(() => {
   vi.restoreAllMocks();
-  server.use(
-    getGetProfileImageSettingsMockHandler({ uploadsEnabled: true }),
-    // What the chat page loads once a flow lands there.
-    getListSessionsMockHandler({ sessions: [], nextCursor: null, hasMore: false }),
-    getGetMessageAllowanceMockHandler({ metered: false }),
-  );
+  server.use(getGetProfileImageSettingsMockHandler({ uploadsEnabled: true }));
+  serveChatPage();
   usePasswordVisibilityStore.setState({ visibleFields: {} });
   usePasswordChangeStore.setState({ isPasswordFormOpen: false });
   useSettingsSearchStore.setState({ query: '' });

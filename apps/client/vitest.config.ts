@@ -49,7 +49,7 @@ export default defineConfig({
         'src/shared/components/ui/code-block-adapter.ts',
         'src/shared/components/scrollbar.ts',
         'src/resources.ts',
-        'src/shared/components/RouterDevtools.tsx',
+        'src/routing/RouterDevtools.tsx',
       ],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },

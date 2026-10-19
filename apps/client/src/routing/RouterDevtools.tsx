@@ -1,9 +1,6 @@
 import { lazy } from 'react';
 
-/**
- * TanStack Router's devtools under `vite dev` only. Not on `import.meta.env.DEV`, which Vitest
- * sets too; a production build replaces `MODE`, so the import is dropped from the bundle.
- */
+// `vite dev` only: Vitest sets `DEV` too, and a production build drops the import with `MODE`.
 export const RouterDevtools =
   import.meta.env.MODE === 'development'
     ? lazy(() =>
