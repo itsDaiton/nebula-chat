@@ -62,8 +62,7 @@ export const registerLogLevelCommands = (program: Command, ctx: Context) => {
       '\nExample:\n  $ NEBULA_OPERATOR_TOKEN=… nebula log-level set redis debug --ttl 600',
     )
     .action(async (component: string, level: ChangeLogLevelBody['level'], options: SetOptions) => {
-      const profile = await ctx.profile();
-      const target = operatorTarget(profile, ctx.deps);
+      const { profile, target } = await operatorTarget(ctx);
       const { env } = ctx.deps;
       const operator = options.operator ?? env.NEBULA_OPERATOR ?? env.USER ?? env.USERNAME;
       if (!operator?.trim()) {

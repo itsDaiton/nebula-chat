@@ -3,13 +3,18 @@ import { dirname, join } from 'node:path';
 import { z } from 'zod';
 import { CliError, UsageError } from '@cli/errors';
 
+/** Only http(s), stored without a trailing slash so request paths join onto it cleanly. */
+export const serverUrlSchema = z
+  .url({ protocol: /^https?$/ })
+  .transform((url) => url.replace(/\/+$/, ''));
+
 const configSchema = z.object({
   defaultProfile: z.string().optional(),
-  profiles: z.record(z.string(), z.object({ url: z.string() })).default({}),
+  profiles: z.record(z.string(), z.object({ url: serverUrlSchema })).default({}),
 });
 
 export type Config = z.infer<typeof configSchema>;
-export type Profile = { name: string; url: string };
+export type CliProfile = { name: string; url: string };
 
 /** `$XDG_CONFIG_HOME/nebula-chat/config.json`, falling back to `~/.config` as the XDG spec does. */
 export const configFilePath = (env: Record<string, string | undefined>, homeDir: string) => {
@@ -48,7 +53,7 @@ export const saveConfig = async (path: string, config: Config) => {
 };
 
 /** The `--profile` one if given, else the default one. */
-export const resolveProfile = (config: Config, requested: string | undefined): Profile => {
+export const resolveProfile = (config: Config, requested: string | undefined): CliProfile => {
   const name = requested ?? config.defaultProfile;
   if (name === undefined) {
     throw new UsageError(
@@ -61,3 +66,10 @@ export const resolveProfile = (config: Config, requested: string | undefined): P
   }
   return { name, url: profile.url };
 };
+
+/** A CLI profile as `profile` commands print it. */
+export const profileSummary = (config: Config, name: string, url: string) => ({
+  name,
+  url,
+  default: config.defaultProfile === name,
+});

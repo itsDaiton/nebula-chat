@@ -10,7 +10,6 @@ export const createContext = (deps: Deps, options: () => GlobalOptions) => {
   return {
     deps,
     configFile,
-    options,
     profile: async () => resolveProfile(await loadConfig(configFile), options().profile),
     print: (result: Result) =>
       print(result, {

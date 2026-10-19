@@ -1,20 +1,17 @@
 import { type Command, InvalidArgumentError } from 'commander';
-import { loadConfig, saveConfig } from '@cli/config/config';
+import {
+  loadConfig,
+  profileSummary,
+  resolveProfile,
+  saveConfig,
+  serverUrlSchema,
+} from '@cli/config/config';
 import type { Context } from '@cli/context';
-import { UsageError } from '@cli/errors';
 
-/** Only http(s), stored without a trailing slash so request paths join onto it cleanly. */
 const parseServerUrl = (value: string) => {
-  let url: URL;
-  try {
-    url = new URL(value);
-  } catch {
-    throw new InvalidArgumentError(`'${value}' is not an http(s) URL.`);
-  }
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    throw new InvalidArgumentError(`'${value}' is not an http(s) URL.`);
-  }
-  return url.href.replace(/\/+$/, '');
+  const parsed = serverUrlSchema.safeParse(value);
+  if (!parsed.success) throw new InvalidArgumentError(`'${value}' is not an http(s) URL.`);
+  return parsed.data;
 };
 
 export const registerProfileCommands = (program: Command, ctx: Context) => {
@@ -35,7 +32,7 @@ export const registerProfileCommands = (program: Command, ctx: Context) => {
       config.defaultProfile ??= name;
       await saveConfig(ctx.configFile, config);
       ctx.print({
-        data: { name, url, default: config.defaultProfile === name },
+        data: profileSummary(config, name, url),
         view: {
           kind: 'message',
           text: `${existed ? 'Updated' : 'Added'} profile '${name}' (${url}).`,
@@ -48,11 +45,9 @@ export const registerProfileCommands = (program: Command, ctx: Context) => {
     .description('list the profiles; * marks the default')
     .action(async () => {
       const config = await loadConfig(ctx.configFile);
-      const profiles = Object.entries(config.profiles).map(([name, { url }]) => ({
-        name,
-        url,
-        default: config.defaultProfile === name,
-      }));
+      const profiles = Object.entries(config.profiles).map(([name, { url }]) =>
+        profileSummary(config, name, url),
+      );
       ctx.print({
         data: profiles,
         view: {
@@ -74,15 +69,12 @@ export const registerProfileCommands = (program: Command, ctx: Context) => {
     .argument('<name>', 'the profile to use from now on')
     .action(async (name: string) => {
       const config = await loadConfig(ctx.configFile);
-      const target = config.profiles[name];
-      if (target === undefined) {
-        throw new UsageError(`Unknown profile '${name}'. See \`nebula profile list\`.`);
-      }
+      const { url } = resolveProfile(config, name);
       config.defaultProfile = name;
       await saveConfig(ctx.configFile, config);
       ctx.print({
-        data: { name, url: target.url, default: true },
-        view: { kind: 'message', text: `Now using profile '${name}' (${target.url}).` },
+        data: profileSummary(config, name, url),
+        view: { kind: 'message', text: `Now using profile '${name}' (${url}).` },
       });
     });
 };

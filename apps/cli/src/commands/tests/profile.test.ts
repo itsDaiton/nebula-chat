@@ -196,6 +196,15 @@ describe('nebula profile', () => {
       expect(code).toBe(1);
       expect(cli.stderr()).toContain(`${cli.configFile} is not a valid config file`);
     });
+    it('exits 1 when a hand-edited profile URL is not http(s)', async () => {
+      const cli = await createHarness();
+      await cli.writeConfig({ profiles: { local: { url: 'ftp://files.example' } } });
+
+      const code = await cli.run('profile', 'list');
+
+      expect(code).toBe(1);
+      expect(cli.stderr()).toContain(`${cli.configFile} is not a valid config file`);
+    });
   });
 
   describe('use', () => {

@@ -168,6 +168,15 @@ describe('nebula log-level set', () => {
       expect(cli.stdout()).toBe('');
     });
 
+    it('when NEBULA_OPERATOR_TOKEN is not set and no profile has been added either', async () => {
+      cli = await operatorCli({ NEBULA_OPERATOR_TOKEN: undefined });
+
+      const code = await cli.run('log-level', 'set', 'redis', 'debug');
+
+      expect(code).toBe(3);
+      expect(cli.stderr()).toContain('NEBULA_OPERATOR_TOKEN is not set');
+    });
+
     it('when the server rejects the token (403)', async () => {
       answerWith(403, envelope('Forbidden', 'This action requires the operator token.'));
 
