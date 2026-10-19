@@ -1,7 +1,13 @@
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { NotFound } from '@/shared/pages/NotFound';
-import { renderWithChakra } from '@/test/render';
+import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
+import { getListSessionsMockHandler } from '@/libs/api/generated/sessions/sessions.msw';
+import { resources } from '@/resources';
+import { route } from '@/routing/routes';
+import { holdSession } from '@/test/auth';
+import { server } from '@/test/msw';
+import { renderRoute } from '@/test/renderRoute';
 
 vi.mock('@/theme/hooks/useColorMode', () => ({
   useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
@@ -12,21 +18,30 @@ vi.mock('@/theme/hooks/useColorMode', () => ({
 const layout = vi.hoisted(() => ({ isMobile: true, showSidePanels: false, showRightPanel: false }));
 vi.mock('@/shared/hooks/useResponsiveLayout', () => ({ useResponsiveLayout: () => layout }));
 
-beforeEach(() => {
+const UNKNOWN_URL = '/no-such-page';
+
+beforeEach(async () => {
   vi.clearAllMocks();
+  server.use(
+    getListSessionsMockHandler({ sessions: [], nextCursor: null, hasMore: false }),
+    getGetMessageAllowanceMockHandler({ metered: false }),
+  );
+  await holdSession({});
 });
 
 describe('NotFound', () => {
-  it('tells the user the page does not exist', () => {
-    const { container } = renderWithChakra(<NotFound />);
+  it('tells the user the page does not exist', async () => {
+    await renderRoute(UNKNOWN_URL);
 
-    expect(container.textContent).toBeTruthy();
+    expect(screen.getByText(resources.notFound.title)).toBeInTheDocument();
   });
 
-  it('offers a way back', () => {
-    renderWithChakra(<NotFound />);
+  it('offers a way back to the chat', async () => {
+    const { router } = await renderRoute(UNKNOWN_URL);
 
-    const interactive = [...screen.queryAllByRole('link'), ...screen.queryAllByRole('button')];
-    expect(interactive.length).toBeGreaterThan(0);
+    await userEvent.click(screen.getByRole('button', { name: resources.notFound.action }));
+
+    expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(route.chat.root());
   });
 });

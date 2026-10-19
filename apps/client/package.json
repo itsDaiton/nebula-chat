@@ -20,6 +20,7 @@
     "@hookform/resolvers": "^5.9.1",
     "@nebula-chat/errors": "workspace:*",
     "@tanstack/react-query": "^5.104.1",
+    "@tanstack/react-router": "^1.170.41",
     "axios": "^1.18.0",
     "better-auth": "catalog:",
     "next-themes": "^0.4.6",
@@ -36,6 +37,8 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^10.6.0",
+    "@tanstack/react-router-devtools": "^1.167.2",
+    "@tanstack/router-plugin": "^1.168.42",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",

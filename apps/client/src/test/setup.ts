@@ -67,4 +67,6 @@ beforeAll(() => {
   );
 
   window.HTMLElement.prototype.scrollIntoView = vi.fn();
+  // TanStack Router restores the scroll position after each navigation.
+  window.scrollTo = vi.fn();
 });

@@ -8,6 +8,7 @@ apps/client/build
 apps/server/dist
 apps/server/node_modules
 apps/server/src/generated
+apps/client/src/routeTree.gen.ts
 libs/db/migrations
 
 *.log
