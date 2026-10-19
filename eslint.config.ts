@@ -25,6 +25,7 @@ export default [
       'apps/server/src/generated/**',
       'libs/db/migrations/**',
       'apps/client/src/libs/api/generated/**',
+      'apps/client/src/routeTree.gen.ts',
       'apps/cli/src/api/generated/**',
     ],
   },

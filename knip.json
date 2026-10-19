@@ -6,7 +6,8 @@
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreFiles": ["src/libs/api/generated/**"],
       "ignoreIssues": {
-        "src/libs/api/generated/**": ["exports", "types"]
+        "src/libs/api/generated/**": ["exports", "types"],
+        "src/routeTree.gen.ts": ["exports", "types"]
       }
     },
     "apps/server": {

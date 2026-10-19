@@ -1,5 +1,5 @@
 import { Box, Button, Stack, Text } from '@chakra-ui/react';
-import { NavLink } from 'react-router';
+import { Link } from '@tanstack/react-router';
 import { SettingsSearch } from '@/modules/settings/components/SettingsSearch';
 import { SETTINGS_SECTIONS } from '@/modules/settings/utils/settingsSections';
 import { resources } from '@/resources';
@@ -43,10 +43,10 @@ export const SettingsNav = () => (
           gap={3}
           _currentPage={{ bg: 'bg.muted', fontWeight: 'semibold' }}
         >
-          <NavLink to={path} end>
+          <Link to={path} activeOptions={{ exact: true }}>
             <SectionIcon />
             {label}
-          </NavLink>
+          </Link>
         </Button>
       ))}
     </Stack>

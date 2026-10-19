@@ -1,6 +1,6 @@
 import { Box, Text, VisuallyHidden } from '@chakra-ui/react';
+import { Navigate } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
-import { Navigate } from 'react-router';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { AccountIdSetting } from '@/modules/settings/components/AccountIdSetting';
 import { DeleteAccountSetting } from '@/modules/settings/components/DeleteAccountSetting';
