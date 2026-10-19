@@ -23,7 +23,7 @@ const parseFrame = (frame: string) => {
 describe('SSE formatters', () => {
   it('terminates every frame with a blank line so the client flushes it', () => {
     const frames = [
-      sseSessionCreated('c1'),
+      sseSessionCreated('s1'),
       sseUserMessageCreated('m1'),
       sseAssistantMessageCreated('m2'),
       sseToken('hi'),
@@ -39,9 +39,9 @@ describe('SSE formatters', () => {
   });
 
   it('emits session-created with the session id', () => {
-    expect(parseFrame(sseSessionCreated('conv-1'))).toEqual({
+    expect(parseFrame(sseSessionCreated('session-1'))).toEqual({
       event: 'session-created',
-      data: { sessionId: 'conv-1' },
+      data: { sessionId: 'session-1' },
     });
   });
 

@@ -167,7 +167,7 @@ describe('createUserMessage', () => {
     });
   });
 
-  it('creates a session when none is supplied, owned by the session user', async () => {
+  it("creates a session when none is supplied, owned by the auth session's user", async () => {
     const result = await createUserMessage(undefined, 'hello there', 'user', OWNER_ID);
 
     expect(result.isNewSession).toBe(true);

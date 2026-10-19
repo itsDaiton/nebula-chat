@@ -20,7 +20,7 @@ describe('routes', () => {
   });
 
   it('builds a session path from its id', () => {
-    expect(route.chat.session('abc')).toBe('/c/abc');
+    expect(route.chat.session('abc')).toBe('/s/abc');
   });
 
   it('builds the auth path', () => {

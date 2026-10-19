@@ -202,7 +202,7 @@ describe('GET /api/messages/:messageId', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json().id).toBe(MESSAGE_ID);
-    // Owner-scoped: the lookup is filtered to the session user.
+    // Owner-scoped: the lookup is filtered to the auth session's user.
     expect(repo.findById).toHaveBeenCalledWith({ messageId: MESSAGE_ID }, REGISTERED_USER_ID);
   });
 
@@ -278,7 +278,7 @@ describe('GET /api/messages', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toHaveLength(1);
-    // Owner-scoped: the filter is applied inside the session user's messages.
+    // Owner-scoped: the filter is applied inside the auth session's user's messages.
     expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, SESSION_ID);
   });
 

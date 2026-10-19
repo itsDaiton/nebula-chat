@@ -25,9 +25,8 @@ export type CachedStreamData = {
 };
 
 /**
- * The cache key for a chat request. Kept exactly as the pre-migration cache had
- * it — session + model + hash of the last user message — per ADR-0009. The
- * correct-key rework (full context, temperature, system prompt) is a separate
+ * The cache key for a chat request: session + model + hash of the last user
+ * message, per ADR-0009. The correct-key rework (full context, temperature, system prompt) is a separate
  * future ticket. Key composition and hashing come from `@nebula-chat/redis`.
  */
 export const chatCacheKey = (data: CreateChatStreamDTO): string => {

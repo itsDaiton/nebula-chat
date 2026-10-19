@@ -319,7 +319,7 @@ describe('useChatStream — session creation', () => {
 
     await sendMessage(result);
 
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith(`/c/${NEW_ID}`, { replace: true }));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith(`/s/${NEW_ID}`, { replace: true }));
   });
 
   it('does not navigate when continuing an existing session', async () => {

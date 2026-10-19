@@ -4,7 +4,7 @@ import type { SessionListItemProps } from '@/modules/sessions/types/types';
 import { formatDate } from '@/shared/utils/dateUtils';
 
 export const SessionListItem = ({ session, onClick }: SessionListItemProps) => {
-  const match = useMatch('/c/:id');
+  const match = useMatch('/s/:id');
   const isActive = match?.params.id === session.id;
 
   return (

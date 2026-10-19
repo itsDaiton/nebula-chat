@@ -210,7 +210,7 @@ Routes are defined in `routes.ts` as typed helpers and consumed through React Ro
 import { route } from '@/routes';
 
 navigate(route.chat.root()); // /
-navigate(route.chat.session(id)); // /c/:id
+navigate(route.chat.session(id)); // /s/:id
 ```
 
 `RouterProvider.tsx` sets up the React Router instance. Route components live in `modules/*/` as `*Page.tsx` files.

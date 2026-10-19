@@ -57,13 +57,13 @@ The instance is configured with:
 | Setting                  | Value                                                                                                                                                           |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Database adapter         | Drizzle over `@nebula-chat/db` (`provider: 'pg'`). `advanced.database.generateId: 'uuid'` so Postgres generates ids, keeping `sessions.userId` a plain uuid FK. |
-| Email / password         | Enabled. Password hashing is better-auth's built-in default (scrypt). Password reset enabled; a reset revokes the user's other sessions.                        |
+| Email / password         | Enabled. Password hashing is better-auth's built-in default (scrypt). Password reset enabled; a reset revokes the user's other auth sessions.                   |
 | Email verification       | Sent on sign-up (`sendOnSignUp`), **not required** to sign in; following the link verifies and signs the user in. See [Email](#email).                          |
 | Social providers         | Google and GitHub, each enabled only when the server is given its OAuth client id + secret. See [Social sign-in](#social-sign-in).                              |
 | Anonymous plugin         | `POST /sign-in/anonymous` mints a Guest. Its `onLinkAccount` hook runs the claim.                                                                               |
 | Have I Been Pwned plugin | Rejects sign-up with a known-breached password (`400 PASSWORD_COMPROMISED`); a reset is checked by the reset guard instead.                                     |
 | openAPI plugin           | Serves the auth API reference — see [API reference](#interactive-reference).                                                                                    |
-| `secondaryStorage`       | The `@nebula-chat/redis` `authStore` — sessions, verification records, and rate-limit counters.                                                                 |
+| `secondaryStorage`       | The `@nebula-chat/redis` `authStore` — auth sessions, verification records, and rate-limit counters.                                                            |
 | `session.cookieCache`    | Enabled — a short-lived signed cookie lets most requests validate without a store round-trip.                                                                   |
 | `rateLimit`              | Enabled, `storage: 'secondary-storage'` (Redis). Keyed per client by `advanced.ipAddress.ipAddressHeaders: ['cf-connecting-ip']` — see below.                   |
 

@@ -1,5 +1,5 @@
--- NEB-352: the domain Conversation is now a Session (CONTEXT.md). Renamed in place, never
--- dropped and recreated, so every row survives. better-auth's `session` table is untouched.
+-- Renamed in place, never dropped and recreated, so every row survives.
+-- better-auth's `session` table is a different table and stays as it is.
 ALTER TABLE "conversations" RENAME TO "sessions";--> statement-breakpoint
 ALTER TABLE "sessions" RENAME CONSTRAINT "conversations_pkey" TO "sessions_pkey";--> statement-breakpoint
 ALTER TABLE "sessions" RENAME CONSTRAINT "conversations_user_id_users_id_fk" TO "sessions_user_id_users_id_fk";--> statement-breakpoint

@@ -56,13 +56,13 @@ describe('SessionListItem', () => {
 
   it('renders differently when it is the open session', () => {
     const inactive = renderWithChakra(<SessionListItem session={aSession()} onClick={vi.fn()} />, {
-      route: '/c/other-id',
+      route: '/s/other-id',
     });
     const inactiveHtml = inactive.container.innerHTML;
     inactive.unmount();
 
     const active = renderWithChakra(<SessionListItem session={aSession()} onClick={vi.fn()} />, {
-      route: `/c/${SESSION_ID}`,
+      route: `/s/${SESSION_ID}`,
     });
 
     expect(active.container.innerHTML).not.toBe(inactiveHtml);

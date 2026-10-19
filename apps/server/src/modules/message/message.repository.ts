@@ -36,8 +36,8 @@ export const messageRepository: {
     return row?.messages ?? null;
   },
   // Narrowing to one session stays inside the owner join, so another user's
-  // session reads as empty rather than leaking its existence. One
-  // session is a thread, read oldest first; the full list stays newest first.
+  // session reads as empty rather than leaking its existence. One session
+  // reads oldest first; the full list stays newest first.
   async findAll(userId: string, sessionId?: string) {
     const rows = await db
       .select()

@@ -61,7 +61,7 @@ beforeEach(() => {
 });
 
 describe('POST /api/sessions', () => {
-  it('creates a session owned by the session user and responds 201', async () => {
+  it("creates a session owned by the auth session's user and responds 201", async () => {
     repo.create.mockResolvedValue(fromPartial(aSession()));
 
     const res = await app.inject({
@@ -184,7 +184,7 @@ describe('GET /api/sessions/:sessionId', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ id: SESSION_ID });
-    // Owner-scoped: the lookup is filtered to the session user.
+    // Owner-scoped: the lookup is filtered to the auth session's user.
     expect(repo.findById).toHaveBeenCalledWith({ sessionId: SESSION_ID }, REGISTERED_USER_ID);
   });
 
@@ -231,7 +231,7 @@ describe('GET /api/sessions', () => {
 
     await app.inject({ method: 'GET', url: '/api/sessions' });
 
-    // Owner-scoped: the session user is the first argument.
+    // Owner-scoped: the auth session's user is the first argument.
     expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, 10, undefined);
   });
 
@@ -288,7 +288,7 @@ describe('GET /api/sessions/search', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toHaveLength(1);
-    // Owner-scoped: the session user is the first argument.
+    // Owner-scoped: the auth session's user is the first argument.
     expect(repo.search).toHaveBeenCalledWith(REGISTERED_USER_ID, 'hello');
   });
 

@@ -57,7 +57,7 @@ const renderPage = (route = '/') =>
   renderWithChakra(
     <Routes>
       <Route path="/" element={<ChatPage />} />
-      <Route path="/c/:id" element={<ChatPage />} />
+      <Route path="/s/:id" element={<ChatPage />} />
     </Routes>,
     { route },
   );
@@ -146,7 +146,7 @@ describe('ChatPage', () => {
       ]),
     );
 
-    renderPage(`/c/${SESSION_ID}`);
+    renderPage(`/s/${SESSION_ID}`);
 
     expect(await screen.findByText('a question', {}, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.getByText('an answer')).toBeInTheDocument();
@@ -162,7 +162,7 @@ describe('ChatPage', () => {
       }),
     );
 
-    renderPage(`/c/${SESSION_ID}`);
+    renderPage(`/s/${SESSION_ID}`);
 
     expect(
       await screen.findByText(resources.sessions.single.error, {}, { timeout: 3000 }),
