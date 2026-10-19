@@ -9,8 +9,8 @@ name: Build
 on:
   push:
     branches: [main]
+  # Any base branch, so a PR stacked on another PR's branch is checked too.
   pull_request:
-    branches: [main]
   workflow_dispatch:
 
 permissions: {}
