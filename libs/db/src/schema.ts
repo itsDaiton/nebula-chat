@@ -1,4 +1,14 @@
-import { pgTable, uuid, text, timestamp, integer, boolean, index } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import {
+  pgTable,
+  uuid,
+  text,
+  timestamp,
+  integer,
+  boolean,
+  index,
+  check,
+} from 'drizzle-orm/pg-core';
 
 // better-auth is the source of truth for this table's shape (modelName: "users").
 // Field names must match better-auth's core user model exactly so the Drizzle adapter
@@ -85,11 +95,14 @@ export const messages = pgTable(
     sessionId: uuid('session_id')
       .references(() => sessions.id, { onDelete: 'cascade' })
       .notNull(),
-    role: text('role', { enum: ['user', 'assistant', 'system'] }).notNull(),
+    role: text('role', { enum: ['user', 'assistant'] }).notNull(),
     content: text('content').notNull(),
     tokenCount: integer('token_count'),
     cached: boolean('cached').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
-  (t) => [index('msg_session_idx').on(t.sessionId)],
+  (t) => [
+    index('msg_session_idx').on(t.sessionId),
+    check('messages_role_check', sql`${t.role} in ('user', 'assistant')`),
+  ],
 );

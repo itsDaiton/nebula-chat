@@ -11,5 +11,4 @@ export type StreamChatBodyMessagesItemRole =
 export const StreamChatBodyMessagesItemRole = {
   user: 'user',
   assistant: 'assistant',
-  system: 'system',
 } as const;

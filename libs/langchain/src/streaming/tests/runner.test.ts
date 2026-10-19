@@ -88,13 +88,12 @@ describe('streamChat', () => {
         history: [
           { role: 'user', content: 'q' },
           { role: 'assistant', content: 'a' },
-          { role: 'system', content: 's' },
         ],
       }),
     );
 
     const { history } = streamArgs[0] as { history: { getType: () => string }[] };
-    expect(history.map((m) => m.getType())).toEqual(['human', 'ai', 'system']);
+    expect(history.map((m) => m.getType())).toEqual(['human', 'ai']);
   });
 
   it('passes the user message through as the chain input', async () => {

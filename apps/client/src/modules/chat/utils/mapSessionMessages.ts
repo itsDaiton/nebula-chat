@@ -1,11 +1,7 @@
 import type { Message } from '@/libs/api/generated/model/message';
 import type { ChatMessage } from '@/modules/chat/types/types';
 
-const CHAT_ROLES: ReadonlySet<string> = new Set<ChatMessage['role']>([
-  'user',
-  'assistant',
-  'system',
-]);
+const CHAT_ROLES: ReadonlySet<string> = new Set<ChatMessage['role']>(['user', 'assistant']);
 
 const isChatRole = (role: string): role is ChatMessage['role'] => CHAT_ROLES.has(role);
 

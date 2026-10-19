@@ -11,5 +11,4 @@ export type CreateMessageBodyRole =
 export const CreateMessageBodyRole = {
   user: 'user',
   assistant: 'assistant',
-  system: 'system',
 } as const;

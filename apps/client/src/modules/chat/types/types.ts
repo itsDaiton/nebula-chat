@@ -2,7 +2,7 @@ import type { Dispatch, SetStateAction } from 'react';
 
 export type ChatMessage = {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant';
   content: string;
 };
 

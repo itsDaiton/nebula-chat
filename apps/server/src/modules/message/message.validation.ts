@@ -3,7 +3,7 @@ import { isoDateTimeSchema } from '@backend/utils/isoDateTimeSchema';
 
 export const createMessageSchema = z.object({
   sessionId: z.uuid(),
-  role: z.enum(['user', 'assistant', 'system']),
+  role: z.enum(['user', 'assistant']),
   content: z.string().min(1),
   tokenCount: z.number().int().nullable().optional(),
 });

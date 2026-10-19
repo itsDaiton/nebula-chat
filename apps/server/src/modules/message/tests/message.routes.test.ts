@@ -35,7 +35,7 @@ type MessageRow = {
   id: string;
   sessionId: string;
   content: string;
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant';
   tokenCount: number | null;
   cached: boolean;
   createdAt: Date;
@@ -113,7 +113,7 @@ describe('POST /api/messages', () => {
     expect(res.statusCode).toBe(201);
   });
 
-  it.each(['user', 'assistant', 'system'] as const)('accepts the %s role', async (role) => {
+  it.each(['user', 'assistant'] as const)('accepts the %s role', async (role) => {
     repo.create.mockResolvedValue(fromPartial(aMessage({ role })));
 
     const res = await app.inject({
@@ -123,6 +123,17 @@ describe('POST /api/messages', () => {
     });
 
     expect(res.statusCode).toBe(201);
+  });
+
+  it('rejects the system role', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/messages',
+      payload: { ...validBody, role: 'system' },
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(repo.create).not.toHaveBeenCalled();
   });
 
   it('rejects a role outside the enum', async () => {

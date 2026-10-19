@@ -1,4 +1,4 @@
-import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { buildChatChain } from '../chains/chat.chain';
 import type { LLMLogger } from '../logger';
 import { DEFAULT_MODELS, MODEL_REGISTRY } from '../providers/types';
@@ -7,7 +7,7 @@ import { llmConcurrencyLimiter } from '../rate-limit/concurrency';
 import { countTokens } from '../tokens/counter';
 import { getMessageContentText, packHistory } from '../tokens/window';
 
-type HistoryRole = 'assistant' | 'system' | 'user';
+type HistoryRole = 'assistant' | 'user';
 
 export type HistoryMessage = {
   role: HistoryRole;
@@ -63,8 +63,6 @@ export const streamChat = async (
         return new HumanMessage(message.content);
       case 'assistant':
         return new AIMessage(message.content);
-      case 'system':
-        return new SystemMessage(message.content);
       default: {
         const unreachable: never = message.role;
         throw new Error(`Unsupported history role: ${String(unreachable)}`);
