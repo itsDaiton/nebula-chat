@@ -2,9 +2,9 @@ import { useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { parseErrorEnvelope } from '@nebula-chat/errors';
 import {
-  getGetConversationQueryKey,
-  getListConversationsInfiniteQueryKey,
-} from '@/libs/api/generated/conversations/conversations';
+  getGetSessionQueryKey,
+  getListSessionsInfiniteQueryKey,
+} from '@/libs/api/generated/sessions/sessions';
 import { getGetMessageAllowanceQueryKey, streamChat } from '@/libs/api/generated/chat/chat';
 import { getListMessagesQueryKey } from '@/libs/api/generated/messages/messages';
 import { ErrorCode } from '@/libs/api/generated/model/errorCode';
@@ -24,13 +24,13 @@ export const useChatStream = () => {
     isPostStreamNavigation,
     error,
     usage,
-    conversationId,
+    sessionId,
     setHistory,
     setIsStreaming,
     setIsPostStreamNavigation,
     setError,
     setUsage,
-    setConversationId,
+    setSessionId,
   } = useChatStreamStore();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -38,15 +38,15 @@ export const useChatStream = () => {
   const abortController = useRef<AbortController | null>(null);
   const pendingNavigationId = useRef<string | null>(null);
 
-  // Keep conversationId in a ref so streamMessage doesn't need it as a useCallback dep.
-  // Without this, every setConversationId call (fired mid-stream on conversation-created)
+  // Keep sessionId in a ref so streamMessage doesn't need it as a useCallback dep.
+  // Without this, every setSessionId call (fired mid-stream on session-created)
   // would recreate streamMessage → handleSendMessage → re-render the entire ChatContainer.
-  const conversationIdRef = useRef(conversationId);
-  conversationIdRef.current = conversationId;
+  const sessionIdRef = useRef(sessionId);
+  sessionIdRef.current = sessionId;
 
   // SSE isn't a query, so the cache is invalidated rather than seeded (ADR-0012).
-  const invalidateConversationList = useCallback(
-    () => queryClient.invalidateQueries({ queryKey: getListConversationsInfiniteQueryKey() }),
+  const invalidateSessionList = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: getListSessionsInfiniteQueryKey() }),
     [queryClient],
   );
 
@@ -57,16 +57,16 @@ export const useChatStream = () => {
   );
 
   const invalidateCompletedStream = useCallback(
-    (completedConversationId: string | undefined) => {
-      void invalidateConversationList();
+    (completedSessionId: string | undefined) => {
+      void invalidateSessionList();
       void queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() });
-      if (completedConversationId) {
+      if (completedSessionId) {
         void queryClient.invalidateQueries({
-          queryKey: getGetConversationQueryKey(completedConversationId),
+          queryKey: getGetSessionQueryKey(completedSessionId),
         });
       }
     },
-    [invalidateConversationList, queryClient],
+    [invalidateSessionList, queryClient],
   );
 
   const abort = useCallback(() => {
@@ -76,7 +76,7 @@ export const useChatStream = () => {
   }, [setIsStreaming]);
 
   const streamMessage = useCallback(
-    async ({ model, messages, conversationId: customConversationId }: ChatHistoryStreamOptions) => {
+    async ({ model, messages, sessionId: customSessionId }: ChatHistoryStreamOptions) => {
       pendingNavigationId.current = null;
 
       const controller = new AbortController();
@@ -84,11 +84,11 @@ export const useChatStream = () => {
 
       // Build the request body synchronously before any state updates.
       const newUserMessage = messages.at(-1);
-      const activeConversationId = customConversationId ?? conversationIdRef.current;
+      const activeSessionId = customSessionId ?? sessionIdRef.current;
       const requestBody: StreamChatBody = {
         messages: messages.slice(-1),
         model,
-        ...(activeConversationId && { conversationId: activeConversationId }),
+        ...(activeSessionId && { sessionId: activeSessionId }),
       };
 
       // Start the request BEFORE the state update. useChatStreamStore.setState uses
@@ -165,20 +165,20 @@ export const useChatStream = () => {
 
               if (currentEvent === 'end') {
                 abortController.current = null;
-                // Not the ref: it lags a `conversation-created` frame in the same chunk.
-                invalidateCompletedStream(useChatStreamStore.getState().conversationId);
+                // Not the ref: it lags a `session-created` frame in the same chunk.
+                invalidateCompletedStream(useChatStreamStore.getState().sessionId);
                 if (pendingNavigationId.current) {
                   const navId = pendingNavigationId.current;
                   pendingNavigationId.current = null;
                   // Signal that we're in the post-stream navigation window.
                   // isStreaming intentionally stays true here — a useEffect in ChatContainer
-                  // will call clearPostStream() once conversationId from useParams is set,
+                  // will call clearPostStream() once sessionId from useParams is set,
                   // guaranteeing isStreaming goes false only after the navigation has rendered.
                   // (requestAnimationFrame was unreliable: it could fire before React processed
-                  // the navigation render, leaving a frame with isStreaming=false + no conversationId
+                  // the navigation render, leaving a frame with isStreaming=false + no sessionId
                   // → empty state flicker.)
                   setIsPostStreamNavigation(true);
-                  void navigate(route.chat.conversation(navId), { replace: true });
+                  void navigate(route.chat.session(navId), { replace: true });
                 } else {
                   setIsStreaming(false);
                 }
@@ -192,14 +192,14 @@ export const useChatStream = () => {
                 continue;
               }
 
-              if (currentEvent === 'conversation-created') {
-                if (parsed.conversationId) {
-                  const isNewConversation = !conversationIdRef.current;
-                  setConversationId(parsed.conversationId);
-                  if (isNewConversation) {
-                    pendingNavigationId.current = parsed.conversationId;
+              if (currentEvent === 'session-created') {
+                if (parsed.sessionId) {
+                  const isNewSession = !sessionIdRef.current;
+                  setSessionId(parsed.sessionId);
+                  if (isNewSession) {
+                    pendingNavigationId.current = parsed.sessionId;
                     // The server has persisted it, so the sidebar can show it now.
-                    void invalidateConversationList();
+                    void invalidateSessionList();
                   }
                 }
                 currentEvent = null;
@@ -275,10 +275,10 @@ export const useChatStream = () => {
     },
     [
       invalidateCompletedStream,
-      invalidateConversationList,
+      invalidateSessionList,
       invalidateMessageAllowance,
       navigate,
-      setConversationId,
+      setSessionId,
       setError,
       setHistory,
       setIsPostStreamNavigation,
@@ -302,8 +302,8 @@ export const useChatStream = () => {
     streamMessage,
     abort,
     clearPostStream,
-    setConversationId,
+    setSessionId,
     setHistory,
-    conversationId,
+    sessionId,
   };
 };

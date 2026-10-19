@@ -9,7 +9,7 @@ import { runAuthRequest } from '@/modules/auth/utils/runAuthRequest';
 
 /**
  * Starts a social sign-in; better-auth's client then leaves for the provider. Its callback signs
- * the user in on the server (claiming a Guest's conversations) and reloads the app at the chat.
+ * the user in on the server (claiming a Guest's sessions) and reloads the app at the chat.
  */
 export const useSocialSignIn = () =>
   useMutation({

@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v1.13.0...nebula-chat-openapi-v2.0.0) (2026-10-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* the domain Conversation is now a Session ([#588](https://github.com/itsDaiton/nebula-chat/issues/588)). @nebula-chat/auth exports `claimSessions` and `ClaimSessionsParams` in place of `claimConversations` and `ClaimConversationsParams`. The OpenAPI contract serves `/api/sessions*` in place of `/api/conversations*`, with `Session`/`SessionPage` schemas and `sessionId` in place of `conversationId`.
+
+### Features
+
+* NEB-352 release the Session rename as breaking for auth and openapi ([#590](https://github.com/itsDaiton/nebula-chat/issues/590)) ([bc85d0f](https://github.com/itsDaiton/nebula-chat/commit/bc85d0f5c2fa2d800d87904b393d008bfc3c0175))
+
+## [1.13.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v1.12.1...nebula-chat-openapi-v1.13.0) (2026-10-19)
+
+
+### Features
+
+* **sessions:** NEB-352 rename Conversation to Session end to end ([#588](https://github.com/itsDaiton/nebula-chat/issues/588)) ([4d8e9c5](https://github.com/itsDaiton/nebula-chat/commit/4d8e9c58949d573ba641f476095f920645fdec74))
+
 ## [1.12.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v1.12.0...nebula-chat-openapi-v1.12.1) (2026-10-18)
 
 

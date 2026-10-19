@@ -24,7 +24,7 @@ describe('isSafeUrl', () => {
   });
 
   it('allows root-relative links', () => {
-    expect(isSafeUrl('/conversations/123')).toBe(true);
+    expect(isSafeUrl('/sessions/123')).toBe(true);
   });
 
   it('allows in-page anchors', () => {

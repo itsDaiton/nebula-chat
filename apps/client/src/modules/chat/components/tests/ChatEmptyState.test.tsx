@@ -11,16 +11,16 @@ beforeEach(() => {
 
 describe('ChatEmptyState', () => {
   it('welcomes a brand new chat', () => {
-    renderWithChakra(<ChatEmptyState conversationId={undefined} />);
+    renderWithChakra(<ChatEmptyState sessionId={undefined} />);
 
     expect(screen.getByText(resources.chat.welcomeMessage)).toBeInTheDocument();
     expect(screen.getByText(resources.chat.welcomeIntro)).toBeInTheDocument();
   });
 
-  it('shows the empty-conversation copy for an existing conversation', () => {
-    renderWithChakra(<ChatEmptyState conversationId="c1" />);
+  it('shows the empty-session copy for an existing session', () => {
+    renderWithChakra(<ChatEmptyState sessionId="c1" />);
 
-    expect(screen.getByText(resources.chat.emptyConversation)).toBeInTheDocument();
-    expect(screen.getByText(resources.chat.emptyConversationHint)).toBeInTheDocument();
+    expect(screen.getByText(resources.chat.emptySession)).toBeInTheDocument();
+    expect(screen.getByText(resources.chat.emptySessionHint)).toBeInTheDocument();
   });
 });

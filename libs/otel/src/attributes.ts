@@ -34,7 +34,7 @@ export type LogAttributeValues = {
   // Request
   'http.request.method': string;
   'url.path': string;
-  /** The matched route template (`/api/conversations/:conversationId`), not the raw path. */
+  /** The matched route template (`/api/sessions/:sessionId`), not the raw path. */
   'http.route': string;
   'http.response.status_code': number;
   'http.request.id': string;

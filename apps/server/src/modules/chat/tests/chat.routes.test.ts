@@ -45,9 +45,9 @@ vi.mock('@backend/modules/chat/chat.service', () => ({
   chatService: { streamResponse: vi.fn() },
   validateChatRequest: vi.fn(async () => undefined),
   createUserMessage: vi.fn(async () => ({
-    conversationId: '11111111-1111-4111-8111-111111111111',
+    sessionId: '11111111-1111-4111-8111-111111111111',
     userMessageId: '22222222-2222-4222-8222-222222222222',
-    isNewConversation: false,
+    isNewSession: false,
   })),
 }));
 
@@ -72,7 +72,7 @@ const mockedCountUserMessages = vi.mocked(messageRepository.countUserMessagesByO
 
 const validBody = {
   model: 'gpt-4o-mini',
-  conversationId: '11111111-1111-4111-8111-111111111111',
+  sessionId: '11111111-1111-4111-8111-111111111111',
   messages: [{ role: 'user', content: 'what is 2+2?' }],
 };
 
@@ -123,15 +123,15 @@ beforeEach(async () => {
   mockedGetCachedStream.mockResolvedValue(null);
   mockedSaveCachedStream.mockResolvedValue(undefined);
   mockedCreateUserMessage.mockResolvedValue({
-    conversationId: '11111111-1111-4111-8111-111111111111',
+    sessionId: '11111111-1111-4111-8111-111111111111',
     userMessageId: '22222222-2222-4222-8222-222222222222',
-    isNewConversation: false,
+    isNewSession: false,
   });
   chat.streamResponse.mockImplementation(async (_data, write) => {
     write(sseToken('4'));
     write(sseUsage({ promptTokens: 5, completionTokens: 1, totalTokens: 6 }));
     return {
-      conversationId: '11111111-1111-4111-8111-111111111111',
+      sessionId: '11111111-1111-4111-8111-111111111111',
       userMessageId: '22222222-2222-4222-8222-222222222222',
       assistantMessageId: '33333333-3333-4333-8333-333333333333',
     };
@@ -167,16 +167,16 @@ describe('POST /api/chat/stream — validation', () => {
     expect(res.statusCode).toBe(400);
   });
 
-  it('rejects a non-UUID conversationId', async () => {
-    const res = await post({ ...validBody, conversationId: 'nope' }, app);
+  it('rejects a non-UUID sessionId', async () => {
+    const res = await post({ ...validBody, sessionId: 'nope' }, app);
 
     expect(res.statusCode).toBe(400);
   });
 
-  it('accepts a request with no conversationId, starting a new conversation', async () => {
-    const withoutConversation = { model: validBody.model, messages: validBody.messages };
+  it('accepts a request with no sessionId, starting a new session', async () => {
+    const withoutSession = { model: validBody.model, messages: validBody.messages };
 
-    const res = await post(withoutConversation, app);
+    const res = await post(withoutSession, app);
     await new Promise((resolve) => setImmediate(resolve));
 
     expect(res.statusCode).toBe(200);
@@ -279,17 +279,17 @@ describe('POST /api/chat/stream — cache hit', () => {
     ]);
   });
 
-  it('announces a new conversation when the replay creates one', async () => {
+  it('announces a new session when the replay creates one', async () => {
     mockedGetCachedStream.mockResolvedValue(cachedEntry);
     mockedCreateUserMessage.mockResolvedValue({
-      conversationId: '11111111-1111-4111-8111-111111111111',
+      sessionId: '11111111-1111-4111-8111-111111111111',
       userMessageId: '22222222-2222-4222-8222-222222222222',
-      isNewConversation: true,
+      isNewSession: true,
     });
 
     const res = await post(validBody, app);
 
-    expect(eventsIn(res.body)[0]).toBe('conversation-created');
+    expect(eventsIn(res.body)[0]).toBe('session-created');
   });
 
   it('replays zeroed usage when the cached entry carries none', async () => {

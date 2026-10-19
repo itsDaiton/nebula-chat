@@ -14,7 +14,7 @@ export type StreamChatBody = {
   messages: StreamChatBodyMessagesItem[];
   model: string;
   /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
-  conversationId?: string;
+  sessionId?: string;
   /** Bypass and overwrite any cached response, forcing a fresh completion */
   regenerate?: boolean;
 };

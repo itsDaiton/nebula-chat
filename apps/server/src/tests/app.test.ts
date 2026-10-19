@@ -73,8 +73,6 @@ describe('OpenAPI document', () => {
   it('declares each response resource once, with no input or output twin', () => {
     expect(Object.keys(document.components.schemas).sort()).toEqual([
       'ApiRoot',
-      'Conversation',
-      'ConversationPage',
       'ErrorCode',
       'ErrorEnvelope',
       'Health',
@@ -87,6 +85,8 @@ describe('OpenAPI document', () => {
       'MeteredMessageAllowance',
       'ProfileImage',
       'ProfileImageSettings',
+      'Session',
+      'SessionPage',
       'UnmeteredMessageAllowance',
     ]);
   });
@@ -118,7 +118,7 @@ describe('OpenAPI document', () => {
   });
 
   it('renders a response timestamp as a date-time string', () => {
-    expect(document.components.schemas['Conversation']).toMatchObject({
+    expect(document.components.schemas['Session']).toMatchObject({
       properties: { createdAt: { type: 'string', format: 'date-time' } },
     });
   });

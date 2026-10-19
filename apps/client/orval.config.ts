@@ -52,8 +52,8 @@ export default defineConfig({
           signal: true,
         },
         operations: {
-          // The sidebar pages through conversations by cursor.
-          listConversations: {
+          // The sidebar pages through sessions by cursor.
+          listSessions: {
             query: {
               useInfinite: true,
               useInfiniteQueryParam: 'cursor',

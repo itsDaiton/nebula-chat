@@ -9,41 +9,40 @@ import { ChatMessageList } from '@/modules/chat/components/ChatMessageList';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useHandleSendMessage } from '@/modules/chat/hooks/useHandleSendMessage';
 import { useModel } from '@/modules/chat/hooks/useModel';
-import { useConversation } from '@/modules/conversations/hooks/useConversation';
+import { useChatSession } from '@/modules/sessions/hooks/useChatSession';
 import { chatScrollBar } from '@/shared/components/scrollbar';
 import { scrollToBottom } from '@/shared/utils/scrollUtils';
 import { resources } from '@/resources';
 
 export const ChatContainer = () => {
-  const { id: conversationId } = useParams<{ id: string }>();
-  const { error: conversationError, isLoading: isConversationLoading } =
-    useConversation(conversationId);
+  const { id: sessionId } = useParams<{ id: string }>();
+  const { error: sessionError, isLoading: isSessionLoading } = useChatSession(sessionId);
   const {
     history,
     isStreaming,
     isPostStreamNavigation,
     streamMessage,
     clearPostStream,
-    conversationId: chatConversationId,
+    sessionId: chatSessionId,
   } = useChatStream();
   const { selectedModel, setSelectedModel } = useModel();
 
   const { handleSendMessage } = useHandleSendMessage({ history, streamMessage });
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Once the navigation has rendered (conversationId from URL params is set),
+  // Once the navigation has rendered (sessionId from URL params is set),
   // it's safe to clear the streaming state without causing an empty-state flicker.
   useEffect(() => {
-    if (isPostStreamNavigation && conversationId) {
+    if (isPostStreamNavigation && sessionId) {
       clearPostStream();
     }
-  }, [conversationId, isPostStreamNavigation, clearPostStream]);
+  }, [sessionId, isPostStreamNavigation, clearPostStream]);
 
   useEffect(() => {
     scrollToBottom(scrollRef);
   }, [history.length, isStreaming]);
 
-  if (conversationId && isConversationLoading && chatConversationId !== conversationId) {
+  if (sessionId && isSessionLoading && chatSessionId !== sessionId) {
     return (
       <ChatContainerBox>
         <Box flex="1" overflowY="auto" p={4} mb="120px" css={chatScrollBar}>
@@ -59,16 +58,16 @@ export const ChatContainer = () => {
     );
   }
 
-  if (conversationId && conversationError) {
+  if (sessionId && sessionError) {
     return (
       <ChatContainerBox>
         <Flex h="100%" align="center" justify="center">
           <Flex direction="column" align="center" gap={2} maxW="400px" textAlign="center">
             <Text fontSize="md" fontWeight="medium" color="red.500">
-              {resources.conversations.single.error}
+              {resources.sessions.single.error}
             </Text>
             <Text fontSize="sm" color="fg.muted">
-              {conversationError.message}
+              {sessionError.message}
             </Text>
           </Flex>
         </Flex>
@@ -79,10 +78,10 @@ export const ChatContainer = () => {
   return (
     <ChatContainerBox>
       <Box flex="1" overflowY="auto" p={4} mb="120px" css={chatScrollBar}>
-        {(conversationId || isStreaming) && history.length > 0 ? (
+        {(sessionId || isStreaming) && history.length > 0 ? (
           <ChatMessageList history={history} isStreaming={isStreaming} />
         ) : (
-          <ChatEmptyState conversationId={conversationId} />
+          <ChatEmptyState sessionId={sessionId} />
         )}
         <div ref={scrollRef} style={{ height: '0px' }} />
       </Box>

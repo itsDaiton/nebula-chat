@@ -20,9 +20,9 @@ export const messageController = {
     return reply.status(200).send(message);
   },
   async getAll(req: FastifyRequest<{ Querystring: ListMessagesQuery }>, reply: FastifyReply) {
-    const { conversationId } = req.query;
+    const { sessionId } = req.query;
     const { user } = getSessionData(req);
-    const messages = await messageService.getAllMessages(user.id, conversationId);
+    const messages = await messageService.getAllMessages(user.id, sessionId);
     return reply.status(200).send(messages);
   },
 };

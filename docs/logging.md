@@ -38,11 +38,11 @@ For the decisions behind them, see
   "span_id": "d59ebb6660ee6d35",
   "event.name": "http.request.completed",
   "http.request.method": "GET",
-  "url.path": "/api/conversations",
-  "http.route": "/api/conversations",
+  "url.path": "/api/sessions",
+  "http.route": "/api/sessions",
   "http.response.status_code": 200,
   "nebula.duration_ms": 5.06,
-  "msg": "GET /api/conversations 200 · 5.06 ms"
+  "msg": "GET /api/sessions 200 · 5.06 ms"
 }
 ```
 
@@ -223,8 +223,8 @@ rejects an `error` key in a log call's object across the backend packages.
 Keys follow [OpenTelemetry semantic conventions](https://opentelemetry.io/docs/specs/semconv/)
 where one exists, and `nebula.*` for domain concepts.
 
-The Session is **`nebula.session.id`**, never bare `session.id`, even though the
-code variable is still `conversationId`. OTel's `session.id` means a client
+The Session is **`nebula.session.id`**, never bare `session.id`, though the
+code variable is `sessionId`. OTel's `session.id` means a client
 browsing session, and the codebase already has a separate _auth session_.
 
 ## Context: who, which Session, which trace
@@ -237,7 +237,7 @@ browsing session, and the codebase already has a separate _auth session_.
   copies `request.log` onto `reply.log` when the reply is created, and the error
   handler and the completion line write through the reply.
 - **The Session.** `chat.service` binds `nebula.session.id` once the
-  conversation id is known (a new one only gets its id mid-request), and hands
+  session id is known (a new one only gets its id mid-request), and hands
   the LLM call a child bound to it, so `llm.stream.*` lines carry it too.
 - **The trace.** See [Tracing](#tracing).
 

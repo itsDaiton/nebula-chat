@@ -43,7 +43,7 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 /**
- * Create a new message in one of the caller’s own conversations
+ * Create a new message in one of the caller’s own sessions
  * @summary Create message
  */
 export const createMessage = (
@@ -129,7 +129,7 @@ export const useCreateMessage = <TError = ErrorType<ErrorEnvelope>, TContext = u
   return useMutation(getCreateMessageMutationOptions(options), queryClient);
 };
 /**
- * Retrieve the messages across the caller’s own conversations, newest first. Pass `conversationId` to list one conversation’s messages, oldest first; a conversation the caller does not own lists as empty.
+ * Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own lists as empty.
  * @summary List messages
  */
 export const listMessages = (

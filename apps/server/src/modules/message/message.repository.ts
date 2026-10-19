@@ -1,5 +1,5 @@
 import { eq, asc, desc, and, count } from 'drizzle-orm';
-import { messages, conversations } from '@nebula-chat/db';
+import { messages, sessions } from '@nebula-chat/db';
 import type { DbTransaction } from '@nebula-chat/db';
 import { db } from '@backend/db';
 import type {
@@ -12,55 +12,55 @@ import type {
 export const messageRepository: {
   create: (data: CreateMessageDTO) => Promise<MessageRow>;
   findById: (params: GetMessageParams, userId: string) => Promise<MessageRow | null>;
-  findAll: (userId: string, conversationId?: string) => Promise<MessageRow[]>;
+  findAll: (userId: string, sessionId?: string) => Promise<MessageRow[]>;
   createTx: (tx: DbTransaction, data: CreateMessageDTO) => Promise<MessageRow>;
-  findByConversationId: (conversationId: string, limit?: number) => Promise<MessageHistoryRow[]>;
+  findBySessionId: (sessionId: string, limit?: number) => Promise<MessageHistoryRow[]>;
   countUserMessagesByOwner: (userId: string) => Promise<number>;
 } = {
-  async create({ conversationId, content, role, tokenCount }: CreateMessageDTO) {
+  async create({ sessionId, content, role, tokenCount }: CreateMessageDTO) {
     const [row] = await db
       .insert(messages)
-      .values({ conversationId, content, role, tokenCount: tokenCount ?? null })
+      .values({ sessionId, content, role, tokenCount: tokenCount ?? null })
       .returning();
     return row!;
   },
-  // Reads are owner-scoped through the message's conversation (ADR-0010 §2): a
-  // message in another user's conversation reads as absent, joining messages to
-  // `conversations.userId` the same way the allowance count does.
+  // Reads are owner-scoped through the message's session (ADR-0010 §2): a
+  // message in another user's session reads as absent, joining messages to
+  // `sessions.userId` the same way the allowance count does.
   async findById({ messageId }: GetMessageParams, userId: string) {
     const [row] = await db
       .select()
       .from(messages)
-      .innerJoin(conversations, eq(messages.conversationId, conversations.id))
-      .where(and(eq(messages.id, messageId), eq(conversations.userId, userId)));
+      .innerJoin(sessions, eq(messages.sessionId, sessions.id))
+      .where(and(eq(messages.id, messageId), eq(sessions.userId, userId)));
     return row?.messages ?? null;
   },
-  // Narrowing to one conversation stays inside the owner join, so another user's
-  // conversation reads as empty rather than leaking its existence. One
-  // conversation is a thread, read oldest first; the full list stays newest first.
-  async findAll(userId: string, conversationId?: string) {
+  // Narrowing to one session stays inside the owner join, so another user's
+  // session reads as empty rather than leaking its existence. One session
+  // reads oldest first; the full list stays newest first.
+  async findAll(userId: string, sessionId?: string) {
     const rows = await db
       .select()
       .from(messages)
-      .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+      .innerJoin(sessions, eq(messages.sessionId, sessions.id))
       .where(
         and(
-          eq(conversations.userId, userId),
-          conversationId === undefined ? undefined : eq(messages.conversationId, conversationId),
+          eq(sessions.userId, userId),
+          sessionId === undefined ? undefined : eq(messages.sessionId, sessionId),
         ),
       )
-      .orderBy(conversationId === undefined ? desc(messages.createdAt) : asc(messages.createdAt));
+      .orderBy(sessionId === undefined ? desc(messages.createdAt) : asc(messages.createdAt));
     return rows.map((row) => row.messages);
   },
   async createTx(tx: DbTransaction, data: CreateMessageDTO) {
-    const { conversationId, content, role, tokenCount } = data;
+    const { sessionId, content, role, tokenCount } = data;
     const [row] = await tx
       .insert(messages)
-      .values({ conversationId, content, role, tokenCount: tokenCount ?? null })
+      .values({ sessionId, content, role, tokenCount: tokenCount ?? null })
       .returning();
     return row!;
   },
-  async findByConversationId(conversationId: string, limit?: number) {
+  async findBySessionId(sessionId: string, limit?: number) {
     const base = db
       .select({
         id: messages.id,
@@ -70,19 +70,19 @@ export const messageRepository: {
         tokenCount: messages.tokenCount,
       })
       .from(messages)
-      .where(eq(messages.conversationId, conversationId))
+      .where(eq(messages.sessionId, sessionId))
       .orderBy(desc(messages.createdAt));
     return limit === undefined ? base : base.limit(limit);
   },
   async countUserMessagesByOwner(userId: string) {
     // The Guest message allowance (ADR-0010 §4): count the owner's `user`-authored
-    // messages live from Postgres by joining messages to their conversations.
+    // messages live from Postgres by joining messages to their sessions.
     // Assistant messages and other owners' rows never contribute.
     const [row] = await db
       .select({ value: count() })
       .from(messages)
-      .innerJoin(conversations, eq(messages.conversationId, conversations.id))
-      .where(and(eq(conversations.userId, userId), eq(messages.role, 'user')));
+      .innerJoin(sessions, eq(messages.sessionId, sessions.id))
+      .where(and(eq(sessions.userId, userId), eq(messages.role, 'user')));
     return row?.value ?? 0;
   },
 };

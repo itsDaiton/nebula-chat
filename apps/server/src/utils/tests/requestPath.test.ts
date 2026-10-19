@@ -24,7 +24,7 @@ describe('requestPath', () => {
   it.each([
     ['/api/auth/reset-password', '/api/auth/reset-password'],
     ['/api/auth/reset-password/', '/api/auth/reset-password/'],
-    ['/api/conversations?cursor=abc&q=secret', '/api/conversations'],
+    ['/api/sessions?cursor=abc&q=secret', '/api/sessions'],
     ['/api/auth/callback/github?code=abc&state=xyz', '/api/auth/callback/github'],
     ['/', '/'],
   ])('logs %s as %s', (url, expected) => {

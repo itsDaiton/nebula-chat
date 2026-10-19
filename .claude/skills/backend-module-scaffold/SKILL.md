@@ -13,14 +13,14 @@ Creates all 6 layered files for a new module and registers it.
 
 - `$ARGUMENTS` is the module name in kebab-case (e.g. `user-profile`) and singular.
 - An ADR should already exist in `docs/adr/` for a new module (authored upstream via `/domain-modeling` during `/grill-with-docs`/`/to-spec`). If one is clearly missing and warranted, flag it to the user rather than blocking.
-- Read an existing module (e.g. `apps/server/src/modules/conversation/`) as the live reference.
+- Read an existing module (e.g. `apps/server/src/modules/session/`) as the live reference.
 
 ## Files to create
 
 Under `apps/server/src/modules/$ARGUMENTS/`:
 
 1. `$ARGUMENTS.types.ts` — `type` definitions (domain + DTO shapes). No logic.
-2. `$ARGUMENTS.validation.ts` — Zod schemas for request bodies/params/queries and responses, using `.describe('...')` on every field. Every response resource schema carries `.meta({ id: '<PlainNoun>' })` (e.g. `Conversation`, no `…Response` suffix) so the spec names it; request schemas stay unnamed. Response timestamps use `isoDateTimeSchema` from `@backend/utils/isoDateTimeSchema`.
+2. `$ARGUMENTS.validation.ts` — Zod schemas for request bodies/params/queries and responses, using `.describe('...')` on every field. Every response resource schema carries `.meta({ id: '<PlainNoun>' })` (e.g. `Session`, no `…Response` suffix) so the spec names it; request schemas stay unnamed. Response timestamps use `isoDateTimeSchema` from `@backend/utils/isoDateTimeSchema`.
 3. `$ARGUMENTS.repository.ts` — Drizzle queries (the ONLY place Drizzle is called). Omit if the module has no DB access.
 4. `$ARGUMENTS.service.ts` — business logic; calls the repository; throws `AppError` subclasses; never touches req/res.
 5. `$ARGUMENTS.controller.ts` — calls the service; builds the HTTP response; minimal logic.

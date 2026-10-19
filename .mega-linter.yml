@@ -81,7 +81,7 @@ ADDITIONAL_EXCLUDED_DIRECTORIES:
 # fixture in urlUtils.test.ts that exists to prove the URL-safety check handles
 # non-TLS URLs; rewriting it to https would defeat the test.
 # DS172411 (review setTimeout for untrusted data): a note-level match on the
-# debounce timer in useConversationsSearchStore.ts — a fixed numeric delay with a
+# debounce timer in useSessionsSearchStore.ts — a fixed numeric delay with a
 # static callback, no untrusted input. setTimeout debounces are idiomatic here.
 REPOSITORY_DEVSKIM_ARGUMENTS:
   ["--ignore-rule-ids", "DS173237", "DS126858", "DS162092", "DS137138", "DS172411"]

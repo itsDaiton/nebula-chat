@@ -27,7 +27,7 @@ export const chatController = {
     );
 
     if (result) {
-      (req.body as CreateChatStreamDTO).conversationId = result.conversationId;
+      (req.body as CreateChatStreamDTO).sessionId = result.sessionId;
     }
 
     raw.write(sseEnd());
