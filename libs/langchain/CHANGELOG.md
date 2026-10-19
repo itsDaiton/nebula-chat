@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-langchain-v2.1.0...nebula-chat-langchain-v3.0.0) (2026-10-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* **messages:** NEB-353 remove the unused system role from Message ([#599](https://github.com/itsDaiton/nebula-chat/issues/599))
+
+### Bug Fixes
+
+* **messages:** NEB-353 remove the unused system role from Message ([#599](https://github.com/itsDaiton/nebula-chat/issues/599)) ([80ff6ac](https://github.com/itsDaiton/nebula-chat/commit/80ff6ac1869cd0237a4f0ba451c5e085244f17ff))
+
 ## [2.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-langchain-v2.0.2...nebula-chat-langchain-v2.1.0) (2026-10-19)
 
 

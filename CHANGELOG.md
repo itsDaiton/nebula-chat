@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v3.2.0...nebula-chat-v4.0.0) (2026-10-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* **messages:** NEB-353 remove the unused system role from Message ([#599](https://github.com/itsDaiton/nebula-chat/issues/599))
+
+### Features
+
+* **client:** NEB-535 boot TanStack Router with file-based routes and serve Settings and not-found through it ([#598](https://github.com/itsDaiton/nebula-chat/issues/598)) ([bcfebf1](https://github.com/itsDaiton/nebula-chat/commit/bcfebf118c49cbbab15cd0bce4fbe865c6ec9b94))
+
+
+### Bug Fixes
+
+* **messages:** NEB-353 remove the unused system role from Message ([#599](https://github.com/itsDaiton/nebula-chat/issues/599)) ([80ff6ac](https://github.com/itsDaiton/nebula-chat/commit/80ff6ac1869cd0237a4f0ba451c5e085244f17ff))
+
 ## [3.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v3.1.0...nebula-chat-v3.2.0) (2026-10-19)
 
 
