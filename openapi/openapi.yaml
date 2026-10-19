@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nebula Chat API
-  version: 1.12.1
+  version: 1.13.0
   description: REST API for Nebula Chat
   contact:
     name: Nebula Chat
@@ -437,8 +437,8 @@ paths:
       tags:
         - Sessions
       description: >-
-        Retrieve the caller’s own sessions with cursor-based pagination.
-        Returns up to 10 sessions by default.
+        Retrieve the caller’s own sessions with cursor-based pagination. Returns
+        up to 10 sessions by default.
       parameters:
         - schema:
             default: 10
@@ -483,9 +483,7 @@ paths:
       summary: Search sessions
       tags:
         - Sessions
-      description: >-
-        Search the caller’s own sessions by title, ordered by creation
-        date.
+      description: Search the caller’s own sessions by title, ordered by creation date.
       parameters:
         - schema:
             type: string
@@ -645,9 +643,9 @@ paths:
       tags:
         - Messages
       description: >-
-        Retrieve the messages across the caller’s own sessions, newest
-        first. Pass `sessionId` to list one session’s messages, oldest
-        first; a session the caller does not own lists as empty.
+        Retrieve the messages across the caller’s own sessions, newest first.
+        Pass `sessionId` to list one session’s messages, oldest first; a session
+        the caller does not own lists as empty.
       parameters:
         - schema:
             description: Only list the messages of this session, oldest first
