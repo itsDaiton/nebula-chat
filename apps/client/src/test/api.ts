@@ -6,8 +6,8 @@ import { HttpResponse, http, type HttpHandler, type JsonBodyType } from 'msw';
  * path the OpenAPI spec already defines. Import those directly:
  *
  * ```ts
- * import { getListConversationsMockHandler } from '@/libs/api/generated/conversations/conversations.msw';
- * server.use(getListConversationsMockHandler({ conversations, nextCursor: null, hasMore: false }));
+ * import { getListSessionsMockHandler } from '@/libs/api/generated/sessions/sessions.msw';
+ * server.use(getListSessionsMockHandler({ sessions, nextCursor: null, hasMore: false }));
  * ```
  *
  * Failure responses have no generated handler, `/api/chat/stream`'s returns a plain
@@ -15,9 +15,9 @@ import { HttpResponse, http, type HttpHandler, type JsonBodyType } from 'msw';
  * OpenAPI spec. This module covers exactly that gap, keeping the origin wildcard in one place.
  */
 export const API_ROUTE = {
-  conversations: '*/api/conversations',
-  conversationsSearch: '*/api/conversations/search',
-  conversation: '*/api/conversations/:conversationId',
+  sessions: '*/api/sessions',
+  sessionsSearch: '*/api/sessions/search',
+  session: '*/api/sessions/:sessionId',
   chatStream: '*/api/chat/stream',
   messageAllowance: '*/api/chat/message-allowance',
   profileImage: '*/api/profile-image',

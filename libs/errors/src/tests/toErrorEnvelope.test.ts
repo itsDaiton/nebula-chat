@@ -8,10 +8,10 @@ describe('toErrorEnvelope', () => {
     const err = new MessageAllowanceReachedError(10);
 
     expect(toErrorEnvelope(err)).toEqual(err.toEnvelope());
-    expect(toErrorEnvelope(new NotFoundError('Conversation', 'abc'))).toEqual({
+    expect(toErrorEnvelope(new NotFoundError('Session', 'abc'))).toEqual({
       success: false,
       error: 'NotFound',
-      message: 'Conversation with id "abc" not found',
+      message: 'Session with id "abc" not found',
     });
   });
 

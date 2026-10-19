@@ -21,7 +21,7 @@ describe('ChatMessageList', () => {
     expect(screen.getByText('answer')).toBeInTheDocument();
   });
 
-  it('renders nothing for an empty conversation', () => {
+  it('renders nothing for an empty session', () => {
     const { container } = renderWithChakra(<ChatMessageList history={[]} isStreaming={false} />);
 
     expect(container.textContent).toBe('');

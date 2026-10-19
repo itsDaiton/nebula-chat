@@ -6,8 +6,7 @@ import type { ErrorEnvelope } from '@nebula-chat/errors';
 const fmt = (event: string, data: unknown): string =>
   `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 
-export const sseConversationCreated = (conversationId: string) =>
-  fmt('conversation-created', { conversationId });
+export const sseSessionCreated = (sessionId: string) => fmt('session-created', { sessionId });
 
 export const sseUserMessageCreated = (messageId: string) =>
   fmt('user-message-created', { messageId });

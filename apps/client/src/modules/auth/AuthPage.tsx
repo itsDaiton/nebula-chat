@@ -12,7 +12,7 @@ import { route } from '@/routing/routes';
 // Opt-in: a Guest can use the app without ever coming here.
 export const AuthPage = () => {
   const { hidePassword } = usePasswordVisibilityStore();
-  // The server claims a current Guest's conversations into the account on either form.
+  // The server claims a current Guest's sessions into the account on either form.
   const onIdentityChange = useIdentityChange();
 
   return (

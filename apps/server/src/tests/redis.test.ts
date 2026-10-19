@@ -24,7 +24,7 @@ import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 
 const base: CreateChatStreamDTO = {
   model: 'gpt-4o-mini',
-  conversationId: '11111111-1111-4111-8111-111111111111',
+  sessionId: '11111111-1111-4111-8111-111111111111',
   messages: [{ role: 'user', content: 'what is 2+2?' }],
   regenerate: false,
 };
@@ -34,20 +34,20 @@ beforeEach(() => {
 });
 
 describe('chatCacheKey', () => {
-  it('keys on conversation, model and a hash of the last user message', () => {
+  it('keys on session, model and a hash of the last user message', () => {
     expect(chatCacheKey(base)).toBe(
-      `conversation:${base.conversationId}:model:gpt-4o-mini:prompt:${hashText('what is 2+2?')}`,
+      `session:${base.sessionId}:model:gpt-4o-mini:prompt:${hashText('what is 2+2?')}`,
     );
   });
 
-  it('falls back to "default" when there is no conversationId', () => {
-    const withoutConversation: CreateChatStreamDTO = {
+  it('falls back to "default" when there is no sessionId', () => {
+    const withoutSession: CreateChatStreamDTO = {
       model: base.model,
       messages: base.messages,
       regenerate: false,
     };
 
-    expect(chatCacheKey(withoutConversation)).toContain('conversation:default:');
+    expect(chatCacheKey(withoutSession)).toContain('session:default:');
   });
 
   it('hashes the last user message when several are present', () => {

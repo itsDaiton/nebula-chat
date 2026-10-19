@@ -13,7 +13,7 @@ export const RouterProvider = () => (
   <AuthGate>
     <Routes>
       <Route path={route.chat.root()} element={<ChatPage />} />
-      <Route path={route.chat.conversation(':id')} element={<ChatPage />} />
+      <Route path={route.chat.session(':id')} element={<ChatPage />} />
       <Route path={route.auth.root()} element={<AuthPage />} />
       <Route path={route.auth.forgotPassword()} element={<ForgotPasswordPage />} />
       <Route path={route.auth.resetPassword()} element={<ResetPasswordPage />} />

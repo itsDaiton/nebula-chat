@@ -10,9 +10,9 @@ export type {
   User,
 } from './auth';
 
-// Conversation claim (the anonymous → registered handoff, ADR-0010 §2)
-export { claimConversations } from './claim';
-export type { ClaimConversationsParams } from './claim';
+// Session claim (the anonymous → registered handoff, ADR-0010 §2)
+export { claimSessions } from './claim';
+export type { ClaimSessionsParams } from './claim';
 
 // Transactional email (verification + password reset, ADR-0021)
 export { createResendEmailSender } from './resend';

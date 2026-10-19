@@ -44,7 +44,7 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 /**
- * Stream a chat completion response from an AI model with automatic conversation and message persistence.
+ * Stream a chat completion response from an AI model with automatic session and message persistence.
  * @summary Stream chat completion
  */
 export const streamChat = (

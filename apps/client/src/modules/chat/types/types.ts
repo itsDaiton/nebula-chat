@@ -21,7 +21,7 @@ export type ChatInputProps = {
 export type ChatHistoryStreamOptions = {
   model: string;
   messages: ChatMessage[];
-  conversationId?: string;
+  sessionId?: string;
 };
 
 export type UseKeyboardHandlerProps = {
@@ -52,7 +52,7 @@ export type ChatInputBarProps = {
 };
 
 export type ChatEmptyStateProps = {
-  conversationId: string | undefined;
+  sessionId: string | undefined;
 };
 
 export type ChatMessageListProps = {
@@ -77,7 +77,7 @@ export type ChatStreamState = {
   isPostStreamNavigation: boolean;
   error: string | null;
   usage: Usage;
-  conversationId?: string;
+  sessionId?: string;
   /** A Guest's send was refused because their message allowance is spent. */
   isMessageAllowanceReached: boolean;
   setHistory: Dispatch<SetStateAction<ChatMessage[]>>;
@@ -85,7 +85,7 @@ export type ChatStreamState = {
   setIsPostStreamNavigation: (v: boolean) => void;
   setError: (error: string | null) => void;
   setUsage: (usage: Usage) => void;
-  setConversationId: (id: string | undefined) => void;
+  setSessionId: (id: string | undefined) => void;
   clearMessageAllowanceReached: () => void;
 };
 
@@ -106,6 +106,6 @@ export type SseEvent =
   | 'usage'
   | 'error'
   | 'end'
-  | 'conversation-created'
+  | 'session-created'
   | 'user-message-created'
   | 'assistant-message-created';

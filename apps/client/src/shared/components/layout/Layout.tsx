@@ -1,14 +1,14 @@
 import { useEffect } from 'react';
 import { Box, Flex } from '@chakra-ui/react';
 import { Header } from '@/shared/components/layout/Header';
-import { ConversationsList } from '@/modules/conversations/components/ConversationsList';
+import { SessionsList } from '@/modules/sessions/components/SessionsList';
 import { SidePanel } from '@/shared/components/layout/SidePanel';
 import type { LayoutProps } from '@/shared/types/types';
 import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
-import { ConversationDrawer } from '@/modules/conversations/components/ConversationDrawer';
+import { SessionDrawer } from '@/modules/sessions/components/SessionDrawer';
 import { useDrawer } from '@/shared/hooks/useDrawer';
-import { ConversationsSearch } from '@/modules/conversations/components/ConversationsSearch';
-import { useConversations } from '@/modules/conversations/hooks/useConversations';
+import { SessionsSearch } from '@/modules/sessions/components/SessionsSearch';
+import { useSessions } from '@/modules/sessions/hooks/useSessions';
 import { useNavigate } from 'react-router';
 import { route } from '@/routing/routes';
 import { useViewportHeight } from '@/shared/hooks/useViewportHeight';
@@ -17,7 +17,7 @@ export const Layout = ({ children }: LayoutProps) => {
   const { isDrawerOpen, openDrawer, closeDrawer, isSearchOpen, toggleSearch, closeSearch } =
     useDrawer();
   const { showSidePanels, showRightPanel } = useResponsiveLayout();
-  const { conversations } = useConversations();
+  const { sessions } = useSessions();
 
   useEffect(() => {
     if (showSidePanels && isSearchOpen) {
@@ -29,8 +29,8 @@ export const Layout = ({ children }: LayoutProps) => {
   const navigate = useNavigate();
   const viewportHeight = useViewportHeight();
 
-  const handleConversationClick = (conversationId: string) => {
-    void navigate(route.chat.conversation(conversationId));
+  const handleSessionClick = (sessionId: string) => {
+    void navigate(route.chat.session(sessionId));
     closeSearch();
   };
 
@@ -38,9 +38,9 @@ export const Layout = ({ children }: LayoutProps) => {
     <Flex direction="column" style={{ height: viewportHeight }}>
       <Header onMenuClick={openDrawer} />
       {!showSidePanels && isSearchOpen && (
-        <ConversationsSearch
-          conversations={conversations}
-          onConversationClick={handleConversationClick}
+        <SessionsSearch
+          sessions={sessions}
+          onSessionClick={handleSessionClick}
           onClose={closeSearch}
         />
       )}
@@ -54,9 +54,9 @@ export const Layout = ({ children }: LayoutProps) => {
         justifyContent="center"
         overflow="hidden"
       >
-        {showSidePanels && <ConversationsList />}
+        {showSidePanels && <SessionsList />}
         {!showSidePanels && (
-          <ConversationDrawer
+          <SessionDrawer
             isDrawerOpen={isDrawerOpen}
             closeDrawer={closeDrawer}
             toggleSearch={toggleSearch}

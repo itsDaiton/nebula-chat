@@ -34,7 +34,7 @@ const createReply = () => {
   return { reply: reply as unknown as FastifyReply, sent, lines };
 };
 
-const request = { method: 'GET', url: '/api/conversations?limit=5' } as FastifyRequest;
+const request = { method: 'GET', url: '/api/sessions?limit=5' } as FastifyRequest;
 
 const handle = (err: Error) => {
   const { reply, sent } = createReply();
@@ -78,7 +78,7 @@ describe('errorHandler', () => {
           'nebula.component': 'http',
           'error.type': 'Internal',
           'http.response.status_code': 500,
-          'url.path': '/api/conversations',
+          'url.path': '/api/sessions',
           err: expect.objectContaining({
             type: 'TypeError',
             message: 'boom',
@@ -99,7 +99,7 @@ describe('errorHandler', () => {
     });
 
     it.each([
-      ['an AppError', new NotFoundError('Conversation', 'abc')],
+      ['an AppError', new NotFoundError('Session', 'abc')],
       ['a schema-validation failure', validationError()],
       ['a mapped Postgres constraint violation', pgError('23505')],
       ['a framework 4xx', Object.assign(new Error('Unsupported Media Type'), { statusCode: 415 })],
@@ -124,13 +124,13 @@ describe('errorHandler', () => {
   });
 
   it('maps an AppError onto its own status and code', () => {
-    const sent = handle(new NotFoundError('Conversation', 'abc'));
+    const sent = handle(new NotFoundError('Session', 'abc'));
 
     expect(sent.status).toBe(404);
     expect(sent.body).toEqual({
       success: false,
       error: 'NotFound',
-      message: 'Conversation with id "abc" not found',
+      message: 'Session with id "abc" not found',
     });
   });
 

@@ -8,7 +8,7 @@ import type { DbClient } from '@nebula-chat/db';
 import type { AuthStore } from '@nebula-chat/redis';
 import type { Logger } from '@nebula-chat/otel';
 import { passwordResetEmail, verificationEmail } from './authEmails';
-import { claimConversations } from './claim';
+import { claimSessions } from './claim';
 import { toBetterAuthLogHandler } from './logger';
 import { markEmailVerified } from './markEmailVerified';
 import {
@@ -96,14 +96,14 @@ const withProviderImageKept = (providers: SocialProviderCredentials) =>
  *   passed so model names map to our tables; `user.modelName: 'users'` keeps the
  *   `user` model on the existing `users` table.
  * - `advanced.database.generateId: 'uuid'` so Postgres generates ids
- *   (`gen_random_uuid()`), leaving the `conversations.userId` uuid FK unchanged.
+ *   (`gen_random_uuid()`), leaving the `sessions.userId` uuid FK unchanged.
  * - `secondaryStorage` = the injected `authStore` (get/set/delete; ttl in seconds).
  * - `session.cookieCache` enabled so most requests validate from a signed cookie
  *   without touching Redis. `storeSessionInDatabase` is intentionally NOT set —
  *   sessions live in Redis (flip it on later in one line to move them to Postgres).
  * - `rateLimit` enabled with `storage: 'secondary-storage'` (counters in Redis), keyed per
  *   client by the `CF-Connecting-IP` header Render's Cloudflare edge sets.
- * - anonymous plugin with `onLinkAccount` claiming the Guest's conversations.
+ * - anonymous plugin with `onLinkAccount` claiming the Guest's Sessions.
  * - Have I Been Pwned plugin rejecting breached passwords on sign-up.
  * - openAPI plugin documenting the whole auth surface: a Scalar reference UI at
  *   `/api/auth/reference` and the OpenAPI 3.1 schema at
@@ -150,7 +150,7 @@ export const createAuth = ({
     user: {
       modelName: 'users',
       // Settings → Delete account: the password confirms it, or for a user without one a
-      // sign-in under a day old. Conversations and messages go with them (FK cascades).
+      // sign-in under a day old. Their Sessions and messages go with them (FK cascades).
       deleteUser: { enabled: true },
       additionalFields: {
         // Where our upload sits in storage; unset means `image` is a provider URL or empty.
@@ -270,9 +270,9 @@ export const createAuth = ({
     plugins: [
       anonymous({
         onLinkAccount: async ({ anonymousUser, newUser }) => {
-          // Claim the Guest's conversations into the linked account BEFORE the
+          // Claim the Guest's Sessions into the linked account BEFORE the
           // anonymous row is cleaned up (ADR-0010 §2).
-          await claimConversations(db, {
+          await claimSessions(db, {
             fromUserId: anonymousUser.user.id,
             toUserId: newUser.user.id,
           });

@@ -7,7 +7,7 @@ export const useChatStreamStore = create<ChatStreamState>((set) => ({
   isPostStreamNavigation: false,
   error: null,
   usage: null,
-  conversationId: undefined,
+  sessionId: undefined,
   isMessageAllowanceReached: false,
   setHistory: (history) =>
     set((state) => ({
@@ -17,6 +17,6 @@ export const useChatStreamStore = create<ChatStreamState>((set) => ({
   setIsPostStreamNavigation: (v) => set({ isPostStreamNavigation: v }),
   setError: (error) => set({ error }),
   setUsage: (usage) => set({ usage }),
-  setConversationId: (id) => set({ conversationId: id }),
+  setSessionId: (id) => set({ sessionId: id }),
   clearMessageAllowanceReached: () => set({ isMessageAllowanceReached: false }),
 }));

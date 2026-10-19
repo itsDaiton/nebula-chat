@@ -4,7 +4,7 @@ The backend is a Fastify 5 API for Nebula Chat.
 
 It is responsible for:
 - Streaming AI chat responses from OpenAI
-- Persisting conversations/messages in PostgreSQL via Drizzle
+- Persisting sessions/messages in PostgreSQL via Drizzle
 - Caching chat streams in Redis
 - Storing Profile images in Supabase Storage (optional)
 - Exposing OpenAPI docs (`/docs`, `/openapi.json`)

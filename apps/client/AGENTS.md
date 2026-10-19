@@ -127,7 +127,7 @@ apps/client/src/
 │   │   │   ├── useSignOutEverywhere.ts # revoke-sessions, then sign-out on this device
 │   │   │   └── useHasPassword.ts      # list-accounts → has a credential password (delete-account confirm)
 │   │   └── components/
-│   │       ├── SettingsLayout.tsx # App Header over Settings' own shell in place of the chat (no conversations): nav + open section
+│   │       ├── SettingsLayout.tsx # App Header over Settings' own shell in place of the chat (no sessions): nav + open section
 │   │       ├── SettingsNav.tsx    # Search + "Settings" section links; a sidebar on desktop, a top bar on mobile
 │   │       ├── SettingsSearch.tsx # Front-end-only filter over the settings rows
 │   │       ├── SettingsSection.tsx # Titled group of rows (h2)
@@ -139,22 +139,22 @@ apps/client/src/
 │   │       ├── DeleteAccountSetting.tsx # Delete account row + its alertdialog
 │   │       ├── DeleteAccountForm.tsx # Password confirm, or none for a Google/GitHub-only user
 │   │       └── AccountIdSetting.tsx # The user's UUID with a copy button
-│   └── conversations/
-│       ├── types/types.ts         # All conversation types
+│   └── sessions/
+│       ├── types/types.ts         # All session types
 │       ├── utils/                 # navigationActions
 │       ├── stores/
-│       │   └── useConversationsSearchStore.ts  # Search text + its debounced copy
+│       │   └── useSessionsSearchStore.ts  # Search text + its debounced copy
 │       ├── hooks/
-│       │   ├── useConversations.ts        # Sidebar list: infinite query
-│       │   ├── useConversation.ts         # Open conversation: detail + messages queries
-│       │   ├── useConversationsSearch.ts  # Search results: query on the debounced text
+│       │   ├── useSessions.ts         # Sidebar list: infinite query
+│       │   ├── useChatSession.ts      # Open session: detail + messages queries
+│       │   ├── useSessionsSearch.ts   # Search results: query on the debounced text
 │       │   └── useInfiniteScroll.ts
 │       └── components/
-│           ├── ConversationsList.tsx
-│           ├── ConversationDrawer.tsx
-│           ├── ConversationsSearch.tsx
-│           ├── ConversationListItem.tsx
-│           └── ConversationSkeletons.tsx
+│           ├── SessionsList.tsx
+│           ├── SessionDrawer.tsx
+│           ├── SessionsSearch.tsx
+│           ├── SessionListItem.tsx
+│           └── SessionSkeletons.tsx
 └── shared/                        # Cross-module code
     ├── types/types.ts             # Shared types
     ├── config/
@@ -210,7 +210,7 @@ Routes are defined in `routes.ts` as typed helpers and consumed through React Ro
 import { route } from '@/routes';
 
 navigate(route.chat.root()); // /
-navigate(route.chat.conversation(id)); // /c/:id
+navigate(route.chat.session(id)); // /s/:id
 ```
 
 `RouterProvider.tsx` sets up the React Router instance. Route components live in `modules/*/` as `*Page.tsx` files.
@@ -226,13 +226,13 @@ Always use the `@/` path alias — never relative paths (`./`, `../../`, etc.). 
 ```ts
 // correct
 import { useSearchStore } from '@/shared/stores/useSearchStore';
-import type { Conversation } from '@/modules/conversations/types/types';
+import type { Session } from '@/modules/sessions/types/types';
 import { ChatInput } from '@/modules/chat/components/ChatInput';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 
 // wrong — no relative paths, ever
 import { useSearchStore } from '../../shared/stores/useSearchStore';
-import type { Conversation } from '../types/types';
+import type { Session } from '../types/types';
 import { ChatInput } from './ChatInput';
 ```
 
@@ -266,13 +266,13 @@ The only `index.ts` files tolerated are those emitted by code generators (e.g. O
 
 ```ts
 // correct
-type ConversationWithMessages = {
+type SessionWithMessages = {
   id: string;
   messages: Message[];
 };
 
 // wrong — anywhere in the codebase
-interface ConversationWithMessages { ... }
+interface SessionWithMessages { ... }
 ```
 
 - All types must live in `/types/types.ts` under the relevant module or `shared/`. Never define types inline inside hook, store, or component files.
@@ -306,7 +306,7 @@ function MyComponent() { ... }
 
 State is split by **kind** ([ADR-0012](../../docs/adr/0012-adopt-tanstack-query-for-server-state.md)):
 
-- **Server state** is anything the API owns (conversations, messages, search results). It lives in the
+- **Server state** is anything the API owns (sessions, messages, search results). It lives in the
   [TanStack Query](https://tanstack.com/query) cache and is read through the **Orval-generated hooks** in
   `src/libs/api/generated/**`; the cache owns loading, errors, dedup and refetching.
 - **Client state** is what the browser owns (drawer open, selected model, input text). It lives in
@@ -319,11 +319,11 @@ State is split by **kind** ([ADR-0012](../../docs/adr/0012-adopt-tanstack-query-
 
 ### Server state — the generated hooks
 
-- Import the generated hook (`useGetConversation`, `useListConversationsInfinite`, …) from its per-resource
-  file, e.g. `@/libs/api/generated/conversations/conversations`. Regenerate with `pnpm frontend
+- Import the generated hook (`useGetSession`, `useListSessionsInfinite`, …) from its per-resource
+  file, e.g. `@/libs/api/generated/sessions/sessions`. Regenerate with `pnpm frontend
 generate:api` after any backend change; generated files are never hand-edited.
-- Wrap it in a module hook in `/hooks/` when the view needs another shape: `useConversations` flattens the
-  pages with `select`. Type the view with the generated models (`Conversation`, `Message`); never re-declare
+- Wrap it in a module hook in `/hooks/` when the view needs another shape: `useSessions` flattens the
+  pages with `select`. Type the view with the generated models (`Session`, `Message`); never re-declare
   or alias them by hand. Components that call the same hook
   share one request (react-query dedupes by query key), so no provider distributes server state.
 - Use the plain, non-suspense hooks (`useSuspenseQuery: false` in `orval.config.ts`) and drive skeletons off
@@ -336,7 +336,7 @@ generate:api` after any backend change; generated files are never hand-edited.
   `meta: { inlineError: true }` and is not toasted.
 - **After a write the cache cannot see, invalidate** with the generated key helpers:
   `queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() })`. `useChatStream` invalidates the
-  list on `conversation-created`, and the list, conversation detail and messages on `end` (a messages
+  list on `session-created`, and the list, session detail and messages on `end` (a messages
   refetch mid-stream would race the reply). It also invalidates the message allowance on
   `user-message-created`, the moment the server counts the message, and after a send refused at the allowance.
   Invalidate rather than hand-seed with `setQueryData`.
@@ -406,20 +406,20 @@ context is genuinely needed, split it across two files:
 
 ### Existing stores
 
-| Store                         | Location                        | Owns                                                             |
-| ----------------------------- | ------------------------------- | ---------------------------------------------------------------- |
-| `useConversationsSearchStore` | `modules/conversations/stores/` | Search text and its debounced copy (the results are a query)     |
-| `useChatStreamStore`          | `modules/chat/stores/`          | History, stream flag, usage, conversation ID, message allowance  |
-| `useMessageStore`             | `modules/chat/stores/`          | Current message input value                                      |
-| `useModelStore`               | `modules/chat/stores/`          | Selected AI model                                                |
-| `useModelSelectorStore`       | `modules/chat/stores/`          | Model dropdown open state and trigger width                      |
-| `useSearchStore`              | `shared/stores/`                | Search overlay open/closed                                       |
-| `useDrawerStore`              | `shared/stores/`                | Mobile drawer open/closed                                        |
-| `useViewportStore`            | `shared/stores/`                | Viewport height string (updated on resize)                       |
-| `useMultiLineStore`           | `shared/stores/`                | Per-content multi-line detection map (`Record<string, boolean>`) |
-| `usePasswordVisibilityStore`  | `modules/auth/stores/`          | Which password fields are unmasked, per field name               |
-| `usePasswordChangeStore`      | `modules/settings/stores/`      | Whether the Settings Password row's change form is unfolded      |
-| `useSettingsSearchStore`      | `modules/settings/stores/`      | The settings search text                                         |
+| Store                        | Location                   | Owns                                                             |
+| ---------------------------- | -------------------------- | ---------------------------------------------------------------- |
+| `useSessionsSearchStore`     | `modules/sessions/stores/` | Search text and its debounced copy (the results are a query)     |
+| `useChatStreamStore`         | `modules/chat/stores/`     | History, stream flag, usage, session ID, message allowance       |
+| `useMessageStore`            | `modules/chat/stores/`     | Current message input value                                      |
+| `useModelStore`              | `modules/chat/stores/`     | Selected AI model                                                |
+| `useModelSelectorStore`      | `modules/chat/stores/`     | Model dropdown open state and trigger width                      |
+| `useSearchStore`             | `shared/stores/`           | Search overlay open/closed                                       |
+| `useDrawerStore`             | `shared/stores/`           | Mobile drawer open/closed                                        |
+| `useViewportStore`           | `shared/stores/`           | Viewport height string (updated on resize)                       |
+| `useMultiLineStore`          | `shared/stores/`           | Per-content multi-line detection map (`Record<string, boolean>`) |
+| `usePasswordVisibilityStore` | `modules/auth/stores/`     | Which password fields are unmasked, per field name               |
+| `usePasswordChangeStore`     | `modules/settings/stores/` | Whether the Settings Password row's change form is unfolded      |
+| `useSettingsSearchStore`     | `modules/settings/stores/` | The settings search text                                         |
 
 ---
 
@@ -503,8 +503,8 @@ Utility hooks that are inherently parameterised per call-site (`useDebounce`, `u
 | Pattern                            | Wrong                            | Right                                                                             |
 | ---------------------------------- | -------------------------------- | --------------------------------------------------------------------------------- |
 | Derived / computed state           | `useEffect` → `setState`         | Compute inline during render or `useMemo`                                         |
-| Syncing state on prop/route change | `useEffect` → Zustand `set`      | Guarded render-time write (see `useConversation.ts`)                              |
-| Fetching data on mount             | `useEffect(() => fetch(), [])`   | Generated react-query hook, which fetches on mount (see `useConversations.ts`)    |
+| Syncing state on prop/route change | `useEffect` → Zustand `set`      | Guarded render-time write (see `useChatSession.ts`)                               |
+| Fetching data on mount             | `useEffect(() => fetch(), [])`   | Generated react-query hook, which fetches on mount (see `useSessions.ts`)         |
 | Refreshing data after a write      | `useEffect` → refetch            | `queryClient.invalidateQueries` where the write happens (see `useChatStream.ts`)  |
 | Reading a browser API value        | `useEffect` + `useState`         | `useSyncExternalStore` (see `useViewportHeight.ts`)                               |
 | DOM measurement after mount        | `useRef` + `useEffect`           | Callback ref — `ref={useCallback((node) => { ... }, [])}` (see `useMultiLine.ts`) |
@@ -560,7 +560,7 @@ pnpm frontend test:coverage
   OpenAPI document the backend emits:
 
   ```ts
-  server.use(getListConversationsMockHandler({ conversations, nextCursor: null, hasMore: false }));
+  server.use(getListSessionsMockHandler({ sessions, nextCursor: null, hasMore: false }));
   ```
 
   The generated handlers match any origin, which is what keeps `http://localhost:3000` out of tests. Three

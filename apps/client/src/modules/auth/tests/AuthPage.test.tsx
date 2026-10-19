@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getListConversationsMockHandler } from '@/libs/api/generated/conversations/conversations.msw';
+import { getListSessionsMockHandler } from '@/libs/api/generated/sessions/sessions.msw';
 import { AuthPage } from '@/modules/auth/AuthPage';
 import { ForgotPasswordPage } from '@/modules/auth/ForgotPasswordPage';
 import { AccountStatus } from '@/modules/auth/components/AccountStatus';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
-import { ConversationsList } from '@/modules/conversations/components/ConversationsList';
+import { SessionsList } from '@/modules/sessions/components/SessionsList';
 import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
@@ -25,7 +25,7 @@ import {
 import { server } from '@/test/msw';
 import { renderWithChakra } from '@/test/render';
 
-const GUEST_CONVERSATIONS = [
+const GUEST_SESSIONS = [
   {
     id: '11111111-1111-4111-8111-111111111111',
     title: 'Trip to Lisbon',
@@ -44,7 +44,7 @@ const becomeRegistered = () => {
   session = aSession({ isAnonymous: false });
 };
 
-// The chat root stands in for the app: the nav indicator plus the Guest's conversation list.
+// The chat root stands in for the app: the nav indicator plus the Guest's session list.
 const renderAuthFlow = (initialRoute = route.auth.root()) => {
   const view = renderWithChakra(
     <Routes>
@@ -53,7 +53,7 @@ const renderAuthFlow = (initialRoute = route.auth.root()) => {
         element={
           <>
             <AccountStatus />
-            <ConversationsList />
+            <SessionsList />
           </>
         }
       />
@@ -114,8 +114,8 @@ beforeEach(() => {
   session = aSession();
   server.use(
     mockGetSession(() => session),
-    getListConversationsMockHandler({
-      conversations: GUEST_CONVERSATIONS,
+    getListSessionsMockHandler({
+      sessions: GUEST_SESSIONS,
       nextCursor: null,
       hasMore: false,
     }),
@@ -413,12 +413,12 @@ describe('AuthPage', () => {
     expect(passwordField()).toHaveAttribute('type', 'password');
   });
 
-  it("keeps the Guest's conversations after signing in (the claim)", async () => {
+  it("keeps the Guest's sessions after signing in (the claim)", async () => {
     let listRequests = 0;
     server.use(
-      getListConversationsMockHandler(() => {
+      getListSessionsMockHandler(() => {
         listRequests += 1;
-        return { conversations: GUEST_CONVERSATIONS, nextCursor: null, hasMore: false };
+        return { sessions: GUEST_SESSIONS, nextCursor: null, hasMore: false };
       }),
       mockEmailSignIn(becomeRegistered),
     );
@@ -511,12 +511,12 @@ describe('AuthPage', () => {
     });
 
     // The claim itself runs on the server's provider callback; the client only has to reload as the new user.
-    it('lands back in the chat signed in, listing their conversations afresh', async () => {
+    it('lands back in the chat signed in, listing their sessions afresh', async () => {
       let listRequests = 0;
       server.use(
-        getListConversationsMockHandler(() => {
+        getListSessionsMockHandler(() => {
           listRequests += 1;
-          return { conversations: GUEST_CONVERSATIONS, nextCursor: null, hasMore: false };
+          return { sessions: GUEST_SESSIONS, nextCursor: null, hasMore: false };
         }),
       );
       const sent = captureSocialSignIn();
