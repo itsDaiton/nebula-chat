@@ -1,6 +1,6 @@
 {
   "name": "@nebula-chat/auth",
-  "version": "2.5.0",
+  "version": "3.0.0",
   "description": "better-auth substrate: auth sessions, anonymous Guests, the Session claim and auth email",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
