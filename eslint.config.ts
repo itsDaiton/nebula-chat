@@ -20,9 +20,12 @@ export default [
       '**/vite.config.*',
       '**/vitest.config.*',
       'apps/client/orval.config.*',
+      'apps/cli/orval.config.*',
+      'apps/cli/tsdown.config.*',
       'apps/server/src/generated/**',
       'libs/db/migrations/**',
       'apps/client/src/libs/api/generated/**',
+      'apps/cli/src/api/generated/**',
     ],
   },
   {
@@ -128,6 +131,34 @@ export default [
       'no-var': 'error',
       'no-new-require': 'error',
       'n/no-deprecated-api': 'warn',
+      '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/no-floating-promises': 'error',
+    },
+  },
+  {
+    files: ['apps/cli/**/*.ts'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: './apps/cli/tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: String.raw`^\.+\/`,
+              message: 'Use @cli/ absolute path imports instead of relative paths.',
+            },
+          ],
+        },
+      ],
       '@typescript-eslint/no-misused-promises': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
     },

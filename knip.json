@@ -12,6 +12,12 @@
     "apps/server": {
       "project": ["src/**/*.ts"]
     },
+    "apps/cli": {
+      "project": ["src/**/*.ts"],
+      "ignoreIssues": {
+        "src/api/generated/**": ["exports", "types"]
+      }
+    },
     "libs/db": {
       "project": ["src/**/*.ts"],
       "drizzle": false
