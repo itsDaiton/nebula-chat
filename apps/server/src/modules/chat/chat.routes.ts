@@ -16,7 +16,7 @@ const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
   app.post('/stream', {
     schema: {
       description:
-        'Stream a chat completion response from an AI model with automatic conversation and message persistence.',
+        'Stream a chat completion response from an AI model with automatic session and message persistence.',
       summary: 'Stream chat completion',
       tags: ['Chat'],
       operationId: 'streamChat',
@@ -24,8 +24,8 @@ const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
       response: {
         200: jsonResponse('Streamed SSE events', z.string()),
         400: jsonResponse('Invalid request body or validation error', errorEnvelopeSchema),
-        404: jsonResponse('Conversation not found', errorEnvelopeSchema),
-        401: jsonResponse('No authenticated session', errorEnvelopeSchema),
+        404: jsonResponse('Session not found', errorEnvelopeSchema),
+        401: jsonResponse('No auth session', errorEnvelopeSchema),
         403: jsonResponse(
           'Guest message allowance reached — registration required',
           errorEnvelopeSchema,
@@ -58,7 +58,7 @@ const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
       operationId: 'getMessageAllowance',
       response: {
         200: jsonResponse("The caller's message allowance", messageAllowanceSchema),
-        401: jsonResponse('No authenticated session', errorEnvelopeSchema),
+        401: jsonResponse('No auth session', errorEnvelopeSchema),
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },

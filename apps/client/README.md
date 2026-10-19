@@ -4,7 +4,7 @@ The frontend is a React 19 + Vite SPA for Nebula Chat.
 
 It provides:
 - Chat UI with streaming assistant responses
-- Conversation list/search navigation
+- Session list/search navigation
 - Responsive layout built with Chakra UI
 
 ## Prerequisites

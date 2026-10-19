@@ -10,7 +10,7 @@ beforeEach(() => {
     isPostStreamNavigation: false,
     error: null,
     usage: null,
-    conversationId: undefined,
+    sessionId: undefined,
   });
 });
 
@@ -51,11 +51,11 @@ describe('useChatStreamStore', () => {
     expect(store().usage).toEqual({ promptTokens: 1, completionTokens: 2, totalTokens: 3 });
   });
 
-  it('records and clears the conversation id', () => {
-    store().setConversationId('c1');
-    expect(store().conversationId).toBe('c1');
+  it('records and clears the session id', () => {
+    store().setSessionId('c1');
+    expect(store().sessionId).toBe('c1');
 
-    store().setConversationId(undefined);
-    expect(store().conversationId).toBeUndefined();
+    store().setSessionId(undefined);
+    expect(store().sessionId).toBeUndefined();
   });
 });

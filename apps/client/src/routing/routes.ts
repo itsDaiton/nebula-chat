@@ -1,7 +1,7 @@
 export const route = {
   chat: {
     root: () => '/',
-    conversation: (id: string) => `/c/${id}`,
+    session: (id: string) => `/s/${id}`,
   },
   auth: {
     root: () => '/auth',

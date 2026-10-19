@@ -11,7 +11,7 @@ export const createChatStreamSchema = z.object({
   model: z
     .string()
     .refine((m) => Object.hasOwn(MODEL_REGISTRY, m), { message: 'Invalid model name' }),
-  conversationId: z.uuid().optional(),
+  sessionId: z.uuid().optional(),
   regenerate: z
     .boolean()
     .optional()

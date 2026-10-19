@@ -3,30 +3,30 @@ export const resources = {
     appName: 'nebula chat',
     welcomeMessage: 'Welcome to Nebula Chat! 👋',
     welcomeIntro:
-      "I'm your AI assistant, ready to help you with any questions or tasks you might have. Feel free to start a conversation by typing a message below!",
-    emptyConversation: 'This conversation has no messages yet. 😔',
-    emptyConversationHint: 'Start the conversation by asking Nebula Chat something!',
+      "I'm your AI assistant, ready to help you with any questions or tasks you might have. Feel free to start a session by typing a message below!",
+    emptySession: 'This session has no messages yet. 😔',
+    emptySessionHint: 'Start the session by asking Nebula Chat something!',
     streamError: 'An error occurred during streaming.',
     messageAllowance: {
       title: "You've reached the free message limit",
-      description: 'Register or sign in to keep chatting. Your conversations come with you.',
+      description: 'Register or sign in to keep chatting. Your sessions come with you.',
       action: 'Register or sign in',
       remaining: (remaining: number, limit: number) =>
         `${remaining} of ${limit} ${remaining === 1 ? 'message' : 'messages'} left`,
     },
   },
-  conversations: {
-    title: 'Conversations',
-    loading: 'Loading conversations...',
+  sessions: {
+    title: 'Sessions',
+    loading: 'Loading sessions...',
     loadingMore: 'Loading more...',
-    empty: 'No conversations yet',
-    emptyHint: 'Start a new chat to create your first conversation',
+    empty: 'No sessions yet',
+    emptyHint: 'Start a new chat to create your first session',
     searchPlaceholder: 'Search chats...',
     noResults: 'No chats found',
-    searchHint: 'Start typing to search all conversations',
+    searchHint: 'Start typing to search all sessions',
     single: {
-      loading: 'Loading conversation...',
-      error: 'Error loading conversation',
+      loading: 'Loading session...',
+      error: 'Error loading session',
     },
   },
   auth: {
@@ -76,7 +76,7 @@ export const resources = {
     },
     signUp: {
       title: 'Create your account',
-      description: "Chat as much as you like, and keep the conversations you've already started.",
+      description: "Chat as much as you like, and keep the sessions you've already started.",
     },
     social: {
       google: 'Continue with Google',
@@ -181,11 +181,11 @@ export const resources = {
       },
       deleteAccount: {
         label: 'Delete account',
-        description: 'Permanently delete your account and all of your conversations.',
+        description: 'Permanently delete your account and all of your sessions.',
         action: 'Delete account',
         dialogTitle: 'Delete your account?',
         warning:
-          "This permanently deletes your account and all of your conversations. It can't be undone.",
+          "This permanently deletes your account and all of your sessions. It can't be undone.",
         passwordHint: 'Enter your password to confirm.',
         noPasswordHint: "You signed in with Google or GitHub, so there's no password to enter.",
         confirm: 'Delete my account',
@@ -228,6 +228,6 @@ export const resources = {
     searchChats: 'Search chats',
     files: 'Files',
     aiStudio: 'AI Studio',
-    conversations: 'Recent conversations',
+    sessions: 'Recent sessions',
   },
 };

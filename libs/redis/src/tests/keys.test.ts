@@ -21,8 +21,8 @@ describe('hashText', () => {
 
 describe('buildKey', () => {
   it('joins parts with colons', () => {
-    expect(buildKey('conversation', 'abc', 'model', 'gpt-4o-mini')).toBe(
-      'conversation:abc:model:gpt-4o-mini',
+    expect(buildKey('session', 'abc', 'model', 'gpt-4o-mini')).toBe(
+      'session:abc:model:gpt-4o-mini',
     );
   });
 

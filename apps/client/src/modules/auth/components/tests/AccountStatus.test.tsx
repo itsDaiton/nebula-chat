@@ -2,10 +2,10 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getListConversationsMockHandler } from '@/libs/api/generated/conversations/conversations.msw';
+import { getListSessionsMockHandler } from '@/libs/api/generated/sessions/sessions.msw';
 import { AccountStatus } from '@/modules/auth/components/AccountStatus';
 import { AuthGate } from '@/modules/auth/components/AuthGate';
-import { ConversationsList } from '@/modules/conversations/components/ConversationsList';
+import { SessionsList } from '@/modules/sessions/components/SessionsList';
 import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
@@ -42,11 +42,11 @@ const renderStatus = async (initialRoute: string = route.chat.root()) => {
           }
         />
         <Route
-          path={route.chat.conversation(':id')}
+          path={route.chat.session(':id')}
           element={
             <>
               <AccountStatus />
-              <ConversationsList />
+              <SessionsList />
             </>
           }
         />
@@ -163,12 +163,12 @@ describe('AccountStatus', () => {
         signIns += 1;
         session = aSession();
       }),
-      getListConversationsMockHandler(() => {
+      getListSessionsMockHandler(() => {
         if (!session) unauthenticatedRequests += 1;
-        return { conversations: [], nextCursor: null, hasMore: false };
+        return { sessions: [], nextCursor: null, hasMore: false };
       }),
     );
-    await renderStatus(route.chat.conversation('abc'));
+    await renderStatus(route.chat.session('abc'));
 
     await openMenu();
     await selectMenuItem(await signOutItem());

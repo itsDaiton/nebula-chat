@@ -6,7 +6,7 @@ import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
 import { chatCacheKey, getCachedStream } from '@backend/redis';
 import { getSessionData } from '@backend/plugins/authGate.plugin';
 import {
-  sseConversationCreated,
+  sseSessionCreated,
   sseUserMessageCreated,
   sseCacheHit,
   sseUsage,
@@ -47,14 +47,14 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
     }
     logEvent(log, 'debug', 'cache.hit', { 'nebula.cache.key': key }, 'Replaying a cached reply');
 
-    const conversationId = body.conversationId;
+    const sessionId = body.sessionId;
     const userMessage = body.messages[0];
 
     if (!userMessage) {
       return;
     }
 
-    await validateChatRequest(conversationId, userMessage, getSessionData(req).user.id, body.model);
+    await validateChatRequest(sessionId, userMessage, getSessionData(req).user.id, body.model);
 
     const cachedTokens = cachedData.tokens;
     const lines = cachedTokens.split('\n');
@@ -81,7 +81,7 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
     }
 
     const userMessageResult = await createUserMessage(
-      conversationId,
+      sessionId,
       userMessage.content,
       userMessage.role,
       getSessionData(req).user.id,
@@ -89,7 +89,7 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
 
     const assistantMessage = await messageService.createMessage(
       {
-        conversationId: userMessageResult.conversationId,
+        sessionId: userMessageResult.sessionId,
         role: 'assistant',
         content: assistantContent,
         tokenCount: cachedData.usageData?.totalTokens ?? null,
@@ -97,11 +97,7 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
       getSessionData(req).user.id,
     );
 
-    const {
-      userMessageId,
-      conversationId: finalConversationId,
-      isNewConversation,
-    } = userMessageResult;
+    const { userMessageId, sessionId: finalSessionId, isNewSession } = userMessageResult;
     const assistantMessageId = assistantMessage.id;
 
     reply.hijack();
@@ -109,8 +105,8 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
     setSseHeaders(reply);
     raw.flushHeaders?.();
 
-    if (isNewConversation) {
-      raw.write(sseConversationCreated(finalConversationId));
+    if (isNewSession) {
+      raw.write(sseSessionCreated(finalSessionId));
     }
 
     raw.write(sseUserMessageCreated(userMessageId));
@@ -128,10 +124,7 @@ export const cacheCheckHook: preHandlerAsyncHookHandler = async (
     raw.end();
 
     logEvent(
-      componentLogger(
-        bindAttributes(req.log, { 'nebula.session.id': finalConversationId }),
-        'chat',
-      ),
+      componentLogger(bindAttributes(req.log, { 'nebula.session.id': finalSessionId }), 'chat'),
       'info',
       'chat.reply.completed',
       {

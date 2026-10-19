@@ -29,6 +29,13 @@
       "when": 1791712874181,
       "tag": "0003_profile-image-key",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792411833107,
+      "tag": "0004_rename-conversations-to-sessions",
+      "breakpoints": true
     }
   ]
 }

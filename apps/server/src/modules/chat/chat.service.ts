@@ -5,13 +5,13 @@ import type { ChatLogger, CreateChatStreamDTO, UsageData } from '@backend/module
 import { messageService } from '@backend/modules/message/message.service';
 import { messageRepository } from '@backend/modules/message/message.repository';
 import type { CreateMessageDTO } from '@backend/modules/message/message.types';
-import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
+import { sessionRepository } from '@backend/modules/session/session.repository';
 import {
   streamChat,
   countTokens,
   createRateLimiter,
   getProviderForModel,
-  sseConversationCreated,
+  sseSessionCreated,
   sseUserMessageCreated,
   sseAssistantMessageCreated,
   sseToken,
@@ -38,45 +38,45 @@ const MAX_HISTORY_MESSAGES = 20;
 const rateLimiter = createRateLimiter({ windowMs: 60_000, maxRequests: 20 });
 
 export const createUserMessage = async (
-  conversationId: string | undefined,
+  sessionId: string | undefined,
   userMessageContent: string,
   userMessageRole: CreateMessageDTO['role'],
   userId: string,
-): Promise<{ conversationId: string; userMessageId: string; isNewConversation: boolean }> => {
+): Promise<{ sessionId: string; userMessageId: string; isNewSession: boolean }> => {
   const result = await db.transaction(async (tx: DbTransaction) => {
-    let convId = conversationId;
-    let isNewConversation = false;
+    let resolvedSessionId = sessionId;
+    let isNewSession = false;
 
-    if (convId) {
-      // Owner-scoped (ADR-0010 §2): a conversation the caller doesn't own reads as
-      // absent, so a Guest cannot append to another user's conversation.
-      const existingConversation = await conversationRepository.findByIdTx(tx, convId, userId);
-      if (!existingConversation) {
-        throw new NotFoundError('Conversation', convId);
+    if (resolvedSessionId) {
+      // Owner-scoped (ADR-0010 §2): a session the caller doesn't own reads as
+      // absent, so a Guest cannot append to another user's session.
+      const existingSession = await sessionRepository.findByIdTx(tx, resolvedSessionId, userId);
+      if (!existingSession) {
+        throw new NotFoundError('Session', resolvedSessionId);
       }
     } else {
       const title = userMessageContent.slice(0, 50) || 'New Chat';
-      // conversations.userId is NOT NULL (ADR-0010 §2): a new conversation is
-      // owned by the session user (a Guest or a Registered user).
-      const newConversation = await conversationRepository.createTx(tx, title, userId);
-      convId = newConversation.id;
-      isNewConversation = true;
+      // sessions.userId is NOT NULL (ADR-0010 §2): a new session is
+      // owned by the auth session's user (a Guest or a Registered user).
+      const newSession = await sessionRepository.createTx(tx, title, userId);
+      resolvedSessionId = newSession.id;
+      isNewSession = true;
     }
 
-    if (!convId) {
-      throw new BadRequestError('Conversation id could not be resolved.');
+    if (!resolvedSessionId) {
+      throw new BadRequestError('Session id could not be resolved.');
     }
 
     const newUserMessage = await messageRepository.createTx(tx, {
-      conversationId: convId,
+      sessionId: resolvedSessionId,
       role: userMessageRole,
       content: userMessageContent,
     });
 
     return {
-      conversationId: convId,
+      sessionId: resolvedSessionId,
       userMessageId: newUserMessage.id,
-      isNewConversation,
+      isNewSession,
     };
   });
 
@@ -84,7 +84,7 @@ export const createUserMessage = async (
 };
 
 export const validateChatRequest = async (
-  conversationId: string | undefined,
+  sessionId: string | undefined,
   userMessage: { role: string; content: string },
   userId: string,
   model?: string,
@@ -102,14 +102,11 @@ export const validateChatRequest = async (
     );
   }
 
-  if (conversationId) {
-    // Owner-scoped (ADR-0010 §2): another user's conversation reads as absent.
-    const existingConversation = await conversationRepository.findByIdSimple(
-      conversationId,
-      userId,
-    );
-    if (!existingConversation) {
-      throw new NotFoundError('Conversation', conversationId);
+  if (sessionId) {
+    // Owner-scoped (ADR-0010 §2): another user's session reads as absent.
+    const existingSession = await sessionRepository.findByIdSimple(sessionId, userId);
+    if (!existingSession) {
+      throw new NotFoundError('Session', sessionId);
     }
   }
 };
@@ -128,22 +125,18 @@ export const chatService = {
     write: (chunk: string) => void,
     userId: string,
     logger: ChatLogger,
-  ): Promise<
-    { conversationId: string; userMessageId: string; assistantMessageId: string } | undefined
-  > {
+  ): Promise<{ sessionId: string; userMessageId: string; assistantMessageId: string } | undefined> {
     const startMs = Date.now();
-    let conversationId = data.conversationId;
+    let sessionId = data.sessionId;
     let userMessageId: string | undefined;
     let assistantMessageId: string | undefined;
     let provider: ProviderType | undefined;
     let usage: UsageData | undefined;
 
-    // The Session is bound once it is known (a new conversation only gets its
+    // The Session is bound once it is known (a new session only gets its
     // id mid-request), so the model call's lines and the summary both carry it.
     const sessionLogger = (): ChatLogger =>
-      conversationId === undefined
-        ? logger
-        : bindAttributes(logger, { 'nebula.session.id': conversationId });
+      sessionId === undefined ? logger : bindAttributes(logger, { 'nebula.session.id': sessionId });
 
     const summary = (): LogAttributes => ({
       'nebula.message.id': userMessageId,
@@ -178,26 +171,23 @@ export const chatService = {
 
       const userMessage = data.messages[0]!;
       const requestedModel = data.model;
-      await validateChatRequest(conversationId, userMessage, userId, requestedModel);
+      await validateChatRequest(sessionId, userMessage, userId, requestedModel);
 
       const result = await createUserMessage(
-        conversationId,
+        sessionId,
         userMessage.content,
         userMessage.role,
         userId,
       );
-      conversationId = result.conversationId;
+      sessionId = result.sessionId;
       userMessageId = result.userMessageId;
 
-      if (result.isNewConversation) {
-        write(sseConversationCreated(conversationId));
+      if (result.isNewSession) {
+        write(sseSessionCreated(sessionId));
       }
       write(sseUserMessageCreated(userMessageId));
 
-      const dbHistory = await messageRepository.findByConversationId(
-        conversationId,
-        MAX_HISTORY_MESSAGES,
-      );
+      const dbHistory = await messageRepository.findBySessionId(sessionId, MAX_HISTORY_MESSAGES);
 
       const history = dbHistory
         .filter((m) => m.id !== userMessageId)
@@ -245,7 +235,7 @@ export const chatService = {
 
       const assistantMessage = await messageService.createMessage(
         {
-          conversationId,
+          sessionId,
           role: 'assistant',
           content: fullResponse,
           tokenCount: usage?.totalTokens ?? null,
@@ -263,7 +253,7 @@ export const chatService = {
         `Direct reply completed · ${requestedModel} · ${usage?.totalTokens ?? 0} tokens · ${((Date.now() - startMs) / 1000).toFixed(1)} s`,
       );
 
-      return { conversationId, userMessageId, assistantMessageId };
+      return { sessionId, userMessageId, assistantMessageId };
     } catch (error) {
       // The hijacked reply bypasses the global error handler, so classify here:
       // an AppError speaks for itself, anything else is reported generically.

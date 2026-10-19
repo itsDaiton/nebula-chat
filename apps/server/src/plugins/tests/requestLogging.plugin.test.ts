@@ -8,8 +8,8 @@ import { guestSession, registeredSession, REGISTERED_USER_ID } from '@backend/te
 // ADR-0008: the repository is the boundary to Postgres. Everything between it
 // and the HTTP edge — routing, validation, the gate, the error handler and the
 // request-logging hooks under test — is real.
-vi.mock('@backend/modules/conversation/conversation.repository', () => ({
-  conversationRepository: { create: vi.fn(), findById: vi.fn(), findAll: vi.fn(), search: vi.fn() },
+vi.mock('@backend/modules/session/session.repository', () => ({
+  sessionRepository: { create: vi.fn(), findById: vi.fn(), findAll: vi.fn(), search: vi.fn() },
 }));
 
 vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
@@ -19,12 +19,12 @@ vi.mock('@backend/auth', () => ({
 }));
 
 import { auth } from '@backend/auth';
-import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
+import { sessionRepository } from '@backend/modules/session/session.repository';
 
-const repo = vi.mocked(conversationRepository);
+const repo = vi.mocked(sessionRepository);
 const mockedGetSession = vi.mocked(auth.api.getSession);
 
-const CONVERSATION_ID = '11111111-1111-4111-8111-111111111111';
+const SESSION_ID = '11111111-1111-4111-8111-111111111111';
 
 const { logger, lines } = captureLogger();
 let app: FastifyInstance;
@@ -106,7 +106,7 @@ describe('a 4xx', () => {
   it('writes no line of its own and names its error.type on the completion line', async () => {
     repo.findById.mockResolvedValue(fromPartial(null));
 
-    const res = await app.inject({ method: 'GET', url: `/api/conversations/${CONVERSATION_ID}` });
+    const res = await app.inject({ method: 'GET', url: `/api/sessions/${SESSION_ID}` });
 
     expect(res.statusCode).toBe(404);
     expect(atInfo()).toEqual([
@@ -119,7 +119,7 @@ describe('a 4xx', () => {
   });
 
   it('names a schema-validation failure Validation', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/conversations/not-a-uuid' });
+    const res = await app.inject({ method: 'GET', url: '/api/sessions/not-a-uuid' });
 
     expect(res.statusCode).toBe(400);
     expect(atInfo()).toEqual([
@@ -147,7 +147,7 @@ describe('a 5xx', () => {
       new TypeError("Cannot read properties of undefined (reading 'id')"),
     );
 
-    const res = await app.inject({ method: 'GET', url: '/api/conversations' });
+    const res = await app.inject({ method: 'GET', url: '/api/sessions' });
 
     expect(res.statusCode).toBe(500);
     const errors = lines.filter((line) => line.level >= LEVEL.error);
@@ -175,7 +175,7 @@ describe('the User', () => {
     mockedGetSession.mockResolvedValue(session() as never);
     repo.findById.mockResolvedValue(fromPartial(null));
 
-    await app.inject({ method: 'GET', url: `/api/conversations/${CONVERSATION_ID}` });
+    await app.inject({ method: 'GET', url: `/api/sessions/${SESSION_ID}` });
 
     expect(eventLines(lines, 'http.request.completed')).toEqual([
       expect.objectContaining({ 'user.id': expect.any(String), 'nebula.user.kind': kind }),
@@ -185,7 +185,7 @@ describe('the User', () => {
   it('carries the session user id, not a placeholder', async () => {
     repo.findById.mockResolvedValue(fromPartial(null));
 
-    await app.inject({ method: 'GET', url: `/api/conversations/${CONVERSATION_ID}` });
+    await app.inject({ method: 'GET', url: `/api/sessions/${SESSION_ID}` });
 
     expect(eventLines(lines, 'http.request.completed')[0]?.['user.id']).toBe(REGISTERED_USER_ID);
   });
@@ -200,12 +200,12 @@ describe('the User', () => {
 describe('sensitive request data', () => {
   it('logs no cookie, Authorization value or request body', async () => {
     repo.create.mockResolvedValue(
-      fromPartial({ id: CONVERSATION_ID, title: 'x', createdAt: new Date('2026-01-01') }),
+      fromPartial({ id: SESSION_ID, title: 'x', createdAt: new Date('2026-01-01') }),
     );
 
     await app.inject({
       method: 'POST',
-      url: '/api/conversations',
+      url: '/api/sessions',
       headers: {
         cookie: 'better-auth.session_token=SECRET-COOKIE',
         authorization: 'Bearer SECRET-TOKEN',

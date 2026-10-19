@@ -61,28 +61,29 @@ export const verification = pgTable('verification', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-export const conversations = pgTable(
-  'conversations',
+// The domain Session (CONTEXT.md), not better-auth's `session` table above.
+export const sessions = pgTable(
+  'sessions',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    title: text('title').notNull().default('New conversation'),
+    title: text('title').notNull().default('New session'),
     model: text('model').notNull().default('gpt-4o-mini'),
     systemPrompt: text('system_prompt'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (t) => [index('conv_user_idx').on(t.userId)],
+  (t) => [index('session_user_idx').on(t.userId)],
 );
 
 export const messages = pgTable(
   'messages',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    conversationId: uuid('conversation_id')
-      .references(() => conversations.id, { onDelete: 'cascade' })
+    sessionId: uuid('session_id')
+      .references(() => sessions.id, { onDelete: 'cascade' })
       .notNull(),
     role: text('role', { enum: ['user', 'assistant', 'system'] }).notNull(),
     content: text('content').notNull(),
@@ -90,5 +91,5 @@ export const messages = pgTable(
     cached: boolean('cached').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
-  (t) => [index('msg_conv_idx').on(t.conversationId)],
+  (t) => [index('msg_session_idx').on(t.sessionId)],
 );

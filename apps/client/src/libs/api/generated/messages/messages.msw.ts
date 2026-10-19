@@ -15,7 +15,7 @@ export const getCreateMessageResponseMock = (
   overrideResponse: Partial<Extract<Message, object>> = {},
 ): Message => ({
   id: faker.string.uuid(),
-  conversationId: faker.string.uuid(),
+  sessionId: faker.string.uuid(),
   content: faker.string.alpha({ length: { min: 10, max: 20 } }),
   role: faker.string.alpha({ length: { min: 10, max: 20 } }),
   tokenCount: faker.helpers.arrayElement([
@@ -30,7 +30,7 @@ export const getCreateMessageResponseMock = (
 export const getListMessagesResponseMock = (): Message[] =>
   Array.from({ length: faker.number.int({ min: 1, max: 1000 }) }, (_, i) => i + 1).map(() => ({
     id: faker.string.uuid(),
-    conversationId: faker.string.uuid(),
+    sessionId: faker.string.uuid(),
     content: faker.string.alpha({ length: { min: 10, max: 20 } }),
     role: faker.string.alpha({ length: { min: 10, max: 20 } }),
     tokenCount: faker.helpers.arrayElement([
@@ -45,7 +45,7 @@ export const getGetMessageResponseMock = (
   overrideResponse: Partial<Extract<Message, object>> = {},
 ): Message => ({
   id: faker.string.uuid(),
-  conversationId: faker.string.uuid(),
+  sessionId: faker.string.uuid(),
   content: faker.string.alpha({ length: { min: 10, max: 20 } }),
   role: faker.string.alpha({ length: { min: 10, max: 20 } }),
   tokenCount: faker.helpers.arrayElement([

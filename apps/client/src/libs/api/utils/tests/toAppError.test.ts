@@ -19,7 +19,7 @@ describe('toAppError', () => {
       aFailedResponse(404, {
         success: false,
         error: 'NotFound',
-        message: 'Conversation not found',
+        message: 'Session not found',
       }),
     );
 
@@ -27,7 +27,7 @@ describe('toAppError', () => {
     expect(error).toMatchObject({
       code: 'NotFound',
       status: 404,
-      message: 'Conversation not found',
+      message: 'Session not found',
     });
   });
 

@@ -96,7 +96,7 @@ const searchField = () => screen.getByRole('searchbox', { name: resources.settin
 
 describe('SettingsPage', () => {
   describe('layout', () => {
-    it("keeps the app's navbar but replaces the chat, conversations included", async () => {
+    it("keeps the app's navbar but replaces the chat, sessions included", async () => {
       await holdSession({ isAnonymous: false });
 
       renderPage();
@@ -107,7 +107,7 @@ describe('SettingsPage', () => {
       expect(
         within(screen.getByRole('banner')).getByRole('button', { name: resources.userMenu.label }),
       ).toBeInTheDocument();
-      expect(screen.queryByText(resources.conversations.title)).not.toBeInTheDocument();
+      expect(screen.queryByText(resources.sessions.title)).not.toBeInTheDocument();
     });
 
     it('groups the Account page into Profile and Security sections', async () => {

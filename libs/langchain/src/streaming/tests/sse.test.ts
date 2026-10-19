@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   sseAssistantMessageCreated,
   sseCacheHit,
-  sseConversationCreated,
+  sseSessionCreated,
   sseEnd,
   sseError,
   sseToken,
@@ -23,7 +23,7 @@ const parseFrame = (frame: string) => {
 describe('SSE formatters', () => {
   it('terminates every frame with a blank line so the client flushes it', () => {
     const frames = [
-      sseConversationCreated('c1'),
+      sseSessionCreated('s1'),
       sseUserMessageCreated('m1'),
       sseAssistantMessageCreated('m2'),
       sseToken('hi'),
@@ -38,10 +38,10 @@ describe('SSE formatters', () => {
     }
   });
 
-  it('emits conversation-created with the conversation id', () => {
-    expect(parseFrame(sseConversationCreated('conv-1'))).toEqual({
-      event: 'conversation-created',
-      data: { conversationId: 'conv-1' },
+  it('emits session-created with the session id', () => {
+    expect(parseFrame(sseSessionCreated('session-1'))).toEqual({
+      event: 'session-created',
+      data: { sessionId: 'session-1' },
     });
   });
 
