@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v3.0.0...nebula-chat-v3.0.1) (2026-10-19)
+
+
+### Bug Fixes
+
+* **ci:** run Build and MegaLinter on pull requests into any branch ([#593](https://github.com/itsDaiton/nebula-chat/issues/593)) ([44d6e54](https://github.com/itsDaiton/nebula-chat/commit/44d6e547f5e7ba20518eb73f4beb1187d2fd29b1))
+
 ## [3.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v2.18.0...nebula-chat-v3.0.0) (2026-10-19)
 
 
