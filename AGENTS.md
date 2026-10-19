@@ -6,6 +6,7 @@ Package-specific conventions — directory layout, state management, module patt
 
 - [apps/client/AGENTS.md](./apps/client/AGENTS.md) — frontend (React, TanStack Query, Zustand, Chakra UI)
 - [apps/server/AGENTS.md](./apps/server/AGENTS.md) — backend (Fastify, Drizzle, Zod)
+- `apps/cli` — the operator CLI (commander, an Orval fetch client); small enough to live in [Operator CLI](#operator-cli-appscli) below
 
 Read this file for anything that spans the whole repo; read the relevant package's `AGENTS.md` before touching code inside it.
 
@@ -92,7 +93,7 @@ Releases on `main` are fully automated by [release-please](https://github.com/go
 - The cost of this rule is changelog noise: a CI tweak lands as a patch release. That is deliberate — a silently unreleased change is worse than an over-reported one.
 - **Scope should name the release-please component** the change belongs to, matching
   `release-please-config.json`'s `packages` keys: `client` (`apps/client`), `server`
-  (`apps/server`), `db` (`libs/db`), `errors` (`libs/errors`), `langchain` (`libs/langchain`), `openapi`, or omit the scope
+  (`apps/server`), `cli` (`apps/cli`), `db` (`libs/db`), `errors` (`libs/errors`), `langchain` (`libs/langchain`), `openapi`, or omit the scope
   (or use a repo-wide one like `fix(agents): ...`) for root-level tooling/docs changes (`CLAUDE.md`,
   `AGENTS.md`, `CONTEXT.md`, `.claude/`, `docs/`) — those fall under the root `nebula-chat` component, which
   explicitly excludes `apps/**`, `libs/**`, and `openapi/**`.
@@ -115,6 +116,7 @@ Also run typecheck in the affected package before committing:
 ```bash
 pnpm --filter @nebula-chat/client run typecheck
 pnpm --filter @nebula-chat/server run typecheck
+pnpm --filter @nebula-chat/cli run typecheck
 ```
 
 Do not disable ESLint rules with inline `// eslint-disable` comments unless absolutely necessary, and always document why.
@@ -150,6 +152,7 @@ pnpm turbo run test              # every package
 pnpm backend test                # server only
 pnpm frontend test               # client only
 pnpm --filter @nebula-chat/langchain test
+pnpm --filter @nebula-chat/cli test
 ```
 
 ### Rules
@@ -213,6 +216,7 @@ These apply everywhere in the repo, frontend and backend alike. See each package
 ```text
 nebula-chat/
 ├── apps/
+│   ├── cli/                  # `nebula` operator CLI — see Operator CLI below
 │   ├── client/               # React SPA (frontend) — see its AGENTS.md
 │   └── server/               # Fastify API (backend) — see its AGENTS.md
 ├── libs/
@@ -248,6 +252,36 @@ When scaffolding a new package under `libs/`, follow these steps **in order** be
 4. Implement the lib, then **commit and push** when the work is complete.
 
 Never skip steps 1 or 2, even for small utility libs. If the lib is substantial enough to need its own conventions, give it its own `AGENTS.md` and link it from this file's list at the top.
+
+---
+
+## Operator CLI (`apps/cli`)
+
+`nebula` is the terminal client for Operators and Admins ([ADR-0029](./docs/adr/0029-operator-cli-as-an-api-client.md)). It talks only to the public HTTP API, through a fetch client Orval generates from `openapi/openapi.yaml` (the `Operator` and `Admin` tags). Run it from the repo root, no build needed:
+
+```bash
+pnpm nebula --help
+pnpm nebula profile add local --url http://localhost:3000   # the first profile becomes the default
+pnpm nebula profile add prod --url https://<server-host>
+pnpm nebula profile use prod
+NEBULA_OPERATOR_TOKEN=… pnpm nebula --profile local log-level set redis debug --ttl 600
+pnpm nebula --json profile list | jq .
+```
+
+- **CLI profiles** (server URLs, and which is the default) live in `$XDG_CONFIG_HOME/nebula-chat/config.json`, else `~/.config/nebula-chat/config.json`. `--profile <name>` overrides the default per command.
+- **The operator token** is read only from `NEBULA_OPERATOR_TOKEN` and never written to disk. `log-level set` records `--operator`, else `$NEBULA_OPERATOR`, else `$USER`, as who asked.
+- **Output:** a table, key–value list or sentence for humans (bold headers only on a TTY without `NO_COLOR`); `--json` prints exactly one JSON document to stdout. Errors go to stderr.
+- **Exit codes:** `0` success, `1` server or unknown error, `2` usage error (bad arguments, unknown profile, a `400`), `3` authentication or authorisation error.
+
+### Adding a command
+
+1. If the route is new, regenerate the spec, then the CLI client: `pnpm --filter @nebula-chat/cli run generate:api`. Generated code under `src/api/generated/` is never hand-edited.
+2. Add `src/commands/<group>.ts` exporting `register<Group>Commands(program, ctx)`, and call it in `buildProgram` in `src/run.ts`. Give each command a description and an example (`addHelpText('after', …)`).
+3. In the action, call the generated function with `{ target }` (`operatorTarget(profile, deps)` for operator routes), narrow the response union on `status`, and turn any other status into an error (`operatorError` / `responseError`). Throw `UsageError` / `AuthError` / `CliError` for the exit code; never call `process.exit`.
+4. Print once, through `ctx.print({ data, view })`: `data` is the `--json` document, `view` the human `table`, `fields` or `message`.
+5. Test it at the CLI's only seam: `src/commands/tests/<group>.test.ts` calls `run(argv, deps)` through `createHarness()` (temp config dir, captured streams) with MSW handlers built from the generated `get…Url()` helpers. Cover success, `--json`, each auth failure, a server error and usage errors.
+
+`run(argv, deps)` takes everything outside the process as `deps` (env, stdout, stderr, fetch, clock, home directory); `src/bin.ts` wires the real ones and is the only untested file.
 
 ---
 
@@ -325,3 +359,14 @@ This repo's `.claude/` workspace (skills) and its documentation (`AGENTS.md` fil
 - Any `.claude/skills/**` whose steps or file paths reference the area that changed (e.g. a renamed directory, a retired ticket, a changed convention).
 
 A PR that changes how the codebase works but leaves these docs describing the old way is not done.
+
+<!-- BEGIN:turborepo-agent-rules -->
+
+# This is NOT the Turborepo you know
+
+Turborepo configuration, task behavior, and CLI commands can vary between installed versions and may differ from your training data. Resolve the `turbo` package from this file's directory or relevant workspace; in monorepos, it may not be visible from the repository root. For example, run `node -p "require.resolve('turbo/package.json')"` from a workspace that depends on `turbo`.
+
+Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
+
+This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
+<!-- END:turborepo-agent-rules -->

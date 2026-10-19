@@ -8,5 +8,6 @@
   "libs/otel": "2.3.0",
   "libs/redis": "0.2.4",
   "libs/auth": "2.4.1",
-  "libs/errors": "0.2.2"
+  "libs/errors": "0.2.2",
+  "apps/cli": "0.0.0"
 }

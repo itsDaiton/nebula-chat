@@ -15,7 +15,7 @@ Every issue is a ticket with a Jira-style key: **`NEB-<issue-number>`** (issue `
 Every ticket gets, in addition to its triage state (see [triage-labels.md](./triage-labels.md)):
 
 - **One or more area/lib labels** naming what it touches:
-  - `app:server` — `apps/server` (backend) · `app:client` — `apps/client` (frontend)
+  - `app:server` — `apps/server` (backend) · `app:client` — `apps/client` (frontend) · `app:cli` — `apps/cli` (operator CLI)
   - `lib:auth`, `lib:db`, `lib:langchain`, `lib:otel`, `lib:redis` — the corresponding `libs/*` package
 - **`enhancement`** for a `feat`, **`bug`** for a `fix`.
 

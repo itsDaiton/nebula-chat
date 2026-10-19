@@ -11,6 +11,7 @@
     "preinstall": "npx only-allow pnpm",
     "backend": "pnpm --filter @nebula-chat/server",
     "frontend": "pnpm --filter @nebula-chat/client",
+    "nebula": "tsx --tsconfig apps/cli/tsconfig.json apps/cli/src/bin.ts",
     "lint": "eslint --report-unused-disable-directives --max-warnings=0 .",
     "lint:fix": "eslint --report-unused-disable-directives --max-warnings=0 . --fix",
     "format": "prettier --write .",

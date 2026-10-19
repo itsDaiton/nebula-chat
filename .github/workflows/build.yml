@@ -51,6 +51,8 @@ jobs:
             server:
               - 'apps/server/**'
               - 'libs/**'
+            cli:
+              - 'apps/cli/**'
             auth:
               - 'libs/auth/**'
             db:
@@ -91,6 +93,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           F_CLIENT: ${{ steps.filter.outputs.client }}
           F_SERVER: ${{ steps.filter.outputs.server }}
+          F_CLI: ${{ steps.filter.outputs.cli }}
           F_AUTH: ${{ steps.filter.outputs.auth }}
           F_DB: ${{ steps.filter.outputs.db }}
           F_ERRORS: ${{ steps.filter.outputs.errors }}
@@ -105,9 +108,11 @@ jobs:
           # shared list: `logger.ts` is excluded in server and langchain but is the
           # main tested unit in otel, and `env.ts` is excluded in server but is
           # tested in db. Change one, change the other.
+          # An empty `key` means the package has no Sonar project yet: its Sonar steps skip.
           all='[
             {"id":"client","name":"nebula-chat-client","dir":"apps/client","filter":"@nebula-chat/client","lint":"apps/client/","key":"itsDaiton_nebula-chat-client","project":"Nebula-Chat-Client","coverage":"src/main.tsx,src/vite-env.d.ts,src/theme/**,src/libs/api/generated/**,src/test/**,src/**/tests/**,src/**/*.types.ts,src/**/types/**,src/shared/components/ui/prose.tsx,src/shared/components/ui/provider.tsx,src/shared/components/ui/toaster.tsx,src/shared/components/ui/code-block-adapter.ts,src/shared/components/scrollbar.ts,src/resources.ts"},
             {"id":"server","name":"nebula-chat-server","dir":"apps/server","filter":"@nebula-chat/server","lint":"apps/server/","key":"itsDaiton_nebula-chat-server","project":"Nebula-Chat-Server","coverage":"src/**/tests/**,src/test/**,src/server.ts,src/app.ts,src/logger.ts,src/env.ts,src/db.ts,src/auth.ts,src/profileImageStore.ts,src/generated/**,src/scripts/**,src/**/*.types.ts,src/**/*.repository.ts"},
+            {"id":"cli","name":"nebula-chat-cli","dir":"apps/cli","filter":"@nebula-chat/cli","lint":"apps/cli/","key":"","project":"Nebula-Chat-CLI","coverage":"src/**/tests/**,src/test/**,src/api/generated/**,src/bin.ts"},
             {"id":"auth","name":"nebula-chat-auth","dir":"libs/auth","filter":"@nebula-chat/auth","lint":"libs/auth/","key":"itsDaiton_nebula-chat-auth","project":"Nebula-Chat-Auth","coverage":"src/**/tests/**,src/index.ts,src/auth.ts"},
             {"id":"db","name":"nebula-chat-db","dir":"libs/db","filter":"@nebula-chat/db","lint":"libs/db/","key":"itsDaiton_nebula-chat-db","project":"Nebula-Chat-DB","coverage":"src/**/tests/**,src/index.ts,src/schema.ts,src/migrate.ts,src/baseline.ts"},
             {"id":"errors","name":"nebula-chat-errors","dir":"libs/errors","filter":"@nebula-chat/errors","lint":"libs/errors/","key":"itsDaiton_nebula-chat-errors","project":"Nebula-Chat-Errors","coverage":"src/**/tests/**,src/index.ts"},
@@ -123,6 +128,7 @@ jobs:
             ids='[]'
             if [ "$F_CLIENT" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["client"]'); fi
             if [ "$F_SERVER" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["server"]'); fi
+            if [ "$F_CLI" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["cli"]'); fi
             if [ "$F_AUTH" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["auth"]'); fi
             if [ "$F_DB" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["db"]'); fi
             if [ "$F_ERRORS" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["errors"]'); fi
@@ -210,7 +216,7 @@ jobs:
       # package's vitest.config coverage.exclude. A file excluded from one gate
       # and not the other makes "80% enforced twice" two different numbers.
       - name: SonarQube scan
-        if: ${{ env.SONAR_TOKEN != '' }}
+        if: ${{ env.SONAR_TOKEN != '' && matrix.key != '' }}
         uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
         with:
           projectBaseDir: ${{ matrix.dir }}
@@ -229,13 +235,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Evaluate quality gate
         id: quality_gate
-        if: ${{ env.SONAR_TOKEN != '' }}
+        if: ${{ env.SONAR_TOKEN != '' && matrix.key != '' }}
         uses: SonarSource/sonarqube-quality-gate-action@7a5fffe8e523c40e0c740b6bc2712ab503e52efa # v1.2.1
         with:
           scanMetadataReportFile: ${{ matrix.dir }}/.scannerwork/report-task.txt
           pollingTimeoutSec: 300
       - name: Publish Sonar summary
-        if: ${{ always() && env.SONAR_TOKEN != '' }}
+        if: ${{ always() && env.SONAR_TOKEN != '' && matrix.key != '' }}
         env:
           MATRIX_DIR: ${{ matrix.dir }}
           MATRIX_NAME: ${{ matrix.name }}
@@ -259,7 +265,7 @@ jobs:
             fi
           } >> "${GITHUB_STEP_SUMMARY}"
       - name: Comment quality gate in PR
-        if: ${{ always() && github.event_name == 'pull_request' && env.SONAR_TOKEN != '' }}
+        if: ${{ always() && github.event_name == 'pull_request' && env.SONAR_TOKEN != '' && matrix.key != '' }}
         run: pnpm exec tsx scripts/post-sonar-quality-comment.ts
         env:
           APP_NAME: ${{ matrix.name }}

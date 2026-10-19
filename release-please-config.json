@@ -17,6 +17,13 @@
       "component": "nebula-chat-server",
       "include-component-in-tag": true
     },
+    "apps/cli": {
+      "release-type": "node",
+      "component": "nebula-chat-cli",
+      "include-component-in-tag": true,
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    },
     "libs/auth": {
       "release-type": "node",
       "component": "nebula-chat-auth",
