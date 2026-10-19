@@ -53,7 +53,10 @@ const logLevelStateSchema = z
 const logLevelReportSchema = z
   .object({
     instance: z.string().describe('The server instance, as its hostname and process id'),
-    levels: z.array(logLevelStateSchema).describe('The root level, then every component'),
+    levels: z
+      .array(logLevelStateSchema)
+      .max(LOG_COMPONENTS.length + 1)
+      .describe('The root level, then every component'),
   })
   .meta({ id: 'LogLevelReport' });
 
@@ -64,6 +67,10 @@ export const logLevelReportsResponseSchema = z
       .describe(
         'How many server instances received the request; more than reports means some did not answer in time',
       ),
-    reports: z.array(logLevelReportSchema).describe('One per instance that answered, by instance'),
+    // A bound for the spec (checkov CKV_OPENAPI_21), far above any instance count we run.
+    reports: z
+      .array(logLevelReportSchema)
+      .max(100)
+      .describe('One per instance that answered, by instance'),
   })
   .meta({ id: 'LogLevelReports' });

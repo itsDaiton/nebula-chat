@@ -214,6 +214,7 @@ components:
           description: How many server instances received the request; more than reports
             means some did not answer in time
         reports:
+          maxItems: 100
           type: array
           items:
             $ref: '#/components/schemas/LogLevelReport'
@@ -229,6 +230,7 @@ components:
           type: string
           description: The server instance, as its hostname and process id
         levels:
+          maxItems: 7
           type: array
           items:
             $ref: '#/components/schemas/LogLevelState'

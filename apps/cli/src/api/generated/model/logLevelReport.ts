@@ -9,6 +9,9 @@ import type { LogLevelState } from './logLevelState';
 export interface LogLevelReport {
   /** The server instance, as its hostname and process id */
   instance: string;
-  /** The root level, then every component */
+  /**
+   * The root level, then every component
+   * @maxItems 7
+   */
   levels: LogLevelState[];
 }

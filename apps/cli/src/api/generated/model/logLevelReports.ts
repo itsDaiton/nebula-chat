@@ -13,6 +13,9 @@ export interface LogLevelReports {
    * @maximum 9007199254740991
    */
   receivers: number;
-  /** One per instance that answered, by instance */
+  /**
+   * One per instance that answered, by instance
+   * @maxItems 100
+   */
   reports: LogLevelReport[];
 }
