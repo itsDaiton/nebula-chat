@@ -1,8 +1,8 @@
 # Nebula Chat
 
 Nebula Chat is a full-stack AI chat application.  
-It provides a React frontend for chatting and conversation history, plus an Express backend that
-streams model responses, stores conversations/messages in PostgreSQL, and caches responses in
+It provides a React frontend for chatting and session history, plus an Express backend that
+streams model responses, stores sessions/messages in PostgreSQL, and caches responses in
 Redis.
 
 ## Monorepo structure

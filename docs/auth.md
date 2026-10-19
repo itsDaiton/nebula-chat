@@ -16,11 +16,11 @@ There is no sign-up wall. Access has three states:
 | --------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------- |
 | Unauthenticated | No session cookie                                                 | Nothing — every API route returns `401`                               |
 | Guest           | Client calls `POST /api/auth/sign-in/anonymous`                   | Full read/write, but streaming is capped at `GUEST_MESSAGE_ALLOWANCE` |
-| Registered      | Guest or visitor signs up / signs in with email, Google or GitHub | Uncapped; inherits the Guest's conversations via the claim            |
+| Registered      | Guest or visitor signs up / signs in with email, Google or GitHub | Uncapped; inherits the Guest's sessions via the claim                 |
 
 A visitor becomes a Guest **only when the client explicitly requests an anonymous
 session** — the server never mints one implicitly. On the first sign-up or sign-in,
-the Guest's conversations are reassigned to the new account (see [Account linking](#account-linking)).
+the Guest's sessions are reassigned to the new account (see [Account linking](#account-linking)).
 
 ## Components
 
@@ -54,18 +54,18 @@ constructing their own, mirroring `src/db.ts` and `src/redis.ts`.
 
 The instance is configured with:
 
-| Setting                  | Value                                                                                                                                                                |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Database adapter         | Drizzle over `@nebula-chat/db` (`provider: 'pg'`). `advanced.database.generateId: 'uuid'` so Postgres generates ids, keeping `conversations.userId` a plain uuid FK. |
-| Email / password         | Enabled. Password hashing is better-auth's built-in default (scrypt). Password reset enabled; a reset revokes the user's other sessions.                             |
-| Email verification       | Sent on sign-up (`sendOnSignUp`), **not required** to sign in; following the link verifies and signs the user in. See [Email](#email).                               |
-| Social providers         | Google and GitHub, each enabled only when the server is given its OAuth client id + secret. See [Social sign-in](#social-sign-in).                                   |
-| Anonymous plugin         | `POST /sign-in/anonymous` mints a Guest. Its `onLinkAccount` hook runs the claim.                                                                                    |
-| Have I Been Pwned plugin | Rejects sign-up with a known-breached password (`400 PASSWORD_COMPROMISED`); a reset is checked by the reset guard instead.                                          |
-| openAPI plugin           | Serves the auth API reference — see [API reference](#interactive-reference).                                                                                         |
-| `secondaryStorage`       | The `@nebula-chat/redis` `authStore` — sessions, verification records, and rate-limit counters.                                                                      |
-| `session.cookieCache`    | Enabled — a short-lived signed cookie lets most requests validate without a store round-trip.                                                                        |
-| `rateLimit`              | Enabled, `storage: 'secondary-storage'` (Redis). Keyed per client by `advanced.ipAddress.ipAddressHeaders: ['cf-connecting-ip']` — see below.                        |
+| Setting                  | Value                                                                                                                                                           |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Database adapter         | Drizzle over `@nebula-chat/db` (`provider: 'pg'`). `advanced.database.generateId: 'uuid'` so Postgres generates ids, keeping `sessions.userId` a plain uuid FK. |
+| Email / password         | Enabled. Password hashing is better-auth's built-in default (scrypt). Password reset enabled; a reset revokes the user's other sessions.                        |
+| Email verification       | Sent on sign-up (`sendOnSignUp`), **not required** to sign in; following the link verifies and signs the user in. See [Email](#email).                          |
+| Social providers         | Google and GitHub, each enabled only when the server is given its OAuth client id + secret. See [Social sign-in](#social-sign-in).                              |
+| Anonymous plugin         | `POST /sign-in/anonymous` mints a Guest. Its `onLinkAccount` hook runs the claim.                                                                               |
+| Have I Been Pwned plugin | Rejects sign-up with a known-breached password (`400 PASSWORD_COMPROMISED`); a reset is checked by the reset guard instead.                                     |
+| openAPI plugin           | Serves the auth API reference — see [API reference](#interactive-reference).                                                                                    |
+| `secondaryStorage`       | The `@nebula-chat/redis` `authStore` — sessions, verification records, and rate-limit counters.                                                                 |
+| `session.cookieCache`    | Enabled — a short-lived signed cookie lets most requests validate without a store round-trip.                                                                   |
+| `rateLimit`              | Enabled, `storage: 'secondary-storage'` (Redis). Keyed per client by `advanced.ipAddress.ipAddressHeaders: ['cf-connecting-ip']` — see below.                   |
 
 Rate limits are per client IP, read only from `CF-Connecting-IP`: Render fronts the API with
 Cloudflare, which sets that header itself, whereas `X-Forwarded-For` keeps whatever the client
@@ -106,7 +106,7 @@ curl -i -c jar.txt -X POST http://localhost:3000/api/auth/sign-in/anonymous
 ### `POST /api/auth/sign-up/email` — register
 
 Registers with email + password. If a Guest session is present, the claim moves that
-Guest's conversations to the new account. A breached password is rejected with
+Guest's sessions to the new account. A breached password is rejected with
 `400 PASSWORD_COMPROMISED`.
 
 ```bash
@@ -244,7 +244,7 @@ a credential password must send it — the `before` hook answers `400 PASSWORD_R
 don't (better-auth alone would accept a sign-in under a day old), and better-auth `400
 INVALID_PASSWORD` when it's wrong. A user without one (Google/GitHub only) sends nothing and
 needs an auth session younger than a day (`400 SESSION_EXPIRED` otherwise). The guard is
-[`libs/auth/src/deleteAccount.ts`](../libs/auth/src/deleteAccount.ts). Deletes the user's accounts, sessions and user row; their conversations and
+[`libs/auth/src/deleteAccount.ts`](../libs/auth/src/deleteAccount.ts). Deletes the user's accounts, auth sessions and user row; their Sessions and
 messages go with it through the `ON DELETE CASCADE` foreign keys. Clears the session cookie.
 
 ### `POST /api/auth/delete-anonymous-user` — delete the Guest
@@ -339,14 +339,14 @@ property. A gate is added to a route's `preHandler` chain:
 app.post('/', { preHandler: [requireAuthentication], schema: {/* ... */} }, handler);
 ```
 
-Every conversation and message route is gated by `requireAuthentication`: there is no
-unauthenticated read path, so a caller with no session receives `401` rather than
-data. On top of the gate, reads are **owner-scoped** — `getConversation`,
-`listConversations`, `searchConversations`, `getMessage`, and `listMessages` filter by
-the session user, and the message and chat write paths verify the target conversation
+Every Session and message route is gated by `requireAuthentication`: there is no
+unauthenticated read path, so a caller with no auth session receives `401` rather than
+data. On top of the gate, reads are **owner-scoped** — `getSession`,
+`listSessions`, `searchSessions`, `getMessage`, and `listMessages` filter by
+the auth session's user, and the message and chat write paths verify the target Session
 belongs to the caller. A row owned by another user reads as **`404`** (never `403`),
 so the gate never reveals that a row exists. The message allowance caps only
-_streaming_; a capped Guest can still read their own conversations and messages.
+_streaming_; a capped Guest can still read their own sessions and messages.
 
 ## Message allowance
 
@@ -360,7 +360,7 @@ cache hook, so a capped Guest is rejected before any model or cache work:
   email is still unverified is metered exactly like a Guest until they verify.
 - Regenerations do not count — they replay an existing exchange.
 - Otherwise the user's live `role='user'` message count (a Postgres `count` joined to
-  their conversations) is compared against `GUEST_MESSAGE_ALLOWANCE`. At or above the
+  their sessions) is compared against `GUEST_MESSAGE_ALLOWANCE`. At or above the
   cap, the send is rejected.
 
 No Redis counter is involved; at a cap of ~10 the live count is exact and stateless.
@@ -459,7 +459,7 @@ which turns into "verify your email to keep chatting" once the allowance is spen
 
 Following a verification link signs its owner in. In a browser holding a different
 Guest's session, that is a sign-in like any other, so the claim below moves that Guest's
-conversations into the account.
+sessions into the account.
 
 The client pages better-auth redirects to:
 
@@ -488,7 +488,7 @@ The round trip, from the auth page's "Continue with Google / GitHub":
 2. The provider redirects to `/api/auth/callback/<provider>`, which signs the user in and
    runs `onLinkAccount` — the same [claim](#account-linking) as email sign-in.
 3. better-auth redirects to the chat root. The app loads afresh, `get-session` returns the
-   Registered user, and the Guest's conversations are theirs.
+   Registered user, and the Guest's sessions are theirs.
 
 A failure lands on `/auth?error=<code>`, which the page explains: `access_denied` (the user
 cancelled at the provider), `account_not_linked` (the email already belongs to an account
@@ -536,9 +536,9 @@ signs in socially becomes that provider's user, image included. An `image` with 
 
 When a Guest signs up or signs in — with email or through a social provider's callback —
 better-auth's anonymous plugin fires
-`onLinkAccount`, which calls `claimConversations(db, { fromUserId, toUserId })`
+`onLinkAccount`, which calls `claimSessions(db, { fromUserId, toUserId })`
 ([`libs/auth/src/claim.ts`](../libs/auth/src/claim.ts)). It reassigns every
-`conversations.userId` from the anonymous user to the newly linked account **before**
+`sessions.userId` from the anonymous user to the newly linked account **before**
 the anonymous row is deleted, so authenticating upgrades a Guest's history in place
 instead of discarding it.
 
@@ -549,7 +549,7 @@ better-auth owns the `user`, `session`, `account`, and `verification` models. In
 (`modelName: 'users'`) and carries better-auth's shape (`name`, `email`,
 `emailVerified`, `image`, `isAnonymous`), plus `profileImageKey`, a server-only extra field
 (`input: false`, `returned: false`) holding an uploaded Profile image's storage path; `session`, `account`, and `verification` are
-new. `conversations.userId` is `NOT NULL` — every conversation has an owner. Migration
+new. `sessions.userId` is `NOT NULL` — every session has an owner. Migration
 `0002` relocates existing password hashes into `account` and backfills `name`/`image`.
 Schema changes go through the normal `pnpm --filter @nebula-chat/db db:generate` /
 `db:migrate` flow; better-auth has no separate migrate step for the Drizzle adapter.

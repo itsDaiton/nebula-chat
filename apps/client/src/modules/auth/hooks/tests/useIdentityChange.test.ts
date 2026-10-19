@@ -19,13 +19,13 @@ beforeEach(() => {
 describe('useIdentityChange', () => {
   it("drops the previous user's server state but keeps the session bootstrap", () => {
     const queryClient = createTestQueryClient();
-    queryClient.setQueryData(['conversations'], []);
+    queryClient.setQueryData(['sessions'], []);
     queryClient.setQueryData(SESSION_BOOTSTRAP_KEY, true);
     const { result } = renderHookWithQueryClient(() => useIdentityChange(), { queryClient });
 
     act(() => result.current());
 
-    expect(queryClient.getQueryData(['conversations'])).toBeUndefined();
+    expect(queryClient.getQueryData(['sessions'])).toBeUndefined();
     expect(queryClient.getQueryData(SESSION_BOOTSTRAP_KEY)).toBe(true);
   });
 

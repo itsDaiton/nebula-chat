@@ -5,12 +5,12 @@ import { createTestApp } from '@backend/test/app';
 import { REGISTERED_USER_ID, registeredSession } from '@backend/test/session';
 
 // ADR-0008: only the repository layer is faked. The owner-scoped create path also
-// consults the conversation repository, so it is faked here too.
+// consults the session repository, so it is faked here too.
 vi.mock('@backend/modules/message/message.repository', () => ({
   messageRepository: { create: vi.fn(), findById: vi.fn(), findAll: vi.fn() },
 }));
-vi.mock('@backend/modules/conversation/conversation.repository', () => ({
-  conversationRepository: { findByIdSimple: vi.fn() },
+vi.mock('@backend/modules/session/session.repository', () => ({
+  sessionRepository: { findByIdSimple: vi.fn() },
 }));
 vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
@@ -22,18 +22,18 @@ vi.mock('@backend/auth', () => ({
 
 import { auth } from '@backend/auth';
 import { messageRepository } from '@backend/modules/message/message.repository';
-import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
+import { sessionRepository } from '@backend/modules/session/session.repository';
 
 const repo = vi.mocked(messageRepository);
-const conversationRepo = vi.mocked(conversationRepository);
+const sessionRepo = vi.mocked(sessionRepository);
 const mockedGetSession = vi.mocked(auth.api.getSession);
 
 const MESSAGE_ID = '33333333-3333-4333-8333-333333333333';
-const CONVERSATION_ID = '11111111-1111-4111-8111-111111111111';
+const SESSION_ID = '11111111-1111-4111-8111-111111111111';
 
 type MessageRow = {
   id: string;
-  conversationId: string;
+  sessionId: string;
   content: string;
   role: 'user' | 'assistant' | 'system';
   tokenCount: number | null;
@@ -43,7 +43,7 @@ type MessageRow = {
 
 const aMessage = (overrides: Partial<MessageRow> = {}): MessageRow => ({
   id: MESSAGE_ID,
-  conversationId: CONVERSATION_ID,
+  sessionId: SESSION_ID,
   content: 'hello',
   role: 'user',
   tokenCount: 3,
@@ -53,7 +53,7 @@ const aMessage = (overrides: Partial<MessageRow> = {}): MessageRow => ({
 });
 
 const validBody = {
-  conversationId: CONVERSATION_ID,
+  sessionId: SESSION_ID,
   role: 'user' as const,
   content: 'hello',
 };
@@ -70,11 +70,11 @@ afterAll(async () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Default: an authenticated Registered user who owns the target conversation, so
+  // Default: an authenticated Registered user who owns the target session, so
   // the gated routes pass and the create's ownership check succeeds.
   mockedGetSession.mockResolvedValue(registeredSession() as never);
-  conversationRepo.findByIdSimple.mockResolvedValue(
-    fromPartial({ id: CONVERSATION_ID, userId: REGISTERED_USER_ID }),
+  sessionRepo.findByIdSimple.mockResolvedValue(
+    fromPartial({ id: SESSION_ID, userId: REGISTERED_USER_ID }),
   );
 });
 
@@ -136,11 +136,11 @@ describe('POST /api/messages', () => {
     expect(repo.create).not.toHaveBeenCalled();
   });
 
-  it('rejects a non-UUID conversationId', async () => {
+  it('rejects a non-UUID sessionId', async () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/messages',
-      payload: { ...validBody, conversationId: 'nope' },
+      payload: { ...validBody, sessionId: 'nope' },
     });
 
     expect(res.statusCode).toBe(400);
@@ -174,8 +174,8 @@ describe('POST /api/messages', () => {
     expect(res.statusCode).toBe(409);
   });
 
-  it('returns 404 when the target conversation is not owned by the caller', async () => {
-    conversationRepo.findByIdSimple.mockResolvedValue(null);
+  it('returns 404 when the target session is not owned by the caller', async () => {
+    sessionRepo.findByIdSimple.mockResolvedValue(null);
 
     const res = await app.inject({ method: 'POST', url: '/api/messages', payload: validBody });
 
@@ -268,34 +268,34 @@ describe('GET /api/messages', () => {
     expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, undefined);
   });
 
-  it('narrows the caller’s messages to one conversation', async () => {
+  it('narrows the caller’s messages to one session', async () => {
     repo.findAll.mockResolvedValue(fromPartial([aMessage()]));
 
     const res = await app.inject({
       method: 'GET',
-      url: `/api/messages?conversationId=${CONVERSATION_ID}`,
+      url: `/api/messages?sessionId=${SESSION_ID}`,
     });
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toHaveLength(1);
     // Owner-scoped: the filter is applied inside the session user's messages.
-    expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, CONVERSATION_ID);
+    expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, SESSION_ID);
   });
 
-  it('reads a conversation the caller does not own as empty, not 404', async () => {
+  it('reads a session the caller does not own as empty, not 404', async () => {
     repo.findAll.mockResolvedValue(fromPartial([]));
 
     const res = await app.inject({
       method: 'GET',
-      url: `/api/messages?conversationId=${CONVERSATION_ID}`,
+      url: `/api/messages?sessionId=${SESSION_ID}`,
     });
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual([]);
   });
 
-  it('rejects a non-UUID conversationId before reaching the repository', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/messages?conversationId=nope' });
+  it('rejects a non-UUID sessionId before reaching the repository', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/messages?sessionId=nope' });
 
     expect(res.statusCode).toBe(400);
     expect(res.json()).toMatchObject({ success: false });

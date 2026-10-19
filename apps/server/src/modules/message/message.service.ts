@@ -1,15 +1,15 @@
 import { messageRepository } from '@backend/modules/message/message.repository';
-import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
+import { sessionRepository } from '@backend/modules/session/session.repository';
 import { NotFoundError } from '@nebula-chat/errors';
 import type { CreateMessageDTO } from '@backend/modules/message/message.types';
 
 export const messageService = {
   async createMessage(data: CreateMessageDTO, userId: string) {
-    // A message may only be added to a conversation the caller owns (ADR-0010 §2).
-    // An unowned or missing conversation reads as a 404, never leaking existence.
-    const conversation = await conversationRepository.findByIdSimple(data.conversationId, userId);
-    if (!conversation) {
-      throw new NotFoundError('Conversation', data.conversationId);
+    // A message may only be added to a session the caller owns (ADR-0010 §2).
+    // An unowned or missing session reads as a 404, never leaking existence.
+    const session = await sessionRepository.findByIdSimple(data.sessionId, userId);
+    if (!session) {
+      throw new NotFoundError('Session', data.sessionId);
     }
     return messageRepository.create({ ...data });
   },
@@ -20,7 +20,7 @@ export const messageService = {
     }
     return message;
   },
-  async getAllMessages(userId: string, conversationId?: string) {
-    return messageRepository.findAll(userId, conversationId);
+  async getAllMessages(userId: string, sessionId?: string) {
+    return messageRepository.findAll(userId, sessionId);
   },
 };

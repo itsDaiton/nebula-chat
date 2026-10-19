@@ -26,16 +26,16 @@ export type CachedStreamData = {
 
 /**
  * The cache key for a chat request. Kept exactly as the pre-migration cache had
- * it — conversation + model + hash of the last user message — per ADR-0009. The
+ * it — session + model + hash of the last user message — per ADR-0009. The
  * correct-key rework (full context, temperature, system prompt) is a separate
  * future ticket. Key composition and hashing come from `@nebula-chat/redis`.
  */
 export const chatCacheKey = (data: CreateChatStreamDTO): string => {
-  const conversationId = data.conversationId ?? 'default';
+  const sessionId = data.sessionId ?? 'default';
   const lastUserMessage = [...data.messages].reverse().find((msg) => msg.role === 'user');
   const prompt = lastUserMessage?.content ?? '';
 
-  return buildKey('conversation', conversationId, 'model', data.model, 'prompt', hashText(prompt));
+  return buildKey('session', sessionId, 'model', data.model, 'prompt', hashText(prompt));
 };
 
 export const getCachedStream = (key: string): Promise<CachedStreamData | null> =>

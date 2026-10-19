@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { isoDateTimeSchema } from '@backend/utils/isoDateTimeSchema';
 
 export const createMessageSchema = z.object({
-  conversationId: z.uuid(),
+  sessionId: z.uuid(),
   role: z.enum(['user', 'assistant', 'system']),
   content: z.string().min(1),
   tokenCount: z.number().int().nullable().optional(),
@@ -13,16 +13,13 @@ export const getMessagesSchema = z.object({
 });
 
 export const listMessagesQuerySchema = z.object({
-  conversationId: z
-    .uuid()
-    .optional()
-    .describe('Only list the messages of this conversation, oldest first'),
+  sessionId: z.uuid().optional().describe('Only list the messages of this session, oldest first'),
 });
 
 export const messageResponseSchema = z
   .object({
     id: z.uuid(),
-    conversationId: z.uuid(),
+    sessionId: z.uuid(),
     content: z.string(),
     role: z.string(),
     tokenCount: z.number().int().nullable(),

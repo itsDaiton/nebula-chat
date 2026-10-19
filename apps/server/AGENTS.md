@@ -66,13 +66,13 @@ apps/server/src/
 │   │   ├── chat.messageAllowance.hook.ts # preHandler — rejects a Metered user over the message allowance
 │   │   ├── chat.messageAllowance.service.ts # getMessageAllowance — shared metered decision + live count
 │   │   └── chat.routes.ts         # FastifyPluginCallbackZodOpenApi; schema blocks + hook chain
-│   ├── conversation/
-│   │   ├── conversation.types.ts
-│   │   ├── conversation.validation.ts
-│   │   ├── conversation.repository.ts   # All Drizzle queries
-│   │   ├── conversation.service.ts
-│   │   ├── conversation.controller.ts
-│   │   └── conversation.routes.ts
+│   ├── session/
+│   │   ├── session.types.ts
+│   │   ├── session.validation.ts
+│   │   ├── session.repository.ts   # All Drizzle queries
+│   │   ├── session.service.ts
+│   │   ├── session.controller.ts
+│   │   └── session.routes.ts
 │   ├── message/
 │   │   ├── message.types.ts
 │   │   ├── message.validation.ts
@@ -162,7 +162,7 @@ Throw from the service layer; the `errorHandler` exported from `errors/error.han
 `buildApp()` catches everything and answers with the shared **error envelope**:
 
 ```json
-{ "success": false, "error": "NotFound", "message": "Conversation ... not found" }
+{ "success": false, "error": "NotFound", "message": "Session ... not found" }
 ```
 
 - An `AppError` builds its own envelope with `toEnvelope()`. Never write an envelope literal by hand.
@@ -213,31 +213,31 @@ Registering routes awaits nothing, so the plugin is a callback that ends with `d
 `await` is Sonar's `typescript:S7503`:
 
 ```ts
-// conversation.routes.ts
+// session.routes.ts
 import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
-import { conversationController } from '@backend/modules/conversation/conversation.controller';
+import { sessionController } from '@backend/modules/session/session.controller';
 import {
-  conversationResponseSchema,
-  createConversationSchema,
-} from '@backend/modules/conversation/conversation.validation';
+  sessionResponseSchema,
+  createSessionSchema,
+} from '@backend/modules/session/session.validation';
 import { jsonResponse } from '@backend/utils/jsonResponse';
 
-const conversationRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
+const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
   app.post('/', {
     schema: {
-      description: 'Create a new conversation with a title',
-      summary: 'Create conversation',
-      tags: ['Conversations'],
-      operationId: 'createConversation',
-      body: createConversationSchema,
+      description: 'Create a new session with a title',
+      summary: 'Create session',
+      tags: ['Sessions'],
+      operationId: 'createSession',
+      body: createSessionSchema,
       response: {
-        201: jsonResponse('Conversation created successfully', conversationResponseSchema),
+        201: jsonResponse('Session created successfully', sessionResponseSchema),
         400: jsonResponse('Invalid request body', errorEnvelopeSchema),
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },
-    handler: conversationController.create,
+    handler: sessionController.create,
   });
   done();
 };
@@ -250,15 +250,15 @@ response's description from the response object, not from the schema, so a bare 
 
 ```ts
 response: {
-  201: jsonResponse('Conversation created successfully', conversationResponseSchema),
+  201: jsonResponse('Session created successfully', sessionResponseSchema),
   400: jsonResponse('Invalid request body', errorEnvelopeSchema),
-  404: jsonResponse('Conversation not found', errorEnvelopeSchema),
+  404: jsonResponse('Session not found', errorEnvelopeSchema),
   500: jsonResponse('Internal server error', errorEnvelopeSchema),
 },
 ```
 
 **Rule — every response resource schema carries `.meta({ id })`:** declare it on the schema in the module's
-`*.validation.ts`, as a plain noun with no `…Response` suffix (`Conversation`, `ConversationPage`, `Message`).
+`*.validation.ts`, as a plain noun with no `…Response` suffix (`Session`, `SessionPage`, `Message`).
 The spec then declares it once as a named component, and Orval generates a model with that name. Without an id
 the body is inlined, and Orval names it after the operation and status (`listMessages200Item`). A route hidden with
 `hide: true` needs no id, since it has no place in the spec. An array of a
@@ -266,9 +266,9 @@ named schema needs no id of its own. Request bodies, params and querystrings sta
 `src/tests/app.test.ts` fails on any inline `2xx` JSON object.
 
 ```ts
-export const conversationResponseSchema = z
+export const sessionResponseSchema = z
   .object({ id: z.uuid(), title: z.string(), createdAt: isoDateTimeSchema })
-  .meta({ id: 'Conversation' });
+  .meta({ id: 'Session' });
 ```
 
 A response timestamp the handler holds as a `Date` is `isoDateTimeSchema` (`@backend/utils/isoDateTimeSchema`), never `z.date().transform(...)`. The handler returns the row's `Date`, the reply holds its ISO string, and the spec shows a `date-time` string. A bare `.transform` has no output type for the spec to render.
@@ -282,10 +282,10 @@ answers `500` `Internal`. Define schemas in `*.validation.ts` using plain Zod �
 Use `.describe()` to add field-level descriptions for Swagger docs:
 
 ```ts
-// conversation.validation.ts
+// session.validation.ts
 import { z } from 'zod';
 
-export const getConversationsQuerySchema = z.object({
+export const getSessionsQuerySchema = z.object({
   limit: z.coerce
     .number()
     .int()
@@ -293,7 +293,7 @@ export const getConversationsQuerySchema = z.object({
     .max(50)
     .optional()
     .default(10)
-    .describe('Number of conversations to fetch (1-50, default 10)'),
+    .describe('Number of sessions to fetch (1-50, default 10)'),
   cursor: z.uuid().optional().describe('Pagination cursor for the next page'),
 });
 ```
@@ -302,14 +302,14 @@ export const getConversationsQuerySchema = z.object({
 
 ## Database — Drizzle
 
-Schema lives at `libs/db/src/schema.ts` (`@nebula-chat/db`). The domain tables are `users`, `conversations`, `messages`; better-auth owns `session`, `account`, and `verification` (see [ADR-0010](../../docs/adr/0010-better-auth-for-auth.md)). `conversations.userId` is **NOT NULL** — every conversation has an owner. See [CONTEXT.md](../../CONTEXT.md) for the domain vocabulary.
+Schema lives at `libs/db/src/schema.ts` (`@nebula-chat/db`). The domain tables are `users`, `sessions`, `messages`; better-auth owns `session`, `account`, and `verification` (see [ADR-0010](../../docs/adr/0010-better-auth-for-auth.md)). `sessions.userId` is **NOT NULL** — every session has an owner. See [CONTEXT.md](../../CONTEXT.md) for the domain vocabulary.
 
 **Rules:**
 
 - All Drizzle queries go in `*.repository.ts` files — never in services or controllers.
 - The DB client is created in `src/db.ts` via `createDbClient` from `@nebula-chat/db`. Always import `db` from `@backend/db`.
 - After changing the schema run `pnpm --filter @nebula-chat/db db:generate` in dev or `pnpm --filter @nebula-chat/db db:migrate` in prod. Use the `drizzle-migrate` skill for schema changes.
-- Conversations are cursor-paginated using the conversation `id` as the cursor.
+- Sessions are cursor-paginated using the session `id` as the cursor.
 - Max 20 messages are loaded into context for a single chat request.
 
 ---
@@ -328,7 +328,7 @@ The connection is lazy with no offline queue, so a command sent before it is rea
 before each command.
 
 **Key format** (built in `src/redis.ts` via the lib's `buildKey`/`hashText`, kept as-is per ADR-0009):
-`conversation:{conversationId}:model:{model}:prompt:{sha256(lastUserMessage)[0:16]}`
+`session:{sessionId}:model:{model}:prompt:{sha256(lastUserMessage)[0:16]}`
 
 **Flow:**
 
@@ -354,8 +354,8 @@ POST /api/chat/stream
   → chatController.streamMessage
       → chat.service
           1. Validate token budget (tiktoken — max 2 000 prompt, 10 000 context)
-          2. Fetch conversation history (last 20 messages)
-          3. DB transaction — create user message + conversation if new
+          2. Fetch session history (last 20 messages)
+          3. DB transaction — create user message + session if new
           4. Call the LLM provider's streaming completion
           5. Pipe tokens to client as SSE events via reply.hijack() + reply.raw.write/reply.raw.end
           6. On stream end — persist assistant message + token usage
@@ -371,7 +371,7 @@ POST /api/chat/stream
 
 | Event                       | Data                                              |
 | --------------------------- | ------------------------------------------------- |
-| `conversation-created`      | `{ conversationId }`                              |
+| `session-created`           | `{ sessionId }`                                   |
 | `user-message-created`      | `{ messageId }`                                   |
 | `token`                     | `{ token }` — one per streamed chunk              |
 | `usage`                     | `{ promptTokens, completionTokens, totalTokens }` |
@@ -506,7 +506,7 @@ pnpm backend test:coverage
 
   ```ts
   const app = await buildApp();
-  const res = await app.inject({ method: 'GET', url: '/api/conversations' });
+  const res = await app.inject({ method: 'GET', url: '/api/sessions' });
   expect(res.statusCode).toBe(200);
   ```
 

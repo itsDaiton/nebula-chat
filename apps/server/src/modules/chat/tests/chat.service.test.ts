@@ -12,8 +12,8 @@ vi.mock('@backend/db', () => ({
   closeDb: vi.fn(async () => undefined),
 }));
 
-vi.mock('@backend/modules/conversation/conversation.repository', () => ({
-  conversationRepository: {
+vi.mock('@backend/modules/session/session.repository', () => ({
+  sessionRepository: {
     findByIdTx: vi.fn(),
     createTx: vi.fn(),
     findByIdSimple: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock('@backend/modules/conversation/conversation.repository', () => ({
 }));
 
 vi.mock('@backend/modules/message/message.repository', () => ({
-  messageRepository: { createTx: vi.fn(), findByConversationId: vi.fn() },
+  messageRepository: { createTx: vi.fn(), findBySessionId: vi.fn() },
 }));
 
 vi.mock('@backend/modules/message/message.service', () => ({
@@ -36,7 +36,7 @@ vi.mock('@nebula-chat/langchain', async (importOriginal) => ({
 }));
 
 import { streamChat } from '@nebula-chat/langchain';
-import { conversationRepository } from '@backend/modules/conversation/conversation.repository';
+import { sessionRepository } from '@backend/modules/session/session.repository';
 import { messageRepository } from '@backend/modules/message/message.repository';
 import { messageService } from '@backend/modules/message/message.service';
 import {
@@ -45,22 +45,22 @@ import {
   validateChatRequest,
 } from '@backend/modules/chat/chat.service';
 
-const conversationRepo = vi.mocked(conversationRepository);
+const sessionRepo = vi.mocked(sessionRepository);
 const messageRepo = vi.mocked(messageRepository);
 const mockedStreamChat = vi.mocked(streamChat);
 const mockedMessageService = vi.mocked(messageService);
 
-const CONVERSATION_ID = '11111111-1111-4111-8111-111111111111';
+const SESSION_ID = '11111111-1111-4111-8111-111111111111';
 const USER_MESSAGE_ID = '22222222-2222-4222-8222-222222222222';
 const ASSISTANT_MESSAGE_ID = '33333333-3333-4333-8333-333333333333';
-// The session owner threaded into conversation creation (conversations.userId is
+// The session owner threaded into session creation (sessions.userId is
 // NOT NULL, ADR-0010 §2).
 const OWNER_ID = '44444444-4444-4444-8444-444444444444';
 
 const request = (overrides: Partial<CreateChatStreamDTO> = {}): CreateChatStreamDTO =>
   ({
     model: 'gpt-4o-mini',
-    conversationId: CONVERSATION_ID,
+    sessionId: SESSION_ID,
     messages: [{ role: 'user', content: 'what is 2+2?' }],
     ...overrides,
   }) as CreateChatStreamDTO;
@@ -107,11 +107,11 @@ const respondWith = (
 
 beforeEach(() => {
   vi.clearAllMocks();
-  conversationRepo.findByIdTx.mockResolvedValue(fromPartial({ id: CONVERSATION_ID }));
-  conversationRepo.findByIdSimple.mockResolvedValue(fromPartial({ id: CONVERSATION_ID }));
-  conversationRepo.createTx.mockResolvedValue(fromPartial({ id: CONVERSATION_ID }));
+  sessionRepo.findByIdTx.mockResolvedValue(fromPartial({ id: SESSION_ID }));
+  sessionRepo.findByIdSimple.mockResolvedValue(fromPartial({ id: SESSION_ID }));
+  sessionRepo.createTx.mockResolvedValue(fromPartial({ id: SESSION_ID }));
   messageRepo.createTx.mockResolvedValue(fromPartial({ id: USER_MESSAGE_ID }));
-  messageRepo.findByConversationId.mockResolvedValue(fromPartial([]));
+  messageRepo.findBySessionId.mockResolvedValue(fromPartial([]));
   mockedMessageService.createMessage.mockResolvedValue(fromPartial({ id: ASSISTANT_MESSAGE_ID }));
   respondWith(['4']);
 });
@@ -119,12 +119,7 @@ beforeEach(() => {
 describe('validateChatRequest', () => {
   it('accepts a user message within the token budget', async () => {
     await expect(
-      validateChatRequest(
-        CONVERSATION_ID,
-        { role: 'user', content: 'hi' },
-        OWNER_ID,
-        'gpt-4o-mini',
-      ),
+      validateChatRequest(SESSION_ID, { role: 'user', content: 'hi' }, OWNER_ID, 'gpt-4o-mini'),
     ).resolves.toBeUndefined();
   });
 
@@ -146,64 +141,64 @@ describe('validateChatRequest', () => {
     ).rejects.toThrow(/maximum allowed is 2000 tokens/);
   });
 
-  it('rejects an unknown or unowned conversation', async () => {
-    conversationRepo.findByIdSimple.mockResolvedValue(fromPartial(null));
+  it('rejects an unknown or unowned session', async () => {
+    sessionRepo.findByIdSimple.mockResolvedValue(fromPartial(null));
 
     await expect(
-      validateChatRequest(CONVERSATION_ID, { role: 'user', content: 'hi' }, OWNER_ID),
-    ).rejects.toThrow(`Conversation with id "${CONVERSATION_ID}" not found`);
+      validateChatRequest(SESSION_ID, { role: 'user', content: 'hi' }, OWNER_ID),
+    ).rejects.toThrow(`Session with id "${SESSION_ID}" not found`);
   });
 
-  it('skips the conversation lookup when starting a new conversation', async () => {
+  it('skips the session lookup when starting a new session', async () => {
     await validateChatRequest(undefined, { role: 'user', content: 'hi' }, OWNER_ID);
 
-    expect(conversationRepo.findByIdSimple).not.toHaveBeenCalled();
+    expect(sessionRepo.findByIdSimple).not.toHaveBeenCalled();
   });
 });
 
 describe('createUserMessage', () => {
-  it('reuses an existing conversation', async () => {
-    const result = await createUserMessage(CONVERSATION_ID, 'hello', 'user', OWNER_ID);
+  it('reuses an existing session', async () => {
+    const result = await createUserMessage(SESSION_ID, 'hello', 'user', OWNER_ID);
 
     expect(result).toEqual({
-      conversationId: CONVERSATION_ID,
+      sessionId: SESSION_ID,
       userMessageId: USER_MESSAGE_ID,
-      isNewConversation: false,
+      isNewSession: false,
     });
   });
 
-  it('creates a conversation when none is supplied, owned by the session user', async () => {
+  it('creates a session when none is supplied, owned by the session user', async () => {
     const result = await createUserMessage(undefined, 'hello there', 'user', OWNER_ID);
 
-    expect(result.isNewConversation).toBe(true);
-    expect(conversationRepo.createTx).toHaveBeenCalledWith(fakeTx, 'hello there', OWNER_ID);
+    expect(result.isNewSession).toBe(true);
+    expect(sessionRepo.createTx).toHaveBeenCalledWith(fakeTx, 'hello there', OWNER_ID);
   });
 
-  it('titles a new conversation from the first 50 characters of the message', async () => {
+  it('titles a new session from the first 50 characters of the message', async () => {
     await createUserMessage(undefined, 'x'.repeat(80), 'user', OWNER_ID);
 
-    expect(conversationRepo.createTx).toHaveBeenCalledWith(fakeTx, 'x'.repeat(50), OWNER_ID);
+    expect(sessionRepo.createTx).toHaveBeenCalledWith(fakeTx, 'x'.repeat(50), OWNER_ID);
   });
 
   it("falls back to 'New Chat' for an empty first message", async () => {
     await createUserMessage(undefined, '', 'user', OWNER_ID);
 
-    expect(conversationRepo.createTx).toHaveBeenCalledWith(fakeTx, 'New Chat', OWNER_ID);
+    expect(sessionRepo.createTx).toHaveBeenCalledWith(fakeTx, 'New Chat', OWNER_ID);
   });
 
-  it('throws when the supplied conversation does not exist', async () => {
-    conversationRepo.findByIdTx.mockResolvedValue(fromPartial(null));
+  it('throws when the supplied session does not exist', async () => {
+    sessionRepo.findByIdTx.mockResolvedValue(fromPartial(null));
 
-    await expect(createUserMessage(CONVERSATION_ID, 'hello', 'user', OWNER_ID)).rejects.toThrow(
+    await expect(createUserMessage(SESSION_ID, 'hello', 'user', OWNER_ID)).rejects.toThrow(
       'not found',
     );
   });
 
   it('writes the user message inside the same transaction', async () => {
-    await createUserMessage(CONVERSATION_ID, 'hello', 'user', OWNER_ID);
+    await createUserMessage(SESSION_ID, 'hello', 'user', OWNER_ID);
 
     expect(messageRepo.createTx).toHaveBeenCalledWith(fakeTx, {
-      conversationId: CONVERSATION_ID,
+      sessionId: SESSION_ID,
       role: 'user',
       content: 'hello',
     });
@@ -227,24 +222,24 @@ describe('chatService.streamResponse', () => {
       'assistant-message-created',
     ]);
     expect(result).toEqual({
-      conversationId: CONVERSATION_ID,
+      sessionId: SESSION_ID,
       userMessageId: USER_MESSAGE_ID,
       assistantMessageId: ASSISTANT_MESSAGE_ID,
     });
   });
 
-  it('announces a newly created conversation before the user message', async () => {
-    conversationRepo.createTx.mockResolvedValue(fromPartial({ id: CONVERSATION_ID }));
+  it('announces a newly created session before the user message', async () => {
+    sessionRepo.createTx.mockResolvedValue(fromPartial({ id: SESSION_ID }));
 
-    const { frames } = await collectStream(request({ conversationId: undefined }));
+    const { frames } = await collectStream(request({ sessionId: undefined }));
 
-    expect(eventNames(frames)[0]).toBe('conversation-created');
+    expect(eventNames(frames)[0]).toBe('session-created');
   });
 
-  it('does not announce a conversation when continuing an existing one', async () => {
+  it('does not announce a session when continuing an existing one', async () => {
     const { frames } = await collectStream(request());
 
-    expect(eventNames(frames)).not.toContain('conversation-created');
+    expect(eventNames(frames)).not.toContain('session-created');
   });
 
   it('persists the full assembled response, not the individual tokens', async () => {
@@ -270,7 +265,7 @@ describe('chatService.streamResponse', () => {
   });
 
   it('passes prior turns to the model oldest-first, excluding the new message', async () => {
-    messageRepo.findByConversationId.mockResolvedValue(
+    messageRepo.findBySessionId.mockResolvedValue(
       fromPartial([
         { id: 'newer', role: 'assistant', content: 'second' },
         { id: 'older', role: 'user', content: 'first' },
@@ -352,15 +347,15 @@ describe('chatService.streamResponse', () => {
     expect(joined).not.toContain('a bare string');
   });
 
-  it('surfaces a missing conversation as an error frame rather than throwing', async () => {
-    conversationRepo.findByIdSimple.mockResolvedValue(fromPartial(null));
+  it('surfaces a missing session as an error frame rather than throwing', async () => {
+    sessionRepo.findByIdSimple.mockResolvedValue(fromPartial(null));
 
     const { frames, result } = await collectStream(request());
 
     expect(errorFrame(frames)).toEqual({
       success: false,
       error: 'NotFound',
-      message: `Conversation with id "${CONVERSATION_ID}" not found`,
+      message: `Session with id "${SESSION_ID}" not found`,
     });
     expect(result).toBeUndefined();
   });
@@ -413,7 +408,7 @@ describe('chatService.streamResponse — chat.reply.completed', () => {
         level: LEVEL.info,
         'nebula.component': 'chat',
         'nebula.outcome': 'completed',
-        'nebula.session.id': CONVERSATION_ID,
+        'nebula.session.id': SESSION_ID,
         'nebula.message.id': USER_MESSAGE_ID,
         'nebula.reply.message.id': ASSISTANT_MESSAGE_ID,
         'gen_ai.provider.name': 'openai',
@@ -431,10 +426,10 @@ describe('chatService.streamResponse — chat.reply.completed', () => {
     expect(lines.filter((line) => line.level >= LEVEL.info)).toHaveLength(1);
   });
 
-  it('binds the Session a new conversation was given', async () => {
-    const { lines } = await collectStream(request({ conversationId: undefined }));
+  it('binds the Session a new session was given', async () => {
+    const { lines } = await collectStream(request({ sessionId: undefined }));
 
-    expect(replyLines(lines)[0]?.['nebula.session.id']).toBe(CONVERSATION_ID);
+    expect(replyLines(lines)[0]?.['nebula.session.id']).toBe(SESSION_ID);
   });
 
   it('has the model call log under the Session, from the llm component', async () => {
@@ -451,7 +446,7 @@ describe('chatService.streamResponse — chat.reply.completed', () => {
     expect(eventLines(lines, 'llm.stream.started')).toEqual([
       expect.objectContaining({
         'nebula.component': 'llm',
-        'nebula.session.id': CONVERSATION_ID,
+        'nebula.session.id': SESSION_ID,
       }),
     ]);
   });
@@ -468,7 +463,7 @@ describe('chatService.streamResponse — chat.reply.completed', () => {
         'event.name': 'chat.reply.completed',
         'nebula.outcome': 'rate_limited',
         'error.type': 'TooManyRequests',
-        'nebula.session.id': CONVERSATION_ID,
+        'nebula.session.id': SESSION_ID,
       }),
     ]);
   });
@@ -484,7 +479,7 @@ describe('chatService.streamResponse — chat.reply.completed', () => {
         'event.name': 'chat.reply.completed',
         'nebula.outcome': 'failed',
         'error.type': 'Internal',
-        'nebula.session.id': CONVERSATION_ID,
+        'nebula.session.id': SESSION_ID,
         'nebula.message.id': USER_MESSAGE_ID,
         err: expect.objectContaining({
           message: '401 Incorrect API key provided',
@@ -504,7 +499,7 @@ describe('chatService.streamResponse — chat.reply.completed', () => {
   });
 
   it('writes a failure the caller caused at warn, still as failed', async () => {
-    conversationRepo.findByIdSimple.mockResolvedValue(fromPartial(null));
+    sessionRepo.findByIdSimple.mockResolvedValue(fromPartial(null));
 
     const { lines } = await collectStream(request());
 

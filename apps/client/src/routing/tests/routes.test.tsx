@@ -19,8 +19,8 @@ describe('routes', () => {
     expect(route.chat.root()).toBe('/');
   });
 
-  it('builds a conversation path from its id', () => {
-    expect(route.chat.conversation('abc')).toBe('/c/abc');
+  it('builds a session path from its id', () => {
+    expect(route.chat.session('abc')).toBe('/c/abc');
   });
 
   it('builds the auth path', () => {

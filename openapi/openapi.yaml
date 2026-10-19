@@ -109,7 +109,7 @@ components:
       required:
         - metered
       additionalProperties: false
-    Conversation:
+    Session:
       type: object
       properties:
         id:
@@ -129,14 +129,14 @@ components:
         - title
         - createdAt
       additionalProperties: false
-    ConversationPage:
+    SessionPage:
       type: object
       properties:
-        conversations:
+        sessions:
           maxItems: 100
           type: array
           items:
-            $ref: '#/components/schemas/Conversation'
+            $ref: '#/components/schemas/Session'
         nextCursor:
           anyOf:
             - type: string
@@ -147,7 +147,7 @@ components:
         hasMore:
           type: boolean
       required:
-        - conversations
+        - sessions
         - nextCursor
         - hasMore
       additionalProperties: false
@@ -159,7 +159,7 @@ components:
           format: uuid
           pattern: >-
             ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-        conversationId:
+        sessionId:
           type: string
           format: uuid
           pattern: >-
@@ -183,7 +183,7 @@ components:
             ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - id
-        - conversationId
+        - sessionId
         - content
         - role
         - tokenCount
@@ -266,7 +266,7 @@ paths:
         - Chat
       description: >-
         Stream a chat completion response from an AI model with automatic
-        conversation and message persistence.
+        session and message persistence.
       requestBody:
         required: true
         content:
@@ -295,7 +295,7 @@ paths:
                       - content
                 model:
                   type: string
-                conversationId:
+                sessionId:
                   type: string
                   format: uuid
                   pattern: >-
@@ -323,7 +323,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '401':
-          description: No authenticated session
+          description: No auth session
           content:
             application/json:
               schema:
@@ -335,7 +335,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '404':
-          description: Conversation not found
+          description: Session not found
           content:
             application/json:
               schema:
@@ -376,7 +376,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/MessageAllowance'
         '401':
-          description: No authenticated session
+          description: No auth session
           content:
             application/json:
               schema:
@@ -387,13 +387,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
-  /api/conversations:
+  /api/sessions:
     post:
-      operationId: createConversation
-      summary: Create conversation
+      operationId: createSession
+      summary: Create session
       tags:
-        - Conversations
-      description: Create a new conversation with a title
+        - Sessions
+      description: Create a new session with a title
       requestBody:
         required: true
         content:
@@ -408,11 +408,11 @@ paths:
                 - title
       responses:
         '201':
-          description: Conversation created successfully
+          description: Session created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Conversation'
+                $ref: '#/components/schemas/Session'
         '400':
           description: Invalid request body
           content:
@@ -420,7 +420,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '401':
-          description: No authenticated session
+          description: No auth session
           content:
             application/json:
               schema:
@@ -432,41 +432,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
     get:
-      operationId: listConversations
-      summary: List conversations
+      operationId: listSessions
+      summary: List sessions
       tags:
-        - Conversations
+        - Sessions
       description: >-
-        Retrieve the caller’s own conversations with cursor-based pagination.
-        Returns up to 10 conversations by default.
+        Retrieve the caller’s own sessions with cursor-based pagination.
+        Returns up to 10 sessions by default.
       parameters:
         - schema:
             default: 10
-            description: Number of conversations to fetch (1-100, default 10)
+            description: Number of sessions to fetch (1-100, default 10)
             type: integer
             minimum: 1
             maximum: 100
           in: query
           name: limit
-          description: Number of conversations to fetch (1-100, default 10)
+          description: Number of sessions to fetch (1-100, default 10)
         - schema:
-            description: Pagination cursor for fetching the next page of conversations
+            description: Pagination cursor for fetching the next page of sessions
             type: string
             format: uuid
             pattern: >-
               ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
-          description: Pagination cursor for fetching the next page of conversations
+          description: Pagination cursor for fetching the next page of sessions
       responses:
         '200':
-          description: Paginated list of conversations owned by the caller
+          description: Paginated list of sessions owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConversationPage'
+                $ref: '#/components/schemas/SessionPage'
         '401':
-          description: No authenticated session
+          description: No auth session
           content:
             application/json:
               schema:
@@ -477,34 +477,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
-  /api/conversations/search:
+  /api/sessions/search:
     get:
-      operationId: searchConversations
-      summary: Search conversations
+      operationId: searchSessions
+      summary: Search sessions
       tags:
-        - Conversations
+        - Sessions
       description: >-
-        Search the caller’s own conversations by title, ordered by creation
+        Search the caller’s own sessions by title, ordered by creation
         date.
       parameters:
         - schema:
             type: string
             minLength: 1
-            description: Search query to filter conversations by title
+            description: Search query to filter sessions by title
           in: query
           name: q
           required: true
-          description: Search query to filter conversations by title
+          description: Search query to filter sessions by title
       responses:
         '200':
-          description: Matching conversations owned by the caller
+          description: Matching sessions owned by the caller
           content:
             application/json:
               schema:
                 maxItems: 100
                 type: array
                 items:
-                  $ref: '#/components/schemas/Conversation'
+                  $ref: '#/components/schemas/Session'
         '400':
           description: Invalid search query
           content:
@@ -512,7 +512,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '401':
-          description: No authenticated session
+          description: No auth session
           content:
             application/json:
               schema:
@@ -523,13 +523,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
-  /api/conversations/{conversationId}:
+  /api/sessions/{sessionId}:
     get:
-      operationId: getConversation
-      summary: Get conversation by ID
+      operationId: getSession
+      summary: Get session by ID
       tags:
-        - Conversations
-      description: Retrieve one of the caller’s own conversations by ID
+        - Sessions
+      description: Retrieve one of the caller’s own sessions by ID
       parameters:
         - schema:
             type: string
@@ -537,29 +537,29 @@ paths:
             pattern: >-
               ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
-          name: conversationId
+          name: sessionId
           required: true
       responses:
         '200':
-          description: Conversation retrieved successfully
+          description: Session retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Conversation'
+                $ref: '#/components/schemas/Session'
         '400':
-          description: Invalid conversation ID format
+          description: Invalid session ID format
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '401':
-          description: No authenticated session
+          description: No auth session
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '404':
-          description: Conversation not found or not owned by the caller
+          description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
@@ -576,7 +576,7 @@ paths:
       summary: Create message
       tags:
         - Messages
-      description: Create a new message in one of the caller’s own conversations
+      description: Create a new message in one of the caller’s own sessions
       requestBody:
         required: true
         content:
@@ -584,7 +584,7 @@ paths:
             schema:
               type: object
               properties:
-                conversationId:
+                sessionId:
                   type: string
                   format: uuid
                   pattern: >-
@@ -605,7 +605,7 @@ paths:
                       maximum: 9007199254740991
                     - type: 'null'
               required:
-                - conversationId
+                - sessionId
                 - role
                 - content
       responses:
@@ -622,13 +622,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '401':
-          description: No authenticated session
+          description: No auth session
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '404':
-          description: Conversation not found or not owned by the caller
+          description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
@@ -645,19 +645,19 @@ paths:
       tags:
         - Messages
       description: >-
-        Retrieve the messages across the caller’s own conversations, newest
-        first. Pass `conversationId` to list one conversation’s messages, oldest
-        first; a conversation the caller does not own lists as empty.
+        Retrieve the messages across the caller’s own sessions, newest
+        first. Pass `sessionId` to list one session’s messages, oldest
+        first; a session the caller does not own lists as empty.
       parameters:
         - schema:
-            description: Only list the messages of this conversation, oldest first
+            description: Only list the messages of this session, oldest first
             type: string
             format: uuid
             pattern: >-
               ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
-          name: conversationId
-          description: Only list the messages of this conversation, oldest first
+          name: sessionId
+          description: Only list the messages of this session, oldest first
       responses:
         '200':
           description: List of messages owned by the caller
@@ -669,13 +669,13 @@ paths:
                 items:
                   $ref: '#/components/schemas/Message'
         '400':
-          description: Invalid conversation ID format
+          description: Invalid session ID format
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '401':
-          description: No authenticated session
+          description: No auth session
           content:
             application/json:
               schema:
@@ -716,7 +716,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '401':
-          description: No authenticated session
+          description: No auth session
           content:
             application/json:
               schema:
@@ -962,8 +962,8 @@ tags:
     description: Liveness and readiness probes
   - name: Chat
     description: Chat streaming endpoints
-  - name: Conversations
-    description: Conversation management
+  - name: Sessions
+    description: Session management
   - name: Messages
     description: Message management
   - name: Profile image

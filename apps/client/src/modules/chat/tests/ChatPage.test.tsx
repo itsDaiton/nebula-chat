@@ -4,9 +4,9 @@ import { HttpResponse, delay, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Route, Routes } from 'react-router';
 import {
-  getGetConversationMockHandler,
-  getListConversationsMockHandler,
-} from '@/libs/api/generated/conversations/conversations.msw';
+  getGetSessionMockHandler,
+  getListSessionsMockHandler,
+} from '@/libs/api/generated/sessions/sessions.msw';
 import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
 import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
 import { ChatPage } from '@/modules/chat/ChatPage';
@@ -30,9 +30,9 @@ const layout = vi.hoisted(() => ({
 }));
 vi.mock('@/shared/hooks/useResponsiveLayout', () => ({ useResponsiveLayout: () => layout }));
 
-const CONVERSATION_ID = '11111111-1111-4111-8111-111111111111';
+const SESSION_ID = '11111111-1111-4111-8111-111111111111';
 
-const aConversation = (id: string, title: string) => ({
+const aChatSession = (id: string, title: string) => ({
   id,
   title,
   createdAt: '2026-06-15T11:00:00.000Z',
@@ -40,7 +40,7 @@ const aConversation = (id: string, title: string) => ({
 
 const aMessage = (id: string, role: string, content: string) => ({
   id,
-  conversationId: CONVERSATION_ID,
+  sessionId: SESSION_ID,
   role,
   content,
   tokenCount: null,
@@ -48,8 +48,8 @@ const aMessage = (id: string, role: string, content: string) => ({
   createdAt: '2026-06-15T11:00:00.000Z',
 });
 
-const serveConversations = (...conversations: ReturnType<typeof aConversation>[]) =>
-  server.use(getListConversationsMockHandler({ conversations, nextCursor: null, hasMore: false }));
+const serveSessions = (...sessions: ReturnType<typeof aChatSession>[]) =>
+  server.use(getListSessionsMockHandler({ sessions, nextCursor: null, hasMore: false }));
 
 // Rendered inside real <Routes> so ChatContainer's useParams() sees the id —
 // a bare MemoryRouter would leave it undefined and always show the empty state.
@@ -64,10 +64,10 @@ const renderPage = (route = '/') =>
 
 beforeEach(() => {
   vi.restoreAllMocks();
-  serveConversations();
+  serveSessions();
   server.use(
     mockGetSession(aSession()),
-    getGetConversationMockHandler(aConversation(CONVERSATION_ID, 'Chat')),
+    getGetSessionMockHandler(aChatSession(SESSION_ID, 'Chat')),
     getListMessagesMockHandler([]),
     getGetMessageAllowanceMockHandler({ metered: false }),
   );
@@ -78,7 +78,7 @@ beforeEach(() => {
     isPostStreamNavigation: false,
     error: null,
     usage: null,
-    conversationId: undefined,
+    sessionId: undefined,
   });
 });
 
@@ -95,25 +95,25 @@ describe('ChatPage', () => {
     expect(await screen.findByRole('textbox', { name: '' })).toBeInTheDocument();
   });
 
-  it('lists the conversations the API returns on a desktop layout', async () => {
-    serveConversations(aConversation('a', 'Earlier chat'));
+  it('lists the sessions the API returns on a desktop layout', async () => {
+    serveSessions(aChatSession('a', 'Earlier chat'));
 
     renderPage();
 
     expect(await screen.findByText('Earlier chat')).toBeInTheDocument();
   });
 
-  it('shows the empty-list hint when there are no conversations', async () => {
+  it('shows the empty-list hint when there are no sessions', async () => {
     renderPage();
 
-    expect(await screen.findByText(resources.conversations.empty)).toBeInTheDocument();
+    expect(await screen.findByText(resources.sessions.empty)).toBeInTheDocument();
   });
 
-  it('shows loading skeletons while conversations load', async () => {
+  it('shows loading skeletons while sessions load', async () => {
     server.use(
-      getListConversationsMockHandler(async () => {
+      getListSessionsMockHandler(async () => {
         await delay('infinite');
-        return { conversations: [], nextCursor: null, hasMore: false };
+        return { sessions: [], nextCursor: null, hasMore: false };
       }),
     );
 
@@ -124,9 +124,9 @@ describe('ChatPage', () => {
     );
   });
 
-  it('shows the error in the sidebar when the conversations fail to load', async () => {
+  it('shows the error in the sidebar when the sessions fail to load', async () => {
     server.use(
-      mockApiError('get', API_ROUTE.conversations, 401, {
+      mockApiError('get', API_ROUTE.sessions, 401, {
         success: false,
         error: 'Unauthorized',
         message: 'No authenticated session',
@@ -138,7 +138,7 @@ describe('ChatPage', () => {
     expect(await screen.findByText('No authenticated session')).toBeInTheDocument();
   });
 
-  it('renders the messages of an open conversation', async () => {
+  it('renders the messages of an open session', async () => {
     server.use(
       getListMessagesMockHandler([
         aMessage('m1', 'user', 'a question'),
@@ -146,45 +146,45 @@ describe('ChatPage', () => {
       ]),
     );
 
-    renderPage(`/c/${CONVERSATION_ID}`);
+    renderPage(`/c/${SESSION_ID}`);
 
     expect(await screen.findByText('a question', {}, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.getByText('an answer')).toBeInTheDocument();
   });
 
-  it('surfaces a conversation load failure inline and through the toaster', async () => {
+  it('surfaces a session load failure inline and through the toaster', async () => {
     const toast = vi.spyOn(toaster, 'create');
     server.use(
-      mockApiError('get', API_ROUTE.conversation, 404, {
+      mockApiError('get', API_ROUTE.session, 404, {
         success: false,
         error: 'NotFound',
-        message: 'Conversation not found',
+        message: 'Session not found',
       }),
     );
 
-    renderPage(`/c/${CONVERSATION_ID}`);
+    renderPage(`/c/${SESSION_ID}`);
 
     expect(
-      await screen.findByText(resources.conversations.single.error, {}, { timeout: 3000 }),
+      await screen.findByText(resources.sessions.single.error, {}, { timeout: 3000 }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Conversation not found')).toBeInTheDocument();
+    expect(screen.getByText('Session not found')).toBeInTheDocument();
     expect(toast).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'error', description: 'Conversation not found' }),
+      expect.objectContaining({ type: 'error', description: 'Session not found' }),
     );
   });
 
-  it('shows a conversation created by a reply in the sidebar without a refresh', async () => {
+  it('shows a session created by a reply in the sidebar without a refresh', async () => {
     let created = false;
     server.use(
-      getListConversationsMockHandler(() => ({
-        conversations: created ? [aConversation(CONVERSATION_ID, 'Brand new chat')] : [],
+      getListSessionsMockHandler(() => ({
+        sessions: created ? [aChatSession(SESSION_ID, 'Brand new chat')] : [],
         nextCursor: null,
         hasMore: false,
       })),
       http.post(API_ROUTE.chatStream, () => {
         created = true;
         return new HttpResponse(
-          `event: conversation-created\ndata: ${JSON.stringify({ conversationId: CONVERSATION_ID })}\n\n` +
+          `event: session-created\ndata: ${JSON.stringify({ sessionId: SESSION_ID })}\n\n` +
             `event: token\ndata: ${JSON.stringify({ token: 'hi there' })}\n\n` +
             'event: end\ndata: {}\n\n',
           { headers: { 'Content-Type': 'text/event-stream' } },
@@ -192,7 +192,7 @@ describe('ChatPage', () => {
       }),
     );
     renderPage();
-    expect(await screen.findByText(resources.conversations.empty)).toBeInTheDocument();
+    expect(await screen.findByText(resources.sessions.empty)).toBeInTheDocument();
 
     await userEvent.type(screen.getByRole('textbox', { name: '' }), 'hello{Enter}');
 

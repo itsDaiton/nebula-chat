@@ -7,7 +7,7 @@ describe('SSE_EVENTS', () => {
     'usage',
     'error',
     'end',
-    'conversation-created',
+    'session-created',
     'user-message-created',
     'assistant-message-created',
   ])('recognises %s', (name) => {

@@ -2,7 +2,7 @@ import { Box, Flex } from '@chakra-ui/react';
 import { resources } from '@/resources';
 import type { ChatEmptyStateProps } from '@/modules/chat/types/types';
 
-export const ChatEmptyState = ({ conversationId }: ChatEmptyStateProps) => (
+export const ChatEmptyState = ({ sessionId }: ChatEmptyStateProps) => (
   <Flex
     direction="column"
     align="center"
@@ -13,10 +13,10 @@ export const ChatEmptyState = ({ conversationId }: ChatEmptyStateProps) => (
     gap={4}
   >
     <Box fontSize="2xl" fontWeight="medium" color="fg.default" maxW="600px">
-      {conversationId ? resources.chat.emptyConversation : resources.chat.welcomeMessage}
+      {sessionId ? resources.chat.emptySession : resources.chat.welcomeMessage}
     </Box>
     <Box fontSize="md" maxW="600px" lineHeight="tall">
-      {conversationId ? resources.chat.emptyConversationHint : resources.chat.welcomeIntro}
+      {sessionId ? resources.chat.emptySessionHint : resources.chat.welcomeIntro}
     </Box>
   </Flex>
 );

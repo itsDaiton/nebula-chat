@@ -16,7 +16,7 @@ describe('createQueryClient', () => {
     await client
       .fetchQuery({
         queryKey: ['failing'],
-        queryFn: () => Promise.reject(new NotFoundError('Conversation', 'x')),
+        queryFn: () => Promise.reject(new NotFoundError('Session', 'x')),
       })
       .catch(() => {});
 
@@ -24,7 +24,7 @@ describe('createQueryClient', () => {
       expect.objectContaining({
         type: 'error',
         title: resources.errors.title,
-        description: 'Conversation with id "x" not found',
+        description: 'Session with id "x" not found',
       }),
     );
   });

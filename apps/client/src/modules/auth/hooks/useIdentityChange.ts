@@ -16,7 +16,7 @@ export const useIdentityChange = () => {
   const clearSettingsSearch = useSettingsSearchStore((state) => state.clearSearch);
 
   return () => {
-    // Removed, not reset: nothing refetches as the old user, and claimed conversations load fresh.
+    // Removed, not reset: nothing refetches as the old user, and claimed sessions load fresh.
     queryClient.removeQueries({ predicate: (query) => query.queryHash !== bootstrapHash });
     // A spent allowance belonged to the previous Guest; a new identity starts afresh.
     clearMessageAllowanceReached();

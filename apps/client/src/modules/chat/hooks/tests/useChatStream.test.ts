@@ -3,9 +3,9 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import {
-  getGetConversationQueryKey,
-  getListConversationsInfiniteQueryKey,
-} from '@/libs/api/generated/conversations/conversations';
+  getGetSessionQueryKey,
+  getListSessionsInfiniteQueryKey,
+} from '@/libs/api/generated/sessions/sessions';
 import { getGetMessageAllowanceQueryKey } from '@/libs/api/generated/chat/chat';
 import { getListMessagesQueryKey } from '@/libs/api/generated/messages/messages';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
@@ -63,7 +63,7 @@ beforeEach(() => {
     isPostStreamNavigation: false,
     error: null,
     usage: null,
-    conversationId: undefined,
+    sessionId: undefined,
     isMessageAllowanceReached: false,
   });
   useMessageStore.setState({ message: '' });
@@ -301,20 +301,20 @@ describe('useChatStream — message allowance', () => {
   });
 });
 
-describe('useChatStream — conversation creation', () => {
+describe('useChatStream — session creation', () => {
   const NEW_ID = '11111111-1111-4111-8111-111111111111';
 
-  it('adopts the conversation id the server assigns', async () => {
-    streamFrames(frame('conversation-created', { conversationId: NEW_ID }), frame('end', {}));
+  it('adopts the session id the server assigns', async () => {
+    streamFrames(frame('session-created', { sessionId: NEW_ID }), frame('end', {}));
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
-    await waitFor(() => expect(useChatStreamStore.getState().conversationId).toBe(NEW_ID));
+    await waitFor(() => expect(useChatStreamStore.getState().sessionId).toBe(NEW_ID));
   });
 
-  it('navigates to the new conversation once the stream ends', async () => {
-    streamFrames(frame('conversation-created', { conversationId: NEW_ID }), frame('end', {}));
+  it('navigates to the new session once the stream ends', async () => {
+    streamFrames(frame('session-created', { sessionId: NEW_ID }), frame('end', {}));
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
@@ -322,9 +322,9 @@ describe('useChatStream — conversation creation', () => {
     await waitFor(() => expect(navigate).toHaveBeenCalledWith(`/c/${NEW_ID}`, { replace: true }));
   });
 
-  it('does not navigate when continuing an existing conversation', async () => {
-    useChatStreamStore.setState({ conversationId: 'existing-id' });
-    streamFrames(frame('conversation-created', { conversationId: NEW_ID }), frame('end', {}));
+  it('does not navigate when continuing an existing session', async () => {
+    useChatStreamStore.setState({ sessionId: 'existing-id' });
+    streamFrames(frame('session-created', { sessionId: NEW_ID }), frame('end', {}));
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
@@ -334,9 +334,9 @@ describe('useChatStream — conversation creation', () => {
   });
 
   it('keeps isStreaming true through the post-stream navigation window', async () => {
-    // Dropping it here would render a frame with no conversation and no stream,
+    // Dropping it here would render a frame with no session and no stream,
     // which shows as an empty-state flicker.
-    streamFrames(frame('conversation-created', { conversationId: NEW_ID }), frame('end', {}));
+    streamFrames(frame('session-created', { sessionId: NEW_ID }), frame('end', {}));
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
@@ -345,13 +345,13 @@ describe('useChatStream — conversation creation', () => {
     expect(useChatStreamStore.getState().isStreaming).toBe(true);
   });
 
-  it('ignores a conversation-created frame with no id', async () => {
-    streamFrames(frame('conversation-created', {}), frame('end', {}));
+  it('ignores a session-created frame with no id', async () => {
+    streamFrames(frame('session-created', {}), frame('end', {}));
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().conversationId).toBeUndefined();
+    expect(useChatStreamStore.getState().sessionId).toBeUndefined();
     expect(navigate).not.toHaveBeenCalled();
   });
 });
@@ -370,31 +370,31 @@ describe('useChatStream — query cache', () => {
   const isInvalidated = (queryClient: QueryClient, key: QueryKey) =>
     queryClient.getQueryState(key)?.isInvalidated;
 
-  it('refreshes the sidebar as soon as the server creates a conversation', async () => {
+  it('refreshes the sidebar as soon as the server creates a session', async () => {
     // No `end` frame: the list must refresh on creation, not only on completion.
-    streamFrames(frame('conversation-created', { conversationId: NEW_ID }));
-    const queryClient = primedClient(getListConversationsInfiniteQueryKey());
+    streamFrames(frame('session-created', { sessionId: NEW_ID }));
+    const queryClient = primedClient(getListSessionsInfiniteQueryKey());
     const { result } = renderHookWithQueryClient(() => useChatStream(), { queryClient });
 
     await sendMessage(result);
 
-    expect(isInvalidated(queryClient, getListConversationsInfiniteQueryKey())).toBe(true);
+    expect(isInvalidated(queryClient, getListSessionsInfiniteQueryKey())).toBe(true);
   });
 
-  it('invalidates the list, the conversation and its messages when the stream completes', async () => {
-    useChatStreamStore.setState({ conversationId: EXISTING_ID });
+  it('invalidates the list, the session and its messages when the stream completes', async () => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
     streamFrames(frame('token', { token: 'x' }), frame('end', {}));
     const queryClient = primedClient(
-      getListConversationsInfiniteQueryKey(),
-      getGetConversationQueryKey(EXISTING_ID),
+      getListSessionsInfiniteQueryKey(),
+      getGetSessionQueryKey(EXISTING_ID),
       getListMessagesQueryKey(),
     );
     const { result } = renderHookWithQueryClient(() => useChatStream(), { queryClient });
 
     await sendMessage(result);
 
-    expect(isInvalidated(queryClient, getListConversationsInfiniteQueryKey())).toBe(true);
-    expect(isInvalidated(queryClient, getGetConversationQueryKey(EXISTING_ID))).toBe(true);
+    expect(isInvalidated(queryClient, getListSessionsInfiniteQueryKey())).toBe(true);
+    expect(isInvalidated(queryClient, getGetSessionQueryKey(EXISTING_ID))).toBe(true);
     expect(isInvalidated(queryClient, getListMessagesQueryKey())).toBe(true);
   });
 
@@ -449,7 +449,7 @@ describe('useChatStream — query cache', () => {
   });
 
   it('leaves the cache alone when the stream fails', async () => {
-    useChatStreamStore.setState({ conversationId: EXISTING_ID });
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
     streamFrames(frame('error', { success: false, error: 'Internal', message: 'boom' }));
     const queryClient = primedClient(getListMessagesQueryKey());
     const { result } = renderHookWithQueryClient(() => useChatStream(), { queryClient });
@@ -543,7 +543,7 @@ describe('useChatStream — lifecycle', () => {
     await act(async () => {
       await result.current.streamMessage({
         model: 'gpt-4o',
-        conversationId: '44444444-4444-4444-8444-444444444444',
+        sessionId: '44444444-4444-4444-8444-444444444444',
         messages: [{ id: 'u1', role: 'user', content: 'hi' }],
       });
     });
@@ -551,7 +551,7 @@ describe('useChatStream — lifecycle', () => {
     expect(received).toEqual({
       messages: [{ id: 'u1', role: 'user', content: 'hi' }],
       model: 'gpt-4o',
-      conversationId: '44444444-4444-4444-8444-444444444444',
+      sessionId: '44444444-4444-4444-8444-444444444444',
     });
   });
 
@@ -577,21 +577,21 @@ describe('useChatStream — lifecycle', () => {
     expect(useChatStreamStore.getState().error).toBeNull();
   });
 
-  it('includes the conversation id when one is already active', async () => {
-    let received: { conversationId?: string } | undefined;
+  it('includes the session id when one is already active', async () => {
+    let received: { sessionId?: string } | undefined;
     server.use(
       http.post(ENDPOINT, async ({ request }) => {
-        received = (await request.json()) as { conversationId?: string };
+        received = (await request.json()) as { sessionId?: string };
         return new HttpResponse(frame('end', {}), {
           headers: { 'Content-Type': 'text/event-stream' },
         });
       }),
     );
-    useChatStreamStore.setState({ conversationId: 'existing-id' });
+    useChatStreamStore.setState({ sessionId: 'existing-id' });
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
-    expect(received?.conversationId).toBe('existing-id');
+    expect(received?.sessionId).toBe('existing-id');
   });
 });

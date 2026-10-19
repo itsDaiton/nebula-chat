@@ -25,7 +25,7 @@ describe('AppError', () => {
   });
 
   it('is a real Error named after its class, so logs say what went wrong', () => {
-    const err = new NotFoundError('Conversation');
+    const err = new NotFoundError('Session');
 
     expect(err).toBeInstanceOf(Error);
     expect(err.name).toBe('NotFoundError');
@@ -65,12 +65,12 @@ describe('AppError', () => {
 
 describe('NotFoundError', () => {
   it('names the resource when no id is given', () => {
-    expect(new NotFoundError('Conversation').message).toBe('Conversation not found');
+    expect(new NotFoundError('Session').message).toBe('Session not found');
   });
 
   it('quotes the id when one is given', () => {
-    expect(new NotFoundError('Conversation', 'abc-123').message).toBe(
-      'Conversation with id "abc-123" not found',
+    expect(new NotFoundError('Session', 'abc-123').message).toBe(
+      'Session with id "abc-123" not found',
     );
   });
 });

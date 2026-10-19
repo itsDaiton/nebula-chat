@@ -21,7 +21,7 @@ export type { ChatChainInput, ChatChainConfig, ChatChain } from './chains/chat.c
 export { streamChat } from './streaming/runner';
 export type { ChatStreamConfig, ChatStreamCallbacks, HistoryMessage } from './streaming/runner';
 export {
-  sseConversationCreated,
+  sseSessionCreated,
   sseUserMessageCreated,
   sseAssistantMessageCreated,
   sseToken,

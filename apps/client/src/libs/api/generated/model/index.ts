@@ -6,22 +6,22 @@
  */
 
 export * from './apiRoot';
-export * from './conversation';
-export * from './conversationPage';
-export * from './createConversationBody';
 export * from './createMessageBody';
 export * from './createMessageBodyRole';
+export * from './createSessionBody';
 export * from './errorCode';
 export * from './errorEnvelope';
 export * from './health';
-export * from './listConversationsParams';
 export * from './listMessagesParams';
+export * from './listSessionsParams';
 export * from './message';
 export * from './messageAllowance';
 export * from './meteredMessageAllowance';
 export * from './profileImage';
 export * from './profileImageSettings';
-export * from './searchConversationsParams';
+export * from './searchSessionsParams';
+export * from './session';
+export * from './sessionPage';
 export * from './streamChatBody';
 export * from './streamChatBodyMessagesItem';
 export * from './streamChatBodyMessagesItemRole';
