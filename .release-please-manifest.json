@@ -1,12 +1,12 @@
 {
-  ".": "2.17.9",
-  "apps/client": "1.27.4",
-  "apps/server": "2.8.1",
-  "libs/db": "0.6.2",
-  "openapi": "1.12.1",
-  "libs/langchain": "2.0.2",
-  "libs/otel": "2.3.0",
-  "libs/redis": "0.2.4",
-  "libs/auth": "2.4.1",
-  "libs/errors": "0.2.2"
+  ".": "2.18.0",
+  "apps/client": "1.28.0",
+  "apps/server": "2.9.0",
+  "libs/db": "0.7.0",
+  "openapi": "1.13.0",
+  "libs/langchain": "2.1.0",
+  "libs/otel": "2.4.0",
+  "libs/redis": "0.2.5",
+  "libs/auth": "2.5.0",
+  "libs/errors": "0.2.3"
 }

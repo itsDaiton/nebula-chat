@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.8.1...nebula-chat-server-v2.9.0) (2026-10-19)
+
+
+### Features
+
+* **sessions:** NEB-352 rename Conversation to Session end to end ([#588](https://github.com/itsDaiton/nebula-chat/issues/588)) ([4d8e9c5](https://github.com/itsDaiton/nebula-chat/commit/4d8e9c58949d573ba641f476095f920645fdec74))
+
 ## [2.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v2.8.0...nebula-chat-server-v2.8.1) (2026-10-18)
 
 
