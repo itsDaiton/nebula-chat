@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-redis-v0.2.5...nebula-chat-redis-v0.2.6) (2026-10-19)
+
+
+### Features
+
+* **cli:** add nebula log-level get, reading levels from every server instance ([#592](https://github.com/itsDaiton/nebula-chat/issues/592)) ([b64556e](https://github.com/itsDaiton/nebula-chat/commit/b64556eca2538515a32edd5b472151fe8e187835))
+
 ## [0.2.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-redis-v0.2.4...nebula-chat-redis-v0.2.5) (2026-10-19)
 
 
