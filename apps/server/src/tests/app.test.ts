@@ -79,6 +79,9 @@ describe('OpenAPI document', () => {
       'ErrorEnvelope',
       'Health',
       'LogLevelChange',
+      'LogLevelReport',
+      'LogLevelReports',
+      'LogLevelState',
       'Message',
       'MessageAllowance',
       'MeteredMessageAllowance',
@@ -97,11 +100,17 @@ describe('OpenAPI document', () => {
   });
 
   // Tagged so orval.config.ts can leave it out of the browser client.
-  it('documents the operator route under its own tag, behind the operator token', () => {
-    const operation = document.paths['/api/internal/log-level']?.['post'];
+  it.each(['get', 'post'])(
+    'documents the operator route (%s) under its own tag, behind the operator token',
+    (method) => {
+      const operation = document.paths['/api/internal/log-level']?.[method];
 
-    expect(operation?.tags).toEqual(['Operator']);
-    expect(operation?.security).toEqual([{ operatorToken: [] }]);
+      expect(operation?.tags).toEqual(['Operator']);
+      expect(operation?.security).toEqual([{ operatorToken: [] }]);
+    },
+  );
+
+  it('declares the operator token as a bearer scheme', () => {
     expect(document.components.securitySchemes['operatorToken']).toEqual({
       type: 'http',
       scheme: 'bearer',

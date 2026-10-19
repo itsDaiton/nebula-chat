@@ -7,4 +7,9 @@ export const logLevelController = {
     const result = await logLevelService.change(req.body);
     return reply.status(202).send(result);
   },
+
+  async read(_req: FastifyRequest, reply: FastifyReply) {
+    const result = await logLevelService.read();
+    return reply.status(200).send(result);
+  },
 };

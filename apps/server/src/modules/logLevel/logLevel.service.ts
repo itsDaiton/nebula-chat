@@ -1,4 +1,4 @@
-import { publishLogLevelChange } from '@nebula-chat/otel';
+import { collectLogLevelReports, publishLogLevelChange } from '@nebula-chat/otel';
 import { SERVICE_NAME } from '@backend/logger';
 import type { ChangeLogLevelDTO } from '@backend/modules/logLevel/logLevel.types';
 import { redis } from '@backend/redis';
@@ -16,5 +16,12 @@ export const logLevelService = {
       change,
     });
     return { receivers, expiresAt };
+  },
+  /**
+   * Asks every running server instance for the levels it applies now. Each one
+   * answers for itself, so an instance that missed a change shows as it is.
+   */
+  read() {
+    return collectLogLevelReports({ pubsub: redis.pubsub, serviceName: SERVICE_NAME });
   },
 };

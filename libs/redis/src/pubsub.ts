@@ -13,6 +13,8 @@ export type RedisPubSub = {
    * inside the connection's event handler, so it must not throw.
    */
   subscribe: (channel: string, onMessage: (message: string) => void) => Promise<void>;
+  /** Stops calling `onMessage`; the channel is unsubscribed once its last handler is gone. */
+  unsubscribe: (channel: string, onMessage: (message: string) => void) => Promise<void>;
 };
 
 type PubSubDeps = {
@@ -53,6 +55,12 @@ export const createPubSub = ({ publisher, connect, subscriber }: PubSubDeps): Re
       channelHandlers.add(onMessage);
       handlers.set(channel, channelHandlers);
       await subscriberConnection().subscribe(channel);
+    },
+    unsubscribe: async (channel, onMessage) => {
+      const channelHandlers = handlers.get(channel);
+      if (!channelHandlers?.delete(onMessage) || channelHandlers.size > 0) return;
+      handlers.delete(channel);
+      await subscriberConnection().unsubscribe(channel);
     },
   };
 };

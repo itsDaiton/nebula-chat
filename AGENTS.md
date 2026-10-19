@@ -265,11 +265,13 @@ pnpm nebula profile add local --url http://localhost:3000   # the first profile 
 pnpm nebula profile add prod --url https://<server-host>
 pnpm nebula profile use prod
 NEBULA_OPERATOR_TOKEN=… pnpm nebula --profile local log-level set redis debug --ttl 600
+NEBULA_OPERATOR_TOKEN=… pnpm nebula --profile local log-level get
 pnpm nebula --json profile list | jq .
 ```
 
 - **CLI profiles** (server URLs, and which is the default) live in `$XDG_CONFIG_HOME/nebula-chat/config.json`, else `~/.config/nebula-chat/config.json`. `--profile <name>` overrides the default per command.
 - **The operator token** is read only from `NEBULA_OPERATOR_TOKEN` and never written to disk. `log-level set` records `--operator`, else `$NEBULA_OPERATOR`, else `$USER`, as who asked.
+- **`log-level get`** prints one row per server instance and target (the root, then every component): its level, when a runtime change expires, and who set it (`-` at the boot-time level). Every instance answers for itself ([ADR-0034](./docs/adr/0034-reading-log-levels-from-every-instance.md)). A warning on stderr flags instances that disagree on a level, or that did not answer within the server's 2 seconds. `--json` prints the server's `{ receivers, reports }` as is.
 - **Output:** a table, key–value list or sentence for humans (bold headers only on a TTY without `NO_COLOR`); `--json` prints exactly one JSON document to stdout. Errors go to stderr.
 - **Exit codes:** `0` success, `1` server or unknown error, `2` usage error (bad arguments, unknown profile, a `400`), `3` authentication or authorisation error.
 

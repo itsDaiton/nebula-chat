@@ -5,10 +5,30 @@ import { requireOperator } from '@backend/modules/logLevel/logLevel.operatorGate
 import {
   changeLogLevelSchema,
   logLevelChangeResponseSchema,
+  logLevelReportsResponseSchema,
 } from '@backend/modules/logLevel/logLevel.validation';
 import { jsonResponse } from '@backend/utils/jsonResponse';
 
 const logLevelRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
+  app.get('', {
+    schema: {
+      description:
+        "Report the root log level and every component's, with the expiry and operator of any runtime change, from every running server instance. Each instance answers for itself; one that does not answer within 2 seconds is left out, so `receivers` exceeds the number of reports. Requires the operator token, not a User session.",
+      summary: 'Get log levels',
+      tags: ['Operator'],
+      operationId: 'getLogLevels',
+      security: [{ operatorToken: [] }],
+      response: {
+        200: jsonResponse('The levels each server instance applies', logLevelReportsResponseSchema),
+        403: jsonResponse('Missing or wrong operator token', errorEnvelopeSchema),
+        404: jsonResponse('No operator token is configured', errorEnvelopeSchema),
+        500: jsonResponse('Internal server error', errorEnvelopeSchema),
+      },
+    },
+    onRequest: requireOperator,
+    handler: logLevelController.read,
+  });
+
   app.post('', {
     schema: {
       description:

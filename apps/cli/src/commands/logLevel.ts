@@ -1,8 +1,9 @@
 import { Argument, type Command, InvalidArgumentError, Option } from 'commander';
-import { changeLogLevel } from '@cli/api/generated/operator/operator';
+import { changeLogLevel, getLogLevels } from '@cli/api/generated/operator/operator';
 import { ChangeLogLevelBodyComponent } from '@cli/api/generated/model/changeLogLevelBodyComponent';
 import { ChangeLogLevelBodyLevel } from '@cli/api/generated/model/changeLogLevelBodyLevel';
 import type { ChangeLogLevelBody } from '@cli/api/generated/model/changeLogLevelBody';
+import type { LogLevelReport } from '@cli/api/generated/model/logLevelReport';
 import { operatorError, operatorTarget } from '@cli/api/operator';
 import type { Context } from '@cli/context';
 import { UsageError } from '@cli/errors';
@@ -28,10 +29,74 @@ const timeLeft = (from: Date, to: Date) => {
   return `in ${parts.join(' ')}`;
 };
 
+/** The targets whose level is not the same on every instance that answered. */
+const disagreements = (reports: LogLevelReport[]) => {
+  const levels = new Map<string, Set<string>>();
+  for (const { levels: states } of reports) {
+    for (const { target, level } of states) {
+      levels.set(target, (levels.get(target) ?? new Set()).add(level));
+    }
+  }
+  return [...levels].filter(([, seen]) => seen.size > 1).map(([target]) => target);
+};
+
 export const registerLogLevelCommands = (program: Command, ctx: Context) => {
   const logLevel = program
     .command('log-level')
-    .description('change server log levels at runtime (needs NEBULA_OPERATOR_TOKEN)');
+    .description('read or change server log levels at runtime (needs NEBULA_OPERATOR_TOKEN)');
+
+  logLevel
+    .command('get')
+    .description(
+      "show the root level and every component's, as each running server instance applies them",
+    )
+    .addHelpText('after', '\nExample:\n  $ NEBULA_OPERATOR_TOKEN=… nebula log-level get')
+    .action(async () => {
+      const { profile, target } = await operatorTarget(ctx);
+
+      const response = await getLogLevels({ target });
+      if (response.status !== 200) throw operatorError(response, profile);
+
+      const { receivers, reports } = response.data;
+      const warn = (text: string) => ctx.deps.stderr.write(`warning: ${text}\n`);
+      if (reports.length < receivers) {
+        warn(
+          `${receivers - reports.length} of ${receivers} server instances did not answer in time; their levels are not shown.`,
+        );
+      }
+      const differing = disagreements(reports);
+      if (differing.length > 0) {
+        warn(`Server instances disagree on: ${differing.join(', ')}.`);
+      }
+      const now = ctx.deps.now();
+      ctx.print({
+        data: response.data,
+        view: {
+          kind: 'table',
+          columns: [
+            { key: 'instance', label: 'INSTANCE' },
+            { key: 'target', label: 'TARGET' },
+            { key: 'level', label: 'LEVEL' },
+            { key: 'expires', label: 'EXPIRES' },
+            { key: 'operator', label: 'OPERATOR' },
+          ],
+          rows: reports.flatMap(({ instance, levels }) =>
+            levels.map(({ target: name, level, expiresAt, operator }) => ({
+              instance,
+              target: name,
+              level,
+              expires:
+                expiresAt === null ? '-' : `${expiresAt} (${timeLeft(now, new Date(expiresAt))})`,
+              operator: operator ?? '-',
+            })),
+          ),
+          empty:
+            receivers === 0
+              ? 'No server instance is listening for log-level requests.'
+              : 'No server instance answered in time.',
+        },
+      });
+    });
 
   logLevel
     .command('set')

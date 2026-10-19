@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { hostname } from 'node:os';
 import { resolve } from 'node:path';
 import { createLogger } from '@nebula-chat/otel';
 import type { Logger } from '@nebula-chat/otel';
@@ -12,6 +13,9 @@ const { version } = JSON.parse(readFileSync(resolve(process.cwd(), 'package.json
 
 /** The server's `service.name`: on every line, and what level changes target. */
 export const SERVICE_NAME = 'nebula-chat-server';
+
+/** Names this process in log level reports: each Render instance has its own hostname. */
+export const INSTANCE_ID = `${hostname()}:${process.pid}`;
 
 /**
  * The server's single Pino instance.

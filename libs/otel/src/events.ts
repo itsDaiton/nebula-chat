@@ -49,6 +49,7 @@ export const LOG_EVENTS = [
   'log.level.reverted',
   'log.level.message.rejected',
   'log.level.listen.failed',
+  'log.level.report.failed',
   // Adapters
   'auth.library.log',
   'otel.diag.log',

@@ -16,5 +16,10 @@ export const memoryPubSub = (): RedisPubSub => {
     subscribe: async (channel, onMessage) => {
       handlers.set(channel, [...(handlers.get(channel) ?? []), onMessage]);
     },
+    unsubscribe: async (channel, onMessage) => {
+      const remaining = (handlers.get(channel) ?? []).filter((h) => h !== onMessage);
+      if (remaining.length > 0) handlers.set(channel, remaining);
+      else handlers.delete(channel);
+    },
   };
 };

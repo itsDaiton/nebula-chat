@@ -90,7 +90,7 @@ apps/server/src/
 │   │   ├── profileImage.service.ts
 │   │   ├── profileImage.controller.ts
 │   │   └── profileImage.routes.ts # Raw image body: scoped content-type parsers, 5 MB bodyLimit
-│   └── logLevel/                  # Operator route: POST /api/internal/log-level (spec tag `Operator`, left out of the Orval client; ADR-0020)
+│   └── logLevel/                  # Operator routes: GET/POST /api/internal/log-level (spec tag `Operator`, left out of the browser client; ADR-0020, ADR-0034)
 │       ├── logLevel.types.ts
 │       ├── logLevel.validation.ts
 │       ├── logLevel.service.ts    # Publishes the change to every server instance over Redis pub/sub
