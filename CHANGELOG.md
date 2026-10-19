@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v3.0.1...nebula-chat-v3.1.0) (2026-10-19)
+
+
+### Features
+
+* **cli:** NEB-561 scaffold apps/cli with profiles, JSON output and log-level commands ([#587](https://github.com/itsDaiton/nebula-chat/issues/587)) ([a7202ae](https://github.com/itsDaiton/nebula-chat/commit/a7202ae008f75e1860912901d77ee90f85984d16))
+
 ## [3.0.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v3.0.0...nebula-chat-v3.0.1) (2026-10-19)
 
 
