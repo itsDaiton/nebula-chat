@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v3.1.0...nebula-chat-v3.2.0) (2026-10-19)
+
+
+### Features
+
+* **cli:** add nebula log-level get, reading levels from every server instance ([#592](https://github.com/itsDaiton/nebula-chat/issues/592)) ([b64556e](https://github.com/itsDaiton/nebula-chat/commit/b64556eca2538515a32edd5b472151fe8e187835))
+
 ## [3.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v3.0.1...nebula-chat-v3.1.0) (2026-10-19)
 
 
