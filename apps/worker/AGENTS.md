@@ -7,6 +7,8 @@ which the server relays to the client over SSE
 ([ADR-0014](../../docs/adr/0014-redis-streams-delivery-and-split-send-stream-api.md)). See the
 [root AGENTS.md](../../AGENTS.md) for monorepo-wide commands, git workflow and cross-cutting rules (no
 barrels, `type` not `interface`, arrow functions), which apply here too.
+The whole Direct reply, from send to relay, is drawn in
+[docs/architecture.md → Direct reply](../../docs/architecture.md#direct-reply).
 
 ---
 
