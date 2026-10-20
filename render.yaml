@@ -4,6 +4,8 @@ services:
     runtime: node
     rootDir: .
     plan: free
+    # Without a region Render creates a service in Oregon; the server, worker and their data stay together.
+    region: frankfurt
     # Node 26 no longer bundles Corepack, so pnpm is provisioned with the npm
     # that ships with the runtime. Keep the version in step with the
     # `packageManager` pin in package.json.
@@ -35,6 +37,8 @@ services:
     runtime: node
     rootDir: .
     plan: free
+    # Next to the server and Redis: every reply token is a Redis write the next one waits on.
+    region: frankfurt
     buildCommand: npm install -g pnpm@12.4.1 && pnpm install --frozen-lockfile && pnpm turbo run build --filter=@nebula-chat/worker
     startCommand: cd apps/worker && node dist/src/worker.js
     healthCheckPath: /health
