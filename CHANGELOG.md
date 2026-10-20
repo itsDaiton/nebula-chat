@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.0.0...nebula-chat-v5.0.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* **deploy:** pin the server and worker to Frankfurt in render.yaml ([#605](https://github.com/itsDaiton/nebula-chat/issues/605)) ([2745157](https://github.com/itsDaiton/nebula-chat/commit/27451571e77aa23a2c444440c484c082e52df489))
+
 ## [5.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v4.0.0...nebula-chat-v5.0.0) (2026-10-20)
 
 
