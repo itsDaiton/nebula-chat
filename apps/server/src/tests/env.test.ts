@@ -4,7 +4,6 @@ import { envSchema } from '@backend/env';
 const baseEnv = {
   DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
   REDIS_URL: 'redis://localhost:6379',
-  OPENAI_API_KEY: 'sk-test-key-not-used',
   BETTER_AUTH_SECRET: 'test-better-auth-secret-not-used',
   BETTER_AUTH_URL: 'http://localhost:3000',
   RESEND_API_KEY: 're_test_key_not_used',

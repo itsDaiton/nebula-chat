@@ -1,36 +1,37 @@
 import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
-import { z } from 'zod';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
-import { cacheCheckHook } from '@backend/modules/chat/chat.cacheCheck.hook';
 import { chatController } from '@backend/modules/chat/chat.controller';
 import { messageAllowanceHook } from '@backend/modules/chat/chat.messageAllowance.hook';
-import { streamCaptureHook } from '@backend/modules/chat/chat.streamCapture.hook';
 import {
-  createChatStreamSchema,
   messageAllowanceSchema,
+  sendMessageParamsSchema,
+  sendMessageSchema,
+  sentMessageSchema,
 } from '@backend/modules/chat/chat.validation';
 import { requireAuthentication } from '@backend/plugins/authGate.plugin';
 import { jsonResponse } from '@backend/utils/jsonResponse';
 
+// Mounted at `/api`: sending lives under the Session it goes to (ADR-0014).
 const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
-  app.post('/stream', {
+  app.post('/sessions/:sessionId/messages', {
     schema: {
       description:
-        'Stream a chat completion response from an AI model with automatic session and message persistence.',
-      summary: 'Stream chat completion',
+        'Send a user Message to one of the caller’s own Sessions. The Message is persisted and its reply is queued; nothing waits on the model. Read the reply as server-sent events from `GET /api/streams/{streamId}`.',
+      summary: 'Send message',
       tags: ['Chat'],
-      operationId: 'streamChat',
-      body: createChatStreamSchema,
+      operationId: 'sendMessage',
+      params: sendMessageParamsSchema,
+      body: sendMessageSchema,
       response: {
-        200: jsonResponse('Streamed SSE events', z.string()),
-        400: jsonResponse('Invalid request body or validation error', errorEnvelopeSchema),
-        404: jsonResponse('Session not found', errorEnvelopeSchema),
+        202: jsonResponse('Message persisted and its reply queued', sentMessageSchema),
+        400: jsonResponse('Invalid request body or session ID', errorEnvelopeSchema),
         401: jsonResponse('No auth session', errorEnvelopeSchema),
         403: jsonResponse(
           'Guest message allowance reached — registration required',
           errorEnvelopeSchema,
         ),
-        413: jsonResponse('Message or context exceeds token limit', errorEnvelopeSchema),
+        404: jsonResponse('Session not found or not owned by the caller', errorEnvelopeSchema),
+        413: jsonResponse('Message exceeds the prompt token limit', errorEnvelopeSchema),
         429: jsonResponse('Rate limit exceeded', errorEnvelopeSchema),
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
@@ -41,15 +42,14 @@ const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
         timeWindow: '1 minute',
       },
     },
-    // Order matters: authenticate, then reject a capped Guest before any cache or
-    // model work, then the cache-replay/capture hooks (ADR-0010 §4).
-    preHandler: [requireAuthentication, messageAllowanceHook, cacheCheckHook, streamCaptureHook],
-    handler: chatController.streamMessage,
+    // Authenticate, then reject a capped Guest before anything is persisted (ADR-0010 §4).
+    preHandler: [requireAuthentication, messageAllowanceHook],
+    handler: chatController.sendMessage,
   });
 
-  // A plain read: no rate-limit override, and not the allowance or cache hooks —
+  // A plain read: no rate-limit override, and not the allowance hook —
   // it reports the allowance, it never spends it.
-  app.get('/message-allowance', {
+  app.get('/chat/message-allowance', {
     schema: {
       description:
         "How much of the caller's message allowance is left. Metered users (Guests and unverified Registered users) get their limit, live count and remaining sends; verified Registered users get `metered: false`.",

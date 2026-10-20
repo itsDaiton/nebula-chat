@@ -11,7 +11,7 @@ import {
 } from '@nebula-chat/errors';
 import type { ErrorEnvelope } from '@nebula-chat/errors';
 import { errorHandler } from '@backend/errors/error.handler';
-import { captureLogger, eventLines, LEVEL } from '@backend/test/logCapture';
+import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
 
 /**
  * Minimal reply double capturing the status/body the handler chose. Its `log`

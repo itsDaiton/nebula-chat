@@ -31,5 +31,10 @@ export { bindAttributes } from './bindAttributes';
 export { componentLogger } from './componentLogger';
 export { REDACT_CENSOR } from './redaction';
 
+// Process wiring: env validation and graceful exit
+export { logLevelOverridesSchema, telemetryEnvShape } from './env';
+export { createShutdown } from './shutdown';
+export type { ShutdownOptions } from './shutdown';
+
 // Tracing
 export { initTelemetry, shutdownTelemetry } from './tracing';

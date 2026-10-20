@@ -312,7 +312,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.95, {service_name=~\"$service\"} | event_name=\"http.request.completed\" | http_route != \"/api/chat/stream\" | unwrap nebula_duration_ms [$__range]) by (service_name)",
+          "expr": "quantile_over_time(0.95, {service_name=~\"$service\"} | event_name=\"http.request.completed\" | http_route != \"/api/streams/:streamId\" | unwrap nebula_duration_ms [$__range]) by (service_name)",
           "queryType": "instant"
         }
       ],
@@ -639,7 +639,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.5, {service_name=~\"$service\"} | event_name=\"http.request.completed\" | http_route != \"/api/chat/stream\" | unwrap nebula_duration_ms [$__auto]) by (service_name)",
+          "expr": "quantile_over_time(0.5, {service_name=~\"$service\"} | event_name=\"http.request.completed\" | http_route != \"/api/streams/:streamId\" | unwrap nebula_duration_ms [$__auto]) by (service_name)",
           "queryType": "range",
           "legendFormat": "p50"
         },
@@ -650,7 +650,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.95, {service_name=~\"$service\"} | event_name=\"http.request.completed\" | http_route != \"/api/chat/stream\" | unwrap nebula_duration_ms [$__auto]) by (service_name)",
+          "expr": "quantile_over_time(0.95, {service_name=~\"$service\"} | event_name=\"http.request.completed\" | http_route != \"/api/streams/:streamId\" | unwrap nebula_duration_ms [$__auto]) by (service_name)",
           "queryType": "range",
           "legendFormat": "p95"
         },
@@ -661,7 +661,7 @@
             "uid": "${loki}"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.99, {service_name=~\"$service\"} | event_name=\"http.request.completed\" | http_route != \"/api/chat/stream\" | unwrap nebula_duration_ms [$__auto]) by (service_name)",
+          "expr": "quantile_over_time(0.99, {service_name=~\"$service\"} | event_name=\"http.request.completed\" | http_route != \"/api/streams/:streamId\" | unwrap nebula_duration_ms [$__auto]) by (service_name)",
           "queryType": "range",
           "legendFormat": "p99"
         }

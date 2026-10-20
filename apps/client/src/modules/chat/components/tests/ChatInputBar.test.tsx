@@ -13,20 +13,37 @@ import { route } from '@/routing/routes';
 import { API_ROUTE } from '@/test/api';
 import { aSession, mockGetSession, refreshSession } from '@/test/auth';
 import { aMeteredAllowance } from '@/test/allowance';
+import { mockReplyStream, sseFrame } from '@/test/chat';
 import { server } from '@/test/msw';
 import { renderWithChakra } from '@/test/render';
 
-const sseResponse = (...frames: string[]) =>
-  new HttpResponse([...frames, 'event: end\ndata: {}\n\n'].join(''), {
-    headers: { 'Content-Type': 'text/event-stream' },
-  });
+const SESSION_ID = '11111111-1111-4111-8111-111111111111';
+
+// The send accepted: the Message is persisted and its reply is on this stream.
+const accepted = () =>
+  HttpResponse.json(
+    {
+      messageId: '22222222-2222-4222-8222-222222222222',
+      streamId: '33333333-3333-4333-8333-333333333333',
+    },
+    { status: 202 },
+  );
 
 beforeEach(() => {
   vi.clearAllMocks();
   useMessageStore.setState({ message: '' });
   useModelSelectorStore.setState({ isSelectOpen: false, triggerWidth: 120 });
-  useChatStreamStore.setState({ history: [], isMessageAllowanceReached: false });
-  server.use(mockGetSession(aSession()), getGetMessageAllowanceMockHandler(aMeteredAllowance(5)));
+  // An open Session, so a send goes straight to it.
+  useChatStreamStore.setState({
+    history: [],
+    isMessageAllowanceReached: false,
+    sessionId: SESSION_ID,
+  });
+  server.use(
+    mockGetSession(aSession()),
+    getGetMessageAllowanceMockHandler(aMeteredAllowance(5)),
+    mockReplyStream(sseFrame('end', {})),
+  );
 });
 
 // The bar wired to the real chat-send path, as ChatContainer wires it.
@@ -84,10 +101,10 @@ describe('ChatInputBar', () => {
     server.use(
       // Only a verified Registered user is uncapped (ADR-0021).
       mockGetSession(() => aSession({ isAnonymous: !isRegistered, emailVerified: isRegistered })),
-      http.post(API_ROUTE.chatStream, () => {
+      http.post(API_ROUTE.sendMessage, () => {
         sends += 1;
         return isRegistered
-          ? sseResponse()
+          ? accepted()
           : HttpResponse.json(
               {
                 success: false,
@@ -126,9 +143,9 @@ describe('ChatInputBar', () => {
     let remaining = 2;
     server.use(
       getGetMessageAllowanceMockHandler(() => aMeteredAllowance(remaining)),
-      http.post(API_ROUTE.chatStream, () => {
+      http.post(API_ROUTE.sendMessage, () => {
         remaining -= 1;
-        return sseResponse('event: user-message-created\ndata: {"messageId":"m1"}\n\n');
+        return accepted();
       }),
     );
     renderWithChakra(<ConnectedChatInputBar />);

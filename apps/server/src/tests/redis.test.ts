@@ -1,107 +1,77 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type * as RedisLib from '@nebula-chat/redis';
 
-// `vi.mock` is hoisted above the module body, so the factory's dependencies must
-// be hoisted too (a plain `const` would be in its TDZ when the factory runs).
-const { mockCache, mockClose } = vi.hoisted(() => ({
-  mockCache: { get: vi.fn(), set: vi.fn(async () => undefined), del: vi.fn(), clear: vi.fn() },
-  mockClose: vi.fn(async () => undefined),
+// `vi.mock` is hoisted above the module body, so the factory's dependencies must be hoisted too.
+const toolkit = vi.hoisted(() => ({
+  connect: vi.fn(async () => undefined),
+  close: vi.fn(async () => undefined),
+  connection: { set: vi.fn(async () => 'OK'), get: vi.fn(async () => null as string | null) },
+  reader: { read: vi.fn(async () => []), close: vi.fn() },
 }));
 
-// Keep the real key helpers (hashText/buildKey) but stub the connection factory
-// so importing @backend/redis does not construct a live ioredis client.
+// Keep the real key helpers but stub the factory, so importing @backend/redis opens no connection.
 vi.mock('@nebula-chat/redis', async (importActual) => {
   const actual = await importActual<typeof RedisLib>();
   return {
     ...actual,
-    createRedis: vi.fn(() => ({ cache: mockCache, connection: {}, close: mockClose })),
+    createRedis: vi.fn(() => ({
+      connect: toolkit.connect,
+      close: toolkit.close,
+      connection: toolkit.connection,
+      streams: { openReader: () => toolkit.reader },
+    })),
   };
 });
 
-import { hashText } from '@nebula-chat/redis';
-import { chatCacheKey, getCachedStream, saveCachedStream, closeRedis } from '@backend/redis';
-import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
+import { closeRedis, findStreamOwner, openReplyStream, saveStreamOwner } from '@backend/redis';
 
-const base: CreateChatStreamDTO = {
-  model: 'gpt-4o-mini',
-  sessionId: '11111111-1111-4111-8111-111111111111',
-  messages: [{ role: 'user', content: 'what is 2+2?' }],
-  regenerate: false,
-};
+const STREAM_ID = '44444444-4444-4444-8444-444444444444';
 
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('chatCacheKey', () => {
-  it('keys on session, model and a hash of the last user message', () => {
-    expect(chatCacheKey(base)).toBe(
-      `session:${base.sessionId}:model:gpt-4o-mini:prompt:${hashText('what is 2+2?')}`,
+describe('stream owners', () => {
+  it('records the owner with a TTL, after opening the connection', async () => {
+    await saveStreamOwner(STREAM_ID, 'user-1');
+
+    expect(toolkit.connect).toHaveBeenCalled();
+    expect(toolkit.connection.set).toHaveBeenCalledWith(
+      `stream-owner:${STREAM_ID}`,
+      'user-1',
+      'EX',
+      86_400,
     );
   });
 
-  it('falls back to "default" when there is no sessionId', () => {
-    const withoutSession: CreateChatStreamDTO = {
-      model: base.model,
-      messages: base.messages,
-      regenerate: false,
-    };
+  it('reads the owner back from the same key', async () => {
+    toolkit.connection.get.mockResolvedValueOnce('user-1');
 
-    expect(chatCacheKey(withoutSession)).toContain('session:default:');
+    await expect(findStreamOwner(STREAM_ID)).resolves.toBe('user-1');
+    expect(toolkit.connection.get).toHaveBeenCalledWith(`stream-owner:${STREAM_ID}`);
   });
 
-  it('hashes the last user message when several are present', () => {
-    const withHistory: CreateChatStreamDTO = {
-      ...base,
-      messages: [
-        { role: 'user', content: 'first' },
-        { role: 'assistant', content: 'reply' },
-        { role: 'user', content: 'second' },
-      ],
-    };
+  it('propagates a Redis failure rather than reading it as no owner', async () => {
+    toolkit.connection.get.mockRejectedValueOnce(new Error('redis down'));
 
-    expect(chatCacheKey(withHistory)).toContain(`prompt:${hashText('second')}`);
-  });
-
-  it('hashes an empty prompt when the request carries no user message', () => {
-    const assistantOnly: CreateChatStreamDTO = {
-      ...base,
-      messages: [{ role: 'assistant', content: 'hello' }],
-    };
-
-    expect(chatCacheKey(assistantOnly)).toContain(`prompt:${hashText('')}`);
+    await expect(findStreamOwner(STREAM_ID)).rejects.toThrow('redis down');
   });
 });
 
-describe('getCachedStream', () => {
-  it('delegates the lookup to the redis cache under the given key', async () => {
-    mockCache.get.mockResolvedValue({ tokens: 'x' });
+describe('openReplyStream', () => {
+  it("reads the reply's stream key from the given offset, blocking for the given time", async () => {
+    const reader = openReplyStream(STREAM_ID);
+    await reader.read('1-1', 15_000);
 
-    const result = await getCachedStream('k');
-
-    expect(mockCache.get).toHaveBeenCalledWith('k');
-    expect(result).toEqual({ tokens: 'x' });
-  });
-});
-
-describe('saveCachedStream', () => {
-  it('stores tokens and usage under the key', async () => {
-    await saveCachedStream('k', 'event: token\ndata: {}', {
-      promptTokens: 1,
-      completionTokens: 2,
-      totalTokens: 3,
-    });
-
-    expect(mockCache.set).toHaveBeenCalledWith('k', {
-      tokens: 'event: token\ndata: {}',
-      usageData: { promptTokens: 1, completionTokens: 2, totalTokens: 3 },
+    expect(toolkit.reader.read).toHaveBeenCalledWith(`stream:${STREAM_ID}`, '1-1', {
+      blockMs: 15_000,
     });
   });
 
-  it('omits usageData when none is given', async () => {
-    await saveCachedStream('k', 'tokens');
+  it('closes its dedicated connection', () => {
+    openReplyStream(STREAM_ID).close();
 
-    expect(mockCache.set).toHaveBeenCalledWith('k', { tokens: 'tokens' });
+    expect(toolkit.reader.close).toHaveBeenCalled();
   });
 });
 
@@ -109,6 +79,6 @@ describe('closeRedis', () => {
   it('closes the toolkit', async () => {
     await closeRedis();
 
-    expect(mockClose).toHaveBeenCalled();
+    expect(toolkit.close).toHaveBeenCalled();
   });
 });

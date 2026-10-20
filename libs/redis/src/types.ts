@@ -66,3 +66,26 @@ export type ConnectionEvents = {
   on(event: 'error', listener: (error: Error) => void): unknown;
   on(event: 'ready', listener: () => void): unknown;
 };
+
+/** The subset of the ioredis client the streams primitive appends and expires with. */
+export type StreamWriteConnection = {
+  xadd(key: string, id: '*', field: string, value: string): Promise<string | null>;
+  expire(key: string, seconds: number): Promise<number>;
+};
+
+/** A raw `XREAD` reply: per stream, its key and `[id, [field, value, …]]` entries; nil on timeout. */
+export type XReadReply = [key: string, entries: [id: string, fields: string[]][]][] | null;
+
+/** The subset of a dedicated ioredis connection a stream reader calls. */
+export type StreamReadConnection = {
+  xread(
+    countToken: 'COUNT',
+    count: number,
+    blockToken: 'BLOCK',
+    blockMs: number,
+    streamsToken: 'STREAMS',
+    key: string,
+    id: string,
+  ): Promise<XReadReply>;
+  disconnect(): void;
+};

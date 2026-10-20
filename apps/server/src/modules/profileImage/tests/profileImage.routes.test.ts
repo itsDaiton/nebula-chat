@@ -6,8 +6,8 @@ import type {
   StoredProfileImage,
 } from '@backend/modules/profileImage/profileImage.types';
 import { createTestApp } from '@backend/test/app';
-import { captureLogger, eventLines } from '@backend/test/logCapture';
-import type { LogLine } from '@backend/test/logCapture';
+import { captureLogger, eventLines } from '@nebula-chat/otel/testing';
+import type { LogLine } from '@nebula-chat/otel/testing';
 import {
   memoryProfileImageStore,
   memoryProfileImageUrl,

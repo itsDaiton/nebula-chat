@@ -24,10 +24,24 @@
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true
     },
+    "apps/worker": {
+      "release-type": "node",
+      "component": "nebula-chat-worker",
+      "include-component-in-tag": true,
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    },
     "libs/auth": {
       "release-type": "node",
       "component": "nebula-chat-auth",
       "include-component-in-tag": true
+    },
+    "libs/contracts": {
+      "release-type": "node",
+      "component": "nebula-chat-contracts",
+      "include-component-in-tag": true,
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
     },
     "libs/db": {
       "release-type": "node",

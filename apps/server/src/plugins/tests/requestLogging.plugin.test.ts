@@ -2,7 +2,7 @@ import { fromPartial } from '@total-typescript/shoehorn';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestApp } from '@backend/test/app';
-import { captureLogger, eventLines, LEVEL } from '@backend/test/logCapture';
+import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
 import { guestSession, registeredSession, REGISTERED_USER_ID } from '@backend/test/session';
 
 // ADR-0008: the repository is the boundary to Postgres. Everything between it

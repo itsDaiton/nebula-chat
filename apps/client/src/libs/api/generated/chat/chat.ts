@@ -20,11 +20,10 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { ErrorEnvelope, MessageAllowance, StreamChatBody } from '../model';
+import type { ErrorEnvelope, MessageAllowance, SendMessageBody, SentMessage } from '../model';
 
-import { streamClient } from '../../streamClient';
-import type { ErrorType, BodyType } from '../../streamClient';
 import { axiosClient } from '../../client';
+import type { ErrorType, BodyType } from '../../client';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -44,46 +43,47 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 /**
- * Stream a chat completion response from an AI model with automatic session and message persistence.
- * @summary Stream chat completion
+ * Send a user Message to one of the caller’s own Sessions. The Message is persisted and its reply is queued; nothing waits on the model. Read the reply as server-sent events from `GET /api/streams/{streamId}`.
+ * @summary Send message
  */
-export const streamChat = (
-  streamChatBody: BodyType<StreamChatBody>,
-  options?: SecondParameter<typeof streamClient>,
+export const sendMessage = (
+  sessionId: string,
+  sendMessageBody: BodyType<SendMessageBody>,
+  options?: SecondParameter<typeof axiosClient>,
   signal?: AbortSignal,
 ) => {
-  return streamClient<string>(
+  return axiosClient<SentMessage>(
     {
-      url: `/api/chat/stream`,
+      url: `/api/sessions/${sessionId}/messages`,
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      data: streamChatBody,
+      data: sendMessageBody,
       signal,
     },
     options,
   );
 };
 
-export const getStreamChatMutationKey = () => ['streamChat'] as const;
+export const getSendMessageMutationKey = () => ['sendMessage'] as const;
 
-export const getStreamChatMutationOptions = <
+export const getSendMessageMutationOptions = <
   TError = ErrorType<ErrorEnvelope>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof streamChat>>,
+    Awaited<ReturnType<typeof sendMessage>>,
     TError,
-    StreamChatMutationVariables,
+    SendMessageMutationVariables,
     TContext
   >;
-  request?: SecondParameter<typeof streamClient>;
+  request?: SecondParameter<typeof axiosClient>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof streamChat>>,
+  Awaited<ReturnType<typeof sendMessage>>,
   TError,
-  StreamChatMutationVariables,
+  SendMessageMutationVariables,
   TContext
 > => {
-  const mutationKey = getStreamChatMutationKey();
+  const mutationKey = getSendMessageMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
       ? options
@@ -91,43 +91,43 @@ export const getStreamChatMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof streamChat>>,
-    StreamChatMutationVariables
+    Awaited<ReturnType<typeof sendMessage>>,
+    SendMessageMutationVariables
   > = (props) => {
-    const { data } = props ?? {};
+    const { sessionId, data } = props ?? {};
 
-    return streamChat(data, requestOptions);
+    return sendMessage(sessionId, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type StreamChatMutationResult = NonNullable<Awaited<ReturnType<typeof streamChat>>>;
-export type StreamChatMutationBody = BodyType<StreamChatBody>;
-export type StreamChatMutationError = ErrorType<ErrorEnvelope>;
-export type StreamChatMutationVariables = { data: BodyType<StreamChatBody> };
+export type SendMessageMutationResult = NonNullable<Awaited<ReturnType<typeof sendMessage>>>;
+export type SendMessageMutationBody = BodyType<SendMessageBody>;
+export type SendMessageMutationError = ErrorType<ErrorEnvelope>;
+export type SendMessageMutationVariables = { sessionId: string; data: BodyType<SendMessageBody> };
 
 /**
- * @summary Stream chat completion
+ * @summary Send message
  */
-export const useStreamChat = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
+export const useSendMessage = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof streamChat>>,
+      Awaited<ReturnType<typeof sendMessage>>,
       TError,
-      StreamChatMutationVariables,
+      SendMessageMutationVariables,
       TContext
     >;
-    request?: SecondParameter<typeof streamClient>;
+    request?: SecondParameter<typeof axiosClient>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof streamChat>>,
+  Awaited<ReturnType<typeof sendMessage>>,
   TError,
-  StreamChatMutationVariables,
+  SendMessageMutationVariables,
   TContext
 > => {
-  return useMutation(getStreamChatMutationOptions(options), queryClient);
+  return useMutation(getSendMessageMutationOptions(options), queryClient);
 };
 /**
  * How much of the caller's message allowance is left. Metered users (Guests and unverified Registered users) get their limit, live count and remaining sends; verified Registered users get `metered: false`.

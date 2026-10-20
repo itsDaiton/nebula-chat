@@ -12,10 +12,17 @@ import type { RequestHandlerOptions } from 'msw';
 import type {
   MessageAllowance,
   MeteredMessageAllowance,
+  SentMessage,
   UnmeteredMessageAllowance,
 } from '../model';
 
-export const getStreamChatResponseMock = (): string => faker.word.sample();
+export const getSendMessageResponseMock = (
+  overrideResponse: Partial<Extract<SentMessage, object>> = {},
+): SentMessage => ({
+  messageId: faker.string.uuid(),
+  streamId: faker.string.uuid(),
+  ...overrideResponse,
+});
 
 export const getGetMessageAllowanceResponseMeteredMessageAllowanceMock = (
   overrideResponse: Partial<MeteredMessageAllowance> = {},
@@ -42,21 +49,24 @@ export const getGetMessageAllowanceResponseMock = (): MessageAllowance =>
     { ...getGetMessageAllowanceResponseUnmeteredMessageAllowanceMock() },
   ]);
 
-export const getStreamChatMockHandler = (
+export const getSendMessageMockHandler = (
   overrideResponse?:
-    string | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<string> | string),
+    | SentMessage
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<SentMessage> | SentMessage),
   options?: RequestHandlerOptions,
 ) => {
   return http.post(
-    '*/api/chat/stream',
+    '*/api/sessions/:sessionId/messages',
     async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
             ? await overrideResponse(info)
             : overrideResponse
-          : getStreamChatResponseMock(),
-        { status: 200 },
+          : getSendMessageResponseMock(),
+        { status: 202 },
       );
     },
     options,
@@ -86,4 +96,4 @@ export const getGetMessageAllowanceMockHandler = (
     options,
   );
 };
-export const getChatMock = () => [getStreamChatMockHandler(), getGetMessageAllowanceMockHandler()];
+export const getChatMock = () => [getSendMessageMockHandler(), getGetMessageAllowanceMockHandler()];

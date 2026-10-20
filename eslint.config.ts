@@ -137,6 +137,29 @@ export default [
     },
   },
   {
+    files: ['apps/worker/**/*.{ts,js}'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: './apps/worker/tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: {
+      n: nPlugin,
+      '@typescript-eslint': tseslint,
+    },
+    rules: {
+      'n/no-unsupported-features/es-syntax': 'off',
+      'n/no-missing-import': 'off',
+      'no-var': 'error',
+      'no-new-require': 'error',
+      'n/no-deprecated-api': 'warn',
+      '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/no-floating-promises': 'error',
+    },
+  },
+  {
     files: ['apps/cli/**/*.ts'],
     languageOptions: {
       parser: tsParser,
@@ -192,6 +215,19 @@ export default [
       parser: tsParser,
       parserOptions: {
         project: './libs/auth/tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+  },
+  {
+    files: ['libs/contracts/**/*.{ts,js}'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: './libs/contracts/tsconfig.json',
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -257,7 +293,8 @@ export default [
     // the cause — and `{ error: err.message }` throws them away on purpose.
     files: [
       'apps/server/**/*.{ts,js}',
-      'libs/{auth,db,errors,langchain,otel,redis}/**/*.{ts,tsx,js}',
+      'apps/worker/**/*.{ts,js}',
+      'libs/{auth,contracts,db,errors,langchain,otel,redis}/**/*.{ts,tsx,js}',
     ],
     rules: {
       'no-restricted-syntax': [

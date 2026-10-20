@@ -20,6 +20,19 @@ For the decisions behind them, see
 - Lines go to stdout, and also to Loki over OTLP when `OTEL_LOGS_EXPORTER=otlp`
   ([Exporting logs](#exporting-logs)). Grafana links them to their traces.
 
+```mermaid
+flowchart LR
+  code["logEvent · req.log<br/>server and worker"] --> pino["Pino instance<br/>createLogger: redaction,<br/>trace_id / span_id mixin"]
+  pino --> stdout["stdout<br/>JSON, or pino-pretty in development"]
+  pino -->|"OTEL_LOGS_EXPORTER=otlp<br/>+ an endpoint"| logsdk["OpenTelemetry logs SDK<br/>batched, OTLP/HTTP"]
+  sdk["NodeSDK<br/>auto-instrumentation spans"] -->|"OTEL_EXPORTER_OTLP_ENDPOINT"| traces["OTLP/HTTP traces"]
+  logsdk --> loki["Loki<br/>Grafana Cloud · otel-lgtm locally"]
+  traces --> tempo["Tempo<br/>Grafana Cloud · otel-lgtm locally"]
+  loki <-.->|trace_id| tempo
+```
+
+Each process sends straight to the backend; there is no collector in between.
+
 ## What a line looks like
 
 ```json
@@ -90,7 +103,8 @@ export const logger: Logger = createLogger({
 The libs never create a logger: `@nebula-chat/redis`, `@nebula-chat/db` and
 `@nebula-chat/auth` log only through the one they are given, and
 `@nebula-chat/langchain` through the duck-typed `LLMLogger` it is handed per
-call.
+call. The worker follows the same rules: `@worker/logger` outside a job, the
+job's bound child inside one.
 
 ## Writing a line
 
@@ -159,21 +173,25 @@ once, and nobody else does:
 - **Auth.** The `/api/auth/*` catch-all hijacks its reply, so a throw from
   better-auth's handler skips the error handler. The route writes the same
   `http.request.failed` line (`error.type: Internal`) and records the code.
-- **Chat.** The SSE stream hijacks its reply, so `chat.service` is its own
+- **Direct replies** (the worker, `service.name: nebula-chat-worker`). The
+  runner in `apps/worker/src/directReplies/runDirectReply.ts` is the reply's one
   handler. `@nebula-chat/langchain`'s `streamChat` rethrows without logging, and
-  the service writes exactly one `chat.reply.completed` per Direct reply:
+  the runner writes exactly one `chat.reply.completed` per Direct reply:
 
-  | `nebula.outcome` | Level                                                     | Carries                       |
-  | ---------------- | --------------------------------------------------------- | ----------------------------- |
-  | `completed`      | `info`                                                    | tokens, both message ids      |
-  | `rate_limited`   | `warn`                                                    | `error.type: TooManyRequests` |
-  | `failed`         | `error`, or `warn` when the caller caused it (a 4xx code) | `err`, `error.type`           |
+  | `nebula.outcome` | Level                                                     | Carries             |
+  | ---------------- | --------------------------------------------------------- | ------------------- |
+  | `completed`      | `info`                                                    | tokens              |
+  | `failed`         | `error`, or `warn` when the caller caused it (a 4xx code) | `err`, `error.type` |
 
-  Every outcome also carries `nebula.session.id` (once known), the user Message
-  as `nebula.message.id`, the assistant Message as `nebula.reply.message.id`
-  (when one was created), `gen_ai.*`, and `nebula.duration_ms`. A reply replayed
-  from the cache is still a Direct reply: `chat.cacheCheck.hook.ts` writes its
-  `completed` line, marked by `nebula.cache.key`.
+  Every line is written through the job's logger, bound to `user.id`,
+  `nebula.session.id`, the user Message as `nebula.message.id`, the reply's
+  stream (and assistant Message) as `nebula.reply.message.id`, and
+  `nebula.job.id`; it also carries `gen_ai.*` and `nebula.duration_ms`. A job
+  whose payload breaks the contract writes `job.payload.rejected` instead.
+
+- **Reply streams** (the server). The relay hijacks its reply; a Redis failure
+  mid-relay writes one `chat.stream.relay.failed` `error` line, and a failed
+  wake-up ping of the worker on enqueue writes `worker.ping.failed` at `warn`.
 
 - **Cache.** Every cache operation is fail-open, so a Redis failure is a `warn`
   (`cache.read.failed`, `cache.write.failed`, `cache.delete.failed`,
@@ -342,8 +360,33 @@ Both routes are in the OpenAPI spec (Swagger UI at `/docs`, tag `Operator`, whic
 In code, `changeLogLevel(logger, change)` from `@nebula-chat/otel` does the
 in-process part, and `readLogLevels(logger)` reads it back.
 `listenForLogLevelChanges`, `publishLogLevelChange` and `collectLogLevelReports`
-carry it over any pub/sub with `@nebula-chat/redis`'s `pubsub` shape. A new process (the
-worker, NEB-354) listens with one call next to its `createLogger`.
+carry it over any pub/sub with `@nebula-chat/redis`'s `pubsub` shape.
+
+```mermaid
+sequenceDiagram
+  participant O as Operator<br/>nebula log-level set
+  participant S as Server instance<br/>that took the request
+  participant R as Redis pub/sub
+  participant I as Every server instance<br/>(including that one)
+
+  O->>S: POST /api/internal/log-level (Bearer OPERATOR_TOKEN)
+  Note over S: requireOperator: 404 if unset, 403 if wrong
+  S->>R: PUBLISH log-level:nebula-chat-server
+  R-->>S: receivers
+  S-->>O: 202 {receivers, expiresAt}
+  R->>I: change
+  Note over I: changeLogLevel · log.level.changed<br/>timer reverts it: log.level.reverted
+  O->>S: GET /api/internal/log-level
+  S->>R: SUBSCRIBE log-level-reply:nebula-chat-server:id<br/>PUBLISH log-level-report:nebula-chat-server {replyTo}
+  R->>I: report request
+  I->>R: PUBLISH replyTo {instance, levels}
+  R-->>S: one report per instance, or 2 s pass
+  S-->>O: 200 {receivers, reports}
+```
+
+The worker listens the same way, but on its own channels (`log-level:nebula-chat-worker`). The
+route publishes only to the server's, so the worker's levels cannot be changed or read through
+it yet; `LOG_LEVEL` and `LOG_LEVEL_OVERRIDES` on the worker service are the way today.
 
 ## Never logged
 
@@ -431,7 +474,7 @@ exported, just without a trace to link to. The compiled build
 ### Shutdown
 
 `shutdownTelemetry()` flushes pending spans (and exported log records) and stops the SDK. It is idempotent:
-the lib's own `SIGTERM` hook and the server's shutdown sequence (`src/shutdown.ts`)
+the lib's own `SIGTERM` hook and each app's shutdown sequence (`createShutdown`)
 share one flush. It never rejects, and it stops waiting after a fixed 2s
 (`SHUTDOWN_FLUSH_CAP_MS`). A reachable collector finishes well within that. An
 unreachable one makes the exporter retry for about 8s, which would hold the

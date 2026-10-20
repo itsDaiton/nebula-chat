@@ -1,17 +1,21 @@
 # Nebula Chat
 
-Nebula Chat is a full-stack AI chat application.  
-It provides a React frontend for chatting and session history, plus an Express backend that
-streams model responses, stores sessions/messages in PostgreSQL, and caches responses in
-Redis.
+Nebula Chat is a full-stack AI chat application.
+It provides a React frontend for chatting and session history, a Fastify API that stores
+sessions/messages in PostgreSQL and relays replies over SSE, and a worker that produces those
+replies from the LLM providers through Redis. See [docs/architecture.md](./docs/architecture.md)
+for diagrams of how the pieces fit together.
 
 ## Monorepo structure
 
 ```text
 nebula-chat/
-└── apps/
-    ├── client/   # React + Vite client
-    └── server/   # Fastify + Drizzle API
+├── apps/
+│   ├── cli/      # `nebula` operator CLI
+│   ├── client/   # React + Vite client
+│   ├── server/   # Fastify + Drizzle API
+│   └── worker/   # LLM replies off a BullMQ queue
+└── libs/         # Shared packages: auth, contracts, db, errors, langchain, otel, redis
 ```
 
 ## Prerequisites
@@ -60,14 +64,17 @@ default).
    ```bash
    cp .env.example .env # credentials for the local Postgres/Redis containers
    cp apps/server/.env.example apps/server/.env
+   cp apps/worker/.env.example apps/worker/.env
    cp apps/client/.env.example apps/client/.env
    ```
 
 3. Fill required values:
    - `.env` (root): Postgres/Redis container credentials. `DATABASE_URL` and `REDIS_URL` in the
      server `.env` must use the same ones.
-   - `apps/server/.env`: at least `OPENAI_API_KEY`, `SERVER_URL`, `CLIENT_URL`,
-     `DATABASE_URL` and `REDIS_URL`.
+   - `apps/server/.env`: at least `SERVER_URL`, `CLIENT_URL`, `DATABASE_URL` and
+     `REDIS_URL`.
+   - `apps/worker/.env`: `OPENAI_API_KEY` (or `ANTHROPIC_API_KEY`), plus the same
+     `DATABASE_URL` and `REDIS_URL`. The worker produces every reply, so chat needs it running.
    - `apps/client/.env`: `VITE_API_URL` (usually `http://localhost:3000` in local
      development).
 

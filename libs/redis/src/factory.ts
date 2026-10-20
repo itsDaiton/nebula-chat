@@ -6,14 +6,16 @@ import { createAuthStore } from './authStore';
 import type { AuthStore } from './authStore';
 import { createPubSub } from './pubsub';
 import type { RedisPubSub } from './pubsub';
+import { createStreams } from './streams';
+import type { RedisStreams } from './streams';
 import type { RedisConfig } from './types';
 
 /**
- * The namespaced Redis toolkit returned by `createRedis`. `cache`, `authStore`,
- * `pubsub` and the raw `connection` are built now; `streams` and `lock` remain
- * designed-for seams that land with their consuming tickets (M-7/M-8). `authStore`
- * is the first consumer of the reserved storage seam (M-6, better-auth); `pubsub`
- * carries runtime log-level changes (ADR-0020).
+ * The namespaced Redis toolkit returned by `createRedis`. `lock` remains a
+ * designed-for seam that lands with its consuming ticket. `authStore` is the
+ * first consumer of the reserved storage seam (M-6, better-auth); `pubsub`
+ * carries runtime log-level changes (ADR-0020); `streams` carries reply streams
+ * from the worker to the server (ADR-0014).
  */
 export type RedisToolkit = {
   cache: RedisCache;
@@ -24,8 +26,15 @@ export type RedisToolkit = {
   authStore: AuthStore;
   /** Fire-and-forget broadcast to every subscribed process (ADR-0020). */
   pubsub: RedisPubSub;
-  /** Raw ioredis instance, for libraries that need one (e.g. BullMQ in M-7). */
+  /** Append-only per-key logs that readers tail from any offset (ADR-0014). */
+  streams: RedisStreams;
+  /** Raw ioredis instance: the main command connection. */
   connection: Redis;
+  /**
+   * A new connection of its own, for a library that blocks on one (BullMQ). It
+   * has `maxRetriesPerRequest: null` and an offline queue; `close()` closes it.
+   */
+  dedicatedConnection(): Redis;
   /**
    * Opens the connection now rather than on first use; resolves once it is ready,
    * or rejects if that attempt fails (ioredis keeps retrying). Call it at startup,
@@ -54,11 +63,19 @@ export const createRedis = (config: RedisConfig): RedisToolkit => {
     subscriber: manager.subscriber,
   });
 
+  const streams = createStreams({
+    writer: manager.main,
+    connect: manager.connect,
+    readerConnection: manager.dedicated,
+  });
+
   return {
     cache,
     authStore,
     pubsub,
+    streams,
     connection: manager.main,
+    dedicatedConnection: manager.dedicated,
     connect: manager.connect,
     close: () => manager.close(),
   };

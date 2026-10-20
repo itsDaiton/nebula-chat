@@ -1,9 +1,10 @@
 import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
+import { fromPartial } from '@total-typescript/shoehorn';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { sseToken, sseUsage } from '@nebula-chat/langchain';
+import type { DirectReplyJob } from '@nebula-chat/contracts';
 import { env } from '@backend/env';
 import { createTestApp } from '@backend/test/app';
-import { captureLogger, eventLines, LEVEL } from '@backend/test/logCapture';
+import { replyStreams } from '@backend/test/memoryReplyStreams';
 import {
   guestSession,
   registeredSession,
@@ -11,452 +12,281 @@ import {
   unverifiedSession,
 } from '@backend/test/session';
 
-vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
+const fakeTx = { __tx: true };
 
-// @backend/auth is the boundary to better-auth: the route's `requireAuthentication` gate
-// calls `auth.api.getSession`, so faking the module lets the test drive the
-// session (a Registered user by default; a Guest in the allowance tests) without
-// standing up a real better-auth instance (ADR-0008).
+// The send path's one transaction runs against the faked repositories below.
+vi.mock('@backend/db', () => ({
+  db: { transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn(fakeTx)) },
+  closeDb: vi.fn(async () => undefined),
+}));
+
 vi.mock('@backend/auth', () => ({
   auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
 }));
 
-// message.repository is the boundary the message-allowance hook reaches Postgres
-// through (the live `role='user'` count). The rest of the chat send path fakes
-// the chat service, so this is the only DB seam the route test opens.
+// The repositories are the boundary to Postgres; everything above them is real.
+vi.mock('@backend/modules/session/session.repository', () => ({
+  sessionRepository: { findByIdTx: vi.fn(), updateModelTx: vi.fn() },
+}));
+
 vi.mock('@backend/modules/message/message.repository', () => ({
-  messageRepository: { countUserMessagesByOwner: vi.fn() },
+  messageRepository: { createTx: vi.fn(), countUserMessagesByOwner: vi.fn() },
 }));
 
-// @backend/redis is the boundary to Redis: the hooks call its cache helpers, so
-// faking the module keeps this route test about routing, hijacking and the cache
-// hooks without opening a connection.
-vi.mock('@backend/redis', () => ({
-  redis: { cache: {}, connection: {}, close: vi.fn(async () => undefined) },
-  closeRedis: vi.fn(async () => undefined),
-  chatCacheKey: vi.fn(() => 'cache-key'),
-  getCachedStream: vi.fn(),
-  saveCachedStream: vi.fn(async () => undefined),
-}));
+// @backend/redis is the boundary to Redis: stream owners live in memory.
+vi.mock('@backend/redis', async () => {
+  const { replyStreams: fake } = await import('@backend/test/memoryReplyStreams.js');
+  return {
+    redis: { connection: {}, close: vi.fn(async () => undefined) },
+    closeRedis: vi.fn(async () => undefined),
+    saveStreamOwner: fake.saveStreamOwner,
+    findStreamOwner: fake.findStreamOwner,
+    openReplyStream: fake.openReplyStream,
+  };
+});
 
-// The whole chat service is faked: the controller and both hooks import from it,
-// and this keeps the route test about routing, hijacking and the cache hooks.
-vi.mock('@backend/modules/chat/chat.service', () => ({
-  chatService: { streamResponse: vi.fn() },
-  validateChatRequest: vi.fn(async () => undefined),
-  createUserMessage: vi.fn(async () => ({
-    sessionId: '11111111-1111-4111-8111-111111111111',
-    userMessageId: '22222222-2222-4222-8222-222222222222',
-    isNewSession: false,
-  })),
-}));
-
-vi.mock('@backend/modules/message/message.service', () => ({
-  messageService: {
-    createMessage: vi.fn(async () => ({ id: '33333333-3333-4333-8333-333333333333' })),
-  },
+// @backend/queue is the boundary to BullMQ: enqueued jobs are kept in memory.
+const { enqueued } = vi.hoisted(() => ({ enqueued: [] as DirectReplyJob[] }));
+vi.mock('@backend/queue', () => ({
+  enqueueDirectReply: vi.fn(async (job: DirectReplyJob) => {
+    enqueued.push(job);
+  }),
+  closeQueue: vi.fn(async () => undefined),
 }));
 
 import { auth } from '@backend/auth';
-import { getCachedStream, saveCachedStream } from '@backend/redis';
-import { chatService, createUserMessage } from '@backend/modules/chat/chat.service';
 import { messageRepository } from '@backend/modules/message/message.repository';
-import { messageService } from '@backend/modules/message/message.service';
+import { sessionRepository } from '@backend/modules/session/session.repository';
 
-const mockedGetCachedStream = vi.mocked(getCachedStream);
-const mockedSaveCachedStream = vi.mocked(saveCachedStream);
-const chat = vi.mocked(chatService);
-const mockedCreateUserMessage = vi.mocked(createUserMessage);
 const mockedGetSession = vi.mocked(auth.api.getSession);
-const mockedCountUserMessages = vi.mocked(messageRepository.countUserMessagesByOwner);
+const sessionRepo = vi.mocked(sessionRepository);
+const messageRepo = vi.mocked(messageRepository);
 
-const validBody = {
-  model: 'gpt-4o-mini',
-  sessionId: '11111111-1111-4111-8111-111111111111',
-  messages: [{ role: 'user', content: 'what is 2+2?' }],
-};
+const SESSION_ID = '11111111-1111-4111-8111-111111111111';
+const MESSAGE_ID = '22222222-2222-4222-8222-222222222222';
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
-// The route is rate-limited to 10 requests per minute per IP, and
-// @fastify/rate-limit keeps that state for the life of the app. Each request
-// therefore comes from its own address so one test cannot exhaust another's
-// budget; the limit itself is exercised deliberately below.
+const validBody = { content: 'what is 2+2?', mode: 'direct' };
+
+// The send route is rate-limited to 10 requests per minute per IP, and
+// @fastify/rate-limit keeps that state for the life of the app, so each request
+// comes from its own address; the limit itself is exercised deliberately below.
 let nextIp = 0;
 const uniqueIp = () => `10.1.${Math.floor(nextIp / 256) % 256}.${nextIp++ % 256}`;
 
-// Awaited here so the inject() chain type resolves to a response rather than
-// light-my-request's chainable builder.
-const post = async (
+const send = async (
   payload: object,
-  app: FastifyInstance,
-  remoteAddress = uniqueIp(),
+  { sessionId = SESSION_ID, remoteAddress = uniqueIp() } = {},
 ): Promise<LightMyRequestResponse> =>
-  app.inject({ method: 'POST', url: '/api/chat/stream', payload, remoteAddress });
+  app.inject({
+    method: 'POST',
+    url: `/api/sessions/${sessionId}/messages`,
+    payload,
+    remoteAddress,
+  });
 
-const eventsIn = (body: string) =>
-  body
-    .split('\n')
-    .filter((l) => l.startsWith('event: '))
-    .map((l) => l.slice(7));
-
-const { logger, lines } = captureLogger();
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  app = await createTestApp({ logger });
+  app = await createTestApp();
 });
 
 afterAll(async () => {
   await app.close();
 });
 
-beforeEach(async () => {
-  // raw.end() emits 'finish' asynchronously, so the previous request's capture
-  // hook can still be in flight. Let it land before clearing, or its
-  // saveCachedStream call is attributed to this test.
-  await new Promise((resolve) => setImmediate(resolve));
+beforeEach(() => {
   vi.clearAllMocks();
-  lines.length = 0;
-  // Default: an authenticated Registered user (uncapped). Allowance tests below
-  // swap in a Guest and drive the live message count.
+  replyStreams.reset();
+  enqueued.length = 0;
+  // Default: an authenticated Registered user (uncapped) sending to a Session they own.
   mockedGetSession.mockResolvedValue(registeredSession() as never);
-  mockedCountUserMessages.mockResolvedValue(0);
-  mockedGetCachedStream.mockResolvedValue(null);
-  mockedSaveCachedStream.mockResolvedValue(undefined);
-  mockedCreateUserMessage.mockResolvedValue({
-    sessionId: '11111111-1111-4111-8111-111111111111',
-    userMessageId: '22222222-2222-4222-8222-222222222222',
-    isNewSession: false,
-  });
-  chat.streamResponse.mockImplementation(async (_data, write) => {
-    write(sseToken('4'));
-    write(sseUsage({ promptTokens: 5, completionTokens: 1, totalTokens: 6 }));
-    return {
-      sessionId: '11111111-1111-4111-8111-111111111111',
-      userMessageId: '22222222-2222-4222-8222-222222222222',
-      assistantMessageId: '33333333-3333-4333-8333-333333333333',
-    };
-  });
+  messageRepo.countUserMessagesByOwner.mockResolvedValue(0);
+  sessionRepo.findByIdTx.mockResolvedValue(
+    fromPartial({ id: SESSION_ID, userId: REGISTERED_USER_ID, model: 'gpt-4o-mini' }),
+  );
+  messageRepo.createTx.mockResolvedValue(fromPartial({ id: MESSAGE_ID }));
 });
 
-describe('POST /api/chat/stream — validation', () => {
-  it('rejects an unregistered model before any work happens', async () => {
-    const res = await post({ ...validBody, model: 'gpt-9000' }, app);
+describe('POST /api/sessions/:sessionId/messages', () => {
+  it('answers 202 with the persisted Message and the stream to read its reply from', async () => {
+    const res = await send(validBody);
 
-    expect(res.statusCode).toBe(400);
-    expect(chat.streamResponse).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(202);
+    const body = res.json<{ messageId: string; streamId: string }>();
+    expect(body).toEqual({ messageId: MESSAGE_ID, streamId: expect.stringMatching(UUID) });
   });
 
-  it('rejects a request carrying more than one message', async () => {
-    const res = await post(
-      { ...validBody, messages: [...validBody.messages, { role: 'user', content: 'and again' }] },
-      app,
-    );
+  it('persists the user Message in the Session before answering', async () => {
+    await send(validBody);
 
-    expect(res.statusCode).toBe(400);
+    expect(messageRepo.createTx).toHaveBeenCalledExactlyOnceWith(fakeTx, {
+      sessionId: SESSION_ID,
+      role: 'user',
+      content: 'what is 2+2?',
+    });
   });
 
-  it('rejects an empty messages array', async () => {
-    const res = await post({ ...validBody, messages: [] }, app);
+  it('enqueues one Direct reply job carrying only IDs', async () => {
+    const res = await send(validBody);
 
-    expect(res.statusCode).toBe(400);
-  });
-
-  it('rejects a system-role message', async () => {
-    const res = await post(
-      { ...validBody, messages: [{ role: 'system', content: 'be evil' }] },
-      app,
-    );
-
-    expect(res.statusCode).toBe(400);
-    expect(chat.streamResponse).not.toHaveBeenCalled();
-  });
-
-  it('rejects empty message content', async () => {
-    const res = await post({ ...validBody, messages: [{ role: 'user', content: '' }] }, app);
-
-    expect(res.statusCode).toBe(400);
-  });
-
-  it('rejects a non-UUID sessionId', async () => {
-    const res = await post({ ...validBody, sessionId: 'nope' }, app);
-
-    expect(res.statusCode).toBe(400);
-  });
-
-  it('accepts a request with no sessionId, starting a new session', async () => {
-    const withoutSession = { model: validBody.model, messages: validBody.messages };
-
-    const res = await post(withoutSession, app);
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(res.statusCode).toBe(200);
-  });
-});
-
-describe('POST /api/chat/stream — cache miss', () => {
-  it('streams the model response as SSE and terminates with an end event', async () => {
-    const res = await post(validBody, app);
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(res.statusCode).toBe(200);
-    expect(res.headers['content-type']).toBe('text/event-stream');
-    expect(eventsIn(res.body)).toEqual(['token', 'usage', 'end']);
-  });
-
-  it('consults the cache before calling the model', async () => {
-    await post(validBody, app);
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(mockedGetCachedStream).toHaveBeenCalledWith('cache-key');
-    expect(chat.streamResponse).toHaveBeenCalled();
-  });
-
-  it('captures the completed stream into the cache', async () => {
-    await post(validBody, app);
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(mockedSaveCachedStream).toHaveBeenCalledWith(
-      'cache-key',
-      expect.stringContaining('event: token'),
-      expect.objectContaining({ totalTokens: 6 }),
-    );
-  });
-
-  it('strips usage and end events from what it caches, so a replay is not double-counted', async () => {
-    await post(validBody, app);
-    await new Promise((resolve) => setImmediate(resolve));
-
-    const cached = mockedSaveCachedStream.mock.calls[0]![1];
-    expect(cached).not.toContain('event: usage');
-    expect(cached).not.toContain('event: end');
-  });
-
-  it('falls open to normal streaming when the cache lookup throws', async () => {
-    mockedGetCachedStream.mockRejectedValue(new Error('redis down'));
-
-    const res = await post(validBody, app);
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(res.statusCode).toBe(200);
-    expect(chat.streamResponse).toHaveBeenCalled();
-  });
-
-  // KNOWN BUG, pinned rather than endorsed: streamCaptureHook guards on
-  // `full.trim() === ''` *before* filtering, and the controller always writes an
-  // `end` frame — so a stream that produced no tokens still looks non-empty and
-  // gets cached as whitespace. Every identical request then replays an empty
-  // answer for the whole TTL instead of retrying the model. The same is true of
-  // a stream that only produced an `event: error`.
-  it('caches a whitespace entry when the model produced nothing', async () => {
-    chat.streamResponse.mockImplementation(async () => undefined);
-
-    await post(validBody, app);
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(mockedSaveCachedStream).toHaveBeenCalled();
-    const lastCall = mockedSaveCachedStream.mock.calls.at(-1)!;
-    expect(lastCall[1].trim()).toBe('');
-  });
-});
-
-describe('POST /api/chat/stream — cache hit', () => {
-  const cachedEntry = {
-    tokens: `${sseToken('4')}`,
-    usageData: { promptTokens: 5, completionTokens: 1, totalTokens: 6 },
-  };
-
-  it('replays the cached stream without calling the model', async () => {
-    mockedGetCachedStream.mockResolvedValue(cachedEntry);
-
-    const res = await post(validBody, app);
-
-    expect(res.statusCode).toBe(200);
-    expect(chat.streamResponse).not.toHaveBeenCalled();
-  });
-
-  it('marks the response as a cache hit', async () => {
-    mockedGetCachedStream.mockResolvedValue(cachedEntry);
-
-    const res = await post(validBody, app);
-
-    expect(eventsIn(res.body)).toEqual([
-      'user-message-created',
-      'cache-hit',
-      'token',
-      'usage',
-      'assistant-message-created',
-      'end',
+    expect(enqueued).toEqual([
+      {
+        userId: REGISTERED_USER_ID,
+        sessionId: SESSION_ID,
+        messageId: MESSAGE_ID,
+        streamId: res.json<{ streamId: string }>().streamId,
+      },
     ]);
   });
 
-  it('announces a new session when the replay creates one', async () => {
-    mockedGetCachedStream.mockResolvedValue(cachedEntry);
-    mockedCreateUserMessage.mockResolvedValue({
-      sessionId: '11111111-1111-4111-8111-111111111111',
-      userMessageId: '22222222-2222-4222-8222-222222222222',
-      isNewSession: true,
-    });
+  it('makes the caller the only User who may read the reply stream', async () => {
+    const res = await send(validBody);
 
-    const res = await post(validBody, app);
-
-    expect(eventsIn(res.body)[0]).toBe('session-created');
+    const { streamId } = res.json<{ streamId: string }>();
+    expect(replyStreams.owners.get(streamId)).toBe(REGISTERED_USER_ID);
   });
 
-  it('replays zeroed usage when the cached entry carries none', async () => {
-    mockedGetCachedStream.mockResolvedValue({ tokens: sseToken('4') });
+  it("binds the Session to the Model the caller picked when it differs from the Session's", async () => {
+    await send({ ...validBody, model: 'gpt-4.1' });
 
-    const res = await post(validBody, app);
-
-    expect(res.body).toContain('"totalTokens":0');
-  });
-
-  it('persists the reconstructed assistant message from the cached tokens', async () => {
-    mockedGetCachedStream.mockResolvedValue(cachedEntry);
-
-    await post(validBody, app);
-
-    expect(vi.mocked(messageService).createMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ role: 'assistant', content: '4' }),
-      REGISTERED_USER_ID,
+    expect(sessionRepo.updateModelTx).toHaveBeenCalledExactlyOnceWith(
+      fakeTx,
+      SESSION_ID,
+      'gpt-4.1',
     );
   });
 
-  it('does not re-cache a replayed stream', async () => {
-    mockedGetCachedStream.mockResolvedValue(cachedEntry);
+  it("leaves the Session's Model alone when the caller picks the same one or none", async () => {
+    await send({ ...validBody, model: 'gpt-4o-mini' });
+    await send(validBody);
 
-    await post(validBody, app);
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(mockedSaveCachedStream).not.toHaveBeenCalled();
-  });
-});
-
-describe('POST /api/chat/stream — regenerate', () => {
-  const cachedEntry = {
-    tokens: `${sseToken('4')}`,
-    usageData: { promptTokens: 5, completionTokens: 1, totalTokens: 6 },
-  };
-
-  it('bypasses the cache and calls the model even when an entry exists', async () => {
-    mockedGetCachedStream.mockResolvedValue(cachedEntry);
-
-    const res = await post({ ...validBody, regenerate: true }, app);
-    // Drain the fire-and-forget capture so its saveCachedStream is not
-    // attributed to a later test.
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(res.statusCode).toBe(200);
-    expect(mockedGetCachedStream).not.toHaveBeenCalled();
-    expect(chat.streamResponse).toHaveBeenCalled();
+    expect(sessionRepo.updateModelTx).not.toHaveBeenCalled();
   });
 
-  it('overwrites the cached entry with the fresh completion', async () => {
-    mockedGetCachedStream.mockResolvedValue(cachedEntry);
+  it("answers 404 for a Session the caller doesn't own, persisting and enqueuing nothing", async () => {
+    sessionRepo.findByIdTx.mockResolvedValue(null);
 
-    await post({ ...validBody, regenerate: true }, app);
-    await new Promise((resolve) => setImmediate(resolve));
+    const res = await send(validBody);
 
-    expect(mockedSaveCachedStream).toHaveBeenCalledWith(
-      'cache-key',
-      expect.stringContaining('event: token'),
-      expect.objectContaining({ totalTokens: 6 }),
-    );
-  });
-});
-
-describe('POST /api/chat/stream — Guest message allowance', () => {
-  // GUEST_MESSAGE_ALLOWANCE defaults to 10 (env.ts). The count comes live from
-  // Postgres via the mocked repository.
-  const CAP = 10;
-
-  it('lets a Guest under the cap send', async () => {
-    mockedGetSession.mockResolvedValue(guestSession() as never);
-    mockedCountUserMessages.mockResolvedValue(CAP - 1);
-
-    const res = await post(validBody, app);
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(res.statusCode).toBe(200);
-    expect(chat.streamResponse).toHaveBeenCalled();
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toMatchObject({ success: false, error: 'NotFound' });
+    expect(messageRepo.createTx).not.toHaveBeenCalled();
+    expect(enqueued).toEqual([]);
   });
 
-  it('rejects a Guest at the cap with a 403 MessageAllowanceReached', async () => {
-    mockedGetSession.mockResolvedValue(guestSession() as never);
-    mockedCountUserMessages.mockResolvedValue(CAP);
+  it('answers 413 for a Message over the prompt token budget, before persisting it', async () => {
+    const res = await send({ ...validBody, content: 'token '.repeat(2_500) });
 
-    const res = await post(validBody, app);
+    expect(res.statusCode).toBe(413);
+    expect(res.json()).toMatchObject({ error: 'PayloadTooLarge' });
+    expect(messageRepo.createTx).not.toHaveBeenCalled();
+  });
 
-    expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({
-      success: false,
-      error: 'MessageAllowanceReached',
-      message: `Message allowance exceeded: a Guest can send at most ${CAP} messages.`,
+  it('answers 500 when the job cannot be enqueued', async () => {
+    const { enqueueDirectReply } = await import('@backend/queue.js');
+    vi.mocked(enqueueDirectReply).mockRejectedValueOnce(new Error('redis down'));
+
+    const res = await send(validBody);
+
+    expect(res.statusCode).toBe(500);
+    expect(res.json()).toMatchObject({ error: 'Internal' });
+  });
+
+  describe('validation', () => {
+    it.each([
+      ['a mode other than direct', { ...validBody, mode: 'run' }],
+      ['no mode', { content: 'hi' }],
+      ['empty content', { ...validBody, content: '' }],
+      ['an unknown Model', { ...validBody, model: 'gpt-0' }],
+    ])('rejects %s with a 400 before any work happens', async (_case, payload) => {
+      const res = await send(payload);
+
+      expect(res.statusCode).toBe(400);
+      expect(res.json()).toMatchObject({ success: false, error: 'Validation' });
+      expect(messageRepo.createTx).not.toHaveBeenCalled();
+      expect(enqueued).toEqual([]);
     });
-    // Rejected before any model work.
-    expect(chat.streamResponse).not.toHaveBeenCalled();
+
+    it('rejects a session id that is not a UUID', async () => {
+      const res = await send(validBody, { sessionId: 'not-a-uuid' });
+
+      expect(res.statusCode).toBe(400);
+    });
   });
 
-  it('still allows a regenerate at the cap, since regenerations do not count', async () => {
-    mockedGetSession.mockResolvedValue(guestSession() as never);
-    mockedCountUserMessages.mockResolvedValue(CAP + 5);
+  describe('Guest message allowance', () => {
+    // GUEST_MESSAGE_ALLOWANCE defaults to 10 (env.ts); the count comes live from Postgres.
+    const CAP = env.GUEST_MESSAGE_ALLOWANCE;
 
-    const res = await post({ ...validBody, regenerate: true }, app);
-    await new Promise((resolve) => setImmediate(resolve));
+    it('lets a Guest under the cap send', async () => {
+      mockedGetSession.mockResolvedValue(guestSession() as never);
+      messageRepo.countUserMessagesByOwner.mockResolvedValue(CAP - 1);
 
-    expect(res.statusCode).toBe(200);
-    // The count is never consulted for a regenerate.
-    expect(mockedCountUserMessages).not.toHaveBeenCalled();
-    expect(chat.streamResponse).toHaveBeenCalled();
+      const res = await send(validBody);
+
+      expect(res.statusCode).toBe(202);
+      expect(enqueued).toHaveLength(1);
+    });
+
+    it('rejects a Guest at the cap with the typed 403 MessageAllowanceReached, persisting nothing', async () => {
+      mockedGetSession.mockResolvedValue(guestSession() as never);
+      messageRepo.countUserMessagesByOwner.mockResolvedValue(CAP);
+
+      const res = await send(validBody);
+
+      expect(res.statusCode).toBe(403);
+      expect(res.json()).toEqual({
+        success: false,
+        error: 'MessageAllowanceReached',
+        message: `Message allowance exceeded: a Guest can send at most ${CAP} messages.`,
+      });
+      expect(messageRepo.createTx).not.toHaveBeenCalled();
+      expect(enqueued).toEqual([]);
+    });
+
+    it('caps a Registered user whose email is unverified like a Guest', async () => {
+      mockedGetSession.mockResolvedValue(unverifiedSession() as never);
+      messageRepo.countUserMessagesByOwner.mockResolvedValue(CAP);
+
+      const res = await send(validBody);
+
+      expect(res.statusCode).toBe(403);
+      expect(res.json()).toMatchObject({ error: 'MessageAllowanceReached' });
+    });
+
+    it('leaves a verified Registered user uncapped, never counting their messages', async () => {
+      messageRepo.countUserMessagesByOwner.mockResolvedValue(CAP + 100);
+
+      const res = await send(validBody);
+
+      expect(res.statusCode).toBe(202);
+      expect(messageRepo.countUserMessagesByOwner).not.toHaveBeenCalled();
+    });
+
+    it('rejects a request with no authenticated session', async () => {
+      mockedGetSession.mockResolvedValue(null);
+
+      const res = await send(validBody);
+
+      expect(res.statusCode).toBe(401);
+      expect(enqueued).toEqual([]);
+    });
   });
 
-  it('caps a Registered user whose email is unverified like a Guest', async () => {
-    mockedGetSession.mockResolvedValue(unverifiedSession() as never);
-    mockedCountUserMessages.mockResolvedValue(CAP);
+  it('rate-limits sends to 10 a minute from one address', async () => {
+    const remoteAddress = uniqueIp();
+    const statuses: number[] = [];
+    for (let i = 0; i < 11; i++) {
+      statuses.push((await send(validBody, { remoteAddress })).statusCode);
+    }
 
-    const res = await post(validBody, app);
-
-    expect(res.statusCode).toBe(403);
-    expect(res.json()).toMatchObject({ error: 'MessageAllowanceReached' });
-    expect(chat.streamResponse).not.toHaveBeenCalled();
-  });
-
-  it('lets an unverified Registered user under the cap send', async () => {
-    mockedGetSession.mockResolvedValue(unverifiedSession() as never);
-    mockedCountUserMessages.mockResolvedValue(CAP - 1);
-
-    const res = await post(validBody, app);
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(res.statusCode).toBe(200);
-    expect(chat.streamResponse).toHaveBeenCalled();
-  });
-
-  it('leaves a verified Registered user uncapped, never counting their messages', async () => {
-    mockedGetSession.mockResolvedValue(registeredSession() as never);
-    mockedCountUserMessages.mockResolvedValue(CAP + 100);
-
-    const res = await post(validBody, app);
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(res.statusCode).toBe(200);
-    expect(mockedCountUserMessages).not.toHaveBeenCalled();
-    expect(chat.streamResponse).toHaveBeenCalled();
-  });
-
-  it('rejects a request with no authenticated session', async () => {
-    mockedGetSession.mockResolvedValue(null);
-
-    const res = await post(validBody, app);
-
-    expect(res.statusCode).toBe(401);
-    expect(chat.streamResponse).not.toHaveBeenCalled();
+    expect(statuses.slice(0, 10).every((status) => status === 202)).toBe(true);
+    expect(statuses[10]).toBe(429);
   });
 });
 
 describe('GET /api/chat/message-allowance', () => {
-  // GUEST_MESSAGE_ALLOWANCE defaults to 10 (env.ts); the count comes live from
-  // Postgres via the mocked repository, through the same shared function the
-  // send-path hook calls.
   const CAP = env.GUEST_MESSAGE_ALLOWANCE;
 
   const getAllowance = async (): Promise<LightMyRequestResponse> =>
@@ -464,7 +294,7 @@ describe('GET /api/chat/message-allowance', () => {
 
   it("reports a Guest's limit, live count and what is left", async () => {
     mockedGetSession.mockResolvedValue(guestSession() as never);
-    mockedCountUserMessages.mockResolvedValue(3);
+    messageRepo.countUserMessagesByOwner.mockResolvedValue(3);
 
     const res = await getAllowance();
 
@@ -474,27 +304,24 @@ describe('GET /api/chat/message-allowance', () => {
 
   it('meters a Registered user whose email is unverified like a Guest', async () => {
     mockedGetSession.mockResolvedValue(unverifiedSession() as never);
-    mockedCountUserMessages.mockResolvedValue(1);
+    messageRepo.countUserMessagesByOwner.mockResolvedValue(1);
 
     const res = await getAllowance();
 
-    expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ metered: true, limit: CAP, used: 1, remaining: CAP - 1 });
   });
 
   it('answers metered false for a verified Registered user, never counting', async () => {
-    mockedGetSession.mockResolvedValue(registeredSession() as never);
-
     const res = await getAllowance();
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ metered: false });
-    expect(mockedCountUserMessages).not.toHaveBeenCalled();
+    expect(messageRepo.countUserMessagesByOwner).not.toHaveBeenCalled();
   });
 
   it('clamps remaining at 0 when the count is above the limit', async () => {
     mockedGetSession.mockResolvedValue(guestSession() as never);
-    mockedCountUserMessages.mockResolvedValue(CAP + 4);
+    messageRepo.countUserMessagesByOwner.mockResolvedValue(CAP + 4);
 
     const res = await getAllowance();
 
@@ -503,14 +330,13 @@ describe('GET /api/chat/message-allowance', () => {
 
   it('agrees with the send path: 0 remaining here is a 403 there', async () => {
     mockedGetSession.mockResolvedValue(guestSession() as never);
-    mockedCountUserMessages.mockResolvedValue(CAP);
+    messageRepo.countUserMessagesByOwner.mockResolvedValue(CAP);
 
     const read = await getAllowance();
-    const send = await post(validBody, app);
+    const sent = await send(validBody);
 
     expect(read.json()).toMatchObject({ metered: true, remaining: 0 });
-    expect(send.statusCode).toBe(403);
-    expect(send.json()).toMatchObject({ error: 'MessageAllowanceReached' });
+    expect(sent.statusCode).toBe(403);
   });
 
   it('rejects a request with no authenticated session with the 401 envelope', async () => {
@@ -520,248 +346,5 @@ describe('GET /api/chat/message-allowance', () => {
 
     expect(res.statusCode).toBe(401);
     expect(res.json()).toMatchObject({ success: false, error: 'Unauthorized' });
-    expect(mockedCountUserMessages).not.toHaveBeenCalled();
-  });
-});
-
-/**
- * Both paths hijack the reply and write to the raw response, so the CORS headers
- * `@fastify/cors` buffered on the reply only reach the client if they are forwarded.
- * `/health` is the reference: a normal route, flushed by `reply.send`.
- */
-describe('POST /api/chat/stream — CORS', () => {
-  const cachedEntry = {
-    tokens: `${sseToken('4')}`,
-    usageData: { promptTokens: 5, completionTokens: 1, totalTokens: 6 },
-  };
-
-  const postFrom = async (origin?: string): Promise<LightMyRequestResponse> => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/chat/stream',
-      payload: validBody,
-      remoteAddress: uniqueIp(),
-      headers: origin ? { origin } : {},
-    });
-    // Let the model stream's capture hook land before the next test clears mocks.
-    await new Promise((resolve) => setImmediate(resolve));
-    return res;
-  };
-
-  const corsHeadersOf = (headers: LightMyRequestResponse['headers']) =>
-    Object.fromEntries(
-      Object.entries(headers).filter(
-        ([name]) => name.startsWith('access-control-') || name === 'vary',
-      ),
-    );
-
-  describe.each([
-    ['the model stream', null],
-    ['the cache replay', cachedEntry],
-  ])('on %s', (_path, cached) => {
-    beforeEach(() => {
-      mockedGetCachedStream.mockResolvedValue(cached);
-    });
-
-    it('echoes an allowed origin with credentials and Vary: Origin', async () => {
-      const res = await postFrom(env.CLIENT_URL);
-
-      expect(res.statusCode).toBe(200);
-      expect(res.headers).toMatchObject({
-        'access-control-allow-origin': env.CLIENT_URL,
-        'access-control-allow-credentials': 'true',
-        vary: 'Origin',
-        'content-type': 'text/event-stream',
-      });
-    });
-
-    it('adds no access-control-allow-* header for a disallowed origin', async () => {
-      const res = await postFrom('https://evil.example');
-
-      expect(res.statusCode).toBe(200);
-      expect(
-        Object.keys(res.headers).filter((name) => name.startsWith('access-control-allow-')),
-      ).toEqual([]);
-    });
-
-    it('answers a request with no origin as /health does, without a wildcard', async () => {
-      const health = await app.inject({ method: 'GET', url: '/health' });
-
-      const res = await postFrom();
-
-      expect(res.statusCode).toBe(200);
-      expect(res.headers['content-type']).toBe('text/event-stream');
-      expect(res.headers['access-control-allow-origin']).toBeUndefined();
-      expect(corsHeadersOf(res.headers)).toEqual(corsHeadersOf(health.headers));
-    });
-  });
-});
-
-describe('POST /api/chat/stream — rate limiting', () => {
-  it('rejects the eleventh request from one address within the window', async () => {
-    const ip = '10.99.0.1';
-    const statuses: number[] = [];
-
-    for (let i = 0; i < 11; i++) {
-      statuses.push((await post(validBody, app, ip)).statusCode);
-    }
-
-    expect(statuses.slice(0, 10).every((s) => s === 200)).toBe(true);
-    expect(statuses[10]).toBe(429);
-  });
-
-  it('answers a rate-limited request with the TooManyRequests envelope', async () => {
-    const ip = '10.99.0.4';
-    let res: LightMyRequestResponse | undefined;
-    for (let i = 0; i < 11; i++) res = await post(validBody, app, ip);
-
-    expect(res?.json()).toMatchObject({ success: false, error: 'TooManyRequests' });
-  });
-
-  it('does not spend another address’s budget', async () => {
-    const ip = '10.99.0.2';
-    for (let i = 0; i < 11; i++) await post(validBody, app, ip);
-
-    const res = await post(validBody, app, '10.99.0.3');
-
-    expect(res.statusCode).toBe(200);
-  });
-});
-
-describe('POST /api/chat/stream — logging', () => {
-  // Earlier describes fire requests back to back (the rate-limit loops) whose
-  // capture hooks save on a later 'finish'. Let every one of them land, then
-  // start from an empty capture, so each test sees only its own request.
-  beforeEach(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 25));
-    lines.length = 0;
-  });
-
-  const cachedEntry = {
-    tokens: `${sseToken('4')}`,
-    usageData: { promptTokens: 5, completionTokens: 1, totalTokens: 6 },
-  };
-
-  it('completes the hijacked stream with one http.request.completed line', async () => {
-    await post(validBody, app);
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(eventLines(lines, 'http.request.completed')).toEqual([
-      expect.objectContaining({
-        level: LEVEL.info,
-        'url.path': '/api/chat/stream',
-        'http.response.status_code': 200,
-        'user.id': REGISTERED_USER_ID,
-      }),
-    ]);
-  });
-
-  it('writes the cache hit at debug with its key', async () => {
-    mockedGetCachedStream.mockResolvedValue(cachedEntry);
-
-    await post(validBody, app);
-
-    expect(eventLines(lines, 'cache.hit')).toEqual([
-      expect.objectContaining({
-        level: LEVEL.debug,
-        'nebula.component': 'redis',
-        'nebula.cache.key': 'cache-key',
-      }),
-    ]);
-  });
-
-  it('writes one chat.reply.completed for a reply replayed from the cache', async () => {
-    mockedGetCachedStream.mockResolvedValue(cachedEntry);
-
-    await post(validBody, app);
-
-    expect(eventLines(lines, 'chat.reply.completed')).toEqual([
-      expect.objectContaining({
-        level: LEVEL.info,
-        'nebula.component': 'chat',
-        'nebula.outcome': 'completed',
-        'nebula.session.id': '11111111-1111-4111-8111-111111111111',
-        'nebula.message.id': '22222222-2222-4222-8222-222222222222',
-        'nebula.reply.message.id': '33333333-3333-4333-8333-333333333333',
-        'nebula.cache.key': 'cache-key',
-        'gen_ai.request.model': 'gpt-4o-mini',
-        'gen_ai.usage.input_tokens': 5,
-        'gen_ai.usage.output_tokens': 1,
-        'nebula.duration_ms': expect.any(Number),
-        'user.id': REGISTERED_USER_ID,
-      }),
-    ]);
-  });
-
-  it('writes the cache save at debug with its key', async () => {
-    await post(validBody, app);
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(eventLines(lines, 'cache.saved')).toEqual([
-      expect.objectContaining({ level: LEVEL.debug, 'nebula.cache.key': 'cache-key' }),
-    ]);
-  });
-
-  it('writes a failed cache check as one warn with err, and still streams', async () => {
-    mockedGetCachedStream.mockRejectedValue(new Error('redis down'));
-
-    const res = await post(validBody, app);
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(res.statusCode).toBe(200);
-    expect(lines.filter((line) => line.level >= LEVEL.warn)).toEqual([
-      expect.objectContaining({
-        level: LEVEL.warn,
-        'event.name': 'cache.check.failed',
-        'nebula.component': 'redis',
-        err: expect.objectContaining({ message: 'redis down', stack: expect.any(String) }),
-      }),
-    ]);
-  });
-
-  it('writes a failed cache save as a warn with err', async () => {
-    mockedSaveCachedStream.mockRejectedValue(new Error('redis down'));
-
-    await post(validBody, app);
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(eventLines(lines, 'cache.write.failed')).toEqual([
-      expect.objectContaining({
-        level: LEVEL.warn,
-        err: expect.objectContaining({ message: 'redis down' }),
-      }),
-    ]);
-  });
-
-  it('writes an unparseable cached token line as a warn', async () => {
-    mockedGetCachedStream.mockResolvedValue({
-      tokens: `event: token\ndata: {"token": not json\n\n${sseToken('4')}`,
-    });
-
-    await post(validBody, app);
-
-    expect(eventLines(lines, 'cache.entry.unparseable')).toEqual([
-      expect.objectContaining({ level: LEVEL.warn, 'nebula.cache.key': 'cache-key' }),
-    ]);
-  });
-
-  it('logs no cookie, Authorization value or Message content', async () => {
-    await app.inject({
-      method: 'POST',
-      url: '/api/chat/stream',
-      remoteAddress: uniqueIp(),
-      headers: {
-        cookie: 'better-auth.session_token=SECRET-COOKIE',
-        authorization: 'Bearer SECRET-TOKEN',
-      },
-      payload: { ...validBody, messages: [{ role: 'user', content: 'SECRET-CONTENT' }] },
-    });
-    await new Promise((resolve) => setImmediate(resolve));
-
-    const logged = JSON.stringify(lines);
-    expect(lines.length).toBeGreaterThan(0);
-    expect(logged).not.toContain('SECRET-COOKIE');
-    expect(logged).not.toContain('SECRET-TOKEN');
-    expect(logged).not.toContain('SECRET-CONTENT');
   });
 });

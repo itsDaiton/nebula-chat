@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "declaration": true,
+    "outDir": "./dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    // Isomorphic like @nebula-chat/errors: shared by the server and the worker, and
+    // free of Node APIs so the client could read it too. No `node` types keeps that honest.
+    "lib": ["ES2022"],
+    "types": []
+  },
+  "include": ["src", "tsdown.config.mts"]
+}

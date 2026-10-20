@@ -27,3 +27,6 @@ export const AUTH_KEY_PREFIX = 'auth';
  * the `a:b:c` key convention stays centralised rather than hand-concatenated.
  */
 export const authKey = (key: string): string => buildKey(AUTH_KEY_PREFIX, key);
+
+/** The key of the Redis Stream that carries one reply, keyed by its `streamId` (ADR-0014). */
+export const streamKey = (streamId: string): string => buildKey('stream', streamId);

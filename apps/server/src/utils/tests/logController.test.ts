@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { describe, expect, it } from 'vitest';
 import { recordedErrorType } from '@backend/errors/requestErrorType';
-import { captureLogger, LEVEL } from '@backend/test/logCapture';
+import { captureLogger, LEVEL } from '@nebula-chat/otel/testing';
 import { logController } from '@backend/utils/logController';
 
 const exchange = () => {

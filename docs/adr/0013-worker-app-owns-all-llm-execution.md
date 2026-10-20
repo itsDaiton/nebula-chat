@@ -1,6 +1,7 @@
 # ADR-0013: A dedicated worker app owns all LLM execution; the server holds no LLM keys
 
-- **Status:** Proposed — to be implemented by the nebula-chat 2.0 epic (NEB-349). Amended by [ADR-0030](./0030-model-catalog-in-contracts-and-model-call-ledger.md) (`contracts` also holds the model catalog), [ADR-0031](./0031-worker-runs-all-background-jobs.md) (the worker runs all background jobs) and [ADR-0032](./0032-short-app-directory-names.md) (the worker lives at `apps/worker`)
+- **Status:** Accepted — implemented by the nebula-chat 2.0 epic (NEB-349); NEB-354 moved Direct replies into the worker.
+  Amended by [ADR-0030](./0030-model-catalog-in-contracts-and-model-call-ledger.md) (`contracts` also holds the model catalog), [ADR-0031](./0031-worker-runs-all-background-jobs.md) (the worker runs all background jobs) and [ADR-0032](./0032-short-app-directory-names.md) (the worker lives at `apps/worker`)
 - **Date:** 2026-09-22
 - **Deciders:** @itsDaiton
 

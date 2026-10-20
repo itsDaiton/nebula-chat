@@ -71,9 +71,8 @@ export const sessionRepository = {
       .where(and(eq(sessions.id, id), eq(sessions.userId, userId)));
     return row ?? null;
   },
-  async createTx(tx: DbTransaction, title: string, userId: string) {
-    const [row] = await tx.insert(sessions).values({ title, userId }).returning();
-    return row!;
+  async updateModelTx(tx: DbTransaction, id: string, model: string) {
+    await tx.update(sessions).set({ model, updatedAt: new Date() }).where(eq(sessions.id, id));
   },
   async search(userId: string, query: string, limit = paginationConfig.maxLimit) {
     return db

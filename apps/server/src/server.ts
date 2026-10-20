@@ -1,4 +1,5 @@
 import {
+  createShutdown,
   initTelemetry,
   listenForLogLevelChanges,
   logEvent,
@@ -11,7 +12,6 @@ initTelemetry(SERVICE_NAME, { logger, diagLevel: env.OTEL_LOG_LEVEL });
 
 import { buildApp } from '@backend/app';
 import { redis } from '@backend/redis';
-import { createShutdown } from '@backend/shutdown';
 
 const start = async (): Promise<void> => {
   // Open Redis while the app builds, so the first request does not race the connect.
@@ -61,6 +61,7 @@ const start = async (): Promise<void> => {
 
   const shutdown = createShutdown({
     logger,
+    failedEvent: 'server.shutdown.failed',
     // `shutdownTelemetry` never rejects and gives up on a dead collector after a
     // fixed cap, so only `app.close()` can fail or hold the exit — as before.
     close: async () => {

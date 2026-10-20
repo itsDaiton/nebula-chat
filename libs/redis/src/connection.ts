@@ -11,6 +11,11 @@ export type ConnectionManager = {
   connect(): Promise<void>;
   /** The subscriber connection for pub/sub, opened on first call. */
   subscriber(): Redis;
+  /**
+   * A new connection for one blocking consumer (a stream reader, BullMQ): its
+   * commands wait out an outage instead of failing. Closed with the manager.
+   */
+  dedicated(): Redis;
   /** Tears down every connection this manager owns. */
   close(): Promise<void>;
 };
@@ -34,10 +39,10 @@ const closeConnection = async (connection: Redis): Promise<void> => {
 /**
  * Owns the app's Redis connection(s): a main command connection, plus a
  * subscriber connection for pub/sub (in subscriber mode Redis runs no other
- * command), opened only once something subscribes. BullMQ (a connection
- * configured with `maxRetriesPerRequest: null`) is provisioned here when M-7
- * lands — a caller asks a primitive for what it needs and the manager hands over
- * the right connection, so call sites never learn there is more than one.
+ * command), opened only once something subscribes, plus a dedicated connection
+ * per blocking consumer: a stream reader's `XREAD … BLOCK` ties its connection
+ * up, and BullMQ needs one with `maxRetriesPerRequest: null`. Neither can share
+ * the main connection.
  *
  * `lazyConnect` + `enableOfflineQueue: false` keep the cache fail-open fast: when
  * Redis is unreachable a command rejects immediately rather than queueing, and
@@ -55,6 +60,7 @@ export const createConnectionManager = (redisUrl: string, logger: Logger): Conne
   logConnectionErrors(main, logger);
   const connect = createConnector(main);
   let subscriberConnection: Redis | undefined;
+  const dedicatedConnections = new Set<Redis>();
 
   // A SUBSCRIBE waits in the offline queue for as long as Redis is down, rather
   // than failing after 20 retries and never listening; ioredis re-subscribes on
@@ -71,9 +77,22 @@ export const createConnectionManager = (redisUrl: string, logger: Logger): Conne
     return subscriberConnection;
   };
 
-  const close = async (): Promise<void> => {
-    await Promise.all([main, subscriberConnection].flatMap((c) => (c ? [closeConnection(c)] : [])));
+  const dedicated = (): Redis => {
+    const connection = main.duplicate({ enableOfflineQueue: true, maxRetriesPerRequest: null });
+    logConnectionErrors(connection, logger);
+    dedicatedConnections.add(connection);
+    // A connection its owner already closed has nothing left for `close` to do.
+    connection.once('end', () => dedicatedConnections.delete(connection));
+    return connection;
   };
 
-  return { main, connect, subscriber, close };
+  const close = async (): Promise<void> => {
+    await Promise.all(
+      [main, subscriberConnection, ...dedicatedConnections].flatMap((c) =>
+        c ? [closeConnection(c)] : [],
+      ),
+    );
+  };
+
+  return { main, connect, subscriber, dedicated, close };
 };

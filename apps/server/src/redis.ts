@@ -1,47 +1,43 @@
-import { buildKey, createRedis, hashText } from '@nebula-chat/redis';
-import type { RedisToolkit } from '@nebula-chat/redis';
+import { buildKey, createRedis, streamKey } from '@nebula-chat/redis';
+import type { RedisToolkit, StreamEntry } from '@nebula-chat/redis';
 import { env } from '@backend/env';
 import { logger } from '@backend/logger';
-import type { CreateChatStreamDTO, UsageData } from '@backend/modules/chat/chat.types';
 
-/**
- * The server's single Redis toolkit (shared connection + cache primitive),
- * mirroring `src/db.ts`. Config and loading live here — consumers import from
- * `@backend/redis` rather than constructing their own. Default cache TTL is 10
- * minutes; the keyspace is bounded by TTL + Redis `maxmemory-policy`.
- */
-export const redis: RedisToolkit = createRedis({
-  redisUrl: env.REDIS_URL,
-  logger,
-  cache: { defaultTtlSeconds: 600 },
-});
+/** The server's single Redis toolkit, mirroring `src/db.ts`. */
+export const redis: RedisToolkit = createRedis({ redisUrl: env.REDIS_URL, logger });
 
 export const closeRedis = (): Promise<void> => redis.close();
 
-/** A previously captured SSE token stream, replayed verbatim on a cache hit. */
-export type CachedStreamData = {
-  tokens: string;
-  usageData?: UsageData;
+// Outlives the stream itself (an hour after `end`), and a job that waits for a sleeping worker.
+const STREAM_OWNER_TTL_SECONDS = 24 * 60 * 60;
+
+const streamOwnerKey = (streamId: string): string => buildKey('stream-owner', streamId);
+
+// The assistant Message only exists once the worker finishes it, so a stream's owner is kept here,
+// not in Postgres. Errors propagate.
+export const saveStreamOwner = async (streamId: string, userId: string): Promise<void> => {
+  // The main connection rejects a command sent before its first connect is ready.
+  await redis.connect();
+  await redis.connection.set(streamOwnerKey(streamId), userId, 'EX', STREAM_OWNER_TTL_SECONDS);
 };
 
-/**
- * The cache key for a chat request: session + model + hash of the last user
- * message, per ADR-0009. The correct-key rework (full context, temperature, system prompt) is a separate
- * future ticket. Key composition and hashing come from `@nebula-chat/redis`.
- */
-export const chatCacheKey = (data: CreateChatStreamDTO): string => {
-  const sessionId = data.sessionId ?? 'default';
-  const lastUserMessage = [...data.messages].reverse().find((msg) => msg.role === 'user');
-  const prompt = lastUserMessage?.content ?? '';
-
-  return buildKey('session', sessionId, 'model', data.model, 'prompt', hashText(prompt));
+/** The User a reply stream belongs to, or `null` for an unknown or expired one. Errors propagate. */
+export const findStreamOwner = async (streamId: string): Promise<string | null> => {
+  await redis.connect();
+  return redis.connection.get(streamOwnerKey(streamId));
 };
 
-export const getCachedStream = (key: string): Promise<CachedStreamData | null> =>
-  redis.cache.get<CachedStreamData>(key);
+/** Tails one reply stream over a dedicated connection; `close` drops it and rejects a read in flight. */
+export type ReplyStreamReader = {
+  read: (afterId: string, blockMs: number) => Promise<StreamEntry[]>;
+  close: () => void;
+};
 
-export const saveCachedStream = (
-  key: string,
-  tokens: string,
-  usageData?: UsageData,
-): Promise<void> => redis.cache.set(key, { tokens, ...(usageData !== undefined && { usageData }) });
+export const openReplyStream = (streamId: string): ReplyStreamReader => {
+  const reader = redis.streams.openReader();
+  const key = streamKey(streamId);
+  return {
+    read: (afterId, blockMs) => reader.read(key, afterId, { blockMs }),
+    close: () => reader.close(),
+  };
+};

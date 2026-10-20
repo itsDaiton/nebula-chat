@@ -1,0 +1,32 @@
+name: Deploy nebula-chat-worker
+
+# The worker bundles its workspace libraries at build time, so a release of any
+# of them changes what runs in production, as with the server.
+on:
+  push:
+    tags:
+      - 'nebula-chat-worker-v*'
+      - 'nebula-chat-contracts-v*'
+      - 'nebula-chat-db-v*'
+      - 'nebula-chat-errors-v*'
+      - 'nebula-chat-langchain-v*'
+      - 'nebula-chat-otel-v*'
+      - 'nebula-chat-redis-v*'
+  workflow_dispatch:
+
+permissions: {}
+
+# One release pushes several tags at once, each firing its own run.
+concurrency:
+  group: deploy-nebula-chat-worker
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy nebula-chat-worker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_WORKER_DEPLOY_HOOK }}
+        run: curl -fSs --retry 3 -X POST "$DEPLOY_HOOK"

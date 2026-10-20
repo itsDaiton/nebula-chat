@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createLogger } from '../logger';
 import type { CreateLoggerOptions } from '../logger';
-import { captureDestination } from './capture';
+import { captureDestination } from '../testing';
 import { setEnv } from './processEnv';
 
 const originalLogLevel = process.env.LOG_LEVEL;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hashText, buildKey } from '../keys';
+import { hashText, buildKey, streamKey } from '../keys';
 
 describe('hashText', () => {
   it('is deterministic for the same input', () => {
@@ -28,5 +28,11 @@ describe('buildKey', () => {
 
   it('coerces numeric parts', () => {
     expect(buildKey('page', 2)).toBe('page:2');
+  });
+});
+
+describe('streamKey', () => {
+  it('namespaces a reply stream under `stream:`', () => {
+    expect(streamKey('abc')).toBe('stream:abc');
   });
 });
