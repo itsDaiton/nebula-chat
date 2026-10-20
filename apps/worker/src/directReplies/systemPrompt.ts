@@ -1,4 +1,5 @@
-export const SYSTEM_PROMPT = `
+/** The system prompt every Direct reply runs with. */
+export const DIRECT_REPLY_SYSTEM_PROMPT = `
 # Persona
 
 You are Nebula Chat, a helpful AI assistant.

@@ -13,6 +13,12 @@ export const LOG_EVENTS = [
   'http.request.failed',
   // Chat
   'chat.reply.completed',
+  'chat.stream.relay.failed',
+  'chat.stream.end.failed',
+  // Jobs (the worker, ADR-0013)
+  'job.payload.rejected',
+  'job.queue.failed',
+  'worker.ping.failed',
   // LLM
   'llm.stream.started',
   'llm.stream.finished',
@@ -38,6 +44,9 @@ export const LOG_EVENTS = [
   'server.started',
   'server.start.failed',
   'server.shutdown.failed',
+  'worker.started',
+  'worker.start.failed',
+  'worker.shutdown.failed',
   'redis.connect.failed',
   'otel.started',
   'otel.start.failed',

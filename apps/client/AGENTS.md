@@ -94,7 +94,7 @@ apps/client/src/
 │   ├── chat/
 │   │   ├── ChatPage.tsx
 │   │   ├── types/types.ts         # All chat types
-│   │   ├── utils/                 # Model options, SSE event names, message mapping, isMessageAllowanceLow
+│   │   ├── utils/                 # Model options, SSE event names + parseSseStream, message mapping, isMessageAllowanceLow
 │   │   ├── stores/                # Zustand stores (client state)
 │   │   │   ├── useChatStreamStore.ts
 │   │   │   ├── useMessageStore.ts
@@ -333,11 +333,13 @@ State is split by **kind** ([ADR-0012](../../docs/adr/0012-adopt-tanstack-query-
   `src/libs/api/generated/**`; the cache owns loading, errors, dedup and refetching.
 - **Client state** is what the browser owns (drawer open, selected model, input text). It lives in
   [Zustand](https://zustand.docs.pmnd.rs/) stores.
-- **Chat streaming** is neither: `useChatStream` sends the request through the generated `streamChat`
-  (a fetch mutator, `libs/api/streamClient.ts`, that returns the raw `Response`), reads the SSE body itself
-  and writes the live reply into `useChatStreamStore`. `streamChat` is only called through `useChatStream`;
-  its generated react-query hook (`useStreamChat`) must never be used, because it would go through axios and
-  buffer the body.
+- **Chat streaming** is send, then subscribe (ADR-0014). `useChatStream` creates the Session for a new chat
+  (`useCreateSession`), sends the Message with the generated `useSendMessage` mutation (202
+  `{ messageId, streamId }`), then opens the reply stream through the generated `readReplyStream` (a fetch
+  mutator, `libs/api/streamClient.ts`, that returns the raw `Response`). It reads the SSE body with
+  `utils/parseSseStream.ts` and writes the live reply into `useChatStreamStore`. `readReplyStream` is only
+  called through `useChatStream`; its generated react-query hook (`useReadReplyStream`) must never be used,
+  because it would go through axios and buffer the body.
 
 ### Server state — the generated hooks
 
@@ -358,9 +360,9 @@ generate:api` after any backend change; generated files are never hand-edited.
   `meta: { inlineError: true }` and is not toasted.
 - **After a write the cache cannot see, invalidate** with the generated key helpers:
   `queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() })`. `useChatStream` invalidates the
-  list on `session-created`, and the list, session detail and messages on `end` (a messages
-  refetch mid-stream would race the reply). It also invalidates the message allowance on
-  `user-message-created`, the moment the server counts the message, and after a send refused at the allowance.
+  list once it creates a Session, and the list, session detail and messages on `end` (a messages
+  refetch mid-stream would race the reply). It also invalidates the message allowance once the send is
+  accepted, the moment the server counts the message, and after a send refused at the allowance.
   Invalidate rather than hand-seed with `setQueryData`.
 
 ### Auth state — better-auth
@@ -541,7 +543,7 @@ reworked: `ChatContainer` (clearing the post-stream flags, scrolling to the newe
 ## Shared Utilities
 
 - `@nebula-chat/errors` — the error vocabulary shared with the server (ADR-0011). The generated hooks already
-  reject with its `AppError`; the SSE stream reads an error body or `error` frame with
+  reject with its `AppError`; the reply stream reads an error body or `error` event with
   `parseErrorEnvelope(value)` and shows its `message`. Switch on the error code (`AppError.code`), not the
   HTTP status (a `MessageAllowanceReached` and a `Forbidden` are both 403s).
 - `shared/config/serverConfig.ts` — `SERVER_CONFIG.BASE_URL` (the axios `baseURL`) and `getApiEndpoint(path)`
@@ -587,7 +589,8 @@ pnpm frontend test:coverage
 
   The generated handlers match any origin, which is what keeps `http://localhost:3000` out of tests. Three
   things have no usable generated handler: failure responses (Orval emits only the documented success),
-  `/api/chat/stream` (its handler returns a plain string, not SSE frames) and better-auth's `/api/auth/*`. Their
+  `/api/streams/:streamId` (its handler returns a plain string, not SSE frames; `mockReplyStream` in
+  `@/test/chat` serves real frames) and better-auth's `/api/auth/*`. Their
   routes live in `@/test/api`, the one place route strings are written; `@/test/auth` holds the auth
   fixture and handlers (`aSession` (pass `image` for a Profile image), `mockGetSession`, `mockAnonymousSignIn`, `mockEmailSignIn`,
   `mockEmailSignUp`, `mockSocialSignIn` (its redirect is a hash change to `providerConsentUrl()`, the one

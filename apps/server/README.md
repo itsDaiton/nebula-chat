@@ -30,8 +30,8 @@ It is responsible for:
    cp apps/server/.env.example apps/server/.env
    ```
 
-3. Configure required variables in `apps/server/.env`:
-   - `OPENAI_API_KEY`
+3. Configure required variables in `apps/server/.env` (the server holds no LLM keys; those go in
+   `apps/worker/.env`, see [the worker's AGENTS.md](../worker/AGENTS.md)):
    - `SERVER_URL` (for local use: `http://localhost:3000`), allowed as a CORS origin (e.g. for Swagger UI at `/docs`)
    - `CLIENT_URL` (for local use: `http://localhost:5173`)
    - `DATABASE_URL` and `REDIS_URL` (for the local containers, build them from the credentials in the root `.env`)

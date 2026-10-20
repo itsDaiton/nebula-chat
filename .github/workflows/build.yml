@@ -53,8 +53,13 @@ jobs:
               - 'libs/**'
             cli:
               - 'apps/cli/**'
+            worker:
+              - 'apps/worker/**'
+              - 'libs/**'
             auth:
               - 'libs/auth/**'
+            contracts:
+              - 'libs/contracts/**'
             db:
               - 'libs/db/**'
             errors:
@@ -94,7 +99,9 @@ jobs:
           F_CLIENT: ${{ steps.filter.outputs.client }}
           F_SERVER: ${{ steps.filter.outputs.server }}
           F_CLI: ${{ steps.filter.outputs.cli }}
+          F_WORKER: ${{ steps.filter.outputs.worker }}
           F_AUTH: ${{ steps.filter.outputs.auth }}
+          F_CONTRACTS: ${{ steps.filter.outputs.contracts }}
           F_DB: ${{ steps.filter.outputs.db }}
           F_ERRORS: ${{ steps.filter.outputs.errors }}
           F_LANGCHAIN: ${{ steps.filter.outputs.langchain }}
@@ -113,7 +120,9 @@ jobs:
             {"id":"client","name":"nebula-chat-client","dir":"apps/client","filter":"@nebula-chat/client","lint":"apps/client/","key":"itsDaiton_nebula-chat-client","project":"Nebula-Chat-Client","coverage":"src/main.tsx,src/vite-env.d.ts,src/theme/**,src/libs/api/generated/**,src/routeTree.gen.ts,src/test/**,src/**/tests/**,src/**/*.types.ts,src/**/types/**,src/shared/components/ui/prose.tsx,src/shared/components/ui/provider.tsx,src/shared/components/ui/toaster.tsx,src/shared/components/ui/code-block-adapter.ts,src/shared/components/scrollbar.ts,src/resources.ts,src/routing/RouterDevtools.tsx"},
             {"id":"server","name":"nebula-chat-server","dir":"apps/server","filter":"@nebula-chat/server","lint":"apps/server/","key":"itsDaiton_nebula-chat-server","project":"Nebula-Chat-Server","coverage":"src/**/tests/**,src/test/**,src/server.ts,src/app.ts,src/logger.ts,src/env.ts,src/db.ts,src/auth.ts,src/profileImageStore.ts,src/generated/**,src/scripts/**,src/**/*.types.ts,src/**/*.repository.ts"},
             {"id":"cli","name":"nebula-chat-cli","dir":"apps/cli","filter":"@nebula-chat/cli","lint":"apps/cli/","key":"itsDaiton_nebula-chat-cli","project":"Nebula-Chat-CLI","coverage":"src/**/tests/**,src/test/**,src/api/generated/**,src/bin.ts"},
+            {"id":"worker","name":"nebula-chat-worker","dir":"apps/worker","filter":"@nebula-chat/worker","lint":"apps/worker/","key":"","project":"Nebula-Chat-Worker","coverage":"src/**/tests/**,src/test/**,src/worker.ts,src/env.ts,src/logger.ts,src/db.ts,src/redis.ts,src/**/*Repository.ts"},
             {"id":"auth","name":"nebula-chat-auth","dir":"libs/auth","filter":"@nebula-chat/auth","lint":"libs/auth/","key":"itsDaiton_nebula-chat-auth","project":"Nebula-Chat-Auth","coverage":"src/**/tests/**,src/index.ts,src/auth.ts"},
+            {"id":"contracts","name":"nebula-chat-contracts","dir":"libs/contracts","filter":"@nebula-chat/contracts","lint":"libs/contracts/","key":"","project":"Nebula-Chat-Contracts","coverage":"src/**/tests/**,src/index.ts"},
             {"id":"db","name":"nebula-chat-db","dir":"libs/db","filter":"@nebula-chat/db","lint":"libs/db/","key":"itsDaiton_nebula-chat-db","project":"Nebula-Chat-DB","coverage":"src/**/tests/**,src/index.ts,src/schema.ts,src/migrate.ts,src/baseline.ts"},
             {"id":"errors","name":"nebula-chat-errors","dir":"libs/errors","filter":"@nebula-chat/errors","lint":"libs/errors/","key":"itsDaiton_nebula-chat-errors","project":"Nebula-Chat-Errors","coverage":"src/**/tests/**,src/index.ts"},
             {"id":"langchain","name":"nebula-chat-langchain","dir":"libs/langchain","filter":"@nebula-chat/langchain","lint":"libs/langchain/","key":"itsDaiton_nebula-chat-langchain","project":"Nebula-Chat-LangChain","coverage":"src/**/tests/**,src/index.ts,src/logger.ts"},
@@ -129,7 +138,9 @@ jobs:
             if [ "$F_CLIENT" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["client"]'); fi
             if [ "$F_SERVER" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["server"]'); fi
             if [ "$F_CLI" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["cli"]'); fi
+            if [ "$F_WORKER" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["worker"]'); fi
             if [ "$F_AUTH" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["auth"]'); fi
+            if [ "$F_CONTRACTS" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["contracts"]'); fi
             if [ "$F_DB" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["db"]'); fi
             if [ "$F_ERRORS" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["errors"]'); fi
             if [ "$F_LANGCHAIN" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["langchain"]'); fi

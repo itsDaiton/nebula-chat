@@ -1,0 +1,72 @@
+import type { ReplyStreamEvent } from '@nebula-chat/contracts';
+import type {
+  DirectReplyStore,
+  ReplyStreamWriter,
+  StoredMessage,
+  StoredSession,
+  StreamChat,
+} from '@worker/directReplies/runDirectReply';
+
+type StoredAssistantMessage = Parameters<DirectReplyStore['createAssistantMessage']>[0];
+
+/** Postgres in memory: Sessions keyed by id with their owner, Messages oldest first. */
+export const memoryStore = () => {
+  const sessions = new Map<string, StoredSession & { userId: string }>();
+  const messages: (StoredMessage & { sessionId: string })[] = [];
+  const created: StoredAssistantMessage[] = [];
+  const store: DirectReplyStore = {
+    findSession: async (sessionId, userId) => {
+      const session = sessions.get(sessionId);
+      return session?.userId === userId ? { id: session.id, model: session.model } : null;
+    },
+    findRecentMessages: async (sessionId, limit) =>
+      messages
+        .filter((m) => m.sessionId === sessionId)
+        .toReversed()
+        .slice(0, limit)
+        .map(({ id, role, content }) => ({ id, role, content })),
+    createAssistantMessage: async (message) => {
+      created.push(message);
+    },
+  };
+  return { store, sessions, messages, created };
+};
+
+/** Reply streams in memory, with every write in one ordered log so tests can assert sequencing. */
+export const memoryStream = (operations: string[] = []) => {
+  const events = new Map<string, ReplyStreamEvent[]>();
+  const expired = new Set<string>();
+  const stream: ReplyStreamWriter = {
+    append: async (streamId, event) => {
+      events.set(streamId, [...(events.get(streamId) ?? []), event]);
+      operations.push(`append:${event.type}`);
+    },
+    expire: async (streamId) => {
+      expired.add(streamId);
+      operations.push('expire');
+    },
+  };
+  return { stream, events, expired };
+};
+
+/** A model that streams `tokens` then reports `usage`, recording the config it was called with. */
+export const scriptedModel = (
+  tokens: string[],
+  usage = { promptTokens: 10, completionTokens: tokens.length, totalTokens: 10 + tokens.length },
+) => {
+  const calls: Parameters<StreamChat>[0][] = [];
+  const streamChat: StreamChat = async (config, { onToken, onUsage }) => {
+    calls.push(config);
+    for (const token of tokens) onToken(token);
+    onUsage(usage);
+  };
+  return { streamChat, calls };
+};
+
+/** A model that streams `tokens` and then fails with `error`, as a provider outage mid-reply would. */
+export const failingModel =
+  (error: Error, tokens: string[] = []): StreamChat =>
+  async (_config, { onToken }) => {
+    for (const token of tokens) onToken(token);
+    throw error;
+  };

@@ -60,7 +60,7 @@ export default defineConfig({
             },
           },
           // Streams SSE, so the request goes through a fetch mutator that hands back the raw Response.
-          streamChat: {
+          readReplyStream: {
             mutator: {
               path: './src/libs/api/streamClient.ts',
               name: 'streamClient',

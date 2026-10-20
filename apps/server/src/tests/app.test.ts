@@ -85,6 +85,7 @@ describe('OpenAPI document', () => {
       'MeteredMessageAllowance',
       'ProfileImage',
       'ProfileImageSettings',
+      'SentMessage',
       'Session',
       'SessionPage',
       'UnmeteredMessageAllowance',

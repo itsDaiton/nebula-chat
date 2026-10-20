@@ -2,16 +2,13 @@ import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 // env.ts parses process.env on import, so these must be set before @backend/app loads.
-// No connection is opened (pg and Redis are lazy), so placeholders suffice; a real var wins.
+// No connection is opened (pg, Redis and the job queue are lazy), so placeholders suffice; a real var wins.
 process.env['DATABASE_URL'] ??= 'postgresql://localhost:5432/openapi';
 process.env['REDIS_URL'] ??= 'redis://localhost:6379';
 process.env['BETTER_AUTH_SECRET'] ??= 'openapi-placeholder-secret-never-used-for-signing';
 process.env['BETTER_AUTH_URL'] ??= 'http://localhost:3000';
 process.env['RESEND_API_KEY'] ??= 'openapi-placeholder-resend-key';
 process.env['EMAIL_FROM'] ??= 'openapi@example.com';
-if (!process.env['OPENAI_API_KEY'] && !process.env['ANTHROPIC_API_KEY']) {
-  process.env['OPENAI_API_KEY'] = 'openapi-placeholder-key';
-}
 
 const main = async (): Promise<void> => {
   const { buildApp } = await import('@backend/app.js');

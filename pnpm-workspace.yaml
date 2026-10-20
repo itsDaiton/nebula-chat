@@ -27,6 +27,8 @@ nodeVersion: 26.8.2
 allowBuilds:
   argon2: true
   esbuild: true
+  # Optional native msgpack speed-up pulled in by bullmq; the pure-JS fallback is enough.
+  msgpackr-extract: false
   msw: true
   protobufjs: true
 

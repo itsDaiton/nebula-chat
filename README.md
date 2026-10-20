@@ -60,14 +60,17 @@ default).
    ```bash
    cp .env.example .env # credentials for the local Postgres/Redis containers
    cp apps/server/.env.example apps/server/.env
+   cp apps/worker/.env.example apps/worker/.env
    cp apps/client/.env.example apps/client/.env
    ```
 
 3. Fill required values:
    - `.env` (root): Postgres/Redis container credentials. `DATABASE_URL` and `REDIS_URL` in the
      server `.env` must use the same ones.
-   - `apps/server/.env`: at least `OPENAI_API_KEY`, `SERVER_URL`, `CLIENT_URL`,
-     `DATABASE_URL` and `REDIS_URL`.
+   - `apps/server/.env`: at least `SERVER_URL`, `CLIENT_URL`, `DATABASE_URL` and
+     `REDIS_URL`.
+   - `apps/worker/.env`: `OPENAI_API_KEY` (or `ANTHROPIC_API_KEY`), plus the same
+     `DATABASE_URL` and `REDIS_URL`. The worker produces every reply, so chat needs it running.
    - `apps/client/.env`: `VITE_API_URL` (usually `http://localhost:3000` in local
      development).
 

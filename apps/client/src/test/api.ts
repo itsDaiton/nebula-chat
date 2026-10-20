@@ -10,7 +10,7 @@ import { HttpResponse, http, type HttpHandler, type JsonBodyType } from 'msw';
  * server.use(getListSessionsMockHandler({ sessions, nextCursor: null, hasMore: false }));
  * ```
  *
- * Failure responses have no generated handler, `/api/chat/stream`'s returns a plain
+ * Failure responses have no generated handler, `/api/streams/:streamId`'s returns a plain
  * string rather than SSE frames, and better-auth's `/api/auth/*` is absent from the
  * OpenAPI spec. This module covers exactly that gap, keeping the origin wildcard in one place.
  */
@@ -18,7 +18,8 @@ export const API_ROUTE = {
   sessions: '*/api/sessions',
   sessionsSearch: '*/api/sessions/search',
   session: '*/api/sessions/:sessionId',
-  chatStream: '*/api/chat/stream',
+  sendMessage: '*/api/sessions/:sessionId/messages',
+  replyStream: '*/api/streams/:streamId',
   messageAllowance: '*/api/chat/message-allowance',
   profileImage: '*/api/profile-image',
   authSession: '*/api/auth/get-session',

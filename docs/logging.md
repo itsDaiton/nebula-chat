@@ -90,7 +90,8 @@ export const logger: Logger = createLogger({
 The libs never create a logger: `@nebula-chat/redis`, `@nebula-chat/db` and
 `@nebula-chat/auth` log only through the one they are given, and
 `@nebula-chat/langchain` through the duck-typed `LLMLogger` it is handed per
-call.
+call. The worker follows the same rules: `@worker/logger` outside a job, the
+job's bound child inside one.
 
 ## Writing a line
 
@@ -159,21 +160,25 @@ once, and nobody else does:
 - **Auth.** The `/api/auth/*` catch-all hijacks its reply, so a throw from
   better-auth's handler skips the error handler. The route writes the same
   `http.request.failed` line (`error.type: Internal`) and records the code.
-- **Chat.** The SSE stream hijacks its reply, so `chat.service` is its own
+- **Direct replies** (the worker, `service.name: nebula-chat-worker`). The
+  runner in `apps/worker/src/directReplies/runDirectReply.ts` is the reply's one
   handler. `@nebula-chat/langchain`'s `streamChat` rethrows without logging, and
-  the service writes exactly one `chat.reply.completed` per Direct reply:
+  the runner writes exactly one `chat.reply.completed` per Direct reply:
 
-  | `nebula.outcome` | Level                                                     | Carries                       |
-  | ---------------- | --------------------------------------------------------- | ----------------------------- |
-  | `completed`      | `info`                                                    | tokens, both message ids      |
-  | `rate_limited`   | `warn`                                                    | `error.type: TooManyRequests` |
-  | `failed`         | `error`, or `warn` when the caller caused it (a 4xx code) | `err`, `error.type`           |
+  | `nebula.outcome` | Level                                                     | Carries             |
+  | ---------------- | --------------------------------------------------------- | ------------------- |
+  | `completed`      | `info`                                                    | tokens              |
+  | `failed`         | `error`, or `warn` when the caller caused it (a 4xx code) | `err`, `error.type` |
 
-  Every outcome also carries `nebula.session.id` (once known), the user Message
-  as `nebula.message.id`, the assistant Message as `nebula.reply.message.id`
-  (when one was created), `gen_ai.*`, and `nebula.duration_ms`. A reply replayed
-  from the cache is still a Direct reply: `chat.cacheCheck.hook.ts` writes its
-  `completed` line, marked by `nebula.cache.key`.
+  Every line is written through the job's logger, bound to `user.id`,
+  `nebula.session.id`, the user Message as `nebula.message.id`, the reply's
+  stream (and assistant Message) as `nebula.reply.message.id`, and
+  `nebula.job.id`; it also carries `gen_ai.*` and `nebula.duration_ms`. A job
+  whose payload breaks the contract writes `job.payload.rejected` instead.
+
+- **Reply streams** (the server). The relay hijacks its reply; a Redis failure
+  mid-relay writes one `chat.stream.relay.failed` `error` line, and a failed
+  wake-up ping of the worker on enqueue writes `worker.ping.failed` at `warn`.
 
 - **Cache.** Every cache operation is fail-open, so a Redis failure is a `warn`
   (`cache.read.failed`, `cache.write.failed`, `cache.delete.failed`,

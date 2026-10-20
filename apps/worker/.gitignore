@@ -1,0 +1,13 @@
+/node_modules
+npm-debug.log
+
+/dist
+/tmp/*
+!/tmp/restart.txt
+
+/.env.local
+/.env.development
+/.env.test
+/.env.production
+/.env
+

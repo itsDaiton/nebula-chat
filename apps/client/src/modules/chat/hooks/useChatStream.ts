@@ -1,21 +1,34 @@
 import { useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { parseErrorEnvelope } from '@nebula-chat/errors';
+import { isAppError, parseErrorEnvelope } from '@nebula-chat/errors';
 import {
   getGetSessionQueryKey,
   getListSessionsInfiniteQueryKey,
+  useCreateSession,
 } from '@/libs/api/generated/sessions/sessions';
-import { getGetMessageAllowanceQueryKey, streamChat } from '@/libs/api/generated/chat/chat';
+import { getGetMessageAllowanceQueryKey, useSendMessage } from '@/libs/api/generated/chat/chat';
 import { getListMessagesQueryKey } from '@/libs/api/generated/messages/messages';
+import { readReplyStream } from '@/libs/api/generated/streams/streams';
 import { ErrorCode } from '@/libs/api/generated/model/errorCode';
-import type { StreamChatBody } from '@/libs/api/generated/model/streamChatBody';
-import type { ChatHistoryStreamOptions, SseEvent } from '@/modules/chat/types/types';
+import type { SendMessageBodyModel } from '@/libs/api/generated/model/sendMessageBodyModel';
+import type { ChatHistoryStreamOptions } from '@/modules/chat/types/types';
 import { useNavigate } from 'react-router';
 import { route } from '@/routing/routes';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
-import { SSE_EVENTS } from '@/modules/chat/utils/sseEvents';
+import { parseSseStream } from '@/modules/chat/utils/parseSseStream';
 import { resources } from '@/resources';
+
+// A failed send or stream renders inside the reply, so the global toaster stays out of it.
+const INLINE_ERROR = { mutation: { meta: { inlineError: true } } };
+
+const parseJson = (raw: string): unknown => {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
 
 export const useChatStream = () => {
   const {
@@ -34,12 +47,13 @@ export const useChatStream = () => {
   } = useChatStreamStore();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { mutateAsync: createSession } = useCreateSession(INLINE_ERROR);
+  const { mutateAsync: sendMessage } = useSendMessage(INLINE_ERROR);
 
   const abortController = useRef<AbortController | null>(null);
-  const pendingNavigationId = useRef<string | null>(null);
 
   // Keep sessionId in a ref so streamMessage doesn't need it as a useCallback dep.
-  // Without this, every setSessionId call (fired mid-stream on session-created)
+  // Without this, every setSessionId call (fired mid-send for a new session)
   // would recreate streamMessage → handleSendMessage → re-render the entire ChatContainer.
   const sessionIdRef = useRef(sessionId);
   sessionIdRef.current = sessionId;
@@ -57,16 +71,41 @@ export const useChatStream = () => {
   );
 
   const invalidateCompletedStream = useCallback(
-    (completedSessionId: string | undefined) => {
+    (completedSessionId: string) => {
       void invalidateSessionList();
       void queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() });
-      if (completedSessionId) {
-        void queryClient.invalidateQueries({
-          queryKey: getGetSessionQueryKey(completedSessionId),
-        });
-      }
+      void queryClient.invalidateQueries({ queryKey: getGetSessionQueryKey(completedSessionId) });
     },
     [invalidateSessionList, queryClient],
+  );
+
+  const showReplyError = useCallback(
+    (message: string) => {
+      setError(message);
+      setHistory((prev) => {
+        const updated = [...prev];
+        const last = updated.at(-1);
+        if (last?.role === 'assistant') {
+          updated[updated.length - 1] = { ...last, content: message };
+        }
+        return updated;
+      });
+    },
+    [setError, setHistory],
+  );
+
+  const appendToken = useCallback(
+    (token: string) =>
+      setHistory((prev) => {
+        const updated = [...prev];
+        const last = updated.at(-1);
+        if (last?.role !== 'assistant') {
+          return prev;
+        }
+        updated[updated.length - 1] = { ...last, content: last.content + token };
+        return updated;
+      }),
+    [setHistory],
   );
 
   const abort = useCallback(() => {
@@ -75,33 +114,19 @@ export const useChatStream = () => {
     setIsStreaming(false);
   }, [setIsStreaming]);
 
+  /**
+   * Sends the newest message, then subscribes to its reply (ADR-0014): a new
+   * chat first gets its Session, the send returns the reply's stream id, and the
+   * stream's tokens render into the trailing assistant message until `end`.
+   */
   const streamMessage = useCallback(
     async ({ model, messages, sessionId: customSessionId }: ChatHistoryStreamOptions) => {
-      pendingNavigationId.current = null;
-
       const controller = new AbortController();
       abortController.current = controller;
+      const content = messages.at(-1)?.content ?? '';
+      let activeSessionId = customSessionId ?? sessionIdRef.current;
+      const isNewSession = !activeSessionId;
 
-      // Build the request body synchronously before any state updates.
-      const newUserMessage = messages.at(-1);
-      const activeSessionId = customSessionId ?? sessionIdRef.current;
-      const requestBody: StreamChatBody = {
-        messages: messages.slice(-1),
-        model,
-        ...(activeSessionId && { sessionId: activeSessionId }),
-      };
-
-      // Start the request BEFORE the state update. useChatStreamStore.setState uses
-      // useSyncExternalStore which can trigger synchronous renders — doing it before
-      // the call would delay the HTTP request by the cost of that render pass.
-      // The stream mutator resolves with the raw Response, though the generated type says string.
-      const responseFetch = streamChat(
-        requestBody,
-        undefined,
-        controller.signal,
-      ) as unknown as Promise<Response>;
-
-      // Now update UI state. The network request is already in flight.
       useChatStreamStore.setState({
         isStreaming: true,
         error: null,
@@ -111,179 +136,103 @@ export const useChatStream = () => {
       });
 
       try {
-        const response = await responseFetch;
+        if (!activeSessionId) {
+          const created = await createSession({ data: { title: content.slice(0, 50) } });
+          activeSessionId = created.id;
+          setSessionId(activeSessionId);
+          // The sidebar can show it now, before its first reply.
+          void invalidateSessionList();
+        }
 
-        if (!response.ok) {
-          // A rejection before streaming starts (auth, allowance, validation,
-          // rate limit) arrives as the JSON error envelope.
+        const { streamId } = await sendMessage({
+          sessionId: activeSessionId,
+          data: { content, mode: 'direct', model: model as SendMessageBodyModel },
+        });
+        void invalidateMessageAllowance();
+        if (controller.signal.aborted) return;
+
+        // The stream mutator resolves with the raw Response, though the generated type says string.
+        const response = (await readReplyStream(
+          streamId,
+          undefined,
+          controller.signal,
+        )) as unknown as Response;
+        if (!response.ok || !response.body) {
           const envelope = parseErrorEnvelope(await response.json().catch(() => null));
-          // Matched on the code, since a plain Forbidden is a 403 too; a bare 403 counts as reached.
-          const isMessageAllowanceReached = envelope
-            ? envelope.error === ErrorCode.MessageAllowanceReached
-            : response.status === 403;
-          if (isMessageAllowanceReached) {
-            // Nothing was persisted, so the refused message goes back to the composer to resend.
-            useChatStreamStore.setState({
-              history: messages.slice(0, -1),
-              isStreaming: false,
-              isMessageAllowanceReached: true,
-            });
-            useMessageStore.getState().setMessage(newUserMessage?.content ?? '');
-            // The count shown may be stale (another tab), so resync it with the server's.
-            void invalidateMessageAllowance();
-            return;
-          }
           throw new Error(envelope?.message ?? resources.chat.streamError);
         }
 
-        if (!response.body) {
-          throw new Error('Response body is null.');
-        }
+        for await (const { event, data } of parseSseStream(response.body)) {
+          const parsed = parseJson(data);
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let buffer = '';
-        let currentEvent: SseEvent | null = null;
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            if (line.startsWith('event: ')) {
-              const name = line.slice(7);
-              currentEvent = SSE_EVENTS.has(name) ? (name as SseEvent) : null;
-              continue;
+          if (event === 'token') {
+            const token = (parsed as { token?: unknown } | null)?.token;
+            if (typeof token === 'string') appendToken(token);
+          } else if (event === 'usage') {
+            const { promptTokens, completionTokens, totalTokens } = parsed as Record<
+              string,
+              number
+            >;
+            setUsage({ promptTokens, completionTokens, totalTokens });
+          } else if (event === 'error') {
+            showReplyError(parseErrorEnvelope(parsed)?.message ?? resources.chat.streamError);
+            setIsStreaming(false);
+            return;
+          } else {
+            invalidateCompletedStream(activeSessionId);
+            if (isNewSession) {
+              // isStreaming intentionally stays true here — a useEffect in ChatContainer
+              // will call clearPostStream() once sessionId from useParams is set,
+              // guaranteeing isStreaming goes false only after the navigation has rendered.
+              // (requestAnimationFrame was unreliable: it could fire before React processed
+              // the navigation render, leaving a frame with isStreaming=false + no sessionId
+              // → empty state flicker.)
+              setIsPostStreamNavigation(true);
+              void navigate(route.chat.session(activeSessionId), { replace: true });
+            } else {
+              setIsStreaming(false);
             }
-
-            if (line.startsWith('data: ')) {
-              const raw = line.replace('data: ', '').trim();
-
-              if (currentEvent === 'end') {
-                abortController.current = null;
-                // Not the ref: it lags a `session-created` frame in the same chunk.
-                invalidateCompletedStream(useChatStreamStore.getState().sessionId);
-                if (pendingNavigationId.current) {
-                  const navId = pendingNavigationId.current;
-                  pendingNavigationId.current = null;
-                  // Signal that we're in the post-stream navigation window.
-                  // isStreaming intentionally stays true here — a useEffect in ChatContainer
-                  // will call clearPostStream() once sessionId from useParams is set,
-                  // guaranteeing isStreaming goes false only after the navigation has rendered.
-                  // (requestAnimationFrame was unreliable: it could fire before React processed
-                  // the navigation render, leaving a frame with isStreaming=false + no sessionId
-                  // → empty state flicker.)
-                  setIsPostStreamNavigation(true);
-                  void navigate(route.chat.session(navId), { replace: true });
-                } else {
-                  setIsStreaming(false);
-                }
-                return;
-              }
-
-              let parsed: any;
-              try {
-                parsed = JSON.parse(raw);
-              } catch {
-                continue;
-              }
-
-              if (currentEvent === 'session-created') {
-                if (parsed.sessionId) {
-                  const isNewSession = !sessionIdRef.current;
-                  setSessionId(parsed.sessionId);
-                  if (isNewSession) {
-                    pendingNavigationId.current = parsed.sessionId;
-                    // The server has persisted it, so the sidebar can show it now.
-                    void invalidateSessionList();
-                  }
-                }
-                currentEvent = null;
-                continue;
-              }
-
-              if (currentEvent === 'user-message-created') {
-                void invalidateMessageAllowance();
-                currentEvent = null;
-                continue;
-              }
-
-              if (currentEvent === 'assistant-message-created') {
-                currentEvent = null;
-                continue;
-              }
-
-              if (currentEvent === 'error') {
-                const errorMsg = parseErrorEnvelope(parsed)?.message ?? resources.chat.streamError;
-                setError(errorMsg);
-                setHistory((prev) => {
-                  const updated = [...prev];
-                  const last = updated.at(-1);
-                  if (last?.role === 'assistant') {
-                    updated[updated.length - 1] = {
-                      ...last,
-                      content: errorMsg,
-                    };
-                  }
-                  return updated;
-                });
-                setIsStreaming(false);
-                abortController.current = null;
-                return;
-              }
-
-              if (currentEvent === 'usage') {
-                setUsage({
-                  promptTokens: parsed.promptTokens,
-                  completionTokens: parsed.completionTokens,
-                  totalTokens: parsed.totalTokens,
-                });
-                currentEvent = null;
-                continue;
-              }
-
-              if (currentEvent === 'token' && typeof parsed.token === 'string') {
-                setHistory((prev) => {
-                  const updated = [...prev];
-                  const last = updated.at(-1);
-                  if (last?.role !== 'assistant') {
-                    return prev;
-                  }
-                  updated[updated.length - 1] = {
-                    ...last,
-                    content: last.content + parsed.token,
-                  };
-                  return updated;
-                });
-                currentEvent = null;
-              }
-            }
+            return;
           }
         }
+        // The body closed without `end`: the connection dropped mid-reply.
+        throw new Error(resources.chat.streamError);
       } catch (err) {
+        if (isAppError(err) && err.code === ErrorCode.MessageAllowanceReached) {
+          // Nothing was persisted, so the refused message goes back to the composer to resend.
+          useChatStreamStore.setState({
+            history: messages.slice(0, -1),
+            isStreaming: false,
+            isMessageAllowanceReached: true,
+          });
+          useMessageStore.getState().setMessage(content);
+          // The count shown may be stale (another tab), so resync it with the server's.
+          void invalidateMessageAllowance();
+          return;
+        }
         if (!controller.signal.aborted) {
-          setError((err as Error).message || 'Unknown error occurred');
+          showReplyError(
+            err instanceof Error && err.message ? err.message : resources.chat.streamError,
+          );
         }
         setIsStreaming(false);
       } finally {
-        abortController.current = null;
+        if (abortController.current === controller) abortController.current = null;
       }
     },
     [
+      appendToken,
+      createSession,
       invalidateCompletedStream,
       invalidateSessionList,
       invalidateMessageAllowance,
       navigate,
+      sendMessage,
       setSessionId,
-      setError,
-      setHistory,
       setIsPostStreamNavigation,
       setIsStreaming,
       setUsage,
+      showReplyError,
     ],
   );
 

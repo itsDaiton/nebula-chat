@@ -20,6 +20,37 @@ services:
     startCommand: cd apps/server && node dist/src/server.js
     healthCheckPath: /health
     autoDeployTrigger: off
+    envVars:
+      # The worker's public URL. The server pings its /health on every enqueue,
+      # which is what wakes a sleeping free-plan worker (ADR-0013).
+      - key: WORKER_URL
+        sync: false
+
+  # Produces every LLM reply (ADR-0013). The free plan has no background
+  # workers, so it runs as a web service whose only route is /health; it sleeps
+  # without inbound HTTP and the server's ping wakes it. It holds the LLM keys;
+  # the server holds none. Migrations stay with the server's build.
+  - type: web
+    name: nebula-chat-worker
+    runtime: node
+    rootDir: .
+    plan: free
+    buildCommand: npm install -g pnpm@12.4.1 && pnpm install --frozen-lockfile && pnpm turbo run build --filter=@nebula-chat/worker
+    startCommand: cd apps/worker && node dist/src/worker.js
+    healthCheckPath: /health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      # At least one of the two LLM keys.
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
 
   - type: web
     name: nebula-chat-client

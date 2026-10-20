@@ -9,5 +9,7 @@
   "libs/redis": "0.2.6",
   "libs/auth": "3.0.0",
   "libs/errors": "0.2.3",
-  "apps/cli": "1.1.0"
+  "apps/cli": "1.1.0",
+  "libs/contracts": "0.0.0",
+  "apps/worker": "0.0.0"
 }

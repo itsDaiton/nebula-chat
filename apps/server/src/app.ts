@@ -21,6 +21,7 @@ import { apiRootSchema, healthSchema } from '@backend/health.validation';
 import { logger } from '@backend/logger';
 import chatRoutes from '@backend/modules/chat/chat.routes';
 import sessionRoutes from '@backend/modules/session/session.routes';
+import streamRoutes from '@backend/modules/stream/stream.routes';
 import logLevelRoutes from '@backend/modules/logLevel/logLevel.routes';
 import messageRoutes from '@backend/modules/message/message.routes';
 import profileImageRoutes from '@backend/modules/profileImage/profileImage.routes';
@@ -96,7 +97,8 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
       servers: [{ url: '/' }],
       tags: [
         { name: 'Health', description: 'Liveness and readiness probes' },
-        { name: 'Chat', description: 'Chat streaming endpoints' },
+        { name: 'Chat', description: 'Sending Messages and the message allowance' },
+        { name: 'Streams', description: 'Reply streams, relayed as server-sent events' },
         { name: 'Sessions', description: 'Session management' },
         { name: 'Messages', description: 'Message management' },
         { name: 'Profile image', description: "A Registered user's Profile image" },
@@ -161,9 +163,10 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
 
   app.setErrorHandler(errorHandler);
 
-  await app.register(chatRoutes, { prefix: '/api/chat' });
+  await app.register(chatRoutes, { prefix: '/api' });
   await app.register(sessionRoutes, { prefix: '/api/sessions' });
   await app.register(messageRoutes, { prefix: '/api/messages' });
+  await app.register(streamRoutes, { prefix: '/api/streams' });
   await app.register(profileImageRoutes, { prefix: '/api/profile-image' });
   await app.register(logLevelRoutes, { prefix: '/api/internal/log-level' });
 

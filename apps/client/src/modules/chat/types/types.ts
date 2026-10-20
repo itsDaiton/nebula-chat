@@ -101,11 +101,11 @@ export type ModelSelectorState = {
   setTriggerWidth: (width: number) => void;
 };
 
-export type SseEvent =
-  | 'token'
-  | 'usage'
-  | 'error'
-  | 'end'
-  | 'session-created'
-  | 'user-message-created'
-  | 'assistant-message-created';
+/** The events a reply stream carries (`GET /api/streams/{streamId}`). */
+export type SseEvent = 'token' | 'usage' | 'error' | 'end';
+
+/** One SSE event off a reply stream: its name and its raw `data` line. */
+export type SseFrame = {
+  event: SseEvent;
+  data: string;
+};

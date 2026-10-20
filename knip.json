@@ -19,6 +19,12 @@
         "src/api/generated/**": ["exports", "types"]
       }
     },
+    "apps/worker": {
+      "project": ["src/**/*.ts"]
+    },
+    "libs/contracts": {
+      "project": ["src/**/*.ts"]
+    },
     "libs/db": {
       "project": ["src/**/*.ts"],
       "drizzle": false

@@ -1,23 +1,26 @@
 import { z } from 'zod';
-import { MODEL_REGISTRY } from '@nebula-chat/langchain';
+import { modelIdSchema } from '@nebula-chat/contracts';
 
-const chatMessageSchema = z.object({
-  role: z.enum(['user', 'assistant']),
+export const sendMessageParamsSchema = z.object({
+  sessionId: z.uuid(),
+});
+
+export const sendMessageSchema = z.object({
   content: z.string().min(1),
+  mode: z
+    .literal('direct')
+    .describe('How the reply is produced. Only `direct`, a Direct reply, for now.'),
+  model: modelIdSchema
+    .optional()
+    .describe("Binds the Session to this Model before replying; omitted keeps the Session's Model"),
 });
 
-export const createChatStreamSchema = z.object({
-  messages: z.array(chatMessageSchema).length(1),
-  model: z
-    .string()
-    .refine((m) => Object.hasOwn(MODEL_REGISTRY, m), { message: 'Invalid model name' }),
-  sessionId: z.uuid().optional(),
-  regenerate: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe('Bypass and overwrite any cached response, forcing a fresh completion'),
-});
+export const sentMessageSchema = z
+  .object({
+    messageId: z.uuid().describe('The persisted user Message'),
+    streamId: z.uuid().describe('The reply stream to read from `GET /api/streams/{streamId}`'),
+  })
+  .meta({ id: 'SentMessage' });
 
 const meteredMessageAllowanceSchema = z
   .object({

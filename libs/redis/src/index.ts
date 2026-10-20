@@ -12,8 +12,11 @@ export type { AuthStore } from './authStore';
 // Pub/sub primitive (fire-and-forget broadcast)
 export type { RedisPubSub } from './pubsub';
 
+// Streams primitive (append-only logs tailed from an offset; reply delivery, ADR-0014)
+export type { RedisStreams, StreamReader, StreamEntry, StreamReadOptions } from './streams';
+
 // Key helpers (the lib owns the key/hash scheme)
-export { hashText, buildKey, authKey, AUTH_KEY_PREFIX } from './keys';
+export { hashText, buildKey, authKey, AUTH_KEY_PREFIX, streamKey } from './keys';
 
 // Config
 export type {
@@ -23,4 +26,7 @@ export type {
   AuthStoreConnection,
   PublishConnection,
   SubscribeConnection,
+  StreamWriteConnection,
+  StreamReadConnection,
+  XReadReply,
 } from './types';

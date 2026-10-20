@@ -7,12 +7,16 @@ export const streamClient = async <T>(
   config: AxiosRequestConfig,
   options?: AxiosRequestConfig,
 ): Promise<T> => {
+  const hasBody = config.data !== undefined;
   const response = await fetch(SERVER_CONFIG.getApiEndpoint(config.url ?? ''), {
     method: config.method,
-    headers: { 'Content-Type': 'application/json' },
+    // Only a request with a body declares one: a JSON content type on a GET forces a CORS preflight.
+    ...(hasBody && {
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config.data),
+    }),
     // Carries the better-auth session cookie cross-origin, as the axios client does.
     credentials: 'include',
-    body: JSON.stringify(config.data),
     signal: (options?.signal ?? config.signal) as AbortSignal | undefined,
   });
   // The generated signature says `string` (the OpenAPI 200 body); the runtime value is the Response.

@@ -1,37 +1,20 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { setSseHeaders } from '@backend/config/headers.config';
 import { getMessageAllowance as readMessageAllowance } from '@backend/modules/chat/chat.messageAllowance.service';
-import type { CreateChatStreamDTO } from '@backend/modules/chat/chat.types';
+import type { SendMessageDTO, SendMessageParams } from '@backend/modules/chat/chat.types';
 import { chatService } from '@backend/modules/chat/chat.service';
 import { getSessionData } from '@backend/plugins/authGate.plugin';
-import { sseEnd } from '@nebula-chat/langchain';
 
 export const chatController = {
-  async streamMessage(req: FastifyRequest, reply: FastifyReply): Promise<void> {
-    if (reply.raw.writableEnded) return;
-
-    const input = req.body as CreateChatStreamDTO;
+  async sendMessage(req: FastifyRequest, reply: FastifyReply) {
+    const { sessionId } = req.params as SendMessageParams;
     const { user } = getSessionData(req);
-
-    reply.hijack();
-    const raw = reply.raw;
-
-    setSseHeaders(reply);
-    raw.flushHeaders?.();
-
-    const result = await chatService.streamResponse(
-      input,
-      (chunk) => raw.write(chunk),
+    const sent = await chatService.sendMessage(
+      sessionId,
+      req.body as SendMessageDTO,
       user.id,
       req.log,
     );
-
-    if (result) {
-      (req.body as CreateChatStreamDTO).sessionId = result.sessionId;
-    }
-
-    raw.write(sseEnd());
-    raw.end();
+    return reply.status(202).send(sent);
   },
 
   async getMessageAllowance(req: FastifyRequest, reply: FastifyReply) {

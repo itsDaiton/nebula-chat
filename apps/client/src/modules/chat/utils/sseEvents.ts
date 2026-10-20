@@ -5,7 +5,4 @@ export const SSE_EVENTS: ReadonlySet<string> = new Set<SseEvent>([
   'usage',
   'error',
   'end',
-  'session-created',
-  'user-message-created',
-  'assistant-message-created',
 ]);

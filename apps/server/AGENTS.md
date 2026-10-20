@@ -44,7 +44,8 @@ apps/server/src/
 ├── env.ts                         # Zod-validated env schema — single source for all process.env reads
 ├── health.validation.ts           # ApiRoot / Health response schemas for the `/` and `/health` routes
 ├── db.ts                          # DB client singleton (createDbClient from @nebula-chat/db)
-├── redis.ts                       # Redis toolkit singleton + chat cache helpers (createRedis from @nebula-chat/redis)
+├── redis.ts                       # Redis toolkit singleton + reply-stream helpers: stream owners, openReplyStream
+├── queue.ts                       # BullMQ producer for Direct reply jobs (built on first use) + the worker /health ping
 ├── auth.ts                        # better-auth instance singleton (createAuth from @nebula-chat/auth)
 ├── profileImageStore.ts           # Profile image store singleton: Supabase Storage from env, or null (uploads off)
 ├── config/
@@ -55,17 +56,20 @@ apps/server/src/
 │   ├── error.handler.ts           # Fastify setErrorHandler callback (Zod, AppError, PG codes, fallback); logs a 5xx once
 │   └── requestErrorType.ts        # Per-request error classification, read by the http.request.completed line
 ├── modules/
-│   ├── chat/
+│   ├── chat/                      # Mounted at /api: POST /sessions/:sessionId/messages, GET /chat/message-allowance
 │   │   ├── chat.types.ts
 │   │   ├── chat.validation.ts     # Zod request/response schemas
-│   │   ├── chat.prompt.ts         # Prompt assembly
-│   │   ├── chat.service.ts        # Streaming orchestration
+│   │   ├── chat.service.ts        # sendMessage: persist the user Message, record the stream owner, enqueue
 │   │   ├── chat.controller.ts
-│   │   ├── chat.cacheCheck.hook.ts     # preHandler — replays a cached SSE stream on a hit
-│   │   ├── chat.streamCapture.hook.ts  # preHandler — captures the SSE stream for caching
 │   │   ├── chat.messageAllowance.hook.ts # preHandler — rejects a Metered user over the message allowance
 │   │   ├── chat.messageAllowance.service.ts # getMessageAllowance — shared metered decision + live count
 │   │   └── chat.routes.ts         # FastifyPluginCallbackZodOpenApi; schema blocks + hook chain
+│   ├── stream/                    # GET /api/streams/:streamId — the SSE relay (ADR-0014)
+│   │   ├── stream.types.ts
+│   │   ├── stream.validation.ts
+│   │   ├── stream.service.ts      # assertOwner + relay: tail the Redis Stream, write SSE until `end`
+│   │   ├── stream.controller.ts   # Owner check, then hijack and relay; aborts on client disconnect
+│   │   └── stream.routes.ts
 │   ├── session/
 │   │   ├── session.types.ts
 │   │   ├── session.validation.ts
@@ -97,7 +101,7 @@ apps/server/src/
 │       ├── logLevel.controller.ts
 │       ├── logLevel.operatorGate.hook.ts # onRequest — admits only `Authorization: Bearer <OPERATOR_TOKEN>`
 │       └── logLevel.routes.ts
-├── test/                          # Shared test harness: createTestApp, session fixtures, logCapture (in-memory logger), memoryPubSub, memoryProfileImageStore
+├── test/                          # Shared test harness: createTestApp, session fixtures, logCapture (in-memory logger), memoryPubSub, memoryProfileImageStore, memoryReplyStreams
 ├── utils/
 │   ├── logController.ts           # Fastify logController: request lines off, framework faults stamped fastify.log
 │   ├── logLevelOverrides.ts       # LOG_LEVEL_OVERRIDES parser (component=level pairs)
@@ -105,6 +109,8 @@ apps/server/src/
 │   ├── isoDateTimeSchema.ts       # Response timestamp codec: a Date in the handler, an ISO date-time string on the wire
 │   ├── jsonResponse.ts            # One `response:` entry: its description + application/json schema
 │   ├── forwardReplyHeaders.ts     # Copies a hijacked reply's buffered headers (@fastify/cors's) onto reply.raw
+│   ├── sse.ts                     # SSE formatting: a reply stream event as `id`/`event`/`data`, the keep-alive comment
+│   ├── countTokens.ts             # tiktoken count that holds a user Message to the prompt budget
 │   ├── socialProviders.ts         # GOOGLE_*/GITHUB_* OAuth credentials → createAuth's socialProviders
 │   └── trustProxy.ts
 └── plugins/
@@ -115,8 +121,8 @@ apps/server/src/
 ```
 
 Redis is no longer an in-app module. It lives in the `@nebula-chat/redis` lib
-(shared connection + `cache` primitive), registered via `plugins/redis.plugin.ts`
-and consumed through `app.redis.cache`. See [ADR-0009](../../docs/adr/0009-nebula-chat-redis-lib.md).
+(connection manager + primitives), registered via `plugins/redis.plugin.ts`, which
+closes the job queue and then the toolkit on shutdown. See [ADR-0009](../../docs/adr/0009-nebula-chat-redis-lib.md).
 
 ---
 
@@ -173,8 +179,9 @@ Throw from the service layer; the `errorHandler` exported from `errors/error.han
   gets its own code rather than extra fields, like `MessageAllowanceReached` (a 403, like `Forbidden`).
 - The handler turns everything it catches into an `AppError`: Zod validation failures, Postgres constraint
   codes, and framework errors (classified by their status). A framework error keeps its own status (415, 503).
-- The chat stream hijacks its reply, so it never reaches `errorHandler`. `chat.service` classifies its own
-  failures with `toErrorEnvelope` and writes the **same** envelope as the SSE `error` event.
+- The reply stream relay hijacks its reply once the owner check has passed, so nothing after that reaches
+  `errorHandler`. A reply's own failure arrives from the worker as an `error` event already carrying the
+  envelope; a Redis failure mid-relay is written as an `error` event with the `Internal` envelope, then `end`.
 - The `/api/auth/*` catch-all hijacks its reply too. A throw from better-auth's handler is logged through
   `logRequestFailed` and answered `500` `Internal` on `reply.raw`; once headers are out, the connection is
   dropped instead.
@@ -310,80 +317,85 @@ Schema lives at `libs/db/src/schema.ts` (`@nebula-chat/db`). The domain tables a
 - The DB client is created in `src/db.ts` via `createDbClient` from `@nebula-chat/db`. Always import `db` from `@backend/db`.
 - After changing the schema run `pnpm --filter @nebula-chat/db db:generate` in dev or `pnpm --filter @nebula-chat/db db:migrate` in prod. Use the `drizzle-migrate` skill for schema changes.
 - Sessions are cursor-paginated using the session `id` as the cursor.
-- Max 20 messages are loaded into context for a single chat request.
+- The server loads no chat history: the worker loads the last 20 Messages into a Direct reply's context.
 
 ---
 
-## Caching — Redis
+## Redis
 
-Redis access is provided by the **`@nebula-chat/redis`** lib (shared connection manager +
-single-tier `cache` primitive), registered by `plugins/redis.plugin.ts` and reached through
-`app.redis`. The chat cache helpers (`chatCacheKey`, `getCachedStream`, `saveCachedStream`) live in
-`src/redis.ts` alongside the toolkit singleton and are imported from `@backend/redis`. See
-[ADR-0009](../../docs/adr/0009-nebula-chat-redis-lib.md).
+Redis access is provided by the **`@nebula-chat/redis`** lib, registered by
+`plugins/redis.plugin.ts` and reached through `@backend/redis` (`src/redis.ts`). See
+[ADR-0009](../../docs/adr/0009-nebula-chat-redis-lib.md). The server uses it for:
+
+- **better-auth's secondary storage** (`authStore`, ADR-0010) and **runtime log levels** (`pubsub`, ADR-0020).
+- **Reply streams** (`streams`, ADR-0014): the relay tails a stream over a dedicated connection
+  (`openReplyStream`), since a blocking `XREAD` ties its connection up.
+- **Stream owners**: `saveStreamOwner` / `findStreamOwner` record who may read a stream
+  (`stream-owner:{streamId}`, 24-hour TTL). The assistant Message only exists once the worker finishes it,
+  so the owner check cannot go through Postgres.
+- **The Direct reply queue** (`src/queue.ts`): a BullMQ `Queue` on `redis.dedicatedConnection()`, built on
+  first use so nothing that only builds the app (the OpenAPI script, route tests) opens a connection.
 
 The connection is lazy with no offline queue, so a command sent before it is ready is rejected.
 `server.ts` therefore calls `redis.connect()` at startup without awaiting it (a failure logs
-`redis.connect.failed` while ioredis keeps retrying), and the `authStore` awaits that same connect
-before each command.
+`redis.connect.failed` while ioredis keeps retrying), and the `authStore` and stream-owner helpers await
+that same connect before each command.
 
-**Key format** (built in `src/redis.ts` via the lib's `buildKey`/`hashText`, kept as-is per ADR-0009):
-`session:{sessionId}:model:{model}:prompt:{sha256(lastUserMessage)[0:16]}`
-
-**Flow:**
-
-1. `chat.cacheCheck.hook.ts` preHandler runs before the controller. If `regenerate` is set it bypasses the cache; otherwise, on a hit it replays the cached token stream and returns — the LLM provider is never called.
-2. `chat.streamCapture.hook.ts` preHandler monkey-patches `reply.raw.write` after a real completion call. When the response ends it saves (and, on regenerate, overwrites) the full SSE stream to Redis.
-3. TTL: 600 seconds (10 minutes). The keyspace is bounded by TTL + Redis `maxmemory-policy` (`allkeys-lru`) — there is no hand-rolled eviction.
-4. **Fail-open:** every cache operation swallows Redis errors (read → miss, write → no-op), logged at `warn` as `cache.*.failed` through `@nebula-chat/otel`; the app continues without caching.
-
-Cache hit/miss are emitted as OpenTelemetry metrics; there are no `/api/cache/*` admin endpoints (removed in the migration — a dashboard is a later concern).
+**The response cache is off.** The server's cache hooks were removed with the move to the worker
+(ADR-0013); caching Direct replies comes back in the worker through the `cache` primitive.
 
 ---
 
-## Chat Streaming
+## Sending a Message and streaming its reply
 
-The chat route is the most complex part of the backend. End-to-end flow:
+The server does no LLM work and holds no LLM keys (ADR-0013). It persists the user's Message, queues the
+reply for the worker, and relays the reply stream (ADR-0014):
 
 ```text
-POST /api/chat/stream
-  → @fastify/rate-limit               (10 req / 60 s per IP, opt-in via route config)
-  → Zod body validation               (schema: { body: createChatStreamSchema } — native Fastify)
-  → chat.cacheCheck.hook preHandler   (Redis hit → replay stream via reply.hijack() + reply.raw, done)
-  → chat.streamCapture.hook preHandler (monkey-patches reply.raw.write to capture output)
-  → chatController.streamMessage
-      → chat.service
-          1. Validate token budget (tiktoken — max 2 000 prompt, 10 000 context)
-          2. Fetch session history (last 20 messages)
-          3. DB transaction — create user message + session if new
-          4. Call the LLM provider's streaming completion
-          5. Pipe tokens to client as SSE events via reply.hijack() + reply.raw.write/reply.raw.end
-          6. On stream end — persist assistant message + token usage
-      → chat.streamCapture.hook saves captured output to Redis
+POST /api/sessions/:sessionId/messages   { content, mode: "direct", model? }
+  → @fastify/rate-limit               (10 req / 60 s per IP)
+  → Zod body validation               (mode accepts only "direct")
+  → requireAuthentication
+  → chat.messageAllowance.hook        (403 MessageAllowanceReached before anything is persisted)
+  → chatController.sendMessage → chatService.sendMessage
+      1. Prompt budget (tiktoken, max 2 000 tokens) → 413
+      2. Transaction: owner-scoped Session (404), bind the Session's Model if `model` differs, persist the user Message
+      3. streamId = a new UUID (the assistant Message is persisted under it)
+      4. Record the stream owner in Redis
+      5. Enqueue { userId, sessionId, messageId, streamId } (IDs only, checked against @nebula-chat/contracts)
+      6. Ping the worker's /health, unawaited (wakes a sleeping free-plan worker; a failure logs worker.ping.failed)
+  ← 202 { messageId, streamId }
+
+GET /api/streams/:streamId
+  → requireAuthentication → stream owner check (another User's stream is a 404)
+  → reply.hijack(), SSE headers
+  → streamService.relay: XREAD … BLOCK from `0`, each entry written as an SSE event whose `id` is the
+    entry id; a `: keep-alive` comment after each 15 s block with nothing new; stops after `end`;
+    on client disconnect the dedicated connection is dropped, ending the read in flight
 ```
 
-`GET /api/chat/message-allowance` is the module's other route: a plain read behind
-`requireAuthentication` only (no rate-limit override, none of the send-path hooks) that answers
+The worker (`apps/worker`) loads the Session and history, makes the model call, appends the events and
+persists the assistant Message before `end`.
+
+`GET /api/chat/message-allowance` is the chat module's other route: a plain read behind
+`requireAuthentication` only (no rate-limit override, no allowance hook) that answers
 `getMessageAllowance` from `chat.messageAllowance.service.ts`, the same function
 `chat.messageAllowance.hook` enforces with. See [docs/auth.md](../../docs/auth.md#reading-the-allowance).
 
-**SSE event types emitted to the client:**
+**SSE events on a reply stream** (`ReplyStreamEvent` in `@nebula-chat/contracts`; the event name is its
+`type`, the data the rest of it):
 
-| Event                       | Data                                              |
-| --------------------------- | ------------------------------------------------- |
-| `session-created`           | `{ sessionId }`                                   |
-| `user-message-created`      | `{ messageId }`                                   |
-| `token`                     | `{ token }` — one per streamed chunk              |
-| `usage`                     | `{ promptTokens, completionTokens, totalTokens }` |
-| `assistant-message-created` | `{ messageId }`                                   |
-| `end`                       | `"end"`                                           |
-| `error`                     | the error envelope (`ErrorEnvelope`)              |
+| Event   | Data                                              |
+| ------- | ------------------------------------------------- |
+| `token` | `{ token }` — one per Streaming token             |
+| `usage` | `{ promptTokens, completionTokens, totalTokens }` |
+| `error` | the error envelope (`ErrorEnvelope`)              |
+| `end`   | `{}` — always last, after an `error` too          |
 
-Token budget (see [CONTEXT.md](../../CONTEXT.md#language) for the vocabulary):
+An entry the server cannot parse (a newer worker's event type) is skipped, so the contract can grow.
 
-- Max prompt tokens: **2 000**
-- Max completion tokens: **1 000**
-- Max context window: **10 000**
+Token budget (see [CONTEXT.md](../../CONTEXT.md#language) for the vocabulary): the server holds a user
+Message to **2 000** prompt tokens; the context window and completion limits are the worker's.
 
 ---
 
@@ -450,8 +462,7 @@ be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-fi
 
 | Variable                           | Purpose                                                                                                                   |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `OPENAI_API_KEY`                   | OpenAI API key (optional — set at least one of this or `ANTHROPIC_API_KEY`)                                               |
-| `ANTHROPIC_API_KEY`                | Anthropic API key (optional — set at least one of this or `OPENAI_API_KEY`)                                               |
+| `WORKER_URL`                       | The worker's public URL; the server pings its `/health` on every enqueue to wake it (default `http://localhost:3001`)     |
 | `DATABASE_URL`                     | PostgreSQL connection string                                                                                              |
 | `REDIS_URL`                        | Redis connection (e.g. `redis://localhost:6380`)                                                                          |
 | `CLIENT_URL`                       | Frontend origin for CORS (e.g. `http://localhost:5173`); must be the same site as the API ([auth.md](../../docs/auth.md)) |
@@ -515,12 +526,13 @@ pnpm backend test:coverage
 
 - **Mock at the nearest boundary to an external system, and nothing above it.** For a CRUD route that
   is the repository: `vi.mock` the `*.repository.ts` module and leave the service and controller real —
-  mocking a service to test its own controller tests nothing. `/api/chat/stream` has its boundary
-  elsewhere, because Postgres is not the system it talks to: it reaches the LLM provider through
-  `chat.service` and Redis through `@backend/redis` (`src/redis.ts`), so those are the modules the route
-  test fakes. The rule is the same one either way — fake the thing that would otherwise open a socket,
-  keep everything between it and the HTTP boundary real — and the faked module gets its own unit test at
-  its own seam (`src/tests/redis.test.ts`; the lib's `cache` primitive is tested in `@nebula-chat/redis`).
+  mocking a service to test its own controller tests nothing. The send and stream routes also reach Redis
+  and BullMQ, through `@backend/redis` (`src/redis.ts`) and `@backend/queue` (`src/queue.ts`), so their
+  route tests fake those two modules in memory (`src/test/memoryReplyStreams.ts`, an array of enqueued
+  jobs). The rule is the same one either way — fake the thing that would otherwise open a socket, keep
+  everything between it and the HTTP boundary real — and the faked module gets its own unit test at its
+  own seam (`src/tests/redis.test.ts`, `src/tests/queue.test.ts`; the lib's primitives are tested in
+  `@nebula-chat/redis`).
 - **No database, no Redis, no network.** The CI `DATABASE_URL` secret points at a shared database and is
   off-limits to tests.
 - **Test each layer at its seam**: `.validation` (Zod schemas — accept and reject cases), `.service`

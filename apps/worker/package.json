@@ -1,0 +1,36 @@
+{
+  "name": "@nebula-chat/worker",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@12.4.1",
+  "main": "dist/src/worker.js",
+  "scripts": {
+    "dev": "nodemon",
+    "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "start": "dotenvx run -f .env --ignore=MISSING_ENV_FILE -- node dist/src/worker.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@nebula-chat/contracts": "workspace:*",
+    "@nebula-chat/db": "workspace:*",
+    "@nebula-chat/errors": "workspace:*",
+    "@nebula-chat/langchain": "workspace:*",
+    "@nebula-chat/otel": "workspace:*",
+    "@nebula-chat/redis": "workspace:*",
+    "bullmq": "^6.3.11",
+    "drizzle-orm": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@dotenvx/dotenvx": "catalog:",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "nodemon": "^3.1.14",
+    "tsc-alias": "^1.9.7",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

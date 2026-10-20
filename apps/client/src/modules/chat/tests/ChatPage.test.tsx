@@ -1,13 +1,17 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { HttpResponse, delay, http } from 'msw';
+import { delay } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Route, Routes } from 'react-router';
 import {
+  getCreateSessionMockHandler,
   getGetSessionMockHandler,
   getListSessionsMockHandler,
 } from '@/libs/api/generated/sessions/sessions.msw';
-import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
+import {
+  getGetMessageAllowanceMockHandler,
+  getSendMessageMockHandler,
+} from '@/libs/api/generated/chat/chat.msw';
 import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
 import { ChatPage } from '@/modules/chat/ChatPage';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
@@ -17,6 +21,7 @@ import { resources } from '@/resources';
 import { renderWithChakra } from '@/test/render';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { aSession, mockGetSession } from '@/test/auth';
+import { mockReplyStream, sseFrame } from '@/test/chat';
 import { server } from '@/test/msw';
 
 vi.mock('@/theme/hooks/useColorMode', () => ({
@@ -181,15 +186,15 @@ describe('ChatPage', () => {
         nextCursor: null,
         hasMore: false,
       })),
-      http.post(API_ROUTE.chatStream, () => {
+      getCreateSessionMockHandler(() => {
         created = true;
-        return new HttpResponse(
-          `event: session-created\ndata: ${JSON.stringify({ sessionId: SESSION_ID })}\n\n` +
-            `event: token\ndata: ${JSON.stringify({ token: 'hi there' })}\n\n` +
-            'event: end\ndata: {}\n\n',
-          { headers: { 'Content-Type': 'text/event-stream' } },
-        );
+        return { id: SESSION_ID, title: 'Brand new chat', createdAt: '2026-10-20T00:00:00.000Z' };
       }),
+      getSendMessageMockHandler({
+        messageId: '22222222-2222-4222-8222-222222222222',
+        streamId: '33333333-3333-4333-8333-333333333333',
+      }),
+      mockReplyStream(sseFrame('token', { token: 'hi there' }), sseFrame('end', {})),
     );
     renderPage();
     expect(await screen.findByText(resources.sessions.empty)).toBeInTheDocument();

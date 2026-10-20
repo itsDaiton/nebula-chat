@@ -6,13 +6,16 @@ import {
   getGetSessionQueryKey,
   getListSessionsInfiniteQueryKey,
 } from '@/libs/api/generated/sessions/sessions';
+import { getCreateSessionMockHandler } from '@/libs/api/generated/sessions/sessions.msw';
 import { getGetMessageAllowanceQueryKey } from '@/libs/api/generated/chat/chat';
+import { getSendMessageMockHandler } from '@/libs/api/generated/chat/chat.msw';
 import { getListMessagesQueryKey } from '@/libs/api/generated/messages/messages';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
 import { resources } from '@/resources';
 import { API_ROUTE, mockApiError } from '@/test/api';
+import { mockReplyStream, sseFrame as frame } from '@/test/chat';
 import { server } from '@/test/msw';
 import { createTestQueryClient, renderHookWithQueryClient } from '@/test/render';
 
@@ -20,28 +23,10 @@ const navigate = vi.fn();
 
 vi.mock('react-router', () => ({ useNavigate: () => navigate }));
 
-const ENDPOINT = API_ROUTE.chatStream;
-
-/** Serves `frames` as a streamed SSE response, one chunk per frame. */
-const streamFrames = (...frames: string[]) => {
-  server.use(
-    http.post(ENDPOINT, () => {
-      const stream = new ReadableStream({
-        start(controller) {
-          const encoder = new TextEncoder();
-          for (const frame of frames) controller.enqueue(encoder.encode(frame));
-          controller.close();
-        },
-      });
-      return new HttpResponse(stream, {
-        headers: { 'Content-Type': 'text/event-stream' },
-      });
-    }),
-  );
-};
-
-const frame = (event: string, data: unknown) =>
-  `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+const NEW_SESSION_ID = '11111111-1111-4111-8111-111111111111';
+const MESSAGE_ID = '22222222-2222-4222-8222-222222222222';
+const STREAM_ID = '33333333-3333-4333-8333-333333333333';
+const EXISTING_ID = '44444444-4444-4444-8444-444444444444';
 
 const sendMessage = async (result: { current: ReturnType<typeof useChatStream> }) => {
   await act(async () => {
@@ -51,6 +36,9 @@ const sendMessage = async (result: { current: ReturnType<typeof useChatStream> }
     });
   });
 };
+
+/** Serves the reply stream, plus a send (and a new Session) that point at it. */
+const streamFrames = (...frames: string[]) => server.use(mockReplyStream(...frames));
 
 const history = () => useChatStreamStore.getState().history;
 const assistantContent = () => history().at(-1)?.content;
@@ -67,6 +55,16 @@ beforeEach(() => {
     isMessageAllowanceReached: false,
   });
   useMessageStore.setState({ message: '' });
+  server.use(
+    getCreateSessionMockHandler(({ request }) =>
+      request.json().then((body) => ({
+        id: NEW_SESSION_ID,
+        title: (body as { title: string }).title,
+        createdAt: '2026-10-20T00:00:00.000Z',
+      })),
+    ),
+    getSendMessageMockHandler({ messageId: MESSAGE_ID, streamId: STREAM_ID }),
+  );
 });
 
 describe('useChatStream — token streaming', () => {
@@ -94,8 +92,7 @@ describe('useChatStream — token streaming', () => {
   });
 
   it('reassembles a frame split across chunk boundaries', async () => {
-    // The reader hands back arbitrary byte slices, so the parser must buffer
-    // a partial line rather than dropping it.
+    // The reader hands back arbitrary byte slices, so the parser must buffer a partial line.
     streamFrames('event: token\ndata: {"tok', 'en":"split"}\n\n', frame('end', {}));
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
@@ -104,7 +101,22 @@ describe('useChatStream — token streaming', () => {
     await waitFor(() => expect(assistantContent()).toBe('split'));
   });
 
+  it('reads past entry ids and keep-alive comments', async () => {
+    streamFrames(
+      ': keep-alive\n\n',
+      frame('token', { token: 'ok' }, '1700000000000-1'),
+      frame('end', {}, '1700000000000-2'),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream());
+
+    await sendMessage(result);
+
+    await waitFor(() => expect(assistantContent()).toBe('ok'));
+    expect(useChatStreamStore.getState().error).toBeNull();
+  });
+
   it('stops streaming once the end event arrives', async () => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
     streamFrames(frame('token', { token: 'x' }), frame('end', {}));
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
@@ -164,73 +176,77 @@ describe('useChatStream — usage and errors', () => {
     );
   });
 
-  it('surfaces the message of an error-envelope frame in place of the reply', async () => {
+  it('surfaces the message of an error event in place of the reply', async () => {
     streamFrames(
-      frame('error', {
-        success: false,
-        error: 'TooManyRequests',
-        message: 'Rate limit exceeded. Retry after 500ms.',
-      }),
+      frame('error', { success: false, error: 'BadRequest', message: 'Unsupported model: gpt-0' }),
+      frame('end', {}),
     );
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
-    await waitFor(() => {
-      expect(useChatStreamStore.getState().error).toBe('Rate limit exceeded. Retry after 500ms.');
-      expect(assistantContent()).toBe('Rate limit exceeded. Retry after 500ms.');
-    });
+    expect(useChatStreamStore.getState().error).toBe('Unsupported model: gpt-0');
+    expect(assistantContent()).toBe('Unsupported model: gpt-0');
+    expect(useChatStreamStore.getState().isStreaming).toBe(false);
   });
 
-  it.each([
-    ['carries no envelope', {}],
-    ['is in the retired `{ error }` shape', { error: 'Rate limit exceeded.' }],
-  ])('falls back to a generic message when the error frame %s', async (_label, data) => {
-    streamFrames(frame('error', data));
+  it('falls back to a generic message when the error event carries no envelope', async () => {
+    streamFrames(frame('error', { error: 'Rate limit exceeded.' }), frame('end', {}));
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
-    await waitFor(() =>
-      expect(useChatStreamStore.getState().error).toBe(resources.chat.streamError),
-    );
+    expect(useChatStreamStore.getState().error).toBe(resources.chat.streamError);
   });
 
-  it('stops streaming after an error', async () => {
-    streamFrames(frame('error', { success: false, error: 'Internal', message: 'boom' }));
+  it('reports a stream that closes before its end event', async () => {
+    streamFrames(frame('token', { token: 'half' }));
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
-    await waitFor(() => expect(useChatStreamStore.getState().isStreaming).toBe(false));
+    expect(useChatStreamStore.getState().error).toBe(resources.chat.streamError);
+    expect(useChatStreamStore.getState().isStreaming).toBe(false);
   });
 
-  it('reports a non-OK response without an envelope with the generic message', async () => {
-    server.use(http.post(ENDPOINT, () => new HttpResponse(null, { status: 500 })));
-    const { result } = renderHookWithQueryClient(() => useChatStream());
-
-    await sendMessage(result);
-
-    await waitFor(() =>
-      expect(useChatStreamStore.getState().error).toBe(resources.chat.streamError),
-    );
-  });
-
-  it('reports a rejected request by the message of its error envelope', async () => {
+  it('reports a stream that cannot be opened by the message of its envelope', async () => {
     server.use(
-      mockApiError('post', ENDPOINT, 429, {
+      mockApiError('get', API_ROUTE.replyStream, 404, {
         success: false,
-        error: 'TooManyRequests',
-        message: 'Rate limit exceeded. Retry after 500ms.',
+        error: 'NotFound',
+        message: 'Stream not found',
       }),
     );
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
-    await waitFor(() =>
-      expect(useChatStreamStore.getState().error).toBe('Rate limit exceeded. Retry after 500ms.'),
+    expect(useChatStreamStore.getState().error).toBe('Stream not found');
+  });
+
+  it('reports a stream that cannot be opened and has no envelope with the generic message', async () => {
+    server.use(http.get(API_ROUTE.replyStream, () => new HttpResponse(null, { status: 502 })));
+    const { result } = renderHookWithQueryClient(() => useChatStream());
+
+    await sendMessage(result);
+
+    expect(useChatStreamStore.getState().error).toBe(resources.chat.streamError);
+  });
+
+  it('reports a refused send by the message of its error envelope', async () => {
+    server.use(
+      mockApiError('post', API_ROUTE.sendMessage, 429, {
+        success: false,
+        error: 'TooManyRequests',
+        message: 'Rate limit exceeded, retry in 1 minute',
+      }),
     );
+    const { result } = renderHookWithQueryClient(() => useChatStream());
+
+    await sendMessage(result);
+
+    expect(useChatStreamStore.getState().error).toBe('Rate limit exceeded, retry in 1 minute');
+    expect(useChatStreamStore.getState().isStreaming).toBe(false);
   });
 });
 
@@ -241,8 +257,8 @@ describe('useChatStream — message allowance', () => {
     message: 'Message allowance exceeded: a Guest can send at most 10 messages.',
   };
 
-  it('flags the reached allowance instead of reporting a generic error', async () => {
-    server.use(mockApiError('post', ENDPOINT, 403, allowanceEnvelope));
+  it('flags the reached allowance instead of reporting an error', async () => {
+    server.use(mockApiError('post', API_ROUTE.sendMessage, 403, allowanceEnvelope));
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
@@ -255,7 +271,7 @@ describe('useChatStream — message allowance', () => {
   });
 
   it('returns the refused message to the composer instead of the history', async () => {
-    server.use(mockApiError('post', ENDPOINT, 403, allowanceEnvelope));
+    server.use(mockApiError('post', API_ROUTE.sendMessage, 403, allowanceEnvelope));
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
@@ -264,18 +280,9 @@ describe('useChatStream — message allowance', () => {
     expect(useMessageStore.getState().message).toBe('what is 2+2?');
   });
 
-  it('treats a 403 without an envelope as the reached allowance', async () => {
-    server.use(http.post(ENDPOINT, () => new HttpResponse(null, { status: 403 })));
-    const { result } = renderHookWithQueryClient(() => useChatStream());
-
-    await sendMessage(result);
-
-    expect(useChatStreamStore.getState().isMessageAllowanceReached).toBe(true);
-  });
-
   it('reports a plain Forbidden as an error, not the reached allowance', async () => {
     server.use(
-      mockApiError('post', ENDPOINT, 403, {
+      mockApiError('post', API_ROUTE.sendMessage, 403, {
         success: false,
         error: 'Forbidden',
         message: 'Forbidden.',
@@ -285,7 +292,7 @@ describe('useChatStream — message allowance', () => {
 
     await sendMessage(result);
 
-    await waitFor(() => expect(useChatStreamStore.getState().error).toBe('Forbidden.'));
+    expect(useChatStreamStore.getState().error).toBe('Forbidden.');
     expect(useChatStreamStore.getState().isMessageAllowanceReached).toBe(false);
   });
 
@@ -301,65 +308,120 @@ describe('useChatStream — message allowance', () => {
   });
 });
 
-describe('useChatStream — session creation', () => {
-  const NEW_ID = '11111111-1111-4111-8111-111111111111';
-
-  it('adopts the session id the server assigns', async () => {
-    streamFrames(frame('session-created', { sessionId: NEW_ID }), frame('end', {}));
+describe('useChatStream — send, then subscribe', () => {
+  it('sends the newest message as a Direct reply on the picked Model', async () => {
+    let received: unknown;
+    server.use(
+      getSendMessageMockHandler(async ({ request }) => {
+        received = await request.json();
+        return { messageId: MESSAGE_ID, streamId: STREAM_ID };
+      }),
+    );
+    streamFrames(frame('end', {}));
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
-    await sendMessage(result);
+    await act(async () => {
+      await result.current.streamMessage({
+        model: 'gpt-4o',
+        messages: [
+          { id: 'u1', role: 'user', content: 'older' },
+          { id: 'u2', role: 'user', content: 'newest' },
+        ],
+      });
+    });
 
-    await waitFor(() => expect(useChatStreamStore.getState().sessionId).toBe(NEW_ID));
+    expect(received).toEqual({ content: 'newest', mode: 'direct', model: 'gpt-4o' });
   });
 
-  it('navigates to the new session once the stream ends', async () => {
-    streamFrames(frame('session-created', { sessionId: NEW_ID }), frame('end', {}));
+  it('subscribes to the stream the send answered with', async () => {
+    let opened: unknown;
+    server.use(
+      http.get(API_ROUTE.replyStream, ({ params }) => {
+        opened = params['streamId'];
+        return new HttpResponse(frame('end', {}), {
+          headers: { 'Content-Type': 'text/event-stream' },
+        });
+      }),
+    );
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith(`/s/${NEW_ID}`, { replace: true }));
+    expect(opened).toBe(STREAM_ID);
   });
 
-  it('does not navigate when continuing an existing session', async () => {
-    useChatStreamStore.setState({ sessionId: 'existing-id' });
-    streamFrames(frame('session-created', { sessionId: NEW_ID }), frame('end', {}));
+  it('starts a new chat by creating a Session titled after the message, then sends to it', async () => {
+    let title: unknown;
+    let sentTo: unknown;
+    server.use(
+      getCreateSessionMockHandler(async ({ request }) => {
+        title = ((await request.json()) as { title: string }).title;
+        return { id: NEW_SESSION_ID, title: 'x', createdAt: '2026-10-20T00:00:00.000Z' };
+      }),
+      getSendMessageMockHandler(({ params }) => {
+        sentTo = params['sessionId'];
+        return { messageId: MESSAGE_ID, streamId: STREAM_ID };
+      }),
+    );
+    streamFrames(frame('end', {}));
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
-    await waitFor(() => expect(useChatStreamStore.getState().isStreaming).toBe(false));
-    expect(navigate).not.toHaveBeenCalled();
+    expect(title).toBe('what is 2+2?');
+    expect(sentTo).toBe(NEW_SESSION_ID);
+    expect(useChatStreamStore.getState().sessionId).toBe(NEW_SESSION_ID);
+  });
+
+  it('navigates to the new Session once the reply ends', async () => {
+    streamFrames(frame('end', {}));
+    const { result } = renderHookWithQueryClient(() => useChatStream());
+
+    await sendMessage(result);
+
+    expect(navigate).toHaveBeenCalledWith(`/s/${NEW_SESSION_ID}`, { replace: true });
   });
 
   it('keeps isStreaming true through the post-stream navigation window', async () => {
-    // Dropping it here would render a frame with no session and no stream,
-    // which shows as an empty-state flicker.
-    streamFrames(frame('session-created', { sessionId: NEW_ID }), frame('end', {}));
+    // Dropping it here would render a frame with no session and no stream: an empty-state flicker.
+    streamFrames(frame('end', {}));
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
-    await waitFor(() => expect(useChatStreamStore.getState().isPostStreamNavigation).toBe(true));
-    expect(useChatStreamStore.getState().isStreaming).toBe(true);
+    expect(useChatStreamStore.getState()).toMatchObject({
+      isPostStreamNavigation: true,
+      isStreaming: true,
+    });
   });
 
-  it('ignores a session-created frame with no id', async () => {
-    streamFrames(frame('session-created', {}), frame('end', {}));
+  it('continues an active Session without creating one or navigating', async () => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    let created = false;
+    let sentTo: unknown;
+    server.use(
+      http.post(API_ROUTE.sessions, () => {
+        created = true;
+        return HttpResponse.json({}, { status: 201 });
+      }),
+      getSendMessageMockHandler(({ params }) => {
+        sentTo = params['sessionId'];
+        return { messageId: MESSAGE_ID, streamId: STREAM_ID };
+      }),
+    );
+    streamFrames(frame('end', {}));
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().sessionId).toBeUndefined();
+    expect(created).toBe(false);
+    expect(sentTo).toBe(EXISTING_ID);
+    expect(useChatStreamStore.getState().isStreaming).toBe(false);
     expect(navigate).not.toHaveBeenCalled();
   });
 });
 
 describe('useChatStream — query cache', () => {
-  const NEW_ID = '11111111-1111-4111-8111-111111111111';
-  const EXISTING_ID = '44444444-4444-4444-8444-444444444444';
-
   /** A query client holding fresh data for `keys`, so invalidation is observable. */
   const primedClient = (...keys: QueryKey[]) => {
     const queryClient = createTestQueryClient();
@@ -370,9 +432,9 @@ describe('useChatStream — query cache', () => {
   const isInvalidated = (queryClient: QueryClient, key: QueryKey) =>
     queryClient.getQueryState(key)?.isInvalidated;
 
-  it('refreshes the sidebar as soon as the server creates a session', async () => {
-    // No `end` frame: the list must refresh on creation, not only on completion.
-    streamFrames(frame('session-created', { sessionId: NEW_ID }));
+  it('refreshes the sidebar as soon as the new Session exists, before the reply', async () => {
+    // A stream that never ends: the list must refresh on creation, not only on completion.
+    streamFrames(frame('token', { token: 'x' }));
     const queryClient = primedClient(getListSessionsInfiniteQueryKey());
     const { result } = renderHookWithQueryClient(() => useChatStream(), { queryClient });
 
@@ -381,7 +443,7 @@ describe('useChatStream — query cache', () => {
     expect(isInvalidated(queryClient, getListSessionsInfiniteQueryKey())).toBe(true);
   });
 
-  it('invalidates the list, the session and its messages when the stream completes', async () => {
+  it('invalidates the list, the Session and its messages when the reply ends', async () => {
     useChatStreamStore.setState({ sessionId: EXISTING_ID });
     streamFrames(frame('token', { token: 'x' }), frame('end', {}));
     const queryClient = primedClient(
@@ -398,22 +460,8 @@ describe('useChatStream — query cache', () => {
     expect(isInvalidated(queryClient, getListMessagesQueryKey())).toBe(true);
   });
 
-  it('refreshes the message allowance as soon as the server counts the message', async () => {
-    // No `end` frame: the counter must drop on the count, not only on completion.
-    streamFrames(frame('user-message-created', { messageId: 'm1' }));
-    const queryClient = primedClient(getGetMessageAllowanceQueryKey());
-    const { result } = renderHookWithQueryClient(() => useChatStream(), { queryClient });
-
-    await sendMessage(result);
-
-    expect(isInvalidated(queryClient, getGetMessageAllowanceQueryKey())).toBe(true);
-  });
-
-  it('refreshes the message allowance for a message whose reply then fails', async () => {
-    streamFrames(
-      frame('user-message-created', { messageId: 'm1' }),
-      frame('error', { success: false, error: 'Internal', message: 'boom' }),
-    );
+  it('refreshes the message allowance as soon as the send is accepted', async () => {
+    streamFrames(frame('error', { success: false, error: 'Internal', message: 'boom' }));
     const queryClient = primedClient(getGetMessageAllowanceQueryKey());
     const { result } = renderHookWithQueryClient(() => useChatStream(), { queryClient });
 
@@ -424,7 +472,7 @@ describe('useChatStream — query cache', () => {
 
   it('refreshes the message allowance after a send refused at it', async () => {
     server.use(
-      mockApiError('post', ENDPOINT, 403, {
+      mockApiError('post', API_ROUTE.sendMessage, 403, {
         success: false,
         error: 'MessageAllowanceReached',
         message: 'Message allowance exceeded: a Guest can send at most 10 messages.',
@@ -439,7 +487,7 @@ describe('useChatStream — query cache', () => {
   });
 
   it('leaves the message allowance alone when no message was counted', async () => {
-    server.use(mockApiError('post', ENDPOINT, 500, {}));
+    server.use(mockApiError('post', API_ROUTE.sendMessage, 500, {}));
     const queryClient = primedClient(getGetMessageAllowanceQueryKey());
     const { result } = renderHookWithQueryClient(() => useChatStream(), { queryClient });
 
@@ -448,7 +496,7 @@ describe('useChatStream — query cache', () => {
     expect(isInvalidated(queryClient, getGetMessageAllowanceQueryKey())).toBe(false);
   });
 
-  it('leaves the cache alone when the stream fails', async () => {
+  it('leaves the messages alone when the reply fails', async () => {
     useChatStreamStore.setState({ sessionId: EXISTING_ID });
     streamFrames(frame('error', { success: false, error: 'Internal', message: 'boom' }));
     const queryClient = primedClient(getListMessagesQueryKey());
@@ -461,7 +509,7 @@ describe('useChatStream — query cache', () => {
 });
 
 describe('useChatStream — lifecycle', () => {
-  it('clearPostStream drops both streaming flags together', async () => {
+  it('clearPostStream drops both streaming flags together', () => {
     useChatStreamStore.setState({ isStreaming: true, isPostStreamNavigation: true });
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
@@ -473,8 +521,7 @@ describe('useChatStream — lifecycle', () => {
     });
   });
 
-  it('abort stops the stream without recording an error', async () => {
-    streamFrames(frame('token', { token: 'x' }), frame('end', {}));
+  it('abort stops the stream without recording an error', () => {
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     act(() => result.current.abort());
@@ -483,80 +530,9 @@ describe('useChatStream — lifecycle', () => {
     expect(useChatStreamStore.getState().error).toBeNull();
   });
 
-  it('sends only the newest message, with the model', async () => {
-    let received: { messages: unknown[]; model: string } | undefined;
-    server.use(
-      http.post(ENDPOINT, async ({ request }) => {
-        received = (await request.json()) as { messages: unknown[]; model: string };
-        return new HttpResponse(frame('end', {}), {
-          headers: { 'Content-Type': 'text/event-stream' },
-        });
-      }),
-    );
-    const { result } = renderHookWithQueryClient(() => useChatStream());
-
-    await act(async () => {
-      await result.current.streamMessage({
-        model: 'gpt-4o',
-        messages: [
-          { id: 'u1', role: 'user', content: 'older' },
-          { id: 'u2', role: 'user', content: 'newest' },
-        ],
-      });
-    });
-
-    expect(received?.model).toBe('gpt-4o');
-    expect(received?.messages).toHaveLength(1);
-  });
-
-  it('sends the session cookie with the stream request', async () => {
-    // msw 3 no longer exposes `credentials` on the intercepted request, so read it off `fetch`.
-    const fetchSpy = vi.spyOn(globalThis, 'fetch');
-    server.use(
-      http.post(
-        ENDPOINT,
-        () =>
-          new HttpResponse(frame('end', {}), {
-            headers: { 'Content-Type': 'text/event-stream' },
-          }),
-      ),
-    );
-    const { result } = renderHookWithQueryClient(() => useChatStream());
-
-    await sendMessage(result);
-
-    expect(fetchSpy.mock.calls[0]?.[1]?.credentials).toBe('include');
-  });
-
-  it('sends the request body exactly as built from the newest message', async () => {
-    let received: unknown;
-    server.use(
-      http.post(ENDPOINT, async ({ request }) => {
-        received = await request.json();
-        return new HttpResponse(frame('end', {}), {
-          headers: { 'Content-Type': 'text/event-stream' },
-        });
-      }),
-    );
-    const { result } = renderHookWithQueryClient(() => useChatStream());
-
-    await act(async () => {
-      await result.current.streamMessage({
-        model: 'gpt-4o',
-        sessionId: '44444444-4444-4444-8444-444444444444',
-        messages: [{ id: 'u1', role: 'user', content: 'hi' }],
-      });
-    });
-
-    expect(received).toEqual({
-      messages: [{ id: 'u1', role: 'user', content: 'hi' }],
-      model: 'gpt-4o',
-      sessionId: '44444444-4444-4444-8444-444444444444',
-    });
-  });
-
-  it('aborting an in-flight request ends the stream without recording an error', async () => {
-    server.use(http.post(ENDPOINT, () => new Promise<Response>(() => {})));
+  it('aborting while the reply streams ends it without recording an error', async () => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    server.use(http.get(API_ROUTE.replyStream, () => new Promise<Response>(() => {})));
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
     let sent: Promise<void> | undefined;
@@ -577,21 +553,29 @@ describe('useChatStream — lifecycle', () => {
     expect(useChatStreamStore.getState().error).toBeNull();
   });
 
-  it('includes the session id when one is already active', async () => {
-    let received: { sessionId?: string } | undefined;
+  it('never opens the stream when aborted while the send is in flight', async () => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    let opened = false;
     server.use(
-      http.post(ENDPOINT, async ({ request }) => {
-        received = (await request.json()) as { sessionId?: string };
-        return new HttpResponse(frame('end', {}), {
-          headers: { 'Content-Type': 'text/event-stream' },
-        });
+      http.get(API_ROUTE.replyStream, () => {
+        opened = true;
+        return new HttpResponse(frame('end', {}));
       }),
     );
-    useChatStreamStore.setState({ sessionId: 'existing-id' });
     const { result } = renderHookWithQueryClient(() => useChatStream());
 
-    await sendMessage(result);
+    let sent: Promise<void> | undefined;
+    act(() => {
+      sent = result.current.streamMessage({
+        model: 'gpt-4o-mini',
+        messages: [{ id: 'u1', role: 'user', content: 'hi' }],
+      });
+    });
+    act(() => result.current.abort());
+    await act(async () => {
+      await sent;
+    });
 
-    expect(received?.sessionId).toBe('existing-id');
+    expect(opened).toBe(false);
   });
 });
