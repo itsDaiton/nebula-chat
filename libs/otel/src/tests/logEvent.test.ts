@@ -3,7 +3,7 @@ import type { LogAttributes } from '../attributes';
 import type { LogEventName } from '../events';
 import { logEvent } from '../logEvent';
 import { createLogger } from '../logger';
-import { captureDestination } from './capture';
+import { captureDestination } from '../testing';
 
 const capture = () => {
   const { lines, destination } = captureDestination();

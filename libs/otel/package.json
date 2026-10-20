@@ -9,6 +9,12 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.mjs",
+      "require": "./dist/testing.js",
+      "default": "./dist/testing.js"
     }
   },
   "publishConfig": {
@@ -31,7 +37,8 @@
     "@opentelemetry/exporter-trace-otlp-http": "^0.223.0",
     "@opentelemetry/sdk-logs": "^0.223.0",
     "@opentelemetry/sdk-node": "^0.223.0",
-    "pino": "^10.4.0"
+    "pino": "^10.4.0",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",

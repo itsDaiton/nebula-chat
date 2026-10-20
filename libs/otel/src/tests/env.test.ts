@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { logLevelOverridesSchema } from '@backend/utils/logLevelOverrides';
+import { logLevelOverridesSchema } from '../env';
 
 describe('logLevelOverridesSchema', () => {
   it('parses comma-separated component=level pairs into a map', () => {

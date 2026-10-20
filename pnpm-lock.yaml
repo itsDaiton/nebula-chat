@@ -723,9 +723,6 @@ importers:
       '@langchain/openai':
         specifier: ^1.6.2
         version: 1.6.2(@langchain/core@1.2.17(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.222.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.11.0(@opentelemetry/api@1.9.1))(openai@7.9.0(undici@8.10.2)(ws@8.21.3)(zod@4.6.5))(ws@8.21.3))(undici@8.10.2)(ws@8.21.3)
-      '@nebula-chat/errors':
-        specifier: workspace:*
-        version: link:../errors
       langchain:
         specifier: ^1.5.15
         version: 1.5.15(@langchain/core@1.2.17(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.222.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.11.0(@opentelemetry/api@1.9.1))(openai@7.9.0(undici@8.10.2)(ws@8.21.3)(zod@4.6.5))(ws@8.21.3))(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.222.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.11.0(@opentelemetry/api@1.9.1))(openai@7.9.0(undici@8.10.2)(ws@8.21.3)(zod@4.6.5))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(ws@8.21.3)
@@ -784,6 +781,9 @@ importers:
       pino:
         specifier: ^10.4.0
         version: 10.4.0
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.5
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

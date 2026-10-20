@@ -1,7 +1,8 @@
 import pino from 'pino';
 import { describe, expect, it } from 'vitest';
 import { componentLogger } from '../componentLogger';
-import { captureDestination, captureLogger } from './capture';
+import { captureLogger } from './capture';
+import { captureDestination } from '../testing';
 
 describe('componentLogger', () => {
   it('binds nebula.component on every line it writes', () => {

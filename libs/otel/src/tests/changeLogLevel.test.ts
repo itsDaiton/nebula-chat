@@ -2,7 +2,8 @@ import pino from 'pino';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { changeLogLevel } from '../changeLogLevel';
 import { componentLogger } from '../componentLogger';
-import { captureDestination, captureLogger } from './capture';
+import { captureLogger } from './capture';
+import { captureDestination } from '../testing';
 
 /** The `msg` of every line except the ones recording a level change. */
 const messages = (lines: { msg?: string; 'event.name'?: unknown }[]) =>

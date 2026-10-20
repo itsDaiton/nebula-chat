@@ -2,8 +2,8 @@ import { trace } from '@opentelemetry/api';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createLogger } from '../logger';
 import { initTelemetry } from '../tracing';
-import { captureDestination } from './capture';
-import type { LogLine } from './capture';
+import { captureDestination } from '../testing';
+import type { LogLine } from '../testing';
 import { setEnv } from './processEnv';
 
 // The OTLP exporter is the network boundary: constructing one is what would

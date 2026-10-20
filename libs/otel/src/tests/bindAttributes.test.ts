@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { bindAttributes } from '../bindAttributes';
 import { createLogger } from '../logger';
-import { captureDestination } from './capture';
+import { captureDestination } from '../testing';
 
 const capture = () => {
   const { lines, destination } = captureDestination();

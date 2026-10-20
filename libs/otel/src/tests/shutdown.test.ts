@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createShutdown } from '@backend/shutdown';
-import { captureLogger, eventLines, LEVEL } from '@backend/test/logCapture';
+import { createShutdown } from '../shutdown';
+import { captureLogger, eventLines, LEVEL } from '../testing';
 
 const setup = (close: () => Promise<void>) => {
   const { logger, lines } = captureLogger();
   const exit = vi.fn<(code: number) => void>();
-  const shutdown = createShutdown({ logger, close, exit });
+  const shutdown = createShutdown({ logger, close, failedEvent: 'server.shutdown.failed', exit });
   return { shutdown, exit, lines };
 };
 
@@ -18,7 +18,7 @@ describe('createShutdown', () => {
     await vi.waitFor(() => expect(exit).toHaveBeenCalledExactlyOnceWith(0));
   });
 
-  it('logs server.shutdown.failed and exits 1 when close rejects', async () => {
+  it('logs the given failed event and exits 1 when close rejects', async () => {
     const { shutdown, exit, lines } = setup(() => Promise.reject(new Error('pool exploded')));
 
     shutdown();

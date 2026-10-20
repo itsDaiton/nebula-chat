@@ -1,5 +1,6 @@
 import {
   componentLogger,
+  createShutdown,
   initTelemetry,
   listenForLogLevelChanges,
   logEvent,
@@ -19,7 +20,6 @@ import { closeDb } from '@worker/db';
 import { directReplyRepository } from '@worker/directReplies/directReplyRepository';
 import { createDirectReplyProcessor } from '@worker/jobs/directReply';
 import { redis } from '@worker/redis';
-import { createShutdown } from '@worker/shutdown';
 
 // Long enough for a client that dropped mid-reply to reconnect; Postgres holds the reply after.
 const STREAM_TTL_SECONDS = 60 * 60;
@@ -83,6 +83,7 @@ const start = async (): Promise<void> => {
 
   const shutdown = createShutdown({
     logger,
+    failedEvent: 'worker.shutdown.failed',
     // The worker finishes the replies in flight before Redis and Postgres go.
     close: async () => {
       await Promise.all([

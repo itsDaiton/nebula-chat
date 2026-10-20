@@ -9,7 +9,7 @@ vi.mock('@backend/redis', async () => {
 });
 
 import { streamService } from '@backend/modules/stream/stream.service';
-import { captureLogger } from '@backend/test/logCapture';
+import { captureLogger } from '@nebula-chat/otel/testing';
 import { replyStreams } from '@backend/test/memoryReplyStreams';
 
 const STREAM_ID = '44444444-4444-4444-8444-444444444444';

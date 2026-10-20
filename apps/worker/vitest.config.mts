@@ -20,7 +20,6 @@ export default defineConfig({
       // Mirrored into `matrix.coverage` in .github/workflows/build.yml. Change one, change the other.
       exclude: [
         'src/**/tests/**',
-        'src/test/**',
         'src/worker.ts',
         'src/env.ts',
         'src/logger.ts',

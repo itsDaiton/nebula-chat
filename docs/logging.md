@@ -436,7 +436,7 @@ exported, just without a trace to link to. The compiled build
 ### Shutdown
 
 `shutdownTelemetry()` flushes pending spans (and exported log records) and stops the SDK. It is idempotent:
-the lib's own `SIGTERM` hook and the server's shutdown sequence (`src/shutdown.ts`)
+the lib's own `SIGTERM` hook and each app's shutdown sequence (`createShutdown`)
 share one flush. It never rejects, and it stops waiting after a fixed 2s
 (`SHUTDOWN_FLUSH_CAP_MS`). A reachable collector finishes well within that. An
 unreachable one makes the exporter retry for about 8s, which would hold the

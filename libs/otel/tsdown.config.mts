@@ -1,7 +1,8 @@
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  // `testing` is the in-memory log capture apps' tests import as `@nebula-chat/otel/testing`.
+  entry: ['src/index.ts', 'src/testing.ts'],
   format: ['esm', 'cjs'],
   dts: true,
   clean: true,
@@ -14,6 +15,7 @@ export default defineConfig({
     neverBundle: [
       'pino',
       'pino-pretty',
+      'zod',
       '@opentelemetry/api',
       '@opentelemetry/api-logs',
       '@opentelemetry/core',

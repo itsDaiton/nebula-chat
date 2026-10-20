@@ -9,7 +9,7 @@ import type {
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ForbiddenError, INTERNAL_ERROR_ENVELOPE, UnauthorizedError } from '@nebula-chat/errors';
 import { createTestApp } from '@backend/test/app';
-import { captureLogger, eventLines, LEVEL } from '@backend/test/logCapture';
+import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
 import { guestSession, registeredSession, REGISTERED_USER_ID } from '@backend/test/session';
 
 // @backend/auth is the boundary to better-auth: faking it gives the gates a controllable

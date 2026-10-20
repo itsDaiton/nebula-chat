@@ -3,7 +3,7 @@ import { GENERIC_ERROR_MESSAGE } from '@nebula-chat/errors';
 import { MODEL_IDS } from '@nebula-chat/contracts';
 import type { StreamChat } from '@worker/directReplies/runDirectReply';
 import { createDirectReplyProcessor } from '@worker/jobs/directReply';
-import { captureLogger, eventLines, LEVEL } from '@worker/test/logCapture';
+import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
 import {
   failingModel,
   memoryStore,

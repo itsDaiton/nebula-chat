@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DIRECT_REPLY_QUEUE } from '@nebula-chat/contracts';
-import { captureLogger, eventLines, LEVEL } from '@backend/test/logCapture';
+import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
 
 const bull = vi.hoisted(() => ({
   constructed: [] as { name: string; options: unknown }[],

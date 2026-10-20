@@ -39,8 +39,7 @@ script load through `dotenvx run` — single source of truth (see [Environment V
 ```text
 apps/server/src/
 ├── app.ts                         # buildApp() factory — registers plugins, routes, compilers
-├── server.ts                      # Thin entry point — calls buildApp() then app.listen(), wires SIGTERM/SIGINT
-├── shutdown.ts                    # createShutdown() — close + span flush, then exit (no waiting for the event loop to drain)
+├── server.ts                      # Thin entry point — calls buildApp() then app.listen(), wires SIGTERM/SIGINT (createShutdown from @nebula-chat/otel)
 ├── env.ts                         # Zod-validated env schema — single source for all process.env reads
 ├── health.validation.ts           # ApiRoot / Health response schemas for the `/` and `/health` routes
 ├── db.ts                          # DB client singleton (createDbClient from @nebula-chat/db)
@@ -101,10 +100,9 @@ apps/server/src/
 │       ├── logLevel.controller.ts
 │       ├── logLevel.operatorGate.hook.ts # onRequest — admits only `Authorization: Bearer <OPERATOR_TOKEN>`
 │       └── logLevel.routes.ts
-├── test/                          # Shared test harness: createTestApp, session fixtures, logCapture (in-memory logger), memoryPubSub, memoryProfileImageStore, memoryReplyStreams
+├── test/                          # Shared test harness: createTestApp, session fixtures, memoryPubSub, memoryProfileImageStore, memoryReplyStreams
 ├── utils/
 │   ├── logController.ts           # Fastify logController: request lines off, framework faults stamped fastify.log
-│   ├── logLevelOverrides.ts       # LOG_LEVEL_OVERRIDES parser (component=level pairs)
 │   ├── requestPath.ts             # url.path: the request path, query dropped and path tokens redacted
 │   ├── isoDateTimeSchema.ts       # Response timestamp codec: a Date in the handler, an ISO date-time string on the wire
 │   ├── jsonResponse.ts            # One `response:` entry: its description + application/json schema

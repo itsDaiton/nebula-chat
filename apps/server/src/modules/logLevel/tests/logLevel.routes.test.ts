@@ -2,8 +2,8 @@ import type { FastifyInstance } from 'fastify';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { listenForLogLevelChanges } from '@nebula-chat/otel';
 import { createTestApp } from '@backend/test/app';
-import { captureLogger, eventLines } from '@backend/test/logCapture';
-import type { LogLine } from '@backend/test/logCapture';
+import { captureLogger, eventLines } from '@nebula-chat/otel/testing';
+import type { LogLine } from '@nebula-chat/otel/testing';
 import { memoryPubSub } from '@backend/test/memoryPubSub';
 import { guestSession, registeredSession } from '@backend/test/session';
 

@@ -2,7 +2,7 @@ import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GENERIC_ERROR_MESSAGE } from '@nebula-chat/errors';
 import { createTestApp } from '@backend/test/app';
-import { captureLogger, eventLines, LEVEL } from '@backend/test/logCapture';
+import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
 import { replyStreams } from '@backend/test/memoryReplyStreams';
 import { registeredSession, REGISTERED_USER_ID } from '@backend/test/session';
 

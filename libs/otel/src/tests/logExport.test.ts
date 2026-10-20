@@ -7,8 +7,8 @@ import { LOG_EXPORT_TIMEOUT_MS } from '../logExport';
 import { logEvent } from '../logEvent';
 import { createLogger } from '../logger';
 import { initTelemetry } from '../tracing';
-import { captureDestination } from './capture';
-import type { LogLine } from './capture';
+import { captureDestination } from '../testing';
+import type { LogLine } from '../testing';
 import { setEnv } from './processEnv';
 
 // The OTLP exporters are the network boundary: the log one becomes an in-memory one whose
