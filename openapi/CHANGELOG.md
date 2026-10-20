@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v3.0.0...nebula-chat-openapi-v4.0.0) (2026-10-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* NEB-354 release the worker split as breaking for server and openapi ([#603](https://github.com/itsDaiton/nebula-chat/issues/603))
+
+### Features
+
+* NEB-354 release the worker split as breaking for server and openapi ([#603](https://github.com/itsDaiton/nebula-chat/issues/603)) ([fd6d395](https://github.com/itsDaiton/nebula-chat/commit/fd6d39590a6e17ff62bc3a47366ae93b88120050))
+* **worker:** NEB-354 produce Direct replies in a dedicated worker app via BullMQ and Redis Streams ([#601](https://github.com/itsDaiton/nebula-chat/issues/601)) ([69ac0b4](https://github.com/itsDaiton/nebula-chat/commit/69ac0b43aba769dcbfccbb61ef7fa66cd8d571d4))
+
 ## [3.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v2.1.0...nebula-chat-openapi-v3.0.0) (2026-10-19)
 
 
