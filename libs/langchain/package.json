@@ -29,7 +29,7 @@
     "langchain": "^1.5.15",
     "langsmith": "^0.10.8",
     "p-limit": "^7.3.3",
-    "tiktoken": "^1.0.0"
+    "tiktoken": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",

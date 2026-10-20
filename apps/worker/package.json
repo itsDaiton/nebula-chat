@@ -20,7 +20,7 @@
     "@nebula-chat/langchain": "workspace:*",
     "@nebula-chat/otel": "workspace:*",
     "@nebula-chat/redis": "workspace:*",
-    "bullmq": "^6.3.11",
+    "bullmq": "catalog:",
     "drizzle-orm": "catalog:",
     "zod": "catalog:"
   },
@@ -28,8 +28,8 @@
     "@dotenvx/dotenvx": "catalog:",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
-    "nodemon": "^3.1.14",
-    "tsc-alias": "^1.9.7",
+    "nodemon": "catalog:",
+    "tsc-alias": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
