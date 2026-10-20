@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@nebula-chat/otel": "workspace:*",
-    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/api": "catalog:",
     "ioredis": "^6.0.0"
   },
   "devDependencies": {
