@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.7](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-redis-v0.2.6...nebula-chat-redis-v0.2.7) (2026-10-20)
+
+
+### Features
+
+* **worker:** NEB-354 produce Direct replies in a dedicated worker app via BullMQ and Redis Streams ([#601](https://github.com/itsDaiton/nebula-chat/issues/601)) ([69ac0b4](https://github.com/itsDaiton/nebula-chat/commit/69ac0b43aba769dcbfccbb61ef7fa66cd8d571d4))
+
 ## [0.2.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-redis-v0.2.5...nebula-chat-redis-v0.2.6) (2026-10-19)
 
 

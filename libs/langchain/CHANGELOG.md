@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-langchain-v3.0.0...nebula-chat-langchain-v3.1.0) (2026-10-20)
+
+
+### Features
+
+* **worker:** NEB-354 produce Direct replies in a dedicated worker app via BullMQ and Redis Streams ([#601](https://github.com/itsDaiton/nebula-chat/issues/601)) ([69ac0b4](https://github.com/itsDaiton/nebula-chat/commit/69ac0b43aba769dcbfccbb61ef7fa66cd8d571d4))
+
 ## [3.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-langchain-v2.1.0...nebula-chat-langchain-v3.0.0) (2026-10-19)
 
 
