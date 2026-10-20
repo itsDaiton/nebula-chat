@@ -139,7 +139,9 @@ Every feature module follows this strict 6-layer convention. Add files in this o
 6. <module>.routes.ts       — FastifyPluginCallbackZodOpenApi default export; schema blocks + hook chain
 ```
 
-New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(plugin, { prefix: '/api/<module>' })`. The one exception is `chat`, mounted at `/api`: sending lives under the Session it goes to (`/api/sessions/:sessionId/messages`, ADR-0014). No separate OpenAPI registry step — the `schema:` block on each route is the single source of truth for both validation and documentation. Use the `backend-module-scaffold` skill to generate one.
+New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(plugin, { prefix: '/api/<module>' })`.
+The one exception is `chat`, mounted at `/api`: sending lives under the Session it goes to
+(`/api/sessions/:sessionId/messages`, ADR-0014). No separate OpenAPI registry step — the `schema:` block on each route is the single source of truth for both validation and documentation. Use the `backend-module-scaffold` skill to generate one.
 
 ---
 
