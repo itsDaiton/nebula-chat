@@ -1,6 +1,7 @@
 {
   "name": "@nebula-chat/server",
   "version": "3.0.0",
+  "description": "Fastify API: auth, Sessions and Messages, and the SSE relay for the replies the worker produces",
   "packageManager": "pnpm@12.4.1",
   "main": "dist/src/server.js",
   "scripts": {
