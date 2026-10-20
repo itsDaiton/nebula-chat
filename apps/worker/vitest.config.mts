@@ -16,9 +16,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text-summary', 'lcov'],
       include: ['src/**/*.ts'],
-      // `worker.ts` boots the process and wires the real dependencies; the env,
-      // logger, db and redis singletons are construction only; the repository is
-      // the Drizzle adapter (ADR-0008's integration-test debt, as in the server).
+      // Entry point, construction-only singletons and the Drizzle adapter, as in the server.
       // Mirrored into `matrix.coverage` in .github/workflows/build.yml. Change one, change the other.
       exclude: [
         'src/**/tests/**',

@@ -15,11 +15,8 @@ const errorEventSchema = errorEnvelopeSchema.extend({ type: z.literal('error') }
 
 const endEventSchema = z.object({ type: z.literal('end') });
 
-/**
- * One entry of a per-reply Redis Stream (ADR-0014). The worker appends them; the
- * server relays each as an SSE event named `type` whose data is the rest of the object.
- * A stream always finishes with `end`, after an `error` too.
- */
+// One reply stream entry (ADR-0014), relayed as an SSE event named `type` with the rest as data.
+// A stream always finishes with `end`, after an `error` too.
 export const replyStreamEventSchema = z.discriminatedUnion('type', [
   tokenEventSchema,
   usageEventSchema,

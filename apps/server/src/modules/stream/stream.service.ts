@@ -17,11 +17,7 @@ export const streamService = {
     }
   },
 
-  /**
-   * Relays a reply stream from its start as SSE, in order, until its `end` event
-   * or until `signal` aborts (the client went away). Transport only: what the
-   * events mean is the worker's and the client's business.
-   */
+  /** Relays a reply stream from its start as SSE until `end`, or until `signal` aborts. Transport only. */
   async relay(
     streamId: string,
     write: (chunk: string) => void,

@@ -1,12 +1,16 @@
 import { useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { isAppError, parseErrorEnvelope } from '@nebula-chat/errors';
+import { AppError, isAppError, parseErrorEnvelope } from '@nebula-chat/errors';
 import {
   getGetSessionQueryKey,
   getListSessionsInfiniteQueryKey,
   useCreateSession,
 } from '@/libs/api/generated/sessions/sessions';
-import { getGetMessageAllowanceQueryKey, useSendMessage } from '@/libs/api/generated/chat/chat';
+import {
+  getGetMessageAllowanceQueryKey,
+  getGetMessageAllowanceQueryOptions,
+  useSendMessage,
+} from '@/libs/api/generated/chat/chat';
 import { getListMessagesQueryKey } from '@/libs/api/generated/messages/messages';
 import { readReplyStream } from '@/libs/api/generated/streams/streams';
 import { ErrorCode } from '@/libs/api/generated/model/errorCode';
@@ -114,11 +118,7 @@ export const useChatStream = () => {
     setIsStreaming(false);
   }, [setIsStreaming]);
 
-  /**
-   * Sends the newest message, then subscribes to its reply (ADR-0014): a new
-   * chat first gets its Session, the send returns the reply's stream id, and the
-   * stream's tokens render into the trailing assistant message until `end`.
-   */
+  // Send, then subscribe (ADR-0014): a new chat gets its Session first, and the send names the reply's stream.
   const streamMessage = useCallback(
     async ({ model, messages, sessionId: customSessionId }: ChatHistoryStreamOptions) => {
       const controller = new AbortController();
@@ -137,6 +137,14 @@ export const useChatStream = () => {
 
       try {
         if (!activeSessionId) {
+          // The send checks the allowance, so a capped Guest would otherwise leave an empty Session behind.
+          const allowance = await queryClient.fetchQuery({
+            ...getGetMessageAllowanceQueryOptions(),
+            staleTime: 0,
+          });
+          if (allowance.metered && allowance.remaining === 0) {
+            throw new AppError(ErrorCode.MessageAllowanceReached, resources.chat.streamError);
+          }
           const created = await createSession({ data: { title: content.slice(0, 50) } });
           activeSessionId = created.id;
           setSessionId(activeSessionId);
@@ -227,6 +235,7 @@ export const useChatStream = () => {
       invalidateSessionList,
       invalidateMessageAllowance,
       navigate,
+      queryClient,
       sendMessage,
       setSessionId,
       setIsPostStreamNavigation,

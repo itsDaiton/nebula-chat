@@ -8,15 +8,8 @@ type ShutdownOptions = {
   exit?: (code: number) => void;
 };
 
-/**
- * Builds the SIGTERM/SIGINT handler. It exits as soon as `close` settles rather
- * than waiting for the event loop to drain — a handle nobody closed (a socket, a
- * timer) would otherwise keep the process alive until the supervisor kills it.
- * `nodemon` waits on that exit before starting the new process, so a slow
- * shutdown is a slow reload.
- *
- * A second signal mid-shutdown is ignored: the first one already owns the exit.
- */
+// Exits once `close` settles, not when the event loop drains: an unclosed handle would hold the process.
+// A second signal mid-shutdown is ignored.
 export const createShutdown = ({
   logger,
   close,

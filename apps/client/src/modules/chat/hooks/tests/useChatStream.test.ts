@@ -8,7 +8,10 @@ import {
 } from '@/libs/api/generated/sessions/sessions';
 import { getCreateSessionMockHandler } from '@/libs/api/generated/sessions/sessions.msw';
 import { getGetMessageAllowanceQueryKey } from '@/libs/api/generated/chat/chat';
-import { getSendMessageMockHandler } from '@/libs/api/generated/chat/chat.msw';
+import {
+  getGetMessageAllowanceMockHandler,
+  getSendMessageMockHandler,
+} from '@/libs/api/generated/chat/chat.msw';
 import { getListMessagesQueryKey } from '@/libs/api/generated/messages/messages';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
@@ -64,6 +67,7 @@ beforeEach(() => {
       })),
     ),
     getSendMessageMockHandler({ messageId: MESSAGE_ID, streamId: STREAM_ID }),
+    getGetMessageAllowanceMockHandler({ metered: false }),
   );
 });
 
@@ -277,6 +281,27 @@ describe('useChatStream — message allowance', () => {
     await sendMessage(result);
 
     expect(history()).toEqual([]);
+    expect(useMessageStore.getState().message).toBe('what is 2+2?');
+  });
+
+  it('never creates a Session for a new chat once the allowance is spent', async () => {
+    let created = false;
+    server.use(
+      getGetMessageAllowanceMockHandler({ metered: true, limit: 10, used: 10, remaining: 0 }),
+      http.post(API_ROUTE.sessions, () => {
+        created = true;
+        return HttpResponse.json({}, { status: 201 });
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream());
+
+    await sendMessage(result);
+
+    expect(created).toBe(false);
+    expect(useChatStreamStore.getState()).toMatchObject({
+      isMessageAllowanceReached: true,
+      sessionId: undefined,
+    });
     expect(useMessageStore.getState().message).toBe('what is 2+2?');
   });
 

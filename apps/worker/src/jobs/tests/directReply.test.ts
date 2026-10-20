@@ -154,6 +154,24 @@ describe('the Direct reply job', () => {
       expect(redis.expired.has(STREAM_ID)).toBe(true);
     });
 
+    it('lands every queued token before the error, even when the stream is slow to append', async () => {
+      const append = redis.stream.append;
+      redis.stream.append = async (streamId, event) => {
+        if (event.type === 'token') await new Promise((resolve) => setTimeout(resolve, 5));
+        await append(streamId, event);
+      };
+
+      await run(failingModel(new Error('boom'), ['a', 'b', 'c']));
+
+      expect(streamed().map((event) => event.type)).toEqual([
+        'token',
+        'token',
+        'token',
+        'error',
+        'end',
+      ]);
+    });
+
     it('logs the failed reply once, at error', async () => {
       await run(failingModel(new Error('boom')));
 

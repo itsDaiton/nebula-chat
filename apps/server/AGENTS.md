@@ -139,7 +139,7 @@ Every feature module follows this strict 6-layer convention. Add files in this o
 6. <module>.routes.ts       — FastifyPluginCallbackZodOpenApi default export; schema blocks + hook chain
 ```
 
-New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(plugin, { prefix: '/api/<module>' })`. No separate OpenAPI registry step — the `schema:` block on each route is the single source of truth for both validation and documentation. Use the `backend-module-scaffold` skill to generate one.
+New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(plugin, { prefix: '/api/<module>' })`. The one exception is `chat`, mounted at `/api`: sending lives under the Session it goes to (`/api/sessions/:sessionId/messages`, ADR-0014). No separate OpenAPI registry step — the `schema:` block on each route is the single source of truth for both validation and documentation. Use the `backend-module-scaffold` skill to generate one.
 
 ---
 
@@ -263,6 +263,8 @@ response: {
   500: jsonResponse('Internal server error', errorEnvelopeSchema),
 },
 ```
+
+The one exception is an SSE response (`GET /api/streams/:streamId`): its 200 entry declares `text/event-stream` with a described string schema, since the body is not JSON and the client reads it with a fetch mutator, not a generated model.
 
 **Rule — every response resource schema carries `.meta({ id })`:** declare it on the schema in the module's
 `*.validation.ts`, as a plain noun with no `…Response` suffix (`Session`, `SessionPage`, `Message`).

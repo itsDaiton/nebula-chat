@@ -22,11 +22,8 @@ const directReplyQueue = (): Queue => {
   return directReplies;
 };
 
-/**
- * Wakes the worker: Render's free web services sleep without inbound HTTP, and a
- * request is what starts one (ADR-0013). Never rejects. A failed ping is logged,
- * not surfaced, since the job waits in the queue either way.
- */
+// Wakes a sleeping free-plan worker (ADR-0013). Never rejects: a failed ping is only logged,
+// since the job waits in the queue either way.
 export const pingWorker = async (logger: EventLogger<'warn'>): Promise<void> => {
   try {
     const res = await fetch(new URL('/health', env.WORKER_URL), {

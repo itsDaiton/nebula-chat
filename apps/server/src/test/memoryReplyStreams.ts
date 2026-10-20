@@ -3,12 +3,8 @@ import type { ReplyStreamEvent } from '@nebula-chat/contracts';
 import type { StreamEntry } from '@nebula-chat/redis';
 import type { ReplyStreamReader } from '@backend/redis';
 
-/**
- * An in-memory stand-in for the reply-stream half of `@backend/redis`: stream
- * owners, and streams tailed the way `XREAD … BLOCK` tails them. A read returns
- * the entries after its offset at once; with none, it spends one of `timeouts`
- * (an empty result, as a block that timed out) or else waits for the next append.
- */
+// The reply-stream half of `@backend/redis` in memory. A read with nothing new spends one of
+// `timeouts` (an empty block) or else waits for the next append, as `XREAD … BLOCK` does.
 const memoryReplyStreams = () => {
   const owners = new Map<string, string>();
   const streams = new Map<string, StreamEntry[]>();

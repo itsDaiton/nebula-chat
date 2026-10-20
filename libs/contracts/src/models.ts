@@ -1,10 +1,7 @@
 import { z } from 'zod';
 
-/**
- * The Models a Session may be bound to. The server validates against this list,
- * so it holds no LLM code (ADR-0013); the usage epic grows it into the full
- * model catalog (ADR-0030). Keep it in step with the worker's model registry.
- */
+// The Models a Session may be bound to, so the server validates without LLM code (ADR-0013).
+// The worker's tests fail if one has no provider in its registry; ADR-0030 grows it into the catalog.
 export const MODEL_IDS = [
   'gpt-4o',
   'gpt-4o-mini',

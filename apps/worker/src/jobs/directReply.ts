@@ -1,17 +1,24 @@
 import { directReplyJobSchema } from '@nebula-chat/contracts';
-import { componentLogger, logEvent } from '@nebula-chat/otel';
-import { jobLogger, runDirectReply } from '@worker/directReplies/runDirectReply';
+import type { DirectReplyJob } from '@nebula-chat/contracts';
+import { bindAttributes, componentLogger, logEvent } from '@nebula-chat/otel';
+import type { Logger } from '@nebula-chat/otel';
+import { runDirectReply } from '@worker/directReplies/runDirectReply';
 import type { DirectReplyDeps } from '@worker/directReplies/runDirectReply';
+
+/** The logger a job's lines go through, bound to every ID in its payload. */
+const jobLogger = (logger: Logger, job: DirectReplyJob, jobId: string | undefined): Logger =>
+  bindAttributes(logger, {
+    'user.id': job.userId,
+    'nebula.session.id': job.sessionId,
+    'nebula.message.id': job.messageId,
+    'nebula.reply.message.id': job.streamId,
+    'nebula.job.id': jobId,
+  });
 
 /** What the processor reads off a BullMQ job; a `Job` satisfies it. */
 export type QueuedJob = { id?: string | undefined; data: unknown };
 
-/**
- * The BullMQ processor for the Direct reply queue: validates the payload against
- * the contract, binds the job's IDs onto its logger and runs the Direct reply.
- * It never throws: a failed reply is reported on its stream, and a payload that
- * breaks the contract has no stream to report on, so it is logged and dropped.
- */
+// Never throws: a failed reply is told on its stream; a payload breaking the contract has no stream, so it is logged and dropped.
 export const createDirectReplyProcessor =
   (deps: DirectReplyDeps) =>
   async (job: QueuedJob): Promise<void> => {

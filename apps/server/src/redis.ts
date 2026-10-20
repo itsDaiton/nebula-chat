@@ -3,11 +3,7 @@ import type { RedisToolkit, StreamEntry } from '@nebula-chat/redis';
 import { env } from '@backend/env';
 import { logger } from '@backend/logger';
 
-/**
- * The server's single Redis toolkit, mirroring `src/db.ts`. Config and loading
- * live here; consumers import from `@backend/redis` rather than constructing
- * their own.
- */
+/** The server's single Redis toolkit, mirroring `src/db.ts`. */
 export const redis: RedisToolkit = createRedis({ redisUrl: env.REDIS_URL, logger });
 
 export const closeRedis = (): Promise<void> => redis.close();
@@ -17,10 +13,8 @@ const STREAM_OWNER_TTL_SECONDS = 24 * 60 * 60;
 
 const streamOwnerKey = (streamId: string): string => buildKey('stream-owner', streamId);
 
-/**
- * Records who may read a reply stream. The assistant Message only exists once the
- * worker finishes it, so the owner check cannot go through Postgres. Errors propagate.
- */
+// The assistant Message only exists once the worker finishes it, so a stream's owner is kept here,
+// not in Postgres. Errors propagate.
 export const saveStreamOwner = async (streamId: string, userId: string): Promise<void> => {
   // The main connection rejects a command sent before its first connect is ready.
   await redis.connect();

@@ -13,14 +13,14 @@ import type {
   HistoryMessage,
   ProviderType,
 } from '@nebula-chat/langchain';
-import { bindAttributes, componentLogger, logEvent } from '@nebula-chat/otel';
+import { componentLogger, logEvent } from '@nebula-chat/otel';
 import type { LogAttributes, Logger } from '@nebula-chat/otel';
 import { DIRECT_REPLY_SYSTEM_PROMPT } from '@worker/directReplies/systemPrompt';
 
 /** The most recent Messages loaded into a Direct reply's context. */
 const MAX_HISTORY_MESSAGES = 20;
 
-type Usage = { promptTokens: number; completionTokens: number; totalTokens: number };
+type Usage = Omit<Extract<ReplyStreamEvent, { type: 'usage' }>, 'type'>;
 
 export type StoredSession = { id: string; model: string };
 
@@ -61,14 +61,7 @@ export type DirectReplyDeps = {
   logger: Logger;
 };
 
-/**
- * Produces one Direct reply: loads the Session and its history, streams the
- * Session's Model's answer into the reply stream token by token, persists the
- * assistant Message under the stream's id, then ends the stream. A failure
- * ends it too, after a typed `error` event, so a reader always sees `end`.
- *
- * Writes exactly one `chat.reply.completed` line, whichever way it ends.
- */
+/** Streams one Direct reply, persists it under the stream's id, then ends the stream (after an `error` on failure). */
 export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps): Promise<void> => {
   const { store, stream, logger } = deps;
   const startMs = Date.now();
@@ -83,6 +76,12 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
     'gen_ai.usage.output_tokens': usage?.completionTokens,
     'nebula.duration_ms': Date.now() - startMs,
   });
+
+  // Tokens arrive through a synchronous callback; chaining the appends keeps them in order.
+  let appended: Promise<void> = Promise.resolve();
+  const enqueue = (event: ReplyStreamEvent): void => {
+    appended = appended.then(() => stream.append(job.streamId, event));
+  };
 
   try {
     const session = await store.findSession(job.sessionId, job.userId);
@@ -108,12 +107,6 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
         provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY',
       );
     }
-
-    // Tokens arrive through a synchronous callback; chaining the appends keeps them in order.
-    let appended: Promise<void> = Promise.resolve();
-    const enqueue = (event: ReplyStreamEvent): void => {
-      appended = appended.then(() => stream.append(job.streamId, event));
-    };
 
     let content = '';
     await deps.streamChat(
@@ -168,6 +161,8 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
       { ...summary(), 'nebula.outcome': 'failed', 'error.type': envelope.error, err: error },
       `Direct reply failed · ${envelope.error}`,
     );
+    // Tokens still queued go out first, or `end` would overtake them and the relay would drop them.
+    await appended.catch(() => undefined);
     await endWithError(job.streamId, envelope, deps);
   }
 };
@@ -192,13 +187,3 @@ const endWithError = async (
     );
   }
 };
-
-/** The logger a job's lines go through, bound to every ID in its payload. */
-export const jobLogger = (logger: Logger, job: DirectReplyJob, jobId: string | undefined): Logger =>
-  bindAttributes(logger, {
-    'user.id': job.userId,
-    'nebula.session.id': job.sessionId,
-    'nebula.message.id': job.messageId,
-    'nebula.reply.message.id': job.streamId,
-    'nebula.job.id': jobId,
-  });
