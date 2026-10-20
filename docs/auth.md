@@ -354,11 +354,10 @@ The allowance is application logic, not better-auth's rate limiter. It is enforc
 the chat-send `preHandler`
 [`chat.messageAllowance.hook.ts`](../apps/server/src/modules/chat/chat.messageAllowance.hook.ts),
 which runs after `requireAuthentication` (so the session is attached) and before the
-cache hook, so a capped Guest is rejected before any model or cache work:
+handler, so a capped Guest is rejected before the Message is stored or a reply is queued:
 
 - Verified Registered users are uncapped — the check is skipped. A Registered user whose
   email is still unverified is metered exactly like a Guest until they verify.
-- Regenerations do not count — they replay an existing exchange.
 - Otherwise the user's live `role='user'` message count (a Postgres `count` joined to
   their sessions) is compared against `GUEST_MESSAGE_ALLOWANCE`. At or above the
   cap, the send is rejected.
@@ -409,9 +408,10 @@ A capped Guest receives a `403` carrying the shared error envelope (ADR-0011) wi
 
 The client treats the `MessageAllowanceReached` code as the allowance wall and prompts the
 Guest to register or sign in. It switches on the code, not the status: a plain `Forbidden`
-is also a `403`. The stream request goes out through the generated `streamChat`, whose
-fetch mutator returns the raw `Response` without throwing on a non-2xx, so `useChatStream`
-reads the error envelope itself and matches the generated `ErrorCode`.
+is also a `403`. The send goes out through the generated `sendMessage`, whose axios
+interceptor turns the envelope into an `AppError`, so `useChatStream` matches its code against
+the generated `ErrorCode`. A new chat also reads the allowance before it creates its Session, so
+a capped Guest never leaves an empty Session behind.
 
 A Metered user (a Guest, or an unverified Registered user) sees the allowance before the
 wall: `MessageAllowanceCounter`, directly above the chat input, reads "N of M messages
@@ -431,8 +431,8 @@ composer is never disabled and a typed draft is kept.
 
 The count is the server's live count, so the client keeps no counter of its own. The query is
 never stale (`staleTime: 0`) and refetches on mount, on window focus (a second tab, a verified
-email), when the stream's `user-message-created` event arrives (the moment the server counts
-the message, so a reply that later fails still counts), and after a refused send. An identity
+email), when the send returns `202` (the server has stored the Message, so a reply that later
+fails still counts), and after a refused send. An identity
 change removes every query, so the next identity's allowance is read afresh.
 
 ## Email
