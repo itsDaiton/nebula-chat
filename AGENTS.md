@@ -10,6 +10,8 @@ Package-specific conventions — directory layout, state management, module patt
 - `apps/cli` — the operator CLI (commander, an Orval fetch client); small enough to live in [Operator CLI](#operator-cli-appscli) below
 
 Read this file for anything that spans the whole repo; read the relevant package's `AGENTS.md` before touching code inside it.
+For how the pieces fit together (deployment, packages, data model, the flows that cross apps), start at
+[docs/architecture.md](./docs/architecture.md).
 
 ---
 
@@ -212,6 +214,28 @@ These apply everywhere in the repo, frontend and backend alike. See each package
   choice. Keep each comment to one line, two at most. Names and types carry the what; history belongs in the
   commit message, rationale that spans files in an ADR.
 
+### Diagrams
+
+Architecture and flows are drawn in [Mermaid](https://mermaid.js.org), inside the Markdown that explains
+them. GitHub renders it, it diffs as text, and an agent can read and edit it like code. No exported images
+(PNG, SVG, Excalidraw files): a picture nobody can diff goes stale unnoticed.
+
+- **Where it goes.** System-level views (deployment, workspace packages, data model, Redis keyspace, flows
+  that cross apps) in [docs/architecture.md](./docs/architecture.md). A feature's own flows beside its prose
+  in a topic doc (`docs/auth.md`, `docs/logging.md`). An ADR may draw the decision it records. A package
+  `AGENTS.md` links to a diagram rather than copying it.
+- **Which kind.** `flowchart` for structure and pipelines, `sequenceDiagram` for a request or job that crosses
+  processes, `erDiagram` for the schema, `stateDiagram-v2` for a lifecycle (an identity, a Run's states).
+- **What it shows.** What the code does today. A proposed design stays in its ADR, labelled as proposed;
+  a known shortfall goes under `docs/architecture.md` → Known gaps, not into a diagram as if it worked.
+- **How it reads.** One question per diagram and about 15 nodes at most; split rather than grow. Name real
+  things (routes, files, Redis keys, events, env vars) so a reader can grep from the diagram to the code.
+  Prose around it says what the diagram cannot: why, limits, failure paths.
+- **Keep it true.** A change to a drawn flow updates the diagram in the same PR (see
+  [Keeping the Agentic Workspace in Sync](#keeping-the-agentic-workspace-in-sync)).
+- **Check it renders** before pushing: `npx -y @mermaid-js/mermaid-cli -i docs/<file>.md -o /tmp/<file>.md`
+  renders every block in the file and fails on a syntax error.
+
 ---
 
 ## Monorepo Structure
@@ -370,6 +394,8 @@ This repo's `.claude/` workspace (skills) and its documentation (`AGENTS.md` fil
 - The relevant `AGENTS.md` — root for cross-cutting changes, the package's own `AGENTS.md` for package-specific ones.
 - `CONTEXT.md` if domain vocabulary was introduced, renamed, or retired (this is `/domain-modeling`'s job, ideally done upstream during `/grill-with-docs`/`/to-spec`, not as an afterthought here).
 - `docs/adr/` if the change is hard-to-reverse, surprising, or the result of a real trade-off (see `/domain-modeling`'s ADR criteria).
+- The Mermaid diagrams that draw the area: `docs/architecture.md` for system-level changes (a new app, lib,
+  table, Redis key, queue or deploy step), the topic doc for a feature's flow (see [Diagrams](#diagrams)).
 - Any `.claude/skills/**` whose steps or file paths reference the area that changed (e.g. a renamed directory, a retired ticket, a changed convention).
 
 A PR that changes how the codebase works but leaves these docs describing the old way is not done.

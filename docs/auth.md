@@ -22,6 +22,44 @@ A visitor becomes a Guest **only when the client explicitly requests an anonymou
 session** — the server never mints one implicitly. On the first sign-up or sign-in,
 the Guest's sessions are reassigned to the new account (see [Account linking](#account-linking)).
 
+```mermaid
+stateDiagram-v2
+  [*] --> Unauthenticated
+  Unauthenticated --> Guest: AuthGate calls sign-in/anonymous
+  Guest --> Registered: sign up or sign in, email or social (Claim)
+  state Registered {
+    [*] --> Unverified: email sign-up
+    [*] --> Verified: provider-verified email
+    Unverified --> Verified: verification link or password reset
+  }
+  Registered --> Guest: sign out, sign out everywhere, account deletion
+  note right of Guest
+    Guest and Unverified are Metered users:
+    both are held to the Message allowance.
+  end note
+```
+
+The browser always holds some identity: signing out, or deleting the account, drops the
+client back to a fresh Guest, never to Unauthenticated.
+
+### Becoming a Guest
+
+```mermaid
+sequenceDiagram
+  participant C as Client<br/>AuthGate · ensureSession
+  participant A as Server<br/>/api/auth/* (better-auth)
+  participant PG as Postgres
+  participant R as Redis
+
+  C->>A: GET /api/auth/get-session
+  A-->>C: null (no cookie)
+  C->>A: POST /api/auth/sign-in/anonymous
+  A->>PG: insert users (is_anonymous = true)
+  A->>R: auth:* sign-in session
+  A-->>C: Set-Cookie session_token + session_data
+  Note over C: the app renders only now
+```
+
 ## Components
 
 | Piece                 | Location                                                                          | Responsibility                                                                                                                                    |
@@ -263,9 +301,8 @@ application's own `openapi.yaml`. better-auth's `openAPI` plugin serves an inter
 [Scalar](https://scalar.com/) reference at `/api/auth/reference`, backed by the
 OpenAPI 3.1 schema at `/api/auth/open-api/generate-schema` (the reference UI fetches
 that schema). The reference lists better-auth's full core catalogue — including
-endpoints for features this instance does not enable (account deletion, email
-change) — so the hand-written list above is the authoritative set of
-active endpoints.
+endpoints for features this instance does not enable, such as email change — so
+the hand-written list above is the authoritative set of active endpoints.
 
 ## Sessions and cookies
 
@@ -364,6 +401,20 @@ handler, so a capped Guest is rejected before the Message is stored or a reply i
 
 No Redis counter is involved; at a cap of ~10 the live count is exact and stateless.
 
+```mermaid
+flowchart TD
+  send(["POST /api/sessions/:sessionId/messages"]) --> auth{requireAuthentication}
+  auth -->|no session| e401[401]
+  auth --> hook["messageAllowanceHook<br/>getMessageAllowance"]
+  hook --> verified{verified<br/>Registered user?}
+  verified -->|yes| ok[send goes through]
+  verified -->|"no: Guest or unverified"| count["count role = 'user' Messages<br/>across the User's Sessions"]
+  count --> left{"remaining > 0?<br/>GUEST_MESSAGE_ALLOWANCE − used"}
+  left -->|yes| ok
+  left -->|no| e403["403 MessageAllowanceReached"]
+  read(["GET /api/chat/message-allowance"]) --> hook2["getMessageAllowance"] --> body["{metered, limit, used, remaining}"]
+```
+
 The metered decision and the count live in one function,
 [`getMessageAllowance`](../apps/server/src/modules/chat/chat.messageAllowance.service.ts),
 which both the hook and the read endpoint below call, so what the client displays and what
@@ -461,6 +512,32 @@ Following a verification link signs its owner in. In a browser holding a differe
 Guest's session, that is a sign-in like any other, so the claim below moves that Guest's
 sessions into the account.
 
+```mermaid
+sequenceDiagram
+  participant C as Client
+  participant A as Server<br/>better-auth
+  participant PG as Postgres
+  participant R as Redis
+  participant M as Resend
+
+  C->>A: POST /api/auth/sign-up/email (Guest cookie)
+  Note over A: password checked against HaveIBeenPwned
+  A->>PG: insert users + account (credential)
+  A->>PG: Claim: UPDATE sessions SET user_id = new WHERE user_id = Guest
+  A->>PG: delete the Guest's users row
+  A->>R: auth:* sign-in session + verification token
+  A--)M: verification email (background task)
+  A-->>C: signed in, email unverified
+  Note over C: still Metered until verified
+  C->>A: GET /api/auth/verify-email?token (link from the email)
+  A->>PG: users.email_verified = true
+  A-->>C: redirect to /auth/verify-email, signed in
+```
+
+A password reset runs the same way: `POST /api/auth/request-password-reset` emails a link,
+the link opens `/auth/reset-password?token`, and `POST /api/auth/reset-password` sets the new
+password, marks the email verified (the link proved it) and signs out every auth session.
+
 The client pages better-auth redirects to:
 
 | Page                    | Reached from                         | Shows                                                                            |
@@ -479,6 +556,24 @@ enabling a provider only when both its id and secret are set. Either one alone f
 Each provider's OAuth app registers the redirect URI
 `<BETTER_AUTH_URL>/api/auth/callback/<provider>` — locally
 `http://localhost:3000/api/auth/callback/google` and `…/github`.
+
+```mermaid
+sequenceDiagram
+  participant C as Client
+  participant A as Server<br/>better-auth
+  participant P as Google / GitHub
+  participant PG as Postgres
+
+  C->>A: POST /api/auth/sign-in/social {provider, callbackURL} (Guest cookie)
+  A-->>C: {url}, Guest recorded in the OAuth state
+  C->>P: browser follows url, user consents
+  P->>A: redirect: GET /api/auth/callback/:provider?code&state
+  A->>P: exchange code for profile + email
+  A->>PG: find or create users + account (auto-link if both emails verified)
+  A->>PG: Claim the Guest's Sessions, delete the Guest
+  A-->>C: Set-Cookie, redirect to the chat root
+  Note over C,A: on failure: redirect to /auth?error=code
+```
 
 The round trip, from the auth page's "Continue with Google / GitHub":
 

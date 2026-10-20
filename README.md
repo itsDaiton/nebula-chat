@@ -1,17 +1,21 @@
 # Nebula Chat
 
-Nebula Chat is a full-stack AI chat application.  
-It provides a React frontend for chatting and session history, plus an Express backend that
-streams model responses, stores sessions/messages in PostgreSQL, and caches responses in
-Redis.
+Nebula Chat is a full-stack AI chat application.
+It provides a React frontend for chatting and session history, a Fastify API that stores
+sessions/messages in PostgreSQL and relays replies over SSE, and a worker that produces those
+replies from the LLM providers through Redis. See [docs/architecture.md](./docs/architecture.md)
+for diagrams of how the pieces fit together.
 
 ## Monorepo structure
 
 ```text
 nebula-chat/
-└── apps/
-    ├── client/   # React + Vite client
-    └── server/   # Fastify + Drizzle API
+├── apps/
+│   ├── cli/      # `nebula` operator CLI
+│   ├── client/   # React + Vite client
+│   ├── server/   # Fastify + Drizzle API
+│   └── worker/   # LLM replies off a BullMQ queue
+└── libs/         # Shared packages: auth, contracts, db, errors, langchain, otel, redis
 ```
 
 ## Prerequisites

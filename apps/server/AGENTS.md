@@ -2,6 +2,9 @@
 
 Conventions specific to the Fastify API. See the [root AGENTS.md](../../AGENTS.md) for monorepo-wide commands, git workflow, and cross-cutting rules (no barrels, `type` not `interface`, arrow functions) that also apply here.
 
+How a request moves through the plugins and route gates, the data model and the Direct reply flow are
+drawn in [docs/architecture.md](../../docs/architecture.md); auth flows in [docs/auth.md](../../docs/auth.md).
+
 ---
 
 ## Commands

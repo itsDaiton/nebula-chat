@@ -20,6 +20,19 @@ For the decisions behind them, see
 - Lines go to stdout, and also to Loki over OTLP when `OTEL_LOGS_EXPORTER=otlp`
   ([Exporting logs](#exporting-logs)). Grafana links them to their traces.
 
+```mermaid
+flowchart LR
+  code["logEvent · req.log<br/>server and worker"] --> pino["Pino instance<br/>createLogger: redaction,<br/>trace_id / span_id mixin"]
+  pino --> stdout["stdout<br/>JSON, or pino-pretty in development"]
+  pino -->|"OTEL_LOGS_EXPORTER=otlp<br/>+ an endpoint"| logsdk["OpenTelemetry logs SDK<br/>batched, OTLP/HTTP"]
+  sdk["NodeSDK<br/>auto-instrumentation spans"] -->|"OTEL_EXPORTER_OTLP_ENDPOINT"| traces["OTLP/HTTP traces"]
+  logsdk --> loki["Loki<br/>Grafana Cloud · otel-lgtm locally"]
+  traces --> tempo["Tempo<br/>Grafana Cloud · otel-lgtm locally"]
+  loki <-.->|trace_id| tempo
+```
+
+Each process sends straight to the backend; there is no collector in between.
+
 ## What a line looks like
 
 ```json
@@ -347,8 +360,33 @@ Both routes are in the OpenAPI spec (Swagger UI at `/docs`, tag `Operator`, whic
 In code, `changeLogLevel(logger, change)` from `@nebula-chat/otel` does the
 in-process part, and `readLogLevels(logger)` reads it back.
 `listenForLogLevelChanges`, `publishLogLevelChange` and `collectLogLevelReports`
-carry it over any pub/sub with `@nebula-chat/redis`'s `pubsub` shape. A new process (the
-worker, NEB-354) listens with one call next to its `createLogger`.
+carry it over any pub/sub with `@nebula-chat/redis`'s `pubsub` shape.
+
+```mermaid
+sequenceDiagram
+  participant O as Operator<br/>nebula log-level set
+  participant S as Server instance<br/>that took the request
+  participant R as Redis pub/sub
+  participant I as Every server instance<br/>(including that one)
+
+  O->>S: POST /api/internal/log-level (Bearer OPERATOR_TOKEN)
+  Note over S: requireOperator: 404 if unset, 403 if wrong
+  S->>R: PUBLISH log-level:nebula-chat-server
+  R-->>S: receivers
+  S-->>O: 202 {receivers, expiresAt}
+  R->>I: change
+  Note over I: changeLogLevel · log.level.changed<br/>timer reverts it: log.level.reverted
+  O->>S: GET /api/internal/log-level
+  S->>R: SUBSCRIBE log-level-reply:nebula-chat-server:id<br/>PUBLISH log-level-report:nebula-chat-server {replyTo}
+  R->>I: report request
+  I->>R: PUBLISH replyTo {instance, levels}
+  R-->>S: one report per instance, or 2 s pass
+  S-->>O: 200 {receivers, reports}
+```
+
+The worker listens the same way, but on its own channels (`log-level:nebula-chat-worker`). The
+route publishes only to the server's, so the worker's levels cannot be changed or read through
+it yet; `LOG_LEVEL` and `LOG_LEVEL_OVERRIDES` on the worker service are the way today.
 
 ## Never logged
 
