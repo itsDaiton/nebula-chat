@@ -1,0 +1,44 @@
+name: Validate deploy triggers
+
+# Each deploy-<app>.yml must fire on the release tag of every workspace library
+# the app is built from, or a library-only release ships without redeploying the
+# app. The check walks the `workspace:*` graph and maps each directory to its
+# release-please component; see .github/scripts/check-deploy-triggers.sh.
+on:
+  pull_request:
+    paths:
+      - apps/*/package.json
+      - libs/*/package.json
+      - release-please-config.json
+      - .github/workflows/deploy-*.yml
+      - .github/workflows/validate-deploy-triggers.yml
+      - .github/scripts/check-deploy-triggers.sh
+  push:
+    branches:
+      - main
+    paths:
+      - apps/*/package.json
+      - libs/*/package.json
+      - release-please-config.json
+      - .github/workflows/deploy-*.yml
+      - .github/workflows/validate-deploy-triggers.yml
+      - .github/scripts/check-deploy-triggers.sh
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  validate-deploy-triggers:
+    name: Validate deploy triggers
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      # jq and mikefarah yq v4 are on the runner image, so nothing is installed.
+      - name: Check deploy tags cover workspace dependencies
+        run: .github/scripts/check-deploy-triggers.sh

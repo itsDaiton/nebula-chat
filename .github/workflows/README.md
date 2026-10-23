@@ -58,6 +58,14 @@ That's it — the matrix picks up the new package automatically. Apps that need 
 runtime secret (e.g. the server's `DATABASE_URL`) already have it in the job
 `env`; add more there if a new package needs one.
 
+**4. Add its release tag to every deploy workflow built from it.** When an app
+gains a `workspace:*` dependency on a lib (directly or through another lib), add
+`<component>-v*` (the lib's `component` in `release-please-config.json`) to that
+app's `deploy-<app>.yml` `on.push.tags`. A new deployed app gets its own
+`deploy-<app>.yml` named after its `apps/<app>` directory.
+[`validate-deploy-triggers.yml`](./validate-deploy-triggers.yml) fails CI when a
+tag is missing.
+
 ## Grafana dashboards (`deploy-grafana-dashboards.yml`)
 
 [`deploy-grafana-dashboards.yml`](./deploy-grafana-dashboards.yml) uploads every

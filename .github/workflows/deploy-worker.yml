@@ -2,6 +2,8 @@ name: Deploy nebula-chat-worker
 
 # The worker bundles its workspace libraries at build time, so a release of any
 # of them changes what runs in production, as with the server.
+# `validate-deploy-triggers.yml` keeps this tag list in step with its
+# `workspace:*` dependencies.
 on:
   push:
     tags:
