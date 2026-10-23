@@ -82,6 +82,7 @@ export const auth = createAuth({
   sendEmail, // createResendEmailSender({ apiKey: RESEND_API_KEY, from: EMAIL_FROM })
   errorURL, // `${CLIENT_URL}/auth` — where a failed social sign-in lands
   socialProviders, // socialProvidersFromEnv(env) — Google / GitHub OAuth apps that are configured
+  onUserDeleted, // deleteProfileImageOfDeletedUser(profileImageStore, logger) — deletes the uploaded file on Account deletion
 });
 ```
 
@@ -284,6 +285,18 @@ INVALID_PASSWORD` when it's wrong. A user without one (Google/GitHub only) sends
 needs an auth session younger than a day (`400 SESSION_EXPIRED` otherwise). The guard is
 [`libs/auth/src/deleteAccount.ts`](../libs/auth/src/deleteAccount.ts). Deletes the user's accounts, auth sessions and user row; their Sessions and
 messages go with it through the `ON DELETE CASCADE` foreign keys. Clears the session cookie.
+
+An uploaded Profile image lives outside Postgres, so the server deletes its file too. The lib's
+`user.deleteUser` hooks ([`libs/auth/src/userDeletion.ts`](../libs/auth/src/userDeletion.ts)) read
+`users.profileImageKey` in `beforeDelete`, while the row still exists, and call the injected
+`onUserDeleted({ id, profileImageKey })` in `afterDelete`, once it is gone. Both run only after the
+password or fresh-sign-in check, so a refused deletion leaves the file in place. The server's
+callback ([`profileImage.fileDeletion.ts`](../apps/server/src/modules/profileImage/profileImage.fileDeletion.ts))
+deletes the key through `profileImageStore`. It asks storage nothing for a provider image (no key),
+for no image, or while uploads are off (`profileImageStore` is `null`). A failed storage delete never
+fails the request: it is one `warn`, `profile_image.delete.failed` with `err`, `user.id` and
+`nebula.profile_image.key`, and the account stays deleted. A callback that throws anyway is caught
+by the lib and logged as `auth.user_deleted_callback.failed`.
 
 ### `POST /api/auth/delete-anonymous-user` — delete the Guest
 

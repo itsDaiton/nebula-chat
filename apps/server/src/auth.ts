@@ -3,6 +3,8 @@ import type { AuthInstance } from '@nebula-chat/auth';
 import { db } from '@backend/db';
 import { env } from '@backend/env';
 import { logger } from '@backend/logger';
+import { deleteProfileImageOfDeletedUser } from '@backend/modules/profileImage/profileImage.fileDeletion';
+import { profileImageStore } from '@backend/profileImageStore';
 import { redis } from '@backend/redis';
 import { socialProvidersFromEnv } from '@backend/utils/socialProviders';
 
@@ -11,7 +13,8 @@ import { socialProvidersFromEnv } from '@backend/utils/socialProviders';
  * `src/redis.ts`. Config lives here — consumers import `auth` from `@backend/auth`
  * rather than constructing their own. The lib (`@nebula-chat/auth`) owns the
  * better-auth configuration; the server only injects its resolved env, the DB
- * client, the Redis-backed `authStore` (ADR-0010) and the Resend sender (ADR-0021).
+ * client, the Redis-backed `authStore` (ADR-0010), the Resend sender (ADR-0021) and the
+ * Profile image file deletion run on Account deletion (ADR-0022).
  */
 export const auth: AuthInstance = createAuth({
   db,
@@ -24,4 +27,6 @@ export const auth: AuthInstance = createAuth({
   // A failed social sign-in lands on the client's auth page, which explains its `?error=`.
   errorURL: new URL('/auth', env.CLIENT_URL).href,
   socialProviders: socialProvidersFromEnv(env),
+  // A deleted User's uploaded Profile image goes with them; a failed delete is only logged.
+  onUserDeleted: deleteProfileImageOfDeletedUser(profileImageStore, logger),
 });

@@ -19,6 +19,8 @@ import {
 import type { ChangePasswordAttempt, PasswordRejection } from './passwordRejection';
 import { DELETE_ACCOUNT_REJECTION_MESSAGES, findDeleteAccountRejection } from './deleteAccount';
 import type { EmailSender } from './resend';
+import { userDeletionHooks } from './userDeletion';
+import type { OnUserDeleted } from './userDeletion';
 
 /**
  * Everything the lib needs to build a configured better-auth instance. The lib
@@ -56,6 +58,8 @@ export type CreateAuthConfig = {
   errorURL?: string;
   /** OAuth apps for social sign-in; a provider left out is not offered (`PROVIDER_NOT_FOUND`). */
   socialProviders?: SocialProviderCredentials;
+  /** Deletes what a deleted User kept outside Postgres, once the row is gone; a rejection is only logged. */
+  onUserDeleted?: OnUserDeleted;
 };
 
 /** A provider's OAuth app; it redirects back to `${baseURL}/api/auth/callback/<provider>`. */
@@ -113,7 +117,8 @@ const withProviderImageKept = (providers: SocialProviderCredentials) =>
  * - email/password with password reset; verification is sent on sign-up but not
  *   required to sign in, sent in the background via `sendEmail` (ADR-0021).
  * - `user.deleteUser` enabled for Settings → Delete account; the `before` hook makes a user
- *   with a password send it (better-auth would accept a recent sign-in instead).
+ *   with a password send it (better-auth would accept a recent sign-in instead), and
+ *   `onUserDeleted` runs once the account is gone.
  * - a `before` hook refusing an unchanged password (`PASSWORD_REUSED`) on
  *   `/change-password`, and a breached or unchanged one on `/reset-password`.
  * - Google / GitHub social sign-in for each provider in `socialProviders`; its
@@ -130,6 +135,7 @@ export const createAuth = ({
   sendEmail,
   errorURL,
   socialProviders = {},
+  onUserDeleted,
 }: CreateAuthConfig): Auth =>
   // better-auth 1.7 made `Auth` generic (`Auth<Options>`) and invariant, so the
   // instance `betterAuth()` infers no longer widens to the base `Auth` we expose.
@@ -151,7 +157,10 @@ export const createAuth = ({
       modelName: 'users',
       // Settings → Delete account: the password confirms it, or for a user without one a
       // sign-in under a day old. Their Sessions and messages go with them (FK cascades).
-      deleteUser: { enabled: true },
+      deleteUser: {
+        enabled: true,
+        ...(onUserDeleted && userDeletionHooks(db, logger, onUserDeleted)),
+      },
       additionalFields: {
         // Where our upload sits in storage; unset means `image` is a provider URL or empty.
         profileImageKey: { type: 'string', required: false, input: false, returned: false },

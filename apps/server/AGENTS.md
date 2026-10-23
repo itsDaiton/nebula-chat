@@ -92,6 +92,7 @@ apps/server/src/
 │   │   ├── profileImage.repository.ts   # Through better-auth's internal adapter, so session copies in Redis refresh
 │   │   ├── profileImage.processing.ts   # sharp: JPEG/PNG/WebP in, 256×256 metadata-free WebP out
 │   │   ├── profileImage.supabaseStore.ts # The Supabase Storage ProfileImageStore
+│   │   ├── profileImage.fileDeletion.ts      # Deletes unused files; the onUserDeleted callback @backend/auth wires
 │   │   ├── profileImage.uploadLimit.hook.ts # preHandler — 10 uploads per user per hour, counted in Redis
 │   │   ├── profileImage.service.ts
 │   │   ├── profileImage.controller.ts
