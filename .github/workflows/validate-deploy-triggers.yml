@@ -1,0 +1,35 @@
+name: Validate deploy triggers
+
+# A lib release must redeploy every app built from it, so each deploy-<app>.yml must list its tag.
+# PR-only: whatever reaches main already passed here.
+on:
+  pull_request:
+    paths:
+      - apps/*/package.json
+      - libs/*/package.json
+      - openapi/package.json
+      - release-please-config.json
+      - .github/workflows/deploy-*.yml
+      - .github/workflows/validate-deploy-triggers.yml
+      - .github/scripts/check-deploy-triggers.sh
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  validate-deploy-triggers:
+    name: Validate deploy triggers
+    # Release PRs only bump `version` fields, which the path filter cannot tell from a dependency change.
+    if: ${{ github.head_ref != 'release-please--branches--main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      # jq and mikefarah yq v4 are on the runner image, so nothing is installed.
+      - name: Check deploy tags cover workspace dependencies
+        run: .github/scripts/check-deploy-triggers.sh

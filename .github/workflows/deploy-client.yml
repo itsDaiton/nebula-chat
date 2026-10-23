@@ -1,14 +1,20 @@
 name: Deploy nebula-chat-client
 
-# Unlike the server, the client depends on no workspace packages — its Orval
-# output is committed under apps/client — so its own tag is the
-# only release that changes what it serves.
+# The client bundles @nebula-chat/errors, so an errors release changes what it serves; its Orval
+# output is committed, so an openapi release does not. validate-deploy-triggers.yml checks this list.
 on:
   push:
-    tags: ['nebula-chat-client-v*']
+    tags:
+      - 'nebula-chat-client-v*'
+      - 'nebula-chat-errors-v*'
   workflow_dispatch:
 
 permissions: {}
+
+# One release pushes several tags at once, each firing its own run.
+concurrency:
+  group: deploy-nebula-chat-client
+  cancel-in-progress: true
 
 jobs:
   deploy:

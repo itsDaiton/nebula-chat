@@ -1,7 +1,7 @@
 name: Deploy nebula-chat-worker
 
 # The worker bundles its workspace libraries at build time, so a release of any
-# of them changes what runs in production, as with the server.
+# of them changes what runs in production, as with the server. validate-deploy-triggers.yml checks this list.
 on:
   push:
     tags:
