@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.1.0...nebula-chat-client-v2.1.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* **deps:** patch the Node.js October 2026 security release and vulnerable deps ([#610](https://github.com/itsDaiton/nebula-chat/issues/610)) ([c86fd52](https://github.com/itsDaiton/nebula-chat/commit/c86fd52eb8fd982c81135b3d81ed1df5efb7fdab))
+
 ## [2.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.0.0...nebula-chat-client-v2.1.0) (2026-10-20)
 
 

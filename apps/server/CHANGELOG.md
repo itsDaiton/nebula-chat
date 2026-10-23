@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.0.0...nebula-chat-server-v4.0.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* **deps:** patch the Node.js October 2026 security release and vulnerable deps ([#610](https://github.com/itsDaiton/nebula-chat/issues/610)) ([c86fd52](https://github.com/itsDaiton/nebula-chat/commit/c86fd52eb8fd982c81135b3d81ed1df5efb7fdab))
+
 ## [4.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v3.0.0...nebula-chat-server-v4.0.0) (2026-10-20)
 
 
