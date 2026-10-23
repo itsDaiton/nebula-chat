@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.0.3...nebula-chat-v5.0.4) (2026-10-23)
+
+
+### Bug Fixes
+
+* **ci:** skip the build matrix on Release Please PRs ([#614](https://github.com/itsDaiton/nebula-chat/issues/614)) ([a7c9fac](https://github.com/itsDaiton/nebula-chat/commit/a7c9fac18cf6f4b1d0db034fd47ff2a6e5fb9db2))
+
 ## [5.0.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.0.2...nebula-chat-v5.0.3) (2026-10-23)
 
 
