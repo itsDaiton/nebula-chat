@@ -96,6 +96,7 @@ jobs:
         id: set
         env:
           EVENT: ${{ github.event_name }}
+          HEAD_REF: ${{ github.head_ref }}
           F_CLIENT: ${{ steps.filter.outputs.client }}
           F_SERVER: ${{ steps.filter.outputs.server }}
           F_CLI: ${{ steps.filter.outputs.cli }}
@@ -131,7 +132,11 @@ jobs:
           ]'
           # Non-PR runs (push to main, manual) and any change to shared
           # files build everything; PRs build only the changed packages.
-          if [ "$EVENT" != "pull_request" ] || [ "$F_SHARED" = "true" ]; then
+          # A release PR only bumps versions and changelogs (the root package.json among them, which
+          # trips `shared`), so it builds nothing; the push to main after it merges builds everything.
+          if [ "$EVENT" = "pull_request" ] && [ "$HEAD_REF" = "release-please--branches--main" ]; then
+            selected='[]'
+          elif [ "$EVENT" != "pull_request" ] || [ "$F_SHARED" = "true" ]; then
             selected="$all"
           else
             ids='[]'
