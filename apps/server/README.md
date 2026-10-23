@@ -11,7 +11,7 @@ It is responsible for:
 
 ## Prerequisites
 
-- Node.js `26.8.2` (repo `.nvmrc`)
+- Node.js `26.12.1` (repo `.nvmrc`)
 - pnpm `>=12` (pinned to `12.4.1` via `packageManager`)
 - Podman (recommended for local PostgreSQL + Redis)
 - OpenAI API key

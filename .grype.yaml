@@ -55,3 +55,26 @@ ignore:
       name: braces
       version: 3.0.3
       type: npm
+
+  # GHSA-gfr2-rv44-r23c: markdown-it renders a single multi-line link reference
+  # definition in quadratic time with default options (a regression since
+  # 14.0). Fixed in 14.3.3, but that release is still inside the
+  # minimumReleaseAge window in pnpm-workspace.yaml (clears 2026-10-26).
+  #
+  # markdown-it reaches this repo only through orval -> typedoc, devDependencies
+  # of apps/client and apps/cli used for API-client codegen
+  # (`pnpm why markdown-it -r`). It only parses the repo's own doc comments,
+  # never untrusted input, and nothing deployed ships it.
+  #
+  # Pinned to markdown-it 14.3.2; delete once 14.3.3 clears the release-age
+  # window and the lockfile picks it up.
+  - vulnerability: GHSA-gfr2-rv44-r23c
+    include-aliases: true
+    reason: >-
+      Transitive codegen devDependency via orval/typedoc that only parses the
+      repo's own doc comments. The fix (14.3.3) is still inside the pnpm
+      minimumReleaseAge window.
+    package:
+      name: markdown-it
+      version: 14.3.2
+      type: npm
