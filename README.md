@@ -20,7 +20,7 @@ nebula-chat/
 
 ## Prerequisites
 
-- Node.js `26.8.2` (see `.nvmrc`)
+- Node.js `26.12.1` (see `.nvmrc`)
 - pnpm `>=12` (pinned to `12.4.1` via `packageManager`)
 - Podman (recommended for local PostgreSQL + Redis)
 - OpenAI API key
@@ -37,7 +37,7 @@ nvm install $(cat .nvmrc) && nvm use $(cat .nvmrc)
 On nvm-windows, pass the version explicitly — it does not read `.nvmrc`:
 
 ```powershell
-nvm install 26.8.2; nvm use 26.8.2
+nvm install 26.12.1; nvm use 26.12.1
 ```
 
 Node 26 no longer bundles Corepack, so install pnpm once per Node version with
