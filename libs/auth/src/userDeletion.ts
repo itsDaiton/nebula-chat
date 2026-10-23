@@ -4,22 +4,18 @@ import type { DbClient } from '@nebula-chat/db';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
 import type { Logger } from '@nebula-chat/otel';
 
-/** What of a deleted account lives outside Postgres, for the consumer to clean up. */
+/** What of a deleted User lives outside Postgres, for the consumer to delete. */
 export type DeletedUser = {
   id: string;
   /** The uploaded Profile image's storage key; `null` for a provider image or none. */
   profileImageKey: string | null;
 };
 
-/** Runs once an account is deleted; a rejection is logged and never fails the delete. */
+/** Runs once a User is deleted; a rejection is logged and never fails the delete. */
 export type OnUserDeleted = (user: DeletedUser) => Promise<void>;
 
-/**
- * better-auth's `user.deleteUser` hooks around a confirmed delete. Both run after the password or
- * fresh sign-in check, so a refused delete reaches neither. `beforeDelete` reads the key while the
- * row exists (the session's user never carries `profileImageKey`, which is `returned: false`);
- * `afterDelete` hands it on once the row is gone, so a failed row delete leaves the file in place.
- */
+/** better-auth's delete hooks, run only once the delete is confirmed: read the key, then hand it on. */
+// The session's user never carries `profileImageKey` (`returned: false`), so it is read while the row exists.
 export const userDeletionHooks = (db: DbClient, logger: Logger, onUserDeleted: OnUserDeleted) => {
   const log = componentLogger(logger, 'auth');
   const deleting = new Map<string, DeletedUser>();
@@ -42,9 +38,9 @@ export const userDeletionHooks = (db: DbClient, logger: Logger, onUserDeleted: O
         logEvent(
           log,
           'warn',
-          'auth.user_cleanup.failed',
+          'auth.user_deleted_callback.failed',
           { err, 'user.id': id },
-          'Could not clean up after a deleted account',
+          'The onUserDeleted callback failed for a deleted User',
         );
       }
     },

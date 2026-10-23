@@ -58,11 +58,7 @@ export type CreateAuthConfig = {
   errorURL?: string;
   /** OAuth apps for social sign-in; a provider left out is not offered (`PROVIDER_NOT_FOUND`). */
   socialProviders?: SocialProviderCredentials;
-  /**
-   * Cleans up what a deleted account left outside Postgres, such as its uploaded Profile image.
-   * Runs only after the delete is confirmed and the row is gone; a rejection is logged as
-   * `auth.user_cleanup.failed` and the account stays deleted.
-   */
+  /** Deletes what a deleted User kept outside Postgres, once the row is gone; a rejection is only logged. */
   onUserDeleted?: OnUserDeleted;
 };
 

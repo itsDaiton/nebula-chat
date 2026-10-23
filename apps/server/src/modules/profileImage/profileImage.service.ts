@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { NotFoundError } from '@nebula-chat/errors';
 import type { EventLogger } from '@nebula-chat/otel';
 import { logEvent } from '@nebula-chat/otel';
-import { deleteUnusedProfileImage } from '@backend/modules/profileImage/profileImage.cleanup';
+import { deleteUnusedProfileImage } from '@backend/modules/profileImage/profileImage.fileDeletion';
 import { toProfileImage } from '@backend/modules/profileImage/profileImage.processing';
 import { profileImageRepository } from '@backend/modules/profileImage/profileImage.repository';
 import type {

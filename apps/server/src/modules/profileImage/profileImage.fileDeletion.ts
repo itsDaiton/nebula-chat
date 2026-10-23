@@ -5,13 +5,13 @@ import type { ProfileImageStore } from '@backend/modules/profileImage/profileIma
 
 // Imports nothing that imports `@backend/auth`, so the auth singleton can use it without a cycle.
 
-type CleanupLogger = EventLogger<'warn'>;
+type FileDeletionLogger = EventLogger<'warn'>;
 
 /** Deletes a file nothing points at any more; a failure leaves an orphan, never a failed request. */
 export const deleteUnusedProfileImage = async (
   store: ProfileImageStore,
   key: string,
-  log: CleanupLogger,
+  log: FileDeletionLogger,
   userId?: string,
 ) => {
   try {
@@ -27,12 +27,9 @@ export const deleteUnusedProfileImage = async (
   }
 };
 
-/**
- * The `onUserDeleted` callback: deletes a deleted account's uploaded Profile image. A provider
- * image has no key, and with uploads off there is no store, so neither asks storage anything.
- */
+/** The `onUserDeleted` callback: deletes a deleted User's upload. No key (a provider image) or no store asks nothing. */
 export const deleteProfileImageOfDeletedUser =
-  (store: ProfileImageStore | null, log: CleanupLogger): OnUserDeleted =>
+  (store: ProfileImageStore | null, log: FileDeletionLogger): OnUserDeleted =>
   async ({ id, profileImageKey }) => {
     if (!store || !profileImageKey) return;
     await deleteUnusedProfileImage(store, profileImageKey, log, id);

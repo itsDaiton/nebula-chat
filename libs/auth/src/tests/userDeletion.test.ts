@@ -91,7 +91,7 @@ describe('createAuth onUserDeleted', () => {
 
     await expect(confirmDelete(deleteUser)).resolves.toBeUndefined();
 
-    expect(eventLines(lines, 'auth.user_cleanup.failed')).toEqual([
+    expect(eventLines(lines, 'auth.user_deleted_callback.failed')).toEqual([
       expect.objectContaining({ level: 40, 'user.id': 'user-1', err: expect.anything() }),
     ]);
   });

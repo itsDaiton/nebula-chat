@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { captureLogger, eventLines } from '@nebula-chat/otel/testing';
 import type { LogLine } from '@nebula-chat/otel/testing';
-import { deleteProfileImageOfDeletedUser } from '@backend/modules/profileImage/profileImage.cleanup';
+import { deleteProfileImageOfDeletedUser } from '@backend/modules/profileImage/profileImage.fileDeletion';
 import { memoryProfileImageStore } from '@backend/test/memoryProfileImageStore';
 
 const KEY = 'user-1/a.webp';
@@ -14,7 +14,7 @@ beforeEach(() => {
 });
 
 describe('deleteProfileImageOfDeletedUser', () => {
-  it("deletes a deleted account's uploaded Profile image", async () => {
+  it("deletes a deleted User's uploaded Profile image", async () => {
     const store = memoryProfileImageStore();
     await store.put(KEY, Buffer.from('webp'));
     await store.put('user-2/b.webp', Buffer.from('webp'));
