@@ -1,19 +1,9 @@
 name: Validate deploy triggers
 
 # A lib release must redeploy every app built from it, so each deploy-<app>.yml must list its tag.
+# PR-only: whatever reaches main already passed here.
 on:
   pull_request:
-    paths:
-      - apps/*/package.json
-      - libs/*/package.json
-      - openapi/package.json
-      - release-please-config.json
-      - .github/workflows/deploy-*.yml
-      - .github/workflows/validate-deploy-triggers.yml
-      - .github/scripts/check-deploy-triggers.sh
-  push:
-    branches:
-      - main
     paths:
       - apps/*/package.json
       - libs/*/package.json
@@ -29,6 +19,8 @@ permissions: {}
 jobs:
   validate-deploy-triggers:
     name: Validate deploy triggers
+    # Release PRs only bump `version` fields, which the path filter cannot tell from a dependency change.
+    if: ${{ github.head_ref != 'release-please--branches--main' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
