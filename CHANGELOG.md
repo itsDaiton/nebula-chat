@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.0.2...nebula-chat-v5.0.3) (2026-10-23)
+
+
+### Bug Fixes
+
+* **ci:** NEB-608 redeploy the server and client on every workspace library they are built from ([#612](https://github.com/itsDaiton/nebula-chat/issues/612)) ([3ed97f6](https://github.com/itsDaiton/nebula-chat/commit/3ed97f6dcb7660052797abe6cf906befad9e3957))
+
 ## [5.0.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.0.1...nebula-chat-v5.0.2) (2026-10-23)
 
 
