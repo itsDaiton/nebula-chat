@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.0.0...nebula-chat-auth-v3.0.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* **server:** NEB-609 delete the stored Profile image when an account is deleted ([#616](https://github.com/itsDaiton/nebula-chat/issues/616)) ([cd1eeda](https://github.com/itsDaiton/nebula-chat/commit/cd1eeda0d084c7463f96cfab4ebc9062a99863c2))
+
 ## [3.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v2.5.0...nebula-chat-auth-v3.0.0) (2026-10-19)
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.6.0...nebula-chat-otel-v2.6.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* **server:** NEB-609 delete the stored Profile image when an account is deleted ([#616](https://github.com/itsDaiton/nebula-chat/issues/616)) ([cd1eeda](https://github.com/itsDaiton/nebula-chat/commit/cd1eeda0d084c7463f96cfab4ebc9062a99863c2))
+
 ## [2.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.5.0...nebula-chat-otel-v2.6.0) (2026-10-20)
 
 
