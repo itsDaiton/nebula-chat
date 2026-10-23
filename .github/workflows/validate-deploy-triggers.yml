@@ -1,14 +1,12 @@
 name: Validate deploy triggers
 
-# Each deploy-<app>.yml must fire on the release tag of every workspace library
-# the app is built from, or a library-only release ships without redeploying the
-# app. The check walks the `workspace:*` graph and maps each directory to its
-# release-please component; see .github/scripts/check-deploy-triggers.sh.
+# A lib release must redeploy every app built from it, so each deploy-<app>.yml must list its tag.
 on:
   pull_request:
     paths:
       - apps/*/package.json
       - libs/*/package.json
+      - openapi/package.json
       - release-please-config.json
       - .github/workflows/deploy-*.yml
       - .github/workflows/validate-deploy-triggers.yml
@@ -19,6 +17,7 @@ on:
     paths:
       - apps/*/package.json
       - libs/*/package.json
+      - openapi/package.json
       - release-please-config.json
       - .github/workflows/deploy-*.yml
       - .github/workflows/validate-deploy-triggers.yml

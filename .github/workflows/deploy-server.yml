@@ -4,9 +4,7 @@ name: Deploy nebula-chat-server
 # openapi package version at runtime, so a release of any of them changes what
 # runs in production. Keying the deploy to `nebula-chat-server-v*` alone meant a
 # library fix shipped only if someone remembered to dispatch this workflow by
-# hand — a quiet way to leave stale code in production. The tag list must name
-# every workspace library the server is built from, transitively;
-# `validate-deploy-triggers.yml` fails CI when it does not.
+# hand — a quiet way to leave stale code in production. validate-deploy-triggers.yml checks this list.
 #
 # Deliberately NOT triggered by the root `nebula-chat-v*` tag: that component is
 # mostly docs, AGENTS.md and .claude/, and redeploying production for those is

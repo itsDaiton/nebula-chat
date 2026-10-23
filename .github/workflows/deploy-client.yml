@@ -1,10 +1,7 @@
 name: Deploy nebula-chat-client
 
-# The client bundles @nebula-chat/errors at build time, so an errors release
-# changes what it serves, as a lib release does for the server. Its Orval output
-# is committed under apps/client, so an openapi release alone does not.
-# `validate-deploy-triggers.yml` keeps this tag list in step with its
-# `workspace:*` dependencies.
+# The client bundles @nebula-chat/errors, so an errors release changes what it serves; its Orval
+# output is committed, so an openapi release does not. validate-deploy-triggers.yml checks this list.
 on:
   push:
     tags:

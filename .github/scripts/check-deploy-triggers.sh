@@ -1,17 +1,6 @@
 #!/usr/bin/env bash
-# Fails when a deployed app is built from a workspace library whose release tag
-# does not trigger that app's deploy workflow.
-#
-# Each app bundles its workspace libraries at build time, so a library release
-# changes production only if it redeploys every app built from it. For every
-# apps/<app> with a .github/workflows/deploy-<app>.yml this walks the app's
-# `workspace:*` dependencies (transitively: a lib's lib is bundled too), maps each
-# package directory to its release-please component, and asserts the workflow's
-# `on.push.tags` holds `<component>-v*`. Extra tags (e.g. the server's `openapi-v*`)
-# are allowed.
-#
-# Needs jq and mikefarah yq v4 — both are on the GitHub-hosted runner image.
-# Run from the repository root.
+# Fails when a deploy-<app>.yml misses the release tag of a workspace lib the app is built from
+# (transitively). Needs jq and mikefarah yq v4, both on the runner image; run from the repo root.
 set -euo pipefail
 
 config=release-please-config.json
@@ -42,10 +31,10 @@ for workflow in .github/workflows/deploy-*.yml; do
   [ -f "apps/$app/package.json" ] || continue
   checked=$((checked + 1))
 
-  tags=$(yq -o=json '.on.push.tags // []' "$workflow")
+  # Wrapped and flattened so a single-string `tags:` is an array, not a substring match.
+  tags=$(yq -o=json '[.on.push.tags // []] | flatten' "$workflow")
 
-  # Breadth-first walk of the workspace graph from apps/<app>. The deps are
-  # captured in a variable first so a jq failure stops the script under `set -e`.
+  # Breadth-first walk; deps go through a variable so a jq failure stops the script under `set -e`.
   seen=()
   queue=()
   deps=$(workspace_deps "apps/$app")

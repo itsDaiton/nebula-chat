@@ -54,7 +54,7 @@ also add an `F_<NAME>` env var and an `if` line in "Compute build matrix".
 }
 ```
 
-That's it — the matrix picks up the new package automatically. Apps that need a
+The matrix picks up the new package automatically. Apps that need a
 runtime secret (e.g. the server's `DATABASE_URL`) already have it in the job
 `env`; add more there if a new package needs one.
 
