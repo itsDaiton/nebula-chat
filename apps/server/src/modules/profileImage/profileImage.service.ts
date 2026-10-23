@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { NotFoundError } from '@nebula-chat/errors';
 import type { EventLogger } from '@nebula-chat/otel';
 import { logEvent } from '@nebula-chat/otel';
+import { deleteUnusedProfileImage } from '@backend/modules/profileImage/profileImage.cleanup';
 import { toProfileImage } from '@backend/modules/profileImage/profileImage.processing';
 import { profileImageRepository } from '@backend/modules/profileImage/profileImage.repository';
 import type {
@@ -21,21 +22,6 @@ const requireStore = (): ProfileImageStore => {
     throw uploadsOffError();
   }
   return profileImageStore;
-};
-
-/** Deletes a file nothing points at any more; a failure leaves an orphan, never a failed request. */
-const deleteUnused = async (store: ProfileImageStore, key: string, log: ServiceLogger) => {
-  try {
-    await store.delete(key);
-  } catch (err) {
-    logEvent(
-      log,
-      'warn',
-      'profile_image.delete.failed',
-      { err, 'nebula.profile_image.key': key },
-      'Could not delete an unused Profile image file',
-    );
-  }
 };
 
 export const profileImageService = {
@@ -61,12 +47,12 @@ export const profileImageService = {
     try {
       await profileImageRepository.save(userId, { image, key });
     } catch (err) {
-      await deleteUnused(store, key, log);
+      await deleteUnusedProfileImage(store, key, log);
       throw err;
     }
 
     if (previous?.key) {
-      await deleteUnused(store, previous.key, log);
+      await deleteUnusedProfileImage(store, previous.key, log);
     }
     return { image };
   },
@@ -83,7 +69,7 @@ export const profileImageService = {
     if (!previous.key) return;
 
     if (profileImageStore) {
-      await deleteUnused(profileImageStore, previous.key, log);
+      await deleteUnusedProfileImage(profileImageStore, previous.key, log);
     } else {
       logEvent(
         log,

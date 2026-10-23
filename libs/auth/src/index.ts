@@ -10,6 +10,9 @@ export type {
   User,
 } from './auth';
 
+// Account deletion cleanup (the Profile image file outside Postgres)
+export type { DeletedUser, OnUserDeleted } from './userDeletion';
+
 // Session claim (the anonymous → registered handoff, ADR-0010 §2)
 export { claimSessions } from './claim';
 export type { ClaimSessionsParams } from './claim';

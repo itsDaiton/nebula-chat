@@ -202,7 +202,10 @@ once, and nobody else does:
   deleted after the user is saved, so a failed delete never fails the request:
   it is a `warn`, `profile_image.delete.failed` with `err` and
   `nebula.profile_image.key`. Removing an uploaded image while no storage is
-  configured leaves its file behind, logged as `profile_image.orphaned`.
+  configured leaves its file behind, logged as `profile_image.orphaned`. Account
+  deletion deletes the uploaded file the same way, its failure line also carrying
+  `user.id`; a cleanup callback that throws past that is caught by
+  `@nebula-chat/auth` as `auth.user_cleanup.failed`.
 - **Redis connection.** `@nebula-chat/redis` listens for ioredis's `error`
   event, which fires on every failed (re)connect, so nothing reaches
   `console.error`. The first failure of an outage is one `error` line,
