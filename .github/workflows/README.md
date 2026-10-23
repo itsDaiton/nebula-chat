@@ -8,6 +8,8 @@ All apps and libs are built by a single workflow, [`build.yml`](./build.yml):
   `dorny/paths-filter`) and emits a matrix of only those packages. Pushes to
   `main` and manual `workflow_dispatch` runs build **all** packages, so every
   SonarCloud project always gets a default-branch analysis.
+  The Release Please PR (`release-please--branches--main`) builds nothing: it
+  only bumps versions and changelogs, and its merge to `main` builds everything.
 - **`build`** runs the pipeline once per selected package as a matrix leg:
   `install → lint → format check → typecheck → build → Sonar scan →
   quality gate → PR comment`. The Sonar steps are guarded on `SONAR_TOKEN`, so
