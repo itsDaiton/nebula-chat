@@ -76,7 +76,7 @@ jobs:
               - 'scripts/**'
               - 'tsconfig.scripts.json'
               - 'eslint.config.ts'
-              - 'prettier.config.cjs'
+              - 'prettier.config.mts'
             # Root-level files that change how every package is installed,
             # linted, typechecked or built — any of these rebuilds everything.
             shared:
@@ -87,7 +87,7 @@ jobs:
               - 'package.json'
               - '.npmrc'
               - 'eslint.config.ts'
-              - 'prettier.config.cjs'
+              - 'prettier.config.mts'
               - 'tsconfig.eslint.json'
               - 'tsconfig.scripts.json'
               - 'turbo.json'

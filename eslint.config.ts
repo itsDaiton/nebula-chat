@@ -17,6 +17,7 @@ export default [
       '**/.turbo/**',
       '**/coverage/**',
       'eslint.config.ts',
+      'prettier.config.mts',
       '**/vite.config.*',
       '**/vitest.config.*',
       'apps/client/orval.config.*',
