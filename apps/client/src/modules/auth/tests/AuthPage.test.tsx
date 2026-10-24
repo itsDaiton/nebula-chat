@@ -549,11 +549,11 @@ describe('AuthPage', () => {
       expect(await screen.findByRole('alert')).toHaveTextContent(message);
     });
 
-    it('shows no callback error for a malformed error param', async () => {
+    it('explains a malformed error param as a generic failure', async () => {
       await renderAuthFlow(`${route.auth.root()}?error=${encodeURIComponent('{"code":1}')}`);
 
+      expect(await screen.findByRole('alert')).toHaveTextContent(social.errors.failed);
       expect(socialButton(social.google)).toBeEnabled();
-      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
     it("drops the last callback's error once the user tries again", async () => {

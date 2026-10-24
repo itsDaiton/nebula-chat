@@ -153,6 +153,12 @@ describe('ResetPasswordPage', () => {
     expect(screen.queryByLabelText(resources.auth.fields.newPassword)).not.toBeInTheDocument();
   });
 
+  it('treats a malformed error as a rejected link even with a token', async () => {
+    await renderPage(`?token=reset-token&error=${encodeURIComponent('["INVALID_TOKEN"]')}`);
+
+    expect(screen.getByRole('alert')).toHaveTextContent(resetPassword.linkInvalid);
+  });
+
   it('asks for the new password twice, sending nothing until both match', async () => {
     let requests = 0;
     server.use(

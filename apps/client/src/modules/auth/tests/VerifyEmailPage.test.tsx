@@ -71,13 +71,14 @@ describe('VerifyEmailPage', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(verifyEmail.linkInvalid);
   });
 
-  it('ignores a malformed error code and trusts the session', async () => {
+  it('reads a malformed error code as an invalid link, whatever the session says', async () => {
     await renderPage(`?error=${encodeURIComponent('{"code":1}')}`, {
       isAnonymous: false,
       emailVerified: true,
     });
 
-    expect(screen.getByRole('heading', { name: verifyEmail.verifiedTitle })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: verifyEmail.failedTitle })).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(verifyEmail.linkInvalid);
   });
 
   it('does not claim success for an email that is still unverified', async () => {
