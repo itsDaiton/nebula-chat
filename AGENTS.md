@@ -68,6 +68,7 @@ records the rest.
 - Comments are one line, two at most, and say only what the code can't: the reason, constraint or gotcha.
   No JSDoc blocks restating a name or type, no `@param`/`@returns`. History goes in the commit, cross-file
   rationale in an ADR.
+- Layouts in docs list folders with a one-line purpose, not individual files.
 - Diagrams are Mermaid in Markdown, never exported images — see [docs/agents/diagrams.md](./docs/agents/diagrams.md).
 
 ## New lib under `libs/`
