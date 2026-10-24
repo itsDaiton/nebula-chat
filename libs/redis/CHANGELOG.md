@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.9](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-redis-v0.2.8...nebula-chat-redis-v0.2.9) (2026-10-24)
+
+
+### Bug Fixes
+
+* **agents:** slim agent docs, drop home-grown skills, trim heavy comments ([#627](https://github.com/itsDaiton/nebula-chat/issues/627)) ([acf7b7c](https://github.com/itsDaiton/nebula-chat/commit/acf7b7cb6c96b0103eb27382a77043d4133a615c))
+
 ## [0.2.8](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-redis-v0.2.7...nebula-chat-redis-v0.2.8) (2026-10-24)
 
 
