@@ -1,5 +1,5 @@
 import { Button, HStack, Link as ChakraLink, Separator, Tabs, Text } from '@chakra-ui/react';
-import { Link } from 'react-router';
+import { Link } from '@tanstack/react-router';
 import { AuthForm } from '@/modules/auth/components/AuthForm';
 import { AuthLayout } from '@/modules/auth/components/AuthLayout';
 import { SocialSignIn } from '@/modules/auth/components/SocialSignIn';
@@ -44,7 +44,7 @@ export const AuthPage = () => {
         <Tabs.Content value="sign-in" pt={6}>
           <AuthForm config={SIGN_IN_FORM} onSuccess={onIdentityChange} />
           <ChakraLink asChild fontSize="sm" color="fg.muted" mt={4}>
-            <Link to={route.auth.forgotPassword()} onClick={hidePassword}>
+            <Link to="/auth/forgot-password" onClick={hidePassword}>
               {resources.auth.signIn.forgotPassword}
             </Link>
           </ChakraLink>

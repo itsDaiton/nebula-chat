@@ -1,12 +1,12 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { setSseHeaders } from '@backend/config/headers.config';
+import { setSseHeaders } from '@server/config/headers.config';
 import type {
   ReplyStreamHeaders,
   ReplyStreamQuery,
   StreamParams,
-} from '@backend/modules/stream/stream.types';
-import { streamService } from '@backend/modules/stream/stream.service';
-import { getSessionData } from '@backend/plugins/authGate.plugin';
+} from '@server/modules/stream/stream.types';
+import { streamService } from '@server/modules/stream/stream.service';
+import { getSessionData } from '@server/plugins/authGate.plugin';
 
 export const streamController = {
   async relay(req: FastifyRequest, reply: FastifyReply): Promise<void> {

@@ -13,15 +13,15 @@ type CreateTestAppOptions = {
 /**
  * Builds the real Fastify app for `inject()`-based route tests.
  *
- * Callers must `vi.mock('@backend/db', ...)` and the repositories they exercise:
- * these are unit tests, so nothing reaches Postgres or Redis. `@backend/db` in
+ * Callers must `vi.mock('@server/db', ...)` and the repositories they exercise:
+ * these are unit tests, so nothing reaches Postgres or Redis. `@server/db` in
  * particular owns a module-level `pg` Pool whose `end()` throws if called twice,
  * so a real one cannot survive more than one app lifecycle per worker.
  */
 export const createTestApp = async (
   options: CreateTestAppOptions = {},
 ): Promise<FastifyInstance> => {
-  const { buildApp } = await import('@backend/app.js');
+  const { buildApp } = await import('@server/app.js');
   const app = await buildApp(options.logger ? { logger: options.logger } : {});
   await app.ready();
   return app;

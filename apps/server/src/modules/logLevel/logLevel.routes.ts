@@ -1,13 +1,13 @@
 import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
-import { logLevelController } from '@backend/modules/logLevel/logLevel.controller';
-import { requireOperator } from '@backend/modules/logLevel/logLevel.operatorGate.hook';
+import { logLevelController } from '@server/modules/logLevel/logLevel.controller';
+import { requireOperator } from '@server/modules/logLevel/logLevel.operatorGate.hook';
 import {
   changeLogLevelSchema,
   logLevelChangeResponseSchema,
   logLevelReportsResponseSchema,
-} from '@backend/modules/logLevel/logLevel.validation';
-import { jsonResponse } from '@backend/utils/jsonResponse';
+} from '@server/modules/logLevel/logLevel.validation';
+import { jsonResponse } from '@server/utils/jsonResponse';
 
 const logLevelRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
   app.get('', {

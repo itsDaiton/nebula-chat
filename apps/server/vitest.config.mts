@@ -5,10 +5,10 @@ import { defineConfig } from 'vitest/config';
 const dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
-  // `@backend/*` is a tsconfig path alias (AGENTS.md forbids relative imports),
+  // `@server/*` is a tsconfig path alias (AGENTS.md forbids relative imports),
   // and Vitest resolves through Vite, not tsc — so it has to be restated here.
   resolve: {
-    alias: { '@backend': resolve(dirname, 'src') },
+    alias: { '@server': resolve(dirname, 'src') },
   },
   test: {
     environment: 'node',
@@ -31,7 +31,7 @@ export default defineConfig({
         'src/env.ts',
         'src/db.ts',
         // Pure better-auth wiring: constructs the configured instance from the
-        // lib factory + injected env/db/redis. All tests mock `@backend/auth`, so
+        // lib factory + injected env/db/redis. All tests mock `@server/auth`, so
         // there is no behavior of its own to cover (the gates in authGate.plugin.ts
         // and the lib's own tests carry that). Mirrored in build.yml matrix.coverage.
         'src/auth.ts',

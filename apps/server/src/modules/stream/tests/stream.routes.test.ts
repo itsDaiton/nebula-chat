@@ -1,20 +1,20 @@
 import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GENERIC_ERROR_MESSAGE } from '@nebula-chat/errors';
-import { createTestApp } from '@backend/test/app';
+import { createTestApp } from '@server/test/app';
 import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
-import { replyStreams } from '@backend/test/memoryReplyStreams';
-import { registeredSession, REGISTERED_USER_ID } from '@backend/test/session';
+import { replyStreams } from '@server/test/memoryReplyStreams';
+import { registeredSession, REGISTERED_USER_ID } from '@server/test/session';
 
-vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
+vi.mock('@server/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
-vi.mock('@backend/auth', () => ({
+vi.mock('@server/auth', () => ({
   auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
 }));
 
-// @backend/redis is the boundary to Redis: stream owners and reply streams live in memory.
-vi.mock('@backend/redis', async () => {
-  const { replyStreamsModule } = await import('@backend/test/memoryReplyStreams.js');
+// @server/redis is the boundary to Redis: stream owners and reply streams live in memory.
+vi.mock('@server/redis', async () => {
+  const { replyStreamsModule } = await import('@server/test/memoryReplyStreams.js');
   return {
     redis: { connection: {}, close: vi.fn(async () => undefined) },
     closeRedis: vi.fn(async () => undefined),
@@ -22,12 +22,12 @@ vi.mock('@backend/redis', async () => {
   };
 });
 
-vi.mock('@backend/queue', () => ({
+vi.mock('@server/queue', () => ({
   enqueueDirectReply: vi.fn(),
   closeQueue: vi.fn(async () => undefined),
 }));
 
-import { auth } from '@backend/auth';
+import { auth } from '@server/auth';
 
 const mockedGetSession = vi.mocked(auth.api.getSession);
 

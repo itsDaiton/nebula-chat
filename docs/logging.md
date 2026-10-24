@@ -9,7 +9,7 @@ For the decisions behind them, see
 ## The short version
 
 - Every logger comes from `createLogger()` in `@nebula-chat/otel`. Inside a
-  request you use `req.log`; outside one you import `@backend/logger`. You
+  request you use `req.log`; outside one you import `@server/logger`. You
   never call `console.*`.
 - Every line is written with `logEvent(logger, level, event, attributes, msg)`:
   a stable `event.name`, a human `msg`, and flat dotted attributes from a typed
@@ -93,12 +93,12 @@ export const logger: Logger = createLogger({
 `serviceName` is required: a line that cannot say who wrote it is noise.
 `server.ts` hands this instance to `initTelemetry` and to
 `buildApp({ logger })`, which passes it to Fastify's `loggerInstance`. So
-`app.log`, every `req.log`, and every import of `@backend/logger` share it.
+`app.log`, every `req.log`, and every import of `@server/logger` share it.
 
-| Where you are              | Use               | Why                                                              |
-| -------------------------- | ----------------- | ---------------------------------------------------------------- |
-| Inside a request           | `req.log`         | Carries `http.request.id`, and the User once a gate has run      |
-| No request in scope at all | `@backend/logger` | Startup, shutdown, and the Redis/Postgres/better-auth singletons |
+| Where you are              | Use              | Why                                                              |
+| -------------------------- | ---------------- | ---------------------------------------------------------------- |
+| Inside a request           | `req.log`        | Carries `http.request.id`, and the User once a gate has run      |
+| No request in scope at all | `@server/logger` | Startup, shutdown, and the Redis/Postgres/better-auth singletons |
 
 The libs never create a logger: `@nebula-chat/redis`, `@nebula-chat/db` and
 `@nebula-chat/auth` log only through the one they are given, and
@@ -461,8 +461,8 @@ over OTLP is a second destination next to it (see [Exporting logs](#exporting-lo
 
 Auto-instrumentation patches modules as they load, so anything imported _before_
 `initTelemetry` runs is never instrumented. In `server.ts` only
-`@nebula-chat/otel`, `@backend/env` and `@backend/logger` sit above the call,
-none of them an instrumentation target; `@backend/app` with its
+`@nebula-chat/otel`, `@server/env` and `@server/logger` sit above the call,
+none of them an instrumentation target; `@server/app` with its
 `http`/`pg`/`redis` graph sits below it.
 
 **This works only because the server compiles to CommonJS**, where TypeScript

@@ -1,7 +1,7 @@
 import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
-import { sessionController } from '@backend/modules/session/session.controller';
-import { requireAuthentication } from '@backend/plugins/authGate.plugin';
+import { sessionController } from '@server/modules/session/session.controller';
+import { requireAuthentication } from '@server/plugins/authGate.plugin';
 import {
   sessionDetailResponseSchema,
   sessionResponseSchema,
@@ -11,8 +11,8 @@ import {
   getSessionsQuerySchema,
   paginatedSessionsResponseSchema,
   searchSessionsQuerySchema,
-} from '@backend/modules/session/session.validation';
-import { jsonResponse } from '@backend/utils/jsonResponse';
+} from '@server/modules/session/session.validation';
+import { jsonResponse } from '@server/utils/jsonResponse';
 
 const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
   app.post('', {

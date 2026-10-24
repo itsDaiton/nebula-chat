@@ -18,5 +18,5 @@ const CALLBACK_ERRORS: Partial<Record<string, string>> = {
 };
 
 /** The copy for a failed provider callback's `?error=` code, or nothing without one. */
-export const socialCallbackError = (code: string | null) =>
+export const socialCallbackError = (code: string | undefined) =>
   code ? (CALLBACK_ERRORS[code] ?? social.errors.failed) : undefined;

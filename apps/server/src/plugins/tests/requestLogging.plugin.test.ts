@@ -1,25 +1,25 @@
 import { fromPartial } from '@total-typescript/shoehorn';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createTestApp } from '@backend/test/app';
+import { createTestApp } from '@server/test/app';
 import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
-import { guestSession, registeredSession, REGISTERED_USER_ID } from '@backend/test/session';
+import { guestSession, registeredSession, REGISTERED_USER_ID } from '@server/test/session';
 
 // ADR-0008: the repository is the boundary to Postgres. Everything between it
 // and the HTTP edge — routing, validation, the gate, the error handler and the
 // request-logging hooks under test — is real.
-vi.mock('@backend/modules/session/session.repository', () => ({
+vi.mock('@server/modules/session/session.repository', () => ({
   sessionRepository: { create: vi.fn(), findById: vi.fn(), findAll: vi.fn(), search: vi.fn() },
 }));
 
-vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
+vi.mock('@server/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
-vi.mock('@backend/auth', () => ({
+vi.mock('@server/auth', () => ({
   auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
 }));
 
-import { auth } from '@backend/auth';
-import { sessionRepository } from '@backend/modules/session/session.repository';
+import { auth } from '@server/auth';
+import { sessionRepository } from '@server/modules/session/session.repository';
 
 const repo = vi.mocked(sessionRepository);
 const mockedGetSession = vi.mocked(auth.api.getSession);

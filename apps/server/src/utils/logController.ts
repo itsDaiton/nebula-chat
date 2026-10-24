@@ -2,8 +2,8 @@ import { LogController } from 'fastify';
 import type { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify';
 import { errorCodeForStatus } from '@nebula-chat/errors';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
-import { recordErrorType } from '@backend/errors/requestErrorType';
-import { requestPath } from '@backend/utils/requestPath';
+import { recordErrorType } from '@server/errors/requestErrorType';
+import { requestPath } from '@server/utils/requestPath';
 
 /**
  * Fastify's hook for its own log lines (the non-deprecated home of

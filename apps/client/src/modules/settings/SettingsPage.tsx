@@ -18,7 +18,6 @@ import {
   settingsEntriesIn,
 } from '@/modules/settings/utils/settingsIndex';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 
 /** A Registered user's Account settings, in their own shell; anyone else is sent to sign in. */
 export const SettingsPage = () => {
@@ -28,7 +27,7 @@ export const SettingsPage = () => {
   // AuthGate has normally resolved the session already; never redirect on a read still in flight.
   if (isPending) return null;
 
-  if (!isRegistered) return <Navigate to={route.auth.root()} replace />;
+  if (!isRegistered) return <Navigate to="/auth" replace />;
 
   // Every searchable entry has exactly one row.
   const rows: Record<SettingsEntryId, ReactNode> = {

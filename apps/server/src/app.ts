@@ -15,23 +15,23 @@ import {
   serializerCompiler,
   validatorCompiler,
 } from 'fastify-zod-openapi';
-import { corsOptions } from '@backend/config/cors.config';
-import { errorHandler } from '@backend/errors/error.handler';
-import { apiRootSchema, healthSchema } from '@backend/health.validation';
-import { logger } from '@backend/logger';
-import chatRoutes from '@backend/modules/chat/chat.routes';
-import sessionRoutes from '@backend/modules/session/session.routes';
-import streamRoutes from '@backend/modules/stream/stream.routes';
-import logLevelRoutes from '@backend/modules/logLevel/logLevel.routes';
-import messageRoutes from '@backend/modules/message/message.routes';
-import profileImageRoutes from '@backend/modules/profileImage/profileImage.routes';
-import authGate from '@backend/plugins/authGate.plugin';
-import dbPlugin from '@backend/plugins/db.plugin';
-import redisPlugin from '@backend/plugins/redis.plugin';
-import requestLogging from '@backend/plugins/requestLogging.plugin';
-import { logController } from '@backend/utils/logController';
-import { resolveTrustProxy } from '@backend/utils/trustProxy';
-import { jsonResponse } from '@backend/utils/jsonResponse';
+import { corsOptions } from '@server/config/cors.config';
+import { errorHandler } from '@server/errors/error.handler';
+import { apiRootSchema, healthSchema } from '@server/health.validation';
+import { logger } from '@server/logger';
+import chatRoutes from '@server/modules/chat/chat.routes';
+import sessionRoutes from '@server/modules/session/session.routes';
+import streamRoutes from '@server/modules/stream/stream.routes';
+import logLevelRoutes from '@server/modules/logLevel/logLevel.routes';
+import messageRoutes from '@server/modules/message/message.routes';
+import profileImageRoutes from '@server/modules/profileImage/profileImage.routes';
+import authGate from '@server/plugins/authGate.plugin';
+import dbPlugin from '@server/plugins/db.plugin';
+import redisPlugin from '@server/plugins/redis.plugin';
+import requestLogging from '@server/plugins/requestLogging.plugin';
+import { logController } from '@server/utils/logController';
+import { resolveTrustProxy } from '@server/utils/trustProxy';
+import { jsonResponse } from '@server/utils/jsonResponse';
 
 const { version } = JSON.parse(
   readFileSync(resolve(process.cwd(), '../../openapi/package.json'), 'utf8'),

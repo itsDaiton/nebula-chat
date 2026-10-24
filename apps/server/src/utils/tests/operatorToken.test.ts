@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { operatorTokenSchema } from '@backend/utils/operatorToken';
+import { operatorTokenSchema } from '@server/utils/operatorToken';
 
 const token = 'a'.repeat(32);
 

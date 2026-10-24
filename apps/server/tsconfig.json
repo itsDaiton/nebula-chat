@@ -3,7 +3,7 @@
     "rootDir": ".",
     "outDir": "dist",
     "paths": {
-      "@backend/*": ["./src/*"]
+      "@server/*": ["./src/*"]
     },
     "module": "node20",
     "moduleResolution": "node16",

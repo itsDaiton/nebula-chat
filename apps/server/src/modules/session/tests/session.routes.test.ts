@@ -1,12 +1,12 @@
 import { fromPartial } from '@total-typescript/shoehorn';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createTestApp } from '@backend/test/app';
-import { REGISTERED_USER_ID, registeredSession } from '@backend/test/session';
+import { createTestApp } from '@server/test/app';
+import { REGISTERED_USER_ID, registeredSession } from '@server/test/session';
 
 // ADR-0008: only the repository layer is faked. Routing, Zod validation, the
 // error handler and the hook chain are all the real thing.
-vi.mock('@backend/modules/session/session.repository', () => ({
+vi.mock('@server/modules/session/session.repository', () => ({
   sessionRepository: {
     create: vi.fn(),
     findById: vi.fn(),
@@ -17,17 +17,17 @@ vi.mock('@backend/modules/session/session.repository', () => ({
 
 // No database in a unit test; this also keeps the real pg Pool out of the
 // process, whose end() throws on a second app close.
-vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
+vi.mock('@server/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
-// The create route is gated by `requireAuthentication`; faking `@backend/auth` lets the
+// The create route is gated by `requireAuthentication`; faking `@server/auth` lets the
 // test authenticate without a real better-auth instance (ADR-0008).
-vi.mock('@backend/auth', () => ({
+vi.mock('@server/auth', () => ({
   auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
 }));
 
-// @backend/redis is the boundary to Redis: each Session's in-flight reply stream lives in memory.
-vi.mock('@backend/redis', async () => {
-  const { replyStreamsModule } = await import('@backend/test/memoryReplyStreams.js');
+// @server/redis is the boundary to Redis: each Session's in-flight reply stream lives in memory.
+vi.mock('@server/redis', async () => {
+  const { replyStreamsModule } = await import('@server/test/memoryReplyStreams.js');
   return {
     redis: { connection: {}, close: vi.fn(async () => undefined) },
     closeRedis: vi.fn(async () => undefined),
@@ -35,9 +35,9 @@ vi.mock('@backend/redis', async () => {
   };
 });
 
-import { auth } from '@backend/auth';
-import { replyStreams } from '@backend/test/memoryReplyStreams';
-import { sessionRepository } from '@backend/modules/session/session.repository';
+import { auth } from '@server/auth';
+import { replyStreams } from '@server/test/memoryReplyStreams';
+import { sessionRepository } from '@server/modules/session/session.repository';
 
 const repo = vi.mocked(sessionRepository);
 const mockedGetSession = vi.mocked(auth.api.getSession);

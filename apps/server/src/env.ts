@@ -1,12 +1,12 @@
 import { z } from 'zod';
 import { telemetryEnvShape } from '@nebula-chat/otel';
-import { operatorTokenSchema } from '@backend/utils/operatorToken';
+import { operatorTokenSchema } from '@server/utils/operatorToken';
 import {
   checkProfileImageStorage,
   storageSettingSchema,
   supabaseUrlSchema,
-} from '@backend/utils/profileImageStorage';
-import { checkSocialProviderPairs, oauthCredentialSchema } from '@backend/utils/socialProviders';
+} from '@server/utils/profileImageStorage';
+import { checkSocialProviderPairs, oauthCredentialSchema } from '@server/utils/socialProviders';
 
 // CORS and better-auth match the browser's `Origin` header exactly, so keep only scheme://host:port.
 const originSchema = z.url({ protocol: /^https?$/ }).transform((url) => new URL(url).origin);

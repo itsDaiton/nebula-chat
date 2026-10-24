@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 import { holdSession } from '@/test/auth';
+import { serveChatPage } from '@/test/chat';
 import { renderRoute } from '@/test/renderRoute';
 
 vi.mock('@/theme/hooks/useColorMode', () => ({
@@ -12,6 +13,7 @@ vi.mock('@/theme/hooks/useColorMode', () => ({
 
 beforeEach(async () => {
   await holdSession({});
+  serveChatPage();
 });
 
 describe('router', () => {
@@ -22,9 +24,21 @@ describe('router', () => {
   });
 
   it('still serves a bridged URL through the legacy tree', async () => {
-    await renderRoute(route.auth.root());
+    const { router } = await renderRoute(route.chat.root());
 
-    expect(screen.getByRole('heading', { name: resources.auth.signIn.title })).toBeInTheDocument();
+    expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
+    expect(router.state.matches.at(-1)?.routeId).toBe('/$');
+  });
+
+  it.each([
+    route.auth.root(),
+    route.auth.forgotPassword(),
+    route.auth.resetPassword(),
+    route.auth.verifyEmail(),
+  ])('serves %s through its own route, not the bridge', async (path) => {
+    const { router } = await renderRoute(path);
+
+    expect(router.state.matches.at(-1)?.routeId).toMatch(/^\/auth\//);
     expect(screen.queryByText(resources.notFound.title)).not.toBeInTheDocument();
   });
 
@@ -35,10 +49,29 @@ describe('router', () => {
   });
 
   it("routes a legacy link's navigation through TanStack Router's history", async () => {
-    const { router } = await renderRoute(route.auth.forgotPassword());
+    const { router } = await renderRoute(route.chat.root());
 
-    await userEvent.click(screen.getByRole('link', { name: resources.auth.page.backToSignIn }));
+    await userEvent.click(await screen.findByRole('link', { name: resources.auth.actions.signIn }));
 
+    expect(router.state.location.pathname).toBe(route.auth.root());
+    expect(
+      await screen.findByRole('heading', { name: resources.auth.signIn.title }),
+    ).toBeInTheDocument();
+  });
+
+  it('goes back between the auth pages with the browser history', async () => {
+    const { router } = await renderRoute(route.auth.root());
+
+    await userEvent.click(screen.getByRole('link', { name: resources.auth.signIn.forgotPassword }));
+    expect(
+      await screen.findByRole('heading', { name: resources.auth.forgotPassword.title }),
+    ).toBeInTheDocument();
+
+    router.history.back();
+
+    expect(
+      await screen.findByRole('heading', { name: resources.auth.signIn.title }),
+    ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe(route.auth.root());
   });
 });

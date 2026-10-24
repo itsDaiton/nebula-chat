@@ -1,14 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
 import { getListSessionsMockHandler } from '@/libs/api/generated/sessions/sessions.msw';
-import { AuthPage } from '@/modules/auth/AuthPage';
-import { ForgotPasswordPage } from '@/modules/auth/ForgotPasswordPage';
-import { AccountStatus } from '@/modules/auth/components/AccountStatus';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
-import { SessionsList } from '@/modules/sessions/components/SessionsList';
 import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
@@ -23,7 +19,16 @@ import {
   refreshSession,
 } from '@/test/auth';
 import { server } from '@/test/msw';
-import { renderWithChakra } from '@/test/render';
+import { renderRoute } from '@/test/renderRoute';
+
+vi.mock('@/theme/hooks/useColorMode', () => ({
+  useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
+}));
+
+// The desktop layout, whose side panel lists the sessions (jsdom has no breakpoints to measure).
+vi.mock('@/shared/hooks/useResponsiveLayout', () => ({
+  useResponsiveLayout: () => ({ isMobile: false, showSidePanels: true, showRightPanel: false }),
+}));
 
 const GUEST_SESSIONS = [
   {
@@ -44,24 +49,9 @@ const becomeRegistered = () => {
   session = aSession({ isAnonymous: false });
 };
 
-// The chat root stands in for the app: the nav indicator plus the Guest's session list.
-const renderAuthFlow = (initialRoute = route.auth.root()) => {
-  const view = renderWithChakra(
-    <Routes>
-      <Route
-        path={route.chat.root()}
-        element={
-          <>
-            <AccountStatus />
-            <SessionsList />
-          </>
-        }
-      />
-      <Route path={route.auth.root()} element={<AuthPage />} />
-      <Route path={route.auth.forgotPassword()} element={<ForgotPasswordPage />} />
-    </Routes>,
-    { route: initialRoute },
-  );
+// The real app through the router: the chat root shows the nav indicator and the Guest's sessions.
+const renderAuthFlow = async (initialRoute = route.auth.root()) => {
+  const view = await renderRoute(initialRoute);
   refreshSession();
   return view;
 };
@@ -119,12 +109,13 @@ beforeEach(() => {
       nextCursor: null,
       hasMore: false,
     }),
+    getGetMessageAllowanceMockHandler({ metered: false }),
   );
 });
 
 describe('AuthPage', () => {
   it('opens on sign-in and offers sign-up on its own tab', async () => {
-    renderAuthFlow();
+    await renderAuthFlow();
 
     expect(screen.getByRole('heading', { name: resources.auth.signIn.title })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: resources.auth.actions.signIn })).toBeInTheDocument();
@@ -147,7 +138,7 @@ describe('AuthPage', () => {
         becomeRegistered();
       }),
     );
-    renderAuthFlow();
+    await renderAuthFlow();
 
     await fillSignUp();
     await submitSignUp();
@@ -169,7 +160,7 @@ describe('AuthPage', () => {
         signUps += 1;
       }),
     );
-    renderAuthFlow();
+    await renderAuthFlow();
 
     await fillSignUp({ confirmPassword: 'hunter22hunteR' });
     await submitSignUp();
@@ -185,7 +176,7 @@ describe('AuthPage', () => {
   });
 
   it('clears a mismatch when the first password is fixed to match', async () => {
-    renderAuthFlow();
+    await renderAuthFlow();
 
     await fillSignUp({ password: 'hunter22hunteR', confirmPassword: 'hunter22hunter' });
     await submitSignUp();
@@ -198,7 +189,7 @@ describe('AuthPage', () => {
   });
 
   it('does not flag the confirmation before the user has filled it in', async () => {
-    renderAuthFlow();
+    await renderAuthFlow();
     await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
 
     await userEvent.type(passwordField(), 'hunter22hunter');
@@ -209,7 +200,7 @@ describe('AuthPage', () => {
   });
 
   it('reveals only the password field whose toggle is clicked', async () => {
-    renderAuthFlow();
+    await renderAuthFlow();
     await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
 
     const [, confirmToggle] = screen.getAllByRole('button', {
@@ -229,7 +220,7 @@ describe('AuthPage', () => {
         becomeRegistered();
       }),
     );
-    renderAuthFlow();
+    await renderAuthFlow();
 
     await fillSignUp();
     await submitSignUp();
@@ -248,7 +239,7 @@ describe('AuthPage', () => {
         message: 'The password you entered has been compromised.',
       }),
     );
-    renderAuthFlow();
+    await renderAuthFlow();
 
     await fillSignUp();
     await submitSignUp();
@@ -272,7 +263,7 @@ describe('AuthPage', () => {
         code: 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL',
       }),
     );
-    renderAuthFlow();
+    await renderAuthFlow();
 
     await fillSignUp();
     await submitSignUp();
@@ -289,7 +280,7 @@ describe('AuthPage', () => {
         signUps += 1;
       }),
     );
-    renderAuthFlow();
+    await renderAuthFlow();
     await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
 
     await userEvent.type(emailField(), 'not-an-email');
@@ -307,7 +298,7 @@ describe('AuthPage', () => {
   });
 
   it('clears a field error once the value is fixed', async () => {
-    renderAuthFlow();
+    await renderAuthFlow();
 
     await submitSignIn();
     await waitFor(() =>
@@ -327,7 +318,7 @@ describe('AuthPage', () => {
         becomeRegistered();
       }),
     );
-    renderAuthFlow();
+    await renderAuthFlow();
 
     await fillSignIn();
     await submitSignIn();
@@ -337,7 +328,7 @@ describe('AuthPage', () => {
   });
 
   it('requires both fields to sign in', async () => {
-    renderAuthFlow();
+    await renderAuthFlow();
 
     await submitSignIn();
 
@@ -353,7 +344,7 @@ describe('AuthPage', () => {
     server.use(
       mockApiError('post', API_ROUTE.authSignInEmail, 401, { code: 'INVALID_EMAIL_OR_PASSWORD' }),
     );
-    renderAuthFlow();
+    await renderAuthFlow();
 
     await fillSignIn();
     await submitSignIn();
@@ -366,7 +357,7 @@ describe('AuthPage', () => {
 
   it('falls back to a generic message for an unrecognised error', async () => {
     server.use(mockApiError('post', API_ROUTE.authSignInEmail, 500, { code: 'SOMETHING_ELSE' }));
-    renderAuthFlow();
+    await renderAuthFlow();
 
     await fillSignIn();
     await submitSignIn();
@@ -376,7 +367,7 @@ describe('AuthPage', () => {
 
   it('reports a network failure', async () => {
     server.use(http.post(API_ROUTE.authSignInEmail, () => HttpResponse.error()));
-    renderAuthFlow();
+    await renderAuthFlow();
 
     await fillSignIn();
     await submitSignIn();
@@ -385,7 +376,7 @@ describe('AuthPage', () => {
   });
 
   it('reveals and re-masks the password', async () => {
-    renderAuthFlow();
+    await renderAuthFlow();
     await userEvent.type(passwordField(), 'hunter22hunter');
 
     await userEvent.click(
@@ -403,7 +394,7 @@ describe('AuthPage', () => {
   });
 
   it('masks the password again when switching tabs', async () => {
-    renderAuthFlow();
+    await renderAuthFlow();
     await userEvent.click(
       screen.getByRole('button', { name: resources.passwordInput.showPassword }),
     );
@@ -422,7 +413,7 @@ describe('AuthPage', () => {
       }),
       mockEmailSignIn(becomeRegistered),
     );
-    renderAuthFlow(route.chat.root());
+    await renderAuthFlow(route.chat.root());
 
     expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
 
@@ -441,7 +432,7 @@ describe('AuthPage', () => {
   });
 
   it('offers a password reset from the sign-in form', async () => {
-    renderAuthFlow();
+    await renderAuthFlow();
 
     await userEvent.click(screen.getByRole('link', { name: resources.auth.signIn.forgotPassword }));
 
@@ -451,7 +442,7 @@ describe('AuthPage', () => {
   });
 
   it('lets a visitor go back to the chat as a Guest', async () => {
-    renderAuthFlow();
+    await renderAuthFlow();
 
     await userEvent.click(
       screen.getByRole('link', { name: resources.auth.page.continueWithoutAccount }),
@@ -475,7 +466,7 @@ describe('AuthPage', () => {
     };
 
     it('offers Google and GitHub alongside email, on either tab', async () => {
-      renderAuthFlow();
+      await renderAuthFlow();
 
       expect(socialButton(social.google)).toBeInTheDocument();
       expect(socialButton(social.github)).toBeInTheDocument();
@@ -491,7 +482,7 @@ describe('AuthPage', () => {
       ['github', social.github],
     ])('hands off to %s and follows its redirect', async (provider, label) => {
       const sent = captureSocialSignIn();
-      renderAuthFlow();
+      await renderAuthFlow();
 
       await userEvent.click(socialButton(label));
 
@@ -501,7 +492,7 @@ describe('AuthPage', () => {
 
     it('returns to the chat on success and to this page on failure', async () => {
       const sent = captureSocialSignIn();
-      renderAuthFlow();
+      await renderAuthFlow();
 
       await userEvent.click(socialButton(social.google));
 
@@ -520,14 +511,14 @@ describe('AuthPage', () => {
         }),
       );
       const sent = captureSocialSignIn();
-      const view = renderAuthFlow();
+      const view = await renderAuthFlow();
       await userEvent.click(socialButton(social.github));
       await waitFor(() => expect(sent().callbackURL).toBeDefined());
       view.unmount();
 
       // The provider's callback signs the user in on the server, then loads the app afresh.
       becomeRegistered();
-      renderAuthFlow(new URL(sent().callbackURL ?? '').pathname);
+      await renderAuthFlow(new URL(sent().callbackURL ?? '').pathname);
 
       expect(await findRegisteredMenu()).toBeInTheDocument();
       expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
@@ -539,7 +530,7 @@ describe('AuthPage', () => {
       server.use(
         mockApiError('post', API_ROUTE.authSignInSocial, 404, { code: 'PROVIDER_NOT_FOUND' }),
       );
-      renderAuthFlow();
+      await renderAuthFlow();
 
       await userEvent.click(socialButton(social.github));
 
@@ -553,14 +544,21 @@ describe('AuthPage', () => {
       ['email_not_found', social.errors.emailNotFound],
       ['state_not_found', social.errors.failed],
     ])('explains a %s returned by the provider callback', async (error, message) => {
-      renderAuthFlow(`${route.auth.root()}?error=${error}`);
+      await renderAuthFlow(`${route.auth.root()}?error=${error}`);
 
       expect(await screen.findByRole('alert')).toHaveTextContent(message);
     });
 
+    it('explains a malformed error param as a generic failure', async () => {
+      await renderAuthFlow(`${route.auth.root()}?error=${encodeURIComponent('{"code":1}')}`);
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(social.errors.failed);
+      expect(socialButton(social.google)).toBeEnabled();
+    });
+
     it("drops the last callback's error once the user tries again", async () => {
       captureSocialSignIn();
-      renderAuthFlow(`${route.auth.root()}?error=access_denied`);
+      await renderAuthFlow(`${route.auth.root()}?error=access_denied`);
       expect(await screen.findByRole('alert')).toBeInTheDocument();
 
       await userEvent.click(socialButton(social.google));

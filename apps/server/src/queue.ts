@@ -3,8 +3,8 @@ import { DIRECT_REPLY_QUEUE, directReplyJobSchema } from '@nebula-chat/contracts
 import type { DirectReplyJob } from '@nebula-chat/contracts';
 import { logEvent } from '@nebula-chat/otel';
 import type { EventLogger } from '@nebula-chat/otel';
-import { env } from '@backend/env';
-import { redis } from '@backend/redis';
+import { env } from '@server/env';
+import { redis } from '@server/redis';
 
 // A cold start on Render's free plan takes up to a minute; the ping only has to start it.
 const WORKER_PING_TIMEOUT_MS = 90_000;

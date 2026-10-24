@@ -1,6 +1,6 @@
 import { fromPartial } from '@total-typescript/shoehorn';
 import { describe, expect, it } from 'vitest';
-import { requestPath } from '@backend/utils/requestPath';
+import { requestPath } from '@server/utils/requestPath';
 
 const pathOf = (url: string) => requestPath(fromPartial({ url }));
 

@@ -86,7 +86,7 @@ export const auth = createAuth({
 });
 ```
 
-Consumers import the singleton (`import { auth } from '@backend/auth'`) rather than
+Consumers import the singleton (`import { auth } from '@server/auth'`) rather than
 constructing their own, mirroring `src/db.ts` and `src/redis.ts`.
 
 ## Configuration

@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { sessionService } from '@backend/modules/session/session.service';
-import type { CreateSessionDTO, GetSessionParams } from '@backend/modules/session/session.types';
-import { getSessionData } from '@backend/plugins/authGate.plugin';
+import { sessionService } from '@server/modules/session/session.service';
+import type { CreateSessionDTO, GetSessionParams } from '@server/modules/session/session.types';
+import { getSessionData } from '@server/plugins/authGate.plugin';
 
 type GetSessionsQuery = {
   limit: number;

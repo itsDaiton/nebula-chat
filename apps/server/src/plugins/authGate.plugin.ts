@@ -3,10 +3,10 @@ import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'f
 import fp from 'fastify-plugin';
 import type { SessionData } from '@nebula-chat/auth';
 import { bindAttributes } from '@nebula-chat/otel';
-import { auth } from '@backend/auth';
-import { logRequestFailed } from '@backend/errors/error.handler';
-import { recordErrorType } from '@backend/errors/requestErrorType';
-import { forwardReplyHeaders } from '@backend/utils/forwardReplyHeaders';
+import { auth } from '@server/auth';
+import { logRequestFailed } from '@server/errors/error.handler';
+import { recordErrorType } from '@server/errors/requestErrorType';
+import { forwardReplyHeaders } from '@server/utils/forwardReplyHeaders';
 import {
   ERROR_STATUS,
   ForbiddenError,

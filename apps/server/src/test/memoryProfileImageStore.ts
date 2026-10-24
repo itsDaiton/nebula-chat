@@ -1,4 +1,4 @@
-import type { ProfileImageStore } from '@backend/modules/profileImage/profileImage.types';
+import type { ProfileImageStore } from '@server/modules/profileImage/profileImage.types';
 
 /** The public URL the in-memory store hands out for a key. */
 export const memoryProfileImageUrl = (key: string) => `https://storage.test/profile-images/${key}`;

@@ -1,7 +1,7 @@
 import type { FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
 import { MessageAllowanceReachedError } from '@nebula-chat/errors';
-import { getMessageAllowance } from '@backend/modules/chat/chat.messageAllowance.service';
-import { getSessionData } from '@backend/plugins/authGate.plugin';
+import { getMessageAllowance } from '@server/modules/chat/chat.messageAllowance.service';
+import { getSessionData } from '@server/plugins/authGate.plugin';
 
 /**
  * Enforces the message allowance (ADR-0010 §4) on the send path. Runs after

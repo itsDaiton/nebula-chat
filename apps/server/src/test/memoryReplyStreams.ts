@@ -1,9 +1,9 @@
 import { serializeReplyStreamEvent } from '@nebula-chat/contracts';
 import type { ReplyStreamEvent } from '@nebula-chat/contracts';
 import type { StreamEntry } from '@nebula-chat/redis';
-import type { ReplyStreamReader } from '@backend/redis';
+import type { ReplyStreamReader } from '@server/redis';
 
-// The reply-stream half of `@backend/redis` in memory. A read with nothing new spends one of
+// The reply-stream half of `@server/redis` in memory. A read with nothing new spends one of
 // `timeouts` (an empty block) or else waits for the next append, as `XREAD … BLOCK` does.
 const memoryReplyStreams = () => {
   const owners = new Map<string, string>();
@@ -117,10 +117,10 @@ const memoryReplyStreams = () => {
   };
 };
 
-/** One instance per test file: the `@backend/redis` mock factory and the test share it. */
+/** One instance per test file: the `@server/redis` mock factory and the test share it. */
 export const replyStreams = memoryReplyStreams();
 
-/** The reply-stream exports of `@backend/redis`, for a `vi.mock` factory to spread. */
+/** The reply-stream exports of `@server/redis`, for a `vi.mock` factory to spread. */
 export const replyStreamsModule = {
   saveStreamOwner: replyStreams.saveStreamOwner,
   findStreamOwner: replyStreams.findStreamOwner,

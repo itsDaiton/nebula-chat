@@ -12,7 +12,7 @@ const toolkit = vi.hoisted(() => ({
   streamKeys: new Set<string>(),
 }));
 
-// Keep the real key helpers but stub the factory, so importing @backend/redis opens no connection.
+// Keep the real key helpers but stub the factory, so importing @server/redis opens no connection.
 vi.mock('@nebula-chat/redis', async (importActual) => {
   const actual = await importActual<typeof RedisLib>();
   return {
@@ -45,7 +45,7 @@ import {
   requestStreamCancel,
   saveActiveStream,
   saveStreamOwner,
-} from '@backend/redis';
+} from '@server/redis';
 
 const STREAM_ID = '44444444-4444-4444-8444-444444444444';
 const SESSION_ID = '22222222-2222-4222-8222-222222222222';

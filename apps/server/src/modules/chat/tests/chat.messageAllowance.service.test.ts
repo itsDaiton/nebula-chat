@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { env } from '@backend/env';
+import { env } from '@server/env';
 
 // message.repository is the boundary the allowance reaches Postgres through (the
 // live `role='user'` count); everything else here is the real decision.
-vi.mock('@backend/modules/message/message.repository', () => ({
+vi.mock('@server/modules/message/message.repository', () => ({
   messageRepository: { countUserMessagesByOwner: vi.fn() },
 }));
 
-import { getMessageAllowance } from '@backend/modules/chat/chat.messageAllowance.service';
-import { messageRepository } from '@backend/modules/message/message.repository';
+import { getMessageAllowance } from '@server/modules/chat/chat.messageAllowance.service';
+import { messageRepository } from '@server/modules/message/message.repository';
 
 const mockedCount = vi.mocked(messageRepository.countUserMessagesByOwner);
 const LIMIT = env.GUEST_MESSAGE_ALLOWANCE;

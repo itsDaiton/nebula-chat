@@ -1,7 +1,7 @@
 import { collectLogLevelReports, publishLogLevelChange } from '@nebula-chat/otel';
-import { SERVICE_NAME } from '@backend/logger';
-import type { ChangeLogLevelDTO } from '@backend/modules/logLevel/logLevel.types';
-import { redis } from '@backend/redis';
+import { SERVICE_NAME } from '@server/logger';
+import type { ChangeLogLevelDTO } from '@server/modules/logLevel/logLevel.types';
+import { redis } from '@server/redis';
 
 export const logLevelService = {
   /**

@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { paginationConfig } from '@backend/config/pagination.config';
-import { isoDateTimeSchema } from '@backend/utils/isoDateTimeSchema';
+import { paginationConfig } from '@server/config/pagination.config';
+import { isoDateTimeSchema } from '@server/utils/isoDateTimeSchema';
 
 export const createSessionSchema = z.object({
   title: z.string().min(1),

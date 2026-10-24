@@ -1,15 +1,15 @@
 import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
-import { messageController } from '@backend/modules/message/message.controller';
-import { requireAuthentication } from '@backend/plugins/authGate.plugin';
+import { messageController } from '@server/modules/message/message.controller';
+import { requireAuthentication } from '@server/plugins/authGate.plugin';
 import {
   createMessageSchema,
   getMessagesSchema,
   listMessagesQuerySchema,
   messageResponseSchema,
   messagesArraySchema,
-} from '@backend/modules/message/message.validation';
-import { jsonResponse } from '@backend/utils/jsonResponse';
+} from '@server/modules/message/message.validation';
+import { jsonResponse } from '@server/utils/jsonResponse';
 
 const messageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
   app.post('', {

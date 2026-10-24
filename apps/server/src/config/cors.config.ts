@@ -1,4 +1,4 @@
-import { env } from '@backend/env';
+import { env } from '@server/env';
 
 const allowedOrigins = new Set(
   [env.CLIENT_URL, env.SERVER_URL].filter((v): v is string => Boolean(v)),

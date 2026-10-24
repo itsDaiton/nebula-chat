@@ -1,7 +1,7 @@
 import type { preHandlerAsyncHookHandler } from 'fastify';
 import { TooManyRequestsError } from '@nebula-chat/errors';
-import { getSessionData } from '@backend/plugins/authGate.plugin';
-import { redis } from '@backend/redis';
+import { getSessionData } from '@server/plugins/authGate.plugin';
+import { redis } from '@server/redis';
 
 /** Uploads a user may make per window: each one costs image processing and a stored file. */
 const PROFILE_IMAGE_UPLOAD_LIMIT = 10;

@@ -4,7 +4,7 @@ import type {
   replyStreamHeadersSchema,
   replyStreamQuerySchema,
   streamParamsSchema,
-} from '@backend/modules/stream/stream.validation';
+} from '@server/modules/stream/stream.validation';
 
 export type StreamParams = z.infer<typeof streamParamsSchema>;
 

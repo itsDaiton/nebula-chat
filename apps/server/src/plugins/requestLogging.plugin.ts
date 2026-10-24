@@ -1,7 +1,7 @@
 import fp from 'fastify-plugin';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
-import { recordedErrorType } from '@backend/errors/requestErrorType';
-import { requestPath } from '@backend/utils/requestPath';
+import { recordedErrorType } from '@server/errors/requestErrorType';
+import { requestPath } from '@server/utils/requestPath';
 
 /**
  * Request logging: one `info` line per HTTP request, `http.request.completed`,

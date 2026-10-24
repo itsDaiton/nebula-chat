@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import type { onRequestAsyncHookHandler } from 'fastify';
 import { ForbiddenError } from '@nebula-chat/errors';
-import { env } from '@backend/env';
+import { env } from '@server/env';
 
 // Digests give timingSafeEqual equal lengths without leaking the token's length.
 const digest = (value: string): Buffer => createHash('sha256').update(value).digest();

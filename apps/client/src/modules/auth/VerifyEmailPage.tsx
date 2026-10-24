@@ -1,5 +1,5 @@
 import { Button } from '@chakra-ui/react';
-import { Link, useSearchParams } from 'react-router';
+import { Link, getRouteApi } from '@tanstack/react-router';
 import { AuthLayout } from '@/modules/auth/components/AuthLayout';
 import { AuthStatus } from '@/modules/auth/components/AuthStatus';
 import { ResendVerificationButton } from '@/modules/auth/components/ResendVerificationButton';
@@ -8,15 +8,15 @@ import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 
 const { verifyEmail } = resources.auth;
+const routeApi = getRouteApi('/auth/verify-email');
 
 /**
  * /auth/verify-email — better-auth verifies the emailed token, refreshes the session cookie and
  * redirects here, adding `?error=TOKEN_EXPIRED` (or another code) when it rejects the token.
  */
 export const VerifyEmailPage = () => {
-  const [searchParams] = useSearchParams();
+  const { error } = routeApi.useSearch();
   const { user, isPending, needsEmailVerification } = useAuth();
-  const error = searchParams.get('error');
   // Wait for the refreshed session rather than flash a failure on a valid link.
   if (!error && isPending) return null;
 

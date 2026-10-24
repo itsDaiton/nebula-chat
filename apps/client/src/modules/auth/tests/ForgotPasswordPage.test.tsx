@@ -1,29 +1,25 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router';
-import { describe, expect, it } from 'vitest';
-import { ForgotPasswordPage } from '@/modules/auth/ForgotPasswordPage';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 import { API_ROUTE, mockApiError } from '@/test/api';
-import { mockRequestPasswordReset } from '@/test/auth';
+import { holdSession, mockRequestPasswordReset } from '@/test/auth';
 import { server } from '@/test/msw';
-import { renderWithChakra } from '@/test/render';
+import { renderRoute } from '@/test/renderRoute';
 
-const SIGN_IN_PAGE = 'sign-in page';
+// The real sign-in page its link leads to, through the router.
+const SIGN_IN_PAGE = resources.auth.signIn.title;
 const { forgotPassword } = resources.auth;
 
-const renderPage = () =>
-  renderWithChakra(
-    <Routes>
-      <Route path={route.auth.forgotPassword()} element={<ForgotPasswordPage />} />
-      <Route path={route.auth.root()} element={SIGN_IN_PAGE} />
-    </Routes>,
-    { route: route.auth.forgotPassword() },
-  );
+const renderPage = (search = '') => renderRoute(`${route.auth.forgotPassword()}${search}`);
 
 const emailField = () => screen.getByRole('textbox', { name: resources.auth.fields.email });
 const submit = () => userEvent.click(screen.getByRole('button', { name: forgotPassword.submit }));
+
+beforeEach(async () => {
+  await holdSession({});
+});
 
 describe('ForgotPasswordPage', () => {
   it('emails a reset link that leads back to the reset page', async () => {
@@ -33,7 +29,7 @@ describe('ForgotPasswordPage', () => {
         body = await request.clone().json();
       }),
     );
-    renderPage();
+    await renderPage();
 
     await userEvent.type(emailField(), 'ada@example.com');
     await submit();
@@ -47,7 +43,7 @@ describe('ForgotPasswordPage', () => {
 
   it('replaces the form with the confirmation once sent', async () => {
     server.use(mockRequestPasswordReset());
-    renderPage();
+    await renderPage();
 
     await userEvent.type(emailField(), 'ada@example.com');
     await submit();
@@ -63,7 +59,7 @@ describe('ForgotPasswordPage', () => {
         requests += 1;
       }),
     );
-    renderPage();
+    await renderPage();
 
     await userEvent.type(emailField(), 'not-an-email');
     await submit();
@@ -76,7 +72,7 @@ describe('ForgotPasswordPage', () => {
 
   it('reports a failure above the form', async () => {
     server.use(mockApiError('post', API_ROUTE.authRequestPasswordReset, 500));
-    renderPage();
+    await renderPage();
 
     await userEvent.type(emailField(), 'ada@example.com');
     await submit();
@@ -87,7 +83,7 @@ describe('ForgotPasswordPage', () => {
 
   it('asks the user to wait when reset requests are rate limited', async () => {
     server.use(mockApiError('post', API_ROUTE.authRequestPasswordReset, 429, {}));
-    renderPage();
+    await renderPage();
 
     await userEvent.type(emailField(), 'ada@example.com');
     await submit();
@@ -98,10 +94,16 @@ describe('ForgotPasswordPage', () => {
   });
 
   it('leads back to sign in', async () => {
-    renderPage();
+    await renderPage();
 
     await userEvent.click(screen.getByRole('link', { name: resources.auth.page.backToSignIn }));
 
-    expect(screen.getByText(SIGN_IN_PAGE)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: SIGN_IN_PAGE })).toBeInTheDocument();
+  });
+
+  it('ignores search params it has no use for', async () => {
+    await renderPage(`?token=${encodeURIComponent('{"a":1}')}`);
+
+    expect(emailField()).toBeInTheDocument();
   });
 });

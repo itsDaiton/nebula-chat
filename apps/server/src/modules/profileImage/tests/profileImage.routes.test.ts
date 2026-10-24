@@ -4,15 +4,15 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import type {
   ProfileImageStore,
   StoredProfileImage,
-} from '@backend/modules/profileImage/profileImage.types';
-import { createTestApp } from '@backend/test/app';
+} from '@server/modules/profileImage/profileImage.types';
+import { createTestApp } from '@server/test/app';
 import { captureLogger, eventLines } from '@nebula-chat/otel/testing';
 import type { LogLine } from '@nebula-chat/otel/testing';
 import {
   memoryProfileImageStore,
   memoryProfileImageUrl,
-} from '@backend/test/memoryProfileImageStore';
-import { guestSession, REGISTERED_USER_ID, registeredSession } from '@backend/test/session';
+} from '@server/test/memoryProfileImageStore';
+import { guestSession, REGISTERED_USER_ID, registeredSession } from '@server/test/session';
 
 const state = vi.hoisted(() => ({
   store: null as (ProfileImageStore & { files: Map<string, Buffer> }) | null,
@@ -21,14 +21,14 @@ const state = vi.hoisted(() => ({
 }));
 
 // No database in a unit test; this also keeps the real pg Pool out of the process.
-vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
+vi.mock('@server/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
-vi.mock('@backend/auth', () => ({
+vi.mock('@server/auth', () => ({
   auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
 }));
 
 // Redis holds the per-user upload count; an in-memory counter stands in for INCR.
-vi.mock('@backend/redis', () => ({
+vi.mock('@server/redis', () => ({
   redis: {
     cache: {},
     connection: {},
@@ -45,7 +45,7 @@ vi.mock('@backend/redis', () => ({
 }));
 
 // The repository is the boundary to the users table, through better-auth's adapter.
-vi.mock('@backend/modules/profileImage/profileImage.repository', () => ({
+vi.mock('@server/modules/profileImage/profileImage.repository', () => ({
   profileImageRepository: {
     find: vi.fn(async (userId: string) => state.users.get(userId) ?? null),
     save: vi.fn(async (userId: string, image: StoredProfileImage) => {
@@ -55,15 +55,15 @@ vi.mock('@backend/modules/profileImage/profileImage.repository', () => ({
 }));
 
 // The store Supabase would be; `null` is a server with uploads switched off.
-vi.mock('@backend/profileImageStore', () => ({
+vi.mock('@server/profileImageStore', () => ({
   get profileImageStore() {
     return state.store;
   },
 }));
 
-import { auth } from '@backend/auth';
-import { env } from '@backend/env';
-import { profileImageRepository } from '@backend/modules/profileImage/profileImage.repository';
+import { auth } from '@server/auth';
+import { env } from '@server/env';
+import { profileImageRepository } from '@server/modules/profileImage/profileImage.repository';
 
 const ROUTE = '/api/profile-image';
 const COOKIE = { cookie: 'better-auth.session_token=abc' };

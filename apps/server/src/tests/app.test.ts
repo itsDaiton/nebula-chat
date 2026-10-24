@@ -1,10 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { createTestApp } from '@backend/test/app';
+import { createTestApp } from '@server/test/app';
 
 // No database or auth instance: the document is built from the route schemas alone.
-vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
-vi.mock('@backend/auth', () => ({
+vi.mock('@server/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
+vi.mock('@server/auth', () => ({
   auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
 }));
 

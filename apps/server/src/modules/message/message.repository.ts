@@ -1,13 +1,13 @@
 import { eq, asc, desc, and, count } from 'drizzle-orm';
 import { messages, sessions } from '@nebula-chat/db';
 import type { DbTransaction } from '@nebula-chat/db';
-import { db } from '@backend/db';
+import { db } from '@server/db';
 import type {
   CreateMessageDTO,
   GetMessageParams,
   MessageHistoryRow,
   MessageRow,
-} from '@backend/modules/message/message.types';
+} from '@server/modules/message/message.types';
 
 export const messageRepository: {
   create: (data: CreateMessageDTO) => Promise<MessageRow>;

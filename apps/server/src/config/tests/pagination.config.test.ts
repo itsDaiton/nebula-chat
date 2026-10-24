@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { paginationConfig } from '@backend/config/pagination.config';
+import { paginationConfig } from '@server/config/pagination.config';
 
 describe('paginationConfig', () => {
   it('keeps the default page size within the maximum', () => {

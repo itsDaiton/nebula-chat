@@ -1,5 +1,26 @@
 # Changelog
 
+## [5.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.0.7...nebula-chat-v5.1.0) (2026-10-24)
+
+
+### Features
+
+* **client:** NEB-536 serve the auth routes through TanStack Router with typed search params ([#620](https://github.com/itsDaiton/nebula-chat/issues/620)) ([6bfe66d](https://github.com/itsDaiton/nebula-chat/commit/6bfe66d06b02e9f72aa3594b6ab0971cdf99bae2))
+
+## [5.0.7](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.0.6...nebula-chat-v5.0.7) (2026-10-24)
+
+
+### Bug Fixes
+
+* **deps:** patch fast-uri, undici, zod and markdown-it advisories ([#622](https://github.com/itsDaiton/nebula-chat/issues/622)) ([5270c3a](https://github.com/itsDaiton/nebula-chat/commit/5270c3a124352617005bb13cf02eeebb428db551))
+
+## [5.0.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.0.5...nebula-chat-v5.0.6) (2026-10-24)
+
+
+### Bug Fixes
+
+* **server:** NEB-618 rename the [@backend](https://github.com/backend) path alias to [@server](https://github.com/server) ([#619](https://github.com/itsDaiton/nebula-chat/issues/619)) ([7c26a6c](https://github.com/itsDaiton/nebula-chat/commit/7c26a6c502683720c7e3d923d9b65ac86317752c))
+
 ## [5.0.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.0.4...nebula-chat-v5.0.5) (2026-10-23)
 
 

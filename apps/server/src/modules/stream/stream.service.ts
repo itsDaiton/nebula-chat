@@ -7,9 +7,9 @@ import {
   isStreamExpired,
   openReplyStream,
   requestStreamCancel,
-} from '@backend/redis';
-import type { StreamLogger } from '@backend/modules/stream/stream.types';
-import { SSE_KEEP_ALIVE, sseEvent } from '@backend/utils/sse';
+} from '@server/redis';
+import type { StreamLogger } from '@server/modules/stream/stream.types';
+import { SSE_KEEP_ALIVE, sseEvent } from '@server/utils/sse';
 
 /** How long one read waits for a new entry before the relay sends a keep-alive. */
 const RELAY_BLOCK_MS = 15_000;

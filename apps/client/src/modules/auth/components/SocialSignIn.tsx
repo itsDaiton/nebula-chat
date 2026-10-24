@@ -1,17 +1,19 @@
 import { Button, Icon, Stack } from '@chakra-ui/react';
-import { useSearchParams } from 'react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import { AuthFormAlert } from '@/modules/auth/components/AuthFormAlert';
 import { useSocialSignIn } from '@/modules/auth/hooks/useSocialSignIn';
 import { SOCIAL_PROVIDERS, socialCallbackError } from '@/modules/auth/utils/socialSignIn';
 
+const routeApi = getRouteApi('/auth/');
+
 /** "Continue with Google / GitHub", plus why the last attempt failed if it did. */
 export const SocialSignIn = () => {
-  const [searchParams] = useSearchParams();
+  const { error: callbackErrorCode } = routeApi.useSearch();
   const { mutate: signIn, error, isIdle, isPending, isSuccess, variables } = useSocialSignIn();
   // Success means the browser is leaving for the provider, so the buttons stay busy until it does.
   const isLeaving = isPending || isSuccess;
   // The callback's `?error=` describes the last attempt, so a new one replaces it.
-  const callbackError = isIdle ? socialCallbackError(searchParams.get('error')) : undefined;
+  const callbackError = isIdle ? socialCallbackError(callbackErrorCode) : undefined;
 
   return (
     <Stack w="full" gap={3}>
