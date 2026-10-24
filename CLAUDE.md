@@ -18,6 +18,7 @@ LLM coding mistakes. They bias toward caution over speed; for trivial tasks use 
 3. **Surgical changes.** Touch only what the task requires; match existing style. Don't "improve"
    adjacent code, comments or formatting, and mention unrelated dead code instead of deleting it. Remove
    only the orphans your own change created. Every changed line should trace to the request.
+   Comments stay at one line, two at most: the why, never the what.
 4. **Goal-driven execution.** Turn the task into a verifiable goal — a failing test first for a bug, tests
    green before and after for a refactor — and loop until it's verified. For multi-step work, state a
    short plan with a check per step.

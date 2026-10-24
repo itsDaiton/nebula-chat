@@ -67,7 +67,7 @@ records the rest.
 - No relative imports: `@/*` in the client, `@server/*` in the server, `@worker/*` in the worker.
 - Comments are one line, two at most, and say only what the code can't: the reason, constraint or gotcha.
   No JSDoc blocks restating a name or type, no `@param`/`@returns`. History goes in the commit, cross-file
-  rationale in an ADR.
+  rationale in an ADR. The edit hook flags blocks of three or more lines.
 - Layouts in docs list folders with a one-line purpose, not individual files.
 - Diagrams are Mermaid in Markdown, never exported images — see [docs/agents/diagrams.md](./docs/agents/diagrams.md).
 
