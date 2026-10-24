@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.7](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.0.6...nebula-chat-v5.0.7) (2026-10-24)
+
+
+### Bug Fixes
+
+* **deps:** patch fast-uri, undici, zod and markdown-it advisories ([#622](https://github.com/itsDaiton/nebula-chat/issues/622)) ([5270c3a](https://github.com/itsDaiton/nebula-chat/commit/5270c3a124352617005bb13cf02eeebb428db551))
+
 ## [5.0.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.0.5...nebula-chat-v5.0.6) (2026-10-24)
 
 
