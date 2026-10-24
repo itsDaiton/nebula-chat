@@ -34,7 +34,7 @@ vi.mock('@/theme/hooks/useColorMode', () => ({
   useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
 }));
 
-// The real pages these flows land on, through the router's bridge.
+// The real pages these flows land on.
 const AUTH_PAGE = resources.auth.signIn.title;
 const CHAT_PAGE = resources.chat.welcomeMessage;
 const { fields } = resources.auth;

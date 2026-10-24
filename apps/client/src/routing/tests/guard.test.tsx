@@ -56,7 +56,7 @@ describe('session guard', () => {
     expect(signIns).toBe(0);
   });
 
-  it('guards the auth and settings pages as well', async () => {
+  it('guards the auth pages as well', async () => {
     server.use(mockGetSession(null), mockAnonymousSignIn());
 
     await visit('/auth');

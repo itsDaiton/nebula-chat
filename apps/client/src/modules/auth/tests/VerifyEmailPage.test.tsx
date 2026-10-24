@@ -11,7 +11,7 @@ vi.mock('@/theme/hooks/useColorMode', () => ({
   useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
 }));
 
-// The real chat page its link leads to, through the router's bridge.
+// The real chat page its link leads to.
 const CHAT_PAGE = resources.chat.welcomeMessage;
 const { verifyEmail } = resources.auth;
 
