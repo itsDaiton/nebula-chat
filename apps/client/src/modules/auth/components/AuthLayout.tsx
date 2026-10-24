@@ -1,6 +1,6 @@
 import { Card, Flex, Icon, Text } from '@chakra-ui/react';
+import { Link } from '@tanstack/react-router';
 import { TbGalaxy } from 'react-icons/tb';
-import { Link } from 'react-router';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import type { AuthLayoutProps } from '@/modules/auth/types/types';
 import { resources } from '@/resources';

@@ -1,31 +1,33 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router';
-import { describe, expect, it } from 'vitest';
-import { VerifyEmailPage } from '@/modules/auth/VerifyEmailPage';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resources } from '@/resources';
 import { route } from '@/routing/routes';
 import { holdSession, mockSendVerificationEmail } from '@/test/auth';
+import { serveChatPage } from '@/test/chat';
 import { server } from '@/test/msw';
-import { renderWithChakra } from '@/test/render';
+import { renderRoute } from '@/test/renderRoute';
 
-const CHAT_PAGE = 'chat page';
+vi.mock('@/theme/hooks/useColorMode', () => ({
+  useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
+}));
+
+// The real chat page its link leads to, through the router's bridge.
+const CHAT_PAGE = resources.chat.welcomeMessage;
 const { verifyEmail } = resources.auth;
 
 // better-auth redirects the emailed link here, adding `?error=…` when the token is rejected.
 const renderPage = async (search: string, session: Parameters<typeof holdSession>[0]) => {
   await holdSession(session);
 
-  renderWithChakra(
-    <Routes>
-      <Route path={route.auth.verifyEmail()} element={<VerifyEmailPage />} />
-      <Route path={route.chat.root()} element={CHAT_PAGE} />
-    </Routes>,
-    { route: `${route.auth.verifyEmail()}${search}` },
-  );
+  await renderRoute(`${route.auth.verifyEmail()}${search}`);
 };
 
 const unverified = { isAnonymous: false, emailVerified: false };
+
+beforeEach(() => {
+  serveChatPage();
+});
 
 describe('VerifyEmailPage', () => {
   it('confirms a verified email and starts a chat', async () => {
@@ -36,7 +38,7 @@ describe('VerifyEmailPage', () => {
 
     await userEvent.click(screen.getByRole('link', { name: verifyEmail.startChatting }));
 
-    expect(screen.getByText(CHAT_PAGE)).toBeInTheDocument();
+    expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
   });
 
   it('explains an expired link and offers a new one', async () => {
@@ -66,6 +68,16 @@ describe('VerifyEmailPage', () => {
   it('explains an invalid link', async () => {
     await renderPage('?error=INVALID_TOKEN', unverified);
 
+    expect(screen.getByRole('alert')).toHaveTextContent(verifyEmail.linkInvalid);
+  });
+
+  it('reads a malformed error code as an invalid link, whatever the session says', async () => {
+    await renderPage(`?error=${encodeURIComponent('{"code":1}')}`, {
+      isAnonymous: false,
+      emailVerified: true,
+    });
+
+    expect(screen.getByRole('heading', { name: verifyEmail.failedTitle })).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent(verifyEmail.linkInvalid);
   });
 
