@@ -1,4 +1,5 @@
 import {
+  REPLY_STREAM_RECORD_TTL_SECONDS,
   buildKey,
   createRedis,
   streamCancelKey,
@@ -14,9 +15,6 @@ export const redis: RedisToolkit = createRedis({ redisUrl: env.REDIS_URL, logger
 
 export const closeRedis = (): Promise<void> => redis.close();
 
-// Outlives the stream itself (an hour after `end`), and a job that waits for a sleeping worker.
-const STREAM_OWNER_TTL_SECONDS = 24 * 60 * 60;
-
 const streamOwnerKey = (streamId: string): string => buildKey('stream-owner', streamId);
 
 // The assistant Message only exists once the worker finishes it, so a stream's owner is kept here,
@@ -24,7 +22,13 @@ const streamOwnerKey = (streamId: string): string => buildKey('stream-owner', st
 export const saveStreamOwner = async (streamId: string, userId: string): Promise<void> => {
   // The main connection rejects a command sent before its first connect is ready.
   await redis.connect();
-  await redis.connection.set(streamOwnerKey(streamId), userId, 'EX', STREAM_OWNER_TTL_SECONDS);
+  // Outlives the stream itself, and a job that waits for a sleeping worker.
+  await redis.connection.set(
+    streamOwnerKey(streamId),
+    userId,
+    'EX',
+    REPLY_STREAM_RECORD_TTL_SECONDS,
+  );
 };
 
 /** The User a reply stream belongs to, or `null` for an unknown or expired one. Errors propagate. */
@@ -38,7 +42,12 @@ const activeStreamKey = (sessionId: string): string => buildKey('session-stream'
 /** Records `streamId` as the Session's latest reply, so a page reloaded mid-reply can re-attach. */
 export const saveActiveStream = async (sessionId: string, streamId: string): Promise<void> => {
   await redis.connect();
-  await redis.connection.set(activeStreamKey(sessionId), streamId, 'EX', STREAM_OWNER_TTL_SECONDS);
+  await redis.connection.set(
+    activeStreamKey(sessionId),
+    streamId,
+    'EX',
+    REPLY_STREAM_RECORD_TTL_SECONDS,
+  );
 };
 
 /** Whether the worker has given a reply stream its terminal event. Errors propagate. */

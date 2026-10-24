@@ -85,7 +85,7 @@ describe('the Direct reply job', () => {
     expect(db.created).toEqual([
       { id: STREAM_ID, sessionId: SESSION_ID, content: '4', tokenCount: 11 },
     ]);
-    expect(operations.slice(-3)).toEqual(['persist', 'append:end', 'expire']);
+    expect(operations.slice(-4)).toEqual(['persist', 'markEnded', 'append:end', 'expire']);
   });
 
   it("calls the Session's Model with its history, oldest first, and the user Message", async () => {
@@ -154,6 +154,13 @@ describe('the Direct reply job', () => {
       ]);
       expect(db.created).toEqual([]);
       expect(redis.expired.has(STREAM_ID)).toBe(true);
+    });
+
+    it('marks the stream ended before its end event, so no Session read names it in flight after', async () => {
+      await run(failingModel(new Error('boom')));
+
+      expect(operations).toEqual(['append:error', 'markEnded', 'append:end', 'expire']);
+      expect(redis.ended.has(STREAM_ID)).toBe(true);
     });
 
     it('lands every queued token before the error, even when the stream is slow to append', async () => {
@@ -271,7 +278,7 @@ describe('the Direct reply job', () => {
       expect(db.created).toEqual([
         { id: STREAM_ID, sessionId: SESSION_ID, content: 'Two plus', tokenCount: null },
       ]);
-      expect(operations.slice(-3)).toEqual(['persist', 'append:end', 'expire']);
+      expect(operations.slice(-4)).toEqual(['persist', 'markEnded', 'append:end', 'expire']);
     });
 
     it('logs the reply once, at info, as cancelled', async () => {
@@ -294,6 +301,37 @@ describe('the Direct reply job', () => {
       expect(streamed()).toEqual([{ type: 'end', reason: 'cancelled' }]);
       expect(db.created).toEqual([]);
       expect(redis.expired.has(STREAM_ID)).toBe(true);
+    });
+
+    it('fails, not cancels, a reply whose stop lands only after the model had finished', async () => {
+      // The cancel check is still in flight when the model returns; it lands while the persist fails.
+      let checks = 0;
+      redis.stream.isCancelled = async () => {
+        checks += 1;
+        // The check before the model call finds no stop; a later one resolves late, as stopped.
+        if (checks === 1) return false;
+        return new Promise((resolve) => setTimeout(() => resolve(true), 15));
+      };
+      let persists = 0;
+      db.store.createAssistantMessage = async () => {
+        persists += 1;
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        throw new Error('postgres down');
+      };
+      const model: StreamChat = async (_config, { onToken, onUsage }) => {
+        onToken('4');
+        // Long enough for one cancel check to start, short enough for it to resolve later.
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        onUsage({ promptTokens: 1, completionTokens: 1, totalTokens: 2 });
+      };
+
+      await run(model);
+
+      expect(persists).toBe(1);
+      expect(streamed().slice(-2)).toEqual([
+        { type: 'error', success: false, error: 'Internal', message: GENERIC_ERROR_MESSAGE },
+        { type: 'end' },
+      ]);
     });
 
     it('finishes a reply nobody stopped without aborting its model call', async () => {

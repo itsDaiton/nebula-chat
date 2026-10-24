@@ -339,7 +339,10 @@ State is split by **kind** ([ADR-0012](../../docs/adr/0012-adopt-tanstack-query-
   mutator, `libs/api/streamClient.ts`, that returns the raw `Response`). It reads the SSE body with
   `utils/parseSseStream.ts` and writes the live reply into `useChatStreamStore`. `readReplyStream` is only
   called through `useChatStream`; its generated react-query hook (`useReadReplyStream`) must never be used,
-  because it would go through axios and buffer the body.
+  because it would go through axios and buffer the body. A dropped stream reconnects with backoff, passing
+  the last event id as `lastEventId` and skipping any entry at or before it; a 404 (expired) shows the saved
+  Messages instead. `resumeStream` re-attaches to a Session's `activeStreamId` (called render-time from
+  `ChatContainer`), and `stop` posts `cancelReplyStream`, deferred until the send names the stream.
 
 ### Server state — the generated hooks
 
@@ -433,7 +436,7 @@ context is genuinely needed, split it across two files:
 | Store                        | Location                   | Owns                                                             |
 | ---------------------------- | -------------------------- | ---------------------------------------------------------------- |
 | `useSessionsSearchStore`     | `modules/sessions/stores/` | Search text and its debounced copy (the results are a query)     |
-| `useChatStreamStore`         | `modules/chat/stores/`     | History, stream flag, usage, session ID, message allowance       |
+| `useChatStreamStore`         | `modules/chat/stores/`     | History, stream flag and ID, usage, session ID, allowance, stop  |
 | `useMessageStore`            | `modules/chat/stores/`     | Current message input value                                      |
 | `useModelStore`              | `modules/chat/stores/`     | Selected AI model                                                |
 | `useModelSelectorStore`      | `modules/chat/stores/`     | Model dropdown open state and trigger width                      |

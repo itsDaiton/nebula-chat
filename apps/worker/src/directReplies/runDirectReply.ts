@@ -50,6 +50,21 @@ export type ReplyStreamWriter = {
   expire: (streamId: string) => Promise<void>;
   /** Whether the User asked to stop the reply (the server's cancel flag). */
   isCancelled: (streamId: string) => Promise<boolean>;
+  /** Records that the stream has its terminal event, so the server stops naming it in flight. */
+  markEnded: (streamId: string) => Promise<void>;
+};
+
+type EndEvent = Extract<ReplyStreamEvent, { type: 'end' }>;
+
+/** Appends the terminal event: marked ended first, so a Session read after `end` never re-attaches. */
+const endStream = async (
+  streamId: string,
+  end: EndEvent,
+  stream: ReplyStreamWriter,
+): Promise<void> => {
+  await stream.markEnded(streamId);
+  await stream.append(streamId, end);
+  await stream.expire(streamId);
 };
 
 export type StreamChat = (
@@ -105,6 +120,8 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
   let reply = '';
   const cancel = new AbortController();
   let stopWatching = (): void => undefined;
+  // A stop that lands after the model returned is too late: the reply finishes, or fails, as is.
+  let modelReturned = false;
 
   const summary = (): LogAttributes => ({
     'gen_ai.provider.name': provider,
@@ -175,6 +192,7 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
         },
       },
     );
+    modelReturned = true;
     stopWatching();
     await appended;
 
@@ -186,8 +204,7 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
       content: reply,
       tokenCount: usage?.totalTokens ?? null,
     });
-    await stream.append(job.streamId, { type: 'end' });
-    await stream.expire(job.streamId);
+    await endStream(job.streamId, { type: 'end' }, stream);
 
     logEvent(
       componentLogger(logger, 'chat'),
@@ -198,7 +215,7 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
     );
   } catch (error) {
     stopWatching();
-    if (cancel.signal.aborted) {
+    if (cancel.signal.aborted && !modelReturned) {
       await appended.catch(() => undefined);
       await endCancelled(job, reply, deps, summary);
       return;
@@ -237,8 +254,7 @@ const endCancelled = async (
         tokenCount: null,
       });
     }
-    await stream.append(job.streamId, { type: 'end', reason: 'cancelled' });
-    await stream.expire(job.streamId);
+    await endStream(job.streamId, { type: 'end', reason: 'cancelled' }, stream);
     logEvent(
       componentLogger(logger, 'chat'),
       'info',
@@ -266,8 +282,7 @@ const endWithError = async (
 ): Promise<void> => {
   try {
     await stream.append(streamId, { type: 'error', ...envelope });
-    await stream.append(streamId, { type: 'end' });
-    await stream.expire(streamId);
+    await endStream(streamId, { type: 'end' }, stream);
   } catch (err) {
     // The reply's own failure is already logged; this is the stream it could not be told on.
     logEvent(

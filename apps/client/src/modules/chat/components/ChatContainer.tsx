@@ -7,7 +7,6 @@ import { ChatInputBar } from '@/modules/chat/components/ChatInputBar';
 import { ChatEmptyState } from '@/modules/chat/components/ChatEmptyState';
 import { ChatMessageList } from '@/modules/chat/components/ChatMessageList';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
-import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useHandleSendMessage } from '@/modules/chat/hooks/useHandleSendMessage';
 import { useModel } from '@/modules/chat/hooks/useModel';
 import { useChatSession } from '@/modules/sessions/hooks/useChatSession';
@@ -35,6 +34,12 @@ export const ChatContainer = () => {
   const { selectedModel, setSelectedModel } = useModel();
 
   const { handleSendMessage } = useHandleSendMessage({ history, streamMessage });
+
+  // Guarded render-time sync (no effect): a Session opened mid-reply re-attaches to it once its
+  // history is in; `resumeStream` ignores a stream it is already following.
+  if (sessionId && activeStreamId && chatSessionId === sessionId) {
+    void resumeStream({ sessionId, streamId: activeStreamId });
+  }
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Once the navigation has rendered (sessionId from URL params is set),
@@ -44,15 +49,6 @@ export const ChatContainer = () => {
       clearPostStream();
     }
   }, [sessionId, isPostStreamNavigation, clearPostStream]);
-
-  // A Session opened mid-reply (a reload, another tab) re-attaches to the reply still streaming.
-  useEffect(() => {
-    if (!sessionId || !activeStreamId || chatSessionId !== sessionId) return;
-    const chat = useChatStreamStore.getState();
-    // Already following it, or this tab just did and the Session read is not yet refreshed.
-    if (chat.isStreaming || chat.streamId === activeStreamId) return;
-    void resumeStream({ sessionId, streamId: activeStreamId, messages: chat.history });
-  }, [activeStreamId, chatSessionId, resumeStream, sessionId]);
 
   useEffect(() => {
     scrollToBottom(scrollRef);

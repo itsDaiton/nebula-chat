@@ -26,11 +26,17 @@ export type ChatHistoryStreamOptions = {
   sessionId?: string;
 };
 
-/** A reply still in flight to re-attach to: its Session, its stream and the saved Messages before it. */
+/** A reply still in flight to re-attach to; it lands after the Session's loaded history. */
 export type ResumeStreamOptions = {
   sessionId: string;
   streamId: string;
-  messages: ChatMessage[];
+};
+
+/** How following a reply stream finished: at its end (or saved Message), at an `error`, or aborted. */
+export type FollowOutcome = 'ended' | 'failed' | 'aborted';
+
+export type StopButtonProps = {
+  onStop: () => void;
 };
 
 export type UseChatStreamOptions = {
@@ -95,6 +101,8 @@ export type ChatStreamState = {
   sessionId?: string;
   /** The reply stream being followed (or last followed): what the stop button cancels. */
   streamId: string | null;
+  /** Stop was pressed before the send named the reply's stream. */
+  isStopRequested: boolean;
   /** A Guest's send was refused because their message allowance is spent. */
   isMessageAllowanceReached: boolean;
   setHistory: Dispatch<SetStateAction<ChatMessage[]>>;

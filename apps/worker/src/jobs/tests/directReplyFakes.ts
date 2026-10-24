@@ -38,6 +38,7 @@ export const memoryStream = (operations: string[] = []) => {
   const expired = new Set<string>();
   // The streams a User asked to stop: the server raises this flag, the worker reads it.
   const cancelled = new Set<string>();
+  const ended = new Set<string>();
   const stream: ReplyStreamWriter = {
     append: async (streamId, event) => {
       events.set(streamId, [...(events.get(streamId) ?? []), event]);
@@ -48,8 +49,12 @@ export const memoryStream = (operations: string[] = []) => {
       operations.push('expire');
     },
     isCancelled: async (streamId) => cancelled.has(streamId),
+    markEnded: async (streamId) => {
+      ended.add(streamId);
+      operations.push('markEnded');
+    },
   };
-  return { stream, events, expired, cancelled };
+  return { stream, events, expired, cancelled, ended };
 };
 
 /** A model that streams `tokens` then reports `usage`, recording the config it was called with. */

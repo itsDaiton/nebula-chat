@@ -1,10 +1,6 @@
 import type { FlagConnection } from './types';
 
-/**
- * Short-lived markers: a key raised with a TTL and checked for presence, such as
- * "this reply was asked to stop". Errors propagate: a flag decides what happens
- * next, so a Redis failure never reads as "lowered".
- */
+/** Markers raised with a TTL. Errors propagate: a Redis failure never reads as "lowered". */
 export type RedisFlags = {
   /** Raises `key` for `ttlSeconds`; raising it again restarts the TTL. */
   raise(key: string, ttlSeconds: number): Promise<void>;

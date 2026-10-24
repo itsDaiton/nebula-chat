@@ -60,6 +60,8 @@ beforeEach(() => {
     usage: null,
     sessionId: undefined,
     isMessageAllowanceReached: false,
+    streamId: null,
+    isStopRequested: false,
   });
   useMessageStore.setState({ message: '' });
   server.use(
@@ -419,6 +421,50 @@ describe('useChatStream — stopping a reply', () => {
     expect(useChatStreamStore.getState()).toMatchObject({ isStreaming: false, error: null });
   });
 
+  it('drops the empty reply of a reply stopped before its first token', async () => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    streamFrames(frame('end', { reason: 'cancelled' }, '1-1'));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    expect(history()).toEqual([{ id: 'u1', role: 'user', content: 'what is 2+2?' }]);
+    expect(useChatStreamStore.getState().isStreaming).toBe(false);
+  });
+
+  it('cancels a reply stopped while its message was still being sent', async () => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    const { cancelledStream } = stoppableStream();
+    let releaseSend: () => void = () => undefined;
+    server.use(
+      getSendMessageMockHandler(async () => {
+        await new Promise<void>((resolve) => {
+          releaseSend = resolve;
+        });
+        return { messageId: MESSAGE_ID, streamId: STREAM_ID };
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    let sent: Promise<void> | undefined;
+    act(() => {
+      sent = result.current.streamMessage({
+        model: 'gpt-4o-mini',
+        messages: [{ id: 'u1', role: 'user', content: 'what is 2+2?' }],
+      });
+    });
+    await act(async () => {
+      await result.current.stop();
+    });
+    await act(async () => {
+      releaseSend();
+      await sent;
+    });
+
+    expect(cancelledStream()).toBe(STREAM_ID);
+    expect(useChatStreamStore.getState().isStreaming).toBe(false);
+  });
+
   it('does nothing when no reply is streaming', async () => {
     const { cancelledStream } = stoppableStream();
     const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
@@ -447,12 +493,13 @@ describe('useChatStream — re-attaching', () => {
     );
     const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
 
+    useChatStreamStore.setState({
+      sessionId: EXISTING_ID,
+      history: [{ id: MESSAGE_ID, role: 'user', content: 'what is 2+2?' }],
+    });
+
     await act(async () => {
-      await result.current.resumeStream({
-        sessionId: EXISTING_ID,
-        streamId: STREAM_ID,
-        messages: [{ id: MESSAGE_ID, role: 'user', content: 'what is 2+2?' }],
-      });
+      await result.current.resumeStream({ sessionId: EXISTING_ID, streamId: STREAM_ID });
     });
 
     expect(resumedAfter).toBeNull();
@@ -465,6 +512,56 @@ describe('useChatStream — re-attaching', () => {
       sessionId: EXISTING_ID,
     });
     expect(navigate).not.toHaveBeenCalled();
+  });
+});
+
+describe('useChatStream — re-attaching, edge cases', () => {
+  const replay = () =>
+    server.use(
+      http.get(
+        API_ROUTE.replyStream,
+        () =>
+          new HttpResponse(frame('token', { token: '4' }, '1-1') + frame('end', {}, '1-2'), {
+            headers: { 'Content-Type': 'text/event-stream' },
+          }),
+      ),
+    );
+
+  it('replaces a saved copy of the reply rather than showing it twice', async () => {
+    // A reload that lands after the worker persisted the reply but before its stream ended.
+    replay();
+    useChatStreamStore.setState({
+      sessionId: EXISTING_ID,
+      history: [
+        { id: MESSAGE_ID, role: 'user', content: 'what is 2+2?' },
+        { id: STREAM_ID, role: 'assistant', content: '4' },
+      ],
+    });
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await act(async () => {
+      await result.current.resumeStream({ sessionId: EXISTING_ID, streamId: STREAM_ID });
+    });
+
+    expect(history().map((m) => m.content)).toEqual(['what is 2+2?', '4']);
+  });
+
+  it('leaves a stream it is already following alone', async () => {
+    let opened = 0;
+    server.use(
+      http.get(API_ROUTE.replyStream, () => {
+        opened += 1;
+        return new HttpResponse(frame('end', {}));
+      }),
+    );
+    useChatStreamStore.setState({ isStreaming: true, streamId: STREAM_ID });
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await act(async () => {
+      await result.current.resumeStream({ sessionId: EXISTING_ID, streamId: STREAM_ID });
+    });
+
+    expect(opened).toBe(0);
   });
 });
 

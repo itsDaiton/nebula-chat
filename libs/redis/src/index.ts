@@ -27,6 +27,7 @@ export {
   streamKey,
   streamCancelKey,
   streamEndedKey,
+  REPLY_STREAM_RECORD_TTL_SECONDS,
 } from './keys';
 
 // Config

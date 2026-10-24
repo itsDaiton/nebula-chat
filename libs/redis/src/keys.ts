@@ -39,3 +39,6 @@ export const streamCancelKey = (streamId: string): string => buildKey('stream-ca
  * so a reader can tell a stream that has expired from one whose job is still queued.
  */
 export const streamEndedKey = (streamId: string): string => buildKey('stream-ended', streamId);
+
+/** How long a reply stream's records (its owner, its ended flag) outlive it: a day. */
+export const REPLY_STREAM_RECORD_TTL_SECONDS = 24 * 60 * 60;

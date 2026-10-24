@@ -21,6 +21,7 @@ import type { SendMessageBodyModel } from '@/libs/api/generated/model/sendMessag
 import type {
   ChatHistoryStreamOptions,
   ChatMessage,
+  FollowOutcome,
   ResumeStreamOptions,
   UseChatStreamOptions,
 } from '@/modules/chat/types/types';
@@ -77,9 +78,6 @@ const emptyAssistantMessage = (): ChatMessage => ({
   role: 'assistant',
   content: '',
 });
-
-/** How following a reply stream finished: at its end (or its saved Message), at an `error` event, or aborted. */
-type FollowOutcome = 'ended' | 'failed' | 'aborted';
 
 export const useChatStream = ({
   reconnectDelaysMs = RECONNECT_DELAYS_MS,
@@ -167,6 +165,28 @@ export const useChatStream = ({
     setIsStreaming(false);
   }, [setIsStreaming]);
 
+  const requestCancel = useCallback(
+    async (streamId: string) => {
+      try {
+        await cancelReplyStream(streamId);
+      } catch {
+        // The server never heard it, so no `end` is coming for it: stop reading instead.
+        abort();
+      }
+    },
+    [abort],
+  );
+
+  // A reply stopped before its first token persists nothing, so its empty bubble goes too.
+  const dropEmptyReply = useCallback(
+    () =>
+      setHistory((prev) => {
+        const last = prev.at(-1);
+        return last?.role === 'assistant' && last.content === '' ? prev.slice(0, -1) : prev;
+      }),
+    [setHistory],
+  );
+
   // An expired stream leaves only the persisted reply, so the chat shows the Session's saved Messages.
   const showSavedReply = useCallback(
     async (savedSessionId: string) => {
@@ -179,11 +199,8 @@ export const useChatStream = ({
     [queryClient, setHistory],
   );
 
-  /**
-   * Renders a reply stream into the trailing assistant Message (ADR-0014). A connection that drops
-   * reconnects after the last event it saw, so no token is lost or applied twice; a stream that has
-   * expired falls back to the saved Message. Throws once the reconnects run out.
-   */
+  // Renders a reply stream into the trailing assistant Message, reconnecting after the last event
+  // it saw (ADR-0014); an expired stream falls back to the saved Message. Throws once retries run out.
   const followStream = useCallback(
     async (
       streamId: string,
@@ -242,6 +259,8 @@ export const useChatStream = ({
                 return 'failed';
               } else {
                 // `end`, also when the User stopped the reply: what streamed is the saved reply.
+                const reason = (parsed as { reason?: unknown } | null)?.reason;
+                if (reason === 'cancelled') dropEmptyReply();
                 return 'ended';
               }
             }
@@ -259,7 +278,7 @@ export const useChatStream = ({
       }
       return 'aborted';
     },
-    [appendToken, reconnectDelaysMs, setUsage, showReplyError, showSavedReply],
+    [appendToken, dropEmptyReply, reconnectDelaysMs, setUsage, showReplyError, showSavedReply],
   );
 
   // Send, then subscribe (ADR-0014): a new chat gets its Session first, and the send names the reply's stream.
@@ -276,6 +295,7 @@ export const useChatStream = ({
         error: null,
         usage: null,
         streamId: null,
+        isStopRequested: false,
         isMessageAllowanceReached: false,
         history: [...messages, emptyAssistantMessage()],
       });
@@ -304,6 +324,8 @@ export const useChatStream = ({
         void invalidateMessageAllowance();
         if (controller.signal.aborted) return;
         useChatStreamStore.setState({ streamId });
+        // Stop was pressed before the send named the stream.
+        if (useChatStreamStore.getState().isStopRequested) void requestCancel(streamId);
 
         const outcome = await followStream(streamId, activeSessionId, controller.signal);
         if (outcome === 'failed') {
@@ -354,6 +376,7 @@ export const useChatStream = ({
       invalidateMessageAllowance,
       navigate,
       queryClient,
+      requestCancel,
       sendMessage,
       setSessionId,
       setIsPostStreamNavigation,
@@ -365,7 +388,10 @@ export const useChatStream = ({
   // Re-attaches to a reply still in flight, say after a page reload: the stream replays from its
   // start into a fresh assistant Message after the saved ones, so nothing is missing or doubled.
   const resumeStream = useCallback(
-    async ({ sessionId: resumedSessionId, streamId, messages }: ResumeStreamOptions) => {
+    async ({ sessionId: resumedSessionId, streamId }: ResumeStreamOptions) => {
+      const chat = useChatStreamStore.getState();
+      // Already following it, or this tab just did and the Session read is not yet refreshed.
+      if (chat.isStreaming || chat.streamId === streamId) return;
       const controller = new AbortController();
       abortController.current = controller;
       useChatStreamStore.setState({
@@ -374,7 +400,9 @@ export const useChatStream = ({
         usage: null,
         sessionId: resumedSessionId,
         streamId,
-        history: [...messages, emptyAssistantMessage()],
+        isStopRequested: false,
+        // A reload just after the worker persisted the reply already lists it; the replay replaces it.
+        history: [...chat.history.filter((m) => m.id !== streamId), emptyAssistantMessage()],
       });
       try {
         const outcome = await followStream(streamId, resumedSessionId, controller.signal);
@@ -396,14 +424,14 @@ export const useChatStream = ({
   // The stop button: the worker ends the stream as `cancelled`, which finishes the reply as usual.
   const stop = useCallback(async () => {
     const { isStreaming: streaming, streamId } = useChatStreamStore.getState();
-    if (!streaming || !streamId) return;
-    try {
-      await cancelReplyStream(streamId);
-    } catch {
-      // The server never heard it, so no `end` is coming for it: stop reading instead.
-      abort();
+    if (!streaming) return;
+    if (!streamId) {
+      // The send has not named the stream yet; it cancels once it does.
+      useChatStreamStore.setState({ isStopRequested: true });
+      return;
     }
-  }, [abort]);
+    await requestCancel(streamId);
+  }, [requestCancel]);
 
   // Atomically clears both isStreaming and isPostStreamNavigation in one setState call
   // so ChatContainer sees a consistent state in a single render.

@@ -69,8 +69,8 @@ apps/server/src/
 │   ├── stream/                    # GET /api/streams/:streamId — the SSE relay (ADR-0014)
 │   │   ├── stream.types.ts
 │   │   ├── stream.validation.ts
-│   │   ├── stream.service.ts      # assertOwner + relay: tail the Redis Stream, write SSE until `end`
-│   │   ├── stream.controller.ts   # Owner check, then hijack and relay; aborts on client disconnect
+│   │   ├── stream.service.ts      # assertReadable + relay from Last-Event-ID until `end`; cancel
+│   │   ├── stream.controller.ts   # Readable check, then hijack and relay; aborts on client disconnect
 │   │   └── stream.routes.ts
 │   ├── session/
 │   │   ├── session.types.ts
@@ -339,6 +339,10 @@ Redis access is provided by the **`@nebula-chat/redis`** lib, registered by
 - **Stream owners**: `saveStreamOwner` / `findStreamOwner` record who may read a stream
   (`stream-owner:{streamId}`, 24-hour TTL). The assistant Message only exists once the worker finishes it,
   so the owner check cannot go through Postgres.
+- **Resume and cancel** (NEB-355): `saveActiveStream` / `findActiveStream` keep each Session's in-flight
+  reply (`session-stream:{sessionId}`) for `GET /api/sessions/:id`'s `activeStreamId`; `isStreamExpired`
+  reads the worker's `stream-ended:{streamId}` flag against the stream's existence, so an expired stream
+  404s while a queued one waits; `requestStreamCancel` raises `stream-cancel:{streamId}` for the worker.
 - **The Direct reply queue** (`src/queue.ts`): a BullMQ `Queue` on `redis.dedicatedConnection()`, built on
   first use so nothing that only builds the app (the OpenAPI script, route tests) opens a connection.
 
