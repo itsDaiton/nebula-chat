@@ -1,25 +1,52 @@
 # Nebula Chat
 
-**An AI chat product built to be tried in seconds and trusted in production.**
+**A multi-agent orchestration platform for AI work, built on a chat product you can try in seconds.**
 
-Open the app and start talking — no sign-up wall. Guests get a free message allowance; registering
-(email, Google or GitHub) keeps their history and lifts the limit. Replies stream token by token from
-OpenAI or Anthropic models, and every conversation stays in a searchable, archivable history.
+One question in, one considered answer out. Behind it, a team of specialised AI Agents is meant to
+understand the request, split it up, research, critique and write the reply, while you watch each step
+and stay in control of the spend. The chat foundation is live today. The orchestration layer is designed
+and being built on top of it.
 
 🌐 **App:** <https://www.nebula-chat.cz> · **API:** <https://api.nebula-chat.cz>
 
-## Why it's different
+## The idea
+
+A **Run** answers one message by orchestrating Agents instead of making a single model call:
+
+```mermaid
+flowchart LR
+  msg([Your message]) --> intake["Intake Agents<br/>in parallel"]
+  intake --> brief[Brief]
+  brief --> orch{{"Orchestrator<br/>delegates turn by turn"}}
+  orch <--> agents["Specialist Agents<br/>and tools"]
+  orch -.->|one question at most| you([You])
+  orch --> out["Output Agent<br/>writes the answer"]
+  out --> reply([Streamed reply])
+```
+
+- **Specialised roles.** Each Agent is a fixed pairing of model, prompt and tools, defined by the
+  application rather than invented on the fly.
+- **Inspectable.** Every Step is recorded, so a Run can be read back, resumed and audited.
+- **Bounded.** A Run budget caps the tokens it may spend and ends the Run early with a partial answer
+  instead of failing.
+- **Opt-in.** Pick it per message, or keep the plain direct reply for quick questions.
+
+The design is in [CONTEXT.md](./CONTEXT.md) and
+[ADR-0015](./docs/adr/0015-run-model-intake-orchestrator-loop-output.md).
+
+## What works today
 
 - **Zero-friction start.** Guests chat immediately; signing up *claims* their existing conversations
   instead of resetting them.
-- **Pick the model per conversation.** Switch between providers without losing the thread.
+- **Pick the model per conversation.** Switch between OpenAI and Anthropic models without losing the thread.
 - **Live, resumable streaming.** Replies keep generating if you drop offline and pick up where they left
   off; a Stop button cancels one mid-flight.
 - **Accounts done properly.** Email verification, password reset, social sign-in, profile images,
   sign-out everywhere, and self-serve account deletion with a 30-day grace period.
 - **Run like a service.** Token budgets enforced per request, structured logs and traces in Grafana, and an
   operator CLI to change log levels in production without a deploy.
-- **More coming.** Orchestrated multi-agent responses are designed ([domain model](./CONTEXT.md)) and next in line.
+- **A worker built for it.** Every model call already runs off a job queue in its own service, which is
+  where Runs will execute.
 
 ## How it fits together
 
@@ -66,7 +93,7 @@ flowchart LR
 
 The browser only ever talks to the **server**, which owns auth and history and relays replies over SSE.
 The **worker** owns every model call and takes its jobs off Redis, so slow LLM work never blocks the API
-and each side scales on its own. [Architecture deep dive →](./docs/architecture.md)
+and each side scales on its own. It is also where orchestrated Runs will execute. [Architecture deep dive →](./docs/architecture.md)
 
 ## Built with
 
