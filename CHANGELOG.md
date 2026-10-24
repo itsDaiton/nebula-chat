@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.2.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.2.1...nebula-chat-v5.2.2) (2026-10-24)
+
+
+### Bug Fixes
+
+* **config:** trim Prettier config to non-default options ([#629](https://github.com/itsDaiton/nebula-chat/issues/629)) ([aa36c79](https://github.com/itsDaiton/nebula-chat/commit/aa36c7913e328b88a77d0d52e5ad33b25bdbe9af))
+
 ## [5.2.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.2.0...nebula-chat-v5.2.1) (2026-10-24)
 
 
