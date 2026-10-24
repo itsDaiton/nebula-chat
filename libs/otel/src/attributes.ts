@@ -1,18 +1,8 @@
 import type { LogLevel } from './logLevels';
 
 /**
- * The attribute catalogue: every key a log line may carry, with its value type.
- *
- * Keys are flat dotted strings, never nested objects — Pino does not deep-merge,
- * so a bound `user: {…}` plus a call-site `user: {…}` would emit a duplicate
- * JSON key. They follow OpenTelemetry semantic conventions where one exists and
- * use `nebula.*` for domain concepts. The one nested value is `err`, which stays
- * an object so Pino's serializer emits its type, message, stack and cause.
- *
- * The Session is `nebula.session.id`, never `session.id`: OTel's `session.id`
- * means a client browsing session, and the codebase already has an auth session.
- *
- * @see https://opentelemetry.io/docs/specs/semconv/
+ * The attribute catalogue: every key a log line may carry. Keys are flat dotted strings (Pino doesn't deep-merge), following OTel semantic conventions or `nebula.*`.
+ * The Session is `nebula.session.id`, never `session.id`, which OTel reserves for a client browsing session.
  */
 
 /**

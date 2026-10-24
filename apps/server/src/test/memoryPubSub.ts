@@ -1,9 +1,7 @@
 import type { RedisPubSub } from '@nebula-chat/redis';
 
 /**
- * An in-process stand-in for `redis.pubsub`: `publish` delivers synchronously to
- * every handler subscribed to the channel and resolves to how many there were,
- * as Redis does. Each handler stands for one listening server instance.
+ * An in-process `redis.pubsub`: `publish` delivers synchronously to every subscribed handler (one per listening instance) and resolves to their count.
  */
 export const memoryPubSub = (): RedisPubSub => {
   const handlers = new Map<string, ((message: string) => void)[]>();

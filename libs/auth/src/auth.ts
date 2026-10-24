@@ -23,27 +23,18 @@ import { userDeletionHooks } from './userDeletion';
 import type { OnUserDeleted } from './userDeletion';
 
 /**
- * Everything the lib needs to build a configured better-auth instance. The lib
- * NEVER reads `process.env` — a published lib cannot bind to a consumer's env
- * schema (same rule `@nebula-chat/otel`/`@nebula-chat/redis` follow). The server
- * resolves these from its own env and passes them in.
- *
- * The Guest message allowance is deliberately NOT here: it is enforced in the
- * chat send pre-handler (ADR-0010 §4), not by better-auth.
+ * Everything the lib needs to build an instance; it never reads `process.env`, the server resolves these from its own env.
+ * The Guest message allowance is enforced in the chat send pre-handler (ADR-0010 §4), not here.
  */
 export type CreateAuthConfig = {
   /** The Drizzle client from `@nebula-chat/db` (better-auth owns the auth tables). */
   db: DbClient;
   /**
-   * The Redis-backed `authStore` from `@nebula-chat/redis`, adapted to
-   * better-auth's `SecondaryStorage`. Sessions, verification records and
-   * rate-limit counters live here (ADR-0010 §3).
+   * The Redis-backed `authStore` as better-auth's `SecondaryStorage`: sessions, verification records and rate-limit counters (ADR-0010 §3).
    */
   authStore: AuthStore;
   /**
-   * Injected `@nebula-chat/otel` (Pino) logger. better-auth's internal logs are
-   * routed through it (the lib's single sink); the lib never reaches for
-   * `console` or a consumer's own logger.
+   * Injected `@nebula-chat/otel` logger, the sink for better-auth's internal logs; the lib never touches `console`.
    */
   logger: Logger;
   /** `BETTER_AUTH_SECRET` — signs sessions and the session cookie cache. */
@@ -94,36 +85,8 @@ const withProviderImageKept = (providers: SocialProviderCredentials) =>
   );
 
 /**
- * Build the configured better-auth instance for Nebula Chat.
- *
- * - Drizzle adapter over `@nebula-chat/db` (`provider: 'pg'`), with the schema
- *   passed so model names map to our tables; `user.modelName: 'users'` keeps the
- *   `user` model on the existing `users` table.
- * - `advanced.database.generateId: 'uuid'` so Postgres generates ids
- *   (`gen_random_uuid()`), leaving the `sessions.userId` uuid FK unchanged.
- * - `secondaryStorage` = the injected `authStore` (get/set/delete; ttl in seconds).
- * - `session.cookieCache` enabled so most requests validate from a signed cookie
- *   without touching Redis. `storeSessionInDatabase` is intentionally NOT set —
- *   sessions live in Redis (flip it on later in one line to move them to Postgres).
- * - `rateLimit` enabled with `storage: 'secondary-storage'` (counters in Redis), keyed per
- *   client by the `CF-Connecting-IP` header Render's Cloudflare edge sets.
- * - anonymous plugin with `onLinkAccount` claiming the Guest's Sessions.
- * - Have I Been Pwned plugin rejecting breached passwords on sign-up.
- * - openAPI plugin documenting the whole auth surface: a Scalar reference UI at
- *   `/api/auth/reference` and the OpenAPI 3.1 schema at
- *   `/api/auth/open-api/generate-schema`. The Fastify `/api/auth/*` route is
- *   `hide: true`, so this is the only machine-readable description of these
- *   endpoints (importable into Bruno/Postman, etc.).
- * - email/password with password reset; verification is sent on sign-up but not
- *   required to sign in, sent in the background via `sendEmail` (ADR-0021).
- * - `user.deleteUser` enabled for Settings → Delete account; the `before` hook makes a user
- *   with a password send it (better-auth would accept a recent sign-in instead), and
- *   `onUserDeleted` runs once the account is gone.
- * - a `before` hook refusing an unchanged password (`PASSWORD_REUSED`) on
- *   `/change-password`, and a breached or unchanged one on `/reset-password`.
- * - Google / GitHub social sign-in for each provider in `socialProviders`; its
- *   `/callback/*` runs the same anonymous `onLinkAccount` claim as email.
- * - `profileImageKey`, a server-only user field clients can neither write nor read (ADR-0022).
+ * Builds the configured better-auth instance: Drizzle adapter over `@nebula-chat/db`, Redis `authStore` as secondary storage with rate limiting,
+ * and the anonymous (Guest claim), Have I Been Pwned, OpenAPI, email/password, social and delete-user setup below.
  */
 export const createAuth = ({
   db,
@@ -137,10 +100,8 @@ export const createAuth = ({
   socialProviders = {},
   onUserDeleted,
 }: CreateAuthConfig): Auth =>
-  // better-auth 1.7 made `Auth` generic (`Auth<Options>`) and invariant, so the
-  // instance `betterAuth()` infers no longer widens to the base `Auth` we expose.
-  // Cast back to the portable base type (see `AuthInstance`): safe because the
-  // value IS an `Auth` — only the embedded options generic differs.
+  // better-auth 1.7 made `Auth` generic and invariant, so the inferred instance no longer widens to the base `Auth` we expose;
+  // cast back, which is safe since only the options generic differs.
   betterAuth({
     secret,
     baseURL,
@@ -201,11 +162,8 @@ export const createAuth = ({
       sendVerificationEmail: async ({ user, url }) =>
         sendEmail(await verificationEmail({ user, url })),
     },
-    // Adapt the Redis-backed authStore to better-auth's SecondaryStorage. As of
-    // @better-auth/core 1.7 (src/db/type.ts) the interface is
-    // get/getAndDelete/increment/set/delete; `ttl` is in seconds, which authStore
-    // maps to `SET ... EX` (set) and `INCR` + create-only `EXPIRE` (increment, the
-    // fixed-window semantics the secondary-storage rate limiter requires).
+    // Adapts `authStore` to better-auth's SecondaryStorage (get/getAndDelete/increment/set/delete), with ttl in seconds.
+    // `increment` sets its expiry only on create, the fixed window the rate limiter needs.
     hooks: {
       // Require the password on /delete-user, refuse an unchanged one on /change-password,
       // and a breached or unchanged one before /reset-password consumes the token.
@@ -289,29 +247,19 @@ export const createAuth = ({
       }),
       // /reset-password is breach-checked by the before hook, ahead of token consumption.
       haveIBeenPwned({ paths: ['/sign-up/email', '/change-password'] }),
-      // Serves a Scalar reference UI at `/api/auth/reference` and the OpenAPI 3.1
-      // schema at `/api/auth/open-api/generate-schema`, both reached through the
-      // server's `/api/auth/*` passthrough. Documents every endpoint the core and
-      // the plugins above expose. `auth.api.generateOpenAPISchema()` returns the
-      // same schema as a JSON object for build-time emission.
+      // Scalar UI at `/api/auth/reference` and the OpenAPI 3.1 schema at `/api/auth/open-api/generate-schema`,
+      // reached through the server's `/api/auth/*` passthrough.
       openAPI(),
     ],
   }) as unknown as Auth;
 
 /**
- * The configured better-auth instance type — what `createAuth` returns. Annotated
- * as the base `Auth` (rather than the inferred `Auth<typeof options>`) because the
- * plugin option types better-auth embeds in the inferred type are not exported
- * from a stable path, which makes the inferred type non-portable in `.d.ts` emit
- * (TS2883). The server's `requireAuthentication`/`requireRegistered` decorators use the
- * `User`/`Session` aliases below, which we compose explicitly.
+ * The instance type `createAuth` returns, annotated as the base `Auth` because the inferred type's plugin options aren't portable in `.d.ts` emit (TS2883).
  */
 export type AuthInstance = Auth;
 
 /**
- * The user record as seen by the server. The base better-auth `User` plus the
- * anonymous plugin's `isAnonymous` flag — the field `requireRegistered` reads to
- * tell a Guest from a Registered user.
+ * The user record as the server sees it: better-auth's `User` plus the anonymous plugin's `isAnonymous`, which `requireRegistered` reads.
  */
 export type User = BetterAuthUser & {
   /** `true` for a Guest (anonymous plugin); falsy/absent for a Registered user. */

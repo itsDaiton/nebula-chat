@@ -13,9 +13,7 @@ import type { Logger } from './logger';
 
 type InitTelemetryOptions = {
   /**
-   * Logger the SDK's own diagnostics are routed through. Pass the caller's
-   * existing instance so the process keeps exactly one Pino logger; omitting it
-   * falls back to a lib-created one.
+   * Logger the SDK's diagnostics go through; pass the caller's so the process keeps one Pino logger.
    */
   logger?: Logger;
   /** Overrides `process.env.OTEL_LOG_LEVEL`. */
@@ -25,9 +23,7 @@ type InitTelemetryOptions = {
 type SpanProcessor = NonNullable<NodeSDKConfiguration['spanProcessors']>[number];
 
 /**
- * A span processor that drops every span. Registering one is what makes the
- * SDK install a real tracer provider — with zero processors `NodeSDK` installs
- * none, spans stay non-recording, and no line would ever get a `trace_id`.
+ * A span processor that drops every span; registering one makes the SDK install a real tracer, so lines still get a `trace_id`.
  */
 const discardingSpanProcessor: SpanProcessor = {
   onStart: () => undefined,
@@ -85,18 +81,13 @@ let sdk: NodeSDK | null = null;
 let shutdownPromise: Promise<void> | null = null;
 
 /**
- * How long a shutdown waits on the span flush. A reachable collector takes well
- * under this; an unreachable one makes the exporter retry for ~8s, holding the
- * process open — and `tsx watch` waits on that exit before every restart.
+ * How long shutdown waits on the span flush: an unreachable collector makes the exporter retry for ~8s, and `tsx watch` waits on that exit.
  */
 export const SHUTDOWN_FLUSH_CAP_MS = 2_000;
 
 /**
- * Flushes pending spans and stops the SDK, giving up after
- * `SHUTDOWN_FLUSH_CAP_MS`. Never rejects: a failed flush is the SDK's to report
- * through `diag`, and observability must never fail the shutdown. Idempotent —
- * the lib's own SIGTERM handler and a consumer awaiting it share one flush.
- * Resolves at once when the SDK never started.
+ * Flushes pending spans and stops the SDK, giving up after `SHUTDOWN_FLUSH_CAP_MS`. Never rejects (a failed flush is reported through `diag`),
+ * is idempotent, and resolves at once if the SDK never started.
  */
 export const shutdownTelemetry = (): Promise<void> => {
   if (!sdk) return Promise.resolve();
@@ -112,17 +103,8 @@ export const shutdownTelemetry = (): Promise<void> => {
 };
 
 /**
- * Starts the OpenTelemetry Node SDK with auto-instrumentations. The tracer is
- * always on, so every log line written inside a span carries its `trace_id`;
- * `OTEL_EXPORTER_OTLP_ENDPOINT` only decides whether spans are exported.
- *
- * Reads `process.env` directly rather than a consumer's validated env object: a
- * published lib must not depend on one consumer's env schema, and importing one
- * would pull that consumer's `dotenv`/Zod graph in ahead of the SDK, defeating
- * the import ordering auto-instrumentation depends on. See ADR-0007.
- *
- * Must be called before the modules it instruments (`http`, `pg`, `redis`, ...)
- * are imported — auto-instrumentation patches modules as they load.
+ * Starts the OTel Node SDK with auto-instrumentations; the tracer is always on and `OTEL_EXPORTER_OTLP_ENDPOINT` only decides export.
+ * Reads `process.env` directly (a lib can't use a consumer's env schema, ADR-0007) and must run before the modules it instruments load.
  */
 export const initTelemetry = (serviceName: string, options: InitTelemetryOptions = {}): void => {
   const logger = options.logger ?? createLogger({ serviceName });
@@ -138,21 +120,14 @@ export const initTelemetry = (serviceName: string, options: InitTelemetryOptions
     ],
   });
 
-  // After the constructor, before start(): `new NodeSDK()` installs its own
-  // DiagConsoleLogger when OTEL_LOG_LEVEL is set in the environment, so
-  // attaching any earlier would have the SDK overwrite us and route its
-  // diagnostics to the console. Still ahead of start(), so everything the SDK
-  // reports while booting — resource detection, instrumentation registration,
-  // the first export — lands in the Pino stream.
+  // After the constructor, before `start()`: `new NodeSDK()` installs its own console logger when `OTEL_LOG_LEVEL` is set and would overwrite an earlier one,
+  // while boot diagnostics still reach Pino.
   attachDiagLogger(logger, options.diagLevel ?? process.env.OTEL_LOG_LEVEL);
 
   try {
     instance.start();
   } catch (error) {
-    // Observability must never be able to take the service down. A failed SDK
-    // start (bad endpoint, exporter refusing to initialise, an instrumentation
-    // throwing) degrades us to no tracing rather than aborting boot — handled,
-    // so `warn`. `sdk` stays null so no SIGTERM handler is registered for it.
+    // Observability must never take the service down: a failed SDK start degrades to no tracing (`warn`) and leaves `sdk` null, so no SIGTERM handler is registered.
     logEvent(
       componentLogger(logger, 'otel'),
       'warn',

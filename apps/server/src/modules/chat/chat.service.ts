@@ -13,9 +13,7 @@ const MAX_PROMPT_TOKENS = 2000;
 
 export const chatService = {
   /**
-   * Accepts a user Message for a Direct reply: persists it, records who may read
-   * the reply stream, and enqueues the job. No LLM work happens here; the worker
-   * produces the reply onto the stream (ADR-0013, ADR-0014).
+   * Persists a user Message, records who may read the reply stream and enqueues the job; the worker does the LLM work (ADR-0013, ADR-0014).
    */
   async sendMessage(
     sessionId: string,

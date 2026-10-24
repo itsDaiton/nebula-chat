@@ -1,10 +1,6 @@
 /**
- * The event catalogue: every `event.name` a line may carry. Stable dotted
- * identifiers to filter and alert on — renaming one breaks whoever queries it,
- * so add new names rather than repurposing old ones.
- *
- * The `*.log` names are generic: adapters stamp them on lines a third-party
- * logger (better-auth, the OTel SDK, Fastify internals) wrote in its own words.
+ * The event catalogue: every `event.name` a line may carry. Names are stable identifiers to filter and alert on, so add new ones rather than repurposing old;
+ * the `*.log` names are generic, stamped by adapters on third-party logger lines.
  */
 export const LOG_EVENTS = [
   // HTTP

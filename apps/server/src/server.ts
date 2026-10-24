@@ -28,12 +28,8 @@ const start = async (): Promise<void> => {
 
   const app = await buildApp({ logger });
 
-  // `app.listen()` writes Fastify's own "Server listening at …" line through
-  // `app.log`, and no option turns it off (`listenTextResolver` only rewords
-  // it). `app.log` is a plain property that only instance-level code reads —
-  // request loggers are children of the logger Fastify captured at
-  // construction — so pointing it at a silent child for the duration of the
-  // call drops that one line and nothing else. `server.started` replaces it.
+  // `app.listen()` logs Fastify's own "Server listening" line through `app.log` with no off switch, so a silent child stands in for the call;
+  // `server.started` replaces that line.
   const instanceLog = app.log;
   app.log = instanceLog.child({}, { level: 'silent' });
   let address: string;

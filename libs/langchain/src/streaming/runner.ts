@@ -38,9 +38,7 @@ export const streamChat = async (
   const startMs = Date.now();
 
   const resolvedModel = model ?? DEFAULT_MODELS[llmConfig.provider];
-  // Flat OTel gen_ai.* keys, stamped by hand: this lib does not depend on
-  // @nebula-chat/otel. Progress inside the Direct reply, so `debug` — the
-  // caller writes the one `info` summary for the unit of work.
+  // Flat OTel gen_ai.* keys stamped by hand (this lib doesn't use @nebula-chat/otel); `debug`, since the caller writes the one `info` summary.
   const genAi = {
     'gen_ai.provider.name': llmConfig.provider,
     'gen_ai.request.model': resolvedModel,

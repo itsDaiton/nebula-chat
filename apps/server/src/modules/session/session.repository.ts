@@ -10,9 +10,7 @@ export const sessionRepository = {
     const [row] = await db.insert(sessions).values({ title, userId }).returning();
     return row!;
   },
-  // Every read is owner-scoped (ADR-0010 §2): a caller only ever sees sessions
-  // they own, so a row belonging to another user reads as absent (a 404, never a 403
-  // that would leak its existence).
+  // Every read is owner-scoped (ADR-0010 §2): another user's session reads as absent (a 404, never a 403 that leaks it).
   async findById({ sessionId }: GetSessionParams, userId: string) {
     const [row] = await db
       .select()

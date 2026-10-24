@@ -10,11 +10,8 @@ import {
   check,
 } from 'drizzle-orm/pg-core';
 
-// better-auth is the source of truth for this table's shape (modelName: "users").
-// Field names must match better-auth's core user model exactly so the Drizzle adapter
-// needs no field remapping: `name`, `email`, `emailVerified`, `image`.
-// `isAnonymous` is added by the anonymous plugin (Guest detection).
-// `profileImageKey` is a server-only extra field: the storage path of an uploaded Profile image (ADR-0022).
+// better-auth owns this table's shape (modelName `users`), so field names match its core user model exactly.
+// `isAnonymous` comes from the anonymous plugin; `profileImageKey` is a server-only field (ADR-0022).
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),

@@ -25,9 +25,7 @@ for (const code of errorCodeSchema.options) {
 }
 
 /**
- * The code for an HTTP status, for errors that arrive with a status but no code
- * of their own (framework errors). An unmapped 4xx is still the caller's fault,
- * so it reads as `BadRequest`; everything else is `Internal`.
+ * The code for an HTTP status on errors with no code of their own (framework errors): an unmapped 4xx is `BadRequest`, the rest `Internal`.
  */
 export const errorCodeForStatus = (status: number): ErrorCode => {
   const code = CODE_BY_STATUS.get(status);

@@ -46,22 +46,12 @@ export type BuildAppOptions = {
 };
 
 export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstance> => {
-  // Widened to FastifyBaseLogger deliberately: Fastify infers its logger generic
-  // from this value, and letting the concrete Pino type through would specialise
-  // the instance past the plain `FastifyInstance` this factory returns.
+  // Widened to FastifyBaseLogger: Fastify infers its logger generic from this value, and the concrete Pino type would specialise the instance.
   const loggerInstance: FastifyBaseLogger = options?.logger ?? logger;
 
   const app = Fastify({
-    // Fastify owns request-id generation and the per-request req.log child
-    // logger. Its own request/response lines are off (`logController`): the
-    // requestLogging plugin writes one `http.request.completed` per request
-    // instead (ADR-0017). Do not layer a pino-http hook on top of this — see
-    // ADR-0007.
-    //
-    // `loggerInstance`, not `logger`: since Fastify v5 the `logger` option takes
-    // a boolean or a Pino *config*, and an already-constructed instance goes to
-    // `loggerInstance`. Passing one to `logger` falls through to the http2
-    // overload and misreports itself as a dozen unrelated type errors.
+    // Fastify owns request ids and `req.log`; its own request lines are off (`logController`) in favour of `http.request.completed` (ADR-0017, ADR-0007).
+    // `loggerInstance`, not `logger`: since Fastify v5 `logger` takes only a boolean or Pino config.
     loggerInstance,
     logController,
     trustProxy: resolveTrustProxy(),

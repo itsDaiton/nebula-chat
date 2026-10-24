@@ -18,21 +18,8 @@ export const SERVICE_NAME = 'nebula-chat-server';
 export const INSTANCE_ID = `${hostname()}:${process.pid}`;
 
 /**
- * The server's single Pino instance.
- *
- * `buildApp` builds Fastify with this same object, so `app.log` and every
- * per-request `req.log` child share it — one logger, one config, one
- * destination, one `pino-pretty` worker in development. Every line it writes
- * carries `service.name`, `service.version` and `deployment.environment.name`.
- *
- * Import it only where there is no `req.log` in scope: startup and shutdown,
- * the Redis toolkit, the Postgres pool and better-auth (all built at module
- * load). Inside a request, always prefer `req.log` so lines carry the request
- * id and the User.
- *
- * This is not a return of the M-1-era file that used to live at this path. That
- * one was a *second* Pino, with its own hardcoded config, competing with
- * Fastify's. This is the instance Fastify itself uses. See ADR-0007.
+ * The server's single Pino instance, shared by `buildApp`, `app.log` and every `req.log` (ADR-0007).
+ * Import it only where no `req.log` is in scope: startup, shutdown, Redis, Postgres and better-auth.
  */
 export const logger: Logger = createLogger({
   serviceName: SERVICE_NAME,

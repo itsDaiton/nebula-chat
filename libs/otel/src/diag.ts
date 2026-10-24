@@ -22,12 +22,7 @@ const DIAG_LEVELS: Record<DiagLevelName, DiagLogLevel> = {
 const isDiagLevelName = (value: string): value is DiagLevelName => value in DIAG_LEVELS;
 
 /**
- * Maps an `OTEL_LOG_LEVEL`-style string onto a `DiagLogLevel`, case-insensitively.
- *
- * An unknown or absent value resolves to `ERROR`, not `NONE`: the SDK reports
- * its own failures (unreachable endpoint, exporter rejections, instrumentation
- * faults) through `diag`, and defaulting to silence is what makes a broken
- * exporter invisible.
+ * Maps an `OTEL_LOG_LEVEL` string to a `DiagLogLevel`, case-insensitively; unknown or absent is `ERROR`, not `NONE`, so a broken exporter isn't invisible.
  */
 export const resolveDiagLevel = (raw?: string): DiagLogLevel => {
   const name = raw?.trim().toLowerCase();
@@ -41,13 +36,8 @@ export const resolveDiagLevel = (raw?: string): DiagLogLevel => {
 type PinoDiagLevel = 'error' | 'warn' | 'info' | 'debug' | 'trace';
 
 /**
- * Lowest Pino level the diag child must allow for a given `DiagLogLevel`.
- *
- * `diag.setLogger`'s own level stops OTel calling the adapter below the chosen
- * level, but Pino filters independently: a child inherits its parent's level, so
- * without this the parent's `LOG_LEVEL` (default `info`) would silently swallow
- * every `debug`/`verbose` diagnostic no matter what `OTEL_LOG_LEVEL` asked for.
- * Setting it on the child makes `OTEL_LOG_LEVEL` effective on its own.
+ * Lowest Pino level the diag child must allow for a `DiagLogLevel`: Pino filters independently, so the parent's `LOG_LEVEL`
+ * would swallow `debug`/`verbose` diagnostics whatever `OTEL_LOG_LEVEL` says.
  */
 const childLevelFor = (level: DiagLogLevel): pino.Level | 'silent' => {
   if (level >= DiagLogLevel.VERBOSE) return 'trace';
@@ -59,10 +49,7 @@ const childLevelFor = (level: DiagLogLevel): pino.Level | 'silent' => {
 };
 
 /**
- * `DiagLogger` passes a message plus loose extra args. Pino v10 derives its
- * variadic args from the message's literal format string, so a non-literal
- * message accepts none — the extras go in a bound object instead of being
- * interpolated.
+ * `DiagLogger` passes a message plus loose args; Pino v10 takes variadic args only from a literal format string, so extras go in a bound object.
  */
 const emit = (logger: Logger, level: PinoDiagLevel, message: string, args: unknown[]): void => {
   if (args.length === 0) {
@@ -73,22 +60,12 @@ const emit = (logger: Logger, level: PinoDiagLevel, message: string, args: unkno
 };
 
 /**
- * Routes OpenTelemetry's internal diagnostics into the given Pino logger, stamped
- * `event.name: 'otel.diag.log'` from `nebula.component: 'otel'` so SDK noise
- * stays filterable in aggregated logs. The SDK's own text becomes `msg`.
- *
- * Deliberately not `DiagConsoleLogger`: that writes to `console.*`, which would
- * bypass the very logging pipeline this lib exists to provide.
- *
- * Call this *after* the `NodeSDK` constructor — it installs its own
- * `DiagConsoleLogger` when `OTEL_LOG_LEVEL` is set, and would overwrite an
- * adapter attached earlier.
+ * Routes OTel's internal diagnostics into the Pino logger, stamped `otel.diag.log` from `nebula.component: otel` (not `DiagConsoleLogger`, which bypasses logging).
+ * Call it after the `NodeSDK` constructor, which installs its own console logger when `OTEL_LOG_LEVEL` is set.
  */
 export const attachDiagLogger = (logger: Logger, raw?: string): void => {
   const logLevel = resolveDiagLevel(raw);
-  // The child carries its own level so OTEL_LOG_LEVEL works independently of
-  // the app's LOG_LEVEL — see childLevelFor. Not `componentLogger`: its level
-  // comes from OTEL_LOG_LEVEL, not from LOG_LEVEL_OVERRIDES.
+  // The child carries its own level so `OTEL_LOG_LEVEL` works independently of `LOG_LEVEL` (see childLevelFor).
   const diagLog = logger.child(
     { 'nebula.component': 'otel', 'event.name': 'otel.diag.log' },
     { level: childLevelFor(logLevel) },
@@ -102,11 +79,7 @@ export const attachDiagLogger = (logger: Logger, raw?: string): void => {
     verbose: (message, ...args) => emit(diagLog, 'trace', message, args),
   };
 
-  // `suppressOverrideMessage`: the NodeSDK constructor registers its own
-  // DiagConsoleLogger whenever OTEL_LOG_LEVEL is set, so this call is usually an
-  // override. Without the flag the API announces that through the logger it is
-  // about to replace — i.e. a raw stack trace on the console, the exact output
-  // this adapter exists to avoid.
+  // `suppressOverrideMessage`: the NodeSDK constructor usually registered a logger already, and without the flag the API announces the override as a raw console stack trace.
   diag.setLogger(adapter, {
     logLevel,
     suppressOverrideMessage: true,

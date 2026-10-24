@@ -1,13 +1,8 @@
 import userEvent from '@testing-library/user-event';
 
 /**
- * Picks an item in an open Chakra (Zag) menu the way a keyboard user does: arrow down to it, then
- * Enter.
- *
- * Not with a click: Zag selects only the highlighted item, and highlights on pointermove only
- * while its global interaction modality is `pointer`, ignoring a move that lands where the last
- * one did. jsdom puts every pointer event at (0, 0), so once a key press or programmatic focus
- * (in this test or an earlier one) switches the modality, a click selects nothing.
+ * Picks an open Chakra (Zag) menu item by keyboard, arrow down then Enter: jsdom puts every pointer event at (0, 0),
+ * so once the modality leaves `pointer` a click selects nothing.
  */
 export const selectMenuItem = async (item: HTMLElement) => {
   const itemCount =

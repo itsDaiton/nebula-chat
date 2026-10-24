@@ -65,7 +65,7 @@ Server starts on `http://localhost:3000` by default.
 ## Profile image storage (optional)
 
 Profile image uploads store one processed 256×256 WebP per upload in a public Supabase Storage
-bucket ([ADR-0022](../../docs/adr/0022-supabase-storage-for-profile-images.md)). Only the server
+bucket. Only the server
 writes to it, with the project's secret key; the browser only loads the public image URL.
 
 Set all three variables, or none. With none, the server boots with uploads switched off: the

@@ -4,11 +4,7 @@ import { env } from '@server/env';
 type TrustProxy = NonNullable<FastifyServerOptions['trustProxy']>;
 
 /**
- * Trust the first `hops` proxies in the X-Forwarded-For chain.
- *
- * Fastify used to accept a hop count directly, but @fastify/proxy-addr only
- * understands addresses and predicates, so the count is expressed as the
- * predicate proxy-addr used to compile it into.
+ * Trusts the first `hops` proxies in X-Forwarded-For, as the predicate @fastify/proxy-addr takes in place of Fastify's old hop count.
  */
 const trustHops =
   (hops: number): TrustProxy =>

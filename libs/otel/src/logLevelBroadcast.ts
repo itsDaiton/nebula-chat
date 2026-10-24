@@ -129,10 +129,8 @@ type ListenOptions = {
 };
 
 /**
- * Applies every level change published for this service to this process's
- * logger tree, and answers every report request with the levels it applies.
- * Never rejects: a failed subscription is logged and the boot-time levels stay,
- * so callers start it without awaiting.
+ * Applies every level change published for this service to this process and answers each report request with its levels.
+ * Never rejects: a failed subscription is logged and boot levels stay, so callers start it unawaited.
  */
 export const listenForLogLevelChanges = async ({
   logger,

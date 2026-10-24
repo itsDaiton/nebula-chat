@@ -10,12 +10,8 @@ export type ClaimSessionsParams = {
 };
 
 /**
- * Claim a Guest's sessions into a real account: reassign every
- * `sessions.userId` from the anonymous user to the newly linked user.
- *
- * Run from the anonymous plugin's `onLinkAccount` hook BEFORE the anonymous row
- * is cleaned up (ADR-0010 §2). Extracted into its own file so the claim is a
- * real, directly-testable seam independent of the better-auth SDK wiring.
+ * Reassigns every `sessions.userId` from the anonymous user to the newly linked one (ADR-0010 §2).
+ * Run from `onLinkAccount` before the anonymous row is cleaned up; its own file so it is testable apart from the SDK.
  */
 export const claimSessions = async (
   db: DbClient,

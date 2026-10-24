@@ -1,18 +1,8 @@
 import { HttpResponse, http, type HttpHandler, type JsonBodyType } from 'msw';
 
 /**
- * Orval generates one MSW handler per documented **success** response, matching
- * any origin (`*​/api/...`), so a test never names a host and never restates a
- * path the OpenAPI spec already defines. Import those directly:
- *
- * ```ts
- * import { getListSessionsMockHandler } from '@/libs/api/generated/sessions/sessions.msw';
- * server.use(getListSessionsMockHandler({ sessions, nextCursor: null, hasMore: false }));
- * ```
- *
- * Failure responses have no generated handler, `/api/streams/:streamId`'s returns a plain
- * string rather than SSE frames, and better-auth's `/api/auth/*` is absent from the
- * OpenAPI spec. This module covers exactly that gap, keeping the origin wildcard in one place.
+ * Orval's MSW handlers cover only success responses and match any origin; this module adds the failure responses, the plain-string `/api/streams/:streamId`
+ * and better-auth's `/api/auth/*` (absent from the spec), keeping the origin wildcard in one place.
  */
 export const API_ROUTE = {
   sessions: '*/api/sessions',

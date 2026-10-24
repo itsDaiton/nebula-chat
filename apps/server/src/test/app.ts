@@ -3,20 +3,14 @@ import type { Logger } from '@nebula-chat/otel';
 
 type CreateTestAppOptions = {
   /**
-   * The logger the app is built with. Log-capture tests pass one from
-   * `captureLogger()` to assert on the lines a request writes; everything else
-   * gets the shared logger at the `LOG_LEVEL=fatal` `src/test/setup.ts` sets.
+   * The logger the app is built with: log-capture tests pass `captureLogger()`'s, everything else gets the shared one.
    */
   logger?: Logger;
 };
 
 /**
- * Builds the real Fastify app for `inject()`-based route tests.
- *
- * Callers must `vi.mock('@server/db', ...)` and the repositories they exercise:
- * these are unit tests, so nothing reaches Postgres or Redis. `@server/db` in
- * particular owns a module-level `pg` Pool whose `end()` throws if called twice,
- * so a real one cannot survive more than one app lifecycle per worker.
+ * Builds the real Fastify app for `inject()` route tests; callers `vi.mock('@server/db', ...)` and their repositories,
+ * since the db module's `pg` Pool can't survive more than one app lifecycle per worker.
  */
 export const createTestApp = async (
   options: CreateTestAppOptions = {},

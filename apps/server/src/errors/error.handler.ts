@@ -12,9 +12,7 @@ import { componentLogger, logEvent } from '@nebula-chat/otel';
 import { recordErrorType } from '@server/errors/requestErrorType';
 import { requestPath } from '@server/utils/requestPath';
 
-// PostgreSQL constraint violations: the client gets a safe message, and the
-// driver error rides along as the AppError's cause. A mapped violation is a 4xx,
-// which writes no line, so the cause shows only where that AppError is logged.
+// PostgreSQL constraint violations give the client a safe message; the driver error rides along as the AppError's `cause`.
 const PG_ERRORS: Readonly<Record<string, (cause: Error) => AppError>> = {
   '23505': (cause) =>
     new ConflictError('A record with the same unique value already exists.', { cause }),
@@ -88,15 +86,8 @@ export const logRequestFailed = (
 };
 
 /**
- * Classifies, then logs once — here, where the error is handled:
- *
- * - A 5xx writes one `error` line (`http.request.failed`) with the thrown error
- *   as `err` (its stack and cause) and its code as `error.type`.
- * - A 4xx writes nothing: the caller was told, and it is not a fault a human
- *   should look at.
- *
- * Either way the code is recorded, so the request's `http.request.completed`
- * line names it.
+ * Classifies, then logs once, here: a 5xx writes one `http.request.failed` `error` line, a 4xx writes none.
+ * Either way the code is recorded, so `http.request.completed` names it.
  */
 export const errorHandler = (err: Error, req: FastifyRequest, reply: FastifyReply): void => {
   const appError = toAppError(err);

@@ -6,18 +6,8 @@ import { recordErrorType } from '@server/errors/requestErrorType';
 import { requestPath } from '@server/utils/requestPath';
 
 /**
- * Fastify's hook for its own log lines (the non-deprecated home of
- * `disableRequestLogging` and `requestIdLogLabel`).
- *
- * - Its request lines (`incoming request`, `request completed`) are disabled:
- *   `requestLogging.plugin.ts` writes one `http.request.completed` instead.
- * - The request id is labelled `http.request.id`, so `req.log` binds it under
- *   the catalogue key.
- * - The lines that remain — framework faults `disableRequestLogging` would
- *   otherwise silence too — are stamped `fastify.log` through `logEvent`, from
- *   `nebula.component: http`, instead of Fastify's free-form messages.
- *
- * A class because Fastify only accepts a `LogController` instance.
+ * Fastify's hook for its own log lines: request lines are off (`requestLogging.plugin.ts` replaces them), the request id is `http.request.id`,
+ * and remaining framework faults are stamped `fastify.log` via `logEvent`. A class because Fastify takes only a `LogController` instance.
  */
 class StampedLogController extends LogController {
   // Reached only if `errors/error.handler.ts` itself throws. Same rule as the

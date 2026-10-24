@@ -21,10 +21,7 @@ export type ConnectionManager = {
 };
 
 const closeConnection = async (connection: Redis): Promise<void> => {
-  // `quit()` sends a QUIT command, which forces a connect first — on a
-  // lazily-connected client that never connected (or against a down Redis)
-  // that would hang retrying. Only quit gracefully when actually connected;
-  // otherwise tear the socket down synchronously.
+  // `quit()` forces a connect first and would hang on a never-connected or down client, so quit gracefully only when connected; otherwise tear the socket down.
   if (connection.status === 'ready') {
     try {
       await connection.quit();
@@ -37,20 +34,8 @@ const closeConnection = async (connection: Redis): Promise<void> => {
 };
 
 /**
- * Owns the app's Redis connection(s): a main command connection, plus a
- * subscriber connection for pub/sub (in subscriber mode Redis runs no other
- * command), opened only once something subscribes, plus a dedicated connection
- * per blocking consumer: a stream reader's `XREAD … BLOCK` ties its connection
- * up, and BullMQ needs one with `maxRetriesPerRequest: null`. Neither can share
- * the main connection.
- *
- * `lazyConnect` + `enableOfflineQueue: false` keep the cache fail-open fast: when
- * Redis is unreachable a command rejects immediately rather than queueing, and
- * the cache turns that rejection into a miss. The cost is that a command sent
- * before the first connect is ready is rejected too, so `connect` opens it ahead
- * of use (the server calls it at startup) and the authStore and pub/sub await it.
- *
- * Every connection it opens logs its errors through `logger`.
+ * Owns the app's Redis connections: main, a lazily opened subscriber (subscriber mode runs no other command) and one dedicated per blocking consumer.
+ * `lazyConnect` + no offline queue keep the cache fail-open fast, so `connect` must open it ahead of use; errors log through `logger`.
  */
 export const createConnectionManager = (redisUrl: string, logger: Logger): ConnectionManager => {
   const main = new IORedis(redisUrl, {
@@ -62,9 +47,7 @@ export const createConnectionManager = (redisUrl: string, logger: Logger): Conne
   let subscriberConnection: Redis | undefined;
   const dedicatedConnections = new Set<Redis>();
 
-  // A SUBSCRIBE waits in the offline queue for as long as Redis is down, rather
-  // than failing after 20 retries and never listening; ioredis re-subscribes on
-  // its own after a reconnect.
+  // A SUBSCRIBE waits in the offline queue while Redis is down rather than failing after 20 retries; ioredis re-subscribes after a reconnect.
   const subscriber = (): Redis => {
     if (!subscriberConnection) {
       subscriberConnection = main.duplicate({

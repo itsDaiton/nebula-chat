@@ -1,9 +1,7 @@
 import type { PublishConnection, SubscribeConnection } from './types';
 
 /**
- * Redis pub/sub: fire-and-forget broadcast to whoever is subscribed right now.
- * A message published while a process is disconnected never reaches it, so use
- * it for signals that can be resent (control messages), not for data.
+ * Redis pub/sub: fire-and-forget broadcast to whoever is subscribed now, so use it for resendable control signals, not data.
  */
 export type RedisPubSub = {
   /** Sends `message` on `channel`; resolves to how many subscribers received it. */
@@ -26,9 +24,7 @@ type PubSubDeps = {
 };
 
 /**
- * A Redis connection in subscriber mode can run no other command, so
- * subscriptions share one dedicated connection, opened lazily: a process that
- * never subscribes never opens it. Publishing goes over the main connection.
+ * A subscriber-mode connection runs no other command, so subscriptions share one lazily opened connection; publishing uses the main one.
  */
 export const createPubSub = ({ publisher, connect, subscriber }: PubSubDeps): RedisPubSub => {
   const handlers = new Map<string, Set<(message: string) => void>>();

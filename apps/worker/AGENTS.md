@@ -53,20 +53,14 @@ and the folder says what kind of thing a file is, so a file carries no layer suf
 suffix Vitest needs, in a `tests/` folder beside the code. Folders are named after
 [CONTEXT.md](../../CONTEXT.md) terms and appear when a ticket first needs them.
 
-```text
-apps/worker/src/
-├── worker.ts             # Entry: BullMQ workers, the /health server, shutdown; wires the real dependencies
-├── env.ts                # Zod-validated env — the only reader of process.env (OTEL_* aside, as in the server)
-├── logger.ts             # The single Pino instance (service.name nebula-chat-worker)
-├── db.ts                 # Postgres client (@nebula-chat/db)
-├── redis.ts              # Redis toolkit (@nebula-chat/redis): reply streams, BullMQ's connections
-├── jobs/                 # One BullMQ processor per job type, plumbing only
-│   └── directReply.ts    #   validate the contracts payload, bind the job's IDs, call the feature
-└── directReplies/        # The Direct reply runner and, later, the response cache
-    ├── runDirectReply.ts #   load Session + history, model call, stream events, persist the assistant Message
-    ├── directReplyRepository.ts # Its Drizzle queries
-    └── systemPrompt.ts
-```
+`src/` holds `worker.ts` (entry: BullMQ workers, the `/health` server, shutdown, the real dependencies),
+`env.ts` (the only `process.env` reader, `OTEL_*` aside as in the server), the `logger.ts`, `db.ts` and
+`redis.ts` singletons, and two folders:
+
+- `jobs/` — one BullMQ processor per job type, plumbing only: validate the contracts payload, bind the
+  job's IDs, call the feature.
+- `directReplies/` — the Direct reply runner (load Session and history, model call, stream events, persist
+  the assistant Message), its Drizzle queries and system prompt, and later the response cache.
 
 Folders later tickets add:
 

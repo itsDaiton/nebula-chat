@@ -3,12 +3,7 @@ import { resolve } from 'node:path';
 const packageRoot = resolve(__dirname, '..');
 
 /**
- * Resolve `DATABASE_URL` for the migration tooling.
- *
- * Reads the environment only. The `db:*` package scripts load the server's
- * `.env` through `dotenvx run`, so the running server and the migration
- * scripts share one source of truth; CI and Render inject the variable
- * directly. See ADR-0019.
+ * Resolves `DATABASE_URL` for the migration tooling from the environment only; the `db:*` scripts load the server's `.env` through `dotenvx` (ADR-0019).
  */
 export const loadDatabaseUrl = (): string => {
   const databaseUrl = process.env['DATABASE_URL'];

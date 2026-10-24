@@ -10,19 +10,14 @@ export type RedisConfig = {
   /** Redis connection string */
   redisUrl: string;
   /**
-   * Injected `@nebula-chat/otel` logger. The lib logs exclusively through this —
-   * it never reaches for `console` or a consumer's own logger — via a
-   * `nebula.component: redis` child, so `LOG_LEVEL_OVERRIDES=redis=…` applies.
-   * Pass a logger with no component bound yet.
+   * Injected `@nebula-chat/otel` logger, used via a `nebula.component: redis` child so `LOG_LEVEL_OVERRIDES=redis=…` applies; pass one with no component bound.
    */
   logger: Logger;
   cache?: CacheOptions;
 };
 
 /**
- * The subset of the ioredis client the cache primitive actually calls. Narrowing
- * it here lets a test supply a plain fake without standing up a real server, and
- * a real `Redis` instance satisfies it structurally.
+ * The subset of ioredis the cache calls, so tests can use a plain fake and a real `Redis` satisfies it structurally.
  */
 export type CacheConnection = Pick<Redis, 'get' | 'del' | 'keys'> & {
   set(key: string, value: string, expiryMode: 'EX', ttlSeconds: number): Promise<unknown>;
@@ -35,12 +30,7 @@ export type CacheConnection = Pick<Redis, 'get' | 'del' | 'keys'> & {
 export type LazyConnection = Pick<Redis, 'connect'> & { readonly status: string };
 
 /**
- * The subset of the ioredis client the `authStore` primitive actually calls.
- * Like `CacheConnection`, narrowing it lets tests supply a plain fake while a real
- * `Redis` instance satisfies it structurally. `getdel` maps to Redis `GETDEL`,
- * `incr` to `INCR` and `expire` to `EXPIRE` (used together for TTL-on-create
- * counters); `set` carries both the plain and `EX`-with-TTL overloads
- * (better-auth passes the TTL in seconds).
+ * The subset of ioredis the `authStore` calls (`getdel`, `incr` + `expire` for TTL-on-create counters, `set` with and without `EX`).
  */
 export type AuthStoreConnection = Pick<Redis, 'get' | 'del' | 'getdel' | 'incr' | 'expire'> & {
   set(key: string, value: string, expiryMode: 'EX', ttlSeconds: number): Promise<unknown>;
