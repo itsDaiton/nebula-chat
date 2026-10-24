@@ -1,13 +1,12 @@
 import { Box, Flex, Text, Button } from '@chakra-ui/react';
 import { useNavigate } from '@tanstack/react-router';
-import { route } from '@/routing/routes';
 import { resources } from '@/resources';
 
 export const NotFound = () => {
   const navigate = useNavigate();
 
   const handleGoHome = () => {
-    void navigate({ to: route.chat.root() });
+    void navigate({ to: '/' });
   };
 
   return (

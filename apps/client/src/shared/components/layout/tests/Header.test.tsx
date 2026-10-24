@@ -5,7 +5,7 @@ import { Header } from '@/shared/components/layout/Header';
 import { resources } from '@/resources';
 import { aSession, mockGetSession, refreshSession } from '@/test/auth';
 import { server } from '@/test/msw';
-import { renderWithChakra } from '@/test/render';
+import { renderInRouter } from '@/test/renderRoute';
 
 vi.mock('@/theme/hooks/useColorMode', () => ({
   useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
@@ -22,8 +22,8 @@ beforeEach(() => {
 });
 
 describe('Header', () => {
-  it('renders the app name', () => {
-    renderWithChakra(<Header />);
+  it('renders the app name', async () => {
+    await renderInRouter(<Header />);
 
     expect(screen.getByText(/nebula chat/i)).toBeInTheDocument();
   });
@@ -34,24 +34,24 @@ describe('Header', () => {
   // queries by label rather than by role.
   it('invokes the menu handler when the menu control is clicked', async () => {
     const onMenuClick = vi.fn();
-    renderWithChakra(<Header onMenuClick={onMenuClick} />);
+    await renderInRouter(<Header onMenuClick={onMenuClick} />);
 
     await userEvent.click(screen.getByLabelText('Menu'));
 
     expect(onMenuClick).toHaveBeenCalled();
   });
 
-  it('hides the menu control on a desktop layout', () => {
+  it('hides the menu control on a desktop layout', async () => {
     layout.isMobile = false;
 
-    renderWithChakra(<Header onMenuClick={vi.fn()} />);
+    await renderInRouter(<Header onMenuClick={vi.fn()} />);
 
     expect(screen.queryByLabelText('Menu')).not.toBeInTheDocument();
     layout.isMobile = true;
   });
 
   it("shows a Guest's sign-in link and the theme toggle, without the old gear menu", async () => {
-    renderWithChakra(<Header />);
+    await renderInRouter(<Header />);
     refreshSession();
 
     expect(
@@ -64,7 +64,7 @@ describe('Header', () => {
     expect(screen.queryByRole('button', { name: 'Settings' })).not.toBeInTheDocument();
   });
 
-  it('renders without a menu handler', () => {
-    expect(() => renderWithChakra(<Header />)).not.toThrow();
+  it('renders without a menu handler', async () => {
+    await expect(renderInRouter(<Header />)).resolves.toBeDefined();
   });
 });

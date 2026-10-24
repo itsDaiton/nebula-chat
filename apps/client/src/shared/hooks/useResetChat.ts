@@ -1,11 +1,10 @@
-import { useNavigate } from 'react-router';
-import { route } from '@/routing/routes';
+import { useNavigate } from '@tanstack/react-router';
 
 export const useResetChat = () => {
   const navigate = useNavigate();
 
   const resetChat = () => {
-    void navigate(route.chat.root());
+    void navigate({ to: '/' });
   };
 
   return { resetChat };

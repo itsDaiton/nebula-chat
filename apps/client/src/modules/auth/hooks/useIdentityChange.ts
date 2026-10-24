@@ -1,9 +1,8 @@
 import { hashKey, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router';
-import { SESSION_BOOTSTRAP_KEY } from '@/modules/auth/hooks/useSessionBootstrap';
+import { useNavigate } from '@tanstack/react-router';
+import { SESSION_BOOTSTRAP_KEY } from '@/modules/auth/utils/sessionBootstrap';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useSettingsSearchStore } from '@/modules/settings/stores/useSettingsSearchStore';
-import { route } from '@/routing/routes';
 
 /** Drops the previous user's server state and returns to the chat root. */
 export const useIdentityChange = () => {
@@ -21,6 +20,6 @@ export const useIdentityChange = () => {
     // A spent allowance belonged to the previous Guest; a new identity starts afresh.
     clearMessageAllowanceReached();
     clearSettingsSearch();
-    void navigate(route.chat.root());
+    void navigate({ to: '/' });
   };
 };

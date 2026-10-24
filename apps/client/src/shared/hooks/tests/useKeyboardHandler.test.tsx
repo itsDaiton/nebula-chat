@@ -4,9 +4,6 @@ import { useKeyboardHandler } from '@/shared/hooks/useKeyboardHandler';
 import { useMultiLineStore } from '@/shared/stores/useMultiLineStore';
 import { useSearchStore } from '@/shared/stores/useSearchStore';
 
-const navigate = vi.fn();
-vi.mock('react-router', () => ({ useNavigate: () => navigate }));
-
 const pressKey = (key: string, init: Partial<KeyboardEventInit> = {}, target?: EventTarget) => {
   act(() => {
     const event = new KeyboardEvent('keydown', { key, cancelable: true, bubbles: true, ...init });

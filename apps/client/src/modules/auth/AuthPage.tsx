@@ -7,7 +7,6 @@ import { useIdentityChange } from '@/modules/auth/hooks/useIdentityChange';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import { SIGN_IN_FORM, SIGN_UP_FORM } from '@/modules/auth/utils/authForms';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 
 // Opt-in: a Guest can use the app without ever coming here.
 export const AuthPage = () => {
@@ -28,7 +27,7 @@ export const AuthPage = () => {
           </HStack>
           <SocialSignIn />
           <Button asChild variant="outline" borderColor="border.emphasized" w="full">
-            <Link to={route.chat.root()} onClick={hidePassword}>
+            <Link to="/" onClick={hidePassword}>
               {resources.auth.page.continueWithoutAccount}
             </Link>
           </Button>

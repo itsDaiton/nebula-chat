@@ -9,8 +9,7 @@ import { SessionDrawer } from '@/modules/sessions/components/SessionDrawer';
 import { useDrawer } from '@/shared/hooks/useDrawer';
 import { SessionsSearch } from '@/modules/sessions/components/SessionsSearch';
 import { useSessions } from '@/modules/sessions/hooks/useSessions';
-import { useNavigate } from 'react-router';
-import { route } from '@/routing/routes';
+import { useNavigate } from '@tanstack/react-router';
 import { useViewportHeight } from '@/shared/hooks/useViewportHeight';
 
 export const Layout = ({ children }: LayoutProps) => {
@@ -30,7 +29,7 @@ export const Layout = ({ children }: LayoutProps) => {
   const viewportHeight = useViewportHeight();
 
   const handleSessionClick = (sessionId: string) => {
-    void navigate(route.chat.session(sessionId));
+    void navigate({ to: '/s/$id', params: { id: sessionId } });
     closeSearch();
   };
 

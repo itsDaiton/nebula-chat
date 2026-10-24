@@ -2,7 +2,6 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { holdSession, mockRequestPasswordReset } from '@/test/auth';
 import { server } from '@/test/msw';
@@ -12,7 +11,7 @@ import { renderRoute } from '@/test/renderRoute';
 const SIGN_IN_PAGE = resources.auth.signIn.title;
 const { forgotPassword } = resources.auth;
 
-const renderPage = (search = '') => renderRoute(`${route.auth.forgotPassword()}${search}`);
+const renderPage = (search = '') => renderRoute(`/auth/forgot-password${search}`);
 
 const emailField = () => screen.getByRole('textbox', { name: resources.auth.fields.email });
 const submit = () => userEvent.click(screen.getByRole('button', { name: forgotPassword.submit }));
@@ -37,7 +36,7 @@ describe('ForgotPasswordPage', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(forgotPassword.sent);
     expect(body).toEqual({
       email: 'ada@example.com',
-      redirectTo: expect.stringMatching(new RegExp(`${route.auth.resetPassword()}$`)),
+      redirectTo: expect.stringMatching(/\/auth\/reset-password$/),
     });
   });
 

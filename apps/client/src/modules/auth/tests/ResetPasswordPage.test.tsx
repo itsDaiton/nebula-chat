@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { holdSession, mockResetPassword } from '@/test/auth';
 import { server } from '@/test/msw';
@@ -15,7 +14,7 @@ const SIGN_IN_PAGE = resources.auth.signIn.title;
 const FORGOT_PASSWORD_PAGE = resources.auth.forgotPassword.title;
 
 // better-auth redirects the emailed link here with `?token=…`, or `?error=INVALID_TOKEN`.
-const renderPage = (search: string) => renderRoute(`${route.auth.resetPassword()}${search}`);
+const renderPage = (search: string) => renderRoute(`/auth/reset-password${search}`);
 
 // A masked password input has no ARIA role, so it is found by its label.
 const passwordField = () => screen.getByLabelText(resources.auth.fields.newPassword);

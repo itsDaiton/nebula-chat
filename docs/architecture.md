@@ -296,11 +296,11 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-  root["RootLayout"] --> gate["AuthGate<br/>ensureSession: get-session,<br/>else sign-in/anonymous"]
-  gate --> router["TanStack Router<br/>/settings, splat /$"]
-  router --> legacy["react-router bridge<br/>/, /s/:id, /auth/*"]
-  legacy --> pages[Pages and modules]
-  router --> pages
+  root["RootLayout"] --> router["TanStack Router<br/>file-based routes"]
+  router --> guard["_app beforeLoad guard<br/>ensureSession: get-session,<br/>else sign-in/anonymous"]
+  guard --> loader["Route loaders<br/>ensureQueryData"]
+  guard --> pages[Pages and modules]
+  loader --> pages
   pages --> query["TanStack Query<br/>Orval hooks"]
   pages --> stores["Zustand stores<br/>UI state only"]
   pages --> authc["better-auth client<br/>/api/auth/*"]
@@ -316,9 +316,9 @@ flowchart TD
 - **Server state** is TanStack Query only, through hooks Orval generates
   ([ADR-0012](./adr/0012-adopt-tanstack-query-for-server-state.md)); Zustand holds UI state.
 - **The reply stream** is the one request that bypasses axios: it needs the raw `Response` body.
-- **Routing** is mid-migration to TanStack Router
-  ([ADR-0025](./adr/0025-tanstack-router-replaces-react-router.md)); a splat route hands what is
-  not yet migrated to react-router.
+- **Routing** is file-based TanStack Router
+  ([ADR-0025](./adr/0025-tanstack-router-replaces-react-router.md)); a `beforeLoad` guard on the
+  pathless `_app` route resolves the session before any page or loader runs.
 
 ## Build, release and deploy
 

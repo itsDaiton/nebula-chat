@@ -1,7 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
 import type { MessageAllowance } from '@/libs/api/generated/model/messageAllowance';
@@ -10,14 +9,12 @@ import { MessageAllowanceCounter } from '@/modules/chat/components/MessageAllowa
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 import { API_ROUTE } from '@/test/api';
 import { aSession, holdSession, mockGetSession, refreshSession } from '@/test/auth';
 import { aMeteredAllowance } from '@/test/allowance';
 import { server } from '@/test/msw';
-import { renderWithChakra } from '@/test/render';
+import { renderInRouter } from '@/test/renderRoute';
 
-const AUTH_PAGE = 'auth page';
 const { messageAllowance } = resources.chat;
 
 const GUEST = { isAnonymous: true };
@@ -39,12 +36,7 @@ const serveAllowance = (allowance: MessageAllowance) => {
 const renderCounter = async (session: Parameters<typeof holdSession>[0]) => {
   await holdSession(session);
 
-  renderWithChakra(
-    <Routes>
-      <Route path={route.chat.root()} element={<MessageAllowanceCounter />} />
-      <Route path={route.auth.root()} element={AUTH_PAGE} />
-    </Routes>,
-  );
+  return renderInRouter(<MessageAllowanceCounter />);
 };
 
 beforeEach(() => {
@@ -83,11 +75,11 @@ describe('MessageAllowanceCounter', () => {
 
   it('offers a Guest running low a way to register or sign in', async () => {
     serveAllowance(aMeteredAllowance(3));
-    await renderCounter(GUEST);
+    const { router } = await renderCounter(GUEST);
 
     await userEvent.click(await screen.findByRole('link', { name: messageAllowance.action }));
 
-    expect(screen.getByText(AUTH_PAGE)).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/auth');
   });
 
   it('offers no sign-up while plenty is left', async () => {
@@ -173,7 +165,7 @@ describe('MessageAllowanceCounter', () => {
         isVerified ? { metered: false } : aMeteredAllowance(5),
       ),
     );
-    renderWithChakra(<MessageAllowanceCounter />);
+    await renderInRouter(<MessageAllowanceCounter />);
     expect(await screen.findByRole('status')).toHaveTextContent('5 of 10 messages left');
 
     isVerified = true;
@@ -202,7 +194,7 @@ describe('MessageAllowanceCounter', () => {
         </>
       );
     };
-    renderWithChakra(<SignUpFlow />);
+    await renderInRouter(<SignUpFlow />);
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
 
     isSignedUp = true;

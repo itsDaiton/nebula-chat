@@ -9,13 +9,12 @@ import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
 import { useModelSelectorStore } from '@/modules/chat/stores/useModelSelectorStore';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 import { API_ROUTE } from '@/test/api';
 import { aSession, mockGetSession, refreshSession } from '@/test/auth';
 import { aMeteredAllowance } from '@/test/allowance';
 import { mockReplyStream, sseFrame } from '@/test/chat';
 import { server } from '@/test/msw';
-import { renderWithChakra } from '@/test/render';
+import { renderInRouter } from '@/test/renderRoute';
 
 const SESSION_ID = '11111111-1111-4111-8111-111111111111';
 
@@ -65,8 +64,8 @@ const ConnectedChatInputBar = () => {
 };
 
 describe('ChatInputBar', () => {
-  it('renders the composer', () => {
-    renderWithChakra(
+  it('renders the composer', async () => {
+    await renderInRouter(
       <ChatInputBar
         onSend={vi.fn()}
         isLoading={false}
@@ -80,7 +79,7 @@ describe('ChatInputBar', () => {
 
   it('forwards a sent message to onSend', async () => {
     const onSend = vi.fn();
-    renderWithChakra(
+    await renderInRouter(
       <ChatInputBar
         onSend={onSend}
         isLoading={false}
@@ -115,7 +114,7 @@ describe('ChatInputBar', () => {
             );
       }),
     );
-    renderWithChakra(<ConnectedChatInputBar />);
+    await renderInRouter(<ConnectedChatInputBar />);
     refreshSession();
 
     await userEvent.type(screen.getByRole('textbox'), 'hello');
@@ -125,7 +124,7 @@ describe('ChatInputBar', () => {
     expect(prompt).toHaveTextContent(resources.chat.messageAllowance.title);
     expect(
       screen.getByRole('link', { name: resources.chat.messageAllowance.action }),
-    ).toHaveAttribute('href', route.auth.root());
+    ).toHaveAttribute('href', '/auth');
     expect(screen.getByRole('textbox')).toHaveValue('hello');
 
     isRegistered = true;
@@ -148,7 +147,7 @@ describe('ChatInputBar', () => {
         return accepted();
       }),
     );
-    renderWithChakra(<ConnectedChatInputBar />);
+    await renderInRouter(<ConnectedChatInputBar />);
     refreshSession();
 
     expect(await screen.findByRole('status')).toHaveTextContent('2 of 10 messages left');

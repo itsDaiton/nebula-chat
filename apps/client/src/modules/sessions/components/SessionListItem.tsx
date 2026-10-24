@@ -1,11 +1,11 @@
-import { useMatch } from 'react-router';
 import { Box, Text } from '@chakra-ui/react';
+import { useParams } from '@tanstack/react-router';
 import type { SessionListItemProps } from '@/modules/sessions/types/types';
 import { formatDate } from '@/shared/utils/dateUtils';
 
 export const SessionListItem = ({ session, onClick }: SessionListItemProps) => {
-  const match = useMatch('/s/:id');
-  const isActive = match?.params.id === session.id;
+  const { id } = useParams({ strict: false });
+  const isActive = id === session.id;
 
   return (
     <Box

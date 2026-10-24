@@ -5,10 +5,9 @@ import { AuthStatus } from '@/modules/auth/components/AuthStatus';
 import { ResendVerificationButton } from '@/modules/auth/components/ResendVerificationButton';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 
 const { verifyEmail } = resources.auth;
-const routeApi = getRouteApi('/auth/verify-email');
+const routeApi = getRouteApi('/_app/auth/verify-email');
 
 /**
  * /auth/verify-email — better-auth verifies the emailed token, refreshes the session cookie and
@@ -33,7 +32,7 @@ export const VerifyEmailPage = () => {
       >
         {needsEmailVerification && <ResendVerificationButton />}
         <Button asChild variant={isVerified ? 'solid' : 'outline'}>
-          <Link to={route.chat.root()}>{verifyEmail.startChatting}</Link>
+          <Link to="/">{verifyEmail.startChatting}</Link>
         </Button>
       </AuthStatus>
     </AuthLayout>

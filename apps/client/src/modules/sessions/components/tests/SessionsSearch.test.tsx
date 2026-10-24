@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SessionsSearch } from '@/modules/sessions/components/SessionsSearch';
 import { useSessionsSearchStore } from '@/modules/sessions/stores/useSessionsSearchStore';
-import { renderWithChakra } from '@/test/render';
+import { renderInRouter } from '@/test/renderRoute';
 
 const aSession = (id: string, title = `Session ${id}`) => ({
   id,
@@ -26,14 +26,14 @@ describe('SessionsSearch', () => {
     onClose: vi.fn(),
   };
 
-  it('renders a search box', () => {
-    renderWithChakra(<SessionsSearch {...props} />);
+  it('renders a search box', async () => {
+    await renderInRouter(<SessionsSearch {...props} />);
 
     expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 
-  it('lists the local sessions before any query is typed', () => {
-    renderWithChakra(<SessionsSearch {...props} />);
+  it('lists the local sessions before any query is typed', async () => {
+    await renderInRouter(<SessionsSearch {...props} />);
 
     expect(screen.getByText('First chat')).toBeInTheDocument();
     expect(screen.getByText('Second chat')).toBeInTheDocument();
@@ -41,7 +41,7 @@ describe('SessionsSearch', () => {
 
   it('reports the selected session', async () => {
     const onSessionClick = vi.fn();
-    renderWithChakra(<SessionsSearch {...props} onSessionClick={onSessionClick} />);
+    await renderInRouter(<SessionsSearch {...props} onSessionClick={onSessionClick} />);
 
     await userEvent.click(screen.getByText('First chat'));
 

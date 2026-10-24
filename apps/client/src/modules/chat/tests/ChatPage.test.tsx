@@ -2,7 +2,6 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, delay, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Route, Routes } from 'react-router';
 import {
   getCreateSessionMockHandler,
   getGetSessionMockHandler,
@@ -13,12 +12,11 @@ import {
   getSendMessageMockHandler,
 } from '@/libs/api/generated/chat/chat.msw';
 import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
-import { ChatPage } from '@/modules/chat/ChatPage';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
 import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
-import { renderWithChakra } from '@/test/render';
+import { renderRoute } from '@/test/renderRoute';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { aSession, mockGetSession } from '@/test/auth';
 import { mockReplyStream, sseFrame } from '@/test/chat';
@@ -56,16 +54,7 @@ const aMessage = (id: string, role: string, content: string) => ({
 const serveSessions = (...sessions: ReturnType<typeof aChatSession>[]) =>
   server.use(getListSessionsMockHandler({ sessions, nextCursor: null, hasMore: false }));
 
-// Rendered inside real <Routes> so ChatContainer's useParams() sees the id —
-// a bare MemoryRouter would leave it undefined and always show the empty state.
-const renderPage = (route = '/') =>
-  renderWithChakra(
-    <Routes>
-      <Route path="/" element={<ChatPage />} />
-      <Route path="/s/:id" element={<ChatPage />} />
-    </Routes>,
-    { route },
-  );
+const renderPage = (path = '/') => renderRoute(path);
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -89,13 +78,13 @@ beforeEach(() => {
 
 describe('ChatPage', () => {
   it('welcomes the user on a brand new chat', async () => {
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
   });
 
   it('renders the composer', async () => {
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByRole('textbox', { name: '' })).toBeInTheDocument();
   });
@@ -103,13 +92,13 @@ describe('ChatPage', () => {
   it('lists the sessions the API returns on a desktop layout', async () => {
     serveSessions(aChatSession('a', 'Earlier chat'));
 
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByText('Earlier chat')).toBeInTheDocument();
   });
 
   it('shows the empty-list hint when there are no sessions', async () => {
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByText(resources.sessions.empty)).toBeInTheDocument();
   });
@@ -122,7 +111,7 @@ describe('ChatPage', () => {
       }),
     );
 
-    const { container } = renderPage();
+    const { container } = await renderPage();
 
     await waitFor(() =>
       expect(container.querySelectorAll('.chakra-skeleton').length).toBeGreaterThan(0),
@@ -138,7 +127,7 @@ describe('ChatPage', () => {
       }),
     );
 
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByText('No authenticated session')).toBeInTheDocument();
   });
@@ -151,7 +140,7 @@ describe('ChatPage', () => {
       ]),
     );
 
-    renderPage(`/s/${SESSION_ID}`);
+    await renderPage(`/s/${SESSION_ID}`);
 
     expect(await screen.findByText('a question', {}, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.getByText('an answer')).toBeInTheDocument();
@@ -174,7 +163,7 @@ describe('ChatPage', () => {
       }),
     );
 
-    renderPage(`/s/${SESSION_ID}`);
+    await renderPage(`/s/${SESSION_ID}`);
 
     expect(
       await screen.findByText('Two plus two is four', {}, { timeout: 3000 }),
@@ -193,12 +182,13 @@ describe('ChatPage', () => {
       }),
     );
 
-    renderPage(`/s/${SESSION_ID}`);
+    await renderPage(`/s/${SESSION_ID}`);
 
     expect(
       await screen.findByText(resources.sessions.single.error, {}, { timeout: 3000 }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Session not found')).toBeInTheDocument();
+    expect(screen.getByText('Session not found', { selector: 'p' })).toBeInTheDocument();
+    expect(toast).toHaveBeenCalledTimes(1);
     expect(toast).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', description: 'Session not found' }),
     );
@@ -222,7 +212,7 @@ describe('ChatPage', () => {
       }),
       mockReplyStream(sseFrame('token', { token: 'hi there' }), sseFrame('end', {})),
     );
-    renderPage();
+    await renderPage();
     expect(await screen.findByText(resources.sessions.empty)).toBeInTheDocument();
 
     await userEvent.type(screen.getByRole('textbox', { name: '' }), 'hello{Enter}');
@@ -234,7 +224,7 @@ describe('ChatPage', () => {
     layout.isMobile = true;
     layout.showSidePanels = false;
 
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
 

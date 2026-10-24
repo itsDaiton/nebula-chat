@@ -27,8 +27,7 @@ import type {
   StreamCursor,
   UseChatStreamOptions,
 } from '@/modules/chat/types/types';
-import { useNavigate } from 'react-router';
-import { route } from '@/routing/routes';
+import { useNavigate } from '@tanstack/react-router';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
 import { mapSessionMessages } from '@/modules/chat/utils/mapSessionMessages';
@@ -365,7 +364,7 @@ export const useChatStream = ({
             // isStreaming stays true until ChatContainer's `clearPostStream()` runs once the route has a sessionId, so the navigation renders first;
             // requestAnimationFrame could fire early and flash the empty state.
             setIsPostStreamNavigation(true);
-            void navigate(route.chat.session(activeSessionId), { replace: true });
+            void navigate({ to: '/s/$id', params: { id: activeSessionId }, replace: true });
           } else {
             setIsStreaming(false);
           }

@@ -1,15 +1,14 @@
 import { act } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useIdentityChange } from '@/modules/auth/hooks/useIdentityChange';
-import { SESSION_BOOTSTRAP_KEY } from '@/modules/auth/hooks/useSessionBootstrap';
+import { SESSION_BOOTSTRAP_KEY } from '@/modules/auth/utils/sessionBootstrap';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useSettingsSearchStore } from '@/modules/settings/stores/useSettingsSearchStore';
-import { route } from '@/routing/routes';
 import { createTestQueryClient, renderHookWithQueryClient } from '@/test/render';
 
 const navigate = vi.fn();
 
-vi.mock('react-router', () => ({ useNavigate: () => navigate }));
+vi.mock('@tanstack/react-router', () => ({ useNavigate: () => navigate }));
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -34,7 +33,7 @@ describe('useIdentityChange', () => {
 
     act(() => result.current());
 
-    expect(navigate).toHaveBeenCalledWith(route.chat.root());
+    expect(navigate).toHaveBeenCalledWith({ to: '/' });
   });
 
   it('forgets that the previous Guest reached their message allowance', () => {
