@@ -6,7 +6,6 @@ import { EmailVerificationPrompt } from '@/modules/auth/components/EmailVerifica
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { holdSession, mockSendVerificationEmail } from '@/test/auth';
 import { aMeteredAllowance } from '@/test/allowance';
@@ -77,7 +76,7 @@ describe('EmailVerificationPrompt', () => {
     );
     expect(body).toEqual({
       email: 'ada@example.com',
-      callbackURL: expect.stringMatching(new RegExp(`${route.auth.verifyEmail()}$`)),
+      callbackURL: expect.stringMatching(/\/auth\/verify-email$/),
     });
   });
 

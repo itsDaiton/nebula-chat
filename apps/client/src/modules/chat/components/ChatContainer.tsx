@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Box, Flex, Text } from '@chakra-ui/react';
-import { useParams } from 'react-router';
+import { useParams } from '@tanstack/react-router';
 import { ChatContainerBox } from '@/modules/chat/components/ChatContainerBox';
 import { ChatMessagesSkeletons } from '@/modules/chat/components/ChatMessagesSkeletons';
 import { ChatInputBar } from '@/modules/chat/components/ChatInputBar';
@@ -15,7 +15,7 @@ import { scrollToBottom } from '@/shared/utils/scrollUtils';
 import { resources } from '@/resources';
 
 export const ChatContainer = () => {
-  const { id: sessionId } = useParams<{ id: string }>();
+  const { id: sessionId } = useParams({ strict: false });
   const {
     error: sessionError,
     isLoading: isSessionLoading,

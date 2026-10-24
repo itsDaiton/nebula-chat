@@ -2,7 +2,6 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 import { holdSession, mockSendVerificationEmail } from '@/test/auth';
 import { serveChatPage } from '@/test/chat';
 import { server } from '@/test/msw';
@@ -12,7 +11,7 @@ vi.mock('@/theme/hooks/useColorMode', () => ({
   useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
 }));
 
-// The real chat page its link leads to, through the router's bridge.
+// The real chat page its link leads to.
 const CHAT_PAGE = resources.chat.welcomeMessage;
 const { verifyEmail } = resources.auth;
 
@@ -20,7 +19,7 @@ const { verifyEmail } = resources.auth;
 const renderPage = async (search: string, session: Parameters<typeof holdSession>[0]) => {
   await holdSession(session);
 
-  await renderRoute(`${route.auth.verifyEmail()}${search}`);
+  await renderRoute(`/auth/verify-email${search}`);
 };
 
 const unverified = { isAnonymous: false, emailVerified: false };
@@ -60,7 +59,7 @@ describe('VerifyEmailPage', () => {
     await waitFor(() =>
       expect(body).toEqual({
         email: 'ada@example.com',
-        callbackURL: expect.stringMatching(new RegExp(`${route.auth.verifyEmail()}$`)),
+        callbackURL: expect.stringMatching(/\/auth\/verify-email$/),
       }),
     );
   });

@@ -4,7 +4,6 @@ import { TbGalaxy } from 'react-icons/tb';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import type { AuthLayoutProps } from '@/modules/auth/types/types';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 
 /** The shell every auth page shares: the app's mark above a single card. */
 export const AuthLayout = ({ children, footer }: AuthLayoutProps) => {
@@ -22,7 +21,7 @@ export const AuthLayout = ({ children, footer }: AuthLayoutProps) => {
       px={4}
     >
       <Flex asChild align="center" gap={2}>
-        <Link to={route.chat.root()} onClick={hidePassword}>
+        <Link to="/" onClick={hidePassword}>
           <Icon as={TbGalaxy} boxSize={10} aria-hidden />
           <Text fontSize="2xl" fontWeight="bold" letterSpacing="-0.03em">
             {resources.chat.appName}

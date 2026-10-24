@@ -2,7 +2,6 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 import { holdSession } from '@/test/auth';
 import { serveChatPage } from '@/test/chat';
 import { renderRoute } from '@/test/renderRoute';
@@ -23,44 +22,42 @@ describe('router', () => {
     expect(screen.getByText(resources.notFound.title)).toBeInTheDocument();
   });
 
-  it('still serves a bridged URL through the legacy tree', async () => {
-    const { router } = await renderRoute(route.chat.root());
+  it('serves the chat at the root and at a Session URL', async () => {
+    const { router } = await renderRoute('/');
 
     expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
-    expect(router.state.matches.at(-1)?.routeId).toBe('/$');
+    expect(router.state.matches.at(-1)?.routeId).toBe('/_app/');
   });
 
-  it.each([
-    route.auth.root(),
-    route.auth.forgotPassword(),
-    route.auth.resetPassword(),
-    route.auth.verifyEmail(),
-  ])('serves %s through its own route, not the bridge', async (path) => {
-    const { router } = await renderRoute(path);
+  it.each(['/auth', '/auth/forgot-password', '/auth/reset-password', '/auth/verify-email'])(
+    'serves %s through its own auth route',
+    async (path) => {
+      const { router } = await renderRoute(path);
 
-    expect(router.state.matches.at(-1)?.routeId).toMatch(/^\/auth\//);
-    expect(screen.queryByText(resources.notFound.title)).not.toBeInTheDocument();
-  });
+      expect(router.state.matches.at(-1)?.routeId).toMatch(/^\/_app\/auth\//);
+      expect(screen.queryByText(resources.notFound.title)).not.toBeInTheDocument();
+    },
+  );
 
   it('carries the query client in the router context', async () => {
-    const { router, queryClient } = await renderRoute(route.auth.root());
+    const { router, queryClient } = await renderRoute('/auth');
 
     expect(router.options.context.queryClient).toBe(queryClient);
   });
 
-  it("routes a legacy link's navigation through TanStack Router's history", async () => {
-    const { router } = await renderRoute(route.chat.root());
+  it("routes a link's navigation through the router's history", async () => {
+    const { router } = await renderRoute('/');
 
     await userEvent.click(await screen.findByRole('link', { name: resources.auth.actions.signIn }));
 
-    expect(router.state.location.pathname).toBe(route.auth.root());
+    expect(router.state.location.pathname).toBe('/auth');
     expect(
       await screen.findByRole('heading', { name: resources.auth.signIn.title }),
     ).toBeInTheDocument();
   });
 
   it('goes back between the auth pages with the browser history', async () => {
-    const { router } = await renderRoute(route.auth.root());
+    const { router } = await renderRoute('/auth');
 
     await userEvent.click(screen.getByRole('link', { name: resources.auth.signIn.forgotPassword }));
     expect(
@@ -72,6 +69,6 @@ describe('router', () => {
     expect(
       await screen.findByRole('heading', { name: resources.auth.signIn.title }),
     ).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe(route.auth.root());
+    expect(router.state.location.pathname).toBe('/auth');
   });
 });

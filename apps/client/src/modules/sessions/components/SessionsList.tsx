@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { Box, Flex, Text, Spinner } from '@chakra-ui/react';
 import { toaster } from '@/shared/components/ui/toaster';
 import { useSessions } from '@/modules/sessions/hooks/useSessions';
@@ -8,7 +8,6 @@ import { SidePanel } from '@/shared/components/layout/SidePanel';
 import { resources } from '@/resources';
 import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
 import { useSearchStore } from '@/shared/stores/useSearchStore';
-import { route } from '@/routing/routes';
 import { useInfiniteScroll } from '@/modules/sessions/hooks/useInfiniteScroll';
 import { chatScrollBar } from '@/shared/components/scrollbar';
 import { BadgeActionButton } from '@/shared/components/navigation/BadgeActionButton';
@@ -54,7 +53,7 @@ export const SessionsList = ({
   );
 
   const handleCreateNewChat = () => {
-    void navigate(route.chat.root());
+    void navigate({ to: '/' });
     closeSearch();
     onClose?.();
   };
@@ -89,7 +88,7 @@ export const SessionsList = ({
   };
 
   const handleSessionClick = (sessionId: string) => {
-    void navigate(route.chat.session(sessionId));
+    void navigate({ to: '/s/$id', params: { id: sessionId } });
     closeSearch();
     onClose?.();
   };

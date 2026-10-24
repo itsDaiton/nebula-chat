@@ -25,7 +25,7 @@ import { createTestQueryClient, renderHookWithQueryClient } from '@/test/render'
 
 const navigate = vi.fn();
 
-vi.mock('react-router', () => ({ useNavigate: () => navigate }));
+vi.mock('@tanstack/react-router', () => ({ useNavigate: () => navigate }));
 
 const NEW_SESSION_ID = '11111111-1111-4111-8111-111111111111';
 const MESSAGE_ID = '22222222-2222-4222-8222-222222222222';
@@ -719,7 +719,11 @@ describe('useChatStream — send, then subscribe', () => {
 
     await sendMessage(result);
 
-    expect(navigate).toHaveBeenCalledWith(`/s/${NEW_SESSION_ID}`, { replace: true });
+    expect(navigate).toHaveBeenCalledWith({
+      to: '/s/$id',
+      params: { id: NEW_SESSION_ID },
+      replace: true,
+    });
   });
 
   it('keeps isStreaming true through the post-stream navigation window', async () => {

@@ -10,12 +10,9 @@ import {
   type RenderResult,
 } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
-import { MemoryRouter } from 'react-router';
 import { createQueryClient } from '@/libs/api/queryClient';
 
 type Options = Omit<RenderOptions, 'wrapper'> & {
-  /** Initial history entries for components that read the route. */
-  route?: string;
   /** The query client to render against; a fresh one (retry off) by default. */
   queryClient?: QueryClient;
 };
@@ -24,16 +21,14 @@ type Options = Omit<RenderOptions, 'wrapper'> & {
 export const createTestQueryClient = () => createQueryClient({ retry: false });
 
 /**
- * Renders with Chakra's `defaultSystem`, a fresh query client and a memory router; the app's Provider pulls in next-themes, whose storage access is noise in component tests.
+ * Renders with Chakra's `defaultSystem`, and a fresh query client; the app's Provider pulls in next-themes, whose storage access is noise in component tests.
  */
 export const renderWithChakra = (ui: ReactElement, options: Options = {}): RenderResult => {
-  const { route = '/', queryClient = createTestQueryClient(), ...renderOptions } = options;
+  const { queryClient = createTestQueryClient(), ...renderOptions } = options;
 
   const Wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <ChakraProvider value={defaultSystem}>
-        <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
-      </ChakraProvider>
+      <ChakraProvider value={defaultSystem}>{children}</ChakraProvider>
     </QueryClientProvider>
   );
 

@@ -7,7 +7,6 @@ import { getListSessionsMockHandler } from '@/libs/api/generated/sessions/sessio
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import {
   aSession,
@@ -50,7 +49,7 @@ const becomeRegistered = () => {
 };
 
 // The real app through the router: the chat root shows the nav indicator and the Guest's sessions.
-const renderAuthFlow = async (initialRoute = route.auth.root()) => {
+const renderAuthFlow = async (initialRoute = '/auth') => {
   const view = await renderRoute(initialRoute);
   refreshSession();
   return view;
@@ -227,7 +226,7 @@ describe('AuthPage', () => {
 
     await findRegisteredMenu();
     expect(body).toMatchObject({
-      callbackURL: expect.stringMatching(new RegExp(`${route.auth.verifyEmail()}$`)),
+      callbackURL: expect.stringMatching(/\/auth\/verify-email$/),
     });
   });
 
@@ -413,7 +412,7 @@ describe('AuthPage', () => {
       }),
       mockEmailSignIn(becomeRegistered),
     );
-    await renderAuthFlow(route.chat.root());
+    await renderAuthFlow('/');
 
     expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
 
@@ -497,8 +496,8 @@ describe('AuthPage', () => {
       await userEvent.click(socialButton(social.google));
 
       await waitFor(() => expect(sent().callbackURL).toBeDefined());
-      expect(new URL(sent().callbackURL ?? '').pathname).toBe(route.chat.root());
-      expect(new URL(sent().errorCallbackURL ?? '').pathname).toBe(route.auth.root());
+      expect(new URL(sent().callbackURL ?? '').pathname).toBe('/');
+      expect(new URL(sent().errorCallbackURL ?? '').pathname).toBe('/auth');
     });
 
     // The claim itself runs on the server's provider callback; the client only has to reload as the new user.
@@ -544,13 +543,13 @@ describe('AuthPage', () => {
       ['email_not_found', social.errors.emailNotFound],
       ['state_not_found', social.errors.failed],
     ])('explains a %s returned by the provider callback', async (error, message) => {
-      await renderAuthFlow(`${route.auth.root()}?error=${error}`);
+      await renderAuthFlow(`/auth?error=${error}`);
 
       expect(await screen.findByRole('alert')).toHaveTextContent(message);
     });
 
     it('explains a malformed error param as a generic failure', async () => {
-      await renderAuthFlow(`${route.auth.root()}?error=${encodeURIComponent('{"code":1}')}`);
+      await renderAuthFlow(`/auth?error=${encodeURIComponent('{"code":1}')}`);
 
       expect(await screen.findByRole('alert')).toHaveTextContent(social.errors.failed);
       expect(socialButton(social.google)).toBeEnabled();
@@ -558,7 +557,7 @@ describe('AuthPage', () => {
 
     it("drops the last callback's error once the user tries again", async () => {
       captureSocialSignIn();
-      await renderAuthFlow(`${route.auth.root()}?error=access_denied`);
+      await renderAuthFlow(`/auth?error=access_denied`);
       expect(await screen.findByRole('alert')).toBeInTheDocument();
 
       await userEvent.click(socialButton(social.google));

@@ -8,7 +8,7 @@ const searchSchema = z.object({
   error: optionalSearchError(),
 });
 
-export const Route = createFileRoute('/auth/verify-email')({
+export const Route = createFileRoute('/_app/auth/verify-email')({
   validateSearch: searchSchema,
   component: VerifyEmailPage,
 });

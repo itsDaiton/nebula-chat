@@ -23,8 +23,8 @@ Test commands are under [Testing](#testing); monorepo-wide lint/format/build liv
 `src/` is `main.tsx` / `App.tsx` (mounts TanStack Router's `RouterProvider`), `routeTree.gen.ts` (generated,
 committed, never hand-edited), `resources.ts` (UI strings) and:
 
-- `routes/` — TanStack Router file-based routes (`__root`, `settings`, `auth/*`, and `$.tsx`, the bridge for
-  URLs still on react-router). `routing/` — router setup, `RootLayout`, the legacy bridge, typed path helpers.
+- `routes/` — TanStack Router file-based routes (`__root`, and the `_app` guard layout holding `index`,
+  `s/$id`, `settings` and `auth/*`). `routing/` — router setup, `RootLayout`, search-param helpers.
 - `libs/api/` — the axios instance and SSE fetch mutator (`client.ts`, `streamClient.ts`), the query client,
   and `generated/` (Orval output). `libs/auth/` — the better-auth client, the one auth entry point.
 - `modules/<feature>/` — `auth`, `chat`, `sessions`, `settings`. Each splits into `components/`, `hooks/`,
@@ -37,37 +37,37 @@ committed, never hand-edited), `resources.ts` (UI strings) and:
 
 ## Routing
 
-The client is mid-migration from react-router to [TanStack Router](https://tanstack.com/router)
-(epic NEB-528). TanStack Router is the top-level router and owns the browser history; its routes are
-files in `src/routes/` (the Vite plugin writes `routeTree.gen.ts`, which is committed and excluded from
-lint, format, coverage and knip). A route file only wires a page: the component lives in `modules/*/`
-as a `*Page.tsx`.
+The client routes with [TanStack Router](https://tanstack.com/router) and its file-based Vite plugin
+([ADR-0025](../../docs/adr/0025-tanstack-router-replaces-react-router.md)). Routes are files in
+`src/routes/`; the plugin writes `routeTree.gen.ts`, which is committed and excluded from lint, format,
+coverage and knip. A route file only wires a page: the component lives in `modules/*/` as a `*Page.tsx`.
 
-- **Moved routes** (`/settings`, `/auth/*`, not-found) navigate with TanStack's `Link`, `Navigate` and
-  `useNavigate`, with a typed literal path (`<Link to="/auth/forgot-password">`). A link to a still-bridged
-  path uses its `route.*` helper, since TanStack has no typed path for it yet.
+- **Adding a route.** Create the file under `routes/_app/` (`s/$id.tsx` is `/s/:id`), export
+  `Route = createFileRoute('/_app/<path>')({ component })`, and run `pnpm dev` or `pnpm build` so the plugin
+  regenerates the tree. Every path is typed: a link to a route that doesn't exist fails the typecheck.
+- **Links and navigation.** `<Link to="/auth">`, `<Link to="/s/$id" params={{ id }}>` and
+  `useNavigate()({ to: '/s/$id', params: { id } })`. There is no path-helper object; the literal path is
+  the source of truth. Read a path param with `useParams({ strict: false })` from a component shared by
+  several routes, or `getRouteApi('<route id>')` from a page that belongs to one.
+- **Guards.** `routes/_app.tsx` is a pathless layout whose `beforeLoad` ensures the auth session
+  (`sessionBootstrapOptions`, minting a Guest when there is none) before any child page or loader runs, so a
+  page never renders, or fetches, without one. A new guard (a Registered-only subtree) is another pathless
+  layout with its own `beforeLoad` that throws `redirect({ to })`. `SessionOutlet` also holds the app back
+  while sign-out resets the session, so nothing fetches as nobody while a Guest is re-minted.
+- **Loaders.** A loader prefetches through the existing query client:
+  `context.queryClient.ensureQueryData(getGetSessionQueryOptions(id))`. Components keep using the generated
+  hooks. A prefetch whose failure the page shows itself sets `meta: { inlineError: true }`
+  (see `routes/_app/s/$id.tsx`) so it isn't toasted twice.
 - **Search params** are declared per route with a Zod schema as `validateSearch`, built from
   `routing/searchParams.ts` so a malformed value never throws: `optionalSearchText()` falls back to
   absent, `optionalSearchError()` to an unrecognised code (still an error). TanStack JSON-parses each
-  value (`?token=123` arrives as a number), and both turn a scalar back into text. A page reads them with `getRouteApi('<route id>').useSearch()` (and writes them with that
-  API's `useNavigate`), never by importing its route file.
-- **Everything else** (`/`, `/s/:id`) is served by the catch-all bridge `routes/$.tsx`, which
-  renders the legacy react-router tree for a path in `routing/bridgedRoutes.tsx` and throws
-  `notFound()` for any other.
-- **`LegacyRouter`** wraps every route in a react-router `<Router>` fed TanStack's location and history,
-  so components still on react-router hooks (the chat, the Header) work on any route and
-  their navigations go through TanStack Router.
-
-`routing/routes.ts` keeps the typed path helpers until the last route moves:
-
-```ts
-import { route } from '@/routing/routes';
-
-navigate(route.chat.root()); // /
-navigate(route.chat.session(id)); // /s/:id
-```
-
----
+  value (`?token=123` arrives as a number), and both turn a scalar back into text. A page reads them with
+  `getRouteApi('<route id>').useSearch()` (and writes them with that API's `useNavigate`), never by
+  importing its route file.
+- **Testing.** Page tests go through the URL: `renderRoute('/s/abc')` (`test/renderRoute.tsx`) boots the real
+  router on memory history with the app's providers, a fresh query client and MSW. It seeds the session
+  bootstrap so the guard passes; `renderRoute(path, { seedSession: false })` lets the guard run (see
+  `routing/tests/guard.test.tsx`). A component that only links or reads the route uses `renderInRouter(ui)`.
 
 ## Imports, barrels and types
 
@@ -129,7 +129,7 @@ generate:api` after any backend change; generated files are never hand-edited.
 ### Auth state — better-auth
 
 Auth is not in `openapi.yaml`, so it goes through better-auth's own client (`libs/auth/client.ts`), never
-Orval. `AuthGate` (around every route, in `routing/RootLayout.tsx`) resolves `get-session` and, with no
+Orval. The `_app` route guard (`routes/_app.tsx`) resolves `get-session` and, with no
 session, mints a Guest via `signIn.anonymous()` before any route renders — the server never mints one and
 every API route `401`s without a session. Read the session with `useAuth`, which wraps better-auth's
 `useSession`; never copy it into a Zustand store or `useState`.
@@ -340,10 +340,10 @@ pnpm frontend test:coverage
   on `describe` and `expect`.
 - **Test a page through the router with `renderRoute(path)` (`@/test/renderRoute`)**: it boots the app's
   real router on a memory history at `path`, with the root route's providers, a fresh query client (also
-  returned) and MSW. AuthGate's bootstrap is marked done, so serve the session yourself (`holdSession`,
-  `mockGetSession`). It is async (`await renderRoute(...)`) and returns the `router`, whose
-  `router.state.location` asserts where a navigation landed. Pages still on react-router keep
-  `renderWithChakra` until their route moves.
+  returned) and MSW. The session bootstrap is marked done (`seedSession: false` lets the guard run), so
+  serve the session yourself (`holdSession`, `mockGetSession`). It is async (`await renderRoute(...)`) and
+  returns the `router`, whose `router.state.location` asserts where a navigation landed. A component that
+  only links or reads the route uses `renderInRouter(ui)` instead.
 - **Render inside a fresh query client.** `renderWithChakra` and `renderHookWithQueryClient` (`@/test/render`)
   each create one per test with retries off, so no cached response leaks between tests and a failure
   surfaces at once. Pass your own `queryClient` to prime or inspect the cache, e.g. assert an invalidation

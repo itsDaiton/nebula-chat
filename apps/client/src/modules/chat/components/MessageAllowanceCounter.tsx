@@ -1,10 +1,9 @@
 import { Button, HStack, Text } from '@chakra-ui/react';
+import { Link } from '@tanstack/react-router';
 import { LuLogIn, LuTriangleAlert } from 'react-icons/lu';
-import { Link } from 'react-router';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { useMessageAllowance } from '@/modules/chat/hooks/useMessageAllowance';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 
 const { messageAllowance } = resources.chat;
 
@@ -30,7 +29,7 @@ export const MessageAllowanceCounter = () => {
       {/* An unverified user's resend action is already in the verify-email reminder above. */}
       {isLow && isGuest && (
         <Button asChild size="xs" variant="outline" borderRadius="full">
-          <Link to={route.auth.root()}>
+          <Link to="/auth">
             <LuLogIn />
             {messageAllowance.action}
           </Link>

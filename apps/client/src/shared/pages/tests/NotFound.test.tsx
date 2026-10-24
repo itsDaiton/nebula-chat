@@ -2,7 +2,6 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 import { holdSession } from '@/test/auth';
 import { serveChatPage } from '@/test/chat';
 import { renderRoute } from '@/test/renderRoute';
@@ -37,6 +36,6 @@ describe('NotFound', () => {
     await userEvent.click(screen.getByRole('button', { name: resources.notFound.action }));
 
     expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe(route.chat.root());
+    expect(router.state.location.pathname).toBe('/');
   });
 });

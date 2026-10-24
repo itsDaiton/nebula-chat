@@ -25,7 +25,7 @@ the Guest's sessions are reassigned to the new account (see [Account linking](#a
 ```mermaid
 stateDiagram-v2
   [*] --> Unauthenticated
-  Unauthenticated --> Guest: AuthGate calls sign-in/anonymous
+  Unauthenticated --> Guest: the session guard calls sign-in/anonymous
   Guest --> Registered: sign up or sign in, email or social (Claim)
   state Registered {
     [*] --> Unverified: email sign-up
@@ -46,7 +46,7 @@ client back to a fresh Guest, never to Unauthenticated.
 
 ```mermaid
 sequenceDiagram
-  participant C as Client<br/>AuthGate · ensureSession
+  participant C as Client<br/>session guard · ensureSession
   participant A as Server<br/>/api/auth/* (better-auth)
   participant PG as Postgres
   participant R as Redis

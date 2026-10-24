@@ -9,7 +9,7 @@ import { resetPasswordForm } from '@/modules/auth/utils/authForms';
 import { resources } from '@/resources';
 
 const { resetPassword } = resources.auth;
-const routeApi = getRouteApi('/auth/reset-password');
+const routeApi = getRouteApi('/_app/auth/reset-password');
 
 /** /auth/reset-password — better-auth redirects the emailed link here with `?token` or `?error`. */
 export const ResetPasswordPage = () => {

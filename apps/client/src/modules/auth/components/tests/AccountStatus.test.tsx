@@ -1,14 +1,14 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getListSessionsMockHandler } from '@/libs/api/generated/sessions/sessions.msw';
-import { AccountStatus } from '@/modules/auth/components/AccountStatus';
-import { AuthGate } from '@/modules/auth/components/AuthGate';
-import { SessionsList } from '@/modules/sessions/components/SessionsList';
+import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
+import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
+import {
+  getGetSessionMockHandler,
+  getListSessionsMockHandler,
+} from '@/libs/api/generated/sessions/sessions.msw';
 import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import {
   aSession,
@@ -19,43 +19,30 @@ import {
 } from '@/test/auth';
 import { selectMenuItem } from '@/test/menu';
 import { server } from '@/test/msw';
-import { renderWithChakra } from '@/test/render';
+import { renderRoute } from '@/test/renderRoute';
 
-const AUTH_PAGE = 'auth page';
-const CHAT_PAGE = 'chat page';
-const SETTINGS_PAGE = 'settings page';
+vi.mock('@/theme/hooks/useColorMode', () => ({
+  useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
+}));
+
+const layout = vi.hoisted(() => ({ isMobile: false, showSidePanels: true, showRightPanel: false }));
+vi.mock('@/shared/hooks/useResponsiveLayout', () => ({ useResponsiveLayout: () => layout }));
 
 let session: ReturnType<typeof aSession> | null = aSession();
 
-// Behind the real AuthGate, as the app mounts it, since sign-out hands the re-mint back to it.
-const renderStatus = async (initialRoute: string = route.chat.root()) => {
-  const view = renderWithChakra(
-    <AuthGate>
-      <Routes>
-        <Route
-          path={route.chat.root()}
-          element={
-            <>
-              <AccountStatus />
-              {CHAT_PAGE}
-            </>
-          }
-        />
-        <Route
-          path={route.chat.session(':id')}
-          element={
-            <>
-              <AccountStatus />
-              <SessionsList />
-            </>
-          }
-        />
-        <Route path={route.auth.root()} element={AUTH_PAGE} />
-        <Route path={route.settings.root()} element={SETTINGS_PAGE} />
-      </Routes>
-    </AuthGate>,
-    { route: initialRoute },
+// Through the real session guard, as the app boots, since sign-out hands the re-mint back to it.
+const renderStatus = async (path = '/') => {
+  server.use(
+    getGetMessageAllowanceMockHandler({ metered: false }),
+    getGetSessionMockHandler({
+      id: 'abc',
+      title: 'Chat',
+      createdAt: '2026-06-15T11:00:00.000Z',
+      activeStreamId: null,
+    }),
+    getListMessagesMockHandler([]),
   );
+  const view = await renderRoute(path, { seedSession: false });
   await waitFor(() =>
     expect(screen.queryByRole('status', { name: resources.auth.loading })).not.toBeInTheDocument(),
   );
@@ -84,7 +71,7 @@ const signOutItem = () => screen.findByRole('menuitem', { name: resources.auth.a
 
 describe('AccountStatus', () => {
   it('offers a Guest a sign-in link to the auth page, with no user menu', async () => {
-    await renderStatus();
+    const { router } = await renderStatus();
 
     const signIn = await screen.findByRole('link', { name: resources.auth.actions.signIn });
     expect(
@@ -93,7 +80,7 @@ describe('AccountStatus', () => {
 
     await userEvent.click(signIn);
 
-    expect(await screen.findByText(AUTH_PAGE)).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/auth');
   });
 
   it("shows a Registered user's initials, keeping their email out of the bar", async () => {
@@ -141,14 +128,14 @@ describe('AccountStatus', () => {
 
   it('takes a Registered user to the settings page', async () => {
     session = aSession({ isAnonymous: false });
-    await renderStatus();
+    const { router } = await renderStatus();
 
     await openMenu();
     await selectMenuItem(
       await screen.findByRole('menuitem', { name: resources.userMenu.settings }),
     );
 
-    expect(await screen.findByText(SETTINGS_PAGE)).toBeInTheDocument();
+    await waitFor(() => expect(router.state.location.pathname).toBe('/settings'));
   });
 
   it('signs out to a fresh Guest on the chat root without fetching as nobody', async () => {
@@ -168,12 +155,12 @@ describe('AccountStatus', () => {
         return { sessions: [], nextCursor: null, hasMore: false };
       }),
     );
-    await renderStatus(route.chat.session('abc'));
+    await renderStatus('/s/abc');
 
     await openMenu();
     await selectMenuItem(await signOutItem());
 
-    expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
+    expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
     expect(
       await screen.findByRole('link', { name: resources.auth.actions.signIn }),
     ).toBeInTheDocument();

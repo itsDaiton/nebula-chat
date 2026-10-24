@@ -12,10 +12,6 @@ import type {
   signUpSchema,
 } from '@/modules/auth/utils/authSchemas';
 
-export type AuthGateProps = {
-  children: ReactNode;
-};
-
 export type UserMenuProps = {
   /** The Registered user's name, shown as initials on their Avatar. */
   name: string;

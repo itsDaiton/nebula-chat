@@ -1,8 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useIdentityChange } from '@/modules/auth/hooks/useIdentityChange';
-import { SESSION_BOOTSTRAP_KEY } from '@/modules/auth/hooks/useSessionBootstrap';
+import { SESSION_BOOTSTRAP_KEY } from '@/modules/auth/utils/sessionBootstrap';
 
-/** Once the auth session is gone (signed out, revoked or deleted): AuthGate re-mints a Guest, the app returns to chat. */
+/** Once the auth session is gone (signed out, revoked or deleted): the route guard re-mints a Guest, the app returns to chat. */
 export const useAfterSignOut = () => {
   const queryClient = useQueryClient();
   const onIdentityChange = useIdentityChange();

@@ -24,7 +24,7 @@ export const SettingsPage = () => {
   const { isPending, isRegistered, user } = useAuth();
   const { isEntryVisible, isSectionVisible, hasMatches } = useSettingsSearch();
 
-  // AuthGate has normally resolved the session already; never redirect on a read still in flight.
+  // The route guard has normally resolved the session already; never redirect on a read still in flight.
   if (isPending) return null;
 
   if (!isRegistered) return <Navigate to="/auth" replace />;

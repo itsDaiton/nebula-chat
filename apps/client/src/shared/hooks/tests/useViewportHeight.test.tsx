@@ -4,9 +4,6 @@ import { useViewportHeight } from '@/shared/hooks/useViewportHeight';
 import { useMultiLineStore } from '@/shared/stores/useMultiLineStore';
 import { useSearchStore } from '@/shared/stores/useSearchStore';
 
-const navigate = vi.fn();
-vi.mock('react-router', () => ({ useNavigate: () => navigate }));
-
 beforeEach(() => {
   vi.clearAllMocks();
   useMultiLineStore.setState({ multiLineMap: {} });

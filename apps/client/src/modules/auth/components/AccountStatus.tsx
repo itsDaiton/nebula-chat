@@ -1,11 +1,10 @@
 import { Box, Button, Menu, Text } from '@chakra-ui/react';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { LuLogIn, LuLogOut, LuSettings } from 'react-icons/lu';
-import { Link, useNavigate } from 'react-router';
 import { UserMenu } from '@/modules/auth/components/UserMenu';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { useSignOut } from '@/modules/auth/hooks/useSignOut';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 
 /** The header's account control: a Guest is nudged to sign in, a Registered user gets their user menu. */
 export const AccountStatus = () => {
@@ -17,7 +16,7 @@ export const AccountStatus = () => {
   if (isGuest) {
     return (
       <Button asChild size="sm" variant="solid" borderRadius="full" px={4}>
-        <Link to={route.auth.root()}>
+        <Link to="/auth">
           <LuLogIn />
           {resources.auth.actions.signIn}
         </Link>
@@ -36,7 +35,7 @@ export const AccountStatus = () => {
             {user?.email}
           </Text>
         </Box>
-        <Menu.Item value="settings" onSelect={() => void navigate(route.settings.root())}>
+        <Menu.Item value="settings" onSelect={() => void navigate({ to: '/settings' })}>
           <LuSettings />
           {resources.userMenu.settings}
         </Menu.Item>

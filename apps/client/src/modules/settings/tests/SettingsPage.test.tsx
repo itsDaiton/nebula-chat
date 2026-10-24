@@ -12,7 +12,6 @@ import { usePasswordChangeStore } from '@/modules/settings/stores/usePasswordCha
 import { useSettingsSearchStore } from '@/modules/settings/stores/useSettingsSearchStore';
 import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import {
   aSession,
@@ -35,13 +34,13 @@ vi.mock('@/theme/hooks/useColorMode', () => ({
   useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
 }));
 
-// The real pages these flows land on, through the router's bridge.
+// The real pages these flows land on.
 const AUTH_PAGE = resources.auth.signIn.title;
 const CHAT_PAGE = resources.chat.welcomeMessage;
 const { fields } = resources.auth;
 const { changePassword, profile, account } = resources.settings;
 
-const renderPage = () => renderRoute(route.settings.root());
+const renderPage = () => renderRoute('/settings');
 
 // A masked password input has no ARIA role, so it is found by its label.
 const currentPasswordField = () => screen.getByLabelText(fields.currentPassword);

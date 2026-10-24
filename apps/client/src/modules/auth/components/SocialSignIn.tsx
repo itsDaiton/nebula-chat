@@ -4,7 +4,7 @@ import { AuthFormAlert } from '@/modules/auth/components/AuthFormAlert';
 import { useSocialSignIn } from '@/modules/auth/hooks/useSocialSignIn';
 import { SOCIAL_PROVIDERS, socialCallbackError } from '@/modules/auth/utils/socialSignIn';
 
-const routeApi = getRouteApi('/auth/');
+const routeApi = getRouteApi('/_app/auth/');
 
 /** "Continue with Google / GitHub", plus why the last attempt failed if it did. */
 export const SocialSignIn = () => {

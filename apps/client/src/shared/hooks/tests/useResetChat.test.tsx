@@ -5,7 +5,7 @@ import { useMultiLineStore } from '@/shared/stores/useMultiLineStore';
 import { useSearchStore } from '@/shared/stores/useSearchStore';
 
 const navigate = vi.fn();
-vi.mock('react-router', () => ({ useNavigate: () => navigate }));
+vi.mock('@tanstack/react-router', () => ({ useNavigate: () => navigate }));
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -19,6 +19,6 @@ describe('useResetChat', () => {
 
     act(() => result.current.resetChat());
 
-    expect(navigate).toHaveBeenCalledWith('/');
+    expect(navigate).toHaveBeenCalledWith({ to: '/' });
   });
 });

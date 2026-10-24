@@ -1,19 +1,17 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { MessageAllowancePrompt } from '@/modules/chat/components/MessageAllowancePrompt';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 import { aSession, mockGetSession, refreshSession } from '@/test/auth';
 import { aMeteredAllowance } from '@/test/allowance';
 import { server } from '@/test/msw';
-import { renderHookWithQueryClient, renderWithChakra } from '@/test/render';
+import { renderHookWithQueryClient } from '@/test/render';
+import { renderInRouter } from '@/test/renderRoute';
 
-const AUTH_PAGE = 'auth page';
 const { messageAllowance } = resources.chat;
 
 // The session store is a module singleton, so wait until it holds this test's user.
@@ -23,12 +21,7 @@ const renderPrompt = async ({ isAnonymous }: { isAnonymous: boolean }) => {
   refreshSession();
   await waitFor(() => expect(auth.result.current.isGuest).toBe(isAnonymous));
 
-  renderWithChakra(
-    <Routes>
-      <Route path={route.chat.root()} element={<MessageAllowancePrompt />} />
-      <Route path={route.auth.root()} element={AUTH_PAGE} />
-    </Routes>,
-  );
+  return renderInRouter(<MessageAllowancePrompt />);
 };
 
 beforeEach(() => {
@@ -48,11 +41,11 @@ describe('MessageAllowancePrompt', () => {
 
   it('takes the Guest to the auth page', async () => {
     useChatStreamStore.setState({ isMessageAllowanceReached: true });
-    await renderPrompt({ isAnonymous: true });
+    const { router } = await renderPrompt({ isAnonymous: true });
 
     await userEvent.click(await screen.findByRole('link', { name: messageAllowance.action }));
 
-    expect(screen.getByText(AUTH_PAGE)).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/auth');
   });
 
   it('asks a Guest to register as soon as the allowance is spent, before any refused send', async () => {
