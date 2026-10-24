@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.0.7...nebula-chat-v5.1.0) (2026-10-24)
+
+
+### Features
+
+* **client:** NEB-536 serve the auth routes through TanStack Router with typed search params ([#620](https://github.com/itsDaiton/nebula-chat/issues/620)) ([6bfe66d](https://github.com/itsDaiton/nebula-chat/commit/6bfe66d06b02e9f72aa3594b6ab0971cdf99bae2))
+
 ## [5.0.7](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.0.6...nebula-chat-v5.0.7) (2026-10-24)
 
 
