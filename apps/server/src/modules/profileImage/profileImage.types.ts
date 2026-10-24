@@ -2,7 +2,7 @@ import type { z } from 'zod';
 import type {
   profileImageSchema,
   profileImageSettingsSchema,
-} from '@backend/modules/profileImage/profileImage.validation';
+} from '@server/modules/profileImage/profileImage.validation';
 
 /**
  * Where Profile image files live (ADR-0022): Supabase Storage in production, in memory in tests.

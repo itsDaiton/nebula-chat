@@ -4,7 +4,7 @@ import type {
   createMessageSchema,
   getMessagesSchema,
   listMessagesQuerySchema,
-} from '@backend/modules/message/message.validation';
+} from '@server/modules/message/message.validation';
 
 export type CreateMessageDTO = z.infer<typeof createMessageSchema>;
 

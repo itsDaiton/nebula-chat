@@ -1,9 +1,9 @@
 import { eq, lt, desc, ilike, and, or } from 'drizzle-orm';
 import { sessions } from '@nebula-chat/db';
 import type { DbTransaction } from '@nebula-chat/db';
-import { db } from '@backend/db';
-import { paginationConfig } from '@backend/config/pagination.config';
-import type { CreateSessionDTO, GetSessionParams } from '@backend/modules/session/session.types';
+import { db } from '@server/db';
+import { paginationConfig } from '@server/config/pagination.config';
+import type { CreateSessionDTO, GetSessionParams } from '@server/modules/session/session.types';
 
 export const sessionRepository = {
   async create({ title }: CreateSessionDTO, userId: string) {

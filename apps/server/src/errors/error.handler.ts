@@ -9,8 +9,8 @@ import {
 } from '@nebula-chat/errors';
 import type { ErrorCode } from '@nebula-chat/errors';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
-import { recordErrorType } from '@backend/errors/requestErrorType';
-import { requestPath } from '@backend/utils/requestPath';
+import { recordErrorType } from '@server/errors/requestErrorType';
+import { requestPath } from '@server/utils/requestPath';
 
 // PostgreSQL constraint violations: the client gets a safe message, and the
 // driver error rides along as the AppError's cause. A mapped violation is a 4xx,

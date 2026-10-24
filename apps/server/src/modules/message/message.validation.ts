@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { isoDateTimeSchema } from '@backend/utils/isoDateTimeSchema';
+import { isoDateTimeSchema } from '@server/utils/isoDateTimeSchema';
 
 export const createMessageSchema = z.object({
   sessionId: z.uuid(),

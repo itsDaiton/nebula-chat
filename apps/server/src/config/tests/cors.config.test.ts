@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const mockEnv: { CLIENT_URL?: string; SERVER_URL?: string } = {};
 
-vi.mock('@backend/env', () => ({ env: mockEnv }));
+vi.mock('@server/env', () => ({ env: mockEnv }));
 
 /**
  * The allow-list is captured when the module loads, so each scenario sets the
@@ -11,7 +11,7 @@ vi.mock('@backend/env', () => ({ env: mockEnv }));
 const loadCorsOptions = async (env: typeof mockEnv) => {
   Object.assign(mockEnv, { CLIENT_URL: undefined, SERVER_URL: undefined }, env);
   vi.resetModules();
-  const mod = await import('@backend/config/cors.config.js');
+  const mod = await import('@server/config/cors.config.js');
   return mod.corsOptions;
 };
 

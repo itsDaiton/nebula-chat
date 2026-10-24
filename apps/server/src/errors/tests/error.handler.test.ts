@@ -10,7 +10,7 @@ import {
   NotFoundError,
 } from '@nebula-chat/errors';
 import type { ErrorEnvelope } from '@nebula-chat/errors';
-import { errorHandler } from '@backend/errors/error.handler';
+import { errorHandler } from '@server/errors/error.handler';
 import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
 
 /**

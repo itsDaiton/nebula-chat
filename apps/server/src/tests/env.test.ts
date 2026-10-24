@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { envSchema } from '@backend/env';
+import { envSchema } from '@server/env';
 
 const baseEnv = {
   DATABASE_URL: 'postgresql://test:test@localhost:5432/test',

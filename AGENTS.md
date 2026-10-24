@@ -209,7 +209,7 @@ These apply everywhere in the repo, frontend and backend alike. See each package
   hand-authored or hand-edited; and the single top-level `src/index.ts` of a package under `libs/`, which is
   that package's public surface — it is what `tsdown`'s `entry` and the `exports` map point at, so it is
   required, not optional. Every package under `libs/` has exactly one. Never nest a barrel below that.
-- **No relative imports.** Frontend uses `@/*` (→ `apps/client/src/`); backend uses `@backend/*` (→ `apps/server/src/`); the worker uses `@worker/*` (→ `apps/worker/src/`).
+- **No relative imports.** Frontend uses `@/*` (→ `apps/client/src/`); backend uses `@server/*` (→ `apps/server/src/`); the worker uses `@worker/*` (→ `apps/worker/src/`).
 - **Comments are brief.** Comment only what the code can't say: the reason, constraint, or gotcha behind a
   choice. Keep each comment to one line, two at most. Names and types carry the what; history belongs in the
   commit message, rationale that spans files in an ADR.

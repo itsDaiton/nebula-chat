@@ -1,15 +1,15 @@
 import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
-import { chatController } from '@backend/modules/chat/chat.controller';
-import { messageAllowanceHook } from '@backend/modules/chat/chat.messageAllowance.hook';
+import { chatController } from '@server/modules/chat/chat.controller';
+import { messageAllowanceHook } from '@server/modules/chat/chat.messageAllowance.hook';
 import {
   messageAllowanceSchema,
   sendMessageParamsSchema,
   sendMessageSchema,
   sentMessageSchema,
-} from '@backend/modules/chat/chat.validation';
-import { requireAuthentication } from '@backend/plugins/authGate.plugin';
-import { jsonResponse } from '@backend/utils/jsonResponse';
+} from '@server/modules/chat/chat.validation';
+import { requireAuthentication } from '@server/plugins/authGate.plugin';
+import { jsonResponse } from '@server/utils/jsonResponse';
 
 // Mounted at `/api`: sending lives under the Session it goes to (ADR-0014).
 const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {

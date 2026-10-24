@@ -1,6 +1,6 @@
 import fp from 'fastify-plugin';
-import { closeQueue } from '@backend/queue';
-import { redis, closeRedis } from '@backend/redis';
+import { closeQueue } from '@server/queue';
+import { redis, closeRedis } from '@server/redis';
 
 export default fp(async (app) => {
   app.decorate('redis', redis);

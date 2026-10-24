@@ -2,7 +2,7 @@ import { fromPartial } from '@total-typescript/shoehorn';
 import type { SessionData } from '@nebula-chat/auth';
 
 /**
- * Session fixtures for route tests. Tests `vi.mock('@backend/auth')` so
+ * Session fixtures for route tests. Tests `vi.mock('@server/auth')` so
  * `auth.api.getSession` resolves to one of these, exercising the real
  * `requireAuthentication` / `requireRegistered` gates without a live better-auth instance
  * (ADR-0008: assert external behavior, never better-auth internals). Only the

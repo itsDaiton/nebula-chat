@@ -1,31 +1,31 @@
 import type { FastifyInstance } from 'fastify';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { listenForLogLevelChanges } from '@nebula-chat/otel';
-import { createTestApp } from '@backend/test/app';
+import { createTestApp } from '@server/test/app';
 import { captureLogger, eventLines } from '@nebula-chat/otel/testing';
 import type { LogLine } from '@nebula-chat/otel/testing';
-import { memoryPubSub } from '@backend/test/memoryPubSub';
-import { guestSession, registeredSession } from '@backend/test/session';
+import { memoryPubSub } from '@server/test/memoryPubSub';
+import { guestSession, registeredSession } from '@server/test/session';
 
 // No database in a unit test; this also keeps the real pg Pool out of the process.
-vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
+vi.mock('@server/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
 // Faked so a Guest or Registered session can be presented; the operator gate
 // must ignore it either way.
-vi.mock('@backend/auth', () => ({
+vi.mock('@server/auth', () => ({
   auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
 }));
 
-// @backend/redis is the boundary to Redis. Each test swaps in a fresh in-memory
+// @server/redis is the boundary to Redis. Each test swaps in a fresh in-memory
 // pubsub, so a published change reaches exactly the instances that test starts.
-vi.mock('@backend/redis', () => ({
+vi.mock('@server/redis', () => ({
   redis: { cache: {}, connection: {}, close: vi.fn(async () => undefined) },
   closeRedis: vi.fn(async () => undefined),
 }));
 
-import { auth } from '@backend/auth';
-import { env } from '@backend/env';
-import { redis } from '@backend/redis';
+import { auth } from '@server/auth';
+import { env } from '@server/env';
+import { redis } from '@server/redis';
 
 const mockedGetSession = vi.mocked(auth.api.getSession);
 

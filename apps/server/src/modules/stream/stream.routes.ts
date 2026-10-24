@@ -1,9 +1,9 @@
 import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
-import { streamController } from '@backend/modules/stream/stream.controller';
-import { replyStreamSchema, streamParamsSchema } from '@backend/modules/stream/stream.validation';
-import { requireAuthentication } from '@backend/plugins/authGate.plugin';
-import { jsonResponse } from '@backend/utils/jsonResponse';
+import { streamController } from '@server/modules/stream/stream.controller';
+import { replyStreamSchema, streamParamsSchema } from '@server/modules/stream/stream.validation';
+import { requireAuthentication } from '@server/plugins/authGate.plugin';
+import { jsonResponse } from '@server/utils/jsonResponse';
 
 const streamRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
   app.get('/:streamId', {

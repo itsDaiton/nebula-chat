@@ -1,9 +1,9 @@
 import { parseReplyStreamEvent } from '@nebula-chat/contracts';
 import { INTERNAL_ERROR_ENVELOPE, NotFoundError } from '@nebula-chat/errors';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
-import { findStreamOwner, openReplyStream } from '@backend/redis';
-import type { StreamLogger } from '@backend/modules/stream/stream.types';
-import { SSE_KEEP_ALIVE, sseEvent } from '@backend/utils/sse';
+import { findStreamOwner, openReplyStream } from '@server/redis';
+import type { StreamLogger } from '@server/modules/stream/stream.types';
+import { SSE_KEEP_ALIVE, sseEvent } from '@server/utils/sse';
 
 /** How long one read waits for a new entry before the relay sends a keep-alive. */
 const RELAY_BLOCK_MS = 15_000;

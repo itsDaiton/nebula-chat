@@ -1,6 +1,6 @@
 import type { EventLogger } from '@nebula-chat/otel';
 import type { z } from 'zod';
-import type { streamParamsSchema } from '@backend/modules/stream/stream.validation';
+import type { streamParamsSchema } from '@server/modules/stream/stream.validation';
 
 export type StreamParams = z.infer<typeof streamParamsSchema>;
 

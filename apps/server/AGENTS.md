@@ -92,7 +92,7 @@ apps/server/src/
 │   │   ├── profileImage.repository.ts   # Through better-auth's internal adapter, so session copies in Redis refresh
 │   │   ├── profileImage.processing.ts   # sharp: JPEG/PNG/WebP in, 256×256 metadata-free WebP out
 │   │   ├── profileImage.supabaseStore.ts # The Supabase Storage ProfileImageStore
-│   │   ├── profileImage.fileDeletion.ts      # Deletes unused files; the onUserDeleted callback @backend/auth wires
+│   │   ├── profileImage.fileDeletion.ts      # Deletes unused files; the onUserDeleted callback @server/auth wires
 │   │   ├── profileImage.uploadLimit.hook.ts # preHandler — 10 uploads per user per hour, counted in Redis
 │   │   ├── profileImage.service.ts
 │   │   ├── profileImage.controller.ts
@@ -204,7 +204,7 @@ The full conventions are in [docs/logging.md](../../docs/logging.md). The rules 
   or through a stamped adapter. An event name or attribute key missing from the catalogue
   (`libs/otel/src/events.ts`, `libs/otel/src/attributes.ts`) is a compile error — add it there.
 - **Inside a request, log through `req.log`.** It carries `http.request.id`, and the User once a gate has
-  run. Outside a request, use `@backend/logger`. Never `console`.
+  run. Outside a request, use `@server/logger`. Never `console`.
 - **Log an error once, where it is handled**, under `err` (never `error`; ESLint rejects it). Code that
   throws does not also log. A 4xx writes no line of its own.
 - **One `info` line per unit of work** (`http.request.completed`, `chat.reply.completed`); progress inside
@@ -227,12 +227,12 @@ Registering routes awaits nothing, so the plugin is a callback that ends with `d
 // session.routes.ts
 import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
-import { sessionController } from '@backend/modules/session/session.controller';
+import { sessionController } from '@server/modules/session/session.controller';
 import {
   sessionResponseSchema,
   createSessionSchema,
-} from '@backend/modules/session/session.validation';
-import { jsonResponse } from '@backend/utils/jsonResponse';
+} from '@server/modules/session/session.validation';
+import { jsonResponse } from '@server/utils/jsonResponse';
 
 const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
   app.post('/', {
@@ -284,7 +284,7 @@ export const sessionResponseSchema = z
   .meta({ id: 'Session' });
 ```
 
-A response timestamp the handler holds as a `Date` is `isoDateTimeSchema` (`@backend/utils/isoDateTimeSchema`), never `z.date().transform(...)`. The handler returns the row's `Date`, the reply holds its ISO string, and the spec shows a `date-time` string. A bare `.transform` has no output type for the spec to render.
+A response timestamp the handler holds as a `Date` is `isoDateTimeSchema` (`@server/utils/isoDateTimeSchema`), never `z.date().transform(...)`. The handler returns the row's `Date`, the reply holds its ISO string, and the spec shows a `date-time` string. A bare `.transform` has no output type for the spec to render.
 
 **Rule — every route needs a `schema:` block.** Routes without one produce "Default Response" entries. Use `{ schema: { hide: true } }` to explicitly exclude infrastructure routes (e.g. `/openapi.json`) from the spec rather than leaving them undocumented.
 
@@ -320,7 +320,7 @@ Schema lives at `libs/db/src/schema.ts` (`@nebula-chat/db`). The domain tables a
 **Rules:**
 
 - All Drizzle queries go in `*.repository.ts` files — never in services or controllers.
-- The DB client is created in `src/db.ts` via `createDbClient` from `@nebula-chat/db`. Always import `db` from `@backend/db`.
+- The DB client is created in `src/db.ts` via `createDbClient` from `@nebula-chat/db`. Always import `db` from `@server/db`.
 - After changing the schema run `pnpm --filter @nebula-chat/db db:generate` in dev or `pnpm --filter @nebula-chat/db db:migrate` in prod. Use the `drizzle-migrate` skill for schema changes.
 - Sessions are cursor-paginated using the session `id` as the cursor.
 - The server loads no chat history: the worker loads the last 20 Messages into a Direct reply's context.
@@ -330,7 +330,7 @@ Schema lives at `libs/db/src/schema.ts` (`@nebula-chat/db`). The domain tables a
 ## Redis
 
 Redis access is provided by the **`@nebula-chat/redis`** lib, registered by
-`plugins/redis.plugin.ts` and reached through `@backend/redis` (`src/redis.ts`). See
+`plugins/redis.plugin.ts` and reached through `@server/redis` (`src/redis.ts`). See
 [ADR-0009](../../docs/adr/0009-nebula-chat-redis-lib.md). The server uses it for:
 
 - **better-auth's secondary storage** (`authStore`, ADR-0010) and **runtime log levels** (`pubsub`, ADR-0020).
@@ -445,16 +445,16 @@ backend/OpenAPI change — never ship an API change with a stale client. Do not 
 
 ## Path Aliases
 
-The backend uses `@backend/*` as a path alias for `src/*`:
+The backend uses `@server/*` as a path alias for `src/*`:
 
 ```ts
-import { db } from '@backend/db';
-import { errorHandler } from '@backend/errors/error.handler';
+import { db } from '@server/db';
+import { errorHandler } from '@server/errors/error.handler';
 ```
 
 Never use relative paths in the backend. Aliases are configured in `tsconfig.json` and resolved at build time by `tsc-alias`.
 
-Static imports stay extensionless. A dynamic `import()` needs a `.js` extension (`await import('@backend/app.js')`): under `"module": "node20"` it is emitted as a real ESM import, which resolves like ESM.
+Static imports stay extensionless. A dynamic `import()` needs a `.js` extension (`await import('@server/app.js')`): under `"module": "node20"` it is emitted as a real ESM import, which resolves like ESM.
 
 ---
 
@@ -494,7 +494,7 @@ be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-fi
 | `SUPABASE_SECRET_KEY`              | Supabase secret key; server-only, writes the Profile image bucket                                                         |
 | `PROFILE_IMAGE_BUCKET`             | Public bucket for Profile images: `profile-images-dev` locally, `profile-images` in production                            |
 
-> **`env.ts` rule:** All env vars are Zod-validated in `src/env.ts` and fail loudly at startup before any listener is bound. Never read `process.env.*` directly anywhere in the backend — always import from `@backend/env`. The only code that touches `process.env` is what runs before `env.ts` parses it: `src/test/setup.ts` and `src/scripts/generate-openapi.ts`, which fill placeholders with `??=`.
+> **`env.ts` rule:** All env vars are Zod-validated in `src/env.ts` and fail loudly at startup before any listener is bound. Never read `process.env.*` directly anywhere in the backend — always import from `@server/env`. The only code that touches `process.env` is what runs before `env.ts` parses it: `src/test/setup.ts` and `src/scripts/generate-openapi.ts`, which fill placeholders with `??=`.
 >
 > **One exception:** `@nebula-chat/otel` reads the `OTEL_*` variables (`OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_LOGS_EXPORTER`, `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`, `OTEL_LOG_LEVEL`) from `process.env` itself — a published lib can't depend on one consumer's env schema.
 > They are still declared in `src/env.ts`. See [ADR-0007](../../docs/adr/0007-otel-lib-and-fastify-native-logger.md) for why, and [docs/logging.md](../../docs/logging.md) for how logging works.
@@ -533,7 +533,7 @@ pnpm backend test:coverage
 - **Mock at the nearest boundary to an external system, and nothing above it.** For a CRUD route that
   is the repository: `vi.mock` the `*.repository.ts` module and leave the service and controller real —
   mocking a service to test its own controller tests nothing. The send and stream routes also reach Redis
-  and BullMQ, through `@backend/redis` (`src/redis.ts`) and `@backend/queue` (`src/queue.ts`), so their
+  and BullMQ, through `@server/redis` (`src/redis.ts`) and `@server/queue` (`src/queue.ts`), so their
   route tests fake those two modules in memory (`src/test/memoryReplyStreams.ts`, an array of enqueued
   jobs). The rule is the same one either way — fake the thing that would otherwise open a socket, keep
   everything between it and the HTTP boundary real — and the faked module gets its own unit test at its

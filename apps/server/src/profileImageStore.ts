@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
-import { env } from '@backend/env';
-import { createSupabaseProfileImageStore } from '@backend/modules/profileImage/profileImage.supabaseStore';
-import type { ProfileImageStore } from '@backend/modules/profileImage/profileImage.types';
+import { env } from '@server/env';
+import { createSupabaseProfileImageStore } from '@server/modules/profileImage/profileImage.supabaseStore';
+import type { ProfileImageStore } from '@server/modules/profileImage/profileImage.types';
 
 const { SUPABASE_URL, SUPABASE_SECRET_KEY, PROFILE_IMAGE_BUCKET } = env;
 

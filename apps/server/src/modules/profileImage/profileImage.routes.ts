@@ -1,21 +1,21 @@
 import type { onRequestHookHandler } from 'fastify';
 import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
-import { profileImageController } from '@backend/modules/profileImage/profileImage.controller';
+import { profileImageController } from '@server/modules/profileImage/profileImage.controller';
 import {
   profileImageService,
   uploadsOffError,
-} from '@backend/modules/profileImage/profileImage.service';
-import { limitProfileImageUploads } from '@backend/modules/profileImage/profileImage.uploadLimit.hook';
+} from '@server/modules/profileImage/profileImage.service';
+import { limitProfileImageUploads } from '@server/modules/profileImage/profileImage.uploadLimit.hook';
 import {
   MAX_PROFILE_IMAGE_BYTES,
   PROFILE_IMAGE_CONTENT_TYPES,
   profileImageBodySchema,
   profileImageSchema,
   profileImageSettingsSchema,
-} from '@backend/modules/profileImage/profileImage.validation';
-import { requireAuthentication, requireRegistered } from '@backend/plugins/authGate.plugin';
-import { jsonResponse } from '@backend/utils/jsonResponse';
+} from '@server/modules/profileImage/profileImage.validation';
+import { requireAuthentication, requireRegistered } from '@server/plugins/authGate.plugin';
+import { jsonResponse } from '@server/utils/jsonResponse';
 
 // onRequest, so a Guest or a server without storage is turned away before the body is read.
 const requireUploadsEnabled: onRequestHookHandler = (_req, _reply, done) => {

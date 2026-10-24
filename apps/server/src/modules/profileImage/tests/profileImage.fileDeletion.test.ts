@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { captureLogger, eventLines } from '@nebula-chat/otel/testing';
 import type { LogLine } from '@nebula-chat/otel/testing';
-import { deleteProfileImageOfDeletedUser } from '@backend/modules/profileImage/profileImage.fileDeletion';
-import { memoryProfileImageStore } from '@backend/test/memoryProfileImageStore';
+import { deleteProfileImageOfDeletedUser } from '@server/modules/profileImage/profileImage.fileDeletion';
+import { memoryProfileImageStore } from '@server/test/memoryProfileImageStore';
 
 const KEY = 'user-1/a.webp';
 

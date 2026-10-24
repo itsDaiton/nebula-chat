@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@backend/redis', async () => {
-  const { replyStreams: fake } = await import('@backend/test/memoryReplyStreams.js');
+vi.mock('@server/redis', async () => {
+  const { replyStreams: fake } = await import('@server/test/memoryReplyStreams.js');
   return {
     findStreamOwner: fake.findStreamOwner,
     openReplyStream: fake.openReplyStream,
   };
 });
 
-import { streamService } from '@backend/modules/stream/stream.service';
+import { streamService } from '@server/modules/stream/stream.service';
 import { captureLogger } from '@nebula-chat/otel/testing';
-import { replyStreams } from '@backend/test/memoryReplyStreams';
+import { replyStreams } from '@server/test/memoryReplyStreams';
 
 const STREAM_ID = '44444444-4444-4444-8444-444444444444';
 

@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { profileImageService } from '@backend/modules/profileImage/profileImage.service';
-import { getSessionData } from '@backend/plugins/authGate.plugin';
+import { profileImageService } from '@server/modules/profileImage/profileImage.service';
+import { getSessionData } from '@server/plugins/authGate.plugin';
 
 export const profileImageController = {
   async settings(_req: FastifyRequest, reply: FastifyReply) {

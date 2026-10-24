@@ -1,5 +1,5 @@
 import type { FastifyReply } from 'fastify';
-import { forwardReplyHeaders } from '@backend/utils/forwardReplyHeaders';
+import { forwardReplyHeaders } from '@server/utils/forwardReplyHeaders';
 
 /**
  * Opens a hijacked SSE response. CORS is `@fastify/cors`'s decision (`cors.config.ts`),
