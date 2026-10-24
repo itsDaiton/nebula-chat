@@ -8,10 +8,12 @@ export const streamClient = async <T>(
   options?: AxiosRequestConfig,
 ): Promise<T> => {
   const hasBody = config.data !== undefined;
-  // Only defined params go out: `undefined` would otherwise be sent as the string "undefined".
+  // Only scalar params go out; an absent one would otherwise be sent as the string "undefined".
   const query = new URLSearchParams(
     Object.entries((config.params ?? {}) as Record<string, unknown>).flatMap(([key, value]) =>
-      value === undefined ? [] : [[key, String(value)]],
+      typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+        ? [[key, String(value)]]
+        : [],
     ),
   ).toString();
   const url = SERVER_CONFIG.getApiEndpoint(config.url ?? '');

@@ -23,6 +23,8 @@ import type {
   ChatMessage,
   FollowOutcome,
   ResumeStreamOptions,
+  SseEvent,
+  StreamCursor,
   UseChatStreamOptions,
 } from '@/modules/chat/types/types';
 import { useNavigate } from 'react-router';
@@ -72,6 +74,33 @@ const wait = (ms: number, signal: AbortSignal): Promise<void> =>
       { once: true },
     );
   });
+
+// The stream mutator resolves with the raw Response, though the generated type says string.
+// A network failure resolves to null, for the caller to reconnect.
+const openReplyStream = async (
+  streamId: string,
+  lastEventId: string | undefined,
+  signal: AbortSignal,
+): Promise<Response | null> => {
+  try {
+    return (await readReplyStream(
+      streamId,
+      lastEventId === undefined ? undefined : { lastEventId },
+      undefined,
+      signal,
+    )) as unknown as Response;
+  } catch {
+    return null;
+  }
+};
+
+// A refusal (4xx) will not change on retry, nor anything once retries run out; a 5xx may be a
+// restarting server.
+const assertRetryable = async (response: Response, canRetry: boolean): Promise<void> => {
+  if (response.status >= 500 && canRetry) return;
+  const envelope = parseErrorEnvelope(await response.json().catch(() => null));
+  throw new Error(envelope?.message ?? resources.chat.streamError);
+};
 
 const emptyAssistantMessage = (): ChatMessage => ({
   id: crypto.randomUUID(),
@@ -199,6 +228,56 @@ export const useChatStream = ({
     [queryClient, setHistory],
   );
 
+  // Applies one event to the reply; an outcome means the stream is over.
+  const applyEvent = useCallback(
+    (event: SseEvent, data: string): FollowOutcome | null => {
+      const parsed = parseJson(data);
+      if (event === 'token') {
+        const token = (parsed as { token?: unknown } | null)?.token;
+        if (typeof token === 'string') appendToken(token);
+        return null;
+      }
+      if (event === 'usage') {
+        const { promptTokens, completionTokens, totalTokens } = parsed as Record<string, number>;
+        setUsage({ promptTokens, completionTokens, totalTokens });
+        return null;
+      }
+      if (event === 'error') {
+        showReplyError(parseErrorEnvelope(parsed)?.message ?? resources.chat.streamError);
+        return 'failed';
+      }
+      // `end`, also when the User stopped the reply: what streamed is the saved reply.
+      if ((parsed as { reason?: unknown } | null)?.reason === 'cancelled') dropEmptyReply();
+      return 'ended';
+    },
+    [appendToken, dropEmptyReply, setUsage, showReplyError],
+  );
+
+  // Reads one connection's body; null when it closed or dropped before the stream was over.
+  const readReply = useCallback(
+    async (
+      body: ReadableStream<Uint8Array>,
+      cursor: StreamCursor,
+    ): Promise<FollowOutcome | null> => {
+      try {
+        for await (const { event, data, id } of parseSseStream(body)) {
+          if (id !== undefined) {
+            // A reconnect resumes after `lastEventId`; anything at or before it is already shown.
+            if (!isAfter(id, cursor.lastEventId)) continue;
+            cursor.lastEventId = id;
+            cursor.retries = 0;
+          }
+          const outcome = applyEvent(event, data);
+          if (outcome) return outcome;
+        }
+      } catch {
+        // The connection dropped mid-body: the caller reconnects.
+      }
+      return null;
+    },
+    [applyEvent],
+  );
+
   // Renders a reply stream into the trailing assistant Message, reconnecting after the last event
   // it saw (ADR-0014); an expired stream falls back to the saved Message. Throws once retries run out.
   const followStream = useCallback(
@@ -207,78 +286,30 @@ export const useChatStream = ({
       followedSessionId: string,
       signal: AbortSignal,
     ): Promise<FollowOutcome> => {
-      let lastEventId: string | undefined;
-      let retries = 0;
+      const cursor: StreamCursor = { lastEventId: undefined, retries: 0 };
       while (!signal.aborted) {
-        let response: Response | null = null;
-        try {
-          // The stream mutator resolves with the raw Response, though the generated type says string.
-          response = (await readReplyStream(
-            streamId,
-            lastEventId === undefined ? undefined : { lastEventId },
-            undefined,
-            signal,
-          )) as unknown as Response;
-        } catch {
-          // The network failed to open it: reconnect below, unless the reply was abandoned.
-          if (signal.aborted) return 'aborted';
-        }
-
+        const response = await openReplyStream(streamId, cursor.lastEventId, signal);
         if (response?.status === 404) {
           await showSavedReply(followedSessionId);
           return 'ended';
         }
         if (response && (!response.ok || !response.body)) {
-          const envelope = parseErrorEnvelope(await response.json().catch(() => null));
-          // A refusal (4xx) will not change on retry; a 5xx may be a restarting server.
-          if (response.status < 500 || retries >= reconnectDelaysMs.length) {
-            throw new Error(envelope?.message ?? resources.chat.streamError);
-          }
+          await assertRetryable(response, cursor.retries < reconnectDelaysMs.length);
         } else if (response?.body) {
-          try {
-            for await (const { event, data, id } of parseSseStream(response.body)) {
-              if (id !== undefined) {
-                // A reconnect resumes after `lastEventId`; anything at or before it is already shown.
-                if (!isAfter(id, lastEventId)) continue;
-                lastEventId = id;
-                retries = 0;
-              }
-              const parsed = parseJson(data);
-
-              if (event === 'token') {
-                const token = (parsed as { token?: unknown } | null)?.token;
-                if (typeof token === 'string') appendToken(token);
-              } else if (event === 'usage') {
-                const { promptTokens, completionTokens, totalTokens } = parsed as Record<
-                  string,
-                  number
-                >;
-                setUsage({ promptTokens, completionTokens, totalTokens });
-              } else if (event === 'error') {
-                showReplyError(parseErrorEnvelope(parsed)?.message ?? resources.chat.streamError);
-                return 'failed';
-              } else {
-                // `end`, also when the User stopped the reply: what streamed is the saved reply.
-                const reason = (parsed as { reason?: unknown } | null)?.reason;
-                if (reason === 'cancelled') dropEmptyReply();
-                return 'ended';
-              }
-            }
-          } catch {
-            // The connection dropped mid-body: reconnect below, unless the reply was abandoned.
-            if (signal.aborted) return 'aborted';
-          }
+          const outcome = await readReply(response.body, cursor);
+          if (outcome) return outcome;
         }
+        if (signal.aborted) break;
 
         // The body closed without `end`, or never opened: the connection dropped mid-reply.
-        const delay = reconnectDelaysMs[retries];
+        const delay = reconnectDelaysMs[cursor.retries];
         if (delay === undefined) throw new Error(resources.chat.streamError);
-        retries += 1;
+        cursor.retries += 1;
         await wait(delay, signal);
       }
       return 'aborted';
     },
-    [appendToken, dropEmptyReply, reconnectDelaysMs, setUsage, showReplyError, showSavedReply],
+    [readReply, reconnectDelaysMs, showSavedReply],
   );
 
   // Send, then subscribe (ADR-0014): a new chat gets its Session first, and the send names the reply's stream.

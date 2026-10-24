@@ -35,6 +35,12 @@ export type ResumeStreamOptions = {
 /** How following a reply stream finished: at its end (or saved Message), at an `error`, or aborted. */
 export type FollowOutcome = 'ended' | 'failed' | 'aborted';
 
+/** Where a followed reply stream got to: the last event applied, and reconnects since then. */
+export type StreamCursor = {
+  lastEventId: string | undefined;
+  retries: number;
+};
+
 export type StopButtonProps = {
   onStop: () => void;
 };
