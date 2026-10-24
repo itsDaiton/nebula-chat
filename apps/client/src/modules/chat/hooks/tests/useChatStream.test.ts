@@ -435,7 +435,7 @@ describe('useChatStream — stopping a reply', () => {
   it('cancels a reply stopped while its message was still being sent', async () => {
     useChatStreamStore.setState({ sessionId: EXISTING_ID });
     const { cancelledStream } = stoppableStream();
-    let releaseSend: () => void = () => undefined;
+    let releaseSend: (() => void) | undefined;
     server.use(
       getSendMessageMockHandler(async () => {
         await new Promise<void>((resolve) => {
@@ -453,11 +453,13 @@ describe('useChatStream — stopping a reply', () => {
         messages: [{ id: 'u1', role: 'user', content: 'what is 2+2?' }],
       });
     });
+    // Stop while the send is held at the server, which only a request that has arrived can be.
+    await waitFor(() => expect(releaseSend).toBeDefined());
     await act(async () => {
       await result.current.stop();
     });
     await act(async () => {
-      releaseSend();
+      releaseSend?.();
       await sent;
     });
 
