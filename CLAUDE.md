@@ -6,8 +6,7 @@ Read the relevant ones before a non-trivial change.
 
 ## Working principles
 
-Adapted from [Andrej Karpathy's observations](https://github.com/multica-ai/andrej-karpathy-skills) on
-LLM coding mistakes. They bias toward caution over speed; for trivial tasks use judgment.
+These bias toward caution over speed; for trivial tasks use judgment.
 
 1. **Think before coding.** State assumptions; if uncertain, ask. If several readings exist, present
    them instead of picking silently. If a simpler approach exists, say so and push back. If something is

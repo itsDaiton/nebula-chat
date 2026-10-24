@@ -19,8 +19,10 @@ fi
 
 cd "$repo_root" || exit 0
 
-mapfile -t changed < <(git diff --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' 2>/dev/null; \
-                       git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' 2>/dev/null)
+mapfile -t changed < <(
+  git diff --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' 2>/dev/null
+  git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' 2>/dev/null
+)
 
 if [ "${#changed[@]}" -gt 0 ]; then
   # Deduplicate, then run eslint on changed files only. Use pnpm exec for workspace-aware resolution.
@@ -49,7 +51,8 @@ case "$edited" in
         echo "$long" >&2
         exit 2
       fi
-    fi ;;
+    fi
+    ;;
 esac
 
 exit 0
