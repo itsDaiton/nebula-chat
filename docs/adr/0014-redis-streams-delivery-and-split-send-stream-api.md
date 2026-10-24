@@ -1,6 +1,6 @@
 # ADR-0014: Deliver replies through per-reply Redis Streams, with separate send and stream endpoints
 
-- **Status:** Accepted — implemented by the nebula-chat 2.0 epic (NEB-349). NEB-354 shipped the split send/stream API and per-reply streams for Direct replies; resume via `Last-Event-ID` and cancellation follow
+- **Status:** Accepted — implemented by the nebula-chat 2.0 epic (NEB-349). NEB-354 shipped the split send/stream API and per-reply streams for Direct replies; NEB-355 added resume via `Last-Event-ID` and cancellation
 - **Date:** 2026-09-22
 - **Deciders:** @itsDaiton
 

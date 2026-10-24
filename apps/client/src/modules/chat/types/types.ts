@@ -16,12 +16,26 @@ export type ChatInputProps = {
   autoFocus?: boolean;
   selectedModel: string;
   onModelChange: (model: string) => void;
+  /** Stops the streaming reply; while one streams, it replaces the send button. */
+  onStop?: () => void;
 };
 
 export type ChatHistoryStreamOptions = {
   model: string;
   messages: ChatMessage[];
   sessionId?: string;
+};
+
+/** A reply still in flight to re-attach to: its Session, its stream and the saved Messages before it. */
+export type ResumeStreamOptions = {
+  sessionId: string;
+  streamId: string;
+  messages: ChatMessage[];
+};
+
+export type UseChatStreamOptions = {
+  /** The wait before each reconnect of a dropped reply stream; once they run out, the reply fails. */
+  reconnectDelaysMs?: readonly number[];
 };
 
 export type UseKeyboardHandlerProps = {
@@ -49,6 +63,7 @@ export type ChatInputBarProps = {
   isLoading: boolean;
   selectedModel: string;
   onModelChange: (model: string) => void;
+  onStop?: () => void;
 };
 
 export type ChatEmptyStateProps = {
@@ -78,6 +93,8 @@ export type ChatStreamState = {
   error: string | null;
   usage: Usage;
   sessionId?: string;
+  /** The reply stream being followed (or last followed): what the stop button cancels. */
+  streamId: string | null;
   /** A Guest's send was refused because their message allowance is spent. */
   isMessageAllowanceReached: boolean;
   setHistory: Dispatch<SetStateAction<ChatMessage[]>>;
@@ -104,8 +121,9 @@ export type ModelSelectorState = {
 /** The events a reply stream carries (`GET /api/streams/{streamId}`). */
 export type SseEvent = 'token' | 'usage' | 'error' | 'end';
 
-/** One SSE event off a reply stream: its name and its raw `data` line. */
+/** One SSE event off a reply stream: its name, its raw `data` line and its stream entry id. */
 export type SseFrame = {
   event: SseEvent;
   data: string;
+  id?: string;
 };

@@ -18,6 +18,17 @@ export const sessionResponseSchema = z
   })
   .meta({ id: 'Session' });
 
+export const sessionDetailResponseSchema = sessionResponseSchema
+  .extend({
+    activeStreamId: z
+      .uuid()
+      .nullable()
+      .describe(
+        'The reply still being produced for this Session, to re-attach to with `GET /api/streams/{streamId}`; null when none is in flight',
+      ),
+  })
+  .meta({ id: 'SessionDetail' });
+
 export const sessionsArraySchema = z.array(sessionResponseSchema).max(100);
 
 export const searchSessionsQuerySchema = z.object({

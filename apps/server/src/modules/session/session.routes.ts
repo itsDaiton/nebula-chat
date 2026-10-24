@@ -3,6 +3,7 @@ import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { sessionController } from '@backend/modules/session/session.controller';
 import { requireAuthentication } from '@backend/plugins/authGate.plugin';
 import {
+  sessionDetailResponseSchema,
   sessionResponseSchema,
   sessionsArraySchema,
   createSessionSchema,
@@ -61,7 +62,7 @@ const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
       operationId: 'getSession',
       params: getSessionSchema,
       response: {
-        200: jsonResponse('Session retrieved successfully', sessionResponseSchema),
+        200: jsonResponse('Session retrieved successfully', sessionDetailResponseSchema),
         400: jsonResponse('Invalid session ID format', errorEnvelopeSchema),
         401: jsonResponse('No auth session', errorEnvelopeSchema),
         404: jsonResponse('Session not found or not owned by the caller', errorEnvelopeSchema),

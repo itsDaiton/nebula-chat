@@ -28,6 +28,12 @@ export const envSchema = z
     REDIS_URL: z.url(),
     // The worker app's public URL: the server pings its /health on every enqueue to wake it (ADR-0013).
     WORKER_URL: originSchema.default('http://localhost:3001'),
+    // How long a stop request waits for the worker to see it; it outlasts a cold start of a job that is still queued.
+    STREAM_CANCEL_TTL_SECONDS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(15 * 60),
     CLIENT_URL: originSchema.default('http://localhost:5173'),
     SERVER_URL: z.preprocess((raw) => (raw === '' ? undefined : raw), originSchema.optional()),
     TRUST_PROXY: z.string().optional(),

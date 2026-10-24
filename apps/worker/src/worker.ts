@@ -15,23 +15,30 @@ import { createServer } from 'node:http';
 import { Worker } from 'bullmq';
 import { DIRECT_REPLY_QUEUE, serializeReplyStreamEvent } from '@nebula-chat/contracts';
 import { streamChat } from '@nebula-chat/langchain';
-import { streamKey } from '@nebula-chat/redis';
+import { streamCancelKey, streamEndedKey, streamKey } from '@nebula-chat/redis';
 import { closeDb } from '@worker/db';
 import { directReplyRepository } from '@worker/directReplies/directReplyRepository';
 import { createDirectReplyProcessor } from '@worker/jobs/directReply';
 import { redis } from '@worker/redis';
 
-// Long enough for a client that dropped mid-reply to reconnect; Postgres holds the reply after.
-const STREAM_TTL_SECONDS = 60 * 60;
+// Outlives the stream, as the server's stream-owner record does, so the server can tell an
+// expired stream from one whose job is still queued.
+const STREAM_ENDED_TTL_SECONDS = 24 * 60 * 60;
 
 const start = async (): Promise<void> => {
   const processDirectReply = createDirectReplyProcessor({
     store: directReplyRepository,
     stream: {
       append: async (streamId, event) => {
+        // Ended before `end` lands, so a Session read made once a client has seen `end` never
+        // names this reply as still in flight, and the client never re-attaches to it.
+        if (event.type === 'end') {
+          await redis.flags.raise(streamEndedKey(streamId), STREAM_ENDED_TTL_SECONDS);
+        }
         await redis.streams.append(streamKey(streamId), serializeReplyStreamEvent(event));
       },
-      expire: (streamId) => redis.streams.expire(streamKey(streamId), STREAM_TTL_SECONDS),
+      expire: (streamId) => redis.streams.expire(streamKey(streamId), env.STREAM_TTL_SECONDS),
+      isCancelled: (streamId) => redis.flags.isRaised(streamCancelKey(streamId)),
     },
     streamChat,
     apiKeys: { openai: env.OPENAI_API_KEY, anthropic: env.ANTHROPIC_API_KEY },

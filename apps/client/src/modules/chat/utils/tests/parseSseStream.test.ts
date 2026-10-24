@@ -32,14 +32,20 @@ describe('parseSseStream', () => {
     ]);
   });
 
-  it('ignores ids, comments and events it does not know', async () => {
+  it('ignores comments and events it does not know', async () => {
     await expect(
       collect(
         ': keep-alive\n\n',
         'event: step-started\ndata: {}\n\n',
-        'id: 1-1\nevent: usage\ndata: {"totalTokens":3}\n\n',
+        'event: usage\ndata: {"totalTokens":3}\n\n',
       ),
     ).resolves.toEqual([{ event: 'usage', data: '{"totalTokens":3}' }]);
+  });
+
+  it('carries each event’s id, the stream entry a reconnect resumes after', async () => {
+    await expect(collect('id: 1-1\nevent: token\ndata: {"token":"a"}\n\n')).resolves.toEqual([
+      { event: 'token', data: '{"token":"a"}', id: '1-1' },
+    ]);
   });
 
   it('drops a trailing event the body never terminated', async () => {

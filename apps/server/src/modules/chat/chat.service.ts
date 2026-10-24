@@ -6,7 +6,7 @@ import type { ChatLogger, SendMessageDTO, SentMessage } from '@backend/modules/c
 import { messageRepository } from '@backend/modules/message/message.repository';
 import { sessionRepository } from '@backend/modules/session/session.repository';
 import { enqueueDirectReply } from '@backend/queue';
-import { saveStreamOwner } from '@backend/redis';
+import { saveActiveStream, saveStreamOwner } from '@backend/redis';
 import { countTokens } from '@backend/utils/countTokens';
 
 const MAX_PROMPT_TOKENS = 2000;
@@ -51,6 +51,7 @@ export const chatService = {
     // The assistant Message is persisted under the stream's id, so one id names both.
     const streamId = randomUUID();
     await saveStreamOwner(streamId, userId);
+    await saveActiveStream(sessionId, streamId);
     await enqueueDirectReply({ userId, sessionId, messageId, streamId }, logger);
 
     return { messageId, streamId };

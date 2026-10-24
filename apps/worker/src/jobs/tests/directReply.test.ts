@@ -9,6 +9,7 @@ import {
   memoryStore,
   memoryStream,
   scriptedModel,
+  slowModel,
 } from '@worker/jobs/tests/directReplyFakes';
 
 const USER_ID = '11111111-1111-4111-8111-111111111111';
@@ -39,6 +40,7 @@ const processorWith = (
     streamChat,
     apiKeys,
     logger: log.logger,
+    cancelPollMs: 1,
   });
 
 const run = (streamChat: StreamChat, data: unknown = payload) =>
@@ -249,6 +251,58 @@ describe('the Direct reply job', () => {
       expect(eventLines(log.lines, 'chat.stream.end.failed')).toMatchObject([
         { level: LEVEL.warn },
       ]);
+    });
+  });
+
+  describe('when the User stops it', () => {
+    it('aborts the model call, persists what it had produced and ends the stream as cancelled', async () => {
+      const model = slowModel(['Two', ' plus', ' two', ' is', ' four'], (index) => {
+        if (index === 1) redis.cancelled.add(STREAM_ID);
+      });
+
+      await run(model.streamChat);
+
+      expect(model.signals[0]?.aborted).toBe(true);
+      expect(streamed()).toEqual([
+        { type: 'token', token: 'Two' },
+        { type: 'token', token: ' plus' },
+        { type: 'end', reason: 'cancelled' },
+      ]);
+      expect(db.created).toEqual([
+        { id: STREAM_ID, sessionId: SESSION_ID, content: 'Two plus', tokenCount: null },
+      ]);
+      expect(operations.slice(-3)).toEqual(['persist', 'append:end', 'expire']);
+    });
+
+    it('logs the reply once, at info, as cancelled', async () => {
+      const model = slowModel(['a', 'b', 'c'], () => redis.cancelled.add(STREAM_ID));
+
+      await run(model.streamChat);
+
+      expect(eventLines(log.lines, 'chat.reply.completed')).toMatchObject([
+        { level: LEVEL.info, 'nebula.outcome': 'cancelled' },
+      ]);
+    });
+
+    it('never calls the model for a reply stopped while its job was queued, and persists nothing', async () => {
+      redis.cancelled.add(STREAM_ID);
+      const model = scriptedModel(['4']);
+
+      await run(model.streamChat);
+
+      expect(model.calls).toHaveLength(0);
+      expect(streamed()).toEqual([{ type: 'end', reason: 'cancelled' }]);
+      expect(db.created).toEqual([]);
+      expect(redis.expired.has(STREAM_ID)).toBe(true);
+    });
+
+    it('finishes a reply nobody stopped without aborting its model call', async () => {
+      const model = slowModel(['a', 'b']);
+
+      await run(model.streamChat);
+
+      expect(model.signals[0]?.aborted).toBe(false);
+      expect(streamed().at(-1)).toEqual({ type: 'end' });
     });
   });
 

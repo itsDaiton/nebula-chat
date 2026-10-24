@@ -13,6 +13,7 @@ export const LOG_EVENTS = [
   'http.request.failed',
   // Chat
   'chat.reply.completed',
+  'chat.reply.cancel.requested',
   'chat.stream.relay.failed',
   'chat.stream.end.failed',
   // Jobs (the worker, ADR-0013)

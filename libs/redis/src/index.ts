@@ -15,8 +15,19 @@ export type { RedisPubSub } from './pubsub';
 // Streams primitive (append-only logs tailed from an offset; reply delivery, ADR-0014)
 export type { RedisStreams, StreamReader, StreamEntry, StreamReadOptions } from './streams';
 
+// Flags primitive (short-lived markers with a TTL; reply cancel requests, ADR-0014)
+export type { RedisFlags } from './flags';
+
 // Key helpers (the lib owns the key/hash scheme)
-export { hashText, buildKey, authKey, AUTH_KEY_PREFIX, streamKey } from './keys';
+export {
+  hashText,
+  buildKey,
+  authKey,
+  AUTH_KEY_PREFIX,
+  streamKey,
+  streamCancelKey,
+  streamEndedKey,
+} from './keys';
 
 // Config
 export type {
@@ -29,4 +40,5 @@ export type {
   StreamWriteConnection,
   StreamReadConnection,
   XReadReply,
+  FlagConnection,
 } from './types';

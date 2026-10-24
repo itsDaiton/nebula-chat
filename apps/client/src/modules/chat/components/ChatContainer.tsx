@@ -7,6 +7,7 @@ import { ChatInputBar } from '@/modules/chat/components/ChatInputBar';
 import { ChatEmptyState } from '@/modules/chat/components/ChatEmptyState';
 import { ChatMessageList } from '@/modules/chat/components/ChatMessageList';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
+import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useHandleSendMessage } from '@/modules/chat/hooks/useHandleSendMessage';
 import { useModel } from '@/modules/chat/hooks/useModel';
 import { useChatSession } from '@/modules/sessions/hooks/useChatSession';
@@ -16,12 +17,18 @@ import { resources } from '@/resources';
 
 export const ChatContainer = () => {
   const { id: sessionId } = useParams<{ id: string }>();
-  const { error: sessionError, isLoading: isSessionLoading } = useChatSession(sessionId);
+  const {
+    error: sessionError,
+    isLoading: isSessionLoading,
+    activeStreamId,
+  } = useChatSession(sessionId);
   const {
     history,
     isStreaming,
     isPostStreamNavigation,
     streamMessage,
+    resumeStream,
+    stop,
     clearPostStream,
     sessionId: chatSessionId,
   } = useChatStream();
@@ -37,6 +44,15 @@ export const ChatContainer = () => {
       clearPostStream();
     }
   }, [sessionId, isPostStreamNavigation, clearPostStream]);
+
+  // A Session opened mid-reply (a reload, another tab) re-attaches to the reply still streaming.
+  useEffect(() => {
+    if (!sessionId || !activeStreamId || chatSessionId !== sessionId) return;
+    const chat = useChatStreamStore.getState();
+    // Already following it, or this tab just did and the Session read is not yet refreshed.
+    if (chat.isStreaming || chat.streamId === activeStreamId) return;
+    void resumeStream({ sessionId, streamId: activeStreamId, messages: chat.history });
+  }, [activeStreamId, chatSessionId, resumeStream, sessionId]);
 
   useEffect(() => {
     scrollToBottom(scrollRef);
@@ -90,6 +106,7 @@ export const ChatContainer = () => {
         isLoading={isStreaming}
         selectedModel={selectedModel}
         onModelChange={setSelectedModel}
+        onStop={() => void stop()}
       />
     </ChatContainerBox>
   );

@@ -4,6 +4,7 @@ import { useModelSelector } from '@/modules/chat/hooks/useModelSelector';
 import type { ChatInputProps } from '@/modules/chat/types/types';
 import { ModelSelect } from '@/modules/chat/components/ModelSelect';
 import { SendButton } from '@/modules/chat/components/SendButton';
+import { StopButton } from '@/modules/chat/components/StopButton';
 import { useTextareaAutoResize } from '@/shared/hooks/useTextareaAutoResize';
 import { chatScrollBar } from '@/shared/components/scrollbar';
 import { ChatInputArea } from '@/modules/chat/components/ChatInputArea';
@@ -14,6 +15,7 @@ export const ChatInput = ({
   isLoading = false,
   selectedModel,
   onModelChange,
+  onStop,
 }: ChatInputProps) => {
   const { message, setMessage, handleSubmit, handleMessageSend } = useMessageHandler({
     onSendMessage,
@@ -64,7 +66,11 @@ export const ChatInput = ({
             setIsSelectOpen={setIsSelectOpen}
             triggerWidth={triggerWidth}
           />
-          <SendButton isLoading={isLoading} message={message} />
+          {isLoading && onStop ? (
+            <StopButton onStop={onStop} />
+          ) : (
+            <SendButton isLoading={isLoading} message={message} />
+          )}
         </Flex>
       </Box>
     </chakra.form>

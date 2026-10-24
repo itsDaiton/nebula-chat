@@ -7,6 +7,11 @@ import type { ReplyStreamReader } from '@backend/redis';
 // `timeouts` (an empty block) or else waits for the next append, as `XREAD … BLOCK` does.
 const memoryReplyStreams = () => {
   const owners = new Map<string, string>();
+  // Each Session's latest reply stream, the streams that have their terminal event, and the
+  // streams a User asked to stop.
+  const activeStreams = new Map<string, string>();
+  const ended = new Set<string>();
+  const cancelRequests = new Set<string>();
   const streams = new Map<string, StreamEntry[]>();
   const reads: { streamId: string; afterId: string }[] = [];
   const state = { timeouts: 0, readError: undefined as Error | undefined, closedReaders: 0 };
@@ -64,8 +69,17 @@ const memoryReplyStreams = () => {
     };
   };
 
+  /** What the worker does once a stream has its terminal event and its TTL then passes. */
+  const expire = (streamId: string) => {
+    ended.add(streamId);
+    streams.delete(streamId);
+  };
+
   const reset = () => {
     owners.clear();
+    activeStreams.clear();
+    ended.clear();
+    cancelRequests.clear();
     streams.clear();
     reads.length = 0;
     waiting.clear();
@@ -74,6 +88,10 @@ const memoryReplyStreams = () => {
 
   return {
     owners,
+    activeStreams,
+    ended,
+    cancelRequests,
+    expire,
     reads,
     state,
     append,
@@ -83,9 +101,33 @@ const memoryReplyStreams = () => {
       owners.set(streamId, userId);
     },
     findStreamOwner: async (streamId: string) => owners.get(streamId) ?? null,
+    saveActiveStream: async (sessionId: string, streamId: string) => {
+      activeStreams.set(sessionId, streamId);
+    },
+    findActiveStream: async (sessionId: string) => {
+      const streamId = activeStreams.get(sessionId);
+      return streamId === undefined || ended.has(streamId) ? null : streamId;
+    },
+    isStreamEnded: async (streamId: string) => ended.has(streamId),
+    isStreamExpired: async (streamId: string) => ended.has(streamId) && !streams.has(streamId),
+    requestStreamCancel: async (streamId: string) => {
+      cancelRequests.add(streamId);
+    },
     openReplyStream,
   };
 };
 
 /** One instance per test file: the `@backend/redis` mock factory and the test share it. */
 export const replyStreams = memoryReplyStreams();
+
+/** The reply-stream exports of `@backend/redis`, for a `vi.mock` factory to spread. */
+export const replyStreamsModule = {
+  saveStreamOwner: replyStreams.saveStreamOwner,
+  findStreamOwner: replyStreams.findStreamOwner,
+  saveActiveStream: replyStreams.saveActiveStream,
+  findActiveStream: replyStreams.findActiveStream,
+  isStreamEnded: replyStreams.isStreamEnded,
+  isStreamExpired: replyStreams.isStreamExpired,
+  requestStreamCancel: replyStreams.requestStreamCancel,
+  openReplyStream: replyStreams.openReplyStream,
+};

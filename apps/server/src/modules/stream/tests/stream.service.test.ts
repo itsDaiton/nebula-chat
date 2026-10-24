@@ -1,11 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@backend/redis', async () => {
-  const { replyStreams: fake } = await import('@backend/test/memoryReplyStreams.js');
-  return {
-    findStreamOwner: fake.findStreamOwner,
-    openReplyStream: fake.openReplyStream,
-  };
+  const { replyStreamsModule } = await import('@backend/test/memoryReplyStreams.js');
+  return replyStreamsModule;
 });
 
 import { streamService } from '@backend/modules/stream/stream.service';
@@ -27,6 +24,7 @@ describe('streamService.relay', () => {
 
     const relaying = streamService.relay(
       STREAM_ID,
+      '0',
       (chunk) => frames.push(chunk),
       disconnected.signal,
       logger,

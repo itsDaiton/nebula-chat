@@ -14,13 +14,11 @@ vi.mock('@backend/auth', () => ({
 
 // @backend/redis is the boundary to Redis: stream owners and reply streams live in memory.
 vi.mock('@backend/redis', async () => {
-  const { replyStreams: fake } = await import('@backend/test/memoryReplyStreams.js');
+  const { replyStreamsModule } = await import('@backend/test/memoryReplyStreams.js');
   return {
     redis: { connection: {}, close: vi.fn(async () => undefined) },
     closeRedis: vi.fn(async () => undefined),
-    saveStreamOwner: fake.saveStreamOwner,
-    findStreamOwner: fake.findStreamOwner,
-    openReplyStream: fake.openReplyStream,
+    ...replyStreamsModule,
   };
 });
 
@@ -56,8 +54,18 @@ const framesIn = (body: string): SseFrame[] =>
 const { logger, lines } = captureLogger();
 let app: FastifyInstance;
 
-const read = async (streamId = STREAM_ID): Promise<LightMyRequestResponse> =>
-  app.inject({ method: 'GET', url: `/api/streams/${streamId}` });
+const read = async (
+  streamId = STREAM_ID,
+  { headers, query }: { headers?: Record<string, string>; query?: string } = {},
+): Promise<LightMyRequestResponse> =>
+  app.inject({
+    method: 'GET',
+    url: `/api/streams/${streamId}${query ? `?${query}` : ''}`,
+    ...(headers ? { headers } : {}),
+  });
+
+const cancel = async (streamId = STREAM_ID): Promise<LightMyRequestResponse> =>
+  app.inject({ method: 'POST', url: `/api/streams/${streamId}/cancel` });
 
 beforeAll(async () => {
   app = await createTestApp({ logger });
@@ -168,6 +176,79 @@ describe('GET /api/streams/:streamId', () => {
     ]);
   });
 
+  describe('resuming', () => {
+    it('resumes after the entry named by Last-Event-ID, relaying nothing the client already has', async () => {
+      const ids = replyStreams.append(
+        STREAM_ID,
+        { type: 'token', token: 'Two' },
+        { type: 'token', token: ' plus' },
+        { type: 'token', token: ' two' },
+        { type: 'end' },
+      );
+
+      const res = await read(STREAM_ID, { headers: { 'last-event-id': ids[1]! } });
+
+      expect(framesIn(res.body)).toEqual([
+        { id: ids[2], event: 'token', data: { token: ' two' } },
+        { id: ids[3], event: 'end', data: {} },
+      ]);
+      expect(replyStreams.reads[0]?.afterId).toBe(ids[1]);
+    });
+
+    it('resumes after the entry named by the lastEventId query parameter, for a manual reconnect', async () => {
+      const ids = replyStreams.append(
+        STREAM_ID,
+        { type: 'token', token: 'a' },
+        { type: 'token', token: 'b' },
+        { type: 'end' },
+      );
+
+      const res = await read(STREAM_ID, { query: `lastEventId=${ids[0]!}` });
+
+      expect(framesIn(res.body).map((f) => f.data)).toEqual([{ token: 'b' }, {}]);
+    });
+
+    it('answers 400 for a Last-Event-ID that is not a stream entry id', async () => {
+      const res = await read(STREAM_ID, { headers: { 'last-event-id': 'yesterday' } });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.json()).toMatchObject({ error: 'Validation' });
+      expect(replyStreams.reads).toHaveLength(0);
+    });
+
+    it('answers a typed 404 for a stream that ended and has since expired', async () => {
+      replyStreams.append(STREAM_ID, { type: 'token', token: 'a' }, { type: 'end' });
+      replyStreams.expire(STREAM_ID);
+
+      const res = await read();
+
+      expect(res.statusCode).toBe(404);
+      expect(res.json()).toMatchObject({ success: false, error: 'NotFound' });
+      expect(replyStreams.reads).toHaveLength(0);
+    });
+
+    it('waits for a stream whose job is still queued rather than calling it missing', async () => {
+      const relaying = read();
+      await vi.waitFor(() => expect(replyStreams.reads).toHaveLength(1));
+      replyStreams.append(STREAM_ID, { type: 'token', token: 'late' }, { type: 'end' });
+
+      const res = await relaying;
+
+      expect(res.statusCode).toBe(200);
+      expect(framesIn(res.body).map((f) => f.event)).toEqual(['token', 'end']);
+    });
+
+    it('relays a cancelled end as a terminal event with its reason', async () => {
+      const ids = replyStreams.append(STREAM_ID, { type: 'end', reason: 'cancelled' });
+
+      const res = await read();
+
+      expect(framesIn(res.body)).toEqual([
+        { id: ids[0], event: 'end', data: { reason: 'cancelled' } },
+      ]);
+    });
+  });
+
   describe('owner check', () => {
     it("answers 404 for another User's stream, never revealing that it exists", async () => {
       replyStreams.owners.set(STREAM_ID, OTHER_USER_ID);
@@ -204,5 +285,46 @@ describe('GET /api/streams/:streamId', () => {
       expect(res.statusCode).toBe(400);
       expect(res.json()).toMatchObject({ error: 'Validation' });
     });
+  });
+});
+
+describe('POST /api/streams/:streamId/cancel', () => {
+  it('asks the worker to stop the reply and answers 204, logging the request', async () => {
+    const res = await cancel();
+
+    expect(res.statusCode).toBe(204);
+    expect(replyStreams.cancelRequests.has(STREAM_ID)).toBe(true);
+    expect(eventLines(lines, 'chat.reply.cancel.requested')).toMatchObject([
+      { level: LEVEL.info, 'nebula.reply.message.id': STREAM_ID },
+    ]);
+  });
+
+  it('treats cancelling a reply that already finished as a no-op, not an error', async () => {
+    replyStreams.append(STREAM_ID, { type: 'end' });
+    replyStreams.ended.add(STREAM_ID);
+
+    const res = await cancel();
+
+    expect(res.statusCode).toBe(204);
+    expect(replyStreams.cancelRequests.size).toBe(0);
+  });
+
+  it("answers 404 for another User's stream and never raises its cancel flag", async () => {
+    replyStreams.owners.set(STREAM_ID, OTHER_USER_ID);
+
+    const res = await cancel();
+
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toMatchObject({ success: false, error: 'NotFound' });
+    expect(replyStreams.cancelRequests.size).toBe(0);
+  });
+
+  it('answers 401 without an auth session', async () => {
+    mockedGetSession.mockResolvedValue(null);
+
+    const res = await cancel();
+
+    expect(res.statusCode).toBe(401);
+    expect(replyStreams.cancelRequests.size).toBe(0);
   });
 });

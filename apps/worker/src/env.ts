@@ -13,6 +13,13 @@ const envSchema = z
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
     // How many Direct replies one worker instance produces at once; the primary LLM throttle.
     WORKER_CONCURRENCY: z.coerce.number().int().positive().default(5),
+    // How long a reply stream outlives its terminal event, for a client that dropped mid-reply to
+    // resume from; after that the client reads the persisted Message instead (ADR-0014).
+    STREAM_TTL_SECONDS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(60 * 60),
   })
   .refine((data) => data.OPENAI_API_KEY !== undefined || data.ANTHROPIC_API_KEY !== undefined, {
     message: 'At least one of OPENAI_API_KEY or ANTHROPIC_API_KEY must be set',

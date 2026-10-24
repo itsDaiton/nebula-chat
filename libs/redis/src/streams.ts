@@ -31,6 +31,8 @@ export type RedisStreams = {
   append(key: string, payload: string): Promise<string>;
   /** Deletes `key` once `ttlSeconds` have passed. */
   expire(key: string, ttlSeconds: number): Promise<void>;
+  /** Whether `key` holds a stream: false before its first append and once it has expired. */
+  exists(key: string): Promise<boolean>;
   /** A reader on a dedicated connection; close it when done. */
   openReader(): StreamReader;
 };
@@ -86,6 +88,10 @@ export const createStreams = ({
   expire: async (key, ttlSeconds) => {
     await connect();
     await writer.expire(key, ttlSeconds);
+  },
+  exists: async (key) => {
+    await connect();
+    return (await writer.exists(key)) > 0;
   },
   openReader: () => createReader(readerConnection()),
 });

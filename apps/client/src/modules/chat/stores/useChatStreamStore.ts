@@ -8,6 +8,7 @@ export const useChatStreamStore = create<ChatStreamState>((set) => ({
   error: null,
   usage: null,
   sessionId: undefined,
+  streamId: null,
   isMessageAllowanceReached: false,
   setHistory: (history) =>
     set((state) => ({

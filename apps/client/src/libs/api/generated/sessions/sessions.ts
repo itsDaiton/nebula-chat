@@ -30,6 +30,7 @@ import type {
   ListSessionsParams,
   SearchSessionsParams,
   Session,
+  SessionDetail,
   SessionPage,
 } from '../model';
 
@@ -536,7 +537,7 @@ export const getSession = (
   options?: SecondParameter<typeof axiosClient>,
   signal?: AbortSignal,
 ) => {
-  return axiosClient<Session>(
+  return axiosClient<SessionDetail>(
     { url: `/api/sessions/${sessionId}`, method: 'GET', signal },
     options,
   );

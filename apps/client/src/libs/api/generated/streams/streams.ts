@@ -4,23 +4,27 @@
  * Nebula Chat API
  * REST API for Nebula Chat
  */
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { ErrorEnvelope } from '../model';
+import type { ErrorEnvelope, ReadReplyStreamParams } from '../model';
 
 import { streamClient } from '../../streamClient';
 import type { ErrorType } from '../../streamClient';
+import { axiosClient } from '../../client';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -40,19 +44,23 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 /**
- * Relay a reply stream as server-sent events, from its first event to its `end` (ADR-0014). Only the User who sent the Message may read it.
+ * Relay a reply stream as server-sent events, from its first event (or after `Last-Event-ID`) to its `end` (ADR-0014). Only the User who sent the Message may read it. A stream that has expired answers 404: read the persisted Message instead.
  * @summary Read reply stream
  */
 export const readReplyStream = (
   streamId: string,
+  params?: ReadReplyStreamParams,
   options?: SecondParameter<typeof streamClient>,
   signal?: AbortSignal,
 ) => {
-  return streamClient<string>({ url: `/api/streams/${streamId}`, method: 'GET', signal }, options);
+  return streamClient<string>(
+    { url: `/api/streams/${streamId}`, method: 'GET', params, signal },
+    options,
+  );
 };
 
-export const getReadReplyStreamQueryKey = (streamId: string) => {
-  return [`/api/streams/${streamId}`] as const;
+export const getReadReplyStreamQueryKey = (streamId: string, params?: ReadReplyStreamParams) => {
+  return [`/api/streams/${streamId}`, ...(params ? [params] : [])] as const;
 };
 
 export const getReadReplyStreamQueryOptions = <
@@ -60,6 +68,7 @@ export const getReadReplyStreamQueryOptions = <
   TError = ErrorType<ErrorEnvelope>,
 >(
   streamId: string,
+  params?: ReadReplyStreamParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof readReplyStream>>, TError, TData>>;
     request?: SecondParameter<typeof streamClient>;
@@ -67,10 +76,10 @@ export const getReadReplyStreamQueryOptions = <
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getReadReplyStreamQueryKey(streamId);
+  const queryKey = queryOptions?.queryKey ?? getReadReplyStreamQueryKey(streamId, params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof readReplyStream>>> = ({ signal }) =>
-    readReplyStream(streamId, requestOptions, signal);
+    readReplyStream(streamId, params, requestOptions, signal);
 
   return {
     queryKey,
@@ -90,6 +99,7 @@ export function useReadReplyStream<
   TError = ErrorType<ErrorEnvelope>,
 >(
   streamId: string,
+  params: undefined | ReadReplyStreamParams,
   options: {
     query: Partial<UseQueryOptions<Awaited<ReturnType<typeof readReplyStream>>, TError, TData>> &
       Pick<
@@ -109,6 +119,7 @@ export function useReadReplyStream<
   TError = ErrorType<ErrorEnvelope>,
 >(
   streamId: string,
+  params?: ReadReplyStreamParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof readReplyStream>>, TError, TData>> &
       Pick<
@@ -128,6 +139,7 @@ export function useReadReplyStream<
   TError = ErrorType<ErrorEnvelope>,
 >(
   streamId: string,
+  params?: ReadReplyStreamParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof readReplyStream>>, TError, TData>>;
     request?: SecondParameter<typeof streamClient>;
@@ -143,13 +155,14 @@ export function useReadReplyStream<
   TError = ErrorType<ErrorEnvelope>,
 >(
   streamId: string,
+  params?: ReadReplyStreamParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof readReplyStream>>, TError, TData>>;
     request?: SecondParameter<typeof streamClient>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getReadReplyStreamQueryOptions(streamId, options);
+  const queryOptions = getReadReplyStreamQueryOptions(streamId, params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
@@ -157,3 +170,86 @@ export function useReadReplyStream<
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+/**
+ * Stop a Direct reply in flight: the worker aborts the model call, persists what it had produced and ends the stream with `end` { reason: "cancelled" }. Cancelling a reply that already finished does nothing.
+ * @summary Cancel reply stream
+ */
+export const cancelReplyStream = (
+  streamId: string,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<void>(
+    { url: `/api/streams/${streamId}/cancel`, method: 'POST', signal },
+    options,
+  );
+};
+
+export const getCancelReplyStreamMutationKey = () => ['cancelReplyStream'] as const;
+
+export const getCancelReplyStreamMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelReplyStream>>,
+    TError,
+    CancelReplyStreamMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof axiosClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof cancelReplyStream>>,
+  TError,
+  CancelReplyStreamMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCancelReplyStreamMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof cancelReplyStream>>,
+    CancelReplyStreamMutationVariables
+  > = (props) => {
+    const { streamId } = props ?? {};
+
+    return cancelReplyStream(streamId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CancelReplyStreamMutationResult = NonNullable<
+  Awaited<ReturnType<typeof cancelReplyStream>>
+>;
+
+export type CancelReplyStreamMutationError = ErrorType<ErrorEnvelope>;
+export type CancelReplyStreamMutationVariables = { streamId: string };
+
+/**
+ * @summary Cancel reply stream
+ */
+export const useCancelReplyStream = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof cancelReplyStream>>,
+      TError,
+      CancelReplyStreamMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof cancelReplyStream>>,
+  TError,
+  CancelReplyStreamMutationVariables,
+  TContext
+> => {
+  return useMutation(getCancelReplyStreamMutationOptions(options), queryClient);
+};

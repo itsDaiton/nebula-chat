@@ -46,7 +46,7 @@ apps/server/src/
 ├── env.ts                         # Zod-validated env schema — single source for all process.env reads
 ├── health.validation.ts           # ApiRoot / Health response schemas for the `/` and `/health` routes
 ├── db.ts                          # DB client singleton (createDbClient from @nebula-chat/db)
-├── redis.ts                       # Redis toolkit singleton + reply-stream helpers: stream owners, openReplyStream
+├── redis.ts                       # Redis toolkit singleton + reply-stream helpers: owners, in-flight streams, cancel, openReplyStream
 ├── queue.ts                       # BullMQ producer for Direct reply jobs (built on first use) + the worker /health ping
 ├── auth.ts                        # better-auth instance singleton (createAuth from @nebula-chat/auth)
 ├── profileImageStore.ts           # Profile image store singleton: Supabase Storage from env, or null (uploads off)
@@ -469,6 +469,7 @@ be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-fi
 | Variable                           | Purpose                                                                                                                   |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `WORKER_URL`                       | The worker's public URL; the server pings its `/health` on every enqueue to wake it (default `http://localhost:3001`)     |
+| `STREAM_CANCEL_TTL_SECONDS`        | How long a stop request waits for the worker to see it (default `900`)                                                    |
 | `DATABASE_URL`                     | PostgreSQL connection string                                                                                              |
 | `REDIS_URL`                        | Redis connection (e.g. `redis://localhost:6380`)                                                                          |
 | `CLIENT_URL`                       | Frontend origin for CORS (e.g. `http://localhost:5173`); must be the same site as the API ([auth.md](../../docs/auth.md)) |

@@ -20,6 +20,9 @@ import { DIRECT_REPLY_SYSTEM_PROMPT } from '@worker/directReplies/systemPrompt';
 /** The most recent Messages loaded into a Direct reply's context. */
 const MAX_HISTORY_MESSAGES = 20;
 
+/** How often a streaming reply checks whether its User asked it to stop. */
+const DEFAULT_CANCEL_POLL_MS = 250;
+
 type Usage = Omit<Extract<ReplyStreamEvent, { type: 'usage' }>, 'type'>;
 
 export type StoredSession = { id: string; model: string };
@@ -43,8 +46,10 @@ export type DirectReplyStore = {
 /** The reply stream the server relays: a Redis Stream in production. */
 export type ReplyStreamWriter = {
   append: (streamId: string, event: ReplyStreamEvent) => Promise<void>;
-  /** Gives a finished stream its TTL; Postgres holds the durable reply. */
+  /** Gives a stream its TTL once it has its terminal event; Postgres holds the durable reply. */
   expire: (streamId: string) => Promise<void>;
+  /** Whether the User asked to stop the reply (the server's cancel flag). */
+  isCancelled: (streamId: string) => Promise<boolean>;
 };
 
 export type StreamChat = (
@@ -59,15 +64,47 @@ export type DirectReplyDeps = {
   streamChat: StreamChat;
   apiKeys: { [P in ProviderType]?: string | undefined };
   logger: Logger;
+  /** How often the model call checks for a cancel request. Default 250 ms. */
+  cancelPollMs?: number;
 };
 
-/** Streams one Direct reply, persists it under the stream's id, then ends the stream (after an `error` on failure). */
+/** Aborts `controller` once the reply's cancel flag is raised; call the returned function to stop watching. */
+const watchForCancel = (
+  streamId: string,
+  { stream, cancelPollMs = DEFAULT_CANCEL_POLL_MS }: DirectReplyDeps,
+  controller: AbortController,
+): (() => void) => {
+  let checking = false;
+  const check = async (): Promise<void> => {
+    checking = true;
+    try {
+      if (await stream.isCancelled(streamId)) controller.abort();
+    } catch {
+      // A failed check is not a cancel: the reply carries on, and the next check tries again.
+    } finally {
+      checking = false;
+    }
+  };
+  const timer = setInterval(() => {
+    if (!checking) void check();
+  }, cancelPollMs);
+  return () => clearInterval(timer);
+};
+
+/**
+ * Streams one Direct reply, persists it under the stream's id, then ends the stream (after an
+ * `error` on failure). A reply its User stops ends as `cancelled`, keeping what it had produced.
+ */
 export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps): Promise<void> => {
   const { store, stream, logger } = deps;
   const startMs = Date.now();
   let model: string | undefined;
   let provider: ProviderType | undefined;
   let usage: Usage | undefined;
+  // What the model has produced so far: the whole reply, or what a cancelled one keeps.
+  let reply = '';
+  const cancel = new AbortController();
+  let stopWatching = (): void => undefined;
 
   const summary = (): LogAttributes => ({
     'gen_ai.provider.name': provider,
@@ -108,7 +145,14 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
       );
     }
 
-    let content = '';
+    // A reply stopped while its job waited in the queue never reaches the model.
+    if (await stream.isCancelled(job.streamId)) {
+      cancel.abort();
+      await endCancelled(job, reply, deps, summary);
+      return;
+    }
+
+    stopWatching = watchForCancel(job.streamId, deps, cancel);
     await deps.streamChat(
       {
         provider,
@@ -118,10 +162,11 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
         history,
         userMessage: userMessage.content,
         logger: componentLogger(logger, 'llm'),
+        signal: cancel.signal,
       },
       {
         onToken: (token) => {
-          content += token;
+          reply += token;
           enqueue({ type: 'token', token });
         },
         onUsage: (u) => {
@@ -130,14 +175,15 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
         },
       },
     );
+    stopWatching();
     await appended;
 
-    if (!content.trim()) throw new Error('The assistant did not generate a response.');
+    if (!reply.trim()) throw new Error('The assistant did not generate a response.');
 
     await store.createAssistantMessage({
       id: job.streamId,
       sessionId: job.sessionId,
-      content,
+      content: reply,
       tokenCount: usage?.totalTokens ?? null,
     });
     await stream.append(job.streamId, { type: 'end' });
@@ -151,6 +197,12 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
       `Direct reply completed · ${model} · ${usage?.totalTokens ?? 0} tokens · ${((Date.now() - startMs) / 1000).toFixed(1)} s`,
     );
   } catch (error) {
+    stopWatching();
+    if (cancel.signal.aborted) {
+      await appended.catch(() => undefined);
+      await endCancelled(job, reply, deps, summary);
+      return;
+    }
     // The one handler for a failed reply: an AppError speaks for itself, anything else is generic.
     const envelope = toErrorEnvelope(error);
     const callerCaused = isAppError(error) && error.status < 500;
@@ -163,6 +215,46 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
     );
     // Tokens still queued go out first, or `end` would overtake them and the relay would drop them.
     await appended.catch(() => undefined);
+    await endWithError(job.streamId, envelope, deps);
+  }
+};
+
+/** Persists what a stopped reply had produced, if anything, then ends its stream as `cancelled`. */
+const endCancelled = async (
+  job: DirectReplyJob,
+  content: string,
+  deps: DirectReplyDeps,
+  summary: () => LogAttributes,
+): Promise<void> => {
+  const { store, stream, logger } = deps;
+  try {
+    if (content.trim()) {
+      // Usage only arrives once a model call completes, so a stopped reply has no token count.
+      await store.createAssistantMessage({
+        id: job.streamId,
+        sessionId: job.sessionId,
+        content,
+        tokenCount: null,
+      });
+    }
+    await stream.append(job.streamId, { type: 'end', reason: 'cancelled' });
+    await stream.expire(job.streamId);
+    logEvent(
+      componentLogger(logger, 'chat'),
+      'info',
+      'chat.reply.completed',
+      { ...summary(), 'nebula.outcome': 'cancelled' },
+      'Direct reply cancelled by its User',
+    );
+  } catch (error) {
+    const envelope = toErrorEnvelope(error);
+    logEvent(
+      componentLogger(logger, 'chat'),
+      'error',
+      'chat.reply.completed',
+      { ...summary(), 'nebula.outcome': 'failed', 'error.type': envelope.error, err: error },
+      `Cancelled Direct reply failed to finish · ${envelope.error}`,
+    );
     await endWithError(job.streamId, envelope, deps);
   }
 };

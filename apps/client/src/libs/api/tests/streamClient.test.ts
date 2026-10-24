@@ -28,6 +28,20 @@ describe('streamClient', () => {
     expect(fetchSpy.mock.calls[0]?.[1]?.credentials).toBe('include');
   });
 
+  it('sends its query parameters, so a reconnect can say where it got to', async () => {
+    let lastEventId: string | null | undefined;
+    server.use(
+      http.get(API_ROUTE.replyStream, ({ request }) => {
+        lastEventId = new URL(request.url).searchParams.get('lastEventId');
+        return new HttpResponse('ok');
+      }),
+    );
+
+    await readReplyStream(STREAM_ID, { lastEventId: '1700000000000-3' });
+
+    expect(lastEventId).toBe('1700000000000-3');
+  });
+
   it('sends a JSON body when the request has one', async () => {
     let received: { contentType: string | null; body: unknown } | undefined;
     server.use(
@@ -69,7 +83,9 @@ describe('streamClient', () => {
     const controller = new AbortController();
     controller.abort();
 
-    await expect(readReplyStream(STREAM_ID, undefined, controller.signal)).rejects.toMatchObject({
+    await expect(
+      readReplyStream(STREAM_ID, undefined, undefined, controller.signal),
+    ).rejects.toMatchObject({
       name: 'AbortError',
     });
   });

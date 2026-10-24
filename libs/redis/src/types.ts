@@ -71,6 +71,7 @@ export type ConnectionEvents = {
 export type StreamWriteConnection = {
   xadd(key: string, id: '*', field: string, value: string): Promise<string | null>;
   expire(key: string, seconds: number): Promise<number>;
+  exists(key: string): Promise<number>;
 };
 
 /** A raw `XREAD` reply: per stream, its key and `[id, [field, value, …]]` entries; nil on timeout. */
@@ -88,4 +89,10 @@ export type StreamReadConnection = {
     id: string,
   ): Promise<XReadReply>;
   disconnect(): void;
+};
+
+/** The subset of the ioredis client the flags primitive raises and checks flags with. */
+export type FlagConnection = {
+  set(key: string, value: string, expiryMode: 'EX', ttlSeconds: number): Promise<unknown>;
+  exists(key: string): Promise<number>;
 };

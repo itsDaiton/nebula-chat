@@ -48,6 +48,10 @@ const fakeRedis = () => {
       expiries.set(key, seconds);
       return 1;
     },
+    exists: async (key) => {
+      if (status !== 'ready') throw new Error('Stream isn’t writeable');
+      return streams.has(key) ? 1 : 0;
+    },
   };
 
   const readers: (StreamReadConnection & { closed: boolean })[] = [];
@@ -195,6 +199,24 @@ describe('streams', () => {
     await streams.append('stream:a', 'one');
     await streams.expire('stream:a', 3_600);
     expect(redis.expiries.get('stream:a')).toBe(3_600);
+  });
+
+  it('tells a stream that exists from one that never did or has expired', async () => {
+    const { redis, streams } = setup();
+    await streams.append('stream:a', 'one');
+
+    await expect(streams.exists('stream:a')).resolves.toBe(true);
+    await expect(streams.exists('stream:b')).resolves.toBe(false);
+    redis.streams.delete('stream:a');
+    await expect(streams.exists('stream:a')).resolves.toBe(false);
+  });
+
+  it('opens the main connection before checking a stream exists', async () => {
+    const { redis, streams } = setup();
+
+    await streams.exists('stream:a');
+
+    expect(redis.writer.status).toBe('ready');
   });
 
   it('propagates a failed append rather than failing open', async () => {

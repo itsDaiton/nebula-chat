@@ -19,6 +19,8 @@ export type ChatStreamConfig = LLMConfig & {
   history: HistoryMessage[];
   userMessage: string;
   logger?: LLMLogger;
+  /** Aborts the model call mid-stream; `streamChat` then rejects and reports no usage. */
+  signal?: AbortSignal;
 };
 
 export type ChatStreamCallbacks = {
@@ -32,7 +34,7 @@ export const streamChat = async (
   config: ChatStreamConfig,
   callbacks: ChatStreamCallbacks,
 ): Promise<void> => {
-  const { history, userMessage, systemPrompt = '', logger, model, ...llmConfig } = config;
+  const { history, userMessage, systemPrompt = '', logger, model, signal, ...llmConfig } = config;
   const startMs = Date.now();
 
   const resolvedModel = model ?? DEFAULT_MODELS[llmConfig.provider];
@@ -94,7 +96,10 @@ export const streamChat = async (
 
   try {
     await llmConcurrencyLimiter(async () => {
-      const stream = await chain.stream({ history: trimmedHistory, input: userMessage });
+      const stream = await chain.stream(
+        { history: trimmedHistory, input: userMessage },
+        { signal },
+      );
       let completionTokens = 0;
 
       for await (const chunk of stream) {

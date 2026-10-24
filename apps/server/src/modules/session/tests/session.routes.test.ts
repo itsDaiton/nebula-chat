@@ -25,7 +25,18 @@ vi.mock('@backend/auth', () => ({
   auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
 }));
 
+// @backend/redis is the boundary to Redis: each Session's in-flight reply stream lives in memory.
+vi.mock('@backend/redis', async () => {
+  const { replyStreamsModule } = await import('@backend/test/memoryReplyStreams.js');
+  return {
+    redis: { connection: {}, close: vi.fn(async () => undefined) },
+    closeRedis: vi.fn(async () => undefined),
+    ...replyStreamsModule,
+  };
+});
+
 import { auth } from '@backend/auth';
+import { replyStreams } from '@backend/test/memoryReplyStreams';
 import { sessionRepository } from '@backend/modules/session/session.repository';
 
 const repo = vi.mocked(sessionRepository);
@@ -56,6 +67,7 @@ afterAll(async () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  replyStreams.reset();
   // Default: an authenticated Registered user, so the gated create route passes.
   mockedGetSession.mockResolvedValue(registeredSession() as never);
 });
@@ -186,6 +198,29 @@ describe('GET /api/sessions/:sessionId', () => {
     expect(res.json()).toMatchObject({ id: SESSION_ID });
     // Owner-scoped: the lookup is filtered to the auth session's user.
     expect(repo.findById).toHaveBeenCalledWith({ sessionId: SESSION_ID }, REGISTERED_USER_ID);
+  });
+
+  it('names the reply still streaming, so a page reloaded mid-reply can re-attach to it', async () => {
+    const STREAM_ID = '33333333-3333-4333-8333-333333333333';
+    repo.findById.mockResolvedValue(fromPartial(aSession()));
+    replyStreams.activeStreams.set(SESSION_ID, STREAM_ID);
+
+    const res = await app.inject({ method: 'GET', url: `/api/sessions/${SESSION_ID}` });
+
+    expect(res.json()).toMatchObject({ id: SESSION_ID, activeStreamId: STREAM_ID });
+  });
+
+  it('names no reply once the latest one has ended, or when none was ever sent', async () => {
+    const STREAM_ID = '33333333-3333-4333-8333-333333333333';
+    repo.findById.mockResolvedValue(fromPartial(aSession()));
+
+    const none = await app.inject({ method: 'GET', url: `/api/sessions/${SESSION_ID}` });
+    replyStreams.activeStreams.set(SESSION_ID, STREAM_ID);
+    replyStreams.ended.add(STREAM_ID);
+    const ended = await app.inject({ method: 'GET', url: `/api/sessions/${SESSION_ID}` });
+
+    expect(none.json()).toMatchObject({ activeStreamId: null });
+    expect(ended.json()).toMatchObject({ activeStreamId: null });
   });
 
   it('returns 404 with a NotFound code when the session is absent or not owned', async () => {

@@ -9,7 +9,7 @@ import { faker } from '@faker-js/faker';
 import { HttpResponse, http } from 'msw';
 import type { RequestHandlerOptions } from 'msw';
 
-import type { Session, SessionPage } from '../model';
+import type { Session, SessionDetail, SessionPage } from '../model';
 
 export const getCreateSessionResponseMock = (
   overrideResponse: Partial<Extract<Session, object>> = {},
@@ -43,11 +43,12 @@ export const getSearchSessionsResponseMock = (): Session[] =>
   }));
 
 export const getGetSessionResponseMock = (
-  overrideResponse: Partial<Extract<Session, object>> = {},
-): Session => ({
+  overrideResponse: Partial<Extract<SessionDetail, object>> = {},
+): SessionDetail => ({
   id: faker.string.uuid(),
   title: faker.string.alpha({ length: { min: 10, max: 20 } }),
   createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  activeStreamId: faker.helpers.arrayElement([faker.string.uuid(), null]),
   ...overrideResponse,
 });
 
@@ -119,7 +120,10 @@ export const getSearchSessionsMockHandler = (
 
 export const getGetSessionMockHandler = (
   overrideResponse?:
-    Session | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<Session> | Session),
+    | SessionDetail
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<SessionDetail> | SessionDetail),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(

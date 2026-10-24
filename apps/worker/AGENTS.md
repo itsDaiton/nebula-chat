@@ -39,6 +39,8 @@ Locally, run it next to the server: both read the same Postgres and Redis. Its `
 - **It holds the LLM keys**; the server holds none. Model calls go through `@nebula-chat/langchain`
   until that lib is dissolved into `llm/` (NEB-358).
 - **Every reply stream ends with `end`**, after an `error` event too, so a reader always knows when to stop.
+  A reply its User stopped ends with `end` `{ reason: 'cancelled' }`: the runner polls the server's
+  cancel flag while the model streams, aborts the call and persists what it had produced.
   An error event carries the `@nebula-chat/errors` envelope, never a raw internal message.
 
 ---
@@ -122,6 +124,7 @@ the Drizzle repository, as in the server. The list lives in `vitest.config.mts` 
 | `REDIS_URL`                                                                                               | Redis connection string (the server's Redis)                     |
 | `PORT`                                                                                                    | Port `/health` listens on (default `3001`)                       |
 | `WORKER_CONCURRENCY`                                                                                      | Direct replies one instance produces at once (default `5`)       |
+| `STREAM_TTL_SECONDS`                                                                                      | How long a reply stream outlives its end (default `3600`)        |
 | `LOG_LEVEL`                                                                                               | Log verbosity (default `info`)                                   |
 | `LOG_LEVEL_OVERRIDES`                                                                                     | Per-component levels, comma-separated `component=level`          |
 | `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_LOGS_EXPORTER`, `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`, `OTEL_LOG_LEVEL` | As in the server ([docs/logging.md](../../docs/logging.md))      |

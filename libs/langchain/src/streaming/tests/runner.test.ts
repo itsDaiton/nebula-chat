@@ -40,9 +40,51 @@ const collect = async (config: ChatStreamConfig) => {
   return { tokens, usages };
 };
 
+/** Wires the mocked chain to yield `tokens` one at a time, stopping as LangChain does once its `signal` aborts. */
+const stubAbortableChain = (tokens: string[]) => {
+  mockedBuildChatChain.mockReturnValue({
+    stream: (_args: unknown, options?: { signal?: AbortSignal }) =>
+      Promise.resolve(
+        (async function* () {
+          for (const token of tokens) {
+            options?.signal?.throwIfAborted();
+            yield token;
+          }
+        })(),
+      ),
+  } as unknown as ReturnType<typeof buildChatChain>);
+};
+
 describe('streamChat', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('stops streaming once its signal aborts, rejecting without reporting usage', async () => {
+    stubAbortableChain(['one', 'two', 'three']);
+    const controller = new AbortController();
+    const tokens: string[] = [];
+    const onUsage = vi.fn();
+
+    const streaming = streamChat(baseConfig({ signal: controller.signal }), {
+      onToken: (token) => {
+        tokens.push(token);
+        controller.abort();
+      },
+      onUsage,
+    });
+
+    await expect(streaming).rejects.toThrow();
+    expect(tokens).toEqual(['one']);
+    expect(onUsage).not.toHaveBeenCalled();
+  });
+
+  it('keeps its signal out of the model config', async () => {
+    stubChain(['a']);
+
+    await collect(baseConfig({ signal: new AbortController().signal }));
+
+    expect(mockedBuildChatChain.mock.calls[0]?.[0]).not.toHaveProperty('signal');
   });
 
   it('forwards every streamed chunk to onToken in order', async () => {
