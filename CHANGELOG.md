@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.0.5...nebula-chat-v5.0.6) (2026-10-24)
+
+
+### Bug Fixes
+
+* **server:** NEB-618 rename the [@backend](https://github.com/backend) path alias to [@server](https://github.com/server) ([#619](https://github.com/itsDaiton/nebula-chat/issues/619)) ([7c26a6c](https://github.com/itsDaiton/nebula-chat/commit/7c26a6c502683720c7e3d923d9b65ac86317752c))
+
 ## [5.0.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.0.4...nebula-chat-v5.0.5) (2026-10-23)
 
 
