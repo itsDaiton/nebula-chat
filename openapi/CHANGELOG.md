@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.0.0...nebula-chat-openapi-v4.1.0) (2026-10-24)
+
+
+### Features
+
+* **worker:** NEB-355 make reply streams resumable and cancellable ([#621](https://github.com/itsDaiton/nebula-chat/issues/621)) ([75c9975](https://github.com/itsDaiton/nebula-chat/commit/75c99750070d7806cd96ccf71731b501d0eb7e23))
+
 ## [4.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v3.0.0...nebula-chat-openapi-v4.0.0) (2026-10-20)
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-langchain-v3.1.0...nebula-chat-langchain-v3.2.0) (2026-10-24)
+
+
+### Features
+
+* **worker:** NEB-355 make reply streams resumable and cancellable ([#621](https://github.com/itsDaiton/nebula-chat/issues/621)) ([75c9975](https://github.com/itsDaiton/nebula-chat/commit/75c99750070d7806cd96ccf71731b501d0eb7e23))
+
 ## [3.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-langchain-v3.0.0...nebula-chat-langchain-v3.1.0) (2026-10-20)
 
 

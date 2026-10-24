@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.6.1...nebula-chat-otel-v2.7.0) (2026-10-24)
+
+
+### Features
+
+* **worker:** NEB-355 make reply streams resumable and cancellable ([#621](https://github.com/itsDaiton/nebula-chat/issues/621)) ([75c9975](https://github.com/itsDaiton/nebula-chat/commit/75c99750070d7806cd96ccf71731b501d0eb7e23))
+
 ## [2.6.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.6.0...nebula-chat-otel-v2.6.1) (2026-10-23)
 
 
