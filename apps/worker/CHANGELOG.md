@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.1.0...nebula-chat-worker-v1.1.1) (2026-10-24)
+
+
+### Bug Fixes
+
+* **agents:** slim agent docs, drop home-grown skills, trim heavy comments ([#627](https://github.com/itsDaiton/nebula-chat/issues/627)) ([acf7b7c](https://github.com/itsDaiton/nebula-chat/commit/acf7b7cb6c96b0103eb27382a77043d4133a615c))
+
 ## [1.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.0.0...nebula-chat-worker-v1.1.0) (2026-10-24)
 
 
