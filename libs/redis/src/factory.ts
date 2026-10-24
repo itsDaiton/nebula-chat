@@ -6,6 +6,8 @@ import { createAuthStore } from './authStore';
 import type { AuthStore } from './authStore';
 import { createPubSub } from './pubsub';
 import type { RedisPubSub } from './pubsub';
+import { createFlags } from './flags';
+import type { RedisFlags } from './flags';
 import { createStreams } from './streams';
 import type { RedisStreams } from './streams';
 import type { RedisConfig } from './types';
@@ -28,6 +30,8 @@ export type RedisToolkit = {
   pubsub: RedisPubSub;
   /** Append-only per-key logs that readers tail from any offset (ADR-0014). */
   streams: RedisStreams;
+  /** Short-lived markers raised with a TTL, such as a reply's cancel request (ADR-0014). */
+  flags: RedisFlags;
   /** Raw ioredis instance: the main command connection. */
   connection: Redis;
   /**
@@ -69,11 +73,14 @@ export const createRedis = (config: RedisConfig): RedisToolkit => {
     readerConnection: manager.dedicated,
   });
 
+  const flags = createFlags({ connection: manager.main, connect: manager.connect });
+
   return {
     cache,
     authStore,
     pubsub,
     streams,
+    flags,
     connection: manager.main,
     dedicatedConnection: manager.dedicated,
     connect: manager.connect,

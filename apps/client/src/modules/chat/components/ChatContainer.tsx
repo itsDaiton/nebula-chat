@@ -16,18 +16,30 @@ import { resources } from '@/resources';
 
 export const ChatContainer = () => {
   const { id: sessionId } = useParams<{ id: string }>();
-  const { error: sessionError, isLoading: isSessionLoading } = useChatSession(sessionId);
+  const {
+    error: sessionError,
+    isLoading: isSessionLoading,
+    activeStreamId,
+  } = useChatSession(sessionId);
   const {
     history,
     isStreaming,
     isPostStreamNavigation,
     streamMessage,
+    resumeStream,
+    stop,
     clearPostStream,
     sessionId: chatSessionId,
   } = useChatStream();
   const { selectedModel, setSelectedModel } = useModel();
 
   const { handleSendMessage } = useHandleSendMessage({ history, streamMessage });
+
+  // Guarded render-time sync (no effect): a Session opened mid-reply re-attaches to it once its
+  // history is in; `resumeStream` ignores a stream it is already following.
+  if (sessionId && activeStreamId && chatSessionId === sessionId) {
+    void resumeStream({ sessionId, streamId: activeStreamId });
+  }
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Once the navigation has rendered (sessionId from URL params is set),
@@ -90,6 +102,7 @@ export const ChatContainer = () => {
         isLoading={isStreaming}
         selectedModel={selectedModel}
         onModelChange={setSelectedModel}
+        onStop={() => void stop()}
       />
     </ChatContainerBox>
   );

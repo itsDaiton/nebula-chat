@@ -8,7 +8,16 @@ export const streamClient = async <T>(
   options?: AxiosRequestConfig,
 ): Promise<T> => {
   const hasBody = config.data !== undefined;
-  const response = await fetch(SERVER_CONFIG.getApiEndpoint(config.url ?? ''), {
+  // Only scalar params go out; an absent one would otherwise be sent as the string "undefined".
+  const query = new URLSearchParams(
+    Object.entries((config.params ?? {}) as Record<string, unknown>).flatMap(([key, value]) =>
+      typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+        ? [[key, String(value)]]
+        : [],
+    ),
+  ).toString();
+  const url = SERVER_CONFIG.getApiEndpoint(config.url ?? '');
+  const response = await fetch(query ? `${url}?${query}` : url, {
     method: config.method,
     // Only a request with a body declares one: a JSON content type on a GET forces a CORS preflight.
     ...(hasBody && {

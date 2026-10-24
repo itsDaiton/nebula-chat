@@ -7,6 +7,9 @@ const toolkit = vi.hoisted(() => ({
   close: vi.fn(async () => undefined),
   connection: { set: vi.fn(async () => 'OK'), get: vi.fn(async () => null as string | null) },
   reader: { read: vi.fn(async () => []), close: vi.fn() },
+  // Flags and stream keys held in memory, as the real toolkit's primitives would.
+  flags: new Map<string, number>(),
+  streamKeys: new Set<string>(),
 }));
 
 // Keep the real key helpers but stub the factory, so importing @server/redis opens no connection.
@@ -18,17 +21,39 @@ vi.mock('@nebula-chat/redis', async (importActual) => {
       connect: toolkit.connect,
       close: toolkit.close,
       connection: toolkit.connection,
-      streams: { openReader: () => toolkit.reader },
+      streams: {
+        openReader: () => toolkit.reader,
+        exists: async (key: string) => toolkit.streamKeys.has(key),
+      },
+      flags: {
+        raise: async (key: string, ttlSeconds: number) => {
+          toolkit.flags.set(key, ttlSeconds);
+        },
+        isRaised: async (key: string) => toolkit.flags.has(key),
+      },
     })),
   };
 });
 
-import { closeRedis, findStreamOwner, openReplyStream, saveStreamOwner } from '@server/redis';
+import {
+  closeRedis,
+  findActiveStream,
+  findStreamOwner,
+  isStreamEnded,
+  isStreamExpired,
+  openReplyStream,
+  requestStreamCancel,
+  saveActiveStream,
+  saveStreamOwner,
+} from '@server/redis';
 
 const STREAM_ID = '44444444-4444-4444-8444-444444444444';
+const SESSION_ID = '22222222-2222-4222-8222-222222222222';
 
 beforeEach(() => {
   vi.clearAllMocks();
+  toolkit.flags.clear();
+  toolkit.streamKeys.clear();
 });
 
 describe('stream owners', () => {
@@ -55,6 +80,62 @@ describe('stream owners', () => {
     toolkit.connection.get.mockRejectedValueOnce(new Error('redis down'));
 
     await expect(findStreamOwner(STREAM_ID)).rejects.toThrow('redis down');
+  });
+});
+
+describe("a Session's in-flight stream", () => {
+  it('records the stream under the Session for a day', async () => {
+    await saveActiveStream(SESSION_ID, STREAM_ID);
+
+    expect(toolkit.connection.set).toHaveBeenCalledWith(
+      `session-stream:${SESSION_ID}`,
+      STREAM_ID,
+      'EX',
+      86_400,
+    );
+  });
+
+  it('names the stream while it has not ended', async () => {
+    toolkit.connection.get.mockResolvedValueOnce(STREAM_ID);
+
+    await expect(findActiveStream(SESSION_ID)).resolves.toBe(STREAM_ID);
+    expect(toolkit.connection.get).toHaveBeenCalledWith(`session-stream:${SESSION_ID}`);
+  });
+
+  it('names none once the stream has ended, or when none was recorded', async () => {
+    await expect(findActiveStream(SESSION_ID)).resolves.toBeNull();
+
+    toolkit.connection.get.mockResolvedValueOnce(STREAM_ID);
+    toolkit.flags.set(`stream-ended:${STREAM_ID}`, 86_400);
+    await expect(findActiveStream(SESSION_ID)).resolves.toBeNull();
+  });
+});
+
+describe('stream expiry', () => {
+  it('reads a stream that ended and is gone as expired', async () => {
+    toolkit.flags.set(`stream-ended:${STREAM_ID}`, 86_400);
+
+    await expect(isStreamEnded(STREAM_ID)).resolves.toBe(true);
+    await expect(isStreamExpired(STREAM_ID)).resolves.toBe(true);
+  });
+
+  it('reads a stream that ended but is still kept as not expired, so it can be replayed', async () => {
+    toolkit.flags.set(`stream-ended:${STREAM_ID}`, 86_400);
+    toolkit.streamKeys.add(`stream:${STREAM_ID}`);
+
+    await expect(isStreamExpired(STREAM_ID)).resolves.toBe(false);
+  });
+
+  it('reads a stream that never ended as not expired, though it does not exist yet', async () => {
+    await expect(isStreamExpired(STREAM_ID)).resolves.toBe(false);
+  });
+});
+
+describe('requestStreamCancel', () => {
+  it("raises the stream's cancel flag with the configured TTL", async () => {
+    await requestStreamCancel(STREAM_ID);
+
+    expect(toolkit.flags.get(`stream-cancel:${STREAM_ID}`)).toBe(900);
   });
 });
 

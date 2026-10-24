@@ -36,6 +36,9 @@ export const memoryStore = () => {
 export const memoryStream = (operations: string[] = []) => {
   const events = new Map<string, ReplyStreamEvent[]>();
   const expired = new Set<string>();
+  // The streams a User asked to stop: the server raises this flag, the worker reads it.
+  const cancelled = new Set<string>();
+  const ended = new Set<string>();
   const stream: ReplyStreamWriter = {
     append: async (streamId, event) => {
       events.set(streamId, [...(events.get(streamId) ?? []), event]);
@@ -45,8 +48,13 @@ export const memoryStream = (operations: string[] = []) => {
       expired.add(streamId);
       operations.push('expire');
     },
+    isCancelled: async (streamId) => cancelled.has(streamId),
+    markEnded: async (streamId) => {
+      ended.add(streamId);
+      operations.push('markEnded');
+    },
   };
-  return { stream, events, expired };
+  return { stream, events, expired, cancelled, ended };
 };
 
 /** A model that streams `tokens` then reports `usage`, recording the config it was called with. */
@@ -70,3 +78,27 @@ export const failingModel =
     for (const token of tokens) onToken(token);
     throw error;
   };
+
+/**
+ * A model that streams one token every few milliseconds until it runs out or its `signal`
+ * aborts, then rejects as a LangChain call does. `onToken` runs after each token reaches the reply.
+ */
+export const slowModel = (tokens: string[], onToken: (index: number) => void = () => undefined) => {
+  const signals: (AbortSignal | undefined)[] = [];
+  const streamChat: StreamChat = async ({ signal }, callbacks) => {
+    signals.push(signal);
+    for (const [index, token] of tokens.entries()) {
+      signal?.throwIfAborted();
+      callbacks.onToken(token);
+      onToken(index);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    signal?.throwIfAborted();
+    callbacks.onUsage({
+      promptTokens: 10,
+      completionTokens: tokens.length,
+      totalTokens: 10 + tokens.length,
+    });
+  };
+  return { streamChat, signals };
+};

@@ -46,7 +46,7 @@ apps/server/src/
 ├── env.ts                         # Zod-validated env schema — single source for all process.env reads
 ├── health.validation.ts           # ApiRoot / Health response schemas for the `/` and `/health` routes
 ├── db.ts                          # DB client singleton (createDbClient from @nebula-chat/db)
-├── redis.ts                       # Redis toolkit singleton + reply-stream helpers: stream owners, openReplyStream
+├── redis.ts                       # Redis toolkit singleton + reply-stream helpers: owners, in-flight streams, cancel, openReplyStream
 ├── queue.ts                       # BullMQ producer for Direct reply jobs (built on first use) + the worker /health ping
 ├── auth.ts                        # better-auth instance singleton (createAuth from @nebula-chat/auth)
 ├── profileImageStore.ts           # Profile image store singleton: Supabase Storage from env, or null (uploads off)
@@ -69,8 +69,8 @@ apps/server/src/
 │   ├── stream/                    # GET /api/streams/:streamId — the SSE relay (ADR-0014)
 │   │   ├── stream.types.ts
 │   │   ├── stream.validation.ts
-│   │   ├── stream.service.ts      # assertOwner + relay: tail the Redis Stream, write SSE until `end`
-│   │   ├── stream.controller.ts   # Owner check, then hijack and relay; aborts on client disconnect
+│   │   ├── stream.service.ts      # assertReadable + relay from Last-Event-ID until `end`; cancel
+│   │   ├── stream.controller.ts   # Readable check, then hijack and relay; aborts on client disconnect
 │   │   └── stream.routes.ts
 │   ├── session/
 │   │   ├── session.types.ts
@@ -339,6 +339,10 @@ Redis access is provided by the **`@nebula-chat/redis`** lib, registered by
 - **Stream owners**: `saveStreamOwner` / `findStreamOwner` record who may read a stream
   (`stream-owner:{streamId}`, 24-hour TTL). The assistant Message only exists once the worker finishes it,
   so the owner check cannot go through Postgres.
+- **Resume and cancel** (NEB-355): `saveActiveStream` / `findActiveStream` keep each Session's in-flight
+  reply (`session-stream:{sessionId}`) for `GET /api/sessions/:id`'s `activeStreamId`; `isStreamExpired`
+  reads the worker's `stream-ended:{streamId}` flag against the stream's existence, so an expired stream
+  404s while a queued one waits; `requestStreamCancel` raises `stream-cancel:{streamId}` for the worker.
 - **The Direct reply queue** (`src/queue.ts`): a BullMQ `Queue` on `redis.dedicatedConnection()`, built on
   first use so nothing that only builds the app (the OpenAPI script, route tests) opens a connection.
 
@@ -469,6 +473,7 @@ be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-fi
 | Variable                           | Purpose                                                                                                                   |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `WORKER_URL`                       | The worker's public URL; the server pings its `/health` on every enqueue to wake it (default `http://localhost:3001`)     |
+| `STREAM_CANCEL_TTL_SECONDS`        | How long a stop request waits for the worker to see it (default `900`)                                                    |
 | `DATABASE_URL`                     | PostgreSQL connection string                                                                                              |
 | `REDIS_URL`                        | Redis connection (e.g. `redis://localhost:6380`)                                                                          |
 | `CLIENT_URL`                       | Frontend origin for CORS (e.g. `http://localhost:5173`); must be the same site as the API ([auth.md](../../docs/auth.md)) |

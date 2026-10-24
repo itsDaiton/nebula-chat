@@ -181,6 +181,7 @@ once, and nobody else does:
   | `nebula.outcome` | Level                                                     | Carries             |
   | ---------------- | --------------------------------------------------------- | ------------------- |
   | `completed`      | `info`                                                    | tokens              |
+  | `cancelled`      | `info`: the User stopped it; what it had is persisted     |                     |
   | `failed`         | `error`, or `warn` when the caller caused it (a 4xx code) | `err`, `error.type` |
 
   Every line is written through the job's logger, bound to `user.id`,
@@ -190,7 +191,8 @@ once, and nobody else does:
   whose payload breaks the contract writes `job.payload.rejected` instead.
 
 - **Reply streams** (the server). The relay hijacks its reply; a Redis failure
-  mid-relay writes one `chat.stream.relay.failed` `error` line, and a failed
+  mid-relay writes one `chat.stream.relay.failed` `error` line, a cancel request
+  writes `chat.reply.cancel.requested` at `info`, and a failed
   wake-up ping of the worker on enqueue writes `worker.ping.failed` at `warn`.
 
 - **Cache.** Every cache operation is fail-open, so a Redis failure is a `warn`

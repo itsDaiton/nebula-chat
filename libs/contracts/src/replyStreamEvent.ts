@@ -13,7 +13,12 @@ const usageEventSchema = z.object({
 // The same envelope the JSON error handler sends (ADR-0011), so a client reads errors one way.
 const errorEventSchema = errorEnvelopeSchema.extend({ type: z.literal('error') });
 
-const endEventSchema = z.object({ type: z.literal('end') });
+// `reason` is absent for a reply that ran to its end or failed, and `cancelled` for one the User
+// stopped: whatever it had produced by then is the persisted reply.
+const endEventSchema = z.object({
+  type: z.literal('end'),
+  reason: z.enum(['cancelled']).optional(),
+});
 
 // One reply stream entry (ADR-0014), relayed as an SSE event named `type` with the rest as data.
 // A stream always finishes with `end`, after an `error` too.

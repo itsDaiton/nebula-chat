@@ -35,13 +35,11 @@ vi.mock('@server/modules/message/message.repository', () => ({
 
 // @server/redis is the boundary to Redis: stream owners live in memory.
 vi.mock('@server/redis', async () => {
-  const { replyStreams: fake } = await import('@server/test/memoryReplyStreams.js');
+  const { replyStreamsModule } = await import('@server/test/memoryReplyStreams.js');
   return {
     redis: { connection: {}, close: vi.fn(async () => undefined) },
     closeRedis: vi.fn(async () => undefined),
-    saveStreamOwner: fake.saveStreamOwner,
-    findStreamOwner: fake.findStreamOwner,
-    openReplyStream: fake.openReplyStream,
+    ...replyStreamsModule,
   };
 });
 
@@ -145,6 +143,13 @@ describe('POST /api/sessions/:sessionId/messages', () => {
 
     const { streamId } = res.json<{ streamId: string }>();
     expect(replyStreams.owners.get(streamId)).toBe(REGISTERED_USER_ID);
+  });
+
+  it('records the reply as the Session’s in-flight stream, so a refreshed page can re-attach to it', async () => {
+    const res = await send(validBody);
+
+    const { streamId } = res.json<{ streamId: string }>();
+    expect(replyStreams.activeStreams.get(SESSION_ID)).toBe(streamId);
   });
 
   it("binds the Session to the Model the caller picked when it differs from the Session's", async () => {

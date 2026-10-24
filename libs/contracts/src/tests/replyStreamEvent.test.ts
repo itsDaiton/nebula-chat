@@ -15,6 +15,7 @@ const events: ReplyStreamEvent[] = [
     message: 'An internal server error occurred',
   },
   { type: 'end' },
+  { type: 'end', reason: 'cancelled' },
 ];
 
 describe('reply stream events', () => {
@@ -34,6 +35,10 @@ describe('reply stream events', () => {
 
   it('reads an unknown event type as no event', () => {
     expect(parseReplyStreamEvent(JSON.stringify({ type: 'step-started' }))).toBeNull();
+  });
+
+  it('reads an end event with a reason outside the known set as no event', () => {
+    expect(parseReplyStreamEvent(JSON.stringify({ type: 'end', reason: 'exploded' }))).toBeNull();
   });
 
   it('reads an error event without a valid envelope as no event', () => {

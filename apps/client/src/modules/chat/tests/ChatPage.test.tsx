@@ -1,6 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { delay } from 'msw';
+import { HttpResponse, delay, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Route, Routes } from 'react-router';
 import {
@@ -72,7 +72,7 @@ beforeEach(() => {
   serveSessions();
   server.use(
     mockGetSession(aSession()),
-    getGetSessionMockHandler(aChatSession(SESSION_ID, 'Chat')),
+    getGetSessionMockHandler({ ...aChatSession(SESSION_ID, 'Chat'), activeStreamId: null }),
     getListMessagesMockHandler([]),
     getGetMessageAllowanceMockHandler({ metered: false }),
   );
@@ -155,6 +155,32 @@ describe('ChatPage', () => {
 
     expect(await screen.findByText('a question', {}, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.getByText('an answer')).toBeInTheDocument();
+  });
+
+  it('re-attaches to a reply still streaming when the session is opened mid-reply', async () => {
+    const STREAM_ID = '33333333-3333-4333-8333-333333333333';
+    let opened: unknown;
+    server.use(
+      getGetSessionMockHandler({ ...aChatSession(SESSION_ID, 'Chat'), activeStreamId: STREAM_ID }),
+      getListMessagesMockHandler([aMessage('m1', 'user', 'what is 2+2?')]),
+      http.get(API_ROUTE.replyStream, ({ params }) => {
+        opened = params['streamId'];
+        return new HttpResponse(
+          sseFrame('token', { token: 'Two plus two' }, '1-1') +
+            sseFrame('token', { token: ' is four' }, '1-2') +
+            sseFrame('end', {}, '1-3'),
+          { headers: { 'Content-Type': 'text/event-stream' } },
+        );
+      }),
+    );
+
+    renderPage(`/s/${SESSION_ID}`);
+
+    expect(
+      await screen.findByText('Two plus two is four', {}, { timeout: 3000 }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('what is 2+2?')).toBeInTheDocument();
+    expect(opened).toBe(STREAM_ID);
   });
 
   it('surfaces a session load failure inline and through the toaster', async () => {

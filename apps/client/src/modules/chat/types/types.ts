@@ -16,12 +16,38 @@ export type ChatInputProps = {
   autoFocus?: boolean;
   selectedModel: string;
   onModelChange: (model: string) => void;
+  /** Stops the streaming reply; while one streams, it replaces the send button. */
+  onStop?: () => void;
 };
 
 export type ChatHistoryStreamOptions = {
   model: string;
   messages: ChatMessage[];
   sessionId?: string;
+};
+
+/** A reply still in flight to re-attach to; it lands after the Session's loaded history. */
+export type ResumeStreamOptions = {
+  sessionId: string;
+  streamId: string;
+};
+
+/** How following a reply stream finished: at its end (or saved Message), at an `error`, or aborted. */
+export type FollowOutcome = 'ended' | 'failed' | 'aborted';
+
+/** Where a followed reply stream got to: the last event applied, and reconnects since then. */
+export type StreamCursor = {
+  lastEventId: string | undefined;
+  retries: number;
+};
+
+export type StopButtonProps = {
+  onStop: () => void;
+};
+
+export type UseChatStreamOptions = {
+  /** The wait before each reconnect of a dropped reply stream; once they run out, the reply fails. */
+  reconnectDelaysMs?: readonly number[];
 };
 
 export type UseKeyboardHandlerProps = {
@@ -49,6 +75,7 @@ export type ChatInputBarProps = {
   isLoading: boolean;
   selectedModel: string;
   onModelChange: (model: string) => void;
+  onStop?: () => void;
 };
 
 export type ChatEmptyStateProps = {
@@ -78,6 +105,10 @@ export type ChatStreamState = {
   error: string | null;
   usage: Usage;
   sessionId?: string;
+  /** The reply stream being followed (or last followed): what the stop button cancels. */
+  streamId: string | null;
+  /** Stop was pressed before the send named the reply's stream. */
+  isStopRequested: boolean;
   /** A Guest's send was refused because their message allowance is spent. */
   isMessageAllowanceReached: boolean;
   setHistory: Dispatch<SetStateAction<ChatMessage[]>>;
@@ -104,8 +135,9 @@ export type ModelSelectorState = {
 /** The events a reply stream carries (`GET /api/streams/{streamId}`). */
 export type SseEvent = 'token' | 'usage' | 'error' | 'end';
 
-/** One SSE event off a reply stream: its name and its raw `data` line. */
+/** One SSE event off a reply stream: its name, its raw `data` line and its stream entry id. */
 export type SseFrame = {
   event: SseEvent;
   data: string;
+  id?: string;
 };

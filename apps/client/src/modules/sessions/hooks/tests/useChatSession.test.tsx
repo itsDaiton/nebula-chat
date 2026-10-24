@@ -24,12 +24,16 @@ const aMessage = (id: string, sessionId: string, role: string, content: string) 
 
 // The server narrows the list to the requested session, so the messages
 // are only served to a request that names it.
-const serveSession = (messages = [aMessage('m1', SESSION_ID, 'user', 'a question')]) =>
+const serveSession = (
+  messages = [aMessage('m1', SESSION_ID, 'user', 'a question')],
+  activeStreamId: string | null = null,
+) =>
   server.use(
     getGetSessionMockHandler({
       id: SESSION_ID,
       title: 'Chat',
       createdAt: '2026-01-01T00:00:00.000Z',
+      activeStreamId,
     }),
     getListMessagesMockHandler(({ request }) =>
       new URL(request.url).searchParams.get('sessionId') === SESSION_ID ? messages : [],
@@ -63,6 +67,24 @@ describe('useChatSession', () => {
       { id: 'm2', role: 'assistant', content: 'an answer' },
     ]);
     expect(chat().sessionId).toBe(SESSION_ID);
+  });
+
+  it('names the reply still streaming, for the chat to re-attach to', async () => {
+    const STREAM_ID = '33333333-3333-4333-8333-333333333333';
+    serveSession(undefined, STREAM_ID);
+
+    const { result } = renderHookWithQueryClient(() => useChatSession(SESSION_ID));
+
+    await waitFor(() => expect(result.current.activeStreamId).toBe(STREAM_ID));
+  });
+
+  it('names no reply when none is in flight', async () => {
+    serveSession();
+
+    const { result } = renderHookWithQueryClient(() => useChatSession(SESSION_ID));
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.activeStreamId).toBeNull();
   });
 
   it('reports loading until the session has arrived', () => {

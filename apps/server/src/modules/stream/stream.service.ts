@@ -1,7 +1,13 @@
 import { parseReplyStreamEvent } from '@nebula-chat/contracts';
 import { INTERNAL_ERROR_ENVELOPE, NotFoundError } from '@nebula-chat/errors';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
-import { findStreamOwner, openReplyStream } from '@server/redis';
+import {
+  findStreamOwner,
+  isStreamEnded,
+  isStreamExpired,
+  openReplyStream,
+  requestStreamCancel,
+} from '@server/redis';
 import type { StreamLogger } from '@server/modules/stream/stream.types';
 import { SSE_KEEP_ALIVE, sseEvent } from '@server/utils/sse';
 
@@ -17,9 +23,38 @@ export const streamService = {
     }
   },
 
-  /** Relays a reply stream from its start as SSE until `end`, or until `signal` aborts. Transport only. */
+  /**
+   * The owner check, plus: a stream whose TTL has passed reads as absent, so the client falls
+   * back to the persisted Message. One whose job is still queued is readable, and the relay waits.
+   */
+  async assertReadable(streamId: string, userId: string): Promise<void> {
+    await streamService.assertOwner(streamId, userId);
+    if (await isStreamExpired(streamId)) {
+      throw new NotFoundError('Stream', streamId);
+    }
+  },
+
+  /** Asks the worker to stop the reply; a reply that already finished is left alone (ADR-0014). */
+  async cancel(streamId: string, userId: string, logger: StreamLogger): Promise<void> {
+    await streamService.assertOwner(streamId, userId);
+    if (await isStreamEnded(streamId)) return;
+    await requestStreamCancel(streamId);
+    logEvent(
+      componentLogger(logger, 'chat'),
+      'info',
+      'chat.reply.cancel.requested',
+      { 'nebula.reply.message.id': streamId },
+      'Direct reply stop requested',
+    );
+  },
+
+  /**
+   * Relays a reply stream as SSE from after `afterId` (`'0'` for its start) until `end`, or until
+   * `signal` aborts. Transport only.
+   */
   async relay(
     streamId: string,
+    afterId: string,
     write: (chunk: string) => void,
     signal: AbortSignal,
     logger: StreamLogger,
@@ -28,16 +63,16 @@ export const streamService = {
     // Closing the reader drops its connection, which ends a blocking read at once.
     const stop = () => reader.close();
     signal.addEventListener('abort', stop, { once: true });
-    let afterId = '0';
+    let lastId = afterId;
     try {
       while (!signal.aborted) {
-        const entries = await reader.read(afterId, RELAY_BLOCK_MS);
+        const entries = await reader.read(lastId, RELAY_BLOCK_MS);
         if (entries.length === 0) {
           write(SSE_KEEP_ALIVE);
           continue;
         }
         for (const entry of entries) {
-          afterId = entry.id;
+          lastId = entry.id;
           // An event this server cannot read (say, a newer worker's) is skipped, so the contract can grow.
           const event = parseReplyStreamEvent(entry.payload);
           if (!event) continue;

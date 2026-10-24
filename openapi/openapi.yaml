@@ -41,14 +41,12 @@ components:
         messageId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           description: The persisted user Message
         streamId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           description: The reply stream to read from `GET /api/streams/{streamId}`
       required:
         - messageId
@@ -134,19 +132,44 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         title:
           type: string
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - id
         - title
         - createdAt
+      additionalProperties: false
+    SessionDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        activeStreamId:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: 'null'
+          description: The reply still being produced for this Session, to re-attach to
+            with `GET /api/streams/{streamId}`; null when none is in flight
+      required:
+        - id
+        - title
+        - createdAt
+        - activeStreamId
       additionalProperties: false
     SessionPage:
       type: object
@@ -160,8 +183,7 @@ components:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             - type: 'null'
         hasMore:
           type: boolean
@@ -176,13 +198,11 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         sessionId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         content:
           type: string
         role:
@@ -198,8 +218,7 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - id
         - sessionId
@@ -214,8 +233,7 @@ components:
       properties:
         uploadsEnabled:
           type: boolean
-          description: >-
-            Whether this server can store uploads; removing an image works
+          description: Whether this server can store uploads; removing an image works
             either way
       required:
         - uploadsEnabled
@@ -237,8 +255,7 @@ components:
           type: integer
           minimum: -9007199254740991
           maximum: 9007199254740991
-          description: >-
-            How many server instances received the request; more than reports
+          description: How many server instances received the request; more than reports
             means some did not answer in time
         reports:
           maxItems: 100
@@ -294,8 +311,7 @@ components:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
             - type: 'null'
           description: When the runtime change reverts; `null` at the boot-time level
         operator:
@@ -321,8 +337,7 @@ components:
           description: When the change reverts
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - receivers
         - expiresAt
@@ -362,10 +377,10 @@ paths:
       summary: Send message
       tags:
         - Chat
-      description: >-
-        Send a user Message to one of the caller’s own Sessions. The Message is
-        persisted and its reply is queued; nothing waits on the model. Read the
-        reply as server-sent events from `GET /api/streams/{streamId}`.
+      description: Send a user Message to one of the caller’s own Sessions. The
+        Message is persisted and its reply is queued; nothing waits on the
+        model. Read the reply as server-sent events from `GET
+        /api/streams/{streamId}`.
       requestBody:
         required: true
         content:
@@ -379,13 +394,10 @@ paths:
                 mode:
                   type: string
                   const: direct
-                  description: >-
-                    How the reply is produced. Only `direct`, a Direct reply,
-                    for now.
+                  description: How the reply is produced. Only `direct`, a Direct reply, for now.
                 model:
-                  description: >-
-                    Binds the Session to this Model before replying; omitted
-                    keeps the Session's Model
+                  description: Binds the Session to this Model before replying; omitted keeps the
+                    Session's Model
                   type: string
                   enum:
                     - gpt-4o
@@ -405,8 +417,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
@@ -465,10 +476,9 @@ paths:
       summary: Get message allowance
       tags:
         - Chat
-      description: >-
-        How much of the caller's message allowance is left. Metered users
+      description: "How much of the caller's message allowance is left. Metered users
         (Guests and unverified Registered users) get their limit, live count and
-        remaining sends; verified Registered users get `metered: false`.
+        remaining sends; verified Registered users get `metered: false`."
       responses:
         '200':
           description: The caller's message allowance
@@ -537,9 +547,8 @@ paths:
       summary: List sessions
       tags:
         - Sessions
-      description: >-
-        Retrieve the caller’s own sessions with cursor-based pagination. Returns
-        up to 10 sessions by default.
+      description: Retrieve the caller’s own sessions with cursor-based pagination.
+        Returns up to 10 sessions by default.
       parameters:
         - schema:
             default: 10
@@ -554,8 +563,7 @@ paths:
             description: Pagination cursor for fetching the next page of sessions
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
           description: Pagination cursor for fetching the next page of sessions
@@ -633,8 +641,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
@@ -644,7 +651,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
+                $ref: '#/components/schemas/SessionDetail'
         '400':
           description: Invalid session ID format
           content:
@@ -686,8 +693,7 @@ paths:
                 sessionId:
                   type: string
                   format: uuid
-                  pattern: >-
-                    ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                 role:
                   type: string
                   enum:
@@ -742,17 +748,15 @@ paths:
       summary: List messages
       tags:
         - Messages
-      description: >-
-        Retrieve the messages across the caller’s own sessions, newest first.
-        Pass `sessionId` to list one session’s messages, oldest first; a session
-        the caller does not own lists as empty.
+      description: Retrieve the messages across the caller’s own sessions, newest
+        first. Pass `sessionId` to list one session’s messages, oldest first; a
+        session the caller does not own lists as empty.
       parameters:
         - schema:
             description: Only list the messages of this session, oldest first
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: sessionId
           description: Only list the messages of this session, oldest first
@@ -795,8 +799,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: messageId
           required: true
@@ -837,18 +840,33 @@ paths:
       summary: Read reply stream
       tags:
         - Streams
-      description: >-
-        Relay a reply stream as server-sent events, from its first event to its
-        `end` (ADR-0014). Only the User who sent the Message may read it.
+      description: 'Relay a reply stream as server-sent events, from its first event
+        (or after `Last-Event-ID`) to its `end` (ADR-0014). Only the User who
+        sent the Message may read it. A stream that has expired answers 404:
+        read the persisted Message instead.'
       parameters:
+        - schema:
+            description: Resume after this event id, for a client reconnecting by hand
+            type: string
+            pattern: ^\d+-\d+$
+          in: query
+          name: lastEventId
+          description: Resume after this event id, for a client reconnecting by hand
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: streamId
           required: true
+        - schema:
+            description: Resume after this event id; sent by an EventSource when it
+              reconnects
+            type: string
+            pattern: ^\d+-\d+$
+          in: header
+          name: last-event-id
+          description: Resume after this event id; sent by an EventSource when it reconnects
       responses:
         '200':
           description: The reply stream, as server-sent events
@@ -856,11 +874,56 @@ paths:
             text/event-stream:
               schema:
                 type: string
-                description: >-
-                  Server-sent events: `token` ({ token }), `usage` ({
-                  promptTokens, completionTokens, totalTokens }), `error` (the
-                  ErrorEnvelope) and a final `end` ({}). Each event `id` is its
-                  stream entry id.
+                description: "Server-sent events: `token` ({ token }), `usage` ({ promptTokens,
+                  completionTokens, totalTokens }), `error` (the ErrorEnvelope)
+                  and a final `end` ({}, or { reason: 'cancelled' } for a reply
+                  its User stopped). Each event `id` is its stream entry id;
+                  send the last one back as `Last-Event-ID` (or `lastEventId`)
+                  to resume after it."
+        '400':
+          description: Invalid stream ID or Last-Event-ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: No auth session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Stream not found, expired, or not owned by the caller
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/streams/{streamId}/cancel:
+    post:
+      operationId: cancelReplyStream
+      summary: Cancel reply stream
+      tags:
+        - Streams
+      description: 'Stop a Direct reply in flight: the worker aborts the model call,
+        persists what it had produced and ends the stream with `end` { reason:
+        "cancelled" }. Cancelling a reply that already finished does nothing.'
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: path
+          name: streamId
+          required: true
+      responses:
+        '204':
+          description: Stop requested, or the reply had already finished
         '400':
           description: Invalid stream ID format
           content:
@@ -917,10 +980,9 @@ paths:
       summary: Upload Profile image
       tags:
         - Profile image
-      description: >-
-        Set the Registered user's Profile image from a JPEG, PNG or WebP of up
-        to 5 MB, sent as the raw request body. It is stored as a 256×256 WebP;
-        the previous upload is deleted.
+      description: Set the Registered user's Profile image from a JPEG, PNG or WebP of
+        up to 5 MB, sent as the raw request body. It is stored as a 256×256
+        WebP; the previous upload is deleted.
       requestBody:
         required: true
         content:
@@ -996,8 +1058,7 @@ paths:
       summary: Remove Profile image
       tags:
         - Profile image
-      description: >-
-        Remove the Registered user's Profile image, so their Avatar shows
+      description: Remove the Registered user's Profile image, so their Avatar shows
         initials. Succeeds when there is none.
       responses:
         '204':
@@ -1026,12 +1087,11 @@ paths:
       summary: Get log levels
       tags:
         - Operator
-      description: >-
-        Report the root log level and every component's, with the expiry and
-        operator of any runtime change, from every running server instance. Each
-        instance answers for itself; one that does not answer within 2 seconds
-        is left out, so `receivers` exceeds the number of reports. Requires the
-        operator token, not a User session.
+      description: Report the root log level and every component's, with the expiry
+        and operator of any runtime change, from every running server instance.
+        Each instance answers for itself; one that does not answer within 2
+        seconds is left out, so `receivers` exceeds the number of reports.
+        Requires the operator token, not a User session.
       security:
         - operatorToken: []
       responses:
@@ -1064,10 +1124,9 @@ paths:
       summary: Change log level
       tags:
         - Operator
-      description: >-
-        Change the root log level, or one component's, on every running server
-        instance. It reverts to the boot-time level after `ttlSeconds`. Requires
-        the operator token, not a User session.
+      description: Change the root log level, or one component's, on every running
+        server instance. It reverts to the boot-time level after `ttlSeconds`.
+        Requires the operator token, not a User session.
       requestBody:
         required: true
         content:
@@ -1076,9 +1135,7 @@ paths:
               type: object
               properties:
                 component:
-                  description: >-
-                    The `nebula.component` to change; omit it to change the root
-                    level
+                  description: The `nebula.component` to change; omit it to change the root level
                   type: string
                   enum:
                     - auth

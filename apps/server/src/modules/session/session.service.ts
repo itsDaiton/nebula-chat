@@ -2,6 +2,7 @@ import { sessionRepository } from '@server/modules/session/session.repository';
 import { NotFoundError } from '@nebula-chat/errors';
 import { paginationConfig } from '@server/config/pagination.config';
 import type { CreateSessionDTO } from '@server/modules/session/session.types';
+import { findActiveStream } from '@server/redis';
 
 export const sessionService = {
   async createSession(data: CreateSessionDTO, userId: string) {
@@ -14,7 +15,8 @@ export const sessionService = {
     if (!session) {
       throw new NotFoundError('Session', sessionId);
     }
-    return session;
+    // The in-flight reply lives in Redis until the worker ends it; Postgres has only finished ones.
+    return { ...session, activeStreamId: await findActiveStream(sessionId) };
   },
   async getAllSessions(userId: string, limit = paginationConfig.defaultLimit, cursor?: string) {
     return sessionRepository.findAll(userId, limit, cursor);

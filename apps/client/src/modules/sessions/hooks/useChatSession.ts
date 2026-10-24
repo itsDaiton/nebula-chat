@@ -32,5 +32,7 @@ export const useChatSession = (sessionId: string | undefined) => {
   return {
     isLoading: hasSession && !isSettled && !detail.error && !messages.error,
     error: detail.error ?? messages.error,
+    // Named once the history is in, so a re-attached reply lands after the saved Messages.
+    activeStreamId: isSettled ? (detail.data?.activeStreamId ?? null) : null,
   };
 };

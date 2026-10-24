@@ -3,14 +3,16 @@ import { SSE_EVENTS } from '@/modules/chat/utils/sseEvents';
 
 const frameOf = (block: string): SseFrame | null => {
   let event: string | null = null;
+  let id: string | undefined;
   const data: string[] = [];
   for (const line of block.split('\n')) {
     if (line.startsWith('event: ')) event = line.slice(7);
     else if (line.startsWith('data: ')) data.push(line.slice(6));
-    // `id:` lines and `:` comments (keep-alives) carry nothing the reply needs.
+    else if (line.startsWith('id: ')) id = line.slice(4);
+    // `:` comments (keep-alives) carry nothing the reply needs.
   }
   if (event === null || !SSE_EVENTS.has(event)) return null;
-  return { event: event as SseEvent, data: data.join('\n') };
+  return { event: event as SseEvent, data: data.join('\n'), ...(id === undefined ? {} : { id }) };
 };
 
 /**

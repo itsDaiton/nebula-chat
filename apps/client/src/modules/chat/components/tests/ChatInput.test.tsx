@@ -52,6 +52,24 @@ describe('ChatInput', () => {
     expect(onSendMessage).not.toHaveBeenCalled();
   });
 
+  it('offers to stop the reply while it streams, in place of sending', async () => {
+    const onStop = vi.fn();
+    useMessageStore.setState({ message: 'hello' });
+    renderWithChakra(<ChatInput {...baseProps} isLoading onStop={onStop} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /stop reply/i }));
+
+    expect(onStop).toHaveBeenCalledTimes(1);
+    expect(baseProps.onSendMessage).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: /send message/i })).not.toBeInTheDocument();
+  });
+
+  it('offers no stop button when no reply is streaming', () => {
+    renderWithChakra(<ChatInput {...baseProps} onStop={vi.fn()} />);
+
+    expect(screen.queryByRole('button', { name: /stop reply/i })).not.toBeInTheDocument();
+  });
+
   it('blocks sending while a reply is streaming', async () => {
     useMessageStore.setState({ message: 'hello' });
     renderWithChakra(<ChatInput {...baseProps} isLoading />);

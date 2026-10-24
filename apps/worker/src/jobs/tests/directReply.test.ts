@@ -9,6 +9,7 @@ import {
   memoryStore,
   memoryStream,
   scriptedModel,
+  slowModel,
 } from '@worker/jobs/tests/directReplyFakes';
 
 const USER_ID = '11111111-1111-4111-8111-111111111111';
@@ -39,6 +40,7 @@ const processorWith = (
     streamChat,
     apiKeys,
     logger: log.logger,
+    cancelPollMs: 1,
   });
 
 const run = (streamChat: StreamChat, data: unknown = payload) =>
@@ -83,7 +85,7 @@ describe('the Direct reply job', () => {
     expect(db.created).toEqual([
       { id: STREAM_ID, sessionId: SESSION_ID, content: '4', tokenCount: 11 },
     ]);
-    expect(operations.slice(-3)).toEqual(['persist', 'append:end', 'expire']);
+    expect(operations.slice(-4)).toEqual(['persist', 'markEnded', 'append:end', 'expire']);
   });
 
   it("calls the Session's Model with its history, oldest first, and the user Message", async () => {
@@ -152,6 +154,13 @@ describe('the Direct reply job', () => {
       ]);
       expect(db.created).toEqual([]);
       expect(redis.expired.has(STREAM_ID)).toBe(true);
+    });
+
+    it('marks the stream ended before its end event, so no Session read names it in flight after', async () => {
+      await run(failingModel(new Error('boom')));
+
+      expect(operations).toEqual(['append:error', 'markEnded', 'append:end', 'expire']);
+      expect(redis.ended.has(STREAM_ID)).toBe(true);
     });
 
     it('lands every queued token before the error, even when the stream is slow to append', async () => {
@@ -249,6 +258,89 @@ describe('the Direct reply job', () => {
       expect(eventLines(log.lines, 'chat.stream.end.failed')).toMatchObject([
         { level: LEVEL.warn },
       ]);
+    });
+  });
+
+  describe('when the User stops it', () => {
+    it('aborts the model call, persists what it had produced and ends the stream as cancelled', async () => {
+      const model = slowModel(['Two', ' plus', ' two', ' is', ' four'], (index) => {
+        if (index === 1) redis.cancelled.add(STREAM_ID);
+      });
+
+      await run(model.streamChat);
+
+      expect(model.signals[0]?.aborted).toBe(true);
+      expect(streamed()).toEqual([
+        { type: 'token', token: 'Two' },
+        { type: 'token', token: ' plus' },
+        { type: 'end', reason: 'cancelled' },
+      ]);
+      expect(db.created).toEqual([
+        { id: STREAM_ID, sessionId: SESSION_ID, content: 'Two plus', tokenCount: null },
+      ]);
+      expect(operations.slice(-4)).toEqual(['persist', 'markEnded', 'append:end', 'expire']);
+    });
+
+    it('logs the reply once, at info, as cancelled', async () => {
+      const model = slowModel(['a', 'b', 'c'], () => redis.cancelled.add(STREAM_ID));
+
+      await run(model.streamChat);
+
+      expect(eventLines(log.lines, 'chat.reply.completed')).toMatchObject([
+        { level: LEVEL.info, 'nebula.outcome': 'cancelled' },
+      ]);
+    });
+
+    it('never calls the model for a reply stopped while its job was queued, and persists nothing', async () => {
+      redis.cancelled.add(STREAM_ID);
+      const model = scriptedModel(['4']);
+
+      await run(model.streamChat);
+
+      expect(model.calls).toHaveLength(0);
+      expect(streamed()).toEqual([{ type: 'end', reason: 'cancelled' }]);
+      expect(db.created).toEqual([]);
+      expect(redis.expired.has(STREAM_ID)).toBe(true);
+    });
+
+    it('fails, not cancels, a reply whose stop lands only after the model had finished', async () => {
+      // The cancel check is still in flight when the model returns; it lands while the persist fails.
+      let checks = 0;
+      redis.stream.isCancelled = async () => {
+        checks += 1;
+        // The check before the model call finds no stop; a later one resolves late, as stopped.
+        if (checks === 1) return false;
+        return new Promise((resolve) => setTimeout(() => resolve(true), 15));
+      };
+      let persists = 0;
+      db.store.createAssistantMessage = async () => {
+        persists += 1;
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        throw new Error('postgres down');
+      };
+      const model: StreamChat = async (_config, { onToken, onUsage }) => {
+        onToken('4');
+        // Long enough for one cancel check to start, short enough for it to resolve later.
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        onUsage({ promptTokens: 1, completionTokens: 1, totalTokens: 2 });
+      };
+
+      await run(model);
+
+      expect(persists).toBe(1);
+      expect(streamed().slice(-2)).toEqual([
+        { type: 'error', success: false, error: 'Internal', message: GENERIC_ERROR_MESSAGE },
+        { type: 'end' },
+      ]);
+    });
+
+    it('finishes a reply nobody stopped without aborting its model call', async () => {
+      const model = slowModel(['a', 'b']);
+
+      await run(model.streamChat);
+
+      expect(model.signals[0]?.aborted).toBe(false);
+      expect(streamed().at(-1)).toEqual({ type: 'end' });
     });
   });
 

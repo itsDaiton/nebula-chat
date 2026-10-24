@@ -217,6 +217,9 @@ erDiagram
 | BullMQ queue `direct-replies`                                  | server      | worker         | last 1000 kept              | Direct reply jobs, IDs only (`@nebula-chat/contracts`)                           |
 | `stream:<streamId>` (Redis Stream)                             | worker      | server         | 1 hour after the reply ends | One reply's `token` / `usage` / `error` / `end` events                           |
 | `stream-owner:<streamId>`                                      | server      | server         | 24 hours                    | Who may read a reply stream; the assistant Message does not exist yet            |
+| `session-stream:<sessionId>`                                   | server      | server         | 24 hours                    | The Session's latest reply stream, for a reloaded page to re-attach to           |
+| `stream-ended:<streamId>`                                      | worker      | server         | 24 hours                    | The stream has its terminal event: tells an expired stream from a queued one     |
+| `stream-cancel:<streamId>`                                     | server      | worker         | `STREAM_CANCEL_TTL_SECONDS` | The User asked to stop the reply                                                 |
 | `log-level:<service>` (pub/sub)                                | server      | every instance | message                     | Runtime log level change ([logging.md](./logging.md#changing-levels-at-runtime)) |
 | `log-level-report:<service>`, `log-level-reply:<service>:<id>` | server      | every instance | message                     | Reading every instance's levels back                                             |
 
@@ -255,15 +258,15 @@ sequenceDiagram
     end
     W->>R: XADD usage
     W->>PG: insert assistant Message (id = streamId)
-    W->>R: XADD end, then EXPIRE 1 h
+    W->>R: SET stream-ended:{streamId}, XADD end, then EXPIRE 1 h
   and Client reads it
-    C->>S: GET /api/streams/:streamId (SSE)
-    S->>R: GET stream-owner:{streamId}
+    C->>S: GET /api/streams/:streamId (SSE, Last-Event-ID on a reconnect)
+    S->>R: GET stream-owner:{streamId}, stream-ended + EXISTS stream
     alt unknown, expired or another User's
-      S-->>C: 404
+      S-->>C: 404 (the client shows the saved Message)
     else the caller's stream
       loop until end
-        S->>R: XREAD BLOCK 15 s from the last entry id
+        S->>R: XREAD BLOCK 15 s from Last-Event-ID, then the last entry id
         S-->>C: SSE id + event + data, or a keep-alive comment
       end
     end
@@ -276,8 +279,18 @@ sequenceDiagram
   envelope, then `end`. Tokens already produced are written first.
 - **A sleeping worker** only delays the reply: the job waits in the queue, and the relay keeps
   the SSE response open with keep-alive comments.
-- **Not yet built.** Resuming with `Last-Event-ID`, cancelling a reply, and the response cache;
-  each is a later ticket under ADR-0013 and ADR-0014.
+- **Resume.** A dropped connection reconnects with backoff, sending the last event id it saw
+  (`lastEventId`, or `Last-Event-ID` from an `EventSource`); the relay reads on from exactly that
+  entry, and the client skips any entry at or before it, so no token is lost or doubled. Once the
+  stream has expired the relay answers 404 and the client shows the persisted Message instead.
+- **Re-attach.** `GET /api/sessions/:sessionId` names the Session's reply still in flight as
+  `activeStreamId`; a page reloaded mid-reply follows it from its start.
+- **Cancel.** `POST /api/streams/:streamId/cancel` (owner-checked; a no-op once the reply has
+  ended) raises `stream-cancel:{streamId}`. The worker polls it while streaming, aborts the
+  model call through an `AbortSignal`, persists what it had produced, and ends the stream with
+  `end` `{ reason: 'cancelled' }`. A reply cancelled while its job is queued never reaches the
+  model.
+- **Not yet built.** The response cache; a later ticket under ADR-0013.
 
 ## The client
 

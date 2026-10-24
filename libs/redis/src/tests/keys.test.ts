@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hashText, buildKey, streamKey } from '../keys';
+import { hashText, buildKey, streamCancelKey, streamEndedKey, streamKey } from '../keys';
 
 describe('hashText', () => {
   it('is deterministic for the same input', () => {
@@ -34,5 +34,12 @@ describe('buildKey', () => {
 describe('streamKey', () => {
   it('namespaces a reply stream under `stream:`', () => {
     expect(streamKey('abc')).toBe('stream:abc');
+  });
+});
+
+describe('reply stream flags', () => {
+  it('keeps a stream’s cancel and ended flags apart from the stream and each other', () => {
+    expect(streamCancelKey('abc')).toBe('stream-cancel:abc');
+    expect(streamEndedKey('abc')).toBe('stream-ended:abc');
   });
 });

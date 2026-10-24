@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { telemetryEnvShape } from '@nebula-chat/otel';
+import { REPLY_STREAM_RECORD_TTL_SECONDS } from '@nebula-chat/redis';
 
 const envSchema = z
   .object({
@@ -13,6 +14,14 @@ const envSchema = z
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
     // How many Direct replies one worker instance produces at once; the primary LLM throttle.
     WORKER_CONCURRENCY: z.coerce.number().int().positive().default(5),
+    // How long a reply stream outlives its end for a dropped client to resume (ADR-0014); at most its
+    // ended record, which tells an expired stream from a queued one.
+    STREAM_TTL_SECONDS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(REPLY_STREAM_RECORD_TTL_SECONDS)
+      .default(60 * 60),
   })
   .refine((data) => data.OPENAI_API_KEY !== undefined || data.ANTHROPIC_API_KEY !== undefined, {
     message: 'At least one of OPENAI_API_KEY or ANTHROPIC_API_KEY must be set',

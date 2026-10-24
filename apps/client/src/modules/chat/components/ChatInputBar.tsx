@@ -10,6 +10,7 @@ export const ChatInputBar = ({
   isLoading,
   selectedModel,
   onModelChange,
+  onStop,
 }: ChatInputBarProps) => (
   <Box
     position="absolute"
@@ -27,6 +28,7 @@ export const ChatInputBar = ({
       isLoading={isLoading}
       selectedModel={selectedModel}
       onModelChange={onModelChange}
+      onStop={onStop}
     />
   </Box>
 );

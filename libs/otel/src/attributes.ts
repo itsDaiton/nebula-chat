@@ -81,7 +81,7 @@ export type LogAttributeValues = {
   'nebula.operator': string;
   // Outcome
   'nebula.duration_ms': number;
-  'nebula.outcome': 'completed' | 'rate_limited' | 'failed';
+  'nebula.outcome': 'completed' | 'cancelled' | 'rate_limited' | 'failed';
   // Trace (stamped by createLogger's mixin inside an active span)
   trace_id: string;
   span_id: string;

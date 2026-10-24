@@ -30,3 +30,15 @@ export const authKey = (key: string): string => buildKey(AUTH_KEY_PREFIX, key);
 
 /** The key of the Redis Stream that carries one reply, keyed by its `streamId` (ADR-0014). */
 export const streamKey = (streamId: string): string => buildKey('stream', streamId);
+
+/** The flag that asks the worker to stop producing one reply (ADR-0014). */
+export const streamCancelKey = (streamId: string): string => buildKey('stream-cancel', streamId);
+
+/**
+ * The flag the worker raises once a reply stream has its terminal event. It outlives the stream,
+ * so a reader can tell a stream that has expired from one whose job is still queued.
+ */
+export const streamEndedKey = (streamId: string): string => buildKey('stream-ended', streamId);
+
+/** How long a reply stream's records (its owner, its ended flag) outlive it: a day. */
+export const REPLY_STREAM_RECORD_TTL_SECONDS = 24 * 60 * 60;
