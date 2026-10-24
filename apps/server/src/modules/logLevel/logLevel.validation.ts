@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { LOG_COMPONENTS, LOG_LEVELS, MAX_LOG_LEVEL_TTL_SECONDS } from '@nebula-chat/otel';
-import { isoDateTimeSchema } from '@backend/utils/isoDateTimeSchema';
+import { isoDateTimeSchema } from '@server/utils/isoDateTimeSchema';
 
 /** Long enough to catch a problem in the act, short enough that a forgotten `trace` is cheap. */
 const DEFAULT_TTL_SECONDS = 15 * 60;

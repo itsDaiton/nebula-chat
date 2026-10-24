@@ -1,9 +1,9 @@
 import type { OnUserDeleted } from '@nebula-chat/auth';
 import type { EventLogger } from '@nebula-chat/otel';
 import { logEvent } from '@nebula-chat/otel';
-import type { ProfileImageStore } from '@backend/modules/profileImage/profileImage.types';
+import type { ProfileImageStore } from '@server/modules/profileImage/profileImage.types';
 
-// Imports nothing that imports `@backend/auth`, so the auth singleton can use it without a cycle.
+// Imports nothing that imports `@server/auth`, so the auth singleton can use it without a cycle.
 
 type FileDeletionLogger = EventLogger<'warn'>;
 

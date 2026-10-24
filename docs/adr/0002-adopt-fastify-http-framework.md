@@ -41,7 +41,7 @@ Only these two alternatives were seriously evaluated. Fastify is the explicit ta
   - Prisma, Redis, OpenAI, tiktoken, and the `AppError` hierarchy are unchanged — this ticket does not touch the service, repository, cache, or error layers.
   - The OpenAPI Zod registry in `src/openapi/` is framework-neutral and is reused as-is; only the serving layer changes.
   - Route paths (`/api/chat`, `/api/conversations`, `/api/messages`, `/api/cache`, `/health`, `/docs`, `/openapi.json`) are preserved, so the frontend and the Orval-generated client require no changes from this ticket alone.
-  - `@backend/*` path aliases and `tsc-alias` resolution are unaffected.
+  - `@server/*` path aliases and `tsc-alias` resolution are unaffected.
 
 ## Implementation Notes
 

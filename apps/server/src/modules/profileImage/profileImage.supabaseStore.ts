@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { ProfileImageStore } from '@backend/modules/profileImage/profileImage.types';
+import type { ProfileImageStore } from '@server/modules/profileImage/profileImage.types';
 
 type CreateSupabaseProfileImageStoreConfig = {
   client: Pick<SupabaseClient, 'storage'>;

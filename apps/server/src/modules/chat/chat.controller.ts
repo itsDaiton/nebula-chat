@@ -1,8 +1,8 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { getMessageAllowance as readMessageAllowance } from '@backend/modules/chat/chat.messageAllowance.service';
-import type { SendMessageDTO, SendMessageParams } from '@backend/modules/chat/chat.types';
-import { chatService } from '@backend/modules/chat/chat.service';
-import { getSessionData } from '@backend/plugins/authGate.plugin';
+import { getMessageAllowance as readMessageAllowance } from '@server/modules/chat/chat.messageAllowance.service';
+import type { SendMessageDTO, SendMessageParams } from '@server/modules/chat/chat.types';
+import { chatService } from '@server/modules/chat/chat.service';
+import { getSessionData } from '@server/plugins/authGate.plugin';
 
 export const chatController = {
   async sendMessage(req: FastifyRequest, reply: FastifyReply) {

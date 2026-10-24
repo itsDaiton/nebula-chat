@@ -44,7 +44,7 @@ Install `fastify-type-provider-zod`. Register `validatorCompiler` and `serialize
 ## Implementation Notes
 
 - Files added: `src/app.ts` (extracted `buildApp()`), `src/errors/error.schema.ts` (shared Zod error response schema).
-- Files modified: `src/server.ts` (thin startup wrapper), `src/errors/error.handler.ts` (adds `hasZodFastifySchemaValidationErrors` branch), all `*.routes.ts` files (type → `FastifyPluginAsyncZod`, add `schema:` block, remove `preValidation`), all `*.validation.ts` files (remove `import '@backend/config/openapi.config'` side-effect, remove `.openapi()` calls, replace with `.describe()`), `src/scripts/generate-openapi.ts` (imports `buildApp` from `@backend/app`), `package.json`.
+- Files modified: `src/server.ts` (thin startup wrapper), `src/errors/error.handler.ts` (adds `hasZodFastifySchemaValidationErrors` branch), all `*.routes.ts` files (type → `FastifyPluginAsyncZod`, add `schema:` block, remove `preValidation`), all `*.validation.ts` files (remove `import '@server/config/openapi.config'` side-effect, remove `.openapi()` calls, replace with `.describe()`), `src/scripts/generate-openapi.ts` (imports `buildApp` from `@server/app`), `package.json`.
 - Files deleted: `src/config/openapi.config.ts`, `src/openapi/index.ts`, `src/openapi/schemas.ts`, `src/middleware/validate.ts`, and all four `*.openapi.ts` files (chat, conversation, message, cache).
 - Dependencies removed: `@asteasolutions/zod-to-openapi`, `openapi3-ts`, `js-yaml` (production); `@types/js-yaml` (dev).
 - Dependencies added: `fastify-type-provider-zod@^6.1.0` (requires Fastify ≥5.5.0; resolved Fastify version is 5.8.5).
@@ -59,4 +59,4 @@ Implementation verified on branch `feat/m-1-fastify` (2026-04-25):
 
 - `pnpm --filter nebula-chat-server typecheck` — passes (zero errors).
 - `pnpm lint` — passes at repo root (zero warnings).
-- No stale imports of `zod-to-openapi`, `openapi.config`, `openapi/schemas`, `middleware/validate`, `@backend/openapi`, `openapi3-ts`, or `js-yaml` remain in `src/`.
+- No stale imports of `zod-to-openapi`, `openapi.config`, `openapi/schemas`, `middleware/validate`, `@server/openapi`, `openapi3-ts`, or `js-yaml` remain in `src/`.

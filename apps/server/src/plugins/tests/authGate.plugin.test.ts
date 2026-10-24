@@ -8,13 +8,13 @@ import type {
 } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ForbiddenError, INTERNAL_ERROR_ENVELOPE, UnauthorizedError } from '@nebula-chat/errors';
-import { createTestApp } from '@backend/test/app';
+import { createTestApp } from '@server/test/app';
 import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
-import { guestSession, registeredSession, REGISTERED_USER_ID } from '@backend/test/session';
+import { guestSession, registeredSession, REGISTERED_USER_ID } from '@server/test/session';
 
-// @backend/auth is the boundary to better-auth: faking it gives the gates a controllable
+// @server/auth is the boundary to better-auth: faking it gives the gates a controllable
 // session (ADR-0008) and the catch-all tests below a stand-in request `handler`.
-vi.mock('@backend/auth', () => ({
+vi.mock('@server/auth', () => ({
   auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
 }));
 
@@ -34,15 +34,15 @@ vi.mock('better-auth/node', async (importOriginal) => {
 });
 
 // No database in a unit test; also keeps the real pg Pool out of the process.
-vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
+vi.mock('@server/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
-import { auth } from '@backend/auth';
-import { env } from '@backend/env';
+import { auth } from '@server/auth';
+import { env } from '@server/env';
 import {
   getSessionData,
   requireAuthentication,
   requireRegistered,
-} from '@backend/plugins/authGate.plugin';
+} from '@server/plugins/authGate.plugin';
 
 const mockedGetSession = vi.mocked(auth.api.getSession);
 

@@ -1,7 +1,7 @@
-import { sessionRepository } from '@backend/modules/session/session.repository';
+import { sessionRepository } from '@server/modules/session/session.repository';
 import { NotFoundError } from '@nebula-chat/errors';
-import { paginationConfig } from '@backend/config/pagination.config';
-import type { CreateSessionDTO } from '@backend/modules/session/session.types';
+import { paginationConfig } from '@server/config/pagination.config';
+import type { CreateSessionDTO } from '@server/modules/session/session.types';
 
 export const sessionService = {
   async createSession(data: CreateSessionDTO, userId: string) {

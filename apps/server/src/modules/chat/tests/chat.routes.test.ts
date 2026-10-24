@@ -2,40 +2,40 @@ import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { fromPartial } from '@total-typescript/shoehorn';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DirectReplyJob } from '@nebula-chat/contracts';
-import { env } from '@backend/env';
-import { createTestApp } from '@backend/test/app';
-import { replyStreams } from '@backend/test/memoryReplyStreams';
+import { env } from '@server/env';
+import { createTestApp } from '@server/test/app';
+import { replyStreams } from '@server/test/memoryReplyStreams';
 import {
   guestSession,
   registeredSession,
   REGISTERED_USER_ID,
   unverifiedSession,
-} from '@backend/test/session';
+} from '@server/test/session';
 
 const fakeTx = { __tx: true };
 
 // The send path's one transaction runs against the faked repositories below.
-vi.mock('@backend/db', () => ({
+vi.mock('@server/db', () => ({
   db: { transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn(fakeTx)) },
   closeDb: vi.fn(async () => undefined),
 }));
 
-vi.mock('@backend/auth', () => ({
+vi.mock('@server/auth', () => ({
   auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
 }));
 
 // The repositories are the boundary to Postgres; everything above them is real.
-vi.mock('@backend/modules/session/session.repository', () => ({
+vi.mock('@server/modules/session/session.repository', () => ({
   sessionRepository: { findByIdTx: vi.fn(), updateModelTx: vi.fn() },
 }));
 
-vi.mock('@backend/modules/message/message.repository', () => ({
+vi.mock('@server/modules/message/message.repository', () => ({
   messageRepository: { createTx: vi.fn(), countUserMessagesByOwner: vi.fn() },
 }));
 
-// @backend/redis is the boundary to Redis: stream owners live in memory.
-vi.mock('@backend/redis', async () => {
-  const { replyStreams: fake } = await import('@backend/test/memoryReplyStreams.js');
+// @server/redis is the boundary to Redis: stream owners live in memory.
+vi.mock('@server/redis', async () => {
+  const { replyStreams: fake } = await import('@server/test/memoryReplyStreams.js');
   return {
     redis: { connection: {}, close: vi.fn(async () => undefined) },
     closeRedis: vi.fn(async () => undefined),
@@ -45,18 +45,18 @@ vi.mock('@backend/redis', async () => {
   };
 });
 
-// @backend/queue is the boundary to BullMQ: enqueued jobs are kept in memory.
+// @server/queue is the boundary to BullMQ: enqueued jobs are kept in memory.
 const { enqueued } = vi.hoisted(() => ({ enqueued: [] as DirectReplyJob[] }));
-vi.mock('@backend/queue', () => ({
+vi.mock('@server/queue', () => ({
   enqueueDirectReply: vi.fn(async (job: DirectReplyJob) => {
     enqueued.push(job);
   }),
   closeQueue: vi.fn(async () => undefined),
 }));
 
-import { auth } from '@backend/auth';
-import { messageRepository } from '@backend/modules/message/message.repository';
-import { sessionRepository } from '@backend/modules/session/session.repository';
+import { auth } from '@server/auth';
+import { messageRepository } from '@server/modules/message/message.repository';
+import { sessionRepository } from '@server/modules/session/session.repository';
 
 const mockedGetSession = vi.mocked(auth.api.getSession);
 const sessionRepo = vi.mocked(sessionRepository);
@@ -184,7 +184,7 @@ describe('POST /api/sessions/:sessionId/messages', () => {
   });
 
   it('answers 500 when the job cannot be enqueued', async () => {
-    const { enqueueDirectReply } = await import('@backend/queue.js');
+    const { enqueueDirectReply } = await import('@server/queue.js');
     vi.mocked(enqueueDirectReply).mockRejectedValueOnce(new Error('redis down'));
 
     const res = await send(validBody);

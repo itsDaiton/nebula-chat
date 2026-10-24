@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { logLevelService } from '@backend/modules/logLevel/logLevel.service';
-import type { ChangeLogLevelDTO } from '@backend/modules/logLevel/logLevel.types';
+import { logLevelService } from '@server/modules/logLevel/logLevel.service';
+import type { ChangeLogLevelDTO } from '@server/modules/logLevel/logLevel.types';
 
 export const logLevelController = {
   async change(req: FastifyRequest<{ Body: ChangeLogLevelDTO }>, reply: FastifyReply) {

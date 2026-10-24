@@ -2,7 +2,7 @@ import { IncomingMessage, ServerResponse } from 'node:http';
 import { Socket } from 'node:net';
 import type { FastifyReply } from 'fastify';
 import { describe, expect, it } from 'vitest';
-import { setSseHeaders } from '@backend/config/headers.config';
+import { setSseHeaders } from '@server/config/headers.config';
 
 // A real raw response behind a reply that holds `pending` as its buffered headers.
 const createReply = (pending: Record<string, string> = {}) => {

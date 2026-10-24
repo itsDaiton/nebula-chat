@@ -1,8 +1,8 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { setSseHeaders } from '@backend/config/headers.config';
-import type { StreamParams } from '@backend/modules/stream/stream.types';
-import { streamService } from '@backend/modules/stream/stream.service';
-import { getSessionData } from '@backend/plugins/authGate.plugin';
+import { setSseHeaders } from '@server/config/headers.config';
+import type { StreamParams } from '@server/modules/stream/stream.types';
+import { streamService } from '@server/modules/stream/stream.service';
+import { getSessionData } from '@server/plugins/authGate.plugin';
 
 export const streamController = {
   async relay(req: FastifyRequest, reply: FastifyReply): Promise<void> {

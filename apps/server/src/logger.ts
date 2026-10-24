@@ -3,7 +3,7 @@ import { hostname } from 'node:os';
 import { resolve } from 'node:path';
 import { createLogger } from '@nebula-chat/otel';
 import type { Logger } from '@nebula-chat/otel';
-import { env } from '@backend/env';
+import { env } from '@server/env';
 
 // Same cwd-relative read `src/app.ts` uses for the OpenAPI version: the server
 // always runs from its package directory.

@@ -20,11 +20,11 @@ Creates all 6 layered files for a new module and registers it.
 Under `apps/server/src/modules/$ARGUMENTS/`:
 
 1. `$ARGUMENTS.types.ts` — `type` definitions (domain + DTO shapes). No logic.
-2. `$ARGUMENTS.validation.ts` — Zod schemas for request bodies/params/queries and responses, using `.describe('...')` on every field. Every response resource schema carries `.meta({ id: '<PlainNoun>' })` (e.g. `Session`, no `…Response` suffix) so the spec names it; request schemas stay unnamed. Response timestamps use `isoDateTimeSchema` from `@backend/utils/isoDateTimeSchema`.
+2. `$ARGUMENTS.validation.ts` — Zod schemas for request bodies/params/queries and responses, using `.describe('...')` on every field. Every response resource schema carries `.meta({ id: '<PlainNoun>' })` (e.g. `Session`, no `…Response` suffix) so the spec names it; request schemas stay unnamed. Response timestamps use `isoDateTimeSchema` from `@server/utils/isoDateTimeSchema`.
 3. `$ARGUMENTS.repository.ts` — Drizzle queries (the ONLY place Drizzle is called). Omit if the module has no DB access.
 4. `$ARGUMENTS.service.ts` — business logic; calls the repository; throws `AppError` subclasses; never touches req/res.
 5. `$ARGUMENTS.controller.ts` — calls the service; builds the HTTP response; minimal logic.
-6. `$ARGUMENTS.routes.ts` — `FastifyPluginCallbackZodOpenApi` (from `fastify-zod-openapi`) default export — `(app, _options, done) => { …; done(); }`, not `async` — with a `schema:` block per route (`body`/`params`/`querystring`, `response` per status code — each as `jsonResponse('description', schema)` from `@backend/utils/jsonResponse`, `description`, `summary`, `tags`, `operationId`). This is the single source of truth for both validation and OpenAPI docs — there is no separate `*.openapi.ts` file.
+6. `$ARGUMENTS.routes.ts` — `FastifyPluginCallbackZodOpenApi` (from `fastify-zod-openapi`) default export — `(app, _options, done) => { …; done(); }`, not `async` — with a `schema:` block per route (`body`/`params`/`querystring`, `response` per status code — each as `jsonResponse('description', schema)` from `@server/utils/jsonResponse`, `description`, `summary`, `tags`, `operationId`). This is the single source of truth for both validation and OpenAPI docs — there is no separate `*.openapi.ts` file.
 
 ## Registration
 
@@ -39,6 +39,6 @@ Under `apps/server/src/modules/$ARGUMENTS/`:
 
 - No Drizzle outside `.repository.ts`.
 - No bare `Error` throws — use `AppError` subclasses from `@nebula-chat/errors`.
-- No relative imports — `@backend/*` only.
+- No relative imports — `@server/*` only.
 - No `index.ts` barrels.
 - No `*.openapi.ts` file and no plain `FastifyPluginCallback`/`FastifyPluginAsync` (use `FastifyPluginCallbackZodOpenApi`) — this module predates the Fastify/Zod migration only if it doesn't follow this pattern, which would itself be a bug to fix, not a pattern to copy.

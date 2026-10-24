@@ -1,28 +1,28 @@
 import { fromPartial } from '@total-typescript/shoehorn';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createTestApp } from '@backend/test/app';
-import { REGISTERED_USER_ID, registeredSession } from '@backend/test/session';
+import { createTestApp } from '@server/test/app';
+import { REGISTERED_USER_ID, registeredSession } from '@server/test/session';
 
 // ADR-0008: only the repository layer is faked. The owner-scoped create path also
 // consults the session repository, so it is faked here too.
-vi.mock('@backend/modules/message/message.repository', () => ({
+vi.mock('@server/modules/message/message.repository', () => ({
   messageRepository: { create: vi.fn(), findById: vi.fn(), findAll: vi.fn() },
 }));
-vi.mock('@backend/modules/session/session.repository', () => ({
+vi.mock('@server/modules/session/session.repository', () => ({
   sessionRepository: { findByIdSimple: vi.fn() },
 }));
-vi.mock('@backend/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
+vi.mock('@server/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
-// Every message route is gated by `requireAuthentication`; faking `@backend/auth` lets the
+// Every message route is gated by `requireAuthentication`; faking `@server/auth` lets the
 // test authenticate without a real better-auth instance (ADR-0008).
-vi.mock('@backend/auth', () => ({
+vi.mock('@server/auth', () => ({
   auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
 }));
 
-import { auth } from '@backend/auth';
-import { messageRepository } from '@backend/modules/message/message.repository';
-import { sessionRepository } from '@backend/modules/session/session.repository';
+import { auth } from '@server/auth';
+import { messageRepository } from '@server/modules/message/message.repository';
+import { sessionRepository } from '@server/modules/session/session.repository';
 
 const repo = vi.mocked(messageRepository);
 const sessionRepo = vi.mocked(sessionRepository);

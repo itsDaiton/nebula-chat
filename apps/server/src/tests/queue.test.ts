@@ -19,11 +19,11 @@ vi.mock('bullmq', () => ({
   },
 }));
 
-vi.mock('@backend/redis', () => ({
+vi.mock('@server/redis', () => ({
   redis: { dedicatedConnection: vi.fn(() => ({ dedicated: true })) },
 }));
 
-import { closeQueue, enqueueDirectReply, pingWorker } from '@backend/queue';
+import { closeQueue, enqueueDirectReply, pingWorker } from '@server/queue';
 
 const job = {
   userId: '11111111-1111-4111-8111-111111111111',

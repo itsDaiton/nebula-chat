@@ -5,7 +5,7 @@ process.env['DATABASE_URL'] ??= 'postgresql://test:test@localhost:5432/test';
 process.env['REDIS_URL'] ??= 'redis://localhost:6379';
 process.env['CORS_ORIGIN'] ??= 'http://localhost:5173';
 // better-auth (M-6): env.ts requires these to parse. Route tests mock
-// `@backend/auth`, so no real better-auth instance is built from them.
+// `@server/auth`, so no real better-auth instance is built from them.
 process.env['BETTER_AUTH_SECRET'] ??= 'test-better-auth-secret-not-used';
 process.env['BETTER_AUTH_URL'] ??= 'http://localhost:3000';
 process.env['RESEND_API_KEY'] ??= 're_test_key_not_used';

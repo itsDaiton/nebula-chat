@@ -1,5 +1,5 @@
 import type { FastifyServerOptions } from 'fastify';
-import { env } from '@backend/env';
+import { env } from '@server/env';
 
 type TrustProxy = NonNullable<FastifyServerOptions['trustProxy']>;
 

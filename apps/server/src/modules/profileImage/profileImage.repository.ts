@@ -1,8 +1,8 @@
-import { auth } from '@backend/auth';
+import { auth } from '@server/auth';
 import type {
   ProfileImageUserFields,
   StoredProfileImage,
-} from '@backend/modules/profileImage/profileImage.types';
+} from '@server/modules/profileImage/profileImage.types';
 
 /**
  * Reads and writes go through better-auth's internal adapter, not Drizzle: its `updateUser`

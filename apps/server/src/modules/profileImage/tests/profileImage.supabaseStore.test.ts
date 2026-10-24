@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createSupabaseProfileImageStore } from '@backend/modules/profileImage/profileImage.supabaseStore';
+import { createSupabaseProfileImageStore } from '@server/modules/profileImage/profileImage.supabaseStore';
 
 /** A Supabase client whose bucket answers each call with `result`. */
 const fakeClient = (result: { error: Error | null } = { error: null }) => {

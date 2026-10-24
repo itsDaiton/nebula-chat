@@ -2,15 +2,15 @@ import { randomUUID } from 'node:crypto';
 import { NotFoundError } from '@nebula-chat/errors';
 import type { EventLogger } from '@nebula-chat/otel';
 import { logEvent } from '@nebula-chat/otel';
-import { deleteUnusedProfileImage } from '@backend/modules/profileImage/profileImage.fileDeletion';
-import { toProfileImage } from '@backend/modules/profileImage/profileImage.processing';
-import { profileImageRepository } from '@backend/modules/profileImage/profileImage.repository';
+import { deleteUnusedProfileImage } from '@server/modules/profileImage/profileImage.fileDeletion';
+import { toProfileImage } from '@server/modules/profileImage/profileImage.processing';
+import { profileImageRepository } from '@server/modules/profileImage/profileImage.repository';
 import type {
   ProfileImageDTO,
   ProfileImageSettingsDTO,
   ProfileImageStore,
-} from '@backend/modules/profileImage/profileImage.types';
-import { profileImageStore } from '@backend/profileImageStore';
+} from '@server/modules/profileImage/profileImage.types';
+import { profileImageStore } from '@server/profileImageStore';
 
 type ServiceLogger = EventLogger<'warn'>;
 

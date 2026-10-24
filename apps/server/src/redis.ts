@@ -1,7 +1,7 @@
 import { buildKey, createRedis, streamKey } from '@nebula-chat/redis';
 import type { RedisToolkit, StreamEntry } from '@nebula-chat/redis';
-import { env } from '@backend/env';
-import { logger } from '@backend/logger';
+import { env } from '@server/env';
+import { logger } from '@server/logger';
 
 /** The server's single Redis toolkit, mirroring `src/db.ts`. */
 export const redis: RedisToolkit = createRedis({ redisUrl: env.REDIS_URL, logger });

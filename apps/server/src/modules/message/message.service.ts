@@ -1,7 +1,7 @@
-import { messageRepository } from '@backend/modules/message/message.repository';
-import { sessionRepository } from '@backend/modules/session/session.repository';
+import { messageRepository } from '@server/modules/message/message.repository';
+import { sessionRepository } from '@server/modules/session/session.repository';
 import { NotFoundError } from '@nebula-chat/errors';
-import type { CreateMessageDTO } from '@backend/modules/message/message.types';
+import type { CreateMessageDTO } from '@server/modules/message/message.types';
 
 export const messageService = {
   async createMessage(data: CreateMessageDTO, userId: string) {

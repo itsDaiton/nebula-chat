@@ -5,13 +5,13 @@ import {
   logEvent,
   shutdownTelemetry,
 } from '@nebula-chat/otel';
-import { env } from '@backend/env';
-import { INSTANCE_ID, logger, SERVICE_NAME } from '@backend/logger';
+import { env } from '@server/env';
+import { INSTANCE_ID, logger, SERVICE_NAME } from '@server/logger';
 
 initTelemetry(SERVICE_NAME, { logger, diagLevel: env.OTEL_LOG_LEVEL });
 
-import { buildApp } from '@backend/app';
-import { redis } from '@backend/redis';
+import { buildApp } from '@server/app';
+import { redis } from '@server/redis';
 
 const start = async (): Promise<void> => {
   // Open Redis while the app builds, so the first request does not race the connect.

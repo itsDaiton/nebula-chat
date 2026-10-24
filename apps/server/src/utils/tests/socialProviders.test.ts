@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { socialProvidersFromEnv } from '@backend/utils/socialProviders';
+import { socialProvidersFromEnv } from '@server/utils/socialProviders';
 
 const GOOGLE = { GOOGLE_CLIENT_ID: 'google-id', GOOGLE_CLIENT_SECRET: 'google-secret' };
 const GITHUB = { GITHUB_CLIENT_ID: 'github-id', GITHUB_CLIENT_SECRET: 'github-secret' };

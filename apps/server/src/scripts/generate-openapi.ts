@@ -1,7 +1,7 @@
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-// env.ts parses process.env on import, so these must be set before @backend/app loads.
+// env.ts parses process.env on import, so these must be set before @server/app loads.
 // No connection is opened (pg, Redis and the job queue are lazy), so placeholders suffice; a real var wins.
 process.env['DATABASE_URL'] ??= 'postgresql://localhost:5432/openapi';
 process.env['REDIS_URL'] ??= 'redis://localhost:6379';
@@ -11,7 +11,7 @@ process.env['RESEND_API_KEY'] ??= 'openapi-placeholder-resend-key';
 process.env['EMAIL_FROM'] ??= 'openapi@example.com';
 
 const main = async (): Promise<void> => {
-  const { buildApp } = await import('@backend/app.js');
+  const { buildApp } = await import('@server/app.js');
   const app = await buildApp();
   await app.ready();
 

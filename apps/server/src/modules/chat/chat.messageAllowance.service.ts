@@ -1,7 +1,7 @@
 import type { User } from '@nebula-chat/auth';
-import { env } from '@backend/env';
-import type { MessageAllowance } from '@backend/modules/chat/chat.types';
-import { messageRepository } from '@backend/modules/message/message.repository';
+import { env } from '@server/env';
+import type { MessageAllowance } from '@server/modules/chat/chat.types';
+import { messageRepository } from '@server/modules/message/message.repository';
 
 type AllowanceUser = Pick<User, 'id' | 'isAnonymous' | 'emailVerified'>;
 

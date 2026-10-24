@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { NotFoundError, PayloadTooLargeError } from '@nebula-chat/errors';
 import type { DbTransaction } from '@nebula-chat/db';
-import { db } from '@backend/db';
-import type { ChatLogger, SendMessageDTO, SentMessage } from '@backend/modules/chat/chat.types';
-import { messageRepository } from '@backend/modules/message/message.repository';
-import { sessionRepository } from '@backend/modules/session/session.repository';
-import { enqueueDirectReply } from '@backend/queue';
-import { saveStreamOwner } from '@backend/redis';
-import { countTokens } from '@backend/utils/countTokens';
+import { db } from '@server/db';
+import type { ChatLogger, SendMessageDTO, SentMessage } from '@server/modules/chat/chat.types';
+import { messageRepository } from '@server/modules/message/message.repository';
+import { sessionRepository } from '@server/modules/session/session.repository';
+import { enqueueDirectReply } from '@server/queue';
+import { saveStreamOwner } from '@server/redis';
+import { countTokens } from '@server/utils/countTokens';
 
 const MAX_PROMPT_TOKENS = 2000;
 
