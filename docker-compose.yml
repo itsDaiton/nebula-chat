@@ -57,7 +57,7 @@ services:
   # Local OTLP backend: Grafana, Tempo and Loki, no Collector, traces linked to their log lines.
   # The app only speaks OTLP to OTEL_EXPORTER_OTLP_ENDPOINT, so swapping it is env (ADR-0007/0023).
   otel-lgtm:
-    image: grafana/otel-lgtm:0.36.0
+    image: grafana/otel-lgtm:0.37.0
     container_name: otel-lgtm
     ports:
       # Grafana UI — 3001 on the host because the server itself defaults to 3000.
