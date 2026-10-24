@@ -28,6 +28,7 @@ apps/client/src/
 ├── routes/                        # TanStack Router file-based routes
 │   ├── __root.tsx                 # Root route: RootLayout + the not-found page
 │   ├── settings.tsx               # /settings
+│   ├── auth/                      # /auth/* — a layout route (route.tsx) plus the four pages, each with validateSearch
 │   └── $.tsx                      # Bridge: URLs still on react-router (else not-found)
 ├── routing/
 │   ├── router.ts                  # createAppRouter (+ the Register declaration)
@@ -35,6 +36,7 @@ apps/client/src/
 │   ├── LegacyRouter.tsx           # react-router driven by TanStack's location and history
 │   ├── LegacyRoutes.tsx           # The legacy react-router tree the bridge renders
 │   ├── bridgedRoutes.tsx          # Paths still served by react-router
+│   ├── searchParams.ts            # Zod builders for search params (optionalSearchText)
 │   └── routes.ts                  # Typed path helpers
 ├── libs/api/
 │   ├── client.ts                  # axios instance (credentials, AppError interceptor); Orval's mutator
@@ -220,12 +222,19 @@ files in `src/routes/` (the Vite plugin writes `routeTree.gen.ts`, which is comm
 lint, format, coverage and knip). A route file only wires a page: the component lives in `modules/*/`
 as a `*Page.tsx`.
 
-- **Moved routes** (`/settings`, not-found) navigate with TanStack's `Link`, `Navigate` and `useNavigate`.
-- **Everything else** (`/`, `/s/:id`, `/auth/*`) is served by the catch-all bridge `routes/$.tsx`, which
+- **Moved routes** (`/settings`, `/auth/*`, not-found) navigate with TanStack's `Link`, `Navigate` and
+  `useNavigate`, with a typed literal path (`<Link to="/auth/forgot-password">`). A link to a still-bridged
+  path uses its `route.*` helper, since TanStack has no typed path for it yet.
+- **Search params** are declared per route with a Zod schema as `validateSearch`, built from
+  `routing/searchParams.ts` so a malformed value falls back to absent instead of throwing. TanStack
+  JSON-parses each value (`?token=123` arrives as a number); `optionalSearchText()` turns a scalar back
+  into text. A page reads them with `getRouteApi('<route id>').useSearch()` (and writes them with that
+  API's `useNavigate`), never by importing its route file.
+- **Everything else** (`/`, `/s/:id`) is served by the catch-all bridge `routes/$.tsx`, which
   renders the legacy react-router tree for a path in `routing/bridgedRoutes.tsx` and throws
   `notFound()` for any other.
 - **`LegacyRouter`** wraps every route in a react-router `<Router>` fed TanStack's location and history,
-  so components still on react-router hooks (the chat, auth pages, the Header) work on any route and
+  so components still on react-router hooks (the chat, the Header) work on any route and
   their navigations go through TanStack Router.
 
 `routing/routes.ts` keeps the typed path helpers until the last route moves:

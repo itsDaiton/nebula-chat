@@ -22,7 +22,6 @@ import {
   signUpSchema,
 } from '@/modules/auth/utils/authSchemas';
 import { resources } from '@/resources';
-import { route } from '@/routing/routes';
 
 const { fields, tabs, actions, signIn, signUp, forgotPassword, resetPassword } = resources.auth;
 const { changePassword, account } = resources.settings;
@@ -90,7 +89,7 @@ export const FORGOT_PASSWORD_FORM: AuthFormConfig<ForgotPasswordValues> = {
   request: ({ email }) =>
     authClient.requestPasswordReset({
       email,
-      redirectTo: authCallbackUrl(route.auth.resetPassword()),
+      redirectTo: authCallbackUrl('/auth/reset-password'),
     }),
   successMessage: forgotPassword.sent,
 };
