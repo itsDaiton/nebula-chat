@@ -384,6 +384,8 @@ describe('useChatStream — stopping a reply', () => {
                 controller.enqueue(encoder.encode(frame('end', { reason: 'cancelled' }, '1-2')));
                 controller.close();
               };
+              // Like the Redis flag, a cancel that landed before the stream opened still ends it.
+              if (cancelled) endIt();
             },
           }),
           { headers: { 'Content-Type': 'text/event-stream' } },
