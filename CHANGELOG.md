@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.2.2...nebula-chat-v5.3.0) (2026-10-24)
+
+
+### Features
+
+* **client:** NEB-537 serve the chat routes through TanStack Router and remove react-router and AuthGate ([#631](https://github.com/itsDaiton/nebula-chat/issues/631)) ([cfcb628](https://github.com/itsDaiton/nebula-chat/commit/cfcb628530007c11144f5b4ec98687bc28066c83))
+
 ## [5.2.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.2.1...nebula-chat-v5.2.2) (2026-10-24)
 
 
