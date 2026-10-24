@@ -31,8 +31,7 @@ flowchart LR
   instead of failing.
 - **Opt-in.** Pick it per message, or keep the plain direct reply for quick questions.
 
-The design is in [CONTEXT.md](./CONTEXT.md) and
-[ADR-0015](./docs/adr/0015-run-model-intake-orchestrator-loop-output.md).
+The domain terms are defined in [CONTEXT.md](./CONTEXT.md).
 
 ## What works today
 
@@ -121,6 +120,5 @@ Then start the server, worker and client. [Full setup guide →](./docs/getting-
 | [Architecture](./docs/architecture.md) | Deployment, packages, data model and the flows that cross apps |
 | [Authentication](./docs/auth.md) | Sign-in, guests, the message allowance and claiming |
 | [Observability](./docs/logging.md) | Logging, tracing and runtime log levels |
-| [Decisions](./docs/adr) | Architecture decision records |
 | [Domain glossary](./CONTEXT.md) | The language the product and code share |
 | [Contributing](./AGENTS.md) | Conventions, git workflow and testing |
