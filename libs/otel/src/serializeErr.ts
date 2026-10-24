@@ -4,11 +4,7 @@ import pino from 'pino';
 type SerializedNonError = { type: string; message: string };
 
 /**
- * The `err` serializer. An Error goes through Pino's `errWithCause`, which
- * keeps `cause` as a nested serialized error — so a mapped Postgres error still
- * shows the driver error beneath it. Anything else that was thrown (a string, a
- * plain object) is still emitted as an object, so `err.type` and `err.message`
- * are always there to query.
+ * The `err` serializer: an Error goes through Pino's `errWithCause` (keeping `cause`); anything else thrown is still emitted as an object with `err.type` and `err.message`.
  */
 export const serializeErr = (
   value: unknown,

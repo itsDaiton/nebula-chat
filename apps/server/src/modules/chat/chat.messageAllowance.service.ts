@@ -6,16 +6,8 @@ import { messageRepository } from '@server/modules/message/message.repository';
 type AllowanceUser = Pick<User, 'id' | 'isAnonymous' | 'emailVerified'>;
 
 /**
- * The one place that decides whether a user is metered and how much of their
- * Message allowance (ADR-0010 §4) is left. Both the send-path
- * `messageAllowanceHook` and the `GET /api/chat/message-allowance` read call it,
- * so what the client displays and what the server enforces cannot drift.
- *
- * - A verified Registered user is unmetered and short-circuits without touching
- *   the database. A Guest, or a Registered user still unverified (ADR-0021), is
- *   metered.
- * - `used` is the live `role='user'` message count, raw; `remaining` is clamped
- *   at 0, since lowering `GUEST_MESSAGE_ALLOWANCE` can leave `used` above `limit`.
+ * The one place that decides whether a user is metered and how much allowance is left (ADR-0010 §4, ADR-0021).
+ * `remaining` is clamped at 0, since lowering the limit can leave `used` above it.
  */
 export const getMessageAllowance = async (user: AllowanceUser): Promise<MessageAllowance> => {
   if (!user.isAnonymous && user.emailVerified) {

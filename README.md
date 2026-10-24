@@ -1,130 +1,99 @@
 # Nebula Chat
 
-Nebula Chat is a full-stack AI chat application.
-It provides a React frontend for chatting and session history, a Fastify API that stores
-sessions/messages in PostgreSQL and relays replies over SSE, and a worker that produces those
-replies from the LLM providers through Redis. See [docs/architecture.md](./docs/architecture.md)
-for diagrams of how the pieces fit together.
+**An AI chat product built to be tried in seconds and trusted in production.**
 
-## Monorepo structure
+Open the app and start talking — no sign-up wall. Guests get a free message allowance; registering
+(email, Google or GitHub) keeps their history and lifts the limit. Replies stream token by token from
+OpenAI or Anthropic models, and every conversation stays in a searchable, archivable history.
 
-```text
-nebula-chat/
-├── apps/
-│   ├── cli/      # `nebula` operator CLI
-│   ├── client/   # React + Vite client
-│   ├── server/   # Fastify + Drizzle API
-│   └── worker/   # LLM replies off a BullMQ queue
-└── libs/         # Shared packages: auth, contracts, db, errors, langchain, otel, redis
+🌐 **App:** <https://www.nebula-chat.cz> · **API:** <https://api.nebula-chat.cz>
+
+## Why it's different
+
+- **Zero-friction start.** Guests chat immediately; signing up *claims* their existing conversations
+  instead of resetting them.
+- **Pick the model per conversation.** Switch between providers without losing the thread.
+- **Live, resumable streaming.** Replies keep generating if you drop offline and pick up where they left
+  off; a Stop button cancels one mid-flight.
+- **Accounts done properly.** Email verification, password reset, social sign-in, profile images,
+  sign-out everywhere, and self-serve account deletion with a 30-day grace period.
+- **Run like a service.** Token budgets enforced per request, structured logs and traces in Grafana, and an
+  operator CLI to change log levels in production without a deploy.
+- **More coming.** Orchestrated multi-agent responses are designed ([domain model](./CONTEXT.md)) and next in line.
+
+## How it fits together
+
+```mermaid
+flowchart LR
+  browser([Browser])
+  operator([Operator<br/>nebula CLI])
+
+  subgraph render[Render]
+    client["Client SPA<br/>apps/client · static site"]
+    server["Server API<br/>apps/server · web service"]
+    worker["Worker<br/>apps/worker · web service"]
+  end
+
+  subgraph data[Data]
+    pg[("Postgres<br/>Supabase")]
+    redis[(Redis)]
+    storage[("Supabase Storage<br/>Profile images")]
+  end
+
+  subgraph vendors[Third parties]
+    llm["OpenAI / Anthropic"]
+    resend[Resend]
+    oauth["Google / GitHub OAuth"]
+    grafana["Grafana Cloud<br/>Loki · Tempo"]
+  end
+
+  browser -->|loads| client
+  browser -->|"/api/* and SSE<br/>auth cookie"| server
+  browser <-->|social sign-in redirect| oauth
+  operator -->|"/api/internal/*<br/>bearer token"| server
+  server --> pg
+  server <--> redis
+  server -->|upload, delete| storage
+  server -->|verification and reset email| resend
+  server <-->|code exchange| oauth
+  server -.->|"GET /health wake-up"| worker
+  worker --> pg
+  worker <--> redis
+  worker -->|model call| llm
+  server -.->|OTLP logs and traces| grafana
+  worker -.->|OTLP logs and traces| grafana
 ```
 
-## Prerequisites
+The browser only ever talks to the **server**, which owns auth and history and relays replies over SSE.
+The **worker** owns every model call and takes its jobs off Redis, so slow LLM work never blocks the API
+and each side scales on its own. [Architecture deep dive →](./docs/architecture.md)
 
-- Node.js `26.12.1` (see `.nvmrc`)
-- pnpm `>=12` (pinned to `12.4.1` via `packageManager`)
-- Podman (recommended for local PostgreSQL + Redis)
-- OpenAI API key
+## Built with
 
-### Selecting the toolchain
+TypeScript end to end: React and Chakra UI on the client, Fastify and Drizzle on PostgreSQL on the server,
+BullMQ and Redis Streams for the reply pipeline, LangChain for providers, Better Auth for identity,
+OpenTelemetry into Grafana Cloud. A pnpm + Turborepo monorepo with a typed OpenAPI contract between the
+apps, unit tests behind an 80% coverage gate, and automated releases.
 
-Node is managed with [nvm](https://github.com/nvm-sh/nvm) (macOS/Linux) or
-[nvm-windows](https://github.com/coreybutler/nvm-windows). From the repo root:
+## Run it locally
+
+You need Node `26.12.1`, pnpm, Podman and an OpenAI or Anthropic API key.
 
 ```bash
-nvm install $(cat .nvmrc) && nvm use $(cat .nvmrc)
+pnpm install
+podman compose up -d
+pnpm --filter @nebula-chat/db db:migrate
 ```
 
-On nvm-windows, pass the version explicitly — it does not read `.nvmrc`:
+Then start the server, worker and client. [Full setup guide →](./docs/getting-started.md)
 
-```powershell
-nvm install 26.12.1; nvm use 26.12.1
-```
+## Learn more
 
-Node 26 no longer bundles Corepack, so install pnpm once per Node version with
-the npm that ships with the runtime:
-
-```bash
-npm install -g pnpm@12.4.1
-```
-
-After that the `packageManager` pin keeps everyone on the same pnpm: a mismatched
-local pnpm downloads and runs the pinned version (`pmOnFail: download`, the
-default).
-
-## Local development (quick start)
-
-1. Install dependencies from the repo root:
-
-   ```bash
-   pnpm install
-   ```
-
-2. Create environment files:
-
-   ```bash
-   cp .env.example .env # credentials for the local Postgres/Redis containers
-   cp apps/server/.env.example apps/server/.env
-   cp apps/worker/.env.example apps/worker/.env
-   cp apps/client/.env.example apps/client/.env
-   ```
-
-3. Fill required values:
-   - `.env` (root): Postgres/Redis container credentials. `DATABASE_URL` and `REDIS_URL` in the
-     server `.env` must use the same ones.
-   - `apps/server/.env`: at least `SERVER_URL`, `CLIENT_URL`, `DATABASE_URL` and
-     `REDIS_URL`.
-   - `apps/worker/.env`: `OPENAI_API_KEY` (or `ANTHROPIC_API_KEY`), plus the same
-     `DATABASE_URL` and `REDIS_URL`. The worker produces every reply, so chat needs it running.
-   - `apps/client/.env`: `VITE_API_URL` (usually `http://localhost:3000` in local
-     development).
-
-4. Start local infrastructure:
-
-   ```bash
-   podman compose up -d
-   ```
-
-5. Run DB migrations:
-
-   ```bash
-   cd ../..
-   pnpm --filter @nebula-chat/db db:migrate
-   ```
-
-6. Start backend and frontend (in separate terminals):
-
-   ```bash
-   pnpm --filter @nebula-chat/server run dev
-   pnpm --filter @nebula-chat/client run dev
-   ```
-
-7. Open:
-   - App: `http://localhost:5173`
-   - API docs: `http://localhost:3000/docs`
-   - OpenAPI spec: `http://localhost:3000/openapi.json`
-
-## Useful commands (repo root)
-
-```bash
-pnpm run lint
-pnpm run lint:fix
-pnpm run format
-pnpm run format:check
-pnpm run build:libs                      # build all workspace libs (libs/*) and their dependencies
-pnpm --filter @nebula-chat/client run typecheck
-pnpm --filter @nebula-chat/server run typecheck
-```
-
-Build the libs after a fresh clone or after pulling lib changes. The apps typecheck against the libs' built `dist/`,
-so running `typecheck` on a stale build fails with errors like `no exported member`. `pnpm turbo run typecheck --filter=<pkg>`
-builds the libs it needs first.
-
-## Deployment URLs
-
-- Application: <https://www.nebula-chat.cz>
-- API: <https://api.nebula-chat.cz>
-
-## Notes
-
-- Human-focused setup and usage docs are in these README files.
-- Agent-specific implementation conventions are documented in `AGENTS.md`.
+| | |
+| --- | --- |
+| [Architecture](./docs/architecture.md) | Deployment, packages, data model and the flows that cross apps |
+| [Authentication](./docs/auth.md) | Sign-in, guests, the message allowance and claiming |
+| [Observability](./docs/logging.md) | Logging, tracing and runtime log levels |
+| [Decisions](./docs/adr) | Architecture decision records |
+| [Domain glossary](./CONTEXT.md) | The language the product and code share |
+| [Contributing](./AGENTS.md) | Conventions, git workflow and testing |

@@ -4,11 +4,7 @@ import type { CacheConnection } from './types';
 import { recordCacheHit, recordCacheMiss } from './metrics';
 
 /**
- * A single-tier Redis cache. Values are JSON-serialised. Every operation is
- * **fail-open**: a Redis error degrades a read to a miss and a write to a no-op,
- * logged through the injected logger and never thrown, so a cache outage can
- * never break the caller (per ADR-0009). A failure is handled and the user is
- * unaffected, so it is a `warn` (`cache.*.failed`), not an `error`.
+ * A single-tier JSON Redis cache, fail-open (ADR-0009): an error degrades a read to a miss and a write to a no-op, logged as a `warn` (`cache.*.failed`).
  */
 export type RedisCache = {
   /** Returns the cached value, or `null` on a miss or any Redis error. */

@@ -3,10 +3,8 @@ import type { Logger } from '@nebula-chat/otel';
 import type { ConnectionEvents } from './types';
 
 /**
- * Logs a connection's errors through `logger`; with no `error` listener, ioredis
- * writes each one to `console.error` instead. While Redis is down ioredis errors on
- * every reconnect attempt, so only the first error of an outage is an `error` and
- * the rest are `debug`; the `ready` that ends the outage logs how long it lasted.
+ * Logs a connection's errors through `logger` (ioredis otherwise uses `console.error`); only an outage's first error is `error`, the rest `debug`,
+ * and the `ready` ending it logs how long it lasted.
  */
 export const logConnectionErrors = (connection: ConnectionEvents, logger: Logger): void => {
   const log = componentLogger(logger, 'redis');

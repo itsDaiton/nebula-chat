@@ -3,14 +3,8 @@ import { Pool } from 'pg';
 import { loadDatabaseUrl, migrationsFolder, migrationsSchema, migrationsTable } from './env.js';
 
 /**
- * Mark the existing migration files as already applied, without running them.
- *
- * Needed when a database predates the migration journal — here, the schema was
- * created during the Prisma era (ADR 0004) and `drizzle-kit migrate` never ran
- * against it. The journal is empty, so the migrator treats `0000` as pending
- * and re-runs `CREATE TABLE`, which fails with 42P07 against the live schema.
- *
- * Reports by default; pass `--apply` to write. Take a database snapshot first.
+ * Marks the existing migration files applied without running them, for a database that predates the journal (ADR 0004):
+ * the migrator would otherwise re-run `0000` and fail with 42P07. Reports by default; `--apply` writes, so snapshot first.
  */
 
 const listTables = async (pool: Pool): Promise<string[]> => {

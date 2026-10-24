@@ -22,9 +22,7 @@ export type StreamReader = {
 };
 
 /**
- * Redis Streams: an append-only log per key that readers tail from any offset,
- * so a reader that connects late still gets every entry (unlike pub/sub).
- * Errors propagate: a stream carries data, so nothing here fails open.
+ * Redis Streams: an append-only log per key that readers tail from any offset (unlike pub/sub); errors propagate since nothing here fails open.
  */
 export type RedisStreams = {
   /** Appends `payload` to `key` and resolves to the new entry's id. */

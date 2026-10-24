@@ -151,10 +151,7 @@ const createLevelControl = (root: pino.Logger, boot: LevelOverrides): LevelContr
 };
 
 /**
- * Records the level state on the root logger. Pino builds every child with
- * `Object.create(parent)`, so the state is inherited down the whole chain —
- * Fastify's per-request `req.log`, bound children, all of them — without any
- * logger having to be told about it. `componentLogger.test.ts` pins this.
+ * Records the level state on the root logger; Pino builds every child with `Object.create(parent)`, so the whole chain inherits it (pinned by `componentLogger.test.ts`).
  */
 export const attachLevelControl = (root: pino.Logger, overrides: LevelOverrides): void => {
   (root as WithControl)[LEVEL_CONTROL] = createLevelControl(root, overrides);

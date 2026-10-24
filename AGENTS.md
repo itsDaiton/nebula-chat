@@ -1,401 +1,83 @@
 # AGENTS.md
 
-Reference for AI agents (and contributors) working in this repository: monorepo-wide commands, workflow, and structure.
+Monorepo-wide habits: commands, git workflow, and cross-cutting rules. Package conventions live in
+each package's own file — read the one you're about to touch:
 
-Package-specific conventions — directory layout, state management, module patterns, code examples — live in each package's own `AGENTS.md`, not here:
+- [apps/client](./apps/client/AGENTS.md) — React, TanStack Query, Zustand, Chakra UI
+- [apps/server](./apps/server/AGENTS.md) — Fastify, Drizzle, Zod
+- [apps/worker](./apps/worker/AGENTS.md) — every LLM reply and background job (BullMQ, Redis Streams)
+- [apps/cli](./apps/cli/AGENTS.md) — the `nebula` operator CLI
 
-- [apps/client/AGENTS.md](./apps/client/AGENTS.md) — frontend (React, TanStack Query, Zustand, Chakra UI)
-- [apps/server/AGENTS.md](./apps/server/AGENTS.md) — backend (Fastify, Drizzle, Zod)
-- [apps/worker/AGENTS.md](./apps/worker/AGENTS.md) — the worker: every LLM reply and background job (BullMQ, Redis Streams)
-- `apps/cli` — the operator CLI (commander, an Orval fetch client); small enough to live in [Operator CLI](#operator-cli-appscli) below
+How the pieces fit: [docs/architecture.md](./docs/architecture.md). Domain vocabulary: [CONTEXT.md](./CONTEXT.md).
+Local setup and env files: [README.md](./README.md).
 
-Read this file for anything that spans the whole repo; read the relevant package's `AGENTS.md` before touching code inside it.
-For how the pieces fit together (deployment, packages, data model, the flows that cross apps), start at
-[docs/architecture.md](./docs/architecture.md).
-
----
-
-## Development Commands
-
-Monorepo-wide, from the repo root:
+## Commands
 
 ```bash
-pnpm install                                   # install all workspace dependencies
-pnpm run lint | lint:fix | format | format:check
-pnpm --filter <pkg> run <cmd>                  # run one package's script
-pnpm turbo run build|typecheck --filter=<pkg>  # builds workspace lib artifacts (dist/*.d.ts) first
+pnpm install
+pnpm run lint:fix && pnpm run format           # after every code change; zero warnings tolerated
+pnpm turbo run typecheck --filter=<pkg>        # builds workspace libs (dist/*.d.ts) first
+pnpm turbo run test                            # every package (or `pnpm backend|frontend|worker test`)
+pnpm knip                                      # on demand: after deleting/moving files or changing exports
+podman compose up -d                           # PostgreSQL :5332, Redis :6380
 ```
 
-Start local infrastructure (PostgreSQL on `:5332`, Redis on `:6380`):
+Don't add `// eslint-disable` unless unavoidable, and say why. Never hand-edit generated code (Orval output).
+`main` is Knip-clean: a finding is yours — delete the dead code or drop the `export`.
 
-```bash
-podman compose up
-```
+## Git
 
-Package-specific scripts live with the package: frontend `dev`/`build`/`typecheck` in the [frontend AGENTS.md](./apps/client/AGENTS.md#commands); backend `dev`/`start`/`generate:openapi` and the `@nebula-chat/db` `db:*` migration commands in the [backend AGENTS.md](./apps/server/AGENTS.md#commands).
+- Never commit to `main`. One logical change per branch, then a PR against `main`.
+- Branch: `type/<slug>`, or `type/neb-<n>-<slug>` for a ticket.
+- **Only `feat` and `fix` (and `feat!`/`fix!`).** Release Please ignores every other type, so the work
+  would merge and never release. `fix` is the default (bugs, deps, tooling, CI, docs, refactors);
+  `feat` is new user-visible capability; `!` is a real breaking change to a released surface.
+- Scope names the Release Please component: `client`, `server`, `worker`, `cli`, `contracts`, `db`,
+  `errors`, `langchain`, `openapi` — or none for root tooling/docs. The bump is decided from changed paths,
+  not the scope.
+- Squash-merge is the default, so the **PR title is the commit Release Please parses**. Subject under 72 chars.
+- PR body: summary, `Closes #NN`, test plan.
 
----
+### Tickets
 
-## Git Workflow
-
-- **Never commit directly to `main`.** All work must go through a feature branch and pull request.
-- Branch naming: `feat/<short-description>`, `fix/<short-description>`, `chore/<short-description>`,
-  `refactor/<short-description>` — or `type/neb-<n>-<slug>` when the work comes from a ticket (see
-  [Referencing tickets](#referencing-tickets)). The branch prefix is free-form and independent of
-  the commit type — a `chore/` branch still needs a `feat:` or `fix:` PR title, since only those
-  reach Release Please.
-- One logical change per branch. Don't bundle unrelated changes.
-- Always push the branch and open a PR when the work is complete.
-
-### Commits
-
-- Use [Conventional Commits](https://www.conventionalcommits.org/) format: `type(scope): description`.
-  - **Types: `feat`, `fix`, and `feat!` / `fix!` only.** Release Please ignores every other type, so a `chore:`/`docs:`/`refactor:` PR merges into `main` and then vanishes — no version bump, no changelog entry, no release. See [Release Please](#release-please) for how to choose between them.
-  - Scope is optional but encouraged: `feat(chat): ...`, `fix(backend): ...`, `fix(frontend): ...`
-- Keep the subject line under 72 characters.
-- Commit logically complete units of work — don't leave the codebase in a broken state between commits.
-
-### Pull Requests
-
-- Always open a PR against `main`.
-- PR title follows the same Conventional Commits format.
-- PR description must include a brief summary of what changed and why, plus a test plan.
-- Keep PRs small and focused. Split large changes into multiple PRs.
-
-### Referencing tickets
-
-Tickets from `/to-tickets` (and issues picked up via `/triage`) are GitHub issues. Each issue **is**
-a ticket, identified by the Jira-style key **`NEB-<issue-number>`** — issue `#329` is ticket
-`NEB-329`. The key is a human-friendly alias over the GitHub issue number; there is no separate
-counter to maintain, and it's the token you write in branches, commits, and PR titles (where a bare
-`#329` is ambiguous — GitHub shares that number space with PRs). A PR that implements a ticket must
-carry its ID, since nothing else links the two after merge:
-
-- **The issue title is the PR title.** Once an issue is filed, edit its title to carry its ID —
-  `type(scope): NEB-<n> summary` (the ID, a space, then the summary — no colon after it) — and the
-  implementing PR reuses that exact string. Example:
-  `feat(server): NEB-330 migrate the HTTP framework from Express to Fastify`; breaking:
-  `feat(server)!: NEB-330 …`. The `NEB-<n>` sits in the description position, right after the
-  Conventional Commit header.
-- **Branch**: `type/neb-<n>-<slug>`, e.g. `feat/neb-330-fastify`.
-- **Body**: include a `Closes #NN` (or `Fixes #NN`) line. GitHub's auto-close keys off the bare `#NN`, **not** the `NEB-` alias, so this line is what actually closes the ticket when the PR merges into `main`. Use `Part of #NN` only for the rare ticket that genuinely can't close in one PR — `/to-tickets` sizes tickets to close in one, so this should be uncommon.
-- A PR spanning more than one ticket (avoid where possible — prefer one PR per ticket) names each ID in the title and adds one `Closes #NN` line per ticket in the body.
-- The ID lives in the description position on purpose — `NEB-330` then shows in the changelog line Release Please generates — but never in the commit **type** or **scope** position. A PR with no backing ticket (ad-hoc maintenance) drops the `NEB-<n>:` and uses the plain `type(scope): summary` form.
-
-### Release Please
-
-Releases on `main` are fully automated by [release-please](https://github.com/googleapis/release-please) (`.github/workflows/release-please.yml`, config in `release-please-config.json`) — it reads Conventional Commit messages on `main`, not anything written by hand. There is no manual changelog or version bump; get the commit/PR message right instead.
-
-- **Squash-merge is this repo's default** (`squash_merge_commit_title: PR_TITLE`), so for a normal feature PR the **PR title becomes the one commit release-please parses** — get the title right, not just the individual commits inside the PR. If a PR is merged with a merge commit instead, every individual commit is parsed, so each one still needs a correct type/scope.
-- **Only `feat` and `fix` produce a release. Use nothing else.** Release Please bumps a version solely off these types, so any other type is invisible: the work merges, and no release, tag, or changelog entry ever mentions it. This is a hard rule — a change worth merging is a change worth releasing.
-- **Type decides the version bump** release-please applies to whichever component(s) the commit's changed files fall under:
-  - `fix:` → patch bump. The default. Everything that isn't new capability: bug fixes, dependency bumps, tooling, CI, docs, refactors, test changes.
-  - `feat:` → minor bump. New capability someone could use or notice — a new endpoint, a new UI affordance, a new documented convention.
-  - `feat!:`, `fix!:`, or a footer of `BREAKING CHANGE: ...` → major bump. Use this only for an actual breaking change to a released package's public surface (e.g. `libs/db`'s exported types, the OpenAPI contract) — not for internal refactors.
-- **Do not use `chore`, `refactor`, `docs`, `style`, `test`, `build`, `ci`, or `perf`.** Release Please drops them. Pick `fix` or `feat` by the rule above instead — when in doubt, `fix`.
-- The cost of this rule is changelog noise: a CI tweak lands as a patch release. That is deliberate — a silently unreleased change is worse than an over-reported one.
-- **Scope should name the release-please component** the change belongs to, matching
-  `release-please-config.json`'s `packages` keys: `client` (`apps/client`), `server`
-  (`apps/server`), `worker` (`apps/worker`), `cli` (`apps/cli`), `contracts` (`libs/contracts`), `db` (`libs/db`), `errors` (`libs/errors`), `langchain` (`libs/langchain`), `openapi`, or omit the scope
-  (or use a repo-wide one like `fix(agents): ...`) for root-level tooling/docs changes (`CLAUDE.md`,
-  `AGENTS.md`, `CONTEXT.md`, `.claude/`, `docs/`) — those fall under the root `nebula-chat` component, which
-  explicitly excludes `apps/**`, `libs/**`, and `openapi/**`.
-- release-please determines the bump **per component from the changed file paths**, not from the scope string — the scope is for changelog readability, so keep it accurate, but don't rely on it to control which package gets released.
-- A commit that spans multiple components (e.g. a backend route change plus its regenerated `openapi.yaml` and Orval client) still needs one accurate primary scope; each affected component gets its own bump from the same commit regardless of what the scope says.
-
----
-
-## Code Quality
-
-Run these from the repo root after **every** code change — this is mandatory, not optional:
-
-```bash
-pnpm run lint:fix      # ESLint auto-fix (zero warnings tolerance)
-pnpm run format        # Prettier format
-```
-
-Also run typecheck in the affected package before committing:
-
-```bash
-pnpm --filter @nebula-chat/client run typecheck
-pnpm --filter @nebula-chat/server run typecheck
-pnpm --filter @nebula-chat/worker run typecheck
-pnpm --filter @nebula-chat/cli run typecheck
-```
-
-Do not disable ESLint rules with inline `// eslint-disable` comments unless absolutely necessary, and always document why.
-
-### Knip (on demand)
-
-```bash
-pnpm knip              # unused files, exports, types and dependencies (knip.json)
-```
-
-Not mandatory after every change and not run on PRs. Run it when a change warrants it: deleting or moving files, removing a feature or module, changing a package's exports, adding or removing dependencies, cleanup/refactor work.
-
-- `main` is Knip-clean, so any finding is caused by your change and is fixed in the same PR.
-- Resolve a finding by deleting the dead code or dropping the unneeded `export`.
-- Add a `knip.json` ignore only for generated code (Orval output) or vendored code (`.claude/skills/**`). Never hand-edit generated files to silence a finding.
-- For a CI-side check, run the "Knip Code Analysis" workflow manually (`workflow_dispatch`).
-
----
+A GitHub issue is ticket `NEB-<issue-number>`. The issue title is the PR title:
+`type(scope): NEB-<n> summary` (no colon after the ID; no ID for ad-hoc work). `Closes #NN` closes the
+ticket — GitHub keys off the bare number, not the `NEB-` alias. Prefer one PR per ticket.
 
 ## Testing
 
-**Every PR that changes behavior ships tests at the seams that behavior crosses.** A behavior change
-without a test is an incomplete PR. This is a hard rule, enforced mechanically by an 80% coverage gate —
-see [ADR-0008](./docs/adr/0008-vitest-unit-testing-with-an-enforced-coverage-gate.md).
+A PR that changes behavior ships tests at the seams that behavior crosses — not a test per file. The
+`tdd` skill defines good tests and seams; [ADR-0008](./docs/adr/0008-vitest-unit-testing-with-an-enforced-coverage-gate.md)
+records the rest.
 
-It is _not_ "write a test for every file". Tests go at **seams** — the public boundary where behavior is
-observable without reaching inside. `.claude/skills/tdd/SKILL.md` is the reference for what a good test
-is, where seams are, and the anti-patterns (implementation-coupled, tautological, horizontally sliced).
-Pick the seams deliberately; do not generate a test per function to move a number.
+- Vitest in every package, config per package. Unit tests only: no live database or network.
+- One test file per source file, named after it, in a `tests/` folder beside the code
+  (`hooks/useX.ts` → `hooks/tests/useX.test.ts`). Tests hold their own assertions.
+- Tests run against built libs; never alias `@nebula-chat/*` to `libs/*/src`.
+- 80% coverage gate. Below the bar, exclude a file with no behavior in both its `vitest.config` and
+  `matrix.coverage` in `.github/workflows/build.yml` — never lower a threshold.
+- Never fix a failing test by skipping, deleting or weakening it.
 
-```bash
-pnpm turbo run test              # every package
-pnpm backend test                # server only
-pnpm frontend test               # client only
-pnpm worker test                 # worker only
-pnpm --filter @nebula-chat/langchain test
-pnpm --filter @nebula-chat/cli test
-```
+## Cross-cutting conventions
 
-### Rules
+- `type`, never `interface`.
+- `const` arrow functions, never `function` declarations.
+- No barrel `index.ts` in apps. The only exceptions are generated files and the single `src/index.ts`
+  public surface of each `libs/*` package.
+- No relative imports: `@/*` in the client, `@server/*` in the server, `@worker/*` in the worker.
+- Comments are one line, two at most, and say only what the code can't: the reason, constraint or gotcha.
+  No JSDoc blocks restating a name or type, no `@param`/`@returns`. History goes in the commit, cross-file
+  rationale in an ADR.
+- Diagrams are Mermaid in Markdown, never exported images — see [docs/agents/diagrams.md](./docs/agents/diagrams.md).
 
-- **Vitest everywhere.** One runner for every package, and no root workspace config. Each package
-  owns its own: `vitest.config.ts` in the client, `vitest.config.mts` in the four CommonJS packages, so
-  Vite does not warn about loading an ESM config from a CJS package.
-- **One test file per source file, named after it**: `useDrawerStore.ts` is tested by
-  `useDrawerStore.test.ts` and by nothing else. A file named for a grouping rather than a module
-  (`hooks.test.ts`, `stores.test.ts`, `chatComponents.test.tsx`) is wrong — when a test fails, its
-  filename should already name the module at fault.
-- **Tests live in a `tests/` folder beside the code under test**: `src/shared/hooks/useResponsiveLayout.ts`
-  is tested by `src/shared/hooks/tests/useResponsiveLayout.test.ts`. Helpers shared by the tests in one
-  folder sit alongside them; helpers shared across a package live in `src/test/`. A test file must contain
-  its own assertions — a file whose `it()` blocks come from a helper reads as empty to both Sonar
-  (`typescript:S2187`) and to the next person to open it.
-- **Tests run against built libraries.** `turbo`'s `test` task declares `dependsOn: ["^build"]`, so a test
-  importing `@nebula-chat/*` exercises the tsdown `dist` artifact production actually runs — not the lib's
-  source. Never alias `@nebula-chat/*` to `libs/*/src` in a Vitest config.
-- **80% coverage, enforced twice.** Vitest `coverage.thresholds` fail the CI `Test` step, and Sonar's
-  quality gate requires 80% on both overall and new code, per project. The Vitest threshold is the real
-  gate: Sonar steps are skipped when `SONAR_TOKEN` is absent (dependabot and fork PRs), so a Sonar-only
-  gate would not apply there.
-- **Below the bar? Add a coverage exclusion, never lower a threshold.** Excluding a file from _coverage_
-  asserts it has no behavior to test (schema declarations, SDK wiring, theme tokens, generated clients,
-  migrations). Lowering the threshold asserts nothing and is not an approved escape hatch. A coverage
-  exclusion lives in two places — the package's `vitest.config` and `matrix.coverage` in
-  `.github/workflows/build.yml` — and must be added to both, or the two gates measure different
-  denominators. They cannot share one list: `logger.ts` is excluded in the server and langchain but is
-  the main tested unit in otel.
-- **Unit tests only, for now.** No testcontainers, no live database, no network. Database-backed
-  integration testing is deliberate, recorded debt — see ADR-0008.
-- **Mock at the boundary, not the internals** — see each package's `AGENTS.md` for where that boundary sits.
-- **A failing test is never fixed by skipping, deleting or weakening it.** Fix the code, or fix a test
-  that was asserting the wrong thing — and say which.
+## New lib under `libs/`
 
-See each app's `AGENTS.md` for package-specific conventions and examples.
+In order: add `libs/<name>/.gitignore` (`dist/`, `node_modules/`); add the package to
+`release-please-config.json`; create the `lib:<name>` GitHub label. Give it exactly one `src/index.ts`.
 
----
+## Keep docs true
 
-## Cross-cutting Conventions
-
-These apply everywhere in the repo, frontend and backend alike. See each package's `AGENTS.md` for the full rules and code examples.
-
-- **`type`, never `interface`.** No exceptions, anywhere.
-- **`const` arrow functions, never `function` declarations.** Applies to hooks, utils, helpers, components, and route handlers alike.
-- **No `index.ts` barrel files inside an app.** Import directly from the file that defines the thing. Two
-  exceptions, and only two: `index.ts` files emitted by code generators (e.g. Orval output), which are never
-  hand-authored or hand-edited; and the single top-level `src/index.ts` of a package under `libs/`, which is
-  that package's public surface — it is what `tsdown`'s `entry` and the `exports` map point at, so it is
-  required, not optional. Every package under `libs/` has exactly one. Never nest a barrel below that.
-- **No relative imports.** Frontend uses `@/*` (→ `apps/client/src/`); backend uses `@server/*` (→ `apps/server/src/`); the worker uses `@worker/*` (→ `apps/worker/src/`).
-- **Comments are brief.** Comment only what the code can't say: the reason, constraint, or gotcha behind a
-  choice. Keep each comment to one line, two at most. Names and types carry the what; history belongs in the
-  commit message, rationale that spans files in an ADR.
-
-### Diagrams
-
-Architecture and flows are drawn in [Mermaid](https://mermaid.js.org), inside the Markdown that explains
-them. GitHub renders it, it diffs as text, and an agent can read and edit it like code. No exported images
-(PNG, SVG, Excalidraw files): a picture nobody can diff goes stale unnoticed.
-
-- **Where it goes.** System-level views (deployment, workspace packages, data model, Redis keyspace, flows
-  that cross apps) in [docs/architecture.md](./docs/architecture.md). A feature's own flows beside its prose
-  in a topic doc (`docs/auth.md`, `docs/logging.md`). An ADR may draw the decision it records. A package
-  `AGENTS.md` links to a diagram rather than copying it.
-- **Which kind.** `flowchart` for structure and pipelines, `sequenceDiagram` for a request or job that crosses
-  processes, `erDiagram` for the schema, `stateDiagram-v2` for a lifecycle (an identity, a Run's states).
-- **What it shows.** What the code does today. A proposed design stays in its ADR, labelled as proposed;
-  a known shortfall goes under `docs/architecture.md` → Known gaps, not into a diagram as if it worked.
-- **How it reads.** One question per diagram and about 15 nodes at most; split rather than grow. Name real
-  things (routes, files, Redis keys, events, env vars) so a reader can grep from the diagram to the code.
-  Prose around it says what the diagram cannot: why, limits, failure paths.
-- **Keep it true.** A change to a drawn flow updates the diagram in the same PR (see
-  [Keeping the Agentic Workspace in Sync](#keeping-the-agentic-workspace-in-sync)).
-- **Check it renders** before pushing: `npx -y @mermaid-js/mermaid-cli -i docs/<file>.md -o /tmp/<file>.md`
-  renders every block in the file and fails on a syntax error.
-
----
-
-## Monorepo Structure
-
-```text
-nebula-chat/
-├── apps/
-│   ├── cli/                  # `nebula` operator CLI — see Operator CLI below
-│   ├── client/               # React SPA (frontend) — see its AGENTS.md
-│   ├── server/               # Fastify API (backend) — see its AGENTS.md
-│   └── worker/               # LLM replies and background jobs off BullMQ (ADR-0013) — see its AGENTS.md
-├── libs/
-│   ├── auth/                 # @nebula-chat/auth — better-auth substrate (sessions, anonymous, claim, auth email)
-│   ├── contracts/            # @nebula-chat/contracts — what the server and worker share: job payloads, reply stream events, Model ids
-│   ├── db/                   # @nebula-chat/db — Drizzle ORM schema + migrations
-│   ├── errors/               # @nebula-chat/errors — isomorphic error codes, envelope schema, AppError classes
-│   ├── langchain/            # @nebula-chat/langchain — LLM providers, tokens, streaming; used only by the worker until dissolved into it
-│   ├── otel/                 # @nebula-chat/otel — Pino logger factory, OpenTelemetry tracing and OTLP log export
-│   └── redis/                # @nebula-chat/redis — Redis connections + cache, auth store, pub/sub and streams primitives
-├── grafana/                  # Grafana dashboards as code: provisioned into local otel-lgtm, deployed to Grafana Cloud by CI (docs/logging.md)
-├── openapi/                  # Generated OpenAPI spec — its own workspace package
-├── CLAUDE.md                 # Claude Code operating instructions
-├── CONTEXT.md                # Domain vocabulary glossary
-├── AGENTS.md                 # This file
-├── package.json               # Root workspace (pnpm)
-└── pnpm-workspace.yaml
-```
-
-The apps are managed with pnpm workspaces. Run scripts scoped to a package:
-
-```bash
-pnpm --filter @nebula-chat/client run dev
-pnpm --filter @nebula-chat/server run dev
-pnpm --filter @nebula-chat/worker run dev
-```
-
-### Creating a new lib
-
-When scaffolding a new package under `libs/`, follow these steps **in order** before anything else:
-
-1. **Create `libs/<name>/.gitignore`** containing at minimum `dist/` and `node_modules/` — prevents build artifacts from ever reaching the index.
-2. **Add the package to `release-please-config.json`** under `"packages"` so it is versioned from day one.
-3. **Create a `lib:<name>` GitHub label** (`gh label create lib:<name> --color 5319e7 --description "Touches libs/<name>"`) so tickets touching it can be labelled — see `docs/agents/issue-tracker.md` → Labels.
-4. Implement the lib, then **commit and push** when the work is complete.
-
-Never skip steps 1 or 2, even for small utility libs. If the lib is substantial enough to need its own conventions, give it its own `AGENTS.md` and link it from this file's list at the top.
-
----
-
-## Operator CLI (`apps/cli`)
-
-`nebula` is the terminal client for Operators and Admins ([ADR-0029](./docs/adr/0029-operator-cli-as-an-api-client.md)). It talks only to the public HTTP API, through a fetch client Orval generates from `openapi/openapi.yaml` (the `Operator` and `Admin` tags). Run it from the repo root, no build needed:
-
-```bash
-pnpm nebula --help
-pnpm nebula profile add local --url http://localhost:3000   # the first profile becomes the default
-pnpm nebula profile add prod --url https://<server-host>
-pnpm nebula profile use prod
-NEBULA_OPERATOR_TOKEN=… pnpm nebula --profile local log-level set redis debug --ttl 600
-NEBULA_OPERATOR_TOKEN=… pnpm nebula --profile local log-level get
-pnpm nebula --json profile list | jq .
-```
-
-- **CLI profiles** (server URLs, and which is the default) live in `$XDG_CONFIG_HOME/nebula-chat/config.json`, else `~/.config/nebula-chat/config.json`. `--profile <name>` overrides the default per command.
-- **The operator token** is read only from `NEBULA_OPERATOR_TOKEN` and never written to disk. `log-level set` records `--operator`, else `$NEBULA_OPERATOR`, else `$USER`, as who asked.
-- **`log-level get`** prints one row per server instance and target (the root, then every component): its level, when a runtime change expires, and who set it (`-` at the boot-time level).
-  - Every instance answers for itself ([ADR-0034](./docs/adr/0034-reading-log-levels-from-every-instance.md)).
-  - A warning on stderr flags instances that disagree on a level, or that did not answer within the server's 2 seconds.
-  - `--json` prints the server's `{ receivers, reports }` as is.
-- **Output:** a table, key–value list or sentence for humans (bold headers only on a TTY without `NO_COLOR`); `--json` prints exactly one JSON document to stdout. Errors go to stderr.
-- **Exit codes:** `0` success, `1` server or unknown error, `2` usage error (bad arguments, unknown profile, a `400`), `3` authentication or authorisation error.
-
-### Adding a command
-
-1. If the route is new, regenerate the spec, then the CLI client: `pnpm --filter @nebula-chat/cli run generate:api`. Generated code under `src/api/generated/` is never hand-edited.
-2. Add `src/commands/<group>.ts` exporting `register<Group>Commands(program, ctx)`, and call it in `buildProgram` in `src/run.ts`. Give each command a description and an example (`addHelpText('after', …)`).
-3. In the action, call the generated function with `{ target }` (`operatorTarget(profile, deps)` for operator routes), narrow the response union on `status`, and turn any other status into an error (`operatorError` / `responseError`). Throw `UsageError` / `AuthError` / `CliError` for the exit code; never call `process.exit`.
-4. Print once, through `ctx.print({ data, view })`: `data` is the `--json` document, `view` the human `table`, `fields` or `message`.
-5. Test it at the CLI's only seam: `src/commands/tests/<group>.test.ts` calls `run(argv, deps)` through `createHarness()` (temp config dir, captured streams) with MSW handlers built from the generated `get…Url()` helpers. Cover success, `--json`, each auth failure, a server error and usage errors.
-
-`run(argv, deps)` takes everything outside the process as `deps` (env, stdout, stderr, fetch, clock, home directory); `src/bin.ts` wires the real ones and is the only untested file.
-
----
-
-## Local Development
-
-```bash
-# 1. Install dependencies
-pnpm install
-
-# 2. Start infrastructure (PostgreSQL on :5332, Redis on :6380)
-podman compose up -d
-
-# 3. Run DB migrations
-pnpm --filter @nebula-chat/db db:migrate
-
-# 4. Start backend (watch mode)
-pnpm --filter @nebula-chat/server run dev
-
-# 5. Start the worker (watch mode; it produces every reply, so chat needs it)
-pnpm --filter @nebula-chat/worker run dev
-
-# 6. Start frontend (Vite dev server on :5173)
-pnpm --filter @nebula-chat/client run dev
-```
-
-### API Docs (dev)
-
-Open `http://localhost:3000/docs` for the Swagger UI once the backend is running.
-
-Environment variables are documented per-package: see [Frontend Environment Variables](./apps/client/AGENTS.md#environment-variables), [Backend Environment Variables](./apps/server/AGENTS.md#environment-variables) and [Worker Environment Variables](./apps/worker/AGENTS.md#environment-variables).
-
----
-
-## MCP Servers
-
-The repo-root [`.mcp.json`](./.mcp.json) gives every agent session the same project-scoped MCP servers. It holds no secrets: the only variable is `${NEBULA_MCP_REDIS_URL}`, which has a local default. Interactive Claude Code asks once before enabling project servers; non-interactive and cloud sessions load them without asking, so nothing in this file may reach production.
-
-| Server           | Use it for                                                                                                                                              | Notes                                                                                                                                                                     |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `shadcn`         | Searching, viewing and adding shadcn/ui registry components (the client redesign)                                                                       | Add components through it or the shadcn CLI, never by hand-copying from the website                                                                                       |
-| `better-auth`    | Better Auth docs: plugins (admin, two-factor, anonymous, device authorization), hooks, configuration                                                    | Docs only                                                                                                                                                                 |
-| `context7`       | Version-specific docs for libraries without their own server: TanStack Router/Query/Table/Virtual, Tailwind CSS, Drizzle, BullMQ, Base UI, Fastify, Zod | Free tier without a key; to raise limits add a personal key with `claude mcp add` at user scope instead of editing this file                                              |
-| `langchain-docs` | LangChain, LangGraph and LangSmith guides                                                                                                               | Docs only                                                                                                                                                                 |
-| `playwright`     | Driving the locally running client (`http://localhost:5173`) to verify a UI change and capture screenshots for a PR                                     | Headless, isolated, Chromium; local dev servers only (setup below the table)                                                                                              |
-| `redis-local`    | Inspecting the **local** Redis: BullMQ queues, reply streams, cache entries                                                                             | Defaults to the compose Redis on `:6380`; set `NEBULA_MCP_REDIS_URL` if yours needs a password (`redis://:<password>@localhost:6380/0`). Never point it at a hosted Redis |
-
-**Playwright setup.** Install its browser once with `npx @playwright/mcp@latest install-browser chromium`. In a cloud session that has a preinstalled Chromium, set `PLAYWRIGHT_MCP_EXECUTABLE_PATH` to it instead. It refuses `file:` URLs, so serve pages over HTTP. Its snapshots go to the git-ignored `.playwright-mcp/`.
-
-**No MCP server, use these instead:**
-
-- **TanStack** has retired its MCP server. Use Context7, or `npx @tanstack/cli search-docs "<query>" --library <router|query|table> --json`. TanStack Charts ships its docs inside the package (`node_modules/@tanstack/charts/docs`): read those for the installed version.
-- **Base UI** has no MCP server; Context7 covers it, and [base-ui.com/llms.txt](https://base-ui.com/llms.txt) is the canonical index.
-- **The local Postgres** has no reliable MCP server right now (crystaldba's `postgres-mcp` fails to start against current MCP SDKs). Use `psql` against the compose database (`localhost:5332`) or Drizzle Studio, read-only unless the task is a migration.
-
-**Personal servers (not committed).** These need personal credentials and can change production, so they are never added to `.mcp.json`. Add them at user scope (`claude mcp add --scope user …`) or as claude.ai connectors, and use them only when a task explicitly calls for it:
-
-| Service       | Server                                              | Keep it safe                                                      |
-| ------------- | --------------------------------------------------- | ----------------------------------------------------------------- |
-| GitHub        | Remote `https://api.githubcopilot.com/mcp/`         | Prefer the read-only URL (`…/mcp/readonly`) for exploration       |
-| Supabase      | Remote `https://mcp.supabase.com/mcp`               | Always add `project_ref=<ref>&read_only=true`                     |
-| Render        | Remote `https://mcp.render.com/mcp` with an API key | Has no read-only mode: it can change env vars and trigger deploys |
-| Grafana Cloud | Remote `https://mcp.grafana.com/mcp` (OAuth)        | Choose read-only access at consent                                |
-| Resend        | Remote `https://mcp.resend.com/mcp`                 | Can send real email; use a test domain                            |
-
-When a new provider joins the stack, check for an official MCP server and add it here, or to `.mcp.json` if it needs no personal credentials and cannot touch production.
-
----
-
-## Keeping the Agentic Workspace in Sync
-
-This repo's `.claude/` workspace (skills) and its documentation (`AGENTS.md` files, `CLAUDE.md`, `CONTEXT.md`, `docs/adr/`) describe the codebase as it actually is. When they drift, agents make decisions on stale information — treat a stale reference here the same as a stale code comment: a bug to fix, not a nit to skip.
-
-**Whenever a change touches conventions, module layout, or architecture, update these in the same PR:**
-
-- The relevant `AGENTS.md` — root for cross-cutting changes, the package's own `AGENTS.md` for package-specific ones.
-- `CONTEXT.md` if domain vocabulary was introduced, renamed, or retired (this is `/domain-modeling`'s job, ideally done upstream during `/grill-with-docs`/`/to-spec`, not as an afterthought here).
-- `docs/adr/` if the change is hard-to-reverse, surprising, or the result of a real trade-off (see `/domain-modeling`'s ADR criteria).
-- The Mermaid diagrams that draw the area: `docs/architecture.md` for system-level changes (a new app, lib,
-  table, Redis key, queue or deploy step), the topic doc for a feature's flow (see [Diagrams](#diagrams)).
-- Any `.claude/skills/**` whose steps or file paths reference the area that changed (e.g. a renamed directory, a retired ticket, a changed convention).
-
-A PR that changes how the codebase works but leaves these docs describing the old way is not done.
+A change to conventions, module layout or architecture updates, in the same PR: the relevant `AGENTS.md`,
+`CONTEXT.md` for vocabulary, `docs/adr/` for hard-to-reverse decisions, the Mermaid diagrams that draw the
+area, and any skill that references it. Operator CLI usage: [apps/cli/AGENTS.md](./apps/cli/AGENTS.md).
+MCP servers: [docs/agents/mcp-servers.md](./docs/agents/mcp-servers.md).

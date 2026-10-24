@@ -24,11 +24,7 @@ type Options = Omit<RenderOptions, 'wrapper'> & {
 export const createTestQueryClient = () => createQueryClient({ retry: false });
 
 /**
- * Renders with the Chakra system, a fresh query client and a memory router in place.
- *
- * Uses `defaultSystem` rather than the app's own Provider: the theme tokens are
- * excluded from coverage as declarations, and ColorModeProvider pulls in
- * next-themes, whose storage access is noise in a component test.
+ * Renders with Chakra's `defaultSystem`, a fresh query client and a memory router; the app's Provider pulls in next-themes, whose storage access is noise in component tests.
  */
 export const renderWithChakra = (ui: ReactElement, options: Options = {}): RenderResult => {
   const { route = '/', queryClient = createTestQueryClient(), ...renderOptions } = options;

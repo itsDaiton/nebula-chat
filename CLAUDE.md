@@ -1,50 +1,49 @@
 # CLAUDE.md
 
-Guidance for Claude Code (claude.ai/code) working in this repository.
+Guidance for Claude Code in this repository. [AGENTS.md](./AGENTS.md) holds the repo-wide habits;
+the per-app `AGENTS.md` files hold package conventions; [CONTEXT.md](./CONTEXT.md) owns domain vocabulary.
+Read the relevant ones before a non-trivial change.
 
-`AGENTS.md` is the source of truth for technical conventions — the root file covers monorepo
-commands, git workflow, and cross-cutting rules; the per-app files
-([client](./apps/client/AGENTS.md), [server](./apps/server/AGENTS.md)) cover package specifics;
-`CONTEXT.md` owns domain vocabulary. Read the relevant ones before a non-trivial change. This file
-covers only what's specific to operating as an agent here: how to ship, and which skills to reach
-for.
+## Working principles
 
-## Shipping (branch + PR)
+Adapted from [Andrej Karpathy's observations](https://github.com/multica-ai/andrej-karpathy-skills) on
+LLM coding mistakes. They bias toward caution over speed; for trivial tasks use judgment.
 
-Follow `AGENTS.md` for the full Git workflow; these are the agent-behaviour rules layered on top.
+1. **Think before coding.** State assumptions; if uncertain, ask. If several readings exist, present
+   them instead of picking silently. If a simpler approach exists, say so and push back. If something is
+   unclear, stop and name what's confusing.
+2. **Simplicity first.** The minimum code that solves the problem. No unrequested features, no
+   abstractions for single-use code, no speculative configurability, no handling of impossible cases. If
+   200 lines could be 50, rewrite it.
+3. **Surgical changes.** Touch only what the task requires; match existing style. Don't "improve"
+   adjacent code, comments or formatting, and mention unrelated dead code instead of deleting it. Remove
+   only the orphans your own change created. Every changed line should trace to the request.
+4. **Goal-driven execution.** Turn the task into a verifiable goal — a failing test first for a bug, tests
+   green before and after for a refactor — and loop until it's verified. For multi-step work, state a
+   short plan with a check per step.
 
-- **Never commit to `main`.** Branch first (`git checkout -b <type>/<kebab-slug>`), and reuse the active feature branch rather than forking a parallel one for the same work.
-- **Conventional Commits, `feat`/`fix` only** (`feat!`/`fix!` for a breaking/major change) — Release Please ignores every other type, so a `chore:`/`refactor:` change merges but never releases. Default to `fix(<scope>): …`. Never bundle unrelated changes.
-- **Open a PR when the work is complete.** The PR title is the issue's title carrying the ticket ID
-  — `type(scope): NEB-<n> summary` (plain `type(scope): summary` for ad-hoc work with no ticket);
-  it's the one line Release Please parses, so it must be `feat`/`fix`. Body: one-line summary,
-  `Closes #NN`, test-plan checklist, and the backing ADR link if one exists. Full title/branch/close
-  rules: `AGENTS.md` → Referencing tickets.
-- **Never merge your own PR** unless the user asks. Never force-push shared refs (the pre-bash hook blocks it) or use `--no-verify`.
+## Shipping
 
-## Workflow & skills
+- **Never commit to `main`.** Branch first (`git checkout -b <type>/<kebab-slug>`); reuse the active
+  feature branch rather than forking a parallel one.
+- **Conventional Commits, `feat`/`fix` only** (`!` for breaking) — Release Please ignores every other
+  type. Default to `fix(<scope>): …`. Never bundle unrelated changes.
+- **Open a PR when the work is complete.** Title `type(scope): NEB-<n> summary` (no ID for ad-hoc work).
+  Body: one-line summary, `Closes #NN`, test-plan checklist, ADR link if one exists.
+- **Never merge your own PR** unless asked. Never force-push shared refs or use `--no-verify`.
 
-Main flow for any feature or non-trivial change: **`/grill-with-docs`** → **`/to-spec`** →
-**`/to-tickets`** → **`/implement`** per ticket (drives `/tdd`, finishes with `/code-review` before
-commit). Go straight to `/implement` only for a single-session change with nothing to split.
-On-ramps: **`/triage`** for incoming bug reports / feature requests you didn't create,
-**`/wayfinder`** for a multi-session effort too foggy for one `/grill-with-docs`. Unsure which fits?
-**`/ask-matt`**.
+## Skills
 
-Project MCP servers (shadcn, Better Auth, Context7, LangChain docs, Playwright, local Redis) load from `.mcp.json`. Which one to reach for, and which personal servers must never be committed, is in `AGENTS.md` → MCP Servers.
+Feature or non-trivial change: **`/grill-with-docs`** → **`/to-spec`** → **`/to-tickets`** →
+**`/implement`** per ticket (drives `/tdd`, ends with `/code-review`). Go straight to `/implement` for a
+single-session change. Incoming reports: **`/triage`**. Foggy multi-session effort: **`/wayfinder`**.
+Unsure: **`/ask-matt`**.
 
-ADRs and `CONTEXT.md` entries are produced upstream during `/grill-with-docs`/`/to-spec`/`/domain-modeling`, before a ticket reaches implementation. Repo scaffolding skills speed common tasks: `backend-module-scaffold`, `drizzle-migrate`, `regenerate-api-client`, `zustand-store-scaffold`, `lint-and-format`.
+## Tickets and domain docs
 
-## Issues & domain docs
-
-- **Creating a ticket** (`/to-tickets`, `/triage`, or by hand): fill the canonical skeleton
-  `.github/ISSUE_TEMPLATE.md` and follow the **Ticket anatomy** in `docs/agents/issue-tracker.md` —
-  present tense, detailed enough to implement cold, with every section — and title it
-  `type(scope): NEB-<n> summary`. **This is authoritative and overrides any thinner issue template a
-  skill embeds** (e.g. `/to-tickets`'s built-in `<issue-template>`, and its "avoid file paths" note
-  — name the files). Apply the area/lib + triage labels below. A `validate-ticket` CI check flags
-  any issue that doesn't match.
-- **Tracker**: GitHub Issues (`itsDaiton/nebula-chat`) via the `gh` CLI. Each issue is ticket `NEB-<number>`. See `docs/agents/issue-tracker.md`.
-- **Triage labels**: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
-- **Area/lib labels**: `app:server`, `app:client`, and `lib:<name>` (`lib:db`, `lib:langchain`, …) — label each ticket with what it touches. See `docs/agents/issue-tracker.md` → Labels.
-- **Domain**: a single `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+- Tracker: GitHub Issues (`itsDaiton/nebula-chat`) via `gh`; labels in `docs/agents/triage-labels.md`.
+- A new ticket fills `.github/ISSUE_TEMPLATE.md` and follows the Ticket anatomy in
+  `docs/agents/issue-tracker.md` — this overrides any thinner template a skill embeds. Title it
+  `type(scope): NEB-<n> summary`; label it `app:server` / `app:client` / `lib:<name>` plus a triage label.
+- Domain: one `CONTEXT.md` plus `docs/adr/` — see `docs/agents/domain.md`. Both are produced upstream
+  during `/grill-with-docs`, not during implementation.

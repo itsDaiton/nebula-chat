@@ -2,34 +2,8 @@ import type { AuthStoreConnection } from './types';
 import { authKey } from './keys';
 
 /**
- * A Redis-backed implementation of better-auth's `SecondaryStorage` interface —
- * `get` / `set` / `delete` / `getAndDelete` / `increment` (better-auth 1.7 folded
- * `getAndDelete` for one-time tokens and `increment` for rate-limit counters into
- * the interface itself) — the methods M-6 wires better-auth's `secondaryStorage`,
- * `session` and `rateLimit` state onto.
- *
- * **This primitive is deliberately NOT fail-open.** Unlike the `cache` primitive
- * (which swallows Redis errors into a miss/no-op per ADR-0009), the authStore lets
- * every Redis error propagate to the caller: Redis is a hard dependency for login
- * (ADR-0010 §3), so an outage must surface as a failed request rather than be
- * silently masked. It therefore holds no try/catch and injects no logger — the
- * caller (better-auth, then Fastify) owns the failure. For the same reason every
- * command first awaits the shared `connect`: on a connection that has not finished
- * its first connect, a command is rejected rather than queued.
- *
- * Every key is namespaced under `auth:` (via `authKey`) so auth state never
- * collides with cache keys sharing the same Redis keyspace.
- *
- * The shape matches better-auth's `SecondaryStorage`:
- * ```ts
- * get:          (key) => Promise<string | null> | string | null;
- * getAndDelete: (key) => Promise<string | null> | string | null;
- * increment:    (key, ttl) => Promise<number> | number; // ttl in seconds, applied on create
- * set:          (key, value, ttl?) => Promise<void | null | string> | void; // ttl in seconds
- * delete:       (key) => Promise<void | null | string> | void;
- * ```
- * `AuthStore` satisfies it structurally without `libs/redis` depending on
- * `better-auth`; `libs/auth` (M-6) passes this straight to `secondaryStorage`.
+ * A Redis-backed `SecondaryStorage` for better-auth (get/set/delete/getAndDelete/increment), namespaced under `auth:`.
+ * Deliberately NOT fail-open: Redis is a hard dependency for login (ADR-0010 §3), so errors propagate and every command awaits `connect` first.
  */
 export type AuthStore = {
   /** Returns the raw stored string, or `null` on a miss. Errors propagate. */
@@ -44,11 +18,7 @@ export type AuthStore = {
   /** Atomically reads and removes a key (`GETDEL`). Errors propagate. */
   getAndDelete(key: string): Promise<string | null>;
   /**
-   * Increments the counter at `key` by one (`INCR`) and returns the new value.
-   * The `ttlSeconds` expiry is applied only when the counter is first created
-   * (i.e. `INCR` returns `1`); later increments never extend it, so the window is
-   * fixed from creation — the contract better-auth's secondary-storage rate
-   * limiter depends on. Errors propagate.
+   * Increments the counter at `key` and returns it; `ttlSeconds` applies only on creation (`INCR` returns 1), the fixed window better-auth's rate limiter needs.
    */
   increment(key: string, ttlSeconds: number): Promise<number>;
 };

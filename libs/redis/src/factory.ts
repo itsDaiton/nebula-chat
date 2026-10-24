@@ -13,11 +13,8 @@ import type { RedisStreams } from './streams';
 import type { RedisConfig } from './types';
 
 /**
- * The namespaced Redis toolkit returned by `createRedis`. `lock` remains a
- * designed-for seam that lands with its consuming ticket. `authStore` is the
- * first consumer of the reserved storage seam (M-6, better-auth); `pubsub`
- * carries runtime log-level changes (ADR-0020); `streams` carries reply streams
- * from the worker to the server (ADR-0014).
+ * The namespaced toolkit `createRedis` returns: `authStore` (better-auth), `pubsub` (runtime log levels, ADR-0020) and `streams` (reply streams, ADR-0014);
+ * `lock` is a designed-for seam.
  */
 export type RedisToolkit = {
   cache: RedisCache;
@@ -40,9 +37,7 @@ export type RedisToolkit = {
    */
   dedicatedConnection(): Redis;
   /**
-   * Opens the connection now rather than on first use; resolves once it is ready,
-   * or rejects if that attempt fails (ioredis keeps retrying). Call it at startup,
-   * unawaited, so the first requests find Redis connected.
+   * Opens the connection now; resolves once ready or rejects if that attempt fails (ioredis keeps retrying). Call it unawaited at startup.
    */
   connect(): Promise<void>;
   /** Tears down every connection the toolkit owns. */

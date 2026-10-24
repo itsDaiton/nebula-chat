@@ -24,9 +24,7 @@ export const messageRepository: {
       .returning();
     return row!;
   },
-  // Reads are owner-scoped through the message's session (ADR-0010 §2): a
-  // message in another user's session reads as absent, joining messages to
-  // `sessions.userId` the same way the allowance count does.
+  // Reads are owner-scoped through the message's session (ADR-0010 §2): another user's message reads as absent.
   async findById({ messageId }: GetMessageParams, userId: string) {
     const [row] = await db
       .select()
@@ -35,9 +33,7 @@ export const messageRepository: {
       .where(and(eq(messages.id, messageId), eq(sessions.userId, userId)));
     return row?.messages ?? null;
   },
-  // Narrowing to one session stays inside the owner join, so another user's
-  // session reads as empty rather than leaking its existence. One session
-  // reads oldest first; the full list stays newest first.
+  // Narrowing to one session stays inside the owner join, so another user's session reads as empty; one session is oldest first.
   async findAll(userId: string, sessionId?: string) {
     const rows = await db
       .select()
@@ -75,9 +71,7 @@ export const messageRepository: {
     return limit === undefined ? base : base.limit(limit);
   },
   async countUserMessagesByOwner(userId: string) {
-    // The Guest message allowance (ADR-0010 §4): count the owner's `user`-authored
-    // messages live from Postgres by joining messages to their sessions.
-    // Assistant messages and other owners' rows never contribute.
+    // Guest message allowance (ADR-0010 §4): the owner's live count of `user` messages, joined through their sessions.
     const [row] = await db
       .select({ value: count() })
       .from(messages)

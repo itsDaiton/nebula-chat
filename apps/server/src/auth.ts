@@ -9,12 +9,7 @@ import { redis } from '@server/redis';
 import { socialProvidersFromEnv } from '@server/utils/socialProviders';
 
 /**
- * The server's single configured better-auth instance, mirroring `src/db.ts` and
- * `src/redis.ts`. Config lives here — consumers import `auth` from `@server/auth`
- * rather than constructing their own. The lib (`@nebula-chat/auth`) owns the
- * better-auth configuration; the server only injects its resolved env, the DB
- * client, the Redis-backed `authStore` (ADR-0010), the Resend sender (ADR-0021) and the
- * Profile image file deletion run on Account deletion (ADR-0022).
+ * The server's single better-auth instance: the lib owns the config, the server injects its env, DB, Redis `authStore`, email sender and cleanup callbacks.
  */
 export const auth: AuthInstance = createAuth({
   db,

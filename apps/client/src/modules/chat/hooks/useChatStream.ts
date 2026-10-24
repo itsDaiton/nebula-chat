@@ -132,9 +132,7 @@ export const useChatStream = ({
 
   const abortController = useRef<AbortController | null>(null);
 
-  // Keep sessionId in a ref so streamMessage doesn't need it as a useCallback dep.
-  // Without this, every setSessionId call (fired mid-send for a new session)
-  // would recreate streamMessage → handleSendMessage → re-render the entire ChatContainer.
+  // Held in a ref so `streamMessage` needn't depend on sessionId: a mid-send `setSessionId` would re-render all of ChatContainer.
   const sessionIdRef = useRef(sessionId);
   sessionIdRef.current = sessionId;
 
@@ -364,12 +362,8 @@ export const useChatStream = ({
         } else if (outcome === 'ended') {
           invalidateCompletedStream(activeSessionId);
           if (isNewSession) {
-            // isStreaming intentionally stays true here — a useEffect in ChatContainer
-            // will call clearPostStream() once sessionId from useParams is set,
-            // guaranteeing isStreaming goes false only after the navigation has rendered.
-            // (requestAnimationFrame was unreliable: it could fire before React processed
-            // the navigation render, leaving a frame with isStreaming=false + no sessionId
-            // → empty state flicker.)
+            // isStreaming stays true until ChatContainer's `clearPostStream()` runs once the route has a sessionId, so the navigation renders first;
+            // requestAnimationFrame could fire early and flash the empty state.
             setIsPostStreamNavigation(true);
             void navigate(route.chat.session(activeSessionId), { replace: true });
           } else {

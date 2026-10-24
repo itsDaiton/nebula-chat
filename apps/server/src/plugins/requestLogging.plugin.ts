@@ -4,20 +4,8 @@ import { recordedErrorType } from '@server/errors/requestErrorType';
 import { requestPath } from '@server/utils/requestPath';
 
 /**
- * Request logging: one `info` line per HTTP request, `http.request.completed`,
- * written when the response finishes — plus `http.request.received` at `debug`.
- * Replaces Fastify's own `incoming request`/`request completed` pair, which
- * `utils/logController.ts` disables.
- *
- * Registered through `fastify-plugin` so both hooks sit on the root instance
- * and cover every route, the auth catch-all included. `onResponse` fires on the
- * raw response's `finish`, so it runs for hijacked replies too — the SSE chat
- * route gets its completion line alongside its `chat.reply.completed`.
- *
- * The completion line is written through `reply.log`, which the auth gate
- * rebinds with the User, so it carries `user.id` once a gate has run. A 4xx
- * writes no line of its own; its classification (recorded by the error
- * handler) lands here as `error.type`.
+ * One `info` `http.request.completed` per request (plus `http.request.received` at `debug`), replacing Fastify's own pair.
+ * Registered via `fastify-plugin` on the root, so it covers every route, hijacked SSE and the auth catch-all included.
  */
 export default fp(
   async (app) => {

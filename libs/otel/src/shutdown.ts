@@ -12,13 +12,8 @@ export type ShutdownOptions = {
 };
 
 /**
- * Builds the SIGTERM/SIGINT handler. It exits as soon as `close` settles rather
- * than waiting for the event loop to drain — a handle nobody closed (a socket, a
- * timer) would otherwise keep the process alive until the supervisor kills it.
- * `tsx watch` waits on that exit before starting the new process, so a slow
- * shutdown is a slow reload.
- *
- * A second signal mid-shutdown is ignored: the first one already owns the exit.
+ * Builds the SIGTERM/SIGINT handler: exits as soon as `close` settles rather than waiting for the event loop (`tsx watch` waits on that exit).
+ * A second signal mid-shutdown is ignored.
  */
 export const createShutdown = ({
   logger,

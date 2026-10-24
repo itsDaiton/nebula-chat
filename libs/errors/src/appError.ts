@@ -3,18 +3,14 @@ import type { ErrorCode, ErrorEnvelope } from './errorEnvelope';
 import { ERROR_STATUS } from './errorStatus';
 
 /**
- * A classified error. Its code decides its HTTP status, and `toEnvelope()` is
- * what the client is told. Anything thrown that is not an AppError is treated
- * as internal and never shown to the client verbatim.
+ * A classified error: its code decides its HTTP status and `toEnvelope()` what the client sees; anything else thrown is treated as `Internal`.
  */
 export class AppError extends Error {
   readonly code: ErrorCode;
   readonly status: number;
 
   /**
-   * `options.cause` keeps the error this one was mapped from (a Postgres driver
-   * error behind a `ConflictError`, say). It stays server-side: `toEnvelope()`
-   * never includes it, but the logger's `err` serializer does.
+   * `options.cause` keeps the error this one was mapped from; it stays server-side (the logger's `err` serializer shows it, `toEnvelope()` never does).
    */
   constructor(code: ErrorCode, message: string, options?: ErrorOptions) {
     super(message, options);

@@ -39,92 +39,18 @@ script load through `dotenvx run` — single source of truth (see [Environment V
 
 ## Directory Layout
 
-```text
-apps/server/src/
-├── app.ts                         # buildApp() factory — registers plugins, routes, compilers
-├── server.ts                      # Thin entry point — calls buildApp() then app.listen(), wires SIGTERM/SIGINT (createShutdown from @nebula-chat/otel)
-├── env.ts                         # Zod-validated env schema — single source for all process.env reads
-├── health.validation.ts           # ApiRoot / Health response schemas for the `/` and `/health` routes
-├── db.ts                          # DB client singleton (createDbClient from @nebula-chat/db)
-├── redis.ts                       # Redis toolkit singleton + reply-stream helpers: owners, in-flight streams, cancel, openReplyStream
-├── queue.ts                       # BullMQ producer for Direct reply jobs (built on first use) + the worker /health ping
-├── auth.ts                        # better-auth instance singleton (createAuth from @nebula-chat/auth)
-├── profileImageStore.ts           # Profile image store singleton: Supabase Storage from env, or null (uploads off)
-├── config/
-│   ├── cors.config.ts             # Allowed origins, CORS options
-│   ├── headers.config.ts          # Opens a hijacked SSE response: forwards the reply's CORS headers, sets the SSE ones
-│   └── pagination.config.ts       # Default/max page limits
-├── errors/
-│   ├── error.handler.ts           # Fastify setErrorHandler callback (Zod, AppError, PG codes, fallback); logs a 5xx once
-│   └── requestErrorType.ts        # Per-request error classification, read by the http.request.completed line
-├── modules/
-│   ├── chat/                      # Mounted at /api: POST /sessions/:sessionId/messages, GET /chat/message-allowance
-│   │   ├── chat.types.ts
-│   │   ├── chat.validation.ts     # Zod request/response schemas
-│   │   ├── chat.service.ts        # sendMessage: persist the user Message, record the stream owner, enqueue
-│   │   ├── chat.controller.ts
-│   │   ├── chat.messageAllowance.hook.ts # preHandler — rejects a Metered user over the message allowance
-│   │   ├── chat.messageAllowance.service.ts # getMessageAllowance — shared metered decision + live count
-│   │   └── chat.routes.ts         # FastifyPluginCallbackZodOpenApi; schema blocks + hook chain
-│   ├── stream/                    # GET /api/streams/:streamId — the SSE relay (ADR-0014)
-│   │   ├── stream.types.ts
-│   │   ├── stream.validation.ts
-│   │   ├── stream.service.ts      # assertReadable + relay from Last-Event-ID until `end`; cancel
-│   │   ├── stream.controller.ts   # Readable check, then hijack and relay; aborts on client disconnect
-│   │   └── stream.routes.ts
-│   ├── session/
-│   │   ├── session.types.ts
-│   │   ├── session.validation.ts
-│   │   ├── session.repository.ts   # All Drizzle queries
-│   │   ├── session.service.ts
-│   │   ├── session.controller.ts
-│   │   └── session.routes.ts
-│   ├── message/
-│   │   ├── message.types.ts
-│   │   ├── message.validation.ts
-│   │   ├── message.repository.ts
-│   │   ├── message.service.ts
-│   │   ├── message.controller.ts
-│   │   └── message.routes.ts
-│   ├── profileImage/              # GET /settings, PUT and DELETE /api/profile-image (ADR-0022)
-│   │   ├── profileImage.types.ts  # incl. the ProfileImageStore type (put/delete)
-│   │   ├── profileImage.validation.ts
-│   │   ├── profileImage.repository.ts   # Through better-auth's internal adapter, so session copies in Redis refresh
-│   │   ├── profileImage.processing.ts   # sharp: JPEG/PNG/WebP in, 256×256 metadata-free WebP out
-│   │   ├── profileImage.supabaseStore.ts # The Supabase Storage ProfileImageStore
-│   │   ├── profileImage.fileDeletion.ts      # Deletes unused files; the onUserDeleted callback @server/auth wires
-│   │   ├── profileImage.uploadLimit.hook.ts # preHandler — 10 uploads per user per hour, counted in Redis
-│   │   ├── profileImage.service.ts
-│   │   ├── profileImage.controller.ts
-│   │   └── profileImage.routes.ts # Raw image body: scoped content-type parsers, 5 MB bodyLimit
-│   └── logLevel/                  # Operator routes: GET/POST /api/internal/log-level (spec tag `Operator`, left out of the browser client; ADR-0020, ADR-0034)
-│       ├── logLevel.types.ts
-│       ├── logLevel.validation.ts
-│       ├── logLevel.service.ts    # Publishes the change to every server instance over Redis pub/sub
-│       ├── logLevel.controller.ts
-│       ├── logLevel.operatorGate.hook.ts # onRequest — admits only `Authorization: Bearer <OPERATOR_TOKEN>`
-│       └── logLevel.routes.ts
-├── test/                          # Shared test harness: createTestApp, session fixtures, memoryPubSub, memoryProfileImageStore, memoryReplyStreams
-├── utils/
-│   ├── logController.ts           # Fastify logController: request lines off, framework faults stamped fastify.log
-│   ├── requestPath.ts             # url.path: the request path, query dropped and path tokens redacted
-│   ├── isoDateTimeSchema.ts       # Response timestamp codec: a Date in the handler, an ISO date-time string on the wire
-│   ├── jsonResponse.ts            # One `response:` entry: its description + application/json schema
-│   ├── forwardReplyHeaders.ts     # Copies a hijacked reply's buffered headers (@fastify/cors's) onto reply.raw
-│   ├── sse.ts                     # SSE formatting: a reply stream event as `id`/`event`/`data`, the keep-alive comment
-│   ├── countTokens.ts             # tiktoken count that holds a user Message to the prompt budget
-│   ├── socialProviders.ts         # GOOGLE_*/GITHUB_* OAuth credentials → createAuth's socialProviders
-│   └── trustProxy.ts
-└── plugins/
-    ├── requestLogging.plugin.ts   # Root hooks: http.request.received (debug) + one http.request.completed (info)
-    ├── db.plugin.ts               # Decorates app.db (@nebula-chat/db)
-    ├── redis.plugin.ts            # Decorates app.redis (@nebula-chat/redis); closes it on shutdown
-    └── authGate.plugin.ts         # `authGate`: mounts /api/auth/* (better-auth handler); decorates requireAuthentication/requireRegistered; binds the User onto req.log/reply.log
-```
+`src/` is `app.ts` (the `buildApp()` factory), `server.ts` (entry: `listen` plus signal handling), `env.ts`
+(the only `process.env` reader), singletons (`db.ts`, `redis.ts`, `queue.ts`, `auth.ts`, `logger.ts`) and:
 
-Redis is no longer an in-app module. It lives in the `@nebula-chat/redis` lib
-(connection manager + primitives), registered via `plugins/redis.plugin.ts`, which
-closes the job queue and then the toolkit on shutdown. See [ADR-0009](../../docs/adr/0009-nebula-chat-redis-lib.md).
+- `modules/<name>/` — one 6-layer module each (below): `chat`, `stream`, `session`, `message`,
+  `profileImage`, `logLevel`. A module may add hooks (`*.hook.ts`) and helpers beside its layers.
+- `plugins/` — Fastify plugins: request logging, `db`, `redis`, and `authGate` (mounts `/api/auth/*`,
+  decorates `requireAuthentication` / `requireRegistered`).
+- `errors/` — the global error handler. `config/` — CORS, SSE headers, pagination. `utils/` — small shared helpers.
+- `test/` — the shared harness (`createTestApp`, in-memory pub/sub, reply streams, profile image store).
+
+Redis lives in the `@nebula-chat/redis` lib ([ADR-0009](../../docs/adr/0009-nebula-chat-redis-lib.md)),
+registered by `plugins/redis.plugin.ts`, which closes the job queue and then the toolkit on shutdown.
 
 ---
 
@@ -143,7 +69,7 @@ Every feature module follows this strict 6-layer convention. Add files in this o
 
 New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(plugin, { prefix: '/api/<module>' })`.
 The one exception is `chat`, mounted at `/api`: sending lives under the Session it goes to
-(`/api/sessions/:sessionId/messages`, ADR-0014). No separate OpenAPI registry step — the `schema:` block on each route is the single source of truth for both validation and documentation. Use the `backend-module-scaffold` skill to generate one.
+(`/api/sessions/:sessionId/messages`, ADR-0014). No separate OpenAPI registry step — the `schema:` block on each route is the single source of truth for both validation and documentation.
 
 ---
 
@@ -257,16 +183,7 @@ const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
 **Rule — every response entry is `jsonResponse('description', schema)`:** `fastify-zod-openapi` reads a
 response's description from the response object, not from the schema, so a bare schema (or one with
 `.describe('...')`) documents as "Default Response". The description is route-contextual, so it lives in the
-`response:` block, not the validation file. This applies to success and error responses alike:
-
-```ts
-response: {
-  201: jsonResponse('Session created successfully', sessionResponseSchema),
-  400: jsonResponse('Invalid request body', errorEnvelopeSchema),
-  404: jsonResponse('Session not found', errorEnvelopeSchema),
-  500: jsonResponse('Internal server error', errorEnvelopeSchema),
-},
-```
+`response:` block, not the validation file — success and error responses alike (see the example above).
 
 The one exception is an SSE response (`GET /api/streams/:streamId`): its 200 entry declares `text/event-stream` with a described string schema, since the body is not JSON and the client reads it with a fetch mutator, not a generated model.
 
@@ -292,24 +209,7 @@ On a request validation failure Fastify throws `FST_ERR_VALIDATION`, whose `vali
 `fastify-zod-openapi`'s `RequestValidationError`s. `errors/error.handler.ts` detects them with `instanceof
 RequestValidationError` and answers `400` with the `Validation` code. A reply that fails its response schema
 answers `500` `Internal`. Define schemas in `*.validation.ts` using plain Zod — no registry extensions needed.
-Use `.describe()` to add field-level descriptions for Swagger docs:
-
-```ts
-// session.validation.ts
-import { z } from 'zod';
-
-export const getSessionsQuerySchema = z.object({
-  limit: z.coerce
-    .number()
-    .int()
-    .positive()
-    .max(50)
-    .optional()
-    .default(10)
-    .describe('Number of sessions to fetch (1-50, default 10)'),
-  cursor: z.uuid().optional().describe('Pagination cursor for the next page'),
-});
-```
+Use `.describe()` on schema fields for Swagger docs.
 
 ---
 
@@ -321,7 +221,7 @@ Schema lives at `libs/db/src/schema.ts` (`@nebula-chat/db`). The domain tables a
 
 - All Drizzle queries go in `*.repository.ts` files — never in services or controllers.
 - The DB client is created in `src/db.ts` via `createDbClient` from `@nebula-chat/db`. Always import `db` from `@server/db`.
-- After changing the schema run `pnpm --filter @nebula-chat/db db:generate` in dev or `pnpm --filter @nebula-chat/db db:migrate` in prod. Use the `drizzle-migrate` skill for schema changes.
+- After changing the schema run `pnpm --filter @nebula-chat/db db:generate` in dev or `pnpm --filter @nebula-chat/db db:migrate` in prod. Never edit an applied migration; write a follow-up one, and use `db:generate`, not `db:push`, whenever production needs the change.
 - Sessions are cursor-paginated using the session `id` as the cursor.
 - The server loads no chat history: the worker loads the last 20 Messages into a Direct reply's context.
 
@@ -358,54 +258,22 @@ that same connect before each command.
 
 ## Sending a Message and streaming its reply
 
-The server does no LLM work and holds no LLM keys (ADR-0013). It persists the user's Message, queues the
-reply for the worker, and relays the reply stream (ADR-0014):
+The server does no LLM work and holds no LLM keys (ADR-0013): it persists the user's Message, enqueues the
+reply for the worker, and relays the reply stream (ADR-0014). The full sequence is in
+[docs/architecture.md](../../docs/architecture.md#direct-reply). Specifics worth knowing:
 
-```text
-POST /api/sessions/:sessionId/messages   { content, mode: "direct", model? }
-  → @fastify/rate-limit               (10 req / 60 s per IP)
-  → Zod body validation               (mode accepts only "direct")
-  → requireAuthentication
-  → chat.messageAllowance.hook        (403 MessageAllowanceReached before anything is persisted)
-  → chatController.sendMessage → chatService.sendMessage
-      1. Prompt budget (tiktoken, max 2 000 tokens) → 413
-      2. Transaction: owner-scoped Session (404), bind the Session's Model if `model` differs, persist the user Message
-      3. streamId = a new UUID (the assistant Message is persisted under it)
-      4. Record the stream owner in Redis
-      5. Enqueue { userId, sessionId, messageId, streamId } (IDs only, checked against @nebula-chat/contracts)
-      6. Ping the worker's /health, unawaited (wakes a sleeping free-plan worker; a failure logs worker.ping.failed)
-  ← 202 { messageId, streamId }
-
-GET /api/streams/:streamId
-  → requireAuthentication → stream owner check (another User's stream is a 404)
-  → reply.hijack(), SSE headers
-  → streamService.relay: XREAD … BLOCK from `0`, each entry written as an SSE event whose `id` is the
-    entry id; a `: keep-alive` comment after each 15 s block with nothing new; stops after `end`;
-    on client disconnect the dedicated connection is dropped, ending the read in flight
-```
-
-The worker (`apps/worker`) loads the Session and history, makes the model call, appends the events and
-persists the assistant Message before `end`.
-
-`GET /api/chat/message-allowance` is the chat module's other route: a plain read behind
-`requireAuthentication` only (no rate-limit override, no allowance hook) that answers
-`getMessageAllowance` from `chat.messageAllowance.service.ts`, the same function
-`chat.messageAllowance.hook` enforces with. See [docs/auth.md](../../docs/auth.md#reading-the-allowance).
-
-**SSE events on a reply stream** (`ReplyStreamEvent` in `@nebula-chat/contracts`; the event name is its
-`type`, the data the rest of it):
-
-| Event   | Data                                              |
-| ------- | ------------------------------------------------- |
-| `token` | `{ token }` — one per Streaming token             |
-| `usage` | `{ promptTokens, completionTokens, totalTokens }` |
-| `error` | the error envelope (`ErrorEnvelope`)              |
-| `end`   | `{}` — always last, after an `error` too          |
-
-An entry the server cannot parse (a newer worker's event type) is skipped, so the contract can grow.
-
-Token budget (see [CONTEXT.md](../../CONTEXT.md#language) for the vocabulary): the server holds a user
-Message to **2 000** prompt tokens; the context window and completion limits are the worker's.
+- `POST /api/sessions/:sessionId/messages` answers `202 { messageId, streamId }`. Its chain is rate limit
+  (10/60 s per IP) → body validation → `requireAuthentication` → `chat.messageAllowance.hook`
+  (403 `MessageAllowanceReached` before anything is persisted) → `chatService.sendMessage`.
+- `sendMessage` holds the Message to **2 000** prompt tokens (413), persists it in a transaction, records the
+  stream owner in Redis, enqueues IDs only (checked against `@nebula-chat/contracts`), and pings the worker's
+  `/health` unawaited. Context window and completion limits are the worker's.
+- `GET /api/streams/:streamId` checks the owner (another User's stream is a 404), hijacks the reply and
+  relays the stream as SSE with `id` = the entry id, a `: keep-alive` comment per idle 15 s, ending after `end`.
+- `GET /api/chat/message-allowance` is a plain read that shares `getMessageAllowance` with the hook
+  ([docs/auth.md](../../docs/auth.md#reading-the-allowance)).
+- SSE events are `ReplyStreamEvent` in `@nebula-chat/contracts`: `token`, `usage`, `error` (the error
+  envelope), and `end` (always last). An entry the server cannot parse is skipped, so the contract can grow.
 
 ---
 
@@ -423,7 +291,7 @@ route is the single source of truth:
 
 The generated spec is served at `/openapi.json`; Swagger UI at `/docs`.
 
-To export the spec as a static YAML file for the frontend Orval client, run:
+To export the spec as static YAML for the Orval clients, run:
 
 ```bash
 pnpm --filter @nebula-chat/server run generate:openapi  # writes openapi/openapi.yaml to repo root
@@ -433,17 +301,18 @@ The script (`src/scripts/generate-openapi.ts`) calls `buildApp()` → `app.ready
 
 **Rule:** After every change to the backend, re-run this script to keep `openapi/openapi.yaml` in sync with the current API state. Always commit the updated `openapi/openapi.yaml` alongside backend changes.
 
-**Rule (API client regeneration):** Whenever `openapi/openapi.yaml` changes — whether you edited the backend and regenerated it, or the file changed for any other reason — immediately regenerate the typed frontend API client at `apps/client/src/libs/api/generated/`:
+**Rule (API client regeneration):** Whenever `openapi/openapi.yaml` changes — whether you edited the backend and regenerated it, or the file changed for any other reason — immediately regenerate both typed clients — the frontend's at `apps/client/src/libs/api/generated/` and the CLI's (`Operator` and `Admin` tags) — then typecheck both to surface broken call sites:
 
 ```bash
 pnpm --filter @nebula-chat/client run generate:api
+pnpm --filter @nebula-chat/cli run generate:api
 ```
 
 The generator is Orval, configured at `apps/client/orval.config.ts`, driven by
 `openapi/openapi.yaml`, and using the axios mutator at `apps/client/src/libs/api/client.ts`.
 Regenerated files in `apps/client/src/libs/api/generated/` must be committed in the same PR as the
 backend/OpenAPI change — never ship an API change with a stale client. Do not hand-edit anything under
-`apps/client/src/libs/api/generated/`; always regenerate. Use the `regenerate-api-client` skill for this.
+`apps/client/src/libs/api/generated/`; always regenerate.
 
 ---
 

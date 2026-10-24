@@ -4,8 +4,7 @@ import { cleanStores } from 'nanostores';
 import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 import { server } from '@/test/msw';
 
-// ADR-0008: the API is mocked at the network layer so the Orval-generated client
-// stays under test instead of being replaced by a stub.
+// ADR-0008: the API is mocked at the network layer so the Orval-generated client stays under test.
 // Listens at load, not in beforeAll, so `fetch` is patched before better-auth captures it.
 server.listen({ onUnhandledFrame: 'error' });
 

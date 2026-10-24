@@ -1,9 +1,7 @@
 import { z } from 'zod';
 
-// The on-wire error contract shared by the server (JSON error handler and the
-// chat SSE `error` event) and the client (ADR-0011). Each part has a metadata
-// `id`, which becomes its name in the OpenAPI document and so in the generated
-// client types.
+// The on-wire error contract shared by the server's JSON handler and SSE `error` event and the client (ADR-0011);
+// each part's metadata `id` names it in the OpenAPI document and generated client types.
 
 export const errorCodeSchema = z
   .enum([

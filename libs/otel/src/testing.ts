@@ -10,9 +10,7 @@ export type LogLine = Record<string, unknown> & { level: number; msg: string };
 export const LEVEL = { trace: 10, debug: 20, info: 30, warn: 40, error: 50, fatal: 60 } as const;
 
 /**
- * An in-memory Pino destination. Every line the logger writes is parsed back
- * into an object, so tests assert on the emitted JSON rather than on which
- * method was called.
+ * An in-memory Pino destination whose lines are parsed back to objects, so tests assert on emitted JSON, not on which method was called.
  */
 export const captureDestination = (): { lines: LogLine[]; destination: DestinationStream } => {
   const lines: LogLine[] = [];
@@ -27,9 +25,7 @@ export const captureDestination = (): { lines: LogLine[]; destination: Destinati
 };
 
 /**
- * A real logger writing parsed lines to memory. Tests assert on the emitted
- * lines — event name, level, attributes, how many — never on which function
- * logged. Defaults to `trace` so nothing is filtered before the assertion sees it.
+ * A real logger writing parsed lines to memory, at `trace` so nothing is filtered before the assertion sees it.
  */
 export const captureLogger = (level = 'trace'): { logger: Logger; lines: LogLine[] } => {
   const { lines, destination } = captureDestination();

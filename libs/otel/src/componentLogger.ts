@@ -6,17 +6,8 @@ type ComponentParent<T> = {
 };
 
 /**
- * A child logger for one subsystem: binds `nebula.component` and takes its
- * level from `createLogger`'s `levelOverrides` when the map names it, otherwise
- * inherits the level of the logger it is derived from. The child is tracked, so
- * a later `changeLogLevel` (and its expiry) reaches it too.
- *
- * An override may sit below the root level: Pino filters per logger instance,
- * not at the destination, so a `debug` child under an `info` root still writes
- * its `debug` lines. `src/diag.ts` relies on the same property.
- *
- * Derive it from a logger with no component bound yet — a second
- * `nebula.component` binding would emit the key twice.
+ * A child logger for one subsystem: binds `nebula.component`, takes its level from `levelOverrides` or inherits it, and is tracked for `changeLogLevel`.
+ * An override may sit below the root (Pino filters per instance); derive it from a logger with no component bound yet.
  */
 export const componentLogger = <T extends ComponentParent<T>>(
   logger: T,

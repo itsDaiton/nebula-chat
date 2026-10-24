@@ -26,9 +26,8 @@ export type CreateLoggerOptions = {
 
 export type Logger = pino.Logger;
 
-// pino-pretty splits keys on dots to reach nested values, so a flat dotted key
-// is escaped (`\.`) to be read as one key. The options cross into the transport
-// worker thread, so `messageFormat` must be a template string, not a function.
+// pino-pretty splits keys on dots, so a flat dotted key is escaped (`\.`); the options cross into the transport worker thread,
+// so `messageFormat` must be a template string, not a function.
 const PRETTY_IGNORE = [
   'pid',
   'hostname',
@@ -66,11 +65,8 @@ const buildPino = (config: LoggerOptions, options: CreateLoggerOptions): Logger 
 };
 
 /**
- * The only way a logger is constructed in this system. Every line it (or any
- * child) writes carries the service fields and `pid` — an explicit `base` is
- * also what drops Pino's default `hostname` — plus `trace_id`/`span_id` when
- * written inside an active span. Sensitive keys are censored (`redaction.ts`)
- * and `err` is always serialized as an object with its stack and cause.
+ * The only way a logger is constructed: every line carries the service fields, `pid` and `trace_id`/`span_id` inside a span;
+ * sensitive keys are censored (`redaction.ts`) and `err` serializes with its stack and cause.
  */
 export const createLogger = (options: CreateLoggerOptions): Logger => {
   const config: LoggerOptions = {

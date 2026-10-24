@@ -1,7 +1,5 @@
 /**
- * Keys whose value must never reach a log line: credentials, and anything that
- * carries Message content or personal data. Censored at any of the first three
- * nesting depths, which covers `req.headers.cookie`-style request objects.
+ * Keys whose value must never reach a log line (credentials, Message content, personal data), censored at any of the first three nesting depths.
  */
 const SENSITIVE_KEYS = [
   'cookie',
@@ -23,9 +21,7 @@ const SENSITIVE_KEYS = [
 ] as const;
 
 /**
- * Flat dotted keys (OTel-style attributes). Pino redact paths use dots for
- * *nesting*, so `user.email` would only match `{ user: { email } }` — a flat
- * `"user.email"` key needs bracket notation to be matched at all.
+ * Flat dotted keys (OTel-style): Pino redact paths treat dots as nesting, so `user.email` needs bracket notation to match.
  */
 const SENSITIVE_FLAT_KEYS = [
   'http.request.header.cookie',

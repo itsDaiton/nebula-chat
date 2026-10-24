@@ -4,12 +4,7 @@ import { Pool } from 'pg';
 import { loadDatabaseUrl, migrationsFolder, migrationsSchema, migrationsTable } from './env.js';
 
 /**
- * Apply pending migrations.
- *
- * This replaces `drizzle-kit migrate`, which swallows the underlying error and
- * exits 1 with nothing on stdout — a deploy step that fails without a
- * diagnostic is not operable. Calling the migrator directly lets the real
- * Postgres error (code, failing statement, stack) reach the deploy log.
+ * Applies pending migrations directly, replacing `drizzle-kit migrate`, which exits 1 without printing the underlying Postgres error.
  */
 const main = async (): Promise<void> => {
   const pool = new Pool({ connectionString: loadDatabaseUrl(), max: 1 });
