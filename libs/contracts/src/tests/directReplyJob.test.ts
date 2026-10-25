@@ -21,6 +21,17 @@ describe('directReplyJobSchema', () => {
     expect(directReplyJobSchema.safeParse({ ...job, sessionId: 'abc' }).success).toBe(false);
   });
 
+  it('accepts the W3C trace context alongside the IDs', () => {
+    const traceContext = {
+      traceparent: '00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01',
+      tracestate: 'vendor=1',
+    };
+    expect(directReplyJobSchema.parse({ ...job, ...traceContext })).toEqual({
+      ...job,
+      ...traceContext,
+    });
+  });
+
   it('drops anything beyond the IDs, so content never rides along', () => {
     expect(directReplyJobSchema.parse({ ...job, content: 'hello' })).toEqual(job);
   });

@@ -1,6 +1,13 @@
-import { directReplyJobSchema } from '@nebula-chat/contracts';
+import { DIRECT_REPLY_QUEUE, directReplyJobSchema } from '@nebula-chat/contracts';
 import type { DirectReplyJob } from '@nebula-chat/contracts';
-import { bindAttributes, componentLogger, logEvent } from '@nebula-chat/otel';
+import {
+  bindAttributes,
+  componentLogger,
+  extractTraceContext,
+  logEvent,
+  SpanKind,
+  withSpan,
+} from '@nebula-chat/otel';
 import type { Logger } from '@nebula-chat/otel';
 import { runDirectReply } from '@worker/directReplies/runDirectReply';
 import type { DirectReplyDeps } from '@worker/directReplies/runDirectReply';
@@ -33,8 +40,22 @@ export const createDirectReplyProcessor =
       );
       return;
     }
-    await runDirectReply(payload.data, {
-      ...deps,
-      logger: jobLogger(deps.logger, payload.data, job.id),
-    });
+    // A consumer span continuing the server's trace; a job with no trace context starts its own.
+    await withSpan(
+      `${DIRECT_REPLY_QUEUE} process`,
+      {
+        kind: SpanKind.CONSUMER,
+        parent: extractTraceContext(payload.data),
+        attributes: {
+          'messaging.system': 'bullmq',
+          'messaging.destination.name': DIRECT_REPLY_QUEUE,
+          'messaging.operation.type': 'process',
+        },
+      },
+      () =>
+        runDirectReply(payload.data, {
+          ...deps,
+          logger: jobLogger(deps.logger, payload.data, job.id),
+        }),
+    );
   };

@@ -1,3 +1,11 @@
+import { context, trace } from '@opentelemetry/api';
+import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
+import {
+  BasicTracerProvider,
+  InMemorySpanExporter,
+  SimpleSpanProcessor,
+} from '@opentelemetry/sdk-trace-base';
+import type { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 import type { DestinationStream } from 'pino';
 import type { LogEventName } from './events';
 import { createLogger } from './logger';
@@ -36,3 +44,20 @@ export const captureLogger = (level = 'trace'): { logger: Logger; lines: LogLine
 /** The lines stamped with one event name. */
 export const eventLines = (lines: LogLine[], event: LogEventName): LogLine[] =>
   lines.filter((line) => line['event.name'] === event);
+
+/** Installs an in-memory tracer and context manager to read back spans; global like the SDK's, so call `stop` when the file is done. */
+export const captureSpans = () => {
+  const exporter = new InMemorySpanExporter();
+  const provider = new BasicTracerProvider({ spanProcessors: [new SimpleSpanProcessor(exporter)] });
+  context.setGlobalContextManager(new AsyncLocalStorageContextManager().enable());
+  trace.setGlobalTracerProvider(provider);
+  return {
+    spans: (): ReadableSpan[] => exporter.getFinishedSpans(),
+    reset: (): void => exporter.reset(),
+    stop: async (): Promise<void> => {
+      await provider.shutdown();
+      trace.disable();
+      context.disable();
+    },
+  };
+};

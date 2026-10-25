@@ -1,7 +1,7 @@
 import { Queue } from 'bullmq';
 import { DIRECT_REPLY_QUEUE, directReplyJobSchema } from '@nebula-chat/contracts';
 import type { DirectReplyJob } from '@nebula-chat/contracts';
-import { logEvent } from '@nebula-chat/otel';
+import { injectTraceContext, logEvent, SpanKind, withSpan } from '@nebula-chat/otel';
 import type { EventLogger } from '@nebula-chat/otel';
 import { env } from '@server/env';
 import { redis } from '@server/redis';
@@ -41,12 +41,24 @@ export const pingWorker = async (logger: EventLogger<'warn'>): Promise<void> => 
   }
 };
 
-/** Puts a Direct reply on the queue (the payload is checked against the contract), then pings the worker. */
+/** Puts a Direct reply on the queue (payload checked against the contract), then pings the worker; the enqueue is a producer span whose context rides in the payload. */
 export const enqueueDirectReply = async (
   job: DirectReplyJob,
   logger: EventLogger<'warn'>,
 ): Promise<void> => {
-  await directReplyQueue().add('direct-reply', directReplyJobSchema.parse(job));
+  const payload = directReplyJobSchema.parse(job);
+  await withSpan(
+    `${DIRECT_REPLY_QUEUE} publish`,
+    {
+      kind: SpanKind.PRODUCER,
+      attributes: {
+        'messaging.system': 'bullmq',
+        'messaging.destination.name': DIRECT_REPLY_QUEUE,
+        'messaging.operation.type': 'publish',
+      },
+    },
+    () => directReplyQueue().add('direct-reply', { ...payload, ...injectTraceContext() }),
+  );
   void pingWorker(logger);
 };
 
