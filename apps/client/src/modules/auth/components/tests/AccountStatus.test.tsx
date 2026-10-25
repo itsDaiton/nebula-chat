@@ -25,7 +25,7 @@ vi.mock('@/theme/hooks/useColorMode', () => ({
   useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
 }));
 
-const layout = vi.hoisted(() => ({ isMobile: false, showSidePanels: true, showRightPanel: false }));
+const layout = vi.hoisted(() => ({ isMobile: false, showSidePanels: true }));
 vi.mock('@/shared/hooks/useResponsiveLayout', () => ({ useResponsiveLayout: () => layout }));
 
 let session: ReturnType<typeof aSession> | null = aSession();

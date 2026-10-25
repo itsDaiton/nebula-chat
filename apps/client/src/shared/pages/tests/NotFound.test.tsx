@@ -12,7 +12,7 @@ vi.mock('@/theme/hooks/useColorMode', () => ({
 
 // The menu button is mobile-only, and jsdom's stubbed matchMedia always reports
 // the desktop breakpoint, so the layout is forced here instead.
-const layout = vi.hoisted(() => ({ isMobile: true, showSidePanels: false, showRightPanel: false }));
+const layout = vi.hoisted(() => ({ isMobile: true, showSidePanels: false }));
 vi.mock('@/shared/hooks/useResponsiveLayout', () => ({ useResponsiveLayout: () => layout }));
 
 const UNKNOWN_URL = '/no-such-page';

@@ -1,17 +1,10 @@
 import type { ButtonProps, InputProps } from '@chakra-ui/react';
 import type { ThemeProviderProps } from 'next-themes';
-import type { ReactElement, ReactNode, Ref } from 'react';
+import type { ButtonHTMLAttributes, ReactElement, Ref } from 'react';
 
-export type LayoutProps = {
-  children: ReactNode;
-};
-
-export type SidePanelProps = {
-  children?: ReactNode;
-};
-
-export type HeaderProps = {
-  onMenuClick?: () => void;
+export type HeaderButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label'> & {
+  label: string;
+  shortcut?: ShortcutConfig;
 };
 
 export type MarkdownContentProps = {
@@ -67,11 +60,16 @@ export type SearchState = {
   toggleSearch: () => void;
 };
 
-export type DrawerState = {
+export type PanelState = {
+  isLeftPanelOpen: boolean;
+  isRightPanelOpen: boolean;
   isDrawerOpen: boolean;
+  isSheetOpen: boolean;
+  toggleLeftPanel: () => void;
+  toggleRightPanel: () => void;
   openDrawer: () => void;
-  closeDrawer: () => void;
-  toggleDrawer: () => void;
+  openSheet: () => void;
+  closeMobilePanels: () => void;
 };
 
 export type OS = 'mac' | 'windows';

@@ -1,60 +1,67 @@
-import { Box, Flex, Text, Icon } from '@chakra-ui/react';
-import { ColorModeButton } from '@/theme/components/ColorModeButton';
-import { useResetChat } from '@/shared/hooks/useResetChat';
-import { TbGalaxy } from 'react-icons/tb';
-import { HiMenuAlt2 } from 'react-icons/hi';
+import { Link } from '@tanstack/react-router';
+import { MenuIcon, OrbitIcon, PanelLeftIcon, PanelRightIcon } from 'lucide-react';
 import { AccountStatus } from '@/modules/auth/components/AccountStatus';
+import { CommandHint } from '@/shared/components/layout/CommandHint';
+import { HeaderButton } from '@/shared/components/layout/HeaderButton';
+import { ThemeToggle } from '@/shared/components/layout/ThemeToggle';
+import {
+  INSPECTOR_ID,
+  INSPECTOR_SHORTCUT,
+  SIDEBAR_ID,
+  SIDEBAR_SHORTCUT,
+} from '@/shared/config/panels';
+import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
+import { usePanels } from '@/shared/hooks/usePanels';
 import { resources } from '@/resources';
-import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
-import type { HeaderProps } from '@/shared/types/types';
 
-export const Header = ({ onMenuClick }: HeaderProps) => {
-  const { resetChat } = useResetChat();
-  const { isMobile } = useResponsiveLayout();
+export const Header = () => {
+  const { showSidePanels, isSidebarOpen, isInspectorOpen, toggleSidebar, toggleInspector } =
+    usePanels();
+
+  useKeyboardShortcut(SIDEBAR_SHORTCUT.key, toggleSidebar, SIDEBAR_SHORTCUT);
+  useKeyboardShortcut(INSPECTOR_SHORTCUT.key, toggleInspector, INSPECTOR_SHORTCUT);
+
+  // On desktop the toggles collapse a panel in place; below it they open it as a dialog.
+  const popup = showSidePanels ? undefined : 'dialog';
 
   return (
-    <Box
-      as="header"
-      position="fixed"
-      top={0}
-      left={0}
-      right={0}
-      borderBottom="1.5px solid"
-      borderColor={'border.default'}
-      zIndex={1000}
-      py={2}
-      bg="bg.default"
-      w="100%"
+    <header
+      data-slot="header"
+      className="flex h-12 shrink-0 items-center gap-2 px-2.5 text-foreground"
     >
-      <Flex w="full" h="16" px={4} alignItems="center" justifyContent="space-between">
-        <Box display="flex" alignItems="center" gap={{ base: 4, md: 2 }}>
-          {isMobile && onMenuClick && (
-            <Icon
-              as={HiMenuAlt2}
-              boxSize={{ base: 6, md: 8 }}
-              onClick={onMenuClick}
-              aria-label="Menu"
-            />
-          )}
-          <Icon as={TbGalaxy} boxSize={{ base: 10, md: 12 }} aria-label="Nebula Chat Icon" />
-          <Text
-            pl={2}
-            fontSize={{ base: '2xl', md: '3xl' }}
-            fontWeight="bold"
-            letterSpacing="-0.03em"
-            cursor="pointer"
-            transition="opacity 0.2s"
-            onClick={resetChat}
-            display={{ base: 'none', sm: 'block' }}
-          >
-            {resources.chat.appName}
-          </Text>
-        </Box>
-        <Flex gap={2} alignItems="center">
-          <AccountStatus />
-          <ColorModeButton />
-        </Flex>
-      </Flex>
-    </Box>
+      <HeaderButton
+        label={showSidePanels ? resources.shell.toggleSidebar : resources.shell.openSidebar}
+        shortcut={SIDEBAR_SHORTCUT}
+        onClick={toggleSidebar}
+        aria-expanded={isSidebarOpen}
+        aria-controls={showSidePanels ? SIDEBAR_ID : undefined}
+        aria-haspopup={popup}
+      >
+        {showSidePanels ? <PanelLeftIcon /> : <MenuIcon />}
+      </HeaderButton>
+      <Link
+        to="/"
+        aria-label={resources.shell.home}
+        className="flex items-center gap-2 rounded-lg px-1 text-[15px] font-semibold tracking-tight text-foreground no-underline"
+      >
+        <OrbitIcon className="size-5" aria-hidden />
+        <span className="hidden sm:inline">{resources.chat.appName}</span>
+      </Link>
+      <div className="flex flex-1 justify-center">
+        <CommandHint />
+      </div>
+      <HeaderButton
+        label={showSidePanels ? resources.shell.toggleInspector : resources.shell.openInspector}
+        shortcut={INSPECTOR_SHORTCUT}
+        onClick={toggleInspector}
+        aria-expanded={isInspectorOpen}
+        aria-controls={showSidePanels ? INSPECTOR_ID : undefined}
+        aria-haspopup={popup}
+      >
+        <PanelRightIcon />
+      </HeaderButton>
+      <ThemeToggle />
+      <AccountStatus />
+    </header>
   );
 };

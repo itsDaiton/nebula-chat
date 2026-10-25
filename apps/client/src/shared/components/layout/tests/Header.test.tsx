@@ -11,43 +11,18 @@ vi.mock('@/theme/hooks/useColorMode', () => ({
   useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
 }));
 
-// The menu button is mobile-only, and jsdom's stubbed matchMedia always reports
-// the desktop breakpoint, so the layout is forced here instead.
-const layout = vi.hoisted(() => ({ isMobile: true, showSidePanels: false, showRightPanel: false }));
-vi.mock('@/shared/hooks/useResponsiveLayout', () => ({ useResponsiveLayout: () => layout }));
-
 beforeEach(() => {
   vi.clearAllMocks();
   server.use(mockGetSession(aSession()));
 });
 
 describe('Header', () => {
-  it('renders the app name', async () => {
-    await renderInRouter(<Header />);
+  it('links the app name home', async () => {
+    const { router } = await renderInRouter(<Header />, { path: '/s/abc' });
 
-    expect(screen.getByText(/nebula chat/i)).toBeInTheDocument();
-  });
+    await userEvent.click(screen.getByRole('link', { name: resources.shell.home }));
 
-  // KNOWN A11Y GAP, pinned rather than endorsed: the menu control is a clickable
-  // <Icon> (an svg with aria-label), not a button. It therefore has no button
-  // role, is not in the tab order, and cannot be activated by keyboard — so this
-  // queries by label rather than by role.
-  it('invokes the menu handler when the menu control is clicked', async () => {
-    const onMenuClick = vi.fn();
-    await renderInRouter(<Header onMenuClick={onMenuClick} />);
-
-    await userEvent.click(screen.getByLabelText('Menu'));
-
-    expect(onMenuClick).toHaveBeenCalled();
-  });
-
-  it('hides the menu control on a desktop layout', async () => {
-    layout.isMobile = false;
-
-    await renderInRouter(<Header onMenuClick={vi.fn()} />);
-
-    expect(screen.queryByLabelText('Menu')).not.toBeInTheDocument();
-    layout.isMobile = true;
+    expect(router.state.location.pathname).toBe('/');
   });
 
   it("shows a Guest's sign-in link and the theme toggle, without the old gear menu", async () => {
@@ -60,11 +35,7 @@ describe('Header', () => {
     expect(
       screen.queryByRole('button', { name: resources.userMenu.label }),
     ).not.toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: /toggle color mode/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: resources.shell.toggleTheme })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Settings' })).not.toBeInTheDocument();
-  });
-
-  it('renders without a menu handler', async () => {
-    await expect(renderInRouter(<Header />)).resolves.toBeDefined();
   });
 });

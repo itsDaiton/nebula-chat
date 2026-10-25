@@ -231,6 +231,17 @@ export const resources = {
     message: "The page you're looking for doesn't exist or has been moved.",
     action: 'Go Home',
   },
+  shell: {
+    home: 'Nebula Chat home',
+    commandHint: 'Search chats',
+    sidebar: 'Sidebar',
+    inspector: 'Inspector',
+    toggleSidebar: 'Toggle sidebar',
+    toggleInspector: 'Toggle Inspector',
+    openSidebar: 'Open sidebar',
+    openInspector: 'Open Inspector',
+    toggleTheme: 'Toggle color mode',
+  },
   sidebar: {
     newChat: 'New chat',
     searchChats: 'Search chats',

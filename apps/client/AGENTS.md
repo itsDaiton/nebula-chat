@@ -23,8 +23,8 @@ Test commands are under [Testing](#testing); monorepo-wide lint/format/build liv
 `src/` is `main.tsx` / `App.tsx` (mounts TanStack Router's `RouterProvider`), `routeTree.gen.ts` (generated,
 committed, never hand-edited), `resources.ts` (UI strings) and:
 
-- `routes/` — TanStack Router file-based routes (`__root`, and the `_app` guard layout holding `index`,
-  `s/$id`, `settings` and `auth/*`). `routing/` — router setup, `RootLayout`, search-param helpers.
+- `routes/` — TanStack Router file-based routes (`__root`, and the `_app` guard layout holding `auth/*` and
+  the `_shell` layout, which wraps `index`, `s/$id` and `settings` in the app shell). `routing/` — router setup, `RootLayout`, search-param helpers.
 - `libs/api/` — the axios instance and SSE fetch mutator (`client.ts`, `streamClient.ts`), the query client,
   and `generated/` (Orval output). `libs/auth/` — the better-auth client, the one auth entry point.
 - `modules/<feature>/` — `auth`, `chat`, `sessions`, `settings`. Each splits into `components/`, `hooks/`,
@@ -43,8 +43,9 @@ The client routes with [TanStack Router](https://tanstack.com/router) and its fi
 `src/routes/`; the plugin writes `routeTree.gen.ts`, which is committed and excluded from lint, format,
 coverage and knip. A route file only wires a page: the component lives in `modules/*/` as a `*Page.tsx`.
 
-- **Adding a route.** Create the file under `routes/_app/` (`s/$id.tsx` is `/s/:id`), export
-  `Route = createFileRoute('/_app/<path>')({ component })`, and run `pnpm dev` or `pnpm build` so the plugin
+- **Adding a route.** Create the file under `routes/_app/`, or `routes/_app/_shell/` for a page inside the app
+  shell (`_shell/s/$id.tsx` is `/s/:id`), export `Route = createFileRoute('/_app/<path>')({ component })`
+  (the route id keeps `_shell`; the URL doesn't), and run `pnpm dev` or `pnpm build` so the plugin
   regenerates the tree. Every path is typed: a link to a route that doesn't exist fails the typecheck.
 - **Links and navigation.** `<Link to="/auth">`, `<Link to="/s/$id" params={{ id }}>` and
   `useNavigate()({ to: '/s/$id', params: { id } })`. There is no path-helper object; the literal path is
@@ -58,7 +59,7 @@ coverage and knip. A route file only wires a page: the component lives in `modul
 - **Loaders.** A loader prefetches through the existing query client:
   `context.queryClient.ensureQueryData(getGetSessionQueryOptions(id))`. Components keep using the generated
   hooks. A prefetch whose failure the page shows itself sets `meta: { inlineError: true }`
-  (see `routes/_app/s/$id.tsx`) so it isn't toasted twice.
+  (see `routes/_app/_shell/s/$id.tsx`) so it isn't toasted twice.
 - **Search params** are declared per route with a Zod schema as `validateSearch`, built from
   `routing/searchParams.ts` so a malformed value never throws: `optionalSearchText()` falls back to
   absent, `optionalSearchError()` to an unrecognised code (still an error). TanStack JSON-parses each
@@ -208,6 +209,10 @@ context is genuinely needed, split it across two files:
   (NEB-555), Tailwind's preflight is off and its utilities are unlayered so they beat Chakra's layered
   reset; a small reset scoped to `[data-slot]` stands in for preflight on the new components.
 - Responsive layout decisions (`isMobile`, `showSidePanels`) come from `useResponsiveLayout`.
+- **The app shell** (`shared/components/layout/AppShell.tsx`, the `_shell` route's component) is the header
+  over the sidebar, the routed page and the Inspector. A page inside it fills the centre panel (`h="100%"`)
+  and brings no header of its own. `usePanels` toggles a side panel: a collapse remembered by the persisted
+  `usePanelStore` on desktop, a drawer or bottom sheet below the large breakpoint.
 - **All static text must live in `resources.ts`.** If it is a string shown in the UI — button labels, placeholders, error messages, hints, empty states, tooltips — it goes in `resources.ts`. Never hardcode UI strings inline in components or utilities.
 
 ---
@@ -247,7 +252,7 @@ dialog's title, `none` inside a labelled settings row.
 
 Hooks in `/hooks/` are thin wrappers that read from stores or query hooks and compose logic. They must not duplicate state that already lives in a store or the query cache.
 
-A hook that just re-exposes store state (`useDrawer` over `useDrawerStore` and `useSearchStore`) is correct; one that keeps its own `useState` for it is not.
+A hook that just re-exposes store state (`usePanels` over `usePanelStore`) is correct; one that keeps its own `useState` for it is not.
 
 Utility hooks that are inherently parameterised per call-site (`useDebounce`, `useEventListener`) may use `useRef` — they cannot be singleton stores.
 
@@ -268,8 +273,7 @@ Utility hooks that are inherently parameterised per call-site (`useDebounce`, `u
 | Registering a DOM event listener   | `useEffect` + `addEventListener` | `useEventListener` via `useSyncExternalStore` subscribe lifecycle                 |
 
 New code reaches for the patterns above. Two `useEffect` calls predate this rule and remain until they are
-reworked: `ChatContainer` (clearing the post-stream flags, scrolling to the newest message) and `Layout`
-(closing mobile search when the desktop layout appears). Add no others.
+reworked: `ChatContainer` (clearing the post-stream flags, scrolling to the newest message). Add no others.
 
 ---
 

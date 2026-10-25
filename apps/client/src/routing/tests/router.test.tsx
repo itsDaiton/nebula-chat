@@ -26,7 +26,7 @@ describe('router', () => {
     const { router } = await renderRoute('/');
 
     expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
-    expect(router.state.matches.at(-1)?.routeId).toBe('/_app/');
+    expect(router.state.matches.at(-1)?.routeId).toBe('/_app/_shell/');
   });
 
   it.each(['/auth', '/auth/forgot-password', '/auth/reset-password', '/auth/verify-email'])(

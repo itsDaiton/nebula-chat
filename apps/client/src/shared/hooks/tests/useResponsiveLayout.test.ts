@@ -20,7 +20,6 @@ describe('useResponsiveLayout', () => {
     expect(result.current).toEqual({
       isMobile: true,
       showSidePanels: false,
-      showRightPanel: false,
     });
   });
 
@@ -32,7 +31,6 @@ describe('useResponsiveLayout', () => {
     expect(result.current).toEqual({
       isMobile: true,
       showSidePanels: true,
-      showRightPanel: true,
     });
   });
 
@@ -44,7 +42,6 @@ describe('useResponsiveLayout', () => {
     expect(result.current).toEqual({
       isMobile: false,
       showSidePanels: false,
-      showRightPanel: false,
     });
   });
 });

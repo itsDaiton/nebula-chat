@@ -29,7 +29,6 @@ vi.mock('@/theme/hooks/useColorMode', () => ({
 const layout = vi.hoisted(() => ({
   isMobile: false,
   showSidePanels: true,
-  showRightPanel: false,
 }));
 vi.mock('@/shared/hooks/useResponsiveLayout', () => ({ useResponsiveLayout: () => layout }));
 

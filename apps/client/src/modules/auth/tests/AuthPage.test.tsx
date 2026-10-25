@@ -26,7 +26,7 @@ vi.mock('@/theme/hooks/useColorMode', () => ({
 
 // The desktop layout, whose side panel lists the sessions (jsdom has no breakpoints to measure).
 vi.mock('@/shared/hooks/useResponsiveLayout', () => ({
-  useResponsiveLayout: () => ({ isMobile: false, showSidePanels: true, showRightPanel: false }),
+  useResponsiveLayout: () => ({ isMobile: false, showSidePanels: true }),
 }));
 
 const GUEST_SESSIONS = [
