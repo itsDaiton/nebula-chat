@@ -1,6 +1,6 @@
 {
-  "version": "2026-10-25-1ab9eaf1-1ffb-4099-9711-8bde6c9d06cf",
-  "hash": "5aa3ca3bd16b4fd01c41250aa6dfdb722606ee0ff786e85d79144f6d0a075a85",
+  "version": "2026-10-25-9be81f1b-e2d0-4e83-b7e1-17df1d5d673f",
+  "hash": "006eeff5816e28a8a0b2cfcfbfcb976633e970d5c318b48df412abe5458304d7",
   "defaultModels": {
     "openai": "gpt-4o-mini",
     "anthropic": "claude-3-5-haiku-20241022"
@@ -88,6 +88,18 @@
         "input": 0.25,
         "cachedInput": 0.025,
         "output": 2
+      }
+    },
+    {
+      "id": "gpt-5.6-luna",
+      "label": "GPT-5.6 Luna",
+      "provider": "openai",
+      "contextWindow": 1050000,
+      "maxOutput": 128000,
+      "prices": {
+        "input": 0.2,
+        "cachedInput": 0.02,
+        "output": 1.2
       }
     },
     {

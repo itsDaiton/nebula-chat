@@ -18,6 +18,7 @@ export const SendMessageBodyModel = {
   'gpt-41-mini': 'gpt-4.1-mini',
   'gpt-5': 'gpt-5',
   'gpt-5-mini': 'gpt-5-mini',
+  'gpt-56-luna': 'gpt-5.6-luna',
   'claude-3-5-sonnet-20241022': 'claude-3-5-sonnet-20241022',
   'claude-3-5-haiku-20241022': 'claude-3-5-haiku-20241022',
   'claude-3-opus-20240229': 'claude-3-opus-20240229',
