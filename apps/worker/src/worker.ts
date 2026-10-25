@@ -38,6 +38,7 @@ const start = async (): Promise<void> => {
       markEnded: (streamId) =>
         redis.flags.raise(streamEndedKey(streamId), REPLY_STREAM_RECORD_TTL_SECONDS),
     },
+    cache: redis.cache,
     streamChat,
     apiKeys: { openai: env.OPENAI_API_KEY, anthropic: env.ANTHROPIC_API_KEY },
     logger,

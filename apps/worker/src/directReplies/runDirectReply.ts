@@ -15,6 +15,8 @@ import type {
 } from '@nebula-chat/langchain';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
 import type { LogAttributes, Logger } from '@nebula-chat/otel';
+import { readCachedReply, replyCacheKey, writeCachedReply } from '@worker/directReplies/replyCache';
+import type { ReplyCache } from '@worker/directReplies/replyCache';
 import { DIRECT_REPLY_SYSTEM_PROMPT } from '@worker/directReplies/systemPrompt';
 
 /** The most recent Messages loaded into a Direct reply's context. */
@@ -40,6 +42,8 @@ export type DirectReplyStore = {
     sessionId: string;
     content: string;
     tokenCount: number | null;
+    /** Replayed from the response cache; omitted for a live reply. */
+    cached?: boolean;
   }) => Promise<void>;
 };
 
@@ -75,6 +79,7 @@ export type StreamChat = (
 export type DirectReplyDeps = {
   store: DirectReplyStore;
   stream: ReplyStreamWriter;
+  cache: ReplyCache;
   /** The model call: `@nebula-chat/langchain`'s `streamChat` in production. */
   streamChat: StreamChat;
   apiKeys: { [P in ProviderType]?: string | undefined };
@@ -118,6 +123,7 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
   let usage: Usage | undefined;
   // What the model has produced so far: the whole reply, or what a cancelled one keeps.
   let reply = '';
+  const tokens: string[] = [];
   const cancel = new AbortController();
   let stopWatching = (): void => undefined;
   // A stop that lands after the model returned is too late: the reply finishes, or fails, as is.
@@ -169,6 +175,38 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
       return;
     }
 
+    const cacheKey = replyCacheKey(job.sessionId, model, userMessage.content);
+    // Regenerate skips the lookup; its capture below then overwrites the entry (ADR-0009).
+    const hit = job.regenerate ? null : await readCachedReply(deps.cache, cacheKey, logger);
+    if (hit) {
+      for (const token of hit.tokens) enqueue({ type: 'token', token });
+      if (hit.usage) enqueue({ type: 'usage', ...hit.usage });
+      await appended;
+      await store.createAssistantMessage({
+        id: job.streamId,
+        sessionId: job.sessionId,
+        content: hit.tokens.join(''),
+        tokenCount: hit.usage?.totalTokens ?? null,
+        cached: true,
+      });
+      await endStream(job.streamId, { type: 'end' }, stream);
+      logEvent(
+        componentLogger(logger, 'chat'),
+        'info',
+        'chat.reply.completed',
+        {
+          'gen_ai.request.model': model,
+          'gen_ai.usage.input_tokens': hit.usage?.promptTokens,
+          'gen_ai.usage.output_tokens': hit.usage?.completionTokens,
+          'nebula.duration_ms': Date.now() - startMs,
+          'nebula.outcome': 'completed',
+          'nebula.cache.key': cacheKey,
+        },
+        `Direct reply replayed from the cache · ${model} · ${hit.usage?.totalTokens ?? 0} tokens`,
+      );
+      return;
+    }
+
     stopWatching = watchForCancel(job.streamId, deps, cancel);
     await deps.streamChat(
       {
@@ -184,6 +222,7 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
       {
         onToken: (token) => {
           reply += token;
+          tokens.push(token);
           enqueue({ type: 'token', token });
         },
         onUsage: (u) => {
@@ -205,6 +244,7 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
       tokenCount: usage?.totalTokens ?? null,
     });
     await endStream(job.streamId, { type: 'end' }, stream);
+    await writeCachedReply(deps.cache, cacheKey, { tokens, ...(usage && { usage }) }, logger);
 
     logEvent(
       componentLogger(logger, 'chat'),

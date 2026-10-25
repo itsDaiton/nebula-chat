@@ -1,4 +1,5 @@
 import type { ReplyStreamEvent } from '@nebula-chat/contracts';
+import type { ReplyCache } from '@worker/directReplies/replyCache';
 import type {
   DirectReplyStore,
   ReplyStreamWriter,
@@ -102,3 +103,27 @@ export const slowModel = (tokens: string[], onToken: (index: number) => void = (
   };
   return { streamChat, signals };
 };
+
+/** The response cache in memory, with every write recorded so tests can assert on capture. */
+export const memoryCache = () => {
+  const entries = new Map<string, unknown>();
+  const writes: string[] = [];
+  const cache: ReplyCache = {
+    get: async (key) => entries.get(key) ?? null,
+    set: async (key, entry) => {
+      entries.set(key, entry);
+      writes.push(key);
+    },
+  };
+  return { cache, entries, writes };
+};
+
+/** A cache whose Redis is down: every read and write rejects. */
+export const brokenCache = (): ReplyCache => ({
+  get: async () => {
+    throw new Error('redis down');
+  },
+  set: async () => {
+    throw new Error('redis down');
+  },
+});

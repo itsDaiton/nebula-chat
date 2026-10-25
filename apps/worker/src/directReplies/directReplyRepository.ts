@@ -20,7 +20,9 @@ export const directReplyRepository: DirectReplyStore = {
       .orderBy(desc(messages.createdAt))
       .limit(limit);
   },
-  async createAssistantMessage({ id, sessionId, content, tokenCount }) {
-    await db.insert(messages).values({ id, sessionId, role: 'assistant', content, tokenCount });
+  async createAssistantMessage({ id, sessionId, content, tokenCount, cached }) {
+    await db
+      .insert(messages)
+      .values({ id, sessionId, role: 'assistant', content, tokenCount, cached });
   },
 };

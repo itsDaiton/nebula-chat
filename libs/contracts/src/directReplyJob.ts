@@ -15,6 +15,8 @@ export const directReplyJobSchema = z.object({
   messageId: z.uuid(),
   /** The reply stream's key, and the id the assistant Message is persisted under. */
   streamId: z.uuid(),
+  /** Bypasses the response cache and overwrites its entry. */
+  regenerate: z.boolean().optional(),
 });
 
 export type DirectReplyJob = z.infer<typeof directReplyJobSchema>;

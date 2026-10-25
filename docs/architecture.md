@@ -290,7 +290,11 @@ sequenceDiagram
   model call through an `AbortSignal`, persists what it had produced, and ends the stream with
   `end` `{ reason: 'cancelled' }`. A reply cancelled while its job is queued never reaches the
   model.
-- **Not yet built.** The response cache; a later ticket under ADR-0013.
+- **Response cache.** Before the model call the worker looks up a Cache entry (Session + Model +
+  hash of the user Message, ADR-0009). A hit replays the stored Streaming tokens and usage into the
+  stream, persists the Message as `cached` and never calls the model; a completed reply is captured
+  after it ends. Cancelled and failed replies are never captured, `regenerate` in the job payload
+  skips the lookup and overwrites the entry, and a failing Redis is a miss.
 
 ## The client
 
