@@ -10,7 +10,7 @@ import type { Attributes, Context, Span, SpanKind } from '@opentelemetry/api';
 import { W3CTraceContextPropagator } from '@opentelemetry/core';
 
 /** The W3C trace context as plain strings: what rides in a job payload. */
-export type TraceCarrier = { traceparent?: string | undefined; tracestate?: string | undefined };
+export type TraceCarrier = { traceparent?: string; tracestate?: string };
 
 // Explicit rather than the global propagator, so it works the same whatever the SDK configured.
 const propagator = new W3CTraceContextPropagator();
@@ -23,8 +23,9 @@ export const injectTraceContext = (): TraceCarrier => {
 };
 
 /** The context a carrier describes; a root context when it has none, or a malformed one. */
-export const extractTraceContext = (carrier: TraceCarrier): Context =>
-  propagator.extract(ROOT_CONTEXT, carrier, defaultTextMapGetter);
+export const extractTraceContext = (carrier: {
+  [K in keyof TraceCarrier]: TraceCarrier[K] | undefined;
+}): Context => propagator.extract(ROOT_CONTEXT, carrier, defaultTextMapGetter);
 
 type WithSpanOptions = {
   kind?: SpanKind;
