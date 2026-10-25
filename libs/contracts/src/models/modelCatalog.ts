@@ -41,6 +41,8 @@ export const modelCatalogSchema = z
     version: z.number().int().positive(),
     /** The day the list prices were last checked against the providers. */
     checkedAt: z.iso.date(),
+    /** The Model each provider falls back to when none is requested. */
+    defaultModels: z.record(modelProviderSchema, z.string()),
     models: z.array(modelSchema).min(1),
   })
   .refine(
@@ -48,6 +50,13 @@ export const modelCatalogSchema = z
     {
       message: 'a Model is listed twice',
     },
+  )
+  .refine(
+    (catalog) =>
+      Object.entries(catalog.defaultModels).every(
+        ([provider, id]) => catalog.models.find((model) => model.id === id)?.provider === provider,
+      ),
+    { message: 'each default must be a catalog Model of its own provider' },
   );
 
 const catalog = modelCatalogSchema.parse(catalogJson);
@@ -55,6 +64,8 @@ const catalog = modelCatalogSchema.parse(catalogJson);
 export const MODEL_CATALOG: readonly Model[] = catalog.models;
 
 export const MODEL_CATALOG_VERSION = catalog.version;
+
+export const DEFAULT_MODELS: Readonly<Record<ModelProvider, string>> = catalog.defaultModels;
 
 // `map` loses the tuple shape `z.enum` needs; the ids are still exactly the catalog's.
 export const MODEL_IDS = MODEL_CATALOG.map((model) => model.id) as [string, ...string[]];

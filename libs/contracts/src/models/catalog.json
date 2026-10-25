@@ -1,6 +1,10 @@
 {
-  "version": 2,
+  "version": 3,
   "checkedAt": "2026-10-25",
+  "defaultModels": {
+    "openai": "gpt-4o-mini",
+    "anthropic": "claude-3-5-haiku-20241022"
+  },
   "models": [
     {
       "id": "gpt-4o",

@@ -1,12 +1,11 @@
 import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
-import { findModel } from '@nebula-chat/contracts';
+import { DEFAULT_MODELS, findModel } from '@nebula-chat/contracts';
 import { logEvent } from '@nebula-chat/otel';
 import type { Logger } from '@nebula-chat/otel';
 import { llmConcurrencyLimiter } from '@worker/llm/concurrencyLimiter';
 import { countTokens } from '@worker/llm/countTokens';
 import { createLLM } from '@worker/llm/createLLM';
-import { DEFAULT_MODELS } from '@worker/llm/modelRegistry';
-import type { LLMConfig } from '@worker/llm/modelRegistry';
+import type { LLMConfig } from '@worker/llm/createLLM';
 import { getMessageContentText, packHistory } from '@worker/llm/packHistory';
 
 type HistoryRole = 'assistant' | 'user';

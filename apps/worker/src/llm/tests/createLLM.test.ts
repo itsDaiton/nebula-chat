@@ -3,7 +3,7 @@ import { ChatOpenAI } from '@langchain/openai';
 import { describe, expect, it } from 'vitest';
 import { MODEL_CATALOG } from '@nebula-chat/contracts';
 import { createLLM } from '@worker/llm/createLLM';
-import type { LLMConfig } from '@worker/llm/modelRegistry';
+import type { LLMConfig } from '@worker/llm/createLLM';
 
 const openai = (overrides: Partial<LLMConfig> = {}): LLMConfig => ({
   provider: 'openai',

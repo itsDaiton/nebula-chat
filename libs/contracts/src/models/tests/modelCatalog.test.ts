@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DEFAULT_MODELS,
   MODEL_CATALOG,
   MODEL_CATALOG_VERSION,
   MODEL_IDS,
@@ -12,6 +13,7 @@ import {
 const aCatalog = () => ({
   version: 1,
   checkedAt: '2026-10-25',
+  defaultModels: { openai: 'gpt-test', anthropic: 'claude-test' },
   models: [
     {
       id: 'gpt-test',
@@ -20,6 +22,14 @@ const aCatalog = () => ({
       contextWindow: 128_000,
       maxOutput: 4_096,
       prices: { input: 1, cachedInput: 0.5, output: 2 },
+    },
+    {
+      id: 'claude-test',
+      label: 'Claude Test',
+      provider: 'anthropic',
+      contextWindow: 200_000,
+      maxOutput: 4_096,
+      prices: { input: 3, cachedInput: 0.3, output: 15 },
     },
   ],
 });
@@ -103,6 +113,34 @@ describe('modelCatalogSchema', () => {
   it('rejects a Model with an empty label', () => {
     const catalog = aCatalog();
     catalog.models[0]!.label = ' ';
+
+    expect(modelCatalogSchema.safeParse(catalog).success).toBe(false);
+  });
+});
+
+describe('DEFAULT_MODELS', () => {
+  it('names a Model in the catalog for each provider, belonging to that provider', () => {
+    for (const [provider, id] of Object.entries(DEFAULT_MODELS)) {
+      expect(getModel(id).provider, provider).toBe(provider);
+    }
+  });
+
+  it('rejects a catalog with no default for a provider', () => {
+    const defaultModels = { openai: 'gpt-test' };
+
+    expect(modelCatalogSchema.safeParse({ ...aCatalog(), defaultModels }).success).toBe(false);
+  });
+
+  it('rejects a default that is not in the catalog', () => {
+    const catalog = aCatalog();
+    catalog.defaultModels.openai = 'gpt-missing';
+
+    expect(modelCatalogSchema.safeParse(catalog).success).toBe(false);
+  });
+
+  it('rejects a default that belongs to another provider', () => {
+    const catalog = aCatalog();
+    catalog.defaultModels.openai = 'claude-test';
 
     expect(modelCatalogSchema.safeParse(catalog).success).toBe(false);
   });

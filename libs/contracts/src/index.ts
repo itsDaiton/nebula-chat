@@ -12,6 +12,7 @@ export type { ReplyStreamEvent, ReplyStreamEventType } from './replyStreamEvent'
 
 // The model catalog: the Models a Session may be bound to, with their limits and prices (ADR-0030)
 export {
+  DEFAULT_MODELS,
   MODEL_CATALOG,
   MODEL_CATALOG_VERSION,
   MODEL_IDS,
