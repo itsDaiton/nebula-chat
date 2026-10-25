@@ -27,8 +27,8 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "@typescript-eslint/eslint-plugin": "^8.71.1",
-    "@typescript-eslint/parser": "^8.71.1",
+    "@typescript-eslint/eslint-plugin": "^8.71.2",
+    "@typescript-eslint/parser": "^8.71.2",
     "eslint": "^10.12.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
@@ -38,10 +38,10 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",
     "jiti": "^2.6.1",
-    "knip": "^6.40.0",
-    "prettier": "^3.9.9",
+    "knip": "^6.41.0",
+    "prettier": "^3.9.10",
     "tsx": "catalog:",
-    "turbo": "^2.11.7",
+    "turbo": "^2.11.8",
     "typescript": "catalog:"
   }
 }

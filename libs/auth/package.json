@@ -31,8 +31,8 @@
     "drizzle-orm": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-email": "^6.11.1",
-    "resend": "^6.32.1"
+    "react-email": "^6.11.2",
+    "resend": "^6.33.0"
   },
   "devDependencies": {
     "@types/node": "catalog:",
