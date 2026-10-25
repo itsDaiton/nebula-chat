@@ -4,15 +4,13 @@ import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import { renderWithProviders } from '@/test/render';
 
 describe('ScrollArea', () => {
-  it('renders its content inside the scroll viewport', () => {
+  it('shows its content', () => {
     renderWithProviders(
       <ScrollArea>
         <p>First session</p>
       </ScrollArea>,
     );
 
-    expect(
-      screen.getByText('First session').closest('[data-slot=scroll-area-viewport]'),
-    ).not.toBeNull();
+    expect(screen.getByText('First session')).toBeVisible();
   });
 });

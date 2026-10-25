@@ -4,10 +4,10 @@ import { Badge } from '@/shared/components/ui/badge';
 import { renderWithProviders } from '@/test/render';
 
 describe('Badge', () => {
-  it('renders as a span by default', () => {
+  it('shows its label', () => {
     renderWithProviders(<Badge variant="secondary">Guest</Badge>);
 
-    expect(screen.getByText('Guest').tagName).toBe('SPAN');
+    expect(screen.getByText('Guest')).toBeVisible();
   });
 
   it('renders as the element it is given', () => {

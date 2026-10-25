@@ -201,7 +201,8 @@ context is genuinely needed, split it across two files:
 - **Redesign (epic #530).** New surfaces build on the shadcn/ui base components in `shared/components/ui/`
   (Base UI primitives, `components.json` style `base-nova`; add one with `pnpm dlx shadcn add <name>`, then
   convert it to arrow functions, drop `'use client'` and move any UI string into `resources.ts`). Each such
-  file holds one component family, the exception to one-component-per-file. Style them with Tailwind
+  file holds one component family with its prop types inline, the exception to one-component-per-file and
+  to `types/types.ts`. Style them with Tailwind
   utilities over the tokens in `styles/globals.css` (`bg-panel`, `text-muted-foreground`, `border-border`,
   `font-mono` for metadata and ids, `tabular-nums` for numbers), never raw colours. Until Chakra is removed
   (NEB-555), Tailwind's preflight is off and its utilities are unlayered so they beat Chakra's layered

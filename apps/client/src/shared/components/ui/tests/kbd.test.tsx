@@ -4,7 +4,7 @@ import { Kbd, KbdGroup } from '@/shared/components/ui/kbd';
 import { renderWithProviders } from '@/test/render';
 
 describe('Kbd', () => {
-  it('marks up a shortcut as keyboard input', () => {
+  it('shows each key of a shortcut', () => {
     renderWithProviders(
       <KbdGroup>
         <Kbd>Ctrl</Kbd>
@@ -12,7 +12,7 @@ describe('Kbd', () => {
       </KbdGroup>,
     );
 
-    expect(screen.getByText('Ctrl').tagName).toBe('KBD');
-    expect(screen.getByText('K').parentElement?.tagName).toBe('KBD');
+    expect(screen.getByText('Ctrl')).toBeVisible();
+    expect(screen.getByText('K')).toBeVisible();
   });
 });

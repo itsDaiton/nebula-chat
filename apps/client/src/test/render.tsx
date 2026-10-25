@@ -37,7 +37,7 @@ export const renderWithChakra = (ui: ReactElement, options: Options = {}): Rende
   return render(ui, { wrapper: Wrapper, ...renderOptions });
 };
 
-/** Renders under the app's own providers (query client, theme, tooltips) without a router; `renderRoute` builds on it. */
+/** Renders under the providers `RootLayout` mounts (query client, theme, tooltips) without a router; `renderRoute` builds on it. */
 export const renderWithProviders = (ui: ReactElement, options: Options = {}): RenderResult => {
   const { queryClient = createTestQueryClient(), ...renderOptions } = options;
 
