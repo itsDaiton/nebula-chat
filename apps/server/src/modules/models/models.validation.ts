@@ -20,4 +20,4 @@ const modelResponseSchema = z
   })
   .meta({ id: 'Model' });
 
-export const modelsArraySchema = z.array(modelResponseSchema);
+export const modelsArraySchema = z.array(modelResponseSchema).max(100);

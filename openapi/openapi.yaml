@@ -938,6 +938,7 @@ paths:
           content:
             application/json:
               schema:
+                maxItems: 100
                 type: array
                 items:
                   $ref: '#/components/schemas/Model'
