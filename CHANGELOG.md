@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.6.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.6.0...nebula-chat-v5.6.1) (2026-10-25)
+
+
+### Bug Fixes
+
+* **ci:** NEB-581 reject angle brackets in issue and PR titles so Release Please tags every release ([#645](https://github.com/itsDaiton/nebula-chat/issues/645)) ([2d8d026](https://github.com/itsDaiton/nebula-chat/commit/2d8d026ea584474ffcae6b64b58154c2f3bf1f4f))
+
 ## [5.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.5.1...nebula-chat-v5.6.0) (2026-10-25)
 
 
