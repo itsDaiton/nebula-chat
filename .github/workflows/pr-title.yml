@@ -1,4 +1,4 @@
-name: Validate conventional commit
+name: PR Title
 
 # The PR title becomes the squash-merge commit Release Please parses (AGENTS.md → Tickets): it must be
 # `feat|fix(scope[,scope]): NEB-<n> summary` (no ID for ad-hoc work), and a `<` or `>` in it makes
@@ -11,8 +11,8 @@ on:
 permissions: {}
 
 jobs:
-  title:
-    name: Title format
+  validate:
+    name: validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
