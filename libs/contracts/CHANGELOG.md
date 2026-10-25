@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-contracts-v1.1.0...nebula-chat-contracts-v1.2.0) (2026-10-25)
+
+
+### Features
+
+* **worker:** NEB-356 cache Direct replies in the worker ([#635](https://github.com/itsDaiton/nebula-chat/issues/635)) ([0eed2a0](https://github.com/itsDaiton/nebula-chat/commit/0eed2a04199e74d979b818cc2299b25814d56109))
+
 ## [1.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-contracts-v1.0.0...nebula-chat-contracts-v1.1.0) (2026-10-24)
 
 
