@@ -161,13 +161,6 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
     } catch {
       throw new BadRequestError(`Unsupported model: ${model}`);
     }
-    const apiKey = deps.apiKeys[provider];
-    if (!apiKey) {
-      throw new MissingConfigurationError(
-        provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY',
-      );
-    }
-
     // A reply stopped while its job waited in the queue never reaches the model.
     if (await stream.isCancelled(job.streamId)) {
       cancel.abort();
@@ -205,6 +198,14 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
         `Direct reply replayed from the cache · ${model} · ${hit.usage?.totalTokens ?? 0} tokens`,
       );
       return;
+    }
+
+    // A replay makes no model call, so only a live reply needs the provider's key.
+    const apiKey = deps.apiKeys[provider];
+    if (!apiKey) {
+      throw new MissingConfigurationError(
+        provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY',
+      );
     }
 
     stopWatching = watchForCancel(job.streamId, deps, cancel);

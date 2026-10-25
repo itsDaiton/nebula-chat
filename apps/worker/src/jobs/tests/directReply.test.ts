@@ -373,6 +373,16 @@ describe('the Direct reply job', () => {
       expect(streamed()).toEqual(live);
     });
 
+    it('replays a cached reply even when the provider key is missing', async () => {
+      await run(scriptedModel(['4']).streamChat);
+      redis.events.clear();
+
+      await processorWith(scriptedModel([]).streamChat, {})({ id: 'job-1', data: payload });
+
+      expect(streamed()).toContainEqual({ type: 'token', token: '4' });
+      expect(streamed().some((e) => e.type === 'error')).toBe(false);
+    });
+
     it('persists the replayed Message as cached, with the captured token count', async () => {
       await run(scriptedModel(['2', '+2', ' is 4']).streamChat);
 
