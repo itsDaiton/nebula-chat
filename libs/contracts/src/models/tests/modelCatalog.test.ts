@@ -1,7 +1,12 @@
+// The lib itself is Node-free (tsconfig has no node types); only this test hashes with node:crypto.
+/// <reference types="node" />
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
+import catalogJson from '../catalog.json';
 import {
   DEFAULT_MODELS,
   MODEL_CATALOG,
+  MODEL_CATALOG_HASH,
   MODEL_CATALOG_VERSION,
   MODEL_IDS,
   findModel,
@@ -11,8 +16,8 @@ import {
 } from '../modelCatalog';
 
 const aCatalog = () => ({
-  version: 1,
-  checkedAt: '2026-10-25',
+  version: '2026-10-25-3f2b8c1e-5d4a-4e7b-9a10-6c2d8e9f0a11',
+  hash: 'a'.repeat(64),
   defaultModels: { openai: 'gpt-test', anthropic: 'claude-test' },
   models: [
     {
@@ -42,9 +47,18 @@ describe('MODEL_CATALOG', () => {
     }
   });
 
-  it('carries a version for the file it was loaded from', () => {
-    expect(Number.isInteger(MODEL_CATALOG_VERSION)).toBe(true);
-    expect(MODEL_CATALOG_VERSION).toBeGreaterThan(0);
+  it('carries the version and hash of the file it was loaded from', () => {
+    expect(MODEL_CATALOG_VERSION).toBe(catalogJson.version);
+    expect(MODEL_CATALOG_HASH).toBe(catalogJson.hash);
+  });
+
+  it('hashes the Models and defaults, so a data edit without `pnpm catalog:stamp` fails here', () => {
+    const content = JSON.stringify({
+      defaultModels: catalogJson.defaultModels,
+      models: catalogJson.models,
+    });
+
+    expect(createHash('sha256').update(content).digest('hex')).toBe(MODEL_CATALOG_HASH);
   });
 });
 
@@ -53,15 +67,20 @@ describe('modelCatalogSchema', () => {
     expect(modelCatalogSchema.safeParse(aCatalog()).success).toBe(true);
   });
 
-  it('rejects a version that is not a positive whole number', () => {
-    expect(modelCatalogSchema.safeParse({ ...aCatalog(), version: 0 }).success).toBe(false);
-    expect(modelCatalogSchema.safeParse({ ...aCatalog(), version: 1.5 }).success).toBe(false);
+  it.each([
+    ['a version without a uuid', '2026-10-25'],
+    ['a version that is only a uuid', '3f2b8c1e-5d4a-4e7b-9a10-6c2d8e9f0a11'],
+    ['a version with an impossible date', '2026-13-45-3f2b8c1e-5d4a-4e7b-9a10-6c2d8e9f0a11'],
+    ['a version with a malformed uuid', '2026-10-25-not-a-uuid'],
+  ])('rejects %s', (_case, version) => {
+    expect(modelCatalogSchema.safeParse({ ...aCatalog(), version }).success).toBe(false);
   });
 
-  it('rejects a checkedAt that is not a calendar date', () => {
-    expect(modelCatalogSchema.safeParse({ ...aCatalog(), checkedAt: 'last week' }).success).toBe(
-      false,
-    );
+  it.each([
+    ['too short', 'abc123'],
+    ['not hexadecimal', 'z'.repeat(64)],
+  ])('rejects a hash that is %s', (_case, hash) => {
+    expect(modelCatalogSchema.safeParse({ ...aCatalog(), hash }).success).toBe(false);
   });
 
   it('rejects an empty catalog', () => {

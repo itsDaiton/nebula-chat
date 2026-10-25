@@ -17,7 +17,7 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { ErrorEnvelope, Model } from '../model';
+import type { ErrorEnvelope, ModelCatalog } from '../model';
 
 import { axiosClient } from '../../client';
 import type { ErrorType } from '../../client';
@@ -40,52 +40,55 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 /**
- * The Models a Session can be bound to, with their labels, limits and list prices (USD per million tokens)
- * @summary List Models
+ * The model catalog: the Models a Session can be bound to, with their labels, limits and list prices (USD per million tokens), plus the catalog version and content hash
+ * @summary Get the model catalog
  */
-export const listModels = (options?: SecondParameter<typeof axiosClient>, signal?: AbortSignal) => {
-  return axiosClient<Model[]>({ url: `/api/models`, method: 'GET', signal }, options);
+export const getModelCatalog = (
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<ModelCatalog>({ url: `/api/models`, method: 'GET', signal }, options);
 };
 
-export const getListModelsQueryKey = () => {
+export const getGetModelCatalogQueryKey = () => {
   return [`/api/models`] as const;
 };
 
-export const getListModelsQueryOptions = <
-  TData = Awaited<ReturnType<typeof listModels>>,
+export const getGetModelCatalogQueryOptions = <
+  TData = Awaited<ReturnType<typeof getModelCatalog>>,
   TError = ErrorType<ErrorEnvelope>,
 >(options?: {
-  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listModels>>, TError, TData>>;
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getModelCatalog>>, TError, TData>>;
   request?: SecondParameter<typeof axiosClient>;
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getListModelsQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getGetModelCatalogQueryKey();
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof listModels>>> = ({ signal }) =>
-    listModels(requestOptions, signal);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getModelCatalog>>> = ({ signal }) =>
+    getModelCatalog(requestOptions, signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof listModels>>,
+    Awaited<ReturnType<typeof getModelCatalog>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type ListModelsQueryResult = NonNullable<Awaited<ReturnType<typeof listModels>>>;
-export type ListModelsQueryError = ErrorType<ErrorEnvelope>;
+export type GetModelCatalogQueryResult = NonNullable<Awaited<ReturnType<typeof getModelCatalog>>>;
+export type GetModelCatalogQueryError = ErrorType<ErrorEnvelope>;
 
-export function useListModels<
-  TData = Awaited<ReturnType<typeof listModels>>,
+export function useGetModelCatalog<
+  TData = Awaited<ReturnType<typeof getModelCatalog>>,
   TError = ErrorType<ErrorEnvelope>,
 >(
   options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listModels>>, TError, TData>> &
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getModelCatalog>>, TError, TData>> &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listModels>>,
+          Awaited<ReturnType<typeof getModelCatalog>>,
           TError,
-          Awaited<ReturnType<typeof listModels>>
+          Awaited<ReturnType<typeof getModelCatalog>>
         >,
         'initialData'
       >;
@@ -93,17 +96,17 @@ export function useListModels<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useListModels<
-  TData = Awaited<ReturnType<typeof listModels>>,
+export function useGetModelCatalog<
+  TData = Awaited<ReturnType<typeof getModelCatalog>>,
   TError = ErrorType<ErrorEnvelope>,
 >(
   options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listModels>>, TError, TData>> &
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getModelCatalog>>, TError, TData>> &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listModels>>,
+          Awaited<ReturnType<typeof getModelCatalog>>,
           TError,
-          Awaited<ReturnType<typeof listModels>>
+          Awaited<ReturnType<typeof getModelCatalog>>
         >,
         'initialData'
       >;
@@ -111,31 +114,31 @@ export function useListModels<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useListModels<
-  TData = Awaited<ReturnType<typeof listModels>>,
+export function useGetModelCatalog<
+  TData = Awaited<ReturnType<typeof getModelCatalog>>,
   TError = ErrorType<ErrorEnvelope>,
 >(
   options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listModels>>, TError, TData>>;
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getModelCatalog>>, TError, TData>>;
     request?: SecondParameter<typeof axiosClient>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary List Models
+ * @summary Get the model catalog
  */
 
-export function useListModels<
-  TData = Awaited<ReturnType<typeof listModels>>,
+export function useGetModelCatalog<
+  TData = Awaited<ReturnType<typeof getModelCatalog>>,
   TError = ErrorType<ErrorEnvelope>,
 >(
   options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listModels>>, TError, TData>>;
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getModelCatalog>>, TError, TData>>;
     request?: SecondParameter<typeof axiosClient>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getListModelsQueryOptions(options);
+  const queryOptions = getGetModelCatalogQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

@@ -240,6 +240,25 @@ components:
         - cached
         - createdAt
       additionalProperties: false
+    ModelCatalog:
+      type: object
+      properties:
+        version:
+          type: string
+          description: '`YYYY-MM-DD-<uuid>`: changes whenever the catalog does'
+        hash:
+          type: string
+          description: SHA-256 of the catalog content (Models and defaults)
+        models:
+          maxItems: 100
+          type: array
+          items:
+            $ref: '#/components/schemas/Model'
+      required:
+        - version
+        - hash
+        - models
+      additionalProperties: false
     Model:
       type: object
       properties:
@@ -925,23 +944,21 @@ paths:
                 $ref: '#/components/schemas/ErrorEnvelope'
   /api/models:
     get:
-      operationId: listModels
-      summary: List Models
+      operationId: getModelCatalog
+      summary: Get the model catalog
       tags:
         - Models
       description: >-
-        The Models a Session can be bound to, with their labels, limits and list
-        prices (USD per million tokens)
+        The model catalog: the Models a Session can be bound to, with their
+        labels, limits and list prices (USD per million tokens), plus the
+        catalog version and content hash
       responses:
         '200':
           description: The model catalog
           content:
             application/json:
               schema:
-                maxItems: 100
-                type: array
-                items:
-                  $ref: '#/components/schemas/Model'
+                $ref: '#/components/schemas/ModelCatalog'
         '500':
           description: Internal server error
           content:

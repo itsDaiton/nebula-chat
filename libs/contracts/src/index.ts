@@ -14,6 +14,7 @@ export type { ReplyStreamEvent, ReplyStreamEventType } from './replyStreamEvent'
 export {
   DEFAULT_MODELS,
   MODEL_CATALOG,
+  MODEL_CATALOG_HASH,
   MODEL_CATALOG_VERSION,
   MODEL_IDS,
   findModel,

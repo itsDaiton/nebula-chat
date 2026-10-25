@@ -35,12 +35,23 @@ const modelSchema = z
 export type Model = z.infer<typeof modelSchema>;
 
 // Parsed when this module loads, so a bad edit to catalog.json fails at startup and in CI, never at a call.
+// `YYYY-MM-DD-<uuid>`: the day it was stamped, and a fresh id for that change.
+const catalogVersionSchema = z
+  .string()
+  .refine(
+    (version) =>
+      z.iso.date().safeParse(version.slice(0, 10)).success &&
+      version[10] === '-' &&
+      z.uuid().safeParse(version.slice(11)).success,
+    { message: 'version must be YYYY-MM-DD-<uuid>' },
+  );
+
 export const modelCatalogSchema = z
   .object({
-    /** Bumped on every change to the file. */
-    version: z.number().int().positive(),
-    /** The day the list prices were last checked against the providers. */
-    checkedAt: z.iso.date(),
+    /** Set by `pnpm catalog:stamp` whenever the data changes. */
+    version: catalogVersionSchema,
+    /** SHA-256 of `defaultModels` and `models`; a test fails when the data changes without a stamp. */
+    hash: z.string().regex(/^[0-9a-f]{64}$/),
     /** The Model each provider falls back to when none is requested. */
     defaultModels: z.record(modelProviderSchema, z.string()),
     models: z.array(modelSchema).min(1),
@@ -64,6 +75,8 @@ const catalog = modelCatalogSchema.parse(catalogJson);
 export const MODEL_CATALOG: readonly Model[] = catalog.models;
 
 export const MODEL_CATALOG_VERSION = catalog.version;
+
+export const MODEL_CATALOG_HASH = catalog.hash;
 
 export const DEFAULT_MODELS: Readonly<Record<ModelProvider, string>> = catalog.defaultModels;
 

@@ -20,4 +20,10 @@ const modelResponseSchema = z
   })
   .meta({ id: 'Model' });
 
-export const modelsArraySchema = z.array(modelResponseSchema).max(100);
+export const modelCatalogResponseSchema = z
+  .object({
+    version: z.string().describe('`YYYY-MM-DD-<uuid>`: changes whenever the catalog does'),
+    hash: z.string().describe('SHA-256 of the catalog content (Models and defaults)'),
+    models: z.array(modelResponseSchema).max(100),
+  })
+  .meta({ id: 'ModelCatalog' });

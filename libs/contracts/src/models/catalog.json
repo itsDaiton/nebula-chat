@@ -1,6 +1,6 @@
 {
-  "version": 3,
-  "checkedAt": "2026-10-25",
+  "version": "2026-10-25-1ab9eaf1-1ffb-4099-9711-8bde6c9d06cf",
+  "hash": "5aa3ca3bd16b4fd01c41250aa6dfdb722606ee0ff786e85d79144f6d0a075a85",
   "defaultModels": {
     "openai": "gpt-4o-mini",
     "anthropic": "claude-3-5-haiku-20241022"

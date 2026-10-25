@@ -19,6 +19,7 @@ pnpm run lint:fix && pnpm run format           # after every code change; zero w
 pnpm turbo run typecheck --filter=<pkg>        # builds workspace libs (dist/*.d.ts) first
 pnpm turbo run test                            # every package (or `pnpm backend|frontend|worker test`)
 pnpm knip                                      # on demand: after deleting/moving files or changing exports
+pnpm catalog:stamp                             # after editing libs/contracts/src/models/catalog.json
 podman compose up -d                           # PostgreSQL :5332, Redis :6380
 ```
 

@@ -18,6 +18,7 @@ export * from './message';
 export * from './messageAllowance';
 export * from './meteredMessageAllowance';
 export * from './model';
+export * from './modelCatalog';
 export * from './modelId';
 export * from './modelPrices';
 export * from './modelProvider';

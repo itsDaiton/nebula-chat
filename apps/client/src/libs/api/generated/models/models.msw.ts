@@ -9,36 +9,47 @@ import { faker } from '@faker-js/faker';
 import { HttpResponse, http } from 'msw';
 import type { RequestHandlerOptions } from 'msw';
 
-import type { Model } from '../model';
+import type { ModelCatalog } from '../model';
 
-export const getListModelsResponseMock = (): Model[] =>
-  Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
-    id: faker.helpers.arrayElement([
-      'gpt-4o',
-      'gpt-4o-mini',
-      'gpt-4-turbo',
-      'gpt-4.1',
-      'gpt-4.1-mini',
-      'gpt-5',
-      'gpt-5-mini',
-      'claude-3-5-sonnet-20241022',
-      'claude-3-5-haiku-20241022',
-      'claude-3-opus-20240229',
-    ] as const),
-    label: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    provider: faker.helpers.arrayElement(['openai', 'anthropic'] as const),
-    contextWindow: faker.number.int({ min: 0, max: 9007199254740991 }),
-    maxOutput: faker.number.int({ min: 0, max: 9007199254740991 }),
-    prices: {
-      input: faker.number.float({ fractionDigits: 2 }),
-      cachedInput: faker.number.float({ fractionDigits: 2 }),
-      output: faker.number.float({ fractionDigits: 2 }),
-    },
-  }));
+export const getGetModelCatalogResponseMock = (
+  overrideResponse: Partial<Extract<ModelCatalog, object>> = {},
+): ModelCatalog => ({
+  version: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  hash: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  models: Array.from({ length: faker.number.int({ min: 1, max: 100 }) }, (_, i) => i + 1).map(
+    () => ({
+      id: faker.helpers.arrayElement([
+        'gpt-4o',
+        'gpt-4o-mini',
+        'gpt-4-turbo',
+        'gpt-4.1',
+        'gpt-4.1-mini',
+        'gpt-5',
+        'gpt-5-mini',
+        'claude-3-5-sonnet-20241022',
+        'claude-3-5-haiku-20241022',
+        'claude-3-opus-20240229',
+      ] as const),
+      label: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      provider: faker.helpers.arrayElement(['openai', 'anthropic'] as const),
+      contextWindow: faker.number.int({ min: 0, max: 9007199254740991 }),
+      maxOutput: faker.number.int({ min: 0, max: 9007199254740991 }),
+      prices: {
+        input: faker.number.float({ fractionDigits: 2 }),
+        cachedInput: faker.number.float({ fractionDigits: 2 }),
+        output: faker.number.float({ fractionDigits: 2 }),
+      },
+    }),
+  ),
+  ...overrideResponse,
+});
 
-export const getListModelsMockHandler = (
+export const getGetModelCatalogMockHandler = (
   overrideResponse?:
-    Model[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<Model[]> | Model[]),
+    | ModelCatalog
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<ModelCatalog> | ModelCatalog),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
@@ -49,11 +60,11 @@ export const getListModelsMockHandler = (
           ? typeof overrideResponse === 'function'
             ? await overrideResponse(info)
             : overrideResponse
-          : getListModelsResponseMock(),
+          : getGetModelCatalogResponseMock(),
         { status: 200 },
       );
     },
     options,
   );
 };
-export const getModelsMock = () => [getListModelsMockHandler()];
+export const getModelsMock = () => [getGetModelCatalogMockHandler()];

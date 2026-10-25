@@ -1,6 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { MODEL_CATALOG, MODEL_IDS } from '@nebula-chat/contracts';
+import {
+  MODEL_CATALOG,
+  MODEL_CATALOG_HASH,
+  MODEL_CATALOG_VERSION,
+  MODEL_IDS,
+} from '@nebula-chat/contracts';
 import { createTestApp } from '@server/test/app';
 
 // No database in a unit test; this also keeps the real pg Pool out of the process.
@@ -38,13 +43,15 @@ describe('GET /api/models', () => {
 
     expect(res.statusCode).toBe(200);
     expect(auth.api.getSession).not.toHaveBeenCalled();
-    expect(res.json<{ id: string }[]>().map((model) => model.id)).toEqual([...MODEL_IDS]);
+    expect(res.json<{ models: { id: string }[] }>().models.map((model) => model.id)).toEqual([
+      ...MODEL_IDS,
+    ]);
   });
 
   it('describes each Model with its label, provider, limits and prices', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/models' });
 
-    expect(res.json<unknown[]>()).toContainEqual({
+    expect(res.json<{ models: unknown[] }>().models).toContainEqual({
       id: 'gpt-4.1-mini',
       label: 'GPT-4.1 mini',
       provider: 'openai',
@@ -57,7 +64,13 @@ describe('GET /api/models', () => {
   it('serves exactly what the catalog holds', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/models' });
 
-    expect(res.json()).toEqual(MODEL_CATALOG);
+    expect(res.json<{ models: unknown }>().models).toEqual(MODEL_CATALOG);
+  });
+
+  it('says which version of the catalog it is, with the hash of its content', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/models' });
+
+    expect(res.json()).toMatchObject({ version: MODEL_CATALOG_VERSION, hash: MODEL_CATALOG_HASH });
   });
 
   it('lets any cache keep the catalog for an hour', async () => {
