@@ -45,17 +45,13 @@ export const captureLogger = (level = 'trace'): { logger: Logger; lines: LogLine
 export const eventLines = (lines: LogLine[], event: LogEventName): LogLine[] =>
   lines.filter((line) => line['event.name'] === event);
 
-/**
- * Installs an in-memory tracer and a context manager, so spans started by the code under test can be read back.
- * Global like the SDK's own: call `stop` once the file is done.
- */
+/** Installs an in-memory tracer and context manager to read back spans; global like the SDK's, so call `stop` when the file is done. */
 export const captureSpans = () => {
   const exporter = new InMemorySpanExporter();
   const provider = new BasicTracerProvider({ spanProcessors: [new SimpleSpanProcessor(exporter)] });
   context.setGlobalContextManager(new AsyncLocalStorageContextManager().enable());
   trace.setGlobalTracerProvider(provider);
   return {
-    /** The spans that have ended, in end order. */
     spans: (): ReadableSpan[] => exporter.getFinishedSpans(),
     reset: (): void => exporter.reset(),
     stop: async (): Promise<void> => {

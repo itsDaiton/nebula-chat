@@ -17,7 +17,7 @@ export const directReplyJobSchema = z.object({
   streamId: z.uuid(),
   /** Bypasses the response cache and overwrites its entry. */
   regenerate: z.boolean().optional(),
-  /** The server's trace context, so the worker's spans join its trace; absent on a job enqueued outside a span. */
+  /** The server's W3C trace context; absent on a job enqueued outside a span. */
   traceparent: z.string().optional(),
   tracestate: z.string().optional(),
 });

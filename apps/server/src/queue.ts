@@ -41,10 +41,7 @@ export const pingWorker = async (logger: EventLogger<'warn'>): Promise<void> => 
   }
 };
 
-/**
- * Puts a Direct reply on the queue (the payload is checked against the contract), then pings the worker.
- * The enqueue is a producer span, and its context rides in the payload so the worker's job joins the trace.
- */
+/** Puts a Direct reply on the queue (payload checked against the contract), then pings the worker; the enqueue is a producer span whose context rides in the payload. */
 export const enqueueDirectReply = async (
   job: DirectReplyJob,
   logger: EventLogger<'warn'>,

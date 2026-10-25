@@ -77,7 +77,7 @@ This amends ADR-0007's "no-op when `OTEL_EXPORTER_OTLP_ENDPOINT` is unset". The 
 A job payload in `@nebula-chat/contracts` carries a W3C `traceparent` plus the domain IDs (`user.id`, `nebula.session.id`, `nebula.message.id`, `nebula.run.id`).
 The worker starts the job's span as a child of that trace and binds those IDs onto the job logger.
 One `trace_id` then spans server request → worker job → Steps.
-Recorded here as a requirement on the NEB-349 epic; nothing is built for it now.
+The Direct reply job does this (NEB-357): `enqueueDirectReply` injects `traceparent` under a producer span and the worker extracts it into a consumer span with the model call as a child. The domain IDs and `nebula.run.id` follow with Runs.
 
 ### 9. Levels mean one thing each
 

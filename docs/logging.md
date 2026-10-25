@@ -476,6 +476,13 @@ dev lines carry no `trace_id`, and no request spans reach Tempo. Logs are still
 exported, just without a trace to link to. The compiled build
 (`pnpm build && pnpm start`) is instrumented. Use it when you need traces locally.
 
+### Across the queue
+
+`enqueueDirectReply` runs under a producer span and copies the active context into the job payload's
+`traceparent`/`tracestate` (`injectTraceContext`). The worker's processor extracts it
+(`extractTraceContext`), runs the job as a consumer span and wraps the model call in a child span
+(`withSpan`), so one reply is one trace. A job with no context starts its own root.
+
 ### Shutdown
 
 `shutdownTelemetry()` flushes pending spans (and exported log records) and stops the SDK. It is idempotent:
