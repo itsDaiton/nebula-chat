@@ -9,6 +9,7 @@ Every issue is a ticket with a Jira-style key: **`NEB-<issue-number>`** (issue `
 - Use the bare `#NN` in `gh` commands and `Closes #NN` lines (GitHub only understands that form).
 - Use the `NEB-<n>` key in branch names and titles, where a bare `#NN` collides with PR numbers.
 - **The issue title carries the key and becomes the PR title.** Right after creating an issue, edit its title to `type(scope): NEB-<n> summary` — the ID, a space, then the summary, no colon after it (e.g. `feat(server): NEB-330 migrate Express to Fastify`). The implementing PR reuses that exact string. Full title/branch format: `AGENTS.md` → **Referencing tickets**.
+- **No `<` or `>` in the title.** Release Please drops every release after the first when one reaches the notes, so spell placeholders without brackets (`@nebula-chat/app-name`). validate-ticket flags the issue and `validate-pr-title` fails the PR.
 
 ## Labels
 

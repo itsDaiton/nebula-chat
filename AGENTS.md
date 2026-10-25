@@ -44,6 +44,8 @@ Don't add `// eslint-disable` unless unavoidable, and say why. Never hand-edit g
 A GitHub issue is ticket `NEB-<issue-number>`. The issue title is the PR title:
 `type(scope): NEB-<n> summary` (no colon after the ID; no ID for ad-hoc work). `Closes #NN` closes the
 ticket — GitHub keys off the bare number, not the `NEB-` alias. Prefer one PR per ticket.
+No `<` or `>` in issue or PR titles: Release Please drops every release after the first when one reaches
+the notes (write `@nebula-chat/app-name`, not `@nebula-chat/<app>`).
 
 ## Testing
 

@@ -45,6 +45,11 @@ jobs:
               problems.push('Title must be `type(scope): summary` with `type` = `feat` or `fix` — e.g. `feat(server): NEB-330 migrate to Fastify`.');
             }
 
+            // The issue title becomes the PR title, then the squash-merge header Release Please parses.
+            if (/[<>]/.test(title || '')) {
+              problems.push('Title contains `<` or `>`, which makes Release Please skip the releases after the first — spell the placeholder without brackets, e.g. `@nebula-chat/app-name`.');
+            }
+
             const REQUIRED = ['Change type', 'Summary', 'Background & problem', 'Scope', 'Acceptance criteria', 'Technical approach & notes', 'Testing', 'Depends on'];
             for (const h of REQUIRED) {
               const esc = h.replace(/[.*+?^${}()|[\]\\&]/g, '\\$&');

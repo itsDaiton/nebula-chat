@@ -1,0 +1,24 @@
+name: Validate PR title
+
+# Release Please drops every release after the first when an angle bracket reaches its notes, so a
+# title with `<` or `>` must never become a squash-merge commit header (AGENTS.md → Tickets).
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions: {}
+
+jobs:
+  angle-brackets:
+    name: No angle brackets in the title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        with:
+          script: |
+            if (/[<>]/.test(process.env.PR_TITLE || '')) {
+              core.setFailed('PR title contains `<` or `>`, which makes Release Please skip the releases after the first. Spell the placeholder without brackets, e.g. `@nebula-chat/app-name`.');
+            }
