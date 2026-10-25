@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "checkedAt": "2026-10-25",
   "models": [
     {
@@ -7,7 +7,7 @@
       "label": "GPT-4o",
       "provider": "openai",
       "contextWindow": 128000,
-      "maxOutput": 4096,
+      "maxOutput": 16384,
       "prices": {
         "input": 2.5,
         "cachedInput": 1.25,
@@ -42,8 +42,8 @@
       "id": "gpt-4.1",
       "label": "GPT-4.1",
       "provider": "openai",
-      "contextWindow": 128000,
-      "maxOutput": 8192,
+      "contextWindow": 1047576,
+      "maxOutput": 32768,
       "prices": {
         "input": 2,
         "cachedInput": 0.5,
@@ -54,8 +54,8 @@
       "id": "gpt-4.1-mini",
       "label": "GPT-4.1 mini",
       "provider": "openai",
-      "contextWindow": 128000,
-      "maxOutput": 8192,
+      "contextWindow": 1047576,
+      "maxOutput": 32768,
       "prices": {
         "input": 0.4,
         "cachedInput": 0.1,
@@ -66,8 +66,8 @@
       "id": "gpt-5",
       "label": "GPT-5",
       "provider": "openai",
-      "contextWindow": 128000,
-      "maxOutput": 8192,
+      "contextWindow": 400000,
+      "maxOutput": 128000,
       "prices": {
         "input": 1.25,
         "cachedInput": 0.125,
@@ -78,8 +78,8 @@
       "id": "gpt-5-mini",
       "label": "GPT-5 mini",
       "provider": "openai",
-      "contextWindow": 128000,
-      "maxOutput": 8192,
+      "contextWindow": 400000,
+      "maxOutput": 128000,
       "prices": {
         "input": 0.25,
         "cachedInput": 0.025,

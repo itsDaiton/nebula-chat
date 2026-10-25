@@ -48,8 +48,8 @@ describe('GET /api/models', () => {
       id: 'gpt-4.1-mini',
       label: 'GPT-4.1 mini',
       provider: 'openai',
-      contextWindow: 128_000,
-      maxOutput: 8_192,
+      contextWindow: 1_047_576,
+      maxOutput: 32_768,
       prices: { input: 0.4, cachedInput: 0.1, output: 1.6 },
     });
   });
