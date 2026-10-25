@@ -1,5 +1,6 @@
 import type { ReplyStreamEvent } from '@nebula-chat/contracts';
 import type { ReplyCache } from '@worker/directReplies/replyCache';
+import type { CallUsage, ModelCall, ModelCallLedger } from '@worker/modelCalls/recordModelCall';
 import type {
   DirectReplyStore,
   ReplyStreamWriter,
@@ -58,25 +59,28 @@ export const memoryStream = (operations: string[] = []) => {
   return { stream, events, expired, cancelled, ended };
 };
 
-/** A model that streams `tokens` then reports `usage`, recording the config it was called with. */
+/** A model that streams `tokens`, then reports `usage` and, when given, what the provider billed. */
 export const scriptedModel = (
   tokens: string[],
   usage = { promptTokens: 10, completionTokens: tokens.length, totalTokens: 10 + tokens.length },
+  callUsage?: CallUsage,
 ) => {
   const calls: Parameters<StreamChat>[0][] = [];
-  const streamChat: StreamChat = async (config, { onToken, onUsage }) => {
+  const streamChat: StreamChat = async (config, { onToken, onUsage, onCallUsage }) => {
     calls.push(config);
     for (const token of tokens) onToken(token);
     onUsage(usage);
+    if (callUsage) onCallUsage?.(callUsage);
   };
   return { streamChat, calls };
 };
 
 /** A model that streams `tokens` and then fails with `error`, as a provider outage mid-reply would. */
 export const failingModel =
-  (error: Error, tokens: string[] = []): StreamChat =>
-  async (_config, { onToken }) => {
+  (error: Error, tokens: string[] = [], callUsage?: CallUsage): StreamChat =>
+  async (_config, { onToken, onCallUsage }) => {
     for (const token of tokens) onToken(token);
+    if (callUsage) onCallUsage?.(callUsage);
     throw error;
   };
 
@@ -84,22 +88,31 @@ export const failingModel =
  * A model that streams one token every few milliseconds until it runs out or its `signal`
  * aborts, then rejects as a LangChain call does. `onToken` runs after each token reaches the reply.
  */
-export const slowModel = (tokens: string[], onToken: (index: number) => void = () => undefined) => {
+export const slowModel = (
+  tokens: string[],
+  onToken: (index: number) => void = () => undefined,
+  callUsage?: CallUsage,
+) => {
   const signals: (AbortSignal | undefined)[] = [];
   const streamChat: StreamChat = async ({ signal }, callbacks) => {
     signals.push(signal);
-    for (const [index, token] of tokens.entries()) {
+    try {
+      for (const [index, token] of tokens.entries()) {
+        signal?.throwIfAborted();
+        callbacks.onToken(token);
+        onToken(index);
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
       signal?.throwIfAborted();
-      callbacks.onToken(token);
-      onToken(index);
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      callbacks.onUsage({
+        promptTokens: 10,
+        completionTokens: tokens.length,
+        totalTokens: 10 + tokens.length,
+      });
+    } finally {
+      // As `streamChat` does: a stopped or failed call still reports what the provider billed.
+      if (callUsage) callbacks.onCallUsage?.(callUsage);
     }
-    signal?.throwIfAborted();
-    callbacks.onUsage({
-      promptTokens: 10,
-      completionTokens: tokens.length,
-      totalTokens: 10 + tokens.length,
-    });
   };
   return { streamChat, signals };
 };
@@ -125,5 +138,23 @@ export const brokenCache = (): ReplyCache => ({
   },
   set: async () => {
     throw new Error('redis down');
+  },
+});
+
+/** The Model call ledger in memory; like the table, it keeps the first call recorded under a key. */
+export const memoryLedger = () => {
+  const calls: ModelCall[] = [];
+  const ledger: ModelCallLedger = {
+    append: async (call) => {
+      if (!calls.some((c) => c.idempotencyKey === call.idempotencyKey)) calls.push(call);
+    },
+  };
+  return { ledger, calls };
+};
+
+/** A ledger whose Postgres is down: every append rejects. */
+export const brokenLedger = (): ModelCallLedger => ({
+  append: async () => {
+    throw new Error('postgres down');
   },
 });

@@ -1,6 +1,6 @@
 # ADR-0030: A static model catalog in `@nebula-chat/contracts`, and an append-only Model call ledger priced when each call is recorded
 
-- **Status:** Proposed — the catalog landed with NEB-565; the Model call ledger is still to come
+- **Status:** Proposed — the catalog landed with NEB-565 and the Model call ledger with NEB-567
 - **Date:** 2026-10-18
 - **Deciders:** @itsDaiton
 - **Related:** [ADR-0013](./0013-worker-app-owns-all-llm-execution.md) — amended: `contracts` now also holds shared static data; [ADR-0015](./0015-run-model-intake-orchestrator-loop-output.md) — Runs and Steps

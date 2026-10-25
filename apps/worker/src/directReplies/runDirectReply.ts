@@ -17,6 +17,8 @@ import type {
   HistoryMessage,
 } from '@worker/directReplies/streamChat';
 import type { Prompts } from '@worker/llm/prompts';
+import { recordCachedModelCall, recordModelCall } from '@worker/modelCalls/recordModelCall';
+import type { ModelCallLedger, ModelCallSubject } from '@worker/modelCalls/recordModelCall';
 
 /** The most recent Messages loaded into a Direct reply's context. */
 const MAX_HISTORY_MESSAGES = 20;
@@ -79,6 +81,8 @@ export type DirectReplyDeps = {
   store: DirectReplyStore;
   stream: ReplyStreamWriter;
   cache: ReplyCache;
+  /** Where each model call, and each replay, is recorded. */
+  ledger: ModelCallLedger;
   /** The model call: `directReplies/streamChat` in production. */
   streamChat: StreamChat;
   /** The system prompts, loaded once at boot. */
@@ -160,6 +164,13 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
     const catalogModel = findModel(model);
     if (!catalogModel) throw new BadRequestError(`Unsupported model: ${model}`);
     provider = catalogModel.provider;
+    const subject: ModelCallSubject = {
+      idempotencyKey: job.streamId,
+      userId: job.userId,
+      sessionId: job.sessionId,
+      provider,
+      model,
+    };
     // A reply stopped while its job waited in the queue never reaches the model.
     if (await stream.isCancelled(job.streamId)) {
       cancel.abort();
@@ -181,6 +192,7 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
         tokenCount: hit.usage?.totalTokens ?? null,
         cached: true,
       });
+      await recordCachedModelCall(deps.ledger, logger, subject, startMs);
       await endStream(job.streamId, { type: 'end' }, stream);
       logEvent(
         componentLogger(logger, 'chat'),
@@ -221,28 +233,36 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
         },
       },
       () =>
-        deps.streamChat(
-          {
-            provider: modelProvider,
-            apiKey,
-            model: modelName,
-            systemPrompt: deps.prompts.directReply,
-            history,
-            userMessage: userMessage.content,
-            logger: componentLogger(logger, 'llm'),
-            signal: cancel.signal,
-          },
-          {
-            onToken: (token) => {
-              reply += token;
-              tokens.push(token);
-              enqueue({ type: 'token', token });
-            },
-            onUsage: (u) => {
-              usage = u;
-              enqueue({ type: 'usage', ...u });
-            },
-          },
+        recordModelCall(
+          deps.ledger,
+          logger,
+          subject,
+          (onCallUsage) =>
+            deps.streamChat(
+              {
+                provider: modelProvider,
+                apiKey,
+                model: modelName,
+                systemPrompt: deps.prompts.directReply,
+                history,
+                userMessage: userMessage.content,
+                logger: componentLogger(logger, 'llm'),
+                signal: cancel.signal,
+              },
+              {
+                onToken: (token) => {
+                  reply += token;
+                  tokens.push(token);
+                  enqueue({ type: 'token', token });
+                },
+                onUsage: (u) => {
+                  usage = u;
+                  enqueue({ type: 'usage', ...u });
+                },
+                onCallUsage,
+              },
+            ),
+          cancel.signal,
         ),
     );
     modelReturned = true;

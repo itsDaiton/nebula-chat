@@ -1,7 +1,8 @@
-import { AIMessageChunk, type BaseMessage } from '@langchain/core/messages';
+import { AIMessageChunk, type BaseMessage, type UsageMetadata } from '@langchain/core/messages';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
 import { streamChat, type ChatStreamConfig } from '@worker/directReplies/streamChat';
+import type { CallUsage } from '@worker/modelCalls/recordModelCall';
 import { createLLM } from '@worker/llm/createLLM';
 
 vi.mock('@worker/llm/createLLM', () => ({ createLLM: vi.fn() }));
@@ -27,6 +28,10 @@ const stubChain = (tokens: string[]) =>
   stubModel(async function* () {
     for (const token of tokens) yield new AIMessageChunk(token);
   });
+
+/** A chunk carrying the usage a provider attaches to its stream. */
+const withUsage = (text: string, usage: UsageMetadata) =>
+  Object.assign(new AIMessageChunk(text), { usage_metadata: usage });
 
 /** The packed history the model was sent: everything between the system and human messages. */
 const historyOf = (sent: BaseMessage[][]) => sent[0]?.slice(1, -1) ?? [];
@@ -117,6 +122,110 @@ describe('streamChat', () => {
     const [usage] = usages;
     expect(usages).toHaveLength(1);
     expect(usage?.totalTokens).toBe((usage?.promptTokens ?? 0) + (usage?.completionTokens ?? 0));
+  });
+
+  describe('the usage it reports for the ledger', () => {
+    const callUsages = async (config: ChatStreamConfig = baseConfig()) => {
+      const usages: CallUsage[] = [];
+      const outcome = await streamChat(config, {
+        onToken: () => undefined,
+        onUsage: () => undefined,
+        onCallUsage: (usage) => usages.push(usage),
+      }).then(
+        () => 'completed',
+        () => 'rejected',
+      );
+      return { usages, outcome };
+    };
+
+    it('reports what the provider billed, with the cached input tokens counted apart from the rest', async () => {
+      stubModel(async function* () {
+        yield new AIMessageChunk('a');
+        yield withUsage('b', {
+          input_tokens: 100,
+          output_tokens: 20,
+          total_tokens: 120,
+          input_token_details: { cache_read: 40 },
+        });
+      });
+
+      const { usages } = await callUsages();
+
+      expect(usages).toEqual([
+        { inputTokens: 60, cachedInputTokens: 40, outputTokens: 20, estimated: false },
+      ]);
+    });
+
+    it('adds up the usage of every chunk that carries some, as Anthropic streams it', async () => {
+      stubModel(async function* () {
+        yield withUsage('a', { input_tokens: 70, output_tokens: 1, total_tokens: 71 });
+        yield withUsage('b', { input_tokens: 0, output_tokens: 19, total_tokens: 19 });
+      });
+
+      const { usages } = await callUsages();
+
+      expect(usages).toEqual([
+        { inputTokens: 70, cachedInputTokens: 0, outputTokens: 20, estimated: false },
+      ]);
+    });
+
+    it('falls back to its own count, flagged as an estimate, when the provider reports none', async () => {
+      stubChain(['a', 'b']);
+      const counted = await collect(baseConfig());
+      stubChain(['a', 'b']);
+
+      const { usages } = await callUsages();
+
+      expect(usages).toEqual([
+        {
+          inputTokens: counted.usages[0]?.promptTokens,
+          cachedInputTokens: 0,
+          outputTokens: counted.usages[0]?.completionTokens,
+          estimated: true,
+        },
+      ]);
+    });
+
+    it('still reports, as an estimate, when the call is stopped after it streamed', async () => {
+      stubAbortableChain(['one', 'two', 'three']);
+      const controller = new AbortController();
+      const usages: CallUsage[] = [];
+
+      await expect(
+        streamChat(baseConfig({ signal: controller.signal }), {
+          onToken: () => controller.abort(),
+          onUsage: () => undefined,
+          onCallUsage: (usage) => usages.push(usage),
+        }),
+      ).rejects.toThrow();
+
+      expect(usages).toMatchObject([{ estimated: true, outputTokens: 1 }]);
+    });
+
+    it('reports the usage the provider had sent when the stream fails midway', async () => {
+      stubModel(async function* () {
+        yield withUsage('a', { input_tokens: 70, output_tokens: 1, total_tokens: 71 });
+        throw new Error('upstream 529');
+      });
+
+      const { usages, outcome } = await callUsages();
+
+      expect(outcome).toBe('rejected');
+      expect(usages).toEqual([
+        { inputTokens: 70, cachedInputTokens: 0, outputTokens: 1, estimated: false },
+      ]);
+    });
+
+    it('reports nothing when the call fails before the model streamed anything', async () => {
+      stubModel(() => {
+        throw new Error('401 from the provider');
+      });
+
+      const { usages, outcome } = await callUsages();
+
+      expect(outcome).toBe('rejected');
+      expect(usages).toEqual([]);
+    });
   });
 
   it('counts prompt tokens from the system prompt, user message and packed history', async () => {

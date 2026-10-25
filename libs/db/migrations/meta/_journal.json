@@ -43,6 +43,13 @@
       "when": 1792433699655,
       "tag": "0005_remove-system-message-role",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792950845318,
+      "tag": "0006_model-calls",
+      "breakpoints": true
     }
   ]
 }
