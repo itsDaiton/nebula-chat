@@ -99,6 +99,16 @@ describe('streamChat', () => {
     expect(tokens).toEqual(['Hel', 'lo ', 'world']);
   });
 
+  it('forwards the text of a content-block chunk, as Anthropic streams them', async () => {
+    stubModel(async function* () {
+      yield new AIMessageChunk({ content: [{ type: 'text', text: 'Hi' }] });
+    });
+
+    const { tokens } = await collect(baseConfig());
+
+    expect(tokens).toEqual(['Hi']);
+  });
+
   it('reports usage once, after the stream completes', async () => {
     stubChain(['a', 'b']);
 
