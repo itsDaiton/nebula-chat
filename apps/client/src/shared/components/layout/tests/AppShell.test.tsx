@@ -147,7 +147,20 @@ describe('AppShell on desktop', () => {
   it('opens the chat search from the command hint', async () => {
     await renderRoute('/');
 
-    await userEvent.click(button(resources.shell.commandHint));
+    await userEvent.click(
+      within(screen.getByRole('banner')).getByRole('button', { name: resources.shell.commandHint }),
+    );
+
+    expect(await screen.findByPlaceholderText(resources.sessions.searchPlaceholder)).toBeVisible();
+  });
+
+  it('opens the chat search from the command hint even with the sidebar collapsed', async () => {
+    await renderRoute('/');
+    await userEvent.click(button(resources.shell.toggleSidebar));
+
+    await userEvent.click(
+      within(screen.getByRole('banner')).getByRole('button', { name: resources.shell.commandHint }),
+    );
 
     expect(await screen.findByPlaceholderText(resources.sessions.searchPlaceholder)).toBeVisible();
   });
@@ -220,6 +233,17 @@ describe('AppShell below the large breakpoint', () => {
     ).toBeInTheDocument();
 
     await userEvent.keyboard('{Escape}');
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('closes the sheet on any navigation', async () => {
+    const { router } = await renderRoute('/');
+
+    await userEvent.click(button(resources.shell.openInspector));
+    await screen.findByRole('dialog', { name: resources.shell.inspector });
+
+    await router.navigate({ to: '/s/$id', params: { id: SESSION_ID } });
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });

@@ -32,15 +32,16 @@ const safeLocalStorage: StateStorage = {
 // The side panels' collapse is remembered on desktop; the mobile drawer and sheet always start closed.
 export const usePanelStore = create<PanelState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       isLeftPanelOpen: true,
       isRightPanelOpen: true,
       isDrawerOpen: false,
       isSheetOpen: false,
       toggleLeftPanel: () => set((state) => ({ isLeftPanelOpen: !state.isLeftPanelOpen })),
       toggleRightPanel: () => set((state) => ({ isRightPanelOpen: !state.isRightPanelOpen })),
-      openDrawer: () => set({ isDrawerOpen: true, isSheetOpen: false }),
-      openSheet: () => set({ isSheetOpen: true, isDrawerOpen: false }),
+      // Only one of the drawer and the sheet is ever open.
+      toggleDrawer: () => set({ isDrawerOpen: !get().isDrawerOpen, isSheetOpen: false }),
+      toggleSheet: () => set({ isSheetOpen: !get().isSheetOpen, isDrawerOpen: false }),
       closeMobilePanels: () => set({ isDrawerOpen: false, isSheetOpen: false }),
     }),
     {

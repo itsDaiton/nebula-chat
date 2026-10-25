@@ -7,6 +7,11 @@ export type HeaderButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'a
   shortcut?: ShortcutConfig;
 };
 
+export type ShortcutKeysProps = {
+  shortcut: ShortcutConfig;
+  className?: string;
+};
+
 export type MarkdownContentProps = {
   content: string;
 };
@@ -67,8 +72,8 @@ export type PanelState = {
   isSheetOpen: boolean;
   toggleLeftPanel: () => void;
   toggleRightPanel: () => void;
-  openDrawer: () => void;
-  openSheet: () => void;
+  toggleDrawer: () => void;
+  toggleSheet: () => void;
   closeMobilePanels: () => void;
 };
 

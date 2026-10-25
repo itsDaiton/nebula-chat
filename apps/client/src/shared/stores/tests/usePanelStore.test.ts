@@ -43,8 +43,7 @@ describe('usePanelStore', () => {
 
   it('remembers the collapsed panels, but not an open drawer or sheet', () => {
     usePanelStore.getState().toggleLeftPanel();
-    usePanelStore.getState().openDrawer();
-    usePanelStore.getState().openSheet();
+    usePanelStore.getState().toggleDrawer();
 
     expect(stored().state).toEqual({ isLeftPanelOpen: false, isRightPanelOpen: true });
   });
@@ -63,12 +62,19 @@ describe('usePanelStore', () => {
     });
   });
 
-  it('opens the drawer and the sheet, and closes both together', () => {
-    usePanelStore.getState().openDrawer();
-    expect(usePanelStore.getState().isDrawerOpen).toBe(true);
+  it('toggles the drawer and the sheet, never both open at once', () => {
+    usePanelStore.getState().toggleDrawer();
+    expect(usePanelStore.getState()).toMatchObject({ isDrawerOpen: true, isSheetOpen: false });
 
-    usePanelStore.getState().openSheet();
-    expect(usePanelStore.getState().isSheetOpen).toBe(true);
+    usePanelStore.getState().toggleSheet();
+    expect(usePanelStore.getState()).toMatchObject({ isDrawerOpen: false, isSheetOpen: true });
+
+    usePanelStore.getState().toggleSheet();
+    expect(usePanelStore.getState()).toMatchObject({ isDrawerOpen: false, isSheetOpen: false });
+  });
+
+  it('closes the drawer and the sheet together', () => {
+    usePanelStore.setState({ isDrawerOpen: true, isSheetOpen: true });
 
     usePanelStore.getState().closeMobilePanels();
     expect(usePanelStore.getState()).toMatchObject({ isDrawerOpen: false, isSheetOpen: false });

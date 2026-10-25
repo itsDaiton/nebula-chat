@@ -12,7 +12,7 @@ import { useViewportHeight } from '@/shared/hooks/useViewportHeight';
 import { useSearchStore } from '@/shared/stores/useSearchStore';
 import { resources } from '@/resources';
 
-const PANEL = 'overflow-hidden rounded-xl border border-solid bg-panel';
+const PANEL_CLASSES = 'overflow-hidden rounded-xl border border-solid bg-panel';
 
 /** The header over three panels: the sidebar, the routed page and the Inspector. */
 export const AppShell = () => {
@@ -44,12 +44,12 @@ export const AppShell = () => {
             data-slot="sidebar"
             aria-label={resources.shell.sidebar}
             hidden={!isSidebarOpen}
-            className={`w-[270px] shrink-0 ${PANEL}`}
+            className={`w-[270px] shrink-0 ${PANEL_CLASSES}`}
           >
             <SessionsList />
           </aside>
         )}
-        <main data-slot="page" className={`min-w-0 flex-1 ${PANEL}`}>
+        <main data-slot="page" className={`min-w-0 flex-1 ${PANEL_CLASSES}`}>
           <Outlet />
         </main>
         {showSidePanels && (
@@ -58,7 +58,7 @@ export const AppShell = () => {
             data-slot="inspector"
             aria-label={resources.shell.inspector}
             hidden={!isInspectorOpen}
-            className={`w-[300px] shrink-0 ${PANEL}`}
+            className={`w-[300px] shrink-0 ${PANEL_CLASSES}`}
           />
         )}
       </div>

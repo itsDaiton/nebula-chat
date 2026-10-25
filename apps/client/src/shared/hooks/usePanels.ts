@@ -10,16 +10,8 @@ export const usePanels = () => {
     showSidePanels,
     isSidebarOpen: showSidePanels ? store.isLeftPanelOpen : store.isDrawerOpen,
     isInspectorOpen: showSidePanels ? store.isRightPanelOpen : store.isSheetOpen,
-    toggleSidebar: () => {
-      if (showSidePanels) store.toggleLeftPanel();
-      else if (usePanelStore.getState().isDrawerOpen) store.closeMobilePanels();
-      else store.openDrawer();
-    },
-    toggleInspector: () => {
-      if (showSidePanels) store.toggleRightPanel();
-      else if (usePanelStore.getState().isSheetOpen) store.closeMobilePanels();
-      else store.openSheet();
-    },
+    toggleSidebar: showSidePanels ? store.toggleLeftPanel : store.toggleDrawer,
+    toggleInspector: showSidePanels ? store.toggleRightPanel : store.toggleSheet,
     closeMobilePanels: store.closeMobilePanels,
   };
 };
