@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v1.0.1...nebula-chat-db-v1.1.0) (2026-10-25)
+
+
+### Features
+
+* **worker:** NEB-567 Model call ledger for Direct replies ([#646](https://github.com/itsDaiton/nebula-chat/issues/646)) ([75f4522](https://github.com/itsDaiton/nebula-chat/commit/75f452203e59f60f7c75d3b5d007d5f296a8dd03))
+
 ## [1.0.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v1.0.0...nebula-chat-db-v1.0.1) (2026-10-24)
 
 
