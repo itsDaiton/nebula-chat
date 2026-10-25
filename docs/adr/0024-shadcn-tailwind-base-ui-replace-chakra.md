@@ -1,6 +1,6 @@
 # ADR-0024: Replace Chakra UI with shadcn/ui on Base UI and Tailwind v4, rewritten on one integration branch
 
-- **Status:** Proposed — to be implemented by the UI redesign epic
+- **Status:** Accepted
 - **Date:** 2026-10-18
 - **Deciders:** @itsDaiton
 
