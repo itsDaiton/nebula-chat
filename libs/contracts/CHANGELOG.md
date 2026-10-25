@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-contracts-v1.3.0...nebula-chat-contracts-v1.4.0) (2026-10-25)
+
+
+### Features
+
+* **contracts:** NEB-565 model catalog, GET /api/models and prices ([#643](https://github.com/itsDaiton/nebula-chat/issues/643)) ([60856ed](https://github.com/itsDaiton/nebula-chat/commit/60856ed5f08c2fb8b93726617128a1a3f69c0458))
+
 ## [1.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-contracts-v1.2.0...nebula-chat-contracts-v1.3.0) (2026-10-25)
 
 
