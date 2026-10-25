@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { llmConcurrencyLimiter } from '../concurrency';
+import { llmConcurrencyLimiter } from '@worker/llm/concurrencyLimiter';
 
 describe('llmConcurrencyLimiter', () => {
   it('caps simultaneous in-flight calls at 10', async () => {

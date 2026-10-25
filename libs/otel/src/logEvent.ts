@@ -5,7 +5,7 @@ import type { LogLevel } from './logLevels';
 type LogMethod = (obj: object, msg?: string) => void;
 
 /**
- * The structural shape `logEvent` writes through, deliberately not Pino's `Logger`, so duck-typed loggers (langchain's `LLMLogger`) fit.
+ * The structural shape `logEvent` writes through, deliberately not Pino's `Logger`, so duck-typed loggers fit.
  */
 export type EventLogger<L extends LogLevel = LogLevel> = { readonly [K in L]: LogMethod };
 

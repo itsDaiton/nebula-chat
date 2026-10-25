@@ -250,19 +250,6 @@ export default [
     },
   },
   {
-    files: ['libs/langchain/**/*.{ts,js}'],
-    languageOptions: {
-      parser: tsParser,
-      parserOptions: {
-        project: './libs/langchain/tsconfig.json',
-        tsconfigRootDir: import.meta.dirname,
-      },
-    },
-    plugins: {
-      '@typescript-eslint': tseslint,
-    },
-  },
-  {
     files: ['libs/otel/**/*.{ts,js}'],
     languageOptions: {
       parser: tsParser,
@@ -295,7 +282,7 @@ export default [
     files: [
       'apps/server/**/*.{ts,js}',
       'apps/worker/**/*.{ts,js}',
-      'libs/{auth,contracts,db,errors,langchain,otel,redis}/**/*.{ts,tsx,js}',
+      'libs/{auth,contracts,db,errors,otel,redis}/**/*.{ts,tsx,js}',
     ],
     rules: {
       'no-restricted-syntax': [

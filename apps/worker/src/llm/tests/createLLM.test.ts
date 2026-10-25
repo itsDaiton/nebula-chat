@@ -1,10 +1,8 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatOpenAI } from '@langchain/openai';
 import { describe, expect, it } from 'vitest';
-import { createLLM } from '../factory';
-import { createAnthropicLLM } from '../anthropic';
-import { createOpenAILLM } from '../openai';
-import type { LLMConfig } from '../types';
+import { createLLM } from '@worker/llm/createLLM';
+import type { LLMConfig } from '@worker/llm/modelRegistry';
 
 const openai = (overrides: Partial<LLMConfig> = {}): LLMConfig => ({
   provider: 'openai',
@@ -17,6 +15,10 @@ const anthropic = (overrides: Partial<LLMConfig> = {}): LLMConfig => ({
   apiKey: 'sk-ant-test',
   ...overrides,
 });
+
+const createOpenAILLM = (config: LLMConfig) => createLLM(config) as ChatOpenAI;
+
+const createAnthropicLLM = (config: LLMConfig) => createLLM(config) as ChatAnthropic;
 
 describe('createLLM', () => {
   it('builds a ChatOpenAI for the openai provider', () => {
@@ -34,7 +36,7 @@ describe('createLLM', () => {
   });
 });
 
-describe('createOpenAILLM', () => {
+describe('createLLM for openai', () => {
   // ChatOpenAI accepts `modelName` as a constructor alias but exposes the
   // resolved value as `model`; ChatAnthropic still exposes `modelName`.
   it("defaults to the provider's default model", () => {
@@ -66,7 +68,7 @@ describe('createOpenAILLM', () => {
   });
 });
 
-describe('createAnthropicLLM', () => {
+describe('createLLM for anthropic', () => {
   it("defaults to the provider's default model", () => {
     expect(createAnthropicLLM(anthropic()).modelName).toBe('claude-3-5-haiku-20241022');
   });

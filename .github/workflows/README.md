@@ -39,7 +39,7 @@ that never reports.
   - 'libs/<name>/**' # or 'apps/<name>/**'
 ```
 
-If it maps to a paths-filter id that isn't `client`/`server`/`db`/`langchain`,
+If it maps to a paths-filter id that isn't `client`/`server`/`db`,
 also add an `F_<NAME>` env var and an `if` line in "Compute build matrix".
 
 **3. Add one entry** to the `all` matrix list in "Compute build matrix":

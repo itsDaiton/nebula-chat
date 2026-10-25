@@ -64,8 +64,6 @@ jobs:
               - 'libs/db/**'
             errors:
               - 'libs/errors/**'
-            langchain:
-              - 'libs/langchain/**'
             otel:
               - 'libs/otel/**'
             redis:
@@ -105,7 +103,6 @@ jobs:
           F_CONTRACTS: ${{ steps.filter.outputs.contracts }}
           F_DB: ${{ steps.filter.outputs.db }}
           F_ERRORS: ${{ steps.filter.outputs.errors }}
-          F_LANGCHAIN: ${{ steps.filter.outputs.langchain }}
           F_OTEL: ${{ steps.filter.outputs.otel }}
           F_REDIS: ${{ steps.filter.outputs.redis }}
           F_SHARED: ${{ steps.filter.outputs.shared }}
@@ -113,7 +110,7 @@ jobs:
           set -euo pipefail
           # `coverage` mirrors that package's `vitest.config` coverage.exclude,
           # so Sonar and Vitest measure the same denominator. They cannot be one
-          # shared list: `logger.ts` is excluded in server and langchain but is the
+          # shared list: `logger.ts` is excluded in server but is the
           # main tested unit in otel, and `env.ts` is excluded in server but is
           # tested in db. Change one, change the other.
           # An empty `key` means the package has no Sonar project yet: its Sonar steps skip.
@@ -126,7 +123,6 @@ jobs:
             {"id":"contracts","name":"nebula-chat-contracts","dir":"libs/contracts","filter":"@nebula-chat/contracts","lint":"libs/contracts/","key":"","project":"Nebula-Chat-Contracts","coverage":"src/**/tests/**,src/index.ts"},
             {"id":"db","name":"nebula-chat-db","dir":"libs/db","filter":"@nebula-chat/db","lint":"libs/db/","key":"itsDaiton_nebula-chat-db","project":"Nebula-Chat-DB","coverage":"src/**/tests/**,src/index.ts,src/schema.ts,src/migrate.ts,src/baseline.ts"},
             {"id":"errors","name":"nebula-chat-errors","dir":"libs/errors","filter":"@nebula-chat/errors","lint":"libs/errors/","key":"itsDaiton_nebula-chat-errors","project":"Nebula-Chat-Errors","coverage":"src/**/tests/**,src/index.ts"},
-            {"id":"langchain","name":"nebula-chat-langchain","dir":"libs/langchain","filter":"@nebula-chat/langchain","lint":"libs/langchain/","key":"itsDaiton_nebula-chat-langchain","project":"Nebula-Chat-LangChain","coverage":"src/**/tests/**,src/index.ts,src/logger.ts"},
             {"id":"otel","name":"nebula-chat-otel","dir":"libs/otel","filter":"@nebula-chat/otel","lint":"libs/otel/","key":"itsDaiton_nebula-chat-otel","project":"Nebula-Chat-OTel","coverage":"src/**/tests/**,src/index.ts,src/tracing.ts"},
             {"id":"redis","name":"nebula-chat-redis","dir":"libs/redis","filter":"@nebula-chat/redis","lint":"libs/redis/","key":"itsDaiton_nebula-chat-redis","project":"Nebula-Chat-Redis","coverage":"src/**/tests/**,src/index.ts,src/connection.ts,src/factory.ts,src/metrics.ts"}
           ]'
@@ -148,7 +144,6 @@ jobs:
             if [ "$F_CONTRACTS" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["contracts"]'); fi
             if [ "$F_DB" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["db"]'); fi
             if [ "$F_ERRORS" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["errors"]'); fi
-            if [ "$F_LANGCHAIN" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["langchain"]'); fi
             if [ "$F_OTEL" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["otel"]'); fi
             if [ "$F_REDIS" = "true" ]; then ids=$(echo "$ids" | jq -c '. + ["redis"]'); fi
             selected=$(echo "$all" | jq -c --argjson ids "$ids" '[.[] | select(.id as $i | $ids | index($i))]')

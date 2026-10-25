@@ -14,7 +14,6 @@ initTelemetry(SERVICE_NAME, { logger, diagLevel: env.OTEL_LOG_LEVEL });
 import { createServer } from 'node:http';
 import { Worker } from 'bullmq';
 import { DIRECT_REPLY_QUEUE, serializeReplyStreamEvent } from '@nebula-chat/contracts';
-import { streamChat } from '@nebula-chat/langchain';
 import {
   REPLY_STREAM_RECORD_TTL_SECONDS,
   streamCancelKey,
@@ -23,7 +22,9 @@ import {
 } from '@nebula-chat/redis';
 import { closeDb } from '@worker/db';
 import { directReplyRepository } from '@worker/directReplies/directReplyRepository';
+import { streamChat } from '@worker/directReplies/streamChat';
 import { createDirectReplyProcessor } from '@worker/jobs/directReply';
+import { loadPrompts } from '@worker/llm/prompts';
 import { redis } from '@worker/redis';
 
 const start = async (): Promise<void> => {
@@ -40,6 +41,8 @@ const start = async (): Promise<void> => {
     },
     cache: redis.cache,
     streamChat,
+    // A missing prompt fails boot here rather than the first reply that needs it.
+    prompts: loadPrompts(),
     apiKeys: { openai: env.OPENAI_API_KEY, anthropic: env.ANTHROPIC_API_KEY },
     logger,
   });

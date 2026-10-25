@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_MODELS, MODEL_REGISTRY, getProviderForModel } from '../types';
+import { DEFAULT_MODELS, MODEL_REGISTRY, getProviderForModel } from '@worker/llm/modelRegistry';
 
 describe('getProviderForModel', () => {
   it('resolves an OpenAI model to the openai provider', () => {
