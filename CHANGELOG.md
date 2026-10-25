@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.5.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.4.0...nebula-chat-v5.5.0) (2026-10-25)
+
+
+### Features
+
+* **worker:** NEB-357 propagate one OTel trace across server, queue and worker ([#637](https://github.com/itsDaiton/nebula-chat/issues/637)) ([7046d62](https://github.com/itsDaiton/nebula-chat/commit/7046d624d9e9c7440e469e2c89b00eca9201ad99))
+
 ## [5.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.3.0...nebula-chat-v5.4.0) (2026-10-25)
 
 

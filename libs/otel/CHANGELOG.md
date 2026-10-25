@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.7.1...nebula-chat-otel-v2.8.0) (2026-10-25)
+
+
+### Features
+
+* **worker:** NEB-357 propagate one OTel trace across server, queue and worker ([#637](https://github.com/itsDaiton/nebula-chat/issues/637)) ([7046d62](https://github.com/itsDaiton/nebula-chat/commit/7046d624d9e9c7440e469e2c89b00eca9201ad99))
+
 ## [2.7.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.7.0...nebula-chat-otel-v2.7.1) (2026-10-24)
 
 
