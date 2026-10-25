@@ -1,30 +1,40 @@
+import { AIMessageChunk, type BaseMessage } from '@langchain/core/messages';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildChatChain } from '../../chains/chat.chain';
-import { streamChat, type ChatStreamConfig } from '../runner';
+import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
+import { streamChat, type ChatStreamConfig } from '@worker/directReplies/streamChat';
+import { createLLM } from '@worker/llm/createLLM';
 
-vi.mock('../../chains/chat.chain', () => ({ buildChatChain: vi.fn() }));
+vi.mock('@worker/llm/createLLM', () => ({ createLLM: vi.fn() }));
 
-const mockedBuildChatChain = vi.mocked(buildChatChain);
+const mockedCreateLLM = vi.mocked(createLLM);
 
-/** Wires the mocked chain to yield `tokens`, and captures the invoke payload. */
-const stubChain = (tokens: string[]) => {
-  const streamArgs: unknown[] = [];
-  mockedBuildChatChain.mockReturnValue({
-    stream: (args: unknown) => {
-      streamArgs.push(args);
-      return Promise.resolve(
-        (async function* () {
-          for (const token of tokens) yield token;
-        })(),
-      );
+type StreamOptions = { signal?: AbortSignal };
+
+/** Wires the mocked model's `stream` to `impl`, and captures the messages it was sent. */
+const stubModel = (impl: (options: StreamOptions) => AsyncIterable<AIMessageChunk>) => {
+  const sent: BaseMessage[][] = [];
+  mockedCreateLLM.mockReturnValue({
+    stream: (messages: BaseMessage[], options: StreamOptions = {}) => {
+      sent.push(messages);
+      return Promise.resolve(impl(options));
     },
-  } as unknown as ReturnType<typeof buildChatChain>);
-  return streamArgs;
+  } as unknown as ReturnType<typeof createLLM>);
+  return sent;
 };
+
+/** Wires the mocked model to yield `tokens` as message chunks, and captures the messages sent. */
+const stubChain = (tokens: string[]) =>
+  stubModel(async function* () {
+    for (const token of tokens) yield new AIMessageChunk(token);
+  });
+
+/** The packed history the model was sent: everything between the system and human messages. */
+const historyOf = (sent: BaseMessage[][]) => sent[0]?.slice(1, -1) ?? [];
 
 const baseConfig = (overrides: Partial<ChatStreamConfig> = {}): ChatStreamConfig => ({
   provider: 'openai',
   apiKey: 'sk-test',
+  systemPrompt: '',
   history: [],
   userMessage: 'hello',
   ...overrides,
@@ -40,20 +50,14 @@ const collect = async (config: ChatStreamConfig) => {
   return { tokens, usages };
 };
 
-/** Wires the mocked chain to yield `tokens` one at a time, stopping as LangChain does once its `signal` aborts. */
-const stubAbortableChain = (tokens: string[]) => {
-  mockedBuildChatChain.mockReturnValue({
-    stream: (_args: unknown, options?: { signal?: AbortSignal }) =>
-      Promise.resolve(
-        (async function* () {
-          for (const token of tokens) {
-            options?.signal?.throwIfAborted();
-            yield token;
-          }
-        })(),
-      ),
-  } as unknown as ReturnType<typeof buildChatChain>);
-};
+/** Wires the mocked model to yield `tokens` one at a time, stopping as LangChain does once its `signal` aborts. */
+const stubAbortableChain = (tokens: string[]) =>
+  stubModel(async function* ({ signal }) {
+    for (const token of tokens) {
+      signal?.throwIfAborted();
+      yield new AIMessageChunk(token);
+    }
+  });
 
 describe('streamChat', () => {
   beforeEach(() => {
@@ -84,7 +88,7 @@ describe('streamChat', () => {
 
     await collect(baseConfig({ signal: new AbortController().signal }));
 
-    expect(mockedBuildChatChain.mock.calls[0]?.[0]).not.toHaveProperty('signal');
+    expect(mockedCreateLLM.mock.calls[0]?.[0]).not.toHaveProperty('signal');
   });
 
   it('forwards every streamed chunk to onToken in order', async () => {
@@ -95,13 +99,24 @@ describe('streamChat', () => {
     expect(tokens).toEqual(['Hel', 'lo ', 'world']);
   });
 
+  it('forwards the text of a content-block chunk, as Anthropic streams them', async () => {
+    stubModel(async function* () {
+      yield new AIMessageChunk({ content: [{ type: 'text', text: 'Hi' }] });
+    });
+
+    const { tokens } = await collect(baseConfig());
+
+    expect(tokens).toEqual(['Hi']);
+  });
+
   it('reports usage once, after the stream completes', async () => {
     stubChain(['a', 'b']);
 
     const { usages } = await collect(baseConfig());
 
+    const [usage] = usages;
     expect(usages).toHaveLength(1);
-    expect(usages[0].totalTokens).toBe(usages[0].promptTokens + usages[0].completionTokens);
+    expect(usage?.totalTokens).toBe((usage?.promptTokens ?? 0) + (usage?.completionTokens ?? 0));
   });
 
   it('counts prompt tokens from the system prompt, user message and packed history', async () => {
@@ -110,7 +125,9 @@ describe('streamChat', () => {
     const withoutSystem = await collect(baseConfig());
     const withSystem = await collect(baseConfig({ systemPrompt: 'You are terse.' }));
 
-    expect(withSystem.usages[0].promptTokens).toBeGreaterThan(withoutSystem.usages[0].promptTokens);
+    expect(withSystem.usages[0]?.promptTokens).toBeGreaterThan(
+      withoutSystem.usages[0]?.promptTokens ?? Infinity,
+    );
   });
 
   it('reports zero completion tokens when the model yields nothing', async () => {
@@ -119,11 +136,11 @@ describe('streamChat', () => {
     const { tokens, usages } = await collect(baseConfig());
 
     expect(tokens).toEqual([]);
-    expect(usages[0].completionTokens).toBe(0);
+    expect(usages[0]?.completionTokens).toBe(0);
   });
 
   it('maps each history role onto its LangChain message class', async () => {
-    const streamArgs = stubChain([]);
+    const sent = stubChain([]);
 
     await collect(
       baseConfig({
@@ -134,16 +151,25 @@ describe('streamChat', () => {
       }),
     );
 
-    const { history } = streamArgs[0] as { history: { getType: () => string }[] };
-    expect(history.map((m) => m.getType())).toEqual(['human', 'ai']);
+    expect(historyOf(sent).map((m) => m.getType())).toEqual(['human', 'ai']);
   });
 
-  it('passes the user message through as the chain input', async () => {
-    const streamArgs = stubChain([]);
+  it('sends the system prompt first, then the history, then the user message', async () => {
+    const sent = stubChain([]);
 
-    await collect(baseConfig({ userMessage: 'what is 2+2?' }));
+    await collect(
+      baseConfig({
+        systemPrompt: 'You are terse.',
+        history: [{ role: 'assistant', content: 'earlier answer' }],
+        userMessage: 'what is 2+2?',
+      }),
+    );
 
-    expect((streamArgs[0] as { input: string }).input).toBe('what is 2+2?');
+    expect(sent[0]?.map((m) => [m.getType(), m.content])).toEqual([
+      ['system', 'You are terse.'],
+      ['ai', 'earlier answer'],
+      ['human', 'what is 2+2?'],
+    ]);
   });
 
   it("falls back to the provider's default model when none is given", async () => {
@@ -151,9 +177,7 @@ describe('streamChat', () => {
 
     await collect(baseConfig());
 
-    expect(mockedBuildChatChain).toHaveBeenCalledWith(
-      expect.objectContaining({ model: 'gpt-4o-mini' }),
-    );
+    expect(mockedCreateLLM).toHaveBeenCalledWith(expect.objectContaining({ model: 'gpt-4o-mini' }));
   });
 
   it('keeps an explicitly requested model', async () => {
@@ -161,19 +185,19 @@ describe('streamChat', () => {
 
     await collect(baseConfig({ model: 'gpt-4o' }));
 
-    expect(mockedBuildChatChain).toHaveBeenCalledWith(expect.objectContaining({ model: 'gpt-4o' }));
+    expect(mockedCreateLLM).toHaveBeenCalledWith(expect.objectContaining({ model: 'gpt-4o' }));
   });
 
-  it('always requests a streaming chain', async () => {
+  it('always requests a streaming model', async () => {
     stubChain([]);
 
     await collect(baseConfig());
 
-    expect(mockedBuildChatChain).toHaveBeenCalledWith(expect.objectContaining({ streaming: true }));
+    expect(mockedCreateLLM).toHaveBeenCalledWith(expect.objectContaining({ streaming: true }));
   });
 
   it('drops the oldest history when the model context window cannot hold it', async () => {
-    const streamArgs = stubChain([]);
+    const sent = stubChain([]);
     const long = 'a very long earlier exchange '.repeat(400);
 
     await collect(
@@ -187,8 +211,7 @@ describe('streamChat', () => {
       }),
     );
 
-    const { history } = streamArgs[0] as { history: unknown[] };
-    expect(history.length).toBeLessThanOrEqual(3);
+    expect(historyOf(sent).length).toBeLessThanOrEqual(3);
   });
 
   it('rejects a history role outside the supported union', async () => {
@@ -204,7 +227,7 @@ describe('streamChat', () => {
   });
 
   it('falls back to a default input budget for a model outside the registry', async () => {
-    const streamArgs = stubChain([]);
+    const sent = stubChain([]);
 
     await collect(
       baseConfig({
@@ -213,11 +236,11 @@ describe('streamChat', () => {
       }),
     );
 
-    expect((streamArgs[0] as { history: unknown[] }).history).toHaveLength(1);
+    expect(historyOf(sent)).toHaveLength(1);
   });
 
   it('reserves the larger of the model default and an explicit maxTokens', async () => {
-    const streamArgs = stubChain([]);
+    const sent = stubChain([]);
 
     await collect(
       baseConfig({
@@ -229,11 +252,11 @@ describe('streamChat', () => {
       }),
     );
 
-    expect((streamArgs[0] as { history: unknown[] }).history).toHaveLength(0);
+    expect(historyOf(sent)).toHaveLength(0);
   });
 
   it('keeps history when the model default reservation applies', async () => {
-    const streamArgs = stubChain([]);
+    const sent = stubChain([]);
 
     await collect(
       baseConfig({
@@ -242,80 +265,72 @@ describe('streamChat', () => {
       }),
     );
 
-    expect((streamArgs[0] as { history: unknown[] }).history).toHaveLength(1);
+    expect(historyOf(sent)).toHaveLength(1);
   });
 
   it('rethrows a stream failure as an Error', async () => {
-    mockedBuildChatChain.mockReturnValue({
-      stream: () => Promise.reject(new Error('provider exploded')),
-    } as unknown as ReturnType<typeof buildChatChain>);
+    stubModel(() => {
+      throw new Error('provider exploded');
+    });
 
     await expect(collect(baseConfig())).rejects.toThrow('provider exploded');
   });
 
   it('wraps a non-Error rejection in an Error', async () => {
-    mockedBuildChatChain.mockReturnValue({
-      stream: () => Promise.reject('a bare string'),
-    } as unknown as ReturnType<typeof buildChatChain>);
+    stubModel(() => {
+      throw 'a bare string';
+    });
 
     await expect(collect(baseConfig())).rejects.toThrow('a bare string');
   });
 
   it('logs start and finish at debug with the gen_ai attributes', async () => {
     stubChain(['x']);
-    const logger = { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
+    const { logger, lines } = captureLogger();
 
     await collect(baseConfig({ logger }));
 
-    expect(logger.debug).toHaveBeenCalledWith(
+    expect(eventLines(lines, 'llm.stream.started')).toEqual([
       expect.objectContaining({
-        'event.name': 'llm.stream.started',
+        level: LEVEL.debug,
         'gen_ai.provider.name': 'openai',
         'gen_ai.request.model': 'gpt-4o-mini',
       }),
-      expect.any(String),
-    );
-    expect(logger.debug).toHaveBeenCalledWith(
+    ]);
+    expect(eventLines(lines, 'llm.stream.finished')).toEqual([
       expect.objectContaining({
-        'event.name': 'llm.stream.finished',
+        level: LEVEL.debug,
         'gen_ai.provider.name': 'openai',
         'gen_ai.request.model': 'gpt-4o-mini',
         'gen_ai.usage.input_tokens': expect.any(Number),
         'gen_ai.usage.output_tokens': expect.any(Number),
         'nebula.duration_ms': expect.any(Number),
       }),
-      expect.any(String),
-    );
-    expect(logger.info).not.toHaveBeenCalled();
+    ]);
+    expect(lines.filter((line) => line.level >= LEVEL.info)).toEqual([]);
   });
 
   it('never logs the user message or the completion text', async () => {
     stubChain(['the secret answer']);
-    const logger = { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
+    const { logger, lines } = captureLogger();
 
     await collect(baseConfig({ logger, userMessage: 'my private question' }));
 
-    const logged = JSON.stringify(
-      [logger.info, logger.warn, logger.error, logger.debug].flatMap((m) => m.mock.calls),
-    );
+    const logged = JSON.stringify(lines);
     expect(logged).not.toContain('my private question');
     expect(logged).not.toContain('the secret answer');
   });
 
   it('leaves a stream failure to the caller: rethrows without logging it', async () => {
-    mockedBuildChatChain.mockReturnValue({
-      stream: () => Promise.reject(new Error('nope')),
-    } as unknown as ReturnType<typeof buildChatChain>);
-    const logger = { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
+    stubModel(() => {
+      throw new Error('nope');
+    });
+    const { logger, lines } = captureLogger();
 
     await expect(collect(baseConfig({ logger }))).rejects.toThrow('nope');
 
-    expect(logger.error).not.toHaveBeenCalled();
-    expect(logger.warn).not.toHaveBeenCalled();
-    expect(logger.debug).not.toHaveBeenCalledWith(
-      expect.objectContaining({ 'event.name': 'llm.stream.finished' }),
-      expect.any(String),
-    );
+    expect(lines.filter((line) => line.level >= LEVEL.warn)).toEqual([]);
+    expect(eventLines(lines, 'llm.stream.finished')).toEqual([]);
   });
 
   it('runs without a logger', async () => {

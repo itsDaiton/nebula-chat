@@ -1,7 +1,7 @@
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { describe, expect, it } from 'vitest';
-import { countTokens } from '../counter';
-import { getMessageContentText, packHistory } from '../window';
+import { countTokens } from '@worker/llm/countTokens';
+import { getMessageContentText, packHistory } from '@worker/llm/packHistory';
 
 const human = (text: string) => new HumanMessage(text);
 

@@ -6,18 +6,18 @@ import {
   isAppError,
   toErrorEnvelope,
 } from '@nebula-chat/errors';
-import { getProviderForModel } from '@nebula-chat/langchain';
-import type {
-  ChatStreamCallbacks,
-  ChatStreamConfig,
-  HistoryMessage,
-  ProviderType,
-} from '@nebula-chat/langchain';
 import { componentLogger, logEvent, SpanKind, withSpan } from '@nebula-chat/otel';
 import type { LogAttributes, Logger } from '@nebula-chat/otel';
 import { readCachedReply, replyCacheKey, writeCachedReply } from '@worker/directReplies/replyCache';
 import type { ReplyCache } from '@worker/directReplies/replyCache';
-import { DIRECT_REPLY_SYSTEM_PROMPT } from '@worker/directReplies/systemPrompt';
+import type {
+  ChatStreamCallbacks,
+  ChatStreamConfig,
+  HistoryMessage,
+} from '@worker/directReplies/streamChat';
+import { getProviderForModel } from '@worker/llm/modelRegistry';
+import type { ProviderType } from '@worker/llm/modelRegistry';
+import type { Prompts } from '@worker/llm/prompts';
 
 /** The most recent Messages loaded into a Direct reply's context. */
 const MAX_HISTORY_MESSAGES = 20;
@@ -80,8 +80,10 @@ export type DirectReplyDeps = {
   store: DirectReplyStore;
   stream: ReplyStreamWriter;
   cache: ReplyCache;
-  /** The model call: `@nebula-chat/langchain`'s `streamChat` in production. */
+  /** The model call: `directReplies/streamChat` in production. */
   streamChat: StreamChat;
+  /** The system prompts, loaded once at boot. */
+  prompts: Prompts;
   apiKeys: { [P in ProviderType]?: string | undefined };
   logger: Logger;
   /** How often the model call checks for a cancel request. Default 250 ms. */
@@ -227,7 +229,7 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
             provider: modelProvider,
             apiKey,
             model: modelName,
-            systemPrompt: DIRECT_REPLY_SYSTEM_PROMPT,
+            systemPrompt: deps.prompts.directReply,
             history,
             userMessage: userMessage.content,
             logger: componentLogger(logger, 'llm'),

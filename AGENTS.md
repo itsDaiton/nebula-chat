@@ -33,7 +33,7 @@ Don't add `// eslint-disable` unless unavoidable, and say why. Never hand-edit g
   would merge and never release. `fix` is the default (bugs, deps, tooling, CI, docs, refactors);
   `feat` is new user-visible capability; `!` is a real breaking change to a released surface.
 - Scope names the Release Please component: `client`, `server`, `worker`, `cli`, `contracts`, `db`,
-  `errors`, `langchain`, `openapi` — or none for root tooling/docs. The bump is decided from changed paths,
+  `errors`, `openapi` — or none for root tooling/docs. The bump is decided from changed paths,
   not the scope.
 - Squash-merge is the default, so the **PR title is the commit Release Please parses**. Subject under 72 chars.
 - PR body: summary, `Closes #NN`, test plan.

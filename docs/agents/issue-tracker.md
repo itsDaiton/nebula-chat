@@ -16,7 +16,7 @@ Every ticket gets, in addition to its triage state (see [triage-labels.md](./tri
 
 - **One or more area/lib labels** naming what it touches:
   - `app:server` — `apps/server` (backend) · `app:client` — `apps/client` (frontend) · `app:cli` — `apps/cli` (operator CLI)
-  - `lib:auth`, `lib:db`, `lib:langchain`, `lib:otel`, `lib:redis` — the corresponding `libs/*` package
+  - `lib:auth`, `lib:db`, `lib:otel`, `lib:redis` — the corresponding `libs/*` package (`lib:langchain` is retired: the lib was dissolved into the worker)
 - **`enhancement`** for a `feat`, **`bug`** for a `fix`.
 
 Apply these when creating or triaging a ticket. **When a new `libs/<name>` package is created, add a matching `lib:<name>` GitHub label** (`gh label create lib:<name> --color 5319e7 --description "Touches libs/<name>"`) — this is part of the new-lib checklist in `AGENTS.md`.

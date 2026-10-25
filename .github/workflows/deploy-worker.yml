@@ -9,7 +9,6 @@ on:
       - 'nebula-chat-contracts-v*'
       - 'nebula-chat-db-v*'
       - 'nebula-chat-errors-v*'
-      - 'nebula-chat-langchain-v*'
       - 'nebula-chat-otel-v*'
       - 'nebula-chat-redis-v*'
   workflow_dispatch:

@@ -36,8 +36,8 @@ Locally, run it next to the server: both read the same Postgres and Redis. Its `
   `@nebula-chat/contracts` (job payloads and reply stream events) and `@nebula-chat/db`.
 - **Job payloads carry IDs only.** The processor validates each payload against the contract and loads
   everything else from Postgres.
-- **It holds the LLM keys**; the server holds none. Model calls go through `@nebula-chat/langchain`
-  until that lib is dissolved into `llm/` (NEB-358).
+- **It holds the LLM keys**; the server holds none. Model calls go through `llm/`, on `@langchain/core`
+  and the provider packages; there is no LLM lib (ADR-0013).
 - **Every reply stream ends with `end`**, after an `error` event too, so a reader always knows when to stop.
   A reply its User stopped ends with `end` `{ reason: 'cancelled' }`: the runner polls the server's
   cancel flag while the model streams, aborts the call and persists what it had produced.
@@ -55,22 +55,25 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
 
 `src/` holds `worker.ts` (entry: BullMQ workers, the `/health` server, shutdown, the real dependencies),
 `env.ts` (the only `process.env` reader, `OTEL_*` aside as in the server), the `logger.ts`, `db.ts` and
-`redis.ts` singletons, and two folders:
+`redis.ts` singletons, and these folders:
 
 - `jobs/` — one BullMQ processor per job type, plumbing only: validate the contracts payload, bind the
   job's IDs, call the feature.
 - `directReplies/` — the Direct reply runner (load Session and history, model call, stream events, persist
-  the assistant Message), its Drizzle queries and system prompt, and the response cache (`replyCache.ts`).
+  the assistant Message), the streamed model call (`streamChat.ts`), its Drizzle queries, and the response
+  cache (`replyCache.ts`).
+- `llm/` — the model layer: providers and the model registry, token counting, `packHistory`, the
+  concurrency limiter, and the prompt loader.
+- `resources/prompts/` — one static Markdown system prompt per file, no template variables: dynamic
+  content goes in the human message. `llm/prompts.ts` reads them once at boot and a missing one fails
+  boot; `build` copies the folder into `dist/`, since `tsc` does not.
 
 Folders later tickets add:
 
-- `llm/`: the model layer (providers, token counting, `packHistory`, the concurrency limiter), when the
-  langchain lib is dissolved.
 - `runs/`: the Run graph, its nodes, checkpointer, middleware, stream-event mapping, and the Run and Step
   repositories.
 - `agents/`: one file per Agent definition, plus the registry.
 - `tools/`: one file per tool.
-- `resources/prompts/`: one static Markdown system prompt per Agent.
 
 ### Adding a job type
 

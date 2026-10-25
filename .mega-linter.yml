@@ -92,6 +92,11 @@ REPOSITORY_DEVSKIM_ARGUMENTS:
 # both understand JSONC.
 JSON_JSONLINT_FILTER_REGEX_EXCLUDE: '(tsconfig.*\.json$)'
 
+# The worker's system prompts are model input, not docs: their headings are prompt
+# wording (several `#` sections per prompt), so markdownlint's document rules
+# such as MD025 don't apply. Prettier still formats them.
+MARKDOWN_MARKDOWNLINT_FILTER_REGEX_EXCLUDE: '(apps/worker/src/resources/prompts/)'
+
 # spectral lints OpenAPI documents. Pointed at the repo it picks up
 # pnpm-lock.yaml and reports "Expected a single document in the stream" — it is
 # linting a lockfile as an API spec. The real spec lives in openapi/.

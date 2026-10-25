@@ -6,7 +6,7 @@
   "main": "dist/src/worker.js",
   "scripts": {
     "dev": "nodemon",
-    "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json && node -e \"require('node:fs').cpSync('src/resources', 'dist/src/resources', { recursive: true })\"",
     "start": "dotenvx run -f .env --ignore=MISSING_ENV_FILE -- node dist/src/worker.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -14,14 +14,18 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@langchain/anthropic": "^1.5.12",
+    "@langchain/core": "^1.2.17",
+    "@langchain/openai": "^1.6.2",
     "@nebula-chat/contracts": "workspace:*",
     "@nebula-chat/db": "workspace:*",
     "@nebula-chat/errors": "workspace:*",
-    "@nebula-chat/langchain": "workspace:*",
     "@nebula-chat/otel": "workspace:*",
     "@nebula-chat/redis": "workspace:*",
     "bullmq": "catalog:",
     "drizzle-orm": "catalog:",
+    "p-limit": "^7.3.3",
+    "tiktoken": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

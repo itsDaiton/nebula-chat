@@ -101,10 +101,8 @@ export const logger: Logger = createLogger({
 | No request in scope at all | `@server/logger` | Startup, shutdown, and the Redis/Postgres/better-auth singletons |
 
 The libs never create a logger: `@nebula-chat/redis`, `@nebula-chat/db` and
-`@nebula-chat/auth` log only through the one they are given, and
-`@nebula-chat/langchain` through the duck-typed `LLMLogger` it is handed per
-call. The worker follows the same rules: `@worker/logger` outside a job, the
-job's bound child inside one.
+`@nebula-chat/auth` log only through the one they are given. The worker follows
+the same rules: `@worker/logger` outside a job, the job's bound child inside one.
 
 ## Writing a line
 
@@ -143,9 +141,6 @@ shape by binding `event.name` on a child logger instead of calling `logEvent`:
   extra arguments under `args`.
 - Fastify's remaining framework-fault lines become `fastify.log`, with our own
   `msg` and the error as `err` (see [Request logging](#request-logging)).
-- `@nebula-chat/langchain` writes `llm.stream.started`/`llm.stream.finished` and
-  its `gen_ai.*` keys by hand. It does not depend on `@nebula-chat/otel`, so
-  those names are not type-checked; NEB-358 dissolves the lib into the worker.
 
 ## Levels
 
@@ -175,7 +170,8 @@ once, and nobody else does:
   `http.request.failed` line (`error.type: Internal`) and records the code.
 - **Direct replies** (the worker, `service.name: nebula-chat-worker`). The
   runner in `apps/worker/src/directReplies/runDirectReply.ts` is the reply's one
-  handler. `@nebula-chat/langchain`'s `streamChat` rethrows without logging, and
+  handler. The model call (`directReplies/streamChat.ts`) logs only `debug`
+  lines and rethrows a failure without logging it, and
   the runner writes exactly one `chat.reply.completed` per Direct reply:
 
   | `nebula.outcome` | Level                                                     | Carries             |

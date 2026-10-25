@@ -32,9 +32,6 @@
     "libs/errors": {
       "project": ["src/**/*.ts"]
     },
-    "libs/langchain": {
-      "project": ["src/**/*.ts"]
-    },
     "libs/otel": {
       "project": ["src/**/*.ts"]
     }

@@ -78,14 +78,13 @@ flowchart TD
     contracts[contracts]
     db[db]
     errors[errors]
-    langchain[langchain]
     otel[otel]
     redislib[redis]
   end
 
   client --> errors
   server --> auth & contracts & db & errors & otel & redislib
-  worker --> contracts & db & errors & langchain & otel & redislib
+  worker --> contracts & db & errors & otel & redislib
   auth --> db & otel & redislib
   contracts --> errors
   db --> otel
@@ -95,7 +94,6 @@ flowchart TD
 - `server` and `worker` never import each other. What they share is a lib: `contracts` for the
   job payload and reply stream events, `otel` for logging and process wiring, `db` and `redis` for
   the clients.
-- `langchain` is a dependency of the worker only, until it is dissolved into it.
 - `cli` depends on no workspace package: it is a client of the public HTTP API
   ([ADR-0029](./adr/0029-operator-cli-as-an-api-client.md)). So is `client`, apart from the
   isomorphic error codes in `errors`.

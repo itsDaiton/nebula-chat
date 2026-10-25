@@ -1,11 +1,12 @@
-import { AIMessage, HumanMessage } from '@langchain/core/messages';
-import { buildChatChain } from '../chains/chat.chain';
-import type { LLMLogger } from '../logger';
-import { DEFAULT_MODELS, MODEL_REGISTRY } from '../providers/types';
-import type { LLMConfig } from '../providers/types';
-import { llmConcurrencyLimiter } from '../rate-limit/concurrency';
-import { countTokens } from '../tokens/counter';
-import { getMessageContentText, packHistory } from '../tokens/window';
+import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { logEvent } from '@nebula-chat/otel';
+import type { Logger } from '@nebula-chat/otel';
+import { llmConcurrencyLimiter } from '@worker/llm/concurrencyLimiter';
+import { countTokens } from '@worker/llm/countTokens';
+import { createLLM } from '@worker/llm/createLLM';
+import { DEFAULT_MODELS, MODEL_REGISTRY } from '@worker/llm/modelRegistry';
+import type { LLMConfig } from '@worker/llm/modelRegistry';
+import { getMessageContentText, packHistory } from '@worker/llm/packHistory';
 
 type HistoryRole = 'assistant' | 'user';
 
@@ -15,10 +16,10 @@ export type HistoryMessage = {
 };
 
 export type ChatStreamConfig = LLMConfig & {
-  systemPrompt?: string;
+  systemPrompt: string;
   history: HistoryMessage[];
   userMessage: string;
-  logger?: LLMLogger;
+  logger?: Logger;
   /** Aborts the model call mid-stream; `streamChat` then rejects and reports no usage. */
   signal?: AbortSignal;
 };
@@ -34,20 +35,19 @@ export const streamChat = async (
   config: ChatStreamConfig,
   callbacks: ChatStreamCallbacks,
 ): Promise<void> => {
-  const { history, userMessage, systemPrompt = '', logger, model, signal, ...llmConfig } = config;
+  const { history, userMessage, systemPrompt, logger, model, signal, ...llmConfig } = config;
   const startMs = Date.now();
 
   const resolvedModel = model ?? DEFAULT_MODELS[llmConfig.provider];
-  // Flat OTel gen_ai.* keys stamped by hand (this lib doesn't use @nebula-chat/otel); `debug`, since the caller writes the one `info` summary.
   const genAi = {
     'gen_ai.provider.name': llmConfig.provider,
     'gen_ai.request.model': resolvedModel,
   };
 
-  logger?.debug(
-    { 'event.name': 'llm.stream.started', ...genAi },
-    `LLM stream started · ${resolvedModel}`,
-  );
+  // `debug`, since the caller writes the one `info` summary.
+  if (logger) {
+    logEvent(logger, 'debug', 'llm.stream.started', genAi, `LLM stream started · ${resolvedModel}`);
+  }
 
   const registry = MODEL_REGISTRY[resolvedModel];
   const reservedOutputTokens = registry
@@ -85,40 +85,41 @@ export const streamChat = async (
       0,
     );
 
-  const chain = buildChatChain({
-    ...llmConfig,
-    model: resolvedModel,
-    systemPrompt,
-    streaming: true,
-  });
+  const llm = createLLM({ ...llmConfig, model: resolvedModel, streaming: true });
+  const messages = [
+    new SystemMessage(systemPrompt),
+    ...trimmedHistory,
+    new HumanMessage(userMessage),
+  ];
 
   try {
     await llmConcurrencyLimiter(async () => {
-      const stream = await chain.stream(
-        { history: trimmedHistory, input: userMessage },
-        { signal },
-      );
+      const stream = await llm.stream(messages, signal ? { signal } : {});
       let completionTokens = 0;
 
       for await (const chunk of stream) {
-        callbacks.onToken(chunk);
-        completionTokens += countTokens(chunk, resolvedModel);
+        const token = chunk.text;
+        callbacks.onToken(token);
+        completionTokens += countTokens(token, resolvedModel);
       }
 
       const totalTokens = promptTokens + completionTokens;
       callbacks.onUsage({ promptTokens, completionTokens, totalTokens });
 
-      const durationMs = Date.now() - startMs;
-      logger?.debug(
-        {
-          'event.name': 'llm.stream.finished',
-          ...genAi,
-          'gen_ai.usage.input_tokens': promptTokens,
-          'gen_ai.usage.output_tokens': completionTokens,
-          'nebula.duration_ms': durationMs,
-        },
-        `LLM stream finished · ${resolvedModel} · ${totalTokens} tokens`,
-      );
+      if (logger) {
+        logEvent(
+          logger,
+          'debug',
+          'llm.stream.finished',
+          {
+            ...genAi,
+            'gen_ai.usage.input_tokens': promptTokens,
+            'gen_ai.usage.output_tokens': completionTokens,
+            'nebula.duration_ms': Date.now() - startMs,
+          },
+          `LLM stream finished · ${resolvedModel} · ${totalTokens} tokens`,
+        );
+      }
     });
   } catch (err) {
     // Rethrow only. The failure is the caller's to log, once, where it is

@@ -1,5 +1,5 @@
 import type { BaseMessage } from '@langchain/core/messages';
-import { countTokens } from './counter';
+import { countTokens } from '@worker/llm/countTokens';
 
 export type WindowLimits = {
   maxInputTokens: number;
@@ -45,10 +45,10 @@ export const packHistory = (history: BaseMessage[], limits: WindowLimits): BaseM
   const result: BaseMessage[] = [];
 
   // Walk backwards — most recent messages have priority
-  for (let i = history.length - 1; i >= 0; i--) {
-    const msgTokens = countTokens(normalizeMessageContent(history[i].content), model);
+  for (const message of history.toReversed()) {
+    const msgTokens = countTokens(normalizeMessageContent(message.content), model);
     if (msgTokens > budget) break;
-    result.unshift(history[i]);
+    result.unshift(message);
     budget -= msgTokens;
   }
 

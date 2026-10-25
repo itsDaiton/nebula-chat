@@ -4,7 +4,6 @@
   "apps/server": "4.2.0",
   "libs/db": "1.0.1",
   "openapi": "4.1.0",
-  "libs/langchain": "3.2.1",
   "libs/otel": "2.8.0",
   "libs/redis": "0.2.9",
   "libs/auth": "3.0.2",

@@ -48,6 +48,7 @@ const processorWith = (
     stream: redis.stream,
     cache,
     streamChat,
+    prompts: { directReply: 'You are the Direct reply prompt.' },
     apiKeys,
     logger: log.logger,
     cancelPollMs: 1,
@@ -100,7 +101,7 @@ describe('the Direct reply job', () => {
     expect(operations.slice(-4)).toEqual(['persist', 'markEnded', 'append:end', 'expire']);
   });
 
-  it("calls the Session's Model with its history, oldest first, and the user Message", async () => {
+  it("calls the Session's Model with the Direct reply prompt, its history, oldest first, and the user Message", async () => {
     const model = scriptedModel(['4']);
     await run(model.streamChat);
 
@@ -109,6 +110,7 @@ describe('the Direct reply job', () => {
       provider: 'openai',
       apiKey: 'sk-openai',
       model: 'gpt-4o-mini',
+      systemPrompt: 'You are the Direct reply prompt.',
       userMessage: 'What is 2+2?',
       history: [
         { role: 'user', content: 'Hi' },

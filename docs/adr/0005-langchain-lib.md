@@ -1,6 +1,6 @@
 # ADR-0005: Extract LLM concerns into `@nebula-chat/langchain` workspace library
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0013](./0013-worker-app-owns-all-llm-execution.md) — NEB-358 dissolved the lib into `apps/worker`
 - **Date:** 2026-05-02
 - **Deciders:** @itsDaiton
 
