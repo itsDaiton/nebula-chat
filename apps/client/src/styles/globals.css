@@ -1,5 +1,5 @@
 /* Preflight is left out while Chakra's reset styles the page (NEB-555 restores it), and utilities are
-   unlayered so they win over Chakra's layered reset and recipes. */
+  unlayered so they win over Chakra's layered reset and recipes. */
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css';
 @import 'tw-animate-css';
@@ -10,8 +10,8 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --canvas: #ffffff;
-  --panel: #ffffff;
+  --canvas: #fff;
+  --panel: #fff;
   --raised: #f7f7f7;
   --hover: #f0f0f0;
   --border: #e8e8e8;
@@ -24,6 +24,7 @@
   --warning: #d97706;
   --destructive: #dc2626;
 
+  /* shadcn's names, mapped onto the palette above. */
   --background: var(--canvas);
   --card: var(--panel);
   --card-foreground: var(--foreground);
@@ -50,7 +51,7 @@
   --foreground: #f5f5f5;
   --foreground-secondary: #c9c9c9;
   --muted-foreground: #8a8a8a;
-  --faint: #555555;
+  --faint: #555;
   --success: #22c55e;
   --warning: #f59e0b;
   --destructive: #ef4444;
@@ -85,18 +86,20 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  /* Panels take rounded-xl (12px), controls rounded-lg (8px). */
   --radius: 0.5rem;
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
 
+  /* Geist for UI, Geist Mono for metadata, keyboard hints and ids. */
   --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'Geist Mono Variable', ui-monospace, monospace;
 }
 
 /* Scoped to the new components (each carries `data-slot`) so Chakra screens keep their own base. Unlayered
-   so it beats Chakra's reset; `:where` keeps it at zero specificity under any utility. */
+  so it beats Chakra's reset; `:where` keeps it at zero specificity under any utility. */
 :where([data-slot]) {
   border-color: var(--border);
   outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
@@ -112,7 +115,4 @@
 
 @utility no-scrollbar {
   scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
 }

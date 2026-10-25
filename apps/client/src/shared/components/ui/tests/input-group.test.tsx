@@ -1,5 +1,4 @@
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import {
   InputGroup,
@@ -12,7 +11,7 @@ import {
 import { renderWithProviders } from '@/test/render';
 
 describe('InputGroup', () => {
-  it('focuses the control when its addon is clicked', async () => {
+  it('labels its input and shows the addon beside it', () => {
     renderWithProviders(
       <InputGroup>
         <InputGroupInput aria-label="Search" />
@@ -22,9 +21,8 @@ describe('InputGroup', () => {
       </InputGroup>,
     );
 
-    await userEvent.click(screen.getByText('⌘K'));
-
-    expect(screen.getByRole('textbox', { name: 'Search' })).toHaveFocus();
+    expect(screen.getByRole('textbox', { name: 'Search' })).toBeInTheDocument();
+    expect(screen.getByText('⌘K')).toBeVisible();
   });
 
   it('holds a textarea and an action button', () => {

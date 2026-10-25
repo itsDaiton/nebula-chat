@@ -19,7 +19,7 @@ const InputGroup = ({ className, ...props }: React.ComponentProps<'div'>) => (
 );
 
 const inputGroupAddonVariants = cva(
-  "flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium text-muted-foreground select-none group-data-[disabled=true]/input-group:opacity-50 [&>kbd]:rounded-[calc(var(--radius)-5px)] [&>svg:not([class*='size-'])]:size-4",
+  "flex h-auto items-center justify-center gap-2 py-1.5 text-sm font-medium text-muted-foreground select-none group-data-[disabled=true]/input-group:opacity-50 [&>kbd]:rounded-[calc(var(--radius)-5px)] [&>svg:not([class*='size-'])]:size-4",
   {
     variants: {
       align: {
@@ -43,16 +43,9 @@ const InputGroupAddon = ({
   ...props
 }: React.ComponentProps<'div'> & VariantProps<typeof inputGroupAddonVariants>) => (
   <div
-    role="group"
     data-slot="input-group-addon"
     data-align={align}
     className={cn(inputGroupAddonVariants({ align }), className)}
-    onClick={(e) => {
-      if ((e.target as HTMLElement).closest('button')) {
-        return;
-      }
-      e.currentTarget.parentElement?.querySelector('input')?.focus();
-    }}
     {...props}
   />
 );
