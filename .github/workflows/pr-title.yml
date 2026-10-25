@@ -1,0 +1,38 @@
+name: PR Title
+
+# The PR title becomes the squash-merge commit Release Please parses (AGENTS.md → Tickets): it must be
+# `feat|fix(scope[,scope]): NEB-<n> summary` (no ID for ad-hoc work), and a `<` or `>` in it makes
+# Release Please skip every release after the first.
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions: {}
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        with:
+          script: |
+            const title = process.env.PR_TITLE || '';
+            const pr = context.payload.pull_request;
+            const problems = [];
+
+            if (/[<>]/.test(title)) {
+              problems.push('Title contains `<` or `>`, which makes Release Please skip the releases after the first. Spell the placeholder without brackets, e.g. `@nebula-chat/app-name`.');
+            }
+
+            // Release Please and Dependabot write their own titles.
+            const generated = pr.user.login === 'dependabot[bot]' || pr.head.ref.startsWith('release-please--');
+            const FORMAT = /^(feat|fix)(\([a-z0-9-]+(, ?[a-z0-9-]+)*\))?!?: (NEB-\d+ \S|(?!NEB-)\S)/;
+            if (!generated && !FORMAT.test(title)) {
+              problems.push('Title must be `feat|fix(scope): NEB-<n> summary`, with several scopes comma-separated, e.g. `fix(client,server): NEB-330 migrate to Fastify`. Ad-hoc work has no ID: `fix(server): handle an empty reply`.');
+            }
+
+            if (problems.length) core.setFailed(problems.join('\n'));
