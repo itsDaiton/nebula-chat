@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.3.0...nebula-chat-v5.4.0) (2026-10-25)
+
+
+### Features
+
+* **worker:** NEB-356 cache Direct replies in the worker ([#635](https://github.com/itsDaiton/nebula-chat/issues/635)) ([0eed2a0](https://github.com/itsDaiton/nebula-chat/commit/0eed2a04199e74d979b818cc2299b25814d56109))
+
 ## [5.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.2.2...nebula-chat-v5.3.0) (2026-10-24)
 
 
