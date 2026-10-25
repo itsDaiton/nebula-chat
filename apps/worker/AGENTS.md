@@ -60,7 +60,7 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
 - `jobs/` — one BullMQ processor per job type, plumbing only: validate the contracts payload, bind the
   job's IDs, call the feature.
 - `directReplies/` — the Direct reply runner (load Session and history, model call, stream events, persist
-  the assistant Message), its Drizzle queries and system prompt, and later the response cache.
+  the assistant Message), its Drizzle queries and system prompt, and the response cache (`replyCache.ts`).
 
 Folders later tickets add:
 
@@ -96,7 +96,7 @@ the stream's `error` event. Never log Message content, prompts, completions or S
 
 The root [Testing](../../AGENTS.md#testing) rules apply. The worker's seam is the **job processor**:
 `jobs/tests/directReply.test.ts` calls `createDirectReplyProcessor` with a payload, a scripted fake
-model (`streamChat`), in-memory Session and Message storage, and an in-memory stream sink, then asserts
+model (`streamChat`), in-memory Session and Message storage, an in-memory response cache and an in-memory stream sink, then asserts
 on the emitted events, the persisted assistant Message and the logged lines. No test reaches Postgres,
 Redis or a provider.
 

@@ -4,8 +4,11 @@ import { MODEL_IDS } from '@nebula-chat/contracts';
 import type { StreamChat } from '@worker/directReplies/runDirectReply';
 import { createDirectReplyProcessor } from '@worker/jobs/directReply';
 import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
+import type { ReplyCache } from '@worker/directReplies/replyCache';
 import {
+  brokenCache,
   failingModel,
+  memoryCache,
   memoryStore,
   memoryStream,
   scriptedModel,
@@ -16,6 +19,7 @@ const USER_ID = '11111111-1111-4111-8111-111111111111';
 const SESSION_ID = '22222222-2222-4222-8222-222222222222';
 const MESSAGE_ID = '33333333-3333-4333-8333-333333333333';
 const STREAM_ID = '44444444-4444-4444-8444-444444444444';
+const OTHER_MESSAGE_ID = '66666666-6666-4666-8666-666666666666';
 const OTHER_USER_ID = '55555555-5555-4555-8555-555555555555';
 
 const payload = {
@@ -29,14 +33,17 @@ let operations: string[];
 let db: ReturnType<typeof memoryStore>;
 let redis: ReturnType<typeof memoryStream>;
 let log: ReturnType<typeof captureLogger>;
+let responses: ReturnType<typeof memoryCache>;
 
 const processorWith = (
   streamChat: StreamChat,
   apiKeys: { openai?: string; anthropic?: string } = { openai: 'sk-openai', anthropic: 'sk-ant' },
+  cache: ReplyCache = responses.cache,
 ) =>
   createDirectReplyProcessor({
     store: db.store,
     stream: redis.stream,
+    cache,
     streamChat,
     apiKeys,
     logger: log.logger,
@@ -53,6 +60,7 @@ beforeEach(() => {
   db = memoryStore();
   redis = memoryStream(operations);
   log = captureLogger();
+  responses = memoryCache();
   const created = db.store.createAssistantMessage;
   db.store.createAssistantMessage = async (message) => {
     operations.push('persist');
@@ -341,6 +349,165 @@ describe('the Direct reply job', () => {
 
       expect(model.signals[0]?.aborted).toBe(false);
       expect(streamed().at(-1)).toEqual({ type: 'end' });
+    });
+  });
+
+  describe('its response cache', () => {
+    const usage = { promptTokens: 10, completionTokens: 3, totalTokens: 13 };
+
+    it('captures the tokens and usage of a reply that completed, not its stream events', async () => {
+      await run(scriptedModel(['2', '+2', ' is 4']).streamChat);
+
+      expect([...responses.entries.values()]).toEqual([{ tokens: ['2', '+2', ' is 4'], usage }]);
+    });
+
+    it('replays a repeated prompt from the cache without calling the model, with the events of a live reply', async () => {
+      await run(scriptedModel(['2', '+2', ' is 4']).streamChat);
+      const live = [...streamed()];
+      redis.events.clear();
+      const model = scriptedModel(['never used']);
+
+      await run(model.streamChat);
+
+      expect(model.calls).toHaveLength(0);
+      expect(streamed()).toEqual(live);
+    });
+
+    it('replays a cached reply even when the provider key is missing', async () => {
+      await run(scriptedModel(['4']).streamChat);
+      redis.events.clear();
+
+      await processorWith(scriptedModel([]).streamChat, {})({ id: 'job-1', data: payload });
+
+      expect(streamed()).toContainEqual({ type: 'token', token: '4' });
+      expect(streamed().some((e) => e.type === 'error')).toBe(false);
+    });
+
+    it('persists the replayed Message as cached, with the captured token count', async () => {
+      await run(scriptedModel(['2', '+2', ' is 4']).streamChat);
+
+      await run(scriptedModel([]).streamChat);
+
+      expect(db.created.at(-1)).toEqual({
+        id: STREAM_ID,
+        sessionId: SESSION_ID,
+        content: '2+2 is 4',
+        tokenCount: 13,
+        cached: true,
+      });
+      expect(db.created[0]).not.toHaveProperty('cached');
+    });
+
+    it('ends a replay like a live reply: persisted, then ended, then expired', async () => {
+      await run(scriptedModel(['4']).streamChat);
+      operations.length = 0;
+
+      await run(scriptedModel([]).streamChat);
+
+      expect(operations.slice(-4)).toEqual(['persist', 'markEnded', 'append:end', 'expire']);
+    });
+
+    it('logs the replay as a completed reply carrying the cache key, never the content', async () => {
+      await run(scriptedModel(['secret answer']).streamChat);
+      log.lines.length = 0;
+
+      await run(scriptedModel([]).streamChat);
+
+      const [line, ...rest] = eventLines(log.lines, 'chat.reply.completed');
+      expect(rest).toHaveLength(0);
+      expect(line).toMatchObject({
+        level: LEVEL.info,
+        'nebula.outcome': 'completed',
+        'nebula.cache.key': [...responses.entries.keys()][0],
+        'gen_ai.usage.output_tokens': 1,
+      });
+      expect(JSON.stringify(log.lines)).not.toContain('secret answer');
+    });
+
+    it('misses for another prompt, and for another Model on the same prompt', async () => {
+      await run(scriptedModel(['4']).streamChat);
+
+      db.messages.push({
+        id: OTHER_MESSAGE_ID,
+        sessionId: SESSION_ID,
+        role: 'user',
+        content: 'And 3+3?',
+      });
+      const otherPrompt = scriptedModel(['6']);
+      await run(otherPrompt.streamChat, { ...payload, messageId: OTHER_MESSAGE_ID });
+
+      db.sessions.set(SESSION_ID, { id: SESSION_ID, userId: USER_ID, model: 'gpt-4o' });
+      const otherModel = scriptedModel(['4']);
+      await run(otherModel.streamChat);
+
+      expect(otherPrompt.calls).toHaveLength(1);
+      expect(otherModel.calls).toHaveLength(1);
+    });
+
+    it('never writes the cache for an error, an empty completion or a cancelled reply', async () => {
+      await run(failingModel(new Error('boom'), ['partial']));
+      await run(scriptedModel([' ']).streamChat);
+      redis.cancelled.add(STREAM_ID);
+      await run(scriptedModel(['4']).streamChat);
+
+      expect(responses.writes).toEqual([]);
+    });
+
+    it('does not capture a reply stopped while the model streamed', async () => {
+      const model = slowModel(['a', 'b', 'c', 'd'], (index) => {
+        if (index === 1) redis.cancelled.add(STREAM_ID);
+      });
+
+      await run(model.streamChat);
+
+      expect(responses.writes).toEqual([]);
+    });
+
+    it('regenerate skips the lookup, calls the model and overwrites the entry', async () => {
+      await run(scriptedModel(['old answer']).streamChat);
+      redis.events.clear();
+      const model = scriptedModel(['new answer']);
+
+      await run(model.streamChat, { ...payload, regenerate: true });
+
+      expect(model.calls).toHaveLength(1);
+      expect(streamed()).toContainEqual({ type: 'token', token: 'new answer' });
+      expect([...responses.entries.values()]).toEqual([
+        {
+          tokens: ['new answer'],
+          usage: { promptTokens: 10, completionTokens: 1, totalTokens: 11 },
+        },
+      ]);
+      expect(db.created.at(-1)).not.toHaveProperty('cached');
+    });
+
+    it('treats an entry it cannot read as a miss and overwrites it', async () => {
+      await run(scriptedModel(['4']).streamChat);
+      const [key] = [...responses.entries.keys()];
+      responses.entries.set(key!, { tokens: 'event: token\ndata: {"token":"4"}' });
+      const model = scriptedModel(['fresh']);
+
+      await run(model.streamChat);
+
+      expect(model.calls).toHaveLength(1);
+      expect(responses.entries.get(key!)).toMatchObject({ tokens: ['fresh'] });
+    });
+
+    it('degrades a failing cache to a miss: the reply is live, complete and warns', async () => {
+      const model = scriptedModel(['4']);
+
+      await processorWith(
+        model.streamChat,
+        undefined,
+        brokenCache(),
+      )({ id: 'job-1', data: payload });
+
+      expect(model.calls).toHaveLength(1);
+      expect(streamed().at(-1)).toEqual({ type: 'end' });
+      expect(streamed().some((e) => e.type === 'error')).toBe(false);
+      expect(db.created).toHaveLength(1);
+      expect(eventLines(log.lines, 'cache.read.failed')[0]).toMatchObject({ level: LEVEL.warn });
+      expect(eventLines(log.lines, 'cache.write.failed')[0]).toMatchObject({ level: LEVEL.warn });
     });
   });
 
