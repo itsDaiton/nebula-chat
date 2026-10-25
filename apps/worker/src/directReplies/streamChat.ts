@@ -39,12 +39,12 @@ export const streamChat = async (
   const startMs = Date.now();
 
   const resolvedModel = model ?? DEFAULT_MODELS[llmConfig.provider];
-  // `debug`, since the caller writes the one `info` summary.
   const genAi = {
     'gen_ai.provider.name': llmConfig.provider,
     'gen_ai.request.model': resolvedModel,
   };
 
+  // `debug`, since the caller writes the one `info` summary.
   if (logger) {
     logEvent(logger, 'debug', 'llm.stream.started', genAi, `LLM stream started · ${resolvedModel}`);
   }

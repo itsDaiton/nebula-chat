@@ -101,8 +101,8 @@ export const logger: Logger = createLogger({
 | No request in scope at all | `@server/logger` | Startup, shutdown, and the Redis/Postgres/better-auth singletons |
 
 The libs never create a logger: `@nebula-chat/redis`, `@nebula-chat/db` and
-`@nebula-chat/auth` log only through the one they are given. The worker follows the same rules: `@worker/logger` outside a job, the
-job's bound child inside one.
+`@nebula-chat/auth` log only through the one they are given. The worker follows
+the same rules: `@worker/logger` outside a job, the job's bound child inside one.
 
 ## Writing a line
 
