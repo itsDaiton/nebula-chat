@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.8.0...nebula-chat-otel-v2.8.1) (2026-10-25)
+
+
+### Bug Fixes
+
+* **worker:** NEB-358 dissolve @nebula-chat/langchain into the worker app ([#640](https://github.com/itsDaiton/nebula-chat/issues/640)) ([bd2919f](https://github.com/itsDaiton/nebula-chat/commit/bd2919f913fbfd7ebd52fcb7c82bd9cd398450ab))
+
 ## [2.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.7.1...nebula-chat-otel-v2.8.0) (2026-10-25)
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.5.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.5.0...nebula-chat-v5.5.1) (2026-10-25)
+
+
+### Bug Fixes
+
+* **worker:** NEB-358 dissolve @nebula-chat/langchain into the worker app ([#640](https://github.com/itsDaiton/nebula-chat/issues/640)) ([bd2919f](https://github.com/itsDaiton/nebula-chat/commit/bd2919f913fbfd7ebd52fcb7c82bd9cd398450ab))
+
 ## [5.5.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.4.0...nebula-chat-v5.5.0) (2026-10-25)
 
 
