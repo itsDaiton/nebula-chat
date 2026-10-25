@@ -208,6 +208,13 @@ export const resources = {
       done: 'Password changed. Other devices have been signed out.',
     },
   },
+  ui: {
+    close: 'Close',
+    commandPalette: {
+      title: 'Command Palette',
+      description: 'Search for a command to run...',
+    },
+  },
   passwordInput: {
     showPassword: 'Show password',
     hidePassword: 'Hide password',

@@ -29,8 +29,9 @@ committed, never hand-edited), `resources.ts` (UI strings) and:
   and `generated/` (Orval output). `libs/auth/` — the better-auth client, the one auth entry point.
 - `modules/<feature>/` — `auth`, `chat`, `sessions`, `settings`. Each splits into `components/`, `hooks/`,
   `stores/`, `utils/` and `types/types.ts`, plus its page component.
-- `shared/` — cross-module `components/` (with `ui/` for Chakra adapters), `hooks/`, `stores/`, `layout/`,
-  `config/`, `utils/`.
+- `shared/` — cross-module `components/` (with `ui/` for Chakra adapters and the redesign's base components),
+  `hooks/`, `stores/`, `layout/`, `config/`, `utils/`.
+- `styles/` — the redesign's Tailwind entry: design tokens for light and dark, Geist fonts.
 - `theme/` — Chakra tokens and the next-themes wrapper.
 
 ---
@@ -197,6 +198,14 @@ context is genuinely needed, split it across two files:
 - **One component per file.** Never define multiple components, hooks, or significant logic in a single file. No co-located sub-components, no local helper components at the bottom of a file — every component gets its own file.
 - Components read from stores and hooks — they do not own significant state themselves.
 - Use Chakra UI primitives. Custom UI wrappers live in `shared/components/ui/`.
+- **Redesign (epic #530).** New surfaces build on the shadcn/ui base components in `shared/components/ui/`
+  (Base UI primitives, `components.json` style `base-nova`; add one with `pnpm dlx shadcn add <name>`, then
+  convert it to arrow functions, drop `'use client'` and move any UI string into `resources.ts`). Each such
+  file holds one component family, the exception to one-component-per-file. Style them with Tailwind
+  utilities over the tokens in `styles/globals.css` (`bg-panel`, `text-muted-foreground`, `border-border`,
+  `font-mono` for metadata and ids, `tabular-nums` for numbers), never raw colours. Until Chakra is removed
+  (NEB-555), Tailwind's preflight is off and its utilities are unlayered so they beat Chakra's layered
+  reset; a small reset scoped to `[data-slot]` stands in for preflight on the new components.
 - Responsive layout decisions (`isMobile`, `showSidePanels`) come from `useResponsiveLayout`.
 - **All static text must live in `resources.ts`.** If it is a string shown in the UI — button labels, placeholders, error messages, hints, empty states, tooltips — it goes in `resources.ts`. Never hardcode UI strings inline in components or utilities.
 
@@ -344,7 +353,10 @@ pnpm frontend test:coverage
   serve the session yourself (`holdSession`, `mockGetSession`). It is async (`await renderRoute(...)`) and
   returns the `router`, whose `router.state.location` asserts where a navigation landed. A component that
   only links or reads the route uses `renderInRouter(ui)` instead.
-- **Render inside a fresh query client.** `renderWithChakra` and `renderHookWithQueryClient` (`@/test/render`)
+- **Render a component with `renderWithProviders(ui)` (`@/test/render`)**: the app's own providers (query
+  client, theme, tooltips) without a router; `renderRoute` renders through it. New tests use it over
+  `renderWithChakra`, which goes with Chakra.
+- **Render inside a fresh query client.** `renderWithProviders`, `renderWithChakra` and `renderHookWithQueryClient` (`@/test/render`)
   each create one per test with retries off, so no cached response leaks between tests and a failure
   surfaces at once. Pass your own `queryClient` to prime or inspect the cache, e.g. assert an invalidation
   with `queryClient.getQueryState(key)?.isInvalidated`.

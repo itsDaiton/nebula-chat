@@ -11,6 +11,8 @@ import {
 } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
 import { createQueryClient } from '@/libs/api/queryClient';
+import { TooltipProvider } from '@/shared/components/ui/tooltip';
+import { ThemeProvider } from '@/theme/providers/ThemeProvider';
 
 type Options = Omit<RenderOptions, 'wrapper'> & {
   /** The query client to render against; a fresh one (retry off) by default. */
@@ -29,6 +31,21 @@ export const renderWithChakra = (ui: ReactElement, options: Options = {}): Rende
   const Wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
       <ChakraProvider value={defaultSystem}>{children}</ChakraProvider>
+    </QueryClientProvider>
+  );
+
+  return render(ui, { wrapper: Wrapper, ...renderOptions });
+};
+
+/** Renders under the app's own providers (query client, theme, tooltips) without a router; `renderRoute` builds on it. */
+export const renderWithProviders = (ui: ReactElement, options: Options = {}): RenderResult => {
+  const { queryClient = createTestQueryClient(), ...renderOptions } = options;
+
+  const Wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <TooltipProvider>{children}</TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 

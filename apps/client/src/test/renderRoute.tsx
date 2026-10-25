@@ -13,7 +13,7 @@ import type { ReactElement } from 'react';
 import { SESSION_BOOTSTRAP_KEY } from '@/modules/auth/utils/sessionBootstrap';
 import { createAppRouter } from '@/routing/router';
 import type { AppRouter } from '@/routing/types/types';
-import { createTestQueryClient } from '@/test/render';
+import { createTestQueryClient, renderWithProviders } from '@/test/render';
 
 type Options = Omit<RenderOptions, 'wrapper'> & {
   /** The query client the router context carries; a fresh one (retry off) by default. */
@@ -35,7 +35,11 @@ export const renderRoute = async (
   // An unseeded session is the guard's to resolve while the router renders, so its loading state shows.
   if (seedSession) await router.load();
 
-  return { ...render(<RouterProvider router={router} />, options), router, queryClient };
+  return {
+    ...renderWithProviders(<RouterProvider router={router} />, { queryClient, ...options }),
+    router,
+    queryClient,
+  };
 };
 
 /** `ui` as the page of `/` and `/s/$id`, under the app's providers but not its routes: for a component that links or reads the route. */
