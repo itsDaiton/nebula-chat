@@ -1,8 +1,9 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatOpenAI } from '@langchain/openai';
 import { describe, expect, it } from 'vitest';
+import { MODEL_CATALOG } from '@nebula-chat/contracts';
 import { createLLM } from '@worker/llm/createLLM';
-import type { LLMConfig } from '@worker/llm/modelRegistry';
+import type { LLMConfig } from '@worker/llm/createLLM';
 
 const openai = (overrides: Partial<LLMConfig> = {}): LLMConfig => ({
   provider: 'openai',
@@ -27,6 +28,12 @@ describe('createLLM', () => {
 
   it('builds a ChatAnthropic for the anthropic provider', () => {
     expect(createLLM(anthropic())).toBeInstanceOf(ChatAnthropic);
+  });
+
+  it('has a provider to build for every Model in the catalog', () => {
+    for (const { id, provider } of MODEL_CATALOG) {
+      expect(() => createLLM({ provider, apiKey: 'k', model: id }), id).not.toThrow();
+    }
   });
 
   it('throws for a provider outside the supported union', () => {

@@ -1,4 +1,5 @@
-import type { DirectReplyJob, ReplyStreamEvent } from '@nebula-chat/contracts';
+import { findModel } from '@nebula-chat/contracts';
+import type { DirectReplyJob, ModelProvider, ReplyStreamEvent } from '@nebula-chat/contracts';
 import {
   BadRequestError,
   MissingConfigurationError,
@@ -15,8 +16,6 @@ import type {
   ChatStreamConfig,
   HistoryMessage,
 } from '@worker/directReplies/streamChat';
-import { getProviderForModel } from '@worker/llm/modelRegistry';
-import type { ProviderType } from '@worker/llm/modelRegistry';
 import type { Prompts } from '@worker/llm/prompts';
 
 /** The most recent Messages loaded into a Direct reply's context. */
@@ -84,7 +83,7 @@ export type DirectReplyDeps = {
   streamChat: StreamChat;
   /** The system prompts, loaded once at boot. */
   prompts: Prompts;
-  apiKeys: { [P in ProviderType]?: string | undefined };
+  apiKeys: { [P in ModelProvider]?: string | undefined };
   logger: Logger;
   /** How often the model call checks for a cancel request. Default 250 ms. */
   cancelPollMs?: number;
@@ -121,7 +120,7 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
   const { store, stream, logger } = deps;
   const startMs = Date.now();
   let model: string | undefined;
-  let provider: ProviderType | undefined;
+  let provider: ModelProvider | undefined;
   let usage: Usage | undefined;
   // What the model has produced so far: the whole reply, or what a cancelled one keeps.
   let reply = '';
@@ -158,11 +157,9 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
       .toReversed()
       .map(({ role, content }) => ({ role, content }));
 
-    try {
-      provider = getProviderForModel(model);
-    } catch {
-      throw new BadRequestError(`Unsupported model: ${model}`);
-    }
+    const catalogModel = findModel(model);
+    if (!catalogModel) throw new BadRequestError(`Unsupported model: ${model}`);
+    provider = catalogModel.provider;
     // A reply stopped while its job waited in the queue never reaches the model.
     if (await stream.isCancelled(job.streamId)) {
       cancel.abort();

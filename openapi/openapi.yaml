@@ -240,6 +240,87 @@ components:
         - cached
         - createdAt
       additionalProperties: false
+    ModelCatalog:
+      type: object
+      properties:
+        version:
+          type: string
+          description: '`YYYY-MM-DD-<uuid>`: changes whenever the catalog does'
+        hash:
+          type: string
+          description: SHA-256 of the catalog content (Models and defaults)
+        models:
+          maxItems: 100
+          type: array
+          items:
+            $ref: '#/components/schemas/Model'
+      required:
+        - version
+        - hash
+        - models
+      additionalProperties: false
+    Model:
+      type: object
+      properties:
+        id:
+          type: string
+          enum:
+            - gpt-4o
+            - gpt-4o-mini
+            - gpt-4-turbo
+            - gpt-4.1
+            - gpt-4.1-mini
+            - gpt-5
+            - gpt-5-mini
+            - gpt-5.6-luna
+            - claude-3-5-sonnet-20241022
+            - claude-3-5-haiku-20241022
+            - claude-3-opus-20240229
+        label:
+          type: string
+          description: The name people see, e.g. "GPT-4.1 mini"
+        provider:
+          type: string
+          enum:
+            - openai
+            - anthropic
+        contextWindow:
+          type: integer
+          exclusiveMinimum: 0
+          maximum: 9007199254740991
+          description: Tokens the Model can take in
+        maxOutput:
+          type: integer
+          exclusiveMinimum: 0
+          maximum: 9007199254740991
+          description: Tokens reserved for a reply
+        prices:
+          $ref: '#/components/schemas/ModelPrices'
+      required:
+        - id
+        - label
+        - provider
+        - contextWindow
+        - maxOutput
+        - prices
+      additionalProperties: false
+    ModelPrices:
+      type: object
+      properties:
+        input:
+          type: number
+          description: USD per million input tokens
+        cachedInput:
+          type: number
+          description: USD per million input tokens served from the prompt cache
+        output:
+          type: number
+          description: USD per million output tokens
+      required:
+        - input
+        - cachedInput
+        - output
+      additionalProperties: false
     ProfileImageSettings:
       type: object
       properties:
@@ -426,6 +507,7 @@ paths:
                     - gpt-4.1-mini
                     - gpt-5
                     - gpt-5-mini
+                    - gpt-5.6-luna
                     - claude-3-5-sonnet-20241022
                     - claude-3-5-haiku-20241022
                     - claude-3-opus-20240229
@@ -862,6 +944,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+  /api/models:
+    get:
+      operationId: getModelCatalog
+      summary: Get the model catalog
+      tags:
+        - Models
+      description: >-
+        The model catalog: the Models a Session can be bound to, with their
+        labels, limits and list prices (USD per million tokens), plus the
+        catalog version and content hash
+      responses:
+        '200':
+          description: The model catalog
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelCatalog'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
   /api/streams/{streamId}:
     get:
       operationId: readReplyStream
@@ -1257,6 +1362,8 @@ tags:
     description: Session management
   - name: Messages
     description: Message management
+  - name: Models
+    description: 'The model catalog: Models, limits and prices'
   - name: Profile image
     description: A Registered user's Profile image
   - name: Operator

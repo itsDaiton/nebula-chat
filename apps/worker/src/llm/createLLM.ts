@@ -1,8 +1,17 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatOpenAI } from '@langchain/openai';
-import { DEFAULT_MODELS } from '@worker/llm/modelRegistry';
-import type { LLMConfig } from '@worker/llm/modelRegistry';
+import { DEFAULT_MODELS } from '@nebula-chat/contracts';
+import type { ModelProvider } from '@nebula-chat/contracts';
+
+export type LLMConfig = {
+  provider: ModelProvider;
+  apiKey: string;
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+  streaming?: boolean;
+};
 
 const createOpenAILLM = (config: LLMConfig): ChatOpenAI =>
   new ChatOpenAI({

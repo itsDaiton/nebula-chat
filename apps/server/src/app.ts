@@ -24,6 +24,7 @@ import sessionRoutes from '@server/modules/session/session.routes';
 import streamRoutes from '@server/modules/stream/stream.routes';
 import logLevelRoutes from '@server/modules/logLevel/logLevel.routes';
 import messageRoutes from '@server/modules/message/message.routes';
+import modelRoutes from '@server/modules/models/models.routes';
 import profileImageRoutes from '@server/modules/profileImage/profileImage.routes';
 import authGate from '@server/plugins/authGate.plugin';
 import dbPlugin from '@server/plugins/db.plugin';
@@ -91,6 +92,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
         { name: 'Streams', description: 'Reply streams, relayed as server-sent events' },
         { name: 'Sessions', description: 'Session management' },
         { name: 'Messages', description: 'Message management' },
+        { name: 'Models', description: 'The model catalog: Models, limits and prices' },
         { name: 'Profile image', description: "A Registered user's Profile image" },
         { name: 'Operator', description: 'Operations for whoever runs the deployment' },
       ],
@@ -156,6 +158,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   await app.register(chatRoutes, { prefix: '/api' });
   await app.register(sessionRoutes, { prefix: '/api/sessions' });
   await app.register(messageRoutes, { prefix: '/api/messages' });
+  await app.register(modelRoutes, { prefix: '/api/models' });
   await app.register(streamRoutes, { prefix: '/api/streams' });
   await app.register(profileImageRoutes, { prefix: '/api/profile-image' });
   await app.register(logLevelRoutes, { prefix: '/api/internal/log-level' });

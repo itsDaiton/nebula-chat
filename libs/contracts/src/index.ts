@@ -10,6 +10,18 @@ export {
 } from './replyStreamEvent';
 export type { ReplyStreamEvent, ReplyStreamEventType } from './replyStreamEvent';
 
-// Models a Session may be bound to
-export { MODEL_IDS, modelIdSchema } from './models';
-export type { ModelId } from './models';
+// The model catalog: the Models a Session may be bound to, with their limits and prices (ADR-0030)
+export {
+  DEFAULT_MODELS,
+  MODEL_CATALOG,
+  MODEL_CATALOG_HASH,
+  MODEL_CATALOG_VERSION,
+  MODEL_IDS,
+  findModel,
+  getModel,
+  modelIdSchema,
+  modelProviderSchema,
+} from './models/modelCatalog';
+export type { Model, ModelPrices, ModelProvider } from './models/modelCatalog';
+export { estimateCost } from './models/estimateCost';
+export type { TokenUsage } from './models/estimateCost';
