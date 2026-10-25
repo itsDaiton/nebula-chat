@@ -1,20 +1,30 @@
 import { describe, expect, it } from 'vitest';
 import {
   MODEL_CATALOG,
+  MODEL_CATALOG_VERSION,
   MODEL_IDS,
   findModel,
   getModel,
+  modelCatalogSchema,
   modelIdSchema,
-  modelProviderSchema,
 } from '../modelCatalog';
 
+const aCatalog = () => ({
+  version: 1,
+  checkedAt: '2026-10-25',
+  models: [
+    {
+      id: 'gpt-test',
+      label: 'GPT Test',
+      provider: 'openai',
+      contextWindow: 128_000,
+      maxOutput: 4_096,
+      prices: { input: 1, cachedInput: 0.5, output: 2 },
+    },
+  ],
+});
+
 describe('MODEL_CATALOG', () => {
-  it('lists every Model once', () => {
-    const ids = MODEL_CATALOG.map((model) => model.id);
-
-    expect(new Set(ids).size).toBe(ids.length);
-  });
-
   it('labels each Model for people, not by its id', () => {
     expect(getModel('gpt-4.1-mini').label).toBe('GPT-4.1 mini');
     for (const model of MODEL_CATALOG) {
@@ -22,26 +32,79 @@ describe('MODEL_CATALOG', () => {
     }
   });
 
-  it('names a known provider for every Model', () => {
-    for (const model of MODEL_CATALOG) {
-      expect(modelProviderSchema.safeParse(model.provider).success, model.id).toBe(true);
-    }
+  it('carries a version for the file it was loaded from', () => {
+    expect(Number.isInteger(MODEL_CATALOG_VERSION)).toBe(true);
+    expect(MODEL_CATALOG_VERSION).toBeGreaterThan(0);
+  });
+});
+
+describe('modelCatalogSchema', () => {
+  it('accepts a well-formed catalog', () => {
+    expect(modelCatalogSchema.safeParse(aCatalog()).success).toBe(true);
   });
 
-  it('reserves less output than the context window for every Model', () => {
-    for (const model of MODEL_CATALOG) {
-      expect(model.maxOutput, model.id).toBeGreaterThan(0);
-      expect(model.maxOutput, model.id).toBeLessThan(model.contextWindow);
-    }
+  it('rejects a version that is not a positive whole number', () => {
+    expect(modelCatalogSchema.safeParse({ ...aCatalog(), version: 0 }).success).toBe(false);
+    expect(modelCatalogSchema.safeParse({ ...aCatalog(), version: 1.5 }).success).toBe(false);
   });
 
-  it('prices every Model, with cached input never above uncached input', () => {
-    for (const { id, prices } of MODEL_CATALOG) {
-      expect(prices.input, id).toBeGreaterThan(0);
-      expect(prices.output, id).toBeGreaterThan(0);
-      expect(prices.cachedInput, id).toBeGreaterThan(0);
-      expect(prices.cachedInput, id).toBeLessThanOrEqual(prices.input);
-    }
+  it('rejects a checkedAt that is not a calendar date', () => {
+    expect(modelCatalogSchema.safeParse({ ...aCatalog(), checkedAt: 'last week' }).success).toBe(
+      false,
+    );
+  });
+
+  it('rejects an empty catalog', () => {
+    expect(modelCatalogSchema.safeParse({ ...aCatalog(), models: [] }).success).toBe(false);
+  });
+
+  it('rejects a provider the worker has no factory for', () => {
+    const catalog = aCatalog();
+    catalog.models[0]!.provider = 'cohere';
+
+    expect(modelCatalogSchema.safeParse(catalog).success).toBe(false);
+  });
+
+  it('rejects a Model listed twice', () => {
+    const catalog = aCatalog();
+    catalog.models.push({ ...catalog.models[0]! });
+
+    expect(modelCatalogSchema.safeParse(catalog).success).toBe(false);
+  });
+
+  it('rejects a Model with a missing price', () => {
+    const catalog = aCatalog();
+    const model = { ...catalog.models[0]!, prices: { input: 1, output: 2 } };
+
+    expect(modelCatalogSchema.safeParse({ ...catalog, models: [model] }).success).toBe(false);
+  });
+
+  it('rejects a price that is zero or negative', () => {
+    const catalog = aCatalog();
+    catalog.models[0]!.prices.output = 0;
+
+    expect(modelCatalogSchema.safeParse(catalog).success).toBe(false);
+  });
+
+  it('rejects cached input priced above uncached input', () => {
+    const catalog = aCatalog();
+    catalog.models[0]!.prices.cachedInput = 5;
+
+    expect(modelCatalogSchema.safeParse(catalog).success).toBe(false);
+  });
+
+  it('rejects a reserved output that leaves no room in the context window', () => {
+    const catalog = aCatalog();
+    catalog.models[0]!.maxOutput = catalog.models[0]!.contextWindow;
+
+    expect(modelCatalogSchema.safeParse(catalog).success).toBe(false);
+  });
+
+  it('rejects a Model with an empty label', () => {
+    const catalog = aCatalog();
+    catalog.models[0]!.label = ' ';
+
+    expect(modelCatalogSchema.safeParse(catalog).success).toBe(false);
   });
 });
 

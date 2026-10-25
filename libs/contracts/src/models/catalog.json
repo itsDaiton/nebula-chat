@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "checkedAt": "2026-10-25",
+  "models": [
+    {
+      "id": "gpt-4o",
+      "label": "GPT-4o",
+      "provider": "openai",
+      "contextWindow": 128000,
+      "maxOutput": 4096,
+      "prices": {
+        "input": 2.5,
+        "cachedInput": 1.25,
+        "output": 10
+      }
+    },
+    {
+      "id": "gpt-4o-mini",
+      "label": "GPT-4o mini",
+      "provider": "openai",
+      "contextWindow": 128000,
+      "maxOutput": 16384,
+      "prices": {
+        "input": 0.15,
+        "cachedInput": 0.075,
+        "output": 0.6
+      }
+    },
+    {
+      "id": "gpt-4-turbo",
+      "label": "GPT-4 Turbo",
+      "provider": "openai",
+      "contextWindow": 128000,
+      "maxOutput": 4096,
+      "prices": {
+        "input": 10,
+        "cachedInput": 10,
+        "output": 30
+      }
+    },
+    {
+      "id": "gpt-4.1",
+      "label": "GPT-4.1",
+      "provider": "openai",
+      "contextWindow": 128000,
+      "maxOutput": 8192,
+      "prices": {
+        "input": 2,
+        "cachedInput": 0.5,
+        "output": 8
+      }
+    },
+    {
+      "id": "gpt-4.1-mini",
+      "label": "GPT-4.1 mini",
+      "provider": "openai",
+      "contextWindow": 128000,
+      "maxOutput": 8192,
+      "prices": {
+        "input": 0.4,
+        "cachedInput": 0.1,
+        "output": 1.6
+      }
+    },
+    {
+      "id": "gpt-5",
+      "label": "GPT-5",
+      "provider": "openai",
+      "contextWindow": 128000,
+      "maxOutput": 8192,
+      "prices": {
+        "input": 1.25,
+        "cachedInput": 0.125,
+        "output": 10
+      }
+    },
+    {
+      "id": "gpt-5-mini",
+      "label": "GPT-5 mini",
+      "provider": "openai",
+      "contextWindow": 128000,
+      "maxOutput": 8192,
+      "prices": {
+        "input": 0.25,
+        "cachedInput": 0.025,
+        "output": 2
+      }
+    },
+    {
+      "id": "claude-3-5-sonnet-20241022",
+      "label": "Claude 3.5 Sonnet",
+      "provider": "anthropic",
+      "contextWindow": 200000,
+      "maxOutput": 8192,
+      "prices": {
+        "input": 3,
+        "cachedInput": 0.3,
+        "output": 15
+      }
+    },
+    {
+      "id": "claude-3-5-haiku-20241022",
+      "label": "Claude 3.5 Haiku",
+      "provider": "anthropic",
+      "contextWindow": 200000,
+      "maxOutput": 8192,
+      "prices": {
+        "input": 0.8,
+        "cachedInput": 0.08,
+        "output": 4
+      }
+    },
+    {
+      "id": "claude-3-opus-20240229",
+      "label": "Claude 3 Opus",
+      "provider": "anthropic",
+      "contextWindow": 200000,
+      "maxOutput": 4096,
+      "prices": {
+        "input": 15,
+        "cachedInput": 1.5,
+        "output": 75
+      }
+    }
+  ]
+}

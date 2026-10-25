@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import catalogJson from './catalog.json';
 
 // Aligned with the worker's provider factory (`createLLM`).
 export const modelProviderSchema = z.enum(['openai', 'anthropic']);
@@ -6,111 +7,57 @@ export const modelProviderSchema = z.enum(['openai', 'anthropic']);
 export type ModelProvider = z.infer<typeof modelProviderSchema>;
 
 /** USD per million tokens. `cachedInput` is what a token served from the provider's prompt cache costs. */
-export type ModelPrices = {
-  input: number;
-  cachedInput: number;
-  output: number;
-};
+const modelPricesSchema = z.object({
+  input: z.number().positive(),
+  cachedInput: z.number().positive(),
+  output: z.number().positive(),
+});
 
-export type Model = {
-  id: string;
-  label: string;
-  provider: ModelProvider;
-  contextWindow: number;
-  /** The output tokens a call reserves; packHistory leaves this much room below the context window. */
-  maxOutput: number;
-  prices: ModelPrices;
-};
+export type ModelPrices = z.infer<typeof modelPricesSchema>;
 
-// Prices are code, so a change is a reviewed commit; checked 2026-10-25, except the retired Claude 3.5 Sonnet and 3 Opus (last published rates).
-// GPT-4 Turbo has no cache discount, so its cached rate equals its input rate.
-export const MODEL_CATALOG = [
-  {
-    id: 'gpt-4o',
-    label: 'GPT-4o',
-    provider: 'openai',
-    contextWindow: 128_000,
-    maxOutput: 4_096,
-    prices: { input: 2.5, cachedInput: 1.25, output: 10 },
-  },
-  {
-    id: 'gpt-4o-mini',
-    label: 'GPT-4o mini',
-    provider: 'openai',
-    contextWindow: 128_000,
-    maxOutput: 16_384,
-    prices: { input: 0.15, cachedInput: 0.075, output: 0.6 },
-  },
-  {
-    id: 'gpt-4-turbo',
-    label: 'GPT-4 Turbo',
-    provider: 'openai',
-    contextWindow: 128_000,
-    maxOutput: 4_096,
-    prices: { input: 10, cachedInput: 10, output: 30 },
-  },
-  {
-    id: 'gpt-4.1',
-    label: 'GPT-4.1',
-    provider: 'openai',
-    contextWindow: 128_000,
-    maxOutput: 8_192,
-    prices: { input: 2, cachedInput: 0.5, output: 8 },
-  },
-  {
-    id: 'gpt-4.1-mini',
-    label: 'GPT-4.1 mini',
-    provider: 'openai',
-    contextWindow: 128_000,
-    maxOutput: 8_192,
-    prices: { input: 0.4, cachedInput: 0.1, output: 1.6 },
-  },
-  {
-    id: 'gpt-5',
-    label: 'GPT-5',
-    provider: 'openai',
-    contextWindow: 128_000,
-    maxOutput: 8_192,
-    prices: { input: 1.25, cachedInput: 0.125, output: 10 },
-  },
-  {
-    id: 'gpt-5-mini',
-    label: 'GPT-5 mini',
-    provider: 'openai',
-    contextWindow: 128_000,
-    maxOutput: 8_192,
-    prices: { input: 0.25, cachedInput: 0.025, output: 2 },
-  },
-  {
-    id: 'claude-3-5-sonnet-20241022',
-    label: 'Claude 3.5 Sonnet',
-    provider: 'anthropic',
-    contextWindow: 200_000,
-    maxOutput: 8_192,
-    prices: { input: 3, cachedInput: 0.3, output: 15 },
-  },
-  {
-    id: 'claude-3-5-haiku-20241022',
-    label: 'Claude 3.5 Haiku',
-    provider: 'anthropic',
-    contextWindow: 200_000,
-    maxOutput: 8_192,
-    prices: { input: 0.8, cachedInput: 0.08, output: 4 },
-  },
-  {
-    id: 'claude-3-opus-20240229',
-    label: 'Claude 3 Opus',
-    provider: 'anthropic',
-    contextWindow: 200_000,
-    maxOutput: 4_096,
-    prices: { input: 15, cachedInput: 1.5, output: 75 },
-  },
-] as const satisfies readonly Model[];
+const modelSchema = z
+  .object({
+    id: z.string().min(1),
+    label: z.string().trim().min(1),
+    provider: modelProviderSchema,
+    contextWindow: z.number().int().positive(),
+    /** The output tokens a call reserves; packHistory leaves this much room below the context window. */
+    maxOutput: z.number().int().positive(),
+    prices: modelPricesSchema,
+  })
+  .refine((model) => model.maxOutput < model.contextWindow, {
+    message: 'maxOutput must leave room in the context window',
+  })
+  .refine((model) => model.prices.cachedInput <= model.prices.input, {
+    message: 'cachedInput must not cost more than input',
+  });
 
-export type ModelId = (typeof MODEL_CATALOG)[number]['id'];
+export type Model = z.infer<typeof modelSchema>;
+
+// Parsed when this module loads, so a bad edit to catalog.json fails at startup and in CI, never at a call.
+export const modelCatalogSchema = z
+  .object({
+    /** Bumped on every change to the file. */
+    version: z.number().int().positive(),
+    /** The day the list prices were last checked against the providers. */
+    checkedAt: z.iso.date(),
+    models: z.array(modelSchema).min(1),
+  })
+  .refine(
+    (catalog) => new Set(catalog.models.map((model) => model.id)).size === catalog.models.length,
+    {
+      message: 'a Model is listed twice',
+    },
+  );
+
+const catalog = modelCatalogSchema.parse(catalogJson);
+
+export const MODEL_CATALOG: readonly Model[] = catalog.models;
+
+export const MODEL_CATALOG_VERSION = catalog.version;
 
 // `map` loses the tuple shape `z.enum` needs; the ids are still exactly the catalog's.
-export const MODEL_IDS = MODEL_CATALOG.map((model) => model.id) as [ModelId, ...ModelId[]];
+export const MODEL_IDS = MODEL_CATALOG.map((model) => model.id) as [string, ...string[]];
 
 export const modelIdSchema = z.enum(MODEL_IDS);
 
