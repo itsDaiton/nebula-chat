@@ -1,9 +1,9 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { GENERIC_ERROR_MESSAGE } from '@nebula-chat/errors';
 import { MODEL_IDS } from '@nebula-chat/contracts';
 import type { StreamChat } from '@worker/directReplies/runDirectReply';
 import { createDirectReplyProcessor } from '@worker/jobs/directReply';
-import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
+import { captureLogger, captureSpans, eventLines, LEVEL } from '@nebula-chat/otel/testing';
 import type { ReplyCache } from '@worker/directReplies/replyCache';
 import {
   brokenCache,
@@ -28,6 +28,9 @@ const payload = {
   messageId: MESSAGE_ID,
   streamId: STREAM_ID,
 };
+
+const spans = captureSpans();
+afterAll(() => spans.stop());
 
 let operations: string[];
 let db: ReturnType<typeof memoryStore>;
@@ -56,6 +59,7 @@ const run = (streamChat: StreamChat, data: unknown = payload) =>
 const streamed = () => redis.events.get(STREAM_ID) ?? [];
 
 beforeEach(() => {
+  spans.reset();
   operations = [];
   db = memoryStore();
   redis = memoryStream(operations);
@@ -530,5 +534,37 @@ describe('the Direct reply job', () => {
 
     expect(streamed().at(-1)).toEqual({ type: 'end' });
     expect(streamed().some((event) => event.type === 'error')).toBe(false);
+  });
+});
+
+describe('trace propagation', () => {
+  const TRACE_ID = '0af7651916cd43dd8448eb211c80319c';
+  const PARENT_ID = 'b7ad6b7169203331';
+  const traceparent = `00-${TRACE_ID}-${PARENT_ID}-01`;
+
+  it("runs the job as a child of the server's span, with the model call under it", async () => {
+    await run(scriptedModel(['ok']).streamChat, { ...payload, traceparent });
+
+    const [model, job] = spans.spans();
+    expect(job!.name).toBe('direct-replies process');
+    expect(job!.spanContext().traceId).toBe(TRACE_ID);
+    expect(job!.parentSpanContext?.spanId).toBe(PARENT_ID);
+    expect(model!.name).toBe('chat gpt-4o-mini');
+    expect(model!.spanContext().traceId).toBe(TRACE_ID);
+    expect(model!.parentSpanContext?.spanId).toBe(job!.spanContext().spanId);
+  });
+
+  it('starts a fresh root span for a job with no trace context', async () => {
+    await run(scriptedModel(['ok']).streamChat);
+
+    const job = spans.spans().find((span) => span.name === 'direct-replies process');
+    expect(job!.parentSpanContext).toBeUndefined();
+    expect(streamed().at(-1)).toEqual({ type: 'end' });
+  });
+
+  it("stamps the job's log lines with the trace id", async () => {
+    await run(scriptedModel(['ok']).streamChat, { ...payload, traceparent });
+
+    expect(eventLines(log.lines, 'chat.reply.completed')).toMatchObject([{ trace_id: TRACE_ID }]);
   });
 });

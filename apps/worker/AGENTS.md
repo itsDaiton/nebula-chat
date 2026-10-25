@@ -90,6 +90,10 @@ bound to every ID in its payload (`user.id`, `nebula.session.id`, `nebula.messag
 (`chat.reply.completed` for a Direct reply). A failure is logged once, by the runner that turns it into
 the stream's `error` event. Never log Message content, prompts, completions or Streaming tokens.
 
+A job continues the server's trace: the payload's `traceparent` (and `tracestate`) is extracted into a
+consumer span, the model call is a child span of it, and a job without trace context starts its own root.
+The server injects the context in `enqueueDirectReply`; the helpers live in `@nebula-chat/otel`.
+
 ---
 
 ## Testing

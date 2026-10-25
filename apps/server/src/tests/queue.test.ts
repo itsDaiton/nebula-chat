@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DIRECT_REPLY_QUEUE } from '@nebula-chat/contracts';
-import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
+import { captureLogger, captureSpans, eventLines, LEVEL } from '@nebula-chat/otel/testing';
 
 const bull = vi.hoisted(() => ({
   constructed: [] as { name: string; options: unknown }[],
@@ -23,6 +23,7 @@ vi.mock('@server/redis', () => ({
   redis: { dedicatedConnection: vi.fn(() => ({ dedicated: true })) },
 }));
 
+import { withSpan } from '@nebula-chat/otel';
 import { closeQueue, enqueueDirectReply, pingWorker } from '@server/queue';
 
 const job = {
@@ -32,10 +33,14 @@ const job = {
   streamId: '44444444-4444-4444-8444-444444444444',
 };
 
+const spans = captureSpans();
+afterAll(() => spans.stop());
+
 const fetchMock = vi.fn<typeof fetch>();
 
 beforeEach(() => {
   vi.clearAllMocks();
+  spans.reset();
   fetchMock.mockResolvedValue(new Response('{"status":"ok"}', { status: 200 }));
   vi.stubGlobal('fetch', fetchMock);
 });
@@ -55,7 +60,23 @@ describe('enqueueDirectReply', () => {
         options: expect.objectContaining({ connection: { dedicated: true } }),
       },
     ]);
-    expect(bull.add).toHaveBeenCalledWith('direct-reply', job);
+    expect(bull.add).toHaveBeenCalledWith('direct-reply', {
+      ...job,
+      traceparent: expect.stringMatching(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/),
+    });
+  });
+
+  it('carries the request trace in the payload, under a producer span', async () => {
+    await withSpan('http request', {}, () => enqueueDirectReply(job, captureLogger().logger));
+
+    const [publish, request] = spans.spans();
+    const { traceId, spanId } = publish!.spanContext();
+    expect(publish!.parentSpanContext?.spanId).toBe(request!.spanContext().spanId);
+    expect(bull.add).toHaveBeenCalledWith('direct-reply', {
+      ...job,
+      traceparent: `00-${traceId}-${spanId}-01`,
+    });
+    expect(traceId).toBe(request!.spanContext().traceId);
   });
 
   it('builds the queue once, on first use', async () => {

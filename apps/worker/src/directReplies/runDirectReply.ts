@@ -13,7 +13,7 @@ import type {
   HistoryMessage,
   ProviderType,
 } from '@nebula-chat/langchain';
-import { componentLogger, logEvent } from '@nebula-chat/otel';
+import { componentLogger, logEvent, SpanKind, withSpan } from '@nebula-chat/otel';
 import type { LogAttributes, Logger } from '@nebula-chat/otel';
 import { readCachedReply, replyCacheKey, writeCachedReply } from '@worker/directReplies/replyCache';
 import type { ReplyCache } from '@worker/directReplies/replyCache';
@@ -209,28 +209,42 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
     }
 
     stopWatching = watchForCancel(job.streamId, deps, cancel);
-    await deps.streamChat(
+    const modelProvider = provider;
+    const modelName = model;
+    await withSpan(
+      `chat ${modelName}`,
       {
-        provider,
-        apiKey,
-        model,
-        systemPrompt: DIRECT_REPLY_SYSTEM_PROMPT,
-        history,
-        userMessage: userMessage.content,
-        logger: componentLogger(logger, 'llm'),
-        signal: cancel.signal,
-      },
-      {
-        onToken: (token) => {
-          reply += token;
-          tokens.push(token);
-          enqueue({ type: 'token', token });
-        },
-        onUsage: (u) => {
-          usage = u;
-          enqueue({ type: 'usage', ...u });
+        kind: SpanKind.CLIENT,
+        attributes: {
+          'gen_ai.operation.name': 'chat',
+          'gen_ai.provider.name': modelProvider,
+          'gen_ai.request.model': modelName,
         },
       },
+      () =>
+        deps.streamChat(
+          {
+            provider: modelProvider,
+            apiKey,
+            model: modelName,
+            systemPrompt: DIRECT_REPLY_SYSTEM_PROMPT,
+            history,
+            userMessage: userMessage.content,
+            logger: componentLogger(logger, 'llm'),
+            signal: cancel.signal,
+          },
+          {
+            onToken: (token) => {
+              reply += token;
+              tokens.push(token);
+              enqueue({ type: 'token', token });
+            },
+            onUsage: (u) => {
+              usage = u;
+              enqueue({ type: 'usage', ...u });
+            },
+          },
+        ),
     );
     modelReturned = true;
     stopWatching();

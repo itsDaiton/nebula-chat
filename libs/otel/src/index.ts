@@ -38,3 +38,6 @@ export type { ShutdownOptions } from './shutdown';
 
 // Tracing
 export { initTelemetry, shutdownTelemetry } from './tracing';
+export { extractTraceContext, injectTraceContext, withSpan } from './propagation';
+export type { TraceCarrier } from './propagation';
+export { SpanKind } from '@opentelemetry/api';
