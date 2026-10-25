@@ -1,3 +1,4 @@
+import { findModel } from '@nebula-chat/contracts';
 import type { DirectReplyJob, ReplyStreamEvent } from '@nebula-chat/contracts';
 import {
   BadRequestError,
@@ -15,7 +16,6 @@ import type {
   ChatStreamConfig,
   HistoryMessage,
 } from '@worker/directReplies/streamChat';
-import { getProviderForModel } from '@worker/llm/modelRegistry';
 import type { ProviderType } from '@worker/llm/modelRegistry';
 import type { Prompts } from '@worker/llm/prompts';
 
@@ -158,11 +158,9 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
       .toReversed()
       .map(({ role, content }) => ({ role, content }));
 
-    try {
-      provider = getProviderForModel(model);
-    } catch {
-      throw new BadRequestError(`Unsupported model: ${model}`);
-    }
+    const catalogModel = findModel(model);
+    if (!catalogModel) throw new BadRequestError(`Unsupported model: ${model}`);
+    provider = catalogModel.provider;
     // A reply stopped while its job waited in the queue never reaches the model.
     if (await stream.isCancelled(job.streamId)) {
       cancel.abort();

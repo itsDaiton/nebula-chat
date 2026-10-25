@@ -43,7 +43,7 @@ script load through `dotenvx run` — single source of truth (see [Environment V
 (the only `process.env` reader), singletons (`db.ts`, `redis.ts`, `queue.ts`, `auth.ts`, `logger.ts`) and:
 
 - `modules/<name>/` — one 6-layer module each (below): `chat`, `stream`, `session`, `message`,
-  `profileImage`, `logLevel`. A module may add hooks (`*.hook.ts`) and helpers beside its layers.
+  `models`, `profileImage`, `logLevel`. A module may add hooks (`*.hook.ts`) and helpers beside its layers.
 - `plugins/` — Fastify plugins: request logging, `db`, `redis`, and `authGate` (mounts `/api/auth/*`,
   decorates `requireAuthentication` / `requireRegistered`).
 - `errors/` — the global error handler. `config/` — CORS, SSE headers, pagination. `utils/` — small shared helpers.
@@ -267,7 +267,9 @@ reply for the worker, and relays the reply stream (ADR-0014). The full sequence 
   (403 `MessageAllowanceReached` before anything is persisted) → `chatService.sendMessage`.
 - `sendMessage` holds the Message to **2 000** prompt tokens (413), persists it in a transaction, records the
   stream owner in Redis, enqueues IDs only (checked against `@nebula-chat/contracts`), and pings the worker's
-  `/health` unawaited. Context window and completion limits are the worker's.
+  `/health` unawaited. Limits and prices are in the model catalog in `@nebula-chat/contracts` (ADR-0030).
+- The catalog is served as `GET /api/models` (public, cached for an hour), and `modelIdSchema` derives from it,
+  so a Session can only be bound to a Model in the catalog (400 `Validation` otherwise).
 - `GET /api/streams/:streamId` checks the owner (another User's stream is a 404), hijacks the reply and
   relays the stream as SSE with `id` = the entry id, a `: keep-alive` comment per idle 15 s, ending after `end`.
 - `GET /api/chat/message-allowance` is a plain read that shares `getMessageAllowance` with the hook

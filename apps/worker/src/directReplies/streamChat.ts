@@ -1,10 +1,11 @@
 import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { findModel } from '@nebula-chat/contracts';
 import { logEvent } from '@nebula-chat/otel';
 import type { Logger } from '@nebula-chat/otel';
 import { llmConcurrencyLimiter } from '@worker/llm/concurrencyLimiter';
 import { countTokens } from '@worker/llm/countTokens';
 import { createLLM } from '@worker/llm/createLLM';
-import { DEFAULT_MODELS, MODEL_REGISTRY } from '@worker/llm/modelRegistry';
+import { DEFAULT_MODELS } from '@worker/llm/modelRegistry';
 import type { LLMConfig } from '@worker/llm/modelRegistry';
 import { getMessageContentText, packHistory } from '@worker/llm/packHistory';
 
@@ -49,12 +50,12 @@ export const streamChat = async (
     logEvent(logger, 'debug', 'llm.stream.started', genAi, `LLM stream started · ${resolvedModel}`);
   }
 
-  const registry = MODEL_REGISTRY[resolvedModel];
-  const reservedOutputTokens = registry
-    ? Math.max(registry.defaultMaxOutput, llmConfig.maxTokens ?? 0)
+  const catalogModel = findModel(resolvedModel);
+  const reservedOutputTokens = catalogModel
+    ? Math.max(catalogModel.maxOutput, llmConfig.maxTokens ?? 0)
     : 0;
-  const maxInputTokens = registry
-    ? registry.contextWindow - reservedOutputTokens
+  const maxInputTokens = catalogModel
+    ? catalogModel.contextWindow - reservedOutputTokens
     : DEFAULT_MAX_INPUT_TOKENS;
 
   const langchainHistory = history.map((message) => {

@@ -83,6 +83,8 @@ describe('OpenAPI document', () => {
       'Message',
       'MessageAllowance',
       'MeteredMessageAllowance',
+      'Model',
+      'ModelPrices',
       'ProfileImage',
       'ProfileImageSettings',
       'SentMessage',

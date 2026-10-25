@@ -62,8 +62,9 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
 - `directReplies/` — the Direct reply runner (load Session and history, model call, stream events, persist
   the assistant Message), the streamed model call (`streamChat.ts`), its Drizzle queries, and the response
   cache (`replyCache.ts`).
-- `llm/` — the model layer: providers and the model registry, token counting, `packHistory`, the
-  concurrency limiter, and the prompt loader.
+- `llm/` — the model layer: providers and their default Models, token counting, `packHistory`, the
+  concurrency limiter, and the prompt loader. A Model's provider, limits and prices come from the catalog
+  in `@nebula-chat/contracts` (ADR-0030), not from a registry here.
 - `resources/prompts/` — one static Markdown system prompt per file, no template variables: dynamic
   content goes in the human message. `llm/prompts.ts` reads them once at boot and a missing one fails
   boot; `build` copies the folder into `dist/`, since `tsc` does not.

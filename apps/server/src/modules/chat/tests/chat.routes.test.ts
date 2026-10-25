@@ -1,6 +1,7 @@
 import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { fromPartial } from '@total-typescript/shoehorn';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MODEL_IDS } from '@nebula-chat/contracts';
 import type { DirectReplyJob } from '@nebula-chat/contracts';
 import { env } from '@server/env';
 import { createTestApp } from '@server/test/app';
@@ -161,6 +162,15 @@ describe('POST /api/sessions/:sessionId/messages', () => {
       'gpt-4.1',
     );
   });
+
+  it.each(MODEL_IDS)(
+    'accepts %s, a Model in the catalog, as the Session’s Model',
+    async (model) => {
+      const res = await send({ ...validBody, model });
+
+      expect(res.statusCode).toBe(202);
+    },
+  );
 
   it("leaves the Session's Model alone when the caller picks the same one or none", async () => {
     await send({ ...validBody, model: 'gpt-4o-mini' });
