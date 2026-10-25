@@ -186,6 +186,9 @@ once, and nobody else does:
   `nebula.job.id`; it also carries `gen_ai.*` and `nebula.duration_ms`. A job
   whose payload breaks the contract writes `job.payload.rejected` instead.
 
+- **Model calls.** The ledger write is fail-open, like the cache: a Postgres failure while
+  recording a call is one `warn`, `model_call.record.failed`, with `err`, the Model and the call's
+  `nebula.outcome`, and the reply carries on.
 - **Reply streams** (the server). The relay hijacks its reply; a Redis failure
   mid-relay writes one `chat.stream.relay.failed` `error` line, a cancel request
   writes `chat.reply.cancel.requested` at `info`, and a failed

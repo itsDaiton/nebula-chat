@@ -1,14 +1,17 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { GENERIC_ERROR_MESSAGE } from '@nebula-chat/errors';
-import { MODEL_IDS } from '@nebula-chat/contracts';
+import { estimateCost, MODEL_IDS } from '@nebula-chat/contracts';
 import type { StreamChat } from '@worker/directReplies/runDirectReply';
 import { createDirectReplyProcessor } from '@worker/jobs/directReply';
 import { captureLogger, captureSpans, eventLines, LEVEL } from '@nebula-chat/otel/testing';
 import type { ReplyCache } from '@worker/directReplies/replyCache';
+import type { CallUsage, ModelCallLedger } from '@worker/modelCalls/recordModelCall';
 import {
   brokenCache,
+  brokenLedger,
   failingModel,
   memoryCache,
+  memoryLedger,
   memoryStore,
   memoryStream,
   scriptedModel,
@@ -37,16 +40,19 @@ let db: ReturnType<typeof memoryStore>;
 let redis: ReturnType<typeof memoryStream>;
 let log: ReturnType<typeof captureLogger>;
 let responses: ReturnType<typeof memoryCache>;
+let ledger: ReturnType<typeof memoryLedger>;
 
 const processorWith = (
   streamChat: StreamChat,
   apiKeys: { openai?: string; anthropic?: string } = { openai: 'sk-openai', anthropic: 'sk-ant' },
   cache: ReplyCache = responses.cache,
+  modelCalls: ModelCallLedger = ledger.ledger,
 ) =>
   createDirectReplyProcessor({
     store: db.store,
     stream: redis.stream,
     cache,
+    ledger: modelCalls,
     streamChat,
     prompts: { directReply: 'You are the Direct reply prompt.' },
     apiKeys,
@@ -66,6 +72,7 @@ beforeEach(() => {
   redis = memoryStream(operations);
   log = captureLogger();
   responses = memoryCache();
+  ledger = memoryLedger();
   const created = db.store.createAssistantMessage;
   db.store.createAssistantMessage = async (message) => {
     operations.push('persist');
@@ -526,6 +533,186 @@ describe('the Direct reply job', () => {
       expect(redis.events.size).toBe(0);
       expect(eventLines(log.lines, 'job.payload.rejected')).toMatchObject([
         { level: LEVEL.error, 'nebula.job.id': 'job-1' },
+      ]);
+    });
+  });
+
+  describe('its Model call ledger', () => {
+    const billed: CallUsage = {
+      inputTokens: 1_000,
+      cachedInputTokens: 200,
+      outputTokens: 500,
+      estimated: false,
+    };
+    const cost = estimateCost('gpt-4o-mini', billed);
+
+    it('records one Model call for a reply, with the provider-reported tokens and the cost at the catalog price', async () => {
+      await run(scriptedModel(['4'], undefined, billed).streamChat);
+
+      expect(ledger.calls).toEqual([
+        {
+          idempotencyKey: STREAM_ID,
+          userId: USER_ID,
+          sessionId: SESSION_ID,
+          provider: 'openai',
+          model: 'gpt-4o-mini',
+          inputTokens: 1_000,
+          cachedInputTokens: 200,
+          outputTokens: 500,
+          tokensEstimated: false,
+          costUsd: cost,
+          durationMs: expect.any(Number),
+          outcome: 'completed',
+          cached: false,
+        },
+      ]);
+      expect(cost).toBeGreaterThan(0);
+    });
+
+    it('prices the call for the Session’s own Model and provider', async () => {
+      db.sessions.set(SESSION_ID, {
+        id: SESSION_ID,
+        userId: USER_ID,
+        model: 'claude-3-5-haiku-20241022',
+      });
+
+      await run(scriptedModel(['4'], undefined, billed).streamChat);
+
+      expect(ledger.calls).toMatchObject([
+        {
+          provider: 'anthropic',
+          model: 'claude-3-5-haiku-20241022',
+          costUsd: estimateCost('claude-3-5-haiku-20241022', billed),
+        },
+      ]);
+    });
+
+    it('times the call from its start to its end', async () => {
+      await run(slowModel(['a', 'b', 'c'], undefined, billed).streamChat);
+
+      expect(ledger.calls[0]?.durationMs).toBeGreaterThanOrEqual(50);
+    });
+
+    it('flags a call whose counts are our estimate because the provider reported none', async () => {
+      const estimated: CallUsage = { ...billed, cachedInputTokens: 0, estimated: true };
+
+      await run(scriptedModel(['4'], undefined, estimated).streamChat);
+
+      expect(ledger.calls).toMatchObject([{ tokensEstimated: true, cachedInputTokens: 0 }]);
+    });
+
+    it('records a replayed Cache entry as a cached call that cost nothing', async () => {
+      await run(scriptedModel(['4'], undefined, billed).streamChat);
+      const replayId = '77777777-7777-4777-8777-777777777777';
+      const model = scriptedModel(['never used']);
+
+      await run(model.streamChat, { ...payload, streamId: replayId });
+
+      expect(model.calls).toHaveLength(0);
+      expect(ledger.calls).toHaveLength(2);
+      expect(ledger.calls[1]).toEqual({
+        idempotencyKey: replayId,
+        userId: USER_ID,
+        sessionId: SESSION_ID,
+        provider: 'openai',
+        model: 'gpt-4o-mini',
+        inputTokens: 0,
+        cachedInputTokens: 0,
+        outputTokens: 0,
+        tokensEstimated: false,
+        costUsd: 0,
+        durationMs: expect.any(Number),
+        outcome: 'completed',
+        cached: true,
+      });
+    });
+
+    it('records a failed reply with the outcome and the tokens the provider had billed', async () => {
+      await run(failingModel(new Error('upstream 529'), ['par'], billed));
+
+      expect(ledger.calls).toMatchObject([
+        { outcome: 'failed', inputTokens: 1_000, outputTokens: 500, costUsd: cost, cached: false },
+      ]);
+    });
+
+    it('records a failed reply with no reported tokens as a zero-cost call', async () => {
+      await run(failingModel(new Error('401 from the provider')));
+
+      expect(ledger.calls).toMatchObject([
+        {
+          outcome: 'failed',
+          inputTokens: 0,
+          cachedInputTokens: 0,
+          outputTokens: 0,
+          tokensEstimated: false,
+          costUsd: 0,
+        },
+      ]);
+    });
+
+    it('records a reply its User stopped as cancelled, with the tokens used so far', async () => {
+      const model = slowModel(['a', 'b', 'c'], () => redis.cancelled.add(STREAM_ID), billed);
+
+      await run(model.streamChat);
+
+      expect(ledger.calls).toMatchObject([
+        { outcome: 'cancelled', inputTokens: 1_000, outputTokens: 500, costUsd: cost },
+      ]);
+    });
+
+    it('records an empty completion as completed: the model answered, the reply is what failed', async () => {
+      await run(scriptedModel(['  '], undefined, billed).streamChat);
+
+      expect(streamed().at(-2)).toMatchObject({ type: 'error' });
+      expect(ledger.calls).toMatchObject([{ outcome: 'completed', costUsd: cost }]);
+    });
+
+    it('records nothing for a reply stopped while its job was queued', async () => {
+      redis.cancelled.add(STREAM_ID);
+
+      await run(scriptedModel(['4']).streamChat);
+
+      expect(ledger.calls).toEqual([]);
+    });
+
+    it('records nothing for a Session the User does not own', async () => {
+      db.sessions.clear();
+
+      await run(scriptedModel(['4']).streamChat);
+
+      expect(ledger.calls).toEqual([]);
+    });
+
+    it('records nothing when the provider key is missing, so no call was made', async () => {
+      await processorWith(scriptedModel(['4']).streamChat, {})({ id: 'job-1', data: payload });
+
+      expect(ledger.calls).toEqual([]);
+    });
+
+    it('does not record the same reply twice when its job runs again', async () => {
+      const model = scriptedModel(['4'], undefined, billed);
+      await run(model.streamChat);
+
+      await run(model.streamChat, { ...payload, regenerate: true });
+
+      expect(model.calls).toHaveLength(2);
+      expect(ledger.calls).toHaveLength(1);
+    });
+
+    it('still completes the reply, and warns, when the ledger cannot be written', async () => {
+      const processor = processorWith(
+        scriptedModel(['4'], undefined, billed).streamChat,
+        undefined,
+        undefined,
+        brokenLedger(),
+      );
+
+      await expect(processor({ id: 'job-1', data: payload })).resolves.toBeUndefined();
+
+      expect(streamed().at(-1)).toEqual({ type: 'end' });
+      expect(db.created).toHaveLength(1);
+      expect(eventLines(log.lines, 'model_call.record.failed')).toMatchObject([
+        { level: LEVEL.warn },
       ]);
     });
   });

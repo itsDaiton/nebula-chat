@@ -157,6 +157,8 @@ erDiagram
   users ||--o{ account : "authenticates through"
   users ||--o{ sessions : owns
   sessions ||--o{ messages : holds
+  users |o--o{ model_calls : "is billed for"
+  sessions |o--o{ model_calls : "is billed for"
 
   users {
     uuid id PK
@@ -199,9 +201,24 @@ erDiagram
     text content
     integer token_count
   }
+  model_calls {
+    uuid id PK
+    text idempotency_key UK
+    uuid user_id FK "nullable"
+    uuid session_id FK "nullable"
+    text model
+    integer input_tokens
+    integer cached_input_tokens
+    integer output_tokens
+    numeric cost_usd
+    text outcome "completed, failed or cancelled"
+    boolean cached
+  }
 ```
 
-- Every foreign key cascades on delete, so deleting a User removes their Sessions and Messages.
+- Every foreign key cascades on delete, so deleting a User removes their Sessions and Messages. The
+  exception is `model_calls`, an append-only ledger the worker writes for every model call and cache
+  replay (ADR-0030): its references are set null instead, so usage totals survive a Purge.
 - better-auth keeps live sign-ins and verification tokens in Redis (`secondaryStorage`), so the
   `session` and `verification` tables stay empty in practice.
 - An assistant Message's `id` is its reply stream's `streamId`, so one id names both.
@@ -255,6 +272,7 @@ sequenceDiagram
       W->>R: XADD stream:{streamId} token
     end
     W->>R: XADD usage
+    W->>PG: insert Model call (tokens, cost, outcome)
     W->>PG: insert assistant Message (id = streamId)
     W->>R: SET stream-ended:{streamId}, XADD end, then EXPIRE 1 h
   and Client reads it
@@ -293,6 +311,11 @@ sequenceDiagram
   stream, persists the Message as `cached` and never calls the model; a completed reply is captured
   after it ends. Cancelled and failed replies are never captured, `regenerate` in the job payload
   skips the lookup and overwrites the entry, and a failing Redis is a miss.
+- **Model call ledger.** Every model call the worker makes is recorded once in `model_calls`
+  (ADR-0030), keyed by the reply's `streamId` so a rerun of the same job adds nothing: the
+  provider-reported input, cached-input and output tokens (our own count, flagged, when it reports
+  none), the cost at the catalog price, the duration and the outcome. A failed or stopped reply is
+  recorded with the tokens used so far, and a Cache entry replay as a zero-cost `cached` call.
 
 ## The client
 

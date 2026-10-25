@@ -25,6 +25,7 @@ import { directReplyRepository } from '@worker/directReplies/directReplyReposito
 import { streamChat } from '@worker/directReplies/streamChat';
 import { createDirectReplyProcessor } from '@worker/jobs/directReply';
 import { loadPrompts } from '@worker/llm/prompts';
+import { modelCallRepository } from '@worker/modelCalls/modelCallRepository';
 import { redis } from '@worker/redis';
 
 const start = async (): Promise<void> => {
@@ -40,6 +41,7 @@ const start = async (): Promise<void> => {
         redis.flags.raise(streamEndedKey(streamId), REPLY_STREAM_RECORD_TTL_SECONDS),
     },
     cache: redis.cache,
+    ledger: modelCallRepository,
     streamChat,
     // A missing prompt fails boot here rather than the first reply that needs it.
     prompts: loadPrompts(),

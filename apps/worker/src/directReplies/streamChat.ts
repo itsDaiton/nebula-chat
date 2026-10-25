@@ -1,4 +1,10 @@
-import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import {
+  AIMessage,
+  HumanMessage,
+  mergeUsageMetadata,
+  SystemMessage,
+} from '@langchain/core/messages';
+import type { UsageMetadata } from '@langchain/core/messages';
 import { DEFAULT_MODELS, findModel } from '@nebula-chat/contracts';
 import { logEvent } from '@nebula-chat/otel';
 import type { Logger } from '@nebula-chat/otel';
@@ -7,6 +13,7 @@ import { countTokens } from '@worker/llm/countTokens';
 import { createLLM } from '@worker/llm/createLLM';
 import type { LLMConfig } from '@worker/llm/createLLM';
 import { getMessageContentText, packHistory } from '@worker/llm/packHistory';
+import type { CallUsage } from '@worker/modelCalls/recordModelCall';
 
 type HistoryRole = 'assistant' | 'user';
 
@@ -26,10 +33,37 @@ export type ChatStreamConfig = LLMConfig & {
 
 export type ChatStreamCallbacks = {
   onToken: (token: string) => void;
+  /** The reply stream's usage, counted by us. */
   onUsage: (usage: { promptTokens: number; completionTokens: number; totalTokens: number }) => void;
+  /** What the call used, for the ledger: once it ends, stopped or failed too, unless it never streamed. */
+  onCallUsage?: (usage: CallUsage) => void;
 };
 
 const DEFAULT_MAX_INPUT_TOKENS = 8_000;
+
+// A provider's input total includes the cached tokens; with nothing reported and nothing streamed,
+// nothing is known to have been billed.
+const toCallUsage = (
+  reported: UsageMetadata | undefined,
+  estimate: { promptTokens: number; completionTokens: number },
+): CallUsage | undefined => {
+  if (reported) {
+    const cached = reported.input_token_details?.cache_read ?? 0;
+    return {
+      inputTokens: reported.input_tokens - cached,
+      cachedInputTokens: cached,
+      outputTokens: reported.output_tokens,
+      estimated: false,
+    };
+  }
+  if (estimate.completionTokens === 0) return undefined;
+  return {
+    inputTokens: estimate.promptTokens,
+    cachedInputTokens: 0,
+    outputTokens: estimate.completionTokens,
+    estimated: true,
+  };
+};
 
 export const streamChat = async (
   config: ChatStreamConfig,
@@ -94,13 +128,22 @@ export const streamChat = async (
 
   try {
     await llmConcurrencyLimiter(async () => {
-      const stream = await llm.stream(messages, signal ? { signal } : {});
       let completionTokens = 0;
+      let reported: UsageMetadata | undefined;
 
-      for await (const chunk of stream) {
-        const token = chunk.text;
-        callbacks.onToken(token);
-        completionTokens += countTokens(token, resolvedModel);
+      try {
+        const stream = await llm.stream(messages, signal ? { signal } : {});
+        for await (const chunk of stream) {
+          const token = chunk.text;
+          callbacks.onToken(token);
+          completionTokens += countTokens(token, resolvedModel);
+          if (chunk.usage_metadata) {
+            reported = mergeUsageMetadata(reported, chunk.usage_metadata);
+          }
+        }
+      } finally {
+        const usage = toCallUsage(reported, { promptTokens, completionTokens });
+        if (usage) callbacks.onCallUsage?.(usage);
       }
 
       const totalTokens = promptTokens + completionTokens;

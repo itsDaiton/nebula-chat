@@ -12,6 +12,7 @@ export const LOG_EVENTS = [
   'chat.reply.cancel.requested',
   'chat.stream.relay.failed',
   'chat.stream.end.failed',
+  'model_call.record.failed',
   // Jobs (the worker, ADR-0013)
   'job.payload.rejected',
   'job.queue.failed',

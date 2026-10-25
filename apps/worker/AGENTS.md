@@ -65,6 +65,8 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
 - `llm/` — the model layer: provider clients, token counting, `packHistory`, the concurrency limiter, and
   the prompt loader. A Model's provider, limits, prices and each provider's default Model come from the
   catalog in `@nebula-chat/contracts` (ADR-0030); the worker keeps no registry of its own.
+- `modelCalls/` — the Model call ledger (ADR-0030): `recordModelCall.ts` is the only writer, so a Direct
+  reply and, later, a Step share one path; the Drizzle `ModelCallLedger` sits beside it.
 - `resources/prompts/` — one static Markdown system prompt per file, no template variables: dynamic
   content goes in the human message. `llm/prompts.ts` reads them once at boot and a missing one fails
   boot; `build` copies the folder into `dist/`, since `tsc` does not.
@@ -92,7 +94,8 @@ Same conventions as the server ([docs/logging.md](../../docs/logging.md)). A job
 bound to every ID in its payload (`user.id`, `nebula.session.id`, `nebula.message.id`,
 `nebula.reply.message.id`, `nebula.job.id`) and writes exactly one `info` line when it ends
 (`chat.reply.completed` for a Direct reply). A failure is logged once, by the runner that turns it into
-the stream's `error` event. Never log Message content, prompts, completions or Streaming tokens.
+the stream's `error` event. Every model call and every cache replay is also recorded once as a Model call,
+keyed by the reply's `streamId`; a failed write is a `warn`, never a failed reply. Never log Message content, prompts, completions or Streaming tokens.
 
 A job continues the server's trace: the payload's `traceparent` (and `tracestate`) is extracted into a
 consumer span, the model call is a child span of it, and a job without trace context starts its own root.
@@ -104,8 +107,8 @@ The server injects the context in `enqueueDirectReply`; the helpers live in `@ne
 
 The root [Testing](../../AGENTS.md#testing) rules apply. The worker's seam is the **job processor**:
 `jobs/tests/directReply.test.ts` calls `createDirectReplyProcessor` with a payload, a scripted fake
-model (`streamChat`), in-memory Session and Message storage, an in-memory response cache and an in-memory stream sink, then asserts
-on the emitted events, the persisted assistant Message and the logged lines. No test reaches Postgres,
+model (`streamChat`), in-memory Session and Message storage, an in-memory response cache, an in-memory Model call ledger and an in-memory stream sink, then asserts
+on the emitted events, the persisted assistant Message, the recorded Model calls and the logged lines. No test reaches Postgres,
 Redis or a provider.
 
 Coverage excludes construction-only files (`worker.ts`, `env.ts`, `logger.ts`, `db.ts`, `redis.ts`) and
