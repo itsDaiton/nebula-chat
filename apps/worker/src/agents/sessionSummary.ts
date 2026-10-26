@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { AgentDefinition } from '@worker/agents/agentDefinition';
+import type { AgentDefinition } from '@worker/runs/agentDefinition';
 import type { HistoryMessage } from '@worker/directReplies/streamChat';
 
 export const sessionSummary = {

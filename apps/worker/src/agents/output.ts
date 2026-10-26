@@ -1,4 +1,4 @@
-import type { AgentDefinition } from '@worker/agents/agentDefinition';
+import type { AgentDefinition } from '@worker/runs/agentDefinition';
 import type { Brief } from '@worker/runs/brief';
 
 export const output = {

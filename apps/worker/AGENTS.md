@@ -72,11 +72,11 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
   boot; `build` copies the folder into `dist/`, since `tsc` does not.
 - `runs/` — the Run (ADR-0033): the LangGraph graph and its nodes (`runGraph.ts`), the runner
   (`executeRun.ts`), Step persistence (`steps.ts`), the Brief, the mapping from the graph's stream to
-  reply stream events, the Postgres checkpointer (its own `langgraph` schema, set up at boot), and the
-  Run and Step repositories.
-- `agents/` — one file per Agent definition (Model, prompt, tool grants, parameters, and for an
-  Intake Agent its output schema and human-message builder), plus the registry. The Session's Model
-  never applies to an Agent.
+  reply stream events, the Postgres checkpointer (its own `langgraph` schema, set up at boot), the
+  `AgentDefinition` type and the Agent registry, and the Run and Step repositories.
+- `agents/` — the Agents only: one file each (Model, prompt, tool grants, parameters, and for an
+  Intake Agent its output schema and human-message builder). The Session's Model never applies to an
+  Agent.
 
 Folders later tickets add:
 

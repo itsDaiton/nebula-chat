@@ -1,4 +1,4 @@
-import type { AgentDefinition } from '@worker/agents/agentDefinition';
+import type { AgentDefinition } from '@worker/runs/agentDefinition';
 import { languageDetection } from '@worker/agents/languageDetection';
 import { output } from '@worker/agents/output';
 import { sessionSummary } from '@worker/agents/sessionSummary';

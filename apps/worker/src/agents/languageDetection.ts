@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { AgentDefinition } from '@worker/agents/agentDefinition';
+import type { AgentDefinition } from '@worker/runs/agentDefinition';
 
 export const languageDetection = {
   name: 'languageDetection',

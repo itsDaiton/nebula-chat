@@ -6,7 +6,7 @@ import type { StepPhase } from '@nebula-chat/db';
 import { toErrorEnvelope } from '@nebula-chat/errors';
 import type { ErrorEnvelope } from '@nebula-chat/errors';
 import type { Logger } from '@nebula-chat/otel';
-import type { AgentDefinition } from '@worker/agents/agentDefinition';
+import type { AgentDefinition } from '@worker/runs/agentDefinition';
 import { recordModelCall } from '@worker/modelCalls/recordModelCall';
 import type { CallUsage, ModelCallLedger } from '@worker/modelCalls/recordModelCall';
 
