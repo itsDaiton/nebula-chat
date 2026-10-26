@@ -1,5 +1,19 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "deniedMcpServers": [
+    { "serverName": "claude.ai Booking.com" },
+    { "serverName": "claude.ai Spotify" },
+    { "serverName": "claude.ai PubMed" },
+    { "serverName": "claude.ai Microsoft Learn" },
+    { "serverName": "claude.ai Excalidraw" },
+    { "serverName": "claude.ai Notion" },
+    { "serverName": "claude.ai Gmail" },
+    { "serverName": "claude.ai Google Calendar" },
+    { "serverName": "claude.ai Google Docs" },
+    { "serverName": "claude.ai Google Drive" },
+    { "serverName": "claude.ai Google Sheets" },
+    { "serverName": "claude.ai Google Slides" }
+  ],
   "hooks": {
     "PostToolUse": [
       {
