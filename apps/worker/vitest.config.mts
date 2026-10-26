@@ -16,7 +16,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text-summary', 'lcov'],
       include: ['src/**/*.ts'],
-      // Entry point, construction-only singletons and the Drizzle adapter, as in the server.
+      // Entry point, construction-only singletons and the Drizzle and checkpointer adapters, as in the server.
       // Mirrored into `matrix.coverage` in .github/workflows/build.yml. Change one, change the other.
       exclude: [
         'src/**/tests/**',
@@ -25,6 +25,7 @@ export default defineConfig({
         'src/logger.ts',
         'src/db.ts',
         'src/redis.ts',
+        'src/runs/checkpointer.ts',
         'src/**/*Repository.ts',
       ],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },

@@ -43,7 +43,7 @@ script load through `dotenvx run` — single source of truth (see [Environment V
 (the only `process.env` reader), singletons (`db.ts`, `redis.ts`, `queue.ts`, `auth.ts`, `logger.ts`) and:
 
 - `modules/<name>/` — one 6-layer module each (below): `chat`, `stream`, `session`, `message`,
-  `models`, `profileImage`, `logLevel`. A module may add hooks (`*.hook.ts`) and helpers beside its layers.
+  `models`, `profileImage`, `logLevel`, and `run` (only a repository so far: the send path creates Runs). A module may add hooks (`*.hook.ts`) and helpers beside its layers.
 - `plugins/` — Fastify plugins: request logging, `db`, `redis`, and `authGate` (mounts `/api/auth/*`,
   decorates `requireAuthentication` / `requireRegistered`).
 - `errors/` — the global error handler. `config/` — CORS, SSE headers, pagination. `utils/` — small shared helpers.

@@ -11,7 +11,7 @@ export const chatController = {
     const sent = await chatService.sendMessage(
       sessionId,
       req.body as SendMessageDTO,
-      user.id,
+      user,
       req.log,
     );
     return reply.status(202).send(sent);

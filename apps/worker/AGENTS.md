@@ -62,20 +62,24 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
 - `directReplies/` — the Direct reply runner (load Session and history, model call, stream events, persist
   the assistant Message), the streamed model call (`streamChat.ts`), its Drizzle queries, and the response
   cache (`replyCache.ts`).
-- `llm/` — the model layer: provider clients, token counting, `packHistory`, the concurrency limiter, and
-  the prompt loader. A Model's provider, limits, prices and each provider's default Model come from the
+- `llm/` — the model layer: provider clients, structured output, token counting, `packHistory`, the
+  concurrency limiter, and the prompt loader. A Model's provider, limits, prices and each provider's default Model come from the
   catalog in `@nebula-chat/contracts` (ADR-0030); the worker keeps no registry of its own.
 - `modelCalls/` — the Model call ledger (ADR-0030): `recordModelCall.ts` is the only writer, so a Direct
   reply and, later, a Step share one path; the Drizzle `ModelCallLedger` sits beside it.
 - `resources/prompts/` — one static Markdown system prompt per file, no template variables: dynamic
   content goes in the human message. `llm/prompts.ts` reads them once at boot and a missing one fails
   boot; `build` copies the folder into `dist/`, since `tsc` does not.
+- `runs/` — the Run (ADR-0033): the LangGraph graph and its nodes (`runGraph.ts`), the runner
+  (`executeRun.ts`), Step persistence (`steps.ts`), the Brief, the mapping from the graph's stream to
+  reply stream events, the Postgres checkpointer (its own `langgraph` schema, set up at boot), and the
+  Run and Step repositories.
+- `agents/` — one file per Agent definition (Model, prompt, tool grants, parameters, and for an
+  Intake Agent its output schema and human-message builder), plus the registry. The Session's Model
+  never applies to an Agent.
 
 Folders later tickets add:
 
-- `runs/`: the Run graph, its nodes, checkpointer, middleware, stream-event mapping, and the Run and Step
-  repositories.
-- `agents/`: one file per Agent definition, plus the registry.
 - `tools/`: one file per tool.
 
 ### Adding a job type
@@ -95,7 +99,8 @@ bound to every ID in its payload (`user.id`, `nebula.session.id`, `nebula.messag
 `nebula.reply.message.id`, `nebula.job.id`) and writes exactly one `info` line when it ends
 (`chat.reply.completed` for a Direct reply). A failure is logged once, by the runner that turns it into
 the stream's `error` event. Every model call and every cache replay is also recorded once as a Model call,
-keyed by the reply's `streamId`; a failed write is a `warn`, never a failed reply. Never log Message content, prompts, completions or Streaming tokens.
+keyed by the reply's `streamId` (a Step's id in a Run); a failed write is a `warn`, never a failed reply.
+A Run writes one `chat.run.completed`, plus a `warn` `chat.run.step.failed` for each Intake Agent that failed. Never log Message content, prompts, completions or Streaming tokens.
 
 A job continues the server's trace: the payload's `traceparent` (and `tracestate`) is extracted into a
 consumer span, the model call is a child span of it, and a job without trace context starts its own root.
@@ -108,8 +113,9 @@ The server injects the context in `enqueueDirectReply`; the helpers live in `@ne
 The root [Testing](../../AGENTS.md#testing) rules apply. The worker's seam is the **job processor**:
 `jobs/tests/directReply.test.ts` calls `createDirectReplyProcessor` with a payload, a scripted fake
 model (`streamChat`), in-memory Session and Message storage, an in-memory response cache, an in-memory Model call ledger and an in-memory stream sink, then asserts
-on the emitted events, the persisted assistant Message, the recorded Model calls and the logged lines. No test reaches Postgres,
-Redis or a provider.
+on the emitted events, the persisted assistant Message, the recorded Model calls and the logged lines.
+`jobs/tests/run.test.ts` does the same for a Run, with scripted models per Agent, LangGraph's
+in-memory checkpointer and in-memory Run and Step stores. No test reaches Postgres, Redis or a provider.
 
 Coverage excludes construction-only files (`worker.ts`, `env.ts`, `logger.ts`, `db.ts`, `redis.ts`) and
 the Drizzle repository, as in the server. The list lives in `vitest.config.mts` and `matrix.coverage` in
@@ -121,15 +127,15 @@ the Drizzle repository, as in the server. The list lives in `vitest.config.mts` 
 
 `.env` is loaded by the `dev` and `start` scripts through `dotenvx`, never by code ([ADR-0019](../../docs/adr/0019-dotenvx-loads-env-files-in-package-scripts.md)).
 
-| Variable                                                                                                  | Purpose                                                          |
-| --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `OPENAI_API_KEY`                                                                                          | OpenAI API key (set at least one of this or `ANTHROPIC_API_KEY`) |
-| `ANTHROPIC_API_KEY`                                                                                       | Anthropic API key (set at least one of this or `OPENAI_API_KEY`) |
-| `DATABASE_URL`                                                                                            | PostgreSQL connection string (the server's database)             |
-| `REDIS_URL`                                                                                               | Redis connection string (the server's Redis)                     |
-| `PORT`                                                                                                    | Port `/health` listens on (default `3001`)                       |
-| `WORKER_CONCURRENCY`                                                                                      | Direct replies one instance produces at once (default `5`)       |
-| `STREAM_TTL_SECONDS`                                                                                      | How long a reply stream outlives its end (default `3600`)        |
-| `LOG_LEVEL`                                                                                               | Log verbosity (default `info`)                                   |
-| `LOG_LEVEL_OVERRIDES`                                                                                     | Per-component levels, comma-separated `component=level`          |
-| `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_LOGS_EXPORTER`, `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`, `OTEL_LOG_LEVEL` | As in the server ([docs/logging.md](../../docs/logging.md))      |
+| Variable                                                                                                  | Purpose                                                                          |
+| --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `OPENAI_API_KEY`                                                                                          | OpenAI API key (set at least one of this or `ANTHROPIC_API_KEY`)                 |
+| `ANTHROPIC_API_KEY`                                                                                       | Anthropic API key (set at least one of this or `OPENAI_API_KEY`)                 |
+| `DATABASE_URL`                                                                                            | PostgreSQL connection string (the server's database)                             |
+| `REDIS_URL`                                                                                               | Redis connection string (the server's Redis)                                     |
+| `PORT`                                                                                                    | Port `/health` listens on (default `3001`)                                       |
+| `WORKER_CONCURRENCY`                                                                                      | Direct replies, and separately Runs, one instance produces at once (default `5`) |
+| `STREAM_TTL_SECONDS`                                                                                      | How long a reply stream outlives its end (default `3600`)                        |
+| `LOG_LEVEL`                                                                                               | Log verbosity (default `info`)                                                   |
+| `LOG_LEVEL_OVERRIDES`                                                                                     | Per-component levels, comma-separated `component=level`                          |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_LOGS_EXPORTER`, `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`, `OTEL_LOG_LEVEL` | As in the server ([docs/logging.md](../../docs/logging.md))                      |

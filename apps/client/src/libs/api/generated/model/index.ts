@@ -27,6 +27,7 @@ export * from './profileImageSettings';
 export * from './readReplyStreamParams';
 export * from './searchSessionsParams';
 export * from './sendMessageBody';
+export * from './sendMessageBodyMode';
 export * from './sendMessageBodyModel';
 export * from './sentMessage';
 export * from './session';

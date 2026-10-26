@@ -62,7 +62,7 @@ export type ReplyStreamWriter = {
 type EndEvent = Extract<ReplyStreamEvent, { type: 'end' }>;
 
 /** Appends the terminal event: marked ended first, so a Session read after `end` never re-attaches. */
-const endStream = async (
+export const endStream = async (
   streamId: string,
   end: EndEvent,
   stream: ReplyStreamWriter,

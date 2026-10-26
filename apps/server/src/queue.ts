@@ -1,6 +1,11 @@
 import { Queue } from 'bullmq';
-import { DIRECT_REPLY_QUEUE, directReplyJobSchema } from '@nebula-chat/contracts';
-import type { DirectReplyJob } from '@nebula-chat/contracts';
+import {
+  DIRECT_REPLY_QUEUE,
+  directReplyJobSchema,
+  RUN_QUEUE,
+  runJobSchema,
+} from '@nebula-chat/contracts';
+import type { DirectReplyJob, RunJob } from '@nebula-chat/contracts';
 import { injectTraceContext, logEvent, SpanKind, withSpan } from '@nebula-chat/otel';
 import type { EventLogger } from '@nebula-chat/otel';
 import { env } from '@server/env';
@@ -9,17 +14,37 @@ import { redis } from '@server/redis';
 // A cold start on Render's free plan takes up to a minute; the ping only has to start it.
 const WORKER_PING_TIMEOUT_MS = 90_000;
 
-let directReplies: Queue | undefined;
+const queues = new Map<string, Queue>();
 
 // Built on first use: BullMQ connects as soon as a Queue exists, and nothing that only
 // builds the app (the OpenAPI script, route tests) should open a Redis connection.
-const directReplyQueue = (): Queue => {
-  directReplies ??= new Queue(DIRECT_REPLY_QUEUE, {
-    connection: redis.dedicatedConnection(),
-    // Finished jobs are only bookkeeping: the reply is in Postgres and on its stream.
-    defaultJobOptions: { removeOnComplete: 1_000, removeOnFail: 1_000 },
-  });
-  return directReplies;
+const queue = (name: string): Queue => {
+  let existing = queues.get(name);
+  if (!existing) {
+    existing = new Queue(name, {
+      connection: redis.dedicatedConnection(),
+      // Finished jobs are only bookkeeping: the reply is in Postgres and on its stream.
+      defaultJobOptions: { removeOnComplete: 1_000, removeOnFail: 1_000 },
+    });
+    queues.set(name, existing);
+  }
+  return existing;
+};
+
+// The enqueue is a producer span whose context rides in the payload.
+const publish = async (name: string, jobName: string, payload: object): Promise<void> => {
+  await withSpan(
+    `${name} publish`,
+    {
+      kind: SpanKind.PRODUCER,
+      attributes: {
+        'messaging.system': 'bullmq',
+        'messaging.destination.name': name,
+        'messaging.operation.type': 'publish',
+      },
+    },
+    () => queue(name).add(jobName, { ...payload, ...injectTraceContext() }),
+  );
 };
 
 // Wakes a sleeping free-plan worker (ADR-0013). Never rejects: a failed ping is only logged,
@@ -41,27 +66,21 @@ export const pingWorker = async (logger: EventLogger<'warn'>): Promise<void> => 
   }
 };
 
-/** Puts a Direct reply on the queue (payload checked against the contract), then pings the worker; the enqueue is a producer span whose context rides in the payload. */
+/** Puts a Direct reply on the queue (payload checked against the contract), then pings the worker. */
 export const enqueueDirectReply = async (
   job: DirectReplyJob,
   logger: EventLogger<'warn'>,
 ): Promise<void> => {
-  const payload = directReplyJobSchema.parse(job);
-  await withSpan(
-    `${DIRECT_REPLY_QUEUE} publish`,
-    {
-      kind: SpanKind.PRODUCER,
-      attributes: {
-        'messaging.system': 'bullmq',
-        'messaging.destination.name': DIRECT_REPLY_QUEUE,
-        'messaging.operation.type': 'publish',
-      },
-    },
-    () => directReplyQueue().add('direct-reply', { ...payload, ...injectTraceContext() }),
-  );
+  await publish(DIRECT_REPLY_QUEUE, 'direct-reply', directReplyJobSchema.parse(job));
+  void pingWorker(logger);
+};
+
+/** Puts a Run on the queue (payload checked against the contract), then pings the worker. */
+export const enqueueRun = async (job: RunJob, logger: EventLogger<'warn'>): Promise<void> => {
+  await publish(RUN_QUEUE, 'run', runJobSchema.parse(job));
   void pingWorker(logger);
 };
 
 export const closeQueue = async (): Promise<void> => {
-  await directReplies?.close();
+  await Promise.all([...queues.values()].map((q) => q.close()));
 };
