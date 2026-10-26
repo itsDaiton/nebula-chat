@@ -30,6 +30,9 @@ const stepStartedEventSchema = z.object({
   agent: z.string().min(1),
   /** A short label for the UI; the Step's input and output stay in Postgres. */
   label: z.string().min(1),
+  // The Orchestrator turn the Step belongs to (0 outside the loop); a delegate's parent is its turn's Step.
+  turn: z.number().int().nonnegative(),
+  parentStepId: z.uuid().nullable(),
 });
 
 const stepFinishedEventSchema = z.object({

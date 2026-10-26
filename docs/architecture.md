@@ -362,24 +362,43 @@ flowchart LR
   start --> ss[session<br/>Intake Agent]
   ld --> brief[buildBrief]
   ss --> brief
-  brief --> out[output<br/>Output Agent]
+  brief --> orch[orchestrator<br/>createAgent loop]
+  orch -->|turn: parallel tool calls| dg[delegate Agents<br/>analyst, critic]
+  dg -->|tool results| orch
+  orch -->|handoff: findings| out[output<br/>Output Agent]
   out --> done((end))
 ```
 
-- **Steps.** Each Agent call is a Step, upserted under an id derived from the Run, phase and Agent,
-  with its full input and output, tokens and status. It is announced on the stream as
-  `step-started` (with its `attempt`) and `step-finished`, and its Model call is recorded under
-  the Step's id.
+- **Steps.** Each Agent call is a Step, upserted under an id derived from the Run, phase and Agent
+  (an Orchestrator turn's from its turn number, a delegate's from the Orchestrator's tool-call id),
+  with its turn, parent, full input and output, tokens and status. It is announced on the stream as
+  `step-started` (with its `attempt`, `turn` and `parentStepId`) and `step-finished`, and its Model
+  call is recorded under the Step's id. The tokens its Steps reported, failed ones included, are the Run's total.
 - **Intake.** The two Intake Agents, `language` and `session`, run in parallel on cheap Models and
   return structured output. One that fails leaves its part of the Brief missing, and the Run ends
   `partial`.
 - **Brief.** `buildBrief` merges their outputs into one JSON object keyed by Agent
   (`{ language, session, missing }`), stores it on the Run and passes that JSON down.
-- **Output.** The Output Agent is always the last node: the Orchestrator and its tools go between
-  the Brief and it. It reads the Brief as JSON and streams the answer in the Brief's language. Only
-  its tokens reach the stream. The answer is persisted as an assistant Message linked to the Run.
-- **End.** The Run ends `completed`, `partial` or `failed`, its checkpoints are deleted, and the
-  stream ends with `run-finished` and then `end`.
+- **Orchestrator.** A LangChain `createAgent` tool-calling loop on a strong Model, run nested in its
+  node. It opens with the Brief and the user's message; its only tools are the delegate Agents
+  (`analyst`, `critic`), each taking `{ task }` and answering with one plain model call, so a
+  delegate never delegates. Several calls in one turn run in parallel, up to
+  `RUN_PARALLEL_DELEGATES` per Run, and their results feed the next turn. It hands off by replying
+  without a tool call: that reply is its findings. Its middleware records each turn and delegate
+  as a Step, turns a delegate's error or timeout into an error tool result, and ends the loop at
+  `RUN_TURN_CAP` turns or once the Run's tokens pass `RUN_HANDOFF_THRESHOLD` of `RUN_TOKEN_BUDGET`.
+  A forced handoff passes the delegates' results so far as partial findings, and the Run ends
+  `partial`, as it does when any delegate Step failed.
+- **Output.** The Output Agent is always the last node. It reads the Brief as JSON and the
+  findings, and streams the answer in the Brief's language. Only its tokens reach the stream. The
+  answer is persisted as an assistant Message linked to the Run.
+- **Cancel.** The worker polls the stream's cancel flag for the whole Run, and checks it again at
+  the start of each Orchestrator turn, aborting the graph through an `AbortSignal` that reaches the
+  model call in flight. The finished Steps and the answer streamed so far are kept, the in-flight
+  Model calls are recorded `cancelled`, and the stream ends with `end` `{ reason: 'cancelled' }`. A
+  Run past `RUN_TIMEOUT_MS` is aborted the same way and fails.
+- **End.** The Run ends `completed`, `partial`, `failed` or `cancelled`, its checkpoints are
+  deleted, and the stream ends with `run-finished` and then `end`.
 
 ## The client
 
@@ -434,9 +453,6 @@ flowchart LR
 ## Known gaps
 
 What the diagrams above show but the system does not yet do well:
-
-- **A Run cannot be stopped yet.** Its stream accepts the cancel request, but the worker does not
-  read the flag during a Run, so it runs to its end.
 
 - **Runtime log levels reach the server only.** The worker listens on
   `log-level:nebula-chat-worker`, but `POST /api/internal/log-level` publishes to the server's

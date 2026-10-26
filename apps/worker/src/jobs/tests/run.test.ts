@@ -1,3 +1,4 @@
+import { ToolMessage } from '@langchain/core/messages';
 import { MemorySaver } from '@langchain/langgraph';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getModel } from '@nebula-chat/contracts';
@@ -5,8 +6,20 @@ import type { ReplyStreamEvent } from '@nebula-chat/contracts';
 import { captureLogger, captureSpans, eventLines, LEVEL } from '@nebula-chat/otel/testing';
 import { createRunProcessor } from '@worker/jobs/run';
 import { memoryLedger, memoryStream } from '@worker/jobs/tests/directReplyFakes';
-import { failingChat, memoryRuns, memorySteps, scriptedModels } from '@worker/jobs/tests/runFakes';
+import {
+  delegatingOnce,
+  failingChat,
+  memoryRuns,
+  memorySteps,
+  neverHandingOff,
+  orchestratorReply,
+  scriptedModels,
+} from '@worker/jobs/tests/runFakes';
+import type { OrchestratorScript } from '@worker/jobs/tests/runFakes';
+import type { RunDeps } from '@worker/runs/executeRun';
+import type { RunLimits } from '@worker/runs/orchestrator';
 import type { RunModels } from '@worker/runs/runGraph';
+import { stepIdFor } from '@worker/runs/steps';
 
 const USER_ID = '11111111-1111-4111-8111-111111111111';
 const SESSION_ID = '22222222-2222-4222-8222-222222222222';
@@ -31,7 +44,18 @@ const prompts = {
   directReply: 'Direct reply prompt',
   language: 'Language detection prompt',
   session: 'Session summary prompt',
+  orchestrator: 'Orchestrator prompt',
+  analyst: 'Analyst prompt',
+  critic: 'Critic prompt',
   output: 'Output prompt',
+};
+
+const LIMITS: RunLimits = {
+  turnCap: 6,
+  parallelDelegates: 4,
+  tokenBudget: 60_000,
+  handoffThreshold: 0.85,
+  delegateTimeoutMs: 60_000,
 };
 
 const spans = captureSpans();
@@ -44,7 +68,13 @@ let ledger: ReturnType<typeof memoryLedger>;
 let log: ReturnType<typeof captureLogger>;
 let checkpointer: MemorySaver;
 
-const run = (models: RunModels, data: unknown = payload) =>
+const run = (
+  models: RunModels,
+  data: unknown = payload,
+  overrides: Partial<Pick<RunDeps, 'stream' | 'runTimeoutMs' | 'cancelPollMs'>> & {
+    limits?: Partial<RunLimits>;
+  } = {},
+) =>
   createRunProcessor({
     runs: db.store,
     steps: stepRows.store,
@@ -55,6 +85,10 @@ const run = (models: RunModels, data: unknown = payload) =>
     prompts,
     apiKeys: { openai: 'sk-openai' },
     logger: log.logger,
+    runTimeoutMs: 60_000,
+    cancelPollMs: 10_000,
+    ...overrides,
+    limits: { ...LIMITS, ...overrides.limits },
   })({ id: 'job-1', data });
 
 const streamed = (): ReplyStreamEvent[] => redis.events.get(STREAM_ID) ?? [];
@@ -71,7 +105,13 @@ const checkpointsOf = async (threadId: string) => {
   return found;
 };
 
-const happyModels = () => scriptedModels({ language: DETECTED, session: SUMMARISED }, ANSWER);
+const INTAKE = { language: DETECTED, session: SUMMARISED };
+const happyModels = () => scriptedModels(INTAKE, ANSWER);
+const stepsIn = (phase: string) => steps().filter((step) => step.phase === phase);
+const outputHuman = (models: ReturnType<typeof scriptedModels>) =>
+  models.chatCalls[0]?.messages[1]?.text ?? '';
+const orchestratorTurns = (models: ReturnType<typeof scriptedModels>) =>
+  models.agentCalls.filter((c) => c.agent === 'orchestrator');
 
 beforeEach(() => {
   spans.reset();
@@ -116,8 +156,9 @@ describe('the Run job', () => {
 
     const events = streamed();
     const outputStart = events.findIndex((e) => e.type === 'step-started' && e.phase === 'output');
-    const intakeEvents = events.slice(0, outputStart);
-    expect(intakeEvents.filter((e) => e.type === 'step-finished')).toHaveLength(2);
+    const earlierEvents = events.slice(0, outputStart);
+    // Two Intake Steps, two Orchestrator turns and their two delegate Steps all finish first.
+    expect(earlierEvents.filter((e) => e.type === 'step-finished')).toHaveLength(6);
     expect(events.slice(outputStart + 1, outputStart + 4)).toEqual(
       ANSWER.map((token) => ({ type: 'token', token })),
     );
@@ -141,6 +182,8 @@ describe('the Run job', () => {
           phase: 'intake',
           agent: 'language',
           label: 'Detecting the language',
+          turn: 0,
+          parentStepId: null,
         },
         {
           type: 'step-started',
@@ -149,6 +192,8 @@ describe('the Run job', () => {
           phase: 'intake',
           agent: 'session',
           label: 'Summarising the Session',
+          turn: 0,
+          parentStepId: null,
         },
         {
           type: 'step-started',
@@ -157,10 +202,12 @@ describe('the Run job', () => {
           phase: 'output',
           agent: 'output',
           label: 'Writing the answer',
+          turn: 0,
+          parentStepId: null,
         },
       ]),
     );
-    expect(started).toHaveLength(3);
+    expect(started).toHaveLength(7);
   });
 
   it('never streams an Intake Agent’s model output as the answer', async () => {
@@ -170,10 +217,19 @@ describe('the Run job', () => {
     expect(tokens.map((e) => (e.type === 'token' ? e.token : ''))).toEqual(ANSWER);
   });
 
-  it('persists one completed Step per Intake Agent and one for the Output Agent, in full', async () => {
+  it('persists a completed Step per Intake Agent, Orchestrator turn, delegate and the Output Agent, in full', async () => {
     await run(happyModels().models);
 
-    expect(steps()).toHaveLength(3);
+    expect(steps().map((step) => step.phase)).toEqual([
+      'intake',
+      'intake',
+      'orchestrator',
+      'delegate',
+      'delegate',
+      'orchestrator',
+      'output',
+    ]);
+    expect(steps().every((step) => step.status === 'completed')).toBe(true);
     expect(stepNamed('language')).toMatchObject({
       runId: RUN_ID,
       phase: 'intake',
@@ -220,7 +276,7 @@ describe('the Run job', () => {
     });
   });
 
-  it('passes the Brief to the Output Agent as JSON, with the user’s message', async () => {
+  it('passes the Brief to the Output Agent as JSON, with the Orchestrator’s findings and the user’s message', async () => {
     const models = happyModels();
 
     await run(models.models);
@@ -235,6 +291,7 @@ describe('the Run job', () => {
       missing: [],
     });
     expect(human?.text).toContain('Kolik je dva plus dva?');
+    expect(human?.text).toContain('# Findings\n\nFindings: analyst result | critic result');
   });
 
   it('gives each Intake Agent its own prompt, the summary the history oldest first', async () => {
@@ -266,15 +323,14 @@ describe('the Run job', () => {
   it('records one Model call per model-calling Step, linked to its Run, Step and Agent', async () => {
     await run(happyModels().models);
 
-    expect(ledger.calls).toHaveLength(3);
-    for (const name of ['language', 'session', 'output']) {
-      const step = stepNamed(name);
+    expect(ledger.calls).toHaveLength(7);
+    for (const step of steps()) {
       expect(ledger.calls).toContainEqual(
         expect.objectContaining({
           idempotencyKey: step.id,
           runId: RUN_ID,
           stepId: step.id,
-          agent: name,
+          agent: step.name,
           userId: USER_ID,
           sessionId: SESSION_ID,
           outcome: 'completed',
@@ -352,10 +408,14 @@ describe('the Run job', () => {
   });
 
   describe('when the Output Agent fails', () => {
-    const failingOutput = (): RunModels => ({
-      ...happyModels().models,
-      chat: failingChat('provider down'),
-    });
+    const failingOutput = (): RunModels => {
+      const { models } = happyModels();
+      // Only the Output Agent streams, so only it fails.
+      return {
+        ...models,
+        chat: (config) => (config.streaming ? failingChat('provider down')() : models.chat(config)),
+      };
+    };
 
     it('ends the Run failed, with an error, the Run’s status and end on the stream', async () => {
       await run(failingOutput());
@@ -367,10 +427,11 @@ describe('the Run job', () => {
       expect(stepNamed('output').status).toBe('failed');
     });
 
-    it('still records what the Intake Steps used, and deletes the checkpoints', async () => {
+    it('still records what the finished Steps used, and deletes the checkpoints', async () => {
       await run(failingOutput());
 
-      expect(db.runs.get(RUN_ID)?.tokensUsed).toBe(100);
+      // Two Intake Steps at 50 tokens, two Orchestrator turns and two delegates at 120.
+      expect(db.runs.get(RUN_ID)?.tokensUsed).toBe(2 * 50 + 4 * 120);
       expect(await checkpointsOf(RUN_ID)).toEqual([]);
       expect(eventLines(log.lines, 'chat.run.completed')).toMatchObject([
         { level: LEVEL.error, 'nebula.outcome': 'failed' },
@@ -382,10 +443,10 @@ describe('the Run job', () => {
     await run(happyModels().models);
     await run(happyModels().models);
 
-    expect(steps()).toHaveLength(3);
+    expect(steps()).toHaveLength(7);
     expect(steps().every((step) => step.attempt === 2)).toBe(true);
     expect(stepEvents().filter((e) => e.type === 'step-started' && e.attempt === 2)).toHaveLength(
-      3,
+      7,
     );
   });
 
@@ -422,5 +483,287 @@ describe('the Run job', () => {
 
     expect(redis.events.size).toBe(0);
     expect(eventLines(log.lines, 'job.payload.rejected')).toMatchObject([{ level: LEVEL.error }]);
+  });
+
+  describe('the Orchestrator', () => {
+    it('calls several delegate Agents in one turn, and they run concurrently', async () => {
+      const models = happyModels();
+
+      await run(models.models);
+
+      expect(stepsIn('delegate').map((step) => [step.name, step.turn])).toEqual([
+        ['analyst', 1],
+        ['critic', 1],
+      ]);
+      expect(models.maxDelegatesInFlight()).toBe(2);
+    });
+
+    it('runs no more delegates at once than the per-turn cap', async () => {
+      const models = scriptedModels(INTAKE, ANSWER, {
+        orchestrator: delegatingOnce([
+          ['analyst', 'call_a'],
+          ['analyst', 'call_b'],
+          ['critic', 'call_c'],
+        ]),
+      });
+
+      await run(models.models, payload, { limits: { parallelDelegates: 2 } });
+
+      expect(stepsIn('delegate')).toHaveLength(3);
+      expect(models.maxDelegatesInFlight()).toBe(2);
+    });
+
+    it('feeds the results into the next turn, where it can delegate again', async () => {
+      const call = (name: string, id: string, task: string) =>
+        ({ name, id, args: { task }, type: 'tool_call' }) as const;
+      const reviewing: OrchestratorScript = (messages) => {
+        const results = messages.filter(ToolMessage.isInstance);
+        if (results.length === 0)
+          return orchestratorReply('', [call('analyst', 'call_1', 'Analyse')]);
+        if (results.length === 1) {
+          return orchestratorReply('', [call('critic', 'call_2', `Review: ${results[0]!.text}`)]);
+        }
+        return orchestratorReply('Both agreed.');
+      };
+      const models = scriptedModels(INTAKE, ANSWER, { orchestrator: reviewing });
+
+      await run(models.models);
+
+      const second = orchestratorTurns(models)[1]!.messages;
+      expect(second.filter(ToolMessage.isInstance).map((m) => m.text)).toEqual(['analyst result']);
+      const critic = models.agentCalls.find((c) => c.agent === 'critic')!;
+      expect(critic.messages[1]?.text).toBe('Review: analyst result');
+      expect(stepsIn('orchestrator').map((step) => step.turn)).toEqual([1, 2, 3]);
+      expect(outputHuman(models)).toContain('# Findings\n\nBoth agreed.');
+      expect(db.runs.get(RUN_ID)?.status).toBe('completed');
+    });
+
+    it('is given only the delegate Agents as tools, and gives the delegates none', async () => {
+      const models = happyModels();
+
+      await run(models.models);
+
+      for (const turn of orchestratorTurns(models)) {
+        expect(turn.tools).toEqual(['analyst', 'critic']);
+      }
+      const delegated = models.agentCalls.filter((c) => c.agent !== 'orchestrator');
+      expect(delegated).toHaveLength(2);
+      for (const call of delegated) {
+        expect(call.tools).toEqual([]);
+        expect(call.messages.map((m) => m.type)).toEqual(['system', 'human']);
+      }
+    });
+
+    it('opens with the Brief and the user’s message, under its own prompt', async () => {
+      const models = happyModels();
+
+      await run(models.models);
+
+      const [opening] = orchestratorTurns(models)[0]!.messages;
+      expect(opening?.text).toContain('"englishRestatement": "How much is two plus two?"');
+      expect(opening?.text).toContain('Kolik je dva plus dva?');
+      expect(stepsIn('orchestrator')[0]?.input).toMatchObject({
+        model: 'gpt-4.1',
+        system: 'Orchestrator prompt',
+      });
+    });
+
+    it('persists each turn and delegate execution with its turn and parent, a delegate under its tool-call id', async () => {
+      await run(happyModels().models);
+
+      const [first, second] = stepsIn('orchestrator');
+      expect(first).toMatchObject({ name: 'orchestrator', turn: 1, parentStepId: null });
+      expect(first?.output).toMatchObject({
+        toolCalls: [
+          expect.objectContaining({ id: 'call_analyst_1', name: 'analyst' }),
+          expect.objectContaining({ id: 'call_critic_1', name: 'critic' }),
+        ],
+      });
+      expect(second).toMatchObject({
+        turn: 2,
+        output: { content: expect.stringContaining('Findings') },
+      });
+      const analyst = stepNamed('analyst');
+      expect(analyst).toMatchObject({
+        id: stepIdFor(RUN_ID, 'delegate', 'call_analyst_1'),
+        turn: 1,
+        parentStepId: first!.id,
+        input: {
+          toolCallId: 'call_analyst_1',
+          task: 'Task for the analyst',
+          system: 'Analyst prompt',
+        },
+        output: { result: 'analyst result' },
+        tokens: 120,
+      });
+      expect(stepEvents()).toContainEqual({
+        type: 'step-started',
+        stepId: analyst.id,
+        attempt: 1,
+        phase: 'delegate',
+        agent: 'analyst',
+        label: 'Analysing',
+        turn: 1,
+        parentStepId: first!.id,
+      });
+    });
+
+    it('records each turn and delegate as a Model call with its usage, and adds them to the Run', async () => {
+      await run(happyModels().models);
+
+      const analyst = stepNamed('analyst');
+      expect(ledger.calls).toContainEqual(
+        expect.objectContaining({
+          stepId: analyst.id,
+          agent: 'analyst',
+          model: 'gpt-4.1-mini',
+          inputTokens: 100,
+          outputTokens: 20,
+          outcome: 'completed',
+        }),
+      );
+      expect(db.runs.get(RUN_ID)?.tokensUsed).toBe(2 * 50 + 4 * 120 + stepNamed('output').tokens!);
+    });
+
+    it('hands off at the turn cap, and the Run ends partial with its answer written', async () => {
+      const models = scriptedModels(INTAKE, ANSWER, { orchestrator: neverHandingOff });
+
+      await run(models.models, payload, { limits: { turnCap: 2 } });
+
+      expect(stepsIn('orchestrator')).toHaveLength(2);
+      expect(stepsIn('delegate')).toHaveLength(2);
+      expect(outputHuman(models)).toContain('because it ran out of turns');
+      expect(outputHuman(models)).toContain('## From the analyst Agent\n\nanalyst result');
+      expect(db.created).toHaveLength(1);
+      expect(db.runs.get(RUN_ID)?.status).toBe('partial');
+      expect(streamed().slice(-2)).toEqual([
+        { type: 'run-finished', runId: RUN_ID, status: 'partial' },
+        { type: 'end' },
+      ]);
+    });
+
+    it('hands off once the Run budget nears its threshold, launching no more delegates, and ends partial', async () => {
+      const models = scriptedModels(INTAKE, ANSWER, { orchestrator: neverHandingOff });
+
+      // Intake uses 100 and the first turn 120, past 85% of 200: its delegate is refused.
+      await run(models.models, payload, { limits: { tokenBudget: 200 } });
+
+      expect(stepsIn('orchestrator')).toHaveLength(1);
+      expect(stepsIn('delegate')).toEqual([]);
+      expect(outputHuman(models)).toContain('because the Run budget was nearly spent');
+      expect(db.created).toHaveLength(1);
+      expect(db.runs.get(RUN_ID)).toMatchObject({ status: 'partial', tokenBudget: 200 });
+    });
+
+    it('returns a failing delegate’s error to the Orchestrator as a tool result, carries on, and ends partial', async () => {
+      const models = scriptedModels(INTAKE, ANSWER, {
+        delegates: { critic: { reply: new Error('provider down') } },
+      });
+
+      await run(models.models);
+
+      expect(stepNamed('critic')).toMatchObject({ status: 'failed', error: { error: 'Internal' } });
+      const results = orchestratorTurns(models)[1]!.messages.filter(ToolMessage.isInstance);
+      expect(results.map((m) => [m.status, m.text])).toEqual([
+        ['success', 'analyst result'],
+        ['error', 'The critic Agent failed and returned no result.'],
+      ]);
+      expect(ledger.calls).toContainEqual(
+        expect.objectContaining({ agent: 'critic', outcome: 'failed' }),
+      );
+      expect(eventLines(log.lines, 'chat.run.step.failed')).toMatchObject([
+        { level: LEVEL.warn, 'nebula.agent.name': 'critic' },
+      ]);
+      expect(db.created).toHaveLength(1);
+      expect(db.runs.get(RUN_ID)?.status).toBe('partial');
+    });
+
+    it('times a slow delegate out into an error tool result', async () => {
+      const models = scriptedModels(INTAKE, ANSWER, {
+        delegates: { analyst: { reply: 'too late', delayMs: 1_000 } },
+      });
+
+      await run(models.models, payload, { limits: { delegateTimeoutMs: 20 } });
+
+      expect(stepNamed('analyst').status).toBe('failed');
+      const results = orchestratorTurns(models)[1]!.messages.filter(ToolMessage.isInstance);
+      expect(results[0]?.text).toBe('The analyst Agent timed out and returned no result.');
+      expect(db.created).toHaveLength(1);
+      expect(db.runs.get(RUN_ID)?.status).toBe('partial');
+    });
+  });
+
+  describe('when its User stops it', () => {
+    // A stream that raises the cancel flag once `when` sees the event, as the server would on a stop.
+    const stoppingStream = (when: (event: ReplyStreamEvent) => boolean) => ({
+      ...redis.stream,
+      append: async (streamId: string, event: ReplyStreamEvent) => {
+        if (when(event)) redis.cancelled.add(STREAM_ID);
+        await redis.stream.append(streamId, event);
+      },
+    });
+
+    it('stops between Orchestrator turns, keeping the finished Steps, and ends cancelled', async () => {
+      const models = happyModels();
+
+      await run(models.models, payload, {
+        stream: stoppingStream((e) => e.type === 'step-started' && e.phase === 'delegate'),
+      });
+
+      expect(orchestratorTurns(models)).toHaveLength(1);
+      expect(steps().map((step) => [step.phase, step.status])).toEqual([
+        ['intake', 'completed'],
+        ['intake', 'completed'],
+        ['orchestrator', 'completed'],
+        ['delegate', 'completed'],
+        ['delegate', 'completed'],
+      ]);
+      expect(db.runs.get(RUN_ID)).toMatchObject({
+        status: 'cancelled',
+        tokensUsed: 2 * 50 + 3 * 120,
+      });
+      expect(db.created).toEqual([]);
+      expect(streamed().slice(-2)).toEqual([
+        { type: 'run-finished', runId: RUN_ID, status: 'cancelled' },
+        { type: 'end', reason: 'cancelled' },
+      ]);
+      expect(await checkpointsOf(RUN_ID)).toEqual([]);
+      expect(eventLines(log.lines, 'chat.run.completed')).toMatchObject([
+        { level: LEVEL.info, 'nebula.outcome': 'cancelled' },
+      ]);
+    });
+
+    it('aborts the Output Agent mid-stream and keeps the answer so far', async () => {
+      const models = scriptedModels(INTAKE, ANSWER, { outputSleepMs: 50 });
+
+      await run(models.models, payload, {
+        stream: stoppingStream((e) => e.type === 'token'),
+        cancelPollMs: 5,
+      });
+
+      const kept = db.created[0]?.content ?? '';
+      expect(kept.length).toBeGreaterThan(0);
+      expect(kept.length).toBeLessThan(ANSWER.join('').length);
+      expect(ANSWER.join('').startsWith(kept)).toBe(true);
+      expect(db.runs.get(RUN_ID)?.status).toBe('cancelled');
+      expect(stepNamed('output')).toMatchObject({ status: 'failed', tokens: expect.any(Number) });
+      // The stopped Output Step's tokens count too.
+      expect(db.runs.get(RUN_ID)?.tokensUsed).toBe(2 * 50 + 4 * 120 + stepNamed('output').tokens!);
+      expect(ledger.calls).toContainEqual(
+        expect.objectContaining({ agent: 'output', outcome: 'cancelled' }),
+      );
+      expect(streamed().at(-1)).toEqual({ type: 'end', reason: 'cancelled' });
+    });
+  });
+
+  it('fails a Run that outlives its timeout', async () => {
+    const models = scriptedModels(INTAKE, ANSWER, {
+      delegates: { analyst: { reply: 'slow', delayMs: 1_000 } },
+    });
+
+    await run(models.models, payload, { runTimeoutMs: 30 });
+
+    expect(db.runs.get(RUN_ID)?.status).toBe('failed');
+    expect(types().slice(-3)).toEqual(['error', 'run-finished', 'end']);
   });
 });

@@ -23,6 +23,18 @@ const events: ReplyStreamEvent[] = [
     phase: 'intake',
     agent: 'language',
     label: 'Detecting the language',
+    turn: 0,
+    parentStepId: null,
+  },
+  {
+    type: 'step-started',
+    stepId: '33333333-3333-4333-8333-333333333333',
+    attempt: 1,
+    phase: 'delegate',
+    agent: 'analyst',
+    label: 'Analysing',
+    turn: 2,
+    parentStepId: '44444444-4444-4444-8444-444444444444',
   },
   { type: 'step-finished', stepId: '11111111-1111-4111-8111-111111111111', status: 'failed' },
   { type: 'run-finished', runId: '22222222-2222-4222-8222-222222222222', status: 'partial' },
@@ -58,6 +70,21 @@ describe('reply stream events', () => {
       phase: 'output',
       agent: 'output',
       label: 'Writing the answer',
+      turn: 0,
+      parentStepId: null,
+    };
+    expect(parseReplyStreamEvent(JSON.stringify(event))).toBeNull();
+  });
+
+  it('reads a step-started event without its turn as no event', () => {
+    const event = {
+      type: 'step-started',
+      stepId: '11111111-1111-4111-8111-111111111111',
+      attempt: 1,
+      phase: 'orchestrator',
+      agent: 'orchestrator',
+      label: 'Planning',
+      parentStepId: null,
     };
     expect(parseReplyStreamEvent(JSON.stringify(event))).toBeNull();
   });

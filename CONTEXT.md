@@ -143,6 +143,14 @@ _Avoid_: Context, aggregated output, concatenation.
 The Agent that directs a Run: working from the Brief, it decides which other Agents to delegate to, turn by turn, until it hands its findings to the Output Agent. The only Agent allowed to delegate or to ask a Clarifying question; it calls no tools itself.
 _Avoid_: Planner, main model, router.
 
+**Delegate Agent**:
+An Agent the Orchestrator hands one self-contained task to, as one of its tools (e.g. `analyst`, `critic`). It sees only that task, never the Brief or the conversation, and can never delegate in turn. One that fails or times out is reported back to the Orchestrator, and the Run ends `partial`.
+_Avoid_: Sub-agent, worker, helper, tool (it is exposed as one, but it is an Agent).
+
+**Findings**:
+What the Orchestrator hands the Output Agent: its own reply when it hands off, or, when a limit forces the handoff, its Delegate Agents' results so far, marked partial.
+_Avoid_: Plan, summary, draft answer.
+
 **Clarifying question**:
 The one question an Orchestrator may put to the user during a Run, asked as an assistant Message; the user's next Message in that Session is the answer. Left unanswered, the Run carries on without it and ends `partial`; it is cancelled instead if its Session is Archived or its owner can no longer act.
 _Avoid_: Interrupt, pause, follow-up question, prompt.

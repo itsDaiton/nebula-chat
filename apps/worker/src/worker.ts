@@ -71,6 +71,14 @@ const start = async (): Promise<void> => {
     prompts,
     apiKeys,
     logger,
+    limits: {
+      turnCap: env.RUN_TURN_CAP,
+      parallelDelegates: env.RUN_PARALLEL_DELEGATES,
+      tokenBudget: env.RUN_TOKEN_BUDGET,
+      handoffThreshold: env.RUN_HANDOFF_THRESHOLD,
+      delegateTimeoutMs: env.RUN_DELEGATE_TIMEOUT_MS,
+    },
+    runTimeoutMs: env.RUN_TIMEOUT_MS,
   });
 
   // BullMQ blocks on its connection, so it gets a dedicated one (maxRetriesPerRequest: null).
@@ -80,7 +88,7 @@ const start = async (): Promise<void> => {
   });
   const runs = new Worker(RUN_QUEUE, processRun, {
     connection: redis.dedicatedConnection(),
-    concurrency: env.WORKER_CONCURRENCY,
+    concurrency: env.RUN_CONCURRENCY,
   });
   for (const [queue, name] of [
     [directReplies, 'Direct reply'],

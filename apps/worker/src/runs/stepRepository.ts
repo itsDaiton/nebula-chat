@@ -5,10 +5,10 @@ import type { StepStore } from '@worker/runs/steps';
 
 /** The Postgres `StepStore`: a Step started again is a re-run, so its row is reset and its attempt goes up. */
 export const stepRepository: StepStore = {
-  async start({ id, runId, phase, name, input }) {
+  async start({ id, runId, phase, name, turn, parentStepId, input }) {
     const [row] = await db
       .insert(steps)
-      .values({ id, runId, phase, name, input })
+      .values({ id, runId, phase, name, turn, parentStepId, input })
       .onConflictDoUpdate({
         target: steps.id,
         set: {

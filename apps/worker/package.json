@@ -26,6 +26,7 @@
     "@nebula-chat/redis": "workspace:*",
     "bullmq": "catalog:",
     "drizzle-orm": "catalog:",
+    "langchain": "^1.5.18",
     "p-limit": "^7.3.3",
     "tiktoken": "catalog:",
     "zod": "catalog:"

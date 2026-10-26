@@ -35,9 +35,10 @@ decided to build Runs on it.
    schema that it creates and migrates itself, outside Drizzle. The thread is the Run (`thread_id`
    is the Run ID), never the Session. Checkpoints are resume state, not storage: they are deleted
    when the Run reaches an end state. The `steps` table stays the durable record — inspection, the
-   Model call ledger and the Run budget — and is written idempotently. A delegate Step's ID is the
-   Orchestrator's tool-call ID, which the checkpoint keeps stable across a resume. This supersedes
-   ADR-0016 §3.
+   Model call ledger and the Run budget — and is written idempotently. A delegate Step's ID is
+   derived from the Orchestrator's tool-call ID (a UUID hashed from the Run and that ID, because
+   `steps.id` is a UUID and providers' tool-call IDs are not), with the raw tool-call ID kept in the
+   Step's input; the checkpoint keeps it stable across a resume. This supersedes ADR-0016 §3.
 5. **A re-run node streams again.** On resume, the node in flight re-runs from its start, so its Step emits `step-started` again with a higher `attempt`, and the client discards what it rendered for that Step.
 6. **The Orchestrator may ask one Clarifying question per Run** (see `CONTEXT.md`), through a
    LangGraph interrupt. The question and the answer are Messages. While `waiting`, the Run holds no
