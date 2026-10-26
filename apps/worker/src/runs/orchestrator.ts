@@ -58,6 +58,7 @@ export const createOrchestrator = (deps: OrchestratorDeps) => {
   // Bounds the delegates in flight at once, whatever one turn asks for.
   const delegateSlots = pLimit(limits.parallelDelegates);
   let ending: LoopEnding = 'handoff';
+  const failedDelegates: string[] = [];
 
   const runControl = createMiddleware({
     name: 'RunControl',
@@ -157,6 +158,7 @@ export const createOrchestrator = (deps: OrchestratorDeps) => {
       } catch (err) {
         // A stopped Run stops here too; any other failure is the Orchestrator's to work around.
         if (request.runtime.signal?.aborted) throw err;
+        failedDelegates.push(delegate.name);
         const outcome =
           err instanceof Error && err.name === 'TimeoutError' ? 'timed out' : 'failed';
         logEvent(
@@ -180,5 +182,10 @@ export const createOrchestrator = (deps: OrchestratorDeps) => {
     middleware: [runControl],
   });
 
-  return { loop, recursionLimit: recursionLimitFor(limits.turnCap), ending: () => ending };
+  return {
+    loop,
+    recursionLimit: recursionLimitFor(limits.turnCap),
+    ending: () => ending,
+    failedDelegates: () => failedDelegates,
+  };
 };

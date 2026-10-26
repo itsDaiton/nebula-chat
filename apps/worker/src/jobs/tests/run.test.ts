@@ -655,7 +655,7 @@ describe('the Run job', () => {
       expect(db.runs.get(RUN_ID)).toMatchObject({ status: 'partial', tokenBudget: 200 });
     });
 
-    it('returns a failing delegate’s error to the Orchestrator as a tool result, and carries on', async () => {
+    it('returns a failing delegate’s error to the Orchestrator as a tool result, carries on, and ends partial', async () => {
       const models = scriptedModels(INTAKE, ANSWER, {
         delegates: { critic: { reply: new Error('provider down') } },
       });
@@ -674,7 +674,8 @@ describe('the Run job', () => {
       expect(eventLines(log.lines, 'chat.run.step.failed')).toMatchObject([
         { level: LEVEL.warn, 'nebula.agent.name': 'critic' },
       ]);
-      expect(db.runs.get(RUN_ID)?.status).toBe('completed');
+      expect(db.created).toHaveLength(1);
+      expect(db.runs.get(RUN_ID)?.status).toBe('partial');
     });
 
     it('times a slow delegate out into an error tool result', async () => {
@@ -688,6 +689,7 @@ describe('the Run job', () => {
       const results = orchestratorTurns(models)[1]!.messages.filter(ToolMessage.isInstance);
       expect(results[0]?.text).toBe('The analyst Agent timed out and returned no result.');
       expect(db.created).toHaveLength(1);
+      expect(db.runs.get(RUN_ID)?.status).toBe('partial');
     });
   });
 

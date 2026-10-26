@@ -388,7 +388,7 @@ flowchart LR
   as a Step, turns a delegate's error or timeout into an error tool result, and ends the loop at
   `RUN_TURN_CAP` turns or once the Run's tokens pass `RUN_HANDOFF_THRESHOLD` of `RUN_TOKEN_BUDGET`.
   A forced handoff passes the delegates' results so far as partial findings, and the Run ends
-  `partial`.
+  `partial`, as it does when any delegate Step failed.
 - **Output.** The Output Agent is always the last node. It reads the Brief as JSON and the
   findings, and streams the answer in the Brief's language. Only its tokens reach the stream. The
   answer is persisted as an assistant Message linked to the Run.

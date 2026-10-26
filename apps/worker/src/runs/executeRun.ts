@@ -130,11 +130,14 @@ export const executeRun = async (job: RunJob, deps: RunDeps): Promise<void> => {
       answer: string;
       missing: string[];
       ending: LoopEnding | null;
+      failedDelegates: string[];
     };
     const tokensUsed = tally.tokens;
     // A forced handoff still answers, from partial findings.
     const status: RunEndStatus =
-      state.missing.length > 0 || state.ending !== 'handoff' ? 'partial' : 'completed';
+      state.missing.length > 0 || state.failedDelegates.length > 0 || state.ending !== 'handoff'
+        ? 'partial'
+        : 'completed';
 
     await runs.createAssistantMessage({
       id: job.streamId,

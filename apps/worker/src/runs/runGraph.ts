@@ -55,6 +55,8 @@ const RunState = Annotation.Root({
   brief: Annotation<Brief | null>({ reducer: (_, next) => next, default: () => null }),
   // How the Orchestrator's loop ended: anything but its own handoff ends the Run `partial`.
   ending: Annotation<LoopEnding | null>({ reducer: (_, next) => next, default: () => null }),
+  // The delegate Agents whose Step failed: the Orchestrator carried on, but the Run ends `partial`.
+  failedDelegates: Annotation<string[]>({ reducer: (_, next) => next, default: () => [] }),
   answer: Annotation<string>({ reducer: (_, next) => next, default: () => '' }),
 });
 
@@ -150,7 +152,11 @@ const orchestratorNode =
       { messages: [new HumanMessage(orchestratorInput(brief, deps.message))] },
       { ...config, recursionLimit: orchestrator.recursionLimit },
     );
-    return { messages: result.messages, ending: orchestrator.ending() };
+    return {
+      messages: result.messages,
+      ending: orchestrator.ending(),
+      failedDelegates: orchestrator.failedDelegates(),
+    };
   };
 
 // Intake fans out and in to the Brief, the Orchestrator delegates turn by turn, the Output Agent answers.
