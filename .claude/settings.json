@@ -1,23 +1,18 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "allowedMcpServers": [
-    { "serverName": "shadcn" },
-    { "serverName": "better-auth" },
-    { "serverName": "context7" },
-    { "serverName": "langchain-docs" },
-    { "serverName": "playwright" },
-    { "serverName": "redis-local" },
-    { "serverName": "github" },
-    { "serverName": "claude-code-remote" },
-    { "serverName": "ccd_session" },
-    { "serverName": "Claude_Docs" },
-    { "serverName": "Firecrawl" },
-    { "serverName": "Grafana_Cloud" },
-    { "serverName": "Supabase" },
-    { "serverName": "Render" },
-    { "serverUrl": "https://mcp.grafana.com/mcp" },
-    { "serverUrl": "https://mcp.supabase.com/mcp" },
-    { "serverUrl": "https://mcp.render.com/mcp" }
+  "deniedMcpServers": [
+    { "serverName": "claude.ai Booking.com" },
+    { "serverName": "claude.ai Spotify" },
+    { "serverName": "claude.ai PubMed" },
+    { "serverName": "claude.ai Microsoft Learn" },
+    { "serverName": "claude.ai Excalidraw" },
+    { "serverName": "claude.ai Notion" },
+    { "serverName": "claude.ai Gmail" },
+    { "serverName": "claude.ai Google Calendar" },
+    { "serverName": "claude.ai Google Docs" },
+    { "serverName": "claude.ai Google Drive" },
+    { "serverName": "claude.ai Google Sheets" },
+    { "serverName": "claude.ai Google Slides" }
   ],
   "hooks": {
     "PostToolUse": [
