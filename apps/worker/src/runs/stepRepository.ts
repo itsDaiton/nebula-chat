@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { steps } from '@nebula-chat/db';
 import { db } from '@worker/db';
 import type { StepStore } from '@worker/runs/steps';
@@ -24,6 +24,13 @@ export const stepRepository: StepStore = {
       })
       .returning({ attempt: steps.attempt });
     return row!.attempt;
+  },
+  async completedTokens(runId) {
+    const [row] = await db
+      .select({ total: sql<number>`coalesce(sum(${steps.tokens}), 0)::int` })
+      .from(steps)
+      .where(and(eq(steps.runId, runId), eq(steps.status, 'completed')));
+    return row?.total ?? 0;
   },
   async finish(stepId, result) {
     await db

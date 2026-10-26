@@ -16,10 +16,11 @@ import {
   scriptedModels,
 } from '@worker/jobs/tests/runFakes';
 import type { OrchestratorScript } from '@worker/jobs/tests/runFakes';
-import type { RunDeps } from '@worker/runs/executeRun';
+import type { RunDeps, RunStore } from '@worker/runs/executeRun';
 import type { RunLimits } from '@worker/runs/orchestrator';
 import type { RunModels } from '@worker/runs/runGraph';
 import { stepIdFor } from '@worker/runs/steps';
+import type { StepStore } from '@worker/runs/steps';
 
 const USER_ID = '11111111-1111-4111-8111-111111111111';
 const SESSION_ID = '22222222-2222-4222-8222-222222222222';
@@ -71,8 +72,13 @@ let checkpointer: MemorySaver;
 const run = (
   models: RunModels,
   data: unknown = payload,
-  overrides: Partial<Pick<RunDeps, 'stream' | 'runTimeoutMs' | 'cancelPollMs'>> & {
+  overrides: Partial<
+    Pick<RunDeps, 'stream' | 'runTimeoutMs' | 'cancelPollMs' | 'steps' | 'runs'>
+  > & {
     limits?: Partial<RunLimits>;
+    /** BullMQ's view of the job: tries made before this one, and how many it gets in all. */
+    attemptsMade?: number;
+    attempts?: number;
   } = {},
 ) =>
   createRunProcessor({
@@ -89,7 +95,12 @@ const run = (
     cancelPollMs: 10_000,
     ...overrides,
     limits: { ...LIMITS, ...overrides.limits },
-  })({ id: 'job-1', data });
+  })({
+    id: 'job-1',
+    data,
+    attemptsMade: overrides.attemptsMade ?? 0,
+    opts: { attempts: overrides.attempts ?? 1 },
+  });
 
 const streamed = (): ReplyStreamEvent[] => redis.events.get(STREAM_ID) ?? [];
 const types = () => streamed().map((event) => event.type);
@@ -113,7 +124,7 @@ const outputHuman = (models: ReturnType<typeof scriptedModels>) =>
 const orchestratorTurns = (models: ReturnType<typeof scriptedModels>) =>
   models.agentCalls.filter((c) => c.agent === 'orchestrator');
 
-beforeEach(() => {
+const reset = () => {
   spans.reset();
   db = memoryRuns();
   stepRows = memorySteps();
@@ -133,7 +144,8 @@ beforeEach(() => {
     { id: 'm-2', sessionId: SESSION_ID, role: 'assistant', content: 'Ahoj! Jak pomohu?' },
     { id: MESSAGE_ID, sessionId: SESSION_ID, role: 'user', content: 'Kolik je dva plus dva?' },
   );
-});
+};
+beforeEach(reset);
 
 describe('the Run job', () => {
   it('ends completed, its answer persisted as an assistant Message linked to the Run', async () => {
@@ -327,7 +339,7 @@ describe('the Run job', () => {
     for (const step of steps()) {
       expect(ledger.calls).toContainEqual(
         expect.objectContaining({
-          idempotencyKey: step.id,
+          idempotencyKey: `${step.id}:1`,
           runId: RUN_ID,
           stepId: step.id,
           agent: step.name,
@@ -423,7 +435,16 @@ describe('the Run job', () => {
       expect(db.runs.get(RUN_ID)?.status).toBe('failed');
       expect(db.created).toEqual([]);
       expect(types().slice(-3)).toEqual(['error', 'run-finished', 'end']);
-      expect(streamed().at(-2)).toEqual({ type: 'run-finished', runId: RUN_ID, status: 'failed' });
+      expect(streamed().at(-2)).toEqual({
+        type: 'run-finished',
+        runId: RUN_ID,
+        status: 'failed',
+        error: streamed().find((e) => e.type === 'error') && {
+          success: false,
+          error: 'Internal',
+          message: expect.any(String),
+        },
+      });
       expect(stepNamed('output').status).toBe('failed');
     });
 
@@ -765,5 +786,149 @@ describe('the Run job', () => {
 
     expect(db.runs.get(RUN_ID)?.status).toBe('failed');
     expect(types().slice(-3)).toEqual(['error', 'run-finished', 'end']);
+  });
+
+  describe('when BullMQ retries the job', () => {
+    // A failure the Orchestrator cannot work around, as a lost database connection is: not the delegate's own.
+    const finishFailingOnce = (stepName: string): StepStore => {
+      let failed = false;
+      return {
+        ...stepRows.store,
+        finish: async (stepId, result) => {
+          const step = stepRows.steps.get(stepId);
+          if (!failed && step?.name === stepName && result.status === 'completed') {
+            failed = true;
+            throw new Error('connection lost');
+          }
+          return stepRows.store.finish(stepId, result);
+        },
+      };
+    };
+
+    // The critic is done before the analyst's Step fails: a task still in flight is cancelled with it.
+    const critic_first = {
+      critic: { reply: 'critic result', delayMs: 1 },
+      analyst: { reply: 'analyst result', delayMs: 60 },
+    };
+
+    it('resumes from the checkpoint, re-running only the delegate that was in flight, at attempt 2', async () => {
+      const models = scriptedModels(INTAKE, ANSWER, { delegates: critic_first });
+      const flaky = finishFailingOnce('analyst');
+
+      await expect(run(models.models, payload, { steps: flaky, attempts: 3 })).rejects.toThrow(
+        'connection lost',
+      );
+      expect(db.runs.get(RUN_ID)?.status).toBe('running');
+      expect(types()).not.toContain('end');
+      expect(await checkpointsOf(RUN_ID)).not.toHaveLength(0);
+
+      await run(models.models, payload, { steps: flaky, attempts: 3, attemptsMade: 1 });
+
+      expect(models.structuredCalls).toHaveLength(2);
+      const callsBy = (agent: string) => models.agentCalls.filter((c) => c.agent === agent);
+      expect(callsBy('critic')).toHaveLength(1);
+      expect(callsBy('analyst')).toHaveLength(2);
+      expect(callsBy('orchestrator')).toHaveLength(2);
+      expect(stepNamed('analyst').attempt).toBe(2);
+      expect(stepNamed('critic').attempt).toBe(1);
+      expect(stepNamed('session').attempt).toBe(1);
+      expect(stepEvents()).toContainEqual(
+        expect.objectContaining({
+          type: 'step-started',
+          stepId: stepNamed('analyst').id,
+          attempt: 2,
+        }),
+      );
+      expect(db.runs.get(RUN_ID)?.status).toBe('completed');
+      expect(db.created).toHaveLength(1);
+      expect(streamed().at(-1)).toEqual({ type: 'end' });
+      expect(await checkpointsOf(RUN_ID)).toHaveLength(0);
+    });
+
+    it('keeps the Run’s token total and turn numbering as if it had never stopped', async () => {
+      const uninterrupted = scriptedModels(INTAKE, ANSWER, { delegates: critic_first });
+      await run(uninterrupted.models);
+      const expected = db.runs.get(RUN_ID)!.tokensUsed;
+      const turns = stepsIn('orchestrator').map((step) => step.turn);
+      reset();
+
+      const models = scriptedModels(INTAKE, ANSWER, { delegates: critic_first });
+      const flaky = finishFailingOnce('analyst');
+      await run(models.models, payload, { steps: flaky, attempts: 3 }).catch(() => undefined);
+      await run(models.models, payload, { steps: flaky, attempts: 3, attemptsMade: 1 });
+
+      expect(db.runs.get(RUN_ID)?.tokensUsed).toBe(expected);
+      expect(stepsIn('orchestrator').map((step) => step.turn)).toEqual(turns);
+    });
+
+    it('records the re-run’s Model call too: it was billed', async () => {
+      const models = scriptedModels(INTAKE, ANSWER, { delegates: critic_first });
+      const flaky = finishFailingOnce('analyst');
+      await run(models.models, payload, { steps: flaky, attempts: 3 }).catch(() => undefined);
+      await run(models.models, payload, { steps: flaky, attempts: 3, attemptsMade: 1 });
+
+      expect(ledger.calls.filter((c) => c.agent === 'analyst')).toHaveLength(2);
+    });
+
+    it('does not start a Run over when its thread finished but the Run was never closed', async () => {
+      const models = scriptedModels(INTAKE, ANSWER);
+      const runs: RunStore = {
+        ...db.store,
+        finishRun: async () => {
+          throw new Error('connection lost');
+        },
+      };
+      await expect(run(models.models, payload, { runs, attempts: 3 })).rejects.toThrow(
+        'connection lost',
+      );
+      const callsBefore = models.structuredCalls.length + models.agentCalls.length;
+
+      await run(models.models, payload, { attempts: 3, attemptsMade: 1 });
+
+      expect(models.structuredCalls.length + models.agentCalls.length).toBe(callsBefore);
+      expect(db.runs.get(RUN_ID)?.status).toBe('completed');
+      expect(db.runs.get(RUN_ID)?.tokensUsed).toBeGreaterThan(0);
+    });
+
+    describe('when the Orchestrator keeps failing', () => {
+      const broken = () =>
+        scriptedModels(INTAKE, ANSWER, {
+          orchestrator: () => {
+            throw new Error('provider down');
+          },
+        });
+
+      it('leaves the Run and its stream open until the last try', async () => {
+        const models = broken();
+
+        await expect(run(models.models, payload, { attempts: 3 })).rejects.toThrow('provider down');
+        await expect(run(models.models, payload, { attempts: 3, attemptsMade: 1 })).rejects.toThrow(
+          'provider down',
+        );
+
+        expect(db.runs.get(RUN_ID)?.status).toBe('running');
+        expect(types()).not.toContain('error');
+        expect(types()).not.toContain('end');
+        expect(await checkpointsOf(RUN_ID)).not.toHaveLength(0);
+      });
+
+      it('ends the Run failed on the last try, with a typed error, its checkpoints deleted', async () => {
+        const models = broken();
+        await run(models.models, payload, { attempts: 3 }).catch(() => undefined);
+
+        await run(models.models, payload, { attempts: 3, attemptsMade: 2 });
+
+        expect(db.runs.get(RUN_ID)?.status).toBe('failed');
+        expect(types().slice(-3)).toEqual(['error', 'run-finished', 'end']);
+        expect(streamed().at(-2)).toEqual({
+          type: 'run-finished',
+          runId: RUN_ID,
+          status: 'failed',
+          error: { success: false, error: 'Internal', message: expect.any(String) },
+        });
+        expect(db.created).toHaveLength(0);
+        expect(await checkpointsOf(RUN_ID)).toHaveLength(0);
+      });
+    });
   });
 });

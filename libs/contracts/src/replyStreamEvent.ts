@@ -41,11 +41,12 @@ const stepFinishedEventSchema = z.object({
   status: z.enum(['completed', 'failed']),
 });
 
-// The Run's end state, sent just before `end`.
+// The Run's end state, sent just before `end`; a failed Run carries what failed.
 const runFinishedEventSchema = z.object({
   type: z.literal('run-finished'),
   runId: z.uuid(),
   status: z.enum(['completed', 'partial', 'failed', 'cancelled']),
+  error: errorEnvelopeSchema.optional(),
 });
 
 // One reply stream entry (ADR-0014), relayed as an SSE event named `type` with the rest as data.

@@ -94,6 +94,10 @@ export const memorySteps = () => {
       });
       return attempt;
     },
+    completedTokens: async (runId) =>
+      [...steps.values()]
+        .filter((step) => step.runId === runId && step.status === 'completed')
+        .reduce((sum, step) => sum + (step.tokens ?? 0), 0),
     finish: async (stepId, { status, tokens, ...result }) => {
       Object.assign(steps.get(stepId)!, { status, tokens, ...result });
     },

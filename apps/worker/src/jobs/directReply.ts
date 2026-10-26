@@ -23,7 +23,13 @@ const jobLogger = (logger: Logger, job: DirectReplyJob, jobId: string | undefine
   });
 
 /** What the processor reads off a BullMQ job; a `Job` satisfies it. */
-export type QueuedJob = { id?: string | undefined; data: unknown };
+export type QueuedJob = {
+  id?: string | undefined;
+  data: unknown;
+  /** Tries made before this one, and how many the job gets in all (a Run job's retries). */
+  attemptsMade?: number;
+  opts?: { attempts?: number };
+};
 
 // Never throws: a failed reply is told on its stream; a payload breaking the contract has no stream, so it is logged and dropped.
 export const createDirectReplyProcessor =

@@ -80,6 +80,14 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
   Intake Agent its output schema and human-message builder). The Session's Model never applies to an
   Agent.
 
+A Run job is retried by BullMQ (`RUN_JOB_ATTEMPTS` and `RUN_JOB_BACKOFF_MS` are the server's env, since the
+server adds the job). `executeRun` starts the graph only on a thread with no checkpoint: pending work resumes
+with `null` input, and a finished graph only ends the Run. A failure with tries left is rethrown, leaving the
+Run `running` and its checkpoints in place; the last try ends the Run `failed` with the error on its
+`run-finished` event and deletes the checkpoints. A resumed Run's token total is seeded from its completed
+Steps, a re-run Step's Model call gets its own ledger row (`<stepId>:<attempt>`), and a failed Run persists no
+assistant Message: its error event is the explanation.
+
 Folders later tickets add:
 
 - `tools/`: one file per tool.

@@ -148,9 +148,12 @@ const orchestratorNode =
   (deps: RunGraphDeps) => async (state: RunStateValues, config: LangGraphRunnableConfig) => {
     const brief = state.brief ?? buildBrief(state.intake, state.missing);
     const orchestrator = createOrchestrator(deps);
+    // The node's own checkpoint id would make the nested loop replay its done tasks instead of resuming them.
+    const configurable = { ...config.configurable };
+    delete configurable['checkpoint_id'];
     const result = await orchestrator.loop.invoke(
       { messages: [new HumanMessage(orchestratorInput(brief, deps.message))] },
-      { ...config, recursionLimit: orchestrator.recursionLimit },
+      { ...config, configurable, recursionLimit: orchestrator.recursionLimit },
     );
     return {
       messages: result.messages,

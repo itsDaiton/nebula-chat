@@ -38,6 +38,12 @@ const events: ReplyStreamEvent[] = [
   },
   { type: 'step-finished', stepId: '11111111-1111-4111-8111-111111111111', status: 'failed' },
   { type: 'run-finished', runId: '22222222-2222-4222-8222-222222222222', status: 'partial' },
+  {
+    type: 'run-finished',
+    runId: '22222222-2222-4222-8222-222222222222',
+    status: 'failed',
+    error: { success: false, error: 'Internal', message: 'An internal server error occurred' },
+  },
 ];
 
 describe('reply stream events', () => {

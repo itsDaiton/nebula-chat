@@ -197,7 +197,8 @@ once, and nobody else does:
   | `failed`         | `error`, or `warn` when the caller caused it (a 4xx code) | `err`, `error.type` |
 
   Each Intake Agent that fails also writes a `warn` `chat.run.step.failed` with
-  `err` and `nebula.agent.name`.
+  `err` and `nebula.agent.name`. A failure with job retries left writes a `warn`
+  `chat.run.retrying` (`err`, `error.type`) instead of `chat.run.completed`; the retry resumes the Run.
 
 - **Model calls.** The ledger write is fail-open, like the cache: a Postgres failure while
   recording a call is one `warn`, `model_call.record.failed`, with `err`, the Model and the call's
