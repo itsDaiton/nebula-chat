@@ -18,6 +18,8 @@ export type StepStore = {
     runId: string;
     phase: StepPhase;
     name: string;
+    turn: number;
+    parentStepId: string | null;
     input: unknown;
   }) => Promise<number>;
   finish: (
@@ -35,11 +37,13 @@ export type StepContext = {
   steps: StepStore;
   ledger: ModelCallLedger;
   logger: Logger;
+  /** What the Run's completed Steps used so far: the Run budget is checked against it. */
+  tally: { tokens: number };
 };
 
 // A UUID v5-style hash of the Step's identity, so a node re-run on resume finds its own row.
-const stepIdFor = (runId: string, phase: StepPhase, name: string): string => {
-  const hex = createHash('sha1').update(`${runId}:${phase}:${name}`).digest('hex');
+export const stepIdFor = (runId: string, phase: StepPhase, key: string): string => {
+  const hex = createHash('sha1').update(`${runId}:${phase}:${key}`).digest('hex');
   const variant = ((parseInt(hex[16]!, 16) & 0x3) | 0x8).toString(16);
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 };
@@ -47,20 +51,49 @@ const stepIdFor = (runId: string, phase: StepPhase, name: string): string => {
 const tokensOf = (usage: CallUsage | undefined): number | null =>
   usage ? usage.inputTokens + usage.cachedInputTokens + usage.outputTokens : null;
 
+export type ModelStep<T> = {
+  phase: StepPhase;
+  agent: AgentDefinition;
+  input: unknown;
+  /** The Step's id; derived from the Run, phase and Agent when omitted. */
+  id?: string;
+  turn?: number;
+  parentStepId?: string | null;
+  /** What is persisted as the Step's output, when not the call's result itself. */
+  persist?: (output: T) => unknown;
+};
+
 /** Runs one model-calling Step: persisted, announced and its Model call recorded; a failure is recorded, then rethrown. */
 export const runModelStep = async <T>(
   ctx: StepContext,
-  step: { phase: StepPhase; agent: AgentDefinition; input: unknown },
-  config: LangGraphRunnableConfig,
+  step: ModelStep<T>,
+  config: Pick<LangGraphRunnableConfig, 'writer' | 'signal'>,
   call: (reportUsage: (usage: CallUsage) => void) => Promise<T>,
 ): Promise<{ output: T; tokens: number }> => {
-  const { phase, agent, input } = step;
-  const id = stepIdFor(ctx.runId, phase, agent.name);
+  const { phase, agent, input, turn = 0, parentStepId = null } = step;
+  const id = step.id ?? stepIdFor(ctx.runId, phase, agent.name);
   const emit = (event: ReplyStreamEvent): void => config.writer?.(event);
   let usage: CallUsage | undefined;
 
-  const attempt = await ctx.steps.start({ id, runId: ctx.runId, phase, name: agent.name, input });
-  emit({ type: 'step-started', stepId: id, attempt, phase, agent: agent.name, label: agent.label });
+  const attempt = await ctx.steps.start({
+    id,
+    runId: ctx.runId,
+    phase,
+    name: agent.name,
+    turn,
+    parentStepId,
+    input,
+  });
+  emit({
+    type: 'step-started',
+    stepId: id,
+    attempt,
+    phase,
+    agent: agent.name,
+    label: agent.label,
+    turn,
+    parentStepId,
+  });
   try {
     const output = await recordModelCall(
       ctx.ledger,
@@ -80,10 +113,17 @@ export const runModelStep = async <T>(
           usage = reported;
           reportUsage(reported);
         }),
+      config.signal,
     );
-    await ctx.steps.finish(id, { status: 'completed', output, tokens: tokensOf(usage) });
+    const tokens = tokensOf(usage);
+    await ctx.steps.finish(id, {
+      status: 'completed',
+      output: step.persist ? step.persist(output) : output,
+      tokens,
+    });
     emit({ type: 'step-finished', stepId: id, status: 'completed' });
-    return { output, tokens: tokensOf(usage) ?? 0 };
+    ctx.tally.tokens += tokens ?? 0;
+    return { output, tokens: tokens ?? 0 };
   } catch (error) {
     await ctx.steps.finish(id, {
       status: 'failed',

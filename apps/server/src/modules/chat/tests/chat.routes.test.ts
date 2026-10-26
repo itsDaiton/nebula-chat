@@ -292,6 +292,15 @@ describe('POST /api/sessions/:sessionId/messages', () => {
       expect(replyStreams.activeStreams.get(SESSION_ID)).toBe(streamId);
     });
 
+    it('lets the caller stop the Run through its stream’s cancel', async () => {
+      const { streamId } = (await send(runBody)).json<{ streamId: string }>();
+
+      const res = await app.inject({ method: 'POST', url: `/api/streams/${streamId}/cancel` });
+
+      expect(res.statusCode).toBe(204);
+      expect(replyStreams.cancelRequests.has(streamId)).toBe(true);
+    });
+
     it('rejects a Guest with the typed 403 Forbidden, persisting and enqueuing nothing', async () => {
       mockedGetSession.mockResolvedValue(guestSession() as never);
 

@@ -3,13 +3,12 @@ import { HumanMessage, mergeUsageMetadata, SystemMessage } from '@langchain/core
 import type { BaseMessage, UsageMetadata } from '@langchain/core/messages';
 import { Annotation, END, messagesStateReducer, START, StateGraph } from '@langchain/langgraph';
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
-import { getModel } from '@nebula-chat/contracts';
-import type { ModelProvider } from '@nebula-chat/contracts';
-import { MissingConfigurationError } from '@nebula-chat/errors';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
 import type { z } from 'zod';
+import { llmConfigFor, stepInput } from '@worker/runs/agentDefinition';
 import type { AgentDefinition } from '@worker/runs/agentDefinition';
 import { languageSchema } from '@worker/agents/language';
+import { orchestratorInput } from '@worker/agents/orchestrator';
 import { outputInput } from '@worker/agents/output';
 import { sessionInput, sessionSchema } from '@worker/agents/session';
 import { AGENTS } from '@worker/runs/agentRegistry';
@@ -18,24 +17,22 @@ import { toCallUsage } from '@worker/llm/callUsage';
 import { llmConcurrencyLimiter } from '@worker/llm/concurrencyLimiter';
 import { countTokens } from '@worker/llm/countTokens';
 import type { LLMConfig } from '@worker/llm/createLLM';
-import type { Prompts } from '@worker/llm/prompts';
 import type { StructuredCall } from '@worker/llm/structuredOutput';
 import { buildBrief } from '@worker/runs/brief';
 import type { Brief, IntakeOutputs } from '@worker/runs/brief';
+import { createOrchestrator } from '@worker/runs/orchestrator';
+import type { LoopEnding, OrchestratorDeps } from '@worker/runs/orchestrator';
+import { findingsOf } from '@worker/runs/findings';
 import { runModelStep } from '@worker/runs/steps';
-import type { StepContext } from '@worker/runs/steps';
 
 /** The model layer a Run calls through; tests script both. */
 export type RunModels = {
   structured: StructuredCall;
-  /** A streaming chat model, for the Output Agent. */
+  /** A chat model: tool-calling for the Orchestrator, plain for a delegate, streaming for the Output Agent. */
   chat: (config: LLMConfig) => BaseChatModel;
 };
 
-export type RunGraphDeps = StepContext & {
-  models: RunModels;
-  prompts: Prompts;
-  apiKeys: { [P in ModelProvider]?: string | undefined };
+export type RunGraphDeps = OrchestratorDeps & {
   saveBrief: (brief: Brief) => Promise<void>;
   /** The triggering user Message, and the Session's earlier Messages oldest first. */
   message: string;
@@ -46,7 +43,7 @@ export type RunGraphDeps = StepContext & {
 export const OUTPUT_NODE = 'output';
 
 const RunState = Annotation.Root({
-  // The Orchestrator's nested agent reads and writes this; nothing does yet.
+  // The Orchestrator's conversation: the Brief, its turns and its delegates' results.
   messages: Annotation<BaseMessage[]>({ reducer: messagesStateReducer, default: () => [] }),
   // Each Intake Agent's output under its name; the parallel nodes each add their own.
   intake: Annotation<Partial<IntakeOutputs>>({
@@ -56,30 +53,12 @@ const RunState = Annotation.Root({
   // The Intake Agents that failed, so the Brief is partial and the Run ends `partial`.
   missing: Annotation<string[]>({ reducer: (all, next) => all.concat(next), default: () => [] }),
   brief: Annotation<Brief | null>({ reducer: (_, next) => next, default: () => null }),
+  // How the Orchestrator's loop ended: anything but its own handoff ends the Run `partial`.
+  ending: Annotation<LoopEnding | null>({ reducer: (_, next) => next, default: () => null }),
   answer: Annotation<string>({ reducer: (_, next) => next, default: () => '' }),
-  tokensUsed: Annotation<number>({ reducer: (sum, next) => sum + next, default: () => 0 }),
 });
 
 type RunStateValues = typeof RunState.State;
-
-const llmConfigFor = (agent: AgentDefinition, deps: RunGraphDeps): LLMConfig => {
-  const { provider } = getModel(agent.model);
-  const apiKey = deps.apiKeys[provider];
-  if (!apiKey) {
-    throw new MissingConfigurationError(
-      provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY',
-    );
-  }
-  return { provider, apiKey, model: agent.model, ...agent.parameters };
-};
-
-// Everything the model was sent, so a Step can be inspected on its own.
-const stepInput = (agent: AgentDefinition, system: string, human: string) => ({
-  model: agent.model,
-  parameters: agent.parameters,
-  system,
-  human,
-});
 
 // A failing Intake Agent must not fail the graph step: its Step is recorded failed and its part of the Brief is missing.
 const intakeNode =
@@ -93,13 +72,13 @@ const intakeNode =
     const system = deps.prompts[agent.prompt];
     const human = input(deps);
     try {
-      const { output, tokens } = await runModelStep(
+      const { output } = await runModelStep(
         deps,
         { phase: 'intake', agent, input: stepInput(agent, system, human) },
         config,
         async (reportUsage) => {
           const { output: parsed, usage } = await deps.models.structured({
-            ...llmConfigFor(agent, deps),
+            ...llmConfigFor(agent, deps.apiKeys),
             name: agent.name,
             schema,
             messages: [new SystemMessage(system), new HumanMessage(human)],
@@ -109,7 +88,7 @@ const intakeNode =
           return parsed;
         },
       );
-      return { intake: { [agent.name]: output }, tokensUsed: tokens };
+      return { intake: { [agent.name]: output } };
     } catch (err) {
       logEvent(
         componentLogger(deps.logger, 'chat'),
@@ -127,14 +106,14 @@ const outputNode =
     const agent = AGENTS.output;
     const brief = state.brief ?? buildBrief(state.intake, state.missing);
     const system = deps.prompts[agent.prompt];
-    const human = outputInput(brief, deps.message);
-    const { output, tokens } = await runModelStep(
+    const human = outputInput(brief, deps.message, findingsOf(state.messages, state.ending));
+    const { output } = await runModelStep(
       deps,
       { phase: 'output', agent, input: stepInput(agent, system, human) },
       config,
       (reportUsage) =>
         llmConcurrencyLimiter(async () => {
-          const model = deps.models.chat({ ...llmConfigFor(agent, deps), streaming: true });
+          const model = deps.models.chat({ ...llmConfigFor(agent, deps.apiKeys), streaming: true });
           let answer = '';
           let reported: UsageMetadata | undefined;
           try {
@@ -159,10 +138,25 @@ const outputNode =
           return { answer };
         }),
     );
-    return { answer: output.answer, tokensUsed: tokens };
+    return { answer: output.answer };
   };
 
-/** A Run: the Intake Agents fan out from the start, fan in to the Brief, then the Output Agent answers. */
+// The Orchestrator's agent runs nested in this node, sharing the Run's checkpointer and abort signal.
+const orchestratorNode =
+  (deps: RunGraphDeps) => async (state: RunStateValues, config: LangGraphRunnableConfig) => {
+    const brief = state.brief ?? buildBrief(state.intake, state.missing);
+    const orchestrator = createOrchestrator(deps);
+    const result = await orchestrator.loop.invoke(
+      { messages: [new HumanMessage(orchestratorInput(brief, deps.message))] },
+      { ...config, recursionLimit: orchestrator.recursionLimit },
+    );
+    return { messages: result.messages, ending: orchestrator.ending() };
+  };
+
+/**
+ * A Run: the Intake Agents fan out from the start and fan in to the Brief, the Orchestrator delegates
+ * turn by turn, then the Output Agent answers from its findings.
+ */
 export const createRunGraph = (deps: RunGraphDeps) =>
   new StateGraph(RunState)
     .addNode(
@@ -178,9 +172,11 @@ export const createRunGraph = (deps: RunGraphDeps) =>
       await deps.saveBrief(brief);
       return { brief };
     })
+    .addNode('orchestrator', orchestratorNode(deps))
     .addNode(OUTPUT_NODE, outputNode(deps))
     .addEdge(START, 'language')
     .addEdge(START, 'session')
     .addEdge(['language', 'session'], 'buildBrief')
-    .addEdge('buildBrief', OUTPUT_NODE)
+    .addEdge('buildBrief', 'orchestrator')
+    .addEdge('orchestrator', OUTPUT_NODE)
     .addEdge(OUTPUT_NODE, END);

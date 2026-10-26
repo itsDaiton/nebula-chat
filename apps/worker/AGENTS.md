@@ -71,9 +71,11 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
   content goes in the human message. `llm/prompts.ts` reads them once at boot and a missing one fails
   boot; `build` copies the folder into `dist/`, since `tsc` does not.
 - `runs/` — the Run (ADR-0033): the LangGraph graph and its nodes (`runGraph.ts`), the runner
-  (`executeRun.ts`), Step persistence (`steps.ts`), the Brief, the mapping from the graph's stream to
-  reply stream events, the Postgres checkpointer (its own `langgraph` schema, set up at boot), the
-  `AgentDefinition` type and the Agent registry, and the Run and Step repositories.
+  (`executeRun.ts`), Step persistence (`steps.ts`), the Brief, the Orchestrator's `createAgent` loop
+  and its middleware (`orchestrator.ts`), the delegate-Agent-as-tool adapter, the findings the Output
+  Agent reads, the mapping from the graph's stream to reply stream events, the Postgres checkpointer
+  (its own `langgraph` schema, set up at boot), the `AgentDefinition` type and the Agent registry, and
+  the Run and Step repositories.
 - `agents/` — the Agents only: one file each (Model, prompt, tool grants, parameters, and for an
   Intake Agent its output schema and human-message builder). The Session's Model never applies to an
   Agent.
@@ -100,7 +102,7 @@ bound to every ID in its payload (`user.id`, `nebula.session.id`, `nebula.messag
 (`chat.reply.completed` for a Direct reply). A failure is logged once, by the runner that turns it into
 the stream's `error` event. Every model call and every cache replay is also recorded once as a Model call,
 keyed by the reply's `streamId` (a Step's id in a Run); a failed write is a `warn`, never a failed reply.
-A Run writes one `chat.run.completed`, plus a `warn` `chat.run.step.failed` for each Intake Agent that failed. Never log Message content, prompts, completions or Streaming tokens.
+A Run writes one `chat.run.completed`, plus a `warn` `chat.run.step.failed` for each Intake or delegate Agent that failed. Never log Message content, prompts, completions or Streaming tokens.
 
 A job continues the server's trace: the payload's `traceparent` (and `tracestate`) is extracted into a
 consumer span, the model call is a child span of it, and a job without trace context starts its own root.
@@ -114,8 +116,9 @@ The root [Testing](../../AGENTS.md#testing) rules apply. The worker's seam is th
 `jobs/tests/directReply.test.ts` calls `createDirectReplyProcessor` with a payload, a scripted fake
 model (`streamChat`), in-memory Session and Message storage, an in-memory response cache, an in-memory Model call ledger and an in-memory stream sink, then asserts
 on the emitted events, the persisted assistant Message, the recorded Model calls and the logged lines.
-`jobs/tests/run.test.ts` does the same for a Run, with scripted models per Agent, LangGraph's
-in-memory checkpointer and in-memory Run and Step stores. No test reaches Postgres, Redis or a provider.
+`jobs/tests/run.test.ts` does the same for a Run, with scripted models per Agent (the Orchestrator's
+script decides each reply from the messages it is sent), LangGraph's in-memory checkpointer and
+in-memory Run and Step stores. No test reaches Postgres, Redis or a provider.
 
 Coverage excludes construction-only files (`worker.ts`, `env.ts`, `logger.ts`, `db.ts`, `redis.ts`) and
 the Drizzle repository, as in the server. The list lives in `vitest.config.mts` and `matrix.coverage` in
@@ -127,15 +130,22 @@ the Drizzle repository, as in the server. The list lives in `vitest.config.mts` 
 
 `.env` is loaded by the `dev` and `start` scripts through `dotenvx`, never by code ([ADR-0019](../../docs/adr/0019-dotenvx-loads-env-files-in-package-scripts.md)).
 
-| Variable                                                                                                  | Purpose                                                                          |
-| --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `OPENAI_API_KEY`                                                                                          | OpenAI API key (set at least one of this or `ANTHROPIC_API_KEY`)                 |
-| `ANTHROPIC_API_KEY`                                                                                       | Anthropic API key (set at least one of this or `OPENAI_API_KEY`)                 |
-| `DATABASE_URL`                                                                                            | PostgreSQL connection string (the server's database)                             |
-| `REDIS_URL`                                                                                               | Redis connection string (the server's Redis)                                     |
-| `PORT`                                                                                                    | Port `/health` listens on (default `3001`)                                       |
-| `WORKER_CONCURRENCY`                                                                                      | Direct replies, and separately Runs, one instance produces at once (default `5`) |
-| `STREAM_TTL_SECONDS`                                                                                      | How long a reply stream outlives its end (default `3600`)                        |
-| `LOG_LEVEL`                                                                                               | Log verbosity (default `info`)                                                   |
-| `LOG_LEVEL_OVERRIDES`                                                                                     | Per-component levels, comma-separated `component=level`                          |
-| `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_LOGS_EXPORTER`, `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`, `OTEL_LOG_LEVEL` | As in the server ([docs/logging.md](../../docs/logging.md))                      |
+| Variable                                                                                                  | Purpose                                                          |
+| --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `OPENAI_API_KEY`                                                                                          | OpenAI API key (set at least one of this or `ANTHROPIC_API_KEY`) |
+| `ANTHROPIC_API_KEY`                                                                                       | Anthropic API key (set at least one of this or `OPENAI_API_KEY`) |
+| `DATABASE_URL`                                                                                            | PostgreSQL connection string (the server's database)             |
+| `REDIS_URL`                                                                                               | Redis connection string (the server's Redis)                     |
+| `PORT`                                                                                                    | Port `/health` listens on (default `3001`)                       |
+| `WORKER_CONCURRENCY`                                                                                      | Direct replies one instance produces at once (default `5`)       |
+| `RUN_CONCURRENCY`                                                                                         | Runs one instance executes at once (default `3`)                 |
+| `RUN_TURN_CAP`                                                                                            | Orchestrator turns before a forced handoff (default `6`)         |
+| `RUN_PARALLEL_DELEGATES`                                                                                  | Delegate Agents one Run executes at once (default `4`)           |
+| `RUN_TOKEN_BUDGET`                                                                                        | The Run budget, in tokens across all Steps (default `60000`)     |
+| `RUN_HANDOFF_THRESHOLD`                                                                                   | Share of the Run budget that forces the handoff (default `0.85`) |
+| `RUN_DELEGATE_TIMEOUT_MS`                                                                                 | How long a delegate Step may take (default `60000`)              |
+| `RUN_TIMEOUT_MS`                                                                                          | How long a Run may take before it fails (default `300000`)       |
+| `STREAM_TTL_SECONDS`                                                                                      | How long a reply stream outlives its end (default `3600`)        |
+| `LOG_LEVEL`                                                                                               | Log verbosity (default `info`)                                   |
+| `LOG_LEVEL_OVERRIDES`                                                                                     | Per-component levels, comma-separated `component=level`          |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_LOGS_EXPORTER`, `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`, `OTEL_LOG_LEVEL` | As in the server ([docs/logging.md](../../docs/logging.md))      |

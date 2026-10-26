@@ -4,9 +4,10 @@ import type { RunStatus } from '@nebula-chat/db';
 import { NotFoundError, isAppError, toErrorEnvelope } from '@nebula-chat/errors';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
 import type { LogAttributes } from '@nebula-chat/otel';
-import { endStream } from '@worker/directReplies/runDirectReply';
+import { endStream, watchForCancel } from '@worker/directReplies/runDirectReply';
 import type { ReplyStreamWriter, StoredMessage } from '@worker/directReplies/runDirectReply';
 import type { Brief } from '@worker/runs/brief';
+import type { LoopEnding } from '@worker/runs/orchestrator';
 import { createRunGraph } from '@worker/runs/runGraph';
 import type { RunGraphDeps } from '@worker/runs/runGraph';
 import { toReplyStreamEvents } from '@worker/runs/streamEvents';
@@ -15,7 +16,7 @@ import type { RunStreamChunk } from '@worker/runs/streamEvents';
 /** The Messages loaded for the Session summary: the Session summary replaces raw history for a Run. */
 const MAX_HISTORY_MESSAGES = 20;
 
-type RunEndStatus = Extract<RunStatus, 'completed' | 'partial' | 'failed'>;
+type RunEndStatus = Extract<RunStatus, 'completed' | 'partial' | 'failed' | 'cancelled'>;
 
 /** Where a Run reads its Session's Messages and records its progress: Postgres in production. */
 export type RunStore = {
@@ -23,7 +24,8 @@ export type RunStore = {
   findRun: (runId: string, userId: string) => Promise<{ id: string } | null>;
   /** The Session's latest Messages, newest first. */
   findRecentMessages: (sessionId: string, limit: number) => Promise<StoredMessage[]>;
-  markRunning: (runId: string) => Promise<void>;
+  /** Marks the Run started, with the Run budget it runs under. */
+  markRunning: (runId: string, tokenBudget: number) => Promise<void>;
   saveBrief: (runId: string, brief: Brief) => Promise<void>;
   finishRun: (runId: string, end: { status: RunEndStatus; tokensUsed: number }) => Promise<void>;
   createAssistantMessage: (message: {
@@ -37,12 +39,16 @@ export type RunStore = {
 
 export type RunDeps = Pick<
   RunGraphDeps,
-  'steps' | 'ledger' | 'models' | 'prompts' | 'apiKeys' | 'logger'
+  'steps' | 'ledger' | 'models' | 'prompts' | 'apiKeys' | 'logger' | 'limits'
 > & {
   runs: RunStore;
   stream: ReplyStreamWriter;
   /** Postgres in production, in memory in tests; the Run's id is the thread. */
   checkpointer: BaseCheckpointSaver;
+  /** How long a Run may take before it is aborted and fails. */
+  runTimeoutMs: number;
+  /** How often a Run checks for a cancel request. Default 250 ms. */
+  cancelPollMs?: number;
 };
 
 /** Executes one Run as its graph, streaming Step events and the answer, then ends the stream with the Run's status. */
@@ -51,8 +57,18 @@ export const executeRun = async (job: RunJob, deps: RunDeps): Promise<void> => {
   const startMs = Date.now();
   const thread = { configurable: { thread_id: job.runId } };
   let runFound = false;
-  // What the Steps that finished used, read from the graph's state; nothing before the graph runs.
-  let tokensSoFar = async (): Promise<number> => 0;
+  const tally = { tokens: 0 };
+  // The answer streamed so far: what a stopped Run keeps.
+  let answer = '';
+  const abort = new AbortController();
+  const timedOut = new Error(`The Run took longer than ${deps.runTimeoutMs} ms`);
+  let stopWatching = (): void => undefined;
+  let timer: NodeJS.Timeout | undefined;
+  // Checked at the start of each Orchestrator turn, so a stop lands between turns even between polls.
+  const checkCancelled = async (): Promise<void> => {
+    if (!abort.signal.aborted && (await stream.isCancelled(job.streamId))) abort.abort();
+    abort.signal.throwIfAborted();
+  };
 
   // Events are appended in the order the graph produced them.
   let appended: Promise<void> = Promise.resolve();
@@ -78,36 +94,49 @@ export const executeRun = async (job: RunJob, deps: RunDeps): Promise<void> => {
       .toReversed()
       .map(({ role, content }) => ({ role, content }));
 
-    await runs.markRunning(job.runId);
+    await runs.markRunning(job.runId, deps.limits.tokenBudget);
     const graph = createRunGraph({
       ...deps,
       runId: job.runId,
       userId: job.userId,
       sessionId: job.sessionId,
+      tally,
+      checkCancelled,
       saveBrief: (brief) => runs.saveBrief(job.runId, brief),
       message: userMessage.content,
       history,
     }).compile({ checkpointer });
-    const readState = async () =>
-      (await graph.getState(thread)).values as {
-        answer: string;
-        missing: string[];
-        tokensUsed: number;
-      };
-    tokensSoFar = async () => (await readState()).tokensUsed;
 
+    stopWatching = watchForCancel(job.streamId, deps, abort);
+    timer = setTimeout(() => abort.abort(timedOut), deps.runTimeoutMs);
     const chunks = await graph.stream(
       {},
-      { ...thread, streamMode: ['messages', 'custom'], subgraphs: true },
+      {
+        ...thread,
+        streamMode: ['messages', 'custom'],
+        subgraphs: true,
+        signal: abort.signal,
+      },
     );
     for await (const chunk of chunks) {
-      for (const event of toReplyStreamEvents(chunk as RunStreamChunk)) enqueue(event);
+      for (const event of toReplyStreamEvents(chunk as RunStreamChunk)) {
+        if (event.type === 'token') answer += event.token;
+        enqueue(event);
+      }
     }
     await appended;
+    stopWatching();
+    clearTimeout(timer);
 
-    const state = await readState();
-    const { tokensUsed } = state;
-    const status: RunEndStatus = state.missing.length > 0 ? 'partial' : 'completed';
+    const state = (await graph.getState(thread)).values as {
+      answer: string;
+      missing: string[];
+      ending: LoopEnding | null;
+    };
+    const tokensUsed = tally.tokens;
+    // A forced handoff still answers, from partial findings.
+    const status: RunEndStatus =
+      state.missing.length > 0 || state.ending !== 'handoff' ? 'partial' : 'completed';
 
     await runs.createAssistantMessage({
       id: job.streamId,
@@ -130,6 +159,13 @@ export const executeRun = async (job: RunJob, deps: RunDeps): Promise<void> => {
       `Run ${status} · ${tokensUsed} tokens · ${((Date.now() - startMs) / 1000).toFixed(1)} s`,
     );
   } catch (error) {
+    stopWatching();
+    clearTimeout(timer);
+    if (abort.signal.aborted && abort.signal.reason !== timedOut) {
+      await appended.catch(() => undefined);
+      await endCancelled(job, answer, tally.tokens, deps, outcomeAttributes);
+      return;
+    }
     const envelope = toErrorEnvelope(error);
     const callerCaused = isAppError(error) && error.status < 500;
     logEvent(
@@ -143,7 +179,7 @@ export const executeRun = async (job: RunJob, deps: RunDeps): Promise<void> => {
     try {
       await stream.append(job.streamId, { type: 'error', ...envelope });
       if (runFound) {
-        await runs.finishRun(job.runId, { status: 'failed', tokensUsed: await tokensSoFar() });
+        await runs.finishRun(job.runId, { status: 'failed', tokensUsed: tally.tokens });
         await checkpointer.deleteThread(job.runId);
         await stream.append(job.streamId, {
           type: 'run-finished',
@@ -162,5 +198,49 @@ export const executeRun = async (job: RunJob, deps: RunDeps): Promise<void> => {
         'Could not end the Run after it failed',
       );
     }
+  }
+};
+
+/** Keeps the finished Steps and what the answer had streamed, then ends the Run and its stream `cancelled`. */
+const endCancelled = async (
+  job: RunJob,
+  answer: string,
+  tokensUsed: number,
+  { runs, stream, logger, checkpointer }: RunDeps,
+  outcomeAttributes: (status: RunEndStatus) => LogAttributes,
+): Promise<void> => {
+  try {
+    if (answer.trim()) {
+      await runs.createAssistantMessage({
+        id: job.streamId,
+        sessionId: job.sessionId,
+        runId: job.runId,
+        content: answer,
+        tokenCount: tokensUsed,
+      });
+    }
+    await runs.finishRun(job.runId, { status: 'cancelled', tokensUsed });
+    await checkpointer.deleteThread(job.runId);
+    await stream.append(job.streamId, {
+      type: 'run-finished',
+      runId: job.runId,
+      status: 'cancelled',
+    });
+    await endStream(job.streamId, { type: 'end', reason: 'cancelled' }, stream);
+    logEvent(
+      componentLogger(logger, 'chat'),
+      'info',
+      'chat.run.completed',
+      outcomeAttributes('cancelled'),
+      `Run cancelled by its User · ${tokensUsed} tokens`,
+    );
+  } catch (err) {
+    logEvent(
+      componentLogger(logger, 'chat'),
+      'error',
+      'chat.run.completed',
+      { ...outcomeAttributes('failed'), err },
+      'Cancelled Run failed to finish',
+    );
   }
 };

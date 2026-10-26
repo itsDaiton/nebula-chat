@@ -20,10 +20,10 @@ export const runRepository: RunStore = {
       .orderBy(desc(messages.createdAt))
       .limit(limit);
   },
-  async markRunning(runId) {
+  async markRunning(runId, tokenBudget) {
     await db
       .update(runs)
-      .set({ status: 'running', startedAt: new Date() })
+      .set({ status: 'running', tokenBudget, startedAt: new Date() })
       .where(eq(runs.id, runId));
   },
   async saveBrief(runId, brief) {

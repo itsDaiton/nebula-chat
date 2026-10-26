@@ -12,8 +12,21 @@ const envSchema = z
     REDIS_URL: z.url(),
     OPENAI_API_KEY: z.string().min(1).optional(),
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
-    // How many Direct replies, and separately Runs, one worker instance produces at once; the primary LLM throttle.
+    // How many Direct replies one worker instance produces at once; the primary LLM throttle.
     WORKER_CONCURRENCY: z.coerce.number().int().positive().default(5),
+    // How many Runs one instance executes at once: each fans out to several model calls.
+    RUN_CONCURRENCY: z.coerce.number().int().positive().default(3),
+    RUN_TURN_CAP: z.coerce.number().int().positive().default(6),
+    RUN_PARALLEL_DELEGATES: z.coerce.number().int().positive().default(4),
+    RUN_TOKEN_BUDGET: z.coerce.number().int().positive().default(60_000),
+    // The share of the Run budget past which the Orchestrator is made to hand off.
+    RUN_HANDOFF_THRESHOLD: z.coerce.number().gt(0).max(1).default(0.85),
+    RUN_DELEGATE_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+    RUN_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(5 * 60_000),
     // How long a reply stream outlives its end for a dropped client to resume (ADR-0014); at most its
     // ended record, which tells an expired stream from a queued one.
     STREAM_TTL_SECONDS: z.coerce
