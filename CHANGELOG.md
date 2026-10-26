@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.8.0...nebula-chat-v5.8.1) (2026-10-26)
+
+
+### Bug Fixes
+
+* allowlist MCP servers and keep file edits as diffs ([5fce3f9](https://github.com/itsDaiton/nebula-chat/commit/5fce3f961da0e40e45fe13bd0af38216a24afd71))
+
 ## [5.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.7.0...nebula-chat-v5.8.0) (2026-10-26)
 
 
