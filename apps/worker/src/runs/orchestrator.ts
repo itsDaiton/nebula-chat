@@ -124,6 +124,7 @@ export const createOrchestrator = (deps: OrchestratorDeps) => {
       if (nearBudget()) return errorResult('Not run: the Run budget is nearly spent.');
 
       const turn = turnsIn(request.state.messages);
+      let delegateError: unknown;
       const task = typeof toolCall.args['task'] === 'string' ? toolCall.args['task'] : '';
       try {
         const { output } = await delegateSlots(() =>
@@ -147,17 +148,23 @@ export const createOrchestrator = (deps: OrchestratorDeps) => {
             },
             request.runtime,
             async (reportUsage) => {
-              const result = (await handler(request)) as ToolMessage;
-              const usage = result.artifact as CallUsage | undefined;
-              if (usage) reportUsage(usage);
-              return result;
+              try {
+                const result = (await handler(request)) as ToolMessage;
+                const usage = result.artifact as CallUsage | undefined;
+                if (usage) reportUsage(usage);
+                return result;
+              } catch (err) {
+                delegateError = err;
+                throw err;
+              }
             },
           ),
         );
         return output;
       } catch (err) {
-        // A stopped Run stops here too; any other failure is the Orchestrator's to work around.
-        if (request.runtime.signal?.aborted) throw err;
+        // A stopped Run stops here too, and so does a failure of our own plumbing rather than the Agent's call:
+        // only the Agent's own failure is the Orchestrator's to work around.
+        if (request.runtime.signal?.aborted || err !== delegateError) throw err;
         failedDelegates.push(delegate.name);
         const outcome =
           err instanceof Error && err.name === 'TimeoutError' ? 'timed out' : 'failed';

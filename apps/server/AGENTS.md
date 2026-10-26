@@ -345,6 +345,8 @@ be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-fi
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `WORKER_URL`                       | The worker's public URL; the server pings its `/health` on every enqueue to wake it (default `http://localhost:3001`)     |
 | `STREAM_CANCEL_TTL_SECONDS`        | How long a stop request waits for the worker to see it (default `900`)                                                    |
+| `RUN_JOB_ATTEMPTS`                 | Tries BullMQ gives a Run job; a retry resumes the Run from its checkpoint (default `3`)                                   |
+| `RUN_JOB_BACKOFF_MS`               | Base of the exponential backoff between a Run job's tries (default `5000`)                                                |
 | `DATABASE_URL`                     | PostgreSQL connection string                                                                                              |
 | `REDIS_URL`                        | Redis connection (e.g. `redis://localhost:6380`)                                                                          |
 | `CLIENT_URL`                       | Frontend origin for CORS (e.g. `http://localhost:5173`); must be the same site as the API ([auth.md](../../docs/auth.md)) |

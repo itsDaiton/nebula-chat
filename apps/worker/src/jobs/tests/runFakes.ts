@@ -54,7 +54,7 @@ export const memoryRuns = () => {
       Object.assign(runs.get(runId)!, { status, tokensUsed });
     },
     createAssistantMessage: async (message) => {
-      created.push(message);
+      if (!created.some((m) => m.id === message.id)) created.push(message);
     },
   };
   return { store, runs, messages, created };
@@ -94,6 +94,10 @@ export const memorySteps = () => {
       });
       return attempt;
     },
+    completedTokens: async (runId) =>
+      [...steps.values()]
+        .filter((step) => step.runId === runId && step.status === 'completed')
+        .reduce((sum, step) => sum + (step.tokens ?? 0), 0),
     finish: async (stepId, { status, tokens, ...result }) => {
       Object.assign(steps.get(stepId)!, { status, tokens, ...result });
     },

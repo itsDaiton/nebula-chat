@@ -117,9 +117,19 @@ describe('enqueueRun', () => {
     await enqueueRun(runJob, captureLogger().logger);
 
     expect(bull.constructed.map(({ name }) => name)).toContain(RUN_QUEUE);
-    expect(bull.add).toHaveBeenCalledWith('run', {
-      ...runJob,
-      traceparent: expect.stringMatching(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/),
+    expect(bull.add).toHaveBeenCalledWith(
+      'run',
+      { ...runJob, traceparent: expect.stringMatching(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/) },
+      expect.anything(),
+    );
+  });
+
+  it('has BullMQ retry the job with exponential backoff, so a crashed Run resumes', async () => {
+    await enqueueRun(runJob, captureLogger().logger);
+
+    expect(bull.add).toHaveBeenCalledWith('run', expect.anything(), {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 5_000 },
     });
   });
 

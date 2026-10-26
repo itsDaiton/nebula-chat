@@ -38,6 +38,8 @@ export const runRepository: RunStore = {
   async createAssistantMessage({ id, sessionId, runId, content, tokenCount }) {
     await db
       .insert(messages)
-      .values({ id, sessionId, runId, role: 'assistant', content, tokenCount });
+      .values({ id, sessionId, runId, role: 'assistant', content, tokenCount })
+      // A retry after a crash between this insert and `finishRun` finds its answer already written.
+      .onConflictDoNothing({ target: messages.id });
   },
 };

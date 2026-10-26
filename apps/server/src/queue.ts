@@ -1,4 +1,5 @@
 import { Queue } from 'bullmq';
+import type { JobsOptions } from 'bullmq';
 import {
   DIRECT_REPLY_QUEUE,
   directReplyJobSchema,
@@ -32,7 +33,12 @@ const queue = (name: string): Queue => {
 };
 
 // The enqueue is a producer span whose context rides in the payload.
-const publish = async (name: string, jobName: string, payload: object): Promise<void> => {
+const publish = async (
+  name: string,
+  jobName: string,
+  payload: object,
+  options?: JobsOptions,
+): Promise<void> => {
   await withSpan(
     `${name} publish`,
     {
@@ -43,7 +49,10 @@ const publish = async (name: string, jobName: string, payload: object): Promise<
         'messaging.operation.type': 'publish',
       },
     },
-    () => queue(name).add(jobName, { ...payload, ...injectTraceContext() }),
+    () => {
+      const data = { ...payload, ...injectTraceContext() };
+      return options ? queue(name).add(jobName, data, options) : queue(name).add(jobName, data);
+    },
   );
 };
 
@@ -77,7 +86,10 @@ export const enqueueDirectReply = async (
 
 /** Puts a Run on the queue (payload checked against the contract), then pings the worker. */
 export const enqueueRun = async (job: RunJob, logger: EventLogger<'warn'>): Promise<void> => {
-  await publish(RUN_QUEUE, 'run', runJobSchema.parse(job));
+  await publish(RUN_QUEUE, 'run', runJobSchema.parse(job), {
+    attempts: env.RUN_JOB_ATTEMPTS,
+    backoff: { type: 'exponential', delay: env.RUN_JOB_BACKOFF_MS },
+  });
   void pingWorker(logger);
 };
 

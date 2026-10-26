@@ -34,6 +34,9 @@ export const envSchema = z
       .int()
       .positive()
       .default(15 * 60),
+    // A Run job's tries and the base of its exponential backoff; a retry resumes the Run.
+    RUN_JOB_ATTEMPTS: z.coerce.number().int().positive().default(3),
+    RUN_JOB_BACKOFF_MS: z.coerce.number().int().nonnegative().default(5_000),
     CLIENT_URL: originSchema.default('http://localhost:5173'),
     SERVER_URL: z.preprocess((raw) => (raw === '' ? undefined : raw), originSchema.optional()),
     TRUST_PROXY: z.string().optional(),

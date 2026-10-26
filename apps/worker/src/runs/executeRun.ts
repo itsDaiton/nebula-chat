@@ -50,7 +50,11 @@ export type RunDeps = Pick<
 };
 
 /** Executes one Run as its graph, streaming Step events and the answer, then ends the stream with the Run's status. */
-export const executeRun = async (job: RunJob, deps: RunDeps): Promise<void> => {
+export const executeRun = async (
+  job: RunJob,
+  deps: RunDeps,
+  finalAttempt = true,
+): Promise<void> => {
   const { runs, stream, logger, checkpointer } = deps;
   const startMs = Date.now();
   const thread = { configurable: { thread_id: job.runId } };
@@ -105,21 +109,25 @@ export const executeRun = async (job: RunJob, deps: RunDeps): Promise<void> => {
       history,
     }).compile({ checkpointer });
 
+    // A thread with state is never started again: pending work resumes with no input, a finished graph only ends the Run.
+    const checkpoint = await graph.getState(thread);
+    const hasCheckpoint = checkpoint.createdAt !== undefined;
+    if (hasCheckpoint) tally.tokens = await deps.steps.completedTokens(job.runId);
+
     stopWatching = watchForCancel(job.streamId, deps, abort);
     timer = setTimeout(() => abort.abort(timedOut), deps.runTimeoutMs);
-    const chunks = await graph.stream(
-      {},
-      {
+    if (!hasCheckpoint || checkpoint.next.length > 0) {
+      const chunks = await graph.stream(hasCheckpoint ? null : {}, {
         ...thread,
         streamMode: ['messages', 'custom'],
         subgraphs: true,
         signal: abort.signal,
-      },
-    );
-    for await (const chunk of chunks) {
-      for (const event of toReplyStreamEvents(chunk as RunStreamChunk)) {
-        if (event.type === 'token') answer += event.token;
-        enqueue(event);
+      });
+      for await (const chunk of chunks) {
+        for (const event of toReplyStreamEvents(chunk as RunStreamChunk)) {
+          if (event.type === 'token') answer += event.token;
+          enqueue(event);
+        }
       }
     }
     await appended;
@@ -169,6 +177,18 @@ export const executeRun = async (job: RunJob, deps: RunDeps): Promise<void> => {
     }
     const envelope = toErrorEnvelope(error);
     const callerCaused = isAppError(error) && error.status < 500;
+    // A failure before the final attempt leaves the Run and its checkpoints for the retry; a caller error or timeout would only repeat.
+    if (!finalAttempt && !callerCaused && abort.signal.reason !== timedOut) {
+      logEvent(
+        componentLogger(logger, 'chat'),
+        'warn',
+        'chat.run.retrying',
+        { ...outcomeAttributes('failed'), 'error.type': envelope.error, err: error },
+        `Run failed · ${envelope.error}; the job will resume it from its checkpoint`,
+      );
+      await appended.catch(() => undefined);
+      throw error;
+    }
     logEvent(
       componentLogger(logger, 'chat'),
       callerCaused ? 'warn' : 'error',
@@ -186,6 +206,7 @@ export const executeRun = async (job: RunJob, deps: RunDeps): Promise<void> => {
           type: 'run-finished',
           runId: job.runId,
           status: 'failed',
+          error: envelope,
         });
       }
       await endStream(job.streamId, { type: 'end' }, stream);

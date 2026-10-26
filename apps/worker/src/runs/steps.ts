@@ -22,6 +22,8 @@ export type StepStore = {
     parentStepId: string | null;
     input: unknown;
   }) => Promise<number>;
+  /** What the Run's completed Steps used: the part of a resumed Run's total that will not be spent again. */
+  completedTokens: (runId: string) => Promise<number>;
   finish: (
     stepId: string,
     result:
@@ -99,7 +101,8 @@ export const runModelStep = async <T>(
       ctx.ledger,
       ctx.logger,
       {
-        idempotencyKey: id,
+        // A re-run is a second, billed call, so it gets its own ledger row.
+        idempotencyKey: `${id}:${attempt}`,
         userId: ctx.userId,
         sessionId: ctx.sessionId,
         runId: ctx.runId,
