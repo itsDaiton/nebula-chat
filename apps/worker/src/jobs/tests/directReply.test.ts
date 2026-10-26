@@ -56,8 +56,8 @@ const processorWith = (
     streamChat,
     prompts: {
       directReply: 'You are the Direct reply prompt.',
-      languageDetection: '',
-      sessionSummary: '',
+      language: '',
+      session: '',
       output: '',
     },
     apiKeys,

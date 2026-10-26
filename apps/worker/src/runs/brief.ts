@@ -1,21 +1,14 @@
-import type { LanguageDetection } from '@worker/agents/languageDetection';
-import type { SessionSummary } from '@worker/agents/sessionSummary';
+import type { LanguageOutput } from '@worker/agents/language';
+import type { SessionOutput } from '@worker/agents/session';
 
-/** The structured merge of the Intake Agents' outputs; a part whose Agent failed is null and named in `missing`. */
-export type Brief = {
-  language: string | null;
-  englishRestatement: string | null;
-  sessionSummary: string | null;
-  missing: string[];
-};
+/** Each Intake Agent's output, keyed by its name. */
+export type IntakeOutputs = { language: LanguageOutput; session: SessionOutput };
 
-export const buildBrief = (
-  detected: LanguageDetection | null,
-  summary: SessionSummary | null,
-  missing: string[],
-): Brief => ({
-  language: detected?.language ?? null,
-  englishRestatement: detected?.englishRestatement ?? null,
-  sessionSummary: summary?.summary ?? null,
+/** The JSON merge of the Intake Agents' outputs; an Agent that failed is null and named in `missing`. */
+export type Brief = { [K in keyof IntakeOutputs]: IntakeOutputs[K] | null } & { missing: string[] };
+
+export const buildBrief = (intake: Partial<IntakeOutputs>, missing: string[]): Brief => ({
+  language: intake.language ?? null,
+  session: intake.session ?? null,
   missing,
 });

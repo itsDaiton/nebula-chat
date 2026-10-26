@@ -9,8 +9,8 @@ describe('loadPrompts', () => {
     const prompts = loadPrompts();
 
     expect(prompts.directReply).toContain('You are Nebula Chat');
-    expect(prompts.languageDetection).toContain('language detection');
-    expect(prompts.sessionSummary).toContain('Session summary');
+    expect(prompts.language).toContain('language agent');
+    expect(prompts.session).toContain('session agent');
     expect(prompts.output).toContain('final answer');
   });
 

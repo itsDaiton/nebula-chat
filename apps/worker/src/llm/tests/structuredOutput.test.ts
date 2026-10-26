@@ -24,7 +24,7 @@ const request = {
   provider: 'openai' as const,
   apiKey: 'sk-test',
   model: 'gpt-4o-mini',
-  name: 'languageDetection',
+  name: 'language',
   schema,
   messages: [new HumanMessage('Ahoj')],
 };

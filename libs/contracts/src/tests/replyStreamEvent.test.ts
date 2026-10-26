@@ -21,7 +21,7 @@ const events: ReplyStreamEvent[] = [
     stepId: '11111111-1111-4111-8111-111111111111',
     attempt: 1,
     phase: 'intake',
-    agent: 'languageDetection',
+    agent: 'language',
     label: 'Detecting the language',
   },
   { type: 'step-finished', stepId: '11111111-1111-4111-8111-111111111111', status: 'failed' },

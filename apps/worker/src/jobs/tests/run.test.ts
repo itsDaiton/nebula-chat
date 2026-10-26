@@ -29,8 +29,8 @@ const ANSWER = ['Dva', ' plus dva', ' jsou čtyři.'];
 
 const prompts = {
   directReply: 'Direct reply prompt',
-  languageDetection: 'Language detection prompt',
-  sessionSummary: 'Session summary prompt',
+  language: 'Language detection prompt',
+  session: 'Session summary prompt',
   output: 'Output prompt',
 };
 
@@ -71,8 +71,7 @@ const checkpointsOf = async (threadId: string) => {
   return found;
 };
 
-const happyModels = () =>
-  scriptedModels({ languageDetection: DETECTED, sessionSummary: SUMMARISED }, ANSWER);
+const happyModels = () => scriptedModels({ language: DETECTED, session: SUMMARISED }, ANSWER);
 
 beforeEach(() => {
   spans.reset();
@@ -137,18 +136,18 @@ describe('the Run job', () => {
       expect.arrayContaining([
         {
           type: 'step-started',
-          stepId: stepNamed('languageDetection').id,
+          stepId: stepNamed('language').id,
           attempt: 1,
           phase: 'intake',
-          agent: 'languageDetection',
+          agent: 'language',
           label: 'Detecting the language',
         },
         {
           type: 'step-started',
-          stepId: stepNamed('sessionSummary').id,
+          stepId: stepNamed('session').id,
           attempt: 1,
           phase: 'intake',
-          agent: 'sessionSummary',
+          agent: 'session',
           label: 'Summarising the Session',
         },
         {
@@ -175,7 +174,7 @@ describe('the Run job', () => {
     await run(happyModels().models);
 
     expect(steps()).toHaveLength(3);
-    expect(stepNamed('languageDetection')).toMatchObject({
+    expect(stepNamed('language')).toMatchObject({
       runId: RUN_ID,
       phase: 'intake',
       attempt: 1,
@@ -189,7 +188,7 @@ describe('the Run job', () => {
       output: DETECTED,
       tokens: 50,
     });
-    expect(stepNamed('sessionSummary')).toMatchObject({
+    expect(stepNamed('session')).toMatchObject({
       phase: 'intake',
       status: 'completed',
       input: { human: expect.stringContaining('Assistant: Ahoj! Jak pomohu?') },
@@ -211,18 +210,17 @@ describe('the Run job', () => {
     expect(models.maxInFlight()).toBe(2);
   });
 
-  it('stores the typed Brief on the Run', async () => {
+  it('stores the Brief on the Run: each Intake Agent’s output under its name', async () => {
     await run(happyModels().models);
 
     expect(db.runs.get(RUN_ID)?.brief).toEqual({
-      language: 'Czech',
-      englishRestatement: 'How much is two plus two?',
-      sessionSummary: 'The user greeted the assistant.',
+      language: { language: 'Czech', englishRestatement: 'How much is two plus two?' },
+      session: { summary: 'The user greeted the assistant.' },
       missing: [],
     });
   });
 
-  it("asks the Output Agent to answer in the user's language, given the English restatement and the summary", async () => {
+  it('passes the Brief to the Output Agent as JSON, with the user’s message', async () => {
     const models = happyModels();
 
     await run(models.models);
@@ -230,9 +228,12 @@ describe('the Run job', () => {
     const [call] = models.chatCalls;
     const [system, human] = call!.messages;
     expect(system?.text).toBe('Output prompt');
-    expect(human?.text).toContain('Language: Czech');
-    expect(human?.text).toContain('English restatement: How much is two plus two?');
-    expect(human?.text).toContain('Session summary: The user greeted the assistant.');
+    const json = /```json\n([\s\S]*?)\n```/.exec(human?.text ?? '')?.[1];
+    expect(JSON.parse(json ?? 'null')).toEqual({
+      language: { language: 'Czech', englishRestatement: 'How much is two plus two?' },
+      session: { summary: 'The user greeted the assistant.' },
+      missing: [],
+    });
     expect(human?.text).toContain('Kolik je dva plus dva?');
   });
 
@@ -241,10 +242,10 @@ describe('the Run job', () => {
 
     await run(models.models);
 
-    const summary = models.structuredCalls.find((c) => c.name === 'sessionSummary')!;
+    const summary = models.structuredCalls.find((c) => c.name === 'session')!;
     expect(summary.messages[0]?.text).toBe('Session summary prompt');
     expect(summary.messages[1]?.text).toMatch(/User: Ahoj\n\nAssistant: Ahoj! Jak pomohu\?/);
-    const detection = models.structuredCalls.find((c) => c.name === 'languageDetection')!;
+    const detection = models.structuredCalls.find((c) => c.name === 'language')!;
     expect(detection.messages.map((m) => m.text)).toEqual([
       'Language detection prompt',
       'Kolik je dva plus dva?',
@@ -266,7 +267,7 @@ describe('the Run job', () => {
     await run(happyModels().models);
 
     expect(ledger.calls).toHaveLength(3);
-    for (const name of ['languageDetection', 'sessionSummary', 'output']) {
+    for (const name of ['language', 'session', 'output']) {
       const step = stepNamed(name);
       expect(ledger.calls).toContainEqual(
         expect.objectContaining({
@@ -308,10 +309,7 @@ describe('the Run job', () => {
 
   describe('when an Intake Agent fails', () => {
     const partialModels = () =>
-      scriptedModels(
-        { languageDetection: DETECTED, sessionSummary: new Error('provider down') },
-        ANSWER,
-      );
+      scriptedModels({ language: DETECTED, session: new Error('provider down') }, ANSWER);
 
     it('still answers, and ends the Run partial', async () => {
       await run(partialModels().models);
@@ -328,17 +326,16 @@ describe('the Run job', () => {
       await run(partialModels().models);
 
       expect(db.runs.get(RUN_ID)?.brief).toEqual({
-        language: 'Czech',
-        englishRestatement: 'How much is two plus two?',
-        sessionSummary: null,
-        missing: ['sessionSummary'],
+        language: { language: 'Czech', englishRestatement: 'How much is two plus two?' },
+        session: null,
+        missing: ['session'],
       });
     });
 
     it('records the failed Step with its error and announces it failed', async () => {
       await run(partialModels().models);
 
-      const failed = stepNamed('sessionSummary');
+      const failed = stepNamed('session');
       expect(failed).toMatchObject({
         status: 'failed',
         error: { success: false, error: 'Internal' },
@@ -349,7 +346,7 @@ describe('the Run job', () => {
         status: 'failed',
       });
       expect(eventLines(log.lines, 'chat.run.step.failed')).toMatchObject([
-        { level: LEVEL.warn, 'nebula.agent.name': 'sessionSummary' },
+        { level: LEVEL.warn, 'nebula.agent.name': 'session' },
       ]);
     });
   });

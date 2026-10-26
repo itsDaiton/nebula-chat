@@ -358,8 +358,8 @@ checkpointed in Postgres under the Run's id:
 
 ```mermaid
 flowchart LR
-  start((start)) --> ld[languageDetection<br/>Intake Agent]
-  start --> ss[sessionSummary<br/>Intake Agent]
+  start((start)) --> ld[language<br/>Intake Agent]
+  start --> ss[session<br/>Intake Agent]
   ld --> brief[buildBrief]
   ss --> brief
   brief --> out[output<br/>Output Agent]
@@ -370,10 +370,14 @@ flowchart LR
   with its full input and output, tokens and status. It is announced on the stream as
   `step-started` (with its `attempt`) and `step-finished`, and its Model call is recorded under
   the Step's id.
-- **Intake.** The two Intake Agents run in parallel on cheap Models and return structured
-  output. One that fails leaves its part of the Brief missing, and the Run ends `partial`.
-- **Output.** The Output Agent streams the answer in the Brief's language. Only its tokens reach
-  the stream. The answer is persisted as an assistant Message linked to the Run.
+- **Intake.** The two Intake Agents, `language` and `session`, run in parallel on cheap Models and
+  return structured output. One that fails leaves its part of the Brief missing, and the Run ends
+  `partial`.
+- **Brief.** `buildBrief` merges their outputs into one JSON object keyed by Agent
+  (`{ language, session, missing }`), stores it on the Run and passes that JSON down.
+- **Output.** The Output Agent is always the last node: the Orchestrator and its tools go between
+  the Brief and it. It reads the Brief as JSON and streams the answer in the Brief's language. Only
+  its tokens reach the stream. The answer is persisted as an assistant Message linked to the Run.
 - **End.** The Run ends `completed`, `partial` or `failed`, its checkpoints are deleted, and the
   stream ends with `run-finished` and then `end`.
 

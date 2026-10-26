@@ -9,12 +9,10 @@ import { MissingConfigurationError } from '@nebula-chat/errors';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
 import type { z } from 'zod';
 import type { AgentDefinition } from '@worker/runs/agentDefinition';
-import { languageDetectionSchema } from '@worker/agents/languageDetection';
-import type { LanguageDetection } from '@worker/agents/languageDetection';
+import { languageSchema } from '@worker/agents/language';
 import { outputInput } from '@worker/agents/output';
+import { sessionInput, sessionSchema } from '@worker/agents/session';
 import { AGENTS } from '@worker/runs/agentRegistry';
-import { sessionSummaryInput, sessionSummarySchema } from '@worker/agents/sessionSummary';
-import type { SessionSummary } from '@worker/agents/sessionSummary';
 import type { HistoryMessage } from '@worker/directReplies/streamChat';
 import { toCallUsage } from '@worker/llm/callUsage';
 import { llmConcurrencyLimiter } from '@worker/llm/concurrencyLimiter';
@@ -23,7 +21,7 @@ import type { LLMConfig } from '@worker/llm/createLLM';
 import type { Prompts } from '@worker/llm/prompts';
 import type { StructuredCall } from '@worker/llm/structuredOutput';
 import { buildBrief } from '@worker/runs/brief';
-import type { Brief } from '@worker/runs/brief';
+import type { Brief, IntakeOutputs } from '@worker/runs/brief';
 import { runModelStep } from '@worker/runs/steps';
 import type { StepContext } from '@worker/runs/steps';
 
@@ -50,11 +48,11 @@ export const OUTPUT_NODE = 'output';
 const RunState = Annotation.Root({
   // The Orchestrator's nested agent reads and writes this; nothing does yet.
   messages: Annotation<BaseMessage[]>({ reducer: messagesStateReducer, default: () => [] }),
-  language: Annotation<LanguageDetection | null>({
-    reducer: (_, next) => next,
-    default: () => null,
+  // Each Intake Agent's output under its name; the parallel nodes each add their own.
+  intake: Annotation<Partial<IntakeOutputs>>({
+    reducer: (all, next) => ({ ...all, ...next }),
+    default: () => ({}),
   }),
-  summary: Annotation<SessionSummary | null>({ reducer: (_, next) => next, default: () => null }),
   // The Intake Agents that failed, so the Brief is partial and the Run ends `partial`.
   missing: Annotation<string[]>({ reducer: (all, next) => all.concat(next), default: () => [] }),
   brief: Annotation<Brief | null>({ reducer: (_, next) => next, default: () => null }),
@@ -85,10 +83,9 @@ const stepInput = (agent: AgentDefinition, system: string, human: string) => ({
 
 // A failing Intake Agent must not fail the graph step: its Step is recorded failed and its part of the Brief is missing.
 const intakeNode =
-  <T extends Record<string, unknown>>(
-    agent: AgentDefinition,
-    schema: z.ZodType<T>,
-    key: 'language' | 'summary',
+  <K extends keyof IntakeOutputs>(
+    agent: AgentDefinition & { name: K },
+    schema: z.ZodType<IntakeOutputs[K]>,
     input: (deps: RunGraphDeps) => string,
     deps: RunGraphDeps,
   ) =>
@@ -112,7 +109,7 @@ const intakeNode =
           return parsed;
         },
       );
-      return { [key]: output, tokensUsed: tokens };
+      return { intake: { [agent.name]: output }, tokensUsed: tokens };
     } catch (err) {
       logEvent(
         componentLogger(deps.logger, 'chat'),
@@ -128,7 +125,7 @@ const intakeNode =
 const outputNode =
   (deps: RunGraphDeps) => async (state: RunStateValues, config: LangGraphRunnableConfig) => {
     const agent = AGENTS.output;
-    const brief = state.brief ?? buildBrief(null, null, state.missing);
+    const brief = state.brief ?? buildBrief(state.intake, state.missing);
     const system = deps.prompts[agent.prompt];
     const human = outputInput(brief, deps.message);
     const { output, tokens } = await runModelStep(
@@ -169,33 +166,21 @@ const outputNode =
 export const createRunGraph = (deps: RunGraphDeps) =>
   new StateGraph(RunState)
     .addNode(
-      'languageDetection',
-      intakeNode(
-        AGENTS.languageDetection,
-        languageDetectionSchema,
-        'language',
-        (d) => d.message,
-        deps,
-      ),
+      'language',
+      intakeNode(AGENTS.language, languageSchema, (d) => d.message, deps),
     )
     .addNode(
-      'sessionSummary',
-      intakeNode(
-        AGENTS.sessionSummary,
-        sessionSummarySchema,
-        'summary',
-        (d) => sessionSummaryInput(d.history, d.message),
-        deps,
-      ),
+      'session',
+      intakeNode(AGENTS.session, sessionSchema, (d) => sessionInput(d.history, d.message), deps),
     )
     .addNode('buildBrief', async (state: RunStateValues) => {
-      const brief = buildBrief(state.language, state.summary, state.missing);
+      const brief = buildBrief(state.intake, state.missing);
       await deps.saveBrief(brief);
       return { brief };
     })
     .addNode(OUTPUT_NODE, outputNode(deps))
-    .addEdge(START, 'languageDetection')
-    .addEdge(START, 'sessionSummary')
-    .addEdge(['languageDetection', 'sessionSummary'], 'buildBrief')
+    .addEdge(START, 'language')
+    .addEdge(START, 'session')
+    .addEdge(['language', 'session'], 'buildBrief')
     .addEdge('buildBrief', OUTPUT_NODE)
     .addEdge(OUTPUT_NODE, END);
