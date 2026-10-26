@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.9.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.9.0...nebula-chat-v5.9.1) (2026-10-26)
+
+
+### Bug Fixes
+
+* **ci:** stop cancelled main builds failing build-result ([#660](https://github.com/itsDaiton/nebula-chat/issues/660)) ([7cc29f2](https://github.com/itsDaiton/nebula-chat/commit/7cc29f2f2d4372a95b28169161de6e44194ce94f))
+
 ## [5.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.8.1...nebula-chat-v5.9.0) (2026-10-26)
 
 
