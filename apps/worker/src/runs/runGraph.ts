@@ -153,10 +153,7 @@ const orchestratorNode =
     return { messages: result.messages, ending: orchestrator.ending() };
   };
 
-/**
- * A Run: the Intake Agents fan out from the start and fan in to the Brief, the Orchestrator delegates
- * turn by turn, then the Output Agent answers from its findings.
- */
+// Intake fans out and in to the Brief, the Orchestrator delegates turn by turn, the Output Agent answers.
 export const createRunGraph = (deps: RunGraphDeps) =>
   new StateGraph(RunState)
     .addNode(

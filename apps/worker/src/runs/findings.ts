@@ -7,10 +7,7 @@ const CUT_SHORT: Record<Exclude<LoopEnding, 'handoff'>, string> = {
   budget: 'the Run budget was nearly spent',
 };
 
-/**
- * What the Output Agent works from: the Orchestrator's handoff reply, or, when a limit ended its loop,
- * its delegates' results so far under a note that they are partial.
- */
+// The Orchestrator's handoff reply; when a limit ended its loop, its delegates' results so far, marked partial.
 export const findingsOf = (messages: BaseMessage[], ending: LoopEnding | null): string => {
   if (ending === 'handoff' || ending === null) {
     return messages.findLast(AIMessage.isInstance)?.text ?? '';

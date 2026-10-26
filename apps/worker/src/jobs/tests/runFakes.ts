@@ -233,10 +233,7 @@ class ScriptedChatModel extends BaseChatModel {
   }
 }
 
-/**
- * Models scripted per Agent: Intake returns its typed object or fails, the Orchestrator follows its
- * script, a delegate answers its task, and Output streams `tokens`; every call is kept.
- */
+// Models scripted per Agent (Intake, Orchestrator, delegates, a streaming Output); every call is kept.
 export const scriptedModels = (
   intake: StructuredScript,
   tokens: string[],

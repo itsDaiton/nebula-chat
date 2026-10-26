@@ -744,7 +744,9 @@ describe('the Run job', () => {
       expect(kept.length).toBeLessThan(ANSWER.join('').length);
       expect(ANSWER.join('').startsWith(kept)).toBe(true);
       expect(db.runs.get(RUN_ID)?.status).toBe('cancelled');
-      expect(stepNamed('output').status).toBe('failed');
+      expect(stepNamed('output')).toMatchObject({ status: 'failed', tokens: expect.any(Number) });
+      // The stopped Output Step's tokens count too.
+      expect(db.runs.get(RUN_ID)?.tokensUsed).toBe(2 * 50 + 4 * 120 + stepNamed('output').tokens!);
       expect(ledger.calls).toContainEqual(
         expect.objectContaining({ agent: 'output', outcome: 'cancelled' }),
       );

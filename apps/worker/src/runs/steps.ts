@@ -37,7 +37,7 @@ export type StepContext = {
   steps: StepStore;
   ledger: ModelCallLedger;
   logger: Logger;
-  /** What the Run's completed Steps used so far: the Run budget is checked against it. */
+  /** What the Run's Steps have used so far, failed ones too: the Run budget is checked against it. */
   tally: { tokens: number };
 };
 
@@ -125,6 +125,8 @@ export const runModelStep = async <T>(
     ctx.tally.tokens += tokens ?? 0;
     return { output, tokens: tokens ?? 0 };
   } catch (error) {
+    // A failed or stopped call still spent what it reported.
+    ctx.tally.tokens += tokensOf(usage) ?? 0;
     await ctx.steps.finish(id, {
       status: 'failed',
       error: toErrorEnvelope(error),

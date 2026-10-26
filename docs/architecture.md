@@ -373,7 +373,7 @@ flowchart LR
   (an Orchestrator turn's from its turn number, a delegate's from the Orchestrator's tool-call id),
   with its turn, parent, full input and output, tokens and status. It is announced on the stream as
   `step-started` (with its `attempt`, `turn` and `parentStepId`) and `step-finished`, and its Model
-  call is recorded under the Step's id. The tokens of the Run's completed Steps are its total.
+  call is recorded under the Step's id. The tokens its Steps reported, failed ones included, are the Run's total.
 - **Intake.** The two Intake Agents, `language` and `session`, run in parallel on cheap Models and
   return structured output. One that fails leaves its part of the Brief missing, and the Run ends
   `partial`.

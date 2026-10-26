@@ -18,9 +18,7 @@ import type { StepContext } from '@worker/runs/steps';
 export type RunLimits = {
   turnCap: number;
   parallelDelegates: number;
-  /** The Run budget: the most tokens all its Steps may use. */
   tokenBudget: number;
-  /** The share of the budget past which the Orchestrator is made to hand off. */
   handoffThreshold: number;
   delegateTimeoutMs: number;
 };
@@ -49,10 +47,7 @@ const transcript = (messages: BaseMessage[]) =>
     ...(ToolMessage.isInstance(m) ? { toolCallId: m.tool_call_id } : {}),
   }));
 
-/**
- * The Orchestrator: a `createAgent` tool-calling loop whose only tools are the delegate Agents. Its
- * middleware records every turn and delegate execution as a Step and enforces the Run's limits.
- */
+// A `createAgent` loop whose only tools are the delegate Agents; its middleware records Steps and enforces the limits.
 export const createOrchestrator = (deps: OrchestratorDeps) => {
   const { limits, runId } = deps;
   const agent = orchestratorAgent;
@@ -117,7 +112,7 @@ export const createOrchestrator = (deps: OrchestratorDeps) => {
       const { toolCall } = request;
       const delegate = DELEGATES.find((d) => d.name === toolCall.name);
       const toolCallId = toolCall.id ?? '';
-      const refuse = (content: string) =>
+      const errorResult = (content: string) =>
         new ToolMessage({
           content,
           tool_call_id: toolCallId,
@@ -125,7 +120,7 @@ export const createOrchestrator = (deps: OrchestratorDeps) => {
           status: 'error',
         });
       if (!delegate) return handler(request);
-      if (nearBudget()) return refuse(`Not run: the Run budget is nearly spent.`);
+      if (nearBudget()) return errorResult('Not run: the Run budget is nearly spent.');
 
       const turn = turnsIn(request.state.messages);
       const task = typeof toolCall.args['task'] === 'string' ? toolCall.args['task'] : '';
@@ -162,17 +157,16 @@ export const createOrchestrator = (deps: OrchestratorDeps) => {
       } catch (err) {
         // A stopped Run stops here too; any other failure is the Orchestrator's to work around.
         if (request.runtime.signal?.aborted) throw err;
-        const timedOut = err instanceof Error && err.name === 'TimeoutError';
+        const outcome =
+          err instanceof Error && err.name === 'TimeoutError' ? 'timed out' : 'failed';
         logEvent(
           componentLogger(deps.logger, 'chat'),
           'warn',
           'chat.run.step.failed',
           { err, 'nebula.agent.name': delegate.name },
-          `Delegate Agent ${delegate.name} ${timedOut ? 'timed out' : 'failed'}; the Orchestrator carries on`,
+          `Delegate Agent ${delegate.name} ${outcome}; the Orchestrator carries on`,
         );
-        return refuse(
-          `The ${delegate.name} Agent ${timedOut ? 'timed out' : 'failed'} and returned no result.`,
-        );
+        return errorResult(`The ${delegate.name} Agent ${outcome} and returned no result.`);
       }
     },
   });

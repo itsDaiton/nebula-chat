@@ -24,7 +24,6 @@ export type RunStore = {
   findRun: (runId: string, userId: string) => Promise<{ id: string } | null>;
   /** The Session's latest Messages, newest first. */
   findRecentMessages: (sessionId: string, limit: number) => Promise<StoredMessage[]>;
-  /** Marks the Run started, with the Run budget it runs under. */
   markRunning: (runId: string, tokenBudget: number) => Promise<void>;
   saveBrief: (runId: string, brief: Brief) => Promise<void>;
   finishRun: (runId: string, end: { status: RunEndStatus; tokensUsed: number }) => Promise<void>;
@@ -45,7 +44,6 @@ export type RunDeps = Pick<
   stream: ReplyStreamWriter;
   /** Postgres in production, in memory in tests; the Run's id is the thread. */
   checkpointer: BaseCheckpointSaver;
-  /** How long a Run may take before it is aborted and fails. */
   runTimeoutMs: number;
   /** How often a Run checks for a cancel request. Default 250 ms. */
   cancelPollMs?: number;

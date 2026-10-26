@@ -24,21 +24,19 @@ const taskSchema = z.object({
     .describe('The whole task, self-contained: the Agent sees nothing else of the Run'),
 });
 
-/**
- * A delegate Agent as a tool taking `{ task }`: one plain model call, its answer the tool result and
- * its usage the artifact, so the Step recorder can record the Model call.
- */
+// One plain model call: its answer is the tool result, its usage the artifact the Step recorder reads.
 export const delegateTool = (agent: DelegateDefinition, deps: DelegateToolDeps) =>
   tool(
     async ({ task }, config): Promise<[string, CallUsage | undefined]> => {
       const system = deps.prompts[agent.prompt];
-      const timeout = AbortSignal.timeout(deps.timeoutMs);
-      const signal = config.signal ? AbortSignal.any([config.signal, timeout]) : timeout;
-      const reply = await llmConcurrencyLimiter(() =>
-        deps.models
+      // The timeout starts once the call leaves the process-wide queue, so waiting there costs it nothing.
+      const reply = await llmConcurrencyLimiter(() => {
+        const timeout = AbortSignal.timeout(deps.timeoutMs);
+        const signal = config.signal ? AbortSignal.any([config.signal, timeout]) : timeout;
+        return deps.models
           .chat(llmConfigFor(agent, deps.apiKeys))
-          .invoke([new SystemMessage(system), new HumanMessage(task)], { signal }),
-      );
+          .invoke([new SystemMessage(system), new HumanMessage(task)], { signal });
+      });
       const usage = toCallUsage(reply.usage_metadata, {
         promptTokens: countTokens(system, agent.model) + countTokens(task, agent.model),
         completionTokens: countTokens(reply.text, agent.model),
