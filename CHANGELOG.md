@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.9.1...nebula-chat-v5.10.0) (2026-10-26)
+
+
+### Features
+
+* **worker:** NEB-361 resume Runs from their checkpoint and enforce failure end states ([#663](https://github.com/itsDaiton/nebula-chat/issues/663)) ([7b89c2f](https://github.com/itsDaiton/nebula-chat/commit/7b89c2fa48d978b4badc2bf7210fbc9c91b0d829))
+
 ## [5.9.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.9.0...nebula-chat-v5.9.1) (2026-10-26)
 
 
