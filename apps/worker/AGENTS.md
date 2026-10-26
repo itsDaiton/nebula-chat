@@ -39,6 +39,7 @@ Locally, run it next to the server: both read the same Postgres and Redis. Its `
 - **It holds the LLM keys**; the server holds none. Model calls go through `llm/`, on `@langchain/core`
   and the provider packages; there is no LLM lib (ADR-0013).
 - **Every reply stream ends with `end`**, after an `error` event too, so a reader always knows when to stop.
+  A Run attempt that BullMQ will retry is the exception: it leaves its stream open for the resume.
   A reply its User stopped ends with `end` `{ reason: 'cancelled' }`: the runner polls the server's
   cancel flag while the model streams, aborts the call and persists what it had produced.
   An error event carries the `@nebula-chat/errors` envelope, never a raw internal message.
@@ -110,7 +111,7 @@ bound to every ID in its payload (`user.id`, `nebula.session.id`, `nebula.messag
 (`chat.reply.completed` for a Direct reply). A failure is logged once, by the runner that turns it into
 the stream's `error` event. Every model call and every cache replay is also recorded once as a Model call,
 keyed by the reply's `streamId` (a Step's id in a Run); a failed write is a `warn`, never a failed reply.
-A Run writes one `chat.run.completed`, plus a `warn` `chat.run.step.failed` for each Intake or delegate Agent that failed. Never log Message content, prompts, completions or Streaming tokens.
+A Run writes one `chat.run.completed` (a failure with job retries left writes a `warn` `chat.run.retrying` instead), plus a `warn` `chat.run.step.failed` for each Intake or delegate Agent that failed. Never log Message content, prompts, completions or Streaming tokens.
 
 A job continues the server's trace: the payload's `traceparent` (and `tracestate`) is extracted into a
 consumer span, the model call is a child span of it, and a job without trace context starts its own root.

@@ -54,7 +54,7 @@ export const memoryRuns = () => {
       Object.assign(runs.get(runId)!, { status, tokensUsed });
     },
     createAssistantMessage: async (message) => {
-      created.push(message);
+      if (!created.some((m) => m.id === message.id)) created.push(message);
     },
   };
   return { store, runs, messages, created };

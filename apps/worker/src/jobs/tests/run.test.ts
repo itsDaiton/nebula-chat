@@ -888,6 +888,7 @@ describe('the Run job', () => {
       expect(models.structuredCalls.length + models.agentCalls.length).toBe(callsBefore);
       expect(db.runs.get(RUN_ID)?.status).toBe('completed');
       expect(db.runs.get(RUN_ID)?.tokensUsed).toBeGreaterThan(0);
+      expect(db.created).toHaveLength(1);
     });
 
     describe('when the Orchestrator keeps failing', () => {

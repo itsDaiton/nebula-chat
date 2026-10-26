@@ -24,7 +24,7 @@ const jobLogger = (logger: Logger, job: RunJob, jobId: string | undefined): Logg
     'nebula.job.id': jobId,
   });
 
-// Throws only to have BullMQ retry the job, leaving the Run to resume; its last try ends the Run on its stream. A payload breaking the contract has no stream, so it is logged and dropped.
+// Throws only so BullMQ retries a Run that resumes; a payload breaking the contract has no stream, so it is logged and dropped.
 export const createRunProcessor =
   (deps: RunDeps) =>
   async (job: QueuedJob): Promise<void> => {

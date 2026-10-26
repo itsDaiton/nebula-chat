@@ -30,7 +30,7 @@ export const stepRepository: StepStore = {
       .select({ total: sql<number>`coalesce(sum(${steps.tokens}), 0)::int` })
       .from(steps)
       .where(and(eq(steps.runId, runId), eq(steps.status, 'completed')));
-    return row?.total ?? 0;
+    return row!.total;
   },
   async finish(stepId, result) {
     await db

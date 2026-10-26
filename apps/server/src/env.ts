@@ -34,7 +34,7 @@ export const envSchema = z
       .int()
       .positive()
       .default(15 * 60),
-    // How many times BullMQ runs a Run job, and the base of its exponential backoff: a retry resumes the Run from its checkpoint.
+    // A Run job's tries and the base of its exponential backoff; a retry resumes the Run.
     RUN_JOB_ATTEMPTS: z.coerce.number().int().positive().default(3),
     RUN_JOB_BACKOFF_MS: z.coerce.number().int().nonnegative().default(5_000),
     CLIENT_URL: originSchema.default('http://localhost:5173'),

@@ -49,11 +49,7 @@ export type RunDeps = Pick<
   cancelPollMs?: number;
 };
 
-/**
- * Executes one Run as its graph, streaming Step events and the answer, then ends the stream with the Run's status.
- * A job retried by BullMQ resumes the graph from its checkpoint. A failure that is not on the job's `finalAttempt`
- * is rethrown for that retry, leaving the Run, its stream and its checkpoints as they are.
- */
+/** Executes one Run as its graph, streaming Step events and the answer, then ends the stream with the Run's status. */
 export const executeRun = async (
   job: RunJob,
   deps: RunDeps,
@@ -181,7 +177,7 @@ export const executeRun = async (
     }
     const envelope = toErrorEnvelope(error);
     const callerCaused = isAppError(error) && error.status < 500;
-    // A caller's mistake or a Run past its timeout would fail again the same way, so neither is retried.
+    // A failure before the final attempt leaves the Run and its checkpoints for the retry; a caller error or timeout would only repeat.
     if (!finalAttempt && !callerCaused && abort.signal.reason !== timedOut) {
       logEvent(
         componentLogger(logger, 'chat'),

@@ -149,8 +149,9 @@ const orchestratorNode =
     const brief = state.brief ?? buildBrief(state.intake, state.missing);
     const orchestrator = createOrchestrator(deps);
     // The node's own checkpoint id would make the nested loop replay its done tasks instead of resuming them.
-    const configurable = { ...config.configurable };
-    delete configurable['checkpoint_id'];
+    const configurable = Object.fromEntries(
+      Object.entries(config.configurable ?? {}).filter(([key]) => key !== 'checkpoint_id'),
+    );
     const result = await orchestrator.loop.invoke(
       { messages: [new HumanMessage(orchestratorInput(brief, deps.message))] },
       { ...config, configurable, recursionLimit: orchestrator.recursionLimit },

@@ -26,7 +26,7 @@ const jobLogger = (logger: Logger, job: DirectReplyJob, jobId: string | undefine
 export type QueuedJob = {
   id?: string | undefined;
   data: unknown;
-  /** Tries made before this one, and how many the job gets in all (a Run job's retries). */
+  // A Run job's retries: tries made before this one, and how many it gets in all.
   attemptsMade?: number;
   opts?: { attempts?: number };
 };
