@@ -50,6 +50,12 @@ components:
           pattern: >-
             ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           description: The reply stream to read from `GET /api/streams/{streamId}`
+        runId:
+          description: The Run producing the reply; only in `run` mode
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
       required:
         - messageId
         - streamId
@@ -490,10 +496,12 @@ paths:
                   minLength: 1
                 mode:
                   type: string
-                  const: direct
+                  enum:
+                    - direct
+                    - run
                   description: >-
-                    How the reply is produced. Only `direct`, a Direct reply,
-                    for now.
+                    How the reply is produced: `direct`, a Direct reply, or
+                    `run`, a Run (Registered users only).
                 model:
                   description: >-
                     Binds the Session to this Model before replying; omitted
@@ -543,7 +551,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
-          description: Guest message allowance reached — registration required
+          description: >-
+            Guest message allowance reached, or a Guest asked for a Run —
+            registration required
           content:
             application/json:
               schema:

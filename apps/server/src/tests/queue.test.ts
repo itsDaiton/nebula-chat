@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DIRECT_REPLY_QUEUE } from '@nebula-chat/contracts';
+import { DIRECT_REPLY_QUEUE, RUN_QUEUE } from '@nebula-chat/contracts';
 import { captureLogger, captureSpans, eventLines, LEVEL } from '@nebula-chat/otel/testing';
 
 const bull = vi.hoisted(() => ({
@@ -24,7 +24,7 @@ vi.mock('@server/redis', () => ({
 }));
 
 import { withSpan } from '@nebula-chat/otel';
-import { closeQueue, enqueueDirectReply, pingWorker } from '@server/queue';
+import { closeQueue, enqueueDirectReply, enqueueRun, pingWorker } from '@server/queue';
 
 const job = {
   userId: '11111111-1111-4111-8111-111111111111',
@@ -107,6 +107,33 @@ describe('enqueueDirectReply', () => {
     const { logger } = captureLogger();
 
     await expect(enqueueDirectReply(job, logger)).resolves.toBeUndefined();
+  });
+});
+
+describe('enqueueRun', () => {
+  const runJob = { ...job, runId: '55555555-5555-4555-8555-555555555555' };
+
+  it('adds the job to the Run queue, apart from Direct replies', async () => {
+    await enqueueRun(runJob, captureLogger().logger);
+
+    expect(bull.constructed.map(({ name }) => name)).toContain(RUN_QUEUE);
+    expect(bull.add).toHaveBeenCalledWith('run', {
+      ...runJob,
+      traceparent: expect.stringMatching(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/),
+    });
+  });
+
+  it('refuses a payload that breaks the contract, enqueuing nothing', async () => {
+    await expect(
+      enqueueRun({ ...runJob, runId: 'not-a-uuid' }, captureLogger().logger),
+    ).rejects.toThrow();
+    expect(bull.add).not.toHaveBeenCalled();
+  });
+
+  it("pings the worker's /health so a sleeping worker wakes up", async () => {
+    await enqueueRun(runJob, captureLogger().logger);
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
   });
 });
 

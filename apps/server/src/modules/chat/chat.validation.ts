@@ -8,8 +8,10 @@ export const sendMessageParamsSchema = z.object({
 export const sendMessageSchema = z.object({
   content: z.string().min(1),
   mode: z
-    .literal('direct')
-    .describe('How the reply is produced. Only `direct`, a Direct reply, for now.'),
+    .enum(['direct', 'run'])
+    .describe(
+      'How the reply is produced: `direct`, a Direct reply, or `run`, a Run (Registered users only).',
+    ),
   model: modelIdSchema
     .optional()
     .describe("Binds the Session to this Model before replying; omitted keeps the Session's Model"),
@@ -19,6 +21,7 @@ export const sentMessageSchema = z
   .object({
     messageId: z.uuid().describe('The persisted user Message'),
     streamId: z.uuid().describe('The reply stream to read from `GET /api/streams/{streamId}`'),
+    runId: z.uuid().optional().describe('The Run producing the reply; only in `run` mode'),
   })
   .meta({ id: 'SentMessage' });
 

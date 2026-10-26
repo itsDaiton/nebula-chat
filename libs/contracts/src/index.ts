@@ -1,6 +1,8 @@
 // Jobs: what the server enqueues and the worker consumes (ADR-0013)
 export { DIRECT_REPLY_QUEUE, directReplyJobSchema } from './directReplyJob';
 export type { DirectReplyJob } from './directReplyJob';
+export { RUN_QUEUE, runJobSchema } from './runJob';
+export type { RunJob } from './runJob';
 
 // Reply streams: what the worker appends and the server relays (ADR-0014)
 export {

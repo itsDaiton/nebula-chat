@@ -12,7 +12,7 @@ const envSchema = z
     REDIS_URL: z.url(),
     OPENAI_API_KEY: z.string().min(1).optional(),
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
-    // How many Direct replies one worker instance produces at once; the primary LLM throttle.
+    // How many Direct replies, and separately Runs, one worker instance produces at once; the primary LLM throttle.
     WORKER_CONCURRENCY: z.coerce.number().int().positive().default(5),
     // How long a reply stream outlives its end for a dropped client to resume (ADR-0014); at most its
     // ended record, which tells an expired stream from a queued one.

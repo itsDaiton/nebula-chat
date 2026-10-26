@@ -147,7 +147,8 @@ flowchart TD
 ## Data model
 
 Postgres, through Drizzle (`libs/db/src/schema.ts`). `users`, `session`, `account` and
-`verification` are better-auth's tables; `sessions` and `messages` are the chat domain. Two
+`verification` are better-auth's tables; `sessions`, `messages`, `runs` and `steps` are the chat
+domain. Two
 similar names on purpose: `session` is a sign-in (an _auth session_), `sessions` is a chat
 Session.
 
@@ -157,8 +158,13 @@ erDiagram
   users ||--o{ account : "authenticates through"
   users ||--o{ sessions : owns
   sessions ||--o{ messages : holds
+  sessions ||--o{ runs : "starts"
+  messages ||--o| runs : "triggers"
+  runs |o--o{ messages : "produces"
+  runs ||--o{ steps : "takes"
   users |o--o{ model_calls : "is billed for"
   sessions |o--o{ model_calls : "is billed for"
+  runs |o--o{ model_calls : "is billed for"
 
   users {
     uuid id PK
@@ -200,6 +206,26 @@ erDiagram
     text role "user or assistant"
     text content
     integer token_count
+    uuid run_id FK "nullable: the Run that produced it"
+  }
+  runs {
+    uuid id PK
+    uuid user_id FK
+    uuid session_id FK
+    uuid message_id FK "the triggering user Message"
+    text status "queued, running, completed, partial, failed or cancelled"
+    jsonb brief
+    integer tokens_used
+  }
+  steps {
+    uuid id PK "derived from Run, phase and Agent"
+    uuid run_id FK
+    text phase "intake, orchestrator, delegate, tool or output"
+    text name "Agent or tool"
+    integer attempt
+    jsonb input
+    jsonb output
+    text status "running, completed or failed"
   }
   model_calls {
     uuid id PK
@@ -222,21 +248,24 @@ erDiagram
 - better-auth keeps live sign-ins and verification tokens in Redis (`secondaryStorage`), so the
   `session` and `verification` tables stay empty in practice.
 - An assistant Message's `id` is its reply stream's `streamId`, so one id names both.
+- A Run's LangGraph checkpoints live outside this model, in the `langgraph` schema the worker's
+  checkpointer creates at boot (ADR-0033). Drizzle never sees them, and they are deleted when the Run ends.
 
 ## Redis keyspace
 
-| Key or channel                                                 | Written by  | Read by        | Lifetime                    | Purpose                                                                          |
-| -------------------------------------------------------------- | ----------- | -------------- | --------------------------- | -------------------------------------------------------------------------------- |
-| `auth:*`                                                       | better-auth | better-auth    | set by better-auth          | Sign-in sessions, verification tokens, auth rate-limit counters                  |
-| `auth:profile-image-uploads:<userId>`                          | server      | server         | 1 hour window               | Profile image upload limit                                                       |
-| BullMQ queue `direct-replies`                                  | server      | worker         | last 1000 kept              | Direct reply jobs, IDs only (`@nebula-chat/contracts`)                           |
-| `stream:<streamId>` (Redis Stream)                             | worker      | server         | 1 hour after the reply ends | One reply's `token` / `usage` / `error` / `end` events                           |
-| `stream-owner:<streamId>`                                      | server      | server         | 24 hours                    | Who may read a reply stream; the assistant Message does not exist yet            |
-| `session-stream:<sessionId>`                                   | server      | server         | 24 hours                    | The Session's latest reply stream, for a reloaded page to re-attach to           |
-| `stream-ended:<streamId>`                                      | worker      | server         | 24 hours                    | The stream has its terminal event: tells an expired stream from a queued one     |
-| `stream-cancel:<streamId>`                                     | server      | worker         | `STREAM_CANCEL_TTL_SECONDS` | The User asked to stop the reply                                                 |
-| `log-level:<service>` (pub/sub)                                | server      | every instance | message                     | Runtime log level change ([logging.md](./logging.md#changing-levels-at-runtime)) |
-| `log-level-report:<service>`, `log-level-reply:<service>:<id>` | server      | every instance | message                     | Reading every instance's levels back                                             |
+| Key or channel                                                 | Written by  | Read by        | Lifetime                    | Purpose                                                                           |
+| -------------------------------------------------------------- | ----------- | -------------- | --------------------------- | --------------------------------------------------------------------------------- |
+| `auth:*`                                                       | better-auth | better-auth    | set by better-auth          | Sign-in sessions, verification tokens, auth rate-limit counters                   |
+| `auth:profile-image-uploads:<userId>`                          | server      | server         | 1 hour window               | Profile image upload limit                                                        |
+| BullMQ queue `direct-replies`                                  | server      | worker         | last 1000 kept              | Direct reply jobs, IDs only (`@nebula-chat/contracts`)                            |
+| BullMQ queue `runs`                                            | server      | worker         | last 1000 kept              | Run jobs, IDs only (`@nebula-chat/contracts`)                                     |
+| `stream:<streamId>` (Redis Stream)                             | worker      | server         | 1 hour after the reply ends | One reply's events: tokens, usage, a Run's Step events and status, `error`, `end` |
+| `stream-owner:<streamId>`                                      | server      | server         | 24 hours                    | Who may read a reply stream; the assistant Message does not exist yet             |
+| `session-stream:<sessionId>`                                   | server      | server         | 24 hours                    | The Session's latest reply stream, for a reloaded page to re-attach to            |
+| `stream-ended:<streamId>`                                      | worker      | server         | 24 hours                    | The stream has its terminal event: tells an expired stream from a queued one      |
+| `stream-cancel:<streamId>`                                     | server      | worker         | `STREAM_CANCEL_TTL_SECONDS` | The User asked to stop the reply                                                  |
+| `log-level:<service>` (pub/sub)                                | server      | every instance | message                     | Runtime log level change ([logging.md](./logging.md#changing-levels-at-runtime))  |
+| `log-level-report:<service>`, `log-level-reply:<service>:<id>` | server      | every instance | message                     | Reading every instance's levels back                                              |
 
 `<service>` is `nebula-chat-server` or `nebula-chat-worker`.
 
@@ -317,6 +346,41 @@ sequenceDiagram
   none), the cost at the catalog price, the duration and the outcome. A failed or stopped reply is
   recorded with the tokens used so far, and a Cache entry replay as a zero-cost `cached` call.
 
+## Run
+
+A Registered user can send one Message with `mode: "run"`. The send path is the Direct reply's,
+except that a Guest gets `403 Forbidden`, the server also creates a `queued` Run in the same
+transaction, enqueues a Run job on `runs` and answers `{ messageId, streamId, runId }`. The reply
+is read from the same stream.
+
+In the worker the Run is a LangGraph graph ([ADR-0033](./adr/0033-runs-on-langgraph-checkpointer-owns-resume.md)),
+checkpointed in Postgres under the Run's id:
+
+```mermaid
+flowchart LR
+  start((start)) --> ld[language<br/>Intake Agent]
+  start --> ss[session<br/>Intake Agent]
+  ld --> brief[buildBrief]
+  ss --> brief
+  brief --> out[output<br/>Output Agent]
+  out --> done((end))
+```
+
+- **Steps.** Each Agent call is a Step, upserted under an id derived from the Run, phase and Agent,
+  with its full input and output, tokens and status. It is announced on the stream as
+  `step-started` (with its `attempt`) and `step-finished`, and its Model call is recorded under
+  the Step's id.
+- **Intake.** The two Intake Agents, `language` and `session`, run in parallel on cheap Models and
+  return structured output. One that fails leaves its part of the Brief missing, and the Run ends
+  `partial`.
+- **Brief.** `buildBrief` merges their outputs into one JSON object keyed by Agent
+  (`{ language, session, missing }`), stores it on the Run and passes that JSON down.
+- **Output.** The Output Agent is always the last node: the Orchestrator and its tools go between
+  the Brief and it. It reads the Brief as JSON and streams the answer in the Brief's language. Only
+  its tokens reach the stream. The answer is persisted as an assistant Message linked to the Run.
+- **End.** The Run ends `completed`, `partial` or `failed`, its checkpoints are deleted, and the
+  stream ends with `run-finished` and then `end`.
+
 ## The client
 
 ```mermaid
@@ -370,6 +434,9 @@ flowchart LR
 ## Known gaps
 
 What the diagrams above show but the system does not yet do well:
+
+- **A Run cannot be stopped yet.** Its stream accepts the cancel request, but the worker does not
+  read the flag during a Run, so it runs to its end.
 
 - **Runtime log levels reach the server only.** The worker listens on
   `log-level:nebula-chat-worker`, but `POST /api/internal/log-level` publishes to the server's
