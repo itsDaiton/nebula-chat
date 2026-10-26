@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.8.1...nebula-chat-v5.9.0) (2026-10-26)
+
+
+### Features
+
+* **worker:** NEB-360 Orchestrator tool-calling loop with delegate Agents and Run budget ([#656](https://github.com/itsDaiton/nebula-chat/issues/656)) ([273a3ba](https://github.com/itsDaiton/nebula-chat/commit/273a3bac5dd566f996862e0d0f4075bcc5c9cbf5))
+
 ## [5.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.8.0...nebula-chat-v5.8.1) (2026-10-26)
 
 
