@@ -45,10 +45,7 @@ export type RunDeps = Pick<
   checkpointer: BaseCheckpointSaver;
 };
 
-/**
- * Executes one Run as its LangGraph graph, persisting each Step and streaming its events, then the
- * answer's tokens; persists the answer under the stream's id and ends the stream with the Run's status.
- */
+/** Executes one Run as its graph, streaming Step events and the answer, then ends the stream with the Run's status. */
 export const executeRun = async (job: RunJob, deps: RunDeps): Promise<void> => {
   const { runs, stream, logger, checkpointer } = deps;
   const startMs = Date.now();
@@ -63,7 +60,7 @@ export const executeRun = async (job: RunJob, deps: RunDeps): Promise<void> => {
     appended = appended.then(() => stream.append(job.streamId, event));
   };
 
-  const summary = (status: RunEndStatus): LogAttributes => ({
+  const outcomeAttributes = (status: RunEndStatus): LogAttributes => ({
     'nebula.run.id': job.runId,
     'nebula.outcome': status,
     'nebula.duration_ms': Date.now() - startMs,
@@ -129,7 +126,7 @@ export const executeRun = async (job: RunJob, deps: RunDeps): Promise<void> => {
       componentLogger(logger, 'chat'),
       'info',
       'chat.run.completed',
-      summary(status),
+      outcomeAttributes(status),
       `Run ${status} · ${tokensUsed} tokens · ${((Date.now() - startMs) / 1000).toFixed(1)} s`,
     );
   } catch (error) {
@@ -139,17 +136,15 @@ export const executeRun = async (job: RunJob, deps: RunDeps): Promise<void> => {
       componentLogger(logger, 'chat'),
       callerCaused ? 'warn' : 'error',
       'chat.run.completed',
-      { ...summary('failed'), 'error.type': envelope.error, err: error },
+      { ...outcomeAttributes('failed'), 'error.type': envelope.error, err: error },
       `Run failed · ${envelope.error}`,
     );
     await appended.catch(() => undefined);
     try {
+      await stream.append(job.streamId, { type: 'error', ...envelope });
       if (runFound) {
         await runs.finishRun(job.runId, { status: 'failed', tokensUsed: await tokensSoFar() });
         await checkpointer.deleteThread(job.runId);
-      }
-      await stream.append(job.streamId, { type: 'error', ...envelope });
-      if (runFound) {
         await stream.append(job.streamId, {
           type: 'run-finished',
           runId: job.runId,
@@ -160,7 +155,7 @@ export const executeRun = async (job: RunJob, deps: RunDeps): Promise<void> => {
     } catch (err) {
       // The Run's own failure is already logged; this is the record or stream it could not be told on.
       logEvent(
-        componentLogger(logger, 'redis'),
+        componentLogger(logger, 'chat'),
         'warn',
         'chat.stream.end.failed',
         { err },

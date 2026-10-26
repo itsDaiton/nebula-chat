@@ -7,7 +7,6 @@ export type AgentDefinition = {
   label: string;
   /** A Model in the catalog in `@nebula-chat/contracts`. */
   model: string;
-  /** Its system prompt in `resources/prompts/`. */
   prompt: PromptName;
   /** The tools it may call; none until the Orchestrator's delegates. */
   tools: readonly string[];

@@ -9,7 +9,7 @@ import { MissingConfigurationError } from '@nebula-chat/errors';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
 import type { z } from 'zod';
 import type { AgentDefinition } from '@worker/agents/agentDefinition';
-import { languageDetectionInput, languageDetectionSchema } from '@worker/agents/languageDetection';
+import { languageDetectionSchema } from '@worker/agents/languageDetection';
 import type { LanguageDetection } from '@worker/agents/languageDetection';
 import { outputInput } from '@worker/agents/output';
 import { AGENTS } from '@worker/agents/registry';
@@ -75,6 +75,14 @@ const llmConfigFor = (agent: AgentDefinition, deps: RunGraphDeps): LLMConfig => 
   return { provider, apiKey, model: agent.model, ...agent.parameters };
 };
 
+// Everything the model was sent, so a Step can be inspected on its own.
+const stepInput = (agent: AgentDefinition, system: string, human: string) => ({
+  model: agent.model,
+  parameters: agent.parameters,
+  system,
+  human,
+});
+
 // A failing Intake Agent must not fail the graph step: its Step is recorded failed and its part of the Brief is missing.
 const intakeNode =
   <T extends Record<string, unknown>>(
@@ -85,18 +93,19 @@ const intakeNode =
     deps: RunGraphDeps,
   ) =>
   async (_state: RunStateValues, config: LangGraphRunnableConfig) => {
+    const system = deps.prompts[agent.prompt];
     const human = input(deps);
     try {
       const { output, tokens } = await runModelStep(
         deps,
-        { phase: 'intake', agent, input: { message: human } },
+        { phase: 'intake', agent, input: stepInput(agent, system, human) },
         config,
         async (reportUsage) => {
           const { output: parsed, usage } = await deps.models.structured({
             ...llmConfigFor(agent, deps),
             name: agent.name,
             schema,
-            messages: [new SystemMessage(deps.prompts[agent.prompt]), new HumanMessage(human)],
+            messages: [new SystemMessage(system), new HumanMessage(human)],
             config,
           });
           if (usage) reportUsage(usage);
@@ -124,7 +133,7 @@ const outputNode =
     const human = outputInput(brief, deps.message);
     const { output, tokens } = await runModelStep(
       deps,
-      { phase: 'output', agent, input: { message: human } },
+      { phase: 'output', agent, input: stepInput(agent, system, human) },
       config,
       (reportUsage) =>
         llmConcurrencyLimiter(async () => {
@@ -165,7 +174,7 @@ export const createRunGraph = (deps: RunGraphDeps) =>
         AGENTS.languageDetection,
         languageDetectionSchema,
         'language',
-        (d) => languageDetectionInput(d.message),
+        (d) => d.message,
         deps,
       ),
     )

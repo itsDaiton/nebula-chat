@@ -3,10 +3,7 @@ import { z } from 'zod';
 /** The BullMQ queue the server enqueues Runs on and the worker consumes. */
 export const RUN_QUEUE = 'runs';
 
-/**
- * A Run job: IDs only (ADR-0013) plus the W3C trace context. The worker loads the Run, its Session and
- * the triggering Message from Postgres.
- */
+/** A Run job: IDs only (ADR-0013) plus the W3C trace context; the worker loads the rest from Postgres. */
 export const runJobSchema = z.object({
   /** The Registered user who sent the Message and owns the Session. */
   userId: z.uuid(),

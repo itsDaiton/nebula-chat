@@ -86,10 +86,7 @@ export const memorySteps = () => {
 
 type StructuredScript = Record<string, Record<string, unknown> | Error>;
 
-/**
- * Models scripted per Agent: each Intake Agent returns its typed object (or fails), and the Output
- * Agent streams `tokens`. Every call is kept, with how many Intake calls were in flight at once.
- */
+/** Models scripted per Agent: Intake returns its typed object or fails, Output streams `tokens`; every call is kept. */
 export const scriptedModels = (
   intake: StructuredScript,
   tokens: string[],

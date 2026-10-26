@@ -11,10 +11,7 @@ export type RunStreamChunk =
       message: [chunk: BaseMessage, metadata: Record<string, unknown>],
     ];
 
-/**
- * The reply stream events a graph chunk carries. Step events come from the nodes' custom writer;
- * only the Output node's model tokens are the answer, so an Intake Agent's never reach the user.
- */
+// Step events come from the nodes' custom writer; only the Output node's tokens are the answer.
 export const toReplyStreamEvents = ([, mode, data]: RunStreamChunk): ReplyStreamEvent[] => {
   if (mode === 'custom') return [data];
   const [chunk, metadata] = data;

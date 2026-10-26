@@ -47,10 +47,7 @@ const stepIdFor = (runId: string, phase: StepPhase, name: string): string => {
 const tokensOf = (usage: CallUsage | undefined): number | null =>
   usage ? usage.inputTokens + usage.cachedInputTokens + usage.outputTokens : null;
 
-/**
- * Runs one model-calling Step: persisted and announced on the graph's custom stream as it starts and
- * finishes, its Model call recorded under the Step's id. A failure is recorded on the Step, then rethrown.
- */
+/** Runs one model-calling Step: persisted, announced and its Model call recorded; a failure is recorded, then rethrown. */
 export const runModelStep = async <T>(
   ctx: StepContext,
   step: { phase: StepPhase; agent: AgentDefinition; input: unknown },

@@ -16,5 +16,3 @@ export const languageDetectionSchema = z.object({
 });
 
 export type LanguageDetection = z.infer<typeof languageDetectionSchema>;
-
-export const languageDetectionInput = (message: string): string => message;

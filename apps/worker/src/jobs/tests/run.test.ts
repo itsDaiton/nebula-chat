@@ -180,14 +180,19 @@ describe('the Run job', () => {
       phase: 'intake',
       attempt: 1,
       status: 'completed',
-      input: { message: 'Kolik je dva plus dva?' },
+      input: {
+        model: 'gpt-4o-mini',
+        parameters: { temperature: 0 },
+        system: 'Language detection prompt',
+        human: 'Kolik je dva plus dva?',
+      },
       output: DETECTED,
       tokens: 50,
     });
     expect(stepNamed('sessionSummary')).toMatchObject({
       phase: 'intake',
       status: 'completed',
-      input: { message: expect.stringContaining('Assistant: Ahoj! Jak pomohu?') },
+      input: { human: expect.stringContaining('Assistant: Ahoj! Jak pomohu?') },
       output: SUMMARISED,
     });
     expect(stepNamed('output')).toMatchObject({
