@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.3.0...nebula-chat-server-v4.4.0) (2026-10-26)
+
+
+### Features
+
+* **worker:** NEB-359 Runs with Intake Agents, Brief and Output Agent ([#651](https://github.com/itsDaiton/nebula-chat/issues/651)) ([d74c64e](https://github.com/itsDaiton/nebula-chat/commit/d74c64edb494ba93bb6cb76236dafb268c83f905)), closes [#359](https://github.com/itsDaiton/nebula-chat/issues/359)
+
 ## [4.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.2.0...nebula-chat-server-v4.3.0) (2026-10-25)
 
 
