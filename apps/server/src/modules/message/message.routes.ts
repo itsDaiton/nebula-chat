@@ -24,6 +24,7 @@ const messageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
         400: jsonResponse('Invalid request body', errorEnvelopeSchema),
         401: jsonResponse('No auth session', errorEnvelopeSchema),
         404: jsonResponse('Session not found or not owned by the caller', errorEnvelopeSchema),
+        409: jsonResponse('Session is archived — restore it first', errorEnvelopeSchema),
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },

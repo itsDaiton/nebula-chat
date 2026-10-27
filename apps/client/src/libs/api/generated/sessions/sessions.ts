@@ -141,7 +141,7 @@ export const useCreateSession = <TError = ErrorType<ErrorEnvelope>, TContext = u
   return useMutation(getCreateSessionMutationOptions(options), queryClient);
 };
 /**
- * Retrieve the caller’s own sessions with cursor-based pagination. Returns up to 10 sessions by default.
+ * Retrieve the caller’s own sessions with cursor-based pagination. Returns up to 10 sessions by default; archived sessions are excluded unless `archived=true`.
  * @summary List sessions
  */
 export const listSessions = (
@@ -410,7 +410,7 @@ export function useListSessions<
 }
 
 /**
- * Search the caller’s own sessions by title, ordered by creation date.
+ * Search the caller’s own sessions by title, ordered by creation date. Archived sessions are excluded unless `archived=true`.
  * @summary Search sessions
  */
 export const searchSessions = (
@@ -528,6 +528,166 @@ export function useSearchSessions<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+/**
+ * Archive one of the caller’s own sessions: hidden from the session list, kept unchanged. Idempotent.
+ * @summary Archive session
+ */
+export const archiveSession = (
+  sessionId: string,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<Session>(
+    { url: `/api/sessions/${sessionId}/archive`, method: 'POST', signal },
+    options,
+  );
+};
+
+export const getArchiveSessionMutationKey = () => ['archiveSession'] as const;
+
+export const getArchiveSessionMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof archiveSession>>,
+    TError,
+    ArchiveSessionMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof axiosClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof archiveSession>>,
+  TError,
+  ArchiveSessionMutationVariables,
+  TContext
+> => {
+  const mutationKey = getArchiveSessionMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof archiveSession>>,
+    ArchiveSessionMutationVariables
+  > = (props) => {
+    const { sessionId } = props ?? {};
+
+    return archiveSession(sessionId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ArchiveSessionMutationResult = NonNullable<Awaited<ReturnType<typeof archiveSession>>>;
+
+export type ArchiveSessionMutationError = ErrorType<ErrorEnvelope>;
+export type ArchiveSessionMutationVariables = { sessionId: string };
+
+/**
+ * @summary Archive session
+ */
+export const useArchiveSession = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof archiveSession>>,
+      TError,
+      ArchiveSessionMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof archiveSession>>,
+  TError,
+  ArchiveSessionMutationVariables,
+  TContext
+> => {
+  return useMutation(getArchiveSessionMutationOptions(options), queryClient);
+};
+/**
+ * Restore one of the caller’s own archived sessions. Idempotent.
+ * @summary Restore session
+ */
+export const restoreSession = (
+  sessionId: string,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<Session>(
+    { url: `/api/sessions/${sessionId}/restore`, method: 'POST', signal },
+    options,
+  );
+};
+
+export const getRestoreSessionMutationKey = () => ['restoreSession'] as const;
+
+export const getRestoreSessionMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof restoreSession>>,
+    TError,
+    RestoreSessionMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof axiosClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof restoreSession>>,
+  TError,
+  RestoreSessionMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRestoreSessionMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof restoreSession>>,
+    RestoreSessionMutationVariables
+  > = (props) => {
+    const { sessionId } = props ?? {};
+
+    return restoreSession(sessionId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RestoreSessionMutationResult = NonNullable<Awaited<ReturnType<typeof restoreSession>>>;
+
+export type RestoreSessionMutationError = ErrorType<ErrorEnvelope>;
+export type RestoreSessionMutationVariables = { sessionId: string };
+
+/**
+ * @summary Restore session
+ */
+export const useRestoreSession = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof restoreSession>>,
+      TError,
+      RestoreSessionMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof restoreSession>>,
+  TError,
+  RestoreSessionMutationVariables,
+  TContext
+> => {
+  return useMutation(getRestoreSessionMutationOptions(options), queryClient);
+};
 /**
  * Retrieve one of the caller’s own sessions by ID
  * @summary Get session by ID

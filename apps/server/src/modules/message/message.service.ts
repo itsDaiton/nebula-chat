@@ -1,6 +1,6 @@
 import { messageRepository } from '@server/modules/message/message.repository';
 import { sessionRepository } from '@server/modules/session/session.repository';
-import { NotFoundError } from '@nebula-chat/errors';
+import { ConflictError, NotFoundError } from '@nebula-chat/errors';
 import type { CreateMessageDTO } from '@server/modules/message/message.types';
 
 export const messageService = {
@@ -10,6 +10,9 @@ export const messageService = {
     const session = await sessionRepository.findByIdSimple(data.sessionId, userId);
     if (!session) {
       throw new NotFoundError('Session', data.sessionId);
+    }
+    if (session.archivedAt) {
+      throw new ConflictError('This Session is archived. Restore it before adding a Message.');
     }
     return messageRepository.create({ ...data });
   },

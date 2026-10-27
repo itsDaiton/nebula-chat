@@ -37,7 +37,8 @@ const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
 
   app.get('/search', {
     schema: {
-      description: 'Search the caller’s own sessions by title, ordered by creation date.',
+      description:
+        'Search the caller’s own sessions by title, ordered by creation date. Archived sessions are excluded unless `archived=true`.',
       summary: 'Search sessions',
       tags: ['Sessions'],
       operationId: 'searchSessions',
@@ -52,6 +53,47 @@ const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
     // Owner-scoped: results are filtered to the auth session's user (ADR-0010 §2).
     preHandler: requireAuthentication,
     handler: sessionController.search,
+  });
+
+  app.post('/:sessionId/archive', {
+    schema: {
+      description:
+        'Archive one of the caller’s own sessions: hidden from the session list, kept unchanged. Idempotent.',
+      summary: 'Archive session',
+      tags: ['Sessions'],
+      operationId: 'archiveSession',
+      params: getSessionSchema,
+      response: {
+        200: jsonResponse('Session archived', sessionResponseSchema),
+        400: jsonResponse('Invalid session ID format', errorEnvelopeSchema),
+        401: jsonResponse('No auth session', errorEnvelopeSchema),
+        404: jsonResponse('Session not found or not owned by the caller', errorEnvelopeSchema),
+        500: jsonResponse('Internal server error', errorEnvelopeSchema),
+      },
+    },
+    // Owner-scoped: another user's session reads as 404, never 403 (no leak).
+    preHandler: requireAuthentication,
+    handler: sessionController.archive,
+  });
+
+  app.post('/:sessionId/restore', {
+    schema: {
+      description: 'Restore one of the caller’s own archived sessions. Idempotent.',
+      summary: 'Restore session',
+      tags: ['Sessions'],
+      operationId: 'restoreSession',
+      params: getSessionSchema,
+      response: {
+        200: jsonResponse('Session restored', sessionResponseSchema),
+        400: jsonResponse('Invalid session ID format', errorEnvelopeSchema),
+        401: jsonResponse('No auth session', errorEnvelopeSchema),
+        404: jsonResponse('Session not found or not owned by the caller', errorEnvelopeSchema),
+        500: jsonResponse('Internal server error', errorEnvelopeSchema),
+      },
+    },
+    // Owner-scoped: another user's session reads as 404, never 403 (no leak).
+    preHandler: requireAuthentication,
+    handler: sessionController.restore,
   });
 
   app.get('/:sessionId', {
@@ -77,7 +119,7 @@ const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
   app.get('', {
     schema: {
       description:
-        'Retrieve the caller’s own sessions with cursor-based pagination. Returns up to 10 sessions by default.',
+        'Retrieve the caller’s own sessions with cursor-based pagination. Returns up to 10 sessions by default; archived sessions are excluded unless `archived=true`.',
       summary: 'List sessions',
       tags: ['Sessions'],
       operationId: 'listSessions',

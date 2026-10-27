@@ -38,6 +38,7 @@ const renderStatus = async (path = '/') => {
       id: 'abc',
       title: 'Chat',
       createdAt: '2026-06-15T11:00:00.000Z',
+      archived: false,
       activeStreamId: null,
     }),
     getListMessagesMockHandler([]),

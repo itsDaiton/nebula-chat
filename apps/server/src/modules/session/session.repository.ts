@@ -1,24 +1,41 @@
-import { eq, lt, desc, ilike, and, or } from 'drizzle-orm';
+import { eq, lt, desc, ilike, and, or, isNull, isNotNull, sql } from 'drizzle-orm';
 import { sessions } from '@nebula-chat/db';
 import type { DbTransaction } from '@nebula-chat/db';
 import { db } from '@server/db';
 import { paginationConfig } from '@server/config/pagination.config';
 import type { CreateSessionDTO, GetSessionParams } from '@server/modules/session/session.types';
 
+// The DTO fields; `archived` stands in for the `archivedAt` timestamp, which stays server-side.
+const sessionColumns = {
+  id: sessions.id,
+  title: sessions.title,
+  createdAt: sessions.createdAt,
+  archived: sql<boolean>`${sessions.archivedAt} is not null`,
+};
+
+// The default list and search leave archived Sessions out; `?archived=true` shows only those.
+const archivedFilter = (archived: boolean) =>
+  archived ? isNotNull(sessions.archivedAt) : isNull(sessions.archivedAt);
+
 export const sessionRepository = {
   async create({ title }: CreateSessionDTO, userId: string) {
-    const [row] = await db.insert(sessions).values({ title, userId }).returning();
+    const [row] = await db.insert(sessions).values({ title, userId }).returning(sessionColumns);
     return row!;
   },
   // Every read is owner-scoped (ADR-0010 §2): another user's session reads as absent (a 404, never a 403 that leaks it).
   async findById({ sessionId }: GetSessionParams, userId: string) {
     const [row] = await db
-      .select()
+      .select(sessionColumns)
       .from(sessions)
       .where(and(eq(sessions.id, sessionId), eq(sessions.userId, userId)));
     return row ?? null;
   },
-  async findAll(userId: string, limit = paginationConfig.defaultLimit, cursor?: string) {
+  async findAll(
+    userId: string,
+    limit = paginationConfig.defaultLimit,
+    cursor?: string,
+    archived = false,
+  ) {
     let cursorCreatedAt: Date | undefined;
     let cursorId: string | undefined;
     if (cursor) {
@@ -39,13 +56,9 @@ export const sessionRepository = {
         : undefined;
 
     const rows = await db
-      .select({
-        id: sessions.id,
-        title: sessions.title,
-        createdAt: sessions.createdAt,
-      })
+      .select(sessionColumns)
       .from(sessions)
-      .where(and(eq(sessions.userId, userId), cursorFilter))
+      .where(and(eq(sessions.userId, userId), archivedFilter(archived), cursorFilter))
       .orderBy(desc(sessions.createdAt), desc(sessions.id))
       .limit(limit + 1);
 
@@ -72,16 +85,35 @@ export const sessionRepository = {
   async updateModelTx(tx: DbTransaction, id: string, model: string) {
     await tx.update(sessions).set({ model, updatedAt: new Date() }).where(eq(sessions.id, id));
   },
-  async search(userId: string, query: string, limit = paginationConfig.maxLimit) {
+  async search(userId: string, query: string, archived = false, limit = paginationConfig.maxLimit) {
     return db
-      .select({
-        id: sessions.id,
-        title: sessions.title,
-        createdAt: sessions.createdAt,
-      })
+      .select(sessionColumns)
       .from(sessions)
-      .where(and(eq(sessions.userId, userId), ilike(sessions.title, `%${query}%`)))
+      .where(
+        and(
+          eq(sessions.userId, userId),
+          archivedFilter(archived),
+          ilike(sessions.title, `%${query}%`),
+        ),
+      )
       .orderBy(desc(sessions.createdAt))
       .limit(limit);
+  },
+  // Idempotent: an already-archived Session keeps its original `archivedAt`.
+  async archive(id: string, userId: string) {
+    const [row] = await db
+      .update(sessions)
+      .set({ archivedAt: sql`coalesce(${sessions.archivedAt}, now())` })
+      .where(and(eq(sessions.id, id), eq(sessions.userId, userId)))
+      .returning(sessionColumns);
+    return row ?? null;
+  },
+  async restore(id: string, userId: string) {
+    const [row] = await db
+      .update(sessions)
+      .set({ archivedAt: null })
+      .where(and(eq(sessions.id, id), eq(sessions.userId, userId)))
+      .returning(sessionColumns);
+    return row ?? null;
   },
 };
