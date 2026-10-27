@@ -1,10 +1,12 @@
-import { Box, Button, Menu, Text } from '@chakra-ui/react';
+import { Box, Menu, Text } from '@chakra-ui/react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { LuLogIn, LuLogOut, LuSettings } from 'react-icons/lu';
 import { UserMenu } from '@/modules/auth/components/UserMenu';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { useSignOut } from '@/modules/auth/hooks/useSignOut';
 import { resources } from '@/resources';
+import { buttonVariants } from '@/shared/components/ui/button';
+import { cn } from '@/shared/utils/cn';
 
 /** The header's account control: a Guest is nudged to sign in, a Registered user gets their user menu. */
 export const AccountStatus = () => {
@@ -15,12 +17,10 @@ export const AccountStatus = () => {
 
   if (isGuest) {
     return (
-      <Button asChild size="sm" variant="solid" borderRadius="full" px={4}>
-        <Link to="/auth">
-          <LuLogIn />
-          {resources.auth.actions.signIn}
-        </Link>
-      </Button>
+      <Link to="/auth" className={cn(buttonVariants(), 'h-8 rounded-full px-4 text-[13px]')}>
+        <LuLogIn />
+        {resources.auth.actions.signIn}
+      </Link>
     );
   }
 

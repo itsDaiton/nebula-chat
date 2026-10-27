@@ -2,14 +2,6 @@ import type { ButtonProps, InputProps } from '@chakra-ui/react';
 import type { ThemeProviderProps } from 'next-themes';
 import type { ReactElement, ReactNode, Ref } from 'react';
 
-export type LayoutProps = {
-  children: ReactNode;
-};
-
-export type SidePanelProps = {
-  children?: ReactNode;
-};
-
 export type HeaderProps = {
   onMenuClick?: () => void;
 };
@@ -72,6 +64,42 @@ export type DrawerState = {
   openDrawer: () => void;
   closeDrawer: () => void;
   toggleDrawer: () => void;
+};
+
+export type AppHeaderProps = {
+  isDesktop: boolean;
+  leftOpen: boolean;
+  rightOpen: boolean;
+  onToggleLeft: () => void;
+  onToggleRight: () => void;
+  onOpenSearch: () => void;
+};
+
+export type AppShellProps = {
+  children: ReactNode;
+};
+
+export type NebulaLogoProps = {
+  className?: string;
+};
+
+export type IconActionProps = {
+  label: string;
+  shortcut?: string;
+  pressed?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+};
+
+export type PanelState = {
+  leftOpen: boolean;
+  rightOpen: boolean;
+  /** The Inspector as a bottom sheet below the large breakpoint; transient. */
+  sheetOpen: boolean;
+  toggleLeft: () => void;
+  toggleRight: () => void;
+  closeSheet: () => void;
+  toggleSheet: () => void;
 };
 
 export type OS = 'mac' | 'windows';

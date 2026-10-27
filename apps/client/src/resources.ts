@@ -231,6 +231,15 @@ export const resources = {
     message: "The page you're looking for doesn't exist or has been moved.",
     action: 'Go Home',
   },
+  shell: {
+    togglePanel: { left: 'Toggle sessions panel', right: 'Toggle inspector' },
+    menu: 'Menu',
+    inspector: 'Inspector',
+    inspectorHint: 'Nothing to inspect yet.',
+    search: 'Search',
+    toggleColorMode: 'Toggle color mode',
+    modifier: { mac: '⌘', windows: 'Ctrl' },
+  },
   sidebar: {
     newChat: 'New chat',
     searchChats: 'Search chats',

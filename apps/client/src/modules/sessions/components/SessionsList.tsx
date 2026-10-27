@@ -4,7 +4,6 @@ import { toaster } from '@/shared/components/ui/toaster';
 import { useSessions } from '@/modules/sessions/hooks/useSessions';
 import { SessionListItem } from '@/modules/sessions/components/SessionListItem';
 import { SessionsSearch } from '@/modules/sessions/components/SessionsSearch';
-import { SidePanel } from '@/shared/components/layout/SidePanel';
 import { resources } from '@/resources';
 import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
 import { useSearchStore } from '@/shared/stores/useSearchStore';
@@ -108,7 +107,7 @@ export const SessionsList = ({
         </Text>
       </Flex>
     );
-    return inDrawer ? errorContent : <SidePanel>{errorContent}</SidePanel>;
+    return errorContent;
   }
 
   const content = (
@@ -185,13 +184,9 @@ export const SessionsList = ({
     </>
   );
 
-  if (inDrawer) {
-    return (
-      <Flex direction="column" h="100%" bg="bg.default" overflowY="auto" css={chatScrollBar}>
-        {content}
-      </Flex>
-    );
-  }
-
-  return <SidePanel>{content}</SidePanel>;
+  return (
+    <Flex direction="column" h="100%" overflowY="auto" css={chatScrollBar}>
+      {content}
+    </Flex>
+  );
 };

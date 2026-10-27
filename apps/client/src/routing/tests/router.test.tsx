@@ -10,6 +10,11 @@ vi.mock('@/theme/hooks/useColorMode', () => ({
   useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
 }));
 
+// The Guest's sign-in link lives in the left panel's footer, which only a desktop layout shows.
+vi.mock('@/shared/hooks/useResponsiveLayout', () => ({
+  useResponsiveLayout: () => ({ isMobile: false, showSidePanels: true, showRightPanel: true }),
+}));
+
 beforeEach(async () => {
   await holdSession({});
   serveChatPage();
@@ -26,7 +31,7 @@ describe('router', () => {
     const { router } = await renderRoute('/');
 
     expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
-    expect(router.state.matches.at(-1)?.routeId).toBe('/_app/');
+    expect(router.state.matches.at(-1)?.routeId).toBe('/_app/_chat/');
   });
 
   it.each(['/auth', '/auth/forgot-password', '/auth/reset-password', '/auth/verify-email'])(
