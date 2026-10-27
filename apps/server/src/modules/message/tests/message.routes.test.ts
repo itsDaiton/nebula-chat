@@ -195,6 +195,18 @@ describe('POST /api/messages', () => {
     expect(repo.create).not.toHaveBeenCalled();
   });
 
+  it('answers 409 for an archived Session, creating nothing', async () => {
+    sessionRepo.findByIdSimple.mockResolvedValue(
+      fromPartial({ id: SESSION_ID, userId: REGISTERED_USER_ID, archivedAt: new Date() }),
+    );
+
+    const res = await app.inject({ method: 'POST', url: '/api/messages', payload: validBody });
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json().message).toMatch(/restore/i);
+    expect(repo.create).not.toHaveBeenCalled();
+  });
+
   it('rejects an unauthenticated create with 401 and never reaches the repository', async () => {
     mockedGetSession.mockResolvedValue(null);
 

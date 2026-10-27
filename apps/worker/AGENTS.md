@@ -39,6 +39,7 @@ Locally, run it next to the server: both read the same Postgres and Redis. Its `
 - **It holds the LLM keys**; the server holds none. Model calls go through `llm/`, on `@langchain/core`
   and the provider packages; there is no LLM lib (ADR-0013).
 - **Every reply stream ends with `end`**, after an `error` event too, so a reader always knows when to stop.
+  A Run attempt that BullMQ will retry is the exception: it leaves its stream open for the resume.
   A reply its User stopped ends with `end` `{ reason: 'cancelled' }`: the runner polls the server's
   cancel flag while the model streams, aborts the call and persists what it had produced.
   An error event carries the `@nebula-chat/errors` envelope, never a raw internal message.
@@ -62,20 +63,34 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
 - `directReplies/` — the Direct reply runner (load Session and history, model call, stream events, persist
   the assistant Message), the streamed model call (`streamChat.ts`), its Drizzle queries, and the response
   cache (`replyCache.ts`).
-- `llm/` — the model layer: provider clients, token counting, `packHistory`, the concurrency limiter, and
-  the prompt loader. A Model's provider, limits, prices and each provider's default Model come from the
+- `llm/` — the model layer: provider clients, structured output, token counting, `packHistory`, the
+  concurrency limiter, and the prompt loader. A Model's provider, limits, prices and each provider's default Model come from the
   catalog in `@nebula-chat/contracts` (ADR-0030); the worker keeps no registry of its own.
 - `modelCalls/` — the Model call ledger (ADR-0030): `recordModelCall.ts` is the only writer, so a Direct
   reply and, later, a Step share one path; the Drizzle `ModelCallLedger` sits beside it.
 - `resources/prompts/` — one static Markdown system prompt per file, no template variables: dynamic
   content goes in the human message. `llm/prompts.ts` reads them once at boot and a missing one fails
   boot; `build` copies the folder into `dist/`, since `tsc` does not.
+- `runs/` — the Run (ADR-0033): the LangGraph graph and its nodes (`runGraph.ts`), the runner
+  (`executeRun.ts`), Step persistence (`steps.ts`), the Brief, the Orchestrator's `createAgent` loop
+  and its middleware (`orchestrator.ts`), the delegate-Agent-as-tool adapter, the findings the Output
+  Agent reads, the mapping from the graph's stream to reply stream events, the Postgres checkpointer
+  (its own `langgraph` schema, set up at boot), the `AgentDefinition` type and the Agent registry, and
+  the Run and Step repositories.
+- `agents/` — the Agents only: one file each (Model, prompt, tool grants, parameters, and for an
+  Intake Agent its output schema and human-message builder). The Session's Model never applies to an
+  Agent.
+
+A Run job is retried by BullMQ (`RUN_JOB_ATTEMPTS` and `RUN_JOB_BACKOFF_MS` are the server's env, since the
+server adds the job). `executeRun` starts the graph only on a thread with no checkpoint: pending work resumes
+with `null` input, and a finished graph only ends the Run. A failure with tries left is rethrown, leaving the
+Run `running` and its checkpoints in place; the last try ends the Run `failed` with the error on its
+`run-finished` event and deletes the checkpoints. A resumed Run's token total is seeded from its completed
+Steps, a re-run Step's Model call gets its own ledger row (`<stepId>:<attempt>`), and a failed Run persists no
+assistant Message: its error event is the explanation.
 
 Folders later tickets add:
 
-- `runs/`: the Run graph, its nodes, checkpointer, middleware, stream-event mapping, and the Run and Step
-  repositories.
-- `agents/`: one file per Agent definition, plus the registry.
 - `tools/`: one file per tool.
 
 ### Adding a job type
@@ -95,7 +110,8 @@ bound to every ID in its payload (`user.id`, `nebula.session.id`, `nebula.messag
 `nebula.reply.message.id`, `nebula.job.id`) and writes exactly one `info` line when it ends
 (`chat.reply.completed` for a Direct reply). A failure is logged once, by the runner that turns it into
 the stream's `error` event. Every model call and every cache replay is also recorded once as a Model call,
-keyed by the reply's `streamId`; a failed write is a `warn`, never a failed reply. Never log Message content, prompts, completions or Streaming tokens.
+keyed by the reply's `streamId` (a Step's id in a Run); a failed write is a `warn`, never a failed reply.
+A Run writes one `chat.run.completed` (a failure with job retries left writes a `warn` `chat.run.retrying` instead), plus a `warn` `chat.run.step.failed` for each Intake or delegate Agent that failed. Never log Message content, prompts, completions or Streaming tokens.
 
 A job continues the server's trace: the payload's `traceparent` (and `tracestate`) is extracted into a
 consumer span, the model call is a child span of it, and a job without trace context starts its own root.
@@ -108,8 +124,10 @@ The server injects the context in `enqueueDirectReply`; the helpers live in `@ne
 The root [Testing](../../AGENTS.md#testing) rules apply. The worker's seam is the **job processor**:
 `jobs/tests/directReply.test.ts` calls `createDirectReplyProcessor` with a payload, a scripted fake
 model (`streamChat`), in-memory Session and Message storage, an in-memory response cache, an in-memory Model call ledger and an in-memory stream sink, then asserts
-on the emitted events, the persisted assistant Message, the recorded Model calls and the logged lines. No test reaches Postgres,
-Redis or a provider.
+on the emitted events, the persisted assistant Message, the recorded Model calls and the logged lines.
+`jobs/tests/run.test.ts` does the same for a Run, with scripted models per Agent (the Orchestrator's
+script decides each reply from the messages it is sent), LangGraph's in-memory checkpointer and
+in-memory Run and Step stores. No test reaches Postgres, Redis or a provider.
 
 Coverage excludes construction-only files (`worker.ts`, `env.ts`, `logger.ts`, `db.ts`, `redis.ts`) and
 the Drizzle repository, as in the server. The list lives in `vitest.config.mts` and `matrix.coverage` in
@@ -129,6 +147,13 @@ the Drizzle repository, as in the server. The list lives in `vitest.config.mts` 
 | `REDIS_URL`                                                                                               | Redis connection string (the server's Redis)                     |
 | `PORT`                                                                                                    | Port `/health` listens on (default `3001`)                       |
 | `WORKER_CONCURRENCY`                                                                                      | Direct replies one instance produces at once (default `5`)       |
+| `RUN_CONCURRENCY`                                                                                         | Runs one instance executes at once (default `3`)                 |
+| `RUN_TURN_CAP`                                                                                            | Orchestrator turns before a forced handoff (default `6`)         |
+| `RUN_PARALLEL_DELEGATES`                                                                                  | Delegate Agents one Run executes at once (default `4`)           |
+| `RUN_TOKEN_BUDGET`                                                                                        | The Run budget, in tokens across all Steps (default `60000`)     |
+| `RUN_HANDOFF_THRESHOLD`                                                                                   | Share of the Run budget that forces the handoff (default `0.85`) |
+| `RUN_DELEGATE_TIMEOUT_MS`                                                                                 | How long a delegate Step may take (default `60000`)              |
+| `RUN_TIMEOUT_MS`                                                                                          | How long a Run may take before it fails (default `300000`)       |
 | `STREAM_TTL_SECONDS`                                                                                      | How long a reply stream outlives its end (default `3600`)        |
 | `LOG_LEVEL`                                                                                               | Log verbosity (default `info`)                                   |
 | `LOG_LEVEL_OVERRIDES`                                                                                     | Per-component levels, comma-separated `component=level`          |

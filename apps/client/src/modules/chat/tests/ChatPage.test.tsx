@@ -39,6 +39,7 @@ const aChatSession = (id: string, title: string) => ({
   id,
   title,
   createdAt: '2026-06-15T11:00:00.000Z',
+  archived: false,
 });
 
 const aMessage = (id: string, role: string, content: string) => ({
@@ -204,7 +205,12 @@ describe('ChatPage', () => {
       })),
       getCreateSessionMockHandler(() => {
         created = true;
-        return { id: SESSION_ID, title: 'Brand new chat', createdAt: '2026-10-20T00:00:00.000Z' };
+        return {
+          id: SESSION_ID,
+          title: 'Brand new chat',
+          createdAt: '2026-10-20T00:00:00.000Z',
+          archived: false,
+        };
       }),
       getSendMessageMockHandler({
         messageId: '22222222-2222-4222-8222-222222222222',

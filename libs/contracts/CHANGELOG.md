@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-contracts-v1.6.0...nebula-chat-contracts-v1.7.0) (2026-10-26)
+
+
+### Features
+
+* **worker:** NEB-361 resume Runs from their checkpoint and enforce failure end states ([#663](https://github.com/itsDaiton/nebula-chat/issues/663)) ([7b89c2f](https://github.com/itsDaiton/nebula-chat/commit/7b89c2fa48d978b4badc2bf7210fbc9c91b0d829))
+
+## [1.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-contracts-v1.5.0...nebula-chat-contracts-v1.6.0) (2026-10-26)
+
+
+### Features
+
+* **worker:** NEB-360 Orchestrator tool-calling loop with delegate Agents and Run budget ([#656](https://github.com/itsDaiton/nebula-chat/issues/656)) ([273a3ba](https://github.com/itsDaiton/nebula-chat/commit/273a3bac5dd566f996862e0d0f4075bcc5c9cbf5))
+
+## [1.5.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-contracts-v1.4.0...nebula-chat-contracts-v1.5.0) (2026-10-26)
+
+
+### Features
+
+* **worker:** NEB-359 Runs with Intake Agents, Brief and Output Agent ([#651](https://github.com/itsDaiton/nebula-chat/issues/651)) ([d74c64e](https://github.com/itsDaiton/nebula-chat/commit/d74c64edb494ba93bb6cb76236dafb268c83f905)), closes [#359](https://github.com/itsDaiton/nebula-chat/issues/359)
+
 ## [1.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-contracts-v1.3.0...nebula-chat-contracts-v1.4.0) (2026-10-25)
 
 

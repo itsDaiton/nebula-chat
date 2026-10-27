@@ -20,6 +20,35 @@ const endEventSchema = z.object({
   reason: z.enum(['cancelled']).optional(),
 });
 
+// A Step of a Run starting. `attempt` is 1 the first time; a higher one for a Step already shown means it
+// re-ran on resume, so the client discards what it rendered for it (ADR-0033 §5).
+const stepStartedEventSchema = z.object({
+  type: z.literal('step-started'),
+  stepId: z.uuid(),
+  attempt: z.number().int().positive(),
+  phase: z.enum(['intake', 'orchestrator', 'delegate', 'tool', 'output']),
+  agent: z.string().min(1),
+  /** A short label for the UI; the Step's input and output stay in Postgres. */
+  label: z.string().min(1),
+  // The Orchestrator turn the Step belongs to (0 outside the loop); a delegate's parent is its turn's Step.
+  turn: z.number().int().nonnegative(),
+  parentStepId: z.uuid().nullable(),
+});
+
+const stepFinishedEventSchema = z.object({
+  type: z.literal('step-finished'),
+  stepId: z.uuid(),
+  status: z.enum(['completed', 'failed']),
+});
+
+// The Run's end state, sent just before `end`; a failed Run carries what failed.
+const runFinishedEventSchema = z.object({
+  type: z.literal('run-finished'),
+  runId: z.uuid(),
+  status: z.enum(['completed', 'partial', 'failed', 'cancelled']),
+  error: errorEnvelopeSchema.optional(),
+});
+
 // One reply stream entry (ADR-0014), relayed as an SSE event named `type` with the rest as data.
 // A stream always finishes with `end`, after an `error` too.
 export const replyStreamEventSchema = z.discriminatedUnion('type', [
@@ -27,6 +56,9 @@ export const replyStreamEventSchema = z.discriminatedUnion('type', [
   usageEventSchema,
   errorEventSchema,
   endEventSchema,
+  stepStartedEventSchema,
+  stepFinishedEventSchema,
+  runFinishedEventSchema,
 ]);
 
 export type ReplyStreamEvent = z.infer<typeof replyStreamEventSchema>;

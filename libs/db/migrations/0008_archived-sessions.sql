@@ -1,0 +1,2 @@
+ALTER TABLE "sessions" ADD COLUMN "archived_at" timestamp;--> statement-breakpoint
+CREATE INDEX "session_user_active_idx" ON "sessions" USING btree ("user_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "sessions"."archived_at" is null;

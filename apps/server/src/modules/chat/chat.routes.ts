@@ -27,10 +27,11 @@ const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
         400: jsonResponse('Invalid request body or session ID', errorEnvelopeSchema),
         401: jsonResponse('No auth session', errorEnvelopeSchema),
         403: jsonResponse(
-          'Guest message allowance reached — registration required',
+          'Guest message allowance reached, or a Guest asked for a Run — registration required',
           errorEnvelopeSchema,
         ),
         404: jsonResponse('Session not found or not owned by the caller', errorEnvelopeSchema),
+        409: jsonResponse('Session is archived — restore it first', errorEnvelopeSchema),
         413: jsonResponse('Message exceeds the prompt token limit', errorEnvelopeSchema),
         429: jsonResponse('Rate limit exceeded', errorEnvelopeSchema),
         500: jsonResponse('Internal server error', errorEnvelopeSchema),

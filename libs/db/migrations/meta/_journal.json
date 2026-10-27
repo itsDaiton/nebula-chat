@@ -50,6 +50,20 @@
       "when": 1792950845318,
       "tag": "0006_model-calls",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793008021791,
+      "tag": "0007_runs-and-steps",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793129325136,
+      "tag": "0008_archived-sessions",
+      "breakpoints": true
     }
   ]
 }

@@ -21,6 +21,7 @@ export const getSendMessageResponseMock = (
 ): SentMessage => ({
   messageId: faker.string.uuid(),
   streamId: faker.string.uuid(),
+  runId: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
   ...overrideResponse,
 });
 

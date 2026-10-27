@@ -8,6 +8,7 @@ import type { UsageMetadata } from '@langchain/core/messages';
 import { DEFAULT_MODELS, findModel } from '@nebula-chat/contracts';
 import { logEvent } from '@nebula-chat/otel';
 import type { Logger } from '@nebula-chat/otel';
+import { toCallUsage } from '@worker/llm/callUsage';
 import { llmConcurrencyLimiter } from '@worker/llm/concurrencyLimiter';
 import { countTokens } from '@worker/llm/countTokens';
 import { createLLM } from '@worker/llm/createLLM';
@@ -40,30 +41,6 @@ export type ChatStreamCallbacks = {
 };
 
 const DEFAULT_MAX_INPUT_TOKENS = 8_000;
-
-// A provider's input total includes the cached tokens; with nothing reported and nothing streamed,
-// nothing is known to have been billed.
-const toCallUsage = (
-  reported: UsageMetadata | undefined,
-  estimate: { promptTokens: number; completionTokens: number },
-): CallUsage | undefined => {
-  if (reported) {
-    const cached = reported.input_token_details?.cache_read ?? 0;
-    return {
-      inputTokens: reported.input_tokens - cached,
-      cachedInputTokens: cached,
-      outputTokens: reported.output_tokens,
-      estimated: false,
-    };
-  }
-  if (estimate.completionTokens === 0) return undefined;
-  return {
-    inputTokens: estimate.promptTokens,
-    cachedInputTokens: 0,
-    outputTokens: estimate.completionTokens,
-    estimated: true,
-  };
-};
 
 export const streamChat = async (
   config: ChatStreamConfig,

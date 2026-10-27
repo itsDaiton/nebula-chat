@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nebula Chat API
-  version: 4.2.0
+  version: 4.4.0
   description: REST API for Nebula Chat
   contact:
     name: Nebula Chat
@@ -50,6 +50,12 @@ components:
           pattern: >-
             ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           description: The reply stream to read from `GET /api/streams/{streamId}`
+        runId:
+          description: The Run producing the reply; only in `run` mode
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
       required:
         - messageId
         - streamId
@@ -143,10 +149,14 @@ components:
           format: date-time
           pattern: >-
             ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        archived:
+          type: boolean
+          description: Whether the owner has archived this Session
       required:
         - id
         - title
         - createdAt
+        - archived
       additionalProperties: false
     SessionDetail:
       type: object
@@ -163,6 +173,9 @@ components:
           format: date-time
           pattern: >-
             ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        archived:
+          type: boolean
+          description: Whether the owner has archived this Session
         activeStreamId:
           anyOf:
             - type: string
@@ -177,6 +190,7 @@ components:
         - id
         - title
         - createdAt
+        - archived
         - activeStreamId
       additionalProperties: false
     SessionPage:
@@ -490,10 +504,12 @@ paths:
                   minLength: 1
                 mode:
                   type: string
-                  const: direct
+                  enum:
+                    - direct
+                    - run
                   description: >-
-                    How the reply is produced. Only `direct`, a Direct reply,
-                    for now.
+                    How the reply is produced: `direct`, a Direct reply, or
+                    `run`, a Run (Registered users only).
                 model:
                   description: >-
                     Binds the Session to this Model before replying; omitted
@@ -543,13 +559,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
-          description: Guest message allowance reached — registration required
+          description: >-
+            Guest message allowance reached, or a Guest asked for a Run —
+            registration required
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '404':
           description: Session not found or not owned by the caller
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Session is archived — restore it first
           content:
             application/json:
               schema:
@@ -652,7 +676,8 @@ paths:
         - Sessions
       description: >-
         Retrieve the caller’s own sessions with cursor-based pagination. Returns
-        up to 10 sessions by default.
+        up to 10 sessions by default; archived sessions are excluded unless
+        `archived=true`.
       parameters:
         - schema:
             default: 10
@@ -672,6 +697,20 @@ paths:
           in: query
           name: cursor
           description: Pagination cursor for fetching the next page of sessions
+        - schema:
+            description: >-
+              Return only archived Sessions (`true`) instead of only active ones
+              (default)
+            default: 'false'
+            type: string
+            enum:
+              - 'true'
+              - 'false'
+          in: query
+          name: archived
+          description: >-
+            Return only archived Sessions (`true`) instead of only active ones
+            (default)
       responses:
         '200':
           description: Paginated list of sessions owned by the caller
@@ -697,7 +736,9 @@ paths:
       summary: Search sessions
       tags:
         - Sessions
-      description: Search the caller’s own sessions by title, ordered by creation date.
+      description: >-
+        Search the caller’s own sessions by title, ordered by creation date.
+        Archived sessions are excluded unless `archived=true`.
       parameters:
         - schema:
             type: string
@@ -707,6 +748,20 @@ paths:
           name: q
           required: true
           description: Search query to filter sessions by title
+        - schema:
+            description: >-
+              Return only archived Sessions (`true`) instead of only active ones
+              (default)
+            default: 'false'
+            type: string
+            enum:
+              - 'true'
+              - 'false'
+          in: query
+          name: archived
+          description: >-
+            Return only archived Sessions (`true`) instead of only active ones
+            (default)
       responses:
         '200':
           description: Matching sessions owned by the caller
@@ -725,6 +780,102 @@ paths:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '401':
           description: No auth session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/sessions/{sessionId}/archive:
+    post:
+      operationId: archiveSession
+      summary: Archive session
+      tags:
+        - Sessions
+      description: >-
+        Archive one of the caller’s own sessions: hidden from the session list,
+        kept unchanged. Idempotent.
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: path
+          name: sessionId
+          required: true
+      responses:
+        '200':
+          description: Session archived
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          description: Invalid session ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: No auth session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Session not found or not owned by the caller
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/sessions/{sessionId}/restore:
+    post:
+      operationId: restoreSession
+      summary: Restore session
+      tags:
+        - Sessions
+      description: Restore one of the caller’s own archived sessions. Idempotent.
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: path
+          name: sessionId
+          required: true
+      responses:
+        '200':
+          description: Session restored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          description: Invalid session ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: No auth session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
@@ -840,6 +991,12 @@ paths:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '404':
           description: Session not found or not owned by the caller
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Session is archived — restore it first
           content:
             application/json:
               schema:

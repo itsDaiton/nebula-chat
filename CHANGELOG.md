@@ -1,5 +1,54 @@
 # Changelog
 
+## [5.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.10.1...nebula-chat-v5.11.0) (2026-10-27)
+
+
+### Features
+
+* **server:** NEB-543 Users archive and restore their Sessions ([#673](https://github.com/itsDaiton/nebula-chat/issues/673)) ([64e909a](https://github.com/itsDaiton/nebula-chat/commit/64e909a9a1a86167abb26766ccc69569ad771abe))
+
+## [5.10.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.10.0...nebula-chat-v5.10.1) (2026-10-27)
+
+
+### Bug Fixes
+
+* add the redesign design rules and review decisions for agents ([#667](https://github.com/itsDaiton/nebula-chat/issues/667)) ([60fdcb9](https://github.com/itsDaiton/nebula-chat/commit/60fdcb9ff5f9ea1ae2085de9f4d20f2eb3ea5bb3))
+
+## [5.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.9.1...nebula-chat-v5.10.0) (2026-10-26)
+
+
+### Features
+
+* **worker:** NEB-361 resume Runs from their checkpoint and enforce failure end states ([#663](https://github.com/itsDaiton/nebula-chat/issues/663)) ([7b89c2f](https://github.com/itsDaiton/nebula-chat/commit/7b89c2fa48d978b4badc2bf7210fbc9c91b0d829))
+
+## [5.9.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.9.0...nebula-chat-v5.9.1) (2026-10-26)
+
+
+### Bug Fixes
+
+* **ci:** stop cancelled main builds failing build-result ([#660](https://github.com/itsDaiton/nebula-chat/issues/660)) ([7cc29f2](https://github.com/itsDaiton/nebula-chat/commit/7cc29f2f2d4372a95b28169161de6e44194ce94f))
+
+## [5.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.8.1...nebula-chat-v5.9.0) (2026-10-26)
+
+
+### Features
+
+* **worker:** NEB-360 Orchestrator tool-calling loop with delegate Agents and Run budget ([#656](https://github.com/itsDaiton/nebula-chat/issues/656)) ([273a3ba](https://github.com/itsDaiton/nebula-chat/commit/273a3bac5dd566f996862e0d0f4075bcc5c9cbf5))
+
+## [5.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.8.0...nebula-chat-v5.8.1) (2026-10-26)
+
+
+### Bug Fixes
+
+* allowlist MCP servers and keep file edits as diffs ([5fce3f9](https://github.com/itsDaiton/nebula-chat/commit/5fce3f961da0e40e45fe13bd0af38216a24afd71))
+
+## [5.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.7.0...nebula-chat-v5.8.0) (2026-10-26)
+
+
+### Features
+
+* **worker:** NEB-359 Runs with Intake Agents, Brief and Output Agent ([#651](https://github.com/itsDaiton/nebula-chat/issues/651)) ([d74c64e](https://github.com/itsDaiton/nebula-chat/commit/d74c64edb494ba93bb6cb76236dafb268c83f905)), closes [#359](https://github.com/itsDaiton/nebula-chat/issues/359)
+
 ## [5.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.6.1...nebula-chat-v5.7.0) (2026-10-25)
 
 

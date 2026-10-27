@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.6.1...nebula-chat-client-v2.7.0) (2026-10-27)
+
+
+### Features
+
+* **server:** NEB-543 Users archive and restore their Sessions ([#673](https://github.com/itsDaiton/nebula-chat/issues/673)) ([64e909a](https://github.com/itsDaiton/nebula-chat/commit/64e909a9a1a86167abb26766ccc69569ad771abe))
+
+## [2.6.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.6.0...nebula-chat-client-v2.6.1) (2026-10-27)
+
+
+### Bug Fixes
+
+* add the redesign design rules and review decisions for agents ([#667](https://github.com/itsDaiton/nebula-chat/issues/667)) ([60fdcb9](https://github.com/itsDaiton/nebula-chat/commit/60fdcb9ff5f9ea1ae2085de9f4d20f2eb3ea5bb3))
+
+## [2.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.5.0...nebula-chat-client-v2.6.0) (2026-10-26)
+
+
+### Features
+
+* **worker:** NEB-359 Runs with Intake Agents, Brief and Output Agent ([#651](https://github.com/itsDaiton/nebula-chat/issues/651)) ([d74c64e](https://github.com/itsDaiton/nebula-chat/commit/d74c64edb494ba93bb6cb76236dafb268c83f905)), closes [#359](https://github.com/itsDaiton/nebula-chat/issues/359)
+
 ## [2.5.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.4.0...nebula-chat-client-v2.5.0) (2026-10-25)
 
 

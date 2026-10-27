@@ -186,6 +186,20 @@ once, and nobody else does:
   `nebula.job.id`; it also carries `gen_ai.*` and `nebula.duration_ms`. A job
   whose payload breaks the contract writes `job.payload.rejected` instead.
 
+- **Runs** (the worker). The runner in `apps/worker/src/runs/executeRun.ts`
+  writes exactly one `chat.run.completed` per Run, bound like a Direct reply's
+  lines plus `nebula.run.id`:
+
+  | `nebula.outcome` | Level                                                     | Carries             |
+  | ---------------- | --------------------------------------------------------- | ------------------- |
+  | `completed`      | `info`                                                    | tokens              |
+  | `partial`        | `info`: an Intake Agent failed, the Run still answered    | tokens              |
+  | `failed`         | `error`, or `warn` when the caller caused it (a 4xx code) | `err`, `error.type` |
+
+  Each Intake Agent that fails also writes a `warn` `chat.run.step.failed` with
+  `err` and `nebula.agent.name`. A failure with job retries left writes a `warn`
+  `chat.run.retrying` (`err`, `error.type`) instead of `chat.run.completed`; the retry resumes the Run.
+
 - **Model calls.** The ledger write is fail-open, like the cache: a Postgres failure while
   recording a call is one `warn`, `model_call.record.failed`, with `err`, the Model and the call's
   `nebula.outcome`, and the reply carries on.

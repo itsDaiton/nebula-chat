@@ -1,5 +1,24 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "CLAUDE_CODE_THRIFTY_SONIC": "0"
+  },
+  "allowedMcpServers": [
+    { "serverName": "shadcn" },
+    { "serverName": "better-auth" },
+    { "serverName": "context7" },
+    { "serverName": "langchain-docs" },
+    { "serverName": "playwright" },
+    { "serverName": "redis-local" },
+    { "serverName": "github" },
+    { "serverName": "claude-code-remote" },
+    { "serverName": "ccd_session" },
+    { "serverName": "Claude_Docs" },
+    { "serverName": "Firecrawl" },
+    { "serverName": "Grafana_Cloud" },
+    { "serverName": "Supabase" },
+    { "serverName": "Render" }
+  ],
   "hooks": {
     "PostToolUse": [
       {

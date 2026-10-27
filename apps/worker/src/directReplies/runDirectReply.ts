@@ -62,7 +62,7 @@ export type ReplyStreamWriter = {
 type EndEvent = Extract<ReplyStreamEvent, { type: 'end' }>;
 
 /** Appends the terminal event: marked ended first, so a Session read after `end` never re-attaches. */
-const endStream = async (
+export const endStream = async (
   streamId: string,
   end: EndEvent,
   stream: ReplyStreamWriter,
@@ -94,9 +94,12 @@ export type DirectReplyDeps = {
 };
 
 /** Aborts `controller` once the reply's cancel flag is raised; call the returned function to stop watching. */
-const watchForCancel = (
+export const watchForCancel = (
   streamId: string,
-  { stream, cancelPollMs = DEFAULT_CANCEL_POLL_MS }: DirectReplyDeps,
+  {
+    stream,
+    cancelPollMs = DEFAULT_CANCEL_POLL_MS,
+  }: Pick<DirectReplyDeps, 'stream' | 'cancelPollMs'>,
   controller: AbortController,
 ): (() => void) => {
   let checking = false;

@@ -1,5 +1,26 @@
 # Changelog
 
+## [4.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.5.0...nebula-chat-server-v4.6.0) (2026-10-27)
+
+
+### Features
+
+* **server:** NEB-543 Users archive and restore their Sessions ([#673](https://github.com/itsDaiton/nebula-chat/issues/673)) ([64e909a](https://github.com/itsDaiton/nebula-chat/commit/64e909a9a1a86167abb26766ccc69569ad771abe))
+
+## [4.5.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.4.0...nebula-chat-server-v4.5.0) (2026-10-26)
+
+
+### Features
+
+* **worker:** NEB-361 resume Runs from their checkpoint and enforce failure end states ([#663](https://github.com/itsDaiton/nebula-chat/issues/663)) ([7b89c2f](https://github.com/itsDaiton/nebula-chat/commit/7b89c2fa48d978b4badc2bf7210fbc9c91b0d829))
+
+## [4.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.3.0...nebula-chat-server-v4.4.0) (2026-10-26)
+
+
+### Features
+
+* **worker:** NEB-359 Runs with Intake Agents, Brief and Output Agent ([#651](https://github.com/itsDaiton/nebula-chat/issues/651)) ([d74c64e](https://github.com/itsDaiton/nebula-chat/commit/d74c64edb494ba93bb6cb76236dafb268c83f905)), closes [#359](https://github.com/itsDaiton/nebula-chat/issues/359)
+
 ## [4.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.2.0...nebula-chat-server-v4.3.0) (2026-10-25)
 
 

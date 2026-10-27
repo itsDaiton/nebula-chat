@@ -4,13 +4,14 @@
  * Nebula Chat API
  * REST API for Nebula Chat
  */
+import type { SendMessageBodyMode } from './sendMessageBodyMode';
 import type { SendMessageBodyModel } from './sendMessageBodyModel';
 
 export type SendMessageBody = {
   /** @minLength 1 */
   content: string;
-  /** How the reply is produced. Only `direct`, a Direct reply, for now. */
-  mode: 'direct';
+  /** How the reply is produced: `direct`, a Direct reply, or `run`, a Run (Registered users only). */
+  mode: SendMessageBodyMode;
   /** Binds the Session to this Model before replying; omitted keeps the Session's Model */
   model?: SendMessageBodyModel;
 };

@@ -14,6 +14,7 @@ const aSession = (id: string) => ({
   id,
   title: `Session ${id}`,
   createdAt: '2026-06-15T11:55:00.000Z',
+  archived: false,
 });
 
 describe('useSessions', () => {

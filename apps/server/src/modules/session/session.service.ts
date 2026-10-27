@@ -18,10 +18,29 @@ export const sessionService = {
     // The in-flight reply lives in Redis until the worker ends it; Postgres has only finished ones.
     return { ...session, activeStreamId: await findActiveStream(sessionId) };
   },
-  async getAllSessions(userId: string, limit = paginationConfig.defaultLimit, cursor?: string) {
-    return sessionRepository.findAll(userId, limit, cursor);
+  async getAllSessions(
+    userId: string,
+    limit = paginationConfig.defaultLimit,
+    cursor?: string,
+    archived = false,
+  ) {
+    return sessionRepository.findAll(userId, limit, cursor, archived);
   },
-  async searchSessions(userId: string, query: string) {
-    return sessionRepository.search(userId, query);
+  async searchSessions(userId: string, query: string, archived = false) {
+    return sessionRepository.search(userId, query, archived);
+  },
+  async archiveSession(sessionId: string, userId: string) {
+    const session = await sessionRepository.archive(sessionId, userId);
+    if (!session) {
+      throw new NotFoundError('Session', sessionId);
+    }
+    return session;
+  },
+  async restoreSession(sessionId: string, userId: string) {
+    const session = await sessionRepository.restore(sessionId, userId);
+    if (!session) {
+      throw new NotFoundError('Session', sessionId);
+    }
+    return session;
   },
 };

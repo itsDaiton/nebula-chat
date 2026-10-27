@@ -22,6 +22,7 @@ const session = {
   id: SESSION_ID,
   title: 'Run events in the SSE parser',
   createdAt: '2026-06-15T11:00:00.000Z',
+  archived: false,
 };
 
 const setDesktop = (isDesktop: boolean) => {

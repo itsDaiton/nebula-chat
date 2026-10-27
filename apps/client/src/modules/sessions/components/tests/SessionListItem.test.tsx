@@ -10,6 +10,7 @@ const aSession = (overrides = {}) => ({
   id: SESSION_ID,
   title: 'Planning the migration',
   createdAt: new Date(Date.now() - 5 * 60_000).toISOString(),
+  archived: false,
   ...overrides,
 });
 

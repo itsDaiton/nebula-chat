@@ -12,6 +12,8 @@ vi.mock('@server/modules/session/session.repository', () => ({
     findById: vi.fn(),
     findAll: vi.fn(),
     search: vi.fn(),
+    archive: vi.fn(),
+    restore: vi.fn(),
   },
 }));
 
@@ -50,6 +52,7 @@ const aSession = (overrides: Record<string, unknown> = {}) => ({
   id: SESSION_ID,
   title: 'A session',
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
+  archived: false,
   ...overrides,
 });
 
@@ -127,6 +130,7 @@ describe('POST /api/sessions', () => {
       id: SESSION_ID,
       title: 'A session',
       createdAt: '2026-01-01T00:00:00.000Z',
+      archived: false,
     });
   });
 
@@ -200,6 +204,15 @@ describe('GET /api/sessions/:sessionId', () => {
     expect(repo.findById).toHaveBeenCalledWith({ sessionId: SESSION_ID }, REGISTERED_USER_ID);
   });
 
+  it('returns an archived Session by id, marked archived', async () => {
+    repo.findById.mockResolvedValue(fromPartial(aSession({ archived: true })));
+
+    const res = await app.inject({ method: 'GET', url: `/api/sessions/${SESSION_ID}` });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ id: SESSION_ID, archived: true });
+  });
+
   it('names the reply still streaming, so a page reloaded mid-reply can re-attach to it', async () => {
     const STREAM_ID = '33333333-3333-4333-8333-333333333333';
     repo.findById.mockResolvedValue(fromPartial(aSession()));
@@ -267,7 +280,7 @@ describe('GET /api/sessions', () => {
     await app.inject({ method: 'GET', url: '/api/sessions' });
 
     // Owner-scoped: the auth session's user is the first argument.
-    expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, 10, undefined);
+    expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, 10, undefined, false);
   });
 
   it('coerces the limit query parameter to a number', async () => {
@@ -275,7 +288,7 @@ describe('GET /api/sessions', () => {
 
     await app.inject({ method: 'GET', url: '/api/sessions?limit=25' });
 
-    expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, 25, undefined);
+    expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, 25, undefined, false);
   });
 
   it('passes the pagination cursor through', async () => {
@@ -283,7 +296,22 @@ describe('GET /api/sessions', () => {
 
     await app.inject({ method: 'GET', url: `/api/sessions?cursor=${SESSION_ID}` });
 
-    expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, 10, SESSION_ID);
+    expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, 10, SESSION_ID, false);
+  });
+
+  it('lists only archived Sessions when asked with ?archived=true', async () => {
+    repo.findAll.mockResolvedValue(fromPartial(page));
+
+    await app.inject({ method: 'GET', url: '/api/sessions?archived=true' });
+
+    expect(repo.findAll).toHaveBeenCalledWith(REGISTERED_USER_ID, 10, undefined, true);
+  });
+
+  it('rejects a non-boolean archived flag', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/sessions?archived=maybe' });
+
+    expect(res.statusCode).toBe(400);
+    expect(repo.findAll).not.toHaveBeenCalled();
   });
 
   it('rejects an unauthenticated list with 401 and never reaches the repository', async () => {
@@ -324,7 +352,19 @@ describe('GET /api/sessions/search', () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toHaveLength(1);
     // Owner-scoped: the auth session's user is the first argument.
-    expect(repo.search).toHaveBeenCalledWith(REGISTERED_USER_ID, 'hello');
+    expect(repo.search).toHaveBeenCalledWith(REGISTERED_USER_ID, 'hello', false);
+  });
+
+  it('searches archived Sessions only when asked with archived=true', async () => {
+    repo.search.mockResolvedValue(fromPartial([aSession({ archived: true })]));
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/sessions/search?q=hello&archived=true',
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(repo.search).toHaveBeenCalledWith(REGISTERED_USER_ID, 'hello', true);
   });
 
   it('rejects a missing query string with 400', async () => {
@@ -357,5 +397,59 @@ describe('GET /api/sessions/search', () => {
     // A route-ordering regression would send this to findById instead.
     expect(repo.search).toHaveBeenCalled();
     expect(repo.findById).not.toHaveBeenCalled();
+  });
+});
+
+describe.each([
+  ['archive', 'archived', true],
+  ['restore', 'restored', false],
+] as const)('POST /api/sessions/:sessionId/%s', (action, _past, archived) => {
+  const url = `/api/sessions/${SESSION_ID}/${action}`;
+  const method = repo[action];
+
+  it(`${action}s the caller's own Session and returns it`, async () => {
+    method.mockResolvedValue(fromPartial(aSession({ archived })));
+
+    const res = await app.inject({ method: 'POST', url });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ id: SESSION_ID, archived });
+    // Owner-scoped: the auth session's user is part of the lookup.
+    expect(method).toHaveBeenCalledWith(SESSION_ID, REGISTERED_USER_ID);
+  });
+
+  it('is idempotent: repeating it answers 200 again', async () => {
+    method.mockResolvedValue(fromPartial(aSession({ archived })));
+
+    const first = await app.inject({ method: 'POST', url });
+    const second = await app.inject({ method: 'POST', url });
+
+    expect(first.statusCode).toBe(200);
+    expect(second.statusCode).toBe(200);
+  });
+
+  it("answers a typed 404 for a Session the caller doesn't own or that doesn't exist", async () => {
+    method.mockResolvedValue(null);
+
+    const res = await app.inject({ method: 'POST', url });
+
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toMatchObject({ success: false, error: 'NotFound' });
+  });
+
+  it('rejects a non-UUID id with 400 before touching the repository', async () => {
+    const res = await app.inject({ method: 'POST', url: `/api/sessions/not-a-uuid/${action}` });
+
+    expect(res.statusCode).toBe(400);
+    expect(method).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unauthenticated call with 401 and never reaches the repository', async () => {
+    mockedGetSession.mockResolvedValue(null);
+
+    const res = await app.inject({ method: 'POST', url });
+
+    expect(res.statusCode).toBe(401);
+    expect(method).not.toHaveBeenCalled();
   });
 });

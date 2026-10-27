@@ -9,6 +9,9 @@ export const LOG_EVENTS = [
   'http.request.failed',
   // Chat
   'chat.reply.completed',
+  'chat.run.completed',
+  'chat.run.step.failed',
+  'chat.run.retrying',
   'chat.reply.cancel.requested',
   'chat.stream.relay.failed',
   'chat.stream.end.failed',

@@ -17,6 +17,7 @@ export const getCreateSessionResponseMock = (
   id: faker.string.uuid(),
   title: faker.string.alpha({ length: { min: 10, max: 20 } }),
   createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  archived: faker.datatype.boolean(),
   ...overrideResponse,
 });
 
@@ -28,6 +29,7 @@ export const getListSessionsResponseMock = (
       id: faker.string.uuid(),
       title: faker.string.alpha({ length: { min: 10, max: 20 } }),
       createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+      archived: faker.datatype.boolean(),
     }),
   ),
   nextCursor: faker.helpers.arrayElement([faker.string.uuid(), null]),
@@ -40,7 +42,28 @@ export const getSearchSessionsResponseMock = (): Session[] =>
     id: faker.string.uuid(),
     title: faker.string.alpha({ length: { min: 10, max: 20 } }),
     createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+    archived: faker.datatype.boolean(),
   }));
+
+export const getArchiveSessionResponseMock = (
+  overrideResponse: Partial<Extract<Session, object>> = {},
+): Session => ({
+  id: faker.string.uuid(),
+  title: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  archived: faker.datatype.boolean(),
+  ...overrideResponse,
+});
+
+export const getRestoreSessionResponseMock = (
+  overrideResponse: Partial<Extract<Session, object>> = {},
+): Session => ({
+  id: faker.string.uuid(),
+  title: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  archived: faker.datatype.boolean(),
+  ...overrideResponse,
+});
 
 export const getGetSessionResponseMock = (
   overrideResponse: Partial<Extract<SessionDetail, object>> = {},
@@ -48,6 +71,7 @@ export const getGetSessionResponseMock = (
   id: faker.string.uuid(),
   title: faker.string.alpha({ length: { min: 10, max: 20 } }),
   createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  archived: faker.datatype.boolean(),
   activeStreamId: faker.helpers.arrayElement([faker.string.uuid(), null]),
   ...overrideResponse,
 });
@@ -118,6 +142,50 @@ export const getSearchSessionsMockHandler = (
   );
 };
 
+export const getArchiveSessionMockHandler = (
+  overrideResponse?:
+    | Session
+    | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<Session> | Session),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    '*/api/sessions/:sessionId/archive',
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getArchiveSessionResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getRestoreSessionMockHandler = (
+  overrideResponse?:
+    | Session
+    | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<Session> | Session),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    '*/api/sessions/:sessionId/restore',
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getRestoreSessionResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
 export const getGetSessionMockHandler = (
   overrideResponse?:
     | SessionDetail
@@ -145,5 +213,7 @@ export const getSessionsMock = () => [
   getCreateSessionMockHandler(),
   getListSessionsMockHandler(),
   getSearchSessionsMockHandler(),
+  getArchiveSessionMockHandler(),
+  getRestoreSessionMockHandler(),
   getGetSessionMockHandler(),
 ];
