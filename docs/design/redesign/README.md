@@ -1,21 +1,27 @@
 # Redesign visual reference
 
-Mock screenshots of the redesigned client (epic #530) and the screens that build on it: the admin
+The agreed look of the redesigned client (epic #530) and the screens that build on it: the admin
 dashboard (#531), Model usage (#533), the Run UI from nebula-chat 2.0 (#349) and the CLI's device page
-(#563). They're the agreed look. A ticket that names a screenshot here is implemented to match it.
+(#563). A ticket that names a screenshot here is implemented to match it.
 
-The screenshots come from a static HTML mock in [`mock/`](./mock), not from the app. It uses the real
-tokens from `apps/client/src/styles/globals.css`, the model catalog's labels and the worker's Step
-labels. Copy and data are examples. Where a ticket and a screenshot disagree, the ticket's acceptance
-criteria win and the screenshot gets updated.
+The screenshots live in a Claude artifact, not in the repo: **[Nebula redesign mockups](https://claude.ai/artifact/LLBLmoYqAtjqEEySf8ntqm)**.
+It holds every PNG under `shots/`, the static HTML mock that renders them under `mock/`, and the
+review notes. The mock uses the real tokens from `apps/client/src/styles/globals.css`, the model
+catalog's labels and the worker's Step labels; copy and data are examples. Where a ticket and a
+screenshot disagree, the ticket's acceptance criteria win and the screenshot gets updated.
+
+The artifact is private to the repository owner's Claude account, so only Claude sessions signed in
+as the owner can open it.
 
 ## How to use it
 
-- **Implementing a ticket:** open each PNG listed for it below (`Read` renders images) before
-  writing the UI, and put a screenshot of your result next to it in the PR.
-- **Spacing and sizes:** the mock's `mock/styles.css` holds the exact values (panel widths, radii,
-  type sizes). Read the class for the element rather than measuring the PNG.
-- **Changing the design:** edit the mock, regenerate, and commit the new PNGs with the change.
+- **Implementing a ticket:** fetch each screenshot listed for it below with the Artifact tool:
+  `action: "read"`, `url: "https://claude.ai/artifact/LLBLmoYqAtjqEEySf8ntqm"`, `path: "shots/<file>.png"`. Then open the saved file with
+  `Read` before writing the UI, and put a screenshot of your result in the PR.
+- **Spacing and sizes:** fetch `mock/styles.css` the same way. It holds the exact values (panel
+  widths, radii, type sizes); read the class for the element rather than measuring the PNG.
+- **Changing the design:** see [Regenerating](#regenerating), then update this README if a rule or
+  decision changes.
 
 ## Design rules
 
@@ -39,7 +45,7 @@ These came out of the mockup review and apply to every screen.
 
 ## Screens
 
-| File | What it shows | Tickets |
+| `shots/` file | What it shows | Tickets |
 | --- | --- | --- |
 | `chat-empty.png` | New chat: greeting, composer, starter prompts; Inspector shows the Model a new chat uses | #547 #548 #549 #551 |
 | `chat-thread.png` | Thread with a code block, a GFM table, the meta row (hover state) and the context ring at rest | #549 #551 #665 #666 |
@@ -92,12 +98,10 @@ Gaps the tickets left open, and how each one was settled. The tickets named carr
 
 ## Regenerating
 
-Playwright and Chromium must be available (`require('playwright')`). From this folder:
-
-```bash
-node mock/shoot.js mock screens all 2            # every screen at 2x (retina)
-node mock/shoot.js mock screens chat-thread 2    # one screen
-```
-
-Open `mock/index.html?s=<screen>&theme=light` in a browser to see a screen live. Screens are
-functions in `mock/screens.js`; shared pieces (shell, composer, Inspector) live in `mock/lib.js`.
+1. Fetch every file under `mock/` from the artifact (`action: "list"`, `scope: "files"` names them)
+   into one folder.
+2. Edit `screens.js` (one function per screen) or `lib.js` (shell, composer, Inspector) and
+   `styles.css`. Open `index.html?s=<screen>&theme=light` in a browser to see a screen live.
+3. Render with Playwright and Chromium: `node shoot.js . shots all 2` for every screen at 2x, or
+   `node shoot.js . shots chat-thread 2` for one.
+4. Republish the artifact at the same URL with the changed `shots/` and `mock/` files.

@@ -58,9 +58,7 @@ DISABLE_LINTERS:
 # and typechecked by the `scripts` job in build.yml, which `build-result` gates
 # on. MegaLinter would only duplicate that against a ruleset `eslint.config.ts`
 # contradicts.
-# `docs/design/*/mock/` is a throwaway browser mock that renders the design
-# screenshots; it isn't shipped, and its generated icon map is one long line.
-FILTER_REGEX_EXCLUDE: '(\.claude/skills/|^scripts/|/scripts/|^docs/design/[^/]+/mock/)'
+FILTER_REGEX_EXCLUDE: '(\.claude/skills/|^scripts/|/scripts/)'
 ADDITIONAL_EXCLUDED_DIRECTORIES:
   - skills
   # MegaLinter's own output: `APPLY_FIXES` copies every fixed file into
