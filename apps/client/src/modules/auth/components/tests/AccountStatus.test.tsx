@@ -109,7 +109,7 @@ describe('AccountStatus', () => {
 
     await openMenu();
 
-    const menu = screen.getByRole('menu');
+    const menu = await screen.findByRole('menu');
     expect(within(menu).getByText('Ada')).toBeInTheDocument();
     expect(within(menu).getByText('ada@example.com')).toBeInTheDocument();
     expect(within(menu).getByRole('menuitem', { name: resources.userMenu.settings })).toBeVisible();
