@@ -4,7 +4,7 @@ The agreed look of the redesigned client (epic #530) and the screens that build 
 dashboard (#531), Model usage (#533), the Run UI from nebula-chat 2.0 (#349) and the CLI's device page
 (#563). A ticket that names a screenshot here is implemented to match it.
 
-The screenshots live in a Claude artifact, not in the repo: **[Nebula redesign mockups](https://claude.ai/artifact/LLBLmoYqAtjqEEySf8ntqm)**.
+The screenshots live in a Claude artifact, not in the repo: the one titled **Nebula Redesign Mockups**.
 It holds every PNG under `shots/`, the static HTML mock that renders them under `mock/`, and the
 review notes. The mock uses the real tokens from `apps/client/src/styles/globals.css`, the model
 catalog's labels and the worker's Step labels; copy and data are examples. Where a ticket and a
@@ -15,13 +15,15 @@ as the owner can open it.
 
 ## How to use it
 
+- **Finding it:** list your artifacts with the Artifact tool (`action: "list"`) and take the one
+  titled "Nebula Redesign Mockups".
 - **Implementing a ticket:** fetch each screenshot listed for it below with the Artifact tool:
-  `action: "read"`, `url: "https://claude.ai/artifact/LLBLmoYqAtjqEEySf8ntqm"`, `path: "shots/<file>.png"`. Then open the saved file with
-  `Read` before writing the UI, and put a screenshot of your result in the PR.
+  `action: "read"` on that artifact's URL with `path: "shots/<file>.png"`. Then open the saved file
+  with `Read` before writing the UI, and put a screenshot of your result in the PR.
 - **Spacing and sizes:** fetch `mock/styles.css` the same way. It holds the exact values (panel
   widths, radii, type sizes); read the class for the element rather than measuring the PNG.
-- **Changing the design:** see [Regenerating](#regenerating), then update this README if a rule or
-  decision changes.
+- **Changing the design:** see [Regenerating](#regenerating), then update this README if a rule
+  changes and the tickets if a decision does.
 
 ## Design rules
 
@@ -74,27 +76,6 @@ These came out of the mockup review and apply to every screen.
 | `admin-session.png` | Read-only Session transcript with the audit banner | #559 |
 | `m-chat.png`, `m-drawer.png`, `m-sheet.png` | Mobile (390 px): chat, left panel as a drawer, Inspector as a bottom sheet | #547 #551 |
 | `*-light.png` | Light-mode versions of `chat-empty`, `chat-thread`, `run-finished`, `admin-usage`, `settings-appearance` | as above |
-
-## Decisions from the review
-
-Gaps the tickets left open, and how each one was settled. The tickets named carry the decision.
-
-| Gap | Decision | Tickets |
-| --- | --- | --- |
-| The API had no Model, cost or Run on Messages | New server ticket adds `model`, `estimatedCostUsd`, `runId`, `contextTokens`, `contextMessages` | #665 → #549 #362 #666 |
-| Where Run inspection lives | The Inspector's Run tab, 360 px wide while it's active; a Step's full input and output open in a dialog; no route | #362 #551 |
-| Who owns the Run chip | #362 | #362 |
-| ⌘K booked twice | The palette owns ⌘K; the Search row opens it; the inline search goes | #548 #554 |
-| Account shown twice | Footer is the account menu; no header avatar | #547 #548 |
-| Clarifying question UI | Static copy (no countdown); hint row with Cancel Run; composer sends normally; Run toggle disabled while waiting | #585 |
-| Model picker during a Run | Picker dimmed with a one-line hint; a Run answer's meta row says "Run" with the Run's totals | #652 |
-| Opening an archived Session | Read-only view with a Restore bar, reached from Settings → Archived Sessions | #552 |
-| Unverified users and Runs | Allowed, as the server already does; Run Messages count against the allowance like any other | #652 |
-| Delete-account wording | Describes the 30-day Pending deletion | #552 |
-| Where `/device` lives | After the redesign ships (#555), on the auth layout from #553 | #563 |
-| Side panels on admin pages | The right panel appears only where a row or item can be selected; Overview has none; Model usage shows the pinned Model there | #556 #560 #569 |
-| Granting Admin to a banned User | Refused by the server; the action is disabled with "Unban this User before granting Admin" | #542 #558 |
-| Small things | Session title in the header; archive as an icon button; Shiki's `css-variables` theme mapped to the tokens; admin tables scroll horizontally on phones with detail in the bottom sheet | #547 #548 #549 #556 |
 
 ## Regenerating
 
