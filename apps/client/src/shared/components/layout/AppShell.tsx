@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { cn } from '@/shared/utils/cn';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { AccountFooter } from '@/shared/components/layout/AccountFooter';
 import { InspectorPlaceholder } from '@/shared/components/layout/InspectorPlaceholder';
@@ -46,7 +47,10 @@ export const AppShell = ({ children }: AppShellProps) => {
 
   return (
     <div
-      className="flex flex-col bg-canvas px-2.5 pb-2.5 text-foreground"
+      className={cn(
+        'app-shell flex flex-col bg-canvas text-foreground',
+        isDesktop && 'px-2.5 pb-2.5',
+      )}
       style={{ height: viewportHeight }}
     >
       <AppHeader
@@ -76,7 +80,11 @@ export const AppShell = ({ children }: AppShellProps) => {
             <AccountFooter />
           </aside>
         )}
-        <main className={`${panel} min-w-0 flex-1`}>{children}</main>
+        <main
+          className={cn(panel, 'min-w-0 flex-1', !isDesktop && 'rounded-none border-0 bg-canvas')}
+        >
+          {children}
+        </main>
         {isDesktop && rightOpen && (
           <aside aria-label={resources.shell.inspector} className={`${panel} w-[300px] shrink-0`}>
             <InspectorPlaceholder />
@@ -101,6 +109,7 @@ export const AppShell = ({ children }: AppShellProps) => {
           </Sheet>
           <Sheet open={sheetOpen} onOpenChange={(open) => !open && closeSheet()}>
             <SheetContent side="bottom" className="max-h-[70dvh] gap-0 rounded-t-2xl">
+              <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-border-strong" />
               <SheetTitle className="p-4">{resources.shell.inspector}</SheetTitle>
               <InspectorPlaceholder />
             </SheetContent>
