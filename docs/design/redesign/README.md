@@ -13,17 +13,29 @@ screenshot disagree, the ticket's acceptance criteria win and the screenshot get
 The artifact is private to the repository owner's Claude account, so only Claude sessions signed in
 as the owner can open it.
 
-## How to use it
+## Required steps for every UI ticket
 
-- **Finding it:** list your artifacts with the Artifact tool (`action: "list"`) and take the one
-  titled "Nebula Redesign Mockups".
-- **Implementing a ticket:** fetch each screenshot listed for it below with the Artifact tool:
-  `action: "read"` on that artifact's URL with `path: "shots/<file>.png"`. Then open the saved file
-  with `Read` before writing the UI, and put a screenshot of your result in the PR.
-- **Spacing and sizes:** fetch `mock/styles.css` the same way. It holds the exact values (panel
-  widths, radii, type sizes); read the class for the element rather than measuring the PNG.
-- **Changing the design:** see [Regenerating](#regenerating), then update this README if a rule
-  changes and the tickets if a decision does.
+Do these before the first UI edit. They are not optional, and the `require-redesign-shots` hook in
+`.claude/settings.json` blocks `.tsx` and `.css` edits under `apps/client/src` until step 2 has run.
+
+1. **Find the artifact.** Artifact tool, `action: "list"`; take the one titled "Nebula Redesign
+   Mockups". Raise `limit` if it isn't in the first page.
+2. **Fetch the screenshots.** Look up your ticket in [Screens](#screens) and fetch every file listed
+   for it: Artifact tool, `action: "read"` on the artifact's URL with `paths: ["shots/<file>.png", …]`
+   (add the `-light` variant when one exists).
+3. **Look at them.** Open each saved PNG with `Read`. Fetching without looking doesn't count.
+4. **Take exact values from the mock.** Fetch `mock/styles.css` the same way and read the class for
+   the element (panel widths, radii, type sizes) rather than measuring the PNG.
+5. **Prove it in the PR.** The PR body lists the `shots/` files you matched and carries a screenshot
+   of your result for each, at the same viewport.
+
+**If step 1 or 2 fails** (no Artifact tool in this session, the list has no such artifact, a read
+errors), stop and tell the user what failed. Don't build the UI from the ticket text alone and don't
+work around the hook. A change with no visual surface (a hook, a store, types) may pass the hook by
+the opt-out it prints, after saying so to the user.
+
+To change the design itself, see [Regenerating](#regenerating), then update this README if a rule
+changes and the tickets if a decision does.
 
 ## Design rules
 

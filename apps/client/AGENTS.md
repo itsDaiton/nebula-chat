@@ -2,7 +2,11 @@
 
 Conventions specific to the React SPA. See the [root AGENTS.md](../../AGENTS.md) for monorepo-wide commands, git workflow, and cross-cutting rules (no barrels, `type` not `interface`, arrow functions) that also apply here.
 
-UI work matches the screenshots and design rules in [docs/design/redesign](../../docs/design/redesign/README.md); open the ones your ticket names before building.
+**Redesign mockups are required input, not optional reading.** Before writing any UI, follow
+[docs/design/redesign](../../docs/design/redesign/README.md#required-steps-for-every-ui-ticket): fetch every
+screenshot your ticket names from the Claude artifact "Nebula Redesign Mockups" and look at it. The
+`require-redesign-shots` hook blocks `.tsx`/`.css` edits under `src/` until a session has read one. If the
+artifact can't be loaded, stop and tell the user; never build the UI from the ticket text alone.
 
 ---
 

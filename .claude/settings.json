@@ -10,6 +10,15 @@
             "command": "bash .claude/hooks/lint-changed-files.sh"
           }
         ]
+      },
+      {
+        "matcher": "Artifact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/require-redesign-shots.sh record"
+          }
+        ]
       }
     ],
     "PreToolUse": [
@@ -19,6 +28,15 @@
           {
             "type": "command",
             "command": "bash .claude/hooks/block-dangerous-bash.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/require-redesign-shots.sh gate"
           }
         ]
       }
