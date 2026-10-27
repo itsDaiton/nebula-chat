@@ -1,6 +1,6 @@
 import type { ButtonProps, InputProps } from '@chakra-ui/react';
 import type { ThemeProviderProps } from 'next-themes';
-import type { ReactElement, ReactNode, Ref } from 'react';
+import type { ReactElement, Ref } from 'react';
 
 export type HeaderProps = {
   onMenuClick?: () => void;
