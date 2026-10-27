@@ -205,6 +205,25 @@ describe('POST /api/sessions/:sessionId/messages', () => {
     expect(enqueued).toEqual([]);
   });
 
+  it('refuses a Message to an archived Session with a Conflict telling the client to restore it', async () => {
+    sessionRepo.findByIdTx.mockResolvedValue(
+      fromPartial({
+        id: SESSION_ID,
+        userId: REGISTERED_USER_ID,
+        model: 'gpt-4o-mini',
+        archivedAt: new Date(),
+      }),
+    );
+
+    const res = await send(validBody);
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ success: false, error: 'Conflict' });
+    expect(res.json().message).toMatch(/restore/i);
+    expect(messageRepo.createTx).not.toHaveBeenCalled();
+    expect(enqueued).toEqual([]);
+  });
+
   it('answers 413 for a Message over the prompt token budget, before persisting it', async () => {
     const res = await send({ ...validBody, content: 'token '.repeat(2_500) });
 

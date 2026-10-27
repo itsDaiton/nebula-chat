@@ -1,5 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import { ForbiddenError, NotFoundError, PayloadTooLargeError } from '@nebula-chat/errors';
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  PayloadTooLargeError,
+} from '@nebula-chat/errors';
 import type { DbTransaction } from '@nebula-chat/db';
 import { db } from '@server/db';
 import type {
@@ -44,6 +49,9 @@ export const chatService = {
       const session = await sessionRepository.findByIdTx(tx, sessionId, userId);
       if (!session) {
         throw new NotFoundError('Session', sessionId);
+      }
+      if (session.archivedAt) {
+        throw new ConflictError('This Session is archived. Restore it before sending a Message.');
       }
       // The Model is set per Session (CONTEXT.md); the picker changes it for this and later replies.
       if (input.model !== undefined && input.model !== session.model) {

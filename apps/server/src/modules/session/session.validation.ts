@@ -15,8 +15,15 @@ export const sessionResponseSchema = z
     id: z.uuid(),
     title: z.string(),
     createdAt: isoDateTimeSchema,
+    archived: z.boolean().describe('Whether the owner has archived this Session'),
   })
   .meta({ id: 'Session' });
+
+const archivedQuerySchema = z
+  .enum(['true', 'false'])
+  .default('false')
+  .transform((value) => value === 'true')
+  .describe('Return only archived Sessions (`true`) instead of only active ones (default)');
 
 export const sessionDetailResponseSchema = sessionResponseSchema
   .extend({
@@ -33,6 +40,7 @@ export const sessionsArraySchema = z.array(sessionResponseSchema).max(100);
 
 export const searchSessionsQuerySchema = z.object({
   q: z.string().min(1).describe('Search query to filter sessions by title'),
+  archived: archivedQuerySchema,
 });
 
 export const getSessionsQuerySchema = z.object({
@@ -47,6 +55,7 @@ export const getSessionsQuerySchema = z.object({
       `Number of sessions to fetch (1-${String(paginationConfig.maxLimit)}, default ${String(paginationConfig.defaultLimit)})`,
     ),
   cursor: z.uuid().optional().describe('Pagination cursor for fetching the next page of sessions'),
+  archived: archivedQuerySchema,
 });
 
 export const paginatedSessionsResponseSchema = z

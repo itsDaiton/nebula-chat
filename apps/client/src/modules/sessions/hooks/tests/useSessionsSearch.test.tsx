@@ -12,6 +12,7 @@ const aSession = (id: string, title = `Session ${id}`) => ({
   id,
   title,
   createdAt: '2026-06-15T11:55:00.000Z',
+  archived: false,
 });
 
 beforeEach(() => {

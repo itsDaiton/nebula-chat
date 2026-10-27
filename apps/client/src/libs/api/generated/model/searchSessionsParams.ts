@@ -4,6 +4,7 @@
  * Nebula Chat API
  * REST API for Nebula Chat
  */
+import type { SearchSessionsArchived } from './searchSessionsArchived';
 
 export type SearchSessionsParams = {
   /**
@@ -11,4 +12,8 @@ export type SearchSessionsParams = {
    * @minLength 1
    */
   q: string;
+  /**
+   * Return only archived Sessions (`true`) instead of only active ones (default)
+   */
+  archived?: SearchSessionsArchived;
 };

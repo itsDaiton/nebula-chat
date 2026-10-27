@@ -70,6 +70,7 @@ beforeEach(() => {
         id: NEW_SESSION_ID,
         title: (body as { title: string }).title,
         createdAt: '2026-10-20T00:00:00.000Z',
+        archived: false,
       })),
     ),
     getSendMessageMockHandler({ messageId: MESSAGE_ID, streamId: STREAM_ID }),
@@ -696,7 +697,12 @@ describe('useChatStream — send, then subscribe', () => {
     server.use(
       getCreateSessionMockHandler(async ({ request }) => {
         title = ((await request.json()) as { title: string }).title;
-        return { id: NEW_SESSION_ID, title: 'x', createdAt: '2026-10-20T00:00:00.000Z' };
+        return {
+          id: NEW_SESSION_ID,
+          title: 'x',
+          createdAt: '2026-10-20T00:00:00.000Z',
+          archived: false,
+        };
       }),
       getSendMessageMockHandler(({ params }) => {
         sentTo = params['sessionId'];
