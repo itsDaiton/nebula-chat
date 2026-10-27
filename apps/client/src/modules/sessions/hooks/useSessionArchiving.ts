@@ -48,7 +48,8 @@ export const useSessionArchiving = () => {
         context?.snapshot.forEach(([key, data]) => queryClient.setQueryData(key, data));
       },
       onSuccess: (_session, { sessionId }, context) => {
-        toast(resources.sessions.archived(context?.title ?? ''), {
+        if (sessionId === openId) void navigate({ to: '/' });
+        toast(resources.sessions.archived(context?.title), {
           action: { label: resources.sessions.undo, onClick: () => restore({ sessionId }) },
         });
       },
@@ -56,8 +57,5 @@ export const useSessionArchiving = () => {
     },
   });
 
-  return (sessionId: string) => {
-    mutate({ sessionId });
-    if (sessionId === openId) void navigate({ to: '/' });
-  };
+  return (sessionId: string) => mutate({ sessionId });
 };

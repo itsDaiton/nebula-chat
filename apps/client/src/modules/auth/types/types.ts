@@ -21,6 +21,9 @@ export type UserMenuProps = {
   children: ReactNode;
 };
 
+/** The fields the admin and two-factor plugins add to the user once the server enables them. */
+export type UserPluginFields = { role?: string | null; twoFactorEnabled?: boolean | null };
+
 export type UserAvatarProps = {
   /** The Registered user's name, shown as initials without a Profile image. */
   name: string;

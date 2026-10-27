@@ -22,13 +22,6 @@ export type ColorModeProviderProps = ThemeProviderProps;
 
 export type NebulaButtonProps = ButtonProps;
 
-export type ShortcutConfig = {
-  key: string;
-  ctrl?: boolean;
-  shift?: boolean;
-  alt?: boolean;
-};
-
 export type SearchState = {
   isSearchOpen: boolean;
   openSearch: () => void;

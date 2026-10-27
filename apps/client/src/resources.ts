@@ -24,7 +24,7 @@ export const resources = {
     emptyHint: 'Start a new chat to create your first session',
     archive: 'Archive',
     undo: 'Undo',
-    archived: (title: string) => `“${title}” archived`,
+    archived: (title?: string) => (title ? `“${title}” archived` : 'Session archived'),
     searchPlaceholder: 'Search chats...',
     noResults: 'No chats found',
     searchHint: 'Start typing to search all sessions',

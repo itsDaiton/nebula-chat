@@ -6,7 +6,7 @@ import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { API_ROUTE } from '@/test/api';
 import { server } from '@/test/msw';
 
-/** A better-auth `get-session` body; a Guest unless `isAnonymous` is false, unverified unless `emailVerified`; `role` and `twoFactorEnabled` are the admin and two-factor plugins' fields. */
+/** A better-auth `get-session` body: a Guest, unverified, with no plugin fields unless overridden. */
 export const aSession = ({
   isAnonymous = true,
   emailVerified = false,
