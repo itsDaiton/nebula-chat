@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.10.1...nebula-chat-v5.11.0) (2026-10-27)
+
+
+### Features
+
+* **server:** NEB-543 Users archive and restore their Sessions ([#673](https://github.com/itsDaiton/nebula-chat/issues/673)) ([64e909a](https://github.com/itsDaiton/nebula-chat/commit/64e909a9a1a86167abb26766ccc69569ad771abe))
+
 ## [5.10.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.10.0...nebula-chat-v5.10.1) (2026-10-27)
 
 
