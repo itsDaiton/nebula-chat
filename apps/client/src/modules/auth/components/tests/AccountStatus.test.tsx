@@ -93,18 +93,12 @@ describe('AccountStatus', () => {
     expect(screen.queryByText('ada@example.com')).not.toBeInTheDocument();
   });
 
-  it("shows a Registered user's Profile image, provider pictures included, over their initials", async () => {
+  it("keeps a Registered user's initials showing until their Profile image has loaded", async () => {
     session = aSession({ isAnonymous: false, image: 'https://lh3.googleusercontent.com/a/ada' });
     await renderStatus();
 
     const trigger = await screen.findByRole('button', { name: resources.userMenu.label });
-    // jsdom loads no image, so Chakra keeps the initials showing beneath it.
-    await waitFor(() =>
-      expect(within(trigger).getByAltText('Ada')).toHaveAttribute(
-        'src',
-        'https://lh3.googleusercontent.com/a/ada',
-      ),
-    );
+    // jsdom loads no image, and Base UI mounts the picture only once it has.
     expect(within(trigger).getByText('A')).toBeInTheDocument();
   });
 

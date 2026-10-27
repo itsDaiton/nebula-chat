@@ -115,7 +115,7 @@ describe('ChatPage', () => {
     const { container } = await renderPage();
 
     await waitFor(() =>
-      expect(container.querySelectorAll('.chakra-skeleton').length).toBeGreaterThan(0),
+      expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0),
     );
   });
 
