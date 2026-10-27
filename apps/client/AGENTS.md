@@ -2,6 +2,8 @@
 
 Conventions specific to the React SPA. See the [root AGENTS.md](../../AGENTS.md) for monorepo-wide commands, git workflow, and cross-cutting rules (no barrels, `type` not `interface`, arrow functions) that also apply here.
 
+UI work matches the screenshots and design rules in [docs/design/redesign](../../docs/design/redesign/README.md); open the ones your ticket names before building.
+
 ---
 
 ## Commands
