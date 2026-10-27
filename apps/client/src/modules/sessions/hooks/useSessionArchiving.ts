@@ -1,5 +1,5 @@
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
-import { useNavigate, useParams } from '@tanstack/react-router';
+import { useRouter } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import type { SessionPage } from '@/libs/api/generated/model/sessionPage';
 import {
@@ -13,8 +13,8 @@ import { resources } from '@/resources';
 /** Archives a Session out of the list at once, rolling back on failure and offering an undo that restores it. */
 export const useSessionArchiving = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const { id: openId } = useParams({ strict: false });
+  // Not `useParams`: subscribing the list to the router re-renders it as the cache is cleared on sign-out, refetching as nobody.
+  const router = useRouter();
   const listKey = getListSessionsInfiniteQueryKey();
   const refreshList = () => queryClient.invalidateQueries({ queryKey: listKey });
 
@@ -48,7 +48,9 @@ export const useSessionArchiving = () => {
         context?.snapshot.forEach(([key, data]) => queryClient.setQueryData(key, data));
       },
       onSuccess: (_session, { sessionId }, context) => {
-        if (sessionId === openId) void navigate({ to: '/' });
+        if (router.matchRoute({ to: '/s/$id', params: { id: sessionId } })) {
+          void router.navigate({ to: '/' });
+        }
         toast(resources.sessions.archived(context?.title), {
           action: { label: resources.sessions.undo, onClick: () => restore({ sessionId }) },
         });
