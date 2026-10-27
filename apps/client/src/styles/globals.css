@@ -130,6 +130,7 @@
   font-size: 13.5px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+
   --chakra-colors-bg-default: var(--panel);
   --chakra-colors-bg-subtle: var(--raised);
   --chakra-colors-bg-muted: var(--raised);
