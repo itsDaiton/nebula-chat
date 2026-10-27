@@ -39,6 +39,7 @@
   --accent-foreground: var(--foreground);
   --input: var(--border-strong);
   --ring: var(--muted-foreground);
+  --primary-border: transparent;
 }
 
 .dark {
@@ -55,6 +56,11 @@
   --success: #22c55e;
   --warning: #f59e0b;
   --destructive: #ef4444;
+
+  /* No surface is filled with the foreground colour: primary is a raised neutral. */
+  --primary: #262626;
+  --primary-foreground: var(--foreground);
+  --primary-border: #3a3a3a;
 }
 
 @theme inline {
@@ -85,6 +91,7 @@
   --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-primary-border: var(--primary-border);
 
   /* Panels take rounded-xl (12px), controls rounded-lg (8px). */
   --radius: 0.5rem;

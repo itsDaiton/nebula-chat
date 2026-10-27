@@ -2,18 +2,7 @@ import React from 'react';
 import { Flex } from '@chakra-ui/react';
 
 export const ChatContainerBox = ({ children }: { children: React.ReactNode }) => (
-  <Flex
-    direction="column"
-    h={{ base: 'calc(100dvh - 110px)', lg: 'calc(100vh - 130px)' }}
-    w="100%"
-    bg="bg.default"
-    borderColor={'border.default'}
-    borderWidth={'1px'}
-    borderRadius="lg"
-    position="relative"
-    boxShadow="none"
-    overflow="hidden"
-  >
+  <Flex direction="column" h="100%" w="100%" position="relative" overflow="hidden">
     {children}
   </Flex>
 );
