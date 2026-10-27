@@ -45,5 +45,9 @@ Unsure: **`/ask-matt`**.
 - A new ticket fills `.github/ISSUE_TEMPLATE.md` and follows the Ticket anatomy in
   `docs/agents/issue-tracker.md` — this overrides any thinner template a skill embeds. Title it
   `type(scope): NEB-<n> summary`; label it `app:server` / `app:client` / `lib:<name>` plus a triage label.
+- **Client UI tickets start from the mockups.** Before any UI edit, do the required steps in
+  `docs/design/redesign/README.md`: load the "Nebula Redesign Mockups" artifact and look at every
+  screenshot the ticket names. A hook blocks client `.tsx`/`.css` edits until you have; if the artifact
+  won't load, stop and tell the user.
 - Domain: one `CONTEXT.md` plus `docs/adr/` — see `docs/agents/domain.md`. Both are produced upstream
   during `/grill-with-docs`, not during implementation.
