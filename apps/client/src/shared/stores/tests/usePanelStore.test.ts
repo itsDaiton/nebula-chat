@@ -23,7 +23,7 @@ describe('usePanelStore', () => {
 
   it('persists the panels but not the sheet', () => {
     state().toggleLeft();
-    state().openSheet();
+    state().toggleSheet();
 
     expect(JSON.parse(localStorage.getItem(PANEL_STORAGE_KEY) ?? '{}').state).toEqual({
       leftOpen: false,
@@ -57,14 +57,11 @@ describe('usePanelStore', () => {
     vi.restoreAllMocks();
   });
 
-  it('opens, closes and toggles the sheet', () => {
-    state().openSheet();
+  it('toggles and closes the sheet', () => {
+    state().toggleSheet();
     expect(state().sheetOpen).toBe(true);
 
     state().closeSheet();
     expect(state().sheetOpen).toBe(false);
-
-    state().toggleSheet();
-    expect(state().sheetOpen).toBe(true);
   });
 });

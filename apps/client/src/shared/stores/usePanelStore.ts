@@ -37,7 +37,6 @@ export const usePanelStore = create<PanelState>()(
       sheetOpen: false,
       toggleLeft: () => set((state) => ({ leftOpen: !state.leftOpen })),
       toggleRight: () => set((state) => ({ rightOpen: !state.rightOpen })),
-      openSheet: () => set({ sheetOpen: true }),
       closeSheet: () => set({ sheetOpen: false }),
       toggleSheet: () => set((state) => ({ sheetOpen: !state.sheetOpen })),
     }),

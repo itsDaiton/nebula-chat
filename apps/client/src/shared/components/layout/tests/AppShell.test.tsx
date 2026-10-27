@@ -124,6 +124,16 @@ describe('AppShell on a small screen', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
+  it('closes the Inspector sheet on navigation', async () => {
+    const { router } = await renderRoute('/');
+    await userEvent.click(screen.getByRole('button', { name: resources.shell.togglePanel.right }));
+    await screen.findByRole('dialog');
+
+    await router.navigate({ to: '/s/$id', params: { id: SESSION_ID } });
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
   it('closes the drawer on navigation', async () => {
     const { router } = await renderRoute('/');
     await userEvent.click(screen.getByRole('button', { name: resources.shell.menu }));

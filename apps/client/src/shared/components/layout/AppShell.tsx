@@ -1,6 +1,7 @@
-import { useEffect, type ReactNode } from 'react';
+import { useState } from 'react';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
-import { AccountStatus } from '@/modules/auth/components/AccountStatus';
+import { AccountFooter } from '@/shared/components/layout/AccountFooter';
+import { InspectorPlaceholder } from '@/shared/components/layout/InspectorPlaceholder';
 import { SessionsList } from '@/modules/sessions/components/SessionsList';
 import { SessionsSearch } from '@/modules/sessions/components/SessionsSearch';
 import { useSessions } from '@/modules/sessions/hooks/useSessions';
@@ -11,22 +12,12 @@ import { useDrawer } from '@/shared/hooks/useDrawer';
 import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
 import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
 import { useViewportHeight } from '@/shared/hooks/useViewportHeight';
+import type { AppShellProps } from '@/shared/types/types';
 import { usePanelStore } from '@/shared/stores/usePanelStore';
 
 const panel = 'flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-panel';
 
-const InspectorPlaceholder = () => (
-  <p className="p-4 text-sm text-muted-foreground">{resources.shell.inspectorHint}</p>
-);
-
-const Account = () => (
-  <div className="flex shrink-0 justify-end border-t border-border p-2">
-    <AccountStatus />
-  </div>
-);
-
-/** The chat routes' frame: header on the canvas, then left navigation, centre content and the Inspector as bordered panels. */
-export const AppShell = ({ children }: { children: ReactNode }) => {
+export const AppShell = ({ children }: AppShellProps) => {
   const { showSidePanels: isDesktop } = useResponsiveLayout();
   const { leftOpen, rightOpen, sheetOpen, toggleLeft, toggleRight, closeSheet, toggleSheet } =
     usePanelStore();
@@ -37,11 +28,13 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const viewportHeight = useViewportHeight();
 
-  // The overlays belong to the small layout and to the page they opened over.
-  useEffect(() => {
+  // The overlays belong to the small layout and to the page they opened over (guarded render-time write, no effect).
+  const [frame, setFrame] = useState({ pathname, isDesktop });
+  if (frame.pathname !== pathname || frame.isDesktop !== isDesktop) {
+    setFrame({ pathname, isDesktop });
     closeDrawer();
     closeSheet();
-  }, [pathname, isDesktop, closeDrawer, closeSheet]);
+  }
 
   const onToggleLeft = isDesktop ? toggleLeft : toggleDrawer;
   const onToggleRight = isDesktop ? toggleRight : toggleSheet;
@@ -80,7 +73,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
             <div className="min-h-0 flex-1 overflow-y-auto">
               <SessionsList />
             </div>
-            <Account />
+            <AccountFooter />
           </aside>
         )}
         <main className={`${panel} min-w-0 flex-1`}>{children}</main>
@@ -103,7 +96,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
                   closeSearch={closeSearch}
                 />
               </div>
-              <Account />
+              <AccountFooter />
             </SheetContent>
           </Sheet>
           <Sheet open={sheetOpen} onOpenChange={(open) => !open && closeSheet()}>

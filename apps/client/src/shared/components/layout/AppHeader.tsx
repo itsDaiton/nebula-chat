@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import {
   MenuIcon,
   MoonIcon,
@@ -11,46 +10,12 @@ import { useParams } from '@tanstack/react-router';
 import { useGetSession } from '@/libs/api/generated/sessions/sessions';
 import { resources } from '@/resources';
 import { NebulaLogo } from '@/shared/components/NebulaLogo';
+import { IconAction } from '@/shared/components/layout/IconAction';
 import { Button } from '@/shared/components/ui/button';
 import { Kbd } from '@/shared/components/ui/kbd';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { useOS } from '@/shared/hooks/useOS';
 import type { AppHeaderProps } from '@/shared/types/types';
 import { useColorMode } from '@/theme/hooks/useColorMode';
-
-const IconAction = ({
-  label,
-  shortcut,
-  expanded,
-  onClick,
-  children,
-}: {
-  label: string;
-  shortcut?: string;
-  expanded?: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) => (
-  <Tooltip>
-    <TooltipTrigger
-      render={
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={label}
-          aria-pressed={expanded}
-          onClick={onClick}
-        />
-      }
-    >
-      {children}
-    </TooltipTrigger>
-    <TooltipContent side="bottom">
-      {label}
-      {shortcut && <Kbd>{shortcut}</Kbd>}
-    </TooltipContent>
-  </Tooltip>
-);
 
 export const AppHeader = ({
   isDesktop,
@@ -72,7 +37,7 @@ export const AppHeader = ({
         <IconAction
           label={isDesktop ? resources.shell.togglePanel.left : resources.shell.menu}
           shortcut={`${modifier} B`}
-          expanded={leftOpen}
+          pressed={leftOpen}
           onClick={onToggleLeft}
         >
           {isDesktop ? <PanelLeftIcon /> : <MenuIcon />}
@@ -106,7 +71,7 @@ export const AppHeader = ({
         <IconAction
           label={resources.shell.togglePanel.right}
           shortcut={`${modifier} I`}
-          expanded={rightOpen}
+          pressed={rightOpen}
           onClick={onToggleRight}
         >
           <PanelRightIcon />

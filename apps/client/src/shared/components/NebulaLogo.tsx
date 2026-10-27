@@ -1,8 +1,9 @@
 import { resources } from '@/resources';
+import type { NebulaLogoProps } from '@/shared/types/types';
 import { cn } from '@/shared/utils/cn';
 
 /** Tabler's `galaxy` icon, inlined: Lucide has no galaxy. */
-export const NebulaLogo = ({ className }: { className?: string }) => (
+export const NebulaLogo = ({ className }: NebulaLogoProps) => (
   <span className={cn('flex items-center gap-1.5', className)}>
     <svg
       viewBox="0 0 24 24"

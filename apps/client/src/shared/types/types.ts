@@ -1,6 +1,6 @@
 import type { ButtonProps, InputProps } from '@chakra-ui/react';
 import type { ThemeProviderProps } from 'next-themes';
-import type { ReactElement, Ref } from 'react';
+import type { ReactElement, ReactNode, Ref } from 'react';
 
 export type HeaderProps = {
   onMenuClick?: () => void;
@@ -75,6 +75,22 @@ export type AppHeaderProps = {
   onOpenSearch: () => void;
 };
 
+export type AppShellProps = {
+  children: ReactNode;
+};
+
+export type NebulaLogoProps = {
+  className?: string;
+};
+
+export type IconActionProps = {
+  label: string;
+  shortcut?: string;
+  pressed?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+};
+
 export type PanelState = {
   leftOpen: boolean;
   rightOpen: boolean;
@@ -82,7 +98,6 @@ export type PanelState = {
   sheetOpen: boolean;
   toggleLeft: () => void;
   toggleRight: () => void;
-  openSheet: () => void;
   closeSheet: () => void;
   toggleSheet: () => void;
 };
