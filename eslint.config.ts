@@ -25,6 +25,8 @@ export default [
       'apps/cli/tsdown.config.*',
       'apps/server/src/generated/**',
       'libs/db/migrations/**',
+      // Static HTML mock of the redesign, run only in a browser to regenerate the screenshots.
+      'docs/design/**/mock/**',
       'apps/client/src/libs/api/generated/**',
       'apps/client/src/routeTree.gen.ts',
       'apps/cli/src/api/generated/**',
