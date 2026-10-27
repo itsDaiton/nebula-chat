@@ -98,3 +98,11 @@ These came out of the mockup review and apply to every screen.
 3. Render with Playwright and Chromium: `node shoot.js . shots all 2` for every screen at 2x, or
    `node shoot.js . shots chat-thread 2` for one.
 4. Republish the artifact at the same URL with the changed `shots/` and `mock/` files.
+
+## Retiring the gate
+
+The `require-redesign-shots` hook stays until no open ticket names a `shots/` file; #555 keeps it,
+because the admin dashboard (#531), the Run UI (#349) and the `/device` page (#563) still build from
+the mockups after Chakra is gone. The PR that closes the last such ticket removes the hook script, its
+two entries in `.claude/settings.json`, and its mentions in `CLAUDE.md`, `apps/client/AGENTS.md` and
+this README.
