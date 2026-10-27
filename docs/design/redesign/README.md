@@ -95,8 +95,8 @@ Gaps the tickets left open, and how each one was settled. The tickets named carr
 Playwright and Chromium must be available (`require('playwright')`). From this folder:
 
 ```bash
-node mock/shoot.js mock screens all 1            # every screen at 1x
-node mock/shoot.js mock screens chat-thread 1    # one screen
+node mock/shoot.js mock screens all 2            # every screen at 2x (retina)
+node mock/shoot.js mock screens chat-thread 2    # one screen
 ```
 
 Open `mock/index.html?s=<screen>&theme=light` in a browser to see a screen live. Screens are
