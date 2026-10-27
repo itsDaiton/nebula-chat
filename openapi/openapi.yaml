@@ -551,6 +551,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Session is archived — restore it first
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
         '413':
           description: Message exceeds the prompt token limit
           content:
@@ -951,6 +957,12 @@ paths:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '404':
           description: Session not found or not owned by the caller
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Session is archived — restore it first
           content:
             application/json:
               schema:
