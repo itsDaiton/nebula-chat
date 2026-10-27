@@ -3,7 +3,7 @@ import { initialsOf } from '@/shared/utils/initialsOf';
 
 describe('initialsOf', () => {
   it.each([
-    ['David Poslušný', 'DP'],
+    ['John Doe', 'JD'],
     ['Ada', 'A'],
     ['  grace  brewster   hopper ', 'GH'],
     ['', ''],
