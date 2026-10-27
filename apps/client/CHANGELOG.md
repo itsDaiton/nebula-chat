@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.6.0...nebula-chat-client-v2.6.1) (2026-10-27)
+
+
+### Bug Fixes
+
+* add the redesign design rules and review decisions for agents ([#667](https://github.com/itsDaiton/nebula-chat/issues/667)) ([60fdcb9](https://github.com/itsDaiton/nebula-chat/commit/60fdcb9ff5f9ea1ae2085de9f4d20f2eb3ea5bb3))
+
 ## [2.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.5.0...nebula-chat-client-v2.6.0) (2026-10-26)
 
 
