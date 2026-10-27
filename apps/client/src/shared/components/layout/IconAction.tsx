@@ -10,6 +10,7 @@ export const IconAction = ({ label, shortcut, pressed, onClick, children }: Icon
         <Button
           variant="ghost"
           size="icon"
+          className="size-[30px] text-muted-foreground hover:text-foreground [&_svg:not([class*='size-'])]:size-[18px]"
           aria-label={label}
           aria-pressed={pressed}
           onClick={onClick}

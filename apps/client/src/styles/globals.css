@@ -123,3 +123,19 @@
 @utility no-scrollbar {
   scrollbar-width: none;
 }
+
+/* The shell hosts Chakra screens until they are restyled: it gives them the new font and palette. */
+.app-shell {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  --chakra-colors-bg-default: var(--panel);
+  --chakra-colors-bg-subtle: var(--raised);
+  --chakra-colors-bg-muted: var(--raised);
+  --chakra-colors-fg-default: var(--foreground);
+  --chakra-colors-fg-soft: var(--foreground-secondary);
+  --chakra-colors-fg-muted: var(--muted-foreground);
+  --chakra-colors-border-default: var(--border);
+  --chakra-colors-border-emphasized: var(--border-strong);
+}
