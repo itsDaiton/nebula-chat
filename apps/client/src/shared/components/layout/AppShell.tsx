@@ -41,9 +41,7 @@ export const AppShell = ({ children }: AppShellProps) => {
   const onToggleRight = isDesktop ? toggleRight : toggleSheet;
   useKeyboardShortcut('b', onToggleLeft, { ctrl: true });
   useKeyboardShortcut('i', onToggleRight, { ctrl: true });
-
-  // The list mounts its own search while it is on screen.
-  const searchHere = isSearchOpen && !(isDesktop && leftOpen);
+  useKeyboardShortcut('k', openSearch, { ctrl: true });
 
   return (
     <div
@@ -61,7 +59,7 @@ export const AppShell = ({ children }: AppShellProps) => {
         onToggleRight={onToggleRight}
         onOpenSearch={openSearch}
       />
-      {searchHere && (
+      {isSearchOpen && (
         <SessionsSearch
           sessions={sessions}
           onSessionClick={(id) => {
@@ -74,9 +72,7 @@ export const AppShell = ({ children }: AppShellProps) => {
       <div className="flex min-h-0 flex-1 gap-2.5">
         {isDesktop && leftOpen && (
           <aside className={`${panel} w-[270px] shrink-0`}>
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              <SessionsList />
-            </div>
+            <SessionsList />
             <AccountFooter />
           </aside>
         )}
@@ -96,14 +92,7 @@ export const AppShell = ({ children }: AppShellProps) => {
           <Sheet open={isDrawerOpen} onOpenChange={(open) => !open && closeDrawer()}>
             <SheetContent side="left" showCloseButton={false} className="gap-0">
               <SheetTitle className="sr-only">{resources.shell.menu}</SheetTitle>
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <SessionsList
-                  inDrawer
-                  onClose={closeDrawer}
-                  toggleSearch={() => (isSearchOpen ? closeSearch() : openSearch())}
-                  closeSearch={closeSearch}
-                />
-              </div>
+              <SessionsList onNavigate={closeDrawer} />
               <AccountFooter />
             </SheetContent>
           </Sheet>

@@ -1,6 +1,5 @@
 import { Box, Flex, Input, InputGroup, Portal, Text } from '@chakra-ui/react';
 import type { SessionsSearchProps } from '@/modules/sessions/types/types';
-import { SessionListItem } from '@/modules/sessions/components/SessionListItem';
 import { chatScrollBar } from '@/shared/components/scrollbar';
 import { useSessionsSearch } from '@/modules/sessions/hooks/useSessionsSearch';
 import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
@@ -80,11 +79,20 @@ export const SessionsSearch = ({ sessions, onSessionClick, onClose }: SessionsSe
               !isSearching &&
               filteredSessions.length > 0 &&
               filteredSessions.map((session) => (
-                <SessionListItem
+                <Box
                   key={session.id}
-                  session={session}
-                  onClick={selectSessionAndClearSearch}
-                />
+                  asChild
+                  p={3}
+                  borderRadius="md"
+                  textAlign="left"
+                  fontSize="sm"
+                  fontWeight="medium"
+                  _hover={{ bg: 'bg.muted' }}
+                >
+                  <button type="button" onClick={() => selectSessionAndClearSearch(session.id)}>
+                    {session.title}
+                  </button>
+                </Box>
               ))}
             {!error && !isSearching && filteredSessions.length === 0 && searchQuery.trim() && (
               <Box py={8} textAlign="center" color="fg.muted">
