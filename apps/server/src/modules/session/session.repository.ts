@@ -1,5 +1,5 @@
-import { eq, lt, desc, ilike, and, or, isNull, isNotNull, sql } from 'drizzle-orm';
-import { sessions } from '@nebula-chat/db';
+import { eq, lt, desc, ilike, and, or, exists, isNull, isNotNull, sql } from 'drizzle-orm';
+import { messages, sessions } from '@nebula-chat/db';
 import type { DbTransaction } from '@nebula-chat/db';
 import { db } from '@server/db';
 import { paginationConfig } from '@server/config/pagination.config';
@@ -85,15 +85,31 @@ export const sessionRepository = {
   async updateModelTx(tx: DbTransaction, id: string, model: string) {
     await tx.update(sessions).set({ model, updatedAt: new Date() }).where(eq(sessions.id, id));
   },
+  // Matches a Session's title or any of its Messages; `matchedContent` is the earliest matching Message's content, if any.
   async search(userId: string, query: string, archived = false, limit = paginationConfig.maxLimit) {
+    const pattern = `%${query}%`;
+    const messageMatch = and(eq(messages.sessionId, sessions.id), ilike(messages.content, pattern));
     return db
-      .select(sessionColumns)
+      .select({
+        ...sessionColumns,
+        matchedContent: sql<
+          string | null
+        >`(select ${messages.content} from ${messages} where ${messageMatch} order by ${messages.createdAt}, ${messages.id} limit 1)`,
+      })
       .from(sessions)
       .where(
         and(
           eq(sessions.userId, userId),
           archivedFilter(archived),
-          ilike(sessions.title, `%${query}%`),
+          or(
+            ilike(sessions.title, pattern),
+            exists(
+              db
+                .select({ one: sql`1` })
+                .from(messages)
+                .where(messageMatch),
+            ),
+          ),
         ),
       )
       .orderBy(desc(sessions.createdAt))

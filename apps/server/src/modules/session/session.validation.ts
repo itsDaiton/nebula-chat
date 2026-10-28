@@ -19,6 +19,17 @@ export const sessionResponseSchema = z
   })
   .meta({ id: 'Session' });
 
+export const sessionSearchResultSchema = sessionResponseSchema
+  .extend({
+    snippet: z
+      .string()
+      .optional()
+      .describe(
+        'Text around the first match in one of the Session’s Messages, ellipsised where cut; absent when only the title matched',
+      ),
+  })
+  .meta({ id: 'SessionSearchResult' });
+
 const archivedQuerySchema = z
   .enum(['true', 'false'])
   .default('false')
@@ -38,8 +49,10 @@ export const sessionDetailResponseSchema = sessionResponseSchema
 
 export const sessionsArraySchema = z.array(sessionResponseSchema).max(100);
 
+export const sessionSearchResultsSchema = z.array(sessionSearchResultSchema).max(100);
+
 export const searchSessionsQuerySchema = z.object({
-  q: z.string().min(1).describe('Search query to filter sessions by title'),
+  q: z.string().min(1).describe('Search query to filter sessions by title or Message content'),
   archived: archivedQuerySchema,
 });
 

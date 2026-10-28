@@ -355,6 +355,74 @@ describe('GET /api/sessions/search', () => {
     expect(repo.search).toHaveBeenCalledWith(REGISTERED_USER_ID, 'hello', false);
   });
 
+  it('returns a title-only match without a snippet', async () => {
+    repo.search.mockResolvedValue(
+      fromPartial([aSession({ title: 'Hello world', matchedContent: null })]),
+    );
+
+    const res = await app.inject({ method: 'GET', url: '/api/sessions/search?q=hello' });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual([
+      {
+        id: SESSION_ID,
+        title: 'Hello world',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        archived: false,
+      },
+    ]);
+  });
+
+  it('returns a content-only match with a snippet around the match', async () => {
+    const content = `${'a'.repeat(60)} a Run job per message ${'b'.repeat(60)}`;
+    repo.search.mockResolvedValue(
+      fromPartial([
+        aSession({ title: 'Should we move replies to Streams?', matchedContent: content }),
+      ]),
+    );
+
+    const res = await app.inject({ method: 'GET', url: '/api/sessions/search?q=RUN%20JOB' });
+
+    expect(res.statusCode).toBe(200);
+    // 40 characters either side of the (case-insensitive) match, ellipsised where cut.
+    expect(res.json<{ snippet: string }[]>()[0]?.snippet).toBe(
+      `…${'a'.repeat(37)} a Run job per message ${'b'.repeat(27)}…`,
+    );
+  });
+
+  it('leaves out the ellipsis on a side the Message does not continue past', async () => {
+    repo.search.mockResolvedValue(
+      fromPartial([aSession({ matchedContent: 'a Run job\nper  message' })]),
+    );
+
+    const res = await app.inject({ method: 'GET', url: '/api/sessions/search?q=job' });
+
+    expect(res.json<{ snippet: string }[]>()[0]?.snippet).toBe('a Run job per message');
+  });
+
+  it('returns an empty list when nothing matches', async () => {
+    repo.search.mockResolvedValue(fromPartial([]));
+
+    const res = await app.inject({ method: 'GET', url: '/api/sessions/search?q=nothing' });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual([]);
+  });
+
+  it("searches only the caller's Sessions, so another user's Session is never returned", async () => {
+    repo.search.mockResolvedValue(fromPartial([]));
+
+    await app.inject({ method: 'GET', url: '/api/sessions/search?q=hello' });
+
+    // Owner scoping is the repository's first argument, taken from the auth session and never from the request.
+    expect(repo.search).toHaveBeenCalledWith(REGISTERED_USER_ID, 'hello', false);
+    expect(repo.search).not.toHaveBeenCalledWith(
+      'another-user-id',
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
   it('searches archived Sessions only when asked with archived=true', async () => {
     repo.search.mockResolvedValue(fromPartial([aSession({ archived: true })]));
 

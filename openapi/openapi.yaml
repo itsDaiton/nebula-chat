@@ -215,6 +215,35 @@ components:
         - nextCursor
         - hasMore
       additionalProperties: false
+    SessionSearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        archived:
+          type: boolean
+          description: Whether the owner has archived this Session
+        snippet:
+          description: >-
+            Text around the first match in one of the Session’s Messages,
+            ellipsised where cut; absent when only the title matched
+          type: string
+      required:
+        - id
+        - title
+        - createdAt
+        - archived
+      additionalProperties: false
     Message:
       type: object
       properties:
@@ -737,17 +766,18 @@ paths:
       tags:
         - Sessions
       description: >-
-        Search the caller’s own sessions by title, ordered by creation date.
+        Search the caller’s own sessions by title or Message content, ordered by
+        creation date. A match inside a Message adds a `snippet` around it.
         Archived sessions are excluded unless `archived=true`.
       parameters:
         - schema:
             type: string
             minLength: 1
-            description: Search query to filter sessions by title
+            description: Search query to filter sessions by title or Message content
           in: query
           name: q
           required: true
-          description: Search query to filter sessions by title
+          description: Search query to filter sessions by title or Message content
         - schema:
             description: >-
               Return only archived Sessions (`true`) instead of only active ones
@@ -771,7 +801,7 @@ paths:
                 maxItems: 100
                 type: array
                 items:
-                  $ref: '#/components/schemas/Session'
+                  $ref: '#/components/schemas/SessionSearchResult'
         '400':
           description: Invalid search query
           content:

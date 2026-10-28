@@ -35,4 +35,5 @@ export * from './sentMessage';
 export * from './session';
 export * from './sessionDetail';
 export * from './sessionPage';
+export * from './sessionSearchResult';
 export * from './unmeteredMessageAllowance';
