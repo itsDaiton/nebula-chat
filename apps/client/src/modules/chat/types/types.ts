@@ -1,14 +1,26 @@
 import type { Dispatch, SetStateAction } from 'react';
+import type { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
 
 export type ChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  tokenCount?: number | null;
+  /** Set by the API once Messages carry how they were made (NEB-665); null for a Run answer. */
+  model?: string | null;
+  estimatedCostUsd?: number | null;
+  runId?: string | null;
 };
 
 export type ChatMessageProps = {
   message: ChatMessage;
+  /** Re-asks the prompt this reply answered; only the newest reply offers it. */
+  onRegenerate?: () => void;
+  /** The reply is still arriving, so there is nothing to copy or regenerate yet. */
+  isStreaming?: boolean;
 };
+
+export type MessageMetaRowProps = ChatMessageProps;
 
 export type ChatInputProps = {
   onSendMessage: (message: string) => void;
@@ -22,6 +34,8 @@ export type ChatInputProps = {
 
 export type ChatHistoryStreamOptions = {
   model: string;
+  /** How the reply is produced; a Direct reply when omitted. */
+  mode?: SendMessageBodyMode;
   messages: ChatMessage[];
   sessionId?: string;
 };
@@ -82,9 +96,15 @@ export type ChatEmptyStateProps = {
   sessionId: string | undefined;
 };
 
+export type ModelOption = {
+  label: string;
+  value: string;
+};
+
 export type ChatMessageListProps = {
   history: ChatMessage[];
   isStreaming: boolean;
+  onRegenerate?: (prompt: string) => void;
 };
 
 export type ModelState = {
@@ -123,13 +143,6 @@ export type ChatStreamState = {
 export type MessageState = {
   message: string;
   setMessage: Dispatch<SetStateAction<string>>;
-};
-
-export type ModelSelectorState = {
-  isSelectOpen: boolean;
-  triggerWidth: number;
-  setIsSelectOpen: (isOpen: boolean) => void;
-  setTriggerWidth: (width: number) => void;
 };
 
 /** The events a reply stream carries (`GET /api/streams/{streamId}`). */

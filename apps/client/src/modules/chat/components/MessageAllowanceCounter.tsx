@@ -1,13 +1,12 @@
-import { Button, HStack, Text } from '@chakra-ui/react';
 import { Link } from '@tanstack/react-router';
-import { LuLogIn, LuTriangleAlert } from 'react-icons/lu';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { useMessageAllowance } from '@/modules/chat/hooks/useMessageAllowance';
 import { resources } from '@/resources';
+import { cn } from '@/shared/utils/cn';
 
 const { messageAllowance } = resources.chat;
 
-/** A Metered user's messages left; at zero the wall prompt takes its place. */
+/** A Metered user's messages left, under the composer; at zero the wall prompt takes its place. */
 export const MessageAllowanceCounter = () => {
   const { isGuest } = useAuth();
   const { allowance, isLow, isSpent } = useMessageAllowance();
@@ -15,26 +14,28 @@ export const MessageAllowanceCounter = () => {
   if (!allowance || isSpent) return null;
 
   return (
-    <HStack
-      role="status"
-      mx={4}
-      mt={3}
-      gap={2}
-      justify="center"
-      textStyle="sm"
-      color={isLow ? 'fg.warning' : 'fg.muted'}
-    >
-      {isLow && <LuTriangleAlert aria-hidden />}
-      <Text>{messageAllowance.remaining(allowance.remaining, allowance.limit)}</Text>
+    <div role="status" className="flex items-center justify-between px-1.5 pt-2 text-[11.5px]">
+      <span
+        className={cn(
+          'flex items-center gap-1.5 font-mono',
+          isLow ? 'text-warning' : 'text-muted-foreground',
+        )}
+      >
+        {isLow && <span aria-hidden className="size-1.5 rounded-full bg-warning" />}
+        {messageAllowance.remaining(allowance.remaining, allowance.limit)}
+      </span>
       {/* An unverified user's resend action is already in the verify-email reminder above. */}
       {isLow && isGuest && (
-        <Button asChild size="xs" variant="outline" borderRadius="full">
-          <Link to="/auth">
-            <LuLogIn />
-            {messageAllowance.action}
-          </Link>
-        </Button>
+        <span className="text-faint">
+          <Link
+            to="/auth"
+            className="text-foreground-secondary underline decoration-border-strong underline-offset-3"
+          >
+            {messageAllowance.counterAction}
+          </Link>{' '}
+          {messageAllowance.toKeepChatting}
+        </span>
       )}
-    </HStack>
+    </div>
   );
 };

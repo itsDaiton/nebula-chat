@@ -1,8 +1,5 @@
-import React from 'react';
-import { Flex } from '@chakra-ui/react';
+import type { ReactNode } from 'react';
 
-export const ChatContainerBox = ({ children }: { children: React.ReactNode }) => (
-  <Flex direction="column" h="100%" w="100%" position="relative" overflow="hidden">
-    {children}
-  </Flex>
+export const ChatContainerBox = ({ children }: { children: ReactNode }) => (
+  <div className="relative flex h-full w-full flex-col overflow-hidden">{children}</div>
 );

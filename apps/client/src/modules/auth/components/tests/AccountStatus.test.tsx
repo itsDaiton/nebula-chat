@@ -155,7 +155,10 @@ describe('AccountStatus', () => {
     await openMenu();
     await selectMenuItem(await signOutItem());
 
-    expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
+    // Sign-out, a fresh Guest and the root's first render chain several requests.
+    expect(
+      await screen.findByText(resources.chat.guestHint, {}, { timeout: 4000 }),
+    ).toBeInTheDocument();
     expect(
       await screen.findByRole('link', { name: resources.auth.actions.signIn }),
     ).toBeInTheDocument();

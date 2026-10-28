@@ -1,76 +1,46 @@
-import { Icon, Select } from '@chakra-ui/react';
-import { modelOptions } from '@/modules/chat/utils/modelOptions';
-import { IoChevronDown } from 'react-icons/io5';
+import { ChevronDownIcon } from 'lucide-react';
+import { getModelLabel, modelOptions } from '@/modules/chat/utils/modelOptions';
+import { Button } from '@/shared/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu';
 
 export const ModelSelect = ({
   selectedModel,
   onModelChange,
-  isSelectOpen,
-  setIsSelectOpen,
-  triggerWidth,
 }: {
   selectedModel: string;
   onModelChange: (model: string) => void;
-  isSelectOpen: boolean;
-  setIsSelectOpen: (isOpen: boolean) => void;
-  triggerWidth?: number;
 }) => (
-  <Select.Root
-    collection={modelOptions}
-    value={[selectedModel]}
-    onValueChange={(details) => details.value[0] && onModelChange(details.value[0])}
-    onOpenChange={(details) => setIsSelectOpen(details.open)}
-    positioning={{ placement: 'top', flip: false }}
-    size="sm"
-    width={triggerWidth ? `${triggerWidth}px` : 'auto'}
-    minW="120px"
-  >
-    <Select.Control>
-      <Select.Trigger
-        bg="transparent"
-        border="none"
-        color="fg.muted"
-        fontSize="sm"
-        fontWeight="medium"
-        height="32px"
-        px={2}
-        cursor="pointer"
-        width="100%"
-        _hover={{
-          bg: 'bg.subtle',
-          color: 'fg.soft',
-        }}
-        _focus={{
-          outline: 'none',
-          boxShadow: 'none',
-          bg: 'transparent',
-        }}
-        _focusVisible={{
-          outline: 'none',
-          boxShadow: 'none',
-          bg: 'transparent',
-        }}
+  <DropdownMenu>
+    <DropdownMenuTrigger
+      render={
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 rounded-full px-2.5 text-[12.5px] text-foreground-secondary"
+        />
+      }
+    >
+      {getModelLabel(selectedModel)}
+      <ChevronDownIcon className="size-3.5" />
+    </DropdownMenuTrigger>
+    <DropdownMenuContent side="top" align="end" className="w-48">
+      <DropdownMenuRadioGroup
+        value={selectedModel}
+        onValueChange={(value) => onModelChange(String(value))}
       >
-        <Select.ValueText />{' '}
-        <Select.IndicatorGroup>
-          <Icon
-            as={IoChevronDown}
-            boxSize="16px"
-            color="fg.muted"
-            transform={isSelectOpen ? 'rotate(180deg)' : 'rotate(0deg)'}
-            transition="transform 0.2s"
-          />
-        </Select.IndicatorGroup>
-      </Select.Trigger>
-    </Select.Control>
-    <Select.Positioner>
-      <Select.Content bg="bg.input" borderColor="border.default" gapY={1}>
-        {modelOptions.items.map((item) => (
-          <Select.Item key={item.value} item={item}>
-            {item.label}
-          </Select.Item>
+        {modelOptions.map(({ label, value }) => (
+          <DropdownMenuRadioItem key={value} value={value}>
+            {label}
+          </DropdownMenuRadioItem>
         ))}
-      </Select.Content>
-    </Select.Positioner>
-  </Select.Root>
+      </DropdownMenuRadioGroup>
+    </DropdownMenuContent>
+  </DropdownMenu>
 );

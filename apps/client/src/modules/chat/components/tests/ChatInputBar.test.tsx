@@ -7,7 +7,6 @@ import { ChatInputBar } from '@/modules/chat/components/ChatInputBar';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
-import { useModelSelectorStore } from '@/modules/chat/stores/useModelSelectorStore';
 import { resources } from '@/resources';
 import { API_ROUTE } from '@/test/api';
 import { aSession, mockGetSession, refreshSession } from '@/test/auth';
@@ -31,7 +30,6 @@ const accepted = () =>
 beforeEach(() => {
   vi.clearAllMocks();
   useMessageStore.setState({ message: '' });
-  useModelSelectorStore.setState({ isSelectOpen: false, triggerWidth: 120 });
   // An open Session, so a send goes straight to it.
   useChatStreamStore.setState({
     history: [],

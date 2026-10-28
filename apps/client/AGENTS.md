@@ -213,6 +213,11 @@ context is genuinely needed, split it across two files:
   `font-mono` for metadata and ids, `tabular-nums` for numbers), never raw colours. Until Chakra is removed
   (NEB-555), Tailwind's preflight is off and its utilities are unlayered so they beat Chakra's layered
   reset; a small reset scoped to `[data-slot]` stands in for preflight on the new components.
+- **Chat surfaces (NEB-549)** are Tailwind over the same tokens. Assistant markdown goes through
+  `MarkdownContent`: prose styles live in `.chat-prose` (`styles/globals.css`), and a fenced block becomes the
+  `CodeBlock` (language label, copy), highlighted by `utils/highlightCode.ts` with Shiki's `css-variables` theme,
+  so one render serves both modes from the `--shiki-*` variables. A Message's meta row shows only what the
+  Message carries (Model, tokens, estimated cost, Run) and nothing while a field is null.
 - Responsive layout decisions (`isMobile`, `showSidePanels`) come from `useResponsiveLayout`.
 - **All static text must live in `resources.ts`.** If it is a string shown in the UI — button labels, placeholders, error messages, hints, empty states, tooltips — it goes in `resources.ts`. Never hardcode UI strings inline in components or utilities.
 

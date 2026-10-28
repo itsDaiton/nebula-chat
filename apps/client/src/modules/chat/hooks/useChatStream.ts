@@ -311,7 +311,12 @@ export const useChatStream = ({
 
   // Send, then subscribe (ADR-0014): a new chat gets its Session first, and the send names the reply's stream.
   const streamMessage = useCallback(
-    async ({ model, messages, sessionId: customSessionId }: ChatHistoryStreamOptions) => {
+    async ({
+      model,
+      mode = 'direct',
+      messages,
+      sessionId: customSessionId,
+    }: ChatHistoryStreamOptions) => {
       const controller = new AbortController();
       abortController.current = controller;
       const content = messages.at(-1)?.content ?? '';
@@ -347,7 +352,7 @@ export const useChatStream = ({
 
         const { streamId } = await sendMessage({
           sessionId: activeSessionId,
-          data: { content, mode: 'direct', model: model as SendMessageBodyModel },
+          data: { content, mode, model: model as SendMessageBodyModel },
         });
         void invalidateMessageAllowance();
         if (controller.signal.aborted) return;

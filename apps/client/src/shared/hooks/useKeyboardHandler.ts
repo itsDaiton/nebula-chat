@@ -15,7 +15,18 @@ export const useKeyboardHandler = ({
     (e: KeyboardEvent) => {
       const isPrintableKey = e.key.length === 1 && !e.ctrlKey && !e.metaKey;
 
-      if (e.key === 'Enter' && message.trim() && !isLoading) {
+      const isOnControl =
+        e.target instanceof HTMLButtonElement || e.target instanceof HTMLAnchorElement;
+
+      // Shift+Enter is a newline, and Enter on a focused control (or in an IME composition) is not a send.
+      if (
+        e.key === 'Enter' &&
+        !e.shiftKey &&
+        !e.isComposing &&
+        !isOnControl &&
+        message.trim() &&
+        !isLoading
+      ) {
         e.preventDefault();
         handleMessageSend();
       } else if (

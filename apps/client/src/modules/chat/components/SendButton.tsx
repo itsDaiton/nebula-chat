@@ -1,30 +1,16 @@
-import { Icon, IconButton } from '@chakra-ui/react';
-import { IoArrowUpOutline } from 'react-icons/io5';
+import { ArrowUpIcon } from 'lucide-react';
+import { resources } from '@/resources';
+import { Button } from '@/shared/components/ui/button';
 
+// The one control filled with the foreground colour, in both modes.
 export const SendButton = ({ isLoading, message }: { isLoading: boolean; message: string }) => (
-  <IconButton
+  <Button
     type="submit"
-    aria-label="Send message"
-    variant="solid"
-    bg="fg.default"
-    color="bg.default"
-    boxSize={10}
-    loading={isLoading}
-    _hover={{
-      bg: 'fg.soft',
-    }}
-    _active={{
-      bg: 'fg.muted',
-    }}
-    _disabled={{
-      opacity: 0.4,
-      bg: {
-        base: 'gray.500',
-        _dark: 'gray.300',
-      },
-    }}
+    size="icon"
+    aria-label={resources.chat.composer.send}
+    className="size-8 rounded-full border-transparent bg-foreground text-background hover:bg-foreground/80 disabled:bg-border-strong disabled:text-muted-foreground disabled:opacity-100"
     disabled={!message.trim() || isLoading}
   >
-    <Icon as={IoArrowUpOutline} />
-  </IconButton>
+    <ArrowUpIcon className="size-4" />
+  </Button>
 );

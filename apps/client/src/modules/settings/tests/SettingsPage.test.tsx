@@ -36,7 +36,7 @@ vi.mock('@/theme/hooks/useColorMode', () => ({
 
 // The real pages these flows land on.
 const AUTH_PAGE = resources.auth.signIn.title;
-const CHAT_PAGE = resources.chat.welcomeMessage;
+const CHAT_PAGE = resources.chat.composer.label;
 const { fields } = resources.auth;
 const { changePassword, profile, account } = resources.settings;
 
@@ -139,7 +139,7 @@ describe('SettingsPage', () => {
       expect(screen.queryByRole('link', { name: /close/i })).not.toBeInTheDocument();
       await userEvent.click(screen.getByText(resources.chat.appName));
 
-      expect(screen.getByText(CHAT_PAGE)).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: CHAT_PAGE })).toBeInTheDocument();
     });
   });
 
@@ -535,7 +535,7 @@ describe('SettingsPage', () => {
 
       await userEvent.click(screen.getByRole('button', { name: account.signOutEverywhere.action }));
 
-      expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
+      expect(await screen.findByRole('textbox', { name: CHAT_PAGE })).toBeInTheDocument();
       expect(calls).toEqual(['revoke-sessions', 'sign-out']);
     });
 
@@ -545,7 +545,7 @@ describe('SettingsPage', () => {
 
       await userEvent.click(screen.getByRole('button', { name: account.signOutEverywhere.action }));
 
-      expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
+      expect(await screen.findByRole('textbox', { name: CHAT_PAGE })).toBeInTheDocument();
     });
 
     it('stays put, signed in, when revoking fails for another reason', async () => {
@@ -598,7 +598,7 @@ describe('SettingsPage', () => {
         );
         await confirmDelete(dialog);
 
-        expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
+        expect(await screen.findByRole('textbox', { name: CHAT_PAGE })).toBeInTheDocument();
         expect(body).toEqual({ password: 'my-passphrase' });
         expect(toast).toHaveBeenCalledWith(
           expect.objectContaining({ type: 'success', title: account.deleteAccount.done }),
@@ -623,7 +623,7 @@ describe('SettingsPage', () => {
 
         await confirmDelete(await openDeleteDialog());
 
-        expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
+        expect(await screen.findByRole('textbox', { name: CHAT_PAGE })).toBeInTheDocument();
         // Give a stray refetch the time to land.
         await new Promise((resolve) => setTimeout(resolve, 50));
         expect(toast).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
@@ -685,7 +685,7 @@ describe('SettingsPage', () => {
         expect(within(dialog).queryByLabelText(fields.password)).not.toBeInTheDocument();
         await confirmDelete(dialog);
 
-        expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
+        expect(await screen.findByRole('textbox', { name: CHAT_PAGE })).toBeInTheDocument();
         expect(body).toEqual({});
       });
 

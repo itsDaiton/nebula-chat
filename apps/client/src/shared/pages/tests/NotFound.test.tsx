@@ -35,7 +35,9 @@ describe('NotFound', () => {
 
     await userEvent.click(screen.getByRole('button', { name: resources.notFound.action }));
 
-    expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('textbox', { name: resources.chat.composer.label }),
+    ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/');
   });
 });

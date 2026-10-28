@@ -362,8 +362,8 @@ describe('useChatStream — reconnecting', () => {
     await sendMessage(result);
 
     expect(history()).toEqual([
-      { id: MESSAGE_ID, role: 'user', content: 'what is 2+2?' },
-      { id: STREAM_ID, role: 'assistant', content: '4' },
+      { id: MESSAGE_ID, role: 'user', content: 'what is 2+2?', tokenCount: null },
+      { id: STREAM_ID, role: 'assistant', content: '4', tokenCount: 1 },
     ]);
     expect(useChatStreamStore.getState()).toMatchObject({ isStreaming: false, error: null });
   });

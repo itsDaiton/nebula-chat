@@ -80,3 +80,8 @@ export type PasswordInputProps = Omit<InputProps, 'type'> & {
   visible: boolean;
   onToggleVisibility: () => void;
 };
+
+export type ScrollPositionState = {
+  isAtBottom: boolean;
+  markAtBottom: (isAtBottom: boolean) => void;
+};

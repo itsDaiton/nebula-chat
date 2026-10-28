@@ -1,57 +1,32 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 import { ModelSelect } from '@/modules/chat/components/ModelSelect';
-import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
-import { useModelSelectorStore } from '@/modules/chat/stores/useModelSelectorStore';
-import { renderWithChakra } from '@/test/render';
-
-beforeEach(() => {
-  vi.clearAllMocks();
-  useMessageStore.setState({ message: '' });
-  useModelSelectorStore.setState({ isSelectOpen: false, triggerWidth: 120 });
-});
+import { renderWithProviders } from '@/test/render';
 
 describe('ModelSelect', () => {
-  // The label also appears in the hidden native <select>, so the trigger's own
-  // value text is queried rather than the whole tree.
-  const valueText = (container: HTMLElement) =>
-    container.querySelector('[data-part="value-text"]')?.textContent;
-
   it('shows the currently selected model', () => {
-    const { container } = renderWithChakra(
-      <ModelSelect
-        selectedModel="gpt-4o-mini"
-        onModelChange={vi.fn()}
-        isSelectOpen={false}
-        setIsSelectOpen={vi.fn()}
-      />,
-    );
+    renderWithProviders(<ModelSelect selectedModel="gpt-4o-mini" onModelChange={vi.fn()} />);
 
-    expect(valueText(container)).toBe('GPT-4o mini');
+    expect(screen.getByRole('button', { name: /GPT-4o mini/ })).toBeInTheDocument();
   });
 
-  it('reflects a different selection', () => {
-    const { container } = renderWithChakra(
-      <ModelSelect
-        selectedModel="gpt-4o"
-        onModelChange={vi.fn()}
-        isSelectOpen={false}
-        setIsSelectOpen={vi.fn()}
-      />,
-    );
+  it('lists every Model and marks the selected one', async () => {
+    renderWithProviders(<ModelSelect selectedModel="gpt-4o" onModelChange={vi.fn()} />);
 
-    expect(valueText(container)).toBe('GPT-4o');
+    await userEvent.click(screen.getByRole('button', { name: /GPT-4o/ }));
+
+    expect(await screen.findAllByRole('menuitemradio')).toHaveLength(7);
+    expect(screen.getByRole('menuitemradio', { name: 'GPT-4o' })).toBeChecked();
   });
 
-  it('exposes the trigger as a combobox for keyboard and screen-reader users', () => {
-    const { container } = renderWithChakra(
-      <ModelSelect
-        selectedModel="gpt-4o-mini"
-        onModelChange={vi.fn()}
-        isSelectOpen={false}
-        setIsSelectOpen={vi.fn()}
-      />,
-    );
+  it('reports the Model the User picks', async () => {
+    const onModelChange = vi.fn();
+    renderWithProviders(<ModelSelect selectedModel="gpt-4o" onModelChange={onModelChange} />);
 
-    expect(container.querySelector('[data-part="trigger"]')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /GPT-4o/ }));
+    await userEvent.click(await screen.findByRole('menuitemradio', { name: 'GPT-5' }));
+
+    expect(onModelChange).toHaveBeenCalledWith('gpt-5');
   });
 });

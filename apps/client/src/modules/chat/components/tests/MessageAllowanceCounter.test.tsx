@@ -77,7 +77,9 @@ describe('MessageAllowanceCounter', () => {
     serveAllowance(aMeteredAllowance(3));
     const { router } = await renderCounter(GUEST);
 
-    await userEvent.click(await screen.findByRole('link', { name: messageAllowance.action }));
+    await userEvent.click(
+      await screen.findByRole('link', { name: messageAllowance.counterAction }),
+    );
 
     expect(router.state.location.pathname).toBe('/auth');
   });
@@ -95,7 +97,7 @@ describe('MessageAllowanceCounter', () => {
     await renderCounter(GUEST);
 
     expect(await screen.findByRole('status')).toHaveTextContent('30 of 100 messages left');
-    expect(screen.getByRole('link', { name: messageAllowance.action })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: messageAllowance.counterAction })).toBeInTheDocument();
   });
 
   it('is quiet above the low threshold of a different cap', async () => {

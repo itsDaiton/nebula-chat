@@ -1,18 +1,20 @@
 import { useEffect, useRef } from 'react';
-import { Box, Flex, Text } from '@chakra-ui/react';
 import { useParams } from '@tanstack/react-router';
 import { ChatContainerBox } from '@/modules/chat/components/ChatContainerBox';
-import { ChatMessagesSkeletons } from '@/modules/chat/components/ChatMessagesSkeletons';
-import { ChatInputBar } from '@/modules/chat/components/ChatInputBar';
 import { ChatEmptyState } from '@/modules/chat/components/ChatEmptyState';
+import { ChatInputBar } from '@/modules/chat/components/ChatInputBar';
 import { ChatMessageList } from '@/modules/chat/components/ChatMessageList';
+import { ChatMessagesSkeletons } from '@/modules/chat/components/ChatMessagesSkeletons';
+import { ChatStarters } from '@/modules/chat/components/ChatStarters';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useHandleSendMessage } from '@/modules/chat/hooks/useHandleSendMessage';
 import { useModel } from '@/modules/chat/hooks/useModel';
 import { useChatSession } from '@/modules/sessions/hooks/useChatSession';
-import { chatScrollBar } from '@/shared/components/scrollbar';
+import { ChatScroller } from '@/shared/components/ui/chat-scroller';
 import { scrollToBottom } from '@/shared/utils/scrollUtils';
 import { resources } from '@/resources';
+
+const COLUMN = 'mx-auto w-full max-w-[740px] px-3 sm:px-7';
 
 export const ChatContainer = () => {
   const { id: sessionId } = useParams({ strict: false });
@@ -54,18 +56,25 @@ export const ChatContainer = () => {
     scrollToBottom(scrollRef);
   }, [history.length, isStreaming]);
 
+  const composer = (
+    <ChatInputBar
+      onSend={(msg) => void handleSendMessage(msg, selectedModel)}
+      isLoading={isStreaming}
+      selectedModel={selectedModel}
+      onModelChange={setSelectedModel}
+      onStop={() => void stop()}
+    />
+  );
+
   if (sessionId && isSessionLoading && chatSessionId !== sessionId) {
     return (
       <ChatContainerBox>
-        <Box flex="1" overflowY="auto" p={4} mb="120px" css={chatScrollBar}>
-          <ChatMessagesSkeletons count={5} />
-        </Box>
-        <ChatInputBar
-          onSend={(msg) => void handleSendMessage(msg, selectedModel)}
-          isLoading={false}
-          selectedModel={selectedModel}
-          onModelChange={setSelectedModel}
-        />
+        <ChatScroller anchorRef={scrollRef}>
+          <div className={`${COLUMN} pt-7 pb-2`}>
+            <ChatMessagesSkeletons count={5} />
+          </div>
+        </ChatScroller>
+        {composer}
       </ChatContainerBox>
     );
   }
@@ -73,37 +82,47 @@ export const ChatContainer = () => {
   if (sessionId && sessionError) {
     return (
       <ChatContainerBox>
-        <Flex h="100%" align="center" justify="center">
-          <Flex direction="column" align="center" gap={2} maxW="400px" textAlign="center">
-            <Text fontSize="md" fontWeight="medium" color="red.500">
-              {resources.sessions.single.error}
-            </Text>
-            <Text fontSize="sm" color="fg.muted">
-              {sessionError.message}
-            </Text>
-          </Flex>
-        </Flex>
+        <div className="flex h-full items-center justify-center">
+          <div className="flex max-w-[400px] flex-col items-center gap-2 text-center">
+            <p className="font-medium text-destructive">{resources.sessions.single.error}</p>
+            <p className="text-sm text-muted-foreground">{sessionError.message}</p>
+          </div>
+        </div>
+      </ChatContainerBox>
+    );
+  }
+
+  if (!((sessionId || isStreaming) && history.length > 0)) {
+    // A new chat centres the composer under the greeting; the starters wait below it.
+    return (
+      <ChatContainerBox>
+        <div className="flex flex-1 flex-col items-center justify-center gap-9 overflow-y-auto pb-14">
+          <ChatEmptyState sessionId={sessionId} />
+          <div className="w-full">
+            {composer}
+            {!sessionId && (
+              <div className={COLUMN}>
+                <ChatStarters />
+              </div>
+            )}
+          </div>
+        </div>
       </ChatContainerBox>
     );
   }
 
   return (
     <ChatContainerBox>
-      <Box flex="1" overflowY="auto" p={4} mb="120px" css={chatScrollBar}>
-        {(sessionId || isStreaming) && history.length > 0 ? (
-          <ChatMessageList history={history} isStreaming={isStreaming} />
-        ) : (
-          <ChatEmptyState sessionId={sessionId} />
-        )}
-        <div ref={scrollRef} style={{ height: '0px' }} />
-      </Box>
-      <ChatInputBar
-        onSend={(msg) => void handleSendMessage(msg, selectedModel)}
-        isLoading={isStreaming}
-        selectedModel={selectedModel}
-        onModelChange={setSelectedModel}
-        onStop={() => void stop()}
-      />
+      <ChatScroller anchorRef={scrollRef}>
+        <div className={`${COLUMN} pt-7 pb-2`}>
+          <ChatMessageList
+            history={history}
+            isStreaming={isStreaming}
+            onRegenerate={(prompt) => void handleSendMessage(prompt, selectedModel)}
+          />
+        </div>
+      </ChatScroller>
+      {composer}
     </ChatContainerBox>
   );
 };

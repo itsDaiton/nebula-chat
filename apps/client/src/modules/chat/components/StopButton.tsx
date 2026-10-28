@@ -1,25 +1,17 @@
-import { Icon, IconButton } from '@chakra-ui/react';
-import { IoStop } from 'react-icons/io5';
+import { SquareIcon } from 'lucide-react';
 import type { StopButtonProps } from '@/modules/chat/types/types';
 import { resources } from '@/resources';
+import { Button } from '@/shared/components/ui/button';
 
 // Not a submit button: it stops the reply streaming, it never sends the composer's text.
 export const StopButton = ({ onStop }: StopButtonProps) => (
-  <IconButton
+  <Button
     type="button"
+    size="icon"
     aria-label={resources.chat.stopReply}
-    variant="solid"
-    bg="fg.default"
-    color="bg.default"
-    boxSize={10}
+    className="size-8 rounded-full border-transparent bg-foreground text-background hover:bg-foreground/80"
     onClick={onStop}
-    _hover={{
-      bg: 'fg.soft',
-    }}
-    _active={{
-      bg: 'fg.muted',
-    }}
   >
-    <Icon as={IoStop} />
-  </IconButton>
+    <SquareIcon className="size-3 fill-current" />
+  </Button>
 );

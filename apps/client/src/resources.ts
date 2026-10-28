@@ -1,17 +1,53 @@
 export const resources = {
   chat: {
     appName: 'nebula chat',
-    welcomeMessage: 'Welcome to Nebula Chat! 👋',
-    welcomeIntro:
-      "I'm your AI assistant, ready to help you with any questions or tasks you might have. Feel free to start a session by typing a message below!",
-    emptySession: 'This session has no messages yet. 😔',
+    greeting: {
+      morning: 'Good morning',
+      afternoon: 'Good afternoon',
+      evening: 'Good evening',
+      withName: (greeting: string, name: string) => `${greeting}, ${name}`,
+    },
+    hint: 'Turn on Run to let Agents plan, analyse and review the answer.',
+    guestHint: 'Ask anything. Sign up to keep your Sessions and unlock Runs.',
+    emptySession: 'This session has no messages yet.',
     emptySessionHint: 'Start the session by asking Nebula Chat something!',
+    starters: [
+      { icon: 'zap', prompt: "Explain Redis Streams consumer groups like I'm new to them" },
+      { icon: 'list-tree', prompt: 'Plan a migration from Chakra UI to shadcn/ui' },
+      { icon: 'type', prompt: 'Rewrite this paragraph to be clearer and shorter' },
+      { icon: 'gauge', prompt: 'Build me a 4-week Zone 2 running plan' },
+    ] as const,
     streamError: 'An error occurred during streaming.',
     stopReply: 'Stop reply',
+    composer: {
+      label: 'Message',
+      placeholder: 'Ask anything…',
+      send: 'Send message',
+      attach: 'Attach files (soon)',
+      disclaimer: 'Nebula can make mistakes. Check important info.',
+    },
+    run: {
+      label: 'Run',
+      soon: 'Runs are coming soon. Agents will plan, analyse and review answers.',
+      guest: 'Runs are for registered users. Sign up to let Agents plan and review answers.',
+    },
+    meta: {
+      copy: 'Copy',
+      copied: 'Copied',
+      regenerate: 'Regenerate',
+      tokens: (count: number) => `${count.toLocaleString('en-US')} tokens`,
+      cost: (usd: number) => `~$${usd < 0.01 ? usd.toFixed(4) : usd.toFixed(2)}`,
+      run: 'Run',
+    },
+    code: { copy: 'Copy' },
+    copyFailed: "Couldn't copy to the clipboard.",
+    scrollToBottom: 'Scroll to bottom',
     messageAllowance: {
       title: "You've reached the free message limit",
       description: 'Register or sign in to keep chatting. Your sessions come with you.',
       action: 'Register or sign in',
+      counterAction: 'Sign up',
+      toKeepChatting: 'to keep chatting',
       remaining: (remaining: number, limit: number) =>
         `${remaining} of ${limit} ${remaining === 1 ? 'message' : 'messages'} left`,
     },
