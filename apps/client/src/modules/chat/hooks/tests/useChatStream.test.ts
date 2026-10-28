@@ -187,6 +187,24 @@ describe('useChatStream — usage and errors', () => {
     );
   });
 
+  it('shows the reply token count on its meta row as soon as the stream reports it', async () => {
+    streamFrames(
+      frame('token', { token: 'hi' }),
+      frame('usage', { promptTokens: 10, completionTokens: 4, totalTokens: 14 }),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    await waitFor(() =>
+      expect(useChatStreamStore.getState().history.at(-1)).toMatchObject({
+        role: 'assistant',
+        tokenCount: 14,
+      }),
+    );
+  });
+
   it('surfaces the message of an error event in place of the reply', async () => {
     streamFrames(
       frame('error', { success: false, error: 'BadRequest', message: 'Unsupported model: gpt-0' }),
@@ -362,8 +380,8 @@ describe('useChatStream — reconnecting', () => {
     await sendMessage(result);
 
     expect(history()).toEqual([
-      { id: MESSAGE_ID, role: 'user', content: 'what is 2+2?' },
-      { id: STREAM_ID, role: 'assistant', content: '4' },
+      { id: MESSAGE_ID, role: 'user', content: 'what is 2+2?', tokenCount: null },
+      { id: STREAM_ID, role: 'assistant', content: '4', tokenCount: 1 },
     ]);
     expect(useChatStreamStore.getState()).toMatchObject({ isStreaming: false, error: null });
   });
@@ -433,6 +451,20 @@ describe('useChatStream — stopping a reply', () => {
 
     expect(history()).toEqual([{ id: 'u1', role: 'user', content: 'what is 2+2?' }]);
     expect(useChatStreamStore.getState().isStreaming).toBe(false);
+  });
+
+  it('flags a stopped reply, and clears the flag on the next send', async () => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    streamFrames(frame('end', { reason: 'cancelled' }, '1-1'));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+    expect(useChatStreamStore.getState().isReplyStopped).toBe(true);
+
+    streamFrames(frame('token', { token: 'ok' }, '1-1'), frame('end', {}, '1-2'));
+    await sendMessage(result);
+
+    expect(useChatStreamStore.getState().isReplyStopped).toBe(false);
   });
 
   it('cancels a reply stopped while its message was still being sent', async () => {

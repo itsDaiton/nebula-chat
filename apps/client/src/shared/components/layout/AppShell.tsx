@@ -71,7 +71,7 @@ export const AppShell = ({ children }: AppShellProps) => {
       )}
       <div className="flex min-h-0 flex-1 gap-2.5">
         {isDesktop && leftOpen && (
-          <aside className={`${panel} w-[270px] shrink-0`}>
+          <aside className={`${panel} w-[270px] shrink-0 2xl:w-[320px]`}>
             <SessionsList />
             <AccountFooter />
           </aside>
@@ -82,7 +82,10 @@ export const AppShell = ({ children }: AppShellProps) => {
           {children}
         </main>
         {isDesktop && rightOpen && (
-          <aside aria-label={resources.shell.inspector} className={`${panel} w-[300px] shrink-0`}>
+          <aside
+            aria-label={resources.shell.inspector}
+            className={`${panel} w-[300px] shrink-0 2xl:w-[360px]`}
+          >
             <InspectorPlaceholder />
           </aside>
         )}

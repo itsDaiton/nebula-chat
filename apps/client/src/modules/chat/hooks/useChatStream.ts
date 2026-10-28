@@ -114,6 +114,7 @@ export const useChatStream = ({
     history,
     isStreaming,
     isPostStreamNavigation,
+    isReplyStopped,
     error,
     usage,
     sessionId,
@@ -237,6 +238,13 @@ export const useChatStream = ({
       if (event === 'usage') {
         const { promptTokens, completionTokens, totalTokens } = parsed as Record<string, number>;
         setUsage({ promptTokens, completionTokens, totalTokens });
+        // The saved Message carries this count, so the meta row shows it now rather than after a reload.
+        setHistory((prev) => {
+          const last = prev.at(-1);
+          return last?.role === 'assistant'
+            ? [...prev.slice(0, -1), { ...last, tokenCount: totalTokens }]
+            : prev;
+        });
         return null;
       }
       if (event === 'error') {
@@ -244,10 +252,13 @@ export const useChatStream = ({
         return 'failed';
       }
       // `end`, also when the User stopped the reply: what streamed is the saved reply.
-      if ((parsed as { reason?: unknown } | null)?.reason === 'cancelled') dropEmptyReply();
+      if ((parsed as { reason?: unknown } | null)?.reason === 'cancelled') {
+        dropEmptyReply();
+        useChatStreamStore.setState({ isReplyStopped: true });
+      }
       return 'ended';
     },
-    [appendToken, dropEmptyReply, setUsage, showReplyError],
+    [appendToken, dropEmptyReply, setHistory, setUsage, showReplyError],
   );
 
   // Reads one connection's body; null when it closed or dropped before the stream was over.
@@ -311,7 +322,12 @@ export const useChatStream = ({
 
   // Send, then subscribe (ADR-0014): a new chat gets its Session first, and the send names the reply's stream.
   const streamMessage = useCallback(
-    async ({ model, messages, sessionId: customSessionId }: ChatHistoryStreamOptions) => {
+    async ({
+      model,
+      mode = 'direct',
+      messages,
+      sessionId: customSessionId,
+    }: ChatHistoryStreamOptions) => {
       const controller = new AbortController();
       abortController.current = controller;
       const content = messages.at(-1)?.content ?? '';
@@ -324,6 +340,7 @@ export const useChatStream = ({
         usage: null,
         streamId: null,
         isStopRequested: false,
+        isReplyStopped: false,
         isMessageAllowanceReached: false,
         history: [...messages, emptyAssistantMessage()],
       });
@@ -347,7 +364,7 @@ export const useChatStream = ({
 
         const { streamId } = await sendMessage({
           sessionId: activeSessionId,
-          data: { content, mode: 'direct', model: model as SendMessageBodyModel },
+          data: { content, mode, model: model as SendMessageBodyModel },
         });
         void invalidateMessageAllowance();
         if (controller.signal.aborted) return;
@@ -425,6 +442,7 @@ export const useChatStream = ({
         sessionId: resumedSessionId,
         streamId,
         isStopRequested: false,
+        isReplyStopped: false,
         // A reload just after the worker persisted the reply already lists it; the replay replaces it.
         history: [...chat.history.filter((m) => m.id !== streamId), emptyAssistantMessage()],
       });
@@ -467,6 +485,7 @@ export const useChatStream = ({
     history,
     isStreaming,
     isPostStreamNavigation,
+    isReplyStopped,
     error,
     usage,
     streamMessage,

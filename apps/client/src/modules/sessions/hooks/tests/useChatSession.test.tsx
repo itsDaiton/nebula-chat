@@ -64,8 +64,8 @@ describe('useChatSession', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(chat().history).toEqual([
-      { id: 'm1', role: 'user', content: 'a question' },
-      { id: 'm2', role: 'assistant', content: 'an answer' },
+      { id: 'm1', role: 'user', content: 'a question', tokenCount: null },
+      { id: 'm2', role: 'assistant', content: 'an answer', tokenCount: null },
     ]);
     expect(chat().sessionId).toBe(SESSION_ID);
   });

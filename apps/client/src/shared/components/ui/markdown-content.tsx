@@ -1,81 +1,28 @@
-import { memo } from 'react';
-import { CodeBlock, IconButton, Box } from '@chakra-ui/react';
+import { isValidElement, memo } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Prose } from '@/shared/components/ui/prose';
-import { useColorMode } from '@/theme/hooks/useColorMode';
+import { CodeBlock } from '@/shared/components/ui/code-block';
 import type { MarkdownContentProps } from '@/shared/types/types';
 import { isSafeUrl } from '@/shared/utils/urlUtils';
 import type { Components, ExtraProps } from 'react-markdown';
-import type { HTMLAttributes, AnchorHTMLAttributes } from 'react';
+import type { AnchorHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
 
-type CodeProps = HTMLAttributes<HTMLElement> & ExtraProps;
-type ParagraphProps = HTMLAttributes<HTMLParagraphElement> & ExtraProps;
+type PreProps = HTMLAttributes<HTMLPreElement> & ExtraProps;
 type AnchorProps = AnchorHTMLAttributes<HTMLAnchorElement> & ExtraProps;
+type CodeElementProps = { className?: string; children?: ReactNode };
 
-const MarkdownCode = ({ className, children, ...rest }: CodeProps) => {
-  const { colorMode } = useColorMode();
-  const match = /language-(\w+)/.exec(className || '');
-  const language = match ? match[1] : '';
-  const toText = (node: unknown): string => {
-    if (node === null || node === undefined) return '';
-    if (typeof node === 'string' || typeof node === 'number' || typeof node === 'boolean')
-      return String(node);
-    if (Array.isArray(node)) return node.map(toText).join('');
-    return '';
-  };
-  const codeString = toText(children).replace(/\n$/, '');
-  const isInline = !className;
-
-  if (!isInline && language) {
-    return (
-      <Box my={4}>
-        <CodeBlock.Root
-          code={codeString}
-          language={language}
-          size="md"
-          meta={{ colorScheme: colorMode }}
-        >
-          <CodeBlock.Header>
-            <CodeBlock.Title>{language}</CodeBlock.Title>
-            <CodeBlock.CopyTrigger asChild>
-              <IconButton variant="ghost" size="xs">
-                <CodeBlock.CopyIndicator />
-              </IconButton>
-            </CodeBlock.CopyTrigger>
-          </CodeBlock.Header>
-          <CodeBlock.Content bg="transparent">
-            <CodeBlock.Code
-              fontSize="sm"
-              bg="transparent"
-              css={{ '& pre': { background: 'transparent !important' } }}
-            >
-              <CodeBlock.CodeText />
-            </CodeBlock.Code>
-          </CodeBlock.Content>
-        </CodeBlock.Root>
-      </Box>
-    );
-  }
-  return (
-    <code className={className} {...rest}>
-      {children}
-    </code>
-  );
+const toText = (node: ReactNode): string => {
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(toText).join('');
+  return '';
 };
 
-const MarkdownParagraph = ({ children, node }: ParagraphProps) => {
-  const isFirstChild = node?.position?.start.line === 1;
-  const isOnlyChild = node?.position?.start.line === node?.position?.end.line;
+// A fenced block arrives as <pre><code class="language-x">; inline code stays a plain <code>.
+const MarkdownPre = ({ children }: PreProps) => {
+  if (!isValidElement<CodeElementProps>(children)) return <pre>{children}</pre>;
+  const language = /language-(\w+)/.exec(children.props.className ?? '')?.[1] ?? 'text';
   return (
-    <p
-      style={{
-        marginTop: isFirstChild ? 0 : undefined,
-        marginBottom: isOnlyChild ? 0 : undefined,
-      }}
-    >
-      {children}
-    </p>
+    <CodeBlock code={toText(children.props.children).replace(/\n$/, '')} language={language} />
   );
 };
 
@@ -94,18 +41,24 @@ const MarkdownLink = ({ href, children }: AnchorProps) => {
   );
 };
 
+const MarkdownTable = ({ children }: HTMLAttributes<HTMLTableElement> & ExtraProps) => (
+  <div className="table-wrap">
+    <table>{children}</table>
+  </div>
+);
+
 const markdownComponents: Components = {
-  code: MarkdownCode,
-  p: MarkdownParagraph,
+  pre: MarkdownPre,
   a: MarkdownLink,
+  table: MarkdownTable,
 };
 
 export const MarkdownContent = memo(({ content }: MarkdownContentProps) => (
-  <Prose maxWidth="none">
+  <div className="chat-prose">
     <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
       {content}
     </Markdown>
-  </Prose>
+  </div>
 ));
 
 MarkdownContent.displayName = 'MarkdownContent';

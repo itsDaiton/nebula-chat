@@ -40,6 +40,19 @@
   --input: var(--border-strong);
   --ring: var(--muted-foreground);
   --primary-border: transparent;
+
+  /* Shiki's css-variables theme, mapped onto the palette. */
+  --shiki-foreground: var(--foreground-secondary);
+  --shiki-background: transparent;
+  --shiki-token-constant: #a8621a;
+  --shiki-token-string: #4d7c4f;
+  --shiki-token-comment: #a3a3a3;
+  --shiki-token-keyword: #0a0a0a;
+  --shiki-token-parameter: #6b5aa6;
+  --shiki-token-function: #2f5f9e;
+  --shiki-token-string-expression: #4d7c4f;
+  --shiki-token-punctuation: var(--muted-foreground);
+  --shiki-token-link: #2f5f9e;
 }
 
 .dark {
@@ -61,6 +74,14 @@
   --primary: #262626;
   --primary-foreground: var(--foreground);
   --primary-border: #3a3a3a;
+  --shiki-token-constant: #e0b07a;
+  --shiki-token-string: #a5c89a;
+  --shiki-token-comment: #5c5c5c;
+  --shiki-token-keyword: #f5f5f5;
+  --shiki-token-parameter: #b4a7e0;
+  --shiki-token-function: #8fb8e8;
+  --shiki-token-string-expression: #a5c89a;
+  --shiki-token-link: #8fb8e8;
 }
 
 @theme inline {
@@ -139,4 +160,129 @@
   --chakra-colors-fg-muted: var(--muted-foreground);
   --chakra-colors-border-default: var(--border);
   --chakra-colors-border-emphasized: var(--border-strong);
+}
+
+/* Assistant Message prose: the markdown output of `MarkdownContent`. */
+.chat-prose {
+  font-size: 14.5px;
+  line-height: 1.68;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+
+.chat-prose > :first-child {
+  margin-top: 0;
+}
+
+.chat-prose > :last-child {
+  margin-bottom: 0;
+}
+
+.chat-prose p {
+  margin: 0 0 12px;
+}
+
+.chat-prose h1,
+.chat-prose h2,
+.chat-prose h3,
+.chat-prose h4 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 18px 0 8px;
+}
+
+.chat-prose h1 {
+  font-size: 18px;
+}
+
+.chat-prose h2 {
+  font-size: 16.5px;
+}
+
+.chat-prose h3,
+.chat-prose h4 {
+  font-size: 15px;
+}
+
+.chat-prose ul,
+.chat-prose ol {
+  margin: 0 0 12px 20px;
+}
+
+.chat-prose ul {
+  list-style: disc;
+}
+
+.chat-prose ol {
+  list-style: decimal;
+}
+
+.chat-prose li {
+  margin: 3px 0;
+}
+
+.chat-prose strong {
+  font-weight: 600;
+}
+
+.chat-prose a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--border-strong);
+}
+
+.chat-prose blockquote {
+  margin: 0 0 12px;
+  padding-left: 14px;
+  border-left: 2px solid var(--border-strong);
+  color: var(--muted-foreground);
+}
+
+.chat-prose hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 16px 0;
+}
+
+.chat-prose :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+
+.chat-prose table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+  margin: 4px 0 14px;
+}
+
+.chat-prose th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  border-bottom: 1px solid var(--border-strong);
+  padding: 6px 10px 6px 0;
+}
+
+.chat-prose td {
+  border-bottom: 1px solid var(--border);
+  padding: 7px 10px 7px 0;
+}
+
+.chat-prose .table-wrap {
+  overflow-x: auto;
+}
+
+/* Shiki emits a <pre> with inline colours from the variables above. */
+.code-block pre {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
 }

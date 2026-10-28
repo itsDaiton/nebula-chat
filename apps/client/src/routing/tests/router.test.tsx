@@ -30,7 +30,9 @@ describe('router', () => {
   it('serves the chat at the root and at a Session URL', async () => {
     const { router } = await renderRoute('/');
 
-    expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('textbox', { name: resources.chat.composer.label }),
+    ).toBeInTheDocument();
     expect(router.state.matches.at(-1)?.routeId).toBe('/_app/_chat/');
   });
 
