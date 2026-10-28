@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.5.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.4.0...nebula-chat-openapi-v4.5.0) (2026-10-28)
+
+
+### Features
+
+* **server:** Session search matches Message content and returns a snippet ([#680](https://github.com/itsDaiton/nebula-chat/issues/680)) ([367cf88](https://github.com/itsDaiton/nebula-chat/commit/367cf8835471ce9b00ac8d79e9fc28fd3f1753ac))
+
 ## [4.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.3.0...nebula-chat-openapi-v4.4.0) (2026-10-27)
 
 
