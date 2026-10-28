@@ -44,13 +44,13 @@ export const ModelSelect = ({
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 gap-1.5 rounded-full px-2.5 text-[12.5px] text-foreground-secondary"
+            className="group h-7 gap-1.5 rounded-full px-2.5 text-[12.5px] text-foreground-secondary aria-expanded:bg-hover aria-expanded:text-foreground"
           />
         }
       >
         {current && <ProviderLogo provider={current.provider} className="size-3.5" />}
         {current?.label ?? selectedModel}
-        <ChevronDownIcon className="size-3.5" />
+        <ChevronDownIcon className="size-3.5 transition-transform group-aria-expanded:rotate-180" />
       </PopoverTrigger>
       <PopoverContent
         side="top"

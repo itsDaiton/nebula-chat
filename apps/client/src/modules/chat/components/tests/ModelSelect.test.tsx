@@ -33,6 +33,16 @@ describe('ModelSelect', () => {
     expect(within(trigger).getByRole('img', { name: 'OpenAI' })).toBeInTheDocument();
   });
 
+  it('marks the trigger expanded while the picker is open', async () => {
+    renderPicker('gpt-5');
+    const trigger = screen.getByRole('button', { name: /GPT-5/ });
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    await userEvent.click(trigger);
+
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+  });
+
   it('shows an id outside the list as itself', () => {
     renderPicker('gpt-9');
 
