@@ -82,6 +82,14 @@ describe('the command palette', () => {
     );
   });
 
+  it('opens from the header button', async () => {
+    await renderApp();
+
+    await userEvent.click(await screen.findByRole('button', { name: resources.shell.search }));
+
+    expect(await screen.findByPlaceholderText(resources.commandPalette.placeholder)).toBeVisible();
+  });
+
   it('returns focus to where it was', async () => {
     await renderApp();
     const trigger = await screen.findByRole('button', { name: resources.shell.search });

@@ -306,7 +306,6 @@ export const resources = {
     actions: 'Actions',
     admin: 'Admin',
     empty: 'No results found.',
-    searching: 'Searching…',
     navigate: 'navigate',
     open: 'open',
     close: 'close',
