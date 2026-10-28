@@ -187,6 +187,24 @@ describe('useChatStream — usage and errors', () => {
     );
   });
 
+  it('shows the reply token count on its meta row as soon as the stream reports it', async () => {
+    streamFrames(
+      frame('token', { token: 'hi' }),
+      frame('usage', { promptTokens: 10, completionTokens: 4, totalTokens: 14 }),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    await waitFor(() =>
+      expect(useChatStreamStore.getState().history.at(-1)).toMatchObject({
+        role: 'assistant',
+        tokenCount: 14,
+      }),
+    );
+  });
+
   it('surfaces the message of an error event in place of the reply', async () => {
     streamFrames(
       frame('error', { success: false, error: 'BadRequest', message: 'Unsupported model: gpt-0' }),

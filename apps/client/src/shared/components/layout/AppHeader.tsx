@@ -30,7 +30,7 @@ export const AppHeader = ({
 }: AppHeaderProps) => {
   const modifier = resources.shell.modifier[useOS()];
   const { colorMode, toggleColorMode } = useColorMode();
-  useKeyboardShortcut('l', toggleColorMode, { ctrl: true, shift: true });
+  useKeyboardShortcut('y', toggleColorMode, { ctrl: true, shift: true });
   const { id } = useParams({ strict: false });
   const { data: session } = useGetSession(id ?? '', { query: { enabled: Boolean(id) } });
 
@@ -93,7 +93,7 @@ export const AppHeader = ({
         </IconAction>
         <IconAction
           label={resources.shell.toggleColorMode}
-          shortcut={`${modifier} ⇧ L`}
+          shortcut={`${modifier} ⇧ Y`}
           onClick={toggleColorMode}
         >
           {colorMode === 'dark' ? <SunIcon /> : <MoonIcon />}

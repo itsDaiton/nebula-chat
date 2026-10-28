@@ -237,6 +237,13 @@ export const useChatStream = ({
       if (event === 'usage') {
         const { promptTokens, completionTokens, totalTokens } = parsed as Record<string, number>;
         setUsage({ promptTokens, completionTokens, totalTokens });
+        // The saved Message carries this count, so the meta row shows it now rather than after a reload.
+        setHistory((prev) => {
+          const last = prev.at(-1);
+          return last?.role === 'assistant'
+            ? [...prev.slice(0, -1), { ...last, tokenCount: totalTokens }]
+            : prev;
+        });
         return null;
       }
       if (event === 'error') {
@@ -247,7 +254,7 @@ export const useChatStream = ({
       if ((parsed as { reason?: unknown } | null)?.reason === 'cancelled') dropEmptyReply();
       return 'ended';
     },
-    [appendToken, dropEmptyReply, setUsage, showReplyError],
+    [appendToken, dropEmptyReply, setHistory, setUsage, showReplyError],
   );
 
   // Reads one connection's body; null when it closed or dropped before the stream was over.

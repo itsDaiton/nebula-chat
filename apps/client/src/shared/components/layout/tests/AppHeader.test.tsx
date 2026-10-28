@@ -38,16 +38,16 @@ describe('AppHeader colour mode', () => {
     const tooltip = await screen.findByText(resources.shell.toggleColorMode, {
       selector: '[data-slot="tooltip-content"]',
     });
-    expect(tooltip).toHaveTextContent('L');
+    expect(tooltip).toHaveTextContent('Y');
     expect(tooltip.querySelector('[data-slot="kbd"]')).toBeInTheDocument();
   });
 
-  it('toggles on Ctrl+Shift+L', async () => {
+  it('toggles on Ctrl+Shift+Y', async () => {
     await renderHeader();
 
     act(() => {
       document.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'L', ctrlKey: true, shiftKey: true, bubbles: true }),
+        new KeyboardEvent('keydown', { key: 'Y', ctrlKey: true, shiftKey: true, bubbles: true }),
       );
     });
 
