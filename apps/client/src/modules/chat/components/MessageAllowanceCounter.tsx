@@ -14,7 +14,7 @@ export const MessageAllowanceCounter = () => {
   if (!allowance || isSpent) return null;
 
   return (
-    <div role="status" className="flex items-center justify-between px-1.5 pt-2 text-[11.5px]">
+    <output className="flex items-center justify-between px-1.5 pt-2 text-[11.5px]">
       <span
         className={cn(
           'flex items-center gap-1.5 font-mono',
@@ -36,6 +36,6 @@ export const MessageAllowanceCounter = () => {
           {messageAllowance.toKeepChatting}
         </span>
       )}
-    </div>
+    </output>
   );
 };

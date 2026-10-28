@@ -20,8 +20,6 @@ export type ChatMessageProps = {
   isStreaming?: boolean;
 };
 
-export type MessageMetaRowProps = ChatMessageProps;
-
 export type ChatInputProps = {
   onSendMessage: (message: string) => void;
   isLoading?: boolean;
