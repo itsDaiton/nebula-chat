@@ -11,25 +11,6 @@ export type SessionListItemProps = {
   onArchive: (session: Session) => void;
 };
 
-export type SessionsSearchState = {
-  searchQuery: string;
-  debouncedQuery: string;
-  setSearchQuery: (query: string) => void;
-  clearSearch: () => void;
-};
-
-export type UseSessionsSearchParams = {
-  localSessions: Session[];
-  onClose: () => void;
-  onSessionClick: (sessionId: string) => void;
-};
-
-export type SessionsSearchProps = {
-  sessions: Session[];
-  onSessionClick: (id: string) => void;
-  onClose: () => void;
-};
-
 export type SessionListSkeletonsProps = {
   count?: number;
 };

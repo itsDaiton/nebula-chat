@@ -9,7 +9,6 @@ import { SessionSkeletons } from '@/modules/sessions/components/SessionSkeletons
 import type { NavigationAction, SessionsListProps } from '@/modules/sessions/types/types';
 import { navigationActions } from '@/modules/sessions/utils/navigationActions';
 import { resources } from '@/resources';
-import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
 import { useNow } from '@/shared/hooks/useNow';
 import { useSearchStore } from '@/shared/stores/useSearchStore';
 
@@ -31,8 +30,6 @@ export const SessionsList = ({ onNavigate }: SessionsListProps = {}) => {
     void navigate({ to: '/' });
     onNavigate?.();
   };
-
-  useKeyboardShortcut('e', startNewChat, { ctrl: true });
 
   const perform = (action: NavigationAction['action']) => {
     if (action === 'newChat') startNewChat();

@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { cn } from '@/shared/utils/cn';
-import { useNavigate, useRouterState } from '@tanstack/react-router';
+import { useRouterState } from '@tanstack/react-router';
 import { AccountFooter } from '@/shared/components/layout/AccountFooter';
 import { InspectorPlaceholder } from '@/shared/components/layout/InspectorPlaceholder';
 import { SessionsList } from '@/modules/sessions/components/SessionsList';
-import { SessionsSearch } from '@/modules/sessions/components/SessionsSearch';
-import { useSessions } from '@/modules/sessions/hooks/useSessions';
+import { CommandPalette } from '@/modules/commandPalette/components/CommandPalette';
+import { useDefaultPaletteActions } from '@/modules/commandPalette/hooks/useDefaultPaletteActions';
+import { useAuthPaletteActions } from '@/modules/auth/hooks/useAuthPaletteActions';
+import { useChatPaletteActions } from '@/modules/chat/hooks/useChatPaletteActions';
+import { useSessionPaletteActions } from '@/modules/sessions/hooks/useSessionPaletteActions';
+import { useSettingsPaletteActions } from '@/modules/settings/hooks/useSettingsPaletteActions';
 import { resources } from '@/resources';
 import { AppHeader } from '@/shared/components/layout/AppHeader';
 import { Sheet, SheetContent, SheetTitle } from '@/shared/components/ui/sheet';
@@ -22,10 +26,7 @@ export const AppShell = ({ children }: AppShellProps) => {
   const { showSidePanels: isDesktop } = useResponsiveLayout();
   const { leftOpen, rightOpen, sheetOpen, toggleLeft, toggleRight, closeSheet, toggleSheet } =
     usePanelStore();
-  const { isDrawerOpen, closeDrawer, toggleDrawer, isSearchOpen, openSearch, closeSearch } =
-    useDrawer();
-  const { sessions } = useSessions();
-  const navigate = useNavigate();
+  const { isDrawerOpen, closeDrawer, toggleDrawer, openSearch } = useDrawer();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const viewportHeight = useViewportHeight();
 
@@ -42,6 +43,11 @@ export const AppShell = ({ children }: AppShellProps) => {
   useKeyboardShortcut('b', onToggleLeft, { ctrl: true });
   useKeyboardShortcut('i', onToggleRight, { ctrl: true });
   useKeyboardShortcut('k', openSearch, { ctrl: true });
+  useSessionPaletteActions();
+  useChatPaletteActions();
+  useDefaultPaletteActions();
+  useSettingsPaletteActions();
+  useAuthPaletteActions();
 
   return (
     <div
@@ -59,16 +65,7 @@ export const AppShell = ({ children }: AppShellProps) => {
         onToggleRight={onToggleRight}
         onOpenSearch={openSearch}
       />
-      {isSearchOpen && (
-        <SessionsSearch
-          sessions={sessions}
-          onSessionClick={(id) => {
-            void navigate({ to: '/s/$id', params: { id } });
-            closeSearch();
-          }}
-          onClose={closeSearch}
-        />
-      )}
+      <CommandPalette />
       <div className="flex min-h-0 flex-1 gap-2.5">
         {isDesktop && leftOpen && (
           <aside className={`${panel} w-[270px] shrink-0 2xl:w-[320px]`}>

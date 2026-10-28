@@ -114,7 +114,7 @@ describe('the left panel', () => {
 
     await userEvent.click(await panel().findByRole('button', { name: /Search/ }));
 
-    expect(await screen.findByPlaceholderText(resources.sessions.searchPlaceholder)).toBeVisible();
+    expect(await screen.findByPlaceholderText(resources.commandPalette.placeholder)).toBeVisible();
   });
 
   it('shows the Sessions heading with its count and each compact relative time', async () => {
