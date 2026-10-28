@@ -67,6 +67,22 @@ describe('ModelSelect', () => {
     );
   });
 
+  it('highlights one row at a time, starting on the selected Model', async () => {
+    renderPicker('gpt-5');
+    await openPicker();
+
+    const highlighted = async () =>
+      (await screen.findAllByRole('option')).filter(
+        (option) => option.getAttribute('data-selected') === 'true',
+      );
+    expect(await highlighted()).toHaveLength(1);
+    expect(await highlighted()).toEqual([screen.getByRole('option', { name: /GPT-5/ })]);
+
+    await userEvent.keyboard('{ArrowUp}');
+
+    expect(await highlighted()).toEqual([screen.getByRole('option', { name: /GPT-4.1 mini/ })]);
+  });
+
   it('filters as you type, by label, id and provider', async () => {
     renderPicker();
     await openPicker();

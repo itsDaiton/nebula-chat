@@ -17,6 +17,9 @@ import { Kbd } from '@/shared/components/ui/kbd';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import type { ModelProvider } from '@/shared/types/types';
 
+// The mockup's key hints carry a border; Kbd's own fill matches the footer and would vanish.
+const kbdClass = 'border border-border-strong bg-raised';
+
 const groupByProvider = (options: ModelOption[]) => {
   const groups = new Map<ModelProvider, ModelOption[]>();
   for (const option of options) {
@@ -62,14 +65,14 @@ export const ModelSelect = ({
             onValueChange={setSearch}
             placeholder={resources.chat.modelPicker.search}
           />
-          <CommandList className="p-1.5">
+          <CommandList className="px-1.5 pt-1 pb-1.5">
             <CommandEmpty className="py-4 text-[12.5px] text-faint">
               {resources.chat.modelPicker.empty(search)}
             </CommandEmpty>
             {groupByProvider(options).map(([provider, models]) => (
               <CommandGroup
                 key={provider}
-                className="p-0"
+                className="p-0 **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:pt-2 **:[[cmdk-group-heading]]:pb-1 **:[[cmdk-group-heading]]:text-[11px] **:[[cmdk-group-heading]]:text-faint"
                 heading={
                   <span className="flex items-center gap-1.5">
                     <span aria-hidden="true">
@@ -110,12 +113,12 @@ export const ModelSelect = ({
           </CommandList>
           <div className="flex items-center gap-4 border-t border-border bg-raised px-3.5 py-2 text-[11.5px] text-faint">
             <span className="inline-flex items-center gap-1.5">
-              <Kbd>↑</Kbd>
-              <Kbd>↓</Kbd>
+              <Kbd className={kbdClass}>↑</Kbd>
+              <Kbd className={kbdClass}>↓</Kbd>
               {resources.chat.modelPicker.move}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Kbd>↵</Kbd>
+              <Kbd className={kbdClass}>↵</Kbd>
               {resources.chat.modelPicker.select}
             </span>
             <span className="ml-auto">{resources.chat.modelPicker.contextSize}</span>
