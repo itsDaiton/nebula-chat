@@ -7,7 +7,9 @@ import { useCommandPaletteStore } from '@/modules/commandPalette/stores/useComma
 import type { PaletteSessionsGroupProps } from '@/modules/commandPalette/types/types';
 import { resources } from '@/resources';
 import { CommandGroup, CommandItem } from '@/shared/components/ui/command';
+import { windowAround } from '@/modules/commandPalette/utils/windowAround';
 import { groupClass, itemClass } from '@/modules/commandPalette/utils/paletteClasses';
+import { cn } from '@/shared/utils/cn';
 import { useNow } from '@/shared/hooks/useNow';
 import { formatRelativeTime } from '@/shared/utils/relativeTime';
 
@@ -41,12 +43,14 @@ export const PaletteSessionsGroup = ({ onSelect }: PaletteSessionsGroupProps) =>
           className={itemClass}
         >
           <MessageSquareIcon />
-          <span className="min-w-0 flex-1 truncate">
-            <HighlightedText text={session.title} query={query} />
+          <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
+            <span className={cn('truncate', session.snippet ? 'max-w-[50%] shrink-0' : 'min-w-0')}>
+              <HighlightedText text={session.title} query={query} />
+            </span>
             {session.snippet && (
-              <span className="text-faint">
-                {' · “'}
-                <HighlightedText text={session.snippet} query={query} />”
+              <span className="min-w-0 truncate text-faint">
+                {'· “'}
+                <HighlightedText text={windowAround(session.snippet, query)} query={query} />”
               </span>
             )}
           </span>
