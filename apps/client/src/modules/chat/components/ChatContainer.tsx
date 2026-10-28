@@ -27,6 +27,7 @@ export const ChatContainer = () => {
     history,
     isStreaming,
     isPostStreamNavigation,
+    isReplyStopped,
     streamMessage,
     resumeStream,
     stop,
@@ -109,6 +110,7 @@ export const ChatContainer = () => {
             <ChatMessageList
               history={history}
               isStreaming={isStreaming}
+              isReplyStopped={isReplyStopped}
               onRegenerate={(prompt) => void handleSendMessage(prompt, selectedModel)}
             />
           </div>

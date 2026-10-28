@@ -453,6 +453,20 @@ describe('useChatStream — stopping a reply', () => {
     expect(useChatStreamStore.getState().isStreaming).toBe(false);
   });
 
+  it('flags a stopped reply, and clears the flag on the next send', async () => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    streamFrames(frame('end', { reason: 'cancelled' }, '1-1'));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+    expect(useChatStreamStore.getState().isReplyStopped).toBe(true);
+
+    streamFrames(frame('token', { token: 'ok' }, '1-1'), frame('end', {}, '1-2'));
+    await sendMessage(result);
+
+    expect(useChatStreamStore.getState().isReplyStopped).toBe(false);
+  });
+
   it('cancels a reply stopped while its message was still being sent', async () => {
     useChatStreamStore.setState({ sessionId: EXISTING_ID });
     const { cancelledStream } = stoppableStream();

@@ -102,6 +102,8 @@ export type ModelOption = {
 export type ChatMessageListProps = {
   history: ChatMessage[];
   isStreaming: boolean;
+  /** The newest reply was stopped by the User, so a note follows the thread. */
+  isReplyStopped?: boolean;
   onRegenerate?: (prompt: string) => void;
 };
 
@@ -129,6 +131,8 @@ export type ChatStreamState = {
   isStopRequested: boolean;
   /** A Guest's send was refused because their message allowance is spent. */
   isMessageAllowanceReached: boolean;
+  /** The newest reply was stopped by the User (kept in the client only: the server persists no marker). */
+  isReplyStopped: boolean;
   setHistory: Dispatch<SetStateAction<ChatMessage[]>>;
   setIsStreaming: (isStreaming: boolean) => void;
   setIsPostStreamNavigation: (v: boolean) => void;

@@ -114,6 +114,7 @@ export const useChatStream = ({
     history,
     isStreaming,
     isPostStreamNavigation,
+    isReplyStopped,
     error,
     usage,
     sessionId,
@@ -251,7 +252,10 @@ export const useChatStream = ({
         return 'failed';
       }
       // `end`, also when the User stopped the reply: what streamed is the saved reply.
-      if ((parsed as { reason?: unknown } | null)?.reason === 'cancelled') dropEmptyReply();
+      if ((parsed as { reason?: unknown } | null)?.reason === 'cancelled') {
+        dropEmptyReply();
+        useChatStreamStore.setState({ isReplyStopped: true });
+      }
       return 'ended';
     },
     [appendToken, dropEmptyReply, setHistory, setUsage, showReplyError],
@@ -336,6 +340,7 @@ export const useChatStream = ({
         usage: null,
         streamId: null,
         isStopRequested: false,
+        isReplyStopped: false,
         isMessageAllowanceReached: false,
         history: [...messages, emptyAssistantMessage()],
       });
@@ -437,6 +442,7 @@ export const useChatStream = ({
         sessionId: resumedSessionId,
         streamId,
         isStopRequested: false,
+        isReplyStopped: false,
         // A reload just after the worker persisted the reply already lists it; the replay replaces it.
         history: [...chat.history.filter((m) => m.id !== streamId), emptyAssistantMessage()],
       });
@@ -479,6 +485,7 @@ export const useChatStream = ({
     history,
     isStreaming,
     isPostStreamNavigation,
+    isReplyStopped,
     error,
     usage,
     streamMessage,

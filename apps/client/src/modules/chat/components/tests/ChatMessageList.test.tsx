@@ -66,6 +66,39 @@ describe('ChatMessageList', () => {
   });
 });
 
+describe('ChatMessageList stopped reply', () => {
+  const stopped = [{ id: 'm1', role: 'user' as const, content: 'tell me a story' }];
+
+  it('says the reply was stopped and retries the last prompt', async () => {
+    const onRegenerate = vi.fn();
+    renderWithProviders(
+      <ChatMessageList
+        history={stopped}
+        isStreaming={false}
+        isReplyStopped
+        onRegenerate={onRegenerate}
+      />,
+    );
+
+    expect(screen.getByText('Reply stopped')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(onRegenerate).toHaveBeenCalledWith('tell me a story');
+  });
+
+  it('shows nothing when the reply was not stopped', () => {
+    renderWithProviders(<ChatMessageList history={stopped} isStreaming={false} />);
+
+    expect(screen.queryByText('Reply stopped')).not.toBeInTheDocument();
+  });
+
+  it('shows nothing while a reply streams', () => {
+    renderWithProviders(<ChatMessageList history={stopped} isStreaming isReplyStopped />);
+
+    expect(screen.queryByText('Reply stopped')).not.toBeInTheDocument();
+  });
+});
+
 describe('ChatMessageList regenerate', () => {
   const thread = [
     { id: 'm1', role: 'user' as const, content: 'first question' },

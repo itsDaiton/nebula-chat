@@ -64,6 +64,7 @@ export const resources = {
       cost: (usd: number) => `~$${usd < 0.01 ? usd.toFixed(4) : usd.toFixed(2)}`,
       run: 'Run',
     },
+    stopped: { note: 'Reply stopped', retry: 'Retry' },
     code: { copy: 'Copy' },
     copyFailed: "Couldn't copy to the clipboard.",
     scrollToBottom: 'Scroll to bottom',
