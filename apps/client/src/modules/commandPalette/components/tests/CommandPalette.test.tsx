@@ -28,7 +28,9 @@ const aListedSession = (id: string, title: string) => ({
 });
 
 const recent = [aListedSession(FIRST, 'Run events in the SSE parser')];
-const found = [aListedSession(SECOND, 'Zone 2 plan for October')];
+const found = [
+  { ...aListedSession(SECOND, 'Zone 2 plan for October'), snippet: '…easy zones at 135 bpm…' },
+];
 
 const renderApp = async (user = aSession({ isAnonymous: false })) => {
   server.use(
@@ -111,6 +113,11 @@ describe('the command palette', () => {
 
     const row = await screen.findByRole('option', { name: /Zone 2 plan for October/ });
     expect(row.querySelector('mark')).toHaveTextContent('Zone');
+    expect(row).toHaveTextContent('· “…easy zones at 135 bpm…”');
+    expect([...row.querySelectorAll('mark')].map((mark) => mark.textContent)).toEqual([
+      'Zone',
+      'zone',
+    ]);
   });
 
   it('runs the shortcuts of Switch Model, Open Settings and New chat', async () => {

@@ -1,4 +1,5 @@
 import { MessageSquareIcon } from 'lucide-react';
+import type { SessionSearchResult } from '@/libs/api/generated/model/sessionSearchResult';
 import { useSearchSessions } from '@/libs/api/generated/sessions/sessions';
 import { HighlightedText } from '@/modules/commandPalette/components/HighlightedText';
 import { useSessions } from '@/modules/sessions/hooks/useSessions';
@@ -25,7 +26,7 @@ export const PaletteSessionsGroup = ({ onSelect }: PaletteSessionsGroupProps) =>
 
   // Until the debounce settles, the previous results would answer the wrong text.
   const isSettled = query.trim() === text;
-  let sessions = isSettled ? found : [];
+  let sessions: SessionSearchResult[] = isSettled ? found : [];
   if (!query.trim()) sessions = recent.slice(0, RECENT_COUNT);
 
   if (sessions.length === 0) return null;
@@ -42,6 +43,12 @@ export const PaletteSessionsGroup = ({ onSelect }: PaletteSessionsGroupProps) =>
           <MessageSquareIcon />
           <span className="min-w-0 flex-1 truncate">
             <HighlightedText text={session.title} query={query} />
+            {session.snippet && (
+              <span className="text-faint">
+                {' · “'}
+                <HighlightedText text={session.snippet} query={query} />”
+              </span>
+            )}
           </span>
           <span className="font-mono text-[11px] text-faint">
             {formatRelativeTime(session.createdAt, now)}
