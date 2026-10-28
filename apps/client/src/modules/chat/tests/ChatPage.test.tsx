@@ -19,7 +19,7 @@ import { resources } from '@/resources';
 import { renderRoute } from '@/test/renderRoute';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { aMeteredAllowance } from '@/test/allowance';
-import { aSession, mockGetSession } from '@/test/auth';
+import { aSession, holdSession, mockGetSession } from '@/test/auth';
 import { mockReplyStream, sseFrame } from '@/test/chat';
 import { server } from '@/test/msw';
 
@@ -235,10 +235,15 @@ describe('ChatPage', () => {
   });
 
   it('fills the composer from a starter prompt', async () => {
+    await holdSession({ isAnonymous: false, emailVerified: true });
     await renderPage();
-    const [{ prompt }] = resources.chat.starters;
+    const pool: string[] = resources.chat.starters.map(({ prompt }) => prompt);
+    const starter = (await screen.findAllByRole('button')).find((button) =>
+      pool.includes(button.textContent ?? ''),
+    );
 
-    await userEvent.click(await screen.findByRole('button', { name: prompt }));
+    await userEvent.click(starter!);
+    const prompt = starter!.textContent;
 
     expect(screen.getByRole('textbox', { name: resources.chat.composer.label })).toHaveValue(
       prompt,
@@ -291,6 +296,7 @@ describe('ChatPage', () => {
   });
 
   it('shows the Run toggle disabled, and the allowance counter under the composer', async () => {
+    await holdSession({ isAnonymous: true });
     server.use(mockGetSession(aSession()), getGetMessageAllowanceMockHandler(aMeteredAllowance(3)));
     await renderPage();
 

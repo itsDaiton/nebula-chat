@@ -34,7 +34,7 @@ const CodeBlock = ({ code, language }: CodeBlockProps) => {
           className="text-[11.5px] text-muted-foreground"
           onClick={() => void copy(code)}
         >
-          {copied ? <CheckIcon className="text-success" /> : <CopyIcon />}
+          {copied ? <CheckIcon /> : <CopyIcon />}
           {copied ? resources.chat.meta.copied : resources.chat.code.copy}
         </Button>
       </div>

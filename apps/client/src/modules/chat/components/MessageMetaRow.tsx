@@ -27,11 +27,7 @@ export const MessageMetaRow = ({ message, onRegenerate }: ChatMessageProps) => {
         label={meta.copy}
         onClick={() => void copy(message.content)}
       >
-        {copied ? (
-          <CheckIcon className="size-3.5 text-success" />
-        ) : (
-          <CopyIcon className="size-3.5" />
-        )}
+        {copied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}
       </IconButton>
       {onRegenerate && (
         <IconButton variant="ghost" size="icon-xs" label={meta.regenerate} onClick={onRegenerate}>

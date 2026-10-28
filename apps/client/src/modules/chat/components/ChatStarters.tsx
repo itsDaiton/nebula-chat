@@ -1,21 +1,48 @@
-import { GaugeIcon, ListTreeIcon, TypeIcon, ZapIcon } from 'lucide-react';
+import { useMemo } from 'react';
+import {
+  BookOpenIcon,
+  CalendarDaysIcon,
+  LightbulbIcon,
+  MoonIcon,
+  PenLineIcon,
+  ScaleIcon,
+  SmileIcon,
+  UtensilsCrossedIcon,
+  WalletIcon,
+} from 'lucide-react';
+import { useAuth } from '@/modules/auth/hooks/useAuth';
+import { pickStarters } from '@/modules/chat/utils/pickStarters';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
 import { resources } from '@/resources';
 
-const ICONS = { zap: ZapIcon, 'list-tree': ListTreeIcon, type: TypeIcon, gauge: GaugeIcon };
+const ICONS = {
+  pen: PenLineIcon,
+  book: BookOpenIcon,
+  calendar: CalendarDaysIcon,
+  utensils: UtensilsCrossedIcon,
+  lightbulb: LightbulbIcon,
+  smile: SmileIcon,
+  scale: ScaleIcon,
+  moon: MoonIcon,
+  wallet: WalletIcon,
+};
 
-/** Starter prompts for a new chat: picking one fills the composer, ready to send or edit. */
+/** Four random starter prompts for a new chat: picking one fills the composer, ready to send or edit. A Guest sees none, so a capped allowance is not spent on a throwaway prompt. */
 export const ChatStarters = () => {
+  const { isGuest } = useAuth();
   const setMessage = useMessageStore((state) => state.setMessage);
+  const starters = useMemo(() => pickStarters(resources.chat.starters), []);
 
   const fill = (prompt: string) => {
     setMessage(prompt);
     document.querySelector<HTMLTextAreaElement>('[data-slot="prompt-input-textarea"]')?.focus();
   };
 
+  if (isGuest) return null;
+
   return (
     <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
-      {resources.chat.starters.map(({ icon, prompt }) => {
+      {starters.map(({ icon, prompt }) => {
         const Icon = ICONS[icon];
         return (
           <button

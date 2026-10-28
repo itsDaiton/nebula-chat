@@ -1,10 +1,8 @@
 import { Link } from '@tanstack/react-router';
-import { InfoIcon } from 'lucide-react';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { useMessageAllowance } from '@/modules/chat/hooks/useMessageAllowance';
 import { resources } from '@/resources';
-import { buttonVariants } from '@/shared/components/ui/button';
-import { cn } from '@/shared/utils/cn';
+import { allowanceLinkClass as LINK } from '@/modules/chat/utils/allowanceLinkClass';
 
 /** Shown once a Guest's message allowance is spent (or a send was refused at it); registering lifts it. */
 export const MessageAllowancePrompt = () => {
@@ -13,19 +11,15 @@ export const MessageAllowancePrompt = () => {
 
   if (!isGuest || !isSpent) return null;
 
+  const { title, action, description } = resources.chat.messageAllowance;
+
   return (
-    <div
-      role="alert"
-      className="mb-3 flex items-center gap-2.5 rounded-[10px] border border-border bg-raised px-3.5 py-3 text-[12.5px] text-foreground-secondary"
-    >
-      <InfoIcon aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
-      <div className="min-w-0 flex-1">
-        <p className="font-medium text-foreground">{resources.chat.messageAllowance.title}</p>
-        <p>{resources.chat.messageAllowance.description}</p>
-      </div>
-      <Link to="/auth" className={cn(buttonVariants({ size: 'sm' }), 'shrink-0 rounded-full')}>
-        {resources.chat.messageAllowance.action}
-      </Link>
-    </div>
+    <p role="alert" className="mb-3 px-1.5 text-center text-[12.5px] text-muted-foreground">
+      <span className="font-medium text-foreground">{title}</span>{' '}
+      <Link to="/auth" className={LINK}>
+        {action}
+      </Link>{' '}
+      {description}
+    </p>
   );
 };

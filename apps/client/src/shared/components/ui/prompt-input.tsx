@@ -5,7 +5,7 @@ const PromptInput = ({ className, ...props }: React.ComponentProps<'form'>) => (
   <form
     data-slot="prompt-input"
     className={cn(
-      'flex flex-col rounded-[18px] border border-border-strong bg-raised pt-3 pr-3 pb-2.5 pl-4 transition-colors focus-within:border-muted-foreground',
+      'flex flex-col rounded-[18px] border border-border-strong bg-raised pt-3 pr-3 pb-2.5 pl-4 transition-colors focus-within:border-muted-foreground/50',
       className,
     )}
     {...props}

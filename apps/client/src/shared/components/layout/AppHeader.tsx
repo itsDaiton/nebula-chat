@@ -15,6 +15,7 @@ import { Button } from '@/shared/components/ui/button';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { Kbd } from '@/shared/components/ui/kbd';
 import { cn } from '@/shared/utils/cn';
+import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
 import { useOS } from '@/shared/hooks/useOS';
 import type { AppHeaderProps } from '@/shared/types/types';
 import { useColorMode } from '@/theme/hooks/useColorMode';
@@ -29,6 +30,7 @@ export const AppHeader = ({
 }: AppHeaderProps) => {
   const modifier = resources.shell.modifier[useOS()];
   const { colorMode, toggleColorMode } = useColorMode();
+  useKeyboardShortcut('l', toggleColorMode, { ctrl: true, shift: true });
   const { id } = useParams({ strict: false });
   const { data: session } = useGetSession(id ?? '', { query: { enabled: Boolean(id) } });
 
@@ -89,7 +91,11 @@ export const AppHeader = ({
         >
           <PanelRightIcon />
         </IconAction>
-        <IconAction label={resources.shell.toggleColorMode} onClick={toggleColorMode}>
+        <IconAction
+          label={resources.shell.toggleColorMode}
+          shortcut={`${modifier} ⇧ L`}
+          onClick={toggleColorMode}
+        >
           {colorMode === 'dark' ? <SunIcon /> : <MoonIcon />}
         </IconAction>
       </div>
