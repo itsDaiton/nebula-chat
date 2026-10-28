@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
+import type { ModelProvider } from '@/shared/types/types';
 
 export type ChatMessage = {
   id: string;
@@ -97,6 +98,22 @@ export type ChatEmptyStateProps = {
 export type ModelOption = {
   label: string;
   value: string;
+  provider: ModelProvider;
+  contextWindow: number;
+};
+
+export type ModelPickerState = {
+  isOpen: boolean;
+  search: string;
+  setOpen: (isOpen: boolean) => void;
+  setSearch: (search: string) => void;
+};
+
+export type ModelSelectProps = {
+  selectedModel: string;
+  onModelChange: (model: string) => void;
+  /** The catalog to pick from; the client's own list until `GET /api/models` is read. */
+  options?: ModelOption[];
 };
 
 export type ChatMessageListProps = {

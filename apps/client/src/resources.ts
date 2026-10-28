@@ -51,6 +51,13 @@ export const resources = {
       attach: 'Attach files (soon)',
       disclaimer: 'Nebula can make mistakes. Check important info.',
     },
+    modelPicker: {
+      search: 'Search Models…',
+      empty: (query: string) => `No Models match “${query}”`,
+      move: 'move',
+      select: 'select',
+      contextSize: 'context size',
+    },
     run: {
       label: 'Run',
       soon: 'Runs are coming soon. Agents will plan, analyse and review answers.',

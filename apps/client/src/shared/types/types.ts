@@ -49,6 +49,13 @@ export type AppShellProps = {
   children: ReactNode;
 };
 
+export type ModelProvider = 'anthropic' | 'openai';
+
+export type ProviderLogoProps = {
+  provider: ModelProvider;
+  className?: string;
+};
+
 export type NebulaLogoProps = {
   className?: string;
 };
