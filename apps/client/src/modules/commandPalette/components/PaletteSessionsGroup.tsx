@@ -23,7 +23,8 @@ export const PaletteSessionsGroup = ({ onSelect }: PaletteSessionsGroupProps) =>
 
   // Until the debounce settles, the previous results would answer the wrong text.
   const isSettled = query.trim() === text;
-  const sessions = !query.trim() ? recent.slice(0, RECENT_COUNT) : isSettled ? found : [];
+  let sessions = isSettled ? found : [];
+  if (!query.trim()) sessions = recent.slice(0, RECENT_COUNT);
 
   if (sessions.length === 0) return null;
 
