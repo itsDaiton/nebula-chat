@@ -9,6 +9,12 @@ export const modelOptions: ModelOption[] = [
   { label: 'GPT-5.1', value: 'gpt-5.1', provider: 'openai', contextWindow: 400_000 },
   { label: 'GPT-5', value: 'gpt-5', provider: 'openai', contextWindow: 400_000 },
   { label: 'GPT-5 mini', value: 'gpt-5-mini', provider: 'openai', contextWindow: 400_000 },
+  {
+    label: 'Claude 3.5 Haiku',
+    value: 'claude-3-5-haiku-20241022',
+    provider: 'anthropic',
+    contextWindow: 200_000,
+  },
 ];
 
 const getModelOption = (id: string) => modelOptions.find((option) => option.value === id);
