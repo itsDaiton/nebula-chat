@@ -5,7 +5,7 @@ import { requireAuthentication } from '@server/plugins/authGate.plugin';
 import {
   sessionDetailResponseSchema,
   sessionResponseSchema,
-  sessionsArraySchema,
+  sessionSearchResultsSchema,
   createSessionSchema,
   getSessionSchema,
   getSessionsQuerySchema,
@@ -38,13 +38,13 @@ const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
   app.get('/search', {
     schema: {
       description:
-        'Search the caller’s own sessions by title, ordered by creation date. Archived sessions are excluded unless `archived=true`.',
+        'Search the caller’s own sessions by title or Message content, ordered by creation date. A match inside a Message adds a `snippet` around it. Archived sessions are excluded unless `archived=true`.',
       summary: 'Search sessions',
       tags: ['Sessions'],
       operationId: 'searchSessions',
       querystring: searchSessionsQuerySchema,
       response: {
-        200: jsonResponse('Matching sessions owned by the caller', sessionsArraySchema),
+        200: jsonResponse('Matching sessions owned by the caller', sessionSearchResultsSchema),
         400: jsonResponse('Invalid search query', errorEnvelopeSchema),
         401: jsonResponse('No auth session', errorEnvelopeSchema),
         500: jsonResponse('Internal server error', errorEnvelopeSchema),

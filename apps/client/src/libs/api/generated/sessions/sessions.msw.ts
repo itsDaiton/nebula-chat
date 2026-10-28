@@ -9,7 +9,7 @@ import { faker } from '@faker-js/faker';
 import { HttpResponse, http } from 'msw';
 import type { RequestHandlerOptions } from 'msw';
 
-import type { Session, SessionDetail, SessionPage } from '../model';
+import type { Session, SessionDetail, SessionPage, SessionSearchResult } from '../model';
 
 export const getCreateSessionResponseMock = (
   overrideResponse: Partial<Extract<Session, object>> = {},
@@ -37,12 +37,16 @@ export const getListSessionsResponseMock = (
   ...overrideResponse,
 });
 
-export const getSearchSessionsResponseMock = (): Session[] =>
+export const getSearchSessionsResponseMock = (): SessionSearchResult[] =>
   Array.from({ length: faker.number.int({ min: 1, max: 100 }) }, (_, i) => i + 1).map(() => ({
     id: faker.string.uuid(),
     title: faker.string.alpha({ length: { min: 10, max: 20 } }),
     createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
     archived: faker.datatype.boolean(),
+    snippet: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      undefined,
+    ]),
   }));
 
 export const getArchiveSessionResponseMock = (
@@ -122,8 +126,10 @@ export const getListSessionsMockHandler = (
 
 export const getSearchSessionsMockHandler = (
   overrideResponse?:
-    | Session[]
-    | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<Session[]> | Session[]),
+    | SessionSearchResult[]
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<SessionSearchResult[]> | SessionSearchResult[]),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
