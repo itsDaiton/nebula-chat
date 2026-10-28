@@ -23,6 +23,8 @@
   --success: #16a34a;
   --warning: #d97706;
   --destructive: #dc2626;
+  /* Anthropic's brand orange, used by its logo alone and the same in both modes. */
+  --anthropic: #d97757;
 
   /* shadcn's names, mapped onto the palette above. */
   --background: var(--canvas);
@@ -108,6 +110,7 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-destructive: var(--destructive);
+  --color-anthropic: var(--anthropic);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
   --color-input: var(--input);
