@@ -29,8 +29,11 @@ const CommandDialog = ({
   children,
   className,
   showCloseButton = false,
+  finalFocus,
   ...props
 }: Omit<React.ComponentProps<typeof Dialog>, 'children'> & {
+  /** Where focus lands on close; the dialog has no trigger to return it to. */
+  finalFocus?: React.ComponentProps<typeof DialogContent>['finalFocus'];
   title?: string;
   description?: string;
   className?: string;
@@ -41,6 +44,7 @@ const CommandDialog = ({
     <DialogContent
       className={cn('top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0', className)}
       showCloseButton={showCloseButton}
+      finalFocus={finalFocus}
     >
       {/* Inside the popup, so Base UI names the dialog by them. */}
       <DialogHeader className="sr-only">

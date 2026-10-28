@@ -33,7 +33,7 @@ committed, never hand-edited), `resources.ts` (UI strings) and:
   and the pathless `_app/_chat` layout rendering `AppShell` around `index` and `s/$id`). `routing/` — router setup, `RootLayout`, search-param helpers.
 - `libs/api/` — the axios instance and SSE fetch mutator (`client.ts`, `streamClient.ts`), the query client,
   and `generated/` (Orval output). `libs/auth/` — the better-auth client, the one auth entry point.
-- `modules/<feature>/` — `auth`, `chat`, `sessions`, `settings`. Each splits into `components/`, `hooks/`,
+- `modules/<feature>/` — `auth`, `chat`, `commandPalette`, `sessions`, `settings`. Each splits into `components/`, `hooks/`,
   `stores/`, `utils/` and `types/types.ts`, plus its page component.
 - `shared/` — cross-module `components/` (with `ui/` for Chakra adapters and the redesign's base components),
   `hooks/`, `stores/`, `layout/`, `config/`, `utils/`.
@@ -75,6 +75,13 @@ coverage and knip. A route file only wires a page: the component lives in `modul
   router on memory history with the app's providers, a fresh query client and MSW. It seeds the session
   bootstrap so the guard passes; `renderRoute(path, { seedSession: false })` lets the guard run (see
   `routing/tests/guard.test.tsx`). A component that only links or reads the route uses `renderInRouter(ui)`.
+
+## Command palette
+
+`Ctrl/⌘ K` opens `modules/commandPalette`. A module adds its actions with `useRegisterPaletteActions([...])`
+(`{ id, group, label, keywords, icon, shortcut?, perform, visible? }`), called from a component that is always
+mounted (see `useSessionPaletteActions`, called by `AppShell`); they are listed while it stays mounted, and
+`visible: false` hides one (Open admin). Sessions come from the search API, not the registry.
 
 ## Imports, barrels and types
 
