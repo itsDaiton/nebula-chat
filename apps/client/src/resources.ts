@@ -46,8 +46,7 @@ export const resources = {
       title: "You've reached the free message limit",
       description: 'Register or sign in to keep chatting. Your sessions come with you.',
       action: 'Register or sign in',
-      counterAction: 'Sign up',
-      toKeepChatting: 'to keep chatting',
+      counterAction: 'Sign up to keep chatting',
       remaining: (remaining: number, limit: number) =>
         `${remaining} of ${limit} ${remaining === 1 ? 'message' : 'messages'} left`,
     },

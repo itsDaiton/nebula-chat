@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ArrowDownIcon } from 'lucide-react';
 import { resources } from '@/resources';
-import { Button } from '@/shared/components/ui/button';
+import { IconButton } from '@/shared/components/ui/icon-button';
 import { useScrollPositionStore } from '@/shared/stores/useScrollPositionStore';
 import { cn } from '@/shared/utils/cn';
 
@@ -60,10 +60,10 @@ const ChatScroller = ({
         />
       </div>
       {!isAtBottom && (
-        <Button
+        <IconButton
           variant="outline"
           size="icon-sm"
-          aria-label={resources.chat.scrollToBottom}
+          label={resources.chat.scrollToBottom}
           className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-panel shadow-sm"
           onClick={() =>
             viewportRef.current?.scrollTo({
@@ -73,7 +73,7 @@ const ChatScroller = ({
           }
         >
           <ArrowDownIcon />
-        </Button>
+        </IconButton>
       )}
     </div>
   );

@@ -213,6 +213,8 @@ context is genuinely needed, split it across two files:
   `font-mono` for metadata and ids, `tabular-nums` for numbers), never raw colours. Until Chakra is removed
   (NEB-555), Tailwind's preflight is off and its utilities are unlayered so they beat Chakra's layered
   reset; a small reset scoped to `[data-slot]` stands in for preflight on the new components.
+- **Icon-only buttons use `IconButton`** (`shared/components/ui/icon-button.tsx`): it takes a `label` that is both the
+  accessible name and the tooltip, so no icon is unnamed on hover. A bare `Button` with just an icon is a bug.
 - **Chat surfaces (NEB-549)** are Tailwind over the same tokens. Assistant markdown goes through
   `MarkdownContent`: prose styles live in `.chat-prose` (`styles/globals.css`), and a fenced block becomes the
   `CodeBlock` (language label, copy), highlighted by `utils/highlightCode.ts` with Shiki's `css-variables` theme,

@@ -12,6 +12,7 @@ import { resources } from '@/resources';
 import { NebulaLogo } from '@/shared/components/NebulaLogo';
 import { IconAction } from '@/shared/components/layout/IconAction';
 import { Button } from '@/shared/components/ui/button';
+import { IconButton } from '@/shared/components/ui/icon-button';
 import { Kbd } from '@/shared/components/ui/kbd';
 import { cn } from '@/shared/utils/cn';
 import { useOS } from '@/shared/hooks/useOS';
@@ -50,9 +51,14 @@ export const AppHeader = ({
         </IconAction>
         {!isDesktop && <NebulaLogo />}
         {session && (
-          <h1 className="ml-1.5 min-w-0 truncate text-[13px] font-normal text-foreground-secondary">
-            {session.title}
-          </h1>
+          <>
+            <span aria-hidden className="text-faint">
+              /
+            </span>
+            <h1 className="min-w-0 truncate text-[13px] font-normal text-foreground-secondary">
+              {session.title}
+            </h1>
+          </>
         )}
       </div>
       <Button
@@ -65,15 +71,16 @@ export const AppHeader = ({
         <Kbd className="ml-auto">{`${modifier} K`}</Kbd>
       </Button>
       <div className="flex flex-1 items-center justify-end gap-1">
-        <Button
+        <IconButton
           variant="ghost"
           size="icon"
           className="sm:hidden"
-          aria-label={resources.shell.search}
+          label={resources.shell.search}
+          side="bottom"
           onClick={onOpenSearch}
         >
           <SearchIcon />
-        </Button>
+        </IconButton>
         <IconAction
           label={resources.shell.togglePanel.right}
           shortcut={`${modifier} I`}
