@@ -14,6 +14,7 @@ export const useDefaultPaletteActions = () => {
       label: resources.commandPalette.toggleTheme,
       keywords: ['dark', 'light', 'color mode'],
       icon: colorMode === 'dark' ? <SunIcon /> : <MoonIcon />,
+      shortcut: ['⇧', 'Y'],
       perform: toggleColorMode,
     },
   ]);

@@ -70,7 +70,7 @@ describe('the command palette', () => {
     ).toBeVisible();
     expect(screen.getByRole('option', { name: /New chat/ })).toBeVisible();
     expect(
-      screen.getByRole('option', { name: resources.commandPalette.toggleTheme }),
+      screen.getByRole('option', { name: new RegExp(resources.commandPalette.toggleTheme) }),
     ).toBeVisible();
 
     await userEvent.keyboard('{Escape}');
@@ -88,6 +88,49 @@ describe('the command palette', () => {
     await userEvent.click(await screen.findByRole('button', { name: resources.shell.search }));
 
     expect(await screen.findByPlaceholderText(resources.commandPalette.placeholder)).toBeVisible();
+  });
+
+  it('hints the keys of each action and closes with esc', async () => {
+    await renderApp();
+    await openPalette();
+
+    const withKeys = (name: string) =>
+      screen.getByRole('option', { name: new RegExp(name) }).querySelectorAll('[data-slot="kbd"]');
+    expect([...withKeys('New chat')].map((key) => key.textContent)).toEqual(['Ctrl', 'E']);
+    expect([...withKeys('Toggle theme')].map((key) => key.textContent)).toEqual(['Ctrl', '⇧', 'Y']);
+    expect([...withKeys('Switch Model')].map((key) => key.textContent)).toEqual(['Ctrl', '⇧', 'L']);
+    expect([...withKeys('Open Settings')].map((key) => key.textContent)).toEqual(['Ctrl', ',']);
+    expect(screen.getAllByText('esc').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('highlights the typed text in Session titles and action names', async () => {
+    await renderApp();
+    server.use(http.get('*/api/sessions/search', () => HttpResponse.json(found)));
+
+    await userEvent.type(await openPalette(), 'zone');
+
+    const row = await screen.findByRole('option', { name: /Zone 2 plan for October/ });
+    expect(row.querySelector('mark')).toHaveTextContent('Zone');
+  });
+
+  it('runs the shortcuts of Switch Model, Open Settings and New chat', async () => {
+    const { router } = await renderApp();
+    await router.navigate({ to: '/s/$id', params: { id: FIRST } });
+
+    await userEvent.keyboard('{Control>}{Shift>}l{/Shift}{/Control}');
+    await waitFor(() => expect(useModelPickerStore.getState().isOpen).toBe(true));
+
+    await userEvent.keyboard('{Control>},{/Control}');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/settings'));
+  });
+
+  it('starts a new chat on Ctrl+E even with the left panel collapsed', async () => {
+    const { router } = await renderApp();
+    await router.navigate({ to: '/s/$id', params: { id: FIRST } });
+
+    await userEvent.keyboard('{Control>}e{/Control}');
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/'));
   });
 
   it('returns focus to where it was', async () => {
@@ -154,7 +197,7 @@ describe('the command palette', () => {
     await openPalette();
 
     await userEvent.click(
-      screen.getByRole('option', { name: resources.commandPalette.openSettings }),
+      screen.getByRole('option', { name: new RegExp(resources.commandPalette.openSettings) }),
     );
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/settings'));
@@ -165,7 +208,7 @@ describe('the command palette', () => {
     await openPalette();
 
     await userEvent.click(
-      screen.getByRole('option', { name: resources.commandPalette.switchModel }),
+      screen.getByRole('option', { name: new RegExp(resources.commandPalette.switchModel) }),
     );
 
     await waitFor(() => expect(useModelPickerStore.getState().isOpen).toBe(true));
@@ -177,7 +220,7 @@ describe('the command palette', () => {
     const before = document.documentElement.classList.contains('dark');
 
     await userEvent.click(
-      screen.getByRole('option', { name: resources.commandPalette.toggleTheme }),
+      screen.getByRole('option', { name: new RegExp(resources.commandPalette.toggleTheme) }),
     );
 
     await waitFor(() => expect(document.documentElement.classList.contains('dark')).toBe(!before));
@@ -186,7 +229,7 @@ describe('the command palette', () => {
   it('offers Open admin to Admins only', async () => {
     const { unmount } = await renderApp(aSession({ isAnonymous: false, role: 'admin' }));
     await openPalette();
-    expect(screen.getByRole('option', { name: resources.commandPalette.openAdmin })).toBeVisible();
+    expect(screen.getByRole('option', { name: /Open admin/ })).toHaveTextContent('Admin');
     unmount();
     useSearchStore.setState({ isSearchOpen: false });
 

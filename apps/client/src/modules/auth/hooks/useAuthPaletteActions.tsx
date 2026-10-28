@@ -15,6 +15,7 @@ export const useAuthPaletteActions = () => {
       label: resources.commandPalette.openAdmin,
       keywords: ['dashboard', 'users'],
       icon: <LayoutDashboardIcon />,
+      badge: resources.account.admin,
       visible: isAdmin,
       // The admin dashboard has no route yet (#531), so the path is pushed rather than typed.
       perform: () => router.history.push('/admin'),

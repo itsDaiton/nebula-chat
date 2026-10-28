@@ -6,8 +6,10 @@ export type PaletteAction = {
   label: string;
   keywords?: string[];
   icon: ReactNode;
-  /** Key hint shown after the platform modifier, e.g. `E`. */
-  shortcut?: string;
+  /** Keys that follow the platform modifier in the hint, e.g. `['⇧', 'Y']`. */
+  shortcut?: string[];
+  /** A tag at the end of the row, e.g. `Admin`. */
+  badge?: string;
   perform: () => void;
   /** Hidden from the palette while false. */
   visible?: boolean;
@@ -25,4 +27,9 @@ export type CommandPaletteState = {
 
 export type PaletteSessionsGroupProps = {
   onSelect: (sessionId: string) => void;
+};
+
+export type HighlightedTextProps = {
+  text: string;
+  query: string;
 };
