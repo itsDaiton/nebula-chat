@@ -92,6 +92,7 @@ describe('OpenAPI document', () => {
       'Session',
       'SessionDetail',
       'SessionPage',
+      'SessionSearchResult',
       'UnmeteredMessageAllowance',
     ]);
   });

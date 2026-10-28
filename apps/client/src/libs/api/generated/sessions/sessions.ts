@@ -32,6 +32,7 @@ import type {
   Session,
   SessionDetail,
   SessionPage,
+  SessionSearchResult,
 } from '../model';
 
 import { axiosClient } from '../../client';
@@ -410,7 +411,7 @@ export function useListSessions<
 }
 
 /**
- * Search the caller’s own sessions by title, ordered by creation date. Archived sessions are excluded unless `archived=true`.
+ * Search the caller’s own sessions by title or Message content, ordered by creation date. A match inside a Message adds a `snippet` around it. Archived sessions are excluded unless `archived=true`.
  * @summary Search sessions
  */
 export const searchSessions = (
@@ -418,7 +419,7 @@ export const searchSessions = (
   options?: SecondParameter<typeof axiosClient>,
   signal?: AbortSignal,
 ) => {
-  return axiosClient<Session[]>(
+  return axiosClient<SessionSearchResult[]>(
     { url: `/api/sessions/search`, method: 'GET', params, signal },
     options,
   );

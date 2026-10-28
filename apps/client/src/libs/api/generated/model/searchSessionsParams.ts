@@ -8,7 +8,7 @@ import type { SearchSessionsArchived } from './searchSessionsArchived';
 
 export type SearchSessionsParams = {
   /**
-   * Search query to filter sessions by title
+   * Search query to filter sessions by title or Message content
    * @minLength 1
    */
   q: string;

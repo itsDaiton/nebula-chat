@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.7.0...nebula-chat-client-v2.8.0) (2026-10-28)
+
+
+### Features
+
+* **server:** Session search matches Message content and returns a snippet ([#680](https://github.com/itsDaiton/nebula-chat/issues/680)) ([367cf88](https://github.com/itsDaiton/nebula-chat/commit/367cf8835471ce9b00ac8d79e9fc28fd3f1753ac))
+
 ## [2.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.6.1...nebula-chat-client-v2.7.0) (2026-10-27)
 
 
