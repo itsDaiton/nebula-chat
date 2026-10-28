@@ -7,6 +7,9 @@ import { cn } from '@/shared/utils/cn';
 
 const BOTTOM_TOLERANCE_PX = 48;
 
+const distanceFromBottom = ({ scrollHeight, scrollTop, clientHeight }: HTMLElement) =>
+  scrollHeight - scrollTop - clientHeight;
+
 type ChatScrollerProps = React.ComponentProps<'div'> & {
   /** The element at the end of the thread: what scrolling to the newest Message reveals. */
   anchorRef?: React.Ref<HTMLDivElement>;
@@ -20,22 +23,30 @@ const ChatScroller = ({
   onScroll,
   ...props
 }: ChatScrollerProps) => {
-  const viewportRef = React.useRef<HTMLDivElement>(null);
+  const viewportRef = React.useRef<HTMLDivElement | null>(null);
   const isAtBottom = useScrollPositionStore((state) => state.isAtBottom);
   const markAtBottom = useScrollPositionStore((state) => state.markAtBottom);
+
+  // The store outlives a thread, so a short new one must not inherit "scrolled up" from the last.
+  const measureOnMount = React.useCallback(
+    (element: HTMLDivElement | null) => {
+      viewportRef.current = element;
+      if (element) markAtBottom(distanceFromBottom(element) <= BOTTOM_TOLERANCE_PX);
+    },
+    [markAtBottom],
+  );
 
   return (
     <div data-slot="chat-scroller" className="relative flex min-h-0 flex-1 flex-col">
       <div
-        ref={viewportRef}
+        ref={measureOnMount}
         data-slot="chat-scroller-viewport"
         className={cn(
           'min-h-0 flex-1 overflow-y-auto [&>*:not([data-slot=chat-scroller-anchor])]:[overflow-anchor:none]',
           className,
         )}
         onScroll={(event) => {
-          const { scrollHeight, scrollTop, clientHeight } = event.currentTarget;
-          markAtBottom(scrollHeight - scrollTop - clientHeight <= BOTTOM_TOLERANCE_PX);
+          markAtBottom(distanceFromBottom(event.currentTarget) <= BOTTOM_TOLERANCE_PX);
           onScroll?.(event);
         }}
         {...props}

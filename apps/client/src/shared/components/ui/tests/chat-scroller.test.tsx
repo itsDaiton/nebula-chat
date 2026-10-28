@@ -30,6 +30,14 @@ describe('ChatScroller', () => {
     expect(screen.queryByRole('button', { name: 'Scroll to bottom' })).not.toBeInTheDocument();
   });
 
+  it('does not inherit a scrolled-up position from the previous thread', () => {
+    useScrollPositionStore.setState({ isAtBottom: false });
+
+    render(<ChatScroller>a short thread that fits</ChatScroller>);
+
+    expect(screen.queryByRole('button', { name: 'Scroll to bottom' })).not.toBeInTheDocument();
+  });
+
   it('shows the button once the reader scrolls up, and scrolls to the end on click', async () => {
     const { container } = render(<ChatScroller>thread</ChatScroller>);
     scrollAway(container.querySelector('[data-slot="chat-scroller-viewport"]')!, 300);

@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { MessageMetaRow } from '@/modules/chat/components/MessageMetaRow';
@@ -30,6 +30,16 @@ describe('MessageMetaRow', () => {
     await user.click(screen.getByRole('button', { name: 'Copy' }));
 
     expect(await navigator.clipboard.readText()).toBe('copy me');
+  });
+
+  it('swaps the copy icon for a check once the copy has worked', async () => {
+    const user = userEvent.setup();
+    const { container } = renderWithProviders(<MessageMetaRow message={reply()} />);
+    expect(container.querySelector('.lucide-check')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Copy' }));
+
+    await waitFor(() => expect(container.querySelector('.lucide-check')).toBeInTheDocument());
   });
 
   it('regenerates on request', async () => {

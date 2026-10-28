@@ -1,4 +1,4 @@
-import { CopyIcon, RefreshCwIcon } from 'lucide-react';
+import { CheckIcon, CopyIcon, RefreshCwIcon } from 'lucide-react';
 import { MetaSeparator } from '@/modules/chat/components/MetaSeparator';
 import { getModelLabel } from '@/modules/chat/utils/modelOptions';
 import type { ChatMessageProps } from '@/modules/chat/types/types';
@@ -10,7 +10,7 @@ const { meta } = resources.chat;
 
 /** Copy, regenerate and how the answer was made; it shows on hover and while focus is inside. */
 export const MessageMetaRow = ({ message, onRegenerate }: ChatMessageProps) => {
-  const copy = useCopyToClipboard();
+  const { copy, copied } = useCopyToClipboard();
   const { runId, model, tokenCount, estimatedCostUsd } = message;
   let source: string | null = null;
   if (runId) source = meta.run;
@@ -27,7 +27,11 @@ export const MessageMetaRow = ({ message, onRegenerate }: ChatMessageProps) => {
         aria-label={meta.copy}
         onClick={() => void copy(message.content)}
       >
-        <CopyIcon className="size-3.5" />
+        {copied ? (
+          <CheckIcon className="size-3.5 text-success" />
+        ) : (
+          <CopyIcon className="size-3.5" />
+        )}
       </Button>
       {onRegenerate && (
         <Button variant="ghost" size="icon-xs" aria-label={meta.regenerate} onClick={onRegenerate}>

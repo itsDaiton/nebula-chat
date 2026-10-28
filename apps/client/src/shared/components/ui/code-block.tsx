@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { CopyIcon } from 'lucide-react';
+import { CheckIcon, CopyIcon } from 'lucide-react';
 import { resources } from '@/resources';
 import { Button } from '@/shared/components/ui/button';
 import { useCopyToClipboard } from '@/shared/hooks/useCopyToClipboard';
@@ -11,7 +11,7 @@ type CodeBlockProps = {
 };
 
 const CodeBlock = ({ code, language }: CodeBlockProps) => {
-  const copy = useCopyToClipboard();
+  const { copy, copied } = useCopyToClipboard();
   // Highlighting is async and pure, so it rides the query cache; the plain code shows until it lands.
   const { data: html } = useQuery({
     queryKey: ['highlight', language, code],
@@ -34,8 +34,8 @@ const CodeBlock = ({ code, language }: CodeBlockProps) => {
           className="text-[11.5px] text-muted-foreground"
           onClick={() => void copy(code)}
         >
-          <CopyIcon />
-          {resources.chat.code.copy}
+          {copied ? <CheckIcon className="text-success" /> : <CopyIcon />}
+          {copied ? resources.chat.meta.copied : resources.chat.code.copy}
         </Button>
       </div>
       {html ? (

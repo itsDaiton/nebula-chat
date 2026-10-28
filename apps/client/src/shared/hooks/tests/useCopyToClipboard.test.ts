@@ -16,10 +16,11 @@ describe('useCopyToClipboard', () => {
     userEvent.setup();
     const { result } = renderHook(() => useCopyToClipboard());
 
-    await act(() => result.current('some text'));
+    await act(() => result.current.copy('some text'));
 
     expect(await navigator.clipboard.readText()).toBe('some text');
     expect(toast.success).toHaveBeenCalledWith(resources.chat.meta.copied);
+    expect(result.current.copied).toBe(true);
   });
 
   it('says so when the clipboard refuses', async () => {
@@ -27,9 +28,10 @@ describe('useCopyToClipboard', () => {
     vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValueOnce(new Error('denied'));
     const { result } = renderHook(() => useCopyToClipboard());
 
-    await act(() => result.current('some text'));
+    await act(() => result.current.copy('some text'));
 
     expect(toast.error).toHaveBeenCalledWith(resources.chat.copyFailed);
     expect(toast.success).not.toHaveBeenCalled();
+    expect(result.current.copied).toBe(false);
   });
 });
