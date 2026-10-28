@@ -271,6 +271,25 @@ describe('ChatPage', () => {
     await waitFor(() => expect(sends).toBe(1));
   });
 
+  it('keeps the same composer mounted when the thread replaces the empty state', async () => {
+    // A remount unsubscribes the allowance footer, which cancels the allowance check the send is awaiting.
+    server.use(
+      getCreateSessionMockHandler(aChatSession(SESSION_ID, 'hello')),
+      getSendMessageMockHandler({
+        messageId: '22222222-2222-4222-8222-222222222222',
+        streamId: '33333333-3333-4333-8333-333333333333',
+      }),
+      mockReplyStream(sseFrame('token', { token: 'hi' }), sseFrame('end', {})),
+    );
+    await renderPage();
+    const box = await screen.findByRole('textbox', { name: resources.chat.composer.label });
+
+    await userEvent.type(box, 'hello{Enter}');
+    expect(await screen.findByText('hello')).toBeInTheDocument();
+
+    expect(box).toBeInTheDocument();
+  });
+
   it('shows the Run toggle disabled, and the allowance counter under the composer', async () => {
     server.use(mockGetSession(aSession()), getGetMessageAllowanceMockHandler(aMeteredAllowance(3)));
     await renderPage();

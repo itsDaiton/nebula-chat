@@ -92,37 +92,38 @@ export const ChatContainer = () => {
     );
   }
 
-  if (!((sessionId || isStreaming) && history.length > 0)) {
-    // A new chat centres the composer under the greeting; the starters wait below it.
-    return (
-      <ChatContainerBox>
-        <div className="flex flex-1 flex-col items-center justify-center gap-9 overflow-y-auto pb-14">
-          <ChatEmptyState sessionId={sessionId} />
-          <div className="w-full">
-            {composer}
-            {!sessionId && (
-              <div className={COLUMN}>
-                <ChatStarters />
-              </div>
-            )}
-          </div>
-        </div>
-      </ChatContainerBox>
-    );
-  }
+  const isEmpty = !((sessionId || isStreaming) && history.length > 0);
 
+  // The composer keeps one slot in both layouts: remounting it mid-send unsubscribes the allowance
+  // footer and cancels the check the send is awaiting. A new chat centres it between the greeting
+  // (above) and the starters (below).
   return (
     <ChatContainerBox>
-      <ChatScroller anchorRef={scrollRef}>
-        <div className={`${COLUMN} pt-7 pb-2`}>
-          <ChatMessageList
-            history={history}
-            isStreaming={isStreaming}
-            onRegenerate={(prompt) => void handleSendMessage(prompt, selectedModel)}
-          />
+      {isEmpty ? (
+        <div className="flex flex-1 items-end justify-center overflow-y-auto pb-9">
+          <ChatEmptyState sessionId={sessionId} />
         </div>
-      </ChatScroller>
+      ) : (
+        <ChatScroller anchorRef={scrollRef}>
+          <div className={`${COLUMN} pt-7 pb-2`}>
+            <ChatMessageList
+              history={history}
+              isStreaming={isStreaming}
+              onRegenerate={(prompt) => void handleSendMessage(prompt, selectedModel)}
+            />
+          </div>
+        </ChatScroller>
+      )}
       {composer}
+      {isEmpty && (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {!sessionId && (
+            <div className={COLUMN}>
+              <ChatStarters />
+            </div>
+          )}
+        </div>
+      )}
     </ChatContainerBox>
   );
 };
