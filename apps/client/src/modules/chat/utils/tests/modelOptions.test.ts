@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   formatContextWindow,
   getModelLabel,
-  getModelOption,
   modelOptions,
 } from '@/modules/chat/utils/modelOptions';
 
@@ -38,13 +37,6 @@ describe('getModelLabel', () => {
 
   it('shows an unlisted id as itself', () => {
     expect(getModelLabel('gpt-9')).toBe('gpt-9');
-  });
-});
-
-describe('getModelOption', () => {
-  it('finds a listed Model and misses an unlisted one', () => {
-    expect(getModelOption('gpt-5')?.provider).toBe('openai');
-    expect(getModelOption('gpt-9')).toBeUndefined();
   });
 });
 

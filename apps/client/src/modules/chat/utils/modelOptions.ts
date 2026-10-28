@@ -11,7 +11,7 @@ export const modelOptions: ModelOption[] = [
   { label: 'GPT-5 mini', value: 'gpt-5-mini', provider: 'openai', contextWindow: 400_000 },
 ];
 
-export const getModelOption = (id: string) => modelOptions.find((option) => option.value === id);
+const getModelOption = (id: string) => modelOptions.find((option) => option.value === id);
 
 /** The Model's display name; an id outside the list shows as itself. */
 export const getModelLabel = (id: string) => getModelOption(id)?.label ?? id;

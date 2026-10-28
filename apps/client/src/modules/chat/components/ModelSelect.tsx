@@ -1,10 +1,6 @@
 import { ChevronDownIcon } from 'lucide-react';
-import { useState } from 'react';
-import {
-  formatContextWindow,
-  getModelOption,
-  modelOptions,
-} from '@/modules/chat/utils/modelOptions';
+import { useModelPickerStore } from '@/modules/chat/stores/useModelPickerStore';
+import { formatContextWindow, modelOptions } from '@/modules/chat/utils/modelOptions';
 import type { ModelOption, ModelSelectProps } from '@/modules/chat/types/types';
 import { resources } from '@/resources';
 import { ProviderLogo, providerNames } from '@/shared/components/ProviderLogo';
@@ -34,19 +30,11 @@ export const ModelSelect = ({
   onModelChange,
   options = modelOptions,
 }: ModelSelectProps) => {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const selected = options.find((option) => option.value === selectedModel);
-  const current = selected ?? getModelOption(selectedModel);
+  const { isOpen, search, setOpen, setSearch } = useModelPickerStore();
+  const current = options.find((option) => option.value === selectedModel);
 
   return (
-    <Popover
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (!next) setSearch('');
-      }}
-    >
+    <Popover open={isOpen} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
           <Button

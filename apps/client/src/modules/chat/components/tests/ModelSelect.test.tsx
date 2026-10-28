@@ -1,7 +1,8 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ModelSelect } from '@/modules/chat/components/ModelSelect';
+import { useModelPickerStore } from '@/modules/chat/stores/useModelPickerStore';
 import type { ModelOption } from '@/modules/chat/types/types';
 import { renderWithProviders } from '@/test/render';
 
@@ -21,6 +22,10 @@ const renderPicker = (selectedModel = 'gpt-5', onModelChange = vi.fn()) => {
 const openPicker = () => userEvent.click(screen.getByRole('button', { name: /GPT-5/ }));
 
 describe('ModelSelect', () => {
+  beforeEach(() => {
+    useModelPickerStore.setState({ isOpen: false, search: '' });
+  });
+
   it('shows the logo and label of the selected Model on the trigger', () => {
     renderPicker('gpt-4.1-mini');
 

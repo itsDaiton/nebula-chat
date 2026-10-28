@@ -102,6 +102,13 @@ export type ModelOption = {
   contextWindow: number;
 };
 
+export type ModelPickerState = {
+  isOpen: boolean;
+  search: string;
+  setOpen: (isOpen: boolean) => void;
+  setSearch: (search: string) => void;
+};
+
 export type ModelSelectProps = {
   selectedModel: string;
   onModelChange: (model: string) => void;
