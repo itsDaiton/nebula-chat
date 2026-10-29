@@ -3,7 +3,6 @@ import { cn } from '@/shared/utils/cn';
 import { useRouterState } from '@tanstack/react-router';
 import { AccountFooter } from '@/shared/components/layout/AccountFooter';
 import { Inspector } from '@/modules/inspector/components/Inspector';
-import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
 import { SessionsList } from '@/modules/sessions/components/SessionsList';
 import { CommandPalette } from '@/modules/commandPalette/components/CommandPalette';
 import { useDefaultPaletteActions } from '@/modules/commandPalette/hooks/useDefaultPaletteActions';
@@ -27,7 +26,6 @@ export const AppShell = ({ children }: AppShellProps) => {
   const { showSidePanels: isDesktop } = useResponsiveLayout();
   const { leftOpen, rightOpen, sheetOpen, toggleLeft, toggleRight, closeSheet, toggleSheet } =
     usePanelStore();
-  const isRunTab = useInspectorStore((state) => state.activeTab === 'run');
   const { isDrawerOpen, closeDrawer, toggleDrawer, openSearch } = useDrawer();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const viewportHeight = useViewportHeight();
@@ -83,11 +81,7 @@ export const AppShell = ({ children }: AppShellProps) => {
         {isDesktop && rightOpen && (
           <aside
             aria-label={resources.shell.inspector}
-            className={cn(
-              panel,
-              'shrink-0',
-              isRunTab ? 'w-[360px] 2xl:w-[420px]' : 'w-[300px] 2xl:w-[360px]',
-            )}
+            className={`${panel} w-[300px] shrink-0 2xl:w-[360px]`}
           >
             <Inspector onClose={toggleRight} />
           </aside>

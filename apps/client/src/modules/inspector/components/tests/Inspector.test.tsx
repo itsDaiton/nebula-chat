@@ -93,16 +93,6 @@ describe('Inspector Run tab', () => {
     expect(await screen.findByText(resources.inspector.run.emptyTitle)).toBeInTheDocument();
   });
 
-  it('widens while the Run tab is active', async () => {
-    await renderRoute('/');
-    const panel = await inspector();
-    expect(panel).toHaveClass('w-[300px]');
-
-    await userEvent.click(await runTab());
-
-    expect(panel).toHaveClass('w-[360px]');
-  });
-
   it('opens on the Run tab when another component asks the store', async () => {
     usePanelStore.setState({ rightOpen: false });
     await renderRoute('/');

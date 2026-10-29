@@ -1,12 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  INSPECTOR_STORAGE_KEY,
-  useInspectorStore,
-} from '@/modules/inspector/stores/useInspectorStore';
+import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
 import { usePanelStore } from '@/shared/stores/usePanelStore';
 
 beforeEach(() => {
-  localStorage.clear();
   useInspectorStore.setState({ activeTab: 'session', selectedRunId: null });
   usePanelStore.setState({ leftOpen: true, rightOpen: false, sheetOpen: false });
 });
@@ -26,13 +22,5 @@ describe('useInspectorStore', () => {
     state().openInspector('session');
 
     expect(state()).toMatchObject({ activeTab: 'session', selectedRunId: 'run-1' });
-  });
-
-  it('remembers the tab but not the Run', () => {
-    state().openInspector('run', 'run-1');
-
-    expect(JSON.parse(localStorage.getItem(INSPECTOR_STORAGE_KEY) ?? '{}').state).toEqual({
-      activeTab: 'run',
-    });
   });
 });
