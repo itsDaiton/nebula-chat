@@ -26,6 +26,7 @@ const aCatalog = () => ({
       provider: 'openai',
       contextWindow: 128_000,
       maxOutput: 4_096,
+      supportsTemperature: true,
       prices: { input: 1, cachedInput: 0.5, output: 2 },
     },
     {
@@ -34,6 +35,7 @@ const aCatalog = () => ({
       provider: 'anthropic',
       contextWindow: 200_000,
       maxOutput: 4_096,
+      supportsTemperature: true,
       prices: { input: 3, cachedInput: 0.3, output: 15 },
     },
   ],
@@ -46,6 +48,17 @@ describe('MODEL_CATALOG', () => {
       expect(model.label.trim(), model.id).not.toBe('');
     }
   });
+
+  it.each(['gpt-5', 'gpt-5-mini', 'gpt-5.6-luna'])('fixes the temperature of %s', (id) => {
+    expect(getModel(id).supportsTemperature).toBe(false);
+  });
+
+  it.each(['gpt-4o', 'gpt-4.1-mini', 'claude-3-5-haiku-20241022'])(
+    'lets %s take a temperature',
+    (id) => {
+      expect(getModel(id).supportsTemperature).toBe(true);
+    },
+  );
 
   it('carries the version and hash of the file it was loaded from', () => {
     expect(MODEL_CATALOG_VERSION).toBe(catalogJson.version);
@@ -127,6 +140,14 @@ describe('modelCatalogSchema', () => {
     catalog.models[0]!.maxOutput = catalog.models[0]!.contextWindow;
 
     expect(modelCatalogSchema.safeParse(catalog).success).toBe(false);
+  });
+
+  it('rejects a Model that does not say whether it accepts temperature', () => {
+    const catalog = aCatalog();
+    const model: Partial<(typeof catalog.models)[number]> = { ...catalog.models[0]! };
+    delete model.supportsTemperature;
+
+    expect(modelCatalogSchema.safeParse({ ...catalog, models: [model] }).success).toBe(false);
   });
 
   it('rejects a Model with an empty label', () => {

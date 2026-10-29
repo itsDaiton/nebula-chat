@@ -16,6 +16,9 @@ const modelResponseSchema = z
     provider: modelProviderSchema,
     contextWindow: z.number().int().positive().describe('Tokens the Model can take in'),
     maxOutput: z.number().int().positive().describe('Tokens reserved for a reply'),
+    supportsTemperature: z
+      .boolean()
+      .describe('False when the Model fixes its temperature and rejects any other value'),
     prices: modelPricesSchema,
   })
   .meta({ id: 'Model' });

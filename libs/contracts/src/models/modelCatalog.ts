@@ -23,6 +23,8 @@ const modelSchema = z
     contextWindow: z.number().int().positive(),
     /** The output tokens a call reserves; packHistory leaves this much room below the context window. */
     maxOutput: z.number().int().positive(),
+    /** False for a reasoning Model that fixes `temperature` at its default and rejects any other value. */
+    supportsTemperature: z.boolean(),
     prices: modelPricesSchema,
   })
   .refine((model) => model.maxOutput < model.contextWindow, {

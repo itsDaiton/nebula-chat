@@ -337,6 +337,10 @@ components:
           exclusiveMinimum: 0
           maximum: 9007199254740991
           description: Tokens reserved for a reply
+        supportsTemperature:
+          type: boolean
+          description: False when the Model fixes its temperature and rejects any other
+            value
         prices:
           $ref: '#/components/schemas/ModelPrices'
       required:
@@ -345,6 +349,7 @@ components:
         - provider
         - contextWindow
         - maxOutput
+        - supportsTemperature
         - prices
       additionalProperties: false
     ModelPrices:

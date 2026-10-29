@@ -1,6 +1,6 @@
 {
-  "version": "2026-10-25-9be81f1b-e2d0-4e83-b7e1-17df1d5d673f",
-  "hash": "006eeff5816e28a8a0b2cfcfbfcb976633e970d5c318b48df412abe5458304d7",
+  "version": "2026-10-29-5e5efd96-ded7-474e-84e4-a7c95ac8246c",
+  "hash": "4bcba0bf6def7098e9dce4eac4b57a2b321407ebe2fbc12b1cd1459d329f0e60",
   "defaultModels": {
     "openai": "gpt-4o-mini",
     "anthropic": "claude-3-5-haiku-20241022"
@@ -12,6 +12,7 @@
       "provider": "openai",
       "contextWindow": 128000,
       "maxOutput": 16384,
+      "supportsTemperature": true,
       "prices": {
         "input": 2.5,
         "cachedInput": 1.25,
@@ -24,6 +25,7 @@
       "provider": "openai",
       "contextWindow": 128000,
       "maxOutput": 16384,
+      "supportsTemperature": true,
       "prices": {
         "input": 0.15,
         "cachedInput": 0.075,
@@ -36,6 +38,7 @@
       "provider": "openai",
       "contextWindow": 128000,
       "maxOutput": 4096,
+      "supportsTemperature": true,
       "prices": {
         "input": 10,
         "cachedInput": 10,
@@ -48,6 +51,7 @@
       "provider": "openai",
       "contextWindow": 1047576,
       "maxOutput": 32768,
+      "supportsTemperature": true,
       "prices": {
         "input": 2,
         "cachedInput": 0.5,
@@ -60,6 +64,7 @@
       "provider": "openai",
       "contextWindow": 1047576,
       "maxOutput": 32768,
+      "supportsTemperature": true,
       "prices": {
         "input": 0.4,
         "cachedInput": 0.1,
@@ -72,6 +77,7 @@
       "provider": "openai",
       "contextWindow": 400000,
       "maxOutput": 128000,
+      "supportsTemperature": false,
       "prices": {
         "input": 1.25,
         "cachedInput": 0.125,
@@ -84,6 +90,7 @@
       "provider": "openai",
       "contextWindow": 400000,
       "maxOutput": 128000,
+      "supportsTemperature": false,
       "prices": {
         "input": 0.25,
         "cachedInput": 0.025,
@@ -96,6 +103,7 @@
       "provider": "openai",
       "contextWindow": 1050000,
       "maxOutput": 128000,
+      "supportsTemperature": false,
       "prices": {
         "input": 0.2,
         "cachedInput": 0.02,
@@ -108,6 +116,7 @@
       "provider": "anthropic",
       "contextWindow": 200000,
       "maxOutput": 8192,
+      "supportsTemperature": true,
       "prices": {
         "input": 3,
         "cachedInput": 0.3,
@@ -120,6 +129,7 @@
       "provider": "anthropic",
       "contextWindow": 200000,
       "maxOutput": 8192,
+      "supportsTemperature": true,
       "prices": {
         "input": 0.8,
         "cachedInput": 0.08,
@@ -132,6 +142,7 @@
       "provider": "anthropic",
       "contextWindow": 200000,
       "maxOutput": 4096,
+      "supportsTemperature": true,
       "prices": {
         "input": 15,
         "cachedInput": 1.5,

@@ -25,5 +25,7 @@ export interface Model {
    * @exclusiveMinimum 0
    */
   maxOutput: number;
+  /** False when the Model fixes its temperature and rejects any other value */
+  supportsTemperature: boolean;
   prices: ModelPrices;
 }
