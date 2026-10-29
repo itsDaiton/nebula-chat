@@ -93,7 +93,7 @@ export const ChatContainer = () => {
     );
   }
 
-  const isEmpty = !((sessionId || isStreaming) && history.length > 0);
+  const isEmpty = history.length === 0;
 
   // The composer keeps one slot in both layouts: remounting it mid-send unsubscribes the allowance
   // footer and cancels the check the send is awaiting. A new chat centres it between the greeting

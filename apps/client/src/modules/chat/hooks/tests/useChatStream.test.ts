@@ -216,7 +216,6 @@ describe('useChatStream — usage and errors', () => {
 
     expect(useChatStreamStore.getState().error).toBe('Unsupported model: gpt-0');
     expect(assistantContent()).toBe('Unsupported model: gpt-0');
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
   });
 
   it('falls back to a generic message when the error event carries no envelope', async () => {
@@ -235,7 +234,6 @@ describe('useChatStream — usage and errors', () => {
     await sendMessage(result);
 
     expect(useChatStreamStore.getState().error).toBe(resources.chat.streamError);
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
   });
 
   it('reports a stream that cannot be opened by the message of its envelope', async () => {
@@ -275,6 +273,83 @@ describe('useChatStream — usage and errors', () => {
     await sendMessage(result);
 
     expect(useChatStreamStore.getState().error).toBe('Rate limit exceeded, retry in 1 minute');
+  });
+});
+
+describe('useChatStream — a failed first reply', () => {
+  const GOES_TO_NEW_SESSION = { to: '/s/$id', params: { id: NEW_SESSION_ID }, replace: true };
+
+  // The route must carry the Session before streaming stops, or the chat resets to the greeting.
+  const expectHeldForNavigation = () => {
+    expect(navigate).toHaveBeenCalledWith(GOES_TO_NEW_SESSION);
+    expect(useChatStreamStore.getState()).toMatchObject({
+      isPostStreamNavigation: true,
+      isStreaming: true,
+      sessionId: NEW_SESSION_ID,
+    });
+  };
+
+  it('keeps the message and the error in the history and moves to the Session it created', async () => {
+    streamFrames(frame('error', { success: false, error: 'Internal', message: 'Provider down' }));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    expect(history().map((m) => m.content)).toEqual(['what is 2+2?', 'Provider down']);
+    expectHeldForNavigation();
+  });
+
+  it('does the same for a send the server refuses', async () => {
+    server.use(
+      mockApiError('post', API_ROUTE.sendMessage, 429, {
+        success: false,
+        error: 'TooManyRequests',
+        message: 'Rate limit exceeded, retry in 1 minute',
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    expect(assistantContent()).toBe('Rate limit exceeded, retry in 1 minute');
+    expectHeldForNavigation();
+  });
+
+  it('does the same for a stream that runs out of reconnects', async () => {
+    streamFrames(frame('token', { token: 'half' }));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    expect(assistantContent()).toBe(resources.chat.streamError);
+    expectHeldForNavigation();
+  });
+
+  it('stays on the new chat when no Session was created to move to', async () => {
+    server.use(
+      mockApiError('post', API_ROUTE.sessions, 500, {
+        success: false,
+        error: 'Internal',
+        message: 'Could not create the Session',
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    expect(assistantContent()).toBe('Could not create the Session');
+    expect(navigate).not.toHaveBeenCalled();
+    expect(useChatStreamStore.getState().isStreaming).toBe(false);
+  });
+
+  it('does not navigate when the failed reply belongs to a Session already open', async () => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    streamFrames(frame('error', { success: false, error: 'Internal', message: 'Provider down' }));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    expect(navigate).not.toHaveBeenCalled();
     expect(useChatStreamStore.getState().isStreaming).toBe(false);
   });
 });
