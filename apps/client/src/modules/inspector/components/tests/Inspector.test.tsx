@@ -12,6 +12,7 @@ import { useModelStore } from '@/modules/chat/stores/useModelStore';
 import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
 import { resources } from '@/resources';
 import { usePanelStore } from '@/shared/stores/usePanelStore';
+import { API_ROUTE, mockApiError } from '@/test/api';
 import { aSession, mockGetSession } from '@/test/auth';
 import { server } from '@/test/msw';
 import { renderRoute } from '@/test/renderRoute';
@@ -97,6 +98,17 @@ describe('Inspector Session tab', () => {
     expect(await panel.findByText('GPT-4.1 mini')).toBeInTheDocument();
     expect(panel.getByText(resources.inspector.session.newChatNotice)).toBeInTheDocument();
     expect(panel.queryByText(resources.inspector.session.messages)).not.toBeInTheDocument();
+  });
+});
+
+describe('Inspector without the model catalog', () => {
+  it("names the Model from the picker's list and hides the limits", async () => {
+    server.use(mockApiError('get', API_ROUTE.models, 500));
+    await renderRoute('/');
+    const panel = within(await inspector());
+
+    expect(await panel.findByText('GPT-4.1 mini')).toBeInTheDocument();
+    expect(panel.queryByText(resources.inspector.session.limits)).not.toBeInTheDocument();
   });
 });
 

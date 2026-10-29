@@ -7,6 +7,7 @@ import { InspectorRow } from '@/modules/inspector/components/InspectorRow';
 import { InspectorSection } from '@/modules/inspector/components/InspectorSection';
 import { formatSessionDate } from '@/modules/inspector/utils/formatSessionDate';
 import { useModel } from '@/modules/chat/hooks/useModel';
+import { modelOptions } from '@/modules/chat/utils/modelOptions';
 import { resources } from '@/resources';
 import { ProviderLogo } from '@/shared/components/ProviderLogo';
 import { formatRelativeTime } from '@/shared/utils/relativeTime';
@@ -23,8 +24,11 @@ export const SessionTab = () => {
     { sessionId: id },
     { query: { enabled: Boolean(id) } },
   );
-  const { data: catalog } = useGetModelCatalog();
+  const { data: catalog } = useGetModelCatalog({ query: { meta: { inlineError: true } } });
   const model = catalog?.models.find((entry) => entry.id === selectedModel);
+  // The picker's list stands in for the name and logo while the catalog is unavailable.
+  const fallback = modelOptions.find((option) => option.value === selectedModel);
+  const provider = model?.provider ?? fallback?.provider;
   const lastMessage = messages?.at(-1);
 
   return (
@@ -37,9 +41,11 @@ export const SessionTab = () => {
       )}
       <InspectorSection label={text.model}>
         <div className="flex items-center gap-2.5 rounded-[10px] border border-border bg-raised p-3">
-          {model && <ProviderLogo provider={model.provider} className="size-5" />}
+          {provider && <ProviderLogo provider={provider} className="size-5" />}
           <div className="min-w-0">
-            <p className="truncate font-medium">{model?.label ?? selectedModel}</p>
+            <p className="truncate font-medium">
+              {model?.label ?? fallback?.label ?? selectedModel}
+            </p>
             <p className="truncate font-mono text-[11px] text-faint">{selectedModel}</p>
           </div>
         </div>

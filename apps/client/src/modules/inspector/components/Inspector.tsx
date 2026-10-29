@@ -7,7 +7,8 @@ import { resources } from '@/resources';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 
-const tabClass = 'flex-none gap-1.5 px-2.5 text-[12.5px] after:bottom-0';
+const tabClass =
+  'flex-none gap-1.5 px-2.5 text-[12.5px] after:inset-x-0 after:bottom-[-1px] after:h-[1.5px]';
 
 export const Inspector = ({ onClose }: InspectorProps) => {
   const { activeTab, selectedRunId, setActiveTab } = useInspectorStore();
@@ -16,7 +17,7 @@ export const Inspector = ({ onClose }: InspectorProps) => {
     <Tabs
       value={activeTab}
       onValueChange={(tab) => setActiveTab(tab as InspectorTab)}
-      className="min-h-0 flex-1 gap-0"
+      className="min-h-0 flex-1 flex-col gap-0"
     >
       <div className="flex items-center border-b border-border px-2 pt-2">
         <TabsList variant="line" className="h-8 w-auto flex-1 justify-start p-0">
