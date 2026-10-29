@@ -59,11 +59,7 @@ export const SessionTab = () => {
             <InspectorRow label={text.created} value={formatSessionDate(session.createdAt)} />
             <InspectorRow
               label={text.lastActivity}
-              value={
-                lastMessage
-                  ? formatRelativeTime(lastMessage.createdAt, Date.now())
-                  : text.noMessages
-              }
+              value={formatRelativeTime(lastMessage?.createdAt ?? session.createdAt, Date.now())}
             />
           </dl>
         </InspectorSection>

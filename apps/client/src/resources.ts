@@ -352,7 +352,6 @@ export const resources = {
       messages: 'Messages',
       created: 'Created',
       lastActivity: 'Last activity',
-      noMessages: 'None yet',
       tokens: (count: string) => `${count} tokens`,
     },
     run: {
