@@ -90,7 +90,7 @@ export const ChatContainer = () => {
   return (
     <ChatContainerBox>
       <Box flex="1" overflowY="auto" p={4} mb="120px" css={chatScrollBar}>
-        {(sessionId || isStreaming) && history.length > 0 ? (
+        {history.length > 0 ? (
           <ChatMessageList history={history} isStreaming={isStreaming} />
         ) : (
           <ChatEmptyState sessionId={sessionId} />

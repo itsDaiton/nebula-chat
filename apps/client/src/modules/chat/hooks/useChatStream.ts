@@ -309,6 +309,16 @@ export const useChatStream = ({
     [readReply, reconnectDelaysMs, showSavedReply],
   );
 
+  // isStreaming stays true until ChatContainer's `clearPostStream()` runs once the route has a sessionId, so the navigation renders first;
+  // requestAnimationFrame could fire early and flash the empty state.
+  const goToNewSession = useCallback(
+    (newSessionId: string) => {
+      setIsPostStreamNavigation(true);
+      void navigate({ to: '/s/$id', params: { id: newSessionId }, replace: true });
+    },
+    [navigate, setIsPostStreamNavigation],
+  );
+
   // Send, then subscribe (ADR-0014): a new chat gets its Session first, and the send names the reply's stream.
   const streamMessage = useCallback(
     async ({ model, messages, sessionId: customSessionId }: ChatHistoryStreamOptions) => {
@@ -356,15 +366,10 @@ export const useChatStream = ({
         if (useChatStreamStore.getState().isStopRequested) void requestCancel(streamId);
 
         const outcome = await followStream(streamId, activeSessionId, controller.signal);
-        if (outcome === 'failed') {
-          setIsStreaming(false);
-        } else if (outcome === 'ended') {
-          invalidateCompletedStream(activeSessionId);
+        if (outcome === 'ended') invalidateCompletedStream(activeSessionId);
+        if (outcome === 'ended' || outcome === 'failed') {
           if (isNewSession) {
-            // isStreaming stays true until ChatContainer's `clearPostStream()` runs once the route has a sessionId, so the navigation renders first;
-            // requestAnimationFrame could fire early and flash the empty state.
-            setIsPostStreamNavigation(true);
-            void navigate({ to: '/s/$id', params: { id: activeSessionId }, replace: true });
+            goToNewSession(activeSessionId);
           } else {
             setIsStreaming(false);
           }
@@ -387,23 +392,27 @@ export const useChatStream = ({
             err instanceof Error && err.message ? err.message : resources.chat.streamError,
           );
         }
-        setIsStreaming(false);
+        // A new chat that got its Session moves to it, so the failed reply stays on screen.
+        if (isNewSession && activeSessionId && !controller.signal.aborted) {
+          goToNewSession(activeSessionId);
+        } else {
+          setIsStreaming(false);
+        }
       } finally {
         if (abortController.current === controller) abortController.current = null;
       }
     },
     [
       createSession,
+      goToNewSession,
       followStream,
       invalidateCompletedStream,
       invalidateSessionList,
       invalidateMessageAllowance,
-      navigate,
       queryClient,
       requestCancel,
       sendMessage,
       setSessionId,
-      setIsPostStreamNavigation,
       setIsStreaming,
       showReplyError,
     ],

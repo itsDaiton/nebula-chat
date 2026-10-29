@@ -226,6 +226,65 @@ describe('ChatPage', () => {
     expect(await screen.findByText('Brand new chat')).toBeInTheDocument();
   });
 
+  describe('when the first reply of a new chat fails', () => {
+    const PROVIDER_ERROR = 'The model provider rejected the request';
+
+    const serveFailedFirstReply = (onCreate = vi.fn()) => {
+      server.use(
+        getCreateSessionMockHandler(() => {
+          onCreate();
+          return aChatSession(SESSION_ID, 'hello');
+        }),
+        getSendMessageMockHandler({
+          messageId: '22222222-2222-4222-8222-222222222222',
+          streamId: '33333333-3333-4333-8333-333333333333',
+        }),
+        mockReplyStream(
+          sseFrame('error', { success: false, error: 'Internal', message: PROVIDER_ERROR }),
+          sseFrame('end', {}),
+        ),
+      );
+      return onCreate;
+    };
+
+    it('keeps the message and shows the error where the reply would be, not the greeting', async () => {
+      serveFailedFirstReply();
+      await renderPage();
+
+      await userEvent.type(await screen.findByRole('textbox', { name: '' }), 'hello{Enter}');
+
+      expect(await screen.findByText(PROVIDER_ERROR)).toBeInTheDocument();
+      expect(screen.getByText('hello', { selector: 'p, div, span' })).toBeInTheDocument();
+      expect(screen.queryByText(resources.chat.welcomeMessage)).not.toBeInTheDocument();
+    });
+
+    it('keeps the error once the Session it created has loaded', async () => {
+      serveFailedFirstReply();
+      server.use(getListMessagesMockHandler([aMessage('m1', 'user', 'hello')]));
+      await renderPage();
+
+      await userEvent.type(await screen.findByRole('textbox', { name: '' }), 'hello{Enter}');
+      await screen.findByText(PROVIDER_ERROR);
+
+      await waitFor(() => expect(useChatStreamStore.getState().isStreaming).toBe(false));
+      expect(screen.getByText(PROVIDER_ERROR)).toBeInTheDocument();
+      expect(screen.queryByText(resources.chat.welcomeMessage)).not.toBeInTheDocument();
+    });
+
+    it('continues the Session the failed attempt created instead of starting another', async () => {
+      const onCreate = serveFailedFirstReply();
+      await renderPage();
+      await userEvent.type(await screen.findByRole('textbox', { name: '' }), 'hello{Enter}');
+      await screen.findByText(PROVIDER_ERROR);
+      await waitFor(() => expect(useChatStreamStore.getState().isStreaming).toBe(false));
+
+      await userEvent.type(screen.getByRole('textbox', { name: '' }), 'again{Enter}');
+
+      await waitFor(() => expect(useChatStreamStore.getState().history.length).toBeGreaterThan(3));
+      expect(onCreate).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('renders on a mobile layout without the side panels', async () => {
     layout.isMobile = true;
     layout.showSidePanels = false;
