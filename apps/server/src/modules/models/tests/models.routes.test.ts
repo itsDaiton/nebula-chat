@@ -48,7 +48,7 @@ describe('GET /api/models', () => {
     ]);
   });
 
-  it('describes each Model with its label, provider, limits and prices', async () => {
+  it('describes each Model with its label, provider, limits, temperature support and prices', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/models' });
 
     expect(res.json<{ models: unknown[] }>().models).toContainEqual({
@@ -57,6 +57,7 @@ describe('GET /api/models', () => {
       provider: 'openai',
       contextWindow: 1_047_576,
       maxOutput: 32_768,
+      supportsTemperature: true,
       prices: { input: 0.4, cachedInput: 0.1, output: 1.6 },
     });
   });

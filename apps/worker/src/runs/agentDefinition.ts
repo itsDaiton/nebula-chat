@@ -22,6 +22,13 @@ export type DelegateDefinition = AgentDefinition & { description: string };
 
 export type ApiKeys = { [P in ModelProvider]?: string | undefined };
 
+// Agents state the temperature they would like; the catalog says whether the Model takes it.
+const sentParameters = ({ model, parameters }: AgentDefinition): Partial<typeof parameters> => {
+  const sent: Partial<typeof parameters> = { ...parameters };
+  if (!getModel(model).supportsTemperature) delete sent.temperature;
+  return sent;
+};
+
 export const llmConfigFor = (agent: AgentDefinition, apiKeys: ApiKeys): LLMConfig => {
   const { provider } = getModel(agent.model);
   const apiKey = apiKeys[provider];
@@ -30,13 +37,13 @@ export const llmConfigFor = (agent: AgentDefinition, apiKeys: ApiKeys): LLMConfi
       provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY',
     );
   }
-  return { provider, apiKey, model: agent.model, ...agent.parameters };
+  return { provider, apiKey, model: agent.model, ...sentParameters(agent) };
 };
 
 // Everything the model was sent, so a Step can be inspected on its own.
 export const stepInput = (agent: AgentDefinition, system: string, human: string) => ({
   model: agent.model,
-  parameters: agent.parameters,
+  parameters: sentParameters(agent),
   system,
   human,
 });
