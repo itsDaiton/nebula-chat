@@ -35,6 +35,7 @@ export const getGetModelCatalogResponseMock = (
       provider: faker.helpers.arrayElement(['openai', 'anthropic'] as const),
       contextWindow: faker.number.int({ min: 0, max: 9007199254740991 }),
       maxOutput: faker.number.int({ min: 0, max: 9007199254740991 }),
+      supportsTemperature: faker.datatype.boolean(),
       prices: {
         input: faker.number.float({ fractionDigits: 2 }),
         cachedInput: faker.number.float({ fractionDigits: 2 }),

@@ -1,7 +1,7 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatOpenAI } from '@langchain/openai';
-import { DEFAULT_MODELS } from '@nebula-chat/contracts';
+import { DEFAULT_MODELS, findModel } from '@nebula-chat/contracts';
 import type { ModelProvider } from '@nebula-chat/contracts';
 
 export type LLMConfig = {
@@ -13,11 +13,15 @@ export type LLMConfig = {
   streaming?: boolean;
 };
 
+// A Model that fixes `temperature` rejects any value, so the key is left out instead of defaulted.
+const temperatureFor = (model: string, temperature: number | undefined) =>
+  findModel(model)?.supportsTemperature === false ? {} : { temperature: temperature ?? 0.7 };
+
 const createOpenAILLM = (config: LLMConfig): ChatOpenAI =>
   new ChatOpenAI({
     openAIApiKey: config.apiKey,
     modelName: config.model ?? DEFAULT_MODELS.openai,
-    temperature: config.temperature ?? 0.7,
+    ...temperatureFor(config.model ?? DEFAULT_MODELS.openai, config.temperature),
     ...(config.maxTokens !== undefined && { maxTokens: config.maxTokens }),
     streaming: config.streaming ?? false,
   });
@@ -26,7 +30,7 @@ const createAnthropicLLM = (config: LLMConfig): ChatAnthropic =>
   new ChatAnthropic({
     anthropicApiKey: config.apiKey,
     modelName: config.model ?? DEFAULT_MODELS.anthropic,
-    temperature: config.temperature ?? 0.7,
+    ...temperatureFor(config.model ?? DEFAULT_MODELS.anthropic, config.temperature),
     ...(config.maxTokens !== undefined && { maxTokens: config.maxTokens }),
     streaming: config.streaming ?? false,
   });
