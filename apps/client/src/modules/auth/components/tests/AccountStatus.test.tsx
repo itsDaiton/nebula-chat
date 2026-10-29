@@ -2,7 +2,6 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
-import { getGetModelCatalogMockHandler } from '@/libs/api/generated/models/models.msw';
 import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
 import {
   getGetSessionMockHandler,
@@ -34,7 +33,6 @@ let session: ReturnType<typeof aSession> | null = aSession();
 // Through the real session guard, as the app boots, since sign-out hands the re-mint back to it.
 const renderStatus = async (path = '/') => {
   server.use(
-    getGetModelCatalogMockHandler(),
     getGetMessageAllowanceMockHandler({ metered: false }),
     getGetSessionMockHandler({
       id: 'abc',

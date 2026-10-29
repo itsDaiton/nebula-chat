@@ -100,6 +100,7 @@ export type ModelOption = {
   value: string;
   provider: ModelProvider;
   contextWindow: number;
+  maxOutput: number;
 };
 
 export type ModelPickerState = {

@@ -2,7 +2,6 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
-import { getGetModelCatalogMockHandler } from '@/libs/api/generated/models/models.msw';
 import {
   getGetSessionMockHandler,
   getListSessionsMockHandler,
@@ -12,7 +11,6 @@ import { useModelStore } from '@/modules/chat/stores/useModelStore';
 import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
 import { resources } from '@/resources';
 import { usePanelStore } from '@/shared/stores/usePanelStore';
-import { API_ROUTE, mockApiError } from '@/test/api';
 import { aSession, mockGetSession } from '@/test/auth';
 import { server } from '@/test/msw';
 import { renderRoute } from '@/test/renderRoute';
@@ -22,23 +20,6 @@ vi.mock('@/shared/hooks/useResponsiveLayout', () => ({ useResponsiveLayout: () =
 
 const SESSION_ID = '11111111-1111-4111-8111-111111111111';
 const MODEL_ID = 'gpt-4.1-mini';
-const prices = { input: 0.4, output: 1.6, cachedInput: 0.1 };
-const catalog = {
-  version: '2026-10-27-00000000-0000-4000-8000-000000000000',
-  hash: 'hash',
-  models: [
-    {
-      id: MODEL_ID,
-      label: 'GPT-4.1 mini',
-      provider: 'openai',
-      contextWindow: 1_047_576,
-      maxOutput: 32_768,
-      supportsTemperature: true,
-      prices,
-    },
-  ],
-};
-
 const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
 const message = (id: string, createdAt: string) => ({
   id,
@@ -63,7 +44,6 @@ beforeEach(() => {
   server.use(
     mockGetSession(aSession()),
     getListSessionsMockHandler({ sessions: [], nextCursor: null, hasMore: false }),
-    getGetModelCatalogMockHandler(catalog as never),
     getGetMessageAllowanceMockHandler({ metered: false }),
     getGetSessionMockHandler({
       id: SESSION_ID,
@@ -98,17 +78,6 @@ describe('Inspector Session tab', () => {
     expect(await panel.findByText('GPT-4.1 mini')).toBeInTheDocument();
     expect(panel.getByText(resources.inspector.session.newChatNotice)).toBeInTheDocument();
     expect(panel.queryByText(resources.inspector.session.messages)).not.toBeInTheDocument();
-  });
-});
-
-describe('Inspector without the model catalog', () => {
-  it("names the Model from the picker's list and hides the limits", async () => {
-    server.use(mockApiError('get', API_ROUTE.models, 500));
-    await renderRoute('/');
-    const panel = within(await inspector());
-
-    expect(await panel.findByText('GPT-4.1 mini')).toBeInTheDocument();
-    expect(panel.queryByText(resources.inspector.session.limits)).not.toBeInTheDocument();
   });
 });
 

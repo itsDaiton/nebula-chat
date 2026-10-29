@@ -7,9 +7,21 @@ import type { ModelOption } from '@/modules/chat/types/types';
 import { renderWithProviders } from '@/test/render';
 
 const options: ModelOption[] = [
-  { label: 'GPT-4.1 mini', value: 'gpt-4.1-mini', provider: 'openai', contextWindow: 1_047_576 },
-  { label: 'GPT-5', value: 'gpt-5', provider: 'openai', contextWindow: 400_000 },
-  { label: 'Claude 3 Opus', value: 'claude-3-opus', provider: 'anthropic', contextWindow: 200_000 },
+  {
+    label: 'GPT-4.1 mini',
+    value: 'gpt-4.1-mini',
+    provider: 'openai',
+    contextWindow: 1_047_576,
+    maxOutput: 8_192,
+  },
+  { label: 'GPT-5', value: 'gpt-5', provider: 'openai', contextWindow: 400_000, maxOutput: 8_192 },
+  {
+    label: 'Claude 3 Opus',
+    value: 'claude-3-opus',
+    provider: 'anthropic',
+    contextWindow: 200_000,
+    maxOutput: 8_192,
+  },
 ];
 
 const renderPicker = (selectedModel = 'gpt-5', onModelChange = vi.fn()) => {
