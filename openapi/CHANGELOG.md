@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.5.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.5.0...nebula-chat-openapi-v4.5.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* **worker:** NEB-671 omit unsupported sampling parameters per Model ([#684](https://github.com/itsDaiton/nebula-chat/issues/684)) ([ab86f47](https://github.com/itsDaiton/nebula-chat/commit/ab86f477b348d02040601e0227918db399ee8475))
+
 ## [4.5.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.4.0...nebula-chat-openapi-v4.5.0) (2026-10-28)
 
 
