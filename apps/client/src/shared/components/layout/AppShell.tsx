@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { cn } from '@/shared/utils/cn';
 import { useRouterState } from '@tanstack/react-router';
 import { AccountFooter } from '@/shared/components/layout/AccountFooter';
-import { InspectorPlaceholder } from '@/shared/components/layout/InspectorPlaceholder';
+import { Inspector } from '@/modules/inspector/components/Inspector';
 import { SessionsList } from '@/modules/sessions/components/SessionsList';
 import { CommandPalette } from '@/modules/commandPalette/components/CommandPalette';
 import { useDefaultPaletteActions } from '@/modules/commandPalette/hooks/useDefaultPaletteActions';
@@ -83,7 +83,7 @@ export const AppShell = ({ children }: AppShellProps) => {
             aria-label={resources.shell.inspector}
             className={`${panel} w-[300px] shrink-0 2xl:w-[360px]`}
           >
-            <InspectorPlaceholder />
+            <Inspector onClose={toggleRight} />
           </aside>
         )}
       </div>
@@ -99,8 +99,8 @@ export const AppShell = ({ children }: AppShellProps) => {
           <Sheet open={sheetOpen} onOpenChange={(open) => !open && closeSheet()}>
             <SheetContent side="bottom" className="max-h-[70dvh] gap-0 rounded-t-2xl">
               <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-border-strong" />
-              <SheetTitle className="p-4">{resources.shell.inspector}</SheetTitle>
-              <InspectorPlaceholder />
+              <SheetTitle className="sr-only">{resources.shell.inspector}</SheetTitle>
+              <Inspector onClose={closeSheet} />
             </SheetContent>
           </Sheet>
         </>

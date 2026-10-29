@@ -5,7 +5,7 @@ import type { PanelState } from '@/shared/types/types';
 export const PANEL_STORAGE_KEY = 'nebula-panels';
 
 // localStorage throws when blocked or full; the panels then just forget their state.
-const safeStorage: StateStorage = {
+export const safeStorage: StateStorage = {
   getItem: (name) => {
     try {
       return localStorage.getItem(name);
@@ -37,6 +37,8 @@ export const usePanelStore = create<PanelState>()(
       sheetOpen: false,
       toggleLeft: () => set((state) => ({ leftOpen: !state.leftOpen })),
       toggleRight: () => set((state) => ({ rightOpen: !state.rightOpen })),
+      // The layout shows one of the two; the other stays harmless until AppShell resets it.
+      openRight: () => set({ rightOpen: true, sheetOpen: true }),
       closeSheet: () => set({ sheetOpen: false }),
       toggleSheet: () => set((state) => ({ sheetOpen: !state.sheetOpen })),
     }),
