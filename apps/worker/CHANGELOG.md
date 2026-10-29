@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.8.0...nebula-chat-worker-v1.8.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* **worker:** NEB-671 omit unsupported sampling parameters per Model ([#684](https://github.com/itsDaiton/nebula-chat/issues/684)) ([ab86f47](https://github.com/itsDaiton/nebula-chat/commit/ab86f477b348d02040601e0227918db399ee8475))
+
 ## [1.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.7.0...nebula-chat-worker-v1.8.0) (2026-10-26)
 
 

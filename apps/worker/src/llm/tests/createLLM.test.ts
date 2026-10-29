@@ -62,6 +62,16 @@ describe('createLLM for openai', () => {
     expect(openaiModel(openai({ temperature: 0 })).temperature).toBe(0);
   });
 
+  it('sends no temperature to a Model that fixes it, whatever was asked', () => {
+    expect(
+      openaiModel(openai({ model: 'gpt-5-mini', temperature: 0.2 })).temperature,
+    ).toBeUndefined();
+  });
+
+  it('sends no default temperature to a Model that fixes it', () => {
+    expect(openaiModel(openai({ model: 'gpt-5-mini' })).temperature).toBeUndefined();
+  });
+
   it('defaults streaming to off', () => {
     expect(openaiModel(openai()).streaming).toBe(false);
   });
