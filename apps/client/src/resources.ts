@@ -319,7 +319,6 @@ export const resources = {
     togglePanel: { left: 'Toggle sessions panel', right: 'Toggle inspector' },
     menu: 'Menu',
     inspector: 'Inspector',
-    inspectorHint: 'Nothing to inspect yet.',
     search: 'Search',
     toggleColorMode: 'Toggle color mode',
     modifier: { mac: '⌘', windows: 'Ctrl' },
@@ -339,5 +338,27 @@ export const resources = {
     registered: 'Registered',
     admin: 'Admin',
     twoFactor: '2FA',
+  },
+  inspector: {
+    close: 'Close inspector',
+    tabs: { session: 'Session', run: 'Run' },
+    session: {
+      model: 'Model',
+      limits: 'Limits',
+      session: 'Session',
+      newChatNotice: 'A new chat will use this Model. Pick another in the composer.',
+      contextWindow: 'Context window',
+      maxOutput: 'Max output',
+      messages: 'Messages',
+      created: 'Created',
+      lastActivity: 'Last activity',
+      noMessages: 'None yet',
+      tokens: (count: string) => `${count} tokens`,
+    },
+    run: {
+      emptyTitle: 'No Run selected',
+      emptyHint:
+        'Turn on Run in the composer to have Agents plan, analyse and review an answer. Select a Run chip under an answer to see its Steps here.',
+    },
   },
 };

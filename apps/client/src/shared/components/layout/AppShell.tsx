@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { cn } from '@/shared/utils/cn';
 import { useRouterState } from '@tanstack/react-router';
 import { AccountFooter } from '@/shared/components/layout/AccountFooter';
-import { InspectorPlaceholder } from '@/shared/components/layout/InspectorPlaceholder';
+import { Inspector } from '@/modules/inspector/components/Inspector';
+import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
 import { SessionsList } from '@/modules/sessions/components/SessionsList';
 import { CommandPalette } from '@/modules/commandPalette/components/CommandPalette';
 import { useDefaultPaletteActions } from '@/modules/commandPalette/hooks/useDefaultPaletteActions';
@@ -26,6 +27,7 @@ export const AppShell = ({ children }: AppShellProps) => {
   const { showSidePanels: isDesktop } = useResponsiveLayout();
   const { leftOpen, rightOpen, sheetOpen, toggleLeft, toggleRight, closeSheet, toggleSheet } =
     usePanelStore();
+  const isRunTab = useInspectorStore((state) => state.activeTab === 'run');
   const { isDrawerOpen, closeDrawer, toggleDrawer, openSearch } = useDrawer();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const viewportHeight = useViewportHeight();
@@ -81,9 +83,13 @@ export const AppShell = ({ children }: AppShellProps) => {
         {isDesktop && rightOpen && (
           <aside
             aria-label={resources.shell.inspector}
-            className={`${panel} w-[300px] shrink-0 2xl:w-[360px]`}
+            className={cn(
+              panel,
+              'shrink-0',
+              isRunTab ? 'w-[360px] 2xl:w-[420px]' : 'w-[300px] 2xl:w-[360px]',
+            )}
           >
-            <InspectorPlaceholder />
+            <Inspector onClose={toggleRight} />
           </aside>
         )}
       </div>
@@ -99,8 +105,8 @@ export const AppShell = ({ children }: AppShellProps) => {
           <Sheet open={sheetOpen} onOpenChange={(open) => !open && closeSheet()}>
             <SheetContent side="bottom" className="max-h-[70dvh] gap-0 rounded-t-2xl">
               <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-border-strong" />
-              <SheetTitle className="p-4">{resources.shell.inspector}</SheetTitle>
-              <InspectorPlaceholder />
+              <SheetTitle className="sr-only">{resources.shell.inspector}</SheetTitle>
+              <Inspector onClose={closeSheet} />
             </SheetContent>
           </Sheet>
         </>

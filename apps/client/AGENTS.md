@@ -33,7 +33,7 @@ committed, never hand-edited), `resources.ts` (UI strings) and:
   and the pathless `_app/_chat` layout rendering `AppShell` around `index` and `s/$id`). `routing/` — router setup, `RootLayout`, search-param helpers.
 - `libs/api/` — the axios instance and SSE fetch mutator (`client.ts`, `streamClient.ts`), the query client,
   and `generated/` (Orval output). `libs/auth/` — the better-auth client, the one auth entry point.
-- `modules/<feature>/` — `auth`, `chat`, `commandPalette`, `sessions`, `settings`. Each splits into `components/`, `hooks/`,
+- `modules/<feature>/` — `auth`, `chat`, `commandPalette`, `inspector`, `sessions`, `settings`. Each splits into `components/`, `hooks/`,
   `stores/`, `utils/` and `types/types.ts`, plus its page component.
 - `shared/` — cross-module `components/` (with `ui/` for Chakra adapters and the redesign's base components),
   `hooks/`, `stores/`, `layout/`, `config/`, `utils/`.

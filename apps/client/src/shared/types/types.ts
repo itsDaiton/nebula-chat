@@ -75,6 +75,8 @@ export type PanelState = {
   sheetOpen: boolean;
   toggleLeft: () => void;
   toggleRight: () => void;
+  /** Opens the Inspector in whichever form the layout shows it. */
+  openRight: () => void;
   closeSheet: () => void;
   toggleSheet: () => void;
 };

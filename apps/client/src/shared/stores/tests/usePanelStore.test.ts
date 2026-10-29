@@ -64,4 +64,12 @@ describe('usePanelStore', () => {
     state().closeSheet();
     expect(state().sheetOpen).toBe(false);
   });
+
+  it('opens the Inspector as both the panel and the sheet', () => {
+    usePanelStore.setState({ rightOpen: false });
+
+    state().openRight();
+
+    expect(state()).toMatchObject({ rightOpen: true, sheetOpen: true });
+  });
 });
