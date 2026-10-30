@@ -5,7 +5,7 @@ they keep, and the flows that cross more than one app. Each diagram draws what t
 a design that is only proposed lives in its ADR. Feature-level flows sit next to their prose:
 sign-in, the Claim and the Message allowance in [auth.md](./auth.md), log export and runtime log
 levels in [logging.md](./logging.md). Domain terms (Session, Message, Direct reply, Run) are
-defined in [CONTEXT.md](../CONTEXT.md).
+defined in [GLOSSARY.md](../GLOSSARY.md).
 
 ## System context
 

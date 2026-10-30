@@ -37,4 +37,4 @@ ADR-0003 made each route's `schema:` block the single source of truth, with `fas
 - Generated client types carry real names, and the client imports `Conversation`/`Message` instead of aliasing `…200…` types.
 - The wire format does not change, but component names and the OpenAPI version do. For codegen consumers of the `openapi` package this is a non-breaking `feat`, noted in its changelog.
 - The spec can go stale silently. A route change without a regeneration is caught only in review.
-- `Conversation` is a deliberate, temporary use of a `CONTEXT.md` _Avoid_ term. NEB-352 renames it to `Session` and lands after this.
+- `Conversation` is a deliberate, temporary use of a `GLOSSARY.md` _Avoid_ term. NEB-352 renames it to `Session` and lands after this.

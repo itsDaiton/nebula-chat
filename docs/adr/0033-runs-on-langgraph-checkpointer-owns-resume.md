@@ -40,7 +40,7 @@ decided to build Runs on it.
    `steps.id` is a UUID and providers' tool-call IDs are not), with the raw tool-call ID kept in the
    Step's input; the checkpoint keeps it stable across a resume. This supersedes ADR-0016 §3.
 5. **A re-run node streams again.** On resume, the node in flight re-runs from its start, so its Step emits `step-started` again with a higher `attempt`, and the client discards what it rendered for that Step.
-6. **The Orchestrator may ask one Clarifying question per Run** (see `CONTEXT.md`), through a
+6. **The Orchestrator may ask one Clarifying question per Run** (see `GLOSSARY.md`), through a
    LangGraph interrupt. The question and the answer are Messages. While `waiting`, the Run holds no
    job; the user's next Message in the Session resumes it from its checkpoint on a new job, so
    ADR-0016 §1 becomes "one job at a time per Run". A delayed job ends the wait after a configurable

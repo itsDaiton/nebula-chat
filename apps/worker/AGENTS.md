@@ -52,7 +52,7 @@ The worker does **not** use the server's `name.layer.ts` file naming. Folders an
 and the folder says what kind of thing a file is, so a file carries no layer suffix
 (`jobs/directReply.ts`, `agents/orchestrator.ts`, `tools/webFetch.ts`). Test files keep the `.test.ts`
 suffix Vitest needs, in a `tests/` folder beside the code. Folders are named after
-[CONTEXT.md](../../CONTEXT.md) terms and appear when a ticket first needs them.
+[GLOSSARY.md](../../GLOSSARY.md) terms and appear when a ticket first needs them.
 
 `src/` holds `worker.ts` (entry: BullMQ workers, the `/health` server, shutdown, the real dependencies),
 `env.ts` (the only `process.env` reader, `OTEL_*` aside as in the server), the `logger.ts`, `db.ts` and

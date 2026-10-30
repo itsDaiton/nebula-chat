@@ -9,15 +9,9 @@
     { "serverName": "context7" },
     { "serverName": "langchain-docs" },
     { "serverName": "playwright" },
-    { "serverName": "redis-local" },
     { "serverName": "github" },
     { "serverName": "claude-code-remote" },
-    { "serverName": "ccd_session" },
-    { "serverName": "Claude_Docs" },
-    { "serverName": "Firecrawl" },
-    { "serverName": "Grafana_Cloud" },
-    { "serverName": "Supabase" },
-    { "serverName": "Render" }
+    { "serverName": "ccd_session" }
   ],
   "hooks": {
     "PostToolUse": [
@@ -38,6 +32,29 @@
           {
             "type": "command",
             "command": "bash .claude/hooks/block-dangerous-bash.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/typecheck-on-stop.sh",
+            "timeout": 300
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-start.sh",
+            "timeout": 10
           }
         ]
       }

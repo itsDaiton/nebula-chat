@@ -20,7 +20,7 @@ landed and is wrong in several concrete ways: it references a "CI-1" workflow th
 Supertest, testcontainers, msw, autocannon) before a single assertion about this codebase exists.
 
 Meanwhile the code most worth testing is not in the server at all. `tiktoken` resolves to exactly one place —
-`libs/langchain/src/tokens/counter.ts` — so the **token budget**, which `CONTEXT.md` names as a first-class
+`libs/langchain/src/tokens/counter.ts` — so the **token budget**, which `GLOSSARY.md` names as a first-class
 domain concept and which decides whether a user is wrongly rejected or silently overcharged, sits in a
 library. The server's own pure logic is a short list: `errors/error.handler.ts`,
 `config/pagination.config.ts`, `utils/trustProxy.ts`.

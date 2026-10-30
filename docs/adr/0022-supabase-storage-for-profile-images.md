@@ -7,7 +7,7 @@
 
 ## Context
 
-Registered users get a Profile image (see `CONTEXT.md`), either uploaded in Settings or supplied by a social provider. better-auth already models the result as the nullable `users.image` URL, sets it from the OAuth profile when a social user is created, and lets `updateUser` change it. It does not accept uploads or store files. The project had no file storage of any kind.
+Registered users get a Profile image (see `GLOSSARY.md`), either uploaded in Settings or supplied by a social provider. better-auth already models the result as the nullable `users.image` URL, sets it from the OAuth profile when a social user is created, and lets `updateUser` change it. It does not accept uploads or store files. The project had no file storage of any kind.
 
 Production Postgres already runs on a Supabase project (`nebula-chat`), so Supabase Storage is available without a new vendor or account. Its access policies key off Supabase Auth, which this app does not use: Supabase cannot tell which better-auth user is making a request.
 

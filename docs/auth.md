@@ -6,7 +6,7 @@ mounted by the server. This document describes how the running system behaves. F
 the rationale behind the design, see
 [ADR-0010](./adr/0010-better-auth-for-auth.md); for the domain terms (**User**,
 **Guest**, **Registered user**, **Message allowance**, **Claim**) see
-[CONTEXT.md](../CONTEXT.md).
+[GLOSSARY.md](../GLOSSARY.md).
 
 ## Model
 

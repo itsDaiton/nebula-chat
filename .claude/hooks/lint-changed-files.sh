@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
-# PostToolUse hook: auto-lint:fix files changed since last commit, then check the edited file's comments.
+# PostToolUse hook: auto-lint:fix the edited file, then check its comments.
 # Scope: .ts/.tsx/.js/.jsx only. Silent on success; prints errors on failure.
 # Lint is non-blocking. Over-long comments exit 2, which feeds the message back to Claude (the edit already happened).
 
 set -u
 
-# The payload names the edited file; lint scope still comes from git diff.
 payload="$(cat 2>/dev/null || true)"
 edited=""
 if command -v jq >/dev/null 2>&1; then
   edited="$(printf '%s' "$payload" | jq -r '.tool_input.file_path // empty' 2>/dev/null)"
 fi
+
+case "$edited" in
+  *.ts|*.tsx|*.js|*.jsx) ;;
+  *) exit 0 ;;
+esac
 
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null)"
 if [ -z "$repo_root" ]; then
@@ -19,17 +23,9 @@ fi
 
 cd "$repo_root" || exit 0
 
-mapfile -t changed < <(
-  git diff --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' 2>/dev/null
-  git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' 2>/dev/null
-)
-
-if [ "${#changed[@]}" -gt 0 ]; then
-  # Deduplicate, then run eslint on changed files only. Use pnpm exec for workspace-aware resolution.
-  mapfile -t files < <(printf '%s\n' "${changed[@]}" | sort -u)
-  if ! pnpm -s exec eslint --fix --no-warn-ignored "${files[@]}" 2>&1; then
-    echo "[lint-changed-files] eslint reported issues (non-blocking)" >&2
-  fi
+# Only the edited file: linting the whole diff on every edit grows with the branch. The Stop hook typechecks the rest.
+if [ -f "$edited" ] && ! pnpm -s exec eslint --fix --no-warn-ignored "$edited" 2>&1; then
+  echo "[lint-changed-files] eslint reported issues (non-blocking)" >&2
 fi
 
 # Comment budget (AGENTS.md): one line, two at most. Counts prose lines per block in the edited file.
