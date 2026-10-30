@@ -6,7 +6,7 @@
 
 ## Context
 
-A **Run** answers one user Message by coordinating several LLM executions and tools. The design space ranges from a fixed pipeline to a fully dynamic agent framework where models write each other's prompts. The original 2.0 design doc called for parallel prompts, per-model prompts and tools, delegation, and dependencies between tasks, and warned against building a generic agent framework before concrete requirements exist. A `/grill-with-docs` session chose the shape below. The vocabulary (Run, Agent, Intake Agent, Brief, Orchestrator, Output Agent, Step, Run budget) is defined in `CONTEXT.md`.
+A **Run** answers one user Message by coordinating several LLM executions and tools. The design space ranges from a fixed pipeline to a fully dynamic agent framework where models write each other's prompts. The original 2.0 design doc called for parallel prompts, per-model prompts and tools, delegation, and dependencies between tasks, and warned against building a generic agent framework before concrete requirements exist. A `/grill-with-docs` session chose the shape below. The vocabulary (Run, Agent, Intake Agent, Brief, Orchestrator, Output Agent, Step, Run budget) is defined in `GLOSSARY.md`.
 
 ## Decision
 

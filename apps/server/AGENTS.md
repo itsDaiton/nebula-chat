@@ -215,7 +215,7 @@ Use `.describe()` on schema fields for Swagger docs.
 
 ## Database — Drizzle
 
-Schema lives at `libs/db/src/schema.ts` (`@nebula-chat/db`). The domain tables are `users`, `sessions`, `messages`; better-auth owns `session`, `account`, and `verification` (see [ADR-0010](../../docs/adr/0010-better-auth-for-auth.md)). `sessions.userId` is **NOT NULL** — every session has an owner. See [CONTEXT.md](../../CONTEXT.md) for the domain vocabulary.
+Schema lives at `libs/db/src/schema.ts` (`@nebula-chat/db`). The domain tables are `users`, `sessions`, `messages`; better-auth owns `session`, `account`, and `verification` (see [ADR-0010](../../docs/adr/0010-better-auth-for-auth.md)). `sessions.userId` is **NOT NULL** — every session has an owner. See [GLOSSARY.md](../../GLOSSARY.md) for the domain vocabulary.
 
 **Rules:**
 

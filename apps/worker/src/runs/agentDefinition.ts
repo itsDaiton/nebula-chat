@@ -4,7 +4,7 @@ import { MissingConfigurationError } from '@nebula-chat/errors';
 import type { LLMConfig } from '@worker/llm/createLLM';
 import type { PromptName } from '@worker/llm/prompts';
 
-/** A named, predefined role (CONTEXT.md): versioned in git, never invented at run time. */
+/** A named, predefined role (GLOSSARY.md): versioned in git, never invented at run time. */
 export type AgentDefinition = {
   name: string;
   /** The short label a Step of this Agent shows in the UI. */

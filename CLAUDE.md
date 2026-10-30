@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 Guidance for Claude Code in this repository. The repo-wide habits below come from [AGENTS.md](./AGENTS.md);
-each app's `CLAUDE.md` imports its `AGENTS.md` on first touch; [CONTEXT.md](./CONTEXT.md) owns domain vocabulary.
+each app's `CLAUDE.md` imports its `AGENTS.md` on first touch; [GLOSSARY.md](./GLOSSARY.md) owns domain vocabulary.
 
 @AGENTS.md
 
@@ -30,13 +30,14 @@ These bias toward caution over speed; for trivial tasks use judgment.
 - **Conventional Commits, `feat`/`fix` only** (`!` for breaking) — Release Please ignores every other
   type. Default to `fix(<scope>): …`. Never bundle unrelated changes.
 - **Open a PR when the work is complete.** Title `type(scope): NEB-<n> summary` (no ID for ad-hoc work).
-  Body: one-line summary, `Closes #NN`, test-plan checklist, ADR link if one exists.
+  Write the body with **`/pr`** (Summary, Evidence, Merge Danger), then add `Closes #NN` and the ADR link if
+  one exists.
 - **Never merge your own PR** unless asked. Never force-push shared refs or use `--no-verify`.
 
 ## Skills
 
 Feature or non-trivial change: **`/grill-with-docs`** → **`/to-spec`** → **`/to-tickets`** →
-**`/implement`** per ticket (drives `/tdd`, ends with `/code-review`). Go straight to `/implement` for a
+**`/implement`** per ticket (drives `/tdd`, ends with `/code-review`) → **`/pr`**. Go straight to `/implement` for a
 single-session change. Incoming reports: **`/triage`**. Foggy multi-session effort: **`/wayfinder`**.
 Unsure: **`/ask-matt`**.
 
@@ -53,7 +54,7 @@ Unsure: **`/ask-matt`**.
 - A new ticket fills `.github/ISSUE_TEMPLATE.md` and follows the Ticket anatomy in
   `docs/agents/issue-tracker.md` — this overrides any thinner template a skill embeds. Title it
   `type(scope): NEB-<n> summary`; label it `app:server` / `app:client` / `lib:<name>` plus a triage label.
-- Domain: one `CONTEXT.md` plus `docs/adr/` — see `docs/agents/domain.md`. Both are produced upstream
+- Domain: one `GLOSSARY.md` plus `docs/adr/` — see `docs/agents/domain.md`. Both are produced upstream
   during `/grill-with-docs`, not during implementation.
 
 ## Compact instructions

@@ -33,7 +33,7 @@ export const chatService = {
     logger: ChatLogger,
   ): Promise<SentMessage> {
     const userId = user.id;
-    // Runs are Registered-only (CONTEXT.md); a Guest gets Direct replies.
+    // Runs are Registered-only (GLOSSARY.md); a Guest gets Direct replies.
     if (input.mode === 'run' && user.isAnonymous) {
       throw new ForbiddenError('A Run requires a registered account.');
     }
@@ -53,7 +53,7 @@ export const chatService = {
       if (session.archivedAt) {
         throw new ConflictError('This Session is archived. Restore it before sending a Message.');
       }
-      // The Model is set per Session (CONTEXT.md); the picker changes it for this and later replies.
+      // The Model is set per Session (GLOSSARY.md); the picker changes it for this and later replies.
       if (input.model !== undefined && input.model !== session.model) {
         await sessionRepository.updateModelTx(tx, sessionId, input.model);
       }

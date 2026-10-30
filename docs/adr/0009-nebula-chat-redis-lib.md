@@ -71,7 +71,7 @@ Eviction moves from the hand-rolled capped list to **per-key TTL + Redis `maxmem
 - One way the app talks to Redis; future tickets extend a toolkit instead of opening new clients.
 - `ioredis` replaces node-`redis`; the connection layer and `redis`-specific calls are rewritten.
 - The cache **key is intentionally unchanged** for now (`conversationId + model + hash(last user message)`),
-  so CONTEXT.md's "Cache entry" term still holds and no domain vocabulary changes. The key is known-imperfect;
+  so GLOSSARY.md's "Cache entry" term still holds and no domain vocabulary changes. The key is known-imperfect;
   correcting it (full-context hash, dropping `conversationId`, semantic caching) is a **separate future
   ticket**.
 - **Regenerate** now bypasses + overwrites the cache — a behavioral change shipped with this ticket.

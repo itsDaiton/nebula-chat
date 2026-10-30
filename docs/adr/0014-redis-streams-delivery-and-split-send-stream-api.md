@@ -24,7 +24,7 @@ Today `POST /api/chat/stream` persists the user Message _and_ holds the SSE resp
 ## Consequences
 
 - The client's streaming hook is rewritten: send, then subscribe, with reconnect by last event ID.
-- The "Conversation" → **Session** rename (see `CONTEXT.md`) lands with this API cut, since the routes are being redrawn anyway.
+- The "Conversation" → **Session** rename (see `GLOSSARY.md`) lands with this API cut, since the routes are being redrawn anyway.
 - Error events on the stream carry the typed error envelope from ADR-0011.
 - Stream memory is bounded by TTL plus Redis `maxmemory-policy`; a stream whose worker died mid-reply expires on its TTL, and the Run's durable status tells the client what happened.
 

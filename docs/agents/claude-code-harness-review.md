@@ -2,7 +2,8 @@
 
 Status: October 2026. Applied in the repo: the `@AGENTS.md` imports, compaction guidance, the three subagents, the
 edited-file lint hook, the `Stop` typecheck gate, the cloud `SessionStart` bootstrap, `skillOverrides` for synced skills
-and pinned MCP versions. The rest needs account or environment settings outside the repo.
+pinned MCP versions, the skills update (`CONTEXT.md` is now `GLOSSARY.md`) and the `/pr` skill for PR bodies. The rest
+needs account or environment settings outside the repo.
 Facts about Claude Code come from the official docs at `code.claude.com/docs` (linked per item). Community sources
 are marked as such and treated as anecdotal.
 

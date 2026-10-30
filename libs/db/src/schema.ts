@@ -71,7 +71,7 @@ export const verification = pgTable('verification', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// The domain Session (CONTEXT.md), not better-auth's `session` table above.
+// The domain Session (GLOSSARY.md), not better-auth's `session` table above.
 export const sessions = pgTable(
   'sessions',
   {
@@ -82,7 +82,7 @@ export const sessions = pgTable(
     title: text('title').notNull().default('New session'),
     model: text('model').notNull().default('gpt-4o-mini'),
     systemPrompt: text('system_prompt'),
-    // Set while the owner has put the Session away (an Archived Session, CONTEXT.md).
+    // Set while the owner has put the Session away (an Archived Session, GLOSSARY.md).
     archivedAt: timestamp('archived_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
