@@ -1,14 +1,14 @@
 {
-  ".": "5.12.1",
-  "apps/client": "2.8.1",
-  "apps/server": "4.7.1",
-  "libs/db": "1.3.0",
+  ".": "5.12.2",
+  "apps/client": "2.8.2",
+  "apps/server": "4.7.2",
+  "libs/db": "1.3.1",
   "openapi": "4.5.1",
   "libs/otel": "2.11.0",
   "libs/redis": "0.2.9",
   "libs/auth": "3.0.2",
   "libs/errors": "0.2.4",
-  "apps/cli": "1.2.1",
+  "apps/cli": "1.2.2",
   "libs/contracts": "1.7.1",
-  "apps/worker": "1.8.1"
+  "apps/worker": "1.8.2"
 }
