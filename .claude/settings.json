@@ -9,15 +9,9 @@
     { "serverName": "context7" },
     { "serverName": "langchain-docs" },
     { "serverName": "playwright" },
-    { "serverName": "redis-local" },
     { "serverName": "github" },
     { "serverName": "claude-code-remote" },
-    { "serverName": "ccd_session" },
-    { "serverName": "Claude_Docs" },
-    { "serverName": "Firecrawl" },
-    { "serverName": "Grafana_Cloud" },
-    { "serverName": "Supabase" },
-    { "serverName": "Render" }
+    { "serverName": "ccd_session" }
   ],
   "hooks": {
     "PostToolUse": [
