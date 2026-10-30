@@ -40,6 +40,8 @@ Feature or non-trivial change: **`/grill-with-docs`** → **`/to-spec`** → **`
 **`/implement`** per ticket (drives `/tdd`, ends with `/code-review`) → **`/pr`**. Go straight to `/implement` for a
 single-session change. Incoming reports: **`/triage`**. Foggy multi-session effort: **`/wayfinder`**.
 Unsure: **`/ask-matt`**.
+Vendored skills carry local edits in `tdd` (seams don't block on confirmation) and `to-tickets` (our ticket
+template); after `npx skills@latest update`, re-apply them from the diff.
 
 ## Subagents
 
