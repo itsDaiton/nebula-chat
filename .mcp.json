@@ -2,7 +2,7 @@
   "mcpServers": {
     "shadcn": {
       "command": "npx",
-      "args": ["-y", "shadcn@latest", "mcp"]
+      "args": ["-y", "shadcn@4.21.5", "mcp"]
     },
     "better-auth": {
       "type": "http",
@@ -18,13 +18,13 @@
     },
     "playwright": {
       "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest", "--headless", "--isolated", "--browser", "chromium"]
+      "args": ["-y", "@playwright/mcp@0.0.83", "--headless", "--isolated", "--browser", "chromium"]
     },
     "redis-local": {
       "command": "uvx",
       "args": [
         "--from",
-        "redis-mcp-server@latest",
+        "redis-mcp-server==0.5.1",
         "redis-mcp-server",
         "--url",
         "${NEBULA_MCP_REDIS_URL:-redis://localhost:6380/0}"

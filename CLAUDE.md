@@ -1,8 +1,9 @@
 # CLAUDE.md
 
-Guidance for Claude Code in this repository. [AGENTS.md](./AGENTS.md) holds the repo-wide habits;
-the per-app `AGENTS.md` files hold package conventions; [CONTEXT.md](./CONTEXT.md) owns domain vocabulary.
-Read the relevant ones before a non-trivial change.
+Guidance for Claude Code in this repository. The repo-wide habits below come from [AGENTS.md](./AGENTS.md);
+each app's `CLAUDE.md` imports its `AGENTS.md` on first touch; [CONTEXT.md](./CONTEXT.md) owns domain vocabulary.
+
+@AGENTS.md
 
 ## Working principles
 
@@ -39,6 +40,13 @@ Feature or non-trivial change: **`/grill-with-docs`** → **`/to-spec`** → **`
 single-session change. Incoming reports: **`/triage`**. Foggy multi-session effort: **`/wayfinder`**.
 Unsure: **`/ask-matt`**.
 
+## Subagents
+
+- Hand lint, typecheck and test runs to the **`verifier`** subagent and act on its summary; keep edits in the
+  main session.
+- Library and API docs: the **`doc-researcher`** subagent. Never set `model:` in a skill: a mid-session model
+  switch re-reads the whole conversation uncached. Use `context: fork` with an `agent:` instead.
+
 ## Tickets and domain docs
 
 - Tracker: GitHub Issues (`itsDaiton/nebula-chat`) via `gh`; labels in `docs/agents/triage-labels.md`.
@@ -47,3 +55,8 @@ Unsure: **`/ask-matt`**.
   `type(scope): NEB-<n> summary`; label it `app:server` / `app:client` / `lib:<name>` plus a triage label.
 - Domain: one `CONTEXT.md` plus `docs/adr/` — see `docs/agents/domain.md`. Both are produced upstream
   during `/grill-with-docs`, not during implementation.
+
+## Compact instructions
+
+Keep the ticket number, the branch, the spec or acceptance criteria, failing check names and the files changed.
+Drop exploration output and passing test logs.

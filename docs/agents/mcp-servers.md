@@ -11,6 +11,8 @@ The repo-root [`.mcp.json`](../../.mcp.json) gives every agent session the same 
 | `playwright`     | Driving the locally running client (`http://localhost:5173`) to verify a UI change and capture screenshots for a PR                                     | Headless, isolated, Chromium; local dev servers only (setup below the table)                                                                                              |
 | `redis-local`    | Inspecting the **local** Redis: BullMQ queues, reply streams, cache entries                                                                             | Defaults to the compose Redis on `:6380`; set `NEBULA_MCP_REDIS_URL` if yours needs a password (`redis://:<password>@localhost:6380/0`). Never point it at a hosted Redis |
 
+**Versions are pinned.** The `npx`/`uvx` servers use exact versions, so a session never starts a release nobody reviewed. Bump them deliberately, to a release at least two weeks old.
+
 **Playwright setup.** Install its browser once with `npx @playwright/mcp@latest install-browser chromium`. In a cloud session that has a preinstalled Chromium, set `PLAYWRIGHT_MCP_EXECUTABLE_PATH` to it instead. It refuses `file:` URLs, so serve pages over HTTP. Its snapshots go to the git-ignored `.playwright-mcp/`.
 
 **No MCP server, use these instead:**

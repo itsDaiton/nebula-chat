@@ -41,6 +41,41 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/typecheck-on-stop.sh",
+            "timeout": 300
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-start.sh",
+            "timeout": 600
+          }
+        ]
+      }
     ]
+  },
+  "skillOverrides": {
+    "spotify-fresh-picks": "off",
+    "spotify-more-like-this": "off",
+    "spotify-playlist": "off",
+    "spotify-podcasts": "off",
+    "spotify-recent-listening": "off",
+    "spotify-similar": "off",
+    "strava-progress-tracker": "off",
+    "strava-run-analyzer": "off",
+    "morning": "off",
+    "post-creator": "off"
   }
 }
