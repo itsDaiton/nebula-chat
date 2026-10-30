@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.8.1...nebula-chat-client-v2.8.2) (2026-10-30)
+
+
+### Bug Fixes
+
+* Claude Code harness, skills update and GLOSSARY.md ([#688](https://github.com/itsDaiton/nebula-chat/issues/688)) ([17abd54](https://github.com/itsDaiton/nebula-chat/commit/17abd5450d4020b267c8e8b07579f23da90bb2e5))
+
 ## [2.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.8.0...nebula-chat-client-v2.8.1) (2026-10-29)
 
 
