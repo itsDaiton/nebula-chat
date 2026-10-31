@@ -86,7 +86,7 @@ In order: add `libs/<name>/.gitignore` (`dist/`, `node_modules/`); add the packa
 
 ## Keep docs true
 
-A change to conventions, module layout or architecture updates, in the same PR: the relevant `AGENTS.md`,
-`GLOSSARY.md` for vocabulary, `docs/adr/` for hard-to-reverse decisions, the Mermaid diagrams that draw the
+A change to conventions, module layout or architecture updates, in the same PR: the relevant `AGENTS.md` or
+`.claude/rules/` file (and its `paths:` globs when a folder moves), `GLOSSARY.md` for vocabulary, `docs/adr/` for hard-to-reverse decisions, the Mermaid diagrams that draw the
 area, and any skill that references it. Operator CLI usage: [apps/cli/AGENTS.md](./apps/cli/AGENTS.md).
 MCP servers: [docs/agents/mcp-servers.md](./docs/agents/mcp-servers.md).
