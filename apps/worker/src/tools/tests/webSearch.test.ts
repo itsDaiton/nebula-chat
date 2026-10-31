@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { webSearchTool } from '@worker/tools/webSearch';
-import { WebToolError } from '@worker/tools/webToolError';
+import { WebToolError } from '@worker/web/webToolError';
 
 type Sent = { url: string; init: RequestInit };
 

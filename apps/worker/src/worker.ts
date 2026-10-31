@@ -34,8 +34,9 @@ import { redis } from '@worker/redis';
 import { createCheckpointer } from '@worker/runs/checkpointer';
 import { runRepository } from '@worker/runs/runRepository';
 import { stepRepository } from '@worker/runs/stepRepository';
-import { dnsResolve, nodeRequest, webFetchTool } from '@worker/tools/webFetch';
+import { webFetchTool } from '@worker/tools/webFetch';
 import { webSearchTool } from '@worker/tools/webSearch';
+import { dnsResolve, nodeRequest } from '@worker/web/httpTransport';
 
 const start = async (): Promise<void> => {
   const stream: ReplyStreamWriter = {

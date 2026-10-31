@@ -15,7 +15,7 @@ import type { ApiKeys, DelegateDefinition, Toolbox, ToolName } from '@worker/run
 import type { RunModels } from '@worker/runs/runGraph';
 import { runToolStep, stepIdFor, turnsIn } from '@worker/runs/steps';
 import type { StepContext } from '@worker/runs/steps';
-import { WebToolError } from '@worker/tools/webToolError';
+import { WebToolError } from '@worker/web/webToolError';
 
 export type DelegateToolDeps = StepContext & {
   models: RunModels;
