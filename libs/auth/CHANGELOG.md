@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.2.0...nebula-chat-auth-v3.3.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-544 Account deletion starts a 30-day Pending deletion ([#699](https://github.com/itsDaiton/nebula-chat/issues/699)) ([cbf636b](https://github.com/itsDaiton/nebula-chat/commit/cbf636b24371eb59794459f1c20494898e4479d2))
+
 ## [3.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.1.0...nebula-chat-auth-v3.2.0) (2026-10-31)
 
 
