@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.14.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.13.0...nebula-chat-client-v2.14.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-541 Admin reads any User's Sessions and Messages, each read audited ([#707](https://github.com/itsDaiton/nebula-chat/issues/707)) ([ae9e5e3](https://github.com/itsDaiton/nebula-chat/commit/ae9e5e37a514323d5e57a5c91a004e45f12aeee3))
+
 ## [2.13.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.12.0...nebula-chat-client-v2.13.0) (2026-10-31)
 
 
