@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.14.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.13.0...nebula-chat-server-v4.14.0) (2026-10-31)
+
+
+### Features
+
+* **worker:** NEB-545 daily Purge of expired Pending deletion and inactive Guests ([#711](https://github.com/itsDaiton/nebula-chat/issues/711)) ([88e021f](https://github.com/itsDaiton/nebula-chat/commit/88e021f49f6e3eb0973feff918d7154af7231da0))
+
 ## [4.13.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.12.0...nebula-chat-server-v4.13.0) (2026-10-31)
 
 
