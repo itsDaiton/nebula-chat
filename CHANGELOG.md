@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.13.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.12.3...nebula-chat-v5.13.0) (2026-10-31)
+
+
+### Features
+
+* **auth:** NEB-538 enable the admin and two-factor plugins with the Audit log table ([#691](https://github.com/itsDaiton/nebula-chat/issues/691)) ([abff13c](https://github.com/itsDaiton/nebula-chat/commit/abff13c83f31d750867fd44082e7770af45059cf))
+
 ## [5.12.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.12.2...nebula-chat-v5.12.3) (2026-10-31)
 
 
