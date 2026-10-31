@@ -47,6 +47,7 @@ const serveSessions = () =>
       createdAt: sessions[0].createdAt,
       archived: false,
       activeStreamId: null,
+      waitingRun: null,
     }),
     getListMessagesMockHandler([]),
     getGetMessageAllowanceMockHandler({ metered: false }),

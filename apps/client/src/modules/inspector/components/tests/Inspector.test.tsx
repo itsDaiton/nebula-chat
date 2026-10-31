@@ -56,6 +56,7 @@ beforeEach(() => {
       createdAt: '2026-10-27T18:02:00.000Z',
       archived: false,
       activeStreamId: null,
+      waitingRun: null,
     }),
     getListMessagesMockHandler([message('m1', minutesAgo(30)), message('m2', minutesAgo(2))]),
   );

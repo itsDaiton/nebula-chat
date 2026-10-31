@@ -36,7 +36,7 @@ const renderApp = async (user = aSession({ isAnonymous: false })) => {
   server.use(
     mockGetSession(user),
     getListSessionsMockHandler({ sessions: recent, nextCursor: null, hasMore: false }),
-    getGetSessionMockHandler({ ...recent[0], activeStreamId: null }),
+    getGetSessionMockHandler({ ...recent[0], activeStreamId: null, waitingRun: null }),
     getListMessagesMockHandler([]),
     getGetMessageAllowanceMockHandler({ metered: false }),
   );

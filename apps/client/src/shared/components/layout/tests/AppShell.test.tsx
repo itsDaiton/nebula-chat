@@ -41,7 +41,7 @@ beforeEach(() => {
   server.use(
     mockGetSession(aSession()),
     getListSessionsMockHandler({ sessions: [], nextCursor: null, hasMore: false }),
-    getGetSessionMockHandler({ ...session, activeStreamId: null }),
+    getGetSessionMockHandler({ ...session, activeStreamId: null, waitingRun: null }),
     getListMessagesMockHandler([]),
     getGetMessageAllowanceMockHandler({ metered: false }),
   );

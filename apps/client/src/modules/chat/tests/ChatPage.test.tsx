@@ -68,7 +68,11 @@ beforeEach(() => {
   serveSessions();
   server.use(
     mockGetSession(aSession()),
-    getGetSessionMockHandler({ ...aChatSession(SESSION_ID, 'Chat'), activeStreamId: null }),
+    getGetSessionMockHandler({
+      ...aChatSession(SESSION_ID, 'Chat'),
+      activeStreamId: null,
+      waitingRun: null,
+    }),
     getListMessagesMockHandler([]),
     getGetMessageAllowanceMockHandler({ metered: false }),
   );
@@ -161,7 +165,11 @@ describe('ChatPage', () => {
     const STREAM_ID = '33333333-3333-4333-8333-333333333333';
     let opened: unknown;
     server.use(
-      getGetSessionMockHandler({ ...aChatSession(SESSION_ID, 'Chat'), activeStreamId: STREAM_ID }),
+      getGetSessionMockHandler({
+        ...aChatSession(SESSION_ID, 'Chat'),
+        activeStreamId: STREAM_ID,
+        waitingRun: null,
+      }),
       getListMessagesMockHandler([aMessage('m1', 'user', 'what is 2+2?')]),
       http.get(API_ROUTE.replyStream, ({ params }) => {
         opened = params['streamId'];
