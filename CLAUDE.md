@@ -5,6 +5,8 @@ each app's `CLAUDE.md` imports its `AGENTS.md` on first touch; [GLOSSARY.md](./G
 
 @AGENTS.md
 
+Topic rules for the server and client live in `.claude/rules/` and load when Claude reads a matching file.
+
 ## Working principles
 
 These bias toward caution over speed; for trivial tasks use judgment.
