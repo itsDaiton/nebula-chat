@@ -9,6 +9,7 @@ const PROMPT_NAMES = [
   'orchestrator',
   'analyst',
   'critic',
+  'researcher',
   'output',
 ] as const;
 
