@@ -72,7 +72,8 @@ const statusFilters = {
 };
 
 const searchFilter = (search: string) => {
-  const pattern = `%${search.replace(/[\\%_]/g, String.raw`\$&`)}%`;
+  const escaped = search.replace(/[\\%_]/g, String.raw`\$&`);
+  const pattern = `%${escaped}%`;
   return or(sql`${users.name} ilike ${pattern}`, sql`${users.email} ilike ${pattern}`);
 };
 
