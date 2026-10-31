@@ -6,7 +6,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /** A User is due when their Pending deletion started, or a Guest was last active, before these. */
 export type PurgeCutoffs = { pendingDeletionBefore: Date; guestInactiveBefore: Date };
 
-export type PurgeCandidates = { pendingUserIds: string[]; guestIds: string[] };
+type PurgeCandidates = { pendingUserIds: string[]; guestIds: string[] };
 
 /** What a run erased and what it could not; counts only, never ids or content (ADR-0028). */
 export type PurgeCounts = { pendingUsers: number; guests: number; failed: number };
