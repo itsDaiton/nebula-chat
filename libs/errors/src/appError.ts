@@ -83,6 +83,20 @@ export class ConflictError extends AppError {
   }
 }
 
+/** Demoting or banning the only Admin left would leave no one to administer. */
+export class LastAdminError extends AppError {
+  constructor() {
+    super('LastAdmin', 'The last Admin cannot be demoted or banned.');
+  }
+}
+
+/** A Guest, an unverified user or a banned user cannot hold the Admin role. */
+export class NotEligibleForAdminError extends AppError {
+  constructor(message: string) {
+    super('NotEligibleForAdmin', message);
+  }
+}
+
 export class PayloadTooLargeError extends AppError {
   constructor(message: string) {
     super('PayloadTooLarge', message);

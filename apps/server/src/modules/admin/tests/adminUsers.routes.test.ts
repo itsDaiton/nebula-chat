@@ -19,6 +19,8 @@ vi.mock('@server/modules/admin/admin.repository', () => ({
     findUserDetail: vi.fn(),
     findPendingDeletion: vi.fn(),
     clearPendingDeletion: vi.fn(),
+    findModerationTarget: vi.fn(),
+    countOtherActiveAdmins: vi.fn(),
   },
 }));
 
@@ -29,7 +31,10 @@ vi.mock('@server/modules/audit/audit.repository', () => ({
 vi.mock('@server/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
 vi.mock('@server/auth', () => ({
-  auth: { api: { getSession: vi.fn() }, handler: vi.fn() },
+  auth: {
+    api: { getSession: vi.fn(), setRole: vi.fn(), banUser: vi.fn(), unbanUser: vi.fn() },
+    handler: vi.fn(),
+  },
 }));
 
 import { auth } from '@server/auth';
@@ -39,6 +44,21 @@ import { auditRepository } from '@server/modules/audit/audit.repository';
 const repo = vi.mocked(adminRepository);
 const audit = vi.mocked(auditRepository);
 const mockedGetSession = vi.mocked(auth.api.getSession);
+const pluginApi = auth.api as unknown as Record<string, ReturnType<typeof vi.fn>>;
+const mockedSetRole = pluginApi.setRole!;
+const mockedBanUser = pluginApi.banUser!;
+const mockedUnbanUser = pluginApi.unbanUser!;
+
+const aTarget = (overrides: Record<string, unknown> = {}) => ({
+  id: USER_ID,
+  emailVerified: true,
+  isAnonymous: false,
+  banned: false,
+  banExpires: null,
+  banReason: null,
+  role: 'user',
+  ...overrides,
+});
 
 const ROUTE = '/api/admin/users';
 const COOKIE = { cookie: 'better-auth.session_token=abc' };
@@ -90,6 +110,11 @@ beforeEach(() => {
   repo.findUserDetail.mockResolvedValue(fromPartial(aRow({ sessionsCount: 3, banReason: null })));
   repo.findPendingDeletion.mockResolvedValue({ id: USER_ID, pendingDeletionAt: PENDING_AT });
   repo.clearPendingDeletion.mockResolvedValue(undefined);
+  repo.findModerationTarget.mockResolvedValue(fromPartial(aTarget()));
+  repo.countOtherActiveAdmins.mockResolvedValue(1);
+  mockedSetRole.mockResolvedValue(undefined);
+  mockedBanUser.mockResolvedValue(undefined);
+  mockedUnbanUser.mockResolvedValue(undefined);
   audit.insert.mockResolvedValue(undefined);
 });
 
@@ -367,5 +392,286 @@ describe('POST /api/admin/users/:id/restore', () => {
     expect(res.statusCode).toBe(403);
     expect(res.json()).toMatchObject({ error: 'TwoFactorRequired' });
     expect(repo.clearPendingDeletion).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/admin/users/:id/role', () => {
+  const ROLE = `${ROUTE}/${USER_ID}/role`;
+  const send = (payload: unknown) =>
+    app.inject({ method: 'POST', url: ROLE, headers: COOKIE, payload: payload as object });
+
+  it('grants Admin to a verified Registered user through better-auth, with one Audit entry', async () => {
+    const res = await send({ role: 'admin' });
+
+    expect(res.statusCode).toBe(204);
+    expect(mockedSetRole).toHaveBeenCalledWith(
+      expect.objectContaining({ body: { userId: USER_ID, role: 'admin' } }),
+    );
+    expect(audit.insert).toHaveBeenCalledTimes(1);
+    expect(audit.insert).toHaveBeenCalledWith({
+      actorType: 'admin',
+      actorUserId: ADMIN_USER_ID,
+      action: 'admin.granted',
+      targetType: 'user',
+      targetId: USER_ID,
+      detail: { role: { from: 'user', to: 'admin' } },
+    });
+  });
+
+  it.each([
+    ['a Guest', { isAnonymous: true }],
+    ['an unverified user', { emailVerified: false }],
+    ['a banned user', { banned: true }],
+  ])('refuses %s with NotEligibleForAdmin', async (_label, overrides) => {
+    repo.findModerationTarget.mockResolvedValue(fromPartial(aTarget(overrides)));
+
+    const res = await send({ role: 'admin' });
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ success: false, error: 'NotEligibleForAdmin' });
+    expect(mockedSetRole).not.toHaveBeenCalled();
+    expect(audit.insert).not.toHaveBeenCalled();
+  });
+
+  it('lets a user whose ban ran out become an Admin', async () => {
+    repo.findModerationTarget.mockResolvedValue(
+      fromPartial(aTarget({ banned: true, banExpires: new Date('2020-01-01T00:00:00.000Z') })),
+    );
+
+    const res = await send({ role: 'admin' });
+
+    expect(res.statusCode).toBe(204);
+  });
+
+  it('answers a typed conflict when the user is already an Admin', async () => {
+    repo.findModerationTarget.mockResolvedValue(fromPartial(aTarget({ role: 'admin' })));
+
+    const res = await send({ role: 'admin' });
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'Conflict' });
+    expect(mockedSetRole).not.toHaveBeenCalled();
+  });
+
+  it('revokes an Admin while another remains', async () => {
+    repo.findModerationTarget.mockResolvedValue(fromPartial(aTarget({ role: 'admin' })));
+
+    const res = await send({ role: 'user' });
+
+    expect(res.statusCode).toBe(204);
+    expect(repo.countOtherActiveAdmins).toHaveBeenCalledWith(USER_ID);
+    expect(mockedSetRole).toHaveBeenCalledWith(
+      expect.objectContaining({ body: { userId: USER_ID, role: 'user' } }),
+    );
+    expect(audit.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'user.role_changed',
+        detail: { role: { from: 'admin', to: 'user' } },
+      }),
+    );
+  });
+
+  it('refuses to revoke the last Admin', async () => {
+    repo.findModerationTarget.mockResolvedValue(fromPartial(aTarget({ role: 'admin' })));
+    repo.countOtherActiveAdmins.mockResolvedValue(0);
+
+    const res = await send({ role: 'user' });
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'LastAdmin' });
+    expect(mockedSetRole).not.toHaveBeenCalled();
+    expect(audit.insert).not.toHaveBeenCalled();
+  });
+
+  it('answers a typed conflict when revoking a user who is not an Admin', async () => {
+    const res = await send({ role: 'user' });
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'Conflict' });
+  });
+
+  it('answers 404 for an unknown User', async () => {
+    repo.findModerationTarget.mockResolvedValue(null);
+
+    const res = await send({ role: 'admin' });
+
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('rejects a role outside admin and user', async () => {
+    const res = await send({ role: 'root' });
+
+    expect(res.statusCode).toBe(400);
+    expect(mockedSetRole).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['a Registered user', () => registeredSession(), 'Forbidden'],
+    ['an Admin short of two-factor', () => adminWithout2FASession(), 'TwoFactorRequired'],
+  ])('refuses %s', async (_label, session, error) => {
+    mockedGetSession.mockResolvedValue(session() as never);
+
+    const res = await send({ role: 'admin' });
+
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toMatchObject({ error });
+    expect(mockedSetRole).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/admin/users/:id/ban', () => {
+  const BAN = `${ROUTE}/${USER_ID}/ban`;
+  const send = (payload: unknown) =>
+    app.inject({ method: 'POST', url: BAN, headers: COOKIE, payload: payload as object });
+
+  it('bans through better-auth with the reason and seconds until the end, and audits once', async () => {
+    const expiresAt = new Date(Date.now() + 3_600_000).toISOString();
+
+    const res = await send({ reason: 'spam', expiresAt });
+
+    expect(res.statusCode).toBe(204);
+    expect(mockedBanUser).toHaveBeenCalledTimes(1);
+    const { body } = mockedBanUser.mock.calls[0]?.[0] as { body: Record<string, unknown> };
+    expect(body).toMatchObject({ userId: USER_ID, banReason: 'spam' });
+    expect(body.banExpiresIn).toBeGreaterThan(3590);
+    expect(body.banExpiresIn).toBeLessThanOrEqual(3600);
+    expect(audit.insert).toHaveBeenCalledTimes(1);
+    expect(audit.insert).toHaveBeenCalledWith({
+      actorType: 'admin',
+      actorUserId: ADMIN_USER_ID,
+      action: 'user.banned',
+      targetType: 'user',
+      targetId: USER_ID,
+      detail: { reason: 'spam', expiresAt },
+    });
+  });
+
+  it('bans with no end when no end time is given', async () => {
+    const res = await send({ reason: 'abuse' });
+
+    expect(res.statusCode).toBe(204);
+    expect(mockedBanUser).toHaveBeenCalledWith(
+      expect.objectContaining({ body: { userId: USER_ID, banReason: 'abuse' } }),
+    );
+    expect(audit.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ detail: { reason: 'abuse', expiresAt: null } }),
+    );
+  });
+
+  it('refuses to ban the last Admin', async () => {
+    repo.findModerationTarget.mockResolvedValue(fromPartial(aTarget({ role: 'admin' })));
+    repo.countOtherActiveAdmins.mockResolvedValue(0);
+
+    const res = await send({ reason: 'spam' });
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'LastAdmin' });
+    expect(mockedBanUser).not.toHaveBeenCalled();
+    expect(audit.insert).not.toHaveBeenCalled();
+  });
+
+  it('bans an Admin while another remains', async () => {
+    repo.findModerationTarget.mockResolvedValue(fromPartial(aTarget({ role: 'admin' })));
+
+    const res = await send({ reason: 'spam' });
+
+    expect(res.statusCode).toBe(204);
+  });
+
+  it('refuses an Admin banning themselves', async () => {
+    repo.findModerationTarget.mockResolvedValue(fromPartial(aTarget({ id: ADMIN_USER_ID })));
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `${ROUTE}/${ADMIN_USER_ID}/ban`,
+      headers: COOKIE,
+      payload: { reason: 'spam' },
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(mockedBanUser).not.toHaveBeenCalled();
+  });
+
+  it('answers a typed conflict for a User who is already banned', async () => {
+    repo.findModerationTarget.mockResolvedValue(fromPartial(aTarget({ banned: true })));
+
+    const res = await send({ reason: 'spam' });
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'Conflict' });
+  });
+
+  it.each([
+    ['no reason', {}],
+    ['an empty reason', { reason: '' }],
+    ['an end time in the past', { reason: 'spam', expiresAt: '2020-01-01T00:00:00.000Z' }],
+    ['an end time that is not a date', { reason: 'spam', expiresAt: 'soon' }],
+  ])('rejects %s', async (_label, payload) => {
+    const res = await send(payload);
+
+    expect(res.statusCode).toBe(400);
+    expect(mockedBanUser).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 for an unknown User', async () => {
+    repo.findModerationTarget.mockResolvedValue(null);
+
+    const res = await send({ reason: 'spam' });
+
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('refuses an Admin short of two-factor', async () => {
+    mockedGetSession.mockResolvedValue(adminWithout2FASession() as never);
+
+    const res = await send({ reason: 'spam' });
+
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toMatchObject({ error: 'TwoFactorRequired' });
+    expect(mockedBanUser).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/admin/users/:id/unban', () => {
+  const UNBAN = `${ROUTE}/${USER_ID}/unban`;
+
+  it('unbans through better-auth and audits once', async () => {
+    repo.findModerationTarget.mockResolvedValue(
+      fromPartial(aTarget({ banned: true, banReason: 'spam' })),
+    );
+
+    const res = await app.inject({ method: 'POST', url: UNBAN, headers: COOKIE });
+
+    expect(res.statusCode).toBe(204);
+    expect(mockedUnbanUser).toHaveBeenCalledWith(
+      expect.objectContaining({ body: { userId: USER_ID } }),
+    );
+    expect(audit.insert).toHaveBeenCalledTimes(1);
+    expect(audit.insert).toHaveBeenCalledWith({
+      actorType: 'admin',
+      actorUserId: ADMIN_USER_ID,
+      action: 'user.unbanned',
+      targetType: 'user',
+      targetId: USER_ID,
+      detail: { reason: 'spam' },
+    });
+  });
+
+  it('answers a typed conflict for a User who is not banned', async () => {
+    const res = await app.inject({ method: 'POST', url: UNBAN, headers: COOKIE });
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'Conflict' });
+    expect(mockedUnbanUser).not.toHaveBeenCalled();
+    expect(audit.insert).not.toHaveBeenCalled();
+  });
+
+  it('refuses an Admin short of two-factor', async () => {
+    mockedGetSession.mockResolvedValue(adminWithout2FASession() as never);
+
+    const res = await app.inject({ method: 'POST', url: UNBAN, headers: COOKIE });
+
+    expect(res.statusCode).toBe(403);
+    expect(mockedUnbanUser).not.toHaveBeenCalled();
   });
 });

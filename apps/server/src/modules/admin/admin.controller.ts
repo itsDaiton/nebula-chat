@@ -1,10 +1,13 @@
+import { fromNodeHeaders } from 'better-auth/node';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { adminService } from '@server/modules/admin/admin.service';
 import { getSessionData } from '@server/plugins/authGate.plugin';
 import type {
   AdminEmailParams,
+  BanUserDTO,
   GrantAdminDTO,
   ListUsersQuery,
+  SetRoleDTO,
   UserIdParams,
 } from '@server/modules/admin/admin.types';
 
@@ -28,6 +31,27 @@ export const adminController = {
   async getUser(req: FastifyRequest<{ Params: UserIdParams }>, reply: FastifyReply) {
     const user = await adminService.getUser(req.params.id);
     return reply.status(200).send(user);
+  },
+  async setRole(
+    req: FastifyRequest<{ Params: UserIdParams; Body: SetRoleDTO }>,
+    reply: FastifyReply,
+  ) {
+    const { id } = getSessionData(req).user;
+    await adminService.setRole(req.params.id, req.body, id, fromNodeHeaders(req.headers));
+    return reply.status(204).send();
+  },
+  async banUser(
+    req: FastifyRequest<{ Params: UserIdParams; Body: BanUserDTO }>,
+    reply: FastifyReply,
+  ) {
+    const { id } = getSessionData(req).user;
+    await adminService.banUser(req.params.id, req.body, id, fromNodeHeaders(req.headers));
+    return reply.status(204).send();
+  },
+  async unbanUser(req: FastifyRequest<{ Params: UserIdParams }>, reply: FastifyReply) {
+    const { id } = getSessionData(req).user;
+    await adminService.unbanUser(req.params.id, id, fromNodeHeaders(req.headers));
+    return reply.status(204).send();
   },
   async restoreUser(req: FastifyRequest<{ Params: UserIdParams }>, reply: FastifyReply) {
     await adminService.restoreUser(req.params.id, getSessionData(req).user.id);

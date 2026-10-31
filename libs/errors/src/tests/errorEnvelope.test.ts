@@ -16,6 +16,8 @@ describe('errorEnvelopeSchema', () => {
     'TwoFactorRequired',
     'NotFound',
     'Conflict',
+    'LastAdmin',
+    'NotEligibleForAdmin',
     'PayloadTooLarge',
     'TooManyRequests',
     'Internal',

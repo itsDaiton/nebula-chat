@@ -1,6 +1,18 @@
-import { ConflictError, NotFoundError, ValidationError } from '@nebula-chat/errors';
+import {
+  ConflictError,
+  LastAdminError,
+  NotEligibleForAdminError,
+  NotFoundError,
+  ValidationError,
+} from '@nebula-chat/errors';
+import { auth } from '@server/auth';
 import { adminRepository } from '@server/modules/admin/admin.repository';
-import type { ListUsersQuery } from '@server/modules/admin/admin.types';
+import type {
+  AdminRole,
+  BanUserDTO,
+  ListUsersQuery,
+  SetRoleDTO,
+} from '@server/modules/admin/admin.types';
 import { auditService } from '@server/modules/audit/audit.service';
 
 type UserRow = NonNullable<Awaited<ReturnType<typeof adminRepository.findUserByEmail>>>;
@@ -54,7 +66,43 @@ const toUserSummary = (user: SummaryRow) => ({
   updatedAt: user.updatedAt,
 });
 
-// The Operator's grants and revocations (ADR-0027 §7); Admins promoting each other comes later.
+type AdminPluginApi = {
+  setRole: (input: {
+    body: { userId: string; role: AdminRole };
+    headers: Headers;
+  }) => Promise<unknown>;
+  banUser: (input: {
+    body: { userId: string; banReason: string; banExpiresIn?: number };
+    headers: Headers;
+  }) => Promise<unknown>;
+  unbanUser: (input: { body: { userId: string }; headers: Headers }) => Promise<unknown>;
+};
+
+// `AuthInstance` is the base `Auth` (TS2883), so the admin plugin's endpoints are typed here.
+const adminApi = () => auth.api as unknown as AdminPluginApi;
+
+type ModerationTarget = NonNullable<
+  Awaited<ReturnType<typeof adminRepository.findModerationTarget>>
+>;
+
+const isBannedNow = ({ banned, banExpires }: ModerationTarget) =>
+  banned && (!banExpires || banExpires > new Date());
+
+const findModerationTarget = async (id: string) => {
+  const user = await adminRepository.findModerationTarget(id);
+  if (!user) {
+    throw new NotFoundError('User', id);
+  }
+  return user;
+};
+
+const assertNotLastAdmin = async (user: ModerationTarget) => {
+  if (user.role === 'admin' && (await adminRepository.countOtherActiveAdmins(user.id)) === 0) {
+    throw new LastAdminError();
+  }
+};
+
+// The Operator's grants and revocations (ADR-0027 §7), and the Admin's own moderation actions.
 export const adminService = {
   async grant(email: string) {
     const user = await findUser(email);
@@ -113,6 +161,83 @@ export const adminService = {
       pendingDeletionAt: user.pendingDeletionAt,
       sessionsCount: user.sessionsCount,
     };
+  },
+  // Admins moderating through better-auth's server API, so sessions and caches are handled by the library.
+  async setRole(userId: string, { role }: SetRoleDTO, adminId: string, headers: Headers) {
+    const user = await findModerationTarget(userId);
+    if (role === 'admin') {
+      if (user.isAnonymous) {
+        throw new NotEligibleForAdminError('A Guest cannot be an Admin.');
+      }
+      if (!user.emailVerified) {
+        throw new NotEligibleForAdminError('Only a user with a verified email can be an Admin.');
+      }
+      if (isBannedNow(user)) {
+        throw new NotEligibleForAdminError('A banned user cannot be an Admin; unban them first.');
+      }
+      if (user.role === 'admin') {
+        throw new ConflictError('This user is already an Admin.');
+      }
+    } else {
+      if (user.role !== 'admin') {
+        throw new ConflictError('This user is not an Admin.');
+      }
+      await assertNotLastAdmin(user);
+    }
+    await adminApi().setRole({ body: { userId, role }, headers });
+    await auditService.append({
+      actorType: 'admin',
+      actorUserId: adminId,
+      action: role === 'admin' ? 'admin.granted' : 'user.role_changed',
+      targetType: 'user',
+      targetId: userId,
+      detail: { role: { from: user.role, to: role } },
+    });
+  },
+  async banUser(
+    userId: string,
+    { reason, expiresAt }: BanUserDTO,
+    adminId: string,
+    headers: Headers,
+  ) {
+    if (userId === adminId) {
+      throw new ValidationError('You cannot ban yourself.');
+    }
+    const user = await findModerationTarget(userId);
+    if (isBannedNow(user)) {
+      throw new ConflictError('This user is already banned.');
+    }
+    await assertNotLastAdmin(user);
+    const banExpiresIn = expiresAt
+      ? Math.max(1, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 1000))
+      : undefined;
+    await adminApi().banUser({
+      body: { userId, banReason: reason, ...(banExpiresIn && { banExpiresIn }) },
+      headers,
+    });
+    await auditService.append({
+      actorType: 'admin',
+      actorUserId: adminId,
+      action: 'user.banned',
+      targetType: 'user',
+      targetId: userId,
+      detail: { reason, expiresAt: expiresAt ?? null },
+    });
+  },
+  async unbanUser(userId: string, adminId: string, headers: Headers) {
+    const user = await findModerationTarget(userId);
+    if (!isBannedNow(user)) {
+      throw new ConflictError('This user is not banned.');
+    }
+    await adminApi().unbanUser({ body: { userId }, headers });
+    await auditService.append({
+      actorType: 'admin',
+      actorUserId: adminId,
+      action: 'user.unbanned',
+      targetType: 'user',
+      targetId: userId,
+      detail: { reason: user.banReason },
+    });
   },
   // An Admin undoing an Account deletion (ADR-0028 §1); the User signing in restores through better-auth instead.
   async restoreUser(userId: string, adminId: string) {

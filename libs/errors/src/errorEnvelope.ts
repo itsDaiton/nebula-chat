@@ -15,6 +15,10 @@ export const errorCodeSchema = z
     'TwoFactorRequired',
     'NotFound',
     'Conflict',
+    // Demoting or banning the only Admin left.
+    'LastAdmin',
+    // A Guest, unverified or banned user asked to become an Admin.
+    'NotEligibleForAdmin',
     'PayloadTooLarge',
     'TooManyRequests',
     // The escape hatch: anything the server did not classify.

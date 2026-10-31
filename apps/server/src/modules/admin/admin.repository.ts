@@ -146,6 +146,27 @@ export const adminRepository = {
       .where(eq(users.id, id));
     return row ?? null;
   },
+  async findModerationTarget(id: string) {
+    const [row] = await db
+      .select({
+        id: users.id,
+        emailVerified: users.emailVerified,
+        isAnonymous: users.isAnonymous,
+        banned: users.banned,
+        banExpires: users.banExpires,
+        banReason: users.banReason,
+        role: users.role,
+      })
+      .from(users)
+      .where(eq(users.id, id));
+    return row ?? null;
+  },
+  async countOtherActiveAdmins(id: string) {
+    return db.$count(
+      users,
+      and(eq(users.role, 'admin'), ne(users.id, id), sql`not coalesce(${isBanned()}, false)`),
+    );
+  },
   async findPendingDeletion(id: string) {
     const [row] = await db
       .select({ id: users.id, pendingDeletionAt: users.pendingDeletionAt })

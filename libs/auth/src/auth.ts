@@ -391,6 +391,13 @@ export const createAuth = ({
       admin({
         defaultRole: 'user',
         roles: { admin: adminWithoutImpersonation, user: userAc },
+        // The sign-in's `BANNED_USER` error carries this message, so the client can show the reason and end.
+        bannedUserMessage: ({ banReason, banExpires }) =>
+          `You have been banned. Reason: ${String(banReason ?? 'No reason')}. ${
+            banExpires
+              ? `The ban ends ${new Date(banExpires as Date).toISOString()}.`
+              : 'The ban has no end.'
+          }`,
       }),
       restoreAccountPlugin(db),
       // TOTP and backup codes only; a trusted device lasts better-auth's default 30 days.

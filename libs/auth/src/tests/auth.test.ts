@@ -248,6 +248,22 @@ describe('createAuth admin and two-factor plugins', () => {
     }
   });
 
+  it('tells a banned user the reason and when the ban ends', async () => {
+    const { bannedUserMessage } = findPlugin('admin')?.options as {
+      bannedUserMessage: (user: Record<string, unknown>) => Promise<string> | string;
+    };
+
+    expect(
+      await bannedUserMessage({
+        banReason: 'Spam',
+        banExpires: new Date('2026-12-01T10:00:00.000Z'),
+      }),
+    ).toBe('You have been banned. Reason: Spam. The ban ends 2026-12-01T10:00:00.000Z.');
+    expect(await bannedUserMessage({ banReason: 'Spam', banExpires: null })).toBe(
+      'You have been banned. Reason: Spam. The ban has no end.',
+    );
+  });
+
   it("keeps better-auth's 30-day trusted device", () => {
     expect(findPlugin('two-factor')?.options).not.toHaveProperty('trustDeviceMaxAge');
   });
