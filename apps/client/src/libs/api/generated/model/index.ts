@@ -5,6 +5,12 @@
  * REST API for Nebula Chat
  */
 
+export * from './adminUserDetail';
+export * from './adminUserDetailBan';
+export * from './adminUserDetailStatus';
+export * from './adminUserPage';
+export * from './adminUserSummary';
+export * from './adminUserSummaryStatus';
 export * from './apiRoot';
 export * from './auditEntry';
 export * from './auditEntryAction';
@@ -23,6 +29,10 @@ export * from './listAuditEntriesParams';
 export * from './listMessagesParams';
 export * from './listSessionsArchived';
 export * from './listSessionsParams';
+export * from './listUsersOrder';
+export * from './listUsersParams';
+export * from './listUsersSortBy';
+export * from './listUsersStatus';
 export * from './message';
 export * from './messageAllowance';
 export * from './meteredMessageAllowance';

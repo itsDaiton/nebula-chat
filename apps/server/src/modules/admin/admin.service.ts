@@ -1,5 +1,6 @@
 import { ConflictError, NotFoundError, ValidationError } from '@nebula-chat/errors';
 import { adminRepository } from '@server/modules/admin/admin.repository';
+import type { ListUsersQuery } from '@server/modules/admin/admin.types';
 import { auditService } from '@server/modules/audit/audit.service';
 
 type UserRow = NonNullable<Awaited<ReturnType<typeof adminRepository.findUserByEmail>>>;
@@ -19,6 +20,36 @@ const findUser = async (email: string) => {
   }
   return user;
 };
+
+type SummaryRow = Awaited<ReturnType<typeof adminRepository.listUsers>>['users'][number];
+
+const isBanned = ({ banned, banExpires }: SummaryRow) =>
+  banned && (!banExpires || banExpires > new Date());
+
+// The first that applies; the repository's status filters follow the same order.
+const statusOf = (user: SummaryRow) => {
+  if (user.isAnonymous) {
+    return 'guest' as const;
+  }
+  if (isBanned(user)) {
+    return 'banned' as const;
+  }
+  if (user.role === 'admin') {
+    return 'admin' as const;
+  }
+  return user.emailVerified ? ('registered' as const) : ('unverified' as const);
+};
+
+const toUserSummary = (user: SummaryRow) => ({
+  id: user.id,
+  email: user.email,
+  name: user.name,
+  status: statusOf(user),
+  twoFactorEnabled: user.twoFactorEnabled,
+  messagesSent: user.messagesSent,
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt,
+});
 
 // The Operator's grants and revocations (ADR-0027 §7); Admins promoting each other comes later.
 export const adminService = {
@@ -63,5 +94,21 @@ export const adminService = {
   async list() {
     const admins = await adminRepository.listAdmins();
     return admins.map(toAdmin);
+  },
+  async listUsers({ limit, cursor, ...filters }: ListUsersQuery) {
+    const page = await adminRepository.listUsers(filters, limit, cursor);
+    return { ...page, users: page.users.map(toUserSummary) };
+  },
+  async getUser(id: string) {
+    const user = await adminRepository.findUserDetail(id);
+    if (!user) {
+      throw new NotFoundError('User', id);
+    }
+    return {
+      ...toUserSummary(user),
+      ban: isBanned(user) ? { reason: user.banReason, expiresAt: user.banExpires } : null,
+      pendingDeletionAt: null,
+      sessionsCount: user.sessionsCount,
+    };
   },
 };

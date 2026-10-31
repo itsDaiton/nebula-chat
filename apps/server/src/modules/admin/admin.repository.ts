@@ -1,8 +1,9 @@
-import { asc, eq } from 'drizzle-orm';
-import { users } from '@nebula-chat/db';
+import { and, asc, desc, eq, gt, isNull, lt, ne, or, sql } from 'drizzle-orm';
+import type { SQL } from 'drizzle-orm';
+import { messages, sessions, users } from '@nebula-chat/db';
 import { auth } from '@server/auth';
 import { db } from '@server/db';
-import type { AdminRole } from '@server/modules/admin/admin.types';
+import type { AdminRole, UserFilters } from '@server/modules/admin/admin.types';
 
 const userColumns = {
   id: users.id,
@@ -14,6 +15,66 @@ const userColumns = {
   role: users.role,
   twoFactorEnabled: users.twoFactorEnabled,
   createdAt: users.createdAt,
+};
+
+const userSummaryColumns = {
+  id: users.id,
+  email: users.email,
+  name: users.name,
+  emailVerified: users.emailVerified,
+  isAnonymous: users.isAnonymous,
+  banned: users.banned,
+  banExpires: users.banExpires,
+  role: users.role,
+  twoFactorEnabled: users.twoFactorEnabled,
+  createdAt: users.createdAt,
+  updatedAt: users.updatedAt,
+};
+
+// A correlated subquery, so only the rows of the page are counted unless the list sorts by it.
+const messagesSent = sql<number>`(
+  select count(*)::int from ${messages}
+  inner join ${sessions} on ${sessions.id} = ${messages.sessionId}
+  where ${sessions.userId} = ${users.id} and ${messages.role} = 'user'
+)`;
+
+const sortKeys = {
+  createdAt: users.createdAt,
+  lastActiveAt: users.updatedAt,
+  messagesSent,
+};
+
+const isGuest = sql`coalesce(${users.isAnonymous}, false)`;
+
+const isBanned = () =>
+  and(eq(users.banned, true), or(isNull(users.banExpires), gt(users.banExpires, new Date())));
+
+// Mirrors the precedence of `status` in the service, so each User is in exactly one status.
+const statusFilters = {
+  guest: () => isGuest,
+  banned: () => and(sql`not ${isGuest}`, isBanned()),
+  admin: () =>
+    and(sql`not ${isGuest}`, sql`not coalesce(${isBanned()}, false)`, eq(users.role, 'admin')),
+  unverified: () =>
+    and(
+      sql`not ${isGuest}`,
+      sql`not coalesce(${isBanned()}, false)`,
+      eq(users.emailVerified, false),
+    ),
+  registered: () =>
+    and(
+      sql`not ${isGuest}`,
+      sql`not coalesce(${isBanned()}, false)`,
+      eq(users.emailVerified, true),
+      ne(users.role, 'admin'),
+    ),
+  // No column yet: nobody is pending deletion until the account lifecycle ticket.
+  pendingDeletion: () => sql`false`,
+};
+
+const searchFilter = (search: string) => {
+  const pattern = `%${search.replace(/[\\%_]/g, '\\$&')}%`;
+  return or(sql`${users.name} ilike ${pattern}`, sql`${users.email} ilike ${pattern}`);
 };
 
 export const adminRepository = {
@@ -34,5 +95,57 @@ export const adminRepository = {
   async setRole(userId: string, role: AdminRole) {
     const { internalAdapter } = await auth.$context;
     await internalAdapter.updateUser(userId, { role });
+  },
+  async listUsers(filters: UserFilters, limit: number, cursor?: string) {
+    // Typed as a column for drizzle's overloads; a count is compared as a plain number at runtime.
+    const sortKey = sortKeys[filters.sortBy] as typeof users.createdAt;
+    const forward = filters.order === 'asc' ? gt : lt;
+
+    let cursorFilter: SQL | undefined;
+    if (cursor) {
+      const [cursorRow] = await db
+        .select({ value: sortKey })
+        .from(users)
+        .where(eq(users.id, cursor));
+      if (cursorRow) {
+        cursorFilter = or(
+          forward(sortKey, cursorRow.value),
+          and(eq(sortKey, cursorRow.value), forward(users.id, cursor)),
+        );
+      }
+    }
+
+    const direction = filters.order === 'asc' ? asc : desc;
+    const rows = await db
+      .select({ ...userSummaryColumns, messagesSent })
+      .from(users)
+      .where(
+        and(
+          // Guests far outnumber Registered users, so they are listed only when asked for.
+          filters.status ? statusFilters[filters.status]() : sql`not ${isGuest}`,
+          filters.search ? searchFilter(filters.search) : undefined,
+          cursorFilter,
+        ),
+      )
+      .orderBy(direction(sortKey), direction(users.id))
+      .limit(limit + 1);
+
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, -1) : rows;
+    const nextCursor = hasMore ? (page.at(-1)?.id ?? null) : null;
+
+    return { users: page, nextCursor, hasMore };
+  },
+  async findUserDetail(id: string) {
+    const [row] = await db
+      .select({
+        ...userSummaryColumns,
+        messagesSent,
+        banReason: users.banReason,
+        sessionsCount: db.$count(sessions, eq(sessions.userId, users.id)),
+      })
+      .from(users)
+      .where(eq(users.id, id));
+    return row ?? null;
   },
 };
