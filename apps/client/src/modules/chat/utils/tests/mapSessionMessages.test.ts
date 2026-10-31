@@ -19,7 +19,15 @@ const aMessage = (id: string, role: string, content: string) => ({
 describe('mapSessionMessages', () => {
   it('keeps only the fields the chat view renders', () => {
     expect(mapSessionMessages([aMessage('m1', 'user', 'hello')])).toEqual([
-      { id: 'm1', role: 'user', content: 'hello', tokenCount: 3 },
+      {
+        id: 'm1',
+        role: 'user',
+        content: 'hello',
+        tokenCount: 3,
+        model: null,
+        estimatedCostUsd: null,
+        runId: null,
+      },
     ]);
   });
 
