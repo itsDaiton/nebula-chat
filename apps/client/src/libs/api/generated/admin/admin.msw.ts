@@ -24,6 +24,7 @@ export const getListAuditEntriesResponseMock = (
         'user.role_changed',
         'user.banned',
         'user.unbanned',
+        'user.restored',
         'session.read',
         'run.read',
       ] as const),
@@ -61,4 +62,22 @@ export const getListAuditEntriesMockHandler = (
     options,
   );
 };
-export const getAdminMock = () => [getListAuditEntriesMockHandler()];
+
+export const getRestoreUserMockHandler = (
+  overrideResponse?:
+    void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    '*/api/admin/users/:id/restore',
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      if (typeof overrideResponse === 'function') {
+        await overrideResponse(info);
+      }
+
+      return new HttpResponse(null, { status: 204 });
+    },
+    options,
+  );
+};
+export const getAdminMock = () => [getListAuditEntriesMockHandler(), getRestoreUserMockHandler()];

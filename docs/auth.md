@@ -285,20 +285,28 @@ a credential password must send it — the `before` hook answers `400 PASSWORD_R
 don't (better-auth alone would accept a sign-in under a day old), and better-auth `400
 INVALID_PASSWORD` when it's wrong. A user without one (Google/GitHub only) sends nothing and
 needs an auth session younger than a day (`400 SESSION_EXPIRED` otherwise). The guard is
-[`libs/auth/src/deleteAccount.ts`](../libs/auth/src/deleteAccount.ts). Deletes the user's accounts, auth sessions and user row; their Sessions and
-messages go with it through the `ON DELETE CASCADE` foreign keys. Clears the session cookie.
+[`libs/auth/src/deleteAccount.ts`](../libs/auth/src/deleteAccount.ts). The `before` hook then ends the request itself
+(ADR-0028): it repeats better-auth's password or freshness check, sets `users.pending_deletion_at`, revokes every auth
+session, clears the cookie and answers `{ success: true, message: "User deleted" }`, the shape the client always got.
+Nothing is deleted: the User, their Sessions and Messages stay for the 30 days before the Purge. A `token` in the body is
+refused, since better-auth would honour one with a hard delete.
 
-An uploaded Profile image lives outside Postgres, so the server deletes its file too. The lib's
-`user.deleteUser` hooks ([`libs/auth/src/userDeletion.ts`](../libs/auth/src/userDeletion.ts)) read
-`users.profileImageKey` in `beforeDelete`, while the row still exists, and call the injected
-`onUserDeleted({ id, profileImageKey })` in `afterDelete`, once it is gone. Both run only after the
-password or fresh-sign-in check, so a refused deletion leaves the file in place. The server's
-callback ([`profileImage.fileDeletion.ts`](../apps/server/src/modules/profileImage/profileImage.fileDeletion.ts))
-deletes the key through `profileImageStore`. It asks storage nothing for a provider image (no key),
-for no image, or while uploads are off (`profileImageStore` is `null`). A failed storage delete never
-fails the request: it is one `warn`, `profile_image.delete.failed` with `err`, `user.id` and
-`nebula.profile_image.key`, and the account stays deleted. A callback that throws anyway is caught
-by the lib and logged as `auth.user_deleted_callback.failed`.
+`user.deleteUser`'s `beforeDelete`/`afterDelete` hooks ([`userDeletion.ts`](../libs/auth/src/userDeletion.ts)) and the
+server's `onUserDeleted` callback (the Profile image file) are not reached by this endpoint any more; they stay for the Purge.
+
+### Pending deletion: sign-in, restore and sign-up
+
+- **Sign-in.** A `databaseHooks.session.create.before` hook sees every sign-in method (password, social, two-factor,
+  email verification). For a pending User it issues no session and stores a one-time restore token in the `verification`
+  table (`restore-account:<token>`, 10 minutes). Password sign-in answers `403 ACCOUNT_PENDING_DELETION` with `purgeDate`
+  and `restoreToken` in the body; a social sign-in redirects to `<errorURL>?pending=<purgeDate>&restoreToken=<token>`.
+  Sign-in checks the password first, so the outcome never confirms an account to a stranger.
+- **Restore.** `POST /api/auth/restore-account` with `{ token }` (the `restore-account` plugin in `@nebula-chat/auth`)
+  consumes the token, clears `pending_deletion_at` and signs the User in. Declining needs no call: the token expires and the
+  User stays pending. A bad or used token is `400 INVALID_RESTORE_TOKEN`.
+- **Sign-up.** `POST /api/auth/sign-up/email` with a pending email answers `409 EMAIL_PENDING_DELETION`, pointing to sign-in.
+- **Guest claim.** No session is issued for a pending User, so the anonymous plugin never links a Guest's Sessions to one.
+- **Admin.** `POST /api/admin/users/:id/restore` clears the mark, audited as `user.restored`; a User who is not pending is `409`.
 
 ### `POST /api/auth/delete-anonymous-user` — delete the Guest
 
