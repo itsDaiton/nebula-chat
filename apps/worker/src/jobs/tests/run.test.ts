@@ -78,6 +78,7 @@ const SEARCH_RESULTS = {
 const fakeToolbox = (searches: string[]) => ({
   web_search: webSearchTool({
     apiKey: 'tvly-test',
+    keyless: false,
     fetch: (async (_url: string, init?: RequestInit) => {
       searches.push(JSON.parse(String(init?.body)).query);
       return Response.json(SEARCH_RESULTS);

@@ -34,8 +34,8 @@ const TAVILY_RESULTS = {
 
 const searching = (
   fake: ReturnType<typeof provider>,
-  { apiKey = 'tvly-key' as string | undefined } = {},
-) => webSearchTool({ apiKey, fetch: fake.fetch, timeoutMs: 1_000, maxResults: 5 });
+  { apiKey = 'tvly-key' as string | undefined, keyless = false } = {},
+) => webSearchTool({ apiKey, keyless, fetch: fake.fetch, timeoutMs: 1_000, maxResults: 5 });
 
 describe('web_search', () => {
   it('maps the provider’s results to a compact list of title, URL and snippet', async () => {
@@ -97,12 +97,41 @@ describe('web_search', () => {
   });
 
   it('fails with a typed timeout when the provider is too slow', async () => {
-    const slow = webSearchTool({ apiKey: 'k', fetch: hanging(), timeoutMs: 20, maxResults: 5 });
+    const slow = webSearchTool({
+      apiKey: 'k',
+      keyless: false,
+      fetch: hanging(),
+      timeoutMs: 20,
+      maxResults: 5,
+    });
 
     await expect(slow.invoke({ query: 'anything' })).rejects.toMatchObject({ code: 'timeout' });
   });
 
-  it('fails as not configured without a provider key, sending nothing', async () => {
+  it('searches keyless without a provider key where keyless is allowed, sending no key', async () => {
+    const fake = provider(() => Response.json(TAVILY_RESULTS));
+
+    const result = await searching(fake, { apiKey: '', keyless: true }).invoke({
+      query: 'czech koruna rate',
+    });
+
+    const headers = new Headers(fake.sent[0]?.init.headers);
+    expect(headers.get('x-tavily-access-mode')).toBe('keyless');
+    expect(headers.has('authorization')).toBe(false);
+    expect(JSON.parse(result)).toHaveLength(2);
+  });
+
+  it('sends its key, not keyless, when it has one', async () => {
+    const fake = provider(() => Response.json(TAVILY_RESULTS));
+
+    await searching(fake, { keyless: true }).invoke({ query: 'anything' });
+
+    const headers = new Headers(fake.sent[0]?.init.headers);
+    expect(headers.get('authorization')).toBe('Bearer tvly-key');
+    expect(headers.has('x-tavily-access-mode')).toBe(false);
+  });
+
+  it('fails as not configured without a key where keyless is not allowed, sending nothing', async () => {
     const fake = provider(() => Response.json(TAVILY_RESULTS));
 
     await expect(

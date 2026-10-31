@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { WebToolError } from '@worker/web/webToolError';
 
 export type TavilyDeps = {
-  apiKey: string;
+  /** Without one the request is keyless: Search still answers, rate-limited. */
+  apiKey: string | undefined;
   fetch: typeof globalThis.fetch;
   maxResults: number;
 };
@@ -25,7 +26,12 @@ export const searchTavily = async (
   try {
     response = await deps.fetch(TAVILY_SEARCH_URL, {
       method: 'POST',
-      headers: { authorization: `Bearer ${deps.apiKey}`, 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        ...(deps.apiKey
+          ? { authorization: `Bearer ${deps.apiKey}` }
+          : { 'x-tavily-access-mode': 'keyless' }),
+      },
       body: JSON.stringify({ query, max_results: deps.maxResults, search_depth: 'basic' }),
       signal,
     });

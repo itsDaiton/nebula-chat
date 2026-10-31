@@ -77,6 +77,8 @@ const start = async (): Promise<void> => {
     toolbox: {
       web_search: webSearchTool({
         apiKey: env.TAVILY_API_KEY,
+        // Keyless is rate-limited: fine for local dev, while production must set a key.
+        keyless: env.NODE_ENV !== 'production',
         fetch: globalThis.fetch,
         timeoutMs: env.WEB_FETCH_TIMEOUT_MS,
         maxResults: 5,

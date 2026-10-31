@@ -4,17 +4,19 @@ import { searchTavily } from '@worker/web/tavily';
 import { WebToolError, withDeadline } from '@worker/web/webToolError';
 
 export type WebSearchDeps = {
-  /** Tavily's key; without it the tool answers every call as not configured. */
+  /** Tavily's key; without it the tool searches keyless where allowed, else answers as not configured. */
   apiKey: string | undefined;
+  /** Whether a missing key may fall back to Tavily's rate-limited keyless access. */
+  keyless: boolean;
   fetch: typeof globalThis.fetch;
   timeoutMs: number;
   maxResults: number;
 };
 
-export const webSearchTool = ({ apiKey, timeoutMs, ...deps }: WebSearchDeps) =>
+export const webSearchTool = ({ apiKey, keyless, timeoutMs, ...deps }: WebSearchDeps) =>
   tool(
     async ({ query }, config): Promise<string> => {
-      if (!apiKey) {
+      if (!apiKey && !keyless) {
         throw new WebToolError('not-configured', 'Web search is not configured on this server.');
       }
       const results = await withDeadline(timeoutMs, config.signal, (signal) =>
