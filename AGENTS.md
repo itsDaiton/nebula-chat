@@ -8,6 +8,10 @@ each package's own file — read the one you're about to touch:
 - [apps/worker](./apps/worker/AGENTS.md) — every LLM reply and background job (BullMQ, Redis Streams)
 - [apps/cli](./apps/cli/AGENTS.md) — the `nebula` operator CLI
 
+The server and client keep their topic conventions (error handling, Drizzle, forms, testing and so on) in
+path-scoped rules under [`.claude/rules/`](./.claude/rules/), one `<app>-<topic>.md` each. Claude Code loads a rule
+when it reads a matching file; each package's `AGENTS.md` links every rule for other agents.
+
 How the pieces fit: [docs/architecture.md](./docs/architecture.md). Domain vocabulary: [GLOSSARY.md](./GLOSSARY.md).
 Local setup and env files: [README.md](./README.md).
 
@@ -82,7 +86,7 @@ In order: add `libs/<name>/.gitignore` (`dist/`, `node_modules/`); add the packa
 
 ## Keep docs true
 
-A change to conventions, module layout or architecture updates, in the same PR: the relevant `AGENTS.md`,
-`GLOSSARY.md` for vocabulary, `docs/adr/` for hard-to-reverse decisions, the Mermaid diagrams that draw the
+A change to conventions, module layout or architecture updates, in the same PR: the relevant `AGENTS.md` or
+`.claude/rules/` file (and its `paths:` globs when a folder moves), `GLOSSARY.md` for vocabulary, `docs/adr/` for hard-to-reverse decisions, the Mermaid diagrams that draw the
 area, and any skill that references it. Operator CLI usage: [apps/cli/AGENTS.md](./apps/cli/AGENTS.md).
 MCP servers: [docs/agents/mcp-servers.md](./docs/agents/mcp-servers.md).
