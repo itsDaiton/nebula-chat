@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.12.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.12.2...nebula-chat-v5.12.3) (2026-10-31)
+
+
+### Bug Fixes
+
+* **deps:** override vulnerable transitive deps, ignore deepmerge ([#692](https://github.com/itsDaiton/nebula-chat/issues/692)) ([1e7cfa3](https://github.com/itsDaiton/nebula-chat/commit/1e7cfa32be2c0b912ad10083ad15d37e6eae5ff6))
+
 ## [5.12.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.12.1...nebula-chat-v5.12.2) (2026-10-30)
 
 
