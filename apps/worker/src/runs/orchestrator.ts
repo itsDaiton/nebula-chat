@@ -20,7 +20,6 @@ export type RunLimits = {
   tokenBudget: number;
   handoffThreshold: number;
   delegateTimeoutMs: number;
-  /** The tool calls one delegate execution may make. */
   delegateToolCallCap: number;
 };
 

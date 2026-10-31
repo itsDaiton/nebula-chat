@@ -11,7 +11,6 @@ export type ToolName = 'web_search' | 'web_fetch';
 /** Every tool, built once from config: a delegate is given the ones it is granted. */
 export type Toolbox = Record<ToolName, StructuredToolInterface>;
 
-/** The short label a tool's Step shows in the UI. */
 export const TOOL_LABELS: Record<ToolName, string> = {
   web_search: 'Searching the web',
   web_fetch: 'Reading a page',

@@ -47,8 +47,10 @@ for (const [prefix, bits] of [
   BLOCKED.addSubnet(prefix, bits, 'ipv4');
 }
 for (const [prefix, bits] of [
-  ['::', 127],
+  ['::', 96],
   ['64:ff9b::', 96],
+  ['64:ff9b:1::', 48],
+  ['2002::', 16],
   ['fc00::', 7],
   ['fe80::', 10],
   ['ff00::', 8],
@@ -67,6 +69,8 @@ const blocked = (url: string): WebToolError =>
 // Every address the hostname resolves to must be public; the request then goes to the first of them.
 const checkedAddress = async (url: URL, deps: WebFetchDeps): Promise<ResolvedAddress> => {
   if (url.protocol !== 'http:' && url.protocol !== 'https:') throw blocked(url.href);
+  // Only web ports, so a URL cannot speak HTTP at a mail or database server.
+  if (url.port !== '' && url.port !== '80' && url.port !== '443') throw blocked(url.href);
   const host = url.hostname.replace(/^\[|\]$/g, '');
   const literal = isIP(host);
   let addresses: ResolvedAddress[];
@@ -152,6 +156,11 @@ const fetchText = async (start: URL, deps: WebFetchDeps, signal: AbortSignal) =>
     if (response.status >= 400) {
       response.discard();
       throw new WebToolError('http-error', `The page answered ${response.status}.`);
+    }
+    const encoding = header(response, 'content-encoding') ?? 'identity';
+    if (encoding !== 'identity') {
+      response.discard();
+      throw new WebToolError('unsupported-content', `Cannot read a ${encoding}-encoded page.`);
     }
     const contentType = header(response, 'content-type') ?? 'text/plain';
     if (!/^text\/|html|xml/i.test(contentType)) {

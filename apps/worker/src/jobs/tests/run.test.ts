@@ -886,6 +886,23 @@ describe('the Run job', () => {
       expect(result?.text).toBe('Answer from 2 searches');
       expect(db.runs.get(RUN_ID)?.status).toBe('completed');
     });
+    it('fails the delegate, not the tool, when a tool Step cannot be recorded', async () => {
+      const failingTools: StepStore = {
+        ...stepRows.store,
+        start: async (step) => {
+          if (step.phase === 'tool') throw new Error('database down');
+          return stepRows.store.start(step);
+        },
+      };
+
+      const models = researching(callingOnce('web_search', { query: 'koruna rate' }));
+      await run(models.models, payload, { steps: failingTools });
+
+      expect(researcherCalls(models)).toHaveLength(1);
+      expect(stepNamed('researcher').status).toBe('failed');
+      expect(db.runs.get(RUN_ID)?.status).toBe('partial');
+    });
+
     it('refuses the calls in one reply that would pass the cap, as error results', async () => {
       const greedy: DelegateTurn = (messages, tools) => {
         const results = resultsIn(messages);

@@ -96,6 +96,7 @@ const runToolLoop = async (
     wrapToolCall: async (request, handler) => {
       const { toolCall } = request;
       const name = toolCall.name as ToolName;
+      let toolError: unknown;
       try {
         const { output } = await runToolStep(
           deps,
@@ -110,11 +111,19 @@ const runToolLoop = async (
           },
           // The inner loop's own runtime has no writer; the delegate's carries Step events to the Run's stream.
           runtime.writer ? { writer: runtime.writer } : {},
-          async () => (await handler(request)) as ToolMessage,
+          async () => {
+            try {
+              return (await handler(request)) as ToolMessage;
+            } catch (err) {
+              toolError = err;
+              throw err;
+            }
+          },
         );
         return output;
       } catch (err) {
-        if (signal.aborted) throw err;
+        // A stopped Run, or a Step that could not be recorded, fails the delegate; only the tool's own failure is its to handle.
+        if (signal.aborted || err !== toolError) throw err;
         return toolErrorResult(err, toolCall);
       }
     },

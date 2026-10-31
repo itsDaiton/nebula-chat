@@ -161,8 +161,12 @@ describe('web_fetch', () => {
       ['link-local IPv6', 'http://[fe80::1]/'],
       ['IPv4-mapped IPv6 loopback', 'http://[::ffff:127.0.0.1]/'],
       ['the unspecified address', 'http://0.0.0.0/'],
+      ['IPv4-compatible IPv6 loopback', 'http://[::7f00:1]/'],
+      ['6to4 over a private address', 'http://[2002:a00:1::]/'],
+      ['local-use NAT64', 'http://[64:ff9b:1::a00:1]/'],
+      ['a port other than 80 or 443', 'http://example.com:25/'],
     ])('%s', async (_name, url) => {
-      await blocked(url);
+      await blocked(url, { 'example.com': [PUBLIC_V4] });
     });
 
     it.each([
@@ -306,6 +310,17 @@ describe('web_fetch', () => {
       await expect(
         fetching(fake).invoke({ url: 'https://example.com/a.pdf' }),
       ).rejects.toMatchObject({ code: 'unsupported-content' });
+    });
+
+    it('a compressed body it asked not to get', async () => {
+      const fake = web(
+        { 'example.com': [PUBLIC_V4] },
+        { 'https://example.com/gz': { headers: { 'content-encoding': 'gzip' }, body: 'x' } },
+      );
+
+      await expect(fetching(fake).invoke({ url: 'https://example.com/gz' })).rejects.toMatchObject({
+        code: 'unsupported-content',
+      });
     });
 
     it('an error status, naming it', async () => {

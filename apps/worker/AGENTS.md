@@ -127,8 +127,9 @@ on the emitted events, the persisted assistant Message, the recorded Model calls
 `jobs/tests/run.test.ts` does the same for a Run, with scripted models per Agent (the Orchestrator's
 script decides each reply from the messages it is sent), LangGraph's in-memory checkpointer and
 in-memory Run and Step stores, and a Toolbox whose search provider and DNS are faked. Each tool is
-also tested at its own seam (`tools/tests/`), with faked DNS, HTTP and provider responses. No test
-reaches Postgres, Redis, a provider or the web.
+also tested at its own seam (`tools/tests/`), with faked DNS, HTTP and provider responses; only
+`nodeRequest`'s pinning is checked against a server in the test's own process. No test reaches
+Postgres, Redis, a provider or the web.
 
 Coverage excludes construction-only files (`worker.ts`, `env.ts`, `logger.ts`, `db.ts`, `redis.ts`) and
 the Drizzle repository, as in the server. The list lives in `vitest.config.mts` and `matrix.coverage` in
