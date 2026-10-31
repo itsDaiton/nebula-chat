@@ -1,5 +1,5 @@
 {
-  "id": "6201788f-1720-4595-bd42-5ecece6d7d34",
+  "id": "a649d817-acae-4678-bf42-5348bcc07289",
   "prevId": "feb4db13-690e-4555-9c63-1aae9ae5a234",
   "version": "7",
   "dialect": "postgresql",
@@ -1329,12 +1329,6 @@
           "notNull": true,
           "default": false
         },
-        "pending_deletion_at": {
-          "name": "pending_deletion_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -1350,7 +1344,29 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "users_created_at_idx": {
+          "name": "users_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {

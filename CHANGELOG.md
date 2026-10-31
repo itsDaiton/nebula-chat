@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.14.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.14.0...nebula-chat-v5.14.1) (2026-10-31)
+
+
+### Bug Fixes
+
+* **agents:** NEB-689 split server and client AGENTS.md into path-scoped rules ([#698](https://github.com/itsDaiton/nebula-chat/issues/698)) ([7281fc5](https://github.com/itsDaiton/nebula-chat/commit/7281fc540d88afb2a3dc81a3995d2742b7fb038e))
+
 ## [5.14.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.13.0...nebula-chat-v5.14.0) (2026-10-31)
 
 

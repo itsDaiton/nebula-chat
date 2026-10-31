@@ -9,7 +9,73 @@ import { faker } from '@faker-js/faker';
 import { HttpResponse, http } from 'msw';
 import type { RequestHandlerOptions } from 'msw';
 
-import type { AuditPage } from '../model';
+import type { AdminUserDetail, AdminUserPage, AuditPage } from '../model';
+
+export const getListUsersResponseMock = (
+  overrideResponse: Partial<Extract<AdminUserPage, object>> = {},
+): AdminUserPage => ({
+  users: Array.from({ length: faker.number.int({ min: 1, max: 100 }) }, (_, i) => i + 1).map(
+    () => ({
+      id: faker.string.uuid(),
+      email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      status: faker.helpers.arrayElement([
+        'registered',
+        'unverified',
+        'admin',
+        'banned',
+        'pendingDeletion',
+        'guest',
+      ] as const),
+      twoFactorEnabled: faker.datatype.boolean(),
+      messagesSent: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+      createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+      updatedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+    }),
+  ),
+  nextCursor: faker.helpers.arrayElement([faker.string.uuid(), null]),
+  hasMore: faker.datatype.boolean(),
+  ...overrideResponse,
+});
+
+export const getGetUserResponseMock = (
+  overrideResponse: Partial<Extract<AdminUserDetail, object>> = {},
+): AdminUserDetail => ({
+  id: faker.string.uuid(),
+  email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  status: faker.helpers.arrayElement([
+    'registered',
+    'unverified',
+    'admin',
+    'banned',
+    'pendingDeletion',
+    'guest',
+  ] as const),
+  twoFactorEnabled: faker.datatype.boolean(),
+  messagesSent: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+  createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  updatedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  ban: faker.helpers.arrayElement([
+    {
+      reason: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      expiresAt: faker.helpers.arrayElement([
+        faker.date.past().toISOString().slice(0, 19) + 'Z',
+        null,
+      ]),
+    },
+    null,
+  ]),
+  pendingDeletionAt: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + 'Z',
+    null,
+  ]),
+  sessionsCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+  ...overrideResponse,
+});
 
 export const getListAuditEntriesResponseMock = (
   overrideResponse: Partial<Extract<AuditPage, object>> = {},
@@ -41,21 +107,47 @@ export const getListAuditEntriesResponseMock = (
   ...overrideResponse,
 });
 
-export const getListAuditEntriesMockHandler = (
+export const getListUsersMockHandler = (
   overrideResponse?:
-    | AuditPage
-    | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<AuditPage> | AuditPage),
+    | AdminUserPage
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<AdminUserPage> | AdminUserPage),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
-    '*/api/admin/audit',
+    '*/api/admin/users',
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
             ? await overrideResponse(info)
             : overrideResponse
-          : getListAuditEntriesResponseMock(),
+          : getListUsersResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getGetUserMockHandler = (
+  overrideResponse?:
+    | AdminUserDetail
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<AdminUserDetail> | AdminUserDetail),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/admin/users/:id',
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetUserResponseMock(),
         { status: 200 },
       );
     },
@@ -80,4 +172,31 @@ export const getRestoreUserMockHandler = (
     options,
   );
 };
-export const getAdminMock = () => [getListAuditEntriesMockHandler(), getRestoreUserMockHandler()];
+
+export const getListAuditEntriesMockHandler = (
+  overrideResponse?:
+    | AuditPage
+    | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<AuditPage> | AuditPage),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/admin/audit',
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getListAuditEntriesResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+export const getAdminMock = () => [
+  getListUsersMockHandler(),
+  getGetUserMockHandler(),
+  getRestoreUserMockHandler(),
+  getListAuditEntriesMockHandler(),
+];

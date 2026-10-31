@@ -64,7 +64,7 @@ components:
           type: boolean
           const: false
         error:
-          $ref: '#/components/schemas/ErrorCode'
+          $ref: "#/components/schemas/ErrorCode"
         message:
           type: string
       required:
@@ -88,14 +88,14 @@ components:
         - Internal
     MessageAllowance:
       oneOf:
-        - $ref: '#/components/schemas/MeteredMessageAllowance'
-        - $ref: '#/components/schemas/UnmeteredMessageAllowance'
+        - $ref: "#/components/schemas/MeteredMessageAllowance"
+        - $ref: "#/components/schemas/UnmeteredMessageAllowance"
       type: object
       discriminator:
         propertyName: metered
         mapping:
-          'true': '#/components/schemas/MeteredMessageAllowance'
-          'false': '#/components/schemas/UnmeteredMessageAllowance'
+          "true": "#/components/schemas/MeteredMessageAllowance"
+          "false": "#/components/schemas/UnmeteredMessageAllowance"
     MeteredMessageAllowance:
       type: object
       properties:
@@ -201,7 +201,7 @@ components:
             - type: string
               format: uuid
               pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
+            - type: "null"
           description: The reply still being produced for this Session, to re-attach to
             with `GET /api/streams/{streamId}`; null when none is in flight
       required:
@@ -218,13 +218,13 @@ components:
           maxItems: 100
           type: array
           items:
-            $ref: '#/components/schemas/Session'
+            $ref: "#/components/schemas/Session"
         nextCursor:
           anyOf:
             - type: string
               format: uuid
               pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
+            - type: "null"
         hasMore:
           type: boolean
       required:
@@ -252,7 +252,7 @@ components:
             - type: integer
               minimum: -9007199254740991
               maximum: 9007199254740991
-            - type: 'null'
+            - type: "null"
         cached:
           type: boolean
         createdAt:
@@ -273,7 +273,7 @@ components:
       properties:
         version:
           type: string
-          description: '`YYYY-MM-DD-<uuid>`: changes whenever the catalog does'
+          description: "`YYYY-MM-DD-<uuid>`: changes whenever the catalog does"
         hash:
           type: string
           description: SHA-256 of the catalog content (Models and defaults)
@@ -281,7 +281,7 @@ components:
           maxItems: 100
           type: array
           items:
-            $ref: '#/components/schemas/Model'
+            $ref: "#/components/schemas/Model"
       required:
         - version
         - hash
@@ -327,7 +327,7 @@ components:
           description: False when the Model fixes its temperature and rejects any other
             value
         prices:
-          $ref: '#/components/schemas/ModelPrices'
+          $ref: "#/components/schemas/ModelPrices"
       required:
         - id
         - label
@@ -387,7 +387,7 @@ components:
           maxItems: 100
           type: array
           items:
-            $ref: '#/components/schemas/LogLevelReport'
+            $ref: "#/components/schemas/LogLevelReport"
           description: One per instance that answered, by instance
       required:
         - receivers
@@ -403,7 +403,7 @@ components:
           maxItems: 7
           type: array
           items:
-            $ref: '#/components/schemas/LogLevelState'
+            $ref: "#/components/schemas/LogLevelState"
           description: The root level, then every component
       required:
         - instance
@@ -438,13 +438,13 @@ components:
             - type: string
               format: date-time
               pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
-            - type: 'null'
+            - type: "null"
           description: When the runtime change reverts; `null` at the boot-time level
         operator:
           description: Who asked for the runtime change; `null` at the boot-time level
           type:
             - string
-            - 'null'
+            - "null"
       required:
         - target
         - level
@@ -496,6 +496,157 @@ components:
         - twoFactorEnabled
         - createdAt
       additionalProperties: false
+    AdminUserPage:
+      type: object
+      properties:
+        users:
+          maxItems: 100
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUserSummary"
+        nextCursor:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: "null"
+        hasMore:
+          type: boolean
+      required:
+        - users
+        - nextCursor
+        - hasMore
+      additionalProperties: false
+    AdminUserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        email:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+            - registered
+            - unverified
+            - admin
+            - banned
+            - pendingDeletion
+            - guest
+          description: "The first that applies: guest, banned, admin, unverified,
+            registered"
+        twoFactorEnabled:
+          type: boolean
+        messagesSent:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: Messages the User sent, across their Sessions
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+      required:
+        - id
+        - email
+        - name
+        - status
+        - twoFactorEnabled
+        - messagesSent
+        - createdAt
+        - updatedAt
+      additionalProperties: false
+    AdminUserDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        email:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+            - registered
+            - unverified
+            - admin
+            - banned
+            - pendingDeletion
+            - guest
+          description: "The first that applies: guest, banned, admin, unverified,
+            registered"
+        twoFactorEnabled:
+          type: boolean
+        messagesSent:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: Messages the User sent, across their Sessions
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        ban:
+          anyOf:
+            - type: object
+              properties:
+                reason:
+                  type:
+                    - string
+                    - "null"
+                expiresAt:
+                  anyOf:
+                    - type: string
+                      format: date-time
+                      pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+                    - type: "null"
+                  description: "`null` for a ban with no end"
+              required:
+                - reason
+                - expiresAt
+              additionalProperties: false
+            - type: "null"
+          description: "`null` unless the User is banned now"
+        pendingDeletionAt:
+          anyOf:
+            - type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: "null"
+          description: When the User asked to delete the account; it is Purged 30 days
+            later. `null` unless pending
+        sessionsCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+      required:
+        - id
+        - email
+        - name
+        - status
+        - twoFactorEnabled
+        - messagesSent
+        - createdAt
+        - updatedAt
+        - ban
+        - pendingDeletionAt
+        - sessionsCount
+      additionalProperties: false
     AuditPage:
       type: object
       properties:
@@ -503,14 +654,14 @@ components:
           maxItems: 100
           type: array
           items:
-            $ref: '#/components/schemas/AuditEntry'
+            $ref: "#/components/schemas/AuditEntry"
           description: Newest first
         nextCursor:
           anyOf:
             - type: string
               format: uuid
               pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
+            - type: "null"
         hasMore:
           type: boolean
       required:
@@ -536,7 +687,7 @@ components:
             - type: string
               format: uuid
               pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
+            - type: "null"
           description: The Admin who acted; `null` for the Operator or the system
         action:
           type: string
@@ -581,12 +732,12 @@ paths:
         - Health
       description: Welcome endpoint — confirms the API is reachable.
       responses:
-        '200':
+        "200":
           description: API is reachable
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiRoot'
+                $ref: "#/components/schemas/ApiRoot"
   /health:
     get:
       operationId: getHealth
@@ -595,12 +746,12 @@ paths:
         - Health
       description: Returns server liveness status and current UTC timestamp.
       responses:
-        '200':
+        "200":
           description: Server is healthy
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Health'
+                $ref: "#/components/schemas/Health"
   /api/sessions/{sessionId}/messages:
     post:
       operationId: sendMessage
@@ -626,8 +777,8 @@ paths:
                   enum:
                     - direct
                     - run
-                  description: 'How the reply is produced: `direct`, a Direct reply, or `run`, a
-                    Run (Registered users only).'
+                  description: "How the reply is produced: `direct`, a Direct reply, or `run`, a
+                    Run (Registered users only)."
                 model:
                   description: Binds the Session to this Model before replying; omitted keeps the
                     Session's Model
@@ -656,61 +807,61 @@ paths:
           name: sessionId
           required: true
       responses:
-        '202':
+        "202":
           description: Message persisted and its reply queued
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SentMessage'
-        '400':
+                $ref: "#/components/schemas/SentMessage"
+        "400":
           description: Invalid request body or session ID
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: Guest message allowance reached, or a Guest asked for a Run —
             registration required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '409':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
           description: Session is archived — restore it first
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '413':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "413":
           description: Message exceeds the prompt token limit
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '429':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
           description: Rate limit exceeded
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/chat/message-allowance:
     get:
       operationId: getMessageAllowance
@@ -721,24 +872,24 @@ paths:
         (Guests and unverified Registered users) get their limit, live count and
         remaining sends; verified Registered users get `metered: false`."
       responses:
-        '200':
+        "200":
           description: The caller's message allowance
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageAllowance'
-        '401':
+                $ref: "#/components/schemas/MessageAllowance"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/sessions:
     post:
       operationId: createSession
@@ -759,30 +910,30 @@ paths:
               required:
                 - title
       responses:
-        '201':
+        "201":
           description: Session created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
-        '400':
+                $ref: "#/components/schemas/Session"
+        "400":
           description: Invalid request body
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
     get:
       operationId: listSessions
       summary: List sessions
@@ -812,34 +963,34 @@ paths:
         - schema:
             description: Return only archived Sessions (`true`) instead of only active ones
               (default)
-            default: 'false'
+            default: "false"
             type: string
             enum:
-              - 'true'
-              - 'false'
+              - "true"
+              - "false"
           in: query
           name: archived
           description: Return only archived Sessions (`true`) instead of only active ones
             (default)
       responses:
-        '200':
+        "200":
           description: Paginated list of sessions owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SessionPage'
-        '401':
+                $ref: "#/components/schemas/SessionPage"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/sessions/search:
     get:
       operationId: searchSessions
@@ -861,17 +1012,17 @@ paths:
         - schema:
             description: Return only archived Sessions (`true`) instead of only active ones
               (default)
-            default: 'false'
+            default: "false"
             type: string
             enum:
-              - 'true'
-              - 'false'
+              - "true"
+              - "false"
           in: query
           name: archived
           description: Return only archived Sessions (`true`) instead of only active ones
             (default)
       responses:
-        '200':
+        "200":
           description: Matching sessions owned by the caller
           content:
             application/json:
@@ -879,33 +1030,33 @@ paths:
                 maxItems: 100
                 type: array
                 items:
-                  $ref: '#/components/schemas/SessionSearchResult'
-        '400':
+                  $ref: "#/components/schemas/SessionSearchResult"
+        "400":
           description: Invalid search query
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/sessions/{sessionId}/archive:
     post:
       operationId: archiveSession
       summary: Archive session
       tags:
         - Sessions
-      description: 'Archive one of the caller’s own sessions: hidden from the session
-        list, kept unchanged. Idempotent.'
+      description: "Archive one of the caller’s own sessions: hidden from the session
+        list, kept unchanged. Idempotent."
       parameters:
         - schema:
             type: string
@@ -915,36 +1066,36 @@ paths:
           name: sessionId
           required: true
       responses:
-        '200':
+        "200":
           description: Session archived
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
-        '400':
+                $ref: "#/components/schemas/Session"
+        "400":
           description: Invalid session ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/sessions/{sessionId}/restore:
     post:
       operationId: restoreSession
@@ -961,36 +1112,36 @@ paths:
           name: sessionId
           required: true
       responses:
-        '200':
+        "200":
           description: Session restored
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
-        '400':
+                $ref: "#/components/schemas/Session"
+        "400":
           description: Invalid session ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/sessions/{sessionId}:
     get:
       operationId: getSession
@@ -1007,36 +1158,36 @@ paths:
           name: sessionId
           required: true
       responses:
-        '200':
+        "200":
           description: Session retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SessionDetail'
-        '400':
+                $ref: "#/components/schemas/SessionDetail"
+        "400":
           description: Invalid session ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/messages:
     post:
       operationId: createMessage
@@ -1068,48 +1219,48 @@ paths:
                     - type: integer
                       minimum: -9007199254740991
                       maximum: 9007199254740991
-                    - type: 'null'
+                    - type: "null"
               required:
                 - sessionId
                 - role
                 - content
       responses:
-        '201':
+        "201":
           description: Message created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '400':
+                $ref: "#/components/schemas/Message"
+        "400":
           description: Invalid request body
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '409':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
           description: Session is archived — restore it first
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
     get:
       operationId: listMessages
       summary: List messages
@@ -1128,7 +1279,7 @@ paths:
           name: sessionId
           description: Only list the messages of this session, oldest first
       responses:
-        '200':
+        "200":
           description: List of messages owned by the caller
           content:
             application/json:
@@ -1136,25 +1287,25 @@ paths:
                 maxItems: 1000
                 type: array
                 items:
-                  $ref: '#/components/schemas/Message'
-        '400':
+                  $ref: "#/components/schemas/Message"
+        "400":
           description: Invalid session ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/messages/{messageId}:
     get:
       operationId: getMessage
@@ -1171,68 +1322,68 @@ paths:
           name: messageId
           required: true
       responses:
-        '200':
+        "200":
           description: Message retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '400':
+                $ref: "#/components/schemas/Message"
+        "400":
           description: Invalid message ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Message not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/models:
     get:
       operationId: getModelCatalog
       summary: Get the model catalog
       tags:
         - Models
-      description: 'The model catalog: the Models a Session can be bound to, with
+      description: "The model catalog: the Models a Session can be bound to, with
         their labels, limits and list prices (USD per million tokens), plus the
-        catalog version and content hash'
+        catalog version and content hash"
       responses:
-        '200':
+        "200":
           description: The model catalog
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ModelCatalog'
-        '500':
+                $ref: "#/components/schemas/ModelCatalog"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/streams/{streamId}:
     get:
       operationId: readReplyStream
       summary: Read reply stream
       tags:
         - Streams
-      description: 'Relay a reply stream as server-sent events, from its first event
+      description: "Relay a reply stream as server-sent events, from its first event
         (or after `Last-Event-ID`) to its `end` (ADR-0014). Only the User who
         sent the Message may read it. A stream that has expired answers 404:
-        read the persisted Message instead.'
+        read the persisted Message instead."
       parameters:
         - schema:
             description: Resume after this event id, for a client reconnecting by hand
@@ -1257,7 +1408,7 @@ paths:
           name: last-event-id
           description: Resume after this event id; sent by an EventSource when it reconnects
       responses:
-        '200':
+        "200":
           description: The reply stream, as server-sent events
           content:
             text/event-stream:
@@ -1269,30 +1420,30 @@ paths:
                   its User stopped). Each event `id` is its stream entry id;
                   send the last one back as `Last-Event-ID` (or `lastEventId`)
                   to resume after it."
-        '400':
+        "400":
           description: Invalid stream ID or Last-Event-ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Stream not found, expired, or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/streams/{streamId}/cancel:
     post:
       operationId: cancelReplyStream
@@ -1311,32 +1462,32 @@ paths:
           name: streamId
           required: true
       responses:
-        '204':
+        "204":
           description: Stop requested, or the reply had already finished
-        '400':
+        "400":
           description: Invalid stream ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Stream not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/profile-image/settings:
     get:
       operationId: getProfileImageSettings
@@ -1345,24 +1496,24 @@ paths:
         - Profile image
       description: Whether this server can store Profile image uploads.
       responses:
-        '200':
+        "200":
           description: Profile image settings
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProfileImageSettings'
-        '401':
+                $ref: "#/components/schemas/ProfileImageSettings"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/profile-image:
     put:
       operationId: uploadProfileImage
@@ -1388,60 +1539,60 @@ paths:
               type: string
               format: binary
       responses:
-        '200':
+        "200":
           description: Profile image stored
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProfileImage'
-        '400':
+                $ref: "#/components/schemas/ProfileImage"
+        "400":
           description: The file is not a JPEG, PNG or WebP image
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: A Guest cannot set a Profile image
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Profile image uploads are switched off
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '413':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "413":
           description: The file is larger than 5 MB
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '415':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "415":
           description: The body is not a JPEG, PNG or WebP
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '429':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
           description: Too many uploads this hour
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
     delete:
       operationId: removeProfileImage
       summary: Remove Profile image
@@ -1450,26 +1601,26 @@ paths:
       description: Remove the Registered user's Profile image, so their Avatar shows
         initials. Succeeds when there is none.
       responses:
-        '204':
+        "204":
           description: Profile image removed
-        '401':
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: A Guest cannot have a Profile image
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/internal/log-level:
     get:
       operationId: getLogLevels
@@ -1484,30 +1635,30 @@ paths:
       security:
         - operatorToken: []
       responses:
-        '200':
+        "200":
           description: The levels each server instance applies
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LogLevelReports'
-        '403':
+                $ref: "#/components/schemas/LogLevelReports"
+        "403":
           description: Missing or wrong operator token
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: No operator token is configured
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
     post:
       operationId: changeLogLevel
       summary: Change log level
@@ -1559,36 +1710,36 @@ paths:
       security:
         - operatorToken: []
       responses:
-        '202':
+        "202":
           description: Change sent to every server instance
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LogLevelChange'
-        '400':
+                $ref: "#/components/schemas/LogLevelChange"
+        "400":
           description: Invalid request body
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: Missing or wrong operator token
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: No operator token is configured
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/internal/admins:
     get:
       operationId: listAdmins
@@ -1599,7 +1750,7 @@ paths:
       security:
         - operatorToken: []
       responses:
-        '200':
+        "200":
           description: Every Admin, oldest account first
           content:
             application/json:
@@ -1607,25 +1758,25 @@ paths:
                 maxItems: 100
                 type: array
                 items:
-                  $ref: '#/components/schemas/Admin'
-        '403':
+                  $ref: "#/components/schemas/Admin"
+        "403":
           description: Missing or wrong operator token
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: No operator token is configured
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
     post:
       operationId: grantAdmin
       summary: Grant Admin
@@ -1651,36 +1802,36 @@ paths:
       security:
         - operatorToken: []
       responses:
-        '201':
+        "201":
           description: The user is now an Admin
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Admin'
-        '400':
+                $ref: "#/components/schemas/Admin"
+        "400":
           description: Invalid body, or the user is a Guest, unverified or banned
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: Missing or wrong operator token
           content:
             application/json:
               schema: {}
-        '404':
+        "404":
           description: No operator token is configured, or no user has that email
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '409':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
           description: The user is already an Admin
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -1707,31 +1858,244 @@ paths:
       security:
         - operatorToken: []
       responses:
-        '204':
+        "204":
           description: The user is no longer an Admin
-        '400':
+        "400":
           description: Invalid email
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: Missing or wrong operator token
           content:
             application/json:
               schema: {}
-        '404':
+        "404":
           description: No operator token is configured, or no user has that email
           content:
             application/json:
               schema: {}
-        '409':
+        "409":
           description: The user is not an Admin
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema: {}
+  /api/admin/users:
+    get:
+      operationId: listUsers
+      summary: List Users
+      tags:
+        - Admin
+      description: List Users, newest first by default, filtered by status and a name
+        or email search, a page at a time. Guests are left out unless
+        `status=guest`. Requires an Admin whose auth session passed two-factor
+        authentication.
+      parameters:
+        - schema:
+            description: Case-insensitive text to find in the name or email
+            type: string
+            minLength: 1
+            maxLength: 100
+          in: query
+          name: search
+          description: Case-insensitive text to find in the name or email
+        - schema:
+            description: Only Users in this status; without it every User but Guests is
+              listed
+            type: string
+            enum:
+              - registered
+              - unverified
+              - admin
+              - banned
+              - pendingDeletion
+              - guest
+          in: query
+          name: status
+          description: Only Users in this status; without it every User but Guests is listed
+        - schema:
+            default: createdAt
+            description: "`lastActiveAt` is the last update to the account until activity is
+              tracked"
+            type: string
+            enum:
+              - createdAt
+              - lastActiveAt
+              - messagesSent
+          in: query
+          name: sortBy
+          description: "`lastActiveAt` is the last update to the account until activity is
+            tracked"
+        - schema:
+            default: desc
+            type: string
+            enum:
+              - asc
+              - desc
+          in: query
+          name: order
+        - schema:
+            default: 10
+            description: Number of Users to fetch (1-100, default 10)
+            type: integer
+            minimum: 1
+            maximum: 100
+          in: query
+          name: limit
+          description: Number of Users to fetch (1-100, default 10)
+        - schema:
+            description: The `nextCursor` of the previous page
+            type: string
+            format: uuid
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: query
+          name: cursor
+          description: The `nextCursor` of the previous page
+      responses:
+        "200":
+          description: A page of Users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserPage"
+        "400":
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/admin/users/{id}:
+    get:
+      operationId: getUser
+      summary: Get a User
+      tags:
+        - Admin
+      description: "Read one User: status, two-factor state, ban, Sessions and
+        messages sent, and timestamps. Requires an Admin whose auth session
+        passed two-factor authentication."
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            description: The User id
+          in: path
+          name: id
+          required: true
+          description: The User id
+      responses:
+        "200":
+          description: The User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserDetail"
+        "400":
+          description: Invalid id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema: {}
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema: {}
+        "404":
+          description: No User has that id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema: {}
+  /api/admin/users/{id}/restore:
+    post:
+      operationId: restoreUser
+      summary: Restore a User
+      tags:
+        - Admin
+      description: Restore a User in Pending deletion in full, and record it in the
+        Audit log. Requires an Admin whose auth session passed two-factor
+        authentication.
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            description: The User id
+          in: path
+          name: id
+          required: true
+          description: The User id
+      responses:
+        "204":
+          description: The User is no longer pending deletion
+        "400":
+          description: Invalid id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema: {}
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema: {}
+        "404":
+          description: No User has that id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: The User is not pending deletion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -1826,96 +2190,37 @@ paths:
           name: cursor
           description: The `nextCursor` of the previous page
       responses:
-        '200':
+        "200":
           description: A page of Audit log entries
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuditPage'
-        '400':
+                $ref: "#/components/schemas/AuditPage"
+        "400":
           description: Invalid query
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: Not signed in
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-  /api/admin/users/{id}/restore:
-    post:
-      operationId: restoreUser
-      summary: Restore a User
-      tags:
-        - Admin
-      description: Restore a User in Pending deletion in full, and record it in the
-        Audit log. Requires an Admin whose auth session passed two-factor
-        authentication.
-      parameters:
-        - schema:
-            type: string
-            format: uuid
-            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            description: The id of the User
-          in: path
-          name: id
-          required: true
-          description: The id of the User
-      responses:
-        '204':
-          description: The User is no longer pending deletion
-        '400':
-          description: Invalid id
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
-          description: Not signed in
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
-          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
-            (`TwoFactorRequired`)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
-          description: No User has that id
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '409':
-          description: The User is not pending deletion
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
 servers:
   - url: /
 security:
@@ -1932,7 +2237,7 @@ tags:
   - name: Messages
     description: Message management
   - name: Models
-    description: 'The model catalog: Models, limits and prices'
+    description: "The model catalog: Models, limits and prices"
   - name: Profile image
     description: A Registered user's Profile image
   - name: Operator

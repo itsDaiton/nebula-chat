@@ -20,7 +20,14 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { AuditPage, ErrorEnvelope, ListAuditEntriesParams } from '../model';
+import type {
+  AdminUserDetail,
+  AdminUserPage,
+  AuditPage,
+  ErrorEnvelope,
+  ListAuditEntriesParams,
+  ListUsersParams,
+} from '../model';
 
 import { axiosClient } from '../../client';
 import type { ErrorType } from '../../client';
@@ -42,6 +49,327 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
+/**
+ * List Users, newest first by default, filtered by status and a name or email search, a page at a time. Guests are left out unless `status=guest`. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary List Users
+ */
+export const listUsers = (
+  params?: ListUsersParams,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<AdminUserPage>(
+    { url: `/api/admin/users`, method: 'GET', params, signal },
+    options,
+  );
+};
+
+export const getListUsersQueryKey = (params?: ListUsersParams) => {
+  return [`/api/admin/users`, ...(params ? [params] : [])] as const;
+};
+
+export const getListUsersQueryOptions = <
+  TData = Awaited<ReturnType<typeof listUsers>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListUsersQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listUsers>>> = ({ signal }) =>
+    listUsers(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listUsers>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListUsersQueryResult = NonNullable<Awaited<ReturnType<typeof listUsers>>>;
+export type ListUsersQueryError = ErrorType<ErrorEnvelope>;
+
+export function useListUsers<
+  TData = Awaited<ReturnType<typeof listUsers>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params: undefined | ListUsersParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listUsers>>,
+          TError,
+          Awaited<ReturnType<typeof listUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListUsers<
+  TData = Awaited<ReturnType<typeof listUsers>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listUsers>>,
+          TError,
+          Awaited<ReturnType<typeof listUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListUsers<
+  TData = Awaited<ReturnType<typeof listUsers>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary List Users
+ */
+
+export function useListUsers<
+  TData = Awaited<ReturnType<typeof listUsers>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListUsersQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * Read one User: status, two-factor state, ban, Sessions and messages sent, and timestamps. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary Get a User
+ */
+export const getUser = (
+  id: string,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<AdminUserDetail>(
+    { url: `/api/admin/users/${id}`, method: 'GET', signal },
+    options,
+  );
+};
+
+export const getGetUserQueryKey = (id: string) => {
+  return [`/api/admin/users/${id}`] as const;
+};
+
+export const getGetUserQueryOptions = <
+  TData = Awaited<ReturnType<typeof getUser>>,
+  TError = ErrorType<ErrorEnvelope | unknown>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetUserQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getUser>>> = ({ signal }) =>
+    getUser(id, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type GetUserQueryResult = NonNullable<Awaited<ReturnType<typeof getUser>>>;
+export type GetUserQueryError = ErrorType<ErrorEnvelope | unknown>;
+
+export function useGetUser<
+  TData = Awaited<ReturnType<typeof getUser>>,
+  TError = ErrorType<ErrorEnvelope | unknown>,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUser>>,
+          TError,
+          Awaited<ReturnType<typeof getUser>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetUser<
+  TData = Awaited<ReturnType<typeof getUser>>,
+  TError = ErrorType<ErrorEnvelope | unknown>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUser>>,
+          TError,
+          Awaited<ReturnType<typeof getUser>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetUser<
+  TData = Awaited<ReturnType<typeof getUser>>,
+  TError = ErrorType<ErrorEnvelope | unknown>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get a User
+ */
+
+export function useGetUser<
+  TData = Awaited<ReturnType<typeof getUser>>,
+  TError = ErrorType<ErrorEnvelope | unknown>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetUserQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * Restore a User in Pending deletion in full, and record it in the Audit log. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary Restore a User
+ */
+export const restoreUser = (
+  id: string,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<void>(
+    { url: `/api/admin/users/${id}/restore`, method: 'POST', signal },
+    options,
+  );
+};
+
+export const getRestoreUserMutationKey = () => ['restoreUser'] as const;
+
+export const getRestoreUserMutationOptions = <
+  TError = ErrorType<ErrorEnvelope | unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof restoreUser>>,
+    TError,
+    RestoreUserMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof axiosClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof restoreUser>>,
+  TError,
+  RestoreUserMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRestoreUserMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof restoreUser>>,
+    RestoreUserMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return restoreUser(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RestoreUserMutationResult = NonNullable<Awaited<ReturnType<typeof restoreUser>>>;
+
+export type RestoreUserMutationError = ErrorType<ErrorEnvelope | unknown>;
+export type RestoreUserMutationVariables = { id: string };
+
+/**
+ * @summary Restore a User
+ */
+export const useRestoreUser = <TError = ErrorType<ErrorEnvelope | unknown>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof restoreUser>>,
+      TError,
+      RestoreUserMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof restoreUser>>,
+  TError,
+  RestoreUserMutationVariables,
+  TContext
+> => {
+  return useMutation(getRestoreUserMutationOptions(options), queryClient);
+};
 /**
  * List Audit log entries, newest first, filtered by actor, action, target and time range, a page at a time. Requires an Admin whose auth session passed two-factor authentication.
  * @summary List Audit log
@@ -160,84 +488,3 @@ export function useListAuditEntries<
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-/**
- * Restore a User in Pending deletion in full, and record it in the Audit log. Requires an Admin whose auth session passed two-factor authentication.
- * @summary Restore a User
- */
-export const restoreUser = (
-  id: string,
-  options?: SecondParameter<typeof axiosClient>,
-  signal?: AbortSignal,
-) => {
-  return axiosClient<void>(
-    { url: `/api/admin/users/${id}/restore`, method: 'POST', signal },
-    options,
-  );
-};
-
-export const getRestoreUserMutationKey = () => ['restoreUser'] as const;
-
-export const getRestoreUserMutationOptions = <
-  TError = ErrorType<ErrorEnvelope>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof restoreUser>>,
-    TError,
-    RestoreUserMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof restoreUser>>,
-  TError,
-  RestoreUserMutationVariables,
-  TContext
-> => {
-  const mutationKey = getRestoreUserMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof restoreUser>>,
-    RestoreUserMutationVariables
-  > = (props) => {
-    const { id } = props ?? {};
-
-    return restoreUser(id, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type RestoreUserMutationResult = NonNullable<Awaited<ReturnType<typeof restoreUser>>>;
-
-export type RestoreUserMutationError = ErrorType<ErrorEnvelope>;
-export type RestoreUserMutationVariables = { id: string };
-
-/**
- * @summary Restore a User
- */
-export const useRestoreUser = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof restoreUser>>,
-      TError,
-      RestoreUserMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof axiosClient>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof restoreUser>>,
-  TError,
-  RestoreUserMutationVariables,
-  TContext
-> => {
-  return useMutation(getRestoreUserMutationOptions(options), queryClient);
-};
