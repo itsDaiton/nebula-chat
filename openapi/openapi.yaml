@@ -521,6 +521,167 @@ components:
         - twoFactorEnabled
         - createdAt
       additionalProperties: false
+    AdminUserPage:
+      type: object
+      properties:
+        users:
+          maxItems: 100
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminUserSummary'
+        nextCursor:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: >-
+                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: 'null'
+        hasMore:
+          type: boolean
+      required:
+        - users
+        - nextCursor
+        - hasMore
+      additionalProperties: false
+    AdminUserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        email:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+            - registered
+            - unverified
+            - admin
+            - banned
+            - pendingDeletion
+            - guest
+          description: 'The first that applies: guest, banned, admin, unverified,
+            registered'
+        twoFactorEnabled:
+          type: boolean
+        messagesSent:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: Messages the User sent, across their Sessions
+        createdAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+      required:
+        - id
+        - email
+        - name
+        - status
+        - twoFactorEnabled
+        - messagesSent
+        - createdAt
+        - updatedAt
+      additionalProperties: false
+    AdminUserDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        email:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+            - registered
+            - unverified
+            - admin
+            - banned
+            - pendingDeletion
+            - guest
+          description: 'The first that applies: guest, banned, admin, unverified,
+            registered'
+        twoFactorEnabled:
+          type: boolean
+        messagesSent:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: Messages the User sent, across their Sessions
+        createdAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        ban:
+          anyOf:
+            - type: object
+              properties:
+                reason:
+                  type:
+                    - string
+                    - 'null'
+                expiresAt:
+                  anyOf:
+                    - type: string
+                      format: date-time
+                      pattern: >-
+                        ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+                    - type: 'null'
+                  description: '`null` for a ban with no end'
+              required:
+                - reason
+                - expiresAt
+              additionalProperties: false
+            - type: 'null'
+          description: '`null` unless the User is banned now'
+        pendingDeletionAt:
+          anyOf:
+            - type: string
+              format: date-time
+              pattern: >-
+                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: 'null'
+          description: >-
+            When the account will be deleted; `null` until deletion can be
+            requested
+        sessionsCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+      required:
+        - id
+        - email
+        - name
+        - status
+        - twoFactorEnabled
+        - messagesSent
+        - createdAt
+        - updatedAt
+        - ban
+        - pendingDeletionAt
+        - sessionsCount
+      additionalProperties: false
     AuditPage:
       type: object
       properties:
@@ -1793,6 +1954,171 @@ paths:
               schema: {}
         '409':
           description: The user is not an Admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema: {}
+  /api/admin/users:
+    get:
+      operationId: listUsers
+      summary: List Users
+      tags:
+        - Admin
+      description: >-
+        List Users, newest first by default, filtered by status and a name
+        or email search, a page at a time. Guests are left out unless
+        `status=guest`. Requires an Admin whose auth session passed two-factor
+        authentication.
+      parameters:
+        - schema:
+            description: Case-insensitive text to find in the name or email
+            type: string
+            minLength: 1
+            maxLength: 100
+          in: query
+          name: search
+          description: Case-insensitive text to find in the name or email
+        - schema:
+            description: >-
+              Only Users in this status; without it every User but Guests is
+              listed
+            type: string
+            enum:
+              - registered
+              - unverified
+              - admin
+              - banned
+              - pendingDeletion
+              - guest
+          in: query
+          name: status
+          description: >-
+            Only Users in this status; without it every User but Guests is
+            listed
+        - schema:
+            default: createdAt
+            description: '`lastActiveAt` is the last update to the account until activity is
+              tracked'
+            type: string
+            enum:
+              - createdAt
+              - lastActiveAt
+              - messagesSent
+          in: query
+          name: sortBy
+          description: '`lastActiveAt` is the last update to the account until activity is
+            tracked'
+        - schema:
+            default: desc
+            type: string
+            enum:
+              - asc
+              - desc
+          in: query
+          name: order
+        - schema:
+            default: 10
+            description: Number of Users to fetch (1-100, default 10)
+            type: integer
+            minimum: 1
+            maximum: 100
+          in: query
+          name: limit
+          description: Number of Users to fetch (1-100, default 10)
+        - schema:
+            description: The `nextCursor` of the previous page
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: query
+          name: cursor
+          description: The `nextCursor` of the previous page
+      responses:
+        '200':
+          description: A page of Users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserPage'
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: >-
+            Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/admin/users/{id}:
+    get:
+      operationId: getUser
+      summary: Get a User
+      tags:
+        - Admin
+      description: 'Read one User: status, two-factor state, ban, Sessions and
+        messages sent, and timestamps. Requires an Admin whose auth session
+        passed two-factor authentication.'
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            description: The User id
+          in: path
+          name: id
+          required: true
+          description: The User id
+      responses:
+        '200':
+          description: The User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserDetail'
+        '400':
+          description: Invalid id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: >-
+            Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema: {}
+        '404':
+          description: No User has that id
           content:
             application/json:
               schema:

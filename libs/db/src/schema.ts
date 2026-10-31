@@ -16,22 +16,27 @@ import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 // better-auth owns this table's shape (modelName `users`), so field names match its core user model exactly.
 // `isAnonymous` comes from the anonymous plugin, `role`/`banned*` from the admin plugin, `twoFactorEnabled` from the
 // two-factor plugin; `profileImageKey` is a server-only field (ADR-0022).
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull(),
-  email: text('email').notNull().unique(),
-  emailVerified: boolean('email_verified').notNull().default(false),
-  image: text('image'),
-  profileImageKey: text('profile_image_key'),
-  isAnonymous: boolean('is_anonymous').default(false),
-  role: text('role').notNull().default('user'),
-  banned: boolean('banned').notNull().default(false),
-  banReason: text('ban_reason'),
-  banExpires: timestamp('ban_expires'),
-  twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+export const users = pgTable(
+  'users',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name').notNull(),
+    email: text('email').notNull().unique(),
+    emailVerified: boolean('email_verified').notNull().default(false),
+    image: text('image'),
+    profileImageKey: text('profile_image_key'),
+    isAnonymous: boolean('is_anonymous').default(false),
+    role: text('role').notNull().default('user'),
+    banned: boolean('banned').notNull().default(false),
+    banReason: text('ban_reason'),
+    banExpires: timestamp('ban_expires'),
+    twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  // Serves the admin Users list: newest first, keyset-paged on the id.
+  (t) => [index('users_created_at_idx').on(t.createdAt.desc(), t.id.desc())],
+);
 
 // better-auth core table — one session per active login (or anonymous Guest identity).
 export const session = pgTable('session', {
