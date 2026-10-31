@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.10.0...nebula-chat-server-v4.11.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-542 Admin grants and revokes the Admin role and bans and unbans Users ([#702](https://github.com/itsDaiton/nebula-chat/issues/702)) ([29abb1a](https://github.com/itsDaiton/nebula-chat/commit/29abb1a3f14e0c3077ef640470070811b5d6eb19))
+
 ## [4.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.9.1...nebula-chat-server-v4.10.0) (2026-10-31)
 
 
