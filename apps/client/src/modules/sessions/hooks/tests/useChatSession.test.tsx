@@ -40,7 +40,6 @@ const serveSession = (
       createdAt: '2026-01-01T00:00:00.000Z',
       archived: false,
       activeStreamId,
-      waitingRun: null,
     }),
     getListMessagesMockHandler(({ request }) =>
       new URL(request.url).searchParams.get('sessionId') === SESSION_ID ? messages : [],

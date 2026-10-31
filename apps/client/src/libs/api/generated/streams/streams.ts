@@ -172,7 +172,7 @@ export function useReadReplyStream<
 }
 
 /**
- * Stop a Direct reply in flight: the worker aborts the model call, persists what it had produced and ends the stream with `end` { reason: "cancelled" }. Cancelling the last stream of a Run waiting on a Clarifying question cancels that Run. Cancelling a reply that already finished does nothing.
+ * Stop a Direct reply in flight: the worker aborts the model call, persists what it had produced and ends the stream with `end` { reason: "cancelled" }. Cancelling a reply that already finished does nothing.
  * @summary Cancel reply stream
  */
 export const cancelReplyStream = (

@@ -13,7 +13,6 @@ const aChatSession = {
   createdAt: '2026-01-01T00:00:00.000Z',
   archived: false,
   activeStreamId: null,
-  waitingRun: null,
 };
 
 describe('axiosClient', () => {

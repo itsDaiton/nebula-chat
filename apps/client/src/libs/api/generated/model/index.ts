@@ -57,7 +57,6 @@ export * from './sendMessageBodyModel';
 export * from './sentMessage';
 export * from './session';
 export * from './sessionDetail';
-export * from './sessionDetailWaitingRun';
 export * from './sessionPage';
 export * from './sessionSearchResult';
 export * from './setUserRoleBody';

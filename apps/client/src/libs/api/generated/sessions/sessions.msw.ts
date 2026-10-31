@@ -77,14 +77,6 @@ export const getGetSessionResponseMock = (
   createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   archived: faker.datatype.boolean(),
   activeStreamId: faker.helpers.arrayElement([faker.string.uuid(), null]),
-  waitingRun: faker.helpers.arrayElement([
-    {
-      id: faker.string.uuid(),
-      streamId: faker.helpers.arrayElement([faker.string.uuid(), null]),
-      stepsCompleted: faker.number.int({ min: 0, max: 9007199254740991 }),
-    },
-    null,
-  ]),
   ...overrideResponse,
 });
 

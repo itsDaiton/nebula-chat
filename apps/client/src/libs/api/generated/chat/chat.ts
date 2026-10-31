@@ -43,7 +43,7 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 /**
- * Send a user Message to one of the caller’s own Sessions. The Message is persisted and its reply is queued; nothing waits on the model. Read the reply as server-sent events from `GET /api/streams/{streamId}`. When the Session has a Run waiting on a Clarifying question, the Message is its answer whatever its `mode`: it resumes the Run on a new stream and the response carries that Run’s `runId`.
+ * Send a user Message to one of the caller’s own Sessions. The Message is persisted and its reply is queued; nothing waits on the model. Read the reply as server-sent events from `GET /api/streams/{streamId}`.
  * @summary Send message
  */
 export const sendMessage = (
