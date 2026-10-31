@@ -4,6 +4,10 @@
  * Nebula Chat API
  * REST API for Nebula Chat
  */
+import type { AdminSessionDetail } from '../model/adminSessionDetail';
+
+import type { AdminSessionPage } from '../model/adminSessionPage';
+
 import type { AdminUserDetail } from '../model/adminUserDetail';
 
 import type { AdminUserPage } from '../model/adminUserPage';
@@ -15,6 +19,8 @@ import type { BanUserBody } from '../model/banUserBody';
 import type { ErrorEnvelope } from '../model/errorEnvelope';
 
 import type { ListAuditEntriesParams } from '../model/listAuditEntriesParams';
+
+import type { ListUserSessionsParams } from '../model/listUserSessionsParams';
 
 import type { ListUsersParams } from '../model/listUsersParams';
 
@@ -146,6 +152,83 @@ export const getUser = async (
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<getUserResponse> => {
   return apiFetch<getUserResponse>(getGetUserUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export type listUserSessionsResponse200 = {
+  data: AdminSessionPage;
+  status: 200;
+};
+
+export type listUserSessionsResponse400 = {
+  data: ErrorEnvelope;
+  status: 400;
+};
+
+export type listUserSessionsResponse401 = {
+  data: unknown;
+  status: 401;
+};
+
+export type listUserSessionsResponse403 = {
+  data: unknown;
+  status: 403;
+};
+
+export type listUserSessionsResponse404 = {
+  data: ErrorEnvelope;
+  status: 404;
+};
+
+export type listUserSessionsResponse500 = {
+  data: unknown;
+  status: 500;
+};
+
+export type listUserSessionsResponseSuccess = listUserSessionsResponse200 & {
+  headers: Headers;
+};
+export type listUserSessionsResponseError = (
+  | listUserSessionsResponse400
+  | listUserSessionsResponse401
+  | listUserSessionsResponse403
+  | listUserSessionsResponse404
+  | listUserSessionsResponse500
+) & {
+  headers: Headers;
+};
+
+export type listUserSessionsResponse =
+  listUserSessionsResponseSuccess | listUserSessionsResponseError;
+
+export const getListUserSessionsUrl = (id: string, params?: ListUserSessionsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/users/${id}/sessions?${stringifiedParams}`
+    : `/api/admin/users/${id}/sessions`;
+};
+
+/**
+ * List a User's Sessions, archived ones included and marked, newest first, a page at a time. Listing is not a content read, so it writes no Audit entry. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary List a User's Sessions
+ */
+export const listUserSessions = async (
+  id: string,
+  params?: ListUserSessionsParams,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<listUserSessionsResponse> => {
+  return apiFetch<listUserSessionsResponse>(getListUserSessionsUrl(id, params), {
     ...options,
     method: 'GET',
   });
@@ -468,6 +551,69 @@ export const unbanUser = async (
   return apiFetch<unbanUserResponse>(getUnbanUserUrl(id), {
     ...options,
     method: 'POST',
+  });
+};
+
+export type readSessionResponse200 = {
+  data: AdminSessionDetail;
+  status: 200;
+};
+
+export type readSessionResponse400 = {
+  data: ErrorEnvelope;
+  status: 400;
+};
+
+export type readSessionResponse401 = {
+  data: ErrorEnvelope;
+  status: 401;
+};
+
+export type readSessionResponse403 = {
+  data: ErrorEnvelope;
+  status: 403;
+};
+
+export type readSessionResponse404 = {
+  data: ErrorEnvelope;
+  status: 404;
+};
+
+export type readSessionResponse500 = {
+  data: ErrorEnvelope;
+  status: 500;
+};
+
+export type readSessionResponseSuccess = readSessionResponse200 & {
+  headers: Headers;
+};
+export type readSessionResponseError = (
+  | readSessionResponse400
+  | readSessionResponse401
+  | readSessionResponse403
+  | readSessionResponse404
+  | readSessionResponse500
+) & {
+  headers: Headers;
+};
+
+export type readSessionResponse = readSessionResponseSuccess | readSessionResponseError;
+
+export const getReadSessionUrl = (id: string) => {
+  return `/api/admin/sessions/${id}`;
+};
+
+/**
+ * Read any Session with all its Messages, oldest first, and record the read in the Audit log. If the Audit entry cannot be written the request fails. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary Read a Session
+ */
+export const readSession = async (
+  id: string,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<readSessionResponse> => {
+  return apiFetch<readSessionResponse>(getReadSessionUrl(id), {
+    ...options,
+    method: 'GET',
   });
 };
 

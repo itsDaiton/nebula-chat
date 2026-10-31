@@ -20,6 +20,7 @@ import { errorHandler } from '@server/errors/error.handler';
 import { apiRootSchema, healthSchema } from '@server/health.validation';
 import { logger } from '@server/logger';
 import adminRoutes from '@server/modules/admin/admin.routes';
+import adminSessionsRoutes from '@server/modules/admin/adminSessions.routes';
 import adminUsersRoutes from '@server/modules/admin/adminUsers.routes';
 import auditRoutes from '@server/modules/audit/audit.routes';
 import chatRoutes from '@server/modules/chat/chat.routes';
@@ -171,6 +172,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   await app.register(logLevelRoutes, { prefix: '/api/internal/log-level' });
   await app.register(adminRoutes, { prefix: '/api/internal/admins' });
   await app.register(adminUsersRoutes, { prefix: '/api/admin/users' });
+  await app.register(adminSessionsRoutes, { prefix: '/api/admin/sessions' });
   await app.register(auditRoutes, { prefix: '/api/admin/audit' });
 
   return app;

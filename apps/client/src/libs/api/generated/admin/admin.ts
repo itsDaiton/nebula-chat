@@ -21,12 +21,15 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdminSessionDetail,
+  AdminSessionPage,
   AdminUserDetail,
   AdminUserPage,
   AuditPage,
   BanUserBody,
   ErrorEnvelope,
   ListAuditEntriesParams,
+  ListUserSessionsParams,
   ListUsersParams,
   SetUserRoleBody,
 } from '../model';
@@ -284,6 +287,134 @@ export function useGetUser<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetUserQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * List a User's Sessions, archived ones included and marked, newest first, a page at a time. Listing is not a content read, so it writes no Audit entry. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary List a User's Sessions
+ */
+export const listUserSessions = (
+  id: string,
+  params?: ListUserSessionsParams,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<AdminSessionPage>(
+    { url: `/api/admin/users/${id}/sessions`, method: 'GET', params, signal },
+    options,
+  );
+};
+
+export const getListUserSessionsQueryKey = (id: string, params?: ListUserSessionsParams) => {
+  return [`/api/admin/users/${id}/sessions`, ...(params ? [params] : [])] as const;
+};
+
+export const getListUserSessionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listUserSessions>>,
+  TError = ErrorType<ErrorEnvelope | unknown>,
+>(
+  id: string,
+  params?: ListUserSessionsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserSessions>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListUserSessionsQueryKey(id, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listUserSessions>>> = ({ signal }) =>
+    listUserSessions(id, params, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof listUserSessions>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type ListUserSessionsQueryResult = NonNullable<Awaited<ReturnType<typeof listUserSessions>>>;
+export type ListUserSessionsQueryError = ErrorType<ErrorEnvelope | unknown>;
+
+export function useListUserSessions<
+  TData = Awaited<ReturnType<typeof listUserSessions>>,
+  TError = ErrorType<ErrorEnvelope | unknown>,
+>(
+  id: string,
+  params: undefined | ListUserSessionsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserSessions>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listUserSessions>>,
+          TError,
+          Awaited<ReturnType<typeof listUserSessions>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListUserSessions<
+  TData = Awaited<ReturnType<typeof listUserSessions>>,
+  TError = ErrorType<ErrorEnvelope | unknown>,
+>(
+  id: string,
+  params?: ListUserSessionsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserSessions>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listUserSessions>>,
+          TError,
+          Awaited<ReturnType<typeof listUserSessions>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListUserSessions<
+  TData = Awaited<ReturnType<typeof listUserSessions>>,
+  TError = ErrorType<ErrorEnvelope | unknown>,
+>(
+  id: string,
+  params?: ListUserSessionsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserSessions>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary List a User's Sessions
+ */
+
+export function useListUserSessions<
+  TData = Awaited<ReturnType<typeof listUserSessions>>,
+  TError = ErrorType<ErrorEnvelope | unknown>,
+>(
+  id: string,
+  params?: ListUserSessionsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserSessions>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListUserSessionsQueryOptions(id, params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
@@ -626,6 +757,128 @@ export const useUnbanUser = <TError = ErrorType<ErrorEnvelope | unknown>, TConte
 > => {
   return useMutation(getUnbanUserMutationOptions(options), queryClient);
 };
+/**
+ * Read any Session with all its Messages, oldest first, and record the read in the Audit log. If the Audit entry cannot be written the request fails. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary Read a Session
+ */
+export const readSession = (
+  id: string,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<AdminSessionDetail>(
+    { url: `/api/admin/sessions/${id}`, method: 'GET', signal },
+    options,
+  );
+};
+
+export const getReadSessionQueryKey = (id: string) => {
+  return [`/api/admin/sessions/${id}`] as const;
+};
+
+export const getReadSessionQueryOptions = <
+  TData = Awaited<ReturnType<typeof readSession>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof readSession>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getReadSessionQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof readSession>>> = ({ signal }) =>
+    readSession(id, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof readSession>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type ReadSessionQueryResult = NonNullable<Awaited<ReturnType<typeof readSession>>>;
+export type ReadSessionQueryError = ErrorType<ErrorEnvelope>;
+
+export function useReadSession<
+  TData = Awaited<ReturnType<typeof readSession>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof readSession>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof readSession>>,
+          TError,
+          Awaited<ReturnType<typeof readSession>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useReadSession<
+  TData = Awaited<ReturnType<typeof readSession>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof readSession>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof readSession>>,
+          TError,
+          Awaited<ReturnType<typeof readSession>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useReadSession<
+  TData = Awaited<ReturnType<typeof readSession>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof readSession>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Read a Session
+ */
+
+export function useReadSession<
+  TData = Awaited<ReturnType<typeof readSession>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof readSession>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getReadSessionQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 /**
  * List Audit log entries, newest first, filtered by actor, action, target and time range, a page at a time. Requires an Admin whose auth session passed two-factor authentication.
  * @summary List Audit log

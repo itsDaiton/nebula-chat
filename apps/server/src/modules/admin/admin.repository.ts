@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, isNotNull, isNull, ne, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNotNull, isNull, lt, ne, or, sql } from 'drizzle-orm';
 import { messages, sessions, users } from '@nebula-chat/db';
 import { auth } from '@server/auth';
 import { db } from '@server/db';
@@ -42,6 +42,17 @@ const sortKeys = {
   createdAt: users.createdAt,
   lastActiveAt: users.updatedAt,
   messagesSent,
+};
+
+const adminSessionColumns = {
+  id: sessions.id,
+  userId: sessions.userId,
+  title: sessions.title,
+  model: sessions.model,
+  archived: sql<boolean>`${sessions.archivedAt} is not null`,
+  messageCount: sql<number>`(select count(*)::int from ${messages} where ${messages.sessionId} = ${sessions.id})`,
+  createdAt: sessions.createdAt,
+  updatedAt: sessions.updatedAt,
 };
 
 const isGuest = sql`coalesce(${users.isAnonymous}, false)`;
@@ -176,5 +187,38 @@ export const adminRepository = {
   },
   async clearPendingDeletion(id: string) {
     await db.update(users).set({ pendingDeletionAt: null }).where(eq(users.id, id));
+  },
+  // Admin reads are not owner-scoped; archived Sessions are included and marked.
+  async findSession(id: string) {
+    const [row] = await db.select(adminSessionColumns).from(sessions).where(eq(sessions.id, id));
+    return row ?? null;
+  },
+  async listUserSessions(userId: string, limit: number, cursor?: string) {
+    let cursorFilter;
+    if (cursor) {
+      const [cursorRow] = await db
+        .select({ createdAt: sessions.createdAt, id: sessions.id })
+        .from(sessions)
+        .where(and(eq(sessions.id, cursor), eq(sessions.userId, userId)));
+      cursorFilter = cursorRow
+        ? or(
+            lt(sessions.createdAt, cursorRow.createdAt),
+            and(eq(sessions.createdAt, cursorRow.createdAt), lt(sessions.id, cursorRow.id)),
+          )
+        : undefined;
+    }
+
+    const rows = await db
+      .select(adminSessionColumns)
+      .from(sessions)
+      .where(and(eq(sessions.userId, userId), cursorFilter))
+      .orderBy(desc(sessions.createdAt), desc(sessions.id))
+      .limit(limit + 1);
+
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, -1) : rows;
+    const nextCursor = hasMore ? (page.at(-1)?.id ?? null) : null;
+
+    return { sessions: page, nextCursor, hasMore };
   },
 };

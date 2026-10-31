@@ -3,7 +3,9 @@ import type {
   adminEmailParamsSchema,
   grantAdminSchema,
   banUserSchema,
+  listUserSessionsQuerySchema,
   listUsersQuerySchema,
+  sessionIdParamsSchema,
   setRoleSchema,
   userIdParamsSchema,
 } from '@server/modules/admin/admin.validation';
@@ -23,3 +25,7 @@ export type UserIdParams = z.infer<typeof userIdParamsSchema>;
 export type SetRoleDTO = z.infer<typeof setRoleSchema>;
 
 export type BanUserDTO = z.infer<typeof banUserSchema>;
+
+export type ListUserSessionsQuery = z.infer<typeof listUserSessionsQuerySchema>;
+
+export type SessionIdParams = z.infer<typeof sessionIdParamsSchema>;

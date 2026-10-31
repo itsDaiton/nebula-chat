@@ -9,7 +9,13 @@ import { faker } from '@faker-js/faker';
 import { HttpResponse, http } from 'msw';
 import type { RequestHandlerOptions } from 'msw';
 
-import type { AdminUserDetail, AdminUserPage, AuditPage } from '../model';
+import type {
+  AdminSessionDetail,
+  AdminSessionPage,
+  AdminUserDetail,
+  AdminUserPage,
+  AuditPage,
+} from '../model';
 
 export const getListUsersResponseMock = (
   overrideResponse: Partial<Extract<AdminUserPage, object>> = {},
@@ -74,6 +80,70 @@ export const getGetUserResponseMock = (
     null,
   ]),
   sessionsCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+  ...overrideResponse,
+});
+
+export const getListUserSessionsResponseMock = (
+  overrideResponse: Partial<Extract<AdminSessionPage, object>> = {},
+): AdminSessionPage => ({
+  sessions: Array.from({ length: faker.number.int({ min: 1, max: 100 }) }, (_, i) => i + 1).map(
+    () => ({
+      id: faker.string.uuid(),
+      title: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      model: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      archived: faker.datatype.boolean(),
+      messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+      createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+      updatedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+    }),
+  ),
+  nextCursor: faker.helpers.arrayElement([faker.string.uuid(), null]),
+  hasMore: faker.datatype.boolean(),
+  ...overrideResponse,
+});
+
+export const getReadSessionResponseMock = (
+  overrideResponse: Partial<Extract<AdminSessionDetail, object>> = {},
+): AdminSessionDetail => ({
+  id: faker.string.uuid(),
+  title: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  model: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  archived: faker.datatype.boolean(),
+  messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+  createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  updatedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  userId: faker.string.uuid(),
+  messages: Array.from({ length: faker.number.int({ min: 1, max: 1000 }) }, (_, i) => i + 1).map(
+    () => ({
+      id: faker.string.uuid(),
+      sessionId: faker.string.uuid(),
+      content: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      role: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      tokenCount: faker.helpers.arrayElement([
+        faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+        null,
+      ]),
+      cached: faker.datatype.boolean(),
+      model: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      estimatedCostUsd: faker.helpers.arrayElement([
+        faker.number.float({ fractionDigits: 2 }),
+        null,
+      ]),
+      runId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+      contextTokens: faker.helpers.arrayElement([
+        faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+        null,
+      ]),
+      contextMessages: faker.helpers.arrayElement([
+        faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+        null,
+      ]),
+      createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+    }),
+  ),
   ...overrideResponse,
 });
 
@@ -155,6 +225,30 @@ export const getGetUserMockHandler = (
   );
 };
 
+export const getListUserSessionsMockHandler = (
+  overrideResponse?:
+    | AdminSessionPage
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<AdminSessionPage> | AdminSessionPage),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/admin/users/:id/sessions',
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getListUserSessionsResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
 export const getRestoreUserMockHandler = (
   overrideResponse?:
     void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void),
@@ -227,6 +321,30 @@ export const getUnbanUserMockHandler = (
   );
 };
 
+export const getReadSessionMockHandler = (
+  overrideResponse?:
+    | AdminSessionDetail
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<AdminSessionDetail> | AdminSessionDetail),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/admin/sessions/:id',
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getReadSessionResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
 export const getListAuditEntriesMockHandler = (
   overrideResponse?:
     | AuditPage
@@ -251,9 +369,11 @@ export const getListAuditEntriesMockHandler = (
 export const getAdminMock = () => [
   getListUsersMockHandler(),
   getGetUserMockHandler(),
+  getListUserSessionsMockHandler(),
   getRestoreUserMockHandler(),
   getSetUserRoleMockHandler(),
   getBanUserMockHandler(),
   getUnbanUserMockHandler(),
+  getReadSessionMockHandler(),
   getListAuditEntriesMockHandler(),
 ];

@@ -2,7 +2,9 @@ import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { adminController } from '@server/modules/admin/admin.controller';
 import {
+  adminSessionPageSchema,
   banUserSchema,
+  listUserSessionsQuerySchema,
   listUsersQuerySchema,
   setRoleSchema,
   userDetailSchema,
@@ -57,6 +59,26 @@ const adminUsersRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) 
     },
     preHandler: requireAdmin,
     handler: adminController.getUser,
+  });
+
+  app.get('/:id/sessions', {
+    schema: {
+      description:
+        "List a User's Sessions, archived ones included and marked, newest first, a page at a time. Listing is not a content read, so it writes no Audit entry. Requires an Admin whose auth session passed two-factor authentication.",
+      summary: "List a User's Sessions",
+      tags: ['Admin'],
+      operationId: 'listUserSessions',
+      params: userIdParamsSchema,
+      querystring: listUserSessionsQuerySchema,
+      response: {
+        200: jsonResponse('A page of Sessions', adminSessionPageSchema),
+        400: jsonResponse('Invalid id or query', errorEnvelopeSchema),
+        404: jsonResponse('No User has that id', errorEnvelopeSchema),
+        ...adminErrors,
+      },
+    },
+    preHandler: requireAdmin,
+    handler: adminController.listUserSessions,
   });
 
   app.post('/:id/restore', {
