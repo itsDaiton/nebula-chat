@@ -41,21 +41,18 @@ components:
         messageId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           description: The persisted user Message
         streamId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           description: The reply stream to read from `GET /api/streams/{streamId}`
         runId:
           description: The Run producing the reply; only in `run` mode
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
       required:
         - messageId
         - streamId
@@ -67,7 +64,7 @@ components:
           type: boolean
           const: false
         error:
-          $ref: '#/components/schemas/ErrorCode'
+          $ref: "#/components/schemas/ErrorCode"
         message:
           type: string
       required:
@@ -83,6 +80,7 @@ components:
         - Unauthorized
         - Forbidden
         - MessageAllowanceReached
+        - TwoFactorRequired
         - NotFound
         - Conflict
         - PayloadTooLarge
@@ -90,14 +88,14 @@ components:
         - Internal
     MessageAllowance:
       oneOf:
-        - $ref: '#/components/schemas/MeteredMessageAllowance'
-        - $ref: '#/components/schemas/UnmeteredMessageAllowance'
+        - $ref: "#/components/schemas/MeteredMessageAllowance"
+        - $ref: "#/components/schemas/UnmeteredMessageAllowance"
       type: object
       discriminator:
         propertyName: metered
         mapping:
-          'true': '#/components/schemas/MeteredMessageAllowance'
-          'false': '#/components/schemas/UnmeteredMessageAllowance'
+          "true": "#/components/schemas/MeteredMessageAllowance"
+          "false": "#/components/schemas/UnmeteredMessageAllowance"
     MeteredMessageAllowance:
       type: object
       properties:
@@ -140,18 +138,42 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         title:
           type: string
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         archived:
           type: boolean
           description: Whether the owner has archived this Session
+      required:
+        - id
+        - title
+        - createdAt
+        - archived
+      additionalProperties: false
+    SessionSearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        archived:
+          type: boolean
+          description: Whether the owner has archived this Session
+        snippet:
+          description: Text around the first match in one of the Session’s Messages,
+            ellipsised where cut; absent when only the title matched
+          type: string
       required:
         - id
         - title
@@ -164,15 +186,13 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         title:
           type: string
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         archived:
           type: boolean
           description: Whether the owner has archived this Session
@@ -180,11 +200,9 @@ components:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
-          description: >-
-            The reply still being produced for this Session, to re-attach to
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: "null"
+          description: The reply still being produced for this Session, to re-attach to
             with `GET /api/streams/{streamId}`; null when none is in flight
       required:
         - id
@@ -200,14 +218,13 @@ components:
           maxItems: 100
           type: array
           items:
-            $ref: '#/components/schemas/Session'
+            $ref: "#/components/schemas/Session"
         nextCursor:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: "null"
         hasMore:
           type: boolean
       required:
@@ -215,48 +232,17 @@ components:
         - nextCursor
         - hasMore
       additionalProperties: false
-    SessionSearchResult:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-        title:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
-        archived:
-          type: boolean
-          description: Whether the owner has archived this Session
-        snippet:
-          description: >-
-            Text around the first match in one of the Session’s Messages,
-            ellipsised where cut; absent when only the title matched
-          type: string
-      required:
-        - id
-        - title
-        - createdAt
-        - archived
-      additionalProperties: false
     Message:
       type: object
       properties:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         sessionId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         content:
           type: string
         role:
@@ -266,14 +252,13 @@ components:
             - type: integer
               minimum: -9007199254740991
               maximum: 9007199254740991
-            - type: 'null'
+            - type: "null"
         cached:
           type: boolean
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - id
         - sessionId
@@ -288,7 +273,7 @@ components:
       properties:
         version:
           type: string
-          description: '`YYYY-MM-DD-<uuid>`: changes whenever the catalog does'
+          description: "`YYYY-MM-DD-<uuid>`: changes whenever the catalog does"
         hash:
           type: string
           description: SHA-256 of the catalog content (Models and defaults)
@@ -296,7 +281,7 @@ components:
           maxItems: 100
           type: array
           items:
-            $ref: '#/components/schemas/Model'
+            $ref: "#/components/schemas/Model"
       required:
         - version
         - hash
@@ -339,11 +324,10 @@ components:
           description: Tokens reserved for a reply
         supportsTemperature:
           type: boolean
-          description: >-
-            False when the Model fixes its temperature and rejects any other
+          description: False when the Model fixes its temperature and rejects any other
             value
         prices:
-          $ref: '#/components/schemas/ModelPrices'
+          $ref: "#/components/schemas/ModelPrices"
       required:
         - id
         - label
@@ -375,8 +359,7 @@ components:
       properties:
         uploadsEnabled:
           type: boolean
-          description: >-
-            Whether this server can store uploads; removing an image works
+          description: Whether this server can store uploads; removing an image works
             either way
       required:
         - uploadsEnabled
@@ -398,14 +381,13 @@ components:
           type: integer
           minimum: -9007199254740991
           maximum: 9007199254740991
-          description: >-
-            How many server instances received the request; more than reports
+          description: How many server instances received the request; more than reports
             means some did not answer in time
         reports:
           maxItems: 100
           type: array
           items:
-            $ref: '#/components/schemas/LogLevelReport'
+            $ref: "#/components/schemas/LogLevelReport"
           description: One per instance that answered, by instance
       required:
         - receivers
@@ -421,7 +403,7 @@ components:
           maxItems: 7
           type: array
           items:
-            $ref: '#/components/schemas/LogLevelState'
+            $ref: "#/components/schemas/LogLevelState"
           description: The root level, then every component
       required:
         - instance
@@ -455,15 +437,14 @@ components:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
-            - type: 'null'
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: "null"
           description: When the runtime change reverts; `null` at the boot-time level
         operator:
           description: Who asked for the runtime change; `null` at the boot-time level
           type:
             - string
-            - 'null'
+            - "null"
       required:
         - target
         - level
@@ -482,11 +463,113 @@ components:
           description: When the change reverts
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - receivers
         - expiresAt
+      additionalProperties: false
+    Admin:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        email:
+          type: string
+          format: email
+          pattern: ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
+        name:
+          type: string
+        twoFactorEnabled:
+          type: boolean
+          description: Whether they have enrolled in two-factor authentication, without
+            which the admin API refuses them
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+      required:
+        - id
+        - email
+        - name
+        - twoFactorEnabled
+        - createdAt
+      additionalProperties: false
+    AuditPage:
+      type: object
+      properties:
+        entries:
+          maxItems: 100
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditEntry"
+          description: Newest first
+        nextCursor:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: "null"
+        hasMore:
+          type: boolean
+      required:
+        - entries
+        - nextCursor
+        - hasMore
+      additionalProperties: false
+    AuditEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        actorType:
+          type: string
+          enum:
+            - admin
+            - operator
+            - system
+        actorUserId:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: "null"
+          description: The Admin who acted; `null` for the Operator or the system
+        action:
+          type: string
+          enum:
+            - admin.granted
+            - user.role_changed
+            - user.banned
+            - user.unbanned
+            - session.read
+            - run.read
+        targetType:
+          type: string
+        targetId:
+          type: string
+        detail:
+          type: object
+          propertyNames:
+            type: string
+          additionalProperties: {}
+          description: Ids and changed fields; never Message content
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+      required:
+        - id
+        - actorType
+        - actorUserId
+        - action
+        - targetType
+        - targetId
+        - detail
+        - createdAt
       additionalProperties: false
 paths:
   /:
@@ -497,12 +580,12 @@ paths:
         - Health
       description: Welcome endpoint — confirms the API is reachable.
       responses:
-        '200':
+        "200":
           description: API is reachable
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiRoot'
+                $ref: "#/components/schemas/ApiRoot"
   /health:
     get:
       operationId: getHealth
@@ -511,22 +594,22 @@ paths:
         - Health
       description: Returns server liveness status and current UTC timestamp.
       responses:
-        '200':
+        "200":
           description: Server is healthy
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Health'
+                $ref: "#/components/schemas/Health"
   /api/sessions/{sessionId}/messages:
     post:
       operationId: sendMessage
       summary: Send message
       tags:
         - Chat
-      description: >-
-        Send a user Message to one of the caller’s own Sessions. The Message is
-        persisted and its reply is queued; nothing waits on the model. Read the
-        reply as server-sent events from `GET /api/streams/{streamId}`.
+      description: Send a user Message to one of the caller’s own Sessions. The
+        Message is persisted and its reply is queued; nothing waits on the
+        model. Read the reply as server-sent events from `GET
+        /api/streams/{streamId}`.
       requestBody:
         required: true
         content:
@@ -542,13 +625,11 @@ paths:
                   enum:
                     - direct
                     - run
-                  description: >-
-                    How the reply is produced: `direct`, a Direct reply, or
-                    `run`, a Run (Registered users only).
+                  description: "How the reply is produced: `direct`, a Direct reply, or `run`, a
+                    Run (Registered users only)."
                 model:
-                  description: >-
-                    Binds the Session to this Model before replying; omitted
-                    keeps the Session's Model
+                  description: Binds the Session to this Model before replying; omitted keeps the
+                    Session's Model
                   type: string
                   enum:
                     - gpt-4o
@@ -569,97 +650,94 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
       responses:
-        '202':
+        "202":
           description: Message persisted and its reply queued
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SentMessage'
-        '400':
+                $ref: "#/components/schemas/SentMessage"
+        "400":
           description: Invalid request body or session ID
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
-          description: >-
-            Guest message allowance reached, or a Guest asked for a Run —
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Guest message allowance reached, or a Guest asked for a Run —
             registration required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '409':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
           description: Session is archived — restore it first
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '413':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "413":
           description: Message exceeds the prompt token limit
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '429':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
           description: Rate limit exceeded
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/chat/message-allowance:
     get:
       operationId: getMessageAllowance
       summary: Get message allowance
       tags:
         - Chat
-      description: >-
-        How much of the caller's message allowance is left. Metered users
+      description: "How much of the caller's message allowance is left. Metered users
         (Guests and unverified Registered users) get their limit, live count and
-        remaining sends; verified Registered users get `metered: false`.
+        remaining sends; verified Registered users get `metered: false`."
       responses:
-        '200':
+        "200":
           description: The caller's message allowance
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageAllowance'
-        '401':
+                $ref: "#/components/schemas/MessageAllowance"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/sessions:
     post:
       operationId: createSession
@@ -680,39 +758,38 @@ paths:
               required:
                 - title
       responses:
-        '201':
+        "201":
           description: Session created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
-        '400':
+                $ref: "#/components/schemas/Session"
+        "400":
           description: Invalid request body
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
     get:
       operationId: listSessions
       summary: List sessions
       tags:
         - Sessions
-      description: >-
-        Retrieve the caller’s own sessions with cursor-based pagination. Returns
-        up to 10 sessions by default; archived sessions are excluded unless
-        `archived=true`.
+      description: Retrieve the caller’s own sessions with cursor-based pagination.
+        Returns up to 10 sessions by default; archived sessions are excluded
+        unless `archived=true`.
       parameters:
         - schema:
             default: 10
@@ -727,54 +804,50 @@ paths:
             description: Pagination cursor for fetching the next page of sessions
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
           description: Pagination cursor for fetching the next page of sessions
         - schema:
-            description: >-
-              Return only archived Sessions (`true`) instead of only active ones
+            description: Return only archived Sessions (`true`) instead of only active ones
               (default)
-            default: 'false'
+            default: "false"
             type: string
             enum:
-              - 'true'
-              - 'false'
+              - "true"
+              - "false"
           in: query
           name: archived
-          description: >-
-            Return only archived Sessions (`true`) instead of only active ones
+          description: Return only archived Sessions (`true`) instead of only active ones
             (default)
       responses:
-        '200':
+        "200":
           description: Paginated list of sessions owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SessionPage'
-        '401':
+                $ref: "#/components/schemas/SessionPage"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/sessions/search:
     get:
       operationId: searchSessions
       summary: Search sessions
       tags:
         - Sessions
-      description: >-
-        Search the caller’s own sessions by title or Message content, ordered by
-        creation date. A match inside a Message adds a `snippet` around it.
-        Archived sessions are excluded unless `archived=true`.
+      description: Search the caller’s own sessions by title or Message content,
+        ordered by creation date. A match inside a Message adds a `snippet`
+        around it. Archived sessions are excluded unless `archived=true`.
       parameters:
         - schema:
             type: string
@@ -785,21 +858,19 @@ paths:
           required: true
           description: Search query to filter sessions by title or Message content
         - schema:
-            description: >-
-              Return only archived Sessions (`true`) instead of only active ones
+            description: Return only archived Sessions (`true`) instead of only active ones
               (default)
-            default: 'false'
+            default: "false"
             type: string
             enum:
-              - 'true'
-              - 'false'
+              - "true"
+              - "false"
           in: query
           name: archived
-          description: >-
-            Return only archived Sessions (`true`) instead of only active ones
+          description: Return only archived Sessions (`true`) instead of only active ones
             (default)
       responses:
-        '200':
+        "200":
           description: Matching sessions owned by the caller
           content:
             application/json:
@@ -807,74 +878,72 @@ paths:
                 maxItems: 100
                 type: array
                 items:
-                  $ref: '#/components/schemas/SessionSearchResult'
-        '400':
+                  $ref: "#/components/schemas/SessionSearchResult"
+        "400":
           description: Invalid search query
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/sessions/{sessionId}/archive:
     post:
       operationId: archiveSession
       summary: Archive session
       tags:
         - Sessions
-      description: >-
-        Archive one of the caller’s own sessions: hidden from the session list,
-        kept unchanged. Idempotent.
+      description: "Archive one of the caller’s own sessions: hidden from the session
+        list, kept unchanged. Idempotent."
       parameters:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
       responses:
-        '200':
+        "200":
           description: Session archived
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
-        '400':
+                $ref: "#/components/schemas/Session"
+        "400":
           description: Invalid session ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/sessions/{sessionId}/restore:
     post:
       operationId: restoreSession
@@ -886,42 +955,41 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
       responses:
-        '200':
+        "200":
           description: Session restored
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
-        '400':
+                $ref: "#/components/schemas/Session"
+        "400":
           description: Invalid session ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/sessions/{sessionId}:
     get:
       operationId: getSession
@@ -933,42 +1001,41 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
       responses:
-        '200':
+        "200":
           description: Session retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SessionDetail'
-        '400':
+                $ref: "#/components/schemas/SessionDetail"
+        "400":
           description: Invalid session ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/messages:
     post:
       operationId: createMessage
@@ -986,8 +1053,7 @@ paths:
                 sessionId:
                   type: string
                   format: uuid
-                  pattern: >-
-                    ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                 role:
                   type: string
                   enum:
@@ -1001,69 +1067,67 @@ paths:
                     - type: integer
                       minimum: -9007199254740991
                       maximum: 9007199254740991
-                    - type: 'null'
+                    - type: "null"
               required:
                 - sessionId
                 - role
                 - content
       responses:
-        '201':
+        "201":
           description: Message created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '400':
+                $ref: "#/components/schemas/Message"
+        "400":
           description: Invalid request body
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '409':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
           description: Session is archived — restore it first
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
     get:
       operationId: listMessages
       summary: List messages
       tags:
         - Messages
-      description: >-
-        Retrieve the messages across the caller’s own sessions, newest first.
-        Pass `sessionId` to list one session’s messages, oldest first; a session
-        the caller does not own lists as empty.
+      description: Retrieve the messages across the caller’s own sessions, newest
+        first. Pass `sessionId` to list one session’s messages, oldest first; a
+        session the caller does not own lists as empty.
       parameters:
         - schema:
             description: Only list the messages of this session, oldest first
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: sessionId
           description: Only list the messages of this session, oldest first
       responses:
-        '200':
+        "200":
           description: List of messages owned by the caller
           content:
             application/json:
@@ -1071,25 +1135,25 @@ paths:
                 maxItems: 1000
                 type: array
                 items:
-                  $ref: '#/components/schemas/Message'
-        '400':
+                  $ref: "#/components/schemas/Message"
+        "400":
           description: Invalid session ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/messages/{messageId}:
     get:
       operationId: getMessage
@@ -1101,76 +1165,73 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: messageId
           required: true
       responses:
-        '200':
+        "200":
           description: Message retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '400':
+                $ref: "#/components/schemas/Message"
+        "400":
           description: Invalid message ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Message not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/models:
     get:
       operationId: getModelCatalog
       summary: Get the model catalog
       tags:
         - Models
-      description: >-
-        The model catalog: the Models a Session can be bound to, with their
-        labels, limits and list prices (USD per million tokens), plus the
-        catalog version and content hash
+      description: "The model catalog: the Models a Session can be bound to, with
+        their labels, limits and list prices (USD per million tokens), plus the
+        catalog version and content hash"
       responses:
-        '200':
+        "200":
           description: The model catalog
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ModelCatalog'
-        '500':
+                $ref: "#/components/schemas/ModelCatalog"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/streams/{streamId}:
     get:
       operationId: readReplyStream
       summary: Read reply stream
       tags:
         - Streams
-      description: >-
-        Relay a reply stream as server-sent events, from its first event (or
-        after `Last-Event-ID`) to its `end` (ADR-0014). Only the User who sent
-        the Message may read it. A stream that has expired answers 404: read the
-        persisted Message instead.
+      description: "Relay a reply stream as server-sent events, from its first event
+        (or after `Last-Event-ID`) to its `end` (ADR-0014). Only the User who
+        sent the Message may read it. A stream that has expired answers 404:
+        read the persisted Message instead."
       parameters:
         - schema:
             description: Resume after this event id, for a client reconnecting by hand
@@ -1182,106 +1243,99 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: streamId
           required: true
         - schema:
-            description: >-
-              Resume after this event id; sent by an EventSource when it
+            description: Resume after this event id; sent by an EventSource when it
               reconnects
             type: string
             pattern: ^\d+-\d+$
           in: header
           name: last-event-id
-          description: >-
-            Resume after this event id; sent by an EventSource when it
-            reconnects
+          description: Resume after this event id; sent by an EventSource when it reconnects
       responses:
-        '200':
+        "200":
           description: The reply stream, as server-sent events
           content:
             text/event-stream:
               schema:
                 type: string
-                description: >-
-                  Server-sent events: `token` ({ token }), `usage` ({
-                  promptTokens, completionTokens, totalTokens }), `error` (the
-                  ErrorEnvelope) and a final `end` ({}, or { reason: 'cancelled'
-                  } for a reply its User stopped). Each event `id` is its stream
-                  entry id; send the last one back as `Last-Event-ID` (or
-                  `lastEventId`) to resume after it.
-        '400':
+                description: "Server-sent events: `token` ({ token }), `usage` ({ promptTokens,
+                  completionTokens, totalTokens }), `error` (the ErrorEnvelope)
+                  and a final `end` ({}, or { reason: 'cancelled' } for a reply
+                  its User stopped). Each event `id` is its stream entry id;
+                  send the last one back as `Last-Event-ID` (or `lastEventId`)
+                  to resume after it."
+        "400":
           description: Invalid stream ID or Last-Event-ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Stream not found, expired, or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/streams/{streamId}/cancel:
     post:
       operationId: cancelReplyStream
       summary: Cancel reply stream
       tags:
         - Streams
-      description: >-
-        Stop a Direct reply in flight: the worker aborts the model call,
+      description: 'Stop a Direct reply in flight: the worker aborts the model call,
         persists what it had produced and ends the stream with `end` { reason:
-        "cancelled" }. Cancelling a reply that already finished does nothing.
+        "cancelled" }. Cancelling a reply that already finished does nothing.'
       parameters:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: streamId
           required: true
       responses:
-        '204':
+        "204":
           description: Stop requested, or the reply had already finished
-        '400':
+        "400":
           description: Invalid stream ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Stream not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/profile-image/settings:
     get:
       operationId: getProfileImageSettings
@@ -1290,34 +1344,33 @@ paths:
         - Profile image
       description: Whether this server can store Profile image uploads.
       responses:
-        '200':
+        "200":
           description: Profile image settings
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProfileImageSettings'
-        '401':
+                $ref: "#/components/schemas/ProfileImageSettings"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/profile-image:
     put:
       operationId: uploadProfileImage
       summary: Upload Profile image
       tags:
         - Profile image
-      description: >-
-        Set the Registered user's Profile image from a JPEG, PNG or WebP of up
-        to 5 MB, sent as the raw request body. It is stored as a 256×256 WebP;
-        the previous upload is deleted.
+      description: Set the Registered user's Profile image from a JPEG, PNG or WebP of
+        up to 5 MB, sent as the raw request body. It is stored as a 256×256
+        WebP; the previous upload is deleted.
       requestBody:
         required: true
         content:
@@ -1334,137 +1387,134 @@ paths:
               type: string
               format: binary
       responses:
-        '200':
+        "200":
           description: Profile image stored
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProfileImage'
-        '400':
+                $ref: "#/components/schemas/ProfileImage"
+        "400":
           description: The file is not a JPEG, PNG or WebP image
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: A Guest cannot set a Profile image
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Profile image uploads are switched off
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '413':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "413":
           description: The file is larger than 5 MB
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '415':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "415":
           description: The body is not a JPEG, PNG or WebP
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '429':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
           description: Too many uploads this hour
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
     delete:
       operationId: removeProfileImage
       summary: Remove Profile image
       tags:
         - Profile image
-      description: >-
-        Remove the Registered user's Profile image, so their Avatar shows
+      description: Remove the Registered user's Profile image, so their Avatar shows
         initials. Succeeds when there is none.
       responses:
-        '204':
+        "204":
           description: Profile image removed
-        '401':
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: A Guest cannot have a Profile image
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/internal/log-level:
     get:
       operationId: getLogLevels
       summary: Get log levels
       tags:
         - Operator
-      description: >-
-        Report the root log level and every component's, with the expiry and
-        operator of any runtime change, from every running server instance. Each
-        instance answers for itself; one that does not answer within 2 seconds
-        is left out, so `receivers` exceeds the number of reports. Requires the
-        operator token, not a User session.
+      description: Report the root log level and every component's, with the expiry
+        and operator of any runtime change, from every running server instance.
+        Each instance answers for itself; one that does not answer within 2
+        seconds is left out, so `receivers` exceeds the number of reports.
+        Requires the operator token, not a User session.
       security:
         - operatorToken: []
       responses:
-        '200':
+        "200":
           description: The levels each server instance applies
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LogLevelReports'
-        '403':
+                $ref: "#/components/schemas/LogLevelReports"
+        "403":
           description: Missing or wrong operator token
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: No operator token is configured
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
     post:
       operationId: changeLogLevel
       summary: Change log level
       tags:
         - Operator
-      description: >-
-        Change the root log level, or one component's, on every running server
-        instance. It reverts to the boot-time level after `ttlSeconds`. Requires
-        the operator token, not a User session.
+      description: Change the root log level, or one component's, on every running
+        server instance. It reverts to the boot-time level after `ttlSeconds`.
+        Requires the operator token, not a User session.
       requestBody:
         required: true
         content:
@@ -1473,9 +1523,7 @@ paths:
               type: object
               properties:
                 component:
-                  description: >-
-                    The `nebula.component` to change; omit it to change the root
-                    level
+                  description: The `nebula.component` to change; omit it to change the root level
                   type: string
                   enum:
                     - auth
@@ -1510,36 +1558,303 @@ paths:
       security:
         - operatorToken: []
       responses:
-        '202':
+        "202":
           description: Change sent to every server instance
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LogLevelChange'
-        '400':
+                $ref: "#/components/schemas/LogLevelChange"
+        "400":
           description: Invalid request body
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: Missing or wrong operator token
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: No operator token is configured
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/internal/admins:
+    get:
+      operationId: listAdmins
+      summary: List Admins
+      tags:
+        - Operator
+      description: List every Admin. Requires the operator token, not a User session.
+      security:
+        - operatorToken: []
+      responses:
+        "200":
+          description: Every Admin, oldest account first
+          content:
+            application/json:
+              schema:
+                maxItems: 100
+                type: array
+                items:
+                  $ref: "#/components/schemas/Admin"
+        "403":
+          description: Missing or wrong operator token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: No operator token is configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: grantAdmin
+      summary: Grant Admin
+      tags:
+        - Operator
+      description: Make a verified Registered user an Admin, and record it in the
+        Audit log with the Operator as actor. This is how the first Admin is
+        made. Requires the operator token, not a User session.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  description: The email of the verified Registered user to make an Admin
+                  type: string
+                  format: email
+                  pattern: ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
+              required:
+                - email
+      security:
+        - operatorToken: []
+      responses:
+        "201":
+          description: The user is now an Admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Admin"
+        "400":
+          description: Invalid body, or the user is a Guest, unverified or banned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Missing or wrong operator token
+          content:
+            application/json:
+              schema: {}
+        "404":
+          description: No operator token is configured, or no user has that email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: The user is already an Admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema: {}
+  /api/internal/admins/{email}:
+    delete:
+      operationId: revokeAdmin
+      summary: Revoke Admin
+      tags:
+        - Operator
+      description: Take the Admin role from a user, and record it in the Audit log
+        with the Operator as actor. Requires the operator token, not a User
+        session.
+      parameters:
+        - schema:
+            description: The email of the Admin
+            type: string
+            format: email
+            pattern: ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
+          in: path
+          name: email
+          required: true
+          description: The email of the Admin
+      security:
+        - operatorToken: []
+      responses:
+        "204":
+          description: The user is no longer an Admin
+        "400":
+          description: Invalid email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Missing or wrong operator token
+          content:
+            application/json:
+              schema: {}
+        "404":
+          description: No operator token is configured, or no user has that email
+          content:
+            application/json:
+              schema: {}
+        "409":
+          description: The user is not an Admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema: {}
+  /api/admin/audit:
+    get:
+      operationId: listAuditEntries
+      summary: List Audit log
+      tags:
+        - Admin
+      description: List Audit log entries, newest first, filtered by actor, action,
+        target and time range, a page at a time. Requires an Admin whose auth
+        session passed two-factor authentication.
+      parameters:
+        - schema:
+            description: Only entries by this kind of actor
+            type: string
+            enum:
+              - admin
+              - operator
+              - system
+          in: query
+          name: actorType
+          description: Only entries by this kind of actor
+        - schema:
+            description: Only entries by this Admin
+            type: string
+            format: uuid
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: query
+          name: actorUserId
+          description: Only entries by this Admin
+        - schema:
+            type: string
+            enum:
+              - admin.granted
+              - user.role_changed
+              - user.banned
+              - user.unbanned
+              - session.read
+              - run.read
+          in: query
+          name: action
+        - schema:
+            description: Only entries about this kind of record, e.g. `user`
+            type: string
+            minLength: 1
+            maxLength: 50
+          in: query
+          name: targetType
+          description: Only entries about this kind of record, e.g. `user`
+        - schema:
+            description: Only entries about this record
+            type: string
+            minLength: 1
+            maxLength: 100
+          in: query
+          name: targetId
+          description: Only entries about this record
+        - schema:
+            description: Only entries at or after this time
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          in: query
+          name: from
+          description: Only entries at or after this time
+        - schema:
+            description: Only entries before this time
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          in: query
+          name: to
+          description: Only entries before this time
+        - schema:
+            default: 10
+            description: Number of entries to fetch (1-100, default 10)
+            type: integer
+            minimum: 1
+            maximum: 100
+          in: query
+          name: limit
+          description: Number of entries to fetch (1-100, default 10)
+        - schema:
+            description: The `nextCursor` of the previous page
+            type: string
+            format: uuid
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: query
+          name: cursor
+          description: The `nextCursor` of the previous page
+      responses:
+        "200":
+          description: A page of Audit log entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditPage"
+        "400":
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
 servers:
   - url: /
 security:
@@ -1556,8 +1871,10 @@ tags:
   - name: Messages
     description: Message management
   - name: Models
-    description: 'The model catalog: Models, limits and prices'
+    description: "The model catalog: Models, limits and prices"
   - name: Profile image
     description: A Registered user's Profile image
   - name: Operator
     description: Operations for whoever runs the deployment
+  - name: Admin
+    description: The admin API, for Admins signed in with two-factor authentication

@@ -8,6 +8,7 @@ describe('ERROR_STATUS', () => {
     ['Unauthorized', 401],
     ['Forbidden', 403],
     ['MessageAllowanceReached', 403],
+    ['TwoFactorRequired', 403],
     ['NotFound', 404],
     ['Conflict', 409],
     ['PayloadTooLarge', 413],

@@ -12,6 +12,7 @@ import {
   ForbiddenError,
   INTERNAL_ERROR_ENVELOPE,
   NotFoundError,
+  TwoFactorRequiredError,
   UnauthorizedError,
 } from '@nebula-chat/errors';
 
@@ -35,8 +36,15 @@ export const getSessionData = (req: FastifyRequest): SessionData => {
  * Resolves the session from the cookies (else `UnauthorizedError`), attaches it, and binds the User onto both `req.log` and `reply.log`.
  * Shared by both gates, since a preHandler cannot call another.
  */
-const resolveSession = async (req: FastifyRequest, reply: FastifyReply): Promise<SessionData> => {
-  const sessionData = await auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
+const resolveSession = async (
+  req: FastifyRequest,
+  reply: FastifyReply,
+  { fresh = false } = {},
+): Promise<SessionData> => {
+  const headers = fromNodeHeaders(req.headers);
+  const sessionData = await auth.api.getSession(
+    fresh ? { headers, query: { disableCookieCache: true } } : { headers },
+  );
   if (!sessionData) {
     throw new UnauthorizedError();
   }
@@ -66,6 +74,21 @@ export const requireRegistered: preHandlerAsyncHookHandler = async (req, reply) 
   const { user } = await resolveSession(req, reply);
   if (user.isAnonymous) {
     throw new ForbiddenError('This action requires a registered account.');
+  }
+};
+
+/**
+ * preHandler for `/api/admin/*`: a verified, unbanned Admin whose auth session passed a second factor (ADR-0027 §2).
+ * better-auth 1.7 marks no auth session, so `@nebula-chat/auth` sets `twoFactorVerified` on each verified code; a trusted-device or social sign-in never does.
+ */
+export const requireAdmin: preHandlerAsyncHookHandler = async (req, reply) => {
+  // Past the cookie cache, so a revoked role, a ban or a fresh verification applies at once.
+  const { user, session } = await resolveSession(req, reply, { fresh: true });
+  if (user.isAnonymous || !user.emailVerified || user.banned || user.role !== 'admin') {
+    throw new ForbiddenError('This action requires an Admin.');
+  }
+  if (!user.twoFactorEnabled || !session.twoFactorVerified) {
+    throw new TwoFactorRequiredError();
   }
 };
 

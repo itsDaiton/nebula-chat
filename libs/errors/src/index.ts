@@ -21,6 +21,7 @@ export {
   UnauthorizedError,
   ForbiddenError,
   MessageAllowanceReachedError,
+  TwoFactorRequiredError,
   NotFoundError,
   ConflictError,
   PayloadTooLargeError,

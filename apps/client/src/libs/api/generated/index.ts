@@ -1,3 +1,4 @@
+export * from './admin/admin';
 export * from './chat/chat';
 export * from './health/health';
 export * from './messages/messages';

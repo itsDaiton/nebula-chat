@@ -43,10 +43,12 @@ script load through `dotenvx run` — single source of truth (see [Environment V
 (the only `process.env` reader), singletons (`db.ts`, `redis.ts`, `queue.ts`, `auth.ts`, `logger.ts`) and:
 
 - `modules/<name>/` — one 6-layer module each (below): `chat`, `stream`, `session`, `message`,
-  `models`, `profileImage`, `logLevel`, and `run` (only a repository so far: the send path creates Runs). A module may add hooks (`*.hook.ts`) and helpers beside its layers.
+  `models`, `profileImage`, `logLevel`, `admin` (the Operator's `/api/internal/admins`), `audit` (the Audit log
+  writer and `GET /api/admin/audit`), and `run` (only a repository so far: the send path creates Runs). A module may add hooks (`*.hook.ts`) and helpers beside its layers.
 - `plugins/` — Fastify plugins: request logging, `db`, `redis`, and `authGate` (mounts `/api/auth/*` and answers `/api/auth/admin/*` with NotFound,
-  decorates `requireAuthentication` / `requireRegistered`).
-- `errors/` — the global error handler. `config/` — CORS, SSE headers, pagination. `utils/` — small shared helpers.
+  decorates `requireAuthentication` / `requireRegistered`; also exports `requireAdmin` for `/api/admin/*`).
+- `errors/` — the global error handler. `config/` — CORS, SSE headers, pagination. `utils/` — small shared helpers,
+  including `operatorGate.hook.ts` (`requireOperator`, the operator-token gate on every `/api/internal/*` route).
 - `test/` — the shared harness (`createTestApp`, in-memory pub/sub, reply streams, profile image store).
 
 Redis lives in the `@nebula-chat/redis` lib ([ADR-0009](../../docs/adr/0009-nebula-chat-redis-lib.md)),
@@ -86,6 +88,7 @@ subclass that matches the situation, imported from `@nebula-chat/errors`:
 | `UnauthorizedError`            | 401         | `Unauthorized`            | Not authenticated                         |
 | `ForbiddenError`               | 403         | `Forbidden`               | Authenticated but not allowed             |
 | `MessageAllowanceReachedError` | 403         | `MessageAllowanceReached` | A Guest has spent their message allowance |
+| `TwoFactorRequiredError`       | 403         | `TwoFactorRequired`       | An Admin's auth session lacks two-factor  |
 | `NotFoundError`                | 404         | `NotFound`                | Resource not found by ID                  |
 | `ConflictError`                | 409         | `Conflict`                | The data clashes with an existing record  |
 | `PayloadTooLargeError`         | 413         | `PayloadTooLarge`         | Message exceeds token limit               |

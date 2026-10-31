@@ -375,14 +375,35 @@ that flag would move them there. The password hash lives on the `account` row
 
 ## Route protection
 
-The `authGate` plugin exposes two `preHandler` gates. Both resolve the session with
+The `authGate` plugin exposes three `preHandler` gates. Each resolves the session with
 `auth.api.getSession({ headers: fromNodeHeaders(req.headers) })` and, on success,
-attach it to the request:
+attaches it to the request:
 
-| Gate                    | Behavior                                                                                    |
-| ----------------------- | ------------------------------------------------------------------------------------------- |
-| `requireAuthentication` | Requires any session (Guest or Registered). `401 Unauthorized` when there is none.          |
-| `requireRegistered`     | `requireAuthentication` plus `403 Forbidden` when the user is a Guest (`user.isAnonymous`). |
+| Gate                    | Behavior                                                                                                                                                                                                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requireAuthentication` | Requires any session (Guest or Registered). `401 Unauthorized` when there is none.                                                                                                                                                                      |
+| `requireRegistered`     | `requireAuthentication` plus `403 Forbidden` when the user is a Guest (`user.isAnonymous`).                                                                                                                                                             |
+| `requireAdmin`          | Guards `/api/admin/*`. Reads past the cookie cache. `403 Forbidden` unless a verified, unbanned user with `role: admin`; then `403 TwoFactorRequired` unless they enrolled in 2FA and this auth session passed it ([below](#two-factor-auth-sessions)). |
+
+### Two-factor auth sessions
+
+better-auth 1.7's two-factor plugin leaves no mark on the auth session it creates after a code is
+verified, and a trusted-device or social sign-in skips the challenge with nothing to tell it apart.
+So `@nebula-chat/auth` adds its own session field, `twoFactorVerified` (default `false`, never
+client-settable), and an after hook sets it on the auth session that a successful
+`/two-factor/verify-totp`, `/verify-backup-code` or `/verify-otp` answers with. That is the session
+the challenge just created, or the caller's own when they verify a code while already signed in. The
+second case is how an Admin on a trusted device, or signed in through Google or GitHub, steps up
+to the admin API ([ADR-0027](./adr/0027-admin-role-two-factor-full-read-and-audit-log.md) §2).
+
+### Admins and the Operator
+
+The Operator grants the first Admin with `POST /api/internal/admins {email}`, revokes with
+`DELETE /api/internal/admins/{email}` and lists with `GET /api/internal/admins`, all behind the
+operator token like the log-level route. A grant needs a verified, unbanned Registered user. Each
+change writes one Audit log entry with the Operator as actor. The role is written the way
+`auth.api.setRole` writes it (`internalAdapter.updateUser`), so the user cached in their auth
+sessions changes too; the endpoint itself needs an Admin's session, which the Operator lacks.
 
 Handlers read the owner through `getSessionData(req)` rather than an untyped request
 property. A gate is added to a route's `preHandler` chain:

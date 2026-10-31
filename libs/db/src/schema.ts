@@ -46,6 +46,8 @@ export const session = pgTable('session', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   impersonatedBy: text('impersonated_by'),
+  // Ours, not better-auth's: set once a second factor is verified on this auth session (ADR-0027 §2).
+  twoFactorVerified: boolean('two_factor_verified').notNull().default(false),
 });
 
 // better-auth core table — one row per linked credential/OAuth provider for a user.
