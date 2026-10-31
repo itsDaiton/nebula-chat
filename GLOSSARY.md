@@ -144,7 +144,7 @@ The Agent that directs a Run: working from the Brief, it decides which other Age
 _Avoid_: Planner, main model, router.
 
 **Delegate Agent**:
-An Agent the Orchestrator hands one self-contained task to, as one of its tools (e.g. `analyst`, `critic`). It sees only that task, never the Brief or the conversation, and can never delegate in turn. One that fails or times out is reported back to the Orchestrator, and the Run ends `partial`.
+An Agent the Orchestrator hands one self-contained task to, as one of its tools (e.g. `analyst`, `critic`, `researcher`). It sees only that task, never the Brief or the conversation, and can never delegate in turn. Only a Delegate Agent is granted tools (the `researcher` has `web_search` and `web_fetch`), which it calls in its own capped loop. One that fails or times out is reported back to the Orchestrator, and the Run ends `partial`.
 _Avoid_: Sub-agent, worker, helper, tool (it is exposed as one, but it is an Agent).
 
 **Findings**:

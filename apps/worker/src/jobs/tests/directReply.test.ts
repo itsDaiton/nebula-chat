@@ -61,6 +61,7 @@ const processorWith = (
       orchestrator: '',
       analyst: '',
       critic: '',
+      researcher: '',
       output: '',
     },
     apiKeys,

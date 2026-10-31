@@ -80,6 +80,9 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
 - `agents/` — the Agents only: one file each (Model, prompt, tool grants, parameters, and for an
   Intake Agent its output schema and human-message builder). The Session's Model never applies to an
   Agent.
+- `tools/` — the tools a delegate may be granted, one file each (`webSearch.ts` on Tavily, `webFetch.ts`
+  with its SSRF guard), plus their typed `WebToolError`. `worker.ts` builds them into the Run's `Toolbox`;
+  `runs/delegateTool.ts` gives a delegate the ones its definition grants, in its own capped loop.
 
 A Run job is retried by BullMQ (`RUN_JOB_ATTEMPTS` and `RUN_JOB_BACKOFF_MS` are the server's env, since the
 server adds the job). `executeRun` starts the graph only on a thread with no checkpoint: pending work resumes
@@ -88,10 +91,6 @@ Run `running` and its checkpoints in place; the last try ends the Run `failed` w
 `run-finished` event and deletes the checkpoints. A resumed Run's token total is seeded from its completed
 Steps, a re-run Step's Model call gets its own ledger row (`<stepId>:<attempt>`), and a failed Run persists no
 assistant Message: its error event is the explanation.
-
-Folders later tickets add:
-
-- `tools/`: one file per tool.
 
 ### Adding a job type
 
@@ -127,7 +126,9 @@ model (`streamChat`), in-memory Session and Message storage, an in-memory respon
 on the emitted events, the persisted assistant Message, the recorded Model calls and the logged lines.
 `jobs/tests/run.test.ts` does the same for a Run, with scripted models per Agent (the Orchestrator's
 script decides each reply from the messages it is sent), LangGraph's in-memory checkpointer and
-in-memory Run and Step stores. No test reaches Postgres, Redis or a provider.
+in-memory Run and Step stores, and a Toolbox whose search provider and DNS are faked. Each tool is
+also tested at its own seam (`tools/tests/`), with faked DNS, HTTP and provider responses. No test
+reaches Postgres, Redis, a provider or the web.
 
 Coverage excludes construction-only files (`worker.ts`, `env.ts`, `logger.ts`, `db.ts`, `redis.ts`) and
 the Drizzle repository, as in the server. The list lives in `vitest.config.mts` and `matrix.coverage` in
@@ -153,6 +154,12 @@ the Drizzle repository, as in the server. The list lives in `vitest.config.mts` 
 | `RUN_TOKEN_BUDGET`                                                                                        | The Run budget, in tokens across all Steps (default `60000`)     |
 | `RUN_HANDOFF_THRESHOLD`                                                                                   | Share of the Run budget that forces the handoff (default `0.85`) |
 | `RUN_DELEGATE_TIMEOUT_MS`                                                                                 | How long a delegate Step may take (default `60000`)              |
+| `RUN_DELEGATE_TOOL_CALL_CAP`                                                                              | Tool calls one delegate execution may make (default `6`)         |
+| `TAVILY_API_KEY`                                                                                          | Tavily key for `web_search`; worker only (unset: searches fail)  |
+| `WEB_FETCH_MAX_BYTES`                                                                                     | Largest page `web_fetch` reads (default `2000000`)               |
+| `WEB_FETCH_TIMEOUT_MS`                                                                                    | Deadline of one fetch or search (default `10000`)                |
+| `WEB_FETCH_MAX_REDIRECTS`                                                                                 | Redirects `web_fetch` follows (default `5`)                      |
+| `WEB_FETCH_MAX_CHARS`                                                                                     | Text `web_fetch` returns before cutting (default `12000`)        |
 | `RUN_TIMEOUT_MS`                                                                                          | How long a Run may take before it fails (default `300000`)       |
 | `STREAM_TTL_SECONDS`                                                                                      | How long a reply stream outlives its end (default `3600`)        |
 | `LOG_LEVEL`                                                                                               | Log verbosity (default `info`)                                   |

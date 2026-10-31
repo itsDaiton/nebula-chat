@@ -11,8 +11,7 @@ import { llmConfigFor } from '@worker/runs/agentDefinition';
 import { DELEGATES } from '@worker/runs/agentRegistry';
 import { delegateTool } from '@worker/runs/delegateTool';
 import type { DelegateToolDeps } from '@worker/runs/delegateTool';
-import { runModelStep, stepIdFor } from '@worker/runs/steps';
-import type { StepContext } from '@worker/runs/steps';
+import { runModelStep, stepIdFor, turnsIn } from '@worker/runs/steps';
 
 /** The limits on one Run's Orchestrator loop; env config in production. */
 export type RunLimits = {
@@ -21,23 +20,21 @@ export type RunLimits = {
   tokenBudget: number;
   handoffThreshold: number;
   delegateTimeoutMs: number;
+  /** The tool calls one delegate execution may make. */
+  delegateToolCallCap: number;
 };
 
 /** How the loop ended: the Orchestrator handed off itself, or a limit made it. */
 export type LoopEnding = 'handoff' | 'turn-cap' | 'budget';
 
-export type OrchestratorDeps = StepContext &
-  Omit<DelegateToolDeps, 'timeoutMs'> & {
-    limits: RunLimits;
-    /** Throws, having aborted the Run, when its User asked to stop it. */
-    checkCancelled: () => Promise<void>;
-  };
+export type OrchestratorDeps = Omit<DelegateToolDeps, 'timeoutMs' | 'toolCallCap'> & {
+  limits: RunLimits;
+  /** Throws, having aborted the Run, when its User asked to stop it. */
+  checkCancelled: () => Promise<void>;
+};
 
 // A turn is three graph steps (hook, model, tools); the turn cap ends the loop well before this backstop.
 const recursionLimitFor = (turnCap: number): number => (turnCap + 1) * 5;
-
-// The turn a message list is on: one Orchestrator reply per earlier turn, so it survives a resume.
-const turnsIn = (messages: BaseMessage[]): number => messages.filter(AIMessage.isInstance).length;
 
 const transcript = (messages: BaseMessage[]) =>
   messages.map((m) => ({
@@ -183,7 +180,11 @@ export const createOrchestrator = (deps: OrchestratorDeps) => {
   const loop = createAgent({
     model: deps.models.chat(llmConfigFor(agent, deps.apiKeys)),
     tools: DELEGATES.map((delegate) =>
-      delegateTool(delegate, { ...deps, timeoutMs: limits.delegateTimeoutMs }),
+      delegateTool(delegate, {
+        ...deps,
+        timeoutMs: limits.delegateTimeoutMs,
+        toolCallCap: limits.delegateToolCallCap,
+      }),
     ),
     systemPrompt: system,
     middleware: [runControl],

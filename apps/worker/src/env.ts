@@ -22,6 +22,14 @@ const envSchema = z
     // The share of the Run budget past which the Orchestrator is made to hand off.
     RUN_HANDOFF_THRESHOLD: z.coerce.number().gt(0).max(1).default(0.85),
     RUN_DELEGATE_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+    RUN_DELEGATE_TOOL_CALL_CAP: z.coerce.number().int().positive().default(6),
+    // Web search (Tavily); without a key the researcher's searches come back as not configured.
+    TAVILY_API_KEY: z.string().min(1).optional(),
+    WEB_FETCH_MAX_BYTES: z.coerce.number().int().positive().default(2_000_000),
+    // Bounds a whole fetch, redirects and body included, and a search.
+    WEB_FETCH_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
+    WEB_FETCH_MAX_REDIRECTS: z.coerce.number().int().nonnegative().default(5),
+    WEB_FETCH_MAX_CHARS: z.coerce.number().int().positive().default(12_000),
     RUN_TIMEOUT_MS: z.coerce
       .number()
       .int()

@@ -1,8 +1,21 @@
+import type { StructuredToolInterface } from '@langchain/core/tools';
 import { getModel } from '@nebula-chat/contracts';
 import type { ModelProvider } from '@nebula-chat/contracts';
 import { MissingConfigurationError } from '@nebula-chat/errors';
 import type { LLMConfig } from '@worker/llm/createLLM';
 import type { PromptName } from '@worker/llm/prompts';
+
+/** The tools an Agent may be granted; only delegates are, so the Orchestrator never calls one itself. */
+export type ToolName = 'web_search' | 'web_fetch';
+
+/** Every tool, built once from config: a delegate is given the ones it is granted. */
+export type Toolbox = Record<ToolName, StructuredToolInterface>;
+
+/** The short label a tool's Step shows in the UI. */
+export const TOOL_LABELS: Record<ToolName, string> = {
+  web_search: 'Searching the web',
+  web_fetch: 'Reading a page',
+};
 
 /** A named, predefined role (GLOSSARY.md): versioned in git, never invented at run time. */
 export type AgentDefinition = {
@@ -12,8 +25,8 @@ export type AgentDefinition = {
   /** A Model in the catalog in `@nebula-chat/contracts`. */
   model: string;
   prompt: PromptName;
-  /** The tools it may call; none until the web tools. */
-  tools: readonly string[];
+  /** The tools it may call; a delegate with any runs its own capped tool-calling loop. */
+  tools: readonly ToolName[];
   parameters: { temperature: number; maxTokens?: number };
 };
 
