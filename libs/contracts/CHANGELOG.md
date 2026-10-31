@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-contracts-v1.7.1...nebula-chat-contracts-v1.8.0) (2026-10-31)
+
+
+### Features
+
+* **worker:** NEB-545 daily Purge of expired Pending deletion and inactive Guests ([#711](https://github.com/itsDaiton/nebula-chat/issues/711)) ([88e021f](https://github.com/itsDaiton/nebula-chat/commit/88e021f49f6e3eb0973feff918d7154af7231da0))
+
 ## [1.7.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-contracts-v1.7.0...nebula-chat-contracts-v1.7.1) (2026-10-29)
 
 
