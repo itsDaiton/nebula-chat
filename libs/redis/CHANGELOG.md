@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.10](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-redis-v0.2.9...nebula-chat-redis-v0.2.10) (2026-10-31)
+
+
+### Features
+
+* **worker:** NEB-585 let the Orchestrator ask one Clarifying question ([#716](https://github.com/itsDaiton/nebula-chat/issues/716)) ([df217d2](https://github.com/itsDaiton/nebula-chat/commit/df217d2bf7c13369d64bd93f0729f910c9f4e8b6)), closes [#585](https://github.com/itsDaiton/nebula-chat/issues/585)
+
 ## [0.2.9](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-redis-v0.2.8...nebula-chat-redis-v0.2.9) (2026-10-24)
 
 
