@@ -5,8 +5,12 @@ import { createTestApp } from '@server/test/app';
 import {
   adminSession,
   adminTrustedDeviceSession,
+  adminWithout2FASession,
   ADMIN_USER_ID,
+  bannedSession,
+  guestSession,
   registeredSession,
+  unverifiedAdminSession,
 } from '@server/test/session';
 
 // ADR-0008: only the repository layer is faked; the gate, validation and error handler are real.
@@ -117,8 +121,11 @@ describe('GET /api/admin/audit', () => {
     expect(repo.list).not.toHaveBeenCalled();
   });
 
-  it('asks an Admin on a trusted-device auth session for two-factor', async () => {
-    mockedGetSession.mockResolvedValue(adminTrustedDeviceSession() as never);
+  it.each([
+    ['an Admin who never enrolled in two-factor', adminWithout2FASession],
+    ['an Admin on a trusted-device auth session', adminTrustedDeviceSession],
+  ])('asks %s for two-factor', async (_who, session) => {
+    mockedGetSession.mockResolvedValue(session() as never);
 
     const res = await app.inject({ method: 'GET', url: ROUTE, headers: COOKIE });
 
@@ -127,13 +134,19 @@ describe('GET /api/admin/audit', () => {
     expect(repo.list).not.toHaveBeenCalled();
   });
 
-  it('answers Forbidden to a User who is not an Admin', async () => {
-    mockedGetSession.mockResolvedValue(registeredSession() as never);
+  it.each([
+    ['a Registered user', registeredSession],
+    ['a Guest', guestSession],
+    ['a banned Admin', bannedSession],
+    ['an Admin whose email is unverified', unverifiedAdminSession],
+  ])('answers Forbidden to %s', async (_who, session) => {
+    mockedGetSession.mockResolvedValue(session() as never);
 
     const res = await app.inject({ method: 'GET', url: ROUTE, headers: COOKIE });
 
     expect(res.statusCode).toBe(403);
     expect(res.json()).toMatchObject({ success: false, error: 'Forbidden' });
+    expect(repo.list).not.toHaveBeenCalled();
   });
 
   it('answers Unauthorized without a session', async () => {

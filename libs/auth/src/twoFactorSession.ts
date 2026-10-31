@@ -1,9 +1,8 @@
-// better-auth 1.7's two-factor plugin leaves no mark on the auth session it signs in, and a trusted-device or social
-// sign-in skips the challenge entirely, so we mark the session ourselves whenever a code is verified (ADR-0027 §2).
+// better-auth 1.7's two-factor plugin leaves no mark on the auth session it signs in, so we mark it ourselves.
+// TOTP and backup codes only: ADR-0027 §2 rules out emailed or texted codes.
 const TWO_FACTOR_VERIFY_PATHS = new Set([
   '/two-factor/verify-totp',
   '/two-factor/verify-backup-code',
-  '/two-factor/verify-otp',
 ]);
 
 /** The slice of better-auth's after-hook context the marker reads. */

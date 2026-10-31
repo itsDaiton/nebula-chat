@@ -4,7 +4,6 @@ import { auditEntries } from '@nebula-chat/db';
 import { db } from '@server/db';
 import type { AuditEntryInput, AuditFilters } from '@server/modules/audit/audit.types';
 
-// A filter applies only when the query names it.
 const when = <T>(value: T | undefined, filter: (present: T) => SQL) =>
   value === undefined ? undefined : filter(value);
 

@@ -49,8 +49,6 @@ export const adminWithout2FASession = (): SessionData =>
 /** An Admin signed in on a trusted device, so this auth session skipped the second factor. */
 export const adminTrustedDeviceSession = (): SessionData => admin({}, { twoFactorVerified: false });
 
-/** A banned Admin, otherwise fully verified. */
 export const bannedSession = (): SessionData => admin({ banned: true }, {});
 
-/** An Admin whose email is not verified. */
 export const unverifiedAdminSession = (): SessionData => admin({ emailVerified: false }, {});

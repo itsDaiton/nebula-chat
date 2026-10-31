@@ -11,7 +11,7 @@ const hookContext = (path: string, returned: unknown) => {
 };
 
 describe('markTwoFactorVerifiedSession', () => {
-  it.each(['/two-factor/verify-totp', '/two-factor/verify-backup-code', '/two-factor/verify-otp'])(
+  it.each(['/two-factor/verify-totp', '/two-factor/verify-backup-code'])(
     'marks the auth session a successful %s answers with',
     async (path) => {
       const { ctx, updateSession } = hookContext(path, { token: 'session-token', user: {} });
@@ -46,7 +46,8 @@ describe('markTwoFactorVerifiedSession', () => {
     expect(updateSession).not.toHaveBeenCalled();
   });
 
-  it.each(['/sign-in/email', '/get-session', '/two-factor/enable'])(
+  // verify-otp is an emailed or texted code, which ADR-0027 §2 does not accept for Admins.
+  it.each(['/sign-in/email', '/get-session', '/two-factor/enable', '/two-factor/verify-otp'])(
     'leaves a session %s answers with alone',
     async (path) => {
       const { ctx, updateSession } = hookContext(path, { token: 'session-token' });

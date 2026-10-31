@@ -391,7 +391,7 @@ better-auth 1.7's two-factor plugin leaves no mark on the auth session it create
 verified, and a trusted-device or social sign-in skips the challenge with nothing to tell it apart.
 So `@nebula-chat/auth` adds its own session field, `twoFactorVerified` (default `false`, never
 client-settable), and an after hook sets it on the auth session that a successful
-`/two-factor/verify-totp`, `/verify-backup-code` or `/verify-otp` answers with. That is the session
+`/two-factor/verify-totp` or `/verify-backup-code` answers with (no emailed or texted codes). That is the session
 the challenge just created, or the caller's own when they verify a code while already signed in. The
 second case is how an Admin on a trusted device, or signed in through Google or GitHub, steps up
 to the admin API ([ADR-0027](./adr/0027-admin-role-two-factor-full-read-and-audit-log.md) §2).
