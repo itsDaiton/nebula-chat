@@ -12,10 +12,16 @@ export const LOG_EVENTS = [
   'chat.run.completed',
   'chat.run.step.failed',
   'chat.run.retrying',
+  'chat.run.waiting',
+  'chat.run.wait.settled',
+  'chat.run.wait.timed_out',
   'chat.reply.cancel.requested',
   'chat.stream.relay.failed',
   'chat.stream.end.failed',
   'model_call.record.failed',
+  // Purge (the worker, ADR-0028)
+  'account.purge.completed',
+  'account.purge.user.failed',
   // Jobs (the worker, ADR-0013)
   'job.payload.rejected',
   'job.queue.failed',

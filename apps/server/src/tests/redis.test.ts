@@ -38,10 +38,12 @@ vi.mock('@nebula-chat/redis', async (importActual) => {
 import {
   closeRedis,
   findActiveStream,
+  findLastStream,
   findStreamOwner,
   isStreamEnded,
   isStreamExpired,
   openReplyStream,
+  requestRunCancel,
   requestStreamCancel,
   saveActiveStream,
   saveStreamOwner,
@@ -108,6 +110,23 @@ describe("a Session's in-flight stream", () => {
     toolkit.connection.get.mockResolvedValueOnce(STREAM_ID);
     toolkit.flags.set(`stream-ended:${STREAM_ID}`, 86_400);
     await expect(findActiveStream(SESSION_ID)).resolves.toBeNull();
+  });
+});
+
+describe('findLastStream', () => {
+  it('names the latest stream even once it has ended, for a Run waiting behind it', async () => {
+    toolkit.connection.get.mockResolvedValueOnce(STREAM_ID);
+    toolkit.flags.set(`stream-ended:${STREAM_ID}`, 86_400);
+
+    await expect(findLastStream(SESSION_ID)).resolves.toBe(STREAM_ID);
+  });
+});
+
+describe('requestRunCancel', () => {
+  it("raises the Run's cancel flag with the configured TTL", async () => {
+    await requestRunCancel('run-1');
+
+    expect(toolkit.flags.get('run-cancel:run-1')).toBe(900);
   });
 });
 

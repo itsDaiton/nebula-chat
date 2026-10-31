@@ -64,6 +64,55 @@
       "when": 1793129325136,
       "tag": "0008_archived-sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793440943440,
+      "tag": "0009_admin-two-factor-audit-log",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793444927170,
+      "tag": "0010_session-two-factor-verified",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793449723180,
+      "tag": "0011_users-created-at-index",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793452108456,
+      "tag": "0012_pending-deletion",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793454046617,
+      "tag": "0013_model-calls-message-link",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793466346057,
+      "tag": "0014_purge-last-active",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1793471688436,
+      "tag": "0015_run-waiting-status",
+      "breakpoints": true
     }
   ]
 }

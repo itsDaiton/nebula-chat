@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.12.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.11.0...nebula-chat-worker-v1.12.0) (2026-10-31)
+
+
+### Features
+
+* **worker:** NEB-585 let the Orchestrator ask one Clarifying question ([#716](https://github.com/itsDaiton/nebula-chat/issues/716)) ([df217d2](https://github.com/itsDaiton/nebula-chat/commit/df217d2bf7c13369d64bd93f0729f910c9f4e8b6)), closes [#585](https://github.com/itsDaiton/nebula-chat/issues/585)
+
+## [1.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.10.0...nebula-chat-worker-v1.11.0) (2026-10-31)
+
+
+### Features
+
+* **worker:** NEB-545 daily Purge of expired Pending deletion and inactive Guests ([#711](https://github.com/itsDaiton/nebula-chat/issues/711)) ([88e021f](https://github.com/itsDaiton/nebula-chat/commit/88e021f49f6e3eb0973feff918d7154af7231da0))
+
+## [1.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.9.0...nebula-chat-worker-v1.10.0) (2026-10-31)
+
+
+### Features
+
+* **worker:** NEB-363 web_search and web_fetch tools for delegate Agents ([#708](https://github.com/itsDaiton/nebula-chat/issues/708)) ([c7a483c](https://github.com/itsDaiton/nebula-chat/commit/c7a483c8a412e15b11da4958df2e3e0e5b79896d))
+
+## [1.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.8.2...nebula-chat-worker-v1.9.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-665 Messages carry their Model, estimated cost, Run and context usage ([#704](https://github.com/itsDaiton/nebula-chat/issues/704)) ([c9bf8b3](https://github.com/itsDaiton/nebula-chat/commit/c9bf8b33f1bac83076aed43f18b1e986c661b6ca))
+
+## [1.8.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.8.1...nebula-chat-worker-v1.8.2) (2026-10-30)
+
+
+### Bug Fixes
+
+* Claude Code harness, skills update and GLOSSARY.md ([#688](https://github.com/itsDaiton/nebula-chat/issues/688)) ([17abd54](https://github.com/itsDaiton/nebula-chat/commit/17abd5450d4020b267c8e8b07579f23da90bb2e5))
+
 ## [1.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.8.0...nebula-chat-worker-v1.8.1) (2026-10-29)
 
 

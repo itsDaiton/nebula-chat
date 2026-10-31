@@ -1,7 +1,7 @@
 import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { logLevelController } from '@server/modules/logLevel/logLevel.controller';
-import { requireOperator } from '@server/modules/logLevel/logLevel.operatorGate.hook';
+import { requireOperator } from '@server/utils/operatorGate.hook';
 import {
   changeLogLevelSchema,
   logLevelChangeResponseSchema,

@@ -8,7 +8,11 @@ each package's own file — read the one you're about to touch:
 - [apps/worker](./apps/worker/AGENTS.md) — every LLM reply and background job (BullMQ, Redis Streams)
 - [apps/cli](./apps/cli/AGENTS.md) — the `nebula` operator CLI
 
-How the pieces fit: [docs/architecture.md](./docs/architecture.md). Domain vocabulary: [CONTEXT.md](./CONTEXT.md).
+The server, client and worker keep their topic conventions (error handling, Drizzle, forms, env and so on) in
+path-scoped rules under [`.claude/rules/`](./.claude/rules/), one `<app>-<topic>.md` each. Claude Code loads a rule
+when it reads a matching file; each package's `AGENTS.md` links every rule for other agents.
+
+How the pieces fit: [docs/architecture.md](./docs/architecture.md). Domain vocabulary: [GLOSSARY.md](./GLOSSARY.md).
 Local setup and env files: [README.md](./README.md).
 
 ## Commands
@@ -18,6 +22,7 @@ pnpm install
 pnpm run lint:fix && pnpm run format           # after every code change; zero warnings tolerated
 pnpm turbo run typecheck --filter=<pkg>        # builds workspace libs (dist/*.d.ts) first
 pnpm turbo run test                            # every package (or `pnpm backend|frontend|worker test`)
+pnpm turbo run test --output-logs=errors-only  # same, printing only failing tasks' logs
 pnpm knip                                      # on demand: after deleting/moving files or changing exports
 pnpm catalog:stamp                             # after editing libs/contracts/src/models/catalog.json
 podman compose up -d                           # PostgreSQL :5332, Redis :6380
@@ -37,7 +42,7 @@ Don't add `// eslint-disable` unless unavoidable, and say why. Never hand-edit g
   `errors`, `openapi` — or none for root tooling/docs. The bump is decided from changed paths,
   not the scope.
 - Squash-merge is the default, so the **PR title is the commit Release Please parses**. Subject under 72 chars.
-- PR body: summary, `Closes #NN`, test plan.
+- PR body: the `pr` skill's template (Summary, Evidence, Merge Danger), plus `Closes #NN` and any ADR link.
 
 ### Tickets
 
@@ -81,7 +86,7 @@ In order: add `libs/<name>/.gitignore` (`dist/`, `node_modules/`); add the packa
 
 ## Keep docs true
 
-A change to conventions, module layout or architecture updates, in the same PR: the relevant `AGENTS.md`,
-`CONTEXT.md` for vocabulary, `docs/adr/` for hard-to-reverse decisions, the Mermaid diagrams that draw the
+A change to conventions, module layout or architecture updates, in the same PR: the relevant `AGENTS.md` or
+`.claude/rules/` file (and its `paths:` globs when a folder moves), `GLOSSARY.md` for vocabulary, `docs/adr/` for hard-to-reverse decisions, the Mermaid diagrams that draw the
 area, and any skill that references it. Operator CLI usage: [apps/cli/AGENTS.md](./apps/cli/AGENTS.md).
 MCP servers: [docs/agents/mcp-servers.md](./docs/agents/mcp-servers.md).

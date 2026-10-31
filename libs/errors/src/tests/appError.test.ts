@@ -10,6 +10,9 @@ import {
   NotFoundError,
   PayloadTooLargeError,
   TooManyRequestsError,
+  TwoFactorRequiredError,
+  LastAdminError,
+  NotEligibleForAdminError,
   UnauthorizedError,
   ValidationError,
 } from '../appError';
@@ -85,6 +88,33 @@ describe('MessageAllowanceReachedError', () => {
       error: 'MessageAllowanceReached',
       message: 'Message allowance exceeded: a Guest can send at most 10 messages.',
     });
+  });
+});
+
+describe('TwoFactorRequiredError', () => {
+  it('answers 403 with its own code, so the client can send an Admin to two-factor sign-in', () => {
+    const err = new TwoFactorRequiredError();
+
+    expect(err.status).toBe(403);
+    expect(err.toEnvelope()).toEqual({
+      success: false,
+      error: 'TwoFactorRequired',
+      message: 'This action requires signing in with two-factor authentication.',
+    });
+  });
+});
+
+describe('the Admin moderation errors', () => {
+  it.each([
+    [new LastAdminError(), 'LastAdmin', 'The last Admin cannot be demoted or banned.'],
+    [
+      new NotEligibleForAdminError('A banned user cannot be an Admin.'),
+      'NotEligibleForAdmin',
+      'A banned user cannot be an Admin.',
+    ],
+  ])('answers 409 with its own code %#', (err, code, message) => {
+    expect(err.status).toBe(409);
+    expect(err.toEnvelope()).toEqual({ success: false, error: code, message });
   });
 });
 

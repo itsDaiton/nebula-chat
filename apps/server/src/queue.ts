@@ -1,6 +1,8 @@
 import { Queue } from 'bullmq';
 import type { JobsOptions } from 'bullmq';
 import {
+  CLARIFYING_QUESTION_TIMEOUT_QUEUE,
+  clarifyingQuestionTimeoutJobId,
   DIRECT_REPLY_QUEUE,
   directReplyJobSchema,
   RUN_QUEUE,
@@ -90,6 +92,32 @@ export const enqueueRun = async (job: RunJob, logger: EventLogger<'warn'>): Prom
     attempts: env.RUN_JOB_ATTEMPTS,
     backoff: { type: 'exponential', delay: env.RUN_JOB_BACKOFF_MS },
   });
+  void pingWorker(logger);
+};
+
+// The job may already be active or gone, which means the wait has ended: nothing to remove or promote.
+const timeoutJob = async (runId: string) =>
+  queue(CLARIFYING_QUESTION_TIMEOUT_QUEUE).getJob(clarifyingQuestionTimeoutJobId(runId));
+
+/** Drops a Run's timeout job once its answer has settled the wait. */
+export const removeClarifyingQuestionTimeout = async (runId: string): Promise<void> => {
+  try {
+    await (await timeoutJob(runId))?.remove();
+  } catch {
+    // An active job finds the Run no longer waiting and does nothing.
+  }
+};
+
+/** Makes a waiting Run's timeout job fire now, so the worker ends it `cancelled`; pings a sleeping worker. */
+export const promoteClarifyingQuestionTimeout = async (
+  runId: string,
+  logger: EventLogger<'warn'>,
+): Promise<void> => {
+  try {
+    await (await timeoutJob(runId))?.promote();
+  } catch {
+    // Not delayed any more: the wait has already ended.
+  }
   void pingWorker(logger);
 };
 

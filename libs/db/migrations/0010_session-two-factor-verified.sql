@@ -1,0 +1,1 @@
+ALTER TABLE "session" ADD COLUMN "two_factor_verified" boolean DEFAULT false NOT NULL;

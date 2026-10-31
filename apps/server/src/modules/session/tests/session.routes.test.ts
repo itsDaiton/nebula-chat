@@ -37,6 +37,17 @@ vi.mock('@server/redis', async () => {
   };
 });
 
+vi.mock('@server/modules/run/run.repository', () => ({
+  runRepository: { findWaiting: vi.fn(async () => []), countCompletedSteps: vi.fn(async () => 0) },
+}));
+
+vi.mock('@server/queue', () => ({
+  promoteClarifyingQuestionTimeout: vi.fn(async () => undefined),
+  closeQueue: vi.fn(async () => undefined),
+}));
+
+import { runRepository } from '@server/modules/run/run.repository';
+import { promoteClarifyingQuestionTimeout } from '@server/queue';
 import { auth } from '@server/auth';
 import { replyStreams } from '@server/test/memoryReplyStreams';
 import { sessionRepository } from '@server/modules/session/session.repository';
@@ -221,6 +232,33 @@ describe('GET /api/sessions/:sessionId', () => {
     const res = await app.inject({ method: 'GET', url: `/api/sessions/${SESSION_ID}` });
 
     expect(res.json()).toMatchObject({ id: SESSION_ID, activeStreamId: STREAM_ID });
+  });
+
+  it('shows the Run waiting on its question, with the stream it was asked on', async () => {
+    const STREAM_ID = '33333333-3333-4333-8333-333333333333';
+    const RUN = '44444444-4444-4444-8444-444444444444';
+    repo.findById.mockResolvedValue(fromPartial(aSession()));
+    replyStreams.activeStreams.set(SESSION_ID, STREAM_ID);
+    replyStreams.ended.add(STREAM_ID);
+    vi.mocked(runRepository.findWaiting).mockResolvedValueOnce([
+      { id: RUN, sessionId: SESSION_ID },
+    ]);
+    vi.mocked(runRepository.countCompletedSteps).mockResolvedValueOnce(5);
+
+    const res = await app.inject({ method: 'GET', url: `/api/sessions/${SESSION_ID}` });
+
+    expect(res.json()).toMatchObject({
+      activeStreamId: null,
+      waitingRun: { id: RUN, streamId: STREAM_ID, stepsCompleted: 5 },
+    });
+  });
+
+  it('shows no waiting Run when none waits', async () => {
+    repo.findById.mockResolvedValue(fromPartial(aSession()));
+
+    const res = await app.inject({ method: 'GET', url: `/api/sessions/${SESSION_ID}` });
+
+    expect(res.json()).toMatchObject({ waitingRun: null });
   });
 
   it('names no reply once the latest one has ended, or when none was ever sent', async () => {
@@ -485,6 +523,25 @@ describe.each([
     // Owner-scoped: the auth session's user is part of the lookup.
     expect(method).toHaveBeenCalledWith(SESSION_ID, REGISTERED_USER_ID);
   });
+
+  if (action === 'archive') {
+    it('cancels the Run waiting in the Session so it cannot write into it', async () => {
+      const RUN = '44444444-4444-4444-8444-444444444444';
+      method.mockResolvedValue(fromPartial(aSession({ archived })));
+      vi.mocked(runRepository.findWaiting).mockResolvedValueOnce([
+        { id: RUN, sessionId: SESSION_ID },
+      ]);
+
+      await app.inject({ method: 'POST', url });
+
+      expect(runRepository.findWaiting).toHaveBeenCalledWith({
+        sessionId: SESSION_ID,
+        userId: REGISTERED_USER_ID,
+      });
+      expect(replyStreams.runCancelRequests.has(RUN)).toBe(true);
+      expect(promoteClarifyingQuestionTimeout).toHaveBeenCalledWith(RUN, expect.anything());
+    });
+  }
 
   it('is idempotent: repeating it answers 200 again', async () => {
     method.mockResolvedValue(fromPartial(aSession({ archived })));

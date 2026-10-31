@@ -25,6 +25,7 @@ export {
   authKey,
   AUTH_KEY_PREFIX,
   streamKey,
+  runCancelKey,
   streamCancelKey,
   streamEndedKey,
   REPLY_STREAM_RECORD_TTL_SECONDS,

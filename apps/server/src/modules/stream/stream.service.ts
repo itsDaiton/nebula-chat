@@ -1,6 +1,7 @@
 import { parseReplyStreamEvent } from '@nebula-chat/contracts';
 import { INTERNAL_ERROR_ENVELOPE, NotFoundError } from '@nebula-chat/errors';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
+import { runService } from '@server/modules/run/run.service';
 import {
   findStreamOwner,
   isStreamEnded,
@@ -37,7 +38,11 @@ export const streamService = {
   /** Asks the worker to stop the reply; a reply that already finished is left alone (ADR-0014). */
   async cancel(streamId: string, userId: string, logger: StreamLogger): Promise<void> {
     await streamService.assertOwner(streamId, userId);
-    if (await isStreamEnded(streamId)) return;
+    if (await isStreamEnded(streamId)) {
+      // A stream that ended on a Clarifying question leaves a waiting Run that this stop cancels.
+      await runService.cancelWaitingRunOfStream(streamId, userId, logger);
+      return;
+    }
     await requestStreamCancel(streamId);
     logEvent(
       componentLogger(logger, 'chat'),

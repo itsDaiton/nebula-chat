@@ -96,7 +96,7 @@ arrives verified, and no automatic linking to an existing account the provider c
   hard dependency for authenticated requests, buffered only by the cookie-cache window.
 - `@nebula-chat/redis` grows an `authStore` primitive (final name TBD at implementation) — the first consumer
   of its reserved storage seams.
-- The domain gains **Guest**, **Registered user**, **Message allowance**, and **Claim** (see `CONTEXT.md`);
+- The domain gains **Guest**, **Registered user**, **Message allowance**, and **Claim** (see `GLOSSARY.md`);
   `session`/`account`/`verification` stay out of the glossary as better-auth infrastructure.
 - We depend on better-auth's release cadence and its schema-generation CLI coexisting with `drizzle-kit`.
 - OAuth is a known, deferred follow-up, not missing scope.

@@ -35,7 +35,11 @@ vi.mock('@server/modules/message/message.repository', () => ({
 }));
 
 vi.mock('@server/modules/run/run.repository', () => ({
-  runRepository: { createTx: vi.fn() },
+  runRepository: { createTx: vi.fn(), claimWaitingTx: vi.fn() },
+}));
+
+vi.mock('@server/modules/user/user.repository', () => ({
+  userRepository: { findLastActiveAt: vi.fn(), setLastActiveAt: vi.fn() },
 }));
 
 // @server/redis is the boundary to Redis: stream owners live in memory.
@@ -60,18 +64,22 @@ vi.mock('@server/queue', () => ({
   enqueueRun: vi.fn(async (job: RunJob) => {
     enqueuedRuns.push(job);
   }),
+  removeClarifyingQuestionTimeout: vi.fn(async () => undefined),
   closeQueue: vi.fn(async () => undefined),
 }));
 
+import { removeClarifyingQuestionTimeout } from '@server/queue';
 import { auth } from '@server/auth';
 import { messageRepository } from '@server/modules/message/message.repository';
 import { runRepository } from '@server/modules/run/run.repository';
 import { sessionRepository } from '@server/modules/session/session.repository';
+import { userRepository } from '@server/modules/user/user.repository';
 
 const mockedGetSession = vi.mocked(auth.api.getSession);
 const sessionRepo = vi.mocked(sessionRepository);
 const messageRepo = vi.mocked(messageRepository);
 const runRepo = vi.mocked(runRepository);
+const userRepo = vi.mocked(userRepository);
 
 const SESSION_ID = '11111111-1111-4111-8111-111111111111';
 const MESSAGE_ID = '22222222-2222-4222-8222-222222222222';
@@ -120,6 +128,8 @@ beforeEach(() => {
   );
   messageRepo.createTx.mockResolvedValue(fromPartial({ id: MESSAGE_ID }));
   runRepo.createTx.mockResolvedValue({ id: RUN_ID });
+  runRepo.claimWaitingTx.mockResolvedValue(null);
+  userRepo.findLastActiveAt.mockResolvedValue(null);
 });
 
 describe('POST /api/sessions/:sessionId/messages', () => {
@@ -139,6 +149,32 @@ describe('POST /api/sessions/:sessionId/messages', () => {
       role: 'user',
       content: 'what is 2+2?',
     });
+  });
+
+  it('records the User as active when they have never been', async () => {
+    await send(validBody);
+
+    expect(userRepo.setLastActiveAt).toHaveBeenCalledExactlyOnceWith(
+      REGISTERED_USER_ID,
+      expect.any(Date),
+    );
+  });
+
+  it('records activity again once the last record is over an hour old', async () => {
+    userRepo.findLastActiveAt.mockResolvedValue(new Date(Date.now() - 61 * 60 * 1000));
+
+    await send(validBody);
+
+    expect(userRepo.setLastActiveAt).toHaveBeenCalledOnce();
+  });
+
+  it('leaves the last activity alone when it was recorded within the hour', async () => {
+    userRepo.findLastActiveAt.mockResolvedValue(new Date(Date.now() - 30 * 60 * 1000));
+
+    const res = await send(validBody);
+
+    expect(res.statusCode).toBe(202);
+    expect(userRepo.setLastActiveAt).not.toHaveBeenCalled();
   });
 
   it('enqueues one Direct reply job carrying only IDs', async () => {
@@ -463,5 +499,72 @@ describe('GET /api/chat/message-allowance', () => {
 
     expect(res.statusCode).toBe(401);
     expect(res.json()).toMatchObject({ success: false, error: 'Unauthorized' });
+  });
+});
+
+describe('answering a Clarifying question', () => {
+  const TRIGGER_ID = '99999999-9999-4999-8999-999999999999';
+  const waiting = () =>
+    runRepo.claimWaitingTx.mockResolvedValue({ id: RUN_ID, messageId: TRIGGER_ID });
+
+  it('persists the Message as the answer linked to the Run, and answers 202 with a new stream', async () => {
+    waiting();
+
+    const res = await send(validBody);
+
+    expect(res.statusCode).toBe(202);
+    expect(res.json()).toEqual({
+      messageId: MESSAGE_ID,
+      streamId: expect.stringMatching(UUID),
+      runId: RUN_ID,
+    });
+    expect(messageRepo.createTx).toHaveBeenCalledWith(
+      fakeTx,
+      expect.objectContaining({ role: 'user', runId: RUN_ID }),
+    );
+    expect(runRepo.createTx).not.toHaveBeenCalled();
+  });
+
+  it('removes the timeout job and enqueues the resume job with the answer, whatever the mode', async () => {
+    waiting();
+
+    const res = await send({ ...validBody, mode: 'run' });
+
+    expect(removeClarifyingQuestionTimeout).toHaveBeenCalledWith(RUN_ID);
+    expect(enqueuedRuns).toEqual([
+      {
+        userId: REGISTERED_USER_ID,
+        sessionId: SESSION_ID,
+        messageId: TRIGGER_ID,
+        streamId: res.json<{ streamId: string }>().streamId,
+        runId: RUN_ID,
+        resume: { answerMessageId: MESSAGE_ID },
+      },
+    ]);
+    expect(enqueued).toEqual([]);
+  });
+
+  it('is an ordinary Message when the timeout got to the Run first', async () => {
+    const res = await send(validBody);
+
+    expect(res.json()).toEqual({ messageId: MESSAGE_ID, streamId: expect.stringMatching(UUID) });
+    expect(messageRepo.createTx).toHaveBeenCalledWith(
+      fakeTx,
+      expect.not.objectContaining({ runId: expect.anything() }),
+    );
+    expect(removeClarifyingQuestionTimeout).not.toHaveBeenCalled();
+    expect(enqueued).toHaveLength(1);
+    expect(enqueuedRuns).toEqual([]);
+  });
+
+  it('counts against the Message allowance, which is checked before the answer is persisted', async () => {
+    mockedGetSession.mockResolvedValue(unverifiedSession() as never);
+    messageRepo.countUserMessagesByOwner.mockResolvedValue(Number.MAX_SAFE_INTEGER);
+    waiting();
+
+    const res = await send(validBody);
+
+    expect(res.statusCode).toBe(403);
+    expect(runRepo.claimWaitingTx).not.toHaveBeenCalled();
   });
 });

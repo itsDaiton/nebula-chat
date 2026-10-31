@@ -52,7 +52,7 @@ The chat path goes from ~6 `info` lines to 2 (`http.request.completed`, `chat.re
 | Outcome   | `nebula.duration_ms`, `nebula.outcome`                                                                            |
 | Trace     | `trace_id`, `span_id` (injected by the OTel Pino instrumentation)                                                 |
 
-The Session is logged as **`nebula.session.id`**, never bare `session.id`, although the code variable is still `conversationId`. OTel's `session.id` means a client browsing session, which would be a third meaning beside the domain Session and the _auth session_ (`CONTEXT.md`).
+The Session is logged as **`nebula.session.id`**, never bare `session.id`, although the code variable is still `conversationId`. OTel's `session.id` means a client browsing session, which would be a third meaning beside the domain Session and the _auth session_ (`GLOSSARY.md`).
 
 `hostname` is dropped from the base fields: on Render it is a random container ID.
 

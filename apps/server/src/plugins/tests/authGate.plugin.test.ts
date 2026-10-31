@@ -6,11 +6,26 @@ import type {
   FastifyRequest,
   preHandlerAsyncHookHandler,
 } from 'fastify';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ForbiddenError, INTERNAL_ERROR_ENVELOPE, UnauthorizedError } from '@nebula-chat/errors';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  ForbiddenError,
+  INTERNAL_ERROR_ENVELOPE,
+  TwoFactorRequiredError,
+  UnauthorizedError,
+} from '@nebula-chat/errors';
 import { createTestApp } from '@server/test/app';
 import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
-import { guestSession, registeredSession, REGISTERED_USER_ID } from '@server/test/session';
+import {
+  adminSession,
+  adminTrustedDeviceSession,
+  adminWithout2FASession,
+  bannedSession,
+  guestSession,
+  registeredSession,
+  REGISTERED_USER_ID,
+  unverifiedAdminSession,
+  unverifiedSession,
+} from '@server/test/session';
 
 // @server/auth is the boundary to better-auth: faking it gives the gates a controllable
 // session (ADR-0008) and the catch-all tests below a stand-in request `handler`.
@@ -40,6 +55,7 @@ import { auth } from '@server/auth';
 import { env } from '@server/env';
 import {
   getSessionData,
+  requireAdmin,
   requireAuthentication,
   requireRegistered,
 } from '@server/plugins/authGate.plugin';
@@ -157,6 +173,53 @@ describe('requireRegistered', () => {
   });
 });
 
+describe('requireAdmin', () => {
+  it('admits an Admin whose auth session passed two-factor', async () => {
+    mockedGetSession.mockResolvedValue(adminSession() as never);
+    const req = makeReq();
+
+    await expect(run(requireAdmin, req)).resolves.toBeUndefined();
+    expect(getSessionData(req).user.role).toBe('admin');
+  });
+
+  it('reads the auth session past the cookie cache, so a revoked role or a ban applies at once', async () => {
+    mockedGetSession.mockResolvedValue(adminSession() as never);
+
+    await run(requireAdmin, makeReq());
+
+    expect(mockedGetSession).toHaveBeenCalledWith(
+      expect.objectContaining({ query: { disableCookieCache: true } }),
+    );
+  });
+
+  it.each([
+    ['an Admin who never enrolled in two-factor', adminWithout2FASession],
+    ['an Admin on a trusted-device auth session', adminTrustedDeviceSession],
+  ])('asks %s for two-factor with TwoFactorRequired', async (_who, session) => {
+    mockedGetSession.mockResolvedValue(session() as never);
+
+    await expect(run(requireAdmin, makeReq())).rejects.toBeInstanceOf(TwoFactorRequiredError);
+  });
+
+  it.each([
+    ['a Registered user', registeredSession],
+    ['a Guest', guestSession],
+    ['an unverified user', unverifiedSession],
+    ['an Admin whose email is unverified', unverifiedAdminSession],
+    ['a banned Admin', bannedSession],
+  ])('rejects %s with Forbidden', async (_who, session) => {
+    mockedGetSession.mockResolvedValue(session() as never);
+
+    await expect(run(requireAdmin, makeReq())).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it('rejects an unauthenticated request with UnauthorizedError', async () => {
+    mockedGetSession.mockResolvedValue(null);
+
+    await expect(run(requireAdmin, makeReq())).rejects.toBeInstanceOf(UnauthorizedError);
+  });
+});
+
 describe('getSessionData', () => {
   it('throws UnauthorizedError when no gate has attached a session', () => {
     expect(() => getSessionData(makeReq())).toThrow(UnauthorizedError);
@@ -227,6 +290,59 @@ describe('auth catch-all route delegation (GET|POST /api/auth/*)', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ ok: true });
+  });
+});
+
+describe('auth catch-all blocks the admin plugin (ADR-0027 §6)', () => {
+  let app: FastifyInstance;
+  const originalHandler = (auth as { handler: unknown }).handler;
+
+  afterEach(() => {
+    adapterOverride.current = undefined;
+    (auth as { handler: unknown }).handler = originalHandler;
+  });
+
+  beforeAll(async () => {
+    app = await createTestApp();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it.each([
+    ['POST', '/api/auth/admin/list-users'],
+    ['GET', '/api/auth/admin/list-users?limit=1'],
+    ['POST', '/api/auth/admin/impersonate-user'],
+    ['POST', '/api/auth/Admin/set-role'],
+    ['POST', '/api/auth/%61dmin/ban-user'],
+    ['POST', '/api/auth//admin/ban-user'],
+  ] as const)(
+    'answers %s %s with the typed NotFound without reaching better-auth',
+    async (method, url) => {
+      const handler = vi.fn<NodeHandler>();
+      adapterOverride.current = handler;
+
+      const res = await app.inject(
+        method === 'POST' ? { method, url, payload: {} } : { method, url },
+      );
+
+      expect(res.statusCode).toBe(404);
+      expect(res.json()).toMatchObject({ success: false, error: 'NotFound' });
+      expect(handler).not.toHaveBeenCalled();
+    },
+  );
+
+  it('still passes a path that only starts with the letters admin', async () => {
+    (auth as { handler: unknown }).handler = async (): Promise<Response> =>
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+
+    const res = await app.inject({ method: 'POST', url: '/api/auth/administrator', payload: {} });
+
+    expect(res.statusCode).toBe(200);
   });
 });
 

@@ -3,6 +3,7 @@ import { criticAgent } from '@worker/agents/critic';
 import { languageAgent } from '@worker/agents/language';
 import { orchestratorAgent } from '@worker/agents/orchestrator';
 import { outputAgent } from '@worker/agents/output';
+import { researcherAgent } from '@worker/agents/researcher';
 import { sessionAgent } from '@worker/agents/session';
 import type { AgentDefinition, DelegateDefinition } from '@worker/runs/agentDefinition';
 
@@ -18,4 +19,5 @@ export const AGENTS = {
 export const DELEGATES = [
   analystAgent,
   criticAgent,
+  researcherAgent,
 ] as const satisfies readonly DelegateDefinition[];

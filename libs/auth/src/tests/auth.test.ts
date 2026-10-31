@@ -1,4 +1,10 @@
-import { parseUserInput, parseUserOutput } from 'better-auth/db';
+import {
+  getSessionDefaultFields,
+  parseSessionInput,
+  parseSessionOutput,
+  parseUserInput,
+  parseUserOutput,
+} from 'better-auth/db';
 import { describe, expect, it, vi } from 'vitest';
 import type { DbClient } from '@nebula-chat/db';
 import type { Logger } from '@nebula-chat/otel';
@@ -212,5 +218,86 @@ describe('createAuth rate limiting', () => {
       'x-forwarded-for': '198.51.100.99',
     });
     expect(keys.some((key) => key.includes('198.51.100.99'))).toBe(false);
+  });
+});
+
+describe('createAuth admin and two-factor plugins', () => {
+  const findPlugin = (id: string) =>
+    buildAuth().options.plugins?.find((plugin) => plugin.id === id);
+
+  it('enables the admin and two-factor plugins', () => {
+    expect(findPlugin('admin')).toBeDefined();
+    expect(findPlugin('two-factor')).toBeDefined();
+  });
+
+  it('gives a new user the user role', () => {
+    const adminPlugin = findPlugin('admin');
+
+    expect(adminPlugin?.options).toMatchObject({ defaultRole: 'user' });
+  });
+
+  it('grants no role the impersonate permission', () => {
+    const adminPlugin = findPlugin('admin');
+    const { roles } = adminPlugin?.options as {
+      roles: Record<string, { statements: { user: string[] } }>;
+    };
+
+    for (const role of Object.values(roles)) {
+      expect(role.statements.user).not.toContain('impersonate');
+      expect(role.statements.user).not.toContain('impersonate-admins');
+    }
+  });
+
+  it('tells a banned user the reason and when the ban ends', async () => {
+    const { bannedUserMessage } = findPlugin('admin')?.options as {
+      bannedUserMessage: (user: Record<string, unknown>) => Promise<string> | string;
+    };
+
+    expect(
+      await bannedUserMessage({
+        banReason: 'Spam',
+        banExpires: new Date('2026-12-01T10:00:00.000Z'),
+      }),
+    ).toBe('You have been banned. Reason: Spam. The ban ends 2026-12-01T10:00:00.000Z.');
+    expect(await bannedUserMessage({ banReason: 'Spam', banExpires: null })).toBe(
+      'You have been banned. Reason: Spam. The ban has no end.',
+    );
+  });
+
+  it("keeps better-auth's 30-day trusted device", () => {
+    expect(findPlugin('two-factor')?.options).not.toHaveProperty('trustDeviceMaxAge');
+  });
+
+  it('names the TOTP issuer Nebula Chat', () => {
+    expect(findPlugin('two-factor')?.options).toMatchObject({ issuer: 'Nebula Chat' });
+  });
+
+  it('starts every auth session unverified by a second factor', () => {
+    expect(getSessionDefaultFields(buildAuth().options)).toMatchObject({
+      twoFactorVerified: false,
+    });
+  });
+
+  it('refuses a client that marks its own auth session verified', () => {
+    // The field is ours, so better-auth's session input type doesn't list it.
+    const update = { twoFactorVerified: true } as Parameters<typeof parseSessionInput>[1];
+
+    expect(() => parseSessionInput(buildAuth().options, update, 'update')).toThrow(
+      'twoFactorVerified is not allowed to be set',
+    );
+  });
+
+  it('tells the server whether the auth session passed two-factor', () => {
+    const session = parseSessionOutput(buildAuth().options, {
+      id: 's-1',
+      userId: 'user-1',
+      token: 't',
+      expiresAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      twoFactorVerified: true,
+    });
+
+    expect(session).toMatchObject({ twoFactorVerified: true });
   });
 });

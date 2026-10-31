@@ -1,6 +1,6 @@
 {
   "name": "nebula-chat-openapi",
-  "version": "4.5.1",
+  "version": "4.12.0",
   "description": "Generated OpenAPI contract for the Nebula Chat API",
   "private": true
 }

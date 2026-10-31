@@ -44,6 +44,21 @@ export const sessionDetailResponseSchema = sessionResponseSchema
       .describe(
         'The reply still being produced for this Session, to re-attach to with `GET /api/streams/{streamId}`; null when none is in flight',
       ),
+    waitingRun: z
+      .object({
+        id: z.uuid(),
+        streamId: z
+          .uuid()
+          .nullable()
+          .describe(
+            'The stream the question was asked on; `POST /api/streams/{streamId}/cancel` cancels the Run',
+          ),
+        stepsCompleted: z.number().int().nonnegative(),
+      })
+      .nullable()
+      .describe(
+        'The Run waiting for the answer to its Clarifying question; the next Message sent to the Session answers it',
+      ),
   })
   .meta({ id: 'SessionDetail' });
 

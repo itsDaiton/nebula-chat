@@ -6,7 +6,7 @@ mounted by the server. This document describes how the running system behaves. F
 the rationale behind the design, see
 [ADR-0010](./adr/0010-better-auth-for-auth.md); for the domain terms (**User**,
 **Guest**, **Registered user**, **Message allowance**, **Claim**) see
-[CONTEXT.md](../CONTEXT.md).
+[GLOSSARY.md](../GLOSSARY.md).
 
 ## Model
 
@@ -93,18 +93,20 @@ constructing their own, mirroring `src/db.ts` and `src/redis.ts`.
 
 The instance is configured with:
 
-| Setting                  | Value                                                                                                                                                           |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Database adapter         | Drizzle over `@nebula-chat/db` (`provider: 'pg'`). `advanced.database.generateId: 'uuid'` so Postgres generates ids, keeping `sessions.userId` a plain uuid FK. |
-| Email / password         | Enabled. Password hashing is better-auth's built-in default (scrypt). Password reset enabled; a reset revokes the user's other auth sessions.                   |
-| Email verification       | Sent on sign-up (`sendOnSignUp`), **not required** to sign in; following the link verifies and signs the user in. See [Email](#email).                          |
-| Social providers         | Google and GitHub, each enabled only when the server is given its OAuth client id + secret. See [Social sign-in](#social-sign-in).                              |
-| Anonymous plugin         | `POST /sign-in/anonymous` mints a Guest. Its `onLinkAccount` hook runs the claim.                                                                               |
-| Have I Been Pwned plugin | Rejects sign-up with a known-breached password (`400 PASSWORD_COMPROMISED`); a reset is checked by the reset guard instead.                                     |
-| openAPI plugin           | Serves the auth API reference — see [API reference](#interactive-reference).                                                                                    |
-| `secondaryStorage`       | The `@nebula-chat/redis` `authStore` — auth sessions, verification records, and rate-limit counters.                                                            |
-| `session.cookieCache`    | Enabled — a short-lived signed cookie lets most requests validate without a store round-trip.                                                                   |
-| `rateLimit`              | Enabled, `storage: 'secondary-storage'` (Redis). Keyed per client by `advanced.ipAddress.ipAddressHeaders: ['cf-connecting-ip']` — see below.                   |
+| Setting                  | Value                                                                                                                                                                                                                                              |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Database adapter         | Drizzle over `@nebula-chat/db` (`provider: 'pg'`). `advanced.database.generateId: 'uuid'` so Postgres generates ids, keeping `sessions.userId` a plain uuid FK.                                                                                    |
+| Email / password         | Enabled. Password hashing is better-auth's built-in default (scrypt). Password reset enabled; a reset revokes the user's other auth sessions.                                                                                                      |
+| Email verification       | Sent on sign-up (`sendOnSignUp`), **not required** to sign in; following the link verifies and signs the user in. See [Email](#email).                                                                                                             |
+| Social providers         | Google and GitHub, each enabled only when the server is given its OAuth client id + secret. See [Social sign-in](#social-sign-in).                                                                                                                 |
+| Anonymous plugin         | `POST /sign-in/anonymous` mints a Guest. Its `onLinkAccount` hook runs the claim.                                                                                                                                                                  |
+| Have I Been Pwned plugin | Rejects sign-up with a known-breached password (`400 PASSWORD_COMPROMISED`); a reset is checked by the reset guard instead.                                                                                                                        |
+| openAPI plugin           | Serves the auth API reference — see [API reference](#interactive-reference).                                                                                                                                                                       |
+| Admin plugin             | Adds `role` and ban fields; impersonation is off (no role holds the permission). Its `/api/auth/admin/*` endpoints are answered `404 NotFound` by the `authGate` plugin ([ADR-0027](./adr/0027-admin-role-two-factor-full-read-and-audit-log.md)). |
+| Two-factor plugin        | TOTP and backup codes (issuer "Nebula Chat"); a trusted device lasts 30 days. Enabling asks for the password, so a social-only user cannot enrol until they set one.                                                                               |
+| `secondaryStorage`       | The `@nebula-chat/redis` `authStore` — auth sessions, verification records, and rate-limit counters.                                                                                                                                               |
+| `session.cookieCache`    | Enabled — a short-lived signed cookie lets most requests validate without a store round-trip.                                                                                                                                                      |
+| `rateLimit`              | Enabled, `storage: 'secondary-storage'` (Redis). Keyed per client by `advanced.ipAddress.ipAddressHeaders: ['cf-connecting-ip']` — see below.                                                                                                      |
 
 Rate limits are per client IP, read only from `CF-Connecting-IP`: Render fronts the API with
 Cloudflare, which sets that header itself, whereas `X-Forwarded-For` keeps whatever the client
@@ -283,20 +285,31 @@ a credential password must send it — the `before` hook answers `400 PASSWORD_R
 don't (better-auth alone would accept a sign-in under a day old), and better-auth `400
 INVALID_PASSWORD` when it's wrong. A user without one (Google/GitHub only) sends nothing and
 needs an auth session younger than a day (`400 SESSION_EXPIRED` otherwise). The guard is
-[`libs/auth/src/deleteAccount.ts`](../libs/auth/src/deleteAccount.ts). Deletes the user's accounts, auth sessions and user row; their Sessions and
-messages go with it through the `ON DELETE CASCADE` foreign keys. Clears the session cookie.
+[`libs/auth/src/deleteAccount.ts`](../libs/auth/src/deleteAccount.ts). The `before` hook then ends the request itself
+(ADR-0028): it repeats better-auth's password or freshness check, sets `users.pending_deletion_at`, revokes every auth
+session, clears the cookie and answers `{ success: true, message: "User deleted" }`, the shape the client always got.
+Nothing is deleted: the User, their Sessions and Messages stay for the 30 days before the Purge. A `token` in the body is
+refused, since better-auth would honour one with a hard delete.
 
-An uploaded Profile image lives outside Postgres, so the server deletes its file too. The lib's
-`user.deleteUser` hooks ([`libs/auth/src/userDeletion.ts`](../libs/auth/src/userDeletion.ts)) read
-`users.profileImageKey` in `beforeDelete`, while the row still exists, and call the injected
-`onUserDeleted({ id, profileImageKey })` in `afterDelete`, once it is gone. Both run only after the
-password or fresh-sign-in check, so a refused deletion leaves the file in place. The server's
-callback ([`profileImage.fileDeletion.ts`](../apps/server/src/modules/profileImage/profileImage.fileDeletion.ts))
-deletes the key through `profileImageStore`. It asks storage nothing for a provider image (no key),
-for no image, or while uploads are off (`profileImageStore` is `null`). A failed storage delete never
-fails the request: it is one `warn`, `profile_image.delete.failed` with `err`, `user.id` and
-`nebula.profile_image.key`, and the account stays deleted. A callback that throws anyway is caught
-by the lib and logged as `auth.user_deleted_callback.failed`.
+`user.deleteUser`'s `beforeDelete`/`afterDelete` hooks ([`userDeletion.ts`](../libs/auth/src/userDeletion.ts)) and the
+server's `onUserDeleted` callback (the Profile image file) are not reached by this endpoint any more; they stay for the Purge.
+
+### Pending deletion: sign-in, restore and sign-up
+
+- **Sign-in.** A `databaseHooks.session.create.before` hook sees every sign-in method (password, social, two-factor,
+  email verification). For a pending User it issues no session and stores a one-time restore token in the `verification`
+  table (`restore-account:<token>`, 10 minutes). Password sign-in answers `403 ACCOUNT_PENDING_DELETION` with `purgeDate`
+  and `restoreToken` in the body; a social sign-in redirects to `<errorURL>?pending=<purgeDate>&restoreToken=<token>`.
+  Sign-in checks the password first, so the outcome never confirms an account to a stranger.
+  A User with two-factor enabled gets the Purge date but no token from a password sign-in, which would skip the code;
+  the token comes only after a verified code (`/two-factor/*`) or a social sign-in, which never asks for one.
+  An email-verification link redirects like a social sign-in.
+- **Restore.** `POST /api/auth/restore-account` with `{ token }` (the `restore-account` plugin in `@nebula-chat/auth`)
+  consumes the token, clears `pending_deletion_at` and signs the User in. Declining needs no call: the token expires and the
+  User stays pending. A bad or used token is `400 INVALID_RESTORE_TOKEN`.
+- **Sign-up.** `POST /api/auth/sign-up/email` with a pending email answers `409 EMAIL_PENDING_DELETION`, pointing to sign-in.
+- **Guest claim.** No session is issued for a pending User, so the anonymous plugin never links a Guest's Sessions to one.
+- **Admin.** `POST /api/admin/users/:id/restore` clears the mark, audited as `user.restored`; a User who is not pending is `409`.
 
 ### `POST /api/auth/delete-anonymous-user` — delete the Guest
 
@@ -373,14 +386,43 @@ that flag would move them there. The password hash lives on the `account` row
 
 ## Route protection
 
-The `authGate` plugin exposes two `preHandler` gates. Both resolve the session with
+The `authGate` plugin exposes three `preHandler` gates. Each resolves the session with
 `auth.api.getSession({ headers: fromNodeHeaders(req.headers) })` and, on success,
-attach it to the request:
+attaches it to the request:
 
-| Gate                    | Behavior                                                                                    |
-| ----------------------- | ------------------------------------------------------------------------------------------- |
-| `requireAuthentication` | Requires any session (Guest or Registered). `401 Unauthorized` when there is none.          |
-| `requireRegistered`     | `requireAuthentication` plus `403 Forbidden` when the user is a Guest (`user.isAnonymous`). |
+| Gate                    | Behavior                                                                                                                                                                                                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requireAuthentication` | Requires any session (Guest or Registered). `401 Unauthorized` when there is none.                                                                                                                                                                      |
+| `requireRegistered`     | `requireAuthentication` plus `403 Forbidden` when the user is a Guest (`user.isAnonymous`).                                                                                                                                                             |
+| `requireAdmin`          | Guards `/api/admin/*`. Reads past the cookie cache. `403 Forbidden` unless a verified, unbanned user with `role: admin`; then `403 TwoFactorRequired` unless they enrolled in 2FA and this auth session passed it ([below](#two-factor-auth-sessions)). |
+
+### Two-factor auth sessions
+
+better-auth 1.7's two-factor plugin leaves no mark on the auth session it creates after a code is
+verified, and a trusted-device or social sign-in skips the challenge with nothing to tell it apart.
+So `@nebula-chat/auth` adds its own session field, `twoFactorVerified` (default `false`, never
+client-settable), and an after hook sets it on the auth session that a successful
+`/two-factor/verify-totp` or `/verify-backup-code` answers with (no emailed or texted codes). That is the session
+the challenge just created, or the caller's own when they verify a code while already signed in. The
+second case is how an Admin on a trusted device, or signed in through Google or GitHub, steps up
+to the admin API ([ADR-0027](./adr/0027-admin-role-two-factor-full-read-and-audit-log.md) §2).
+
+### Admins and the Operator
+
+The Operator grants the first Admin with `POST /api/internal/admins {email}`, revokes with
+`DELETE /api/internal/admins/{email}` and lists with `GET /api/internal/admins`, all behind the
+operator token like the log-level route. A grant needs a verified, unbanned Registered user. Each
+change writes one Audit log entry with the Operator as actor. The role is written the way
+`auth.api.setRole` writes it (`internalAdapter.updateUser`), so the user cached in their auth
+sessions changes too; the endpoint itself needs an Admin's session, which the Operator lacks.
+
+An Admin grants or revokes the role with `POST /api/admin/users/{id}/role {role}` and bans or unbans
+with `POST /api/admin/users/{id}/ban {reason, expiresAt?}` and `/unban`, through better-auth's server
+API (`setRole`, `banUser`, `unbanUser`) with the Admin's own headers. A Guest, an unverified or a
+banned user cannot be made Admin (`NotEligibleForAdmin`), and the last active Admin cannot be demoted
+or banned (`LastAdmin`). A ban revokes every auth session; cookie-cache holders may stay signed in up
+to five minutes. A banned sign-in is refused with the plugin's `BANNED_USER` error, whose message
+carries the reason and end time; once `banExpires` passes, the next sign-in lifts the ban.
 
 Handlers read the owner through `getSessionData(req)` rather than an untyped request
 property. A gate is added to a route's `preHandler` chain:

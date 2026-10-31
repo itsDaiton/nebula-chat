@@ -11,8 +11,14 @@ export const errorCodeSchema = z
     'Forbidden',
     // A Guest has spent their message allowance and must register to continue.
     'MessageAllowanceReached',
+    // An Admin whose auth session has not passed two-factor authentication.
+    'TwoFactorRequired',
     'NotFound',
     'Conflict',
+    // Demoting or banning the only Admin left.
+    'LastAdmin',
+    // A Guest, unverified or banned user asked to become an Admin.
+    'NotEligibleForAdmin',
     'PayloadTooLarge',
     'TooManyRequests',
     // The escape hatch: anything the server did not classify.

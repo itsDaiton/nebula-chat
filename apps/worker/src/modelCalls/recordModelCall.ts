@@ -26,16 +26,20 @@ export type ModelCallSubject = {
   model: string;
 };
 
-export type ModelCall = ModelCallSubject & {
-  inputTokens: number;
-  cachedInputTokens: number;
-  outputTokens: number;
-  tokensEstimated: boolean;
-  costUsd: number;
-  durationMs: number;
-  outcome: ModelCallOutcome;
-  cached: boolean;
-};
+/** What links a Direct reply's call to the assistant Message it produced. */
+export type ModelCallLink = { messageId: string; contextMessages: number };
+
+export type ModelCall = ModelCallSubject &
+  Partial<ModelCallLink> & {
+    inputTokens: number;
+    cachedInputTokens: number;
+    outputTokens: number;
+    tokensEstimated: boolean;
+    costUsd: number;
+    durationMs: number;
+    outcome: ModelCallOutcome;
+    cached: boolean;
+  };
 
 /** The append-only Model call ledger: Postgres in production. It keeps the first call recorded under a key. */
 export type ModelCallLedger = {
@@ -55,12 +59,19 @@ const append = async (
   ledger: ModelCallLedger,
   logger: Logger,
   subject: ModelCallSubject,
-  call: { usage: CallUsage; durationMs: number; outcome: ModelCallOutcome; cached: boolean },
+  call: {
+    usage: CallUsage;
+    durationMs: number;
+    outcome: ModelCallOutcome;
+    cached: boolean;
+    link?: ModelCallLink | undefined;
+  },
 ): Promise<void> => {
-  const { usage, ...rest } = call;
+  const { usage, link, ...rest } = call;
   try {
     await ledger.append({
       ...subject,
+      ...link,
       inputTokens: usage.inputTokens,
       cachedInputTokens: usage.cachedInputTokens,
       outputTokens: usage.outputTokens,
@@ -80,32 +91,43 @@ const append = async (
 };
 
 /** Runs `call` and records it once: `completed` if it returns, else `cancelled` when `signal` aborted, `failed` if not. */
+// `persist` runs before the row is written so it can link the Message; if it throws the call is still recorded, unlinked.
 export const recordModelCall = async <T>(
   ledger: ModelCallLedger,
   logger: Logger,
   subject: ModelCallSubject,
   call: (reportUsage: (usage: CallUsage) => void) => Promise<T>,
   signal?: AbortSignal,
+  persist?: () => Promise<ModelCallLink>,
 ): Promise<T> => {
   const startMs = Date.now();
   let usage = NO_USAGE;
-  const record = (outcome: ModelCallOutcome): Promise<void> =>
+  const record = (outcome: ModelCallOutcome, link?: ModelCallLink): Promise<void> =>
     append(ledger, logger, subject, {
       usage,
       durationMs: Date.now() - startMs,
       outcome,
       cached: false,
+      link,
     });
+  let result: T;
   try {
-    const result = await call((reported) => {
+    result = await call((reported) => {
       usage = reported;
     });
-    await record('completed');
-    return result;
   } catch (error) {
     await record(signal?.aborted ? 'cancelled' : 'failed');
     throw error;
   }
+  let link: ModelCallLink | undefined;
+  try {
+    link = await persist?.();
+  } catch (error) {
+    await record('completed');
+    throw error;
+  }
+  await record('completed', link);
+  return result;
 };
 
 /** Records a replayed Cache entry: it called no provider, so it costs nothing. */
@@ -114,10 +136,12 @@ export const recordCachedModelCall = (
   logger: Logger,
   subject: ModelCallSubject,
   startMs: number,
+  link: ModelCallLink,
 ): Promise<void> =>
   append(ledger, logger, subject, {
     usage: NO_USAGE,
     durationMs: Date.now() - startMs,
     outcome: 'completed',
     cached: true,
+    link,
   });

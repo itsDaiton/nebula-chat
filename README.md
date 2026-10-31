@@ -31,7 +31,7 @@ flowchart LR
   instead of failing.
 - **Opt-in.** Pick it per message, or keep the plain direct reply for quick questions.
 
-The domain terms are defined in [CONTEXT.md](./CONTEXT.md).
+The domain terms are defined in [GLOSSARY.md](./GLOSSARY.md).
 
 ## What works today
 
@@ -120,5 +120,5 @@ Then start the server, worker and client. [Full setup guide →](./docs/getting-
 | [Architecture](./docs/architecture.md) | Deployment, packages, data model and the flows that cross apps |
 | [Authentication](./docs/auth.md) | Sign-in, guests, the message allowance and claiming |
 | [Observability](./docs/logging.md) | Logging, tracing and runtime log levels |
-| [Domain glossary](./CONTEXT.md) | The language the product and code share |
+| [Domain glossary](./GLOSSARY.md) | The language the product and code share |
 | [Contributing](./AGENTS.md) | Conventions, git workflow and testing |

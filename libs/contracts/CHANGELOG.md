@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-contracts-v1.8.0...nebula-chat-contracts-v1.9.0) (2026-10-31)
+
+
+### Features
+
+* **worker:** NEB-585 let the Orchestrator ask one Clarifying question ([#716](https://github.com/itsDaiton/nebula-chat/issues/716)) ([df217d2](https://github.com/itsDaiton/nebula-chat/commit/df217d2bf7c13369d64bd93f0729f910c9f4e8b6)), closes [#585](https://github.com/itsDaiton/nebula-chat/issues/585)
+
+## [1.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-contracts-v1.7.1...nebula-chat-contracts-v1.8.0) (2026-10-31)
+
+
+### Features
+
+* **worker:** NEB-545 daily Purge of expired Pending deletion and inactive Guests ([#711](https://github.com/itsDaiton/nebula-chat/issues/711)) ([88e021f](https://github.com/itsDaiton/nebula-chat/commit/88e021f49f6e3eb0973feff918d7154af7231da0))
+
 ## [1.7.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-contracts-v1.7.0...nebula-chat-contracts-v1.7.1) (2026-10-29)
 
 

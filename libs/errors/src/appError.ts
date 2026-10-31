@@ -64,6 +64,13 @@ export class MessageAllowanceReachedError extends AppError {
   }
 }
 
+/** An Admin whose auth session has not passed two-factor authentication, or who has not enrolled. */
+export class TwoFactorRequiredError extends AppError {
+  constructor() {
+    super('TwoFactorRequired', 'This action requires signing in with two-factor authentication.');
+  }
+}
+
 export class NotFoundError extends AppError {
   constructor(resource: string, id?: string) {
     super('NotFound', id ? `${resource} with id "${id}" not found` : `${resource} not found`);
@@ -73,6 +80,20 @@ export class NotFoundError extends AppError {
 export class ConflictError extends AppError {
   constructor(message: string, options?: ErrorOptions) {
     super('Conflict', message, options);
+  }
+}
+
+/** Demoting or banning the only Admin left would leave no one to administer. */
+export class LastAdminError extends AppError {
+  constructor() {
+    super('LastAdmin', 'The last Admin cannot be demoted or banned.');
+  }
+}
+
+/** A Guest, an unverified user or a banned user cannot hold the Admin role. */
+export class NotEligibleForAdminError extends AppError {
+  constructor(message: string) {
+    super('NotEligibleForAdmin', message);
   }
 }
 

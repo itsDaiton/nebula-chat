@@ -5,7 +5,7 @@ they keep, and the flows that cross more than one app. Each diagram draws what t
 a design that is only proposed lives in its ADR. Feature-level flows sit next to their prose:
 sign-in, the Claim and the Message allowance in [auth.md](./auth.md), log export and runtime log
 levels in [logging.md](./logging.md). Domain terms (Session, Message, Direct reply, Run) are
-defined in [CONTEXT.md](../CONTEXT.md).
+defined in [GLOSSARY.md](../GLOSSARY.md).
 
 ## System context
 
@@ -107,7 +107,7 @@ The server's Zod route schemas are the single source of the HTTP contract
 flowchart LR
   routes["Server route schemas<br/>*.validation.ts"] -->|pnpm generate:openapi| spec["openapi/openapi.yaml"]
   spec -->|"pnpm generate:api<br/>Orval, no Operator tag"| clientgen["Client hooks + MSW mocks<br/>apps/client/src/libs/api/generated"]
-  spec -->|"pnpm generate:api<br/>Orval, Operator tag only"| cligen["CLI fetch client<br/>apps/cli/src/api/generated"]
+  spec -->|"pnpm generate:api<br/>Orval, Operator and Admin tags"| cligen["CLI fetch client<br/>apps/cli/src/api/generated"]
 ```
 
 better-auth's `/api/auth/*` routes are not in this spec; they have their own reference at
@@ -122,9 +122,10 @@ names its gates, so a route without one is public.
 flowchart TD
   req([HTTP request]) --> log1["requestLogging onRequest<br/>http.request.received · debug"]
   log1 --> which{path}
+  which -->|"/api/auth/admin/*"| nf["authGate → 404 NotFound<br/>never reaches better-auth"]
   which -->|"/api/auth/*"| ba["authGate → better-auth handler<br/>reply hijacked"]
   which -->|"/, /health, /docs"| public[Public handler]
-  which -->|"/api/..."| gates["Route gates<br/>rate limit (send only) ·<br/>requireAuthentication / requireRegistered ·<br/>operator token (/api/internal)"]
+  which -->|"/api/..."| gates["Route gates<br/>rate limit (send only) ·<br/>requireAuthentication / requireRegistered ·<br/>requireAdmin (/api/admin) ·<br/>operator token (/api/internal)"]
   gates --> pre["Route preHandlers<br/>e.g. messageAllowanceHook"]
   pre --> handler["controller → service → repository"]
   handler --> pg[(Postgres)]
@@ -138,7 +139,8 @@ flowchart TD
 ```
 
 - **Gates** read the auth session from the cookie cache, else Redis, and bind `user.id` to
-  `req.log`. `requireRegistered` turns a Guest away with `403`.
+  `req.log`. `requireRegistered` turns a Guest away with `403`. `requireAdmin` skips the cookie
+  cache and wants an Admin whose auth session passed two-factor ([auth.md](./auth.md#route-protection)).
 - **Errors** are thrown as `AppError`s and shaped once by the error handler
   ([ADR-0011](./adr/0011-shared-errors-lib-and-typed-envelope.md)); only `5xx` is logged there.
 - **Rate limits**: the send route allows 10 a minute per IP, in memory. better-auth limits its own
@@ -173,6 +175,7 @@ erDiagram
     text image
     text profile_image_key
     boolean is_anonymous
+    timestamp pending_deletion_at
   }
   session {
     uuid id PK
@@ -258,6 +261,7 @@ erDiagram
 | `auth:*`                                                       | better-auth | better-auth    | set by better-auth          | Sign-in sessions, verification tokens, auth rate-limit counters                   |
 | `auth:profile-image-uploads:<userId>`                          | server      | server         | 1 hour window               | Profile image upload limit                                                        |
 | BullMQ queue `direct-replies`                                  | server      | worker         | last 1000 kept              | Direct reply jobs, IDs only (`@nebula-chat/contracts`)                            |
+| BullMQ queue `clarifying-question-timeout`                     | worker      | worker         | removed when it completes   | One delayed job per waiting Run (Run ID only); fires when no answer came          |
 | BullMQ queue `runs`                                            | server      | worker         | last 1000 kept              | Run jobs, IDs only (`@nebula-chat/contracts`)                                     |
 | `stream:<streamId>` (Redis Stream)                             | worker      | server         | 1 hour after the reply ends | One reply's events: tokens, usage, a Run's Step events and status, `error`, `end` |
 | `stream-owner:<streamId>`                                      | server      | server         | 24 hours                    | Who may read a reply stream; the assistant Message does not exist yet             |
@@ -363,8 +367,11 @@ flowchart LR
   ld --> brief[buildBrief]
   ss --> brief
   brief --> orch[orchestrator<br/>createAgent loop]
-  orch -->|turn: parallel tool calls| dg[delegate Agents<br/>analyst, critic]
+  orch -->|turn: parallel tool calls| dg[delegate Agents<br/>analyst, critic, researcher]
   dg -->|tool results| orch
+  dg <-->|researcher's own loop| web[web_search, web_fetch]
+  orch -.->|askUser, once: Run waits, no job| ask[user's next Message<br/>or timeout job]
+  ask -.->|resume job| orch
   orch -->|handoff: findings| out[output<br/>Output Agent]
   out --> done((end))
 ```
@@ -381,14 +388,27 @@ flowchart LR
   (`{ language, session, missing }`), stores it on the Run and passes that JSON down.
 - **Orchestrator.** A LangChain `createAgent` tool-calling loop on a strong Model, run nested in its
   node. It opens with the Brief and the user's message; its only tools are the delegate Agents
-  (`analyst`, `critic`), each taking `{ task }` and answering with one plain model call, so a
-  delegate never delegates. Several calls in one turn run in parallel, up to
+  (`analyst`, `critic`, `researcher`), each taking `{ task }`, so a delegate never delegates. A
+  delegate with no tools answers with one plain model call. Several calls in one turn run in parallel, up to
   `RUN_PARALLEL_DELEGATES` per Run, and their results feed the next turn. It hands off by replying
   without a tool call: that reply is its findings. Its middleware records each turn and delegate
   as a Step, turns a delegate's error or timeout into an error tool result, and ends the loop at
   `RUN_TURN_CAP` turns or once the Run's tokens pass `RUN_HANDOFF_THRESHOLD` of `RUN_TOKEN_BUDGET`.
   A forced handoff passes the delegates' results so far as partial findings, and the Run ends
   `partial`, as it does when any delegate Step failed.
+- **Clarifying question.** The Orchestrator may call `askUser` once. The question is saved as an assistant
+  Message, the Run becomes `waiting`, `run-waiting` ends the stream and the job completes, so the Run holds no
+  job. The user's next Message in the Session is the answer: the server claims the `waiting` Run (to `queued`) in the
+  transaction that saves it, removes the delayed `clarifying-question-timeout` job and enqueues a resume job.
+  If `CLARIFYING_QUESTION_TIMEOUT_MS` passes first, that job claims the Run and enqueues a resume without an answer
+  (the Run ends `partial`). Stop, Archive and Ban raise the Run's cancel flag and promote the job, which ends the Run `cancelled`.
+- **Tools.** Tools are granted per Agent in code, and only to delegates: the `researcher` has
+  `web_search` (Tavily) and `web_fetch`. A delegate with tools runs its own `createAgent` loop,
+  without a checkpointer (its tools only read, so a crash re-runs it whole). Each tool call is a
+  `tool` Step under the delegate's Step; a tool's failure goes back to the delegate as a typed error
+  result. After `RUN_DELEGATE_TOOL_CALL_CAP` calls the delegate is offered no tools, so it answers
+  with what it has. `web_fetch` refuses any URL that is not public HTTP(S): it resolves the hostname
+  itself, checks every address, connects to the checked one and repeats that on each redirect.
 - **Output.** The Output Agent is always the last node. It reads the Brief as JSON and the
   findings, and streams the answer in the Brief's language. Only its tokens reach the stream. The
   answer is persisted as an assistant Message linked to the Run.

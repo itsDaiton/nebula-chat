@@ -12,10 +12,19 @@ import { INSTANCE_ID, logger, SERVICE_NAME } from '@worker/logger';
 initTelemetry(SERVICE_NAME, { logger, diagLevel: env.OTEL_LOG_LEVEL });
 
 import { createServer } from 'node:http';
-import { Worker } from 'bullmq';
-import { DIRECT_REPLY_QUEUE, RUN_QUEUE, serializeReplyStreamEvent } from '@nebula-chat/contracts';
+import { Queue, Worker } from 'bullmq';
+import {
+  CLARIFYING_QUESTION_TIMEOUT_QUEUE,
+  clarifyingQuestionTimeoutJobId,
+  DIRECT_REPLY_QUEUE,
+  PURGE_QUEUE,
+  PURGE_SCHEDULER_ID,
+  RUN_QUEUE,
+  serializeReplyStreamEvent,
+} from '@nebula-chat/contracts';
 import {
   REPLY_STREAM_RECORD_TTL_SECONDS,
+  runCancelKey,
   streamCancelKey,
   streamEndedKey,
   streamKey,
@@ -25,15 +34,24 @@ import { directReplyRepository } from '@worker/directReplies/directReplyReposito
 import type { ReplyStreamWriter } from '@worker/directReplies/runDirectReply';
 import { streamChat } from '@worker/directReplies/streamChat';
 import { createDirectReplyProcessor } from '@worker/jobs/directReply';
+import { createClarifyingQuestionTimeoutProcessor } from '@worker/jobs/clarifyingQuestionTimeout';
+import { createPurgeProcessor } from '@worker/jobs/purge';
 import { createRunProcessor } from '@worker/jobs/run';
 import { createLLM } from '@worker/llm/createLLM';
 import { loadPrompts } from '@worker/llm/prompts';
 import { invokeStructured } from '@worker/llm/structuredOutput';
 import { modelCallRepository } from '@worker/modelCalls/modelCallRepository';
+import { purgeRepository } from '@worker/purge/purgeRepository';
 import { redis } from '@worker/redis';
 import { createCheckpointer } from '@worker/runs/checkpointer';
-import { runRepository } from '@worker/runs/runRepository';
+import { runRepository, waitingRunRepository } from '@worker/runs/runRepository';
 import { stepRepository } from '@worker/runs/stepRepository';
+import { webFetchTool } from '@worker/tools/webFetch';
+import { webSearchTool } from '@worker/tools/webSearch';
+import { dnsResolve, nodeRequest } from '@worker/web/httpTransport';
+
+// Fixed, off-peak UTC; the Purge window is days wide, so the hour carries no meaning (ADR-0031).
+const PURGE_CRON = '0 3 * * *';
 
 const start = async (): Promise<void> => {
   const stream: ReplyStreamWriter = {
@@ -60,23 +78,59 @@ const start = async (): Promise<void> => {
     logger,
   });
 
+  const timeoutQueue = new Queue(CLARIFYING_QUESTION_TIMEOUT_QUEUE, {
+    connection: redis.dedicatedConnection(),
+    defaultJobOptions: { removeOnComplete: true, removeOnFail: 100 },
+  });
+  const runQueue = new Queue(RUN_QUEUE, {
+    connection: redis.dedicatedConnection(),
+    defaultJobOptions: { removeOnComplete: 1_000, removeOnFail: 1_000 },
+  });
+
+  // Creates or migrates the `langgraph` schema before the first Run needs it.
+  const checkpointer = await createCheckpointer(pool);
+
   const processRun = createRunProcessor({
+    scheduleQuestionTimeout: async (runId) => {
+      await timeoutQueue.add(
+        'clarifying-question-timeout',
+        { runId },
+        { delay: env.CLARIFYING_QUESTION_TIMEOUT_MS, jobId: clarifyingQuestionTimeoutJobId(runId) },
+      );
+    },
     runs: runRepository,
     steps: stepRepository,
     stream,
     ledger: modelCallRepository,
-    // Creates or migrates the `langgraph` schema before the first Run needs it.
-    checkpointer: await createCheckpointer(pool),
+    checkpointer,
     models: { structured: (request) => invokeStructured(request), chat: createLLM },
     prompts,
     apiKeys,
     logger,
+    toolbox: {
+      web_search: webSearchTool({
+        apiKey: env.TAVILY_API_KEY,
+        keyless: env.TAVILY_KEYLESS,
+        fetch: globalThis.fetch,
+        timeoutMs: env.WEB_FETCH_TIMEOUT_MS,
+        maxResults: 5,
+      }),
+      web_fetch: webFetchTool({
+        lookup: dnsResolve,
+        request: nodeRequest,
+        maxBytes: env.WEB_FETCH_MAX_BYTES,
+        timeoutMs: env.WEB_FETCH_TIMEOUT_MS,
+        maxRedirects: env.WEB_FETCH_MAX_REDIRECTS,
+        maxChars: env.WEB_FETCH_MAX_CHARS,
+      }),
+    },
     limits: {
       turnCap: env.RUN_TURN_CAP,
       parallelDelegates: env.RUN_PARALLEL_DELEGATES,
       tokenBudget: env.RUN_TOKEN_BUDGET,
       handoffThreshold: env.RUN_HANDOFF_THRESHOLD,
       delegateTimeoutMs: env.RUN_DELEGATE_TIMEOUT_MS,
+      delegateToolCallCap: env.RUN_DELEGATE_TOOL_CALL_CAP,
     },
     runTimeoutMs: env.RUN_TIMEOUT_MS,
   });
@@ -90,9 +144,48 @@ const start = async (): Promise<void> => {
     connection: redis.dedicatedConnection(),
     concurrency: env.RUN_CONCURRENCY,
   });
+  const timeouts = new Worker(
+    CLARIFYING_QUESTION_TIMEOUT_QUEUE,
+    createClarifyingQuestionTimeoutProcessor({
+      runs: waitingRunRepository,
+      checkpointer,
+      isCancelled: (runId) => redis.flags.isRaised(runCancelKey(runId)),
+      enqueueRun: async (job) => {
+        await runQueue.add('run', job, {
+          attempts: env.RUN_JOB_ATTEMPTS,
+          backoff: { type: 'exponential', delay: env.RUN_JOB_BACKOFF_MS },
+        });
+      },
+      logger,
+    }),
+    { connection: redis.dedicatedConnection() },
+  );
+  const processPurge = createPurgeProcessor({
+    store: purgeRepository,
+    logger,
+    now: () => new Date(),
+    pendingDeletionDays: env.PENDING_DELETION_DAYS,
+    guestInactiveDays: env.GUEST_INACTIVE_DAYS,
+  });
+  const purges = new Worker(PURGE_QUEUE, processPurge, {
+    connection: redis.dedicatedConnection(),
+  });
+  const purgeQueue = new Queue(PURGE_QUEUE, {
+    connection: redis.dedicatedConnection(),
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 60_000 },
+      removeOnComplete: 30,
+      removeOnFail: 30,
+    },
+  });
+  // A scheduler with a fixed id: every instance upserts the same one, so the Purge fires once a day.
+  await purgeQueue.upsertJobScheduler(PURGE_SCHEDULER_ID, { pattern: PURGE_CRON, tz: 'UTC' });
   for (const [queue, name] of [
     [directReplies, 'Direct reply'],
     [runs, 'Run'],
+    [timeouts, 'Clarifying question timeout'],
+    [purges, 'Purge'],
   ] as const) {
     queue.on('error', (err) => {
       // `warn`: the connection's own `redis.connection.failed` line is the outage's error.
@@ -141,6 +234,11 @@ const start = async (): Promise<void> => {
       await Promise.all([
         directReplies.close(),
         runs.close(),
+        timeouts.close(),
+        timeoutQueue.close(),
+        runQueue.close(),
+        purges.close(),
+        purgeQueue.close(),
         new Promise<void>((resolve) => health.close(() => resolve())),
       ]);
       await Promise.all([redis.close(), closeDb(), shutdownTelemetry()]);

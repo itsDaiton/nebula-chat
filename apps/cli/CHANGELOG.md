@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.5.0...nebula-chat-cli-v1.6.0) (2026-10-31)
+
+
+### Features
+
+* **worker:** NEB-545 daily Purge of expired Pending deletion and inactive Guests ([#711](https://github.com/itsDaiton/nebula-chat/issues/711)) ([88e021f](https://github.com/itsDaiton/nebula-chat/commit/88e021f49f6e3eb0973feff918d7154af7231da0))
+
+## [1.5.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.4.0...nebula-chat-cli-v1.5.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-541 Admin reads any User's Sessions and Messages, each read audited ([#707](https://github.com/itsDaiton/nebula-chat/issues/707)) ([ae9e5e3](https://github.com/itsDaiton/nebula-chat/commit/ae9e5e37a514323d5e57a5c91a004e45f12aeee3))
+
+## [1.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.3.0...nebula-chat-cli-v1.4.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-542 Admin grants and revokes the Admin role and bans and unbans Users ([#702](https://github.com/itsDaiton/nebula-chat/issues/702)) ([29abb1a](https://github.com/itsDaiton/nebula-chat/commit/29abb1a3f14e0c3077ef640470070811b5d6eb19))
+
+## [1.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.2.2...nebula-chat-cli-v1.3.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-539 admin gate, Audit log and Operator admin routes ([#695](https://github.com/itsDaiton/nebula-chat/issues/695)) ([e044c81](https://github.com/itsDaiton/nebula-chat/commit/e044c818fbaf52095e2b9bda952d77c48eafb918)), closes [#539](https://github.com/itsDaiton/nebula-chat/issues/539)
+
+## [1.2.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.2.1...nebula-chat-cli-v1.2.2) (2026-10-30)
+
+
+### Bug Fixes
+
+* Claude Code harness, skills update and GLOSSARY.md ([#688](https://github.com/itsDaiton/nebula-chat/issues/688)) ([17abd54](https://github.com/itsDaiton/nebula-chat/commit/17abd5450d4020b267c8e8b07579f23da90bb2e5))
+
 ## [1.2.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.2.0...nebula-chat-cli-v1.2.1) (2026-10-24)
 
 

@@ -52,7 +52,7 @@ The worker does **not** use the server's `name.layer.ts` file naming. Folders an
 and the folder says what kind of thing a file is, so a file carries no layer suffix
 (`jobs/directReply.ts`, `agents/orchestrator.ts`, `tools/webFetch.ts`). Test files keep the `.test.ts`
 suffix Vitest needs, in a `tests/` folder beside the code. Folders are named after
-[CONTEXT.md](../../CONTEXT.md) terms and appear when a ticket first needs them.
+[GLOSSARY.md](../../GLOSSARY.md) terms and appear when a ticket first needs them.
 
 `src/` holds `worker.ts` (entry: BullMQ workers, the `/health` server, shutdown, the real dependencies),
 `env.ts` (the only `process.env` reader, `OTEL_*` aside as in the server), the `logger.ts`, `db.ts` and
@@ -66,6 +66,9 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
 - `llm/` — the model layer: provider clients, structured output, token counting, `packHistory`, the
   concurrency limiter, and the prompt loader. A Model's provider, limits, prices and each provider's default Model come from the
   catalog in `@nebula-chat/contracts` (ADR-0030); the worker keeps no registry of its own.
+- `purge/` — the daily Purge (ADR-0028): `runPurge.ts` picks the Users and Guests past their thresholds, erases each in
+  its own transaction and appends one system Audit entry of counts; the Drizzle `PurgeStore` sits beside it. `worker.ts`
+  upserts the job scheduler (fixed id, `0 3 * * *` UTC) so every instance shares one schedule.
 - `modelCalls/` — the Model call ledger (ADR-0030): `recordModelCall.ts` is the only writer, so a Direct
   reply and, later, a Step share one path; the Drizzle `ModelCallLedger` sits beside it.
 - `resources/prompts/` — one static Markdown system prompt per file, no template variables: dynamic
@@ -80,6 +83,11 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
 - `agents/` — the Agents only: one file each (Model, prompt, tool grants, parameters, and for an
   Intake Agent its output schema and human-message builder). The Session's Model never applies to an
   Agent.
+- `tools/` — tool definitions only, one file each (`webSearch.ts`, `webFetch.ts`): the LangChain tool, its
+  Zod arguments and its config. `worker.ts` builds them into the Run's `Toolbox`; `runs/delegateTool.ts` gives
+  a delegate the ones its definition grants, in its own capped loop.
+- `web/` — the web layer the tools call: the Tavily client, the SSRF guard (`addressGuard.ts`), the pinned
+  DNS-and-HTTP transport, the redirect-following page fetch and its text extraction, and `WebToolError`.
 
 A Run job is retried by BullMQ (`RUN_JOB_ATTEMPTS` and `RUN_JOB_BACKOFF_MS` are the server's env, since the
 server adds the job). `executeRun` starts the graph only on a thread with no checkpoint: pending work resumes
@@ -89,9 +97,13 @@ Run `running` and its checkpoints in place; the last try ends the Run `failed` w
 Steps, a re-run Step's Model call gets its own ledger row (`<stepId>:<attempt>`), and a failed Run persists no
 assistant Message: its error event is the explanation.
 
-Folders later tickets add:
-
-- `tools/`: one file per tool.
+A Run may pause once on a Clarifying question (ADR-0033 §6). The Orchestrator's `askUser` tool (`runs/askUserTool.ts`)
+upserts the question Message, then interrupts. `executeRun` reads the interrupt from the root graph's pending task, sets the
+Run `waiting`, appends `run-waiting`, ends the stream, schedules the delayed `clarifying-question-timeout` job
+(`jobs/clarifyingQuestionTimeout.ts`, `CLARIFYING_QUESTION_TIMEOUT_MS`) and completes: a waiting Run holds no job. A Run job
+whose payload has `resume` continues from the checkpoint with `Command({ resume })`; `answerMessageId: null` is the timeout and
+ends the Run `partial`. The timeout job settles the Run with a conditional update on `status = waiting`, so it and a
+server-side answer settle once: it enqueues that resume job, or, with the Run's cancel flag raised, ends the Run `cancelled` and deletes its checkpoints.
 
 ### Adding a job type
 
@@ -127,7 +139,9 @@ model (`streamChat`), in-memory Session and Message storage, an in-memory respon
 on the emitted events, the persisted assistant Message, the recorded Model calls and the logged lines.
 `jobs/tests/run.test.ts` does the same for a Run, with scripted models per Agent (the Orchestrator's
 script decides each reply from the messages it is sent), LangGraph's in-memory checkpointer and
-in-memory Run and Step stores. No test reaches Postgres, Redis or a provider.
+in-memory Run and Step stores, and a Toolbox whose search provider and DNS are faked. Each tool is
+also tested at its own seam (`tools/tests/`), with faked DNS, HTTP and provider responses. `jobs/tests/purge.test.ts` runs the Purge processor over in-memory Users and a fake clock. No test
+reaches Postgres, Redis, a provider or the web.
 
 Coverage excludes construction-only files (`worker.ts`, `env.ts`, `logger.ts`, `db.ts`, `redis.ts`) and
 the Drizzle repository, as in the server. The list lives in `vitest.config.mts` and `matrix.coverage` in
@@ -135,26 +149,11 @@ the Drizzle repository, as in the server. The list lives in `vitest.config.mts` 
 
 ---
 
-## Environment Variables
+## Topic rules
 
-`.env` is loaded by the `dev` and `start` scripts through `dotenvx`, never by code ([ADR-0019](../../docs/adr/0019-dotenvx-loads-env-files-in-package-scripts.md)).
+Each topic lives in a path-scoped rule under [`.claude/rules/`](../../.claude/rules/). Claude Code loads one
+when it reads a matching file; any other agent opens the file when it works in that area.
 
-| Variable                                                                                                  | Purpose                                                          |
-| --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `OPENAI_API_KEY`                                                                                          | OpenAI API key (set at least one of this or `ANTHROPIC_API_KEY`) |
-| `ANTHROPIC_API_KEY`                                                                                       | Anthropic API key (set at least one of this or `OPENAI_API_KEY`) |
-| `DATABASE_URL`                                                                                            | PostgreSQL connection string (the server's database)             |
-| `REDIS_URL`                                                                                               | Redis connection string (the server's Redis)                     |
-| `PORT`                                                                                                    | Port `/health` listens on (default `3001`)                       |
-| `WORKER_CONCURRENCY`                                                                                      | Direct replies one instance produces at once (default `5`)       |
-| `RUN_CONCURRENCY`                                                                                         | Runs one instance executes at once (default `3`)                 |
-| `RUN_TURN_CAP`                                                                                            | Orchestrator turns before a forced handoff (default `6`)         |
-| `RUN_PARALLEL_DELEGATES`                                                                                  | Delegate Agents one Run executes at once (default `4`)           |
-| `RUN_TOKEN_BUDGET`                                                                                        | The Run budget, in tokens across all Steps (default `60000`)     |
-| `RUN_HANDOFF_THRESHOLD`                                                                                   | Share of the Run budget that forces the handoff (default `0.85`) |
-| `RUN_DELEGATE_TIMEOUT_MS`                                                                                 | How long a delegate Step may take (default `60000`)              |
-| `RUN_TIMEOUT_MS`                                                                                          | How long a Run may take before it fails (default `300000`)       |
-| `STREAM_TTL_SECONDS`                                                                                      | How long a reply stream outlives its end (default `3600`)        |
-| `LOG_LEVEL`                                                                                               | Log verbosity (default `info`)                                   |
-| `LOG_LEVEL_OVERRIDES`                                                                                     | Per-component levels, comma-separated `component=level`          |
-| `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_LOGS_EXPORTER`, `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`, `OTEL_LOG_LEVEL` | As in the server ([docs/logging.md](../../docs/logging.md))      |
+| Rule                                            | Covers                                   |
+| ----------------------------------------------- | ---------------------------------------- |
+| [worker-env](../../.claude/rules/worker-env.md) | `.env` loading, `env.ts`, every variable |

@@ -1,5 +1,76 @@
 # Changelog
 
+## [4.15.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.14.0...nebula-chat-server-v4.15.0) (2026-10-31)
+
+
+### Features
+
+* **worker:** NEB-585 let the Orchestrator ask one Clarifying question ([#716](https://github.com/itsDaiton/nebula-chat/issues/716)) ([df217d2](https://github.com/itsDaiton/nebula-chat/commit/df217d2bf7c13369d64bd93f0729f910c9f4e8b6)), closes [#585](https://github.com/itsDaiton/nebula-chat/issues/585)
+
+## [4.14.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.13.0...nebula-chat-server-v4.14.0) (2026-10-31)
+
+
+### Features
+
+* **worker:** NEB-545 daily Purge of expired Pending deletion and inactive Guests ([#711](https://github.com/itsDaiton/nebula-chat/issues/711)) ([88e021f](https://github.com/itsDaiton/nebula-chat/commit/88e021f49f6e3eb0973feff918d7154af7231da0))
+
+## [4.13.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.12.0...nebula-chat-server-v4.13.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-541 Admin reads any User's Sessions and Messages, each read audited ([#707](https://github.com/itsDaiton/nebula-chat/issues/707)) ([ae9e5e3](https://github.com/itsDaiton/nebula-chat/commit/ae9e5e37a514323d5e57a5c91a004e45f12aeee3))
+
+## [4.12.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.11.0...nebula-chat-server-v4.12.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-665 Messages carry their Model, estimated cost, Run and context usage ([#704](https://github.com/itsDaiton/nebula-chat/issues/704)) ([c9bf8b3](https://github.com/itsDaiton/nebula-chat/commit/c9bf8b33f1bac83076aed43f18b1e986c661b6ca))
+
+## [4.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.10.0...nebula-chat-server-v4.11.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-542 Admin grants and revokes the Admin role and bans and unbans Users ([#702](https://github.com/itsDaiton/nebula-chat/issues/702)) ([29abb1a](https://github.com/itsDaiton/nebula-chat/commit/29abb1a3f14e0c3077ef640470070811b5d6eb19))
+
+## [4.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.9.1...nebula-chat-server-v4.10.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-540 Admin reads the User list and a User's details ([#697](https://github.com/itsDaiton/nebula-chat/issues/697)) ([838729a](https://github.com/itsDaiton/nebula-chat/commit/838729a572dcd8bde13cd94ee1f5949b1842e441))
+* **server:** NEB-544 Account deletion starts a 30-day Pending deletion ([#699](https://github.com/itsDaiton/nebula-chat/issues/699)) ([cbf636b](https://github.com/itsDaiton/nebula-chat/commit/cbf636b24371eb59794459f1c20494898e4479d2))
+
+## [4.9.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.9.0...nebula-chat-server-v4.9.1) (2026-10-31)
+
+
+### Bug Fixes
+
+* **agents:** NEB-689 split server and client AGENTS.md into path-scoped rules ([#698](https://github.com/itsDaiton/nebula-chat/issues/698)) ([7281fc5](https://github.com/itsDaiton/nebula-chat/commit/7281fc540d88afb2a3dc81a3995d2742b7fb038e))
+
+## [4.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.8.0...nebula-chat-server-v4.9.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-539 admin gate, Audit log and Operator admin routes ([#695](https://github.com/itsDaiton/nebula-chat/issues/695)) ([e044c81](https://github.com/itsDaiton/nebula-chat/commit/e044c818fbaf52095e2b9bda952d77c48eafb918)), closes [#539](https://github.com/itsDaiton/nebula-chat/issues/539)
+
+## [4.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.7.2...nebula-chat-server-v4.8.0) (2026-10-31)
+
+
+### Features
+
+* **auth:** NEB-538 enable the admin and two-factor plugins with the Audit log table ([#691](https://github.com/itsDaiton/nebula-chat/issues/691)) ([abff13c](https://github.com/itsDaiton/nebula-chat/commit/abff13c83f31d750867fd44082e7770af45059cf))
+
+## [4.7.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.7.1...nebula-chat-server-v4.7.2) (2026-10-30)
+
+
+### Bug Fixes
+
+* Claude Code harness, skills update and GLOSSARY.md ([#688](https://github.com/itsDaiton/nebula-chat/issues/688)) ([17abd54](https://github.com/itsDaiton/nebula-chat/commit/17abd5450d4020b267c8e8b07579f23da90bb2e5))
+
 ## [4.7.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.7.0...nebula-chat-server-v4.7.1) (2026-10-29)
 
 

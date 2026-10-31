@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nebula Chat API
-  version: 4.5.1
+  version: 4.12.0
   description: REST API for Nebula Chat
   contact:
     name: Nebula Chat
@@ -83,8 +83,11 @@ components:
         - Unauthorized
         - Forbidden
         - MessageAllowanceReached
+        - TwoFactorRequired
         - NotFound
         - Conflict
+        - LastAdmin
+        - NotEligibleForAdmin
         - PayloadTooLarge
         - TooManyRequests
         - Internal
@@ -158,63 +161,6 @@ components:
         - createdAt
         - archived
       additionalProperties: false
-    SessionDetail:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-        title:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
-        archived:
-          type: boolean
-          description: Whether the owner has archived this Session
-        activeStreamId:
-          anyOf:
-            - type: string
-              format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
-          description: >-
-            The reply still being produced for this Session, to re-attach to
-            with `GET /api/streams/{streamId}`; null when none is in flight
-      required:
-        - id
-        - title
-        - createdAt
-        - archived
-        - activeStreamId
-      additionalProperties: false
-    SessionPage:
-      type: object
-      properties:
-        sessions:
-          maxItems: 100
-          type: array
-          items:
-            $ref: '#/components/schemas/Session'
-        nextCursor:
-          anyOf:
-            - type: string
-              format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
-        hasMore:
-          type: boolean
-      required:
-        - sessions
-        - nextCursor
-        - hasMore
-      additionalProperties: false
     SessionSearchResult:
       type: object
       properties:
@@ -244,6 +190,96 @@ components:
         - createdAt
         - archived
       additionalProperties: false
+    SessionDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        archived:
+          type: boolean
+          description: Whether the owner has archived this Session
+        activeStreamId:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: >-
+                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: 'null'
+          description: >-
+            The reply still being produced for this Session, to re-attach to
+            with `GET /api/streams/{streamId}`; null when none is in flight
+        waitingRun:
+          anyOf:
+            - type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                  pattern: >-
+                    ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                streamId:
+                  anyOf:
+                    - type: string
+                      format: uuid
+                      pattern: >-
+                        ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    - type: 'null'
+                  description: >-
+                    The stream the question was asked on; `POST
+                    /api/streams/{streamId}/cancel` cancels the Run
+                stepsCompleted:
+                  type: integer
+                  minimum: 0
+                  maximum: 9007199254740991
+              required:
+                - id
+                - streamId
+                - stepsCompleted
+              additionalProperties: false
+            - type: 'null'
+          description: >-
+            The Run waiting for the answer to its Clarifying question; the next
+            Message sent to the Session answers it
+      required:
+        - id
+        - title
+        - createdAt
+        - archived
+        - activeStreamId
+        - waitingRun
+      additionalProperties: false
+    SessionPage:
+      type: object
+      properties:
+        sessions:
+          maxItems: 100
+          type: array
+          items:
+            $ref: '#/components/schemas/Session'
+        nextCursor:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: >-
+                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: 'null'
+        hasMore:
+          type: boolean
+      required:
+        - sessions
+        - nextCursor
+        - hasMore
+      additionalProperties: false
     Message:
       type: object
       properties:
@@ -269,6 +305,40 @@ components:
             - type: 'null'
         cached:
           type: boolean
+        model:
+          description: The Model that wrote a Direct reply; null for a Run answer
+          type:
+            - string
+            - 'null'
+        estimatedCostUsd:
+          description: >-
+            Estimated cost in USD; for a Run answer, the sum of the Run’s Model
+            calls
+          type:
+            - number
+            - 'null'
+        runId:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: >-
+                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: 'null'
+          description: The Run that produced this Message
+        contextTokens:
+          anyOf:
+            - type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            - type: 'null'
+          description: Input tokens of a Direct reply’s request
+        contextMessages:
+          anyOf:
+            - type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            - type: 'null'
+          description: History Messages sent with a Direct reply
         createdAt:
           type: string
           format: date-time
@@ -281,6 +351,11 @@ components:
         - role
         - tokenCount
         - cached
+        - model
+        - estimatedCostUsd
+        - runId
+        - contextTokens
+        - contextMessages
         - createdAt
       additionalProperties: false
     ModelCatalog:
@@ -488,6 +563,390 @@ components:
         - receivers
         - expiresAt
       additionalProperties: false
+    Admin:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        email:
+          type: string
+          format: email
+          pattern: >-
+            ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
+        name:
+          type: string
+        twoFactorEnabled:
+          type: boolean
+          description: >-
+            Whether they have enrolled in two-factor authentication, without
+            which the admin API refuses them
+        createdAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+      required:
+        - id
+        - email
+        - name
+        - twoFactorEnabled
+        - createdAt
+      additionalProperties: false
+    AdminUserPage:
+      type: object
+      properties:
+        users:
+          maxItems: 100
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminUserSummary'
+        nextCursor:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: >-
+                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: 'null'
+        hasMore:
+          type: boolean
+      required:
+        - users
+        - nextCursor
+        - hasMore
+      additionalProperties: false
+    AdminUserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        email:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+            - registered
+            - unverified
+            - admin
+            - banned
+            - pendingDeletion
+            - guest
+          description: 'The first that applies: guest, banned, admin, unverified, registered'
+        twoFactorEnabled:
+          type: boolean
+        messagesSent:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: Messages the User sent, across their Sessions
+        createdAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+      required:
+        - id
+        - email
+        - name
+        - status
+        - twoFactorEnabled
+        - messagesSent
+        - createdAt
+        - updatedAt
+      additionalProperties: false
+    AdminUserDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        email:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+            - registered
+            - unverified
+            - admin
+            - banned
+            - pendingDeletion
+            - guest
+          description: 'The first that applies: guest, banned, admin, unverified, registered'
+        twoFactorEnabled:
+          type: boolean
+        messagesSent:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: Messages the User sent, across their Sessions
+        createdAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        ban:
+          anyOf:
+            - type: object
+              properties:
+                reason:
+                  type:
+                    - string
+                    - 'null'
+                expiresAt:
+                  anyOf:
+                    - type: string
+                      format: date-time
+                      pattern: >-
+                        ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+                    - type: 'null'
+                  description: '`null` for a ban with no end'
+              required:
+                - reason
+                - expiresAt
+              additionalProperties: false
+            - type: 'null'
+          description: '`null` unless the User is banned now'
+        pendingDeletionAt:
+          anyOf:
+            - type: string
+              format: date-time
+              pattern: >-
+                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: 'null'
+          description: >-
+            When the User asked to delete the account; it is Purged 30 days
+            later. `null` unless pending
+        sessionsCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+      required:
+        - id
+        - email
+        - name
+        - status
+        - twoFactorEnabled
+        - messagesSent
+        - createdAt
+        - updatedAt
+        - ban
+        - pendingDeletionAt
+        - sessionsCount
+      additionalProperties: false
+    AdminSessionPage:
+      type: object
+      properties:
+        sessions:
+          maxItems: 100
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminSessionSummary'
+        nextCursor:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: >-
+                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: 'null'
+        hasMore:
+          type: boolean
+      required:
+        - sessions
+        - nextCursor
+        - hasMore
+      additionalProperties: false
+    AdminSessionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        title:
+          type: string
+        model:
+          type: string
+        archived:
+          type: boolean
+          description: Whether the owner has archived the Session
+        messageCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        createdAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+      required:
+        - id
+        - title
+        - model
+        - archived
+        - messageCount
+        - createdAt
+        - updatedAt
+      additionalProperties: false
+    AdminSessionDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        title:
+          type: string
+        model:
+          type: string
+        archived:
+          type: boolean
+          description: Whether the owner has archived the Session
+        messageCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        createdAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        userId:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          description: The owner
+        messages:
+          maxItems: 1000
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+          description: Oldest first
+      required:
+        - id
+        - title
+        - model
+        - archived
+        - messageCount
+        - createdAt
+        - updatedAt
+        - userId
+        - messages
+      additionalProperties: false
+    AuditPage:
+      type: object
+      properties:
+        entries:
+          maxItems: 100
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEntry'
+          description: Newest first
+        nextCursor:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: >-
+                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: 'null'
+        hasMore:
+          type: boolean
+      required:
+        - entries
+        - nextCursor
+        - hasMore
+      additionalProperties: false
+    AuditEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        actorType:
+          type: string
+          enum:
+            - admin
+            - operator
+            - system
+        actorUserId:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: >-
+                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: 'null'
+          description: The Admin who acted; `null` for the Operator or the system
+        action:
+          type: string
+          enum:
+            - admin.granted
+            - user.role_changed
+            - user.banned
+            - user.unbanned
+            - user.restored
+            - session.read
+            - run.read
+            - users.purged
+        targetType:
+          type: string
+        targetId:
+          type: string
+        detail:
+          type: object
+          propertyNames:
+            type: string
+          additionalProperties: {}
+          description: Ids and changed fields; never Message content
+        createdAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+      required:
+        - id
+        - actorType
+        - actorUserId
+        - action
+        - targetType
+        - targetId
+        - detail
+        - createdAt
+      additionalProperties: false
 paths:
   /:
     get:
@@ -526,7 +985,10 @@ paths:
       description: >-
         Send a user Message to one of the caller’s own Sessions. The Message is
         persisted and its reply is queued; nothing waits on the model. Read the
-        reply as server-sent events from `GET /api/streams/{streamId}`.
+        reply as server-sent events from `GET /api/streams/{streamId}`. When the
+        Session has a Run waiting on a Clarifying question, the Message is its
+        answer whatever its `mode`: it resumes the Run on a new stream and the
+        response carries that Run’s `runId`.
       requestBody:
         required: true
         content:
@@ -1245,7 +1707,9 @@ paths:
       description: >-
         Stop a Direct reply in flight: the worker aborts the model call,
         persists what it had produced and ends the stream with `end` { reason:
-        "cancelled" }. Cancelling a reply that already finished does nothing.
+        "cancelled" }. Cancelling the last stream of a Run waiting on a
+        Clarifying question cancels that Run. Cancelling a reply that already
+        finished does nothing.
       parameters:
         - schema:
             type: string
@@ -1540,6 +2004,869 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+  /api/internal/admins:
+    get:
+      operationId: listAdmins
+      summary: List Admins
+      tags:
+        - Operator
+      description: List every Admin. Requires the operator token, not a User session.
+      security:
+        - operatorToken: []
+      responses:
+        '200':
+          description: Every Admin, oldest account first
+          content:
+            application/json:
+              schema:
+                maxItems: 100
+                type: array
+                items:
+                  $ref: '#/components/schemas/Admin'
+        '403':
+          description: Missing or wrong operator token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: No operator token is configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    post:
+      operationId: grantAdmin
+      summary: Grant Admin
+      tags:
+        - Operator
+      description: >-
+        Make a verified Registered user an Admin, and record it in the Audit log
+        with the Operator as actor. This is how the first Admin is made.
+        Requires the operator token, not a User session.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  description: The email of the verified Registered user to make an Admin
+                  type: string
+                  format: email
+                  pattern: >-
+                    ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
+              required:
+                - email
+      security:
+        - operatorToken: []
+      responses:
+        '201':
+          description: The user is now an Admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Admin'
+        '400':
+          description: Invalid body, or the user is a Guest, unverified or banned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Missing or wrong operator token
+          content:
+            application/json:
+              schema: {}
+        '404':
+          description: No operator token is configured, or no user has that email
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: The user is already an Admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema: {}
+  /api/internal/admins/{email}:
+    delete:
+      operationId: revokeAdmin
+      summary: Revoke Admin
+      tags:
+        - Operator
+      description: >-
+        Take the Admin role from a user, and record it in the Audit log with the
+        Operator as actor. Requires the operator token, not a User session.
+      parameters:
+        - schema:
+            description: The email of the Admin
+            type: string
+            format: email
+            pattern: >-
+              ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
+          in: path
+          name: email
+          required: true
+          description: The email of the Admin
+      security:
+        - operatorToken: []
+      responses:
+        '204':
+          description: The user is no longer an Admin
+        '400':
+          description: Invalid email
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Missing or wrong operator token
+          content:
+            application/json:
+              schema: {}
+        '404':
+          description: No operator token is configured, or no user has that email
+          content:
+            application/json:
+              schema: {}
+        '409':
+          description: The user is not an Admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema: {}
+  /api/admin/users:
+    get:
+      operationId: listUsers
+      summary: List Users
+      tags:
+        - Admin
+      description: >-
+        List Users, newest first by default, filtered by status and a name or
+        email search, a page at a time. Guests are left out unless
+        `status=guest`. Requires an Admin whose auth session passed two-factor
+        authentication.
+      parameters:
+        - schema:
+            description: Case-insensitive text to find in the name or email
+            type: string
+            minLength: 1
+            maxLength: 100
+          in: query
+          name: search
+          description: Case-insensitive text to find in the name or email
+        - schema:
+            description: >-
+              Only Users in this status; without it every User but Guests is
+              listed
+            type: string
+            enum:
+              - registered
+              - unverified
+              - admin
+              - banned
+              - pendingDeletion
+              - guest
+          in: query
+          name: status
+          description: >-
+            Only Users in this status; without it every User but Guests is
+            listed
+        - schema:
+            default: createdAt
+            description: >-
+              `lastActiveAt` is the last update to the account until activity is
+              tracked
+            type: string
+            enum:
+              - createdAt
+              - lastActiveAt
+              - messagesSent
+          in: query
+          name: sortBy
+          description: >-
+            `lastActiveAt` is the last update to the account until activity is
+            tracked
+        - schema:
+            default: desc
+            type: string
+            enum:
+              - asc
+              - desc
+          in: query
+          name: order
+        - schema:
+            default: 10
+            description: Number of Users to fetch (1-100, default 10)
+            type: integer
+            minimum: 1
+            maximum: 100
+          in: query
+          name: limit
+          description: Number of Users to fetch (1-100, default 10)
+        - schema:
+            description: The `nextCursor` of the previous page
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: query
+          name: cursor
+          description: The `nextCursor` of the previous page
+      responses:
+        '200':
+          description: A page of Users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserPage'
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: >-
+            Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/admin/users/{id}:
+    get:
+      operationId: getUser
+      summary: Get a User
+      tags:
+        - Admin
+      description: >-
+        Read one User: status, two-factor state, ban, Sessions and messages
+        sent, and timestamps. Requires an Admin whose auth session passed
+        two-factor authentication.
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            description: The User id
+          in: path
+          name: id
+          required: true
+          description: The User id
+      responses:
+        '200':
+          description: The User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserDetail'
+        '400':
+          description: Invalid id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: >-
+            Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema: {}
+        '404':
+          description: No User has that id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema: {}
+  /api/admin/users/{id}/sessions:
+    get:
+      operationId: listUserSessions
+      summary: List a User's Sessions
+      tags:
+        - Admin
+      description: >-
+        List a User's Sessions, archived ones included and marked, newest first,
+        a page at a time. Listing is not a content read, so it writes no Audit
+        entry. Requires an Admin whose auth session passed two-factor
+        authentication.
+      parameters:
+        - schema:
+            default: 10
+            description: Number of Sessions to fetch (1-100, default 10)
+            type: integer
+            minimum: 1
+            maximum: 100
+          in: query
+          name: limit
+          description: Number of Sessions to fetch (1-100, default 10)
+        - schema:
+            description: The `nextCursor` of the previous page
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: query
+          name: cursor
+          description: The `nextCursor` of the previous page
+        - schema:
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            description: The User id
+          in: path
+          name: id
+          required: true
+          description: The User id
+      responses:
+        '200':
+          description: A page of Sessions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSessionPage'
+        '400':
+          description: Invalid id or query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: >-
+            Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema: {}
+        '404':
+          description: No User has that id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema: {}
+  /api/admin/users/{id}/restore:
+    post:
+      operationId: restoreUser
+      summary: Restore a User
+      tags:
+        - Admin
+      description: >-
+        Restore a User in Pending deletion in full, and record it in the Audit
+        log. Requires an Admin whose auth session passed two-factor
+        authentication.
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            description: The User id
+          in: path
+          name: id
+          required: true
+          description: The User id
+      responses:
+        '204':
+          description: The User is no longer pending deletion
+        '400':
+          description: Invalid id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: >-
+            Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema: {}
+        '404':
+          description: No User has that id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: The User is not pending deletion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema: {}
+  /api/admin/users/{id}/role:
+    post:
+      operationId: setUserRole
+      summary: Grant or revoke Admin
+      tags:
+        - Admin
+      description: >-
+        Grant or revoke the Admin role, and record it in the Audit log. A Guest,
+        an unverified or a banned user cannot become an Admin
+        (`NotEligibleForAdmin`), and the last Admin cannot be revoked
+        (`LastAdmin`). Requires an Admin whose auth session passed two-factor
+        authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum:
+                    - admin
+                    - user
+                  description: '`admin` grants the role, `user` revokes it'
+              required:
+                - role
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            description: The User id
+          in: path
+          name: id
+          required: true
+          description: The User id
+      responses:
+        '204':
+          description: The role is changed
+        '400':
+          description: Invalid id or body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: >-
+            Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema: {}
+        '404':
+          description: No User has that id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: >-
+            Already (or not) an Admin (`Conflict`), not eligible
+            (`NotEligibleForAdmin`) or the last Admin (`LastAdmin`)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema: {}
+  /api/admin/users/{id}/ban:
+    post:
+      operationId: banUser
+      summary: Ban a User
+      tags:
+        - Admin
+      description: >-
+        Ban a User with a reason and an optional end time, revoke every auth
+        session of theirs, and record it in the Audit log. Their sign-in then
+        fails with the reason and end time until the ban ends or is lifted. The
+        last Admin cannot be banned (`LastAdmin`). Sessions are revoked through
+        Redis secondary storage; a cookie-cache holder may stay signed in for up
+        to five minutes, as with Sign out everywhere. Requires an Admin whose
+        auth session passed two-factor authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+                  description: Shown to the User when they try to sign in
+                expiresAt:
+                  description: >-
+                    When the ban ends; without it the ban lasts until an Admin
+                    lifts it
+                  type: string
+                  format: date-time
+                  pattern: >-
+                    ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+              required:
+                - reason
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            description: The User id
+          in: path
+          name: id
+          required: true
+          description: The User id
+      responses:
+        '204':
+          description: The User is banned
+        '400':
+          description: Invalid id or body, or the Admin banning themselves
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: >-
+            Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema: {}
+        '404':
+          description: No User has that id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Already banned (`Conflict`) or the last Admin (`LastAdmin`)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema: {}
+  /api/admin/users/{id}/unban:
+    post:
+      operationId: unbanUser
+      summary: Unban a User
+      tags:
+        - Admin
+      description: >-
+        Lift a ban, and record it in the Audit log. Requires an Admin whose auth
+        session passed two-factor authentication.
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            description: The User id
+          in: path
+          name: id
+          required: true
+          description: The User id
+      responses:
+        '204':
+          description: The User is no longer banned
+        '400':
+          description: Invalid id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: >-
+            Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema: {}
+        '404':
+          description: No User has that id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: The User is not banned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema: {}
+  /api/admin/sessions/{id}:
+    get:
+      operationId: readSession
+      summary: Read a Session
+      tags:
+        - Admin
+      description: >-
+        Read any Session with all its Messages, oldest first, and record the
+        read in the Audit log. If the Audit entry cannot be written the request
+        fails. Requires an Admin whose auth session passed two-factor
+        authentication.
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            description: The Session id
+          in: path
+          name: id
+          required: true
+          description: The Session id
+      responses:
+        '200':
+          description: The Session and its Messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSessionDetail'
+        '400':
+          description: Invalid id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: >-
+            Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: No Session has that id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/admin/audit:
+    get:
+      operationId: listAuditEntries
+      summary: List Audit log
+      tags:
+        - Admin
+      description: >-
+        List Audit log entries, newest first, filtered by actor, action, target
+        and time range, a page at a time. Requires an Admin whose auth session
+        passed two-factor authentication.
+      parameters:
+        - schema:
+            description: Only entries by this kind of actor
+            type: string
+            enum:
+              - admin
+              - operator
+              - system
+          in: query
+          name: actorType
+          description: Only entries by this kind of actor
+        - schema:
+            description: Only entries by this Admin
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: query
+          name: actorUserId
+          description: Only entries by this Admin
+        - schema:
+            type: string
+            enum:
+              - admin.granted
+              - user.role_changed
+              - user.banned
+              - user.unbanned
+              - user.restored
+              - session.read
+              - run.read
+              - users.purged
+          in: query
+          name: action
+        - schema:
+            description: Only entries about this kind of record, e.g. `user`
+            type: string
+            minLength: 1
+            maxLength: 50
+          in: query
+          name: targetType
+          description: Only entries about this kind of record, e.g. `user`
+        - schema:
+            description: Only entries about this record
+            type: string
+            minLength: 1
+            maxLength: 100
+          in: query
+          name: targetId
+          description: Only entries about this record
+        - schema:
+            description: Only entries at or after this time
+            type: string
+            format: date-time
+            pattern: >-
+              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          in: query
+          name: from
+          description: Only entries at or after this time
+        - schema:
+            description: Only entries before this time
+            type: string
+            format: date-time
+            pattern: >-
+              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          in: query
+          name: to
+          description: Only entries before this time
+        - schema:
+            default: 10
+            description: Number of entries to fetch (1-100, default 10)
+            type: integer
+            minimum: 1
+            maximum: 100
+          in: query
+          name: limit
+          description: Number of entries to fetch (1-100, default 10)
+        - schema:
+            description: The `nextCursor` of the previous page
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: query
+          name: cursor
+          description: The `nextCursor` of the previous page
+      responses:
+        '200':
+          description: A page of Audit log entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditPage'
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: >-
+            Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
 servers:
   - url: /
 security:
@@ -1561,3 +2888,5 @@ tags:
     description: A Registered user's Profile image
   - name: Operator
     description: Operations for whoever runs the deployment
+  - name: Admin
+    description: The admin API, for Admins signed in with two-factor authentication

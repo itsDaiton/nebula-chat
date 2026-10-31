@@ -1,8 +1,11 @@
 # CLAUDE.md
 
-Guidance for Claude Code in this repository. [AGENTS.md](./AGENTS.md) holds the repo-wide habits;
-the per-app `AGENTS.md` files hold package conventions; [CONTEXT.md](./CONTEXT.md) owns domain vocabulary.
-Read the relevant ones before a non-trivial change.
+Guidance for Claude Code in this repository. The repo-wide habits below come from [AGENTS.md](./AGENTS.md);
+each app's `CLAUDE.md` imports its `AGENTS.md` on first touch; [GLOSSARY.md](./GLOSSARY.md) owns domain vocabulary.
+
+@AGENTS.md
+
+Topic rules for the server, client and worker live in `.claude/rules/` and load when Claude reads a matching file.
 
 ## Working principles
 
@@ -29,15 +32,25 @@ These bias toward caution over speed; for trivial tasks use judgment.
 - **Conventional Commits, `feat`/`fix` only** (`!` for breaking) — Release Please ignores every other
   type. Default to `fix(<scope>): …`. Never bundle unrelated changes.
 - **Open a PR when the work is complete.** Title `type(scope): NEB-<n> summary` (no ID for ad-hoc work).
-  Body: one-line summary, `Closes #NN`, test-plan checklist, ADR link if one exists.
+  Write the body with **`/pr`** (Summary, Evidence, Merge Danger), then add `Closes #NN` and the ADR link if
+  one exists.
 - **Never merge your own PR** unless asked. Never force-push shared refs or use `--no-verify`.
 
 ## Skills
 
 Feature or non-trivial change: **`/grill-with-docs`** → **`/to-spec`** → **`/to-tickets`** →
-**`/implement`** per ticket (drives `/tdd`, ends with `/code-review`). Go straight to `/implement` for a
+**`/implement`** per ticket (drives `/tdd`, ends with `/code-review`) → **`/pr`**. Go straight to `/implement` for a
 single-session change. Incoming reports: **`/triage`**. Foggy multi-session effort: **`/wayfinder`**.
 Unsure: **`/ask-matt`**.
+Vendored skills carry local edits in `tdd` (seams don't block on confirmation) and `to-tickets` (our ticket
+template); after `npx skills@latest update`, re-apply them from the diff.
+
+## Subagents
+
+- Hand lint, typecheck and test runs to the **`verifier`** subagent and act on its summary; keep edits in the
+  main session.
+- Library and API docs: the **`doc-researcher`** subagent. Never set `model:` in a skill: a mid-session model
+  switch re-reads the whole conversation uncached. Use `context: fork` with an `agent:` instead.
 
 ## Tickets and domain docs
 
@@ -49,5 +62,10 @@ Unsure: **`/ask-matt`**.
   `docs/design/redesign/README.md`: load the "Nebula Redesign Mockups" artifact and look at every
   screenshot the ticket names. A hook blocks client `.tsx`/`.css` edits until you have; if the artifact
   won't load, stop and tell the user.
-- Domain: one `CONTEXT.md` plus `docs/adr/` — see `docs/agents/domain.md`. Both are produced upstream
+- Domain: one `GLOSSARY.md` plus `docs/adr/` — see `docs/agents/domain.md`. Both are produced upstream
   during `/grill-with-docs`, not during implementation.
+
+## Compact instructions
+
+Keep the ticket number, the branch, the spec or acceptance criteria, failing check names and the files changed.
+Drop exploration output and passing test logs.

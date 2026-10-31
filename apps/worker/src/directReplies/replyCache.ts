@@ -15,7 +15,7 @@ const cachedReplySchema = z.object({
     .optional(),
 });
 
-/** A Cache entry (CONTEXT.md): what a completed Direct reply streamed. */
+/** A Cache entry (GLOSSARY.md): what a completed Direct reply streamed. */
 export type CachedReply = z.infer<typeof cachedReplySchema>;
 
 /** Where Cache entries live: `@nebula-chat/redis`'s `cache` in production. */

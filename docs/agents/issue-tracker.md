@@ -50,7 +50,7 @@ A ticket is a **pre-implementation artifact** — the output of a `/grill-with-d
   | **Testing**                    | which seams to test, what to mock vs. keep real, the test types, and what's deliberately not tested                                                                                                                                                                                                                                                                                                                      |
   | **Depends on**                 | a **bullet list** of blocking tickets, each linking the issue on GitHub with `#NN` (e.g. `- #334 — @nebula-chat/otel`); a single `- None` bullet if it can start immediately. **Every bullet must also be recorded as a native `blocked_by` edge** (see [Dependencies](#dependencies)) so the block is machine-visible, not prose only. The inverse ("blocks") is the same graph read the other way, not a written field |
   | **Out of scope**               | explicit non-goals, where they matter                                                                                                                                                                                                                                                                                                                                                                                    |
-  | **Notes** _(optional)_         | anything that doesn't fit above: references, deployment realities that shape the design, domain-vocabulary changes (`CONTEXT.md` terms), links to related tickets                                                                                                                                                                                                                                                        |
+  | **Notes** _(optional)_         | anything that doesn't fit above: references, deployment realities that shape the design, domain-vocabulary changes (`GLOSSARY.md` terms), links to related tickets                                                                                                                                                                                                                                                       |
 
 The closed issues `NEB-330`…`NEB-336` (the retired backend-migration work) are worked examples of this shape.
 
@@ -85,7 +85,7 @@ A ticket is **grabbable** when its open-blocker count (`issue_dependencies_summa
 - **List issues**: `gh issue list --state open --json number,title,body,labels --jq '[.[] | {number, title, body, labels: [.labels[].name]}]'` with appropriate `--label` and `--state` filters. `list`'s `comments` field is only a count, not comment bodies — fetch those per-issue with the `gh issue view --json comments` command above.
 - **Comment on an issue**: `gh issue comment <number> --body "..."`
 - **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
-- **Close**: `gh issue close <number> --comment "..."`
+- **Close**: post the explanation with `gh issue comment <number> --body "..."`, then `gh issue close <number>`. On an already-closed issue, `gh issue close --comment` drops the comment and still exits 0.
 
 Infer the repo from `git remote -v`; `gh` does this automatically when run inside a clone.
 
@@ -95,8 +95,8 @@ Infer the repo from `git remote -v`; `gh` does this automatically when run insid
 
 When set to `yes`, PRs run through the same labels and states as issues, using the `gh pr` equivalents:
 
-- **Read a PR**: `gh pr view <number> --comments` and `gh pr diff <number>` for the diff.
-- **List external PRs for triage**: `gh pr list --state open --json number,title,body,labels,author,authorAssociation,comments` then keep only `authorAssociation` of `CONTRIBUTOR`, `FIRST_TIME_CONTRIBUTOR`, or `NONE` (drop `OWNER`/`MEMBER`/`COLLABORATOR`).
+- **Read a PR**: `gh pr view <number>`, then `gh pr view <number> --comments` (off a TTY, `--comments` prints only the comments, not the body), and `gh pr diff <number>` for the diff.
+- **List external PRs for triage**: `gh api --paginate 'repos/{owner}/{repo}/pulls?state=open' --jq '.[] | select(.author_association | IN("OWNER","MEMBER","COLLABORATOR") | not) | {number, title, author: .user.login, author_association, labels: [.labels[].name]}'`.
 - **Comment / label / close**: `gh pr comment`, `gh pr edit --add-label`/`--remove-label`, `gh pr close`.
 
 GitHub shares one number space across issues and PRs, so a bare `#42` may be either: resolve with `gh pr view 42` and fall back to `gh issue view 42`.

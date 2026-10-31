@@ -5,16 +5,39 @@
  * REST API for Nebula Chat
  */
 
+export * from './adminSessionDetail';
+export * from './adminSessionPage';
+export * from './adminSessionSummary';
+export * from './adminUserDetail';
+export * from './adminUserDetailBan';
+export * from './adminUserDetailStatus';
+export * from './adminUserPage';
+export * from './adminUserSummary';
+export * from './adminUserSummaryStatus';
 export * from './apiRoot';
+export * from './auditEntry';
+export * from './auditEntryAction';
+export * from './auditEntryActorType';
+export * from './auditEntryDetail';
+export * from './auditPage';
+export * from './banUserBody';
 export * from './createMessageBody';
 export * from './createMessageBodyRole';
 export * from './createSessionBody';
 export * from './errorCode';
 export * from './errorEnvelope';
 export * from './health';
+export * from './listAuditEntriesAction';
+export * from './listAuditEntriesActorType';
+export * from './listAuditEntriesParams';
 export * from './listMessagesParams';
 export * from './listSessionsArchived';
 export * from './listSessionsParams';
+export * from './listUserSessionsParams';
+export * from './listUsersOrder';
+export * from './listUsersParams';
+export * from './listUsersSortBy';
+export * from './listUsersStatus';
 export * from './message';
 export * from './messageAllowance';
 export * from './meteredMessageAllowance';
@@ -36,4 +59,6 @@ export * from './session';
 export * from './sessionDetail';
 export * from './sessionPage';
 export * from './sessionSearchResult';
+export * from './setUserRoleBody';
+export * from './setUserRoleBodyRole';
 export * from './unmeteredMessageAllowance';

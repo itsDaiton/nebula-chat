@@ -47,6 +47,12 @@ export const memoryRuns = () => {
     markRunning: async (runId, tokenBudget) => {
       Object.assign(runs.get(runId)!, { status: 'running', tokenBudget });
     },
+    markWaiting: async (runId, tokensUsed) => {
+      const run = runs.get(runId)!;
+      if (run.status !== 'running') return false;
+      Object.assign(run, { status: 'waiting', tokensUsed });
+      return true;
+    },
     saveBrief: async (runId, brief) => {
       runs.get(runId)!.brief = brief;
     },
@@ -110,8 +116,14 @@ type StructuredScript = Record<string, Record<string, unknown> | Error>;
 /** The Orchestrator's next reply, decided from the messages it is sent, so one script serves every turn. */
 export type OrchestratorScript = (messages: BaseMessage[]) => AIMessage;
 
+/** A delegate's next reply decided from its messages and the tools it is offered, as a tool-calling loop needs. */
+export type DelegateTurn = (messages: BaseMessage[], tools: string[]) => AIMessage;
+
 /** A delegate Agent's answer to a task, or its failure; `delayMs` holds it in flight that long. */
-export type DelegateScript = Record<string, { reply: string | Error; delayMs?: number }>;
+export type DelegateScript = Record<
+  string,
+  { reply: string | Error | DelegateTurn; delayMs?: number }
+>;
 
 const MODEL_USAGE: UsageMetadata = {
   input_tokens: 100,
@@ -160,6 +172,7 @@ export const neverHandingOff: OrchestratorScript = (messages) => {
 const DELEGATE_PROMPTS: Record<string, string> = {
   'Analyst prompt': 'analyst',
   'Critic prompt': 'critic',
+  'Researcher prompt': 'researcher',
 };
 
 const sleep = (ms: number, signal: AbortSignal | undefined): Promise<void> =>
@@ -232,8 +245,12 @@ class ScriptedChatModel extends BaseChatModel {
       this.inFlight.now -= 1;
     }
     if (scripted.reply instanceof Error) throw scripted.reply;
-    const message = withUsage(new AIMessage(scripted.reply));
-    return { generations: [{ message, text: scripted.reply }] };
+    const message = withUsage(
+      typeof scripted.reply === 'function'
+        ? scripted.reply(messages, this.boundTools)
+        : new AIMessage(scripted.reply),
+    );
+    return { generations: [{ message, text: message.text }] };
   }
 }
 

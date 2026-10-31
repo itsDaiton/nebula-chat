@@ -33,4 +33,14 @@ describe('runJobSchema', () => {
   it('drops anything beyond the IDs, so content never rides along', () => {
     expect(runJobSchema.parse({ ...job, content: 'hello' })).toEqual(job);
   });
+
+  it('accepts a resume with the answer Message, or with none after a timeout', () => {
+    const answerMessageId = '66666666-6666-4666-8666-666666666666';
+    expect(runJobSchema.parse({ ...job, resume: { answerMessageId } }).resume).toEqual({
+      answerMessageId,
+    });
+    expect(runJobSchema.parse({ ...job, resume: { answerMessageId: null } }).resume).toEqual({
+      answerMessageId: null,
+    });
+  });
 });

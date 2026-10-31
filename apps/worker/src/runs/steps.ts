@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto';
+import { AIMessage } from '@langchain/core/messages';
+import type { BaseMessage } from '@langchain/core/messages';
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import { getModel } from '@nebula-chat/contracts';
 import type { ReplyStreamEvent } from '@nebula-chat/contracts';
@@ -50,6 +52,10 @@ export const stepIdFor = (runId: string, phase: StepPhase, key: string): string 
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 };
 
+/** The Orchestrator turn a message list is on: one reply per earlier turn, so it survives a resume. */
+export const turnsIn = (messages: BaseMessage[]): number =>
+  messages.filter(AIMessage.isInstance).length;
+
 const tokensOf = (usage: CallUsage | undefined): number | null =>
   usage ? usage.inputTokens + usage.cachedInputTokens + usage.outputTokens : null;
 
@@ -65,23 +71,31 @@ export type ModelStep<T> = {
   persist?: (output: T) => unknown;
 };
 
-/** Runs one model-calling Step: persisted, announced and its Model call recorded; a failure is recorded, then rethrown. */
-export const runModelStep = async <T>(
+// A Step's lifecycle: persisted `running`, announced, then finished either way; a failure is rethrown.
+const runStep = async <T>(
   ctx: StepContext,
-  step: ModelStep<T>,
-  config: Pick<LangGraphRunnableConfig, 'writer' | 'signal'>,
-  call: (reportUsage: (usage: CallUsage) => void) => Promise<T>,
+  step: {
+    id: string;
+    phase: StepPhase;
+    name: string;
+    label: string;
+    turn: number;
+    parentStepId: string | null;
+    input: unknown;
+    persist: ((output: T) => unknown) | undefined;
+    /** What the Step used, read once it has finished. */
+    tokens: () => number | null;
+  },
+  config: Pick<LangGraphRunnableConfig, 'writer'>,
+  body: (attempt: number) => Promise<T>,
 ): Promise<{ output: T; tokens: number }> => {
-  const { phase, agent, input, turn = 0, parentStepId = null } = step;
-  const id = step.id ?? stepIdFor(ctx.runId, phase, agent.name);
+  const { id, phase, name, label, turn, parentStepId, input } = step;
   const emit = (event: ReplyStreamEvent): void => config.writer?.(event);
-  let usage: CallUsage | undefined;
-
   const attempt = await ctx.steps.start({
     id,
     runId: ctx.runId,
     phase,
-    name: agent.name,
+    name,
     turn,
     parentStepId,
     input,
@@ -91,34 +105,14 @@ export const runModelStep = async <T>(
     stepId: id,
     attempt,
     phase,
-    agent: agent.name,
-    label: agent.label,
+    agent: name,
+    label,
     turn,
     parentStepId,
   });
   try {
-    const output = await recordModelCall(
-      ctx.ledger,
-      ctx.logger,
-      {
-        // A re-run is a second, billed call, so it gets its own ledger row.
-        idempotencyKey: `${id}:${attempt}`,
-        userId: ctx.userId,
-        sessionId: ctx.sessionId,
-        runId: ctx.runId,
-        stepId: id,
-        agent: agent.name,
-        provider: getModel(agent.model).provider,
-        model: agent.model,
-      },
-      (reportUsage) =>
-        call((reported) => {
-          usage = reported;
-          reportUsage(reported);
-        }),
-      config.signal,
-    );
-    const tokens = tokensOf(usage);
+    const output = await body(attempt);
+    const tokens = step.tokens();
     await ctx.steps.finish(id, {
       status: 'completed',
       output: step.persist ? step.persist(output) : output,
@@ -129,13 +123,76 @@ export const runModelStep = async <T>(
     return { output, tokens: tokens ?? 0 };
   } catch (error) {
     // A failed or stopped call still spent what it reported.
-    ctx.tally.tokens += tokensOf(usage) ?? 0;
-    await ctx.steps.finish(id, {
-      status: 'failed',
-      error: toErrorEnvelope(error),
-      tokens: tokensOf(usage),
-    });
+    const tokens = step.tokens();
+    ctx.tally.tokens += tokens ?? 0;
+    await ctx.steps.finish(id, { status: 'failed', error: toErrorEnvelope(error), tokens });
     emit({ type: 'step-finished', stepId: id, status: 'failed' });
     throw error;
   }
 };
+
+/** Runs one model-calling Step: persisted, announced and its Model call recorded; a failure is recorded, then rethrown. */
+export const runModelStep = async <T>(
+  ctx: StepContext,
+  step: ModelStep<T>,
+  config: Pick<LangGraphRunnableConfig, 'writer' | 'signal'>,
+  call: (reportUsage: (usage: CallUsage) => void) => Promise<T>,
+): Promise<{ output: T; tokens: number }> => {
+  const { phase, agent, input, turn = 0, parentStepId = null } = step;
+  const id = step.id ?? stepIdFor(ctx.runId, phase, agent.name);
+  let usage: CallUsage | undefined;
+  return runStep(
+    ctx,
+    {
+      id,
+      phase,
+      name: agent.name,
+      label: agent.label,
+      turn,
+      parentStepId,
+      input,
+      persist: step.persist,
+      tokens: () => tokensOf(usage),
+    },
+    config,
+    (attempt) =>
+      recordModelCall(
+        ctx.ledger,
+        ctx.logger,
+        {
+          // A re-run is a second, billed call, so it gets its own ledger row.
+          idempotencyKey: `${id}:${attempt}`,
+          userId: ctx.userId,
+          sessionId: ctx.sessionId,
+          runId: ctx.runId,
+          stepId: id,
+          agent: agent.name,
+          provider: getModel(agent.model).provider,
+          model: agent.model,
+        },
+        (reportUsage) =>
+          call((reported) => {
+            usage = reported;
+            reportUsage(reported);
+          }),
+        config.signal,
+      ),
+  );
+};
+
+/** Runs one tool call as a `tool` Step under the delegate that made it; it uses no tokens of its own. */
+export const runToolStep = <T>(
+  ctx: StepContext,
+  step: {
+    id: string;
+    name: string;
+    label: string;
+    turn: number;
+    parentStepId: string;
+    input: unknown;
+    persist: (output: T) => unknown;
+  },
+  config: Pick<LangGraphRunnableConfig, 'writer'>,
+  call: () => Promise<T>,
+): Promise<{ output: T; tokens: number }> =>
+  runStep(ctx, { ...step, phase: 'tool', tokens: () => null }, config, call);

@@ -23,6 +23,17 @@ export const getCreateMessageResponseMock = (
     null,
   ]),
   cached: faker.datatype.boolean(),
+  model: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
+  estimatedCostUsd: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+  runId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+  contextTokens: faker.helpers.arrayElement([
+    faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+    null,
+  ]),
+  contextMessages: faker.helpers.arrayElement([
+    faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+    null,
+  ]),
   createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   ...overrideResponse,
 });
@@ -38,6 +49,17 @@ export const getListMessagesResponseMock = (): Message[] =>
       null,
     ]),
     cached: faker.datatype.boolean(),
+    model: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
+    estimatedCostUsd: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+    runId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+    contextTokens: faker.helpers.arrayElement([
+      faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+      null,
+    ]),
+    contextMessages: faker.helpers.arrayElement([
+      faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+      null,
+    ]),
     createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   }));
 
@@ -53,6 +75,17 @@ export const getGetMessageResponseMock = (
     null,
   ]),
   cached: faker.datatype.boolean(),
+  model: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
+  estimatedCostUsd: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+  runId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+  contextTokens: faker.helpers.arrayElement([
+    faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+    null,
+  ]),
+  contextMessages: faker.helpers.arrayElement([
+    faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+    null,
+  ]),
   createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   ...overrideResponse,
 });

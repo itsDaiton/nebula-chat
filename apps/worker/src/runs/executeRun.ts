@@ -1,3 +1,4 @@
+import { Command } from '@langchain/langgraph';
 import type { BaseCheckpointSaver } from '@langchain/langgraph';
 import type { ReplyStreamEvent, RunJob } from '@nebula-chat/contracts';
 import type { RunStatus } from '@nebula-chat/db';
@@ -6,6 +7,7 @@ import { componentLogger, logEvent } from '@nebula-chat/otel';
 import type { LogAttributes } from '@nebula-chat/otel';
 import { endStream, watchForCancel } from '@worker/directReplies/runDirectReply';
 import type { ReplyStreamWriter, StoredMessage } from '@worker/directReplies/runDirectReply';
+import type { ClarifyingAnswer, ClarifyingQuestion } from '@worker/runs/askUserTool';
 import type { Brief } from '@worker/runs/brief';
 import type { LoopEnding } from '@worker/runs/orchestrator';
 import { createRunGraph } from '@worker/runs/runGraph';
@@ -25,6 +27,8 @@ export type RunStore = {
   /** The Session's latest Messages, newest first. */
   findRecentMessages: (sessionId: string, limit: number) => Promise<StoredMessage[]>;
   markRunning: (runId: string, tokenBudget: number) => Promise<void>;
+  /** Moves a `running` Run to `waiting`; false when something else (a cancel) already settled it. */
+  markWaiting: (runId: string, tokensUsed: number) => Promise<boolean>;
   saveBrief: (runId: string, brief: Brief) => Promise<void>;
   finishRun: (runId: string, end: { status: RunEndStatus; tokensUsed: number }) => Promise<void>;
   createAssistantMessage: (message: {
@@ -38,13 +42,15 @@ export type RunStore = {
 
 export type RunDeps = Pick<
   RunGraphDeps,
-  'steps' | 'ledger' | 'models' | 'prompts' | 'apiKeys' | 'logger' | 'limits'
+  'steps' | 'ledger' | 'models' | 'prompts' | 'apiKeys' | 'logger' | 'limits' | 'toolbox'
 > & {
   runs: RunStore;
   stream: ReplyStreamWriter;
   /** Postgres in production, in memory in tests; the Run's id is the thread. */
   checkpointer: BaseCheckpointSaver;
   runTimeoutMs: number;
+  /** Schedules the delayed job that ends the Run's wait for an answer. */
+  scheduleQuestionTimeout: (runId: string) => Promise<void>;
   /** How often a Run checks for a cancel request. Default 250 ms. */
   cancelPollMs?: number;
 };
@@ -105,6 +111,14 @@ export const executeRun = async (
       tally,
       checkCancelled,
       saveBrief: (brief) => runs.saveBrief(job.runId, brief),
+      saveQuestion: ({ id, content }) =>
+        runs.createAssistantMessage({
+          id,
+          sessionId: job.sessionId,
+          runId: job.runId,
+          content,
+          tokenCount: 0,
+        }),
       message: userMessage.content,
       history,
     }).compile({ checkpointer });
@@ -117,7 +131,22 @@ export const executeRun = async (
     stopWatching = watchForCancel(job.streamId, deps, abort);
     timer = setTimeout(() => abort.abort(timedOut), deps.runTimeoutMs);
     if (!hasCheckpoint || checkpoint.next.length > 0) {
-      const chunks = await graph.stream(hasCheckpoint ? null : {}, {
+      // A resume job answers the pending question; a retry after the answer was taken just carries on.
+      const asking = checkpoint.tasks.some((t) => t.interrupts.length > 0);
+      let input: Command | null | Record<string, never> = hasCheckpoint ? null : {};
+      if (asking && job.resume) {
+        const reply = job.resume.answerMessageId
+          ? recent.find((m) => m.id === job.resume?.answerMessageId)
+          : undefined;
+        if (job.resume.answerMessageId && !reply) {
+          throw new NotFoundError('Message', job.resume.answerMessageId);
+        }
+        const resume: ClarifyingAnswer = reply
+          ? { answered: true, text: reply.content }
+          : { answered: false };
+        input = new Command({ resume });
+      }
+      const chunks = await graph.stream(input as Parameters<typeof graph.stream>[0], {
         ...thread,
         streamMode: ['messages', 'custom'],
         subgraphs: true,
@@ -134,6 +163,15 @@ export const executeRun = async (
     stopWatching();
     clearTimeout(timer);
 
+    // The interrupt shows once per graph level in the stream; the root's pending task is the one place to read it.
+    const question = (await graph.getState(thread)).tasks
+      .flatMap((t) => t.interrupts)
+      .map((i) => i.value as ClarifyingQuestion)[0];
+    if (question) {
+      await pauseForAnswer(job, question, tally.tokens, deps, outcomeAttributes);
+      return;
+    }
+
     const state = (await graph.getState(thread)).values as {
       answer: string;
       missing: string[];
@@ -143,7 +181,10 @@ export const executeRun = async (
     const tokensUsed = tally.tokens;
     // A forced handoff still answers, from partial findings.
     const status: RunEndStatus =
-      state.missing.length > 0 || state.failedDelegates.length > 0 || state.ending !== 'handoff'
+      state.missing.length > 0 ||
+      state.failedDelegates.length > 0 ||
+      state.ending !== 'handoff' ||
+      job.resume?.answerMessageId === null
         ? 'partial'
         : 'completed';
 
@@ -221,6 +262,36 @@ export const executeRun = async (
       );
     }
   }
+};
+
+// The job completes normally: a pause is not an error, and the Run holds no job while it waits.
+const pauseForAnswer = async (
+  job: RunJob,
+  { questionMessageId, question }: ClarifyingQuestion,
+  tokensUsed: number,
+  { runs, stream, logger, scheduleQuestionTimeout }: RunDeps,
+  outcomeAttributes: (status: RunEndStatus) => LogAttributes,
+): Promise<void> => {
+  // Scheduled either way: the job id is deterministic, and a job that finds the Run settled does nothing.
+  await runs.markWaiting(job.runId, tokensUsed);
+  await stream.append(job.streamId, {
+    type: 'run-waiting',
+    runId: job.runId,
+    questionMessageId,
+    question,
+  });
+  await endStream(job.streamId, { type: 'end' }, stream);
+  await scheduleQuestionTimeout(job.runId);
+  logEvent(
+    componentLogger(logger, 'chat'),
+    'info',
+    'chat.run.waiting',
+    {
+      'nebula.run.id': job.runId,
+      'nebula.duration_ms': outcomeAttributes('completed')['nebula.duration_ms'],
+    },
+    `Run waiting for an answer · ${tokensUsed} tokens`,
+  );
 };
 
 /** Keeps the finished Steps and what the answer had streamed, then ends the Run and its stream `cancelled`. */

@@ -14,18 +14,33 @@ import {
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 // better-auth owns this table's shape (modelName `users`), so field names match its core user model exactly.
-// `isAnonymous` comes from the anonymous plugin; `profileImageKey` is a server-only field (ADR-0022).
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull(),
-  email: text('email').notNull().unique(),
-  emailVerified: boolean('email_verified').notNull().default(false),
-  image: text('image'),
-  profileImageKey: text('profile_image_key'),
-  isAnonymous: boolean('is_anonymous').default(false),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+// `isAnonymous` comes from the anonymous plugin, `role`/`banned*` from the admin plugin, `twoFactorEnabled` from the
+// two-factor plugin; `profileImageKey` is a server-only field (ADR-0022).
+export const users = pgTable(
+  'users',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name').notNull(),
+    email: text('email').notNull().unique(),
+    emailVerified: boolean('email_verified').notNull().default(false),
+    image: text('image'),
+    profileImageKey: text('profile_image_key'),
+    isAnonymous: boolean('is_anonymous').default(false),
+    role: text('role').notNull().default('user'),
+    banned: boolean('banned').notNull().default(false),
+    banReason: text('ban_reason'),
+    banExpires: timestamp('ban_expires'),
+    twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
+    // Set by Account deletion (ADR-0028); the Purge erases the User 30 days later.
+    pendingDeletionAt: timestamp('pending_deletion_at'),
+    // When the User last sent a Message, at most hourly; a Guest idle for 30 days is Purged (ADR-0028).
+    lastActiveAt: timestamp('last_active_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  // Serves the admin Users list: newest first, keyset-paged on the id.
+  (t) => [index('users_created_at_idx').on(t.createdAt.desc(), t.id.desc())],
+);
 
 // better-auth core table — one session per active login (or anonymous Guest identity).
 export const session = pgTable('session', {
@@ -39,6 +54,9 @@ export const session = pgTable('session', {
   userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
+  impersonatedBy: text('impersonated_by'),
+  // Ours, not better-auth's: set once a second factor is verified on this auth session (ADR-0027 §2).
+  twoFactorVerified: boolean('two_factor_verified').notNull().default(false),
 });
 
 // better-auth core table — one row per linked credential/OAuth provider for a user.
@@ -71,7 +89,24 @@ export const verification = pgTable('verification', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// The domain Session (CONTEXT.md), not better-auth's `session` table above.
+// better-auth two-factor plugin table (model `twoFactor`): the TOTP secret and backup codes, both stored encrypted.
+export const twoFactor = pgTable(
+  'two_factor',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    secret: text('secret').notNull(),
+    backupCodes: text('backup_codes').notNull(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    verified: boolean('verified').default(true),
+    failedVerificationCount: integer('failed_verification_count').default(0),
+    lockedUntil: timestamp('locked_until'),
+  },
+  (t) => [index('two_factor_secret_idx').on(t.secret), index('two_factor_user_idx').on(t.userId)],
+);
+
+// The domain Session (GLOSSARY.md), not better-auth's `session` table above.
 export const sessions = pgTable(
   'sessions',
   {
@@ -82,7 +117,7 @@ export const sessions = pgTable(
     title: text('title').notNull().default('New session'),
     model: text('model').notNull().default('gpt-4o-mini'),
     systemPrompt: text('system_prompt'),
-    // Set while the owner has put the Session away (an Archived Session, CONTEXT.md).
+    // Set while the owner has put the Session away (an Archived Session, GLOSSARY.md).
     archivedAt: timestamp('archived_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -124,6 +159,7 @@ export type ModelCallOutcome = (typeof MODEL_CALL_OUTCOMES)[number];
 export const RUN_STATUSES = [
   'queued',
   'running',
+  'waiting',
   'completed',
   'partial',
   'failed',
@@ -161,7 +197,7 @@ export const runs = pgTable(
     index('runs_user_idx').on(t.userId),
     check(
       'runs_status_check',
-      sql`${t.status} in ('queued', 'running', 'completed', 'partial', 'failed', 'cancelled')`,
+      sql`${t.status} in ('queued', 'running', 'waiting', 'completed', 'partial', 'failed', 'cancelled')`,
     ),
   ],
 );
@@ -222,6 +258,12 @@ export const modelCalls = pgTable(
     sessionId: uuid('session_id').references(() => sessions.id, { onDelete: 'set null' }),
     runId: uuid('run_id').references(() => runs.id, { onDelete: 'set null' }),
     stepId: uuid('step_id').references(() => steps.id, { onDelete: 'set null' }),
+    // The assistant Message a Direct reply produced; null for a Step's call and for a reply that persisted none.
+    messageId: uuid('message_id').references((): AnyPgColumn => messages.id, {
+      onDelete: 'set null',
+    }),
+    // History Messages sent with a Direct reply's call, after packing.
+    contextMessages: integer('context_messages'),
     agent: text('agent'),
     provider: text('provider').notNull(),
     model: text('model').notNull(),
@@ -243,6 +285,50 @@ export const modelCalls = pgTable(
     index('model_calls_created_model_idx').on(t.createdAt, t.model),
     index('model_calls_user_idx').on(t.userId),
     index('model_calls_session_idx').on(t.sessionId),
+    index('model_calls_message_idx').on(t.messageId),
     check('model_calls_outcome_check', sql`${t.outcome} in ('completed', 'failed', 'cancelled')`),
+  ],
+);
+
+export const AUDIT_ACTOR_TYPES = ['admin', 'operator', 'system'] as const;
+
+export type AuditActorType = (typeof AUDIT_ACTOR_TYPES)[number];
+
+export const AUDIT_ACTIONS = [
+  'admin.granted',
+  'user.role_changed',
+  'user.banned',
+  'user.unbanned',
+  'user.restored',
+  'session.read',
+  'run.read',
+  'users.purged',
+] as const;
+
+export type AuditAction = (typeof AUDIT_ACTIONS)[number];
+
+// Append-only (GLOSSARY.md, Audit log): no update or delete path exists in code. The actor is nullable
+// (operator and system actions have no User) and set null on delete, so a Purge keeps the entry.
+export const auditEntries = pgTable(
+  'audit_entries',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    actorType: text('actor_type', { enum: AUDIT_ACTOR_TYPES }).notNull(),
+    actorUserId: uuid('actor_user_id').references(() => users.id, { onDelete: 'set null' }),
+    action: text('action', { enum: AUDIT_ACTIONS }).notNull(),
+    targetType: text('target_type').notNull(),
+    targetId: text('target_id').notNull(),
+    detail: jsonb('detail').notNull().default({}),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('audit_entries_created_idx').on(t.createdAt),
+    index('audit_entries_actor_idx').on(t.actorUserId),
+    index('audit_entries_target_idx').on(t.targetType, t.targetId),
+    check('audit_entries_actor_type_check', sql`${t.actorType} in ('admin', 'operator', 'system')`),
+    check(
+      'audit_entries_action_check',
+      sql`${t.action} in ('admin.granted', 'user.role_changed', 'user.banned', 'user.unbanned', 'user.restored', 'session.read', 'run.read', 'users.purged')`,
+    ),
   ],
 );

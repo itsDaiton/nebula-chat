@@ -22,6 +22,24 @@ const envSchema = z
     // The share of the Run budget past which the Orchestrator is made to hand off.
     RUN_HANDOFF_THRESHOLD: z.coerce.number().gt(0).max(1).default(0.85),
     RUN_DELEGATE_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+    RUN_DELEGATE_TOOL_CALL_CAP: z.coerce.number().int().positive().default(6),
+    // Web search (Tavily). A set key always wins; without one, searches go keyless only when allowed.
+    TAVILY_API_KEY: z.string().min(1).optional(),
+    // Tavily's keyless access is rate-limited: for local dev, never production.
+    TAVILY_KEYLESS: z.stringbool().default(false),
+    WEB_FETCH_MAX_BYTES: z.coerce.number().int().positive().default(2_000_000),
+    // Bounds a whole fetch, redirects and body included, and a search.
+    WEB_FETCH_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
+    WEB_FETCH_MAX_REDIRECTS: z.coerce.number().int().nonnegative().default(5),
+    WEB_FETCH_MAX_CHARS: z.coerce.number().int().positive().default(12_000),
+    // The Purge's thresholds (ADR-0028): how long a Pending deletion lasts, how long a Guest may idle.
+    PENDING_DELETION_DAYS: z.coerce.number().int().positive().default(30),
+    GUEST_INACTIVE_DAYS: z.coerce.number().int().positive().default(30),
+    // How long a Run waits for the answer to its Clarifying question before carrying on without it.
+    CLARIFYING_QUESTION_TIMEOUT_MS: z.coerce.number().int().positive().default(180_000),
+    // Tries of a Run job the worker enqueues itself (the resume after a timeout), as the server's.
+    RUN_JOB_ATTEMPTS: z.coerce.number().int().positive().default(3),
+    RUN_JOB_BACKOFF_MS: z.coerce.number().int().nonnegative().default(5_000),
     RUN_TIMEOUT_MS: z.coerce
       .number()
       .int()

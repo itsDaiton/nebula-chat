@@ -19,6 +19,11 @@ const aMessage = (id: string, sessionId: string, role: string, content: string) 
   content,
   tokenCount: null,
   cached: false,
+  model: null,
+  estimatedCostUsd: null,
+  runId: null,
+  contextTokens: null,
+  contextMessages: null,
   createdAt: '2026-01-01T00:00:00.000Z',
 });
 

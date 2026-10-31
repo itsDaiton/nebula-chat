@@ -129,6 +129,7 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
   let model: string | undefined;
   let provider: ModelProvider | undefined;
   let usage: Usage | undefined;
+  let contextMessages = 0;
   // What the model has produced so far: the whole reply, or what a cancelled one keeps.
   let reply = '';
   const tokens: string[] = [];
@@ -195,7 +196,10 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
         tokenCount: hit.usage?.totalTokens ?? null,
         cached: true,
       });
-      await recordCachedModelCall(deps.ledger, logger, subject, startMs);
+      await recordCachedModelCall(deps.ledger, logger, subject, startMs, {
+        messageId: job.streamId,
+        contextMessages: history.length,
+      });
       await endStream(job.streamId, { type: 'end' }, stream);
       logEvent(
         componentLogger(logger, 'chat'),
@@ -263,23 +267,27 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
                   enqueue({ type: 'usage', ...u });
                 },
                 onCallUsage,
+                onContext: (count) => {
+                  contextMessages = count;
+                },
               },
             ),
           cancel.signal,
+          async () => {
+            modelReturned = true;
+            stopWatching();
+            await appended;
+            if (!reply.trim()) throw new Error('The assistant did not generate a response.');
+            await store.createAssistantMessage({
+              id: job.streamId,
+              sessionId: job.sessionId,
+              content: reply,
+              tokenCount: usage?.totalTokens ?? null,
+            });
+            return { messageId: job.streamId, contextMessages };
+          },
         ),
     );
-    modelReturned = true;
-    stopWatching();
-    await appended;
-
-    if (!reply.trim()) throw new Error('The assistant did not generate a response.');
-
-    await store.createAssistantMessage({
-      id: job.streamId,
-      sessionId: job.sessionId,
-      content: reply,
-      tokenCount: usage?.totalTokens ?? null,
-    });
     await endStream(job.streamId, { type: 'end' }, stream);
     await writeCachedReply(deps.cache, cacheKey, { tokens, ...(usage && { usage }) }, logger);
 

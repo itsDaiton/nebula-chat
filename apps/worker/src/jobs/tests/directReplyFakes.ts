@@ -66,8 +66,9 @@ export const scriptedModel = (
   callUsage?: CallUsage,
 ) => {
   const calls: Parameters<StreamChat>[0][] = [];
-  const streamChat: StreamChat = async (config, { onToken, onUsage, onCallUsage }) => {
+  const streamChat: StreamChat = async (config, { onToken, onUsage, onCallUsage, onContext }) => {
     calls.push(config);
+    onContext?.(config.history.length);
     for (const token of tokens) onToken(token);
     onUsage(usage);
     if (callUsage) onCallUsage?.(callUsage);

@@ -1,5 +1,33 @@
 # Changelog
 
+## [3.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.3.0...nebula-chat-auth-v3.4.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-542 Admin grants and revokes the Admin role and bans and unbans Users ([#702](https://github.com/itsDaiton/nebula-chat/issues/702)) ([29abb1a](https://github.com/itsDaiton/nebula-chat/commit/29abb1a3f14e0c3077ef640470070811b5d6eb19))
+
+## [3.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.2.0...nebula-chat-auth-v3.3.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-544 Account deletion starts a 30-day Pending deletion ([#699](https://github.com/itsDaiton/nebula-chat/issues/699)) ([cbf636b](https://github.com/itsDaiton/nebula-chat/commit/cbf636b24371eb59794459f1c20494898e4479d2))
+
+## [3.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.1.0...nebula-chat-auth-v3.2.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-539 admin gate, Audit log and Operator admin routes ([#695](https://github.com/itsDaiton/nebula-chat/issues/695)) ([e044c81](https://github.com/itsDaiton/nebula-chat/commit/e044c818fbaf52095e2b9bda952d77c48eafb918)), closes [#539](https://github.com/itsDaiton/nebula-chat/issues/539)
+
+## [3.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.0.2...nebula-chat-auth-v3.1.0) (2026-10-31)
+
+
+### Features
+
+* **auth:** NEB-538 enable the admin and two-factor plugins with the Audit log table ([#691](https://github.com/itsDaiton/nebula-chat/issues/691)) ([abff13c](https://github.com/itsDaiton/nebula-chat/commit/abff13c83f31d750867fd44082e7770af45059cf))
+
 ## [3.0.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.0.1...nebula-chat-auth-v3.0.2) (2026-10-24)
 
 

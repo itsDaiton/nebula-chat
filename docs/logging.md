@@ -186,6 +186,10 @@ once, and nobody else does:
   `nebula.job.id`; it also carries `gen_ai.*` and `nebula.duration_ms`. A job
   whose payload breaks the contract writes `job.payload.rejected` instead.
 
+- **Purge** (the worker). `purge/runPurge.ts` writes one `account.purge.completed` per run with the
+  `nebula.purge.*` counts (never ids), and a `warn` `account.purge.user.failed` for each User it could not
+  erase; the job then throws so BullMQ retries.
+
 - **Runs** (the worker). The runner in `apps/worker/src/runs/executeRun.ts`
   writes exactly one `chat.run.completed` per Run, bound like a Direct reply's
   lines plus `nebula.run.id`:
@@ -199,6 +203,8 @@ once, and nobody else does:
   Each Intake Agent that fails also writes a `warn` `chat.run.step.failed` with
   `err` and `nebula.agent.name`. A failure with job retries left writes a `warn`
   `chat.run.retrying` (`err`, `error.type`) instead of `chat.run.completed`; the retry resumes the Run.
+  A Run that pauses on a Clarifying question writes `info` `chat.run.waiting` instead; the timeout job writes
+  `chat.run.wait.timed_out` (`info`) or `chat.run.wait.settled` (`debug`, when an answer got there first).
 
 - **Model calls.** The ledger write is fail-open, like the cache: a Postgres failure while
   recording a call is one `warn`, `model_call.record.failed`, with `err`, the Model and the call's

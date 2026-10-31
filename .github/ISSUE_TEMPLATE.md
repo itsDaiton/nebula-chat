@@ -73,6 +73,6 @@ The test strategy: which seams to test and how — what to mock vs. keep real, t
 
 <!--
 Optional. Anything that doesn't fit above: references, deployment realities that shape the design, domain
-vocabulary this introduces or changes (new/renamed CONTEXT.md terms), and links to related tickets. Omit if
+vocabulary this introduces or changes (new/renamed GLOSSARY.md terms), and links to related tickets. Omit if
 there's nothing to add.
 -->

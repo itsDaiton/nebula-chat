@@ -1,8 +1,11 @@
 import { sessionRepository } from '@server/modules/session/session.repository';
 import { NotFoundError } from '@nebula-chat/errors';
+import type { EventLogger } from '@nebula-chat/otel';
 import { paginationConfig } from '@server/config/pagination.config';
 import type { CreateSessionDTO } from '@server/modules/session/session.types';
-import { findActiveStream } from '@server/redis';
+import { runRepository } from '@server/modules/run/run.repository';
+import { runService } from '@server/modules/run/run.service';
+import { findActiveStream, findLastStream } from '@server/redis';
 
 const SNIPPET_CONTEXT = 40;
 
@@ -28,7 +31,17 @@ export const sessionService = {
       throw new NotFoundError('Session', sessionId);
     }
     // The in-flight reply lives in Redis until the worker ends it; Postgres has only finished ones.
-    return { ...session, activeStreamId: await findActiveStream(sessionId) };
+    const activeStreamId = await findActiveStream(sessionId);
+    const [waiting] = await runRepository.findWaiting({ sessionId, userId });
+    // A Run waiting on its question has no job and no live stream: the last stream is where the question was asked.
+    const waitingRun = waiting
+      ? {
+          id: waiting.id,
+          streamId: await findLastStream(sessionId),
+          stepsCompleted: await runRepository.countCompletedSteps(waiting.id),
+        }
+      : null;
+    return { ...session, activeStreamId, waitingRun };
   },
   async getAllSessions(
     userId: string,
@@ -45,11 +58,13 @@ export const sessionService = {
       return snippet ? { ...session, snippet } : session;
     });
   },
-  async archiveSession(sessionId: string, userId: string) {
+  async archiveSession(sessionId: string, userId: string, logger: EventLogger<'warn'>) {
     const session = await sessionRepository.archive(sessionId, userId);
     if (!session) {
       throw new NotFoundError('Session', sessionId);
     }
+    // An archived Session stays unchanged, so a Run waiting in it must not resume or time out into it.
+    await runService.cancelWaitingRunsInSession(sessionId, userId, logger);
     return session;
   },
   async restoreSession(sessionId: string, userId: string) {

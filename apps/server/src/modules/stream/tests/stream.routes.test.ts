@@ -24,10 +24,17 @@ vi.mock('@server/redis', async () => {
 
 vi.mock('@server/queue', () => ({
   enqueueDirectReply: vi.fn(),
+  promoteClarifyingQuestionTimeout: vi.fn(async () => undefined),
   closeQueue: vi.fn(async () => undefined),
 }));
 
+vi.mock('@server/modules/run/run.repository', () => ({
+  runRepository: { findWaiting: vi.fn(async () => []) },
+}));
+
 import { auth } from '@server/auth';
+import { runRepository } from '@server/modules/run/run.repository';
+import { promoteClarifyingQuestionTimeout } from '@server/queue';
 
 const mockedGetSession = vi.mocked(auth.api.getSession);
 
@@ -307,6 +314,34 @@ describe('POST /api/streams/:streamId/cancel', () => {
 
     expect(res.statusCode).toBe(204);
     expect(replyStreams.cancelRequests.size).toBe(0);
+  });
+
+  it('cancels the Run waiting behind a stream that ended on its question: flags the Run and promotes its timeout job', async () => {
+    const WAITING_RUN = '66666666-6666-4666-8666-666666666666';
+    const SESSION = '77777777-7777-4777-8777-777777777777';
+    replyStreams.ended.add(STREAM_ID);
+    replyStreams.activeStreams.set(SESSION, STREAM_ID);
+    vi.mocked(runRepository.findWaiting).mockResolvedValueOnce([
+      { id: WAITING_RUN, sessionId: SESSION },
+    ]);
+
+    const res = await cancel();
+
+    expect(res.statusCode).toBe(204);
+    expect(replyStreams.runCancelRequests.has(WAITING_RUN)).toBe(true);
+    expect(promoteClarifyingQuestionTimeout).toHaveBeenCalledWith(WAITING_RUN, expect.anything());
+  });
+
+  it('leaves a waiting Run alone when the finished stream is not its last one', async () => {
+    replyStreams.ended.add(STREAM_ID);
+    replyStreams.activeStreams.set('77777777-7777-4777-8777-777777777777', 'older-stream');
+    vi.mocked(runRepository.findWaiting).mockResolvedValueOnce([
+      { id: 'run-1', sessionId: '77777777-7777-4777-8777-777777777777' },
+    ]);
+
+    await cancel();
+
+    expect(replyStreams.runCancelRequests.size).toBe(0);
   });
 
   it("answers 404 for another User's stream and never raises its cancel flag", async () => {
