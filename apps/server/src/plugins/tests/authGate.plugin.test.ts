@@ -6,7 +6,7 @@ import type {
   FastifyRequest,
   preHandlerAsyncHookHandler,
 } from 'fastify';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ForbiddenError, INTERNAL_ERROR_ENVELOPE, UnauthorizedError } from '@nebula-chat/errors';
 import { createTestApp } from '@server/test/app';
 import { captureLogger, eventLines, LEVEL } from '@nebula-chat/otel/testing';
@@ -227,6 +227,59 @@ describe('auth catch-all route delegation (GET|POST /api/auth/*)', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ ok: true });
+  });
+});
+
+describe('auth catch-all blocks the admin plugin (ADR-0027 §6)', () => {
+  let app: FastifyInstance;
+  const originalHandler = (auth as { handler: unknown }).handler;
+
+  afterEach(() => {
+    adapterOverride.current = undefined;
+    (auth as { handler: unknown }).handler = originalHandler;
+  });
+
+  beforeAll(async () => {
+    app = await createTestApp();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it.each([
+    ['POST', '/api/auth/admin/list-users'],
+    ['GET', '/api/auth/admin/list-users?limit=1'],
+    ['POST', '/api/auth/admin/impersonate-user'],
+    ['POST', '/api/auth/Admin/set-role'],
+    ['POST', '/api/auth/%61dmin/ban-user'],
+    ['POST', '/api/auth//admin/ban-user'],
+  ] as const)(
+    'answers %s %s with the typed NotFound without reaching better-auth',
+    async (method, url) => {
+      const handler = vi.fn<NodeHandler>();
+      adapterOverride.current = handler;
+
+      const res = await app.inject(
+        method === 'POST' ? { method, url, payload: {} } : { method, url },
+      );
+
+      expect(res.statusCode).toBe(404);
+      expect(res.json()).toMatchObject({ success: false, error: 'NotFound' });
+      expect(handler).not.toHaveBeenCalled();
+    },
+  );
+
+  it('still passes a path that only starts with the letters admin', async () => {
+    (auth as { handler: unknown }).handler = async (): Promise<Response> =>
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+
+    const res = await app.inject({ method: 'POST', url: '/api/auth/administrator', payload: {} });
+
+    expect(res.statusCode).toBe(200);
   });
 });
 

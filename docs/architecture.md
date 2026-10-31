@@ -122,6 +122,7 @@ names its gates, so a route without one is public.
 flowchart TD
   req([HTTP request]) --> log1["requestLogging onRequest<br/>http.request.received · debug"]
   log1 --> which{path}
+  which -->|"/api/auth/admin/*"| nf["authGate → 404 NotFound<br/>never reaches better-auth"]
   which -->|"/api/auth/*"| ba["authGate → better-auth handler<br/>reply hijacked"]
   which -->|"/, /health, /docs"| public[Public handler]
   which -->|"/api/..."| gates["Route gates<br/>rate limit (send only) ·<br/>requireAuthentication / requireRegistered ·<br/>operator token (/api/internal)"]

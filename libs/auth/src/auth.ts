@@ -2,8 +2,22 @@ import { betterAuth } from 'better-auth';
 import type { Auth, User as BetterAuthUser, Session as BetterAuthSession } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api';
-import { anonymous, haveIBeenPwned, isPasswordCompromised, openAPI } from 'better-auth/plugins';
-import { users, session, account, verification } from '@nebula-chat/db';
+import {
+  admin,
+  anonymous,
+  haveIBeenPwned,
+  isPasswordCompromised,
+  openAPI,
+  twoFactor,
+} from 'better-auth/plugins';
+import {
+  users,
+  session,
+  account,
+  verification,
+  twoFactor as twoFactorTable,
+} from '@nebula-chat/db';
+import { adminAc, defaultAc, userAc } from 'better-auth/plugins/admin/access';
 import type { DbClient } from '@nebula-chat/db';
 import type { AuthStore } from '@nebula-chat/redis';
 import type { Logger } from '@nebula-chat/otel';
@@ -65,6 +79,12 @@ export type SocialProviderCredentials = {
   github?: OAuthCredentials;
 };
 
+// The plugin's admin role minus `impersonate` (ADR-0027 §5), so no role can start an impersonation.
+const adminWithoutImpersonation = defaultAc.newRole({
+  user: adminAc.statements.user.filter((action) => action !== 'impersonate'),
+  session: adminAc.statements.session,
+});
+
 /** The rejection as better-auth's own errors look: its code and message, with a 400. */
 const toRejectionError = (rejection: PasswordRejection) =>
   APIError.from('BAD_REQUEST', {
@@ -112,7 +132,7 @@ export const createAuth = ({
     },
     database: drizzleAdapter(db, {
       provider: 'pg',
-      schema: { users, session, account, verification },
+      schema: { users, session, account, verification, twoFactor: twoFactorTable },
     }),
     user: {
       modelName: 'users',
@@ -250,6 +270,13 @@ export const createAuth = ({
       // Scalar UI at `/api/auth/reference` and the OpenAPI 3.1 schema at `/api/auth/open-api/generate-schema`,
       // reached through the server's `/api/auth/*` passthrough.
       openAPI(),
+      // Impersonation stays off (ADR-0027 §5); the plugin's HTTP endpoints are blocked at the server's auth gate.
+      admin({
+        defaultRole: 'user',
+        roles: { admin: adminWithoutImpersonation, user: userAc },
+      }),
+      // TOTP and backup codes only; a trusted device lasts better-auth's default 30 days.
+      twoFactor({ issuer: 'Nebula Chat' }),
     ],
   }) as unknown as Auth;
 

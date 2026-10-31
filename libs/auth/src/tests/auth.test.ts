@@ -214,3 +214,39 @@ describe('createAuth rate limiting', () => {
     expect(keys.some((key) => key.includes('198.51.100.99'))).toBe(false);
   });
 });
+
+describe('createAuth admin and two-factor plugins', () => {
+  const findPlugin = (id: string) =>
+    buildAuth().options.plugins?.find((plugin) => plugin.id === id);
+
+  it('enables the admin and two-factor plugins', () => {
+    expect(findPlugin('admin')).toBeDefined();
+    expect(findPlugin('two-factor')).toBeDefined();
+  });
+
+  it('gives a new user the user role', () => {
+    const adminPlugin = findPlugin('admin');
+
+    expect(adminPlugin?.options).toMatchObject({ defaultRole: 'user' });
+  });
+
+  it('grants no role the impersonate permission', () => {
+    const adminPlugin = findPlugin('admin');
+    const { roles } = adminPlugin?.options as {
+      roles: Record<string, { statements: { user: string[] } }>;
+    };
+
+    for (const role of Object.values(roles)) {
+      expect(role.statements.user).not.toContain('impersonate');
+      expect(role.statements.user).not.toContain('impersonate-admins');
+    }
+  });
+
+  it("keeps better-auth's 30-day trusted device", () => {
+    expect(findPlugin('two-factor')?.options).not.toHaveProperty('trustDeviceMaxAge');
+  });
+
+  it('names the TOTP issuer Nebula Chat', () => {
+    expect(findPlugin('two-factor')?.options).toMatchObject({ issuer: 'Nebula Chat' });
+  });
+});
