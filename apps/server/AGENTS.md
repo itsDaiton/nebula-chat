@@ -44,7 +44,7 @@ script load through `dotenvx run` — single source of truth (see [Environment V
 
 - `modules/<name>/` — one 6-layer module each (below): `chat`, `stream`, `session`, `message`,
   `models`, `profileImage`, `logLevel`, and `run` (only a repository so far: the send path creates Runs). A module may add hooks (`*.hook.ts`) and helpers beside its layers.
-- `plugins/` — Fastify plugins: request logging, `db`, `redis`, and `authGate` (mounts `/api/auth/*`,
+- `plugins/` — Fastify plugins: request logging, `db`, `redis`, and `authGate` (mounts `/api/auth/*` and answers `/api/auth/admin/*` with NotFound,
   decorates `requireAuthentication` / `requireRegistered`).
 - `errors/` — the global error handler. `config/` — CORS, SSE headers, pagination. `utils/` — small shared helpers.
 - `test/` — the shared harness (`createTestApp`, in-memory pub/sub, reply streams, profile image store).

@@ -1,4 +1,4 @@
-import { anonymousClient } from 'better-auth/client/plugins';
+import { anonymousClient, twoFactorClient } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
 import { SERVER_CONFIG } from '@/shared/config/serverConfig';
 
@@ -7,5 +7,5 @@ export const authClient = createAuthClient({
   baseURL: SERVER_CONFIG.BASE_URL,
   // Sends the better-auth session cookie cross-origin.
   fetchOptions: { credentials: 'include' },
-  plugins: [anonymousClient()],
+  plugins: [anonymousClient(), twoFactorClient()],
 });

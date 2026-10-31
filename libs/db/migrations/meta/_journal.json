@@ -64,6 +64,13 @@
       "when": 1793129325136,
       "tag": "0008_archived-sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793440943440,
+      "tag": "0009_admin-two-factor-audit-log",
+      "breakpoints": true
     }
   ]
 }

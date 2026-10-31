@@ -11,6 +11,7 @@ import {
   ERROR_STATUS,
   ForbiddenError,
   INTERNAL_ERROR_ENVELOPE,
+  NotFoundError,
   UnauthorizedError,
 } from '@nebula-chat/errors';
 
@@ -95,6 +96,21 @@ const failAuthRequest = (err: unknown, req: FastifyRequest, reply: FastifyReply)
   }
 };
 
+const ADMIN_PLUGIN_PREFIX = '/api/auth/admin';
+
+// The path as better-auth's router would match it: query dropped, percent-escapes decoded, case ignored.
+const isAdminPluginPath = (url: string): boolean => {
+  const [rawPath = ''] = url.split('?');
+  let path = rawPath;
+  try {
+    path = decodeURIComponent(rawPath);
+  } catch {
+    // An undecodable path can't name the admin plugin's routes.
+  }
+  const normalized = path.toLowerCase().replace(/\/{2,}/g, '/');
+  return normalized === ADMIN_PLUGIN_PREFIX || normalized.startsWith(`${ADMIN_PLUGIN_PREFIX}/`);
+};
+
 /**
  * Mounts better-auth at `GET|POST /api/auth/*` on the raw req/res (hidden from OpenAPI) and exposes the route gates.
  * Its passthrough body parser lives in an encapsulated child scope, so the rest of the API keeps JSON parsing.
@@ -120,6 +136,12 @@ export default fp(
         url: '/api/auth/*',
         schema: { hide: true },
         handler: async (req, reply) => {
+          // Answered before the hijack; admin actions must use the audited `/api/admin/*` (ADR-0027 §6).
+          if (isAdminPluginPath(req.url)) {
+            return reply
+              .status(ERROR_STATUS.NotFound)
+              .send(new NotFoundError('Route').toEnvelope());
+          }
           reply.hijack();
           forwardReplyHeaders(reply);
           try {
