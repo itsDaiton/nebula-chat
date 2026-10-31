@@ -416,6 +416,14 @@ change writes one Audit log entry with the Operator as actor. The role is writte
 `auth.api.setRole` writes it (`internalAdapter.updateUser`), so the user cached in their auth
 sessions changes too; the endpoint itself needs an Admin's session, which the Operator lacks.
 
+An Admin grants or revokes the role with `POST /api/admin/users/{id}/role {role}` and bans or unbans
+with `POST /api/admin/users/{id}/ban {reason, expiresAt?}` and `/unban`, through better-auth's server
+API (`setRole`, `banUser`, `unbanUser`) with the Admin's own headers. A Guest, an unverified or a
+banned user cannot be made Admin (`NotEligibleForAdmin`), and the last active Admin cannot be demoted
+or banned (`LastAdmin`). A ban revokes every auth session; cookie-cache holders may stay signed in up
+to five minutes. A banned sign-in is refused with the plugin's `BANNED_USER` error, whose message
+carries the reason and end time; once `banExpires` passes, the next sign-in lifts the ban.
+
 Handlers read the owner through `getSessionData(req)` rather than an untyped request
 property. A gate is added to a route's `preHandler` chain:
 

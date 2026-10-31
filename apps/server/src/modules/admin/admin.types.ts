@@ -2,7 +2,9 @@ import type { z } from 'zod';
 import type {
   adminEmailParamsSchema,
   grantAdminSchema,
+  banUserSchema,
   listUsersQuerySchema,
+  setRoleSchema,
   userIdParamsSchema,
 } from '@server/modules/admin/admin.validation';
 
@@ -17,3 +19,7 @@ export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;
 export type UserFilters = Pick<ListUsersQuery, 'search' | 'status' | 'sortBy' | 'order'>;
 
 export type UserIdParams = z.infer<typeof userIdParamsSchema>;
+
+export type SetRoleDTO = z.infer<typeof setRoleSchema>;
+
+export type BanUserDTO = z.infer<typeof banUserSchema>;

@@ -70,6 +70,19 @@ export const listUsersQuerySchema = z.object({
   cursor: z.uuid().optional().describe('The `nextCursor` of the previous page'),
 });
 
+export const setRoleSchema = z.object({
+  role: z.enum(['admin', 'user']).describe('`admin` grants the role, `user` revokes it'),
+});
+
+export const banUserSchema = z.object({
+  reason: z.string().trim().min(1).max(500).describe('Shown to the User when they try to sign in'),
+  expiresAt: z.iso
+    .datetime()
+    .refine((value) => new Date(value) > new Date(), 'The end of a ban must be in the future.')
+    .optional()
+    .describe('When the ban ends; without it the ban lasts until an Admin lifts it'),
+});
+
 export const userIdParamsSchema = z.object({ id: z.uuid().describe('The User id') });
 
 const userSummaryShape = {

@@ -11,6 +11,8 @@ export const ERROR_STATUS: Readonly<Record<ErrorCode, number>> = {
   TwoFactorRequired: 403,
   NotFound: 404,
   Conflict: 409,
+  LastAdmin: 409,
+  NotEligibleForAdmin: 409,
   PayloadTooLarge: 413,
   TooManyRequests: 429,
   Internal: 500,

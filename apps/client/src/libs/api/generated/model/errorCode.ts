@@ -16,6 +16,8 @@ export const ErrorCode = {
   TwoFactorRequired: 'TwoFactorRequired',
   NotFound: 'NotFound',
   Conflict: 'Conflict',
+  LastAdmin: 'LastAdmin',
+  NotEligibleForAdmin: 'NotEligibleForAdmin',
   PayloadTooLarge: 'PayloadTooLarge',
   TooManyRequests: 'TooManyRequests',
   Internal: 'Internal',

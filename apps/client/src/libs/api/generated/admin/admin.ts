@@ -24,13 +24,15 @@ import type {
   AdminUserDetail,
   AdminUserPage,
   AuditPage,
+  BanUserBody,
   ErrorEnvelope,
   ListAuditEntriesParams,
   ListUsersParams,
+  SetUserRoleBody,
 } from '../model';
 
 import { axiosClient } from '../../client';
-import type { ErrorType } from '../../client';
+import type { ErrorType, BodyType } from '../../client';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -369,6 +371,260 @@ export const useRestoreUser = <TError = ErrorType<ErrorEnvelope | unknown>, TCon
   TContext
 > => {
   return useMutation(getRestoreUserMutationOptions(options), queryClient);
+};
+/**
+ * Grant or revoke the Admin role, and record it in the Audit log. A Guest, an unverified or a banned user cannot become an Admin (`NotEligibleForAdmin`), and the last Admin cannot be revoked (`LastAdmin`). Requires an Admin whose auth session passed two-factor authentication.
+ * @summary Grant or revoke Admin
+ */
+export const setUserRole = (
+  id: string,
+  setUserRoleBody: BodyType<SetUserRoleBody>,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<void>(
+    {
+      url: `/api/admin/users/${id}/role`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: setUserRoleBody,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getSetUserRoleMutationKey = () => ['setUserRole'] as const;
+
+export const getSetUserRoleMutationOptions = <
+  TError = ErrorType<ErrorEnvelope | unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setUserRole>>,
+    TError,
+    SetUserRoleMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof axiosClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setUserRole>>,
+  TError,
+  SetUserRoleMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSetUserRoleMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setUserRole>>,
+    SetUserRoleMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return setUserRole(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetUserRoleMutationResult = NonNullable<Awaited<ReturnType<typeof setUserRole>>>;
+export type SetUserRoleMutationBody = BodyType<SetUserRoleBody>;
+export type SetUserRoleMutationError = ErrorType<ErrorEnvelope | unknown>;
+export type SetUserRoleMutationVariables = { id: string; data: BodyType<SetUserRoleBody> };
+
+/**
+ * @summary Grant or revoke Admin
+ */
+export const useSetUserRole = <TError = ErrorType<ErrorEnvelope | unknown>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof setUserRole>>,
+      TError,
+      SetUserRoleMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof setUserRole>>,
+  TError,
+  SetUserRoleMutationVariables,
+  TContext
+> => {
+  return useMutation(getSetUserRoleMutationOptions(options), queryClient);
+};
+/**
+ * Ban a User with a reason and an optional end time, revoke every auth session of theirs, and record it in the Audit log. Their sign-in then fails with the reason and end time until the ban ends or is lifted. The last Admin cannot be banned (`LastAdmin`). Sessions are revoked through Redis secondary storage; a cookie-cache holder may stay signed in for up to five minutes, as with Sign out everywhere. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary Ban a User
+ */
+export const banUser = (
+  id: string,
+  banUserBody: BodyType<BanUserBody>,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<void>(
+    {
+      url: `/api/admin/users/${id}/ban`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: banUserBody,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getBanUserMutationKey = () => ['banUser'] as const;
+
+export const getBanUserMutationOptions = <
+  TError = ErrorType<ErrorEnvelope | unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof banUser>>,
+    TError,
+    BanUserMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof axiosClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof banUser>>,
+  TError,
+  BanUserMutationVariables,
+  TContext
+> => {
+  const mutationKey = getBanUserMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof banUser>>,
+    BanUserMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return banUser(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type BanUserMutationResult = NonNullable<Awaited<ReturnType<typeof banUser>>>;
+export type BanUserMutationBody = BodyType<BanUserBody>;
+export type BanUserMutationError = ErrorType<ErrorEnvelope | unknown>;
+export type BanUserMutationVariables = { id: string; data: BodyType<BanUserBody> };
+
+/**
+ * @summary Ban a User
+ */
+export const useBanUser = <TError = ErrorType<ErrorEnvelope | unknown>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof banUser>>,
+      TError,
+      BanUserMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof banUser>>,
+  TError,
+  BanUserMutationVariables,
+  TContext
+> => {
+  return useMutation(getBanUserMutationOptions(options), queryClient);
+};
+/**
+ * Lift a ban, and record it in the Audit log. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary Unban a User
+ */
+export const unbanUser = (
+  id: string,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<void>(
+    { url: `/api/admin/users/${id}/unban`, method: 'POST', signal },
+    options,
+  );
+};
+
+export const getUnbanUserMutationKey = () => ['unbanUser'] as const;
+
+export const getUnbanUserMutationOptions = <
+  TError = ErrorType<ErrorEnvelope | unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unbanUser>>,
+    TError,
+    UnbanUserMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof axiosClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof unbanUser>>,
+  TError,
+  UnbanUserMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUnbanUserMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof unbanUser>>,
+    UnbanUserMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return unbanUser(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UnbanUserMutationResult = NonNullable<Awaited<ReturnType<typeof unbanUser>>>;
+
+export type UnbanUserMutationError = ErrorType<ErrorEnvelope | unknown>;
+export type UnbanUserMutationVariables = { id: string };
+
+/**
+ * @summary Unban a User
+ */
+export const useUnbanUser = <TError = ErrorType<ErrorEnvelope | unknown>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof unbanUser>>,
+      TError,
+      UnbanUserMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof unbanUser>>,
+  TError,
+  UnbanUserMutationVariables,
+  TContext
+> => {
+  return useMutation(getUnbanUserMutationOptions(options), queryClient);
 };
 /**
  * List Audit log entries, newest first, filtered by actor, action, target and time range, a page at a time. Requires an Admin whose auth session passed two-factor authentication.

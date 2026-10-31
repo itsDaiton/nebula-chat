@@ -24,6 +24,8 @@ export {
   TwoFactorRequiredError,
   NotFoundError,
   ConflictError,
+  LastAdminError,
+  NotEligibleForAdminError,
   PayloadTooLargeError,
   TooManyRequestsError,
   MissingConfigurationError,

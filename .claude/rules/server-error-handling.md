@@ -11,19 +11,21 @@ The error vocabulary lives in the shared **`@nebula-chat/errors`** lib (`libs/er
 import — see [ADR-0011](../../docs/adr/0011-shared-errors-lib-and-typed-envelope.md). Throw the `AppError`
 subclass that matches the situation, imported from `@nebula-chat/errors`:
 
-| Class                          | HTTP status | Code (`error`)            | When to use                               |
-| ------------------------------ | ----------- | ------------------------- | ----------------------------------------- |
-| `BadRequestError`              | 400         | `BadRequest`              | Invalid input not caught by Zod           |
-| `ValidationError`              | 400         | `Validation`              | Data that breaks a rule (Zod, DB checks)  |
-| `UnauthorizedError`            | 401         | `Unauthorized`            | Not authenticated                         |
-| `ForbiddenError`               | 403         | `Forbidden`               | Authenticated but not allowed             |
-| `MessageAllowanceReachedError` | 403         | `MessageAllowanceReached` | A Guest has spent their message allowance |
-| `TwoFactorRequiredError`       | 403         | `TwoFactorRequired`       | An Admin's auth session lacks two-factor  |
-| `NotFoundError`                | 404         | `NotFound`                | Resource not found by ID                  |
-| `ConflictError`                | 409         | `Conflict`                | The data clashes with an existing record  |
-| `PayloadTooLargeError`         | 413         | `PayloadTooLarge`         | Message exceeds token limit               |
-| `TooManyRequestsError`         | 429         | `TooManyRequests`         | A rate limit was hit                      |
-| `MissingConfigurationError`    | 500         | `Internal`                | Required env var not set                  |
+| Class                          | HTTP status | Code (`error`)            | When to use                                 |
+| ------------------------------ | ----------- | ------------------------- | ------------------------------------------- |
+| `BadRequestError`              | 400         | `BadRequest`              | Invalid input not caught by Zod             |
+| `ValidationError`              | 400         | `Validation`              | Data that breaks a rule (Zod, DB checks)    |
+| `UnauthorizedError`            | 401         | `Unauthorized`            | Not authenticated                           |
+| `ForbiddenError`               | 403         | `Forbidden`               | Authenticated but not allowed               |
+| `MessageAllowanceReachedError` | 403         | `MessageAllowanceReached` | A Guest has spent their message allowance   |
+| `TwoFactorRequiredError`       | 403         | `TwoFactorRequired`       | An Admin's auth session lacks two-factor    |
+| `NotFoundError`                | 404         | `NotFound`                | Resource not found by ID                    |
+| `ConflictError`                | 409         | `Conflict`                | The data clashes with an existing record    |
+| `LastAdminError`               | 409         | `LastAdmin`               | Demoting or banning the only Admin left     |
+| `NotEligibleForAdminError`     | 409         | `NotEligibleForAdmin`     | A Guest, unverified or banned user as Admin |
+| `PayloadTooLargeError`         | 413         | `PayloadTooLarge`         | Message exceeds token limit                 |
+| `TooManyRequestsError`         | 429         | `TooManyRequests`         | A rate limit was hit                        |
+| `MissingConfigurationError`    | 500         | `Internal`                | Required env var not set                    |
 
 The code decides the status (`ERROR_STATUS` in `libs/errors/src/errorStatus.ts`), so the two cannot disagree.
 

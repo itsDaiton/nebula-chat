@@ -43,7 +43,7 @@ script load through `dotenvx run` — single source of truth (see [server-env](.
 (the only `process.env` reader), singletons (`db.ts`, `redis.ts`, `queue.ts`, `auth.ts`, `logger.ts`) and:
 
 - `modules/<name>/` — one 6-layer module each (below): `chat`, `stream`, `session`, `message`,
-  `models`, `profileImage`, `logLevel`, `admin` (the Operator's `/api/internal/admins` and the Admin's `/api/admin/users`: list, read and restore), `audit` (the Audit log
+  `models`, `profileImage`, `logLevel`, `admin` (the Operator's `/api/internal/admins` and the Admin's `/api/admin/users`: list, read, restore, grant or revoke Admin, ban and unban), `audit` (the Audit log
   writer and `GET /api/admin/audit`), and `run` (only a repository so far: the send path creates Runs). A module may add hooks (`*.hook.ts`) and helpers beside its layers.
 - `plugins/` — Fastify plugins: request logging, `db`, `redis`, and `authGate` (mounts `/api/auth/*` and answers `/api/auth/admin/*` with NotFound,
   decorates `requireAuthentication` / `requireRegistered`; also exports `requireAdmin` for `/api/admin/*`).
