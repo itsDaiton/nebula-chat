@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.9.0...nebula-chat-openapi-v4.10.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-541 Admin reads any User's Sessions and Messages, each read audited ([#707](https://github.com/itsDaiton/nebula-chat/issues/707)) ([ae9e5e3](https://github.com/itsDaiton/nebula-chat/commit/ae9e5e37a514323d5e57a5c91a004e45f12aeee3))
+
 ## [4.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.8.0...nebula-chat-openapi-v4.9.0) (2026-10-31)
 
 
