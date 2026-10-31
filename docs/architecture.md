@@ -366,8 +366,9 @@ flowchart LR
   ld --> brief[buildBrief]
   ss --> brief
   brief --> orch[orchestrator<br/>createAgent loop]
-  orch -->|turn: parallel tool calls| dg[delegate Agents<br/>analyst, critic]
+  orch -->|turn: parallel tool calls| dg[delegate Agents<br/>analyst, critic, researcher]
   dg -->|tool results| orch
+  dg <-->|researcher's own loop| web[web_search, web_fetch]
   orch -->|handoff: findings| out[output<br/>Output Agent]
   out --> done((end))
 ```
@@ -384,14 +385,21 @@ flowchart LR
   (`{ language, session, missing }`), stores it on the Run and passes that JSON down.
 - **Orchestrator.** A LangChain `createAgent` tool-calling loop on a strong Model, run nested in its
   node. It opens with the Brief and the user's message; its only tools are the delegate Agents
-  (`analyst`, `critic`), each taking `{ task }` and answering with one plain model call, so a
-  delegate never delegates. Several calls in one turn run in parallel, up to
+  (`analyst`, `critic`, `researcher`), each taking `{ task }`, so a delegate never delegates. A
+  delegate with no tools answers with one plain model call. Several calls in one turn run in parallel, up to
   `RUN_PARALLEL_DELEGATES` per Run, and their results feed the next turn. It hands off by replying
   without a tool call: that reply is its findings. Its middleware records each turn and delegate
   as a Step, turns a delegate's error or timeout into an error tool result, and ends the loop at
   `RUN_TURN_CAP` turns or once the Run's tokens pass `RUN_HANDOFF_THRESHOLD` of `RUN_TOKEN_BUDGET`.
   A forced handoff passes the delegates' results so far as partial findings, and the Run ends
   `partial`, as it does when any delegate Step failed.
+- **Tools.** Tools are granted per Agent in code, and only to delegates: the `researcher` has
+  `web_search` (Tavily) and `web_fetch`. A delegate with tools runs its own `createAgent` loop,
+  without a checkpointer (its tools only read, so a crash re-runs it whole). Each tool call is a
+  `tool` Step under the delegate's Step; a tool's failure goes back to the delegate as a typed error
+  result. After `RUN_DELEGATE_TOOL_CALL_CAP` calls the delegate is offered no tools, so it answers
+  with what it has. `web_fetch` refuses any URL that is not public HTTP(S): it resolves the hostname
+  itself, checks every address, connects to the checked one and repeats that on each redirect.
 - **Output.** The Output Agent is always the last node. It reads the Brief as JSON and the
   findings, and streams the answer in the Brief's language. Only its tokens reach the stream. The
   answer is persisted as an assistant Message linked to the Run.

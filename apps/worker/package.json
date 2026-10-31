@@ -26,6 +26,7 @@
     "@nebula-chat/redis": "workspace:*",
     "bullmq": "catalog:",
     "drizzle-orm": "catalog:",
+    "html-to-text": "^9.0.5",
     "langchain": "^1.5.18",
     "p-limit": "^7.3.3",
     "tiktoken": "catalog:",
@@ -33,6 +34,7 @@
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "catalog:",
+    "@types/html-to-text": "^9.0.4",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "nodemon": "catalog:",

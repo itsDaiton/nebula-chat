@@ -55,6 +55,10 @@ services:
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
+      # Web search for the researcher Agent; the worker is the only service that holds it.
+      # Required here: production never falls back to Tavily's rate-limited keyless access.
+      - key: TAVILY_API_KEY
+        sync: false
 
   - type: web
     name: nebula-chat-client

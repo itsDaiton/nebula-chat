@@ -8,7 +8,7 @@ each package's own file — read the one you're about to touch:
 - [apps/worker](./apps/worker/AGENTS.md) — every LLM reply and background job (BullMQ, Redis Streams)
 - [apps/cli](./apps/cli/AGENTS.md) — the `nebula` operator CLI
 
-The server and client keep their topic conventions (error handling, Drizzle, forms, testing and so on) in
+The server, client and worker keep their topic conventions (error handling, Drizzle, forms, env and so on) in
 path-scoped rules under [`.claude/rules/`](./.claude/rules/), one `<app>-<topic>.md` each. Claude Code loads a rule
 when it reads a matching file; each package's `AGENTS.md` links every rule for other agents.
 

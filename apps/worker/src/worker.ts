@@ -34,6 +34,9 @@ import { redis } from '@worker/redis';
 import { createCheckpointer } from '@worker/runs/checkpointer';
 import { runRepository } from '@worker/runs/runRepository';
 import { stepRepository } from '@worker/runs/stepRepository';
+import { webFetchTool } from '@worker/tools/webFetch';
+import { webSearchTool } from '@worker/tools/webSearch';
+import { dnsResolve, nodeRequest } from '@worker/web/httpTransport';
 
 const start = async (): Promise<void> => {
   const stream: ReplyStreamWriter = {
@@ -71,12 +74,31 @@ const start = async (): Promise<void> => {
     prompts,
     apiKeys,
     logger,
+    toolbox: {
+      web_search: webSearchTool({
+        apiKey: env.TAVILY_API_KEY,
+        // Keyless is rate-limited: fine for local dev, while production must set a key.
+        keyless: env.NODE_ENV !== 'production',
+        fetch: globalThis.fetch,
+        timeoutMs: env.WEB_FETCH_TIMEOUT_MS,
+        maxResults: 5,
+      }),
+      web_fetch: webFetchTool({
+        lookup: dnsResolve,
+        request: nodeRequest,
+        maxBytes: env.WEB_FETCH_MAX_BYTES,
+        timeoutMs: env.WEB_FETCH_TIMEOUT_MS,
+        maxRedirects: env.WEB_FETCH_MAX_REDIRECTS,
+        maxChars: env.WEB_FETCH_MAX_CHARS,
+      }),
+    },
     limits: {
       turnCap: env.RUN_TURN_CAP,
       parallelDelegates: env.RUN_PARALLEL_DELEGATES,
       tokenBudget: env.RUN_TOKEN_BUDGET,
       handoffThreshold: env.RUN_HANDOFF_THRESHOLD,
       delegateTimeoutMs: env.RUN_DELEGATE_TIMEOUT_MS,
+      delegateToolCallCap: env.RUN_DELEGATE_TOOL_CALL_CAP,
     },
     runTimeoutMs: env.RUN_TIMEOUT_MS,
   });
