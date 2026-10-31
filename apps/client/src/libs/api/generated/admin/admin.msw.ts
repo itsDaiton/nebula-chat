@@ -163,6 +163,7 @@ export const getListAuditEntriesResponseMock = (
         'user.restored',
         'session.read',
         'run.read',
+        'users.purged',
       ] as const),
       targetType: faker.string.alpha({ length: { min: 10, max: 20 } }),
       targetId: faker.string.alpha({ length: { min: 10, max: 20 } }),

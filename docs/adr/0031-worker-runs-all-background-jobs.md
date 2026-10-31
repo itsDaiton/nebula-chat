@@ -1,6 +1,6 @@
 # ADR-0031: The worker app runs all background jobs, not only LLM execution
 
-- **Status:** Proposed — first used by the Purge job
+- **Status:** Accepted — first used by the Purge job (NEB-545)
 - **Date:** 2026-10-18
 - **Deciders:** @itsDaiton
 - **Related:** [ADR-0013](./0013-worker-app-owns-all-llm-execution.md) — amended; [ADR-0028](./0028-account-deletion-pending-deletion-and-purge.md) — the Purge

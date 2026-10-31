@@ -38,6 +38,10 @@ vi.mock('@server/modules/run/run.repository', () => ({
   runRepository: { createTx: vi.fn() },
 }));
 
+vi.mock('@server/modules/user/user.repository', () => ({
+  userRepository: { findLastActiveAt: vi.fn(), setLastActiveAt: vi.fn() },
+}));
+
 // @server/redis is the boundary to Redis: stream owners live in memory.
 vi.mock('@server/redis', async () => {
   const { replyStreamsModule } = await import('@server/test/memoryReplyStreams.js');
@@ -67,11 +71,13 @@ import { auth } from '@server/auth';
 import { messageRepository } from '@server/modules/message/message.repository';
 import { runRepository } from '@server/modules/run/run.repository';
 import { sessionRepository } from '@server/modules/session/session.repository';
+import { userRepository } from '@server/modules/user/user.repository';
 
 const mockedGetSession = vi.mocked(auth.api.getSession);
 const sessionRepo = vi.mocked(sessionRepository);
 const messageRepo = vi.mocked(messageRepository);
 const runRepo = vi.mocked(runRepository);
+const userRepo = vi.mocked(userRepository);
 
 const SESSION_ID = '11111111-1111-4111-8111-111111111111';
 const MESSAGE_ID = '22222222-2222-4222-8222-222222222222';
@@ -120,6 +126,7 @@ beforeEach(() => {
   );
   messageRepo.createTx.mockResolvedValue(fromPartial({ id: MESSAGE_ID }));
   runRepo.createTx.mockResolvedValue({ id: RUN_ID });
+  userRepo.findLastActiveAt.mockResolvedValue(null);
 });
 
 describe('POST /api/sessions/:sessionId/messages', () => {
@@ -139,6 +146,32 @@ describe('POST /api/sessions/:sessionId/messages', () => {
       role: 'user',
       content: 'what is 2+2?',
     });
+  });
+
+  it('records the User as active when they have never been', async () => {
+    await send(validBody);
+
+    expect(userRepo.setLastActiveAt).toHaveBeenCalledExactlyOnceWith(
+      REGISTERED_USER_ID,
+      expect.any(Date),
+    );
+  });
+
+  it('records activity again once the last record is over an hour old', async () => {
+    userRepo.findLastActiveAt.mockResolvedValue(new Date(Date.now() - 61 * 60 * 1000));
+
+    await send(validBody);
+
+    expect(userRepo.setLastActiveAt).toHaveBeenCalledOnce();
+  });
+
+  it('leaves the last activity alone when it was recorded within the hour', async () => {
+    userRepo.findLastActiveAt.mockResolvedValue(new Date(Date.now() - 30 * 60 * 1000));
+
+    const res = await send(validBody);
+
+    expect(res.statusCode).toBe(202);
+    expect(userRepo.setLastActiveAt).not.toHaveBeenCalled();
   });
 
   it('enqueues one Direct reply job carrying only IDs', async () => {

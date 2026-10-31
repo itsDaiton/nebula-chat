@@ -1,6 +1,6 @@
 # ADR-0028: Account deletion starts a 30-day Pending deletion ending in a Purge; Sessions are archived, never deleted
 
-- **Status:** Accepted — Pending deletion, restore and sign-in handling are implemented (NEB-544); the Purge job waits for the worker
+- **Status:** Accepted — Pending deletion, restore and sign-in handling are implemented (NEB-544); the daily Purge runs in the worker (NEB-545)
 - **Date:** 2026-10-18
 - **Deciders:** @itsDaiton
 - **Related:** [ADR-0010](./0010-better-auth-for-auth.md) — account deletion through better-auth; [ADR-0031](./0031-worker-runs-all-background-jobs.md) — where the Purge runs

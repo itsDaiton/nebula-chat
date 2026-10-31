@@ -66,6 +66,9 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
 - `llm/` — the model layer: provider clients, structured output, token counting, `packHistory`, the
   concurrency limiter, and the prompt loader. A Model's provider, limits, prices and each provider's default Model come from the
   catalog in `@nebula-chat/contracts` (ADR-0030); the worker keeps no registry of its own.
+- `purge/` — the daily Purge (ADR-0028): `runPurge.ts` picks the Users and Guests past their thresholds, erases each in
+  its own transaction and appends one system Audit entry of counts; the Drizzle `PurgeStore` sits beside it. `worker.ts`
+  upserts the job scheduler (fixed id, `0 3 * * *` UTC) so every instance shares one schedule.
 - `modelCalls/` — the Model call ledger (ADR-0030): `recordModelCall.ts` is the only writer, so a Direct
   reply and, later, a Step share one path; the Drizzle `ModelCallLedger` sits beside it.
 - `resources/prompts/` — one static Markdown system prompt per file, no template variables: dynamic
@@ -129,7 +132,7 @@ on the emitted events, the persisted assistant Message, the recorded Model calls
 `jobs/tests/run.test.ts` does the same for a Run, with scripted models per Agent (the Orchestrator's
 script decides each reply from the messages it is sent), LangGraph's in-memory checkpointer and
 in-memory Run and Step stores, and a Toolbox whose search provider and DNS are faked. Each tool is
-also tested at its own seam (`tools/tests/`), with faked DNS, HTTP and provider responses. No test
+also tested at its own seam (`tools/tests/`), with faked DNS, HTTP and provider responses. `jobs/tests/purge.test.ts` runs the Purge processor over in-memory Users and a fake clock. No test
 reaches Postgres, Redis, a provider or the web.
 
 Coverage excludes construction-only files (`worker.ts`, `env.ts`, `logger.ts`, `db.ts`, `redis.ts`) and

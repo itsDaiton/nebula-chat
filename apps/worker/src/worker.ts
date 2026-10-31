@@ -12,8 +12,14 @@ import { INSTANCE_ID, logger, SERVICE_NAME } from '@worker/logger';
 initTelemetry(SERVICE_NAME, { logger, diagLevel: env.OTEL_LOG_LEVEL });
 
 import { createServer } from 'node:http';
-import { Worker } from 'bullmq';
-import { DIRECT_REPLY_QUEUE, RUN_QUEUE, serializeReplyStreamEvent } from '@nebula-chat/contracts';
+import { Queue, Worker } from 'bullmq';
+import {
+  DIRECT_REPLY_QUEUE,
+  PURGE_QUEUE,
+  PURGE_SCHEDULER_ID,
+  RUN_QUEUE,
+  serializeReplyStreamEvent,
+} from '@nebula-chat/contracts';
 import {
   REPLY_STREAM_RECORD_TTL_SECONDS,
   streamCancelKey,
@@ -25,11 +31,13 @@ import { directReplyRepository } from '@worker/directReplies/directReplyReposito
 import type { ReplyStreamWriter } from '@worker/directReplies/runDirectReply';
 import { streamChat } from '@worker/directReplies/streamChat';
 import { createDirectReplyProcessor } from '@worker/jobs/directReply';
+import { createPurgeProcessor } from '@worker/jobs/purge';
 import { createRunProcessor } from '@worker/jobs/run';
 import { createLLM } from '@worker/llm/createLLM';
 import { loadPrompts } from '@worker/llm/prompts';
 import { invokeStructured } from '@worker/llm/structuredOutput';
 import { modelCallRepository } from '@worker/modelCalls/modelCallRepository';
+import { purgeRepository } from '@worker/purge/purgeRepository';
 import { redis } from '@worker/redis';
 import { createCheckpointer } from '@worker/runs/checkpointer';
 import { runRepository } from '@worker/runs/runRepository';
@@ -37,6 +45,9 @@ import { stepRepository } from '@worker/runs/stepRepository';
 import { webFetchTool } from '@worker/tools/webFetch';
 import { webSearchTool } from '@worker/tools/webSearch';
 import { dnsResolve, nodeRequest } from '@worker/web/httpTransport';
+
+// Fixed, off-peak UTC; the Purge window is days wide, so the hour carries no meaning (ADR-0031).
+const PURGE_CRON = '0 3 * * *';
 
 const start = async (): Promise<void> => {
   const stream: ReplyStreamWriter = {
@@ -111,9 +122,31 @@ const start = async (): Promise<void> => {
     connection: redis.dedicatedConnection(),
     concurrency: env.RUN_CONCURRENCY,
   });
+  const processPurge = createPurgeProcessor({
+    store: purgeRepository,
+    logger,
+    now: () => new Date(),
+    pendingDeletionDays: env.PENDING_DELETION_DAYS,
+    guestInactiveDays: env.GUEST_INACTIVE_DAYS,
+  });
+  const purges = new Worker(PURGE_QUEUE, processPurge, {
+    connection: redis.dedicatedConnection(),
+  });
+  const purgeQueue = new Queue(PURGE_QUEUE, {
+    connection: redis.dedicatedConnection(),
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 60_000 },
+      removeOnComplete: 30,
+      removeOnFail: 30,
+    },
+  });
+  // A scheduler with a fixed id: every instance upserts the same one, so the Purge fires once a day.
+  await purgeQueue.upsertJobScheduler(PURGE_SCHEDULER_ID, { pattern: PURGE_CRON, tz: 'UTC' });
   for (const [queue, name] of [
     [directReplies, 'Direct reply'],
     [runs, 'Run'],
+    [purges, 'Purge'],
   ] as const) {
     queue.on('error', (err) => {
       // `warn`: the connection's own `redis.connection.failed` line is the outage's error.
@@ -162,6 +195,8 @@ const start = async (): Promise<void> => {
       await Promise.all([
         directReplies.close(),
         runs.close(),
+        purges.close(),
+        purgeQueue.close(),
         new Promise<void>((resolve) => health.close(() => resolve())),
       ]);
       await Promise.all([redis.close(), closeDb(), shutdownTelemetry()]);

@@ -33,6 +33,8 @@ export const users = pgTable(
     twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
     // Set by Account deletion (ADR-0028); the Purge erases the User 30 days later.
     pendingDeletionAt: timestamp('pending_deletion_at'),
+    // When the User last sent a Message, at most hourly; a Guest idle for 30 days is Purged (ADR-0028).
+    lastActiveAt: timestamp('last_active_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -299,6 +301,7 @@ export const AUDIT_ACTIONS = [
   'user.restored',
   'session.read',
   'run.read',
+  'users.purged',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
@@ -324,7 +327,7 @@ export const auditEntries = pgTable(
     check('audit_entries_actor_type_check', sql`${t.actorType} in ('admin', 'operator', 'system')`),
     check(
       'audit_entries_action_check',
-      sql`${t.action} in ('admin.granted', 'user.role_changed', 'user.banned', 'user.unbanned', 'session.read', 'run.read')`,
+      sql`${t.action} in ('admin.granted', 'user.role_changed', 'user.banned', 'user.unbanned', 'user.restored', 'session.read', 'run.read', 'users.purged')`,
     ),
   ],
 );

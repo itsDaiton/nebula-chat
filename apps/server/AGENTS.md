@@ -44,7 +44,7 @@ script load through `dotenvx run` — single source of truth (see [server-env](.
 
 - `modules/<name>/` — one 6-layer module each (below): `chat`, `stream`, `session`, `message`,
   `models`, `profileImage`, `logLevel`, `admin` (the Operator's `/api/internal/admins` and the Admin's `/api/admin/users`: list, read, restore, grant or revoke Admin, ban and unban, a User's Sessions; and the audited `/api/admin/sessions/:id`), `audit` (the Audit log
-  writer and `GET /api/admin/audit`), and `run` (only a repository so far: the send path creates Runs). A module may add hooks (`*.hook.ts`) and helpers beside its layers.
+  writer and `GET /api/admin/audit`), `run` (only a repository so far: the send path creates Runs), and `user` (only a repository so far: the send path records `lastActiveAt`). A module may add hooks (`*.hook.ts`) and helpers beside its layers.
 - `plugins/` — Fastify plugins: request logging, `db`, `redis`, and `authGate` (mounts `/api/auth/*` and answers `/api/auth/admin/*` with NotFound,
   decorates `requireAuthentication` / `requireRegistered`; also exports `requireAdmin` for `/api/admin/*`).
 - `errors/` — the global error handler. `config/` — CORS, SSE headers, pagination. `utils/` — small shared helpers,
