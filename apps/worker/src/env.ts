@@ -23,8 +23,10 @@ const envSchema = z
     RUN_HANDOFF_THRESHOLD: z.coerce.number().gt(0).max(1).default(0.85),
     RUN_DELEGATE_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
     RUN_DELEGATE_TOOL_CALL_CAP: z.coerce.number().int().positive().default(6),
-    // Web search (Tavily); without a key, searches go keyless (rate-limited) outside production, fail in it.
+    // Web search (Tavily). A set key always wins; without one, searches go keyless only when allowed.
     TAVILY_API_KEY: z.string().min(1).optional(),
+    // Tavily's keyless access is rate-limited: for local dev, never production.
+    TAVILY_KEYLESS: z.stringbool().default(false),
     WEB_FETCH_MAX_BYTES: z.coerce.number().int().positive().default(2_000_000),
     // Bounds a whole fetch, redirects and body included, and a search.
     WEB_FETCH_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
