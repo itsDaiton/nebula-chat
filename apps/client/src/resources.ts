@@ -8,14 +8,6 @@ export const resources = {
     emptySessionHint: 'Start the session by asking Nebula Chat something!',
     streamError: 'An error occurred during streaming.',
     stopReply: 'Stop reply',
-    clarifying: {
-      label: 'Clarifying question',
-      note: "Waiting for your answer. If you don't reply within 3 minutes, the Run carries on without it and the answer will be marked partial.",
-      progress: (steps: number) =>
-        `Run · waiting for you · ${steps} ${steps === 1 ? 'Step' : 'Steps'} done`,
-      hint: "Your next message answers the Run's question",
-      cancel: 'Cancel Run',
-    },
     messageAllowance: {
       title: "You've reached the free message limit",
       description: 'Register or sign in to keep chatting. Your sessions come with you.',

@@ -32,7 +32,6 @@ const aMessage = (id: string, sessionId: string, role: string, content: string) 
 const serveSession = (
   messages = [aMessage('m1', SESSION_ID, 'user', 'a question')],
   activeStreamId: string | null = null,
-  waitingRun: { id: string; streamId: string | null; stepsCompleted: number } | null = null,
 ) =>
   server.use(
     getGetSessionMockHandler({
@@ -41,7 +40,7 @@ const serveSession = (
       createdAt: '2026-01-01T00:00:00.000Z',
       archived: false,
       activeStreamId,
-      waitingRun,
+      waitingRun: null,
     }),
     getListMessagesMockHandler(({ request }) =>
       new URL(request.url).searchParams.get('sessionId') === SESSION_ID ? messages : [],
@@ -84,30 +83,6 @@ describe('useChatSession', () => {
     const { result } = renderHookWithQueryClient(() => useChatSession(SESSION_ID));
 
     await waitFor(() => expect(result.current.activeStreamId).toBe(STREAM_ID));
-  });
-
-  it('shows a Run waiting on its question: the last Message is flagged and the Run is kept for the answer', async () => {
-    const RUN_ID = '55555555-5555-4555-8555-555555555555';
-    const STREAM_ID = '33333333-3333-4333-8333-333333333333';
-    serveSession(
-      [
-        aMessage('m1', SESSION_ID, 'user', 'compare the plans'),
-        aMessage('m2', SESSION_ID, 'assistant', 'Which plans?'),
-      ],
-      null,
-      { id: RUN_ID, streamId: STREAM_ID, stepsCompleted: 4 },
-    );
-
-    const { result } = renderHookWithQueryClient(() => useChatSession(SESSION_ID));
-
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(chat().history.at(-1)).toEqual({
-      id: 'm2',
-      role: 'assistant',
-      content: 'Which plans?',
-      clarifying: true,
-    });
-    expect(chat().waitingRun).toEqual({ runId: RUN_ID, streamId: STREAM_ID, stepsCompleted: 4 });
   });
 
   it('names no reply when none is in flight', async () => {
