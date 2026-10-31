@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.2.2...nebula-chat-cli-v1.3.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-539 admin gate, Audit log and Operator admin routes ([#695](https://github.com/itsDaiton/nebula-chat/issues/695)) ([e044c81](https://github.com/itsDaiton/nebula-chat/commit/e044c818fbaf52095e2b9bda952d77c48eafb918)), closes [#539](https://github.com/itsDaiton/nebula-chat/issues/539)
+
 ## [1.2.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.2.1...nebula-chat-cli-v1.2.2) (2026-10-30)
 
 
