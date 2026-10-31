@@ -9,6 +9,7 @@ paths:
 
 `apps/client/.env`:
 
-| Variable       | Purpose                                                    |
-| -------------- | ---------------------------------------------------------- |
-| `VITE_API_URL` | Base URL of the backend API (e.g. `http://localhost:3000`) |
+| Variable               | Purpose                                                                    |
+| ---------------------- | -------------------------------------------------------------------------- |
+| `VITE_API_URL`         | Base URL of the backend API (e.g. `http://localhost:3000`)                 |
+| `VITE_ENABLE_DEVTOOLS` | `true` shows the TanStack Router devtools under `pnpm dev`; off when unset |

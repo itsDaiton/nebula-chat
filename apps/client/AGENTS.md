@@ -101,5 +101,5 @@ when it reads a matching file; any other agent opens the file when it works in t
 | [client-hooks](../../.claude/rules/client-hooks.md)                       | Thin hooks over stores and queries                     |
 | [client-use-effect](../../.claude/rules/client-use-effect.md)             | No `useEffect`, and what to use instead                |
 | [client-shared-utilities](../../.claude/rules/client-shared-utilities.md) | `@nebula-chat/errors`, server config, pagination       |
-| [client-env](../../.claude/rules/client-env.md)                           | `VITE_API_URL`                                         |
+| [client-env](../../.claude/rules/client-env.md)                           | `VITE_API_URL`, `VITE_ENABLE_DEVTOOLS`                 |
 | [client-testing](../../.claude/rules/client-testing.md)                   | Frontend test commands, MSW, `renderRoute`             |
