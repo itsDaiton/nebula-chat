@@ -1,5 +1,6 @@
-import { eq, asc, desc, and, count } from 'drizzle-orm';
-import { messages, sessions } from '@nebula-chat/db';
+import { eq, asc, desc, and, count, isNotNull, sql, getTableColumns } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
+import { messages, modelCalls, sessions } from '@nebula-chat/db';
 import type { DbTransaction } from '@nebula-chat/db';
 import { db } from '@server/db';
 import type {
@@ -7,12 +8,40 @@ import type {
   GetMessageParams,
   MessageHistoryRow,
   MessageRow,
+  MessageWithMetaRow,
 } from '@server/modules/message/message.types';
+
+// A Direct reply's call links to its Message; a Run's calls sum under the Run. Both joins stay in the one query.
+const directCall = alias(modelCalls, 'direct_call');
+
+const messageMeta = (userId: string) => {
+  const runCost = db
+    .select({
+      runId: modelCalls.runId,
+      costUsd: sql<number>`sum(${modelCalls.costUsd})::float8`.as('cost_usd'),
+    })
+    .from(modelCalls)
+    .where(and(eq(modelCalls.userId, userId), isNotNull(modelCalls.runId)))
+    .groupBy(modelCalls.runId)
+    .as('run_cost');
+  return {
+    runCost,
+    columns: {
+      ...getTableColumns(messages),
+      model: sql<string | null>`${directCall.model}`,
+      estimatedCostUsd: sql<number | null>`coalesce(${directCall.costUsd}, ${runCost.costUsd})`,
+      contextTokens: sql<
+        number | null
+      >`${directCall.inputTokens} + ${directCall.cachedInputTokens}`,
+      contextMessages: sql<number | null>`${directCall.contextMessages}`,
+    },
+  };
+};
 
 export const messageRepository: {
   create: (data: CreateMessageDTO) => Promise<MessageRow>;
-  findById: (params: GetMessageParams, userId: string) => Promise<MessageRow | null>;
-  findAll: (userId: string, sessionId?: string) => Promise<MessageRow[]>;
+  findById: (params: GetMessageParams, userId: string) => Promise<MessageWithMetaRow | null>;
+  findAll: (userId: string, sessionId?: string) => Promise<MessageWithMetaRow[]>;
   createTx: (tx: DbTransaction, data: CreateMessageDTO) => Promise<MessageRow>;
   findBySessionId: (sessionId: string, limit?: number) => Promise<MessageHistoryRow[]>;
   countUserMessagesByOwner: (userId: string) => Promise<number>;
@@ -26,19 +55,25 @@ export const messageRepository: {
   },
   // Reads are owner-scoped through the message's session (ADR-0010 §2): another user's message reads as absent.
   async findById({ messageId }: GetMessageParams, userId: string) {
+    const { runCost, columns } = messageMeta(userId);
     const [row] = await db
-      .select()
+      .select(columns)
       .from(messages)
       .innerJoin(sessions, eq(messages.sessionId, sessions.id))
+      .leftJoin(directCall, eq(directCall.messageId, messages.id))
+      .leftJoin(runCost, eq(runCost.runId, messages.runId))
       .where(and(eq(messages.id, messageId), eq(sessions.userId, userId)));
-    return row?.messages ?? null;
+    return row ?? null;
   },
   // Narrowing to one session stays inside the owner join, so another user's session reads as empty; one session is oldest first.
   async findAll(userId: string, sessionId?: string) {
-    const rows = await db
-      .select()
+    const { runCost, columns } = messageMeta(userId);
+    return db
+      .select(columns)
       .from(messages)
       .innerJoin(sessions, eq(messages.sessionId, sessions.id))
+      .leftJoin(directCall, eq(directCall.messageId, messages.id))
+      .leftJoin(runCost, eq(runCost.runId, messages.runId))
       .where(
         and(
           eq(sessions.userId, userId),
@@ -46,7 +81,6 @@ export const messageRepository: {
         ),
       )
       .orderBy(sessionId === undefined ? desc(messages.createdAt) : asc(messages.createdAt));
-    return rows.map((row) => row.messages);
   },
   async createTx(tx: DbTransaction, data: CreateMessageDTO) {
     const { sessionId, content, role, tokenCount } = data;

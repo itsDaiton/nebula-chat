@@ -38,6 +38,11 @@ type MessageRow = {
   role: 'user' | 'assistant';
   tokenCount: number | null;
   cached: boolean;
+  model: string | null;
+  estimatedCostUsd: number | null;
+  runId: string | null;
+  contextTokens: number | null;
+  contextMessages: number | null;
   createdAt: Date;
 };
 
@@ -48,6 +53,11 @@ const aMessage = (overrides: Partial<MessageRow> = {}): MessageRow => ({
   role: 'user',
   tokenCount: 3,
   cached: false,
+  model: null,
+  estimatedCostUsd: null,
+  runId: null,
+  contextTokens: null,
+  contextMessages: null,
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   ...overrides,
 });
@@ -265,6 +275,81 @@ describe('GET /api/messages', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toHaveLength(2);
+  });
+
+  describe('the metadata it carries', () => {
+    const RUN_ID = '99999999-9999-4999-8999-999999999999';
+    const metaOf = (body: Record<string, unknown>) => ({
+      model: body.model,
+      estimatedCostUsd: body.estimatedCostUsd,
+      runId: body.runId,
+      contextTokens: body.contextTokens,
+      contextMessages: body.contextMessages,
+    });
+    const NONE = {
+      model: null,
+      estimatedCostUsd: null,
+      runId: null,
+      contextTokens: null,
+      contextMessages: null,
+    };
+
+    it('maps a Direct reply, a Run answer, a user Message and a legacy reply', async () => {
+      const direct = {
+        model: 'gpt-4o-mini',
+        estimatedCostUsd: 0.0012,
+        contextTokens: 1200,
+        contextMessages: 6,
+      };
+      const run = { estimatedCostUsd: 0.05, runId: RUN_ID };
+      repo.findAll.mockResolvedValue(
+        fromPartial([
+          aMessage({ role: 'assistant', ...direct }),
+          aMessage({ role: 'assistant', ...run }),
+          aMessage({ role: 'user' }),
+          aMessage({ role: 'assistant' }),
+        ]),
+      );
+
+      const res = await app.inject({ method: 'GET', url: '/api/messages' });
+
+      expect(res.json().map(metaOf)).toEqual([
+        { ...NONE, ...direct },
+        { ...NONE, ...run },
+        NONE,
+        NONE,
+      ]);
+    });
+
+    it('returns a cached replay at zero cost', async () => {
+      repo.findAll.mockResolvedValue(
+        fromPartial([
+          aMessage({ role: 'assistant', cached: true, model: 'gpt-4o-mini', estimatedCostUsd: 0 }),
+        ]),
+      );
+
+      const res = await app.inject({ method: 'GET', url: '/api/messages' });
+
+      expect(res.json()[0]).toMatchObject({ cached: true, estimatedCostUsd: 0 });
+    });
+
+    it('returns the metadata on a single Message too', async () => {
+      repo.findById.mockResolvedValue(
+        fromPartial(aMessage({ role: 'assistant', model: 'gpt-4o-mini', contextMessages: 3 })),
+      );
+
+      const res = await app.inject({ method: 'GET', url: `/api/messages/${MESSAGE_ID}` });
+
+      expect(res.json()).toMatchObject({ model: 'gpt-4o-mini', contextMessages: 3 });
+    });
+
+    it('answers a created Message with null metadata', async () => {
+      repo.create.mockResolvedValue(fromPartial(aMessage()));
+
+      const res = await app.inject({ method: 'POST', url: '/api/messages', payload: validBody });
+
+      expect(metaOf(res.json())).toEqual(NONE);
+    });
   });
 
   it('returns an empty array when there are none', async () => {

@@ -49,6 +49,11 @@ const aMessage = (id: string, role: string, content: string) => ({
   content,
   tokenCount: null,
   cached: false,
+  model: null,
+  estimatedCostUsd: null,
+  runId: null,
+  contextTokens: null,
+  contextMessages: null,
   createdAt: '2026-06-15T11:00:00.000Z',
 });
 

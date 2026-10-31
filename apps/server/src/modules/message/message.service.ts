@@ -1,7 +1,15 @@
 import { messageRepository } from '@server/modules/message/message.repository';
 import { sessionRepository } from '@server/modules/session/session.repository';
 import { ConflictError, NotFoundError } from '@nebula-chat/errors';
-import type { CreateMessageDTO } from '@server/modules/message/message.types';
+import type { CreateMessageDTO, MessageMeta } from '@server/modules/message/message.types';
+
+// A Message just created has no Model call yet, so none of its metadata exists.
+const NO_META: MessageMeta = {
+  model: null,
+  estimatedCostUsd: null,
+  contextTokens: null,
+  contextMessages: null,
+};
 
 export const messageService = {
   async createMessage(data: CreateMessageDTO, userId: string) {
@@ -14,7 +22,7 @@ export const messageService = {
     if (session.archivedAt) {
       throw new ConflictError('This Session is archived. Restore it before adding a Message.');
     }
-    return messageRepository.create({ ...data });
+    return { ...(await messageRepository.create({ ...data })), ...NO_META };
   },
   async getMessage(messageId: string, userId: string) {
     const message = await messageRepository.findById({ messageId }, userId);
