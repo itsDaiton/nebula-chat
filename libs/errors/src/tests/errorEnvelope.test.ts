@@ -13,6 +13,7 @@ describe('errorEnvelopeSchema', () => {
     'Unauthorized',
     'Forbidden',
     'MessageAllowanceReached',
+    'TwoFactorRequired',
     'NotFound',
     'Conflict',
     'PayloadTooLarge',

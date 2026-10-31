@@ -107,7 +107,7 @@ The server's Zod route schemas are the single source of the HTTP contract
 flowchart LR
   routes["Server route schemas<br/>*.validation.ts"] -->|pnpm generate:openapi| spec["openapi/openapi.yaml"]
   spec -->|"pnpm generate:api<br/>Orval, no Operator tag"| clientgen["Client hooks + MSW mocks<br/>apps/client/src/libs/api/generated"]
-  spec -->|"pnpm generate:api<br/>Orval, Operator tag only"| cligen["CLI fetch client<br/>apps/cli/src/api/generated"]
+  spec -->|"pnpm generate:api<br/>Orval, Operator and Admin tags"| cligen["CLI fetch client<br/>apps/cli/src/api/generated"]
 ```
 
 better-auth's `/api/auth/*` routes are not in this spec; they have their own reference at
@@ -125,7 +125,7 @@ flowchart TD
   which -->|"/api/auth/admin/*"| nf["authGate → 404 NotFound<br/>never reaches better-auth"]
   which -->|"/api/auth/*"| ba["authGate → better-auth handler<br/>reply hijacked"]
   which -->|"/, /health, /docs"| public[Public handler]
-  which -->|"/api/..."| gates["Route gates<br/>rate limit (send only) ·<br/>requireAuthentication / requireRegistered ·<br/>operator token (/api/internal)"]
+  which -->|"/api/..."| gates["Route gates<br/>rate limit (send only) ·<br/>requireAuthentication / requireRegistered ·<br/>requireAdmin (/api/admin) ·<br/>operator token (/api/internal)"]
   gates --> pre["Route preHandlers<br/>e.g. messageAllowanceHook"]
   pre --> handler["controller → service → repository"]
   handler --> pg[(Postgres)]
@@ -139,7 +139,8 @@ flowchart TD
 ```
 
 - **Gates** read the auth session from the cookie cache, else Redis, and bind `user.id` to
-  `req.log`. `requireRegistered` turns a Guest away with `403`.
+  `req.log`. `requireRegistered` turns a Guest away with `403`. `requireAdmin` skips the cookie
+  cache and wants an Admin whose auth session passed two-factor ([auth.md](./auth.md#route-protection)).
 - **Errors** are thrown as `AppError`s and shaped once by the error handler
   ([ADR-0011](./adr/0011-shared-errors-lib-and-typed-envelope.md)); only `5xx` is logged there.
 - **Rate limits**: the send route allows 10 a minute per IP, in memory. better-auth limits its own

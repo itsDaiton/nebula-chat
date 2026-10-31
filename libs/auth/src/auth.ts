@@ -34,6 +34,7 @@ import type { ChangePasswordAttempt, PasswordRejection } from './passwordRejecti
 import { DELETE_ACCOUNT_REJECTION_MESSAGES, findDeleteAccountRejection } from './deleteAccount';
 import type { EmailSender } from './resend';
 import { userDeletionHooks } from './userDeletion';
+import { markTwoFactorVerifiedSession } from './twoFactorSession';
 import type { OnUserDeleted } from './userDeletion';
 
 /**
@@ -237,6 +238,7 @@ export const createAuth = ({
         );
         if (rejection) throw toRejectionError(rejection);
       }),
+      after: createAuthMiddleware(markTwoFactorVerifiedSession),
     },
     secondaryStorage: {
       get: (key) => authStore.get(key),
@@ -248,6 +250,10 @@ export const createAuth = ({
     session: {
       cookieCache: {
         enabled: true,
+      },
+      additionalFields: {
+        // Set only by the after hook once a code is verified; the admin gate reads it (ADR-0027 §2).
+        twoFactorVerified: { type: 'boolean', required: false, defaultValue: false, input: false },
       },
     },
     rateLimit: {
@@ -291,10 +297,17 @@ export type AuthInstance = Auth;
 export type User = BetterAuthUser & {
   /** `true` for a Guest (anonymous plugin); falsy/absent for a Registered user. */
   isAnonymous?: boolean | null;
+  /** The admin plugin's role: `admin` or `user`. */
+  role?: string | null;
+  banned?: boolean | null;
+  twoFactorEnabled?: boolean | null;
 };
 
 /** The session record as seen by the server. */
-export type Session = BetterAuthSession;
+export type Session = BetterAuthSession & {
+  /** Set once a second factor was verified on this auth session; a trusted-device or social sign-in leaves it false. */
+  twoFactorVerified?: boolean | null;
+};
 
 /** `{ session, user }` — the shape `auth.api.getSession()` resolves to. */
 export type SessionData = {

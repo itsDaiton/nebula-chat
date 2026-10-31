@@ -6,12 +6,20 @@
  */
 
 export * from './apiRoot';
+export * from './auditEntry';
+export * from './auditEntryAction';
+export * from './auditEntryActorType';
+export * from './auditEntryDetail';
+export * from './auditPage';
 export * from './createMessageBody';
 export * from './createMessageBodyRole';
 export * from './createSessionBody';
 export * from './errorCode';
 export * from './errorEnvelope';
 export * from './health';
+export * from './listAuditEntriesAction';
+export * from './listAuditEntriesActorType';
+export * from './listAuditEntriesParams';
 export * from './listMessagesParams';
 export * from './listSessionsArchived';
 export * from './listSessionsParams';

@@ -4,9 +4,13 @@
  * Nebula Chat API
  * REST API for Nebula Chat
  */
+import type { Admin } from '../model/admin';
+
 import type { ChangeLogLevelBody } from '../model/changeLogLevelBody';
 
 import type { ErrorEnvelope } from '../model/errorEnvelope';
+
+import type { GrantAdminBody } from '../model/grantAdminBody';
 
 import type { LogLevelChange } from '../model/logLevelChange';
 
@@ -137,5 +141,200 @@ export const changeLogLevel = async (
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(changeLogLevelBody),
+  });
+};
+
+export type listAdminsResponse200 = {
+  data: Admin[];
+  status: 200;
+};
+
+export type listAdminsResponse403 = {
+  data: ErrorEnvelope;
+  status: 403;
+};
+
+export type listAdminsResponse404 = {
+  data: ErrorEnvelope;
+  status: 404;
+};
+
+export type listAdminsResponse500 = {
+  data: ErrorEnvelope;
+  status: 500;
+};
+
+export type listAdminsResponseSuccess = listAdminsResponse200 & {
+  headers: Headers;
+};
+export type listAdminsResponseError = (
+  listAdminsResponse403 | listAdminsResponse404 | listAdminsResponse500
+) & {
+  headers: Headers;
+};
+
+export type listAdminsResponse = listAdminsResponseSuccess | listAdminsResponseError;
+
+export const getListAdminsUrl = () => {
+  return `/api/internal/admins`;
+};
+
+/**
+ * List every Admin. Requires the operator token, not a User session.
+ * @summary List Admins
+ */
+export const listAdmins = async (
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<listAdminsResponse> => {
+  return apiFetch<listAdminsResponse>(getListAdminsUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export type grantAdminResponse201 = {
+  data: Admin;
+  status: 201;
+};
+
+export type grantAdminResponse400 = {
+  data: ErrorEnvelope;
+  status: 400;
+};
+
+export type grantAdminResponse403 = {
+  data: unknown;
+  status: 403;
+};
+
+export type grantAdminResponse404 = {
+  data: ErrorEnvelope;
+  status: 404;
+};
+
+export type grantAdminResponse409 = {
+  data: ErrorEnvelope;
+  status: 409;
+};
+
+export type grantAdminResponse500 = {
+  data: unknown;
+  status: 500;
+};
+
+export type grantAdminResponseSuccess = grantAdminResponse201 & {
+  headers: Headers;
+};
+export type grantAdminResponseError = (
+  | grantAdminResponse400
+  | grantAdminResponse403
+  | grantAdminResponse404
+  | grantAdminResponse409
+  | grantAdminResponse500
+) & {
+  headers: Headers;
+};
+
+export type grantAdminResponse = grantAdminResponseSuccess | grantAdminResponseError;
+
+export const getGrantAdminUrl = () => {
+  return `/api/internal/admins`;
+};
+
+/**
+ * Make a verified Registered user an Admin, and record it in the Audit log with the Operator as actor. This is how the first Admin is made. Requires the operator token, not a User session.
+ * @summary Grant Admin
+ */
+export const grantAdmin = async (
+  grantAdminBody: GrantAdminBody,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<grantAdminResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiFetch<grantAdminResponse>(getGrantAdminUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(grantAdminBody),
+  });
+};
+
+export type revokeAdminResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type revokeAdminResponse400 = {
+  data: ErrorEnvelope;
+  status: 400;
+};
+
+export type revokeAdminResponse403 = {
+  data: unknown;
+  status: 403;
+};
+
+export type revokeAdminResponse404 = {
+  data: unknown;
+  status: 404;
+};
+
+export type revokeAdminResponse409 = {
+  data: ErrorEnvelope;
+  status: 409;
+};
+
+export type revokeAdminResponse500 = {
+  data: unknown;
+  status: 500;
+};
+
+export type revokeAdminResponseSuccess = revokeAdminResponse204 & {
+  headers: Headers;
+};
+export type revokeAdminResponseError = (
+  | revokeAdminResponse400
+  | revokeAdminResponse403
+  | revokeAdminResponse404
+  | revokeAdminResponse409
+  | revokeAdminResponse500
+) & {
+  headers: Headers;
+};
+
+export type revokeAdminResponse = revokeAdminResponseSuccess | revokeAdminResponseError;
+
+export const getRevokeAdminUrl = (email: string) => {
+  return `/api/internal/admins/${email}`;
+};
+
+/**
+ * Take the Admin role from a user, and record it in the Audit log with the Operator as actor. Requires the operator token, not a User session.
+ * @summary Revoke Admin
+ */
+export const revokeAdmin = async (
+  email: string,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<revokeAdminResponse> => {
+  return apiFetch<revokeAdminResponse>(getRevokeAdminUrl(email), {
+    ...options,
+    method: 'DELETE',
   });
 };

@@ -64,6 +64,13 @@ export class MessageAllowanceReachedError extends AppError {
   }
 }
 
+/** An Admin whose auth session has not passed two-factor authentication, or who has not enrolled. */
+export class TwoFactorRequiredError extends AppError {
+  constructor() {
+    super('TwoFactorRequired', 'This action requires signing in with two-factor authentication.');
+  }
+}
+
 export class NotFoundError extends AppError {
   constructor(resource: string, id?: string) {
     super('NotFound', id ? `${resource} with id "${id}" not found` : `${resource} not found`);

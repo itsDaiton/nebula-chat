@@ -10,6 +10,7 @@ import {
   NotFoundError,
   PayloadTooLargeError,
   TooManyRequestsError,
+  TwoFactorRequiredError,
   UnauthorizedError,
   ValidationError,
 } from '../appError';
@@ -84,6 +85,19 @@ describe('MessageAllowanceReachedError', () => {
       success: false,
       error: 'MessageAllowanceReached',
       message: 'Message allowance exceeded: a Guest can send at most 10 messages.',
+    });
+  });
+});
+
+describe('TwoFactorRequiredError', () => {
+  it('answers 403 with its own code, so the client can send an Admin to two-factor sign-in', () => {
+    const err = new TwoFactorRequiredError();
+
+    expect(err.status).toBe(403);
+    expect(err.toEnvelope()).toEqual({
+      success: false,
+      error: 'TwoFactorRequired',
+      message: 'This action requires signing in with two-factor authentication.',
     });
   });
 });

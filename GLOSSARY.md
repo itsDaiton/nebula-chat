@@ -101,7 +101,7 @@ A verified Registered user who also holds the admin role: sees and acts on every
 _Avoid_: Operator (an Operator holds the operator token and is not a User), superuser, moderator.
 
 **Audit log**:
-The permanent, append-only record of every Admin action (changing a role, banning, archiving) and every time an Admin reads a User's Sessions or Runs.
+The permanent, append-only record of every Admin action (changing a role, banning, archiving), every time an Admin reads a User's Sessions or Runs, and every Admin an Operator grants or revokes.
 _Avoid_: Activity log, history.
 
 **Operator**:

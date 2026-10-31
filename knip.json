@@ -15,6 +15,7 @@
     },
     "apps/cli": {
       "project": ["src/**/*.ts"],
+      "ignoreFiles": ["src/api/generated/**"],
       "ignoreIssues": {
         "src/api/generated/**": ["exports", "types"]
       }
