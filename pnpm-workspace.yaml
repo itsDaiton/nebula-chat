@@ -54,6 +54,7 @@ minimumReleaseAgeExclude:
   - minimatch@11.0.3
   - '@isaacs/nonrecursive-glob-match@1.0.3'
   - path-scurry@3.0.0
+  - follow-redirects@1.16.2
 
 ignoredOptionalDependencies:
   - prisma
@@ -86,3 +87,6 @@ overrides:
   glob@13: ^14.0.2
   minimatch@9: ^11.0.1
   minimatch@10: ^11.0.1
+  seroval: ^1.6.11
+  systeminformation: ^5.33.16
+  follow-redirects: ^1.16.2
