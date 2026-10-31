@@ -17,7 +17,7 @@ import { messageRepository } from '@server/modules/message/message.repository';
 import { runRepository } from '@server/modules/run/run.repository';
 import { sessionRepository } from '@server/modules/session/session.repository';
 import { userRepository } from '@server/modules/user/user.repository';
-import { enqueueDirectReply, enqueueRun } from '@server/queue';
+import { enqueueDirectReply, enqueueRun, removeClarifyingQuestionTimeout } from '@server/queue';
 import { saveActiveStream, saveStreamOwner } from '@server/redis';
 import { countTokens } from '@server/utils/countTokens';
 
@@ -55,7 +55,7 @@ export const chatService = {
       );
     }
 
-    const { messageId, runId } = await db.transaction(async (tx: DbTransaction) => {
+    const { messageId, runId, answeredRun } = await db.transaction(async (tx: DbTransaction) => {
       // Owner-scoped (ADR-0010 §2): another user's Session reads as absent.
       const session = await sessionRepository.findByIdTx(tx, sessionId, userId);
       if (!session) {
@@ -68,14 +68,22 @@ export const chatService = {
       if (input.model !== undefined && input.model !== session.model) {
         await sessionRepository.updateModelTx(tx, sessionId, input.model);
       }
+      // The next Message answers a Run waiting on its question, whatever its mode. Claiming the Run and
+      // saving the answer share this transaction, so the timeout job and the answer settle it once.
+      const waiting = await runRepository.claimWaitingTx(tx, sessionId, userId);
       const message = await messageRepository.createTx(tx, {
         sessionId,
         role: 'user',
         content: input.content,
+        ...(waiting && { runId: waiting.id }),
       });
-      if (input.mode !== 'run') return { messageId: message.id, runId: undefined };
+      if (waiting) {
+        return { messageId: message.id, runId: waiting.id, answeredRun: waiting };
+      }
+      if (input.mode !== 'run')
+        return { messageId: message.id, runId: undefined, answeredRun: undefined };
       const run = await runRepository.createTx(tx, { userId, sessionId, messageId: message.id });
-      return { messageId: message.id, runId: run.id };
+      return { messageId: message.id, runId: run.id, answeredRun: undefined };
     });
 
     await touchLastActive(userId);
@@ -87,6 +95,21 @@ export const chatService = {
     if (runId === undefined) {
       await enqueueDirectReply({ userId, sessionId, messageId, streamId }, logger);
       return { messageId, streamId };
+    }
+    if (answeredRun) {
+      await removeClarifyingQuestionTimeout(runId);
+      await enqueueRun(
+        {
+          userId,
+          sessionId,
+          messageId: answeredRun.messageId,
+          streamId,
+          runId,
+          resume: { answerMessageId: messageId },
+        },
+        logger,
+      );
+      return { messageId, streamId, runId };
     }
     await enqueueRun({ userId, sessionId, messageId, streamId, runId }, logger);
     return { messageId, streamId, runId };

@@ -62,6 +62,7 @@ beforeEach(() => {
     isMessageAllowanceReached: false,
     streamId: null,
     isStopRequested: false,
+    waitingRun: null,
   });
   useMessageStore.setState({ message: '' });
   server.use(
@@ -937,5 +938,100 @@ describe('useChatStream — lifecycle', () => {
     });
 
     expect(opened).toBe(false);
+  });
+});
+
+describe('useChatStream — a Clarifying question', () => {
+  const RUN_ID = '55555555-5555-4555-8555-555555555555';
+  const QUESTION_ID = '66666666-6666-4666-8666-666666666666';
+  const ANSWER_STREAM_ID = '77777777-7777-4777-8777-777777777777';
+  const waitingFrames = () => [
+    frame('step-finished', { stepId: QUESTION_ID, status: 'completed' }, '1-1'),
+    frame(
+      'run-waiting',
+      { runId: RUN_ID, questionMessageId: QUESTION_ID, question: 'Which plans?' },
+      '1-2',
+    ),
+    frame('end', {}, '1-3'),
+  ];
+
+  it('renders the question as an assistant Message and shows the Run waiting for its answer', async () => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    streamFrames(...waitingFrames());
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    expect(history().at(-1)).toEqual({
+      id: QUESTION_ID,
+      role: 'assistant',
+      content: 'Which plans?',
+      clarifying: true,
+    });
+    expect(useChatStreamStore.getState()).toMatchObject({
+      isStreaming: false,
+      waitingRun: { runId: RUN_ID, streamId: STREAM_ID, stepsCompleted: 1 },
+    });
+  });
+
+  it('sends the next message to the Session as the answer and renders the resumed Run’s stream', async () => {
+    useChatStreamStore.setState({
+      sessionId: EXISTING_ID,
+      waitingRun: { runId: RUN_ID, streamId: STREAM_ID, stepsCompleted: 2 },
+    });
+    let sentBody: unknown;
+    server.use(
+      getSendMessageMockHandler(async ({ request }) => {
+        sentBody = await request.json();
+        return { messageId: MESSAGE_ID, streamId: ANSWER_STREAM_ID, runId: RUN_ID };
+      }),
+    );
+    streamFrames(frame('token', { token: 'Compared.' }, '1-1'), frame('end', {}, '1-2'));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    expect(sentBody).toMatchObject({ content: 'what is 2+2?' });
+    expect(assistantContent()).toBe('Compared.');
+    expect(useChatStreamStore.getState().waitingRun).toBeNull();
+  });
+
+  it('keeps the Run waiting when the answer is refused at the allowance', async () => {
+    const waitingRun = { runId: RUN_ID, streamId: STREAM_ID, stepsCompleted: 2 };
+    useChatStreamStore.setState({ sessionId: EXISTING_ID, waitingRun });
+    server.use(
+      mockApiError('post', API_ROUTE.sendMessage, 403, {
+        success: false,
+        error: 'MessageAllowanceReached',
+        message: 'Limit reached',
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    expect(useChatStreamStore.getState().waitingRun).toEqual(waitingRun);
+  });
+
+  it('cancels the waiting Run through the stream its question was asked on', async () => {
+    useChatStreamStore.setState({
+      sessionId: EXISTING_ID,
+      waitingRun: { runId: RUN_ID, streamId: STREAM_ID, stepsCompleted: 2 },
+    });
+    let cancelled: unknown;
+    server.use(
+      http.post(`${API_ROUTE.replyStream}/cancel`, ({ params }) => {
+        cancelled = params['streamId'];
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await act(async () => {
+      await result.current.cancelRun();
+    });
+
+    expect(cancelled).toBe(STREAM_ID);
+    expect(useChatStreamStore.getState().waitingRun).toBeNull();
   });
 });

@@ -49,6 +49,14 @@ const runFinishedEventSchema = z.object({
   error: errorEnvelopeSchema.optional(),
 });
 
+// The Run paused on a Clarifying question; the stream ends right after, and the answer's reply is a new stream.
+const runWaitingEventSchema = z.object({
+  type: z.literal('run-waiting'),
+  runId: z.uuid(),
+  questionMessageId: z.uuid(),
+  question: z.string().min(1),
+});
+
 // One reply stream entry (ADR-0014), relayed as an SSE event named `type` with the rest as data.
 // A stream always finishes with `end`, after an `error` too.
 export const replyStreamEventSchema = z.discriminatedUnion('type', [
@@ -59,6 +67,7 @@ export const replyStreamEventSchema = z.discriminatedUnion('type', [
   stepStartedEventSchema,
   stepFinishedEventSchema,
   runFinishedEventSchema,
+  runWaitingEventSchema,
 ]);
 
 export type ReplyStreamEvent = z.infer<typeof replyStreamEventSchema>;

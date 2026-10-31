@@ -203,6 +203,8 @@ once, and nobody else does:
   Each Intake Agent that fails also writes a `warn` `chat.run.step.failed` with
   `err` and `nebula.agent.name`. A failure with job retries left writes a `warn`
   `chat.run.retrying` (`err`, `error.type`) instead of `chat.run.completed`; the retry resumes the Run.
+  A Run that pauses on a Clarifying question writes `info` `chat.run.waiting` instead; the timeout job writes
+  `chat.run.wait.timed_out` (`info`) or `chat.run.wait.settled` (`debug`, when an answer got there first).
 
 - **Model calls.** The ledger write is fail-open, like the cache: a Postgres failure while
   recording a call is one `warn`, `model_call.record.failed`, with `err`, the Model and the call's

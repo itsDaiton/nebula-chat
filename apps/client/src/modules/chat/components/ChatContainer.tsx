@@ -28,6 +28,8 @@ export const ChatContainer = () => {
     streamMessage,
     resumeStream,
     stop,
+    cancelRun,
+    waitingRun,
     clearPostStream,
     sessionId: chatSessionId,
   } = useChatStream();
@@ -91,7 +93,7 @@ export const ChatContainer = () => {
     <ChatContainerBox>
       <Box flex="1" overflowY="auto" p={4} mb="120px" css={chatScrollBar}>
         {(sessionId || isStreaming) && history.length > 0 ? (
-          <ChatMessageList history={history} isStreaming={isStreaming} />
+          <ChatMessageList history={history} isStreaming={isStreaming} waitingRun={waitingRun} />
         ) : (
           <ChatEmptyState sessionId={sessionId} />
         )}
@@ -103,6 +105,8 @@ export const ChatContainer = () => {
         selectedModel={selectedModel}
         onModelChange={setSelectedModel}
         onStop={() => void stop()}
+        waitingRun={waitingRun}
+        onCancelRun={() => void cancelRun()}
       />
     </ChatContainerBox>
   );

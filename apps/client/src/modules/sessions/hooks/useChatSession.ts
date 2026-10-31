@@ -26,7 +26,22 @@ export const useChatSession = (sessionId: string | undefined) => {
       useChatStreamStore.setState({ history: [], sessionId: undefined });
     }
   } else if (isSettled && chat.sessionId !== sessionId) {
-    useChatStreamStore.setState({ history: messages.data, sessionId });
+    const waiting = detail.data?.waitingRun ?? null;
+    // The question is the Run's last Message; the API lists it like any assistant Message.
+    const history = messages.data.map((m, i) =>
+      waiting && i === messages.data.length - 1 && m.role === 'assistant'
+        ? { ...m, clarifying: true }
+        : m,
+    );
+    useChatStreamStore.setState({
+      history,
+      sessionId,
+      waitingRun: waiting && {
+        runId: waiting.id,
+        streamId: waiting.streamId,
+        stepsCompleted: waiting.stepsCompleted,
+      },
+    });
   }
 
   return {

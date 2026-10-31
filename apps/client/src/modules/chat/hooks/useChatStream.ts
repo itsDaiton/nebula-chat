@@ -117,12 +117,14 @@ export const useChatStream = ({
     error,
     usage,
     sessionId,
+    waitingRun,
     setHistory,
     setIsStreaming,
     setIsPostStreamNavigation,
     setError,
     setUsage,
     setSessionId,
+    setWaitingRun,
   } = useChatStreamStore();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -130,6 +132,8 @@ export const useChatStream = ({
   const { mutateAsync: sendMessage } = useSendMessage(INLINE_ERROR);
 
   const abortController = useRef<AbortController | null>(null);
+  // Steps finished on the stream being followed: the waiting row says how far the Run got.
+  const stepsDone = useRef(0);
 
   // Held in a ref so `streamMessage` needn't depend on sessionId: a mid-send `setSessionId` would re-render all of ChatContainer.
   const sessionIdRef = useRef(sessionId);
@@ -239,6 +243,29 @@ export const useChatStream = ({
         setUsage({ promptTokens, completionTokens, totalTokens });
         return null;
       }
+      if (event === 'step-finished') {
+        if ((parsed as { status?: unknown } | null)?.status === 'completed') stepsDone.current += 1;
+        return null;
+      }
+      if (event === 'run-waiting') {
+        const { runId, questionMessageId, question } = (parsed ?? {}) as Record<string, string>;
+        if (!runId || !questionMessageId || !question) return null;
+        // The question takes the place of the reply the stream was building.
+        setHistory((prev) => {
+          const last = prev.at(-1);
+          const base = last?.role === 'assistant' && last.content === '' ? prev.slice(0, -1) : prev;
+          return [
+            ...base,
+            { id: questionMessageId, role: 'assistant', content: question, clarifying: true },
+          ];
+        });
+        setWaitingRun({
+          runId,
+          streamId: useChatStreamStore.getState().streamId,
+          stepsCompleted: stepsDone.current,
+        });
+        return 'waiting';
+      }
       if (event === 'error') {
         showReplyError(parseErrorEnvelope(parsed)?.message ?? resources.chat.streamError);
         return 'failed';
@@ -247,7 +274,7 @@ export const useChatStream = ({
       if ((parsed as { reason?: unknown } | null)?.reason === 'cancelled') dropEmptyReply();
       return 'ended';
     },
-    [appendToken, dropEmptyReply, setUsage, showReplyError],
+    [appendToken, dropEmptyReply, setHistory, setUsage, setWaitingRun, showReplyError],
   );
 
   // Reads one connection's body; null when it closed or dropped before the stream was over.
@@ -284,6 +311,7 @@ export const useChatStream = ({
       signal: AbortSignal,
     ): Promise<FollowOutcome> => {
       const cursor: StreamCursor = { lastEventId: undefined, retries: 0 };
+      stepsDone.current = 0;
       while (!signal.aborted) {
         const response = await openReplyStream(streamId, cursor.lastEventId, signal);
         if (response?.status === 404) {
@@ -317,6 +345,8 @@ export const useChatStream = ({
       const content = messages.at(-1)?.content ?? '';
       let activeSessionId = customSessionId ?? sessionIdRef.current;
       const isNewSession = !activeSessionId;
+      // Whatever is sent while a Run waits is its answer; the send going through is what settles it.
+      const answeredRun = useChatStreamStore.getState().waitingRun;
 
       useChatStreamStore.setState({
         isStreaming: true,
@@ -325,6 +355,7 @@ export const useChatStream = ({
         streamId: null,
         isStopRequested: false,
         isMessageAllowanceReached: false,
+        waitingRun: null,
         history: [...messages, emptyAssistantMessage()],
       });
 
@@ -358,7 +389,7 @@ export const useChatStream = ({
         const outcome = await followStream(streamId, activeSessionId, controller.signal);
         if (outcome === 'failed') {
           setIsStreaming(false);
-        } else if (outcome === 'ended') {
+        } else if (outcome === 'ended' || outcome === 'waiting') {
           invalidateCompletedStream(activeSessionId);
           if (isNewSession) {
             // isStreaming stays true until ChatContainer's `clearPostStream()` runs once the route has a sessionId, so the navigation renders first;
@@ -375,6 +406,7 @@ export const useChatStream = ({
           useChatStreamStore.setState({
             history: messages.slice(0, -1),
             isStreaming: false,
+            waitingRun: answeredRun,
             isMessageAllowanceReached: true,
           });
           useMessageStore.getState().setMessage(content);
@@ -430,7 +462,8 @@ export const useChatStream = ({
       });
       try {
         const outcome = await followStream(streamId, resumedSessionId, controller.signal);
-        if (outcome === 'ended') invalidateCompletedStream(resumedSessionId);
+        if (outcome === 'ended' || outcome === 'waiting')
+          invalidateCompletedStream(resumedSessionId);
       } catch (err) {
         if (!controller.signal.aborted) {
           showReplyError(
@@ -457,6 +490,20 @@ export const useChatStream = ({
     await requestCancel(streamId);
   }, [requestCancel]);
 
+  // The Cancel Run button: the worker ends the waiting Run `cancelled`; the question stays as the last Message.
+  const cancelRun = useCallback(async () => {
+    const waiting = useChatStreamStore.getState().waitingRun;
+    if (!waiting?.streamId) return;
+    try {
+      await cancelReplyStream(waiting.streamId);
+    } catch {
+      // The server never heard it: the Run is still waiting, so keep showing it.
+      return;
+    }
+    setWaitingRun(null);
+    if (sessionIdRef.current) invalidateCompletedStream(sessionIdRef.current);
+  }, [invalidateCompletedStream, setWaitingRun]);
+
   // Atomically clears both isStreaming and isPostStreamNavigation in one setState call
   // so ChatContainer sees a consistent state in a single render.
   const clearPostStream = useCallback(() => {
@@ -472,6 +519,8 @@ export const useChatStream = ({
     streamMessage,
     resumeStream,
     stop,
+    cancelRun,
+    waitingRun,
     abort,
     clearPostStream,
     setSessionId,

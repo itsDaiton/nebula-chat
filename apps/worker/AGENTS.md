@@ -97,6 +97,14 @@ Run `running` and its checkpoints in place; the last try ends the Run `failed` w
 Steps, a re-run Step's Model call gets its own ledger row (`<stepId>:<attempt>`), and a failed Run persists no
 assistant Message: its error event is the explanation.
 
+A Run may pause once on a Clarifying question (ADR-0033 §6). The Orchestrator's `askUser` tool (`runs/askUserTool.ts`)
+upserts the question Message, then interrupts. `executeRun` reads the interrupt from the root graph's pending task, sets the
+Run `waiting`, appends `run-waiting`, ends the stream, schedules the delayed `clarifying-question-timeout` job
+(`jobs/clarifyingQuestionTimeout.ts`, `CLARIFYING_QUESTION_TIMEOUT_MS`) and completes: a waiting Run holds no job. A Run job
+whose payload has `resume` continues from the checkpoint with `Command({ resume })`; `answerMessageId: null` is the timeout and
+ends the Run `partial`. The timeout job settles the Run with a conditional update on `status = waiting`, so it and a
+server-side answer settle once: it enqueues that resume job, or, with the Run's cancel flag raised, ends the Run `cancelled` and deletes its checkpoints.
+
 ### Adding a job type
 
 1. Add its payload schema and queue name to `@nebula-chat/contracts`, IDs only.

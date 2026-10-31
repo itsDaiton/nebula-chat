@@ -11,6 +11,7 @@ export const useChatStreamStore = create<ChatStreamState>((set) => ({
   streamId: null,
   isStopRequested: false,
   isMessageAllowanceReached: false,
+  waitingRun: null,
   setHistory: (history) =>
     set((state) => ({
       history: typeof history === 'function' ? history(state.history) : history,
@@ -21,4 +22,5 @@ export const useChatStreamStore = create<ChatStreamState>((set) => ({
   setUsage: (usage) => set({ usage }),
   setSessionId: (id) => set({ sessionId: id }),
   clearMessageAllowanceReached: () => set({ isMessageAllowanceReached: false }),
+  setWaitingRun: (waitingRun) => set({ waitingRun }),
 }));

@@ -1,9 +1,10 @@
-import { Box } from '@chakra-ui/react';
+import { Box, Button, Flex, Text } from '@chakra-ui/react';
 import { EmailVerificationPrompt } from '@/modules/auth/components/EmailVerificationPrompt';
 import { ChatInput } from '@/modules/chat/components/ChatInput';
 import { MessageAllowanceCounter } from '@/modules/chat/components/MessageAllowanceCounter';
 import { MessageAllowancePrompt } from '@/modules/chat/components/MessageAllowancePrompt';
 import type { ChatInputBarProps } from '@/modules/chat/types/types';
+import { resources } from '@/resources';
 
 export const ChatInputBar = ({
   onSend,
@@ -11,6 +12,8 @@ export const ChatInputBar = ({
   selectedModel,
   onModelChange,
   onStop,
+  waitingRun,
+  onCancelRun,
 }: ChatInputBarProps) => (
   <Box
     position="absolute"
@@ -23,6 +26,18 @@ export const ChatInputBar = ({
     <MessageAllowancePrompt />
     <EmailVerificationPrompt />
     <MessageAllowanceCounter />
+    {waitingRun && (
+      <Flex align="center" justify="space-between" gap={3} px={4} py={2}>
+        <Text fontSize="sm" color="fg.muted">
+          {resources.chat.clarifying.hint}
+        </Text>
+        {waitingRun.streamId && onCancelRun && (
+          <Button size="xs" variant="outline" onClick={onCancelRun}>
+            {resources.chat.clarifying.cancel}
+          </Button>
+        )}
+      </Flex>
+    )}
     <ChatInput
       onSendMessage={onSend}
       isLoading={isLoading}

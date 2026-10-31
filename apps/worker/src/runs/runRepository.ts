@@ -2,6 +2,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { messages, runs } from '@nebula-chat/db';
 import { db } from '@worker/db';
 import type { RunStore } from '@worker/runs/executeRun';
+import type { WaitingRunStore } from '@worker/runs/endClarifyingWait';
 
 /** The Postgres `RunStore`. Owner-scoped like the server's reads (ADR-0010 §2). */
 export const runRepository: RunStore = {
@@ -26,6 +27,14 @@ export const runRepository: RunStore = {
       .set({ status: 'running', tokenBudget, startedAt: new Date() })
       .where(eq(runs.id, runId));
   },
+  async markWaiting(runId, tokensUsed) {
+    const rows = await db
+      .update(runs)
+      .set({ status: 'waiting', tokensUsed })
+      .where(and(eq(runs.id, runId), eq(runs.status, 'running')))
+      .returning({ id: runs.id });
+    return rows.length > 0;
+  },
   async saveBrief(runId, brief) {
     await db.update(runs).set({ brief }).where(eq(runs.id, runId));
   },
@@ -41,5 +50,16 @@ export const runRepository: RunStore = {
       .values({ id, sessionId, runId, role: 'assistant', content, tokenCount })
       // A retry after a crash between this insert and `finishRun` finds its answer already written.
       .onConflictDoNothing({ target: messages.id });
+  },
+};
+
+export const waitingRunRepository: WaitingRunStore = {
+  async settleWaiting(runId, next) {
+    const [row] = await db
+      .update(runs)
+      .set(next === 'cancelled' ? { status: next, finishedAt: new Date() } : { status: next })
+      .where(and(eq(runs.id, runId), eq(runs.status, 'waiting')))
+      .returning({ userId: runs.userId, sessionId: runs.sessionId, messageId: runs.messageId });
+    return row ?? null;
   },
 };

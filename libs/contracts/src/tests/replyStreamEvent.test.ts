@@ -39,6 +39,12 @@ const events: ReplyStreamEvent[] = [
   { type: 'step-finished', stepId: '11111111-1111-4111-8111-111111111111', status: 'failed' },
   { type: 'run-finished', runId: '22222222-2222-4222-8222-222222222222', status: 'partial' },
   {
+    type: 'run-waiting',
+    runId: '22222222-2222-4222-8222-222222222222',
+    questionMessageId: '55555555-5555-4555-8555-555555555555',
+    question: 'Which two plans do you mean?',
+  },
+  {
     type: 'run-finished',
     runId: '22222222-2222-4222-8222-222222222222',
     status: 'failed',

@@ -12,6 +12,7 @@ const memoryReplyStreams = () => {
   const activeStreams = new Map<string, string>();
   const ended = new Set<string>();
   const cancelRequests = new Set<string>();
+  const runCancelRequests = new Set<string>();
   const streams = new Map<string, StreamEntry[]>();
   const reads: { streamId: string; afterId: string }[] = [];
   const state = { timeouts: 0, readError: undefined as Error | undefined, closedReaders: 0 };
@@ -80,6 +81,7 @@ const memoryReplyStreams = () => {
     activeStreams.clear();
     ended.clear();
     cancelRequests.clear();
+    runCancelRequests.clear();
     streams.clear();
     reads.length = 0;
     waiting.clear();
@@ -91,6 +93,7 @@ const memoryReplyStreams = () => {
     activeStreams,
     ended,
     cancelRequests,
+    runCancelRequests,
     expire,
     reads,
     state,
@@ -107,6 +110,10 @@ const memoryReplyStreams = () => {
     findActiveStream: async (sessionId: string) => {
       const streamId = activeStreams.get(sessionId);
       return streamId === undefined || ended.has(streamId) ? null : streamId;
+    },
+    findLastStream: async (sessionId: string) => activeStreams.get(sessionId) ?? null,
+    requestRunCancel: async (runId: string) => {
+      runCancelRequests.add(runId);
     },
     isStreamEnded: async (streamId: string) => ended.has(streamId),
     isStreamExpired: async (streamId: string) => ended.has(streamId) && !streams.has(streamId),
@@ -129,5 +136,7 @@ export const replyStreamsModule = {
   isStreamEnded: replyStreams.isStreamEnded,
   isStreamExpired: replyStreams.isStreamExpired,
   requestStreamCancel: replyStreams.requestStreamCancel,
+  findLastStream: replyStreams.findLastStream,
+  requestRunCancel: replyStreams.requestRunCancel,
   openReplyStream: replyStreams.openReplyStream,
 };

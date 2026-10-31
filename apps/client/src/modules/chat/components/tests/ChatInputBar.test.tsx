@@ -64,6 +64,37 @@ const ConnectedChatInputBar = () => {
 };
 
 describe('ChatInputBar', () => {
+  it('while a Run waits, says the next message answers it, and Cancel Run cancels it', async () => {
+    const onCancelRun = vi.fn();
+    await renderInRouter(
+      <ChatInputBar
+        onSend={vi.fn()}
+        isLoading={false}
+        selectedModel="gpt-4o-mini"
+        onModelChange={vi.fn()}
+        waitingRun={{ runId: 'r1', streamId: 's1', stepsCompleted: 2 }}
+        onCancelRun={onCancelRun}
+      />,
+    );
+
+    expect(screen.getByText(resources.chat.clarifying.hint)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: resources.chat.clarifying.cancel }));
+    expect(onCancelRun).toHaveBeenCalledOnce();
+  });
+
+  it('shows no waiting hint when no Run waits', async () => {
+    await renderInRouter(
+      <ChatInputBar
+        onSend={vi.fn()}
+        isLoading={false}
+        selectedModel="gpt-4o-mini"
+        onModelChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText(resources.chat.clarifying.hint)).not.toBeInTheDocument();
+  });
+
   it('renders the composer', async () => {
     await renderInRouter(
       <ChatInputBar

@@ -4,10 +4,21 @@ export type ChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  /** The Run's Clarifying question: rendered with its label and, while the Run waits, its note. */
+  clarifying?: boolean;
+};
+
+/** A Run paused on its Clarifying question; the next message sent answers it. */
+type WaitingRun = {
+  runId: string;
+  /** The stream the question was asked on, which cancels the Run; null once it has been forgotten. */
+  streamId: string | null;
+  stepsCompleted: number;
 };
 
 export type ChatMessageProps = {
   message: ChatMessage;
+  waitingRun?: WaitingRun | null;
 };
 
 export type ChatInputProps = {
@@ -33,7 +44,7 @@ export type ResumeStreamOptions = {
 };
 
 /** How following a reply stream finished: at its end (or saved Message), at an `error`, or aborted. */
-export type FollowOutcome = 'ended' | 'failed' | 'aborted';
+export type FollowOutcome = 'ended' | 'waiting' | 'failed' | 'aborted';
 
 /** Where a followed reply stream got to: the last event applied, and reconnects since then. */
 export type StreamCursor = {
@@ -76,6 +87,8 @@ export type ChatInputBarProps = {
   selectedModel: string;
   onModelChange: (model: string) => void;
   onStop?: () => void;
+  waitingRun?: WaitingRun | null;
+  onCancelRun?: () => void;
 };
 
 export type ChatEmptyStateProps = {
@@ -85,6 +98,7 @@ export type ChatEmptyStateProps = {
 export type ChatMessageListProps = {
   history: ChatMessage[];
   isStreaming: boolean;
+  waitingRun?: WaitingRun | null;
 };
 
 export type ModelState = {
@@ -111,6 +125,8 @@ export type ChatStreamState = {
   isStopRequested: boolean;
   /** A Guest's send was refused because their message allowance is spent. */
   isMessageAllowanceReached: boolean;
+  /** The Run waiting for the answer to its Clarifying question, if any. */
+  waitingRun: WaitingRun | null;
   setHistory: Dispatch<SetStateAction<ChatMessage[]>>;
   setIsStreaming: (isStreaming: boolean) => void;
   setIsPostStreamNavigation: (v: boolean) => void;
@@ -118,6 +134,7 @@ export type ChatStreamState = {
   setUsage: (usage: Usage) => void;
   setSessionId: (id: string | undefined) => void;
   clearMessageAllowanceReached: () => void;
+  setWaitingRun: (waitingRun: WaitingRun | null) => void;
 };
 
 export type MessageState = {
@@ -133,7 +150,7 @@ export type ModelSelectorState = {
 };
 
 /** The events a reply stream carries (`GET /api/streams/{streamId}`). */
-export type SseEvent = 'token' | 'usage' | 'error' | 'end';
+export type SseEvent = 'token' | 'usage' | 'error' | 'end' | 'step-finished' | 'run-waiting';
 
 /** One SSE event off a reply stream: its name, its raw `data` line and its stream entry id. */
 export type SseFrame = {

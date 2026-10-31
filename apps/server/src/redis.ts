@@ -1,6 +1,7 @@
 import {
   REPLY_STREAM_RECORD_TTL_SECONDS,
   buildKey,
+  runCancelKey,
   createRedis,
   streamCancelKey,
   streamEndedKey,
@@ -68,6 +69,16 @@ export const findActiveStream = async (sessionId: string): Promise<string | null
  */
 export const isStreamExpired = async (streamId: string): Promise<boolean> =>
   (await isStreamEnded(streamId)) && !(await redis.streams.exists(streamKey(streamId)));
+
+/** The Session's latest reply stream, ended or not: a Run waiting on a question is named by it. Errors propagate. */
+export const findLastStream = async (sessionId: string): Promise<string | null> => {
+  await redis.connect();
+  return redis.connection.get(activeStreamKey(sessionId));
+};
+
+/** Raises the flag that cancels a Run waiting on a Clarifying question; the promoted timeout job reads it. */
+export const requestRunCancel = (runId: string): Promise<void> =>
+  redis.flags.raise(runCancelKey(runId), env.STREAM_CANCEL_TTL_SECONDS);
 
 /** Raises the flag the worker polls to stop producing a reply. Errors propagate. */
 export const requestStreamCancel = (streamId: string): Promise<void> =>
