@@ -175,6 +175,7 @@ erDiagram
     text image
     text profile_image_key
     boolean is_anonymous
+    timestamp pending_deletion_at
   }
   session {
     uuid id PK
