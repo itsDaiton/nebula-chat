@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.6.0...nebula-chat-openapi-v4.7.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-540 Admin reads the User list and a User's details ([#697](https://github.com/itsDaiton/nebula-chat/issues/697)) ([838729a](https://github.com/itsDaiton/nebula-chat/commit/838729a572dcd8bde13cd94ee1f5949b1842e441))
+* **server:** NEB-544 Account deletion starts a 30-day Pending deletion ([#699](https://github.com/itsDaiton/nebula-chat/issues/699)) ([cbf636b](https://github.com/itsDaiton/nebula-chat/commit/cbf636b24371eb59794459f1c20494898e4479d2))
+
 ## [4.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.5.1...nebula-chat-openapi-v4.6.0) (2026-10-31)
 
 
