@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.13.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.12.0...nebula-chat-otel-v2.13.0) (2026-10-31)
+
+
+### Features
+
+* **worker:** NEB-585 let the Orchestrator ask one Clarifying question ([#716](https://github.com/itsDaiton/nebula-chat/issues/716)) ([df217d2](https://github.com/itsDaiton/nebula-chat/commit/df217d2bf7c13369d64bd93f0729f910c9f4e8b6)), closes [#585](https://github.com/itsDaiton/nebula-chat/issues/585)
+
 ## [2.12.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.11.0...nebula-chat-otel-v2.12.0) (2026-10-31)
 
 
