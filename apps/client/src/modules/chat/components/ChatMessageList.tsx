@@ -13,7 +13,7 @@ export const ChatMessageList = ({ history, isStreaming, waitingRun }: ChatMessag
       ) {
         return null;
       }
-      return <ChatMessage key={message.id} message={message} waitingRun={waitingRun ?? null} />;
+      return <ChatMessage key={message.id} message={message} waitingRun={waitingRun} />;
     })}
     {isStreaming && history.at(-1)?.role === 'assistant' && !history.at(-1)?.content && (
       <ChatStreaming />

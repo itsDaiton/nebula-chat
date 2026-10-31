@@ -272,8 +272,8 @@ const pauseForAnswer = async (
   { runs, stream, logger, scheduleQuestionTimeout }: RunDeps,
   outcomeAttributes: (status: RunEndStatus) => LogAttributes,
 ): Promise<void> => {
-  // A cancel that landed first already settled the Run; the timeout job ends it.
-  if (!(await runs.markWaiting(job.runId, tokensUsed))) return;
+  // Scheduled either way: the job id is deterministic, and a job that finds the Run settled does nothing.
+  await runs.markWaiting(job.runId, tokensUsed);
   await stream.append(job.streamId, {
     type: 'run-waiting',
     runId: job.runId,

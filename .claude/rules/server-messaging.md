@@ -28,4 +28,5 @@ reply for the worker, and relays the reply stream (ADR-0014). The full sequence 
   timeout job settle it once. The timeout job is removed and a resume job enqueued. Cancelling the last stream of
   a waiting Run (or Archive, Ban) raises the Run's cancel flag and promotes its timeout job.
 - SSE events are `ReplyStreamEvent` in `@nebula-chat/contracts`: `token`, `usage`, `error` (the error
-  envelope), and `end` (always last). An entry the server cannot parse is skipped, so the contract can grow.
+  envelope), the Run events (`step-started`, `step-finished`, `run-finished`, and `run-waiting` when a Run
+  pauses on a Clarifying question, after which the stream ends), and `end` (always last). An entry the server cannot parse is skipped, so the contract can grow.

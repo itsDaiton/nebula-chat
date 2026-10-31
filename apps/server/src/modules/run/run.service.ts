@@ -11,6 +11,13 @@ const cancelWaitingRun = async (runId: string, logger: RunLogger): Promise<void>
   await promoteClarifyingQuestionTimeout(runId, logger);
 };
 
+const cancelWaitingRuns = async (
+  filter: { sessionId?: string; userId: string },
+  logger: RunLogger,
+): Promise<void> => {
+  for (const run of await runRepository.findWaiting(filter)) await cancelWaitingRun(run.id, logger);
+};
+
 export const runService = {
   /** Cancels the Session's waiting Run, if any: archiving a Session must leave it unchanged. */
   async cancelWaitingRunsInSession(
@@ -18,16 +25,12 @@ export const runService = {
     userId: string,
     logger: RunLogger,
   ): Promise<void> {
-    for (const run of await runRepository.findWaiting({ sessionId, userId })) {
-      await cancelWaitingRun(run.id, logger);
-    }
+    await cancelWaitingRuns({ sessionId, userId }, logger);
   },
 
-  /** Cancels every waiting Run of a User who can no longer act (Ban, Pending deletion). */
+  /** Cancels every waiting Run of a User who can no longer act; Ban calls it, Pending deletion will. */
   async cancelWaitingRunsOfUser(userId: string, logger: RunLogger): Promise<void> {
-    for (const run of await runRepository.findWaiting({ userId })) {
-      await cancelWaitingRun(run.id, logger);
-    }
+    await cancelWaitingRuns({ userId }, logger);
   },
 
   /** The stop button on a stream that ended on a question: cancels the Run waiting behind it. */
