@@ -255,6 +255,12 @@ export const modelCalls = pgTable(
     sessionId: uuid('session_id').references(() => sessions.id, { onDelete: 'set null' }),
     runId: uuid('run_id').references(() => runs.id, { onDelete: 'set null' }),
     stepId: uuid('step_id').references(() => steps.id, { onDelete: 'set null' }),
+    // The assistant Message a Direct reply produced; null for a Step's call and for a reply that persisted none.
+    messageId: uuid('message_id').references((): AnyPgColumn => messages.id, {
+      onDelete: 'set null',
+    }),
+    // History Messages sent with a Direct reply's call, after packing.
+    contextMessages: integer('context_messages'),
     agent: text('agent'),
     provider: text('provider').notNull(),
     model: text('model').notNull(),
@@ -276,6 +282,7 @@ export const modelCalls = pgTable(
     index('model_calls_created_model_idx').on(t.createdAt, t.model),
     index('model_calls_user_idx').on(t.userId),
     index('model_calls_session_idx').on(t.sessionId),
+    index('model_calls_message_idx').on(t.messageId),
     check('model_calls_outcome_check', sql`${t.outcome} in ('completed', 'failed', 'cancelled')`),
   ],
 );

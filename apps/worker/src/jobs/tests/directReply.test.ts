@@ -572,6 +572,8 @@ describe('the Direct reply job', () => {
           durationMs: expect.any(Number),
           outcome: 'completed',
           cached: false,
+          messageId: STREAM_ID,
+          contextMessages: 2,
         },
       ]);
       expect(cost).toBeGreaterThan(0);
@@ -632,6 +634,8 @@ describe('the Direct reply job', () => {
         durationMs: expect.any(Number),
         outcome: 'completed',
         cached: true,
+        messageId: replayId,
+        contextMessages: 2,
       });
     });
 
@@ -673,6 +677,7 @@ describe('the Direct reply job', () => {
 
       expect(streamed().at(-2)).toMatchObject({ type: 'error' });
       expect(ledger.calls).toMatchObject([{ outcome: 'completed', costUsd: cost }]);
+      expect(ledger.calls[0]?.messageId).toBeUndefined();
     });
 
     it('records nothing for a reply stopped while its job was queued', async () => {

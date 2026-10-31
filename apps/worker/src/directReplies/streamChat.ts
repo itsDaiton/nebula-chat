@@ -38,6 +38,8 @@ export type ChatStreamCallbacks = {
   onUsage: (usage: { promptTokens: number; completionTokens: number; totalTokens: number }) => void;
   /** What the call used, for the ledger: once it ends, stopped or failed too, unless it never streamed. */
   onCallUsage?: (usage: CallUsage) => void;
+  /** How many history Messages `packHistory` kept for the call. */
+  onContext?: (contextMessages: number) => void;
 };
 
 const DEFAULT_MAX_INPUT_TOKENS = 8_000;
@@ -87,6 +89,8 @@ export const streamChat = async (
     systemPrompt,
     userMessage,
   });
+
+  callbacks.onContext?.(trimmedHistory.length);
 
   const promptTokens =
     countTokens(systemPrompt, resolvedModel) +

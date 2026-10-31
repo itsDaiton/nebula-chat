@@ -8,6 +8,11 @@ const aMessage = (id: string, role: string, content: string) => ({
   sessionId: 'c1',
   tokenCount: 3,
   cached: false,
+  model: null,
+  estimatedCostUsd: null,
+  runId: null,
+  contextTokens: null,
+  contextMessages: null,
   createdAt: '2026-01-01T00:00:00.000Z',
 });
 
