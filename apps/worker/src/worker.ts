@@ -14,6 +14,8 @@ initTelemetry(SERVICE_NAME, { logger, diagLevel: env.OTEL_LOG_LEVEL });
 import { createServer } from 'node:http';
 import { Queue, Worker } from 'bullmq';
 import {
+  CLARIFYING_QUESTION_TIMEOUT_QUEUE,
+  clarifyingQuestionTimeoutJobId,
   DIRECT_REPLY_QUEUE,
   PURGE_QUEUE,
   PURGE_SCHEDULER_ID,
@@ -22,6 +24,7 @@ import {
 } from '@nebula-chat/contracts';
 import {
   REPLY_STREAM_RECORD_TTL_SECONDS,
+  runCancelKey,
   streamCancelKey,
   streamEndedKey,
   streamKey,
@@ -31,6 +34,7 @@ import { directReplyRepository } from '@worker/directReplies/directReplyReposito
 import type { ReplyStreamWriter } from '@worker/directReplies/runDirectReply';
 import { streamChat } from '@worker/directReplies/streamChat';
 import { createDirectReplyProcessor } from '@worker/jobs/directReply';
+import { createClarifyingQuestionTimeoutProcessor } from '@worker/jobs/clarifyingQuestionTimeout';
 import { createPurgeProcessor } from '@worker/jobs/purge';
 import { createRunProcessor } from '@worker/jobs/run';
 import { createLLM } from '@worker/llm/createLLM';
@@ -40,7 +44,7 @@ import { modelCallRepository } from '@worker/modelCalls/modelCallRepository';
 import { purgeRepository } from '@worker/purge/purgeRepository';
 import { redis } from '@worker/redis';
 import { createCheckpointer } from '@worker/runs/checkpointer';
-import { runRepository } from '@worker/runs/runRepository';
+import { runRepository, waitingRunRepository } from '@worker/runs/runRepository';
 import { stepRepository } from '@worker/runs/stepRepository';
 import { webFetchTool } from '@worker/tools/webFetch';
 import { webSearchTool } from '@worker/tools/webSearch';
@@ -74,13 +78,31 @@ const start = async (): Promise<void> => {
     logger,
   });
 
+  const timeoutQueue = new Queue(CLARIFYING_QUESTION_TIMEOUT_QUEUE, {
+    connection: redis.dedicatedConnection(),
+    defaultJobOptions: { removeOnComplete: true, removeOnFail: 100 },
+  });
+  const runQueue = new Queue(RUN_QUEUE, {
+    connection: redis.dedicatedConnection(),
+    defaultJobOptions: { removeOnComplete: 1_000, removeOnFail: 1_000 },
+  });
+
+  // Creates or migrates the `langgraph` schema before the first Run needs it.
+  const checkpointer = await createCheckpointer(pool);
+
   const processRun = createRunProcessor({
+    scheduleQuestionTimeout: async (runId) => {
+      await timeoutQueue.add(
+        'clarifying-question-timeout',
+        { runId },
+        { delay: env.CLARIFYING_QUESTION_TIMEOUT_MS, jobId: clarifyingQuestionTimeoutJobId(runId) },
+      );
+    },
     runs: runRepository,
     steps: stepRepository,
     stream,
     ledger: modelCallRepository,
-    // Creates or migrates the `langgraph` schema before the first Run needs it.
-    checkpointer: await createCheckpointer(pool),
+    checkpointer,
     models: { structured: (request) => invokeStructured(request), chat: createLLM },
     prompts,
     apiKeys,
@@ -122,6 +144,22 @@ const start = async (): Promise<void> => {
     connection: redis.dedicatedConnection(),
     concurrency: env.RUN_CONCURRENCY,
   });
+  const timeouts = new Worker(
+    CLARIFYING_QUESTION_TIMEOUT_QUEUE,
+    createClarifyingQuestionTimeoutProcessor({
+      runs: waitingRunRepository,
+      checkpointer,
+      isCancelled: (runId) => redis.flags.isRaised(runCancelKey(runId)),
+      enqueueRun: async (job) => {
+        await runQueue.add('run', job, {
+          attempts: env.RUN_JOB_ATTEMPTS,
+          backoff: { type: 'exponential', delay: env.RUN_JOB_BACKOFF_MS },
+        });
+      },
+      logger,
+    }),
+    { connection: redis.dedicatedConnection() },
+  );
   const processPurge = createPurgeProcessor({
     store: purgeRepository,
     logger,
@@ -146,6 +184,7 @@ const start = async (): Promise<void> => {
   for (const [queue, name] of [
     [directReplies, 'Direct reply'],
     [runs, 'Run'],
+    [timeouts, 'Clarifying question timeout'],
     [purges, 'Purge'],
   ] as const) {
     queue.on('error', (err) => {
@@ -195,6 +234,9 @@ const start = async (): Promise<void> => {
       await Promise.all([
         directReplies.close(),
         runs.close(),
+        timeouts.close(),
+        timeoutQueue.close(),
+        runQueue.close(),
         purges.close(),
         purgeQueue.close(),
         new Promise<void>((resolve) => health.close(() => resolve())),

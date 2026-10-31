@@ -30,6 +30,7 @@ const SESSION_ID = '22222222-2222-4222-8222-222222222222';
 const MESSAGE_ID = '33333333-3333-4333-8333-333333333333';
 const STREAM_ID = '44444444-4444-4444-8444-444444444444';
 const RUN_ID = '55555555-5555-4555-8555-555555555555';
+const ANSWER_ID = '88888888-8888-4888-8888-888888888888';
 const OTHER_USER_ID = '66666666-6666-4666-8666-666666666666';
 
 const payload = {
@@ -108,6 +109,7 @@ let ledger: ReturnType<typeof memoryLedger>;
 let log: ReturnType<typeof captureLogger>;
 let checkpointer: MemorySaver;
 let searches: string[];
+let scheduledTimeouts: string[];
 
 const run = (
   models: RunModels,
@@ -134,6 +136,9 @@ const run = (
     toolbox: fakeToolbox(searches),
     runTimeoutMs: 60_000,
     cancelPollMs: 10_000,
+    scheduleQuestionTimeout: async (runId) => {
+      scheduledTimeouts.push(runId);
+    },
     ...overrides,
     limits: { ...LIMITS, ...overrides.limits },
   })({
@@ -174,6 +179,7 @@ const reset = () => {
   log = captureLogger();
   checkpointer = new MemorySaver();
   searches = [];
+  scheduledTimeouts = [];
   db.runs.set(RUN_ID, {
     id: RUN_ID,
     userId: USER_ID,
@@ -601,13 +607,13 @@ describe('the Run job', () => {
       expect(db.runs.get(RUN_ID)?.status).toBe('completed');
     });
 
-    it('is given only the delegate Agents as tools, and gives the delegates none', async () => {
+    it('is given the delegate Agents and askUser as tools, and gives the delegates none', async () => {
       const models = happyModels();
 
       await run(models.models);
 
       for (const turn of orchestratorTurns(models)) {
-        expect(turn.tools).toEqual(['analyst', 'critic', 'researcher']);
+        expect(turn.tools).toEqual(['analyst', 'critic', 'researcher', 'askUser']);
       }
       const delegated = models.agentCalls.filter((c) => c.agent !== 'orchestrator');
       expect(delegated).toHaveLength(2);
@@ -1148,5 +1154,124 @@ describe('the Run job', () => {
         expect(await checkpointsOf(RUN_ID)).toHaveLength(0);
       });
     });
+  });
+});
+
+// An Orchestrator that asks once, then hands off with the user's reply as its findings.
+const askingOnce =
+  (
+    ask: (id: string) => AIMessage = (id) => askCall(id, 'Which two plans do you mean?'),
+  ): OrchestratorScript =>
+  (messages) => {
+    const results = messages.filter(ToolMessage.isInstance);
+    if (results.length === 0) return ask('call_ask_1');
+    return orchestratorReply(`Findings: ${results.map((m) => m.text).join(' | ')}`);
+  };
+
+const askCall = (id: string, question: string): AIMessage =>
+  orchestratorReply('', [{ name: 'askUser', id, args: { question }, type: 'tool_call' }]);
+
+describe('a Clarifying question', () => {
+  const askingModels = (orchestrator: OrchestratorScript = askingOnce()) =>
+    scriptedModels(INTAKE, ANSWER, { orchestrator });
+  const questionId = () => db.created.find((m) => m.content === 'Which two plans do you mean?')?.id;
+  const resumeJob = (answerMessageId: string | null) => ({
+    ...payload,
+    streamId: '77777777-7777-4777-8777-777777777777',
+    resume: { answerMessageId },
+  });
+
+  it('pauses the Run: the question is a Message linked to it, the stream says so and ends, one timeout is scheduled', async () => {
+    await run(askingModels().models);
+
+    expect(db.runs.get(RUN_ID)).toMatchObject({ status: 'waiting' });
+    expect(db.created).toEqual([
+      {
+        id: expect.any(String),
+        sessionId: SESSION_ID,
+        runId: RUN_ID,
+        content: 'Which two plans do you mean?',
+        tokenCount: 0,
+      },
+    ]);
+    expect(streamed().slice(-2)).toEqual([
+      {
+        type: 'run-waiting',
+        runId: RUN_ID,
+        questionMessageId: questionId(),
+        question: 'Which two plans do you mean?',
+      },
+      { type: 'end' },
+    ]);
+    expect(types()).not.toContain('run-finished');
+    expect(scheduledTimeouts).toEqual([RUN_ID]);
+    expect(await checkpointsOf(RUN_ID)).not.toHaveLength(0);
+  });
+
+  it('resumes with the answer without repeating earlier Steps or the asking turn, and ends completed', async () => {
+    const first = askingModels();
+    await run(first.models);
+    const stepsBefore = steps().length;
+    db.messages.push({
+      id: ANSWER_ID,
+      sessionId: SESSION_ID,
+      role: 'user',
+      content: 'Plans A and B',
+    });
+    const second = askingModels();
+
+    await run(second.models, resumeJob(ANSWER_ID));
+
+    expect(db.runs.get(RUN_ID)).toMatchObject({ status: 'completed' });
+    expect(second.structuredCalls).toHaveLength(0);
+    // Only the turn that follows the answer is a new model call.
+    expect(orchestratorTurns(second)).toHaveLength(1);
+    expect(orchestratorTurns(second)[0]?.messages.at(-1)?.text).toContain(
+      'The user answered: Plans A and B',
+    );
+    expect(steps().length).toBeGreaterThan(stepsBefore);
+    expect(db.created.at(-1)).toMatchObject({
+      id: '77777777-7777-4777-8777-777777777777',
+      content: 'Dva plus dva jsou čtyři.',
+    });
+    expect(await checkpointsOf(RUN_ID)).toHaveLength(0);
+  });
+
+  it('carries on without an answer after the timeout and ends partial', async () => {
+    await run(askingModels().models);
+    const second = askingModels();
+
+    await run(second.models, resumeJob(null));
+
+    expect(db.runs.get(RUN_ID)).toMatchObject({ status: 'partial' });
+    expect(orchestratorTurns(second)[0]?.messages.at(-1)?.text).toContain('did not answer');
+  });
+
+  it('refuses a second question with an error result and the Orchestrator carries on', async () => {
+    const asksTwice: OrchestratorScript = (messages) => {
+      const results = messages.filter(ToolMessage.isInstance);
+      if (results.length === 0) return askCall('call_ask_1', 'Which two plans do you mean?');
+      if (results.length === 1) return askCall('call_ask_2', 'And which year?');
+      return orchestratorReply('Findings: done');
+    };
+    await run(askingModels(asksTwice).models);
+    db.messages.push({ id: ANSWER_ID, sessionId: SESSION_ID, role: 'user', content: 'A and B' });
+    const second = askingModels(asksTwice);
+
+    await run(second.models, resumeJob(ANSWER_ID));
+
+    expect(db.runs.get(RUN_ID)).toMatchObject({ status: 'completed' });
+    expect(db.created.filter((m) => m.content === 'And which year?')).toHaveLength(0);
+    expect(orchestratorTurns(second).at(-1)?.messages.at(-1)?.text).toContain('already asked');
+  });
+
+  it('keeps asking out of the delegates’ toolset', async () => {
+    const models = askingModels(delegatingOnce());
+    await run(models.models);
+
+    expect(
+      models.agentCalls.filter((c) => c.agent !== 'orchestrator').flatMap((c) => c.tools),
+    ).not.toContain('askUser');
+    expect(orchestratorTurns(models)[0]?.tools).toContain('askUser');
   });
 });

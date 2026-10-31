@@ -26,6 +26,9 @@ export const streamKey = (streamId: string): string => buildKey('stream', stream
 /** The flag that asks the worker to stop producing one reply (ADR-0014). */
 export const streamCancelKey = (streamId: string): string => buildKey('stream-cancel', streamId);
 
+/** The flag that cancels a Run waiting on a Clarifying question, which has no stream to poll. */
+export const runCancelKey = (runId: string): string => buildKey('run-cancel', runId);
+
 /**
  * The flag the worker raises once a reply stream has its terminal event. It outlives the stream,
  * so a reader can tell a stream that has expired from one whose job is still queued.

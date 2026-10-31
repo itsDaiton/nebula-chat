@@ -159,6 +159,7 @@ export type ModelCallOutcome = (typeof MODEL_CALL_OUTCOMES)[number];
 export const RUN_STATUSES = [
   'queued',
   'running',
+  'waiting',
   'completed',
   'partial',
   'failed',
@@ -196,7 +197,7 @@ export const runs = pgTable(
     index('runs_user_idx').on(t.userId),
     check(
       'runs_status_check',
-      sql`${t.status} in ('queued', 'running', 'completed', 'partial', 'failed', 'cancelled')`,
+      sql`${t.status} in ('queued', 'running', 'waiting', 'completed', 'partial', 'failed', 'cancelled')`,
     ),
   ],
 );

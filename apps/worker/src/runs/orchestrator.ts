@@ -1,8 +1,10 @@
 import { AIMessage, ToolMessage } from '@langchain/core/messages';
 import type { BaseMessage } from '@langchain/core/messages';
+import type { StructuredToolInterface } from '@langchain/core/tools';
 import { createAgent, createMiddleware } from 'langchain';
 import pLimit from 'p-limit';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
+import { ASK_USER, askUserTool } from '@worker/runs/askUserTool';
 import { orchestratorAgent } from '@worker/agents/orchestrator';
 import { toCallUsage } from '@worker/llm/callUsage';
 import { countTokens } from '@worker/llm/countTokens';
@@ -30,6 +32,8 @@ export type OrchestratorDeps = Omit<DelegateToolDeps, 'timeoutMs' | 'toolCallCap
   limits: RunLimits;
   /** Throws, having aborted the Run, when its User asked to stop it. */
   checkCancelled: () => Promise<void>;
+  /** Persists the Clarifying question as an assistant Message linked to the Run. */
+  saveQuestion: (question: { id: string; content: string }) => Promise<void>;
 };
 
 // A turn is three graph steps (hook, model, tools); the turn cap ends the loop well before this backstop.
@@ -42,6 +46,13 @@ const transcript = (messages: BaseMessage[]) =>
     ...(AIMessage.isInstance(m) && m.tool_calls?.length ? { toolCalls: m.tool_calls } : {}),
     ...(ToolMessage.isInstance(m) ? { toolCallId: m.tool_call_id } : {}),
   }));
+
+// Only the first askUser call of a Run runs; a re-run of that same call after a resume is still the first.
+const isFirstAsk = (messages: BaseMessage[], toolCallId: string): boolean =>
+  messages
+    .filter(AIMessage.isInstance)
+    .flatMap((m) => m.tool_calls ?? [])
+    .find((c) => c.name === ASK_USER)?.id === toolCallId;
 
 // A `createAgent` loop whose only tools are the delegate Agents; its middleware records Steps and enforces the limits.
 export const createOrchestrator = (deps: OrchestratorDeps) => {
@@ -116,6 +127,9 @@ export const createOrchestrator = (deps: OrchestratorDeps) => {
           name: toolCall.name,
           status: 'error',
         });
+      if (toolCall.name === ASK_USER && !isFirstAsk(request.state.messages, toolCallId)) {
+        return errorResult('Not run: you already asked your one question in this Run.');
+      }
       if (!delegate) return handler(request);
       if (nearBudget()) return errorResult('Not run: the Run budget is nearly spent.');
 
@@ -178,13 +192,16 @@ export const createOrchestrator = (deps: OrchestratorDeps) => {
 
   const loop = createAgent({
     model: deps.models.chat(llmConfigFor(agent, deps.apiKeys)),
-    tools: DELEGATES.map((delegate) =>
-      delegateTool(delegate, {
-        ...deps,
-        timeoutMs: limits.delegateTimeoutMs,
-        toolCallCap: limits.delegateToolCallCap,
-      }),
-    ),
+    tools: [
+      ...DELEGATES.map((delegate) =>
+        delegateTool(delegate, {
+          ...deps,
+          timeoutMs: limits.delegateTimeoutMs,
+          toolCallCap: limits.delegateToolCallCap,
+        }),
+      ),
+      askUserTool({ runId, saveQuestion: deps.saveQuestion }),
+    ] as StructuredToolInterface[],
     systemPrompt: system,
     middleware: [runControl],
   });

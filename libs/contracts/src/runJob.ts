@@ -13,6 +13,8 @@ export const runJobSchema = z.object({
   /** The reply stream's key, and the id the assistant Message is persisted under. */
   streamId: z.uuid(),
   runId: z.uuid(),
+  /** Present when the job resumes a Run waiting on a Clarifying question: `null` means nobody answered in time. */
+  resume: z.object({ answerMessageId: z.uuid().nullable() }).optional(),
   /** The server's W3C trace context; absent on a job enqueued outside a span. */
   traceparent: z.string().optional(),
   tracestate: z.string().optional(),

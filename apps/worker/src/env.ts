@@ -35,6 +35,11 @@ const envSchema = z
     // The Purge's thresholds (ADR-0028): how long a Pending deletion lasts, how long a Guest may idle.
     PENDING_DELETION_DAYS: z.coerce.number().int().positive().default(30),
     GUEST_INACTIVE_DAYS: z.coerce.number().int().positive().default(30),
+    // How long a Run waits for the answer to its Clarifying question before carrying on without it.
+    CLARIFYING_QUESTION_TIMEOUT_MS: z.coerce.number().int().positive().default(180_000),
+    // Tries of a Run job the worker enqueues itself (the resume after a timeout), as the server's.
+    RUN_JOB_ATTEMPTS: z.coerce.number().int().positive().default(3),
+    RUN_JOB_BACKOFF_MS: z.coerce.number().int().nonnegative().default(5_000),
     RUN_TIMEOUT_MS: z.coerce
       .number()
       .int()

@@ -42,7 +42,7 @@ export const messageRepository: {
   create: (data: CreateMessageDTO) => Promise<MessageRow>;
   findById: (params: GetMessageParams, userId: string) => Promise<MessageWithMetaRow | null>;
   findAll: (userId: string, sessionId?: string) => Promise<MessageWithMetaRow[]>;
-  createTx: (tx: DbTransaction, data: CreateMessageDTO) => Promise<MessageRow>;
+  createTx: (tx: DbTransaction, data: CreateMessageDTO & { runId?: string }) => Promise<MessageRow>;
   findBySessionId: (sessionId: string, limit?: number) => Promise<MessageHistoryRow[]>;
   countUserMessagesByOwner: (userId: string) => Promise<number>;
 } = {
@@ -82,11 +82,11 @@ export const messageRepository: {
       )
       .orderBy(sessionId === undefined ? desc(messages.createdAt) : asc(messages.createdAt));
   },
-  async createTx(tx: DbTransaction, data: CreateMessageDTO) {
-    const { sessionId, content, role, tokenCount } = data;
+  async createTx(tx: DbTransaction, data: CreateMessageDTO & { runId?: string }) {
+    const { sessionId, content, role, tokenCount, runId } = data;
     const [row] = await tx
       .insert(messages)
-      .values({ sessionId, content, role, tokenCount: tokenCount ?? null })
+      .values({ sessionId, content, role, tokenCount: tokenCount ?? null, runId: runId ?? null })
       .returning();
     return row!;
   },

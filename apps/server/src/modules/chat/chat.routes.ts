@@ -16,7 +16,7 @@ const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
   app.post('/sessions/:sessionId/messages', {
     schema: {
       description:
-        'Send a user Message to one of the caller’s own Sessions. The Message is persisted and its reply is queued; nothing waits on the model. Read the reply as server-sent events from `GET /api/streams/{streamId}`.',
+        'Send a user Message to one of the caller’s own Sessions. The Message is persisted and its reply is queued; nothing waits on the model. Read the reply as server-sent events from `GET /api/streams/{streamId}`. When the Session has a Run waiting on a Clarifying question, the Message is its answer whatever its `mode`: it resumes the Run on a new stream and the response carries that Run’s `runId`.',
       summary: 'Send message',
       tags: ['Chat'],
       operationId: 'sendMessage',

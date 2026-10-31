@@ -58,7 +58,7 @@ export const adminController = {
     reply: FastifyReply,
   ) {
     const { id } = getSessionData(req).user;
-    await adminService.banUser(req.params.id, req.body, id, fromNodeHeaders(req.headers));
+    await adminService.banUser(req.params.id, req.body, id, fromNodeHeaders(req.headers), req.log);
     return reply.status(204).send();
   },
   async unbanUser(req: FastifyRequest<{ Params: UserIdParams }>, reply: FastifyReply) {

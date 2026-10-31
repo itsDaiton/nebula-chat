@@ -261,6 +261,7 @@ erDiagram
 | `auth:*`                                                       | better-auth | better-auth    | set by better-auth          | Sign-in sessions, verification tokens, auth rate-limit counters                   |
 | `auth:profile-image-uploads:<userId>`                          | server      | server         | 1 hour window               | Profile image upload limit                                                        |
 | BullMQ queue `direct-replies`                                  | server      | worker         | last 1000 kept              | Direct reply jobs, IDs only (`@nebula-chat/contracts`)                            |
+| BullMQ queue `clarifying-question-timeout`                     | worker      | worker         | removed when it completes   | One delayed job per waiting Run (Run ID only); fires when no answer came          |
 | BullMQ queue `runs`                                            | server      | worker         | last 1000 kept              | Run jobs, IDs only (`@nebula-chat/contracts`)                                     |
 | `stream:<streamId>` (Redis Stream)                             | worker      | server         | 1 hour after the reply ends | One reply's events: tokens, usage, a Run's Step events and status, `error`, `end` |
 | `stream-owner:<streamId>`                                      | server      | server         | 24 hours                    | Who may read a reply stream; the assistant Message does not exist yet             |
@@ -369,6 +370,8 @@ flowchart LR
   orch -->|turn: parallel tool calls| dg[delegate Agents<br/>analyst, critic, researcher]
   dg -->|tool results| orch
   dg <-->|researcher's own loop| web[web_search, web_fetch]
+  orch -.->|askUser, once: Run waits, no job| ask[user's next Message<br/>or timeout job]
+  ask -.->|resume job| orch
   orch -->|handoff: findings| out[output<br/>Output Agent]
   out --> done((end))
 ```
@@ -393,6 +396,12 @@ flowchart LR
   `RUN_TURN_CAP` turns or once the Run's tokens pass `RUN_HANDOFF_THRESHOLD` of `RUN_TOKEN_BUDGET`.
   A forced handoff passes the delegates' results so far as partial findings, and the Run ends
   `partial`, as it does when any delegate Step failed.
+- **Clarifying question.** The Orchestrator may call `askUser` once. The question is saved as an assistant
+  Message, the Run becomes `waiting`, `run-waiting` ends the stream and the job completes, so the Run holds no
+  job. The user's next Message in the Session is the answer: the server claims the `waiting` Run (to `queued`) in the
+  transaction that saves it, removes the delayed `clarifying-question-timeout` job and enqueues a resume job.
+  If `CLARIFYING_QUESTION_TIMEOUT_MS` passes first, that job claims the Run and enqueues a resume without an answer
+  (the Run ends `partial`). Stop, Archive and Ban raise the Run's cancel flag and promote the job, which ends the Run `cancelled`.
 - **Tools.** Tools are granted per Agent in code, and only to delegates: the `researcher` has
   `web_search` (Tavily) and `web_fetch`. A delegate with tools runs its own `createAgent` loop,
   without a checkpointer (its tools only read, so a crash re-runs it whole). Each tool call is a

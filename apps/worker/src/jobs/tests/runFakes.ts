@@ -47,6 +47,12 @@ export const memoryRuns = () => {
     markRunning: async (runId, tokenBudget) => {
       Object.assign(runs.get(runId)!, { status: 'running', tokenBudget });
     },
+    markWaiting: async (runId, tokensUsed) => {
+      const run = runs.get(runId)!;
+      if (run.status !== 'running') return false;
+      Object.assign(run, { status: 'waiting', tokensUsed });
+      return true;
+    },
     saveBrief: async (runId, brief) => {
       runs.get(runId)!.brief = brief;
     },

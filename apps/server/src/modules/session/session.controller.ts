@@ -40,7 +40,7 @@ export const sessionController = {
   },
   async archive(req: FastifyRequest<{ Params: GetSessionParams }>, reply: FastifyReply) {
     const { user } = getSessionData(req);
-    const session = await sessionService.archiveSession(req.params.sessionId, user.id);
+    const session = await sessionService.archiveSession(req.params.sessionId, user.id, req.log);
     return reply.status(200).send(session);
   },
   async restore(req: FastifyRequest<{ Params: GetSessionParams }>, reply: FastifyReply) {

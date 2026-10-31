@@ -37,9 +37,27 @@ vi.mock('@server/auth', () => ({
   },
 }));
 
+vi.mock('@server/modules/run/run.repository', () => ({
+  runRepository: { findWaiting: vi.fn(async () => []), countCompletedSteps: vi.fn(async () => 0) },
+}));
+
+vi.mock('@server/queue', () => ({
+  promoteClarifyingQuestionTimeout: vi.fn(async () => undefined),
+  closeQueue: vi.fn(async () => undefined),
+}));
+
+vi.mock('@server/redis', () => ({
+  requestRunCancel: vi.fn(async () => undefined),
+  findLastStream: vi.fn(async () => null),
+  redis: { connection: {}, close: vi.fn(async () => undefined) },
+  closeRedis: vi.fn(async () => undefined),
+}));
+
 import { auth } from '@server/auth';
 import { adminRepository } from '@server/modules/admin/admin.repository';
 import { auditRepository } from '@server/modules/audit/audit.repository';
+import { runRepository } from '@server/modules/run/run.repository';
+import { promoteClarifyingQuestionTimeout } from '@server/queue';
 
 const repo = vi.mocked(adminRepository);
 const audit = vi.mocked(auditRepository);
@@ -544,6 +562,18 @@ describe('POST /api/admin/users/:id/ban', () => {
       targetId: USER_ID,
       detail: { reason: 'spam', expiresAt },
     });
+  });
+
+  it('cancels the banned User’s waiting Runs', async () => {
+    const RUN = '44444444-4444-4444-8444-444444444444';
+    vi.mocked(runRepository.findWaiting).mockResolvedValueOnce([
+      { id: RUN, sessionId: '55555555-5555-4555-8555-555555555555' },
+    ]);
+
+    await send({ reason: 'spam' });
+
+    expect(runRepository.findWaiting).toHaveBeenCalledWith({ userId: USER_ID });
+    expect(promoteClarifyingQuestionTimeout).toHaveBeenCalledWith(RUN, expect.anything());
   });
 
   it('bans with no end when no end time is given', async () => {

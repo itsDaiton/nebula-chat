@@ -5,6 +5,7 @@ import {
   NotFoundError,
   ValidationError,
 } from '@nebula-chat/errors';
+import type { EventLogger } from '@nebula-chat/otel';
 import { auth } from '@server/auth';
 import { adminRepository } from '@server/modules/admin/admin.repository';
 import type {
@@ -16,6 +17,7 @@ import type {
 } from '@server/modules/admin/admin.types';
 import { auditService } from '@server/modules/audit/audit.service';
 import { messageRepository } from '@server/modules/message/message.repository';
+import { runService } from '@server/modules/run/run.service';
 
 type UserRow = NonNullable<Awaited<ReturnType<typeof adminRepository.findUserByEmail>>>;
 
@@ -222,6 +224,7 @@ export const adminService = {
     { reason, expiresAt }: BanUserDTO,
     adminId: string,
     headers: Headers,
+    logger: EventLogger<'warn'>,
   ) {
     if (userId === adminId) {
       throw new ValidationError('You cannot ban yourself.');
@@ -246,6 +249,8 @@ export const adminService = {
       targetId: userId,
       detail: { reason, expiresAt: expiresAt ?? null },
     });
+    // A banned owner cannot answer, so their waiting Runs end instead of timing out into a banned account.
+    await runService.cancelWaitingRunsOfUser(userId, logger);
   },
   async unbanUser(userId: string, adminId: string, headers: Headers) {
     const user = await findModerationTarget(userId);

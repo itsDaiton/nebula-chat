@@ -5,6 +5,7 @@ import { captureLogger, captureSpans, eventLines, LEVEL } from '@nebula-chat/ote
 const bull = vi.hoisted(() => ({
   constructed: [] as { name: string; options: unknown }[],
   add: vi.fn(async () => ({ id: '1' })),
+  getJob: vi.fn(),
   close: vi.fn(async () => undefined),
 }));
 
@@ -12,6 +13,7 @@ const bull = vi.hoisted(() => ({
 vi.mock('bullmq', () => ({
   Queue: class {
     add = bull.add;
+    getJob = bull.getJob;
     close = bull.close;
     constructor(name: string, options: unknown) {
       bull.constructed.push({ name, options });
@@ -24,7 +26,14 @@ vi.mock('@server/redis', () => ({
 }));
 
 import { withSpan } from '@nebula-chat/otel';
-import { closeQueue, enqueueDirectReply, enqueueRun, pingWorker } from '@server/queue';
+import {
+  closeQueue,
+  enqueueDirectReply,
+  enqueueRun,
+  pingWorker,
+  promoteClarifyingQuestionTimeout,
+  removeClarifyingQuestionTimeout,
+} from '@server/queue';
 
 const job = {
   userId: '11111111-1111-4111-8111-111111111111',
@@ -182,5 +191,48 @@ describe('closeQueue', () => {
     await closeQueue();
 
     expect(bull.close).toHaveBeenCalled();
+  });
+});
+
+describe('the Clarifying question timeout job', () => {
+  const RUN_ID = '55555555-5555-4555-8555-555555555555';
+  const JOB_ID = `clarifying-question-timeout-${RUN_ID}`;
+
+  it('is looked up by its deterministic id and removed once the answer settles the wait', async () => {
+    const remove = vi.fn(async () => undefined);
+    bull.getJob.mockResolvedValueOnce({ remove });
+
+    await removeClarifyingQuestionTimeout(RUN_ID);
+
+    expect(bull.getJob).toHaveBeenCalledWith(JOB_ID);
+    expect(remove).toHaveBeenCalledOnce();
+  });
+
+  it('tolerates a job that is already active or gone when removing it', async () => {
+    bull.getJob.mockResolvedValueOnce({ remove: vi.fn().mockRejectedValue(new Error('locked')) });
+    await expect(removeClarifyingQuestionTimeout(RUN_ID)).resolves.toBeUndefined();
+
+    bull.getJob.mockResolvedValueOnce(undefined);
+    await expect(removeClarifyingQuestionTimeout(RUN_ID)).resolves.toBeUndefined();
+  });
+
+  it('is promoted to fire now on a cancel, and the sleeping worker is pinged', async () => {
+    const promote = vi.fn(async () => undefined);
+    bull.getJob.mockResolvedValueOnce({ promote });
+
+    await promoteClarifyingQuestionTimeout(RUN_ID, captureLogger().logger);
+
+    expect(promote).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
+  it('tolerates a job that is no longer delayed when promoting it', async () => {
+    bull.getJob.mockResolvedValueOnce({
+      promote: vi.fn().mockRejectedValue(new Error('not delayed')),
+    });
+
+    await expect(
+      promoteClarifyingQuestionTimeout(RUN_ID, captureLogger().logger),
+    ).resolves.toBeUndefined();
   });
 });
