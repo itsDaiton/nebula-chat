@@ -29,6 +29,11 @@ const message = (id: string, createdAt: string) => ({
   tokenCount: null,
   cached: false,
   createdAt,
+  model: null,
+  estimatedCostUsd: null,
+  runId: null,
+  contextTokens: null,
+  contextMessages: null,
 });
 
 const inspector = () => screen.findByRole('complementary', { name: resources.shell.inspector });

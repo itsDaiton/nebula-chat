@@ -5,7 +5,7 @@ import type { PanelState } from '@/shared/types/types';
 export const PANEL_STORAGE_KEY = 'nebula-panels';
 
 // localStorage throws when blocked or full; the panels then just forget their state.
-export const safeStorage: StateStorage = {
+const safeStorage: StateStorage = {
   getItem: (name) => {
     try {
       return localStorage.getItem(name);
