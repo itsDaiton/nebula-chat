@@ -11,7 +11,8 @@
     { "serverName": "playwright" },
     { "serverName": "github" },
     { "serverName": "claude-code-remote" },
-    { "serverName": "ccd_session" }
+    { "serverName": "ccd_session" },
+    { "serverName": "claude-artifacts" }
   ],
   "hooks": {
     "PostToolUse": [
