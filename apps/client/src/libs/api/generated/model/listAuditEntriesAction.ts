@@ -16,4 +16,5 @@ export const ListAuditEntriesAction = {
   userrestored: 'user.restored',
   sessionread: 'session.read',
   runread: 'run.read',
+  userspurged: 'users.purged',
 } as const;

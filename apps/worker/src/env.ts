@@ -32,6 +32,9 @@ const envSchema = z
     WEB_FETCH_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
     WEB_FETCH_MAX_REDIRECTS: z.coerce.number().int().nonnegative().default(5),
     WEB_FETCH_MAX_CHARS: z.coerce.number().int().positive().default(12_000),
+    // The Purge's thresholds (ADR-0028): how long a Pending deletion lasts, how long a Guest may idle.
+    PENDING_DELETION_DAYS: z.coerce.number().int().positive().default(30),
+    GUEST_INACTIVE_DAYS: z.coerce.number().int().positive().default(30),
     RUN_TIMEOUT_MS: z.coerce
       .number()
       .int()

@@ -842,6 +842,7 @@ components:
             - user.restored
             - session.read
             - run.read
+            - users.purged
         targetType:
           type: string
         targetId:
@@ -2619,6 +2620,7 @@ paths:
               - user.restored
               - session.read
               - run.read
+              - users.purged
           in: query
           name: action
         - schema:

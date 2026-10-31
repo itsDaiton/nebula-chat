@@ -69,6 +69,10 @@ export type LogAttributeValues = {
   'nebula.log.level.expires_at': string;
   /** Who asked for an operational change, as they named themselves. */
   'nebula.operator': string;
+  // Purge
+  'nebula.purge.pending_users': number;
+  'nebula.purge.guests': number;
+  'nebula.purge.failed': number;
   // Outcome
   'nebula.duration_ms': number;
   'nebula.outcome': 'completed' | 'partial' | 'cancelled' | 'rate_limited' | 'failed';

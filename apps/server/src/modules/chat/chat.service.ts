@@ -16,11 +16,22 @@ import type {
 import { messageRepository } from '@server/modules/message/message.repository';
 import { runRepository } from '@server/modules/run/run.repository';
 import { sessionRepository } from '@server/modules/session/session.repository';
+import { userRepository } from '@server/modules/user/user.repository';
 import { enqueueDirectReply, enqueueRun } from '@server/queue';
 import { saveActiveStream, saveStreamOwner } from '@server/redis';
 import { countTokens } from '@server/utils/countTokens';
 
 const MAX_PROMPT_TOKENS = 2000;
+
+// The Purge only needs day precision (ADR-0028), so a send writes at most once an hour.
+const ACTIVITY_WRITE_INTERVAL_MS = 60 * 60 * 1000;
+
+const touchLastActive = async (userId: string): Promise<void> => {
+  const now = new Date();
+  const last = await userRepository.findLastActiveAt(userId);
+  if (last && now.getTime() - last.getTime() < ACTIVITY_WRITE_INTERVAL_MS) return;
+  await userRepository.setLastActiveAt(userId, now);
+};
 
 export const chatService = {
   /**
@@ -66,6 +77,8 @@ export const chatService = {
       const run = await runRepository.createTx(tx, { userId, sessionId, messageId: message.id });
       return { messageId: message.id, runId: run.id };
     });
+
+    await touchLastActive(userId);
 
     // The assistant Message is persisted under the stream's id, so one id names both.
     const streamId = randomUUID();

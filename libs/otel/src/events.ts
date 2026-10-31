@@ -16,6 +16,9 @@ export const LOG_EVENTS = [
   'chat.stream.relay.failed',
   'chat.stream.end.failed',
   'model_call.record.failed',
+  // Purge (the worker, ADR-0028)
+  'account.purge.completed',
+  'account.purge.user.failed',
   // Jobs (the worker, ADR-0013)
   'job.payload.rejected',
   'job.queue.failed',
