@@ -31,6 +31,9 @@ const statusOf = (user: SummaryRow) => {
   if (user.isAnonymous) {
     return 'guest' as const;
   }
+  if (user.pendingDeletionAt) {
+    return 'pendingDeletion' as const;
+  }
   if (isBanned(user)) {
     return 'banned' as const;
   }
@@ -107,8 +110,27 @@ export const adminService = {
     return {
       ...toUserSummary(user),
       ban: isBanned(user) ? { reason: user.banReason, expiresAt: user.banExpires } : null,
-      pendingDeletionAt: null,
+      pendingDeletionAt: user.pendingDeletionAt,
       sessionsCount: user.sessionsCount,
     };
+  },
+  // An Admin undoing an Account deletion (ADR-0028 §1); the User signing in restores through better-auth instead.
+  async restoreUser(userId: string, adminId: string) {
+    const user = await adminRepository.findPendingDeletion(userId);
+    if (!user) {
+      throw new NotFoundError('User', userId);
+    }
+    if (!user.pendingDeletionAt) {
+      throw new ConflictError('This user is not pending deletion.');
+    }
+    await adminRepository.clearPendingDeletion(userId);
+    await auditService.append({
+      actorType: 'admin',
+      actorUserId: adminId,
+      action: 'user.restored',
+      targetType: 'user',
+      targetId: userId,
+      detail: { pendingDeletionAt: user.pendingDeletionAt.toISOString() },
+    });
   },
 };

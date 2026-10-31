@@ -56,6 +56,26 @@ const adminUsersRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) 
     preHandler: requireAdmin,
     handler: adminController.getUser,
   });
+
+  app.post('/:id/restore', {
+    schema: {
+      description:
+        'Restore a User in Pending deletion in full, and record it in the Audit log. Requires an Admin whose auth session passed two-factor authentication.',
+      summary: 'Restore a User',
+      tags: ['Admin'],
+      operationId: 'restoreUser',
+      params: userIdParamsSchema,
+      response: {
+        204: { description: 'The User is no longer pending deletion' },
+        400: jsonResponse('Invalid id', errorEnvelopeSchema),
+        404: jsonResponse('No User has that id', errorEnvelopeSchema),
+        409: jsonResponse('The User is not pending deletion', errorEnvelopeSchema),
+        ...adminErrors,
+      },
+    },
+    preHandler: requireAdmin,
+    handler: adminController.restoreUser,
+  });
   done();
 };
 

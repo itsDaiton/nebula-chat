@@ -4,15 +4,18 @@
  * Nebula Chat API
  * REST API for Nebula Chat
  */
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query';
@@ -287,6 +290,86 @@ export function useGetUser<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+/**
+ * Restore a User in Pending deletion in full, and record it in the Audit log. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary Restore a User
+ */
+export const restoreUser = (
+  id: string,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<void>(
+    { url: `/api/admin/users/${id}/restore`, method: 'POST', signal },
+    options,
+  );
+};
+
+export const getRestoreUserMutationKey = () => ['restoreUser'] as const;
+
+export const getRestoreUserMutationOptions = <
+  TError = ErrorType<ErrorEnvelope | unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof restoreUser>>,
+    TError,
+    RestoreUserMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof axiosClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof restoreUser>>,
+  TError,
+  RestoreUserMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRestoreUserMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof restoreUser>>,
+    RestoreUserMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return restoreUser(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RestoreUserMutationResult = NonNullable<Awaited<ReturnType<typeof restoreUser>>>;
+
+export type RestoreUserMutationError = ErrorType<ErrorEnvelope | unknown>;
+export type RestoreUserMutationVariables = { id: string };
+
+/**
+ * @summary Restore a User
+ */
+export const useRestoreUser = <TError = ErrorType<ErrorEnvelope | unknown>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof restoreUser>>,
+      TError,
+      RestoreUserMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof restoreUser>>,
+  TError,
+  RestoreUserMutationVariables,
+  TContext
+> => {
+  return useMutation(getRestoreUserMutationOptions(options), queryClient);
+};
 /**
  * List Audit log entries, newest first, filtered by actor, action, target and time range, a page at a time. Requires an Admin whose auth session passed two-factor authentication.
  * @summary List Audit log

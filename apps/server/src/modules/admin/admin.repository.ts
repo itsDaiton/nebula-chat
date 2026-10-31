@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, isNull, ne, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNotNull, isNull, ne, or, sql } from 'drizzle-orm';
 import { messages, sessions, users } from '@nebula-chat/db';
 import { auth } from '@server/auth';
 import { db } from '@server/db';
@@ -26,6 +26,7 @@ const userSummaryColumns = {
   banExpires: users.banExpires,
   role: users.role,
   twoFactorEnabled: users.twoFactorEnabled,
+  pendingDeletionAt: users.pendingDeletionAt,
   createdAt: users.createdAt,
   updatedAt: users.updatedAt,
 };
@@ -48,27 +49,35 @@ const isGuest = sql`coalesce(${users.isAnonymous}, false)`;
 const isBanned = () =>
   and(eq(users.banned, true), or(isNull(users.banExpires), gt(users.banExpires, new Date())));
 
+const notPending = isNull(users.pendingDeletionAt);
+
 // Mirrors the precedence of `status` in the service, so each User is in exactly one status.
 const statusFilters = {
   guest: () => isGuest,
-  banned: () => and(sql`not ${isGuest}`, isBanned()),
+  pendingDeletion: () => and(sql`not ${isGuest}`, isNotNull(users.pendingDeletionAt)),
+  banned: () => and(sql`not ${isGuest}`, notPending, isBanned()),
   admin: () =>
-    and(sql`not ${isGuest}`, sql`not coalesce(${isBanned()}, false)`, eq(users.role, 'admin')),
+    and(
+      sql`not ${isGuest}`,
+      notPending,
+      sql`not coalesce(${isBanned()}, false)`,
+      eq(users.role, 'admin'),
+    ),
   unverified: () =>
     and(
       sql`not ${isGuest}`,
+      notPending,
       sql`not coalesce(${isBanned()}, false)`,
       eq(users.emailVerified, false),
     ),
   registered: () =>
     and(
       sql`not ${isGuest}`,
+      notPending,
       sql`not coalesce(${isBanned()}, false)`,
       eq(users.emailVerified, true),
       ne(users.role, 'admin'),
     ),
-  // No column yet: nobody is pending deletion until the account lifecycle ticket.
-  pendingDeletion: () => sql`false`,
 };
 
 const searchFilter = (search: string) => {
@@ -136,5 +145,15 @@ export const adminRepository = {
       .from(users)
       .where(eq(users.id, id));
     return row ?? null;
+  },
+  async findPendingDeletion(id: string) {
+    const [row] = await db
+      .select({ id: users.id, pendingDeletionAt: users.pendingDeletionAt })
+      .from(users)
+      .where(eq(users.id, id));
+    return row ?? null;
+  },
+  async clearPendingDeletion(id: string) {
+    await db.update(users).set({ pendingDeletionAt: null }).where(eq(users.id, id));
   },
 };

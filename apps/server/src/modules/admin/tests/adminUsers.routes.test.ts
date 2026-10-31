@@ -6,6 +6,7 @@ import {
   adminSession,
   adminTrustedDeviceSession,
   adminWithout2FASession,
+  ADMIN_USER_ID,
   bannedSession,
   guestSession,
   registeredSession,
@@ -13,7 +14,12 @@ import {
 
 // ADR-0008: only the repositories are faked; the gate, validation and error handler are real.
 vi.mock('@server/modules/admin/admin.repository', () => ({
-  adminRepository: { listUsers: vi.fn(), findUserDetail: vi.fn() },
+  adminRepository: {
+    listUsers: vi.fn(),
+    findUserDetail: vi.fn(),
+    findPendingDeletion: vi.fn(),
+    clearPendingDeletion: vi.fn(),
+  },
 }));
 
 vi.mock('@server/modules/audit/audit.repository', () => ({
@@ -39,6 +45,7 @@ const COOKIE = { cookie: 'better-auth.session_token=abc' };
 const USER_ID = '44444444-4444-4444-8444-444444444444';
 const CREATED_AT = new Date('2026-09-01T08:00:00.000Z');
 const UPDATED_AT = new Date('2026-09-02T09:00:00.000Z');
+const PENDING_AT = new Date('2026-10-01T00:00:00.000Z');
 
 const aRow = (overrides: Record<string, unknown> = {}) => ({
   id: USER_ID,
@@ -50,6 +57,7 @@ const aRow = (overrides: Record<string, unknown> = {}) => ({
   banExpires: null,
   role: 'user',
   twoFactorEnabled: false,
+  pendingDeletionAt: null,
   createdAt: CREATED_AT,
   updatedAt: UPDATED_AT,
   messagesSent: 7,
@@ -80,6 +88,9 @@ beforeEach(() => {
     fromPartial({ users: [aRow()], nextCursor: USER_ID, hasMore: true }),
   );
   repo.findUserDetail.mockResolvedValue(fromPartial(aRow({ sessionsCount: 3, banReason: null })));
+  repo.findPendingDeletion.mockResolvedValue({ id: USER_ID, pendingDeletionAt: PENDING_AT });
+  repo.clearPendingDeletion.mockResolvedValue(undefined);
+  audit.insert.mockResolvedValue(undefined);
 });
 
 describe('GET /api/admin/users', () => {
@@ -252,5 +263,109 @@ describe('GET /api/admin/users/:id', () => {
     expect(res.statusCode).toBe(403);
     expect(res.json()).toMatchObject({ error: 'TwoFactorRequired' });
     expect(audit.insert).not.toHaveBeenCalled();
+  });
+});
+
+describe('a User in Pending deletion', () => {
+  it('shows that status and when deletion was asked for, even for a banned Admin', async () => {
+    repo.findUserDetail.mockResolvedValue(
+      fromPartial(
+        aRow({
+          role: 'admin',
+          banned: true,
+          banReason: null,
+          pendingDeletionAt: PENDING_AT,
+          sessionsCount: 0,
+        }),
+      ),
+    );
+
+    const res = await app.inject({ method: 'GET', url: `${ROUTE}/${USER_ID}`, headers: COOKIE });
+
+    expect(res.json()).toMatchObject({
+      status: 'pendingDeletion',
+      pendingDeletionAt: '2026-10-01T00:00:00.000Z',
+    });
+  });
+
+  it('is listed under the pendingDeletion filter', async () => {
+    repo.listUsers.mockResolvedValue(
+      fromPartial({
+        users: [aRow({ pendingDeletionAt: PENDING_AT })],
+        nextCursor: null,
+        hasMore: false,
+      }),
+    );
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `${ROUTE}?status=pendingDeletion`,
+      headers: COOKIE,
+    });
+
+    expect(res.json().users[0]).toMatchObject({ status: 'pendingDeletion' });
+    expect(repo.listUsers).toHaveBeenCalledWith(
+      { ...DEFAULT_FILTERS, status: 'pendingDeletion' },
+      10,
+      undefined,
+    );
+  });
+});
+
+describe('POST /api/admin/users/:id/restore', () => {
+  const RESTORE = `${ROUTE}/${USER_ID}/restore`;
+
+  it('restores a pending User and records the Admin in the Audit log', async () => {
+    const res = await app.inject({ method: 'POST', url: RESTORE, headers: COOKIE });
+
+    expect(res.statusCode).toBe(204);
+    expect(repo.clearPendingDeletion).toHaveBeenCalledWith(USER_ID);
+    expect(audit.insert).toHaveBeenCalledWith({
+      actorType: 'admin',
+      actorUserId: ADMIN_USER_ID,
+      action: 'user.restored',
+      targetType: 'user',
+      targetId: USER_ID,
+      detail: { pendingDeletionAt: '2026-10-01T00:00:00.000Z' },
+    });
+  });
+
+  it('answers a typed conflict for a User who is not pending, writing nothing', async () => {
+    repo.findPendingDeletion.mockResolvedValue({ id: USER_ID, pendingDeletionAt: null });
+
+    const res = await app.inject({ method: 'POST', url: RESTORE, headers: COOKIE });
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ success: false, error: 'Conflict' });
+    expect(repo.clearPendingDeletion).not.toHaveBeenCalled();
+    expect(audit.insert).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 for an unknown User', async () => {
+    repo.findPendingDeletion.mockResolvedValue(null);
+
+    const res = await app.inject({ method: 'POST', url: RESTORE, headers: COOKIE });
+
+    expect(res.statusCode).toBe(404);
+    expect(audit.insert).not.toHaveBeenCalled();
+  });
+
+  it('refuses a Registered user who is not an Admin', async () => {
+    mockedGetSession.mockResolvedValue(registeredSession() as never);
+
+    const res = await app.inject({ method: 'POST', url: RESTORE, headers: COOKIE });
+
+    expect(res.statusCode).toBe(403);
+    expect(repo.clearPendingDeletion).not.toHaveBeenCalled();
+  });
+
+  it('refuses an Admin short of two-factor', async () => {
+    mockedGetSession.mockResolvedValue(adminWithout2FASession() as never);
+
+    const res = await app.inject({ method: 'POST', url: RESTORE, headers: COOKIE });
+
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toMatchObject({ error: 'TwoFactorRequired' });
+    expect(repo.clearPendingDeletion).not.toHaveBeenCalled();
   });
 });

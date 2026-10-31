@@ -108,7 +108,9 @@ export const userDetailSchema = z
       .describe('`null` unless the User is banned now'),
     pendingDeletionAt: isoDateTimeSchema
       .nullable()
-      .describe('When the account will be deleted; `null` until deletion can be requested'),
+      .describe(
+        'When the User asked to delete the account; it is Purged 30 days later. `null` unless pending',
+      ),
     sessionsCount: z.number().int(),
   })
   .meta({ id: 'AdminUserDetail' });

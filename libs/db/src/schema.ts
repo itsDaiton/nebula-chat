@@ -31,6 +31,8 @@ export const users = pgTable(
     banReason: text('ban_reason'),
     banExpires: timestamp('ban_expires'),
     twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
+    // Set by Account deletion (ADR-0028); the Purge erases the User 30 days later.
+    pendingDeletionAt: timestamp('pending_deletion_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -287,6 +289,7 @@ export const AUDIT_ACTIONS = [
   'user.role_changed',
   'user.banned',
   'user.unbanned',
+  'user.restored',
   'session.read',
   'run.read',
 ] as const;

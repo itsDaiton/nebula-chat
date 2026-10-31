@@ -27,7 +27,7 @@ export interface AdminUserDetail {
   updatedAt: string;
   /** `null` unless the User is banned now */
   ban: AdminUserDetailBan;
-  /** When the account will be deleted; `null` until deletion can be requested */
+  /** When the User asked to delete the account; it is Purged 30 days later. `null` unless pending */
   pendingDeletionAt: string | null;
   /**
    * @minimum -9007199254740991

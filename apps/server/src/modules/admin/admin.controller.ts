@@ -1,5 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { adminService } from '@server/modules/admin/admin.service';
+import { getSessionData } from '@server/plugins/authGate.plugin';
 import type {
   AdminEmailParams,
   GrantAdminDTO,
@@ -27,5 +28,9 @@ export const adminController = {
   async getUser(req: FastifyRequest<{ Params: UserIdParams }>, reply: FastifyReply) {
     const user = await adminService.getUser(req.params.id);
     return reply.status(200).send(user);
+  },
+  async restoreUser(req: FastifyRequest<{ Params: UserIdParams }>, reply: FastifyReply) {
+    await adminService.restoreUser(req.params.id, getSessionData(req).user.id);
+    return reply.status(204).send();
   },
 };

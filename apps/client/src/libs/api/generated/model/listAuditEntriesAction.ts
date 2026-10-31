@@ -13,6 +13,7 @@ export const ListAuditEntriesAction = {
   userrole_changed: 'user.role_changed',
   userbanned: 'user.banned',
   userunbanned: 'user.unbanned',
+  userrestored: 'user.restored',
   sessionread: 'session.read',
   runread: 'run.read',
 } as const;
