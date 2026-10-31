@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.20.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.0...nebula-chat-v5.20.1) (2026-10-31)
+
+
+### Bug Fixes
+
+* allow claude-artifacts MCP server in Claude Code ([#720](https://github.com/itsDaiton/nebula-chat/issues/720)) ([e298cfb](https://github.com/itsDaiton/nebula-chat/commit/e298cfbd16dac400e66384cb1e7ff4827afdcafe))
+
 ## [5.20.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.19.0...nebula-chat-v5.20.0) (2026-10-31)
 
 
