@@ -15,7 +15,8 @@ const cancelWaitingRuns = async (
   filter: { sessionId?: string; userId: string },
   logger: RunLogger,
 ): Promise<void> => {
-  for (const run of await runRepository.findWaiting(filter)) await cancelWaitingRun(run.id, logger);
+  const waiting = await runRepository.findWaiting(filter);
+  await Promise.all(waiting.map((run) => cancelWaitingRun(run.id, logger)));
 };
 
 export const runService = {
@@ -39,10 +40,12 @@ export const runService = {
     userId: string,
     logger: RunLogger,
   ): Promise<void> {
-    for (const run of await runRepository.findWaiting({ userId })) {
-      if ((await findLastStream(run.sessionId)) === streamId) {
-        await cancelWaitingRun(run.id, logger);
-      }
-    }
+    const waiting = await runRepository.findWaiting({ userId });
+    const behind = await Promise.all(
+      waiting.map(async (run) => (await findLastStream(run.sessionId)) === streamId),
+    );
+    await Promise.all(
+      waiting.filter((_, i) => behind[i]).map((run) => cancelWaitingRun(run.id, logger)),
+    );
   },
 };
