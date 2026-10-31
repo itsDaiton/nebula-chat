@@ -6,7 +6,9 @@ import type {
   AdminEmailParams,
   BanUserDTO,
   GrantAdminDTO,
+  ListUserSessionsQuery,
   ListUsersQuery,
+  SessionIdParams,
   SetRoleDTO,
   UserIdParams,
 } from '@server/modules/admin/admin.types';
@@ -31,6 +33,17 @@ export const adminController = {
   async getUser(req: FastifyRequest<{ Params: UserIdParams }>, reply: FastifyReply) {
     const user = await adminService.getUser(req.params.id);
     return reply.status(200).send(user);
+  },
+  async listUserSessions(
+    req: FastifyRequest<{ Params: UserIdParams; Querystring: ListUserSessionsQuery }>,
+    reply: FastifyReply,
+  ) {
+    const page = await adminService.listUserSessions(req.params.id, req.query);
+    return reply.status(200).send(page);
+  },
+  async readSession(req: FastifyRequest<{ Params: SessionIdParams }>, reply: FastifyReply) {
+    const session = await adminService.readSession(req.params.id, getSessionData(req).user.id);
+    return reply.status(200).send(session);
   },
   async setRole(
     req: FastifyRequest<{ Params: UserIdParams; Body: SetRoleDTO }>,

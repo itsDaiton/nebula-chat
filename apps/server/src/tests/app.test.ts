@@ -73,6 +73,9 @@ describe('OpenAPI document', () => {
   it('declares each response resource once, with no input or output twin', () => {
     expect(Object.keys(document.components.schemas).sort()).toEqual([
       'Admin',
+      'AdminSessionDetail',
+      'AdminSessionPage',
+      'AdminSessionSummary',
       'AdminUserDetail',
       'AdminUserPage',
       'AdminUserSummary',

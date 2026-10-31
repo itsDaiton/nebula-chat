@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { paginationConfig } from '@server/config/pagination.config';
+import { messagesArraySchema } from '@server/modules/message/message.validation';
 import { isoDateTimeSchema } from '@server/utils/isoDateTimeSchema';
 
 // Lowercased, as better-auth stores every email.
@@ -127,3 +128,46 @@ export const userDetailSchema = z
     sessionsCount: z.number().int(),
   })
   .meta({ id: 'AdminUserDetail' });
+
+export const listUserSessionsQuerySchema = z.object({
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(paginationConfig.maxLimit)
+    .default(paginationConfig.defaultLimit)
+    .describe(
+      `Number of Sessions to fetch (1-${String(paginationConfig.maxLimit)}, default ${String(paginationConfig.defaultLimit)})`,
+    ),
+  cursor: z.uuid().optional().describe('The `nextCursor` of the previous page'),
+});
+
+export const sessionIdParamsSchema = z.object({ id: z.uuid().describe('The Session id') });
+
+const adminSessionShape = {
+  id: z.uuid(),
+  title: z.string(),
+  model: z.string(),
+  archived: z.boolean().describe('Whether the owner has archived the Session'),
+  messageCount: z.number().int(),
+  createdAt: isoDateTimeSchema,
+  updatedAt: isoDateTimeSchema,
+};
+
+const adminSessionSummarySchema = z.object(adminSessionShape).meta({ id: 'AdminSessionSummary' });
+
+export const adminSessionPageSchema = z
+  .object({
+    sessions: z.array(adminSessionSummarySchema).max(paginationConfig.maxLimit),
+    nextCursor: z.uuid().nullable(),
+    hasMore: z.boolean(),
+  })
+  .meta({ id: 'AdminSessionPage' });
+
+export const adminSessionDetailSchema = z
+  .object({
+    ...adminSessionShape,
+    userId: z.uuid().describe('The owner'),
+    messages: messagesArraySchema.describe('Oldest first'),
+  })
+  .meta({ id: 'AdminSessionDetail' });

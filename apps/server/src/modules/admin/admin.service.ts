@@ -10,10 +10,12 @@ import { adminRepository } from '@server/modules/admin/admin.repository';
 import type {
   AdminRole,
   BanUserDTO,
+  ListUserSessionsQuery,
   ListUsersQuery,
   SetRoleDTO,
 } from '@server/modules/admin/admin.types';
 import { auditService } from '@server/modules/audit/audit.service';
+import { messageRepository } from '@server/modules/message/message.repository';
 
 type UserRow = NonNullable<Awaited<ReturnType<typeof adminRepository.findUserByEmail>>>;
 
@@ -161,6 +163,27 @@ export const adminService = {
       pendingDeletionAt: user.pendingDeletionAt,
       sessionsCount: user.sessionsCount,
     };
+  },
+  async listUserSessions(userId: string, { limit, cursor }: ListUserSessionsQuery) {
+    await findModerationTarget(userId);
+    return adminRepository.listUserSessions(userId, limit, cursor);
+  },
+  // Opening a Session is a content read: audited once, after it succeeds, and a failed Audit write fails the read.
+  async readSession(sessionId: string, adminId: string) {
+    const session = await adminRepository.findSession(sessionId);
+    if (!session) {
+      throw new NotFoundError('Session', sessionId);
+    }
+    const messages = await messageRepository.findAll(session.userId, sessionId);
+    await auditService.append({
+      actorType: 'admin',
+      actorUserId: adminId,
+      action: 'session.read',
+      targetType: 'session',
+      targetId: sessionId,
+      detail: { userId: session.userId },
+    });
+    return { ...session, messages };
   },
   // Admins moderating through better-auth's server API, so sessions and caches are handled by the library.
   async setRole(userId: string, { role }: SetRoleDTO, adminId: string, headers: Headers) {
