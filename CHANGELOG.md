@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.18.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.17.0...nebula-chat-v5.18.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-541 Admin reads any User's Sessions and Messages, each read audited ([#707](https://github.com/itsDaiton/nebula-chat/issues/707)) ([ae9e5e3](https://github.com/itsDaiton/nebula-chat/commit/ae9e5e37a514323d5e57a5c91a004e45f12aeee3))
+* **worker:** NEB-363 web_search and web_fetch tools for delegate Agents ([#708](https://github.com/itsDaiton/nebula-chat/issues/708)) ([c7a483c](https://github.com/itsDaiton/nebula-chat/commit/c7a483c8a412e15b11da4958df2e3e0e5b79896d))
+
 ## [5.17.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.16.0...nebula-chat-v5.17.0) (2026-10-31)
 
 

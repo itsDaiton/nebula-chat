@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.9.0...nebula-chat-worker-v1.10.0) (2026-10-31)
+
+
+### Features
+
+* **worker:** NEB-363 web_search and web_fetch tools for delegate Agents ([#708](https://github.com/itsDaiton/nebula-chat/issues/708)) ([c7a483c](https://github.com/itsDaiton/nebula-chat/commit/c7a483c8a412e15b11da4958df2e3e0e5b79896d))
+
 ## [1.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.8.2...nebula-chat-worker-v1.9.0) (2026-10-31)
 
 
