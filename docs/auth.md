@@ -301,6 +301,9 @@ server's `onUserDeleted` callback (the Profile image file) are not reached by th
   table (`restore-account:<token>`, 10 minutes). Password sign-in answers `403 ACCOUNT_PENDING_DELETION` with `purgeDate`
   and `restoreToken` in the body; a social sign-in redirects to `<errorURL>?pending=<purgeDate>&restoreToken=<token>`.
   Sign-in checks the password first, so the outcome never confirms an account to a stranger.
+  A User with two-factor enabled gets the Purge date but no token from a password sign-in, which would skip the code;
+  the token comes only after a verified code (`/two-factor/*`) or a social sign-in, which never asks for one.
+  An email-verification link redirects like a social sign-in.
 - **Restore.** `POST /api/auth/restore-account` with `{ token }` (the `restore-account` plugin in `@nebula-chat/auth`)
   consumes the token, clears `pending_deletion_at` and signs the User in. Declining needs no call: the token expires and the
   User stays pending. A bad or used token is `400 INVALID_RESTORE_TOKEN`.

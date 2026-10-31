@@ -185,7 +185,7 @@ describe('createAuth Account deletion', () => {
 
 describe('createAuth sign-up with a pending email', () => {
   it('answers a typed conflict telling the user to sign in', async () => {
-    const { db } = makeDb([[{ pendingDeletionAt: PENDING_AT }]]);
+    const { db } = makeDb([[{ pendingDeletionAt: PENDING_AT, twoFactorEnabled: false }]]);
     const { ctx } = hookContext({ path: '/sign-up/email', body: { email: 'Ada@Example.com' } });
 
     await expect(build(db).options.hooks!.before!(ctx)).rejects.toMatchObject({
@@ -216,7 +216,7 @@ const signInContext = (path: string) => {
 
 describe('createAuth sign-in of a pending User', () => {
   it('lets a normal User sign in', async () => {
-    const { db } = makeDb([[{ pendingDeletionAt: null }]]);
+    const { db } = makeDb([[{ pendingDeletionAt: null, twoFactorEnabled: false }]]);
     const { ctx, createVerificationValue } = signInContext('/sign-in/email');
 
     await expect(sessionHook(db)({ userId: 'user-1' }, ctx)).resolves.toBeUndefined();
@@ -225,7 +225,7 @@ describe('createAuth sign-in of a pending User', () => {
   });
 
   it('issues no session and answers the Purge date with a restore token', async () => {
-    const { db } = makeDb([[{ pendingDeletionAt: PENDING_AT }]]);
+    const { db } = makeDb([[{ pendingDeletionAt: PENDING_AT, twoFactorEnabled: false }]]);
     const { ctx, createVerificationValue } = signInContext('/sign-in/email');
 
     const outcome = sessionHook(db)({ userId: 'user-1' }, ctx);
@@ -247,7 +247,7 @@ describe('createAuth sign-in of a pending User', () => {
   });
 
   it('sends a social sign-in to the client auth page with the Purge date and token', async () => {
-    const { db } = makeDb([[{ pendingDeletionAt: PENDING_AT }]]);
+    const { db } = makeDb([[{ pendingDeletionAt: PENDING_AT, twoFactorEnabled: false }]]);
     const { ctx, redirect } = signInContext('/callback/google');
 
     await expect(sessionHook(db)({ userId: 'user-1' }, ctx)).rejects.toThrow(/^redirect:/);
@@ -256,5 +256,36 @@ describe('createAuth sign-in of a pending User', () => {
     expect(target.origin + target.pathname).toBe('http://localhost:5173/auth');
     expect(target.searchParams.get('pending')).toBe('2026-10-31T00:00:00.000Z');
     expect(target.searchParams.get('restoreToken')).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('sends an email-verification link to the client auth page too', async () => {
+    const { db } = makeDb([[{ pendingDeletionAt: PENDING_AT, twoFactorEnabled: false }]]);
+    const { ctx, redirect } = signInContext('/verify-email');
+
+    await expect(sessionHook(db)({ userId: 'user-1' }, ctx)).rejects.toThrow(/^redirect:/);
+
+    expect(redirect).toHaveBeenCalledOnce();
+  });
+
+  it('gives a password sign-in with two-factor no restore token, so the code cannot be skipped', async () => {
+    const { db } = makeDb([[{ pendingDeletionAt: PENDING_AT, twoFactorEnabled: true }]]);
+    const { ctx, createVerificationValue } = signInContext('/sign-in/email');
+
+    const error = await sessionHook(db)({ userId: 'user-1' }, ctx).catch((e: unknown) => e);
+
+    expect(error).toMatchObject({ body: { code: 'ACCOUNT_PENDING_DELETION' } });
+    expect((error as { body: object }).body).not.toHaveProperty('restoreToken');
+    expect(createVerificationValue).not.toHaveBeenCalled();
+  });
+
+  it('issues the token once a two-factor code was verified', async () => {
+    const { db } = makeDb([[{ pendingDeletionAt: PENDING_AT, twoFactorEnabled: true }]]);
+    const { ctx, createVerificationValue } = signInContext('/two-factor/verify-totp');
+
+    await expect(sessionHook(db)({ userId: 'user-1' }, ctx)).rejects.toMatchObject({
+      body: { restoreToken: expect.any(String) },
+    });
+
+    expect(createVerificationValue).toHaveBeenCalledOnce();
   });
 });

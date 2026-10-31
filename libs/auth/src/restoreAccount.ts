@@ -4,10 +4,7 @@ import type { BetterAuthPlugin } from 'better-auth';
 import type { DbClient } from '@nebula-chat/db';
 import { clearPendingDeletion, restoreTokenIdentifier } from './pendingDeletion';
 
-/**
- * `POST /restore-account`: trades the one-time token a Pending-deletion sign-in returned for a normal session.
- * Declining needs no call; the token just expires and the User stays pending.
- */
+// Trades a Pending-deletion sign-in's one-time token for a session; declining just lets it expire.
 export const restoreAccountPlugin = (db: DbClient): BetterAuthPlugin => ({
   id: 'restore-account',
   endpoints: {

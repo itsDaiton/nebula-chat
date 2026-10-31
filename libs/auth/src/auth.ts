@@ -42,7 +42,7 @@ import {
   PENDING_DELETION_MESSAGES,
   PENDING_DELETION_SIGN_UP_CODE,
   RESTORE_TOKEN_TTL_SECONDS,
-  findPendingDeletionAt,
+  findPendingUser,
   findPendingDeletionAtByEmail,
   isSessionFresh,
   markPendingDeletion,
@@ -299,18 +299,32 @@ export const createAuth = ({
           // Every sign-in method ends in a session, so this one hook keeps a User in Pending deletion
           // signed out and answers with the Purge date and a one-time token to restore with.
           before: async ({ userId }, ctx) => {
-            const pendingAt = await findPendingDeletionAt(db, userId);
-            if (!pendingAt) return;
+            const pending = await findPendingUser(db, userId);
+            if (!pending) return;
             if (!ctx) return false;
+            const purgeDate = purgeDateOf(pending.pendingDeletionAt).toISOString();
+            // Password sign-in runs this hook before the second factor, so a token here would skip it;
+            // only a session made after a verified code (or a social sign-in, which never has one) may restore.
+            const afterSecondFactor = ctx.path.startsWith('/two-factor/');
+            if (
+              pending.twoFactorEnabled &&
+              !afterSecondFactor &&
+              !ctx.path.startsWith('/callback/')
+            ) {
+              throw new APIError('FORBIDDEN', {
+                code: PENDING_DELETION_CODE,
+                message: PENDING_DELETION_MESSAGES[PENDING_DELETION_CODE],
+                purgeDate,
+              });
+            }
             const restoreToken = randomBytes(32).toString('hex');
             await ctx.context.internalAdapter.createVerificationValue({
               identifier: restoreTokenIdentifier(restoreToken),
               value: userId,
               expiresAt: new Date(Date.now() + RESTORE_TOKEN_TTL_SECONDS * 1000),
             });
-            const purgeDate = purgeDateOf(pendingAt).toISOString();
-            // A social sign-in arrives by redirect, so its outcome has to land on a client route.
-            if (ctx.path.startsWith('/callback/') && errorURL) {
+            // A social sign-in or an email link arrives by redirect, so its outcome has to land on a client route.
+            if (errorURL && (ctx.path.startsWith('/callback/') || ctx.path === '/verify-email')) {
               const target = new URL(errorURL);
               target.searchParams.set('pending', purgeDate);
               target.searchParams.set('restoreToken', restoreToken);

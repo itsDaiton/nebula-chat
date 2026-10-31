@@ -38,12 +38,17 @@ export const clearPendingDeletion = async (db: DbClient, userId: string) => {
   await db.update(users).set({ pendingDeletionAt: null }).where(eq(users.id, userId));
 };
 
-export const findPendingDeletionAt = async (db: DbClient, userId: string) => {
+export const findPendingUser = async (db: DbClient, userId: string) => {
   const [row] = await db
-    .select({ pendingDeletionAt: users.pendingDeletionAt })
+    .select({
+      pendingDeletionAt: users.pendingDeletionAt,
+      twoFactorEnabled: users.twoFactorEnabled,
+    })
     .from(users)
     .where(eq(users.id, userId));
-  return row?.pendingDeletionAt ?? null;
+  return row?.pendingDeletionAt
+    ? { pendingDeletionAt: row.pendingDeletionAt, twoFactorEnabled: row.twoFactorEnabled }
+    : null;
 };
 
 export const findPendingDeletionAtByEmail = async (db: DbClient, email: string) => {
