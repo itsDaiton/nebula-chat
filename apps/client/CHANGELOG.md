@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.15.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.15.0...nebula-chat-client-v2.15.1) (2026-10-31)
+
+
+### Bug Fixes
+
+* **client:** make TanStack devtools opt-in via env var ([#722](https://github.com/itsDaiton/nebula-chat/issues/722)) ([6162a10](https://github.com/itsDaiton/nebula-chat/commit/6162a1049e17ec3af9c41ae675325d92feb2bcb4))
+
 ## [2.15.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.14.0...nebula-chat-client-v2.15.0) (2026-10-31)
 
 
