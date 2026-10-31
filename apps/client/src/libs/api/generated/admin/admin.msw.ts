@@ -17,7 +17,7 @@ export const getListUsersResponseMock = (
   users: Array.from({ length: faker.number.int({ min: 1, max: 100 }) }, (_, i) => i + 1).map(
     () => ({
       id: faker.string.uuid(),
-      email: faker.internet.email(),
+      email: faker.string.alpha({ length: { min: 10, max: 20 } }),
       name: faker.string.alpha({ length: { min: 10, max: 20 } }),
       status: faker.helpers.arrayElement([
         'registered',
@@ -42,7 +42,7 @@ export const getGetUserResponseMock = (
   overrideResponse: Partial<Extract<AdminUserDetail, object>> = {},
 ): AdminUserDetail => ({
   id: faker.string.uuid(),
-  email: faker.internet.email(),
+  email: faker.string.alpha({ length: { min: 10, max: 20 } }),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
   status: faker.helpers.arrayElement([
     'registered',

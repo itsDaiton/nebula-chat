@@ -1,5 +1,4 @@
-import { and, asc, desc, eq, gt, isNull, lt, ne, or, sql } from 'drizzle-orm';
-import type { SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNull, ne, or, sql } from 'drizzle-orm';
 import { messages, sessions, users } from '@nebula-chat/db';
 import { auth } from '@server/auth';
 import { db } from '@server/db';
@@ -97,23 +96,12 @@ export const adminRepository = {
     await internalAdapter.updateUser(userId, { role });
   },
   async listUsers(filters: UserFilters, limit: number, cursor?: string) {
-    // Typed as a column for drizzle's overloads; a count is compared as a plain number at runtime.
-    const sortKey = sortKeys[filters.sortBy] as typeof users.createdAt;
-    const forward = filters.order === 'asc' ? gt : lt;
-
-    let cursorFilter: SQL | undefined;
-    if (cursor) {
-      const [cursorRow] = await db
-        .select({ value: sortKey })
-        .from(users)
-        .where(eq(users.id, cursor));
-      if (cursorRow) {
-        cursorFilter = or(
-          forward(sortKey, cursorRow.value),
-          and(eq(sortKey, cursorRow.value), forward(users.id, cursor)),
-        );
-      }
-    }
+    const sortKey = sortKeys[filters.sortBy];
+    const after = filters.order === 'asc' ? sql.raw('>') : sql.raw('<');
+    // Compared in SQL against the cursor row, so no timestamp is rounded to milliseconds on the way through JS.
+    const cursorFilter = cursor
+      ? sql`(${sortKey}, ${users.id}) ${after} (select ${sortKey}, ${users.id} from ${users} where ${users.id} = ${cursor})`
+      : undefined;
 
     const direction = filters.order === 'asc' ? asc : desc;
     const rows = await db

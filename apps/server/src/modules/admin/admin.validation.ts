@@ -30,7 +30,7 @@ export const adminSchema = z
 // A bound for the spec (checkov CKV_OPENAPI_21), far above any Admin count we run.
 export const adminsSchema = z.array(adminSchema).max(100);
 
-export const USER_STATUSES = [
+const USER_STATUSES = [
   'registered',
   'unverified',
   'admin',
@@ -39,7 +39,7 @@ export const USER_STATUSES = [
   'guest',
 ] as const;
 
-export const USER_SORTS = ['createdAt', 'lastActiveAt', 'messagesSent'] as const;
+const USER_SORTS = ['createdAt', 'lastActiveAt', 'messagesSent'] as const;
 
 export const listUsersQuerySchema = z.object({
   search: z
@@ -74,7 +74,8 @@ export const userIdParamsSchema = z.object({ id: z.uuid().describe('The User id'
 
 const userSummaryShape = {
   id: z.uuid(),
-  email: z.email(),
+  // A Guest's generated address may lack a TLD (`temp-…@localhost`), which z.email() rejects.
+  email: z.string(),
   name: z.string(),
   status: z
     .enum(USER_STATUSES)

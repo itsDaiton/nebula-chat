@@ -515,6 +515,12 @@ components:
           pattern: >-
             ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
+        - id
+        - email
+        - name
+        - twoFactorEnabled
+        - createdAt
+      additionalProperties: false
     AdminUserPage:
       type: object
       properties:
@@ -547,9 +553,6 @@ components:
             ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         email:
           type: string
-          format: email
-          pattern: >-
-            ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
         name:
           type: string
         status:
@@ -600,9 +603,6 @@ components:
             ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         email:
           type: string
-          format: email
-          pattern: >-
-            ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
         name:
           type: string
         status:
@@ -662,7 +662,8 @@ components:
               pattern: >-
                 ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
             - type: 'null'
-          description: When the account will be deleted; `null` until deletion can be
+          description: >-
+            When the account will be deleted; `null` until deletion can be
             requested
         sessionsCount:
           type: integer
@@ -680,12 +681,6 @@ components:
         - ban
         - pendingDeletionAt
         - sessionsCount
-      additionalProperties: false
-        - id
-        - email
-        - name
-        - twoFactorEnabled
-        - createdAt
       additionalProperties: false
     AuditPage:
       type: object
@@ -1936,13 +1931,46 @@ paths:
           name: email
           required: true
           description: The email of the Admin
+      security:
+        - operatorToken: []
+      responses:
+        '204':
+          description: The user is no longer an Admin
+        '400':
+          description: Invalid email
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Missing or wrong operator token
+          content:
+            application/json:
+              schema: {}
+        '404':
+          description: No operator token is configured, or no user has that email
+          content:
+            application/json:
+              schema: {}
+        '409':
+          description: The user is not an Admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema: {}
   /api/admin/users:
     get:
       operationId: listUsers
       summary: List Users
       tags:
         - Admin
-      description: List Users, newest first by default, filtered by status and a name
+      description: >-
+        List Users, newest first by default, filtered by status and a name
         or email search, a page at a time. Guests are left out unless
         `status=guest`. Requires an Admin whose auth session passed two-factor
         authentication.
@@ -1956,7 +1984,8 @@ paths:
           name: search
           description: Case-insensitive text to find in the name or email
         - schema:
-            description: Only Users in this status; without it every User but Guests is
+            description: >-
+              Only Users in this status; without it every User but Guests is
               listed
             type: string
             enum:
@@ -1968,7 +1997,9 @@ paths:
               - guest
           in: query
           name: status
-          description: Only Users in this status; without it every User but Guests is listed
+          description: >-
+            Only Users in this status; without it every User but Guests is
+            listed
         - schema:
             default: createdAt
             description: '`lastActiveAt` is the last update to the account until activity is
@@ -2028,7 +2059,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
-          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: >-
+            Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
@@ -2079,45 +2111,14 @@ paths:
             application/json:
               schema: {}
         '403':
-          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: >-
+            Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
               schema: {}
         '404':
           description: No User has that id
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema: {}
-      security:
-        - operatorToken: []
-      responses:
-        '204':
-          description: The user is no longer an Admin
-        '400':
-          description: Invalid email
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
-          description: Missing or wrong operator token
-          content:
-            application/json:
-              schema: {}
-        '404':
-          description: No operator token is configured, or no user has that email
-          content:
-            application/json:
-              schema: {}
-        '409':
-          description: The user is not an Admin
           content:
             application/json:
               schema:
