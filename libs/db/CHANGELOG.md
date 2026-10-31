@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v1.6.0...nebula-chat-db-v1.7.0) (2026-10-31)
+
+
+### Features
+
+* **server:** NEB-665 Messages carry their Model, estimated cost, Run and context usage ([#704](https://github.com/itsDaiton/nebula-chat/issues/704)) ([c9bf8b3](https://github.com/itsDaiton/nebula-chat/commit/c9bf8b33f1bac83076aed43f18b1e986c661b6ca))
+
 ## [1.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v1.5.0...nebula-chat-db-v1.6.0) (2026-10-31)
 
 
