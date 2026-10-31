@@ -101,6 +101,60 @@ const adminWithoutImpersonation = defaultAc.newRole({
   session: adminAc.statements.session,
 });
 
+type HookContext = Parameters<Parameters<typeof createAuthMiddleware>[0]>[0];
+
+type AuthSession = NonNullable<Awaited<ReturnType<typeof getSessionFromCtx>>>;
+
+// better-auth's own confirmation, repeated because the delete hook ends the request in its place.
+const assertConfirmed = async (
+  { context }: HookContext,
+  authSession: AuthSession,
+  candidate: string | undefined,
+  hash: string | null | undefined,
+) => {
+  if (candidate) {
+    const matches = hash && (await context.password.verify({ hash, password: candidate }));
+    if (!matches) throw APIError.from('BAD_REQUEST', BASE_ERROR_CODES.INVALID_PASSWORD);
+    return;
+  }
+  const createdAt = new Date(authSession.session.createdAt);
+  if (!isSessionFresh(createdAt, context.sessionConfig.freshAge, new Date())) {
+    throw APIError.from('BAD_REQUEST', BASE_ERROR_CODES.SESSION_EXPIRED);
+  }
+};
+
+/** Confirms an Account deletion, then starts its Pending deletion in place of better-auth's hard delete. */
+const startPendingDeletion = async (db: DbClient, ctx: HookContext) => {
+  const authSession = await getSessionFromCtx(ctx);
+  // No session is better-auth's own 401.
+  if (!authSession) return;
+  const body = ctx.body as { password?: string; token?: string } | undefined;
+  // No verification email is configured, so a token can only be a forgery.
+  if (body?.token) {
+    throw APIError.from('BAD_REQUEST', BASE_ERROR_CODES.INVALID_TOKEN);
+  }
+  const { internalAdapter } = ctx.context;
+  const credential = (await internalAdapter.findAccounts(authSession.user.id)).find(
+    ({ providerId }) => providerId === 'credential',
+  );
+  const rejection = findDeleteAccountRejection({
+    password: body?.password,
+    hasPassword: Boolean(credential),
+  });
+  if (rejection) {
+    throw APIError.from('BAD_REQUEST', {
+      code: rejection,
+      message: DELETE_ACCOUNT_REJECTION_MESSAGES[rejection],
+    });
+  }
+  await assertConfirmed(ctx, authSession, body?.password, credential?.password);
+  await markPendingDeletion(db, authSession.user.id, new Date());
+  await internalAdapter.deleteUserSessions(authSession.user.id);
+  deleteSessionCookie(ctx);
+  // The shape better-auth answers a delete with, so the client sees no change.
+  return ctx.json({ success: true, message: 'User deleted' });
+};
+
 /** The rejection as better-auth's own errors look: its code and message, with a 400. */
 const toRejectionError = (rejection: PasswordRejection) =>
   APIError.from('BAD_REQUEST', {
@@ -205,50 +259,7 @@ export const createAuth = ({
       // Require the password on /delete-user, refuse an unchanged one on /change-password,
       // and a breached or unchanged one before /reset-password consumes the token.
       before: createAuthMiddleware(async (ctx) => {
-        if (ctx.path === '/delete-user') {
-          const authSession = await getSessionFromCtx(ctx);
-          // No session is better-auth's own 401.
-          if (!authSession) return;
-          const body = ctx.body as { password?: string; token?: string } | undefined;
-          // No verification email is configured, so a token can only be a forgery.
-          if (body?.token) {
-            throw APIError.from('BAD_REQUEST', BASE_ERROR_CODES.INVALID_TOKEN);
-          }
-          const { internalAdapter, password, sessionConfig } = ctx.context;
-          const credential = (await internalAdapter.findAccounts(authSession.user.id)).find(
-            ({ providerId }) => providerId === 'credential',
-          );
-          const rejection = findDeleteAccountRejection({
-            password: body?.password,
-            hasPassword: Boolean(credential),
-          });
-          if (rejection) {
-            throw APIError.from('BAD_REQUEST', {
-              code: rejection,
-              message: DELETE_ACCOUNT_REJECTION_MESSAGES[rejection],
-            });
-          }
-          // better-auth's own confirmation, repeated because this hook ends the request in its place.
-          if (body?.password) {
-            const matches =
-              credential?.password &&
-              (await password.verify({ hash: credential.password, password: body.password }));
-            if (!matches) throw APIError.from('BAD_REQUEST', BASE_ERROR_CODES.INVALID_PASSWORD);
-          } else if (
-            !isSessionFresh(
-              new Date(authSession.session.createdAt),
-              sessionConfig.freshAge,
-              new Date(),
-            )
-          ) {
-            throw APIError.from('BAD_REQUEST', BASE_ERROR_CODES.SESSION_EXPIRED);
-          }
-          await markPendingDeletion(db, authSession.user.id, new Date());
-          await internalAdapter.deleteUserSessions(authSession.user.id);
-          deleteSessionCookie(ctx);
-          // The shape better-auth answers a delete with, so the client sees no change.
-          return ctx.json({ success: true, message: 'User deleted' });
-        }
+        if (ctx.path === '/delete-user') return startPendingDeletion(db, ctx);
         if (ctx.path === '/sign-up/email') {
           const email = (ctx.body as { email?: string } | undefined)?.email;
           if (email && (await findPendingDeletionAtByEmail(db, email))) {
