@@ -4,22 +4,22 @@ packages:
   - openapi
 
 catalog:
-  '@dotenvx/dotenvx': ^2.37.0
-  '@opentelemetry/api': ^1.9.1
+  '@dotenvx/dotenvx': ^2.38.2
+  '@opentelemetry/api': ^1.10.0
   '@types/node': ^26.6.5
   '@types/react': ^19.3.0
   '@types/react-dom': ^19.3.0
   '@vitest/coverage-v8': ^5.0.5
-  better-auth: 1.7.10
-  bullmq: ^6.3.15
+  better-auth: 1.7.12
+  bullmq: ^6.4.0
   drizzle-orm: ^0.45.4
   msw: ^3.0.3
   nodemon: ^3.1.14
-  orval: ^8.43.0
+  orval: ^8.44.0
   react: ^19.3.1
   react-dom: ^19.3.1
   tiktoken: ^1.0.0
-  tsc-alias: ^1.9.7
+  tsc-alias: ^1.9.8
   tsdown: ^0.23.1
   tsx: ^4.23.15
   typescript: ^6.0.3
