@@ -1,27 +1,12 @@
-import { Box, Flex, Text } from '@chakra-ui/react';
 import type { SettingsRowProps } from '@/modules/settings/types/types';
 
 /** Label and description anchored left, the control right; stacked on mobile. */
 export const SettingsRow = ({ label, description, children }: SettingsRowProps) => (
-  <Flex
-    direction={{ base: 'column', md: 'row' }}
-    align={{ base: 'stretch', md: 'center' }}
-    justify="space-between"
-    gap={{ base: 3, md: 8 }}
-    py={4}
-    borderBottomWidth="1px"
-    borderColor="border.default"
-  >
-    <Box>
-      <Text fontSize={{ base: 'sm', '2xl': 'md' }} fontWeight="medium">
-        {label}
-      </Text>
-      {description && (
-        <Text fontSize={{ base: 'xs', md: 'sm' }} color="fg.muted">
-          {description}
-        </Text>
-      )}
-    </Box>
-    <Box flexShrink={0}>{children}</Box>
-  </Flex>
+  <div className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+    <div className="min-w-0">
+      <p className="text-sm font-medium">{label}</p>
+      {description && <div className="text-[13px] text-muted-foreground">{description}</div>}
+    </div>
+    {children && <div className="shrink-0">{children}</div>}
+  </div>
 );

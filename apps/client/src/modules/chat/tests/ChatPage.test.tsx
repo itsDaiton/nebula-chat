@@ -6,6 +6,7 @@ import {
   getCreateSessionMockHandler,
   getGetSessionMockHandler,
   getListSessionsMockHandler,
+  getRestoreSessionMockHandler,
 } from '@/libs/api/generated/sessions/sessions.msw';
 import {
   getGetMessageAllowanceMockHandler,
@@ -404,5 +405,53 @@ describe('ChatPage', () => {
 
     layout.isMobile = false;
     layout.showSidePanels = true;
+  });
+
+  describe('an archived Session', () => {
+    const serveArchived = () =>
+      server.use(
+        getGetSessionMockHandler({
+          ...aChatSession(SESSION_ID, 'Chat'),
+          archived: true,
+          activeStreamId: null,
+          waitingRun: null,
+        }),
+        getListMessagesMockHandler([aMessage('m1', 'user', 'An old question')]),
+      );
+
+    it('reads without a composer, and offers Restore in its place', async () => {
+      serveArchived();
+
+      await renderPage(`/s/${SESSION_ID}`);
+
+      expect(await screen.findByText('An old question')).toBeInTheDocument();
+      expect(screen.getByText(resources.settings.archived.notice)).toBeInTheDocument();
+      expect(screen.getByText(resources.settings.archived.bar)).toBeInTheDocument();
+      expect(screen.queryByLabelText(resources.chat.composer.label)).not.toBeInTheDocument();
+    });
+
+    it('brings the composer back once restored', async () => {
+      serveArchived();
+      server.use(
+        getRestoreSessionMockHandler(() => {
+          server.use(
+            getGetSessionMockHandler({
+              ...aChatSession(SESSION_ID, 'Chat'),
+              activeStreamId: null,
+              waitingRun: null,
+            }),
+          );
+          return aChatSession(SESSION_ID, 'Chat');
+        }),
+      );
+      await renderPage(`/s/${SESSION_ID}`);
+
+      await userEvent.click(
+        await screen.findByRole('button', { name: resources.settings.archived.restore }),
+      );
+
+      expect(await screen.findByLabelText(resources.chat.composer.label)).toBeInTheDocument();
+      expect(screen.queryByText(resources.settings.archived.bar)).not.toBeInTheDocument();
+    });
   });
 });

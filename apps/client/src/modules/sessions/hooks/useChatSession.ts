@@ -32,6 +32,8 @@ export const useChatSession = (sessionId: string | undefined) => {
   return {
     isLoading: hasSession && !isSettled && !detail.error && !messages.error,
     error: detail.error ?? messages.error,
+    // An archived Session reads but takes no sends (the server refuses them).
+    isArchived: detail.data?.archived === true,
     // Named once the history is in, so a re-attached reply lands after the saved Messages.
     activeStreamId: isSettled ? (detail.data?.activeStreamId ?? null) : null,
   };

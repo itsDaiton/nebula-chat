@@ -130,6 +130,11 @@
   --font-mono: 'Geist Mono Variable', ui-monospace, monospace;
 }
 
+/* Appearance > Interface font: the system stack replaces Geist for UI text; mono stays. */
+html[data-font='system'] {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
 /* Scoped to the new components (each carries `data-slot`) so Chakra screens keep their own base. Unlayered
   so it beats Chakra's reset; `:where` keeps it at zero specificity under any utility. */
 :where([data-slot]) {

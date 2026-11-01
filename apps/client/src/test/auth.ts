@@ -123,6 +123,31 @@ export const mockDeleteUser = mockAuthPost(API_ROUTE.authDeleteUser, {
   message: 'User deleted',
 });
 
+export const TOTP_SECRET = 'JBSWY3DPEHPK3PXP';
+export const BACKUP_CODES = ['aaaa-1111', 'bbbb-2222'];
+
+/** Starts two-factor setup on `two-factor/enable`: the TOTP URI to scan and the backup codes. */
+export const mockTwoFactorEnable = mockAuthPost(API_ROUTE.authTwoFactorEnable, {
+  method: 'totp',
+  totpURI: `otpauth://totp/Nebula%20Chat:ada%40example.com?secret=${TOTP_SECRET}&issuer=Nebula%20Chat`,
+  backupCodes: BACKUP_CODES,
+});
+
+/** Confirms a code on `two-factor/verify-totp`. */
+export const mockTwoFactorVerify = mockAuthPost(API_ROUTE.authTwoFactorVerifyTotp, {
+  token: 'token-1',
+  user: aSession({ isAnonymous: false, twoFactorEnabled: true }).user,
+});
+
+/** Turns two-factor off on `two-factor/disable`. */
+export const mockTwoFactorDisable = mockAuthPost(API_ROUTE.authTwoFactorDisable, { status: true });
+
+/** Replaces the backup codes on `two-factor/generate-backup-codes`. */
+export const mockBackupCodes = mockAuthPost(API_ROUTE.authTwoFactorBackupCodes, {
+  status: true,
+  backupCodes: ['cccc-3333', 'dddd-4444'],
+});
+
 /** Lists the user's linked accounts by provider (`credential` is the email/password one). */
 export const mockListAccounts = (providers: string[]): HttpHandler =>
   http.get(API_ROUTE.authListAccounts, () =>

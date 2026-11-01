@@ -1,7 +1,8 @@
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { ChevronsUpDownIcon, LogOutIcon, SettingsIcon, UserIcon } from 'lucide-react';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { useSignOut } from '@/modules/auth/hooks/useSignOut';
+import { useSettingsDialogStore } from '@/modules/settings/stores/useSettingsDialogStore';
 import { resources } from '@/resources';
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
 import { Badge } from '@/shared/components/ui/badge';
@@ -22,7 +23,7 @@ import { initialsOf } from '@/shared/utils/initialsOf';
 export const AccountFooter = () => {
   const { user, isGuest, isRegistered, isAdmin, hasTwoFactor } = useAuth();
   const { mutate: signOut, isPending } = useSignOut();
-  const navigate = useNavigate();
+  const openSettings = useSettingsDialogStore((state) => state.openSettings);
 
   if (isGuest) {
     return (
@@ -89,7 +90,7 @@ export const AccountFooter = () => {
             </DropdownMenuLabel>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => void navigate({ to: '/settings' })}>
+          <DropdownMenuItem onClick={() => openSettings()}>
             <SettingsIcon />
             {resources.userMenu.settings}
           </DropdownMenuItem>

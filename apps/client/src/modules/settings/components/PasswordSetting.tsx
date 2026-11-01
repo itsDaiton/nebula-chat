@@ -1,41 +1,40 @@
-import { Box, Button } from '@chakra-ui/react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { AuthForm } from '@/modules/auth/components/AuthForm';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import { CHANGE_PASSWORD_FORM } from '@/modules/auth/utils/authForms';
 import { SettingsRow } from '@/modules/settings/components/SettingsRow';
-import { usePasswordChangeStore } from '@/modules/settings/stores/usePasswordChangeStore';
 import { resources } from '@/resources';
-import { toaster } from '@/shared/components/ui/toaster';
+import { Button } from '@/shared/components/ui/button';
 
 const { changePassword } = resources.settings;
 
 /** The Password row; its button unfolds the Password change form beneath it. */
 export const PasswordSetting = () => {
-  const { isPasswordFormOpen, togglePasswordForm, closePasswordForm } = usePasswordChangeStore();
+  const [isOpen, setOpen] = useState(false);
   const { hidePassword } = usePasswordVisibilityStore();
 
   const toggle = () => {
     hidePassword();
-    togglePasswordForm();
+    setOpen((open) => !open);
   };
 
   const onChanged = () => {
-    closePasswordForm();
-    toaster.create({ type: 'success', title: changePassword.done });
+    setOpen(false);
+    toast.success(changePassword.done);
   };
 
   return (
     <>
       <SettingsRow label={changePassword.title} description={changePassword.description}>
-        {/* Fixed width, so swapping its label doesn't reflow the description beside it. */}
-        <Button variant="outline" minW="36" onClick={toggle} aria-expanded={isPasswordFormOpen}>
-          {isPasswordFormOpen ? changePassword.cancel : changePassword.open}
+        <Button variant="outline" onClick={toggle} aria-expanded={isOpen}>
+          {isOpen ? changePassword.cancel : changePassword.open}
         </Button>
       </SettingsRow>
-      {isPasswordFormOpen && (
-        <Box maxW="md" py={4}>
+      {isOpen && (
+        <div className="max-w-md px-4 pb-4">
           <AuthForm config={CHANGE_PASSWORD_FORM} header="none" onSuccess={onChanged} />
-        </Box>
+        </div>
       )}
     </>
   );

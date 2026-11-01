@@ -9,6 +9,7 @@ import { useDefaultPaletteActions } from '@/modules/commandPalette/hooks/useDefa
 import { useAuthPaletteActions } from '@/modules/auth/hooks/useAuthPaletteActions';
 import { useChatPaletteActions } from '@/modules/chat/hooks/useChatPaletteActions';
 import { useSessionPaletteActions } from '@/modules/sessions/hooks/useSessionPaletteActions';
+import { SettingsDialog } from '@/modules/settings/components/SettingsDialog';
 import { useSettingsPaletteActions } from '@/modules/settings/hooks/useSettingsPaletteActions';
 import { resources } from '@/resources';
 import { AppHeader } from '@/shared/components/layout/AppHeader';
@@ -66,6 +67,7 @@ export const AppShell = ({ children }: AppShellProps) => {
         onOpenSearch={openSearch}
       />
       <CommandPalette />
+      <SettingsDialog />
       <div className="flex min-h-0 flex-1 gap-2.5">
         {isDesktop && leftOpen && (
           <aside className={`${panel} w-[270px] shrink-0 2xl:w-[320px]`}>

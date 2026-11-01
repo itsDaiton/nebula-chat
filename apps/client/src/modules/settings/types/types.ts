@@ -1,32 +1,24 @@
 import type { ReactNode } from 'react';
-import type { IconType } from 'react-icons';
 import type { z } from 'zod';
 import type { profileNameSchema } from '@/modules/settings/utils/settingsSchemas';
 
-export type SettingsLayoutProps = {
-  children: ReactNode;
-};
+/** The Settings dialog's sections, in nav order. */
+export type SettingsSectionId = 'profile' | 'security' | 'archived' | 'appearance' | 'account';
 
-/** One entry in the settings navigation, and the route that renders it. */
-export type SettingsSection = {
-  label: string;
-  icon: IconType;
-  path: string;
-};
-
-/** A titled group of settings rows. */
-export type SettingsSectionProps = {
-  title: string;
-  /** Filtered out by the search: kept mounted so its rows keep what was typed. */
-  hidden?: boolean;
-  children: ReactNode;
+export type SettingsDialogState = {
+  isOpen: boolean;
+  section: SettingsSectionId;
+  /** Opens the dialog on `section`, or on the one it last showed. */
+  openSettings: (section?: SettingsSectionId) => void;
+  closeSettings: () => void;
+  setSection: (section: SettingsSectionId) => void;
 };
 
 /** One setting: what it is on the left, its control on the right. */
 export type SettingsRowProps = {
   label: string;
-  description?: string;
-  children: ReactNode;
+  description?: ReactNode;
+  children?: ReactNode;
 };
 
 export type ProfileNameFormProps = {
@@ -48,29 +40,32 @@ export type AccountIdSettingProps = {
 
 export type ProfileNameValues = z.infer<typeof profileNameSchema>;
 
-export type PasswordChangeState = {
-  isPasswordFormOpen: boolean;
-  togglePasswordForm: () => void;
-  closePasswordForm: () => void;
+export type PasswordPromptProps = {
+  prompt: string;
+  submitLabel: string;
+  isPending: boolean;
+  /** An inline error from the last attempt. */
+  error?: string;
+  onSubmit: (password: string) => void;
+  onCancel: () => void;
 };
 
-/** The Account page's sections, in order. */
-export type SettingsSectionId = 'profile' | 'security' | 'account';
+/** Where the two-factor setup stands; the codes and URI exist only until it is done. */
+export type TwoFactorStep =
+  | { name: 'idle' }
+  | { name: 'password' }
+  | { name: 'scan'; totpURI: string; backupCodes: string[] }
+  | { name: 'backup'; backupCodes: string[] }
+  | { name: 'disable' }
+  | { name: 'regenerate' };
 
-/** The searchable rows on the Account page. */
-export type SettingsEntryId =
-  'image' | 'name' | 'password' | 'signOutEverywhere' | 'deleteAccount' | 'accountId';
-
-/** A setting the search can find: its row's copy plus words people might search for instead. */
-export type SettingsEntry = {
-  section: SettingsSectionId;
-  label: string;
-  description?: string;
-  keywords: string[];
+export type BackupCodesProps = {
+  codes: string[];
 };
 
-export type SettingsSearchState = {
-  query: string;
-  searchSettings: (query: string) => void;
-  clearSearch: () => void;
+export type AppearanceFont = 'geist' | 'system';
+
+export type AppearanceState = {
+  font: AppearanceFont;
+  setFont: (font: AppearanceFont) => void;
 };
