@@ -212,21 +212,6 @@ describe('the command palette', () => {
     await waitFor(() => expect(useSettingsDialogStore.getState().isOpen).toBe(true));
   });
 
-  it('opens Settings on the chosen section', async () => {
-    await renderApp();
-    await openPalette();
-
-    await userEvent.click(
-      screen.getByRole('option', {
-        name: new RegExp(
-          resources.commandPalette.settingsSection(resources.settings.sections.security),
-        ),
-      }),
-    );
-
-    await waitFor(() => expect(useSettingsDialogStore.getState().section).toBe('security'));
-  });
-
   it('opens the Model picker from Switch Model', async () => {
     await renderApp();
     await openPalette();

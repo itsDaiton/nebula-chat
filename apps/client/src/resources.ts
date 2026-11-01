@@ -413,7 +413,6 @@ export const resources = {
     switchModel: 'Switch Model…',
     toggleTheme: 'Toggle theme',
     openSettings: 'Open Settings',
-    settingsSection: (section: string) => `Settings: ${section}`,
     openAdmin: 'Open admin',
   },
   shell: {
