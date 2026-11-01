@@ -29,7 +29,7 @@ Test commands are in [client-testing](../../.claude/rules/client-testing.md); mo
 `src/` is `main.tsx` / `App.tsx` (mounts TanStack Router's `RouterProvider`), `routeTree.gen.ts` (generated,
 committed, never hand-edited), `resources.ts` (UI strings) and:
 
-- `routes/` — TanStack Router file-based routes (`__root`, the `_app` guard layout holding `settings` and `auth/*`,
+- `routes/` — TanStack Router file-based routes (`__root`, the `_app` guard layout holding `auth/*` and `settings` (a redirect to `/` that opens the Settings dialog),
   and the pathless `_app/_chat` layout rendering `AppShell` around `index` and `s/$id`). `routing/` — router setup, `RootLayout`, search-param helpers.
 - `libs/api/` — the axios instance and SSE fetch mutator (`client.ts`, `streamClient.ts`), the query client,
   and `generated/` (Orval output). `libs/auth/` — the better-auth client, the one auth entry point.

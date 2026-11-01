@@ -39,4 +39,23 @@ describe('ChatStarters', () => {
 
     expect(useMessageStore.getState().message).toBe(prompt);
   });
+
+  it('clears a starter left in the composer when the chat leaves the screen', async () => {
+    const { unmount } = renderWithProviders(<ChatStarters />);
+    await userEvent.click((await screen.findAllByRole('button'))[0]!);
+
+    unmount();
+
+    expect(useMessageStore.getState().message).toBe('');
+  });
+
+  it('keeps a draft the user has edited when the chat leaves the screen', async () => {
+    const { unmount } = renderWithProviders(<ChatStarters />);
+    await userEvent.click((await screen.findAllByRole('button'))[0]!);
+    useMessageStore.getState().setMessage((message) => `${message} and more`);
+
+    unmount();
+
+    expect(useMessageStore.getState().message).toContain('and more');
+  });
 });

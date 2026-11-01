@@ -99,6 +99,8 @@ export type AuthFormProps<Values extends FieldValues> = {
    * description, `description` sits under a dialog's own title, `none` sits inside a labelled settings row.
    */
   header?: 'full' | 'description' | 'none';
+  /** The form sits among Settings controls: a button of their size and width, not a page's full-width one. */
+  compact?: boolean;
   onSuccess?: () => void;
   /** Called after the failure is shown, for a page that reacts to a specific one. */
   onError?: (error: Error) => void;

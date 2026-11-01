@@ -1,16 +1,18 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getGetProfileImageSettingsMockHandler,
   getRemoveProfileImageMockHandler,
   getUploadProfileImageMockHandler,
 } from '@/libs/api/generated/profile-image/profile-image.msw';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
+import { toast as sonner } from 'sonner';
 import { usePasswordChangeStore } from '@/modules/settings/stores/usePasswordChangeStore';
-import { useSettingsSearchStore } from '@/modules/settings/stores/useSettingsSearchStore';
-import { toaster } from '@/shared/components/ui/toaster';
+import { useSettingsDialogStore } from '@/modules/settings/stores/useSettingsDialogStore';
+import { useTwoFactorSetupStore } from '@/modules/settings/stores/useTwoFactorSetupStore';
+import type { SettingsSectionId } from '@/modules/settings/types/types';
 import { resources } from '@/resources';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import {
@@ -23,7 +25,6 @@ import {
   mockRevokeSessions,
   mockSignOut,
   mockUpdateUser,
-  refreshSession,
 } from '@/test/auth';
 import { serveChatPage } from '@/test/chat';
 import { aSendableFile } from '@/test/files';
@@ -40,7 +41,10 @@ const CHAT_PAGE = resources.chat.composer.label;
 const { fields } = resources.auth;
 const { changePassword, profile, account } = resources.settings;
 
-const renderPage = () => renderRoute('/settings');
+const renderPage = async (section: SettingsSectionId) => {
+  useSettingsDialogStore.setState({ isOpen: true, section });
+  return renderRoute('/');
+};
 
 // A masked password input has no ARIA role, so it is found by its label.
 const currentPasswordField = () => screen.getByLabelText(fields.currentPassword);
@@ -80,154 +84,19 @@ beforeEach(() => {
   server.use(getGetProfileImageSettingsMockHandler({ uploadsEnabled: true }));
   serveChatPage();
   usePasswordVisibilityStore.setState({ visibleFields: {} });
+  useSettingsDialogStore.setState({ isOpen: false, section: 'profile', query: '' });
   usePasswordChangeStore.setState({ isPasswordFormOpen: false });
-  useSettingsSearchStore.setState({ query: '' });
+  useTwoFactorSetupStore.getState().reset();
 });
 
-const searchField = () => screen.getByRole('searchbox', { name: resources.settings.search.label });
-
-describe('SettingsPage', () => {
-  describe('layout', () => {
-    it("keeps the app's navbar but replaces the chat, sessions included", async () => {
-      await holdSession({ isAnonymous: false });
-
-      await renderPage();
-
-      expect(
-        screen.getByRole('heading', { level: 1, name: resources.settings.sections.account }),
-      ).toBeInTheDocument();
-      expect(
-        within(screen.getByRole('banner')).getByRole('button', { name: resources.userMenu.label }),
-      ).toBeInTheDocument();
-      expect(screen.queryByText(resources.sessions.title)).not.toBeInTheDocument();
-    });
-
-    it('groups the Account page into Profile and Security sections', async () => {
-      await holdSession({ isAnonymous: false });
-
-      await renderPage();
-
-      expect(screen.getByRole('heading', { level: 2, name: profile.title })).toBeInTheDocument();
-      expect(
-        screen.getByRole('heading', { level: 2, name: resources.settings.security.title }),
-      ).toBeInTheDocument();
-    });
-
-    it('ends the page with an Account section', async () => {
-      await holdSession({ isAnonymous: false });
-
-      await renderPage();
-
-      expect(screen.getByRole('heading', { level: 2, name: account.title })).toBeInTheDocument();
-    });
-
-    it('lists its sections in a Settings navigation, marking the open one', async () => {
-      await holdSession({ isAnonymous: false });
-
-      await renderPage();
-
-      const nav = screen.getByRole('navigation', { name: resources.settings.title });
-      expect(
-        within(nav).getByRole('link', { name: resources.settings.sections.account }),
-      ).toHaveAttribute('aria-current', 'page');
-    });
-
-    it('goes back to the chat through the navbar, not a close button', async () => {
-      await holdSession({ isAnonymous: false });
-      await renderPage();
-
-      expect(screen.queryByRole('link', { name: /close/i })).not.toBeInTheDocument();
-      await userEvent.click(screen.getByText(resources.chat.appName));
-
-      expect(screen.getByRole('textbox', { name: CHAT_PAGE })).toBeInTheDocument();
-    });
-  });
-
-  describe('search', () => {
-    beforeEach(async () => {
-      await holdSession({ isAnonymous: false });
-    });
-
-    it('narrows the page to the settings that match, hiding empty sections', async () => {
-      await renderPage();
-
-      await userEvent.type(searchField(), 'password');
-
-      expect(screen.getByRole('button', { name: changePassword.open })).toBeInTheDocument();
-      expect(
-        screen.getByRole('heading', { level: 2, name: resources.settings.security.title }),
-      ).toBeInTheDocument();
-      expect(screen.queryByRole('textbox', { name: profile.name.label })).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole('heading', { level: 2, name: profile.title }),
-      ).not.toBeInTheDocument();
-    });
-
-    it('matches regardless of case, on every word, including related terms', async () => {
-      await renderPage();
-
-      await userEvent.type(searchField(), 'FULL  Name');
-      expect(nameField()).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: changePassword.open })).not.toBeInTheDocument();
-
-      await userEvent.clear(searchField());
-      await userEvent.type(searchField(), 'login');
-      expect(screen.getByRole('button', { name: changePassword.open })).toBeInTheDocument();
-
-      await userEvent.clear(searchField());
-      await userEvent.type(searchField(), 'delete');
-      expect(
-        screen.getByRole('button', { name: account.deleteAccount.action }),
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByRole('button', { name: account.signOutEverywhere.action }),
-      ).not.toBeInTheDocument();
-    });
-
-    it('says so when nothing matches, and shows everything again once cleared', async () => {
-      await renderPage();
-
-      await userEvent.type(searchField(), 'zebra');
-
-      expect(screen.getByRole('status')).toHaveTextContent(resources.settings.search.empty);
-      expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument();
-
-      await userEvent.click(screen.getByRole('button', { name: resources.settings.search.clear }));
-
-      expect(searchField()).toHaveValue('');
-      expect(searchField()).toHaveFocus();
-      expect(nameField()).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: changePassword.open })).toBeInTheDocument();
-    });
-  });
-
-  describe('access', () => {
-    it('sends a Guest to the auth page', async () => {
-      await holdSession({ isAnonymous: true });
-
-      await renderPage();
-
-      expect(await screen.findByText(AUTH_PAGE)).toBeInTheDocument();
-      expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
-    });
-
-    it('sends a signed-out visitor to the auth page', async () => {
-      server.use(mockGetSession(null));
-
-      await renderPage();
-      refreshSession();
-
-      expect(await screen.findByText(AUTH_PAGE)).toBeInTheDocument();
-    });
-  });
-
+describe('SettingsDialog', () => {
   describe('Profile name', () => {
     beforeEach(async () => {
       await holdSession({ isAnonymous: false });
     });
 
     it("shows the user's name, with Save idle until it changes", async () => {
-      await renderPage();
+      await renderPage('profile');
 
       expect(nameField()).toHaveValue('Ada');
       expect(screen.getByRole('button', { name: profile.name.save })).toBeDisabled();
@@ -238,24 +107,20 @@ describe('SettingsPage', () => {
     });
 
     it('saves the new name and confirms it', async () => {
-      const toast = vi.spyOn(toaster, 'create');
+      const toast = vi.spyOn(sonner, 'success');
       let body: unknown;
       server.use(
         mockUpdateUser(async (request) => {
           body = await request.clone().json();
         }),
       );
-      await renderPage();
+      await renderPage('profile');
 
       await userEvent.clear(nameField());
       await userEvent.type(nameField(), '  Ada Lovelace ');
       await saveName();
 
-      await waitFor(() =>
-        expect(toast).toHaveBeenCalledWith(
-          expect.objectContaining({ type: 'success', title: profile.name.saved }),
-        ),
-      );
+      await waitFor(() => expect(toast).toHaveBeenCalledWith(profile.name.saved));
       expect(body).toEqual({ name: 'Ada Lovelace' });
       expect(nameField()).toHaveValue('Ada Lovelace');
       expect(screen.getByRole('button', { name: profile.name.save })).toBeDisabled();
@@ -268,7 +133,7 @@ describe('SettingsPage', () => {
           requests += 1;
         }),
       );
-      await renderPage();
+      await renderPage('profile');
 
       await userEvent.clear(nameField());
       await userEvent.type(nameField(), '   ');
@@ -282,7 +147,7 @@ describe('SettingsPage', () => {
 
     it('shows a failed save under the name field', async () => {
       server.use(mockApiError('post', API_ROUTE.authUpdateUser, 500));
-      await renderPage();
+      await renderPage('profile');
 
       await userEvent.type(nameField(), ' Lovelace');
       await saveName();
@@ -294,6 +159,20 @@ describe('SettingsPage', () => {
   });
 
   describe('Profile image', () => {
+    const RealImage = window.Image;
+    beforeEach(() => {
+      window.Image = class {
+        onload: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        set src(_value: string) {
+          queueMicrotask(() => this.onload?.());
+        }
+      } as unknown as typeof Image;
+    });
+    afterEach(() => {
+      window.Image = RealImage;
+    });
+
     const IMAGE_URL = 'https://storage.test/profile-images/user-1/new.webp';
     const { image: copy } = profile;
 
@@ -301,7 +180,7 @@ describe('SettingsPage', () => {
     const imageInput = () => screen.findByLabelText<HTMLInputElement>(copy.label);
     const uploadButton = () => screen.queryByRole('button', { name: copy.upload });
     const removeButton = () => screen.queryByRole('button', { name: copy.remove });
-    // jsdom loads no image, so Chakra keeps it hidden; the element still says which one it is.
+    // jsdom loads no image, so the Avatar keeps it hidden until a stub reports it loaded.
     const avatarImages = () => screen.queryAllByAltText('Ada');
 
     const pick = async (file: File) =>
@@ -326,7 +205,7 @@ describe('SettingsPage', () => {
 
     it('shows initials, Upload image and no Remove for a user without one', async () => {
       await holdSession({ isAnonymous: false });
-      await renderPage();
+      await renderPage('profile');
 
       expect(await screen.findByRole('button', { name: copy.upload })).toBeInTheDocument();
       expect(removeButton()).not.toBeInTheDocument();
@@ -335,16 +214,16 @@ describe('SettingsPage', () => {
 
     it('sits above the name in the Profile section', async () => {
       await holdSession({ isAnonymous: false });
-      await renderPage();
+      await renderPage('profile');
 
       const label = screen.getByText(copy.label);
       expect(label.compareDocumentPosition(nameField())).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     });
 
-    it('uploads the picked file as it is, then shows it in Settings and the header', async () => {
+    it('uploads the picked file as it is, then shows it in Settings', async () => {
       await holdSession({ isAnonymous: false });
       const session = serveSession(null);
-      const toast = vi.spyOn(toaster, 'create');
+      const toast = vi.spyOn(sonner, 'success');
       const sent: { type: string | null; size: number }[] = [];
       server.use(
         getUploadProfileImageMockHandler(async ({ request }) => {
@@ -356,17 +235,15 @@ describe('SettingsPage', () => {
           return { image: IMAGE_URL };
         }),
       );
-      await renderPage();
+      await renderPage('profile');
 
       await pick(aFile('image/webp', 2048));
 
-      await waitFor(() => expect(avatarImages()).toHaveLength(2));
+      await waitFor(() => expect(avatarImages()).toHaveLength(1));
       for (const img of avatarImages()) expect(img).toHaveAttribute('src', IMAGE_URL);
       expect(sent).toEqual([{ type: 'image/webp', size: 2048 }]);
       expect(session.uncachedReads).toBe(1);
-      expect(toast).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'success', title: copy.uploaded }),
-      );
+      expect(toast).toHaveBeenCalledWith(copy.uploaded);
     });
 
     it('shows the upload as pending on the Avatar', async () => {
@@ -380,7 +257,7 @@ describe('SettingsPage', () => {
             }),
         ),
       );
-      await renderPage();
+      await renderPage('profile');
 
       await pick(aFile());
 
@@ -401,7 +278,7 @@ describe('SettingsPage', () => {
           return { image: IMAGE_URL };
         }),
       );
-      await renderPage();
+      await renderPage('profile');
 
       await pick(file);
 
@@ -423,7 +300,7 @@ describe('SettingsPage', () => {
           message: 'from the server',
         }),
       );
-      await renderPage();
+      await renderPage('profile');
 
       await pick(aFile());
 
@@ -433,16 +310,16 @@ describe('SettingsPage', () => {
     it('hides Upload image while uploads are switched off', async () => {
       server.use(getGetProfileImageSettingsMockHandler({ uploadsEnabled: false }));
       await holdSession({ isAnonymous: false });
-      await renderPage();
+      await renderPage('profile');
 
       expect(await screen.findByText(copy.label)).toBeInTheDocument();
       await waitFor(() => expect(uploadButton()).not.toBeInTheDocument());
     });
 
-    it('removes the image, going back to initials in Settings and the header', async () => {
+    it('removes the image, going back to initials in Settings', async () => {
       await holdSession({ isAnonymous: false, image: IMAGE_URL });
       const session = serveSession(IMAGE_URL);
-      const toast = vi.spyOn(toaster, 'create');
+      const toast = vi.spyOn(sonner, 'success');
       let removals = 0;
       server.use(
         getRemoveProfileImageMockHandler(() => {
@@ -450,8 +327,8 @@ describe('SettingsPage', () => {
           session.image = null;
         }),
       );
-      await renderPage();
-      expect(avatarImages()).toHaveLength(2);
+      await renderPage('profile');
+      await waitFor(() => expect(avatarImages()).toHaveLength(1));
 
       await userEvent.click(removeButton()!);
 
@@ -459,15 +336,13 @@ describe('SettingsPage', () => {
       expect(removals).toBe(1);
       expect(session.uncachedReads).toBe(1);
       expect(removeButton()).not.toBeInTheDocument();
-      expect(toast).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'success', title: copy.removed }),
-      );
+      expect(toast).toHaveBeenCalledWith(copy.removed);
     });
 
     it('keeps a provider picture removable while uploads are switched off', async () => {
       server.use(getGetProfileImageSettingsMockHandler({ uploadsEnabled: false }));
       await holdSession({ isAnonymous: false, image: 'https://avatars.githubusercontent.com/u/1' });
-      await renderPage();
+      await renderPage('profile');
 
       expect(removeButton()).toBeInTheDocument();
       for (const img of avatarImages()) {
@@ -478,31 +353,12 @@ describe('SettingsPage', () => {
     it('shows a failed removal', async () => {
       await holdSession({ isAnonymous: false, image: IMAGE_URL });
       server.use(mockApiError('delete', API_ROUTE.profileImage, 500));
-      await renderPage();
+      await renderPage('profile');
 
       await userEvent.click(removeButton()!);
 
       expect(await screen.findByRole('alert')).toHaveTextContent(copy.errors.failed);
-      expect(avatarImages()).toHaveLength(2);
-    });
-  });
-
-  describe('search keeps hidden settings as they were', () => {
-    beforeEach(async () => {
-      await holdSession({ isAnonymous: false });
-    });
-
-    it('keeps an unsaved name and an open password form through a search', async () => {
-      await renderPage();
-      await userEvent.type(nameField(), ' Lovelace');
-      await openPasswordForm();
-      await userEvent.type(currentPasswordField(), 'half-typed');
-
-      await userEvent.type(searchField(), 'account id');
-      await userEvent.clear(searchField());
-
-      expect(nameField()).toHaveValue('Ada Lovelace');
-      expect(currentPasswordField()).toHaveValue('half-typed');
+      await waitFor(() => expect(avatarImages()).toHaveLength(1));
     });
   });
 
@@ -513,10 +369,10 @@ describe('SettingsPage', () => {
 
     it("shows the user's account ID and copies it", async () => {
       const user = userEvent.setup();
-      await renderPage();
+      await renderPage('account');
 
       expect(screen.getByText('user-1')).toBeInTheDocument();
-      await user.click(screen.getByRole('button', { name: account.accountId.copy }));
+      await user.click(screen.getByRole('button', { name: account.accountId.copyLabel }));
 
       expect(await navigator.clipboard.readText()).toBe('user-1');
     });
@@ -531,9 +387,11 @@ describe('SettingsPage', () => {
           calls.push('sign-out');
         }),
       );
-      await renderPage();
+      await renderPage('security');
 
-      await userEvent.click(screen.getByRole('button', { name: account.signOutEverywhere.action }));
+      await userEvent.click(
+        screen.getByRole('button', { name: resources.settings.security.signOutEverywhere.action }),
+      );
 
       expect(await screen.findByRole('textbox', { name: CHAT_PAGE })).toBeInTheDocument();
       expect(calls).toEqual(['revoke-sessions', 'sign-out']);
@@ -541,9 +399,11 @@ describe('SettingsPage', () => {
 
     it('finishes signing out when the sessions were already revoked by an earlier try', async () => {
       server.use(mockApiError('post', API_ROUTE.authRevokeSessions, 401), mockSignOut());
-      await renderPage();
+      await renderPage('security');
 
-      await userEvent.click(screen.getByRole('button', { name: account.signOutEverywhere.action }));
+      await userEvent.click(
+        screen.getByRole('button', { name: resources.settings.security.signOutEverywhere.action }),
+      );
 
       expect(await screen.findByRole('textbox', { name: CHAT_PAGE })).toBeInTheDocument();
     });
@@ -556,13 +416,17 @@ describe('SettingsPage', () => {
           signOuts += 1;
         }),
       );
-      await renderPage();
+      await renderPage('security');
 
-      await userEvent.click(screen.getByRole('button', { name: account.signOutEverywhere.action }));
+      await userEvent.click(
+        screen.getByRole('button', { name: resources.settings.security.signOutEverywhere.action }),
+      );
 
       await waitFor(() =>
         expect(
-          screen.getByRole('button', { name: account.signOutEverywhere.action }),
+          screen.getByRole('button', {
+            name: resources.settings.security.signOutEverywhere.action,
+          }),
         ).toBeEnabled(),
       );
       expect(signOuts).toBe(0);
@@ -580,7 +444,7 @@ describe('SettingsPage', () => {
         );
 
       it('asks for the password, deletes the account and returns to the chat', async () => {
-        const toast = vi.spyOn(toaster, 'create');
+        const toast = vi.spyOn(sonner, 'success');
         let body: unknown;
         server.use(
           mockListAccounts(['credential']),
@@ -588,7 +452,7 @@ describe('SettingsPage', () => {
             body = await request.clone().json();
           }),
         );
-        await renderPage();
+        await renderPage('account');
 
         const dialog = await openDeleteDialog();
         expect(within(dialog).getByText(account.deleteAccount.warning)).toBeInTheDocument();
@@ -600,13 +464,11 @@ describe('SettingsPage', () => {
 
         expect(await screen.findByRole('textbox', { name: CHAT_PAGE })).toBeInTheDocument();
         expect(body).toEqual({ password: 'my-passphrase' });
-        expect(toast).toHaveBeenCalledWith(
-          expect.objectContaining({ type: 'success', title: account.deleteAccount.done }),
-        );
+        expect(toast).toHaveBeenCalledWith(account.deleteAccount.done);
       });
 
       it('shows no error once the deleted account has no session left', async () => {
-        const toast = vi.spyOn(toaster, 'create');
+        const toast = vi.spyOn(sonner, 'success');
         const state = { deleted: false };
         server.use(
           // As the server does: once the user is gone, every authenticated call is a 401.
@@ -619,7 +481,7 @@ describe('SettingsPage', () => {
             state.deleted = true;
           }),
         );
-        await renderPage();
+        await renderPage('account');
 
         await confirmDelete(await openDeleteDialog());
 
@@ -637,7 +499,7 @@ describe('SettingsPage', () => {
             requests += 1;
           }),
         );
-        await renderPage();
+        await renderPage('account');
 
         const dialog = await openDeleteDialog();
         await within(dialog).findByLabelText(fields.password);
@@ -656,7 +518,7 @@ describe('SettingsPage', () => {
           mockListAccounts(['credential']),
           mockApiError('post', API_ROUTE.authDeleteUser, 400, { code: 'INVALID_PASSWORD' }),
         );
-        await renderPage();
+        await renderPage('account');
 
         const dialog = await openDeleteDialog();
         await userEvent.type(await within(dialog).findByLabelText(fields.password), 'wrong-one');
@@ -678,7 +540,7 @@ describe('SettingsPage', () => {
             body = await request.clone().json();
           }),
         );
-        await renderPage();
+        await renderPage('account');
 
         const dialog = await openDeleteDialog();
         await within(dialog).findByText(account.deleteAccount.noPasswordHint);
@@ -694,7 +556,7 @@ describe('SettingsPage', () => {
           mockListAccounts(['github']),
           mockApiError('post', API_ROUTE.authDeleteUser, 400, { code: 'SESSION_EXPIRED' }),
         );
-        await renderPage();
+        await renderPage('account');
 
         const dialog = await openDeleteDialog();
         await within(dialog).findByText(account.deleteAccount.noPasswordHint);
@@ -712,7 +574,7 @@ describe('SettingsPage', () => {
             code: 'CREDENTIAL_ACCOUNT_NOT_FOUND',
           }),
         );
-        await renderPage();
+        await renderPage('account');
 
         const dialog = await openDeleteDialog();
         await userEvent.type(await within(dialog).findByLabelText(fields.password), 'anything');
@@ -725,7 +587,7 @@ describe('SettingsPage', () => {
 
       it('keeps the account when the user cancels', async () => {
         server.use(mockListAccounts(['credential']));
-        await renderPage();
+        await renderPage('account');
 
         const dialog = await openDeleteDialog();
         await userEvent.click(
@@ -743,7 +605,7 @@ describe('SettingsPage', () => {
             deletions.requests += 1;
           }),
         );
-        await renderPage();
+        await renderPage('account');
 
         await openDeleteDialog();
         // The open dialog makes the page behind it inert, the way a backdrop click reaches it.
@@ -765,7 +627,7 @@ describe('SettingsPage', () => {
     });
 
     it('keeps the form folded away until the user asks to change their password', async () => {
-      await renderPage();
+      await renderPage('security');
 
       expect(screen.queryByLabelText(fields.currentPassword)).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: changePassword.open })).toHaveAttribute(
@@ -781,7 +643,7 @@ describe('SettingsPage', () => {
     });
 
     it('asks for the current password and the new one twice', async () => {
-      await renderPage();
+      await renderPage('security');
       await openPasswordForm();
 
       expect(currentPasswordField()).toHaveAttribute('autocomplete', 'current-password');
@@ -790,24 +652,20 @@ describe('SettingsPage', () => {
     });
 
     it('changes the password, signing out other devices, and folds the form away', async () => {
-      const toast = vi.spyOn(toaster, 'create');
+      const toast = vi.spyOn(sonner, 'success');
       let body: unknown;
       server.use(
         mockChangePassword(async (request) => {
           body = await request.clone().json();
         }),
       );
-      await renderPage();
+      await renderPage('security');
       await openPasswordForm();
 
       await fillForm();
       await submit();
 
-      await waitFor(() =>
-        expect(toast).toHaveBeenCalledWith(
-          expect.objectContaining({ type: 'success', title: changePassword.done }),
-        ),
-      );
+      await waitFor(() => expect(toast).toHaveBeenCalledWith(changePassword.done));
       expect(body).toEqual({
         currentPassword: 'old-passphrase',
         newPassword: 'a-new-long-passphrase',
@@ -818,7 +676,6 @@ describe('SettingsPage', () => {
       );
       // The page's only status region is the search's, and it has nothing to say: no in-place
       // success panel (the toast is the app's toaster, outside the page).
-      expect(within(screen.getByRole('main')).getByRole('status')).toBeEmptyDOMElement();
       expect(screen.queryByText(AUTH_PAGE)).not.toBeInTheDocument();
 
       // Opened again, the form doesn't bring back the passwords it sent.
@@ -835,7 +692,7 @@ describe('SettingsPage', () => {
           message: 'Invalid password',
         }),
       );
-      await renderPage();
+      await renderPage('security');
       await openPasswordForm();
 
       await fillForm();
@@ -856,7 +713,7 @@ describe('SettingsPage', () => {
       ['PASSWORD_TOO_LONG', resources.auth.validation.passwordTooLong],
     ])('shows %s under the new-password field', async (code, message) => {
       server.use(mockApiError('post', API_ROUTE.authChangePassword, 400, { code }));
-      await renderPage();
+      await renderPage('security');
       await openPasswordForm();
 
       await fillForm();
@@ -867,7 +724,7 @@ describe('SettingsPage', () => {
 
     it('says when there have been too many attempts', async () => {
       server.use(mockApiError('post', API_ROUTE.authChangePassword, 429));
-      await renderPage();
+      await renderPage('security');
       await openPasswordForm();
 
       await fillForm();
@@ -882,7 +739,7 @@ describe('SettingsPage', () => {
       server.use(
         mockApiError('post', API_ROUTE.authChangePassword, 500, { code: 'SOMETHING_NEW' }),
       );
-      await renderPage();
+      await renderPage('security');
       await openPasswordForm();
 
       await fillForm();
@@ -893,7 +750,7 @@ describe('SettingsPage', () => {
 
     it('sends nothing while the confirmation does not match', async () => {
       const counter = countRequests();
-      await renderPage();
+      await renderPage('security');
       await openPasswordForm();
 
       await fillForm({ confirmation: 'a-new-long-passphrasE' });
@@ -909,7 +766,7 @@ describe('SettingsPage', () => {
 
     it('sends nothing when the new password is the current one', async () => {
       const counter = countRequests();
-      await renderPage();
+      await renderPage('security');
       await openPasswordForm();
 
       await fillForm({ current: 'old-passphrase', next: 'old-passphrase' });
@@ -925,7 +782,7 @@ describe('SettingsPage', () => {
 
     it('requires the current password and a long enough new one', async () => {
       const counter = countRequests();
-      await renderPage();
+      await renderPage('security');
       await openPasswordForm();
 
       await userEvent.type(newPasswordField(), 'short');
@@ -944,7 +801,7 @@ describe('SettingsPage', () => {
 
     it('refuses a new password longer than 128 characters without sending it', async () => {
       const counter = countRequests();
-      await renderPage();
+      await renderPage('security');
       await openPasswordForm();
 
       await fillForm({ next: 'a'.repeat(129) });
@@ -959,7 +816,7 @@ describe('SettingsPage', () => {
     });
 
     it('reveals only the password field whose toggle is clicked', async () => {
-      await renderPage();
+      await renderPage('security');
       await openPasswordForm();
 
       const [, newPasswordToggle] = screen.getAllByRole('button', {
@@ -971,5 +828,113 @@ describe('SettingsPage', () => {
       expect(currentPasswordField()).toHaveAttribute('type', 'password');
       expect(confirmPasswordField()).toHaveAttribute('type', 'password');
     });
+  });
+});
+
+describe('Settings dialog', () => {
+  it('redirects /settings to / with the dialog open', async () => {
+    await holdSession({ isAnonymous: false });
+
+    const { router } = await renderRoute('/settings');
+
+    expect(router.state.location.pathname).toBe('/');
+    expect(
+      await screen.findByRole('dialog', { name: resources.settings.title }),
+    ).toBeInTheDocument();
+  });
+
+  it('opens a bare request on Profile, not the section last shown', async () => {
+    await holdSession({ isAnonymous: false });
+    useSettingsDialogStore.setState({ isOpen: false, section: 'security' });
+    useSettingsDialogStore.getState().openSettings();
+
+    await renderRoute('/');
+
+    expect(
+      await screen.findByRole('button', { name: resources.settings.sections.profile }),
+    ).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('opens /settings on the section named in ?section', async () => {
+    await holdSession({ isAnonymous: false });
+
+    await renderRoute('/settings?section=security');
+
+    expect(
+      await screen.findByRole('button', { name: resources.settings.sections.security }),
+    ).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('searches the settings and jumps to the section that holds the match', async () => {
+    await holdSession({ isAnonymous: false });
+    await renderPage('profile');
+
+    await userEvent.type(
+      await screen.findByRole('searchbox', { name: resources.settings.search.label }),
+      'backup',
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: new RegExp(resources.settings.security.twoFactor.label) }),
+    );
+
+    expect(
+      screen.getByRole('button', { name: resources.settings.sections.security }),
+    ).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('searchbox')).toHaveValue('');
+  });
+
+  it('says so when nothing matches', async () => {
+    await holdSession({ isAnonymous: false });
+    await renderPage('profile');
+
+    await userEvent.type(
+      await screen.findByRole('searchbox', { name: resources.settings.search.label }),
+      'zzzz',
+    );
+
+    expect(screen.getByText(resources.settings.search.empty)).toBeInTheDocument();
+  });
+
+  it('opens on the requested section and marks it current', async () => {
+    await holdSession({ isAnonymous: false });
+    useSettingsDialogStore.getState().openSettings('account');
+
+    await renderRoute('/');
+
+    expect(
+      await screen.findByRole('button', { name: resources.settings.sections.account }),
+    ).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByText(resources.settings.account.adminNotice.title)).toBeInTheDocument();
+    expect(
+      screen.getByText(resources.settings.account.deleteAccount.description),
+    ).toBeInTheDocument();
+  });
+
+  it('switches sections from the list', async () => {
+    await holdSession({ isAnonymous: false });
+    useSettingsDialogStore.getState().openSettings('profile');
+    await renderRoute('/');
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: resources.settings.sections.appearance }),
+    );
+
+    expect(
+      screen.getByRole('radiogroup', { name: resources.settings.appearance.theme.label }),
+    ).toBeInTheDocument();
+  });
+
+  it('closes on Escape and on the close button', async () => {
+    await holdSession({ isAnonymous: false });
+    useSettingsDialogStore.getState().openSettings();
+    await renderRoute('/');
+    await screen.findByRole('dialog');
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+    useSettingsDialogStore.getState().openSettings();
+    await userEvent.click(await screen.findByRole('button', { name: resources.ui.close }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 });

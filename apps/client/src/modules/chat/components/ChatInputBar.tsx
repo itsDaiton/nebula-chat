@@ -13,7 +13,7 @@ export const ChatInputBar = ({
 }: ChatInputBarProps) => (
   <div
     data-slot="chat-input-bar"
-    className="mx-auto w-full max-w-[740px] shrink-0 px-3 pb-3 sm:px-7"
+    className="mx-auto w-full max-w-(--transcript-width) shrink-0 px-3 pb-3 sm:px-7"
   >
     <MessageAllowancePrompt />
     <EmailVerificationPrompt />

@@ -58,6 +58,16 @@ const renderAuthFlow = async (initialRoute = '/auth') => {
 };
 
 const nameField = () => screen.getByRole('textbox', { name: resources.auth.fields.name });
+/** Switches to sign-up, once the sign-in panel has gone: its fields would otherwise answer the same queries. */
+const openSignUp = async () => {
+  await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
+  await waitFor(() =>
+    expect(
+      screen.queryByRole('form', { name: resources.auth.tabs.signIn }),
+    ).not.toBeInTheDocument(),
+  );
+};
+
 const emailField = () => screen.getByRole('textbox', { name: resources.auth.fields.email });
 // A masked password input has no ARIA role, so it is found by its label.
 const passwordField = () => screen.getByLabelText(resources.auth.fields.password);
@@ -84,7 +94,7 @@ const fillSignUp = async ({
   password = 'hunter22hunter',
   confirmPassword = password,
 }: { password?: string; confirmPassword?: string } = {}) => {
-  await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
+  await openSignUp();
   await userEvent.type(nameField(), 'Ada');
   await userEvent.type(emailField(), 'ada@example.com');
   await userEvent.type(passwordField(), password);
@@ -124,7 +134,7 @@ describe('AuthPage', () => {
       screen.queryByRole('textbox', { name: resources.auth.fields.name }),
     ).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
+    await openSignUp();
 
     expect(screen.getByRole('heading', { name: resources.auth.signUp.title })).toBeInTheDocument();
     expect(nameField()).toBeInTheDocument();
@@ -191,7 +201,7 @@ describe('AuthPage', () => {
 
   it('does not flag the confirmation before the user has filled it in', async () => {
     await renderAuthFlow();
-    await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
+    await openSignUp();
 
     await userEvent.type(passwordField(), 'hunter22hunter');
     await userEvent.click(nameField());
@@ -202,7 +212,7 @@ describe('AuthPage', () => {
 
   it('reveals only the password field whose toggle is clicked', async () => {
     await renderAuthFlow();
-    await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
+    await openSignUp();
 
     const [, confirmToggle] = screen.getAllByRole('button', {
       name: resources.passwordInput.showPassword,
@@ -282,7 +292,7 @@ describe('AuthPage', () => {
       }),
     );
     await renderAuthFlow();
-    await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
+    await openSignUp();
 
     await userEvent.type(emailField(), 'not-an-email');
     await userEvent.type(passwordField(), 'short');
@@ -400,7 +410,7 @@ describe('AuthPage', () => {
       screen.getByRole('button', { name: resources.passwordInput.showPassword }),
     );
 
-    await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
+    await openSignUp();
 
     expect(passwordField()).toHaveAttribute('type', 'password');
   });
@@ -472,7 +482,7 @@ describe('AuthPage', () => {
       expect(socialButton(social.google)).toBeInTheDocument();
       expect(socialButton(social.github)).toBeInTheDocument();
 
-      await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
+      await openSignUp();
 
       expect(socialButton(social.google)).toBeInTheDocument();
       expect(socialButton(social.github)).toBeInTheDocument();

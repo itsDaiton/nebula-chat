@@ -1,32 +1,35 @@
 import type { ReactNode } from 'react';
-import type { IconType } from 'react-icons';
 import type { z } from 'zod';
 import type { profileNameSchema } from '@/modules/settings/utils/settingsSchemas';
 
-export type SettingsLayoutProps = {
-  children: ReactNode;
+/** The Settings dialog's sections, in nav order. */
+export type SettingsSectionId = 'profile' | 'security' | 'archived' | 'appearance' | 'account';
+
+export type SettingsDialogState = {
+  isOpen: boolean;
+  section: SettingsSectionId;
+  /** What the search box holds; cleared when the dialog closes. */
+  query: string;
+  /** Opens the dialog on `section`, or on Profile. */
+  openSettings: (section?: SettingsSectionId) => void;
+  closeSettings: () => void;
+  setSection: (section: SettingsSectionId) => void;
+  setQuery: (query: string) => void;
 };
 
-/** One entry in the settings navigation, and the route that renders it. */
-export type SettingsSection = {
-  label: string;
-  icon: IconType;
-  path: string;
-};
-
-/** A titled group of settings rows. */
-export type SettingsSectionProps = {
-  title: string;
-  /** Filtered out by the search: kept mounted so its rows keep what was typed. */
-  hidden?: boolean;
-  children: ReactNode;
+export type PasswordChangeState = {
+  isPasswordFormOpen: boolean;
+  togglePasswordForm: () => void;
+  closePasswordForm: () => void;
 };
 
 /** One setting: what it is on the left, its control on the right. */
 export type SettingsRowProps = {
   label: string;
-  description?: string;
-  children: ReactNode;
+  description?: ReactNode;
+  /** The control goes beneath the label rather than beside it, for a wide control. */
+  stacked?: boolean;
+  children?: ReactNode;
 };
 
 export type ProfileNameFormProps = {
@@ -48,29 +51,87 @@ export type AccountIdSettingProps = {
 
 export type ProfileNameValues = z.infer<typeof profileNameSchema>;
 
-export type PasswordChangeState = {
-  isPasswordFormOpen: boolean;
-  togglePasswordForm: () => void;
-  closePasswordForm: () => void;
+export type PasswordPromptProps = {
+  prompt: string;
+  submitLabel: string;
+  isPending: boolean;
+  /** An inline error from the last attempt. */
+  error?: string;
+  onSubmit: (password: string) => void;
+  onCancel: () => void;
 };
 
-/** The Account page's sections, in order. */
-export type SettingsSectionId = 'profile' | 'security' | 'account';
+/** Where the two-factor setup stands; the codes and URI exist only until it is done. */
+export type TwoFactorStep =
+  | { name: 'idle' }
+  | { name: 'password' }
+  | { name: 'scan'; totpURI: string; backupCodes: string[] }
+  | { name: 'backup'; backupCodes: string[] }
+  | { name: 'disable' }
+  | { name: 'regenerate' };
 
-/** The searchable rows on the Account page. */
-export type SettingsEntryId =
-  'image' | 'name' | 'password' | 'signOutEverywhere' | 'deleteAccount' | 'accountId';
+export type TwoFactorSetupState = {
+  step: TwoFactorStep;
+  /** The 6 digits typed on the scan step. */
+  code: string;
+  setStep: (step: TwoFactorStep) => void;
+  setCode: (code: string) => void;
+  reset: () => void;
+};
 
-/** A setting the search can find: its row's copy plus words people might search for instead. */
-export type SettingsEntry = {
-  section: SettingsSectionId;
+export type BackupCodesProps = {
+  codes: string[];
+};
+
+type AppearanceFont = 'geist' | 'system';
+type ResponseFont = 'match' | 'geist' | 'system';
+type TranscriptSize = 'small' | 'medium' | 'large';
+type TranscriptWidth = 'narrow' | 'wide';
+type MotionPreference = 'system' | 'reduced' | 'full';
+
+type AppearanceValues = {
+  font: AppearanceFont;
+  responseFont: ResponseFont;
+  transcriptSize: TranscriptSize;
+  transcriptWidth: TranscriptWidth;
+  motion: MotionPreference;
+};
+
+export type AppearanceState = AppearanceValues & {
+  setAppearance: (values: Partial<AppearanceValues>) => void;
+};
+
+export type SegmentedControlProps<Value extends string> = {
   label: string;
-  description?: string;
-  keywords: string[];
+  value: Value;
+  options: { value: Value; label: string }[];
+  onChange: (value: Value) => void;
 };
 
-export type SettingsSearchState = {
-  query: string;
-  searchSettings: (query: string) => void;
-  clearSearch: () => void;
+export type TwoFactorSetupHeaderProps = {
+  step: number;
+  text: string;
+  onCancel?: () => void;
+};
+
+export type TwoFactorScanStepProps = {
+  /** The `otpauth://` URI the QR code and the manual key come from. */
+  totpURI: string;
+  backupCodes: string[];
+};
+
+export type TwoFactorBackupStepProps = {
+  backupCodes: string[];
+};
+
+export type TwoFactorConfirmStepProps = {
+  action: 'disable' | 'regenerate';
+};
+
+export type ThemePreviewProps = {
+  mode: 'system' | 'light' | 'dark';
+};
+
+export type ThemePreviewHalfProps = {
+  dark: boolean;
 };

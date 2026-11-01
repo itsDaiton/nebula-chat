@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef } from 'react';
 import { cn } from '@/shared/utils/cn';
 import { useRouterState } from '@tanstack/react-router';
 import { AccountFooter } from '@/shared/components/layout/AccountFooter';
@@ -9,6 +9,7 @@ import { useDefaultPaletteActions } from '@/modules/commandPalette/hooks/useDefa
 import { useAuthPaletteActions } from '@/modules/auth/hooks/useAuthPaletteActions';
 import { useChatPaletteActions } from '@/modules/chat/hooks/useChatPaletteActions';
 import { useSessionPaletteActions } from '@/modules/sessions/hooks/useSessionPaletteActions';
+import { SettingsDialog } from '@/modules/settings/components/SettingsDialog';
 import { useSettingsPaletteActions } from '@/modules/settings/hooks/useSettingsPaletteActions';
 import { resources } from '@/resources';
 import { AppHeader } from '@/shared/components/layout/AppHeader';
@@ -31,9 +32,9 @@ export const AppShell = ({ children }: AppShellProps) => {
   const viewportHeight = useViewportHeight();
 
   // The overlays belong to the small layout and to the page they opened over (guarded render-time write, no effect).
-  const [frame, setFrame] = useState({ pathname, isDesktop });
-  if (frame.pathname !== pathname || frame.isDesktop !== isDesktop) {
-    setFrame({ pathname, isDesktop });
+  const frame = useRef({ pathname, isDesktop });
+  if (frame.current.pathname !== pathname || frame.current.isDesktop !== isDesktop) {
+    frame.current = { pathname, isDesktop };
     closeDrawer();
     closeSheet();
   }
@@ -66,6 +67,7 @@ export const AppShell = ({ children }: AppShellProps) => {
         onOpenSearch={openSearch}
       />
       <CommandPalette />
+      <SettingsDialog />
       <div className="flex min-h-0 flex-1 gap-2.5">
         {isDesktop && leftOpen && (
           <aside className={`${panel} w-[270px] shrink-0 2xl:w-[320px]`}>

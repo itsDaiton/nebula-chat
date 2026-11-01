@@ -1,5 +1,7 @@
+import { ArchiveIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useParams } from '@tanstack/react-router';
+import { ArchivedSessionBar } from '@/modules/chat/components/ArchivedSessionBar';
 import { ChatContainerBox } from '@/modules/chat/components/ChatContainerBox';
 import { ChatEmptyState } from '@/modules/chat/components/ChatEmptyState';
 import { ChatInputBar } from '@/modules/chat/components/ChatInputBar';
@@ -14,7 +16,7 @@ import { ChatScroller } from '@/shared/components/ui/chat-scroller';
 import { scrollToBottom } from '@/shared/utils/scrollUtils';
 import { resources } from '@/resources';
 
-const COLUMN = 'mx-auto w-full max-w-[740px] px-3 sm:px-7';
+const COLUMN = 'mx-auto w-full max-w-(--transcript-width) px-3 sm:px-7';
 
 export const ChatContainer = () => {
   const { id: sessionId } = useParams({ strict: false });
@@ -22,6 +24,7 @@ export const ChatContainer = () => {
     error: sessionError,
     isLoading: isSessionLoading,
     activeStreamId,
+    isArchived,
   } = useChatSession(sessionId);
   const {
     history,
@@ -57,15 +60,18 @@ export const ChatContainer = () => {
     scrollToBottom(scrollRef);
   }, [history.length, isStreaming]);
 
-  const composer = (
-    <ChatInputBar
-      onSend={(msg) => void handleSendMessage(msg, selectedModel)}
-      isLoading={isStreaming}
-      selectedModel={selectedModel}
-      onModelChange={setSelectedModel}
-      onStop={() => void stop()}
-    />
-  );
+  const composer =
+    isArchived && sessionId ? (
+      <ArchivedSessionBar sessionId={sessionId} />
+    ) : (
+      <ChatInputBar
+        onSend={(msg) => void handleSendMessage(msg, selectedModel)}
+        isLoading={isStreaming}
+        selectedModel={selectedModel}
+        onModelChange={setSelectedModel}
+        onStop={() => void stop()}
+      />
+    );
 
   if (sessionId && isSessionLoading && chatSessionId !== sessionId) {
     return (
@@ -100,6 +106,15 @@ export const ChatContainer = () => {
   // (above) and the starters (below).
   return (
     <ChatContainerBox>
+      {isArchived && (
+        <p
+          role="note"
+          className="flex shrink-0 items-center gap-2.5 border-b border-border px-4 py-2.5 text-sm"
+        >
+          <ArchiveIcon className="size-4 text-muted-foreground" />
+          {resources.settings.archived.notice}
+        </p>
+      )}
       {isEmpty ? (
         <div className="flex flex-1 items-end justify-center overflow-y-auto pb-9">
           <ChatEmptyState sessionId={sessionId} />
@@ -111,7 +126,9 @@ export const ChatContainer = () => {
               history={history}
               isStreaming={isStreaming}
               isReplyStopped={isReplyStopped}
-              onRegenerate={(prompt) => void handleSendMessage(prompt, selectedModel)}
+              onRegenerate={
+                isArchived ? undefined : (prompt) => void handleSendMessage(prompt, selectedModel)
+              }
             />
           </div>
         </ChatScroller>

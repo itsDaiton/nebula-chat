@@ -1,9 +1,11 @@
-import { Field, Input } from '@chakra-ui/react';
+import { useId } from 'react';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import type { AuthFormFieldProps } from '@/modules/auth/types/types';
+import { Field, FieldLabel } from '@/shared/components/ui/field';
+import { Input } from '@/shared/components/ui/input';
 import { PasswordInput } from '@/shared/components/ui/password-input';
 
-// Field wires the label, aria-invalid and the error text's aria-errormessage onto the input.
+/** A labelled input whose error is wired to it with aria-errormessage. */
 export const AuthFormField = ({
   label,
   type,
@@ -12,21 +14,33 @@ export const AuthFormField = ({
   error,
 }: AuthFormFieldProps) => {
   const { visibleFields, togglePasswordVisibility } = usePasswordVisibilityStore();
+  const id = useId();
+  const errorId = `${id}-error`;
+  const invalid = {
+    id,
+    'aria-invalid': Boolean(error),
+    'aria-errormessage': error ? errorId : undefined,
+  };
 
   return (
-    <Field.Root invalid={Boolean(error)}>
-      <Field.Label>{label}</Field.Label>
+    <Field data-invalid={Boolean(error)}>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       {type === 'password' ? (
         <PasswordInput
           autoComplete={autoComplete}
           visible={Boolean(visibleFields[registration.name])}
           onToggleVisibility={() => togglePasswordVisibility(registration.name)}
+          {...invalid}
           {...registration}
         />
       ) : (
-        <Input type={type} autoComplete={autoComplete} {...registration} />
+        <Input type={type} autoComplete={autoComplete} {...invalid} {...registration} />
       )}
-      <Field.ErrorText>{error}</Field.ErrorText>
-    </Field.Root>
+      {error && (
+        <p id={errorId} className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
+    </Field>
   );
 };

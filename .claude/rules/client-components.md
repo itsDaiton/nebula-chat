@@ -8,7 +8,7 @@ paths:
 # Components
 
 - Components live in `modules/<module>/components/` or `shared/components/`.
-- **One component per file.** Never define multiple components, hooks, or significant logic in a single file. No co-located sub-components, no local helper components at the bottom of a file — every component gets its own file.
+- **One component per file** (not lint-enforced: `react/no-multi-comp` crashes on ESLint 10, so check it in review). Never define multiple components, hooks, or significant logic in a single file. No co-located sub-components, no local helper components at the bottom of a file — every component gets its own file.
 - Components read from stores and hooks — they do not own significant state themselves.
 - Use Chakra UI primitives. Custom UI wrappers live in `shared/components/ui/`.
 - **Redesign (epic #530).** New surfaces build on the shadcn/ui base components in `shared/components/ui/`

@@ -1,3 +1,4 @@
+import { useSettingsDialogStore } from '@/modules/settings/stores/useSettingsDialogStore';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
@@ -54,6 +55,7 @@ const openPalette = async () => {
 };
 
 beforeEach(() => {
+  useSettingsDialogStore.setState({ isOpen: false });
   localStorage.clear();
   usePanelStore.setState({ leftOpen: false, rightOpen: false, sheetOpen: false });
   useSearchStore.setState({ isSearchOpen: false });
@@ -128,7 +130,7 @@ describe('the command palette', () => {
     await waitFor(() => expect(useModelPickerStore.getState().isOpen).toBe(true));
 
     await userEvent.keyboard('{Control>},{/Control}');
-    await waitFor(() => expect(router.state.location.pathname).toBe('/settings'));
+    await waitFor(() => expect(useSettingsDialogStore.getState().isOpen).toBe(true));
   });
 
   it('starts a new chat on Ctrl+E even with the left panel collapsed', async () => {
@@ -200,14 +202,14 @@ describe('the command palette', () => {
   });
 
   it('opens Settings', async () => {
-    const { router } = await renderApp();
+    await renderApp();
     await openPalette();
 
     await userEvent.click(
       screen.getByRole('option', { name: new RegExp(resources.commandPalette.openSettings) }),
     );
 
-    await waitFor(() => expect(router.state.location.pathname).toBe('/settings'));
+    await waitFor(() => expect(useSettingsDialogStore.getState().isOpen).toBe(true));
   });
 
   it('opens the Model picker from Switch Model', async () => {

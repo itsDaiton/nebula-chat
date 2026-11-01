@@ -130,6 +130,76 @@
   --font-mono: 'Geist Mono Variable', ui-monospace, monospace;
 }
 
+/* The input-otp caret blinks with this. */
+@theme inline {
+  --animate-caret-blink: caret-blink 1.25s ease-out infinite;
+
+  @keyframes caret-blink {
+    0%,
+    70%,
+    100% {
+      opacity: 1;
+    }
+
+    20%,
+    50% {
+      opacity: 0;
+    }
+  }
+}
+
+/* Settings > Appearance. Font and transcript options are attributes on <html>; the tokens below follow them. */
+html[data-font='system'] {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', roboto, sans-serif;
+}
+
+html {
+  --font-response: var(--font-sans);
+  --transcript-scale: 1;
+  --transcript-width: 740px;
+}
+
+html[data-response-font='geist'] {
+  --font-response: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+}
+
+html[data-response-font='system'] {
+  --font-response: system-ui, -apple-system, 'Segoe UI', roboto, sans-serif;
+}
+
+html[data-transcript-size='small'] {
+  --transcript-scale: 0.93;
+}
+
+html[data-transcript-size='large'] {
+  --transcript-scale: 1.12;
+}
+
+html[data-transcript-width='wide'] {
+  --transcript-width: 960px;
+}
+
+/* Motion: "Reduced" always, "System" when the device asks for it; "Full" never. Unlayered, so it beats the utilities' layer without !important. */
+html[data-motion='reduced'] *,
+html[data-motion='reduced'] *::before,
+html[data-motion='reduced'] *::after {
+  animation-duration: 0.01ms;
+  animation-iteration-count: 1;
+  transition-duration: 0.01ms;
+  scroll-behavior: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-motion='system'] *,
+  html[data-motion='system'] *::before,
+  html[data-motion='system'] *::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+    scroll-behavior: auto;
+  }
+}
+
 /* Scoped to the new components (each carries `data-slot`) so Chakra screens keep their own base. Unlayered
   so it beats Chakra's reset; `:where` keeps it at zero specificity under any utility. */
 :where([data-slot]) {
@@ -168,7 +238,8 @@
 
 /* Assistant Message prose: the markdown output of `MarkdownContent`. */
 .chat-prose {
-  font-size: 14.5px;
+  font-family: var(--font-response);
+  font-size: calc(14.5px * var(--transcript-scale));
   line-height: 1.68;
   color: var(--foreground);
   overflow-wrap: anywhere;

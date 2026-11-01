@@ -79,8 +79,9 @@ const config = defineConfig({
         },
       },
       fonts: {
-        body: { value: 'Inter, -apple-system, system-ui, sans-serif' },
-        heading: { value: 'Inter, -apple-system, system-ui, sans-serif' },
+        // The redesign's font token (Geist, or the system stack from Appearance), so Chakra screens match.
+        body: { value: 'var(--font-sans)' },
+        heading: { value: 'var(--font-sans)' },
       },
       radii: {
         sm: { value: '0.375rem' },

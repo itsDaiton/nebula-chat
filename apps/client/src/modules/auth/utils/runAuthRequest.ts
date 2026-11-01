@@ -22,6 +22,7 @@ const AUTH_ERRORS: Partial<Record<string, AuthErrorDescription>> = {
   // Account deletion: a password sent for a Google/GitHub-only user, or none sent for one with a password.
   CREDENTIAL_ACCOUNT_NOT_FOUND: { field: 'root', message: errors.noPassword },
   PASSWORD_REQUIRED: { field: 'currentPassword', message: validation.passwordRequired },
+  INVALID_CODE: { field: 'root', message: resources.settings.security.twoFactor.invalidCode },
   // The server has no credentials for the provider (it is configured per environment).
   PROVIDER_NOT_FOUND: { field: 'root', message: social.errors.unavailable },
 };
@@ -31,12 +32,14 @@ const UNKNOWN_ERROR: AuthErrorDescription = { field: 'root', message: errors.unk
 // better-auth's rate limiter answers 429 with no code of its own.
 const TOO_MANY_REQUESTS: AuthErrorDescription = { field: 'root', message: errors.tooManyRequests };
 
-/** Runs a better-auth call, rejecting with an AppError whose message is safe to show. */
-export const runAuthRequest = async (request: () => Promise<AuthResult>): Promise<void> => {
+/** Runs a better-auth call, rejecting with an AppError whose message is safe to show; resolves with its result. */
+export const runAuthRequest = async <Result extends AuthResult>(
+  request: () => Promise<Result>,
+): Promise<Result> => {
   const result = await request().catch((cause: unknown) => {
     throw new AppError('Internal', resources.errors.network, { cause });
   });
-  if (!result.error) return;
+  if (!result.error) return result;
 
   const { code, status } = result.error;
   const { field, message } =
