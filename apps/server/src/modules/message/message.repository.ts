@@ -29,7 +29,10 @@ const messageMeta = (userId: string) => {
     columns: {
       ...getTableColumns(messages),
       model: sql<string | null>`${directCall.model}`,
-      estimatedCostUsd: sql<number | null>`coalesce(${directCall.costUsd}, ${runCost.costUsd})`,
+      // Qualified by hand: Drizzle renders a sub-select field bare, which `direct_call.cost_usd` makes ambiguous.
+      estimatedCostUsd: sql<
+        number | null
+      >`coalesce(${directCall.costUsd}, ${sql.identifier('run_cost')}.${sql.identifier('cost_usd')})`,
       contextTokens: sql<
         number | null
       >`${directCall.inputTokens} + ${directCall.cachedInputTokens}`,
