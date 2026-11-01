@@ -71,6 +71,20 @@ describe('TwoFactorSetting', () => {
     expect(TOTP_SECRET).toBeTruthy();
   });
 
+  it('accepts a code pasted the way authenticator apps show it', async () => {
+    await holdSession({ isAnonymous: false });
+    server.use(mockTwoFactorEnable());
+    await renderSecurity();
+    await turnOn();
+    const field = await screen.findByLabelText(twoFactor.code);
+
+    await userEvent.click(field);
+    await userEvent.paste('482 100');
+
+    expect(field).toHaveValue('482100');
+    expect(screen.getByRole('button', { name: twoFactor.verify })).toBeEnabled();
+  });
+
   it('downloads the backup codes as a text file', async () => {
     await holdSession({ isAnonymous: false });
     server.use(mockTwoFactorEnable(), mockTwoFactorVerify());

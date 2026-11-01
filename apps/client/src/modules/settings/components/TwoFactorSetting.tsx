@@ -130,11 +130,11 @@ export const TwoFactorSetting = () => {
                 id="two-factor-code"
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                maxLength={6}
                 className="w-36 font-mono tracking-[0.3em]"
                 value={code}
                 aria-invalid={Boolean(verify.error)}
-                onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))}
+                // Apps show the code as "123 456", so paste is cleaned before it is cut to six digits.
+                onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
               />
               <Button type="submit" disabled={code.length !== 6 || verify.isPending}>
                 {twoFactor.verify}
