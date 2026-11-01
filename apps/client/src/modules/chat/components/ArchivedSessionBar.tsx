@@ -12,7 +12,7 @@ export const ArchivedSessionBar = ({ sessionId }: { sessionId: string }) => {
   return (
     <div
       data-slot="archived-session-bar"
-      className="mx-auto w-full max-w-[740px] shrink-0 px-3 pb-3 sm:px-7"
+      className="mx-auto w-full max-w-(--transcript-width) shrink-0 px-3 pb-3 sm:px-7"
     >
       <div className="flex items-center gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-3">
         <ArchiveIcon className="size-4 shrink-0 text-muted-foreground" />

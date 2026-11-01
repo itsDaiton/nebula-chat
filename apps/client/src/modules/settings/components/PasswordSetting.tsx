@@ -32,8 +32,10 @@ export const PasswordSetting = () => {
         </Button>
       </SettingsRow>
       {isOpen && (
-        <div className="max-w-md px-4 pb-4">
-          <AuthForm config={CHANGE_PASSWORD_FORM} header="none" onSuccess={onChanged} />
+        <div className="px-4 py-4">
+          <div className="max-w-sm">
+            <AuthForm config={CHANGE_PASSWORD_FORM} header="none" onSuccess={onChanged} />
+          </div>
         </div>
       )}
     </>

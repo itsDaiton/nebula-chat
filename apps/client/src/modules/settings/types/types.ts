@@ -64,8 +64,26 @@ export type BackupCodesProps = {
 };
 
 export type AppearanceFont = 'geist' | 'system';
+export type ResponseFont = 'match' | 'geist' | 'system';
+export type TranscriptSize = 'small' | 'medium' | 'large';
+export type TranscriptWidth = 'narrow' | 'wide';
+export type MotionPreference = 'system' | 'reduced' | 'full';
 
-export type AppearanceState = {
+export type AppearanceValues = {
   font: AppearanceFont;
-  setFont: (font: AppearanceFont) => void;
+  responseFont: ResponseFont;
+  transcriptSize: TranscriptSize;
+  transcriptWidth: TranscriptWidth;
+  motion: MotionPreference;
+};
+
+export type AppearanceState = AppearanceValues & {
+  setAppearance: (values: Partial<AppearanceValues>) => void;
+};
+
+export type SegmentedControlProps<Value extends string> = {
+  label: string;
+  value: Value;
+  options: { value: Value; label: string }[];
+  onChange: (value: Value) => void;
 };

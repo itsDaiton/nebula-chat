@@ -1,4 +1,4 @@
-import { Button, Heading, Stack, Text } from '@chakra-ui/react';
+import { Loader2Icon } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, type FieldValues, type Path } from 'react-hook-form';
 import { AuthFormAlert } from '@/modules/auth/components/AuthFormAlert';
@@ -8,6 +8,7 @@ import { useAuthMutation } from '@/modules/auth/hooks/useAuthMutation';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import type { AuthFormProps } from '@/modules/auth/types/types';
 import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
+import { Button } from '@/shared/components/ui/button';
 
 /** One auth form — sign-in, sign-up, forgot, reset or change password — as its config describes it. */
 export const AuthForm = <Values extends FieldValues>({
@@ -69,18 +70,14 @@ export const AuthForm = <Values extends FieldValues>({
 
   return (
     <form onSubmit={(event) => void handleSubmit(onSubmit)(event)} aria-label={label} noValidate>
-      <Stack gap={4}>
+      <div className="flex flex-col gap-4">
         {header !== 'none' && (
-          <Stack gap={1} mb={2}>
+          <div className="mb-2 flex flex-col gap-1">
             {header === 'full' && (
-              <Heading as="h1" size="xl">
-                {title}
-              </Heading>
+              <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
             )}
-            <Text color="fg.muted" fontSize="sm">
-              {description}
-            </Text>
-          </Stack>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
         )}
         <AuthFormAlert message={errors.root?.server?.message} />
         {fields.map((field) => (
@@ -97,13 +94,16 @@ export const AuthForm = <Values extends FieldValues>({
         ))}
         <Button
           type="submit"
-          loading={isPending}
-          mt={2}
-          colorPalette={destructive ? 'red' : undefined}
+          size="lg"
+          variant={destructive ? 'destructive' : 'default'}
+          disabled={isPending}
+          aria-busy={isPending}
+          className="mt-2 w-full"
         >
+          {isPending && <Loader2Icon className="animate-spin" />}
           {submitLabel}
         </Button>
-      </Stack>
+      </div>
     </form>
   );
 };

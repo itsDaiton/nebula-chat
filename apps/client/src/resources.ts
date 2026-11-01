@@ -302,17 +302,40 @@ export const resources = {
         system: 'System',
         light: 'Light',
         dark: 'Dark',
-        description: {
-          system: 'System follows your device setting',
-          light: 'Always light',
-          dark: 'Always dark',
-        },
+        description: 'System follows your device setting.',
       },
       font: {
         label: 'Interface font',
         description: 'Geist, or your system’s UI font',
         geist: 'Geist',
         system: 'System',
+      },
+      responseFont: {
+        label: 'Response font',
+        description: 'The font of the conversation',
+        match: 'Match interface',
+        geist: 'Geist',
+        system: 'System',
+      },
+      textSize: {
+        label: 'Transcript text size',
+        description: 'How large the conversation reads',
+        small: 'Small',
+        medium: 'Medium',
+        large: 'Large',
+      },
+      width: {
+        label: 'Transcript width',
+        description: 'How wide the conversation column is',
+        narrow: 'Narrow',
+        wide: 'Wide',
+      },
+      motion: {
+        label: 'Motion',
+        description: 'System follows your device’s reduce-motion setting',
+        system: 'System',
+        reduced: 'Reduced',
+        full: 'Full',
       },
     },
     account: {
@@ -323,8 +346,8 @@ export const resources = {
       deleteAccount: {
         label: 'Delete account',
         description:
-          'Your account is scheduled for deletion and removed for good after 30 days. Sign in before then to restore it.',
-        action: 'Delete account…',
+          'Removes your account and every Session 30 days from now. Sign in before then and nothing is lost.',
+        action: 'Delete account',
         dialogTitle: 'Delete your account?',
         warning:
           'Your account and all of your Sessions are scheduled for deletion and removed for good after 30 days. Signing in before then restores them.',

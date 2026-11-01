@@ -33,15 +33,30 @@ export const useAppearanceStore = create<AppearanceState>()(
   persist(
     (set) => ({
       font: 'geist',
-      setFont: (font) => set({ font }),
+      responseFont: 'match',
+      transcriptSize: 'medium',
+      transcriptWidth: 'narrow',
+      motion: 'system',
+      setAppearance: (values) => set(values),
     }),
     { name: APPEARANCE_STORAGE_KEY, storage: createJSONStorage(() => safeStorage) },
   ),
 );
 
-// The font token lives in CSS; the attribute switches it for the whole document, auth pages included.
-const applyFont = ({ font }: AppearanceState) => {
-  document.documentElement.dataset.font = font;
+// The tokens live in CSS; attributes on the document switch them everywhere, auth pages included.
+const applyAppearance = ({
+  font,
+  responseFont,
+  transcriptSize,
+  transcriptWidth,
+  motion,
+}: AppearanceState) => {
+  const { dataset } = document.documentElement;
+  dataset.font = font;
+  dataset.responseFont = responseFont;
+  dataset.transcriptSize = transcriptSize;
+  dataset.transcriptWidth = transcriptWidth;
+  dataset.motion = motion;
 };
-applyFont(useAppearanceStore.getState());
-useAppearanceStore.subscribe(applyFont);
+applyAppearance(useAppearanceStore.getState());
+useAppearanceStore.subscribe(applyAppearance);

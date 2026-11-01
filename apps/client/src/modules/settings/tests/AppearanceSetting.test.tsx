@@ -8,12 +8,18 @@ import { holdSession } from '@/test/auth';
 import { serveChatPage } from '@/test/chat';
 import { renderRoute } from '@/test/renderRoute';
 
-const { theme, font } = resources.settings.appearance;
+const { theme, font, responseFont, textSize, width, motion } = resources.settings.appearance;
 
 beforeEach(() => {
   serveChatPage();
   localStorage.clear();
-  useAppearanceStore.setState({ font: 'geist' });
+  useAppearanceStore.setState({
+    font: 'geist',
+    responseFont: 'match',
+    transcriptSize: 'medium',
+    transcriptWidth: 'narrow',
+    motion: 'system',
+  });
   useSettingsDialogStore.setState({ isOpen: true, section: 'appearance' });
 });
 
@@ -37,6 +43,36 @@ describe('AppearanceSetting', () => {
 
     expect(document.documentElement.dataset.font).toBe('system');
     expect(localStorage.getItem(APPEARANCE_STORAGE_KEY)).toContain('"system"');
+  });
+
+  it('keeps the theme description as it is while the theme changes', async () => {
+    await holdSession({ isAnonymous: false });
+    await renderRoute('/');
+
+    await userEvent.click(await screen.findByRole('radio', { name: new RegExp(theme.dark) }));
+
+    expect(screen.getByText(theme.description)).toBeInTheDocument();
+  });
+
+  it('applies the conversation options at once and remembers them', async () => {
+    await holdSession({ isAnonymous: false });
+    await renderRoute('/');
+    const choose = async (group: string, name: string) =>
+      userEvent.click(
+        within(await screen.findByRole('radiogroup', { name: group })).getByRole('radio', { name }),
+      );
+
+    await choose(responseFont.label, responseFont.system);
+    await choose(textSize.label, textSize.large);
+    await choose(width.label, width.wide);
+    await choose(motion.label, motion.reduced);
+
+    const { dataset } = document.documentElement;
+    expect(dataset.responseFont).toBe('system');
+    expect(dataset.transcriptSize).toBe('large');
+    expect(dataset.transcriptWidth).toBe('wide');
+    expect(dataset.motion).toBe('reduced');
+    expect(localStorage.getItem(APPEARANCE_STORAGE_KEY)).toContain('"transcriptWidth":"wide"');
   });
 
   it('is all a Guest sees of Settings', async () => {

@@ -1,6 +1,6 @@
-import type { ButtonProps, InputProps } from '@chakra-ui/react';
+import type { ButtonProps } from '@chakra-ui/react';
 import type { ThemeProviderProps } from 'next-themes';
-import type { ReactNode, Ref } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 
 export type HeaderProps = {
   onMenuClick?: () => void;
@@ -84,8 +84,7 @@ export type PanelState = {
 export type OS = 'mac' | 'windows';
 
 /** A password field whose masking its owner controls. */
-export type PasswordInputProps = Omit<InputProps, 'type'> & {
-  ref?: Ref<HTMLInputElement>;
+export type PasswordInputProps = Omit<ComponentProps<'input'>, 'type'> & {
   visible: boolean;
   onToggleVisibility: () => void;
 };

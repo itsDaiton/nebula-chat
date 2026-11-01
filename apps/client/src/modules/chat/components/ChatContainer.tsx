@@ -16,7 +16,7 @@ import { ChatScroller } from '@/shared/components/ui/chat-scroller';
 import { scrollToBottom } from '@/shared/utils/scrollUtils';
 import { resources } from '@/resources';
 
-const COLUMN = 'mx-auto w-full max-w-[740px] px-3 sm:px-7';
+const COLUMN = 'mx-auto w-full max-w-(--transcript-width) px-3 sm:px-7';
 
 export const ChatContainer = () => {
   const { id: sessionId } = useParams({ strict: false });
