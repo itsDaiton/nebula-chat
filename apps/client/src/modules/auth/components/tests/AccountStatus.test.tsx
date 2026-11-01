@@ -1,3 +1,4 @@
+import { useSettingsDialogStore } from '@/modules/settings/stores/useSettingsDialogStore';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -53,6 +54,7 @@ const renderStatus = async (path = '/') => {
 };
 
 beforeEach(() => {
+  useSettingsDialogStore.setState({ isOpen: false });
   vi.restoreAllMocks();
   session = aSession();
   server.use(mockGetSession(() => session));
@@ -122,16 +124,16 @@ describe('AccountStatus', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('takes a Registered user to the settings page', async () => {
+  it('opens Settings for a Registered user', async () => {
     session = aSession({ isAnonymous: false });
-    const { router } = await renderStatus();
+    await renderStatus();
 
     await openMenu();
     await selectMenuItem(
       await screen.findByRole('menuitem', { name: resources.userMenu.settings }),
     );
 
-    await waitFor(() => expect(router.state.location.pathname).toBe('/settings'));
+    await waitFor(() => expect(useSettingsDialogStore.getState().isOpen).toBe(true));
   });
 
   it('signs out to a fresh Guest on the chat root without fetching as nobody', async () => {
