@@ -9,7 +9,9 @@ import {
 } from '@/libs/api/generated/profile-image/profile-image.msw';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import { toast as sonner } from 'sonner';
+import { usePasswordChangeStore } from '@/modules/settings/stores/usePasswordChangeStore';
 import { useSettingsDialogStore } from '@/modules/settings/stores/useSettingsDialogStore';
+import { useTwoFactorSetupStore } from '@/modules/settings/stores/useTwoFactorSetupStore';
 import type { SettingsSectionId } from '@/modules/settings/types/types';
 import { resources } from '@/resources';
 import { API_ROUTE, mockApiError } from '@/test/api';
@@ -82,7 +84,9 @@ beforeEach(() => {
   server.use(getGetProfileImageSettingsMockHandler({ uploadsEnabled: true }));
   serveChatPage();
   usePasswordVisibilityStore.setState({ visibleFields: {} });
-  useSettingsDialogStore.setState({ isOpen: false, section: 'profile' });
+  useSettingsDialogStore.setState({ isOpen: false, section: 'profile', query: '' });
+  usePasswordChangeStore.setState({ isPasswordFormOpen: false });
+  useTwoFactorSetupStore.getState().reset();
 });
 
 describe('SettingsDialog', () => {

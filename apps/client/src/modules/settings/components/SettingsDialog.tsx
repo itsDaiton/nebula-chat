@@ -1,5 +1,5 @@
 import { SearchIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useRef } from 'react';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { SettingsSectionContent } from '@/modules/settings/components/SettingsSectionContent';
 import type { SettingsSectionId } from '@/modules/settings/types/types';
@@ -17,9 +17,9 @@ import { cn } from '@/shared/utils/cn';
 
 /** Settings as a modal over the app: the sections on the left, the active one on the right. */
 export const SettingsDialog = () => {
-  const { isOpen, section, closeSettings, setSection } = useSettingsDialogStore();
+  const { isOpen, section, query, closeSettings, setSection, setQuery } = useSettingsDialogStore();
+  const activeNav = useRef<HTMLButtonElement>(null);
   const { isRegistered } = useAuth();
-  const [query, setQuery] = useState('');
 
   const sections = SETTINGS_SECTIONS.filter(({ guest }) => isRegistered || guest);
   const active = sections.find(({ id }) => id === section) ?? sections[0];
@@ -39,16 +39,11 @@ export const SettingsDialog = () => {
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (open) return;
-        setQuery('');
-        closeSettings();
-      }}
-    >
+    <Dialog open={isOpen} onOpenChange={(open) => !open && closeSettings()}>
       <DialogContent
         showCloseButton
+        // Not the search box: focus lands on the current section so the keyboard opens on the nav.
+        initialFocus={activeNav}
         overlayClassName="bg-black/40 supports-backdrop-filter:backdrop-blur-none"
         className="app-shell h-[640px] max-h-[calc(100dvh-2rem)] gap-0 overflow-hidden p-0 sm:max-w-[900px] md:grid md:grid-cols-[220px_1fr] md:grid-rows-1"
       >
@@ -105,6 +100,7 @@ export const SettingsDialog = () => {
                 <button
                   key={id}
                   type="button"
+                  ref={active?.id === id ? activeNav : undefined}
                   aria-current={active?.id === id ? 'page' : undefined}
                   onClick={() => setSection(id)}
                   className={cn(

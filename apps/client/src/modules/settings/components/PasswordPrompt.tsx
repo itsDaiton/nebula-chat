@@ -1,4 +1,4 @@
-import { useState, type SubmitEvent } from 'react';
+import { useForm } from 'react-hook-form';
 import type { PasswordPromptProps } from '@/modules/settings/types/types';
 import { resources } from '@/resources';
 import { Button } from '@/shared/components/ui/button';
@@ -15,15 +15,15 @@ export const PasswordPrompt = ({
   onSubmit,
   onCancel,
 }: PasswordPromptProps) => {
-  const [password, setPassword] = useState('');
-
-  const submit = (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (password) onSubmit(password);
-  };
+  const { register, handleSubmit, watch } = useForm<{ password: string }>({
+    defaultValues: { password: '' },
+  });
 
   return (
-    <form onSubmit={submit} className="flex max-w-sm flex-col gap-2">
+    <form
+      onSubmit={(event) => void handleSubmit(({ password }) => onSubmit(password))(event)}
+      className="flex max-w-sm flex-col gap-2"
+    >
       <label htmlFor="two-factor-password" className="text-[13px] text-muted-foreground">
         {prompt}
       </label>
@@ -31,9 +31,8 @@ export const PasswordPrompt = ({
         id="two-factor-password"
         type="password"
         autoComplete="current-password"
-        value={password}
         aria-invalid={Boolean(error)}
-        onChange={(event) => setPassword(event.target.value)}
+        {...register('password', { required: true })}
       />
       {error && (
         <p role="alert" className="text-sm text-destructive">
@@ -41,7 +40,7 @@ export const PasswordPrompt = ({
         </p>
       )}
       <div className="flex gap-2">
-        <Button type="submit" disabled={isPending || !password}>
+        <Button type="submit" disabled={isPending || !watch('password')}>
           {submitLabel}
         </Button>
         <Button type="button" variant="ghost" onClick={onCancel}>

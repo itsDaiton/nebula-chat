@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef } from 'react';
 import { cn } from '@/shared/utils/cn';
 import { useRouterState } from '@tanstack/react-router';
 import { AccountFooter } from '@/shared/components/layout/AccountFooter';
@@ -32,9 +32,9 @@ export const AppShell = ({ children }: AppShellProps) => {
   const viewportHeight = useViewportHeight();
 
   // The overlays belong to the small layout and to the page they opened over (guarded render-time write, no effect).
-  const [frame, setFrame] = useState({ pathname, isDesktop });
-  if (frame.pathname !== pathname || frame.isDesktop !== isDesktop) {
-    setFrame({ pathname, isDesktop });
+  const frame = useRef({ pathname, isDesktop });
+  if (frame.current.pathname !== pathname || frame.current.isDesktop !== isDesktop) {
+    frame.current = { pathname, isDesktop };
     closeDrawer();
     closeSheet();
   }

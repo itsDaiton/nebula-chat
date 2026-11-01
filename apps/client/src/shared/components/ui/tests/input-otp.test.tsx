@@ -1,7 +1,6 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
-import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import {
   InputOTP,
@@ -11,29 +10,24 @@ import {
 } from '@/shared/components/ui/input-otp';
 import { renderWithProviders } from '@/test/render';
 
-const Code = () => {
-  const [value, setValue] = useState('');
-  return (
-    <InputOTP
-      aria-label="Code"
-      maxLength={4}
-      value={value}
-      onChange={setValue}
-      pattern={REGEXP_ONLY_DIGITS}
-      pasteTransformer={(text) => text.replaceAll(/\D/g, '')}
-    >
-      <InputOTPGroup>
-        <InputOTPSlot index={0} />
-        <InputOTPSlot index={1} />
-      </InputOTPGroup>
-      <InputOTPSeparator />
-      <InputOTPGroup>
-        <InputOTPSlot index={2} />
-        <InputOTPSlot index={3} />
-      </InputOTPGroup>
-    </InputOTP>
-  );
-};
+const Code = () => (
+  <InputOTP
+    aria-label="Code"
+    maxLength={4}
+    pattern={REGEXP_ONLY_DIGITS}
+    pasteTransformer={(text) => text.replaceAll(/\D/g, '')}
+  >
+    <InputOTPGroup>
+      <InputOTPSlot index={0} />
+      <InputOTPSlot index={1} />
+    </InputOTPGroup>
+    <InputOTPSeparator />
+    <InputOTPGroup>
+      <InputOTPSlot index={2} />
+      <InputOTPSlot index={3} />
+    </InputOTPGroup>
+  </InputOTP>
+);
 
 describe('InputOTP', () => {
   it('shows each typed digit in its own slot', async () => {

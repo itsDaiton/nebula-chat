@@ -8,10 +8,19 @@ export type SettingsSectionId = 'profile' | 'security' | 'archived' | 'appearanc
 export type SettingsDialogState = {
   isOpen: boolean;
   section: SettingsSectionId;
+  /** What the search box holds; cleared when the dialog closes. */
+  query: string;
   /** Opens the dialog on `section`, or on Profile. */
   openSettings: (section?: SettingsSectionId) => void;
   closeSettings: () => void;
   setSection: (section: SettingsSectionId) => void;
+  setQuery: (query: string) => void;
+};
+
+export type PasswordChangeState = {
+  isPasswordFormOpen: boolean;
+  togglePasswordForm: () => void;
+  closePasswordForm: () => void;
 };
 
 /** One setting: what it is on the left, its control on the right. */
@@ -61,6 +70,15 @@ export type TwoFactorStep =
   | { name: 'disable' }
   | { name: 'regenerate' };
 
+export type TwoFactorSetupState = {
+  step: TwoFactorStep;
+  /** The 6 digits typed on the scan step. */
+  code: string;
+  setStep: (step: TwoFactorStep) => void;
+  setCode: (code: string) => void;
+  reset: () => void;
+};
+
 export type BackupCodesProps = {
   codes: string[];
 };
@@ -88,4 +106,32 @@ export type SegmentedControlProps<Value extends string> = {
   value: Value;
   options: { value: Value; label: string }[];
   onChange: (value: Value) => void;
+};
+
+export type TwoFactorSetupHeaderProps = {
+  step: number;
+  text: string;
+  onCancel?: () => void;
+};
+
+export type TwoFactorScanStepProps = {
+  /** The `otpauth://` URI the QR code and the manual key come from. */
+  totpURI: string;
+  backupCodes: string[];
+};
+
+export type TwoFactorBackupStepProps = {
+  backupCodes: string[];
+};
+
+export type TwoFactorConfirmStepProps = {
+  action: 'disable' | 'regenerate';
+};
+
+export type ThemePreviewProps = {
+  mode: 'system' | 'light' | 'dark';
+};
+
+export type ThemePreviewHalfProps = {
+  dark: boolean;
 };

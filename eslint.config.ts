@@ -104,6 +104,16 @@ export default [
           ],
         },
       ],
+      // Selectors, not `paths`: `import * as React` in the shadcn files would trip an importNames ban.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "ImportDeclaration[source.value='react'] > ImportSpecifier[imported.name='useState'], CallExpression[callee.object.name='React'][callee.property.name='useState']",
+          message:
+            'No useState: client state lives in a Zustand store, form fields in react-hook-form (client-state rule).',
+        },
+      ],
       'react/jsx-uses-react': 'off',
       'react/react-in-jsx-scope': 'off',
       'react/self-closing-comp': 'error',

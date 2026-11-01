@@ -61,7 +61,7 @@ every API route `401`s without a session. Read the session with `useAuth`, which
 
 ## Client state — Zustand
 
-**Never use `useState`.** Client state lives in Zustand stores.
+**Never use `useState`** (ESLint fails the import). Client state lives in Zustand stores. State that must not outlive its UI (a half-finished setup, a search box) resets from `useOnUnmount`'s ref callback, not an effect.
 
 | Scenario                                                       | Use                                                         |
 | -------------------------------------------------------------- | ----------------------------------------------------------- |
