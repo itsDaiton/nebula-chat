@@ -148,13 +148,37 @@ export const useChatStream = ({
     [queryClient],
   );
 
+  // The stream carries only the token count; the saved reply knows its Model and cost, so the meta row takes them now rather than after a reload.
+  const showSavedReplyMeta = useCallback(
+    async (savedSessionId: string) => {
+      const saved = await queryClient.fetchQuery({
+        ...getListMessagesQueryOptions({ sessionId: savedSessionId }),
+        staleTime: 0,
+      });
+      const reply = mapSessionMessages(saved).findLast(({ role }) => role === 'assistant');
+      if (!reply || sessionIdRef.current !== savedSessionId) return;
+      setHistory((prev) => {
+        const last = prev.at(-1);
+        if (last?.role !== 'assistant') return prev;
+        const { model, estimatedCostUsd, runId, tokenCount } = reply;
+        return [
+          ...prev.slice(0, -1),
+          { ...last, model, estimatedCostUsd, runId, tokenCount: tokenCount ?? last.tokenCount },
+        ];
+      });
+    },
+    [queryClient, setHistory],
+  );
+
   const invalidateCompletedStream = useCallback(
     (completedSessionId: string) => {
       void invalidateSessionList();
       void queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() });
       void queryClient.invalidateQueries({ queryKey: getGetSessionQueryKey(completedSessionId) });
+      // A failed read leaves the meta row as the stream left it; the invalidation above reports the failure.
+      void showSavedReplyMeta(completedSessionId).catch(() => undefined);
     },
-    [invalidateSessionList, queryClient],
+    [invalidateSessionList, queryClient, showSavedReplyMeta],
   );
 
   const showReplyError = useCallback(
