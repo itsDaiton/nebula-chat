@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -82,6 +82,28 @@ describe('TwoFactorSetting', () => {
     await userEvent.paste('482 100');
 
     expect(field).toHaveValue('482100');
+    expect(screen.getByRole('button', { name: twoFactor.verify })).toBeEnabled();
+  });
+
+  it('takes the number row as digits on a layout that types symbols there', async () => {
+    await holdSession({ isAnonymous: false });
+    server.use(mockTwoFactorEnable());
+    await renderSecurity();
+    await turnOn();
+    const field = await screen.findByLabelText(twoFactor.code);
+
+    // Czech: the unshifted number row types ě š č ř ž ý.
+    const row = [
+      ['ě', 'Digit2'],
+      ['š', 'Digit3'],
+      ['č', 'Digit4'],
+      ['ř', 'Digit5'],
+      ['ž', 'Digit6'],
+      ['ý', 'Digit7'],
+    ];
+    for (const [key, code] of row) fireEvent.keyDown(field, { key, code });
+
+    expect(field).toHaveValue('234567');
     expect(screen.getByRole('button', { name: twoFactor.verify })).toBeEnabled();
   });
 
