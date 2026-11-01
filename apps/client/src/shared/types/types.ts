@@ -19,7 +19,6 @@ export type UseColorModeReturn = {
 
 export type ColorModeProviderProps = ThemeProviderProps;
 
-
 export type SearchState = {
   isSearchOpen: boolean;
   openSearch: () => void;
