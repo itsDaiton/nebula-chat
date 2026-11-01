@@ -65,13 +65,13 @@ export type BackupCodesProps = {
   codes: string[];
 };
 
-export type AppearanceFont = 'geist' | 'system';
-export type ResponseFont = 'match' | 'geist' | 'system';
-export type TranscriptSize = 'small' | 'medium' | 'large';
-export type TranscriptWidth = 'narrow' | 'wide';
-export type MotionPreference = 'system' | 'reduced' | 'full';
+type AppearanceFont = 'geist' | 'system';
+type ResponseFont = 'match' | 'geist' | 'system';
+type TranscriptSize = 'small' | 'medium' | 'large';
+type TranscriptWidth = 'narrow' | 'wide';
+type MotionPreference = 'system' | 'reduced' | 'full';
 
-export type AppearanceValues = {
+type AppearanceValues = {
   font: AppearanceFont;
   responseFont: ResponseFont;
   transcriptSize: TranscriptSize;

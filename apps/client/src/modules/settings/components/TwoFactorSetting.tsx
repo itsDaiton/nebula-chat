@@ -1,3 +1,4 @@
+import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { CheckIcon, CopyIcon } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -16,7 +17,7 @@ import {
 import type { TwoFactorStep } from '@/modules/settings/types/types';
 import { resources } from '@/resources';
 import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/shared/components/ui/input-otp';
 
 const { twoFactor } = resources.settings.security;
 
@@ -125,17 +126,29 @@ export const TwoFactorSetting = () => {
             <label htmlFor="two-factor-code" className="text-[13px] font-medium">
               {twoFactor.code}
             </label>
-            <div className="flex gap-2">
-              <Input
+            <div className="flex flex-wrap items-center gap-3">
+              <InputOTP
                 id="two-factor-code"
+                maxLength={6}
+                value={code}
+                onChange={setCode}
+                pattern={REGEXP_ONLY_DIGITS}
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                className="w-36 font-mono tracking-[0.3em]"
-                value={code}
                 aria-invalid={Boolean(verify.error)}
-                // Apps show the code as "123 456", so paste is cleaned before it is cut to six digits.
-                onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-              />
+                // Apps show the code as "123 456", so a paste is cleaned of everything but digits.
+                pasteTransformer={(text) => text.replaceAll(/\D/g, '')}
+              >
+                <InputOTPGroup className="gap-2">
+                  {[0, 1, 2, 3, 4, 5].map((index) => (
+                    <InputOTPSlot
+                      key={index}
+                      index={index}
+                      className="size-10 rounded-lg border font-mono text-base first:rounded-lg first:border last:rounded-lg"
+                    />
+                  ))}
+                </InputOTPGroup>
+              </InputOTP>
               <Button type="submit" disabled={code.length !== 6 || verify.isPending}>
                 {twoFactor.verify}
               </Button>

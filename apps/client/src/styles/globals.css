@@ -130,6 +130,24 @@
   --font-mono: 'Geist Mono Variable', ui-monospace, monospace;
 }
 
+/* The input-otp caret blinks with this. */
+@theme inline {
+  --animate-caret-blink: caret-blink 1.25s ease-out infinite;
+
+  @keyframes caret-blink {
+    0%,
+    70%,
+    100% {
+      opacity: 1;
+    }
+
+    20%,
+    50% {
+      opacity: 0;
+    }
+  }
+}
+
 /* Settings > Appearance. Font and transcript options are attributes on <html>; the tokens below follow them. */
 html[data-font='system'] {
   --font-sans: system-ui, -apple-system, 'Segoe UI', roboto, sans-serif;
