@@ -1,4 +1,3 @@
-import type { ButtonProps } from '@chakra-ui/react';
 import type { ThemeProviderProps } from 'next-themes';
 import type { ComponentProps, ReactNode } from 'react';
 
@@ -20,7 +19,6 @@ export type UseColorModeReturn = {
 
 export type ColorModeProviderProps = ThemeProviderProps;
 
-export type NebulaButtonProps = ButtonProps;
 
 export type SearchState = {
   isSearchOpen: boolean;
