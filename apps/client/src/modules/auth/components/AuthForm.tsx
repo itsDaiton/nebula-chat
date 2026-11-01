@@ -9,11 +9,13 @@ import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVis
 import type { AuthFormProps } from '@/modules/auth/types/types';
 import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
 import { Button } from '@/shared/components/ui/button';
+import { cn } from '@/shared/utils/cn';
 
 /** One auth form — sign-in, sign-up, forgot, reset or change password — as its config describes it. */
 export const AuthForm = <Values extends FieldValues>({
   config,
   header = 'full',
+  compact = false,
   onSuccess,
   onError,
 }: AuthFormProps<Values>) => {
@@ -94,11 +96,11 @@ export const AuthForm = <Values extends FieldValues>({
         ))}
         <Button
           type="submit"
-          size="lg"
+          size={compact ? 'default' : 'lg'}
           variant={destructive ? 'destructive' : 'default'}
           disabled={isPending}
           aria-busy={isPending}
-          className="mt-2 w-full"
+          className={cn('mt-2', compact ? 'self-start' : 'w-full')}
         >
           {isPending && <Loader2Icon className="animate-spin" />}
           {submitLabel}

@@ -7,6 +7,7 @@ import {
   DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -27,7 +28,9 @@ export const DeleteAccountSetting = () => (
           <DialogDescription>{deleteAccount.warning}</DialogDescription>
         </DialogHeader>
         <DeleteAccountForm />
-        <DialogClose render={<Button variant="outline" />}>{deleteAccount.cancel}</DialogClose>
+        <DialogFooter>
+          <DialogClose render={<Button variant="outline" />}>{deleteAccount.cancel}</DialogClose>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   </SettingsRow>

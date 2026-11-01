@@ -350,7 +350,7 @@ export const resources = {
         action: 'Delete account',
         dialogTitle: 'Delete your account?',
         warning:
-          'Your account and all of your Sessions are scheduled for deletion and removed for good after 30 days. Signing in before then restores them.',
+          'Your account and Sessions are removed after 30 days. Signing in again before then cancels the deletion.',
         passwordHint: 'Enter your password to confirm.',
         noPasswordHint: "You signed in with Google or GitHub, so there's no password to enter.",
         confirm: 'Delete my account',

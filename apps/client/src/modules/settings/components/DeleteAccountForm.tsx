@@ -20,8 +20,13 @@ export const DeleteAccountForm = () => {
 
   // If the lookup fails, ask for a password: most accounts have one, and the server checks anyway.
   return hasPassword === false ? (
-    <AuthForm config={CONFIRM_DELETE_ACCOUNT_FORM} header="description" onSuccess={onDeleted} />
+    <AuthForm
+      config={CONFIRM_DELETE_ACCOUNT_FORM}
+      header="description"
+      compact
+      onSuccess={onDeleted}
+    />
   ) : (
-    <AuthForm config={DELETE_ACCOUNT_FORM} header="description" onSuccess={onDeleted} />
+    <AuthForm config={DELETE_ACCOUNT_FORM} header="description" compact onSuccess={onDeleted} />
   );
 };

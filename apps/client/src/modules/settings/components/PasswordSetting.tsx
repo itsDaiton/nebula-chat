@@ -34,7 +34,7 @@ export const PasswordSetting = () => {
       {isOpen && (
         <div className="px-4 py-4">
           <div className="max-w-sm">
-            <AuthForm config={CHANGE_PASSWORD_FORM} header="none" onSuccess={onChanged} />
+            <AuthForm config={CHANGE_PASSWORD_FORM} header="none" compact onSuccess={onChanged} />
           </div>
         </div>
       )}

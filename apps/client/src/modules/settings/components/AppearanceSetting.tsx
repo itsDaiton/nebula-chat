@@ -18,20 +18,23 @@ const {
 
 const THEMES = ['system', 'light', 'dark'] as const;
 
-const Preview = ({ mode }: { mode: (typeof THEMES)[number] }) => (
+const PreviewHalf = ({ dark }: { dark: boolean }) => (
   <span
-    aria-hidden
     className={cn(
-      'flex h-16 items-center justify-center gap-1 overflow-hidden border-b border-border p-2',
-      mode === 'dark' ? 'bg-neutral-950' : 'bg-white',
+      'flex h-full flex-1 items-center justify-center gap-1 p-2',
+      dark ? 'bg-neutral-950' : 'bg-white',
     )}
   >
-    <span
-      className={cn('h-full w-4 rounded', mode === 'dark' ? 'bg-neutral-800' : 'bg-neutral-200')}
-    />
-    <span
-      className={cn('h-full flex-1 rounded', mode === 'dark' ? 'bg-neutral-800' : 'bg-neutral-100')}
-    />
+    <span className={cn('h-full w-3 rounded', dark ? 'bg-neutral-800' : 'bg-neutral-200')} />
+    <span className={cn('h-full flex-1 rounded', dark ? 'bg-neutral-800' : 'bg-neutral-100')} />
+  </span>
+);
+
+/** The theme in miniature; System is split, light beside dark. */
+const Preview = ({ mode }: { mode: (typeof THEMES)[number] }) => (
+  <span aria-hidden className="flex h-16 overflow-hidden border-b border-border">
+    {mode !== 'dark' && <PreviewHalf dark={false} />}
+    {mode !== 'light' && <PreviewHalf dark />}
   </span>
 );
 
