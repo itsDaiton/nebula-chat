@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, type SubmitEvent } from 'react';
 import type { PasswordPromptProps } from '@/modules/settings/types/types';
 import { resources } from '@/resources';
 import { Button } from '@/shared/components/ui/button';
@@ -17,7 +17,7 @@ export const PasswordPrompt = ({
 }: PasswordPromptProps) => {
   const [password, setPassword] = useState('');
 
-  const submit = (event: FormEvent) => {
+  const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (password) onSubmit(password);
   };
