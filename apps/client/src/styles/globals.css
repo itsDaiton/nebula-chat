@@ -161,24 +161,24 @@ html[data-transcript-width='wide'] {
   --transcript-width: 960px;
 }
 
-/* Motion: "Reduced" always, "System" when the device asks for it; "Full" never. */
+/* Motion: "Reduced" always, "System" when the device asks for it; "Full" never. Unlayered, so it beats the utilities' layer without !important. */
 html[data-motion='reduced'] *,
 html[data-motion='reduced'] *::before,
 html[data-motion='reduced'] *::after {
-  animation-duration: 0.01ms !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 0.01ms !important;
-  scroll-behavior: auto !important;
+  animation-duration: 0.01ms;
+  animation-iteration-count: 1;
+  transition-duration: 0.01ms;
+  scroll-behavior: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
   html[data-motion='system'] *,
   html[data-motion='system'] *::before,
   html[data-motion='system'] *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+    scroll-behavior: auto;
   }
 }
 
