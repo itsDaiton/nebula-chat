@@ -1,36 +1,27 @@
-import type { NavigationAction } from '@/shared/types/types';
-import { FiEdit, FiSearch } from 'react-icons/fi';
-import { FaWandMagicSparkles } from 'react-icons/fa6';
-import { IoDocumentOutline } from 'react-icons/io5';
+import { FolderIcon, SearchIcon, SparklesIcon, SquarePenIcon } from 'lucide-react';
+import type { NavigationAction } from '@/modules/sessions/types/types';
 import { resources } from '@/resources';
 
 export const navigationActions: NavigationAction[] = [
   {
     id: 'new-chat',
-    icon: <FiEdit />,
+    icon: <SquarePenIcon />,
     label: resources.sidebar.newChat,
     action: 'newChat',
-    shortcut: { key: 'E', ctrl: true },
+    shortcut: 'E',
   },
   {
     id: 'search',
-    icon: <FiSearch />,
+    icon: <SearchIcon />,
     label: resources.sidebar.searchChats,
     action: 'search',
-    shortcut: { key: 'K', ctrl: true },
+    shortcut: 'K',
   },
-  {
-    id: 'files',
-    icon: <IoDocumentOutline />,
-    label: resources.sidebar.files,
-    badge: { text: 'Soon', colorPalette: 'purple', variant: 'subtle' },
-    action: 'files',
-  },
+  { id: 'files', icon: <FolderIcon />, label: resources.sidebar.files, action: 'files' },
   {
     id: 'ai-studio',
-    icon: <FaWandMagicSparkles />,
+    icon: <SparklesIcon />,
     label: resources.sidebar.aiStudio,
-    badge: { text: 'Soon', colorPalette: 'purple', variant: 'subtle' },
     action: 'aiStudio',
   },
 ];

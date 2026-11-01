@@ -32,7 +32,9 @@ describe('session guard', () => {
 
     await visit('/');
 
-    expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('textbox', { name: resources.chat.composer.label }),
+    ).toBeInTheDocument();
     expect(signIns).toBe(1);
     const { result } = renderHook(() => useAuth());
     await waitFor(() => expect(result.current.isGuest).toBe(true));
@@ -52,7 +54,9 @@ describe('session guard', () => {
 
     await visit('/');
 
-    expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('textbox', { name: resources.chat.composer.label }),
+    ).toBeInTheDocument();
     expect(signIns).toBe(0);
   });
 
@@ -77,8 +81,12 @@ describe('session guard', () => {
     await visit('/');
 
     expect(await screen.findByRole('status', { name: resources.auth.loading })).toBeInTheDocument();
-    expect(screen.queryByText(resources.chat.welcomeMessage)).not.toBeInTheDocument();
-    expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
+    expect(
+      screen.queryByRole('textbox', { name: resources.chat.composer.label }),
+    ).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole('textbox', { name: resources.chat.composer.label }),
+    ).toBeInTheDocument();
   });
 
   it('shows an error instead of the app when no session can be established', async () => {
@@ -87,7 +95,9 @@ describe('session guard', () => {
     await visit('/');
 
     expect(await screen.findByRole('alert')).toHaveTextContent(resources.auth.sessionFailed);
-    expect(screen.queryByText(resources.chat.welcomeMessage)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('textbox', { name: resources.chat.composer.label }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows an error when the session cannot be read', async () => {

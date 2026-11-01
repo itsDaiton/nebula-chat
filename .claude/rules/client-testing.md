@@ -65,7 +65,10 @@ pnpm frontend test:coverage
   serve the session yourself (`holdSession`, `mockGetSession`). It is async (`await renderRoute(...)`) and
   returns the `router`, whose `router.state.location` asserts where a navigation landed. A component that
   only links or reads the route uses `renderInRouter(ui)` instead.
-- **Render inside a fresh query client.** `renderWithChakra` and `renderHookWithQueryClient` (`@/test/render`)
+- **Render a component with `renderWithProviders(ui)` (`@/test/render`)**: the app's own providers (query
+  client, theme, tooltips) without a router; `renderRoute` renders through it. New tests use it over
+  `renderWithChakra`, which goes with Chakra.
+- **Render inside a fresh query client.** `renderWithProviders`, `renderWithChakra` and `renderHookWithQueryClient` (`@/test/render`)
   each create one per test with retries off, so no cached response leaks between tests and a failure
   surfaces at once. Pass your own `queryClient` to prime or inspect the cache, e.g. assert an invalidation
   with `queryClient.getQueryState(key)?.isInvalidated`.

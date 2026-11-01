@@ -1,0 +1,292 @@
+/* Preflight is left out while Chakra's reset styles the page (NEB-555 restores it), and utilities are
+  unlayered so they win over Chakra's layered reset and recipes. */
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css';
+@import 'tw-animate-css';
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
+
+/* next-themes puts `dark` on <html>. */
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --canvas: #fff;
+  --panel: #fff;
+  --raised: #f7f7f7;
+  --hover: #f0f0f0;
+  --border: #e8e8e8;
+  --border-strong: #dcdcdc;
+  --foreground: #0a0a0a;
+  --foreground-secondary: #404040;
+  --muted-foreground: #737373;
+  --faint: #a3a3a3;
+  --success: #16a34a;
+  --warning: #d97706;
+  --destructive: #dc2626;
+
+  /* Anthropic's brand orange, used by its logo alone and the same in both modes. */
+  --anthropic: #d97757;
+
+  /* shadcn's names, mapped onto the palette above. */
+  --background: var(--canvas);
+  --card: var(--panel);
+  --card-foreground: var(--foreground);
+  --popover: var(--panel);
+  --popover-foreground: var(--foreground);
+  --primary: var(--foreground);
+  --primary-foreground: var(--canvas);
+  --secondary: var(--raised);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--raised);
+  --accent: var(--hover);
+  --accent-foreground: var(--foreground);
+  --input: var(--border-strong);
+  --ring: var(--muted-foreground);
+  --primary-border: transparent;
+
+  /* Shiki's css-variables theme, mapped onto the palette. */
+  --shiki-foreground: var(--foreground-secondary);
+  --shiki-background: transparent;
+  --shiki-token-constant: #a8621a;
+  --shiki-token-string: #4d7c4f;
+  --shiki-token-comment: #a3a3a3;
+  --shiki-token-keyword: #0a0a0a;
+  --shiki-token-parameter: #6b5aa6;
+  --shiki-token-function: #2f5f9e;
+  --shiki-token-string-expression: #4d7c4f;
+  --shiki-token-punctuation: var(--muted-foreground);
+  --shiki-token-link: #2f5f9e;
+}
+
+.dark {
+  --canvas: #0a0a0a;
+  --panel: #0d0d0d;
+  --raised: #151515;
+  --hover: #1a1a1a;
+  --border: #1f1f1f;
+  --border-strong: #2a2a2a;
+  --foreground: #f5f5f5;
+  --foreground-secondary: #c9c9c9;
+  --muted-foreground: #8a8a8a;
+  --faint: #555;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --destructive: #ef4444;
+
+  /* No surface is filled with the foreground colour: primary is a raised neutral. */
+  --primary: #262626;
+  --primary-foreground: var(--foreground);
+  --primary-border: #3a3a3a;
+  --shiki-token-constant: #e0b07a;
+  --shiki-token-string: #a5c89a;
+  --shiki-token-comment: #5c5c5c;
+  --shiki-token-keyword: #f5f5f5;
+  --shiki-token-parameter: #b4a7e0;
+  --shiki-token-function: #8fb8e8;
+  --shiki-token-string-expression: #a5c89a;
+  --shiki-token-link: #8fb8e8;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-panel: var(--panel);
+  --color-raised: var(--raised);
+  --color-hover: var(--hover);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
+  --color-faint: var(--faint);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-destructive: var(--destructive);
+  --color-anthropic: var(--anthropic);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary-border: var(--primary-border);
+
+  /* Panels take rounded-xl (12px), controls rounded-lg (8px). */
+  --radius: 0.5rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+
+  /* Geist for UI, Geist Mono for metadata, keyboard hints and ids. */
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, monospace;
+}
+
+/* Scoped to the new components (each carries `data-slot`) so Chakra screens keep their own base. Unlayered
+  so it beats Chakra's reset; `:where` keeps it at zero specificity under any utility. */
+:where([data-slot]) {
+  border-color: var(--border);
+  outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+  font-family: var(--font-sans);
+}
+
+/* The slice of preflight the components rely on; only on their own controls, never a nested Chakra one. */
+:where(input, textarea, select, button):where([data-slot]) {
+  font: inherit;
+  color: inherit;
+  background-color: transparent;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* The shell hosts Chakra screens until they are restyled: it gives them the new font and palette. */
+.app-shell {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+
+  --chakra-colors-bg-default: var(--panel);
+  --chakra-colors-bg-subtle: var(--raised);
+  --chakra-colors-bg-muted: var(--raised);
+  --chakra-colors-fg-default: var(--foreground);
+  --chakra-colors-fg-soft: var(--foreground-secondary);
+  --chakra-colors-fg-muted: var(--muted-foreground);
+  --chakra-colors-border-default: var(--border);
+  --chakra-colors-border-emphasized: var(--border-strong);
+}
+
+/* Assistant Message prose: the markdown output of `MarkdownContent`. */
+.chat-prose {
+  font-size: 14.5px;
+  line-height: 1.68;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+
+.chat-prose > :first-child {
+  margin-top: 0;
+}
+
+.chat-prose > :last-child {
+  margin-bottom: 0;
+}
+
+.chat-prose p {
+  margin: 0 0 12px;
+}
+
+.chat-prose h1,
+.chat-prose h2,
+.chat-prose h3,
+.chat-prose h4 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 18px 0 8px;
+}
+
+.chat-prose h1 {
+  font-size: 18px;
+}
+
+.chat-prose h2 {
+  font-size: 16.5px;
+}
+
+.chat-prose h3,
+.chat-prose h4 {
+  font-size: 15px;
+}
+
+.chat-prose ul,
+.chat-prose ol {
+  margin: 0 0 12px 20px;
+}
+
+.chat-prose ul {
+  list-style: disc;
+}
+
+.chat-prose ol {
+  list-style: decimal;
+}
+
+.chat-prose li {
+  margin: 3px 0;
+}
+
+.chat-prose strong {
+  font-weight: 600;
+}
+
+.chat-prose a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--border-strong);
+}
+
+.chat-prose blockquote {
+  margin: 0 0 12px;
+  padding-left: 14px;
+  border-left: 2px solid var(--border-strong);
+  color: var(--muted-foreground);
+}
+
+.chat-prose hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 16px 0;
+}
+
+.chat-prose :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+
+.chat-prose table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+  margin: 4px 0 14px;
+}
+
+.chat-prose th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  border-bottom: 1px solid var(--border-strong);
+  padding: 6px 10px 6px 0;
+}
+
+.chat-prose td {
+  border-bottom: 1px solid var(--border);
+  padding: 7px 10px 7px 0;
+}
+
+.chat-prose .table-wrap {
+  overflow-x: auto;
+}
+
+/* Shiki emits a <pre> with inline colours from the variables above. */
+.code-block pre {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+}

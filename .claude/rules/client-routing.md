@@ -12,7 +12,7 @@ The client routes with [TanStack Router](https://tanstack.com/router) and its fi
 `src/routes/`; the plugin writes `routeTree.gen.ts`, which is committed and excluded from lint, format,
 coverage and knip. A route file only wires a page: the component lives in `modules/*/` as a `*Page.tsx`.
 
-- **Adding a route.** Create the file under `routes/_app/` (`s/$id.tsx` is `/s/:id`), export
+- **Adding a route.** Create the file under `routes/_app/` (chat pages under `routes/_app/_chat/`, which wraps them in `AppShell`; `s/$id.tsx` is `/s/:id`), export
   `Route = createFileRoute('/_app/<path>')({ component })`, and run `pnpm dev` or `pnpm build` so the plugin
   regenerates the tree. Every path is typed: a link to a route that doesn't exist fails the typecheck.
 - **Links and navigation.** `<Link to="/auth">`, `<Link to="/s/$id" params={{ id }}>` and
@@ -27,7 +27,7 @@ coverage and knip. A route file only wires a page: the component lives in `modul
 - **Loaders.** A loader prefetches through the existing query client:
   `context.queryClient.ensureQueryData(getGetSessionQueryOptions(id))`. Components keep using the generated
   hooks. A prefetch whose failure the page shows itself sets `meta: { inlineError: true }`
-  (see `routes/_app/s/$id.tsx`) so it isn't toasted twice.
+  (see `routes/_app/_chat/s/$id.tsx`) so it isn't toasted twice.
 - **Search params** are declared per route with a Zod schema as `validateSearch`, built from
   `routing/searchParams.ts` so a malformed value never throws: `optionalSearchText()` falls back to
   absent, `optionalSearchError()` to an unrecognised code (still an error). TanStack JSON-parses each

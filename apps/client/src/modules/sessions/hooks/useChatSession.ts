@@ -23,10 +23,10 @@ export const useChatSession = (sessionId: string | undefined) => {
   const chat = useChatStreamStore.getState();
   if (!sessionId) {
     if (!chat.isStreaming && chat.sessionId !== undefined) {
-      useChatStreamStore.setState({ history: [], sessionId: undefined });
+      useChatStreamStore.setState({ history: [], sessionId: undefined, isReplyStopped: false });
     }
   } else if (isSettled && chat.sessionId !== sessionId) {
-    useChatStreamStore.setState({ history: messages.data, sessionId });
+    useChatStreamStore.setState({ history: messages.data, sessionId, isReplyStopped: false });
   }
 
   return {

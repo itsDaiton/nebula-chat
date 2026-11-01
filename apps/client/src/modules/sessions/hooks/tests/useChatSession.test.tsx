@@ -40,6 +40,7 @@ const serveSession = (
       createdAt: '2026-01-01T00:00:00.000Z',
       archived: false,
       activeStreamId,
+      waitingRun: null,
     }),
     getListMessagesMockHandler(({ request }) =>
       new URL(request.url).searchParams.get('sessionId') === SESSION_ID ? messages : [],
@@ -69,8 +70,24 @@ describe('useChatSession', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(chat().history).toEqual([
-      { id: 'm1', role: 'user', content: 'a question' },
-      { id: 'm2', role: 'assistant', content: 'an answer' },
+      {
+        id: 'm1',
+        role: 'user',
+        content: 'a question',
+        tokenCount: null,
+        model: null,
+        estimatedCostUsd: null,
+        runId: null,
+      },
+      {
+        id: 'm2',
+        role: 'assistant',
+        content: 'an answer',
+        tokenCount: null,
+        model: null,
+        estimatedCostUsd: null,
+        runId: null,
+      },
     ]);
     expect(chat().sessionId).toBe(SESSION_ID);
   });

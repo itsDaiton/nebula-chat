@@ -66,6 +66,9 @@ beforeAll(() => {
   );
 
   window.HTMLElement.prototype.scrollIntoView = vi.fn();
+  // A sonner toast captures the pointer on press, which jsdom lacks.
+  window.HTMLElement.prototype.setPointerCapture = vi.fn();
+  window.HTMLElement.prototype.releasePointerCapture = vi.fn();
   // TanStack Router restores the scroll position after each navigation.
   window.scrollTo = vi.fn();
 });

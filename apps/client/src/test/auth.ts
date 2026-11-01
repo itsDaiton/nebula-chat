@@ -6,12 +6,20 @@ import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { API_ROUTE } from '@/test/api';
 import { server } from '@/test/msw';
 
-/** A better-auth `get-session` body; a Guest unless `isAnonymous` is false, unverified unless `emailVerified`. */
+/** A better-auth `get-session` body: a Guest, unverified, with no plugin fields unless overridden. */
 export const aSession = ({
   isAnonymous = true,
   emailVerified = false,
   image = null,
-}: { isAnonymous?: boolean; emailVerified?: boolean; image?: string | null } = {}) => ({
+  role,
+  twoFactorEnabled,
+}: {
+  isAnonymous?: boolean;
+  emailVerified?: boolean;
+  image?: string | null;
+  role?: string;
+  twoFactorEnabled?: boolean;
+} = {}) => ({
   session: {
     id: 'session-1',
     userId: 'user-1',
@@ -27,6 +35,8 @@ export const aSession = ({
     emailVerified,
     image,
     isAnonymous,
+    ...(role !== undefined && { role }),
+    ...(twoFactorEnabled !== undefined && { twoFactorEnabled }),
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },

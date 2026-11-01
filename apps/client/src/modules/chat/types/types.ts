@@ -1,13 +1,24 @@
 import type { Dispatch, SetStateAction } from 'react';
+import type { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
+import type { ModelProvider } from '@/shared/types/types';
 
 export type ChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  tokenCount?: number | null;
+  /** Set by the API once Messages carry how they were made (NEB-665); null for a Run answer. */
+  model?: string | null;
+  estimatedCostUsd?: number | null;
+  runId?: string | null;
 };
 
 export type ChatMessageProps = {
   message: ChatMessage;
+  /** Re-asks the prompt this reply answered; only the newest reply offers it. */
+  onRegenerate?: () => void;
+  /** The reply is still arriving, so there is nothing to copy or regenerate yet. */
+  isStreaming?: boolean;
 };
 
 export type ChatInputProps = {
@@ -22,6 +33,8 @@ export type ChatInputProps = {
 
 export type ChatHistoryStreamOptions = {
   model: string;
+  /** How the reply is produced; a Direct reply when omitted. */
+  mode?: SendMessageBodyMode;
   messages: ChatMessage[];
   sessionId?: string;
 };
@@ -82,9 +95,34 @@ export type ChatEmptyStateProps = {
   sessionId: string | undefined;
 };
 
+export type ModelOption = {
+  label: string;
+  value: string;
+  provider: ModelProvider;
+  contextWindow: number;
+  maxOutput: number;
+};
+
+export type ModelPickerState = {
+  isOpen: boolean;
+  search: string;
+  setOpen: (isOpen: boolean) => void;
+  setSearch: (search: string) => void;
+};
+
+export type ModelSelectProps = {
+  selectedModel: string;
+  onModelChange: (model: string) => void;
+  /** The catalog to pick from; the client's own list until `GET /api/models` is read. */
+  options?: ModelOption[];
+};
+
 export type ChatMessageListProps = {
   history: ChatMessage[];
   isStreaming: boolean;
+  /** The newest reply was stopped by the User, so a note follows the thread. */
+  isReplyStopped?: boolean;
+  onRegenerate?: (prompt: string) => void;
 };
 
 export type ModelState = {
@@ -111,6 +149,8 @@ export type ChatStreamState = {
   isStopRequested: boolean;
   /** A Guest's send was refused because their message allowance is spent. */
   isMessageAllowanceReached: boolean;
+  /** The newest reply was stopped by the User (kept in the client only: the server persists no marker). */
+  isReplyStopped: boolean;
   setHistory: Dispatch<SetStateAction<ChatMessage[]>>;
   setIsStreaming: (isStreaming: boolean) => void;
   setIsPostStreamNavigation: (v: boolean) => void;
@@ -123,13 +163,6 @@ export type ChatStreamState = {
 export type MessageState = {
   message: string;
   setMessage: Dispatch<SetStateAction<string>>;
-};
-
-export type ModelSelectorState = {
-  isSelectOpen: boolean;
-  triggerWidth: number;
-  setIsSelectOpen: (isOpen: boolean) => void;
-  setTriggerWidth: (width: number) => void;
 };
 
 /** The events a reply stream carries (`GET /api/streams/{streamId}`). */

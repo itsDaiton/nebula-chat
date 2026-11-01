@@ -18,7 +18,8 @@ import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
 import { renderRoute } from '@/test/renderRoute';
 import { API_ROUTE, mockApiError } from '@/test/api';
-import { aSession, mockGetSession } from '@/test/auth';
+import { aMeteredAllowance } from '@/test/allowance';
+import { aSession, holdSession, mockGetSession } from '@/test/auth';
 import { mockReplyStream, sseFrame } from '@/test/chat';
 import { server } from '@/test/msw';
 
@@ -67,7 +68,11 @@ beforeEach(() => {
   serveSessions();
   server.use(
     mockGetSession(aSession()),
-    getGetSessionMockHandler({ ...aChatSession(SESSION_ID, 'Chat'), activeStreamId: null }),
+    getGetSessionMockHandler({
+      ...aChatSession(SESSION_ID, 'Chat'),
+      activeStreamId: null,
+      waitingRun: null,
+    }),
     getListMessagesMockHandler([]),
     getGetMessageAllowanceMockHandler({ metered: false }),
   );
@@ -86,13 +91,17 @@ describe('ChatPage', () => {
   it('welcomes the user on a brand new chat', async () => {
     await renderPage();
 
-    expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('textbox', { name: resources.chat.composer.label }),
+    ).toBeInTheDocument();
   });
 
   it('renders the composer', async () => {
     await renderPage();
 
-    expect(await screen.findByRole('textbox', { name: '' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('textbox', { name: resources.chat.composer.label }),
+    ).toBeInTheDocument();
   });
 
   it('lists the sessions the API returns on a desktop layout', async () => {
@@ -120,7 +129,7 @@ describe('ChatPage', () => {
     const { container } = await renderPage();
 
     await waitFor(() =>
-      expect(container.querySelectorAll('.chakra-skeleton').length).toBeGreaterThan(0),
+      expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0),
     );
   });
 
@@ -156,7 +165,11 @@ describe('ChatPage', () => {
     const STREAM_ID = '33333333-3333-4333-8333-333333333333';
     let opened: unknown;
     server.use(
-      getGetSessionMockHandler({ ...aChatSession(SESSION_ID, 'Chat'), activeStreamId: STREAM_ID }),
+      getGetSessionMockHandler({
+        ...aChatSession(SESSION_ID, 'Chat'),
+        activeStreamId: STREAM_ID,
+        waitingRun: null,
+      }),
       getListMessagesMockHandler([aMessage('m1', 'user', 'what is 2+2?')]),
       http.get(API_ROUTE.replyStream, ({ params }) => {
         opened = params['streamId'];
@@ -226,9 +239,157 @@ describe('ChatPage', () => {
     await renderPage();
     expect(await screen.findByText(resources.sessions.empty)).toBeInTheDocument();
 
-    await userEvent.type(screen.getByRole('textbox', { name: '' }), 'hello{Enter}');
+    await userEvent.type(
+      screen.getByRole('textbox', { name: resources.chat.composer.label }),
+      'hello{Enter}',
+    );
 
     expect(await screen.findByText('Brand new chat')).toBeInTheDocument();
+  });
+
+  it('fills the composer from a starter prompt', async () => {
+    await holdSession({ isAnonymous: false, emailVerified: true });
+    await renderPage();
+    const pool: string[] = resources.chat.starters.map(({ prompt }) => prompt);
+    const starter = (await screen.findAllByRole('button')).find((button) =>
+      pool.includes(button.textContent ?? ''),
+    );
+
+    await userEvent.click(starter!);
+    const prompt = starter!.textContent;
+
+    expect(screen.getByRole('textbox', { name: resources.chat.composer.label })).toHaveValue(
+      prompt,
+    );
+  });
+
+  it('adds a newline on Shift+Enter and sends on Enter', async () => {
+    let sends = 0;
+    server.use(
+      getCreateSessionMockHandler(aChatSession(SESSION_ID, 'hello')),
+      getSendMessageMockHandler(() => {
+        sends += 1;
+        return {
+          messageId: '22222222-2222-4222-8222-222222222222',
+          streamId: '33333333-3333-4333-8333-333333333333',
+        };
+      }),
+      mockReplyStream(sseFrame('token', { token: 'hi' }), sseFrame('end', {})),
+    );
+    await renderPage();
+    const box = await screen.findByRole('textbox', { name: resources.chat.composer.label });
+
+    await userEvent.type(box, 'one{Shift>}{Enter}{/Shift}two');
+
+    expect(box).toHaveValue('one\ntwo');
+    expect(sends).toBe(0);
+
+    await userEvent.type(box, '{Enter}');
+
+    await waitFor(() => expect(sends).toBe(1));
+  });
+
+  it('keeps the same composer mounted when the thread replaces the empty state', async () => {
+    // A remount unsubscribes the allowance footer, which cancels the allowance check the send is awaiting.
+    server.use(
+      getCreateSessionMockHandler(aChatSession(SESSION_ID, 'hello')),
+      getSendMessageMockHandler({
+        messageId: '22222222-2222-4222-8222-222222222222',
+        streamId: '33333333-3333-4333-8333-333333333333',
+      }),
+      mockReplyStream(sseFrame('token', { token: 'hi' }), sseFrame('end', {})),
+    );
+    await renderPage();
+    const box = await screen.findByRole('textbox', { name: resources.chat.composer.label });
+
+    await userEvent.type(box, 'hello{Enter}');
+    expect(await screen.findByText('hello')).toBeInTheDocument();
+
+    expect(box).toBeInTheDocument();
+  });
+
+  it('shows the Run toggle disabled, and the allowance counter under the composer', async () => {
+    await holdSession({ isAnonymous: true });
+    server.use(mockGetSession(aSession()), getGetMessageAllowanceMockHandler(aMeteredAllowance(3)));
+    await renderPage();
+
+    expect(await screen.findByText('3 of 10 messages left')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: resources.chat.run.label })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+  });
+
+  describe('when the first reply of a new chat fails', () => {
+    const PROVIDER_ERROR = 'The model provider rejected the request';
+
+    const serveFailedFirstReply = (onCreate = vi.fn()) => {
+      server.use(
+        getCreateSessionMockHandler(() => {
+          onCreate();
+          return aChatSession(SESSION_ID, 'hello');
+        }),
+        getSendMessageMockHandler({
+          messageId: '22222222-2222-4222-8222-222222222222',
+          streamId: '33333333-3333-4333-8333-333333333333',
+        }),
+        mockReplyStream(
+          sseFrame('error', { success: false, error: 'Internal', message: PROVIDER_ERROR }),
+          sseFrame('end', {}),
+        ),
+      );
+      return onCreate;
+    };
+
+    it('keeps the message and shows the error where the reply would be, not the greeting', async () => {
+      serveFailedFirstReply();
+      await renderPage();
+
+      await userEvent.type(
+        await screen.findByRole('textbox', { name: resources.chat.composer.label }),
+        'hello{Enter}',
+      );
+
+      expect(await screen.findByText(PROVIDER_ERROR)).toBeInTheDocument();
+      expect(screen.getByText('hello', { selector: 'p, div, span' })).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
+    });
+
+    it('keeps the error once the Session it created has loaded', async () => {
+      serveFailedFirstReply();
+      server.use(getListMessagesMockHandler([aMessage('m1', 'user', 'hello')]));
+      await renderPage();
+
+      await userEvent.type(
+        await screen.findByRole('textbox', { name: resources.chat.composer.label }),
+        'hello{Enter}',
+      );
+      await screen.findByText(PROVIDER_ERROR);
+
+      await waitFor(() => expect(useChatStreamStore.getState().isStreaming).toBe(false));
+      expect(screen.getByText(PROVIDER_ERROR)).toBeInTheDocument();
+      expect(screen.queryByText(resources.chat.emptySession)).not.toBeInTheDocument();
+    });
+
+    it('continues the Session the failed attempt created instead of starting another', async () => {
+      const onCreate = serveFailedFirstReply();
+      await renderPage();
+      await userEvent.type(
+        await screen.findByRole('textbox', { name: resources.chat.composer.label }),
+        'hello{Enter}',
+      );
+      await screen.findByText(PROVIDER_ERROR);
+      await waitFor(() => expect(useChatStreamStore.getState().isStreaming).toBe(false));
+
+      await userEvent.type(
+        screen.getByRole('textbox', { name: resources.chat.composer.label }),
+        'again{Enter}',
+      );
+
+      expect(await screen.findByText('again')).toBeInTheDocument();
+      await waitFor(() => expect(screen.getAllByText(PROVIDER_ERROR)).toHaveLength(2));
+      expect(onCreate).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('renders on a mobile layout without the side panels', async () => {
@@ -237,7 +398,9 @@ describe('ChatPage', () => {
 
     await renderPage();
 
-    expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('textbox', { name: resources.chat.composer.label }),
+    ).toBeInTheDocument();
 
     layout.isMobile = false;
     layout.showSidePanels = true;

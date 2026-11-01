@@ -77,17 +77,19 @@ describe('MessageAllowanceCounter', () => {
     serveAllowance(aMeteredAllowance(3));
     const { router } = await renderCounter(GUEST);
 
-    await userEvent.click(await screen.findByRole('link', { name: messageAllowance.action }));
+    await userEvent.click(
+      await screen.findByRole('link', { name: messageAllowance.counterAction }),
+    );
 
     expect(router.state.location.pathname).toBe('/auth');
   });
 
-  it('offers no sign-up while plenty is left', async () => {
+  it('offers a Guest the sign-up link even while plenty is left', async () => {
     serveAllowance(aMeteredAllowance(4));
     await renderCounter(GUEST);
 
     await screen.findByRole('status');
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: messageAllowance.counterAction })).toBeInTheDocument();
   });
 
   it('scales the low state with a different configured cap', async () => {
@@ -95,15 +97,7 @@ describe('MessageAllowanceCounter', () => {
     await renderCounter(GUEST);
 
     expect(await screen.findByRole('status')).toHaveTextContent('30 of 100 messages left');
-    expect(screen.getByRole('link', { name: messageAllowance.action })).toBeInTheDocument();
-  });
-
-  it('is quiet above the low threshold of a different cap', async () => {
-    serveAllowance(aMeteredAllowance(31, 100));
-    await renderCounter(GUEST);
-
-    await screen.findByRole('status');
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: messageAllowance.counterAction })).toBeInTheDocument();
   });
 
   it('leaves the resend action to the verify-email reminder for an unverified user running low', async () => {

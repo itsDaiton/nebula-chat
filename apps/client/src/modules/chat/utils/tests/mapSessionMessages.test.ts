@@ -19,8 +19,29 @@ const aMessage = (id: string, role: string, content: string) => ({
 describe('mapSessionMessages', () => {
   it('keeps only the fields the chat view renders', () => {
     expect(mapSessionMessages([aMessage('m1', 'user', 'hello')])).toEqual([
-      { id: 'm1', role: 'user', content: 'hello' },
+      {
+        id: 'm1',
+        role: 'user',
+        content: 'hello',
+        tokenCount: 3,
+        model: null,
+        estimatedCostUsd: null,
+        runId: null,
+      },
     ]);
+  });
+
+  it('carries the Model, cost and Run once the API returns them', () => {
+    const [mapped] = mapSessionMessages([
+      {
+        ...aMessage('m1', 'assistant', 'hi'),
+        model: 'gpt-4.1',
+        estimatedCostUsd: 0.002,
+        runId: null,
+      },
+    ]);
+
+    expect(mapped).toMatchObject({ model: 'gpt-4.1', estimatedCostUsd: 0.002, runId: null });
   });
 
   it('preserves order', () => {
