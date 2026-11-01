@@ -49,6 +49,7 @@ export const SettingsDialog = () => {
     >
       <DialogContent
         showCloseButton
+        overlayClassName="bg-black/40 supports-backdrop-filter:backdrop-blur-none"
         className="app-shell h-[640px] max-h-[calc(100dvh-2rem)] gap-0 overflow-hidden p-0 sm:max-w-[900px] md:grid md:grid-cols-[220px_1fr] md:grid-rows-1"
       >
         <div className="flex min-h-0 flex-col gap-2 border-b border-border p-3 md:border-r md:border-b-0 md:p-4">

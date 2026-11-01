@@ -32,7 +32,7 @@ const PreviewHalf = ({ dark }: { dark: boolean }) => (
 
 /** The theme in miniature; System is split, light beside dark. */
 const Preview = ({ mode }: { mode: (typeof THEMES)[number] }) => (
-  <span aria-hidden className="flex h-16 overflow-hidden border-b border-border">
+  <span aria-hidden className="flex h-20 overflow-hidden border-b border-border">
     {mode !== 'dark' && <PreviewHalf dark={false} />}
     {mode !== 'light' && <PreviewHalf dark />}
   </span>
@@ -57,8 +57,8 @@ export const AppearanceSetting = () => {
               aria-checked={active === mode}
               onClick={() => setTheme(mode)}
               className={cn(
-                'w-32 overflow-hidden rounded-lg border text-left text-[13px] outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
-                active === mode ? 'border-foreground' : 'border-border',
+                'w-40 overflow-hidden rounded-lg border text-left text-[13px] outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+                active === mode ? 'border-foreground ring-2 ring-foreground' : 'border-border',
               )}
             >
               <Preview mode={mode} />
