@@ -133,23 +133,6 @@ export const TwoFactorSetting = () => {
                 className="w-36 font-mono tracking-[0.3em]"
                 value={code}
                 aria-invalid={Boolean(verify.error)}
-                onKeyDown={(event) => {
-                  // Czech, French and similar layouts put symbols on the number row; a code is digits, so the key's digit is taken.
-                  const digit = /^Digit(\d)$/.exec(event.code)?.[1];
-                  if (
-                    !digit ||
-                    event.key === digit ||
-                    event.ctrlKey ||
-                    event.metaKey ||
-                    event.altKey
-                  ) {
-                    return;
-                  }
-                  event.preventDefault();
-                  const { value, selectionStart, selectionEnd } = event.currentTarget;
-                  const next = value.slice(0, selectionStart ?? value.length) + digit;
-                  setCode((next + value.slice(selectionEnd ?? value.length)).slice(0, 6));
-                }}
                 // Apps show the code as "123 456", so paste is cleaned before it is cut to six digits.
                 onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
               />
