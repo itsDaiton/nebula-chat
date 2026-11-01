@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.15.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.15.0...nebula-chat-server-v4.15.1) (2026-11-01)
+
+
+### Bug Fixes
+
+* **server:** qualify the Run cost column in the Message listing ([#726](https://github.com/itsDaiton/nebula-chat/issues/726)) ([0d7bba0](https://github.com/itsDaiton/nebula-chat/commit/0d7bba0938c40b6da314ac916d316d7a47dc7655))
+
 ## [4.15.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.14.0...nebula-chat-server-v4.15.0) (2026-10-31)
 
 
