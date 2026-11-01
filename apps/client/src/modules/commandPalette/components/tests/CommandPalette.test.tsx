@@ -202,7 +202,7 @@ describe('the command palette', () => {
   });
 
   it('opens Settings', async () => {
-    const { router } = await renderApp();
+    await renderApp();
     await openPalette();
 
     await userEvent.click(
