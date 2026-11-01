@@ -205,6 +205,59 @@ describe('useChatStream — usage and errors', () => {
     );
   });
 
+  it("shows the saved reply's model and cost on its meta row once the stream ends", async () => {
+    streamFrames(
+      frame('token', { token: 'hi' }),
+      frame('usage', { promptTokens: 10, completionTokens: 4, totalTokens: 14 }),
+      frame('end', {}),
+    );
+    server.use(
+      getListMessagesMockHandler([
+        {
+          id: 'saved-u1',
+          sessionId: NEW_SESSION_ID,
+          role: 'user',
+          content: 'what is 2+2?',
+          tokenCount: null,
+          cached: false,
+          model: null,
+          estimatedCostUsd: null,
+          runId: null,
+          contextTokens: null,
+          contextMessages: null,
+          createdAt: '2026-06-15T11:00:00.000Z',
+        },
+        {
+          id: 'saved-a1',
+          sessionId: NEW_SESSION_ID,
+          role: 'assistant',
+          content: 'hi',
+          tokenCount: 14,
+          cached: false,
+          model: 'gpt-4o-mini',
+          estimatedCostUsd: 0.0021,
+          runId: null,
+          contextTokens: 10,
+          contextMessages: 1,
+          createdAt: '2026-06-15T11:00:01.000Z',
+        },
+      ]),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    await waitFor(() =>
+      expect(history().at(-1)).toMatchObject({
+        role: 'assistant',
+        content: 'hi',
+        tokenCount: 14,
+        model: 'gpt-4o-mini',
+        estimatedCostUsd: 0.0021,
+      }),
+    );
+  });
+
   it('surfaces the message of an error event in place of the reply', async () => {
     streamFrames(
       frame('error', { success: false, error: 'BadRequest', message: 'Unsupported model: gpt-0' }),
