@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import {
   BookOpenIcon,
   CalendarDaysIcon,
@@ -33,7 +33,23 @@ export const ChatStarters = () => {
   const setMessage = useMessageStore((state) => state.setMessage);
   const starters = useMemo(() => pickStarters(resources.chat.starters), []);
 
+  const filled = useRef<string | null>(null);
+
+  // A starter is a suggestion, not a draft: it goes when the chat leaves the screen, unless edited.
+  const watchLeaving = useCallback(
+    (node: HTMLDivElement | null) =>
+      node
+        ? () => {
+            if (useMessageStore.getState().message === filled.current) {
+              useMessageStore.getState().setMessage('');
+            }
+          }
+        : undefined,
+    [],
+  );
+
   const fill = (prompt: string) => {
+    filled.current = prompt;
     setMessage(prompt);
     document.querySelector<HTMLTextAreaElement>('[data-slot="prompt-input-textarea"]')?.focus();
   };
@@ -41,7 +57,7 @@ export const ChatStarters = () => {
   if (isGuest) return null;
 
   return (
-    <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+    <div ref={watchLeaving} className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
       {starters.map(({ icon, prompt }) => {
         const Icon = ICONS[icon];
         return (
