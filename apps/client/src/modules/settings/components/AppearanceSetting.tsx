@@ -44,7 +44,7 @@ export const AppearanceSetting = () => {
 
   return (
     <SettingsGroup>
-      <SettingsRow label={theme.label} description={theme.description}>
+      <SettingsRow label={theme.label} description={theme.description} stacked>
         <div role="radiogroup" aria-label={theme.label} className="flex gap-3">
           {THEMES.map((mode) => (
             <button

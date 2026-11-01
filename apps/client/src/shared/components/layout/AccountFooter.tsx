@@ -73,7 +73,7 @@ export const AccountFooter = () => {
             <span className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
               <Badge
                 variant="outline"
-                className="h-[19px] rounded-md px-1.5 font-mono text-[10.5px]"
+                className="h-[19px] rounded-md border-border-strong px-1.5 font-mono text-[10.5px] text-muted-foreground"
               >
                 {isAdmin ? resources.account.admin : resources.account.registered}
               </Badge>

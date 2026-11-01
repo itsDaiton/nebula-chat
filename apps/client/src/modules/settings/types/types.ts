@@ -18,6 +18,8 @@ export type SettingsDialogState = {
 export type SettingsRowProps = {
   label: string;
   description?: ReactNode;
+  /** The control goes beneath the label rather than beside it, for a wide control. */
+  stacked?: boolean;
   children?: ReactNode;
 };
 
