@@ -19,7 +19,14 @@ const { deleteAccount } = resources.settings.account;
 export const DeleteAccountSetting = () => (
   <SettingsRow label={deleteAccount.label} description={deleteAccount.description}>
     <Dialog>
-      <DialogTrigger render={<Button variant="destructive" />}>
+      <DialogTrigger
+        render={
+          <Button
+            variant="destructive"
+            className="border-destructive/40 bg-transparent dark:bg-transparent"
+          />
+        }
+      >
         {deleteAccount.action}
       </DialogTrigger>
       <DialogContent role="alertdialog" className="app-shell sm:max-w-md">

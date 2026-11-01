@@ -215,7 +215,11 @@ export const TwoFactorSetting = () => {
           <Button variant="outline" onClick={() => setStep({ name: 'regenerate' })}>
             {twoFactor.regenerate}
           </Button>
-          <Button variant="destructive" onClick={() => setStep({ name: 'disable' })}>
+          <Button
+            variant="destructive"
+            className="border-destructive/40 bg-transparent dark:bg-transparent"
+            onClick={() => setStep({ name: 'disable' })}
+          >
             {twoFactor.turnOff}
           </Button>
         </div>

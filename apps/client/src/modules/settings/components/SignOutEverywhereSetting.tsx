@@ -10,7 +10,12 @@ export const SignOutEverywhereSetting = () => {
 
   return (
     <SettingsRow label={signOutEverywhere.label} description={signOutEverywhere.description}>
-      <Button variant="destructive" disabled={isPending} onClick={() => mutate()}>
+      <Button
+        variant="destructive"
+        className="border-destructive/40 bg-transparent dark:bg-transparent"
+        disabled={isPending}
+        onClick={() => mutate()}
+      >
         {signOutEverywhere.action}
       </Button>
     </SettingsRow>

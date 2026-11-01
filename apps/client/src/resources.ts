@@ -208,6 +208,7 @@ export const resources = {
   settings: {
     title: 'Settings',
     nav: 'Settings sections',
+    search: { label: 'Search settings', placeholder: 'Search', empty: 'No settings match.' },
     sections: {
       profile: 'Profile',
       security: 'Security',
@@ -302,37 +303,39 @@ export const resources = {
         system: 'System',
         light: 'Light',
         dark: 'Dark',
-        description: 'System follows your device setting.',
+        description: 'Light, dark, or follow your device. Applies right away.',
       },
       font: {
         label: 'Interface font',
-        description: 'Geist, or your system’s UI font',
+        description: 'The font for menus, buttons and labels. Geist, or your device’s own.',
         geist: 'Geist',
         system: 'System',
       },
       responseFont: {
         label: 'Response font',
-        description: 'The font of the conversation',
+        description:
+          'The font for messages in a Session. Match interface follows the setting above.',
         match: 'Match interface',
         geist: 'Geist',
         system: 'System',
       },
       textSize: {
         label: 'Transcript text size',
-        description: 'How large the conversation reads',
+        description: 'Scales the messages in a Session. The rest of the app keeps its size.',
         small: 'Small',
         medium: 'Medium',
         large: 'Large',
       },
       width: {
         label: 'Transcript width',
-        description: 'How wide the conversation column is',
+        description: 'How wide the conversation column is. Wide fits more on a large screen.',
         narrow: 'Narrow',
         wide: 'Wide',
       },
       motion: {
         label: 'Motion',
-        description: 'System follows your device’s reduce-motion setting',
+        description:
+          'Animations and transitions. System follows your device’s reduce-motion setting.',
         system: 'System',
         reduced: 'Reduced',
         full: 'Full',
@@ -410,6 +413,7 @@ export const resources = {
     switchModel: 'Switch Model…',
     toggleTheme: 'Toggle theme',
     openSettings: 'Open Settings',
+    settingsSection: (section: string) => `Settings: ${section}`,
     openAdmin: 'Open admin',
   },
   shell: {

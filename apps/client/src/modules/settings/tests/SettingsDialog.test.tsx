@@ -839,6 +839,58 @@ describe('Settings dialog', () => {
     ).toBeInTheDocument();
   });
 
+  it('opens a bare request on Profile, not the section last shown', async () => {
+    await holdSession({ isAnonymous: false });
+    useSettingsDialogStore.setState({ isOpen: false, section: 'security' });
+    useSettingsDialogStore.getState().openSettings();
+
+    await renderRoute('/');
+
+    expect(
+      await screen.findByRole('button', { name: resources.settings.sections.profile }),
+    ).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('opens /settings on the section named in ?section', async () => {
+    await holdSession({ isAnonymous: false });
+
+    await renderRoute('/settings?section=security');
+
+    expect(
+      await screen.findByRole('button', { name: resources.settings.sections.security }),
+    ).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('searches the settings and jumps to the section that holds the match', async () => {
+    await holdSession({ isAnonymous: false });
+    await renderPage('profile');
+
+    await userEvent.type(
+      await screen.findByRole('searchbox', { name: resources.settings.search.label }),
+      'backup',
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: new RegExp(resources.settings.security.twoFactor.label) }),
+    );
+
+    expect(
+      screen.getByRole('button', { name: resources.settings.sections.security }),
+    ).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('searchbox')).toHaveValue('');
+  });
+
+  it('says so when nothing matches', async () => {
+    await holdSession({ isAnonymous: false });
+    await renderPage('profile');
+
+    await userEvent.type(
+      await screen.findByRole('searchbox', { name: resources.settings.search.label }),
+      'zzzz',
+    );
+
+    expect(screen.getByText(resources.settings.search.empty)).toBeInTheDocument();
+  });
+
   it('opens on the requested section and marks it current', async () => {
     await holdSession({ isAnonymous: false });
     useSettingsDialogStore.getState().openSettings('account');

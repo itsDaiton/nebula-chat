@@ -8,7 +8,7 @@ export type SettingsSectionId = 'profile' | 'security' | 'archived' | 'appearanc
 export type SettingsDialogState = {
   isOpen: boolean;
   section: SettingsSectionId;
-  /** Opens the dialog on `section`, or on the one it last showed. */
+  /** Opens the dialog on `section`, or on Profile. */
   openSettings: (section?: SettingsSectionId) => void;
   closeSettings: () => void;
   setSection: (section: SettingsSectionId) => void;
