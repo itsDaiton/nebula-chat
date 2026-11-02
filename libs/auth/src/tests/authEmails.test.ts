@@ -50,4 +50,11 @@ describe.each([
     expect(inlineImages).toEqual([LOGO]);
     expect(html).toContain(`src="cid:${LOGO.contentId}"`);
   });
+
+  it("sets its text in the app's Geist, falling back to the system font", async () => {
+    const { html } = await build({ user, url: URL_WITH_QUERY });
+
+    expect(html).toContain('href="https://fonts.googleapis.com/css2?family=Geist');
+    expect(html).toMatch(/font-family:\s*Geist,\s*-apple-system/);
+  });
 });
