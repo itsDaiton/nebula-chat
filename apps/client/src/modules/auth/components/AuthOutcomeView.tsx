@@ -7,7 +7,7 @@ import type { AuthOutcomeViewProps } from '@/modules/auth/types/types';
 export const AuthOutcomeView = ({ outcome }: AuthOutcomeViewProps) => {
   switch (outcome.kind) {
     case 'twoFactor':
-      return <TwoFactorChallenge />;
+      return <TwoFactorChallenge canTrustDevice={outcome.canTrustDevice} />;
     case 'pendingDeletion':
       return <PendingDeletionPrompt {...outcome} />;
     case 'banned':

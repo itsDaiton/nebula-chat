@@ -24,25 +24,22 @@ export const PendingDeletionPrompt = ({ purgeDate, restoreToken }: PendingDeleti
           <>
             {pendingDeletion.scheduledOn}
             <b className="font-medium text-foreground">{formatAuthDate(purgeDate)}</b>
-            {restoreToken ? pendingDeletion.restoreOrSignOut : pendingDeletion.cannotRestoreHere}
+            {pendingDeletion.restoreOrSignOut}
           </>
         }
       />
       <div className="mt-[22px] flex flex-col gap-1.5">
         <AuthFormAlert message={error?.message} />
-        {/* A password sign-in with 2FA gets no token: the server refuses it before the code is asked for. */}
-        {restoreToken && (
-          <Button
-            size="lg"
-            className="w-full"
-            disabled={isPending}
-            aria-busy={isPending}
-            onClick={() => restore(restoreToken)}
-          >
-            {isPending && <Loader2Icon className="animate-spin" />}
-            {pendingDeletion.restore}
-          </Button>
-        )}
+        <Button
+          size="lg"
+          className="w-full"
+          disabled={isPending}
+          aria-busy={isPending}
+          onClick={() => restore(restoreToken)}
+        >
+          {isPending && <Loader2Icon className="animate-spin" />}
+          {pendingDeletion.restore}
+        </Button>
         {/* No session was made, so signing out only leaves: the browser keeps its Guest session. */}
         <Link
           to="/"

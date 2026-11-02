@@ -79,10 +79,12 @@ export const mockEmailSignIn = mockAuthPost(API_ROUTE.authSignInEmail, {
 });
 
 /** Answers `sign-in/email` the way the two-factor plugin does for a User with 2FA: no session, a code to ask for. */
-export const mockTwoFactorSignIn = mockAuthPost(API_ROUTE.authSignInEmail, {
-  twoFactorRedirect: true,
-  twoFactorMethods: ['totp'],
-});
+export const mockTwoFactorSignIn = ({ canTrustDevice = true } = {}): HttpHandler =>
+  mockAuthPost(API_ROUTE.authSignInEmail, {
+    twoFactorRedirect: true,
+    twoFactorMethods: ['totp'],
+    canTrustDevice,
+  })();
 
 /** Signs a challenged User in with a backup code on `two-factor/verify-backup-code`. */
 export const mockBackupCodeVerify = mockAuthPost(API_ROUTE.authTwoFactorVerifyBackupCode, {

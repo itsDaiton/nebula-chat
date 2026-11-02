@@ -26,7 +26,11 @@ const SLOT_CLASS =
   'h-[50px] w-10 rounded-[10px] border border-border-strong bg-canvas font-mono text-xl font-medium first:rounded-[10px] first:border last:rounded-[10px] data-[active=true]:border-foreground data-[active=true]:ring-0 sm:w-11 dark:bg-raised';
 
 /** The code (or a backup code) that finishes a sign-in held back for its second factor. */
-export const TwoFactorCodeForm = ({ method, onOutcome }: TwoFactorCodeFormProps) => {
+export const TwoFactorCodeForm = ({
+  method,
+  canTrustDevice,
+  onOutcome,
+}: TwoFactorCodeFormProps) => {
   const { mutate, isPending } = useVerifySecondFactor();
   const {
     control,
@@ -37,8 +41,7 @@ export const TwoFactorCodeForm = ({ method, onOutcome }: TwoFactorCodeFormProps)
   } = useForm<TwoFactorCodeValues>({
     resolver: zodResolver(method === 'totp' ? totpCodeSchema : backupCodeSchema),
     mode: 'onTouched',
-    // The challenge carries no role, so an Admin (who can't trust a device) is offered it too.
-    defaultValues: { code: '', trustDevice: true },
+    defaultValues: { code: '', trustDevice: canTrustDevice },
   });
   const codeId = useId();
   const errorId = `${codeId}-error`;
@@ -123,16 +126,18 @@ export const TwoFactorCodeForm = ({ method, onOutcome }: TwoFactorCodeFormProps)
           </p>
         )}
       </div>
-      <label className="flex items-center gap-2 text-[13px] text-foreground-secondary">
-        <Controller
-          control={control}
-          name="trustDevice"
-          render={({ field }) => (
-            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-          )}
-        />
-        {twoFactor.trustDevice}
-      </label>
+      {canTrustDevice && (
+        <label className="flex items-center gap-2 text-[13px] text-foreground-secondary">
+          <Controller
+            control={control}
+            name="trustDevice"
+            render={({ field }) => (
+              <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+            )}
+          />
+          {twoFactor.trustDevice}
+        </label>
+      )}
       <Button type="submit" size="lg" className="w-full" disabled={isPending} aria-busy={isPending}>
         {isPending && <Loader2Icon className="animate-spin" />}
         {twoFactor.verify}

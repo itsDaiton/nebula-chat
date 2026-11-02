@@ -142,8 +142,8 @@ export type AuthHeadingProps = {
 
 /** Why a sign-in stopped short of a session, and what the page shows in place of the form. */
 export type AuthOutcome =
-  | { kind: 'twoFactor' }
-  | { kind: 'pendingDeletion'; purgeDate: string; restoreToken?: string }
+  | { kind: 'twoFactor'; canTrustDevice: boolean }
+  | { kind: 'pendingDeletion'; purgeDate: string; restoreToken: string }
   | { kind: 'banned'; reason: string; until: string | null };
 
 /** The search params a social sign-in's redirect back to /auth can carry. */
@@ -170,8 +170,12 @@ type TwoFactorMethod = 'totp' | 'backup';
 /** One go at the sign-in's second factor. */
 export type SecondFactorAttempt = TwoFactorCodeValues & { method: TwoFactorMethod };
 
+export type TwoFactorChallengeProps = Omit<Extract<AuthOutcome, { kind: 'twoFactor' }>, 'kind'>;
+
 export type TwoFactorCodeFormProps = {
   method: TwoFactorMethod;
+  /** False for an Admin, who can't trust a device (ADR-0027 §2). */
+  canTrustDevice: boolean;
   onOutcome: (outcome: AuthOutcome) => void;
 };
 

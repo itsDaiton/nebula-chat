@@ -5,7 +5,12 @@ import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
 const pendingDeletionBody = z.object({
   // better-fetch revives an ISO date in a JSON body into a Date.
   purgeDate: z.union([z.string(), z.date()]).transform((date) => new Date(date).toISOString()),
-  restoreToken: z.string().optional(),
+  restoreToken: z.string(),
+});
+
+const secondFactorData = z.object({
+  twoFactorRedirect: z.literal(true),
+  canTrustDevice: z.boolean().optional(),
 });
 
 const bannedBody = z.object({ message: z.string() });
@@ -16,7 +21,7 @@ const BANNED_MESSAGE = /Reason: ([\s\S]*)\. (?:The ban ends (\S+)\.|The ban has 
 const NO_REASON = 'No reason';
 
 /** The ban a refused sign-in's message describes; a social sign-in brings it back as `?error_description=`. */
-export const bannedOutcome = (message: string): AuthOutcome => {
+const bannedOutcome = (message: string): AuthOutcome => {
   const [, reason = '', until = null] = BANNED_MESSAGE.exec(message) ?? [];
   return { kind: 'banned', reason: reason === NO_REASON ? '' : reason, until };
 };
@@ -29,7 +34,7 @@ export const socialSignInOutcome = ({
   error,
   errorDescription,
 }: SocialSignInLanding): AuthOutcome | null => {
-  if (pending && !Number.isNaN(Date.parse(pending))) {
+  if (pending && restoreToken && !Number.isNaN(Date.parse(pending))) {
     return { kind: 'pendingDeletion', purgeDate: pending, restoreToken };
   }
   if (error === 'BANNED_USER') return bannedOutcome(errorDescription ?? '');
@@ -37,8 +42,11 @@ export const socialSignInOutcome = ({
 };
 
 /** A sign-in the two-factor plugin held back: no session yet, a code to ask for. */
-export const needsSecondFactor = ({ data }: AuthResult) =>
-  typeof data === 'object' && data !== null && 'twoFactorRedirect' in data;
+export const secondFactorOutcome = ({ data }: AuthResult): AuthOutcome | undefined => {
+  const challenge = secondFactorData.safeParse(data);
+  if (!challenge.success) return undefined;
+  return { kind: 'twoFactor', canTrustDevice: challenge.data.canTrustDevice !== false };
+};
 
 /** The outcome a refused sign-in carries in its body, or nothing for an ordinary failure. */
 export const authOutcomeOf = (error: Error): AuthOutcome | undefined => {

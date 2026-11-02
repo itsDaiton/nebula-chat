@@ -7,7 +7,7 @@ import { SocialSignIn } from '@/modules/auth/components/SocialSignIn';
 import { useIdentityChange } from '@/modules/auth/hooks/useIdentityChange';
 import { useAuthPageStore } from '@/modules/auth/stores/useAuthPageStore';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
-import { authOutcomeOf, needsSecondFactor } from '@/modules/auth/utils/authOutcome';
+import { authOutcomeOf, secondFactorOutcome } from '@/modules/auth/utils/authOutcome';
 import { SIGN_IN_FORM } from '@/modules/auth/utils/authForms';
 import { resources } from '@/resources';
 
@@ -27,9 +27,11 @@ export const SignInPanel = () => {
       <AuthForm
         config={SIGN_IN_FORM}
         header="none"
-        onSuccess={(result) =>
-          needsSecondFactor(result) ? showOutcome({ kind: 'twoFactor' }) : onIdentityChange()
-        }
+        onSuccess={(result) => {
+          const challenge = secondFactorOutcome(result);
+          if (challenge) showOutcome(challenge);
+          else onIdentityChange();
+        }}
         onError={(error) => {
           const outcome = authOutcomeOf(error);
           if (outcome) showOutcome(outcome);

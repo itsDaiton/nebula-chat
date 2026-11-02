@@ -606,8 +606,8 @@ describe('AuthPage', () => {
     const verify = () => userEvent.click(screen.getByRole('button', { name: twoFactor.verify }));
 
     /** Signs in with a password the server holds back for a second factor. */
-    const reachChallenge = async () => {
-      server.use(mockTwoFactorSignIn());
+    const reachChallenge = async (options?: Parameters<typeof mockTwoFactorSignIn>[0]) => {
+      server.use(mockTwoFactorSignIn(options));
       await renderAuthFlow();
       await fillSignIn();
       await submitSignIn();
@@ -668,6 +668,24 @@ describe('AuthPage', () => {
 
       expect(await findRegisteredMenu()).toBeInTheDocument();
       expect(body).toEqual({ code: 'aaaa-1111', trustDevice: true });
+    });
+
+    it('offers an Admin no trusted device, and trusts none', async () => {
+      let body: unknown;
+      server.use(
+        mockTwoFactorVerify(async (request) => {
+          body = await request.clone().json();
+          becomeRegistered();
+        }),
+      );
+      await reachChallenge({ canTrustDevice: false });
+
+      expect(screen.queryByRole('checkbox', { name: twoFactor.trustDevice })).toBeNull();
+      await userEvent.type(codeField(), '381204');
+      await verify();
+
+      await findRegisteredMenu();
+      expect(body).toEqual({ code: '381204', trustDevice: false });
     });
 
     it('shows a wrong code under the code, keeping the challenge open', async () => {
@@ -775,13 +793,17 @@ describe('AuthPage', () => {
       expect(screen.getByRole('link', { name: resources.auth.actions.signIn })).toBeInTheDocument();
     });
 
-    it('offers no restore when the sign-in carried no token (a password sign-in with 2FA)', async () => {
+    it('says the account is scheduled for deletion when the refusal carries no restore token', async () => {
       refuseAsPending({ restoreToken: undefined });
+      await renderAuthFlow();
 
-      await reachPrompt();
+      await fillSignIn();
+      await submitSignIn();
 
-      expect(screen.queryByRole('button', { name: pendingDeletion.restore })).toBeNull();
-      expect(screen.getByText(/can’t be restored from here yet/)).toBeInTheDocument();
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        resources.auth.errors.pendingDeletion,
+      );
+      expect(screen.queryByRole('heading', { name: pendingDeletion.title })).toBeNull();
     });
 
     it('shows the prompt when a social sign-in lands here with the Purge date', async () => {

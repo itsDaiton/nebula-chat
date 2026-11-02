@@ -132,8 +132,6 @@ export const resources = {
       scheduledOn: 'Your account is scheduled for deletion on ',
       restoreOrSignOut:
         '. Restore it to keep your Sessions, or sign out and it will be deleted on that date.',
-      cannotRestoreHere:
-        '. An account with two-factor authentication can’t be restored from here yet: sign in with Google or GitHub if you linked one, or ask an Admin to restore it.',
       restore: 'Restore my account',
       signOut: 'Sign out',
     },
