@@ -6,7 +6,7 @@ import type {
 } from '@/modules/auth/types/types';
 import { resources } from '@/resources';
 
-const { validation, errors } = resources.auth;
+const { validation, errors, twoFactor } = resources.auth;
 
 // better-auth's default password bounds; the server enforces them again.
 const PASSWORD_MIN_LENGTH = 8;
@@ -91,3 +91,13 @@ export const changePasswordSchema = z
     ),
   )
   .refine(...confirmsPassword);
+
+export const totpCodeSchema = z.object({
+  code: z.string().regex(/^\d{6}$/, twoFactor.codeRequired),
+  trustDevice: z.boolean(),
+});
+
+export const backupCodeSchema = z.object({
+  code: z.string().trim().min(1, twoFactor.backupCodeRequired),
+  trustDevice: z.boolean(),
+});

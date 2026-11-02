@@ -37,7 +37,8 @@ pnpm frontend test:coverage
   `@/test/chat` serves real frames) and better-auth's `/api/auth/*`. Their
   routes live in `@/test/api`, the one place route strings are written; `@/test/auth` holds the auth
   fixture and handlers (`aSession` (pass `image` for a Profile image), `mockGetSession`, `mockAnonymousSignIn`, `mockEmailSignIn`,
-  `mockEmailSignUp`, `mockSocialSignIn` (its redirect is a hash change to `providerConsentUrl()`, the one
+  `mockEmailSignUp`, `mockTwoFactorSignIn` (a sign-in held back for a second factor), `mockBackupCodeVerify`,
+  `mockRestoreAccount`, `mockSocialSignIn` (its redirect is a hash change to `providerConsentUrl()`, the one
   navigation jsdom performs), `mockSignOut`, `mockRequestPasswordReset`, `mockResetPassword`, `mockChangePassword`, `mockUpdateUser`, `mockRevokeSessions`, `mockDeleteUser`, `mockListAccounts`,
   `mockSendVerificationEmail`) plus `refreshSession`, which refetches better-auth's module-level session
   store after a render, and `holdSession`, which serves a session and waits until that store holds it. Regenerate with `pnpm frontend generate:api` after any backend change.

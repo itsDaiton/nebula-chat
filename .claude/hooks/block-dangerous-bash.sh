@@ -34,16 +34,28 @@ if [[ "$cmd" =~ $rm_danger_re ]]; then
   block "rm -rf of root/home/working-tree (target was /, ~, \$HOME, ., ./, .., ../, *, /*, ./*, ~/*, or \$HOME/*)"
 fi
 
+# `--force-with-lease` is allowed (rebasing a feature branch needs it); a bare force, or any force onto
+# main/master, is not.
+# Each `git push …` segment is checked on its own, so a commit message in the same command can't trip it.
+while IFS= read -r push; do
+  [[ "$push" =~ (--force|[[:space:]]-f([[:space:]]|$)) ]] || continue
+  if [[ "$push" =~ (--force([[:space:]]|$)|[[:space:]]-f([[:space:]]|$)) ]]; then
+    block "git push --force / -f (use --force-with-lease)"
+  fi
+  if [[ "$push" =~ [[:space:]:+](main|master)([[:space:]]|$) ]]; then
+    block "force push to main/master"
+  fi
+done < <(printf '%s\n' "$cmd" | grep -oE 'git push[^;&|]*')
+
 case "$cmd" in
-  *"git push"*"--force"*|*"git push"*"-f "*)   block "git push with force options (all force pushes are blocked)" ;;
-  *"git reset --hard"*)                          block "git reset --hard (destructive)" ;;
-  *"git clean -fdx"*)                          block "git clean -fd (destructive)" ;;
-  *"git clean -fd"*)                           block "git clean -fd (destructive)" ;;
-  *"db:push"*"--force"*)                         block "drizzle db:push --force (bypasses migration safety)" ;;
-  *"DROP TABLE"*|*"DROP DATABASE"*|*"TRUNCATE"*) block "destructive SQL statement" ;;
-  *"docker-compose down -v"*|*"docker compose down -v"*) block "docker-compose down -v (deletes volumes)" ;;
-  *":(){ :|:& };:"*)                            block "fork bomb" ;;
-  *"--no-verify"*)                              block "--no-verify (skips git hooks)" ;;
+*"git reset --hard"*) block "git reset --hard (destructive)" ;;
+*"git clean -fdx"*) block "git clean -fd (destructive)" ;;
+*"git clean -fd"*) block "git clean -fd (destructive)" ;;
+*"db:push"*"--force"*) block "drizzle db:push --force (bypasses migration safety)" ;;
+*"DROP TABLE"* | *"DROP DATABASE"* | *"TRUNCATE"*) block "destructive SQL statement" ;;
+*"docker-compose down -v"* | *"docker compose down -v"*) block "docker-compose down -v (deletes volumes)" ;;
+*":(){ :|:& };:"*) block "fork bomb" ;;
+*"--no-verify"*) block "--no-verify (skips git hooks)" ;;
 esac
 
 exit 0

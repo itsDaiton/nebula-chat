@@ -26,6 +26,8 @@ export const API_ROUTE = {
   authDeleteUser: '*/api/auth/delete-user',
   authTwoFactorEnable: '*/api/auth/two-factor/enable',
   authTwoFactorVerifyTotp: '*/api/auth/two-factor/verify-totp',
+  authTwoFactorVerifyBackupCode: '*/api/auth/two-factor/verify-backup-code',
+  authRestoreAccount: '*/api/auth/restore-account',
   authTwoFactorDisable: '*/api/auth/two-factor/disable',
   authTwoFactorBackupCodes: '*/api/auth/two-factor/generate-backup-codes',
   authListAccounts: '*/api/auth/list-accounts',

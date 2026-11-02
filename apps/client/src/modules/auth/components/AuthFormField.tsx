@@ -12,6 +12,7 @@ export const AuthFormField = ({
   autoComplete,
   registration,
   error,
+  labelAction,
 }: AuthFormFieldProps) => {
   const { visibleFields, togglePasswordVisibility } = usePasswordVisibilityStore();
   const id = useId();
@@ -23,7 +24,7 @@ export const AuthFormField = ({
   };
 
   return (
-    <Field data-invalid={Boolean(error)}>
+    <Field data-invalid={Boolean(error)} className="relative">
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
       {type === 'password' ? (
         <PasswordInput
@@ -40,6 +41,10 @@ export const AuthFormField = ({
         <p id={errorId} className="text-sm text-destructive">
           {error}
         </p>
+      )}
+      {/* Shown in the label row but after the input in the DOM, so Tab goes straight from field to field. */}
+      {labelAction && (
+        <div className="absolute top-0 right-0 flex h-5 w-auto! items-center">{labelAction}</div>
       )}
     </Field>
   );

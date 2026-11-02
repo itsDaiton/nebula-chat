@@ -30,5 +30,9 @@ dialog's title, `none` inside a labelled settings row.
 - **Server failures go through `setError`.** One that belongs to a field goes under it
   (`setError('password', …)`); anything else goes to `root.server` and renders as an alert above the
   fields. Flag that mutation `meta: { inlineError: true }` so it is not toasted too.
+- **A sign-in can stop short of a session.** `onSuccess` receives better-auth's result and `onError` the
+  `AuthRequestError`; `utils/authOutcome.ts` reads either as an outcome (2FA challenge, Pending deletion,
+  banned), and `AuthPage` swaps the form for it through `useAuthPageStore`. The 2FA code form
+  (`TwoFactorCodeForm`) is its own react-hook-form form: an OTP input and a checkbox don't fit `AuthForm`'s configs.
 - Field values belong to react-hook-form — never mirror them into a Zustand store. UI state around a form
   (e.g. password masking) is still a Zustand store.
