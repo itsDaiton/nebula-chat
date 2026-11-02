@@ -103,7 +103,7 @@ The instance is configured with:
 | Have I Been Pwned plugin | Rejects sign-up with a known-breached password (`400 PASSWORD_COMPROMISED`); a reset is checked by the reset guard instead.                                                                                                                        |
 | openAPI plugin           | Serves the auth API reference — see [API reference](#interactive-reference).                                                                                                                                                                       |
 | Admin plugin             | Adds `role` and ban fields; impersonation is off (no role holds the permission). Its `/api/auth/admin/*` endpoints are answered `404 NotFound` by the `authGate` plugin ([ADR-0027](./adr/0027-admin-role-two-factor-full-read-and-audit-log.md)). |
-| Two-factor plugin        | TOTP and backup codes (issuer "Nebula Chat"); a trusted device lasts 30 days. Enabling asks for the password, so a social-only user cannot enrol until they set one.                                                                               |
+| Two-factor plugin        | TOTP and backup codes (issuer "Nebula Chat"); a trusted device lasts 30 days, except for a User in Pending deletion. Enabling asks for the password, so a social-only user cannot enrol until they set one.                                        |
 | `secondaryStorage`       | The `@nebula-chat/redis` `authStore` — auth sessions, verification records, and rate-limit counters.                                                                                                                                               |
 | `session.cookieCache`    | Enabled — a short-lived signed cookie lets most requests validate without a store round-trip.                                                                                                                                                      |
 | `rateLimit`              | Enabled, `storage: 'secondary-storage'` (Redis). Keyed per client by `advanced.ipAddress.ipAddressHeaders: ['cf-connecting-ip']` — see below.                                                                                                      |
@@ -301,8 +301,10 @@ server's `onUserDeleted` callback (the Profile image file) are not reached by th
   table (`restore-account:<token>`, 10 minutes). Password sign-in answers `403 ACCOUNT_PENDING_DELETION` with `purgeDate`
   and `restoreToken` in the body; a social sign-in redirects to `<errorURL>?pending=<purgeDate>&restoreToken=<token>`.
   Sign-in checks the password first, so the outcome never confirms an account to a stranger.
-  A User with two-factor enabled gets the Purge date but no token from a password sign-in, which would skip the code;
-  the token comes only after a verified code (`/two-factor/*`) or a social sign-in, which never asks for one.
+  A User with two-factor enabled gets the token only after a verified code (`/two-factor/*`) or a social sign-in, which
+  never asks for one. Their password sign-in gets the usual `twoFactorRedirect` challenge: the hook lets that session
+  through for the two-factor plugin to delete, and the `pending-deletion-sign-in` plugin drops a trusted-device cookie so
+  the code is still asked, then refuses (no token) any session that survives anyway.
   An email-verification link redirects like a social sign-in.
 - **Restore.** `POST /api/auth/restore-account` with `{ token }` (the `restore-account` plugin in `@nebula-chat/auth`)
   consumes the token, clears `pending_deletion_at` and signs the User in. Declining needs no call: the token expires and the

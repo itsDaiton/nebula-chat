@@ -1,5 +1,26 @@
 # Changelog
 
+## [5.20.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.4...nebula-chat-v5.20.5) (2026-11-02)
+
+
+### Bug Fixes
+
+* **auth:** let a 2FA User in Pending deletion reach the code challenge ([#733](https://github.com/itsDaiton/nebula-chat/issues/733)) ([3d8ae42](https://github.com/itsDaiton/nebula-chat/commit/3d8ae42d5d1decba543d3ede970da8cf446ce3ee))
+
+## [5.20.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.3...nebula-chat-v5.20.4) (2026-11-02)
+
+
+### Bug Fixes
+
+* **auth:** stop Admins from trusting a device on the 2FA challenge ([#732](https://github.com/itsDaiton/nebula-chat/issues/732)) ([08e8472](https://github.com/itsDaiton/nebula-chat/commit/08e84721086e0d3f2caad790b161aec863496165))
+
+## [5.20.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.2...nebula-chat-v5.20.3) (2026-11-01)
+
+
+### Bug Fixes
+
+* **server:** qualify the Run cost column in the Message listing ([#726](https://github.com/itsDaiton/nebula-chat/issues/726)) ([0d7bba0](https://github.com/itsDaiton/nebula-chat/commit/0d7bba0938c40b6da314ac916d316d7a47dc7655))
+
 ## [5.20.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.1...nebula-chat-v5.20.2) (2026-10-31)
 
 

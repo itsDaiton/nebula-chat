@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.4.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.4.1...nebula-chat-auth-v3.4.2) (2026-11-02)
+
+
+### Bug Fixes
+
+* **auth:** let a 2FA User in Pending deletion reach the code challenge ([#733](https://github.com/itsDaiton/nebula-chat/issues/733)) ([3d8ae42](https://github.com/itsDaiton/nebula-chat/commit/3d8ae42d5d1decba543d3ede970da8cf446ce3ee))
+
+## [3.4.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.4.0...nebula-chat-auth-v3.4.1) (2026-11-02)
+
+
+### Bug Fixes
+
+* **auth:** stop Admins from trusting a device on the 2FA challenge ([#732](https://github.com/itsDaiton/nebula-chat/issues/732)) ([08e8472](https://github.com/itsDaiton/nebula-chat/commit/08e84721086e0d3f2caad790b161aec863496165))
+
 ## [3.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.3.0...nebula-chat-auth-v3.4.0) (2026-10-31)
 
 
