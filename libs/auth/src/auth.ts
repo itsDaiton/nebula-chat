@@ -37,6 +37,7 @@ import { DELETE_ACCOUNT_REJECTION_MESSAGES, findDeleteAccountRejection } from '.
 import type { EmailSender } from './resend';
 import { userDeletionHooks } from './userDeletion';
 import { markTwoFactorVerifiedSession } from './twoFactorSession';
+import { adminTrustDevicePlugin } from './adminTrustDevice';
 import {
   PENDING_DELETION_CODE,
   PENDING_DELETION_MESSAGES,
@@ -404,6 +405,8 @@ export const createAuth = ({
       restoreAccountPlugin(db),
       // TOTP and backup codes only; a trusted device lasts better-auth's default 30 days.
       twoFactor({ issuer: 'Nebula Chat' }),
+      // After `twoFactor()`, so its after hook sees the challenge it answers with.
+      adminTrustDevicePlugin(),
       // After `twoFactor`, so its hooks see the sign-in once the plugin has had its say.
       pendingDeletionSignInPlugin(db),
     ],
