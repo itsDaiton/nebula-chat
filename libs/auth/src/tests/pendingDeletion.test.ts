@@ -3,7 +3,7 @@ import { users } from '@nebula-chat/db';
 import type { DbClient } from '@nebula-chat/db';
 import {
   clearPendingDeletion,
-  findPendingDeletionAtByEmail,
+  findPendingUserByEmail,
   isSessionFresh,
   markPendingDeletion,
   purgeDateOf,
@@ -62,19 +62,28 @@ describe('pending deletion writes', () => {
   });
 });
 
-describe('findPendingDeletionAtByEmail', () => {
-  const makeDb = (rows: { pendingDeletionAt: Date | null }[]) => {
+describe('findPendingUserByEmail', () => {
+  const makeDb = (rows: { pendingDeletionAt: Date | null; twoFactorEnabled: boolean }[]) => {
     const where = vi.fn().mockResolvedValue(rows);
     return { select: () => ({ from: () => ({ where }) }) } as unknown as DbClient;
   };
 
-  it('returns the deletion time of a pending User', async () => {
-    const db = makeDb([{ pendingDeletionAt: NOW }]);
+  it('returns the deletion time and two-factor state of a pending User', async () => {
+    const db = makeDb([{ pendingDeletionAt: NOW, twoFactorEnabled: true }]);
 
-    expect(await findPendingDeletionAtByEmail(db, 'ada@example.com')).toEqual(NOW);
+    expect(await findPendingUserByEmail(db, 'ada@example.com')).toEqual({
+      pendingDeletionAt: NOW,
+      twoFactorEnabled: true,
+    });
+  });
+
+  it('returns null for a User who is not pending', async () => {
+    const db = makeDb([{ pendingDeletionAt: null, twoFactorEnabled: true }]);
+
+    expect(await findPendingUserByEmail(db, 'ada@example.com')).toBeNull();
   });
 
   it('returns null when no User has that email', async () => {
-    expect(await findPendingDeletionAtByEmail(makeDb([]), 'none@example.com')).toBeNull();
+    expect(await findPendingUserByEmail(makeDb([]), 'none@example.com')).toBeNull();
   });
 });
