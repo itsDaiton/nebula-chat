@@ -1,4 +1,3 @@
-import { Button } from '@chakra-ui/react';
 import { Link, getRouteApi } from '@tanstack/react-router';
 import { AuthForm } from '@/modules/auth/components/AuthForm';
 import { AuthLayout } from '@/modules/auth/components/AuthLayout';
@@ -7,6 +6,7 @@ import { BackToSignIn } from '@/modules/auth/components/BackToSignIn';
 import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
 import { resetPasswordForm } from '@/modules/auth/utils/authForms';
 import { resources } from '@/resources';
+import { buttonVariants } from '@/shared/components/ui/button';
 
 const { resetPassword } = resources.auth;
 const routeApi = getRouteApi('/_app/auth/reset-password');
@@ -29,9 +29,12 @@ export const ResetPasswordPage = () => {
         <AuthForm config={resetPasswordForm(token)} onError={showInvalidLink} />
       ) : (
         <AuthStatus title={resetPassword.title} status="error" message={resetPassword.linkInvalid}>
-          <Button asChild>
-            <Link to="/auth/forgot-password">{resetPassword.requestNewLink}</Link>
-          </Button>
+          <Link
+            to="/auth/forgot-password"
+            className={buttonVariants({ size: 'lg', className: 'w-full' })}
+          >
+            {resetPassword.requestNewLink}
+          </Link>
         </AuthStatus>
       )}
     </AuthLayout>

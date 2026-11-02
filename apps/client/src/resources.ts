@@ -106,11 +106,44 @@ export const resources = {
       or: 'or',
       continueWithoutAccount: 'Continue without an account',
       backToSignIn: 'Back to sign in',
+      goToSignIn: 'Go to sign in',
     },
     signIn: {
-      title: 'Welcome back',
-      description: 'Sign in to pick up right where you left off.',
-      forgotPassword: 'Forgot your password?',
+      title: 'Sign in',
+      description: 'Your Guest Sessions move to your account.',
+      forgotPassword: 'Forgot password?',
+      noAccount: 'No account?',
+    },
+    twoFactor: {
+      title: 'Two-factor code',
+      description: 'Enter the 6-digit code from your authenticator app.',
+      backupDescription: 'Enter one of the backup codes you saved when you turned on two-factor.',
+      code: 'Authentication code',
+      backupCode: 'Backup code',
+      trustDevice: 'Trust this device for 30 days',
+      verify: 'Verify',
+      useBackupCode: 'Use a backup code instead',
+      useAuthenticator: 'Use your authenticator app instead',
+      codeRequired: 'Enter the 6-digit code.',
+      backupCodeRequired: 'Enter a backup code.',
+    },
+    pendingDeletion: {
+      title: 'Restore your account?',
+      scheduledOn: 'Your account is scheduled for deletion on ',
+      restoreOrSignOut:
+        '. Restore it to keep your Sessions, or sign out and it will be deleted on that date.',
+      cannotRestoreHere:
+        '. An account with two-factor authentication can’t be restored from here yet: sign in with Google or GitHub if you linked one, or ask an Admin to restore it.',
+      restore: 'Restore my account',
+      signOut: 'Sign out',
+    },
+    banned: {
+      title: 'This account is suspended',
+      suspendedUntil: 'An Admin suspended it until ',
+      suspendedUntilEnd: '.',
+      suspendedPermanently: 'An Admin suspended it permanently.',
+      reason: 'Reason',
+      continueAsGuest: 'Continue as Guest',
     },
     forgotPassword: {
       title: 'Reset your password',
@@ -145,8 +178,9 @@ export const resources = {
       sent: 'Verification email sent. Check your inbox.',
     },
     signUp: {
-      title: 'Create your account',
+      title: 'Create an account',
       description: "Chat as much as you like, and keep the sessions you've already started.",
+      haveAccount: 'Have an account?',
     },
     social: {
       google: 'Continue with Google',
@@ -161,7 +195,7 @@ export const resources = {
         failed: "We couldn't sign you in with that account. Please try again.",
       },
     },
-    tabs: {
+    forms: {
       signIn: 'Sign in',
       signUp: 'Sign up',
     },
@@ -198,6 +232,14 @@ export const resources = {
       sessionExpired: 'For your security, sign out and sign back in, then try again.',
       noPassword: "Your account doesn't use a password. Reload the page and try again.",
       tooManyRequests: 'Too many attempts. Wait a minute, then try again.',
+      emailPendingDeletion:
+        'This email belongs to an account scheduled for deletion. Sign in to restore it.',
+      pendingDeletion: 'This account is scheduled for deletion.',
+      banned: 'This account is suspended.',
+      restoreTokenInvalid: 'This restore link has expired. Sign in again to restore your account.',
+      invalidBackupCode: 'That backup code is wrong or was already used.',
+      twoFactorExpired: 'This sign-in timed out. Sign in again.',
+      twoFactorLocked: 'Too many wrong codes. Wait a while, then sign in again.',
       unknown: 'Something went wrong on our end. Please try again.',
     },
   },

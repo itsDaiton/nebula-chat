@@ -1,57 +1,51 @@
-import { Button, HStack, Link as ChakraLink, Separator, Tabs, Text } from '@chakra-ui/react';
-import { Link } from '@tanstack/react-router';
-import { AuthForm } from '@/modules/auth/components/AuthForm';
+import { Link, getRouteApi } from '@tanstack/react-router';
 import { AuthLayout } from '@/modules/auth/components/AuthLayout';
-import { SocialSignIn } from '@/modules/auth/components/SocialSignIn';
-import { useIdentityChange } from '@/modules/auth/hooks/useIdentityChange';
+import { AuthOutcomeView } from '@/modules/auth/components/AuthOutcomeView';
+import { SignInPanel } from '@/modules/auth/components/SignInPanel';
+import { SignUpPanel } from '@/modules/auth/components/SignUpPanel';
+import { useAuthPageStore } from '@/modules/auth/stores/useAuthPageStore';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
-import { SIGN_IN_FORM, SIGN_UP_FORM } from '@/modules/auth/utils/authForms';
+import type { AuthOutcome } from '@/modules/auth/types/types';
 import { resources } from '@/resources';
+import { useOnUnmount } from '@/shared/hooks/useOnUnmount';
+
+const routeApi = getRouteApi('/_app/auth/');
 
 // Opt-in: a Guest can use the app without ever coming here.
 export const AuthPage = () => {
+  const { pending, restoreToken } = routeApi.useSearch();
+  const { form, outcome, reset } = useAuthPageStore();
   const { hidePassword } = usePasswordVisibilityStore();
-  // The server claims a current Guest's sessions into the account on either form.
-  const onIdentityChange = useIdentityChange();
+  const resetOnLeave = useOnUnmount(reset);
+  // A social sign-in of a User in Pending deletion lands here with the Purge date and a restore token.
+  const landed: AuthOutcome | null = pending
+    ? { kind: 'pendingDeletion', purgeDate: pending, restoreToken }
+    : null;
+  const shown = outcome ?? landed;
 
   return (
     <AuthLayout
       footer={
-        <>
-          <HStack w="full">
-            <Separator flex="1" />
-            <Text fontSize="sm" color="fg.muted">
-              {resources.auth.page.or}
-            </Text>
-            <Separator flex="1" />
-          </HStack>
-          <SocialSignIn />
-          <Button asChild variant="outline" borderColor="border.emphasized" w="full">
-            <Link to="/" onClick={hidePassword}>
-              {resources.auth.page.continueWithoutAccount}
-            </Link>
-          </Button>
-        </>
+        !shown && (
+          <Link
+            to="/"
+            onClick={hidePassword}
+            className="text-[12.5px] text-muted-foreground hover:text-foreground"
+          >
+            {resources.auth.page.continueWithoutAccount}
+          </Link>
+        )
       }
     >
-      {/* Only the open form is mounted, so its field labels stay unique. */}
-      <Tabs.Root defaultValue="sign-in" lazyMount unmountOnExit fitted onValueChange={hidePassword}>
-        <Tabs.List>
-          <Tabs.Trigger value="sign-in">{resources.auth.tabs.signIn}</Tabs.Trigger>
-          <Tabs.Trigger value="sign-up">{resources.auth.tabs.signUp}</Tabs.Trigger>
-        </Tabs.List>
-        <Tabs.Content value="sign-in" pt={6}>
-          <AuthForm config={SIGN_IN_FORM} onSuccess={onIdentityChange} />
-          <ChakraLink asChild fontSize="sm" color="fg.muted" mt={4}>
-            <Link to="/auth/forgot-password" onClick={hidePassword}>
-              {resources.auth.signIn.forgotPassword}
-            </Link>
-          </ChakraLink>
-        </Tabs.Content>
-        <Tabs.Content value="sign-up" pt={6}>
-          <AuthForm config={SIGN_UP_FORM} onSuccess={onIdentityChange} />
-        </Tabs.Content>
-      </Tabs.Root>
+      <div ref={resetOnLeave}>
+        {shown ? (
+          <AuthOutcomeView outcome={shown} />
+        ) : form === 'sign-in' ? (
+          <SignInPanel />
+        ) : (
+          <SignUpPanel />
+        )}
+      </div>
     </AuthLayout>
   );
 };

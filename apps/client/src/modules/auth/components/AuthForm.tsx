@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, type FieldValues, type Path } from 'react-hook-form';
 import { AuthFormAlert } from '@/modules/auth/components/AuthFormAlert';
 import { AuthFormField } from '@/modules/auth/components/AuthFormField';
+import { AuthHeading } from '@/modules/auth/components/AuthHeading';
 import { AuthStatus } from '@/modules/auth/components/AuthStatus';
 import { useAuthMutation } from '@/modules/auth/hooks/useAuthMutation';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
@@ -18,6 +19,7 @@ export const AuthForm = <Values extends FieldValues>({
   compact = false,
   onSuccess,
   onError,
+  labelActions,
 }: AuthFormProps<Values>) => {
   const {
     label,
@@ -73,14 +75,8 @@ export const AuthForm = <Values extends FieldValues>({
   return (
     <form onSubmit={(event) => void handleSubmit(onSubmit)(event)} aria-label={label} noValidate>
       <div className="flex flex-col gap-4">
-        {header !== 'none' && (
-          <div className="mb-2 flex flex-col gap-1">
-            {header === 'full' && (
-              <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-            )}
-            <p className="text-sm text-muted-foreground">{description}</p>
-          </div>
-        )}
+        {header === 'full' && <AuthHeading title={title} description={description} />}
+        {header === 'description' && <p className="text-sm text-muted-foreground">{description}</p>}
         <AuthFormAlert message={errors.root?.server?.message} />
         {fields.map((field) => (
           <AuthFormField
@@ -92,6 +88,7 @@ export const AuthForm = <Values extends FieldValues>({
               onChange: () => revalidateComparedWith(field.name),
             })}
             error={errors[field.name]?.message?.toString()}
+            labelAction={labelActions?.[field.name]}
           />
         ))}
         <Button

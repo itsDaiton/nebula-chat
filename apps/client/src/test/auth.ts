@@ -78,6 +78,21 @@ export const mockEmailSignIn = mockAuthPost(API_ROUTE.authSignInEmail, {
   user: aSession({ isAnonymous: false }).user,
 });
 
+/** Answers `sign-in/email` the way the two-factor plugin does for a User with 2FA: no session, a code to ask for. */
+export const mockTwoFactorSignIn = mockAuthPost(API_ROUTE.authSignInEmail, {
+  twoFactorRedirect: true,
+  twoFactorMethods: ['totp'],
+});
+
+/** Signs a challenged User in with a backup code on `two-factor/verify-backup-code`. */
+export const mockBackupCodeVerify = mockAuthPost(API_ROUTE.authTwoFactorVerifyBackupCode, {
+  token: 'token-1',
+  user: aSession({ isAnonymous: false, twoFactorEnabled: true }).user,
+});
+
+/** Trades a Pending-deletion restore token for a session on `restore-account`. */
+export const mockRestoreAccount = mockAuthPost(API_ROUTE.authRestoreAccount, { success: true });
+
 /** Registers a user on `sign-up/email`, calling `onRequest` first. */
 export const mockEmailSignUp = mockAuthPost(API_ROUTE.authSignUpEmail, {
   token: 'token-1',

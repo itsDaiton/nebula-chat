@@ -10,10 +10,14 @@ import { resources } from '@/resources';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import {
   aSession,
+  mockBackupCodeVerify,
   mockEmailSignIn,
   mockEmailSignUp,
   mockGetSession,
+  mockRestoreAccount,
   mockSocialSignIn,
+  mockTwoFactorSignIn,
+  mockTwoFactorVerify,
   providerConsentUrl,
   refreshSession,
 } from '@/test/auth';
@@ -58,12 +62,12 @@ const renderAuthFlow = async (initialRoute = '/auth') => {
 };
 
 const nameField = () => screen.getByRole('textbox', { name: resources.auth.fields.name });
-/** Switches to sign-up, once the sign-in panel has gone: its fields would otherwise answer the same queries. */
+/** Switches to sign-up, once the sign-in form has gone: its fields would otherwise answer the same queries. */
 const openSignUp = async () => {
-  await userEvent.click(screen.getByRole('tab', { name: resources.auth.tabs.signUp }));
+  await userEvent.click(screen.getByRole('button', { name: resources.auth.forms.signUp }));
   await waitFor(() =>
     expect(
-      screen.queryByRole('form', { name: resources.auth.tabs.signIn }),
+      screen.queryByRole('form', { name: resources.auth.forms.signIn }),
     ).not.toBeInTheDocument(),
   );
 };
@@ -125,7 +129,7 @@ beforeEach(() => {
 });
 
 describe('AuthPage', () => {
-  it('opens on sign-in and offers sign-up on its own tab', async () => {
+  it('opens on sign-in and switches to sign-up', async () => {
     await renderAuthFlow();
 
     expect(screen.getByRole('heading', { name: resources.auth.signIn.title })).toBeInTheDocument();
@@ -139,6 +143,10 @@ describe('AuthPage', () => {
     expect(screen.getByRole('heading', { name: resources.auth.signUp.title })).toBeInTheDocument();
     expect(nameField()).toBeInTheDocument();
     expect(screen.getByRole('button', { name: resources.auth.actions.signUp })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: resources.auth.forms.signIn }));
+
+    expect(screen.getByRole('heading', { name: resources.auth.signIn.title })).toBeInTheDocument();
   });
 
   it('registers with email and returns to the chat as a Registered user', async () => {
@@ -404,7 +412,7 @@ describe('AuthPage', () => {
     expect(passwordField()).toHaveAttribute('type', 'password');
   });
 
-  it('masks the password again when switching tabs', async () => {
+  it('masks the password again when switching to sign-up', async () => {
     await renderAuthFlow();
     await userEvent.click(
       screen.getByRole('button', { name: resources.passwordInput.showPassword }),
@@ -476,7 +484,7 @@ describe('AuthPage', () => {
       return () => body;
     };
 
-    it('offers Google and GitHub alongside email, on either tab', async () => {
+    it('offers Google and GitHub alongside email, on either form', async () => {
       await renderAuthFlow();
 
       expect(socialButton(social.google)).toBeInTheDocument();
@@ -575,6 +583,275 @@ describe('AuthPage', () => {
       await userEvent.click(socialButton(social.google));
 
       await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+    });
+  });
+
+  describe('two-factor challenge', () => {
+    const { twoFactor } = resources.auth;
+    const codeField = () => screen.getByLabelText(twoFactor.code);
+    const verify = () => userEvent.click(screen.getByRole('button', { name: twoFactor.verify }));
+
+    /** Signs in with a password the server holds back for a second factor. */
+    const reachChallenge = async () => {
+      server.use(mockTwoFactorSignIn());
+      await renderAuthFlow();
+      await fillSignIn();
+      await submitSignIn();
+      expect(await screen.findByRole('heading', { name: twoFactor.title })).toBeInTheDocument();
+    };
+
+    it('asks a User with 2FA for a code and signs them in with it, trusting the device', async () => {
+      let body: unknown;
+      server.use(
+        mockTwoFactorVerify(async (request) => {
+          body = await request.clone().json();
+          becomeRegistered();
+        }),
+      );
+      await reachChallenge();
+
+      // No session yet: the chat isn't shown as Registered behind the challenge.
+      expect(screen.queryByRole('form', { name: resources.auth.forms.signIn })).toBeNull();
+      expect(screen.getByRole('checkbox', { name: twoFactor.trustDevice })).toBeChecked();
+      await userEvent.type(codeField(), '381204');
+      await verify();
+
+      expect(await findRegisteredMenu()).toBeInTheDocument();
+      expect(body).toEqual({ code: '381204', trustDevice: true });
+    });
+
+    it('leaves the device untrusted when the box is cleared', async () => {
+      let body: unknown;
+      server.use(
+        mockTwoFactorVerify(async (request) => {
+          body = await request.clone().json();
+          becomeRegistered();
+        }),
+      );
+      await reachChallenge();
+
+      await userEvent.click(screen.getByRole('checkbox', { name: twoFactor.trustDevice }));
+      await userEvent.type(codeField(), '381204');
+      await verify();
+
+      await findRegisteredMenu();
+      expect(body).toEqual({ code: '381204', trustDevice: false });
+    });
+
+    it('signs in with a backup code instead', async () => {
+      let body: unknown;
+      server.use(
+        mockBackupCodeVerify(async (request) => {
+          body = await request.clone().json();
+          becomeRegistered();
+        }),
+      );
+      await reachChallenge();
+
+      await userEvent.click(screen.getByRole('button', { name: twoFactor.useBackupCode }));
+      await userEvent.type(screen.getByLabelText(twoFactor.backupCode), 'aaaa-1111');
+      await verify();
+
+      expect(await findRegisteredMenu()).toBeInTheDocument();
+      expect(body).toEqual({ code: 'aaaa-1111', trustDevice: true });
+    });
+
+    it('shows a wrong code under the code, keeping the challenge open', async () => {
+      server.use(
+        mockApiError('post', API_ROUTE.authTwoFactorVerifyTotp, 401, { code: 'INVALID_CODE' }),
+      );
+      await reachChallenge();
+
+      await userEvent.type(codeField(), '000000');
+      await verify();
+
+      await waitFor(() =>
+        expect(codeField()).toHaveAccessibleErrorMessage(
+          resources.settings.security.twoFactor.invalidCode,
+        ),
+      );
+      expect(screen.getByRole('heading', { name: twoFactor.title })).toBeInTheDocument();
+    });
+
+    it('asks for all six digits before sending anything', async () => {
+      let verifies = 0;
+      server.use(
+        mockTwoFactorVerify(() => {
+          verifies += 1;
+        }),
+      );
+      await reachChallenge();
+
+      await userEvent.type(codeField(), '381');
+      await verify();
+
+      await waitFor(() => expect(codeField()).toHaveAccessibleErrorMessage(twoFactor.codeRequired));
+      expect(verifies).toBe(0);
+    });
+  });
+
+  describe('Pending deletion', () => {
+    const { pendingDeletion } = resources.auth;
+    const PURGE_DATE = '2026-11-26T12:00:00.000Z';
+
+    const refuseAsPending = (body: object = { restoreToken: 'restore-1' }) =>
+      server.use(
+        mockApiError('post', API_ROUTE.authSignInEmail, 403, {
+          code: 'ACCOUNT_PENDING_DELETION',
+          message: 'This account is scheduled for deletion. Restore it to keep your data.',
+          purgeDate: PURGE_DATE,
+          ...body,
+        }),
+      );
+
+    const reachPrompt = async () => {
+      await renderAuthFlow();
+      await fillSignIn();
+      await submitSignIn();
+      return screen.findByRole('heading', { name: pendingDeletion.title });
+    };
+
+    it('offers to restore the account, naming the Purge date', async () => {
+      refuseAsPending();
+
+      expect(await reachPrompt()).toBeInTheDocument();
+
+      expect(screen.getByText('26 November 2026')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: pendingDeletion.restore })).toBeInTheDocument();
+    });
+
+    it('signs the User in once they restore it', async () => {
+      let body: unknown;
+      refuseAsPending();
+      server.use(
+        mockRestoreAccount(async (request) => {
+          body = await request.clone().json();
+          becomeRegistered();
+        }),
+      );
+      await reachPrompt();
+
+      await userEvent.click(screen.getByRole('button', { name: pendingDeletion.restore }));
+
+      expect(await findRegisteredMenu()).toBeInTheDocument();
+      expect(body).toEqual({ token: 'restore-1' });
+    });
+
+    it('says when the restore token has expired', async () => {
+      refuseAsPending();
+      server.use(
+        mockApiError('post', API_ROUTE.authRestoreAccount, 400, { code: 'INVALID_RESTORE_TOKEN' }),
+      );
+      await reachPrompt();
+
+      await userEvent.click(screen.getByRole('button', { name: pendingDeletion.restore }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        resources.auth.errors.restoreTokenInvalid,
+      );
+    });
+
+    it('returns to the chat as a Guest on sign out', async () => {
+      refuseAsPending();
+      await reachPrompt();
+
+      await userEvent.click(screen.getByRole('link', { name: pendingDeletion.signOut }));
+
+      expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: resources.auth.actions.signIn })).toBeInTheDocument();
+    });
+
+    it('offers no restore when the sign-in carried no token (a password sign-in with 2FA)', async () => {
+      refuseAsPending({ restoreToken: undefined });
+
+      await reachPrompt();
+
+      expect(screen.queryByRole('button', { name: pendingDeletion.restore })).toBeNull();
+      expect(screen.getByText(/can’t be restored from here yet/)).toBeInTheDocument();
+    });
+
+    it('shows the prompt when a social sign-in lands here with the Purge date', async () => {
+      server.use(mockRestoreAccount(becomeRegistered));
+      await renderAuthFlow(
+        `/auth?pending=${encodeURIComponent(PURGE_DATE)}&restoreToken=restore-2`,
+      );
+
+      expect(
+        await screen.findByRole('heading', { name: pendingDeletion.title }),
+      ).toBeInTheDocument();
+      expect(screen.getByText('26 November 2026')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: pendingDeletion.restore }));
+
+      expect(await findRegisteredMenu()).toBeInTheDocument();
+    });
+
+    it('points a sign-up with a pending email to sign-in', async () => {
+      server.use(
+        mockApiError('post', API_ROUTE.authSignUpEmail, 409, { code: 'EMAIL_PENDING_DELETION' }),
+      );
+      await renderAuthFlow();
+
+      await fillSignUp();
+      await submitSignUp();
+
+      await waitFor(() =>
+        expect(emailField()).toHaveAccessibleErrorMessage(
+          resources.auth.errors.emailPendingDeletion,
+        ),
+      );
+      await userEvent.click(screen.getByRole('button', { name: resources.auth.page.goToSignIn }));
+
+      expect(
+        screen.getByRole('heading', { name: resources.auth.signIn.title }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe('banned', () => {
+    const { banned } = resources.auth;
+
+    const refuseAsBanned = (message: string) =>
+      server.use(
+        mockApiError('post', API_ROUTE.authSignInEmail, 403, { code: 'BANNED_USER', message }),
+      );
+
+    it('shows the reason and when the ban ends', async () => {
+      refuseAsBanned(
+        'You have been banned. Reason: Automated prompts at a rate that breaks the fair-use policy.. The ban ends 2026-11-10T12:00:00.000Z.',
+      );
+      await renderAuthFlow();
+
+      await fillSignIn();
+      await submitSignIn();
+
+      expect(await screen.findByRole('heading', { name: banned.title })).toBeInTheDocument();
+      expect(screen.getByText('10 November 2026')).toBeInTheDocument();
+      expect(
+        screen.getByText('Automated prompts at a rate that breaks the fair-use policy.'),
+      ).toBeInTheDocument();
+    });
+
+    it('says a ban with no end is permanent', async () => {
+      refuseAsBanned('You have been banned. Reason: Spam. The ban has no end.');
+      await renderAuthFlow();
+
+      await fillSignIn();
+      await submitSignIn();
+
+      expect(await screen.findByText(banned.suspendedPermanently)).toBeInTheDocument();
+      expect(screen.getByText('Spam')).toBeInTheDocument();
+    });
+
+    it('lets them carry on as a Guest', async () => {
+      refuseAsBanned('You have been banned. Reason: Spam. The ban has no end.');
+      await renderAuthFlow();
+      await fillSignIn();
+      await submitSignIn();
+
+      await userEvent.click(await screen.findByRole('link', { name: banned.continueAsGuest }));
+
+      expect(await screen.findByText('Trip to Lisbon')).toBeInTheDocument();
     });
   });
 });

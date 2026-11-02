@@ -12,6 +12,7 @@ export const AuthFormField = ({
   autoComplete,
   registration,
   error,
+  labelAction,
 }: AuthFormFieldProps) => {
   const { visibleFields, togglePasswordVisibility } = usePasswordVisibilityStore();
   const id = useId();
@@ -24,7 +25,10 @@ export const AuthFormField = ({
 
   return (
     <Field data-invalid={Boolean(error)}>
-      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <div className="flex items-center justify-between gap-2">
+        <FieldLabel htmlFor={id}>{label}</FieldLabel>
+        {labelAction}
+      </div>
       {type === 'password' ? (
         <PasswordInput
           autoComplete={autoComplete}

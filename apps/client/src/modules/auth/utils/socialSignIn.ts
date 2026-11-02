@@ -1,13 +1,12 @@
-import { FaGithub } from 'react-icons/fa';
-import { FcGoogle } from 'react-icons/fc';
+import { FaGithub, FaGoogle } from 'react-icons/fa';
 import type { SocialProviderConfig } from '@/modules/auth/types/types';
 import { resources } from '@/resources';
 
 const { social } = resources.auth;
 
 export const SOCIAL_PROVIDERS: SocialProviderConfig[] = [
-  { provider: 'google', label: social.google, icon: FcGoogle },
   { provider: 'github', label: social.github, icon: FaGithub },
+  { provider: 'google', label: social.google, icon: FaGoogle },
 ];
 
 // The `?error=` better-auth's OAuth callback (or the provider, for `access_denied`) redirects with.
