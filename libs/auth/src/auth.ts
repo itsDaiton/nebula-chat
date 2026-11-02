@@ -43,12 +43,13 @@ import {
   PENDING_DELETION_SIGN_UP_CODE,
   RESTORE_TOKEN_TTL_SECONDS,
   findPendingUser,
-  findPendingDeletionAtByEmail,
+  findPendingUserByEmail,
   isSessionFresh,
   markPendingDeletion,
   purgeDateOf,
   restoreTokenIdentifier,
 } from './pendingDeletion';
+import { pendingDeletionSignInPlugin } from './pendingDeletionSignIn';
 import { restoreAccountPlugin } from './restoreAccount';
 import type { OnUserDeleted } from './userDeletion';
 
@@ -262,7 +263,7 @@ export const createAuth = ({
         if (ctx.path === '/delete-user') return startPendingDeletion(db, ctx);
         if (ctx.path === '/sign-up/email') {
           const email = (ctx.body as { email?: string } | undefined)?.email;
-          if (email && (await findPendingDeletionAtByEmail(db, email))) {
+          if (email && (await findPendingUserByEmail(db, email))) {
             throw APIError.from('CONFLICT', {
               code: PENDING_DELETION_SIGN_UP_CODE,
               message: PENDING_DELETION_MESSAGES[PENDING_DELETION_SIGN_UP_CODE],
@@ -314,8 +315,9 @@ export const createAuth = ({
             if (!pending) return;
             if (!ctx) return false;
             const purgeDate = purgeDateOf(pending.pendingDeletionAt).toISOString();
-            // Password sign-in runs this hook before the second factor, so a token here would skip it;
-            // only a session made after a verified code (or a social sign-in, which never has one) may restore.
+            // Only a session made after a verified code (or a social sign-in, which never has one) may restore.
+            // A password sign-in's session is let through: the two-factor plugin swaps it for the code challenge.
+            if (pending.twoFactorEnabled && ctx.path === '/sign-in/email') return;
             const afterSecondFactor = ctx.path.startsWith('/two-factor/');
             if (
               pending.twoFactorEnabled &&
@@ -402,6 +404,8 @@ export const createAuth = ({
       restoreAccountPlugin(db),
       // TOTP and backup codes only; a trusted device lasts better-auth's default 30 days.
       twoFactor({ issuer: 'Nebula Chat' }),
+      // After `twoFactor`, so its hooks see the sign-in once the plugin has had its say.
+      pendingDeletionSignInPlugin(db),
     ],
   }) as unknown as Auth;
 

@@ -267,9 +267,18 @@ describe('createAuth sign-in of a pending User', () => {
     expect(redirect).toHaveBeenCalledOnce();
   });
 
-  it('gives a password sign-in with two-factor no restore token, so the code cannot be skipped', async () => {
+  it('lets a password sign-in with two-factor through, for the plugin to swap for a code challenge', async () => {
     const { db } = makeDb([[{ pendingDeletionAt: PENDING_AT, twoFactorEnabled: true }]]);
     const { ctx, createVerificationValue } = signInContext('/sign-in/email');
+
+    await expect(sessionHook(db)({ userId: 'user-1' }, ctx)).resolves.toBeUndefined();
+
+    expect(createVerificationValue).not.toHaveBeenCalled();
+  });
+
+  it('gives an email-link sign-in with two-factor no restore token, so the code cannot be skipped', async () => {
+    const { db } = makeDb([[{ pendingDeletionAt: PENDING_AT, twoFactorEnabled: true }]]);
+    const { ctx, createVerificationValue } = signInContext('/verify-email');
 
     const error = await sessionHook(db)({ userId: 'user-1' }, ctx).catch((e: unknown) => e);
 
