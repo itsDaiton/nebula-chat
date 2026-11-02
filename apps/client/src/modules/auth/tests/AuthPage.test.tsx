@@ -452,6 +452,18 @@ describe('AuthPage', () => {
     await waitFor(() => expect(listRequests).toBe(2));
   });
 
+  it('tabs from the email straight to the password, then to the reset link', async () => {
+    await renderAuthFlow();
+    await userEvent.click(emailField());
+
+    await userEvent.tab();
+    expect(passwordField()).toHaveFocus();
+
+    await userEvent.tab();
+    await userEvent.tab();
+    expect(screen.getByRole('link', { name: resources.auth.signIn.forgotPassword })).toHaveFocus();
+  });
+
   it('offers a password reset from the sign-in form', async () => {
     await renderAuthFlow();
 

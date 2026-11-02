@@ -24,11 +24,8 @@ export const AuthFormField = ({
   };
 
   return (
-    <Field data-invalid={Boolean(error)}>
-      <div className="flex items-center justify-between gap-2">
-        <FieldLabel htmlFor={id}>{label}</FieldLabel>
-        {labelAction}
-      </div>
+    <Field data-invalid={Boolean(error)} className="relative">
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       {type === 'password' ? (
         <PasswordInput
           autoComplete={autoComplete}
@@ -44,6 +41,10 @@ export const AuthFormField = ({
         <p id={errorId} className="text-sm text-destructive">
           {error}
         </p>
+      )}
+      {/* Shown in the label row but after the input in the DOM, so Tab goes straight from field to field. */}
+      {labelAction && (
+        <div className="absolute top-0 right-0 flex h-5 w-auto! items-center">{labelAction}</div>
       )}
     </Field>
   );
