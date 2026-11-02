@@ -1,7 +1,8 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
+import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { holdSession, mockResetPassword } from '@/test/auth';
@@ -26,6 +27,7 @@ const fillPasswords = async (password: string, confirmation = password) => {
 const submit = () => userEvent.click(screen.getByRole('button', { name: resetPassword.submit }));
 
 beforeEach(async () => {
+  vi.restoreAllMocks();
   await holdSession({});
   usePasswordVisibilityStore.setState({ visibleFields: {} });
 });
@@ -43,20 +45,22 @@ describe('ResetPasswordPage', () => {
     await fillPasswords('a-new-long-passphrase');
     await submit();
 
-    expect(await screen.findByRole('status')).toHaveTextContent(resetPassword.done);
+    await waitFor(() => expect(body).toBeDefined());
     expect(body).toEqual({ newPassword: 'a-new-long-passphrase', token: 'reset-token' });
   });
 
-  it('sends the user on to sign in with the new password', async () => {
+  // Every session ends on a reset and none is made, so the next step is signing in with the new password.
+  it('sends the user straight on to sign in, saying the password changed', async () => {
+    const toast = vi.spyOn(toaster, 'create');
     server.use(mockResetPassword());
-    await renderPage('?token=reset-token');
+    const { router } = await renderPage('?token=reset-token');
 
     await fillPasswords('a-new-long-passphrase');
     await submit();
-    await screen.findByRole('status');
-    await userEvent.click(screen.getByRole('link', { name: resources.auth.page.backToSignIn }));
 
     expect(await screen.findByRole('heading', { name: SIGN_IN_PAGE })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/auth');
+    expect(toast).toHaveBeenCalledWith({ type: 'success', title: resetPassword.done });
   });
 
   it('swaps the form for a new-link offer when the token turns out spent or edited', async () => {
@@ -141,8 +145,7 @@ describe('ResetPasswordPage', () => {
     await fillPasswords('a-new-long-passphrase');
     await submit();
 
-    await screen.findByRole('status');
-    expect(body).toMatchObject({ token: '9123456789' });
+    await waitFor(() => expect(body).toMatchObject({ token: '9123456789' }));
   });
 
   it('treats a malformed token as a missing one', async () => {

@@ -106,7 +106,6 @@ export const resetPasswordForm = (token: string): AuthFormConfig<ResetPasswordVa
     confirmPasswordField(fields.confirmNewPassword),
   ],
   request: ({ password }) => authClient.resetPassword({ newPassword: password, token }),
-  successMessage: resetPassword.done,
 });
 
 /** A Registered user's Password change; the new password keeps the name `password` the error map targets. */

@@ -6,6 +6,7 @@ import { BackToSignIn } from '@/modules/auth/components/BackToSignIn';
 import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
 import { resetPasswordForm } from '@/modules/auth/utils/authForms';
 import { resources } from '@/resources';
+import { toaster } from '@/shared/components/ui/toaster';
 import { buttonVariants } from '@/shared/components/ui/button';
 
 const { resetPassword } = resources.auth;
@@ -23,10 +24,20 @@ export const ResetPasswordPage = () => {
     }
   };
 
+  // A reset ends every session and makes none, so the next step is signing in with the new password.
+  const goToSignIn = () => {
+    toaster.create({ type: 'success', title: resetPassword.done });
+    void navigate({ to: '/auth', search: {} });
+  };
+
   return (
     <AuthLayout footer={<BackToSignIn />}>
       {token && error === undefined ? (
-        <AuthForm config={resetPasswordForm(token)} onError={showInvalidLink} />
+        <AuthForm
+          config={resetPasswordForm(token)}
+          onSuccess={goToSignIn}
+          onError={showInvalidLink}
+        />
       ) : (
         <AuthStatus title={resetPassword.title} status="error" message={resetPassword.linkInvalid}>
           <Link
