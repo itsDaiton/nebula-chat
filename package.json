@@ -28,21 +28,21 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "@typescript-eslint/eslint-plugin": "^8.71.2",
-    "@typescript-eslint/parser": "^8.71.2",
+    "@typescript-eslint/eslint-plugin": "^8.72.0",
+    "@typescript-eslint/parser": "^8.72.0",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-n": "^18.4.1",
+    "eslint-plugin-n": "^18.5.0",
     "eslint-plugin-promise": "^7.3.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",
     "jiti": "^2.6.1",
-    "knip": "^6.41.0",
+    "knip": "^6.42.1",
     "prettier": "^3.9.10",
     "tsx": "catalog:",
-    "turbo": "^2.11.8",
+    "turbo": "^2.11.10",
     "typescript": "catalog:"
   }
 }
