@@ -146,6 +146,14 @@ export type AuthOutcome =
   | { kind: 'pendingDeletion'; purgeDate: string; restoreToken?: string }
   | { kind: 'banned'; reason: string; until: string | null };
 
+/** The search params a social sign-in's redirect back to /auth can carry. */
+export type SocialSignInLanding = {
+  pending?: string;
+  restoreToken?: string;
+  error?: string;
+  errorDescription?: string;
+};
+
 export type AuthOutcomeViewProps = { outcome: AuthOutcome };
 
 export type OutcomeIconProps = { icon: LucideIcon; className?: string };

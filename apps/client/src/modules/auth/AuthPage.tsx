@@ -5,8 +5,7 @@ import { SignInPanel } from '@/modules/auth/components/SignInPanel';
 import { SignUpPanel } from '@/modules/auth/components/SignUpPanel';
 import { useAuthPageStore } from '@/modules/auth/stores/useAuthPageStore';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
-import type { AuthOutcome } from '@/modules/auth/types/types';
-import { bannedOutcome } from '@/modules/auth/utils/authOutcome';
+import { socialSignInOutcome } from '@/modules/auth/utils/authOutcome';
 import { resources } from '@/resources';
 import { useOnUnmount } from '@/shared/hooks/useOnUnmount';
 
@@ -18,15 +17,10 @@ export const AuthPage = () => {
   const { form, outcome, reset } = useAuthPageStore();
   const { hidePassword } = usePasswordVisibilityStore();
   const resetOnLeave = useOnUnmount(reset);
-  // A social sign-in of a User in Pending deletion lands here with the Purge date and a restore token,
-  // a banned one with the ban's message; a hand-edited date is ignored rather than crashing the page.
-  const socialOutcome: AuthOutcome | null =
-    pending && !Number.isNaN(Date.parse(pending))
-      ? { kind: 'pendingDeletion', purgeDate: pending, restoreToken }
-      : error === 'BANNED_USER'
-        ? bannedOutcome(error_description ?? '')
-        : null;
-  const shown = outcome ?? socialOutcome;
+  const shown =
+    outcome ??
+    socialSignInOutcome({ pending, restoreToken, error, errorDescription: error_description });
+  const panel = form === 'sign-in' ? <SignInPanel /> : <SignUpPanel />;
 
   return (
     <AuthLayout
@@ -42,15 +36,7 @@ export const AuthPage = () => {
         )
       }
     >
-      <div ref={resetOnLeave}>
-        {shown ? (
-          <AuthOutcomeView outcome={shown} />
-        ) : form === 'sign-in' ? (
-          <SignInPanel />
-        ) : (
-          <SignUpPanel />
-        )}
-      </div>
+      <div ref={resetOnLeave}>{shown ? <AuthOutcomeView outcome={shown} /> : panel}</div>
     </AuthLayout>
   );
 };

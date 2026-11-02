@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { AuthOutcome, AuthResult } from '@/modules/auth/types/types';
+import type { AuthOutcome, AuthResult, SocialSignInLanding } from '@/modules/auth/types/types';
 import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
 
 const pendingDeletionBody = z.object({
@@ -19,6 +19,21 @@ const NO_REASON = 'No reason';
 export const bannedOutcome = (message: string): AuthOutcome => {
   const [, reason = '', until = null] = BANNED_MESSAGE.exec(message) ?? [];
   return { kind: 'banned', reason: reason === NO_REASON ? '' : reason, until };
+};
+
+// A social sign-in redirects a User in Pending deletion back with the Purge date and token, a banned one with its
+// message. A hand-edited date is ignored rather than crashing the page.
+export const socialSignInOutcome = ({
+  pending,
+  restoreToken,
+  error,
+  errorDescription,
+}: SocialSignInLanding): AuthOutcome | null => {
+  if (pending && !Number.isNaN(Date.parse(pending))) {
+    return { kind: 'pendingDeletion', purgeDate: pending, restoreToken };
+  }
+  if (error === 'BANNED_USER') return bannedOutcome(errorDescription ?? '');
+  return null;
 };
 
 /** A sign-in the two-factor plugin held back: no session yet, a code to ask for. */
