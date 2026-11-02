@@ -268,6 +268,12 @@ describe('createAuth admin and two-factor plugins', () => {
     expect(findPlugin('two-factor')?.options).not.toHaveProperty('trustDeviceMaxAge');
   });
 
+  it("runs the Admin trust-device guard after the two-factor plugin's hooks", () => {
+    const ids = buildAuth().options.plugins?.map((plugin) => plugin.id) ?? [];
+
+    expect(ids.indexOf('admin-trust-device')).toBeGreaterThan(ids.indexOf('two-factor'));
+  });
+
   it('names the TOTP issuer Nebula Chat', () => {
     expect(findPlugin('two-factor')?.options).toMatchObject({ issuer: 'Nebula Chat' });
   });
