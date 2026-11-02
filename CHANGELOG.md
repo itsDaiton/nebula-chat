@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.20.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.5...nebula-chat-v5.20.6) (2026-11-02)
+
+
+### Bug Fixes
+
+* **auth:** set the auth emails in Geist with the app's light tokens ([#737](https://github.com/itsDaiton/nebula-chat/issues/737)) ([25495c6](https://github.com/itsDaiton/nebula-chat/commit/25495c68dad271e446f815f6704d21b683dbefa6))
+
 ## [5.20.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.4...nebula-chat-v5.20.5) (2026-11-02)
 
 

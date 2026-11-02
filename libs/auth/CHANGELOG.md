@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.4.2...nebula-chat-auth-v3.4.3) (2026-11-02)
+
+
+### Bug Fixes
+
+* **auth:** set the auth emails in Geist with the app's light tokens ([#737](https://github.com/itsDaiton/nebula-chat/issues/737)) ([25495c6](https://github.com/itsDaiton/nebula-chat/commit/25495c68dad271e446f815f6704d21b683dbefa6))
+
 ## [3.4.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.4.1...nebula-chat-auth-v3.4.2) (2026-11-02)
 
 
