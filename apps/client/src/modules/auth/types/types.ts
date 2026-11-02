@@ -157,7 +157,7 @@ export type PendingDeletionPromptProps = Extract<AuthOutcome, { kind: 'pendingDe
 
 export type BannedNoticeProps = Extract<AuthOutcome, { kind: 'banned' }>;
 
-export type TwoFactorMethod = 'totp' | 'backup';
+type TwoFactorMethod = 'totp' | 'backup';
 
 /** One go at the sign-in's second factor. */
 export type SecondFactorAttempt = TwoFactorCodeValues & { method: TwoFactorMethod };

@@ -12,6 +12,14 @@ const bannedBody = z.object({ message: z.string() });
 
 // The server's `bannedUserMessage`: "… Reason: <reason>. The ban ends <ISO date>." or "… The ban has no end."
 const BANNED_MESSAGE = /Reason: ([\s\S]*)\. (?:The ban ends (\S+)\.|The ban has no end\.)$/;
+// What that message says when the Admin gave none.
+const NO_REASON = 'No reason';
+
+/** The ban a refused sign-in's message describes; a social sign-in brings it back as `?error_description=`. */
+export const bannedOutcome = (message: string): AuthOutcome => {
+  const [, reason = '', until = null] = BANNED_MESSAGE.exec(message) ?? [];
+  return { kind: 'banned', reason: reason === NO_REASON ? '' : reason, until };
+};
 
 /** A sign-in the two-factor plugin held back: no session yet, a code to ask for. */
 export const needsSecondFactor = ({ data }: AuthResult) =>
@@ -28,8 +36,7 @@ export const authOutcomeOf = (error: Error): AuthOutcome | undefined => {
 
   if (error.authCode === 'BANNED_USER') {
     const body = bannedBody.safeParse(error.cause);
-    const match = body.success ? BANNED_MESSAGE.exec(body.data.message) : null;
-    return { kind: 'banned', reason: match?.[1] ?? '', until: match?.[2] ?? null };
+    return bannedOutcome(body.success ? body.data.message : '');
   }
 
   return undefined;

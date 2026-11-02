@@ -4,6 +4,7 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
 import { getListSessionsMockHandler } from '@/libs/api/generated/sessions/sessions.msw';
+import { useAuthPageStore } from '@/modules/auth/stores/useAuthPageStore';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
@@ -116,6 +117,7 @@ beforeEach(() => {
   vi.restoreAllMocks();
   window.location.hash = '';
   usePasswordVisibilityStore.setState({ visibleFields: {} });
+  useAuthPageStore.getState().reset();
   session = aSession();
   server.use(
     mockGetSession(() => session),
@@ -786,6 +788,14 @@ describe('AuthPage', () => {
       expect(await findRegisteredMenu()).toBeInTheDocument();
     });
 
+    it('ignores a landing whose Purge date is not a date', async () => {
+      await renderAuthFlow('/auth?pending=soon&restoreToken=restore-2');
+
+      expect(
+        await screen.findByRole('heading', { name: resources.auth.signIn.title }),
+      ).toBeInTheDocument();
+    });
+
     it('points a sign-up with a pending email to sign-in', async () => {
       server.use(
         mockApiError('post', API_ROUTE.authSignUpEmail, 409, { code: 'EMAIL_PENDING_DELETION' }),
@@ -839,7 +849,29 @@ describe('AuthPage', () => {
       await fillSignIn();
       await submitSignIn();
 
-      expect(await screen.findByText(banned.suspendedPermanently)).toBeInTheDocument();
+      expect(await screen.findByText(banned.bannedPermanently)).toBeInTheDocument();
+      expect(screen.getByText('Spam')).toBeInTheDocument();
+    });
+
+    it('leaves out the reason when the Admin gave none', async () => {
+      refuseAsBanned('You have been banned. Reason: No reason. The ban has no end.');
+      await renderAuthFlow();
+
+      await fillSignIn();
+      await submitSignIn();
+
+      expect(await screen.findByText(banned.bannedPermanently)).toBeInTheDocument();
+      expect(screen.queryByText(banned.reason)).toBeNull();
+    });
+
+    it('shows the ban when a social sign-in lands here refused', async () => {
+      const message = 'You have been banned. Reason: Spam. The ban ends 2026-11-10T12:00:00.000Z.';
+      await renderAuthFlow(
+        `/auth?error=BANNED_USER&error_description=${encodeURIComponent(message)}`,
+      );
+
+      expect(await screen.findByRole('heading', { name: banned.title })).toBeInTheDocument();
+      expect(screen.getByText('10 November 2026')).toBeInTheDocument();
       expect(screen.getByText('Spam')).toBeInTheDocument();
     });
 

@@ -138,10 +138,10 @@ export const resources = {
       signOut: 'Sign out',
     },
     banned: {
-      title: 'This account is suspended',
-      suspendedUntil: 'An Admin suspended it until ',
-      suspendedUntilEnd: '.',
-      suspendedPermanently: 'An Admin suspended it permanently.',
+      title: 'This account is banned',
+      bannedUntil: 'An Admin banned it until ',
+      bannedUntilEnd: '.',
+      bannedPermanently: 'An Admin banned it permanently.',
       reason: 'Reason',
       continueAsGuest: 'Continue as Guest',
     },
@@ -235,7 +235,7 @@ export const resources = {
       emailPendingDeletion:
         'This email belongs to an account scheduled for deletion. Sign in to restore it.',
       pendingDeletion: 'This account is scheduled for deletion.',
-      banned: 'This account is suspended.',
+      banned: 'This account is banned.',
       restoreTokenInvalid: 'This restore link has expired. Sign in again to restore your account.',
       invalidBackupCode: 'That backup code is wrong or was already used.',
       twoFactorExpired: 'This sign-in timed out. Sign in again.',

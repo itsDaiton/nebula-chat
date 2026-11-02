@@ -18,12 +18,12 @@ export const BannedNotice = ({ reason, until }: BannedNoticeProps) => (
       description={
         until ? (
           <>
-            {banned.suspendedUntil}
+            {banned.bannedUntil}
             <b className="font-medium text-foreground">{formatAuthDate(until)}</b>
-            {banned.suspendedUntilEnd}
+            {banned.bannedUntilEnd}
           </>
         ) : (
-          banned.suspendedPermanently
+          banned.bannedPermanently
         )
       }
     />
