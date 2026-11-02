@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.20.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.3...nebula-chat-v5.20.4) (2026-11-02)
+
+
+### Bug Fixes
+
+* **auth:** stop Admins from trusting a device on the 2FA challenge ([#732](https://github.com/itsDaiton/nebula-chat/issues/732)) ([08e8472](https://github.com/itsDaiton/nebula-chat/commit/08e84721086e0d3f2caad790b161aec863496165))
+
 ## [5.20.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.2...nebula-chat-v5.20.3) (2026-11-01)
 
 
