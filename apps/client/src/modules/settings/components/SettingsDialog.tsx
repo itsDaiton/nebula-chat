@@ -19,7 +19,7 @@ import { cn } from '@/shared/utils/cn';
 export const SettingsDialog = () => {
   const { isOpen, section, query, closeSettings, setSection, setQuery } = useSettingsDialogStore();
   const activeNav = useRef<HTMLButtonElement>(null);
-  const { isRegistered } = useAuth();
+  const { isRegistered, isPending } = useAuth();
 
   const sections = SETTINGS_SECTIONS.filter(({ guest }) => isRegistered || guest);
   const active = sections.find(({ id }) => id === section) ?? sections[0];
@@ -39,7 +39,8 @@ export const SettingsDialog = () => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && closeSettings()}>
+    // Held until the session resolves: before that only the Guest sections exist, and initial focus would land on the first of them.
+    <Dialog open={isOpen && !isPending} onOpenChange={(open) => !open && closeSettings()}>
       <DialogContent
         showCloseButton
         // Not the search box: focus lands on the current section so the keyboard opens on the nav.
