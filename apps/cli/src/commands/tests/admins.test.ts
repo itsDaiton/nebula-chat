@@ -196,10 +196,10 @@ describe('nebula admins revoke', () => {
 
   it('exits 1 with the server message when the user is the last Admin', async () => {
     const cli = await cliWith();
-    revokeAnswers(409, envelope('LastAdmin', 'The last Admin cannot be revoked.'));
+    revokeAnswers(409, envelope('LastAdmin', 'The last Admin cannot be demoted or banned.'));
 
     expect(await cli.run('admins', 'revoke', EMAIL, '--yes')).toBe(1);
-    expect(cli.stderr()).toBe('error: The last Admin cannot be revoked.\n');
+    expect(cli.stderr()).toBe('error: The last Admin cannot be demoted or banned.\n');
   });
 
   it('exits 3 when the operator token is wrong', async () => {
