@@ -1,7 +1,7 @@
 import { MoonIcon, SunIcon } from 'lucide-react';
 import { useRegisterPaletteActions } from '@/modules/commandPalette/hooks/useRegisterPaletteActions';
 import { resources } from '@/resources';
-import { useColorMode } from '@/theme/hooks/useColorMode';
+import { useColorMode } from '@/shared/hooks/useColorMode';
 
 /** The actions no feature module owns. */
 export const useDefaultPaletteActions = () => {

@@ -18,7 +18,7 @@ import { cn } from '@/shared/utils/cn';
 import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
 import { useOS } from '@/shared/hooks/useOS';
 import type { AppHeaderProps } from '@/shared/types/types';
-import { useColorMode } from '@/theme/hooks/useColorMode';
+import { useColorMode } from '@/shared/hooks/useColorMode';
 
 export const AppHeader = ({
   isDesktop,

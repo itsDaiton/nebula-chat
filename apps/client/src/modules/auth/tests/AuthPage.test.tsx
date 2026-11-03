@@ -6,7 +6,7 @@ import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/cha
 import { getListSessionsMockHandler } from '@/libs/api/generated/sessions/sessions.msw';
 import { useAuthPageStore } from '@/modules/auth/stores/useAuthPageStore';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
-import { toaster } from '@/shared/components/ui/toaster';
+import { toast as sonner } from 'sonner';
 import { resources } from '@/resources';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import {
@@ -25,7 +25,7 @@ import {
 import { server } from '@/test/msw';
 import { renderRoute } from '@/test/renderRoute';
 
-vi.mock('@/theme/hooks/useColorMode', () => ({
+vi.mock('@/shared/hooks/useColorMode', () => ({
   useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
 }));
 
@@ -253,7 +253,7 @@ describe('AuthPage', () => {
   });
 
   it('shows a breached password under the password field without clearing the form', async () => {
-    const toast = vi.spyOn(toaster, 'create');
+    const toast = vi.spyOn(sonner, 'error');
     server.use(
       mockApiError('post', API_ROUTE.authSignUpEmail, 400, {
         code: 'PASSWORD_COMPROMISED',

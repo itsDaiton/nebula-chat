@@ -10,16 +10,16 @@ paths:
 - Components live in `modules/<module>/components/` or `shared/components/`.
 - **One component per file** (not lint-enforced: `react/no-multi-comp` crashes on ESLint 10, so check it in review). Never define multiple components, hooks, or significant logic in a single file. No co-located sub-components, no local helper components at the bottom of a file — every component gets its own file.
 - Components read from stores and hooks — they do not own significant state themselves.
-- Use Chakra UI primitives. Custom UI wrappers live in `shared/components/ui/`.
-- **Redesign (epic #530).** New surfaces build on the shadcn/ui base components in `shared/components/ui/`
+- **Base components.** Surfaces build on the shadcn/ui components in `shared/components/ui/`
   (Base UI primitives, `components.json` style `base-nova`; add one with `pnpm dlx shadcn add <name>`, then
   convert it to arrow functions, drop `'use client'` and move any UI string into `resources.ts`). Each such
   file holds one component family with its prop types inline, the exception to one-component-per-file and
   to `types/types.ts`. Style them with Tailwind
   utilities over the tokens in `styles/globals.css` (`bg-panel`, `text-muted-foreground`, `border-border`,
-  `font-mono` for metadata and ids, `tabular-nums` for numbers), never raw colours. Until Chakra is removed
-  (NEB-555), Tailwind's preflight is off and its utilities are unlayered so they beat Chakra's layered
-  reset; a small reset scoped to `[data-slot]` stands in for preflight on the new components.
+  `font-mono` for metadata and ids, `tabular-nums` for numbers), never raw colours. Tailwind's preflight is
+  global, so a bare heading or list has no browser styling.
+- **Toasts** are sonner's `toast` (`toast.success(title)`, `toast.error(title, { description })`); the one
+  `Toaster` is mounted in `RootLayout`. Icons come from `lucide-react`; a brand mark it lacks is an inline SVG.
 - **Icon-only buttons use `IconButton`** (`shared/components/ui/icon-button.tsx`): it takes a `label` that is both the
   accessible name and the tooltip, so no icon is unnamed on hover. A bare `Button` with just an icon is a bug.
 - **Chat surfaces (NEB-549)** are Tailwind over the same tokens. Assistant markdown goes through

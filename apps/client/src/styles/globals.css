@@ -1,6 +1,5 @@
-/* Preflight is left out while Chakra's reset styles the page (NEB-555 restores it), and utilities are
-  unlayered so they win over Chakra's layered reset and recipes. */
 @import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
 @import 'tailwindcss/utilities.css';
 @import 'tw-animate-css';
 @import '@fontsource-variable/geist';
@@ -200,40 +199,16 @@ html[data-motion='reduced'] *::after {
   }
 }
 
-/* Scoped to the new components (each carries `data-slot`) so Chakra screens keep their own base. Unlayered
-  so it beats Chakra's reset; `:where` keeps it at zero specificity under any utility. */
-:where([data-slot]) {
-  border-color: var(--border);
-  outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
-  font-family: var(--font-sans);
-}
-
-/* The slice of preflight the components rely on; only on their own controls, never a nested Chakra one. */
-:where(input, textarea, select, button):where([data-slot]) {
-  font: inherit;
-  color: inherit;
-  background-color: transparent;
-}
-
 @utility no-scrollbar {
   scrollbar-width: none;
 }
 
-/* The shell hosts Chakra screens until they are restyled: it gives them the new font and palette. */
+/* The shell sets the app's base type for everything inside it, dialogs included. */
 .app-shell {
   font-family: var(--font-sans);
   font-size: 13.5px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-
-  --chakra-colors-bg-default: var(--panel);
-  --chakra-colors-bg-subtle: var(--raised);
-  --chakra-colors-bg-muted: var(--raised);
-  --chakra-colors-fg-default: var(--foreground);
-  --chakra-colors-fg-soft: var(--foreground-secondary);
-  --chakra-colors-fg-muted: var(--muted-foreground);
-  --chakra-colors-border-default: var(--border);
-  --chakra-colors-border-emphasized: var(--border-strong);
 }
 
 /* Assistant Message prose: the markdown output of `MarkdownContent`. */

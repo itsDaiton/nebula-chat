@@ -1,6 +1,7 @@
 import { getRouteApi } from '@tanstack/react-router';
 import { Loader2Icon } from 'lucide-react';
 import { AuthFormAlert } from '@/modules/auth/components/AuthFormAlert';
+import { SocialIcon } from '@/modules/auth/components/SocialIcon';
 import { useSocialSignIn } from '@/modules/auth/hooks/useSocialSignIn';
 import { SOCIAL_PROVIDERS, socialCallbackError } from '@/modules/auth/utils/socialSignIn';
 import { Button } from '@/shared/components/ui/button';
@@ -19,7 +20,7 @@ export const SocialSignIn = () => {
   return (
     <div className="mt-5 flex flex-col gap-2">
       <AuthFormAlert message={error?.message ?? callbackError} />
-      {SOCIAL_PROVIDERS.map(({ provider, label, icon: Icon }) => (
+      {SOCIAL_PROVIDERS.map(({ provider, label }) => (
         <Button
           key={provider}
           variant="outline"
@@ -32,7 +33,7 @@ export const SocialSignIn = () => {
           {isLeaving && variables === provider ? (
             <Loader2Icon className="animate-spin" />
           ) : (
-            <Icon aria-hidden />
+            <SocialIcon provider={provider} />
           )}
           {label}
         </Button>

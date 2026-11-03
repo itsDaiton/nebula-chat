@@ -22,15 +22,13 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text-summary', 'lcov'],
       include: ['src/**/*.{ts,tsx}'],
-      // ADR-0008: Chakra theme tokens and the Orval-generated API client have no
-      // behaviour of their own; `main.tsx` is the bootstrap entrypoint, and
+      // ADR-0008: the Orval-generated API client has no behaviour of its own; `main.tsx` is the bootstrap entrypoint, and
       // `RouterDevtools` loads only under `vite dev`.
       // Mirrored into `matrix.coverage` in .github/workflows/build.yml so the
       // Sonar gate measures the same denominator. Change one, change the other.
       exclude: [
         'src/main.tsx',
         'src/vite-env.d.ts',
-        'src/theme/**',
         'src/libs/api/generated/**',
         // TanStack Router's generated route tree (the router plugin's output).
         'src/routeTree.gen.ts',
@@ -41,11 +39,8 @@ export default defineConfig({
         'src/**/*.types.ts',
         'src/**/types/**',
         // ADR-0008: style declarations and library wiring, with no behaviour to
-        // assert on. `prose.tsx` is a Chakra style recipe, `scrollbar.ts` a style
-        // object, and the provider/toaster/code-block modules configure Chakra.
+        // assert on.
         'src/shared/components/ui/prose.tsx',
-        'src/shared/components/ui/provider.tsx',
-        'src/shared/components/ui/toaster.tsx',
         'src/shared/components/ui/code-block-adapter.ts',
         'src/shared/components/scrollbar.ts',
         'src/resources.ts',
