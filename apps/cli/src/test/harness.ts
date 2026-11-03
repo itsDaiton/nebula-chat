@@ -30,20 +30,32 @@ const captureStream = (isTTY: boolean) => {
 type HarnessOptions = {
   env?: Record<string, string | undefined>;
   isTTY?: boolean;
+  /** What the operator types at a confirmation prompt; the prompts asked are recorded in `asked`. */
+  answer?: boolean;
 };
 
 /** Drives `run(argv, deps)` in-process: a temp home and XDG dir, captured streams, MSW for HTTP. */
-export const createHarness = async ({ env = {}, isTTY = false }: HarnessOptions = {}) => {
+export const createHarness = async ({
+  env = {},
+  isTTY = false,
+  answer = false,
+}: HarnessOptions = {}) => {
   const home = await mkdtemp(join(tmpdir(), 'nebula-cli-'));
   tempDirs.push(home);
   const xdgConfigHome = join(home, 'xdg');
   const configFile = join(xdgConfigHome, 'nebula-chat', 'config.json');
   const stdout = captureStream(isTTY);
   const stderr = captureStream(isTTY);
+  const asked: string[] = [];
   const deps: Deps = {
     env: { XDG_CONFIG_HOME: xdgConfigHome, ...env },
     stdout: stdout.stream,
     stderr: stderr.stream,
+    stdin: { isTTY },
+    confirm: async (question) => {
+      asked.push(question);
+      return answer;
+    },
     // Late-bound, so the call goes through the fetch MSW patched.
     fetch: (input, init) => globalThis.fetch(input, init),
     now: () => NOW,
@@ -56,6 +68,7 @@ export const createHarness = async ({ env = {}, isTTY = false }: HarnessOptions 
     run: (...argv: string[]) => run(argv, deps),
     stdout: stdout.text,
     stderr: stderr.text,
+    asked,
     readConfig: async (path = configFile): Promise<unknown> =>
       JSON.parse(await readFile(path, 'utf8')),
     writeConfig: async (config: unknown) => {

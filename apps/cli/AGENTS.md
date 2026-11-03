@@ -11,6 +11,9 @@ pnpm nebula profile add prod --url https://<server-host>
 pnpm nebula profile use prod
 NEBULA_OPERATOR_TOKEN=… pnpm nebula --profile local log-level set redis debug --ttl 600
 NEBULA_OPERATOR_TOKEN=… pnpm nebula --profile local log-level get
+NEBULA_OPERATOR_TOKEN=… pnpm nebula admins grant dana@example.com   # how the first Admin is made
+NEBULA_OPERATOR_TOKEN=… pnpm nebula admins revoke dana@example.com --yes
+NEBULA_OPERATOR_TOKEN=… pnpm nebula admins list
 pnpm nebula --json profile list | jq .
 ```
 
@@ -20,6 +23,8 @@ pnpm nebula --json profile list | jq .
   - Every instance answers for itself ([ADR-0034](../../docs/adr/0034-reading-log-levels-from-every-instance.md)).
   - A warning on stderr flags instances that disagree on a level, or that did not answer within the server's 2 seconds.
   - `--json` prints the server's `{ receivers, reports }` as is.
+- **`admins revoke`** asks `[y/N]` on a TTY, and without `--yes` refuses in a non-interactive shell (exit `2`). The server's own message (unknown email, Guest, unverified, banned, already or not an Admin, last Admin) prints with exit `1`.
+  - `list` shows the account's creation time as "granted at": the API records no grant time.
 - **Output:** a table, key–value list or sentence for humans (bold headers only on a TTY without `NO_COLOR`); `--json` prints exactly one JSON document to stdout. Errors go to stderr.
 - **Exit codes:** `0` success, `1` server or unknown error, `2` usage error (bad arguments, unknown profile, a `400`), `3` authentication or authorisation error.
 
@@ -31,4 +36,4 @@ pnpm nebula --json profile list | jq .
 4. Print once, through `ctx.print({ data, view })`: `data` is the `--json` document, `view` the human `table`, `fields` or `message`.
 5. Test it at the CLI's only seam: `src/commands/tests/<group>.test.ts` calls `run(argv, deps)` through `createHarness()` (temp config dir, captured streams) with MSW handlers built from the generated `get…Url()` helpers. Cover success, `--json`, each auth failure, a server error and usage errors.
 
-`run(argv, deps)` takes everything outside the process as `deps` (env, stdout, stderr, fetch, clock, home directory); `src/bin.ts` wires the real ones and is the only untested file.
+`run(argv, deps)` takes everything outside the process as `deps` (env, stdout, stderr, stdin, confirm prompt, fetch, clock, home directory); `src/bin.ts` wires the real ones and is the only untested file.

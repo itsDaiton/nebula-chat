@@ -1,5 +1,6 @@
 import { Command, CommanderError } from 'commander';
 import packageJson from '#package.json' with { type: 'json' };
+import { registerAdminsCommands } from '@cli/commands/admins';
 import { registerLogLevelCommands } from '@cli/commands/logLevel';
 import { registerProfileCommands } from '@cli/commands/profile';
 import { createContext, type GlobalOptions } from '@cli/context';
@@ -12,6 +13,8 @@ export type Deps = {
   env: Record<string, string | undefined>;
   stdout: Stream;
   stderr: Stream;
+  stdin: { isTTY?: boolean };
+  confirm: (question: string) => Promise<boolean>;
   fetch: typeof globalThis.fetch;
   now: () => Date;
   homeDir: string;
@@ -22,6 +25,7 @@ Examples:
   $ nebula profile add local --url http://localhost:3000
   $ nebula profile use local
   $ NEBULA_OPERATOR_TOKEN=… nebula log-level set redis debug --ttl 600
+  $ NEBULA_OPERATOR_TOKEN=… nebula admins grant dana@example.com
   $ nebula --profile prod --json profile list`;
 
 const buildProgram = (deps: Deps) => {
@@ -44,6 +48,7 @@ const buildProgram = (deps: Deps) => {
   const ctx = createContext(deps, () => program.opts<GlobalOptions>());
   registerProfileCommands(program, ctx);
   registerLogLevelCommands(program, ctx);
+  registerAdminsCommands(program, ctx);
   return program;
 };
 
