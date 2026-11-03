@@ -1,5 +1,33 @@
 # Changelog
 
+## [3.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.15.1...nebula-chat-client-v3.0.0) (2026-11-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* **client:** NEB-555 remove Chakra UI from the client ([#742](https://github.com/itsDaiton/nebula-chat/issues/742))
+* **client:** NEB-530 redesign the client on shadcn/ui, Base UI and Tailwind
+
+### Features
+
+* **client:** NEB-530 redesign the client on shadcn/ui, Base UI and Tailwind ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-546 redesign foundation — Tailwind v4, shadcn/ui on Base UI, tokens, Geist and test helpers ([#649](https://github.com/itsDaiton/nebula-chat/issues/649)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-547 redesigned shell — header, three panels, mobile drawer and sheet ([#670](https://github.com/itsDaiton/nebula-chat/issues/670)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-548 redesigned left panel with Sessions, relative times, keyboard hints and the archive action ([#675](https://github.com/itsDaiton/nebula-chat/issues/675)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-549 redesigned chat with greeting, composer, messages, code blocks and meta row ([#676](https://github.com/itsDaiton/nebula-chat/issues/676)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-550 model picker with provider logos, labels, search and context size ([#678](https://github.com/itsDaiton/nebula-chat/issues/678)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-551 Inspector right panel with a Session tab and a Run tab slot ([#686](https://github.com/itsDaiton/nebula-chat/issues/686)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-552 Settings as a modal with 2FA, Archived Sessions, Appearance ([#725](https://github.com/itsDaiton/nebula-chat/issues/725)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-553 redesigned auth pages with the 2FA challenge, the Pending deletion restore prompt and the banned message ([#731](https://github.com/itsDaiton/nebula-chat/issues/731)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-554 command palette ([#679](https://github.com/itsDaiton/nebula-chat/issues/679)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-555 remove Chakra UI from the client ([#742](https://github.com/itsDaiton/nebula-chat/issues/742)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-706 plug the Message metadata from the API into the redesigned chat ([#739](https://github.com/itsDaiton/nebula-chat/issues/739)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+
+
+### Bug Fixes
+
+* **client:** NEB-672 keep a failed reply visible in a new chat ([#683](https://github.com/itsDaiton/nebula-chat/issues/683)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+
 ## [2.15.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.15.0...nebula-chat-client-v2.15.1) (2026-10-31)
 
 
