@@ -1,3 +1,4 @@
+import { WorkflowIcon } from 'lucide-react';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { getGreeting } from '@/modules/chat/utils/greeting';
 import { resources } from '@/resources';
@@ -20,7 +21,10 @@ export const ChatEmptyState = ({ sessionId }: ChatEmptyStateProps) => {
       <h1 className="text-[46px] leading-[1.05] font-light tracking-[-0.045em]">
         {getGreeting(new Date(), isGuest ? null : user?.name)}
       </h1>
-      <p className="mt-3.5 flex items-center justify-center gap-1.5 text-[13.5px] text-muted-foreground">
+      <p className="mt-3.5 text-[13.5px] text-muted-foreground">
+        {!isGuest && (
+          <WorkflowIcon aria-hidden className="mr-1.5 inline-block size-3.5 align-[-2px]" />
+        )}
         {isGuest ? resources.chat.guestHint : resources.chat.hint}
       </p>
     </div>

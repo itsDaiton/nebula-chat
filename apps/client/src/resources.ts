@@ -459,7 +459,7 @@ export const resources = {
     togglePanel: { left: 'Toggle sessions panel', right: 'Toggle inspector' },
     menu: 'Menu',
     inspector: 'Inspector',
-    search: 'Search',
+    search: 'Search Sessions',
     toggleColorMode: 'Toggle color mode',
     modifier: { mac: '⌘', windows: 'Ctrl' },
   },

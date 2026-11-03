@@ -90,6 +90,34 @@ beforeEach(() => {
 });
 
 describe('SettingsDialog', () => {
+  // First in the file on purpose: it needs better-auth's session store untouched, so the request is still pending.
+  describe('opened before the session resolves', () => {
+    it('waits for the session, then focuses the current section', async () => {
+      let release = () => {};
+      const resolved = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      server.use(
+        http.get(API_ROUTE.authSession, async () => {
+          await resolved;
+          return HttpResponse.json(aSession({ isAnonymous: false }));
+        }),
+      );
+
+      await renderPage('profile');
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+      release();
+      const dialog = await screen.findByRole('dialog');
+      await waitFor(() =>
+        expect(
+          within(dialog).getByRole('button', { name: resources.settings.sections.profile }),
+        ).toHaveFocus(),
+      );
+    });
+  });
+
   describe('Profile name', () => {
     beforeEach(async () => {
       await holdSession({ isAnonymous: false });
