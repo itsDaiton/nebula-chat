@@ -10,10 +10,7 @@ const envelopeMessage = (data: unknown) =>
     ? data.message
     : undefined;
 
-/**
- * An unknown email and a server without an operator token are both 404s, told apart by the message.
- * `refused` lists the statuses whose server message is the answer, not a usage or auth problem.
- */
+// An unknown email and an unset operator token are both 404s; the message tells them apart.
 const adminError = (
   response: { status: number; data: unknown },
   profile: CliProfile,

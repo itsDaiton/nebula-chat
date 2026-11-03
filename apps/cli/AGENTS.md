@@ -36,4 +36,4 @@ pnpm nebula --json profile list | jq .
 4. Print once, through `ctx.print({ data, view })`: `data` is the `--json` document, `view` the human `table`, `fields` or `message`.
 5. Test it at the CLI's only seam: `src/commands/tests/<group>.test.ts` calls `run(argv, deps)` through `createHarness()` (temp config dir, captured streams) with MSW handlers built from the generated `get…Url()` helpers. Cover success, `--json`, each auth failure, a server error and usage errors.
 
-`run(argv, deps)` takes everything outside the process as `deps` (env, stdout, stderr, fetch, clock, home directory); `src/bin.ts` wires the real ones and is the only untested file.
+`run(argv, deps)` takes everything outside the process as `deps` (env, stdout, stderr, stdin, confirm prompt, fetch, clock, home directory); `src/bin.ts` wires the real ones and is the only untested file.
