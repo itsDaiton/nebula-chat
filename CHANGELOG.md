@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.21.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.6...nebula-chat-v5.21.0) (2026-11-03)
+
+
+### Features
+
+* **cli:** NEB-562 nebula admins grant, revoke and list ([#740](https://github.com/itsDaiton/nebula-chat/issues/740)) ([ab06c1c](https://github.com/itsDaiton/nebula-chat/commit/ab06c1c04458119af1068d6eb1513c9a8bf8bb3a))
+
 ## [5.20.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.5...nebula-chat-v5.20.6) (2026-11-02)
 
 
