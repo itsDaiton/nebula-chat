@@ -199,6 +199,14 @@ html[data-motion='reduced'] *::after {
   }
 }
 
+/* Preflight resets borders to currentcolor; without this a bare `border` is white in dark mode. */
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+  }
+}
+
 @utility no-scrollbar {
   scrollbar-width: none;
 }
