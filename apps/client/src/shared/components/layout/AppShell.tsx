@@ -99,7 +99,11 @@ export const AppShell = ({ children }: AppShellProps) => {
             </SheetContent>
           </Sheet>
           <Sheet open={sheetOpen} onOpenChange={(open) => !open && closeSheet()}>
-            <SheetContent side="bottom" className="max-h-[70dvh] gap-0 rounded-t-2xl">
+            <SheetContent
+              side="bottom"
+              showCloseButton={false}
+              className="max-h-[70dvh] gap-0 rounded-t-2xl"
+            >
               <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-border-strong" />
               <SheetTitle className="sr-only">{resources.shell.inspector}</SheetTitle>
               <Inspector onClose={closeSheet} />
