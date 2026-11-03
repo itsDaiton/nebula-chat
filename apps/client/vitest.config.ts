@@ -22,8 +22,9 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text-summary', 'lcov'],
       include: ['src/**/*.{ts,tsx}'],
-      // ADR-0008: the Orval-generated API client has no behaviour of its own; `main.tsx` is the bootstrap entrypoint, and
-      // `RouterDevtools` loads only under `vite dev`.
+      // ADR-0008: the Orval-generated API client has no behaviour of its own;
+      // `main.tsx` is the bootstrap entrypoint, and `RouterDevtools` loads only
+      // under `vite dev`.
       // Mirrored into `matrix.coverage` in .github/workflows/build.yml so the
       // Sonar gate measures the same denominator. Change one, change the other.
       exclude: [
