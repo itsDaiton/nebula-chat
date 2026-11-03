@@ -8,95 +8,101 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root';
-import { Route as AppRouteImport } from './routes/_app';
-import { Route as AppIndexRouteImport } from './routes/_app/index';
-import { Route as AppAuthRouteRouteImport } from './routes/_app/auth/route';
-import { Route as AppSettingsRouteImport } from './routes/_app/settings';
-import { Route as AppAuthIndexRouteImport } from './routes/_app/auth/index';
-import { Route as AppAuthForgotPasswordRouteImport } from './routes/_app/auth/forgot-password';
-import { Route as AppAuthResetPasswordRouteImport } from './routes/_app/auth/reset-password';
-import { Route as AppAuthVerifyEmailRouteImport } from './routes/_app/auth/verify-email';
-import { Route as AppSIdRouteImport } from './routes/_app/s/$id';
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as AppChatRouteImport } from './routes/_app/_chat'
+import { Route as AppAuthRouteRouteImport } from './routes/_app/auth/route'
+import { Route as AppSettingsRouteImport } from './routes/_app/settings'
+import { Route as AppChatIndexRouteImport } from './routes/_app/_chat/index'
+import { Route as AppAuthIndexRouteImport } from './routes/_app/auth/index'
+import { Route as AppAuthForgotPasswordRouteImport } from './routes/_app/auth/forgot-password'
+import { Route as AppAuthResetPasswordRouteImport } from './routes/_app/auth/reset-password'
+import { Route as AppAuthVerifyEmailRouteImport } from './routes/_app/auth/verify-email'
+import { Route as AppChatSIdRouteImport } from './routes/_app/_chat/s/$id'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
-} as any);
-const AppIndexRoute = AppIndexRouteImport.update({
-  id: '/',
-  path: '/',
+} as any)
+const AppChatRoute = AppChatRouteImport.update({
+  id: '/_chat',
   getParentRoute: () => AppRoute,
-} as any);
+} as any)
 const AppAuthRouteRoute = AppAuthRouteRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => AppRoute,
-} as any);
+} as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AppRoute,
-} as any);
+} as any)
+const AppChatIndexRoute = AppChatIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppChatRoute,
+} as any)
 const AppAuthIndexRoute = AppAuthIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppAuthRouteRoute,
-} as any);
+} as any)
 const AppAuthForgotPasswordRoute = AppAuthForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
   getParentRoute: () => AppAuthRouteRoute,
-} as any);
+} as any)
 const AppAuthResetPasswordRoute = AppAuthResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
   getParentRoute: () => AppAuthRouteRoute,
-} as any);
+} as any)
 const AppAuthVerifyEmailRoute = AppAuthVerifyEmailRouteImport.update({
   id: '/verify-email',
   path: '/verify-email',
   getParentRoute: () => AppAuthRouteRoute,
-} as any);
-const AppSIdRoute = AppSIdRouteImport.update({
+} as any)
+const AppChatSIdRoute = AppChatSIdRouteImport.update({
   id: '/s/$id',
   path: '/s/$id',
-  getParentRoute: () => AppRoute,
-} as any);
+  getParentRoute: () => AppChatRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AppIndexRoute;
-  '/auth': typeof AppAuthRouteRouteWithChildren;
-  '/settings': typeof AppSettingsRoute;
-  '/auth/forgot-password': typeof AppAuthForgotPasswordRoute;
-  '/auth/reset-password': typeof AppAuthResetPasswordRoute;
-  '/auth/verify-email': typeof AppAuthVerifyEmailRoute;
-  '/s/$id': typeof AppSIdRoute;
-  '/auth/': typeof AppAuthIndexRoute;
+  '/': typeof AppChatIndexRoute
+  '/auth': typeof AppAuthRouteRouteWithChildren
+  '/settings': typeof AppSettingsRoute
+  '/auth/forgot-password': typeof AppAuthForgotPasswordRoute
+  '/auth/reset-password': typeof AppAuthResetPasswordRoute
+  '/auth/verify-email': typeof AppAuthVerifyEmailRoute
+  '/auth/': typeof AppAuthIndexRoute
+  '/s/$id': typeof AppChatSIdRoute
 }
 export interface FileRoutesByTo {
-  '/settings': typeof AppSettingsRoute;
-  '/': typeof AppIndexRoute;
-  '/auth/forgot-password': typeof AppAuthForgotPasswordRoute;
-  '/auth/reset-password': typeof AppAuthResetPasswordRoute;
-  '/auth/verify-email': typeof AppAuthVerifyEmailRoute;
-  '/s/$id': typeof AppSIdRoute;
-  '/auth': typeof AppAuthIndexRoute;
+  '/': typeof AppChatIndexRoute
+  '/settings': typeof AppSettingsRoute
+  '/auth/forgot-password': typeof AppAuthForgotPasswordRoute
+  '/auth/reset-password': typeof AppAuthResetPasswordRoute
+  '/auth/verify-email': typeof AppAuthVerifyEmailRoute
+  '/auth': typeof AppAuthIndexRoute
+  '/s/$id': typeof AppChatSIdRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  '/_app': typeof AppRouteWithChildren;
-  '/_app/auth': typeof AppAuthRouteRouteWithChildren;
-  '/_app/settings': typeof AppSettingsRoute;
-  '/_app/': typeof AppIndexRoute;
-  '/_app/auth/forgot-password': typeof AppAuthForgotPasswordRoute;
-  '/_app/auth/reset-password': typeof AppAuthResetPasswordRoute;
-  '/_app/auth/verify-email': typeof AppAuthVerifyEmailRoute;
-  '/_app/s/$id': typeof AppSIdRoute;
-  '/_app/auth/': typeof AppAuthIndexRoute;
+  __root__: typeof rootRouteImport
+  '/_app': typeof AppRouteWithChildren
+  '/_app/auth': typeof AppAuthRouteRouteWithChildren
+  '/_app/_chat': typeof AppChatRouteWithChildren
+  '/_app/settings': typeof AppSettingsRoute
+  '/_app/auth/forgot-password': typeof AppAuthForgotPasswordRoute
+  '/_app/auth/reset-password': typeof AppAuthResetPasswordRoute
+  '/_app/auth/verify-email': typeof AppAuthVerifyEmailRoute
+  '/_app/_chat/': typeof AppChatIndexRoute
+  '/_app/auth/': typeof AppAuthIndexRoute
+  '/_app/_chat/s/$id': typeof AppChatSIdRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
@@ -104,107 +110,115 @@ export interface FileRouteTypes {
     | '/auth/forgot-password'
     | '/auth/reset-password'
     | '/auth/verify-email'
+    | '/auth/'
     | '/s/$id'
-    | '/auth/';
-  fileRoutesByTo: FileRoutesByTo;
+  fileRoutesByTo: FileRoutesByTo
   to:
-    | '/settings'
     | '/'
+    | '/settings'
     | '/auth/forgot-password'
     | '/auth/reset-password'
     | '/auth/verify-email'
+    | '/auth'
     | '/s/$id'
-    | '/auth';
   id:
     | '__root__'
     | '/_app'
     | '/_app/auth'
+    | '/_app/_chat'
     | '/_app/settings'
-    | '/_app/'
     | '/_app/auth/forgot-password'
     | '/_app/auth/reset-password'
     | '/_app/auth/verify-email'
-    | '/_app/s/$id'
-    | '/_app/auth/';
-  fileRoutesById: FileRoutesById;
+    | '/_app/_chat/'
+    | '/_app/auth/'
+    | '/_app/_chat/s/$id'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AppRoute: typeof AppRouteWithChildren;
+  AppRoute: typeof AppRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/_app': {
-      id: '/_app';
-      path: '';
-      fullPath: '/';
-      preLoaderRoute: typeof AppRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    '/_app/': {
-      id: '/_app/';
-      path: '/';
-      fullPath: '/';
-      preLoaderRoute: typeof AppIndexRouteImport;
-      parentRoute: typeof AppRoute;
-    };
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/_chat': {
+      id: '/_app/_chat'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppChatRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/auth': {
-      id: '/_app/auth';
-      path: '/auth';
-      fullPath: '/auth';
-      preLoaderRoute: typeof AppAuthRouteRouteImport;
-      parentRoute: typeof AppRoute;
-    };
+      id: '/_app/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AppAuthRouteRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings': {
-      id: '/_app/settings';
-      path: '/settings';
-      fullPath: '/settings';
-      preLoaderRoute: typeof AppSettingsRouteImport;
-      parentRoute: typeof AppRoute;
-    };
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/_chat/': {
+      id: '/_app/_chat/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AppChatIndexRouteImport
+      parentRoute: typeof AppChatRoute
+    }
     '/_app/auth/': {
-      id: '/_app/auth/';
-      path: '/';
-      fullPath: '/auth/';
-      preLoaderRoute: typeof AppAuthIndexRouteImport;
-      parentRoute: typeof AppAuthRouteRoute;
-    };
+      id: '/_app/auth/'
+      path: '/'
+      fullPath: '/auth/'
+      preLoaderRoute: typeof AppAuthIndexRouteImport
+      parentRoute: typeof AppAuthRouteRoute
+    }
     '/_app/auth/forgot-password': {
-      id: '/_app/auth/forgot-password';
-      path: '/forgot-password';
-      fullPath: '/auth/forgot-password';
-      preLoaderRoute: typeof AppAuthForgotPasswordRouteImport;
-      parentRoute: typeof AppAuthRouteRoute;
-    };
+      id: '/_app/auth/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AppAuthForgotPasswordRouteImport
+      parentRoute: typeof AppAuthRouteRoute
+    }
     '/_app/auth/reset-password': {
-      id: '/_app/auth/reset-password';
-      path: '/reset-password';
-      fullPath: '/auth/reset-password';
-      preLoaderRoute: typeof AppAuthResetPasswordRouteImport;
-      parentRoute: typeof AppAuthRouteRoute;
-    };
+      id: '/_app/auth/reset-password'
+      path: '/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AppAuthResetPasswordRouteImport
+      parentRoute: typeof AppAuthRouteRoute
+    }
     '/_app/auth/verify-email': {
-      id: '/_app/auth/verify-email';
-      path: '/verify-email';
-      fullPath: '/auth/verify-email';
-      preLoaderRoute: typeof AppAuthVerifyEmailRouteImport;
-      parentRoute: typeof AppAuthRouteRoute;
-    };
-    '/_app/s/$id': {
-      id: '/_app/s/$id';
-      path: '/s/$id';
-      fullPath: '/s/$id';
-      preLoaderRoute: typeof AppSIdRouteImport;
-      parentRoute: typeof AppRoute;
-    };
+      id: '/_app/auth/verify-email'
+      path: '/verify-email'
+      fullPath: '/auth/verify-email'
+      preLoaderRoute: typeof AppAuthVerifyEmailRouteImport
+      parentRoute: typeof AppAuthRouteRoute
+    }
+    '/_app/_chat/s/$id': {
+      id: '/_app/_chat/s/$id'
+      path: '/s/$id'
+      fullPath: '/s/$id'
+      preLoaderRoute: typeof AppChatSIdRouteImport
+      parentRoute: typeof AppChatRoute
+    }
   }
 }
 
 interface AppAuthRouteRouteChildren {
-  AppAuthForgotPasswordRoute: typeof AppAuthForgotPasswordRoute;
-  AppAuthResetPasswordRoute: typeof AppAuthResetPasswordRoute;
-  AppAuthVerifyEmailRoute: typeof AppAuthVerifyEmailRoute;
-  AppAuthIndexRoute: typeof AppAuthIndexRoute;
+  AppAuthForgotPasswordRoute: typeof AppAuthForgotPasswordRoute
+  AppAuthResetPasswordRoute: typeof AppAuthResetPasswordRoute
+  AppAuthVerifyEmailRoute: typeof AppAuthVerifyEmailRoute
+  AppAuthIndexRoute: typeof AppAuthIndexRoute
 }
 
 const AppAuthRouteRouteChildren: AppAuthRouteRouteChildren = {
@@ -212,29 +226,42 @@ const AppAuthRouteRouteChildren: AppAuthRouteRouteChildren = {
   AppAuthResetPasswordRoute: AppAuthResetPasswordRoute,
   AppAuthVerifyEmailRoute: AppAuthVerifyEmailRoute,
   AppAuthIndexRoute: AppAuthIndexRoute,
-};
+}
 
-const AppAuthRouteRouteWithChildren = AppAuthRouteRoute._addFileChildren(AppAuthRouteRouteChildren);
+const AppAuthRouteRouteWithChildren = AppAuthRouteRoute._addFileChildren(
+  AppAuthRouteRouteChildren,
+)
+
+interface AppChatRouteChildren {
+  AppChatIndexRoute: typeof AppChatIndexRoute
+  AppChatSIdRoute: typeof AppChatSIdRoute
+}
+
+const AppChatRouteChildren: AppChatRouteChildren = {
+  AppChatIndexRoute: AppChatIndexRoute,
+  AppChatSIdRoute: AppChatSIdRoute,
+}
+
+const AppChatRouteWithChildren =
+  AppChatRoute._addFileChildren(AppChatRouteChildren)
 
 interface AppRouteChildren {
-  AppAuthRouteRoute: typeof AppAuthRouteRouteWithChildren;
-  AppSettingsRoute: typeof AppSettingsRoute;
-  AppIndexRoute: typeof AppIndexRoute;
-  AppSIdRoute: typeof AppSIdRoute;
+  AppAuthRouteRoute: typeof AppAuthRouteRouteWithChildren
+  AppChatRoute: typeof AppChatRouteWithChildren
+  AppSettingsRoute: typeof AppSettingsRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAuthRouteRoute: AppAuthRouteRouteWithChildren,
+  AppChatRoute: AppChatRouteWithChildren,
   AppSettingsRoute: AppSettingsRoute,
-  AppIndexRoute: AppIndexRoute,
-  AppSIdRoute: AppSIdRoute,
-};
+}
 
-const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren);
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()

@@ -1,14 +1,18 @@
-import { Box, Flex, chakra } from '@chakra-ui/react';
-import { useMessageHandler } from '@/modules/chat/hooks/useMessageHandler';
-import { useModelSelector } from '@/modules/chat/hooks/useModelSelector';
-import type { ChatInputProps } from '@/modules/chat/types/types';
+import { AttachButton } from '@/modules/chat/components/AttachButton';
 import { ModelSelect } from '@/modules/chat/components/ModelSelect';
+import { RunToggle } from '@/modules/chat/components/RunToggle';
 import { SendButton } from '@/modules/chat/components/SendButton';
 import { StopButton } from '@/modules/chat/components/StopButton';
-import { useTextareaAutoResize } from '@/shared/hooks/useTextareaAutoResize';
-import { chatScrollBar } from '@/shared/components/scrollbar';
-import { ChatInputArea } from '@/modules/chat/components/ChatInputArea';
+import { useMessageHandler } from '@/modules/chat/hooks/useMessageHandler';
+import type { ChatInputProps } from '@/modules/chat/types/types';
+import { resources } from '@/resources';
+import {
+  PromptInput,
+  PromptInputActions,
+  PromptInputTextarea,
+} from '@/shared/components/ui/prompt-input';
 import { useKeyboardHandler } from '@/shared/hooks/useKeyboardHandler';
+import { useTextareaAutoResize } from '@/shared/hooks/useTextareaAutoResize';
 
 export const ChatInput = ({
   onSendMessage,
@@ -22,57 +26,31 @@ export const ChatInput = ({
     isLoading,
   });
 
-  const { inputRef } = useKeyboardHandler({
-    message,
-    isLoading,
-    handleMessageSend,
-  });
+  const { inputRef } = useKeyboardHandler({ message, isLoading, handleMessageSend });
 
   useTextareaAutoResize(inputRef as React.RefObject<HTMLTextAreaElement>);
 
-  const { triggerWidth, isSelectOpen, setIsSelectOpen } = useModelSelector({
-    selectedModel,
-  });
-
   return (
-    <chakra.form onSubmit={handleSubmit} p={4}>
-      <Box
-        position="relative"
-        bg="bg.input"
-        borderRadius="lg"
-        borderColor="border.default"
-        borderWidth={{ base: '1px', _dark: '1.5px' }}
-        transition="all 0.2s"
-        _hover={{
-          borderColor: 'border.emphasized',
-        }}
-        _focusWithin={{
-          borderColor: 'border.emphasized',
-          boxShadow: '0 0 0 1px var(--chakra-colors-border-emphasized)',
-        }}
-      >
-        <ChatInputArea
-          inputRef={inputRef}
-          message={message}
-          setMessage={setMessage}
-          isLoading={isLoading}
-          chatScrollBar={chatScrollBar}
-        />
-        <Flex align="center" justify="flex-end" gap={2} px={2} pb={2} minH="40px">
-          <ModelSelect
-            selectedModel={selectedModel}
-            onModelChange={onModelChange}
-            isSelectOpen={isSelectOpen}
-            setIsSelectOpen={setIsSelectOpen}
-            triggerWidth={triggerWidth}
-          />
-          {isLoading && onStop ? (
-            <StopButton onStop={onStop} />
-          ) : (
-            <SendButton isLoading={isLoading} message={message} />
-          )}
-        </Flex>
-      </Box>
-    </chakra.form>
+    <PromptInput onSubmit={handleSubmit}>
+      <PromptInputTextarea
+        ref={inputRef}
+        value={message}
+        onChange={(event) => setMessage(event.target.value)}
+        autoFocus
+        aria-label={resources.chat.composer.label}
+        placeholder={resources.chat.composer.placeholder}
+      />
+      <PromptInputActions>
+        <AttachButton />
+        <RunToggle />
+        <span className="flex-1" />
+        <ModelSelect selectedModel={selectedModel} onModelChange={onModelChange} />
+        {isLoading && onStop ? (
+          <StopButton onStop={onStop} />
+        ) : (
+          <SendButton isLoading={isLoading} message={message} />
+        )}
+      </PromptInputActions>
+    </PromptInput>
   );
 };

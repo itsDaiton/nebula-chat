@@ -7,4 +7,31 @@ const isChatRole = (role: string): role is ChatMessage['role'] => CHAT_ROLES.has
 
 /** Drops roles the chat view can't render; the API types `role` as a plain string. */
 export const mapSessionMessages = (messages: Message[]): ChatMessage[] =>
-  messages.flatMap(({ id, role, content }) => (isChatRole(role) ? [{ id, role, content }] : []));
+  messages.flatMap(
+    ({
+      id,
+      role,
+      content,
+      tokenCount,
+      model,
+      estimatedCostUsd,
+      runId,
+      contextTokens,
+      contextMessages,
+    }) =>
+      isChatRole(role)
+        ? [
+            {
+              id,
+              role,
+              content,
+              tokenCount,
+              model,
+              estimatedCostUsd,
+              runId,
+              contextTokens,
+              contextMessages,
+            },
+          ]
+        : [],
+  );

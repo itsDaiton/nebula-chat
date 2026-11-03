@@ -28,7 +28,7 @@ afterAll(async () => {
   cleanStores(...authAtoms);
 });
 
-// jsdom implements neither of these, and Chakra UI reaches for both during layout.
+// jsdom implements none of these browser APIs, which the components reach for during layout.
 beforeAll(() => {
   vi.stubGlobal(
     'matchMedia',
@@ -66,6 +66,11 @@ beforeAll(() => {
   );
 
   window.HTMLElement.prototype.scrollIntoView = vi.fn();
+  // input-otp probes for a password manager's badge at a point on the page, which jsdom can't hit-test.
+  document.elementFromPoint = vi.fn(() => null);
+  // A sonner toast captures the pointer on press, which jsdom lacks.
+  window.HTMLElement.prototype.setPointerCapture = vi.fn();
+  window.HTMLElement.prototype.releasePointerCapture = vi.fn();
   // TanStack Router restores the scroll position after each navigation.
   window.scrollTo = vi.fn();
 });

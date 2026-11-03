@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SessionSkeletons } from '@/modules/sessions/components/SessionSkeletons';
-import { renderWithChakra } from '@/test/render';
+import { render } from '@testing-library/react';
 
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -13,23 +13,23 @@ afterEach(() => {
 
 describe('SessionSkeletons', () => {
   it('renders the configured default number of placeholders', () => {
-    const { container } = renderWithChakra(<SessionSkeletons />);
+    const { container } = render(<SessionSkeletons />);
 
-    expect(container.querySelectorAll('.chakra-skeleton').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0);
   });
 
   it('renders exactly the requested count', () => {
-    const { container: three } = renderWithChakra(<SessionSkeletons count={3} />);
-    const { container: six } = renderWithChakra(<SessionSkeletons count={6} />);
+    const { container: three } = render(<SessionSkeletons count={3} />);
+    const { container: six } = render(<SessionSkeletons count={6} />);
 
-    expect(six.querySelectorAll('.chakra-skeleton')).toHaveLength(
-      three.querySelectorAll('.chakra-skeleton').length * 2,
+    expect(six.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(
+      three.querySelectorAll('[data-slot="skeleton"]').length * 2,
     );
   });
 
   it('renders nothing for a count of zero', () => {
-    const { container } = renderWithChakra(<SessionSkeletons count={0} />);
+    const { container } = render(<SessionSkeletons count={0} />);
 
-    expect(container.querySelectorAll('.chakra-skeleton')).toHaveLength(0);
+    expect(container.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(0);
   });
 });

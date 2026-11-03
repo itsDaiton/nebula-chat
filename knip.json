@@ -3,7 +3,7 @@
   "ignoreFiles": [".claude/skills/**"],
   "workspaces": {
     "apps/client": {
-      "project": ["src/**/*.{ts,tsx}"],
+      "project": ["src/**/*.{ts,tsx,css}"],
       "ignoreFiles": ["src/libs/api/generated/**"],
       "ignoreIssues": {
         "src/libs/api/generated/**": ["exports", "types"],

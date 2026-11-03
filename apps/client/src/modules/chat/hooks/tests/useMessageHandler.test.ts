@@ -3,14 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMessageHandler } from '@/modules/chat/hooks/useMessageHandler';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
-import { useModelSelectorStore } from '@/modules/chat/stores/useModelSelectorStore';
 import { useModelStore } from '@/modules/chat/stores/useModelStore';
 
 beforeEach(() => {
   vi.clearAllMocks();
   useMessageStore.setState({ message: '' });
   useModelStore.setState({ selectedModel: 'gpt-4o-mini' });
-  useModelSelectorStore.setState({ isSelectOpen: false, triggerWidth: 120 });
   useChatStreamStore.setState({ history: [] });
 });
 

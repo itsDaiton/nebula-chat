@@ -1,6 +1,8 @@
 import { useGetSession } from '@/libs/api/generated/sessions/sessions';
 import { useListMessages } from '@/libs/api/generated/messages/messages';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
+import { useModelStore } from '@/modules/chat/stores/useModelStore';
+import { modelOptions } from '@/modules/chat/utils/modelOptions';
 import { mapSessionMessages } from '@/modules/chat/utils/mapSessionMessages';
 
 // Loads the routed session into the chat. Its messages come from the message
@@ -23,15 +25,22 @@ export const useChatSession = (sessionId: string | undefined) => {
   const chat = useChatStreamStore.getState();
   if (!sessionId) {
     if (!chat.isStreaming && chat.sessionId !== undefined) {
-      useChatStreamStore.setState({ history: [], sessionId: undefined });
+      useChatStreamStore.setState({ history: [], sessionId: undefined, isReplyStopped: false });
     }
   } else if (isSettled && chat.sessionId !== sessionId) {
-    useChatStreamStore.setState({ history: messages.data, sessionId });
+    useChatStreamStore.setState({ history: messages.data, sessionId, isReplyStopped: false });
+    // Only on opening a Session, so a later pick or refetch never resets the composer.
+    const lastModel = messages.data.findLast((message) => message.model)?.model;
+    if (lastModel && modelOptions.some((option) => option.value === lastModel)) {
+      useModelStore.setState({ selectedModel: lastModel });
+    }
   }
 
   return {
     isLoading: hasSession && !isSettled && !detail.error && !messages.error,
     error: detail.error ?? messages.error,
+    // An archived Session reads but takes no sends (the server refuses them).
+    isArchived: detail.data?.archived === true,
     // Named once the history is in, so a re-attached reply lands after the saved Messages.
     activeStreamId: isSettled ? (detail.data?.activeStreamId ?? null) : null,
   };

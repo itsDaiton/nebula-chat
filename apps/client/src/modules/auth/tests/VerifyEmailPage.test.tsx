@@ -7,12 +7,12 @@ import { serveChatPage } from '@/test/chat';
 import { server } from '@/test/msw';
 import { renderRoute } from '@/test/renderRoute';
 
-vi.mock('@/theme/hooks/useColorMode', () => ({
+vi.mock('@/shared/hooks/useColorMode', () => ({
   useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
 }));
 
 // The real chat page its link leads to.
-const CHAT_PAGE = resources.chat.welcomeMessage;
+const CHAT_PAGE = resources.chat.composer.label;
 const { verifyEmail } = resources.auth;
 
 // better-auth redirects the emailed link here, adding `?error=…` when the token is rejected.
@@ -37,7 +37,7 @@ describe('VerifyEmailPage', () => {
 
     await userEvent.click(screen.getByRole('link', { name: verifyEmail.startChatting }));
 
-    expect(await screen.findByText(CHAT_PAGE)).toBeInTheDocument();
+    expect(await screen.findByRole('textbox', { name: CHAT_PAGE })).toBeInTheDocument();
   });
 
   it('explains an expired link and offers a new one', async () => {

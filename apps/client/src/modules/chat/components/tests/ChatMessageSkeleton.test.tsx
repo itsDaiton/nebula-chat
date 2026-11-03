@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { ChatMessageSkeleton } from '@/modules/chat/components/ChatMessageSkeleton';
-import { renderWithChakra } from '@/test/render';
+import { renderWithProviders } from '@/test/render';
 
 describe('ChatMessageSkeleton', () => {
   it('renders a single message skeleton', () => {
-    const { container } = renderWithChakra(<ChatMessageSkeleton />);
+    const { container } = renderWithProviders(<ChatMessageSkeleton />);
 
-    expect(container.querySelectorAll('.chakra-skeleton').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0);
   });
 
   it('renders a user-aligned variant', () => {
-    const assistant = renderWithChakra(<ChatMessageSkeleton />);
+    const assistant = renderWithProviders(<ChatMessageSkeleton />);
     const assistantHtml = assistant.container.innerHTML;
     assistant.unmount();
 
-    const user = renderWithChakra(<ChatMessageSkeleton isUser />);
+    const user = renderWithProviders(<ChatMessageSkeleton isUser />);
 
     expect(user.container.innerHTML).not.toBe(assistantHtml);
   });

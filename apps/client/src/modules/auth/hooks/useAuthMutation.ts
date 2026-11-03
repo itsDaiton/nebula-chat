@@ -5,10 +5,10 @@ import { runAuthRequest } from '@/modules/auth/utils/runAuthRequest';
 /** An auth form's better-auth call; the form shows a failure under the field it concerns. */
 export const useAuthMutation = <Values>(
   request: (values: Values) => Promise<AuthResult>,
-  onSuccess?: () => void,
+  onSuccess?: (result: AuthResult) => void,
 ) =>
   useMutation({
     mutationFn: (values: Values) => runAuthRequest(() => request(values)),
-    onSuccess,
+    onSuccess: (result) => onSuccess?.(result),
     meta: { inlineError: true },
   });

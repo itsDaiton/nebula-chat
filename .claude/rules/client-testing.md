@@ -17,8 +17,8 @@ pnpm frontend test:watch
 pnpm frontend test:coverage
 ```
 
-- **Environment is `jsdom`**, not `happy-dom` — Chakra UI v3 leans on layout and `matchMedia` APIs where
-  happy-dom has gaps.
+- **Environment is `jsdom`**, not `happy-dom` — the Base UI components lean on layout and `matchMedia` APIs
+  where happy-dom has gaps.
 - **React Testing Library for components.** Query by role and accessible name, never by test id or class.
   If a component is hard to query by role, that is usually an accessibility bug worth fixing rather than a
   reason to reach for `container.querySelector`.
@@ -37,7 +37,8 @@ pnpm frontend test:coverage
   `@/test/chat` serves real frames) and better-auth's `/api/auth/*`. Their
   routes live in `@/test/api`, the one place route strings are written; `@/test/auth` holds the auth
   fixture and handlers (`aSession` (pass `image` for a Profile image), `mockGetSession`, `mockAnonymousSignIn`, `mockEmailSignIn`,
-  `mockEmailSignUp`, `mockSocialSignIn` (its redirect is a hash change to `providerConsentUrl()`, the one
+  `mockEmailSignUp`, `mockTwoFactorSignIn` (a sign-in held back for a second factor), `mockBackupCodeVerify`,
+  `mockRestoreAccount`, `mockSocialSignIn` (its redirect is a hash change to `providerConsentUrl()`, the one
   navigation jsdom performs), `mockSignOut`, `mockRequestPasswordReset`, `mockResetPassword`, `mockChangePassword`, `mockUpdateUser`, `mockRevokeSessions`, `mockDeleteUser`, `mockListAccounts`,
   `mockSendVerificationEmail`) plus `refreshSession`, which refetches better-auth's module-level session
   store after a render, and `holdSession`, which serves a session and waits until that store holds it. Regenerate with `pnpm frontend generate:api` after any backend change.
@@ -48,11 +49,6 @@ pnpm frontend test:coverage
 
 - **Build a Metered user's allowance with `aMeteredAllowance` (`@/test/allowance`)**: `remaining` of
   `limit` (10 by default) left, with `used` derived, for the generated `getGetMessageAllowanceMockHandler`.
-
-- **Pick a Chakra menu item with `selectMenuItem` (`@/test/menu`)**, not `userEvent.click`: Zag only
-  selects a pointer-highlighted item, and jsdom's (0, 0) pointer events stop highlighting once anything
-  switches its interaction modality, so a click can silently select nothing. Selection navigates a tick
-  later, so assert the destination with `findBy*`.
 
 - **One test file per source file, in a `tests/` folder beside it**: `ChatInput.tsx` is tested by
   `components/tests/ChatInput.test.tsx`. Never group several modules into one file.
@@ -65,13 +61,15 @@ pnpm frontend test:coverage
   serve the session yourself (`holdSession`, `mockGetSession`). It is async (`await renderRoute(...)`) and
   returns the `router`, whose `router.state.location` asserts where a navigation landed. A component that
   only links or reads the route uses `renderInRouter(ui)` instead.
-- **Render inside a fresh query client.** `renderWithChakra` and `renderHookWithQueryClient` (`@/test/render`)
+- **Render a component with `renderWithProviders(ui)` (`@/test/render`)**: the app's own providers (query
+  client, theme, tooltips) without a router; `renderRoute` renders through it.
+- **Render inside a fresh query client.** `renderWithProviders` and `renderHookWithQueryClient` (`@/test/render`)
   each create one per test with retries off, so no cached response leaks between tests and a failure
   surfaces at once. Pass your own `queryClient` to prime or inspect the cache, e.g. assert an invalidation
   with `queryClient.getQueryState(key)?.isInvalidated`.
 - **Hooks and pages are the highest-value targets.** Drive query hooks and the components that use them
   through MSW rather than stubbing the generated hooks. Zustand stores are module-level singletons, so
   reset state between tests rather than relying on fresh imports.
-- **Coverage-excluded**: `src/theme/**` (Chakra tokens), `src/libs/api/generated/**` (Orval output) and
+- **Coverage-excluded**: `src/libs/api/generated/**` (Orval output) and
   `src/routeTree.gen.ts` (router plugin output).
   Everything else faces the 80% bar.

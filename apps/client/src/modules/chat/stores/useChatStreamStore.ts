@@ -11,6 +11,7 @@ export const useChatStreamStore = create<ChatStreamState>((set) => ({
   streamId: null,
   isStopRequested: false,
   isMessageAllowanceReached: false,
+  isReplyStopped: false,
   setHistory: (history) =>
     set((state) => ({
       history: typeof history === 'function' ? history(state.history) : history,

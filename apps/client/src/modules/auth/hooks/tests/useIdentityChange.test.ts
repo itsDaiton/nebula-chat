@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useIdentityChange } from '@/modules/auth/hooks/useIdentityChange';
 import { SESSION_BOOTSTRAP_KEY } from '@/modules/auth/utils/sessionBootstrap';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
-import { useSettingsSearchStore } from '@/modules/settings/stores/useSettingsSearchStore';
+import { useSettingsDialogStore } from '@/modules/settings/stores/useSettingsDialogStore';
 import { createTestQueryClient, renderHookWithQueryClient } from '@/test/render';
 
 const navigate = vi.fn();
@@ -45,12 +45,12 @@ describe('useIdentityChange', () => {
     expect(useChatStreamStore.getState().isMessageAllowanceReached).toBe(false);
   });
 
-  it("forgets the previous user's settings search", () => {
-    useSettingsSearchStore.setState({ query: 'delete' });
+  it("closes the previous user's Settings dialog", () => {
+    useSettingsDialogStore.setState({ isOpen: true });
     const { result } = renderHookWithQueryClient(() => useIdentityChange());
 
     act(() => result.current());
 
-    expect(useSettingsSearchStore.getState().query).toBe('');
+    expect(useSettingsDialogStore.getState().isOpen).toBe(false);
   });
 });

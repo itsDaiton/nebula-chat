@@ -6,12 +6,20 @@ import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { API_ROUTE } from '@/test/api';
 import { server } from '@/test/msw';
 
-/** A better-auth `get-session` body; a Guest unless `isAnonymous` is false, unverified unless `emailVerified`. */
+/** A better-auth `get-session` body: a Guest, unverified, with no plugin fields unless overridden. */
 export const aSession = ({
   isAnonymous = true,
   emailVerified = false,
   image = null,
-}: { isAnonymous?: boolean; emailVerified?: boolean; image?: string | null } = {}) => ({
+  role,
+  twoFactorEnabled,
+}: {
+  isAnonymous?: boolean;
+  emailVerified?: boolean;
+  image?: string | null;
+  role?: string;
+  twoFactorEnabled?: boolean;
+} = {}) => ({
   session: {
     id: 'session-1',
     userId: 'user-1',
@@ -27,6 +35,8 @@ export const aSession = ({
     emailVerified,
     image,
     isAnonymous,
+    ...(role !== undefined && { role }),
+    ...(twoFactorEnabled !== undefined && { twoFactorEnabled }),
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
@@ -67,6 +77,23 @@ export const mockEmailSignIn = mockAuthPost(API_ROUTE.authSignInEmail, {
   token: 'token-1',
   user: aSession({ isAnonymous: false }).user,
 });
+
+/** Answers `sign-in/email` the way the two-factor plugin does for a User with 2FA: no session, a code to ask for. */
+export const mockTwoFactorSignIn = ({ canTrustDevice = true } = {}): HttpHandler =>
+  mockAuthPost(API_ROUTE.authSignInEmail, {
+    twoFactorRedirect: true,
+    twoFactorMethods: ['totp'],
+    canTrustDevice,
+  })();
+
+/** Signs a challenged User in with a backup code on `two-factor/verify-backup-code`. */
+export const mockBackupCodeVerify = mockAuthPost(API_ROUTE.authTwoFactorVerifyBackupCode, {
+  token: 'token-1',
+  user: aSession({ isAnonymous: false, twoFactorEnabled: true }).user,
+});
+
+/** Trades a Pending-deletion restore token for a session on `restore-account`. */
+export const mockRestoreAccount = mockAuthPost(API_ROUTE.authRestoreAccount, { success: true });
 
 /** Registers a user on `sign-up/email`, calling `onRequest` first. */
 export const mockEmailSignUp = mockAuthPost(API_ROUTE.authSignUpEmail, {
@@ -111,6 +138,31 @@ export const mockRevokeSessions = mockAuthPost(API_ROUTE.authRevokeSessions, { s
 export const mockDeleteUser = mockAuthPost(API_ROUTE.authDeleteUser, {
   success: true,
   message: 'User deleted',
+});
+
+export const TOTP_SECRET = 'JBSWY3DPEHPK3PXP';
+export const BACKUP_CODES = ['aaaa-1111', 'bbbb-2222'];
+
+/** Starts two-factor setup on `two-factor/enable`: the TOTP URI to scan and the backup codes. */
+export const mockTwoFactorEnable = mockAuthPost(API_ROUTE.authTwoFactorEnable, {
+  method: 'totp',
+  totpURI: `otpauth://totp/Nebula%20Chat:ada%40example.com?secret=${TOTP_SECRET}&issuer=Nebula%20Chat`,
+  backupCodes: BACKUP_CODES,
+});
+
+/** Confirms a code on `two-factor/verify-totp`. */
+export const mockTwoFactorVerify = mockAuthPost(API_ROUTE.authTwoFactorVerifyTotp, {
+  token: 'token-1',
+  user: aSession({ isAnonymous: false, twoFactorEnabled: true }).user,
+});
+
+/** Turns two-factor off on `two-factor/disable`. */
+export const mockTwoFactorDisable = mockAuthPost(API_ROUTE.authTwoFactorDisable, { status: true });
+
+/** Replaces the backup codes on `two-factor/generate-backup-codes`. */
+export const mockBackupCodes = mockAuthPost(API_ROUTE.authTwoFactorBackupCodes, {
+  status: true,
+  backupCodes: ['cccc-3333', 'dddd-4444'],
 });
 
 /** Lists the user's linked accounts by provider (`credential` is the email/password one). */

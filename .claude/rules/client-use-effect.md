@@ -18,6 +18,5 @@ paths:
 | DOM measurement after mount        | `useRef` + `useEffect`           | Callback ref — `ref={useCallback((node) => { ... }, [])}` (see `useMultiLine.ts`) |
 | Registering a DOM event listener   | `useEffect` + `addEventListener` | `useEventListener` via `useSyncExternalStore` subscribe lifecycle                 |
 
-New code reaches for the patterns above. Two `useEffect` calls predate this rule and remain until they are
-reworked: `ChatContainer` (clearing the post-stream flags, scrolling to the newest message) and `Layout`
-(closing mobile search when the desktop layout appears). Add no others.
+New code reaches for the patterns above. One `useEffect` predates this rule and remains until it is reworked:
+`ChatContainer` (clearing the post-stream flags, scrolling to the newest message). Add no others.

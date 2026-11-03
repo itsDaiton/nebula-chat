@@ -121,8 +121,8 @@ The gate is **80% on overall code and 80% on new code**, for each of the five So
 (Sonar has no cross-project aggregate). Overall-at-80 is the strict reading: unlike Sonar's default new-code
 condition, it fails until the whole project is genuinely covered, which is the point — the alternative
 ratchets up slowly and leaves four tickets' worth of existing code permanently unexamined. Files where
-coverage is meaningless — Drizzle schema declarations, OTel SDK wiring, Chakra theme tokens, the
-Orval-generated API client, migrations — are added to `sonar.coverage.exclusions` as they are identified.
+coverage is meaningless — Drizzle schema declarations, OTel SDK wiring, the Orval-generated API
+client, migrations — are added to `sonar.coverage.exclusions` as they are identified.
 Excluding a file from _coverage_ is not excluding it from _testing_; it is an assertion that there is no
 behavior there to assert on.
 
