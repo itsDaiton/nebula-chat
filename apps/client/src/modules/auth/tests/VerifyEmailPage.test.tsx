@@ -7,7 +7,7 @@ import { serveChatPage } from '@/test/chat';
 import { server } from '@/test/msw';
 import { renderRoute } from '@/test/renderRoute';
 
-vi.mock('@/theme/hooks/useColorMode', () => ({
+vi.mock('@/shared/hooks/useColorMode', () => ({
   useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
 }));
 

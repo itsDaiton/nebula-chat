@@ -1,4 +1,3 @@
-import { ChakraProvider, defaultSystem } from '@chakra-ui/react';
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query';
 import {
   Outlet,
@@ -67,9 +66,7 @@ export const renderInRouter = async (
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <ChakraProvider value={defaultSystem}>
-          <RouterProvider router={router} />
-        </ChakraProvider>
+        <RouterProvider router={router} />
       </QueryClientProvider>,
     ),
     router,

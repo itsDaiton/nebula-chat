@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
-import { toaster } from '@/shared/components/ui/toaster';
+import { toast as sonner } from 'sonner';
 import { resources } from '@/resources';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { holdSession, mockResetPassword } from '@/test/auth';
@@ -51,7 +51,7 @@ describe('ResetPasswordPage', () => {
 
   // Every session ends on a reset and none is made, so the next step is signing in with the new password.
   it('sends the user straight on to sign in, saying the password changed', async () => {
-    const toast = vi.spyOn(toaster, 'create');
+    const toast = vi.spyOn(sonner, 'success');
     server.use(mockResetPassword());
     const { router } = await renderPage('?token=reset-token');
 
@@ -60,7 +60,7 @@ describe('ResetPasswordPage', () => {
 
     expect(await screen.findByRole('heading', { name: SIGN_IN_PAGE })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/auth');
-    expect(toast).toHaveBeenCalledWith({ type: 'success', title: resetPassword.done });
+    expect(toast).toHaveBeenCalledWith(resetPassword.done);
   });
 
   it('swaps the form for a new-link offer when the token turns out spent or edited', async () => {

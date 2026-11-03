@@ -28,7 +28,7 @@ afterAll(async () => {
   cleanStores(...authAtoms);
 });
 
-// jsdom implements neither of these, and Chakra UI reaches for both during layout.
+// jsdom implements none of these browser APIs, which the components reach for during layout.
 beforeAll(() => {
   vi.stubGlobal(
     'matchMedia',

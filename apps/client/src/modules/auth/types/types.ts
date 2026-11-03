@@ -1,6 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { IconType } from 'react-icons';
 import type { FieldValues, Path, UseFormRegisterReturn } from 'react-hook-form';
 import type { z } from 'zod';
 import type {
@@ -15,25 +14,8 @@ import type {
   totpCodeSchema,
 } from '@/modules/auth/utils/authSchemas';
 
-export type UserMenuProps = {
-  /** The Registered user's name, shown as initials on their Avatar. */
-  name: string;
-  /** Their Profile image URL, if they have one. */
-  image?: string | null;
-  /** The menu's heading and items. */
-  children: ReactNode;
-};
-
 /** The fields the admin and two-factor plugins add to the user once the server enables them. */
 export type UserPluginFields = { role?: string | null; twoFactorEnabled?: boolean | null };
-
-export type UserAvatarProps = {
-  /** The Registered user's name, shown as initials without a Profile image. */
-  name: string;
-  /** Their Profile image URL, if they have one. */
-  image?: string | null;
-  size?: 'sm' | '2xl';
-};
 
 /** What better-auth's client resolves with: a sign-in's data says when it needs a second factor. */
 export type AuthResult = {
@@ -214,5 +196,6 @@ export type SocialProvider = 'google' | 'github';
 export type SocialProviderConfig = {
   provider: SocialProvider;
   label: string;
-  icon: IconType;
 };
+
+export type SocialIconProps = { provider: SocialProvider };

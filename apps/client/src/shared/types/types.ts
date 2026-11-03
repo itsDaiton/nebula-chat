@@ -1,9 +1,4 @@
-import type { ThemeProviderProps } from 'next-themes';
 import type { ComponentProps, ReactNode } from 'react';
-
-export type HeaderProps = {
-  onMenuClick?: () => void;
-};
 
 export type MarkdownContentProps = {
   content: string;
@@ -16,8 +11,6 @@ export type UseColorModeReturn = {
   setColorMode: (colorMode: ColorMode) => void;
   toggleColorMode: () => void;
 };
-
-export type ColorModeProviderProps = ThemeProviderProps;
 
 export type SearchState = {
   isSearchOpen: boolean;

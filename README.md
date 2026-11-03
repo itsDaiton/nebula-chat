@@ -96,7 +96,7 @@ and each side scales on its own. It is also where orchestrated Runs will execute
 
 ## Built with
 
-TypeScript end to end: React and Chakra UI on the client, Fastify and Drizzle on PostgreSQL on the server,
+TypeScript end to end: React, Tailwind and shadcn/ui on the client, Fastify and Drizzle on PostgreSQL on the server,
 BullMQ and Redis Streams for the reply pipeline, LangChain for providers, Better Auth for identity,
 OpenTelemetry into Grafana Cloud. A pnpm + Turborepo monorepo with a typed OpenAPI contract between the
 apps, unit tests behind an 80% coverage gate, and automated releases.

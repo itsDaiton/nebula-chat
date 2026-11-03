@@ -24,8 +24,8 @@ dialog's title, `none` inside a labelled settings row.
   config, so it re-validates once touched as that other field changes; the rule itself is an object
   refinement in the schema (`compareFields` in `authSchemas.ts`), which zod otherwise skips while any field
   is invalid.
-- **Errors render under their field.** Wrap each input in Chakra's `Field.Root invalid={…}` with a
-  `Field.ErrorText`; Field wires `aria-invalid` and `aria-errormessage`, so tests assert with
+- **Errors render under their field.** Wrap each input in `Field` (`data-invalid={…}`) with its error
+  beneath, wired by `aria-invalid` and `aria-errormessage` (see `AuthFormField`), so tests assert with
   `toHaveAccessibleErrorMessage`.
 - **Server failures go through `setError`.** One that belongs to a field goes under it
   (`setError('password', …)`); anything else goes to `root.server` and renders as an alert above the

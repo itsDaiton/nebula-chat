@@ -15,7 +15,7 @@ import {
 import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
-import { toaster } from '@/shared/components/ui/toaster';
+import { toast as sonner } from 'sonner';
 import { resources } from '@/resources';
 import { renderRoute } from '@/test/renderRoute';
 import { API_ROUTE, mockApiError } from '@/test/api';
@@ -24,7 +24,7 @@ import { aSession, holdSession, mockGetSession } from '@/test/auth';
 import { mockReplyStream, sseFrame } from '@/test/chat';
 import { server } from '@/test/msw';
 
-vi.mock('@/theme/hooks/useColorMode', () => ({
+vi.mock('@/shared/hooks/useColorMode', () => ({
   useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
 }));
 
@@ -223,8 +223,8 @@ describe('ChatPage', () => {
     expect(opened).toBe(STREAM_ID);
   });
 
-  it('surfaces a session load failure inline and through the toaster', async () => {
-    const toast = vi.spyOn(toaster, 'create');
+  it('surfaces a session load failure inline and through a toast', async () => {
+    const toast = vi.spyOn(sonner, 'error');
     server.use(
       mockApiError('get', API_ROUTE.session, 404, {
         success: false,
@@ -240,9 +240,9 @@ describe('ChatPage', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Session not found', { selector: 'p' })).toBeInTheDocument();
     expect(toast).toHaveBeenCalledTimes(1);
-    expect(toast).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'error', description: 'Session not found' }),
-    );
+    expect(toast).toHaveBeenCalledWith(resources.errors.title, {
+      description: 'Session not found',
+    });
   });
 
   it('shows a session created by a reply in the sidebar without a refresh', async () => {

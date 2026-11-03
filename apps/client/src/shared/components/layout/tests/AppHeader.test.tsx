@@ -8,7 +8,7 @@ import { server } from '@/test/msw';
 import { renderInRouter } from '@/test/renderRoute';
 
 const toggleColorMode = vi.hoisted(() => vi.fn());
-vi.mock('@/theme/hooks/useColorMode', () => ({
+vi.mock('@/shared/hooks/useColorMode', () => ({
   useColorMode: () => ({ colorMode: 'dark', toggleColorMode }),
 }));
 

@@ -1,4 +1,5 @@
 import { Link, getRouteApi } from '@tanstack/react-router';
+import { toast } from 'sonner';
 import { AuthForm } from '@/modules/auth/components/AuthForm';
 import { AuthLayout } from '@/modules/auth/components/AuthLayout';
 import { AuthStatus } from '@/modules/auth/components/AuthStatus';
@@ -6,7 +7,6 @@ import { BackToSignIn } from '@/modules/auth/components/BackToSignIn';
 import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
 import { resetPasswordForm } from '@/modules/auth/utils/authForms';
 import { resources } from '@/resources';
-import { toaster } from '@/shared/components/ui/toaster';
 import { buttonVariants } from '@/shared/components/ui/button';
 
 const { resetPassword } = resources.auth;
@@ -26,7 +26,7 @@ export const ResetPasswordPage = () => {
 
   // A reset ends every session and makes none, so the next step is signing in with the new password.
   const goToSignIn = () => {
-    toaster.create({ type: 'success', title: resetPassword.done });
+    toast.success(resetPassword.done);
     void navigate({ to: '/auth', search: {} });
   };
 

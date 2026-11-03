@@ -7,7 +7,7 @@ import type { MessageAllowance } from '@/libs/api/generated/model/messageAllowan
 import { useIdentityChange } from '@/modules/auth/hooks/useIdentityChange';
 import { MessageAllowanceCounter } from '@/modules/chat/components/MessageAllowanceCounter';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
-import { toaster } from '@/shared/components/ui/toaster';
+import { toast as sonner } from 'sonner';
 import { resources } from '@/resources';
 import { API_ROUTE } from '@/test/api';
 import { aSession, holdSession, mockGetSession, refreshSession } from '@/test/auth';
@@ -134,7 +134,7 @@ describe('MessageAllowanceCounter', () => {
   });
 
   it('renders nothing, and reports nothing, when the read fails', async () => {
-    const toast = vi.spyOn(toaster, 'create');
+    const toast = vi.spyOn(sonner, 'error');
     const reads = { count: 0 };
     server.use(
       http.get(API_ROUTE.messageAllowance, () => {

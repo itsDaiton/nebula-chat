@@ -1,7 +1,7 @@
 import { NotFoundError } from '@nebula-chat/errors';
+import { toast as sonner } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createQueryClient } from '@/libs/api/queryClient';
-import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
 
 beforeEach(() => {
@@ -10,7 +10,7 @@ beforeEach(() => {
 
 describe('createQueryClient', () => {
   it('reports a failed query through the toaster', async () => {
-    const toast = vi.spyOn(toaster, 'create');
+    const toast = vi.spyOn(sonner, 'error');
     const client = createQueryClient({ retry: false });
 
     await client
@@ -20,17 +20,13 @@ describe('createQueryClient', () => {
       })
       .catch(() => {});
 
-    expect(toast).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'error',
-        title: resources.errors.title,
-        description: 'Session with id "x" not found',
-      }),
-    );
+    expect(toast).toHaveBeenCalledWith(resources.errors.title, {
+      description: 'Session with id "x" not found',
+    });
   });
 
   it('reports a failed mutation through the toaster', async () => {
-    const toast = vi.spyOn(toaster, 'create');
+    const toast = vi.spyOn(sonner, 'error');
     const client = createQueryClient({ retry: false });
 
     await client
@@ -39,11 +35,11 @@ describe('createQueryClient', () => {
       .execute(undefined)
       .catch(() => {});
 
-    expect(toast).toHaveBeenCalledWith(expect.objectContaining({ description: 'boom' }));
+    expect(toast).toHaveBeenCalledWith(resources.errors.title, { description: 'boom' });
   });
 
   it('leaves a mutation that renders its own error inline untoasted', async () => {
-    const toast = vi.spyOn(toaster, 'create');
+    const toast = vi.spyOn(sonner, 'error');
     const client = createQueryClient({ retry: false });
 
     await client
@@ -59,7 +55,7 @@ describe('createQueryClient', () => {
   });
 
   it('leaves a query that renders its own error inline untoasted', async () => {
-    const toast = vi.spyOn(toaster, 'create');
+    const toast = vi.spyOn(sonner, 'error');
     const client = createQueryClient({ retry: false });
 
     await client
@@ -74,7 +70,7 @@ describe('createQueryClient', () => {
   });
 
   it('does not toast a query that succeeds', async () => {
-    const toast = vi.spyOn(toaster, 'create');
+    const toast = vi.spyOn(sonner, 'error');
     const client = createQueryClient({ retry: false });
 
     await client.fetchQuery({ queryKey: ['ok'], queryFn: () => Promise.resolve(1) });

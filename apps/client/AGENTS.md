@@ -35,10 +35,9 @@ committed, never hand-edited), `resources.ts` (UI strings) and:
   and `generated/` (Orval output). `libs/auth/` — the better-auth client, the one auth entry point.
 - `modules/<feature>/` — `auth`, `chat`, `commandPalette`, `inspector`, `sessions`, `settings`. Each splits into `components/`, `hooks/`,
   `stores/`, `utils/` and `types/types.ts`, plus its page component.
-- `shared/` — cross-module `components/` (with `ui/` for Chakra adapters and the redesign's base components),
+- `shared/` — cross-module `components/` (with `ui/` for the shadcn/ui base components),
   `hooks/`, `stores/`, `layout/`, `config/`, `utils/`.
-- `styles/` — the redesign's Tailwind entry: design tokens for light and dark, Geist fonts.
-- `theme/` — Chakra tokens and the next-themes wrapper.
+- `styles/` — the Tailwind entry: preflight, design tokens for light and dark, Geist fonts.
 
 ---
 
@@ -64,7 +63,7 @@ coverage and knip. A route file only wires a page: the component lives in `modul
 - **Loaders.** A loader prefetches through the existing query client:
   `context.queryClient.ensureQueryData(getGetSessionQueryOptions(id))`. Components keep using the generated
   hooks. A prefetch whose failure the page shows itself sets `meta: { inlineError: true }`
-  (see `routes/_app/s/$id.tsx`) so it isn't toasted twice.
+  (see `routes/_app/_chat/s/$id.tsx`) so it isn't toasted twice.
 - **Search params** are declared per route with a Zod schema as `validateSearch`, built from
   `routing/searchParams.ts` so a malformed value never throws: `optionalSearchText()` falls back to
   absent, `optionalSearchError()` to an unrecognised code (still an error). TanStack JSON-parses each
@@ -92,14 +91,14 @@ The root rules apply (`@/` alias only, no barrels, `type` not `interface`, arrow
 Each topic lives in a path-scoped rule under [`.claude/rules/`](../../.claude/rules/). Claude Code loads one
 when it reads a matching file; any other agent opens the file when it works in that area.
 
-| Rule                                                                      | Covers                                                 |
-| ------------------------------------------------------------------------- | ------------------------------------------------------ |
-| [client-routing](../../.claude/rules/client-routing.md)                   | TanStack Router files, guards, loaders, search params  |
-| [client-state](../../.claude/rules/client-state.md)                       | react-query, Zustand, auth state, chat streaming       |
-| [client-components](../../.claude/rules/client-components.md)             | One component per file, Chakra, `resources.ts` strings |
-| [client-forms](../../.claude/rules/client-forms.md)                       | react-hook-form with zod, `AuthForm`                   |
-| [client-hooks](../../.claude/rules/client-hooks.md)                       | Thin hooks over stores and queries                     |
-| [client-use-effect](../../.claude/rules/client-use-effect.md)             | No `useEffect`, and what to use instead                |
-| [client-shared-utilities](../../.claude/rules/client-shared-utilities.md) | `@nebula-chat/errors`, server config, pagination       |
-| [client-env](../../.claude/rules/client-env.md)                           | `VITE_API_URL`, `VITE_ENABLE_DEVTOOLS`                 |
-| [client-testing](../../.claude/rules/client-testing.md)                   | Frontend test commands, MSW, `renderRoute`             |
+| Rule                                                                      | Covers                                                    |
+| ------------------------------------------------------------------------- | --------------------------------------------------------- |
+| [client-routing](../../.claude/rules/client-routing.md)                   | TanStack Router files, guards, loaders, search params     |
+| [client-state](../../.claude/rules/client-state.md)                       | react-query, Zustand, auth state, chat streaming          |
+| [client-components](../../.claude/rules/client-components.md)             | One component per file, shadcn/ui, `resources.ts` strings |
+| [client-forms](../../.claude/rules/client-forms.md)                       | react-hook-form with zod, `AuthForm`                      |
+| [client-hooks](../../.claude/rules/client-hooks.md)                       | Thin hooks over stores and queries                        |
+| [client-use-effect](../../.claude/rules/client-use-effect.md)             | No `useEffect`, and what to use instead                   |
+| [client-shared-utilities](../../.claude/rules/client-shared-utilities.md) | `@nebula-chat/errors`, server config, pagination          |
+| [client-env](../../.claude/rules/client-env.md)                           | `VITE_API_URL`, `VITE_ENABLE_DEVTOOLS`                    |
+| [client-testing](../../.claude/rules/client-testing.md)                   | Frontend test commands, MSW, `renderRoute`                |
