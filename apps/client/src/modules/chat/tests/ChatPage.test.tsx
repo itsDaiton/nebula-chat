@@ -189,8 +189,8 @@ describe('ChatPage', () => {
     expect(rows.replay).toContain(resources.chat.meta.cost(0));
     expect(rows.run).toContain(resources.chat.meta.run);
     expect(rows.run).not.toContain('GPT-4.1');
-    expect(rows.legacy).not.toContain('~$');
-    expect(rows.m1).not.toContain('~$');
+    expect(rows.legacy).not.toMatch(/~\$|GPT/);
+    expect(rows.m1).not.toMatch(/~\$|GPT/);
   });
 
   it('re-attaches to a reply still streaming when the session is opened mid-reply', async () => {
