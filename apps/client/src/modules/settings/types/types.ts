@@ -62,7 +62,7 @@ export type PasswordPromptProps = {
 };
 
 /** Where the two-factor setup stands; the codes and URI exist only until it is done. */
-export type TwoFactorStep =
+type TwoFactorStep =
   | { name: 'idle' }
   | { name: 'password' }
   | { name: 'scan'; totpURI: string; backupCodes: string[] }
