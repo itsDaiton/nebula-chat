@@ -1,10 +1,12 @@
 import { waitFor } from '@testing-library/react';
 import { AppError } from '@nebula-chat/errors';
 import { beforeEach, describe, expect, it } from 'vitest';
+import type { Message } from '@/libs/api/generated/model/message';
 import { getGetSessionMockHandler } from '@/libs/api/generated/sessions/sessions.msw';
 import { getListMessagesQueryKey } from '@/libs/api/generated/messages/messages';
 import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
+import { useModelStore } from '@/modules/chat/stores/useModelStore';
 import { useChatSession } from '@/modules/sessions/hooks/useChatSession';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { server } from '@/test/msw';
@@ -12,7 +14,7 @@ import { createTestQueryClient, renderHookWithQueryClient } from '@/test/render'
 
 const SESSION_ID = '11111111-1111-4111-8111-111111111111';
 
-const aMessage = (id: string, sessionId: string, role: string, content: string) => ({
+const aMessage = (id: string, sessionId: string, role: string, content: string): Message => ({
   id,
   sessionId,
   role,
@@ -57,6 +59,7 @@ beforeEach(() => {
     error: null,
     sessionId: undefined,
   });
+  useModelStore.setState({ selectedModel: 'gpt-4o-mini' });
 });
 
 describe('useChatSession', () => {
@@ -189,5 +192,52 @@ describe('useChatSession', () => {
 
     expect(chat().history).toHaveLength(1);
     expect(chat().sessionId).toBe(SESSION_ID);
+  });
+
+  describe('the composer Model', () => {
+    const reply = (id: string, model: string | null) => ({
+      ...aMessage(id, SESSION_ID, 'assistant', id),
+      model,
+    });
+    const selected = () => useModelStore.getState().selectedModel;
+
+    it('swaps to the Model the Session last used when it loads', async () => {
+      serveSession([reply('a1', 'gpt-4o'), reply('a2', 'gpt-4.1'), reply('a3', null)]);
+
+      renderHookWithQueryClient(() => useChatSession(SESSION_ID));
+
+      await waitFor(() => expect(selected()).toBe('gpt-4.1'));
+    });
+
+    it('keeps the pick when the Session recorded no Model, or one the picker lacks', async () => {
+      serveSession([reply('a1', null), reply('a2', 'retired-model')]);
+
+      const { result } = renderHookWithQueryClient(() => useChatSession(SESSION_ID));
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(selected()).toBe('gpt-4o-mini');
+    });
+
+    it('keeps a pick made after the load when the Messages refetch', async () => {
+      serveSession([reply('a1', 'gpt-4.1')]);
+      const queryClient = createTestQueryClient();
+      renderHookWithQueryClient(() => useChatSession(SESSION_ID), { queryClient });
+      await waitFor(() => expect(selected()).toBe('gpt-4.1'));
+
+      useModelStore.setState({ selectedModel: 'gpt-5.1' });
+      await queryClient.invalidateQueries({
+        queryKey: getListMessagesQueryKey({ sessionId: SESSION_ID }),
+      });
+
+      expect(selected()).toBe('gpt-5.1');
+    });
+
+    it('leaves the pick alone on a new chat', () => {
+      useModelStore.setState({ selectedModel: 'gpt-5.1' });
+
+      renderHookWithQueryClient(() => useChatSession(undefined));
+
+      expect(selected()).toBe('gpt-5.1');
+    });
   });
 });
