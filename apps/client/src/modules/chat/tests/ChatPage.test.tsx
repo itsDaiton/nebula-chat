@@ -162,6 +162,37 @@ describe('ChatPage', () => {
     expect(screen.getByText('an answer')).toBeInTheDocument();
   });
 
+  it('shows how each loaded reply was made, and nothing for user and older Messages', async () => {
+    const reply = (id: string, meta: object) => ({ ...aMessage(id, 'assistant', id), ...meta });
+    server.use(
+      getListMessagesMockHandler([
+        aMessage('m1', 'user', 'a question'),
+        reply('direct', { model: 'gpt-4.1', estimatedCostUsd: 0.0123 }),
+        reply('replay', { model: 'gpt-4.1', estimatedCostUsd: 0, cached: true }),
+        reply('run', { runId: 'run-1', estimatedCostUsd: 0.5 }),
+        reply('legacy', {}),
+      ]),
+    );
+
+    await renderPage(`/s/${SESSION_ID}`);
+
+    await screen.findByText('direct');
+    const rows = Object.fromEntries(
+      ['m1', 'direct', 'replay', 'run', 'legacy'].map((id) => {
+        const text = id === 'm1' ? 'a question' : id;
+        const row = screen.getByText(text).closest('.group\\/message');
+        return [id, row?.querySelector('[data-slot="message-meta-row"]')?.textContent ?? ''];
+      }),
+    );
+    expect(rows.direct).toContain('GPT-4.1');
+    expect(rows.direct).toContain(resources.chat.meta.cost(0.0123));
+    expect(rows.replay).toContain(resources.chat.meta.cost(0));
+    expect(rows.run).toContain(resources.chat.meta.run);
+    expect(rows.run).not.toContain('GPT-4.1');
+    expect(rows.legacy).not.toMatch(/~\$|GPT/);
+    expect(rows.m1).not.toMatch(/~\$|GPT/);
+  });
+
   it('re-attaches to a reply still streaming when the session is opened mid-reply', async () => {
     const STREAM_ID = '33333333-3333-4333-8333-333333333333';
     let opened: unknown;

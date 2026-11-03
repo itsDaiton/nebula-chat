@@ -1,6 +1,8 @@
 import { useGetSession } from '@/libs/api/generated/sessions/sessions';
 import { useListMessages } from '@/libs/api/generated/messages/messages';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
+import { useModelStore } from '@/modules/chat/stores/useModelStore';
+import { modelOptions } from '@/modules/chat/utils/modelOptions';
 import { mapSessionMessages } from '@/modules/chat/utils/mapSessionMessages';
 
 // Loads the routed session into the chat. Its messages come from the message
@@ -27,6 +29,11 @@ export const useChatSession = (sessionId: string | undefined) => {
     }
   } else if (isSettled && chat.sessionId !== sessionId) {
     useChatStreamStore.setState({ history: messages.data, sessionId, isReplyStopped: false });
+    // Only on opening a Session, so a later pick or refetch never resets the composer.
+    const lastModel = messages.data.findLast((message) => message.model)?.model;
+    if (lastModel && modelOptions.some((option) => option.value === lastModel)) {
+      useModelStore.setState({ selectedModel: lastModel });
+    }
   }
 
   return {

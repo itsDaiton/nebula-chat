@@ -77,6 +77,31 @@ describe('Inspector Session tab', () => {
     expect(panel.queryByText(/system prompt/i)).not.toBeInTheDocument();
   });
 
+  it('shows the Model of the latest reply that has one, not the composer pick', async () => {
+    server.use(
+      getListMessagesMockHandler([
+        { ...message('m1', minutesAgo(30)), role: 'assistant', model: 'gpt-4o' },
+        { ...message('m2', minutesAgo(10)), role: 'assistant', model: 'gpt-4.1' },
+        { ...message('m3', minutesAgo(2)), role: 'assistant', runId: 'run-1' },
+      ]),
+    );
+    await renderRoute(`/s/${SESSION_ID}`);
+    const panel = within(await inspector());
+
+    expect(await panel.findByText('GPT-4.1')).toBeInTheDocument();
+    expect(panel.queryByText('GPT-4.1 mini')).not.toBeInTheDocument();
+  });
+
+  it("keeps the composer's pick for a Session whose Messages record no Model", async () => {
+    server.use(
+      getListMessagesMockHandler([{ ...message('m1', minutesAgo(2)), role: 'assistant' }]),
+    );
+    await renderRoute(`/s/${SESSION_ID}`);
+    const panel = within(await inspector());
+
+    expect(await panel.findByText('GPT-4.1 mini')).toBeInTheDocument();
+  });
+
   it('shows the Model a new chat will use when no Session is open', async () => {
     await renderRoute('/');
     const panel = within(await inspector());

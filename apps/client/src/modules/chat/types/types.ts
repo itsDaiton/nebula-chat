@@ -7,10 +7,12 @@ export type ChatMessage = {
   role: 'user' | 'assistant';
   content: string;
   tokenCount?: number | null;
-  /** Set by the API once Messages carry how they were made (NEB-665); null for a Run answer. */
+  /** How the Message was made; null means not available (a user Message, a Run answer or an older reply). */
   model?: string | null;
   estimatedCostUsd?: number | null;
   runId?: string | null;
+  contextTokens?: number | null;
+  contextMessages?: number | null;
 };
 
 export type ChatMessageProps = {

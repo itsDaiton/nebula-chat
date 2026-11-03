@@ -27,6 +27,8 @@ describe('mapSessionMessages', () => {
         model: null,
         estimatedCostUsd: null,
         runId: null,
+        contextTokens: null,
+        contextMessages: null,
       },
     ]);
   });
@@ -37,11 +39,19 @@ describe('mapSessionMessages', () => {
         ...aMessage('m1', 'assistant', 'hi'),
         model: 'gpt-4.1',
         estimatedCostUsd: 0.002,
-        runId: null,
+        runId: 'run-1',
+        contextTokens: 120,
+        contextMessages: 4,
       },
     ]);
 
-    expect(mapped).toMatchObject({ model: 'gpt-4.1', estimatedCostUsd: 0.002, runId: null });
+    expect(mapped).toMatchObject({
+      model: 'gpt-4.1',
+      estimatedCostUsd: 0.002,
+      runId: 'run-1',
+      contextTokens: 120,
+      contextMessages: 4,
+    });
   });
 
   it('preserves order', () => {
