@@ -1,6 +1,5 @@
 import { useSyncExternalStore } from 'react';
 
-// Chakra's lg and xl thresholds, kept so the layout switches where it always has.
 const SIDE_PANELS_QUERY = '(min-width: 62em)';
 const RIGHT_PANEL_QUERY = '(min-width: 80em)';
 
