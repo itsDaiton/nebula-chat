@@ -63,7 +63,7 @@ coverage and knip. A route file only wires a page: the component lives in `modul
 - **Loaders.** A loader prefetches through the existing query client:
   `context.queryClient.ensureQueryData(getGetSessionQueryOptions(id))`. Components keep using the generated
   hooks. A prefetch whose failure the page shows itself sets `meta: { inlineError: true }`
-  (see `routes/_app/s/$id.tsx`) so it isn't toasted twice.
+  (see `routes/_app/_chat/s/$id.tsx`) so it isn't toasted twice.
 - **Search params** are declared per route with a Zod schema as `validateSearch`, built from
   `routing/searchParams.ts` so a malformed value never throws: `optionalSearchText()` falls back to
   absent, `optionalSearchError()` to an unrecognised code (still an error). TanStack JSON-parses each
