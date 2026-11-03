@@ -27,6 +27,8 @@ describe('mapSessionMessages', () => {
         model: null,
         estimatedCostUsd: null,
         runId: null,
+        contextTokens: null,
+        contextMessages: null,
       },
     ]);
   });
@@ -38,6 +40,8 @@ describe('mapSessionMessages', () => {
         model: 'gpt-4.1',
         estimatedCostUsd: 0.002,
         runId: null,
+        contextTokens: null,
+        contextMessages: null,
       },
     ]);
 

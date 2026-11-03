@@ -78,6 +78,8 @@ describe('useChatSession', () => {
         model: null,
         estimatedCostUsd: null,
         runId: null,
+        contextTokens: null,
+        contextMessages: null,
       },
       {
         id: 'm2',
@@ -87,6 +89,8 @@ describe('useChatSession', () => {
         model: null,
         estimatedCostUsd: null,
         runId: null,
+        contextTokens: null,
+        contextMessages: null,
       },
     ]);
     expect(chat().sessionId).toBe(SESSION_ID);

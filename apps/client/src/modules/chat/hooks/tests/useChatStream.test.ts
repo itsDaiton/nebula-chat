@@ -526,6 +526,8 @@ describe('useChatStream — reconnecting', () => {
         model: null,
         estimatedCostUsd: null,
         runId: null,
+        contextTokens: null,
+        contextMessages: null,
       },
       {
         id: STREAM_ID,
@@ -535,6 +537,8 @@ describe('useChatStream — reconnecting', () => {
         model: null,
         estimatedCostUsd: null,
         runId: null,
+        contextTokens: null,
+        contextMessages: null,
       },
     ]);
     expect(useChatStreamStore.getState()).toMatchObject({ isStreaming: false, error: null });
