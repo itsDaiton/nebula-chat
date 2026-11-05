@@ -7,9 +7,9 @@ import { aSession, mockGetSession } from '@/test/auth';
 import { server } from '@/test/msw';
 import { renderInRouter } from '@/test/renderRoute';
 
-const toggleColorMode = vi.hoisted(() => vi.fn());
-vi.mock('@/shared/hooks/useColorMode', () => ({
-  useColorMode: () => ({ colorMode: 'dark', toggleColorMode }),
+const toggleThemeMode = vi.hoisted(() => vi.fn());
+vi.mock('@/shared/hooks/useThemeMode', () => ({
+  useThemeMode: () => ({ themeMode: 'dark', toggleThemeMode }),
 }));
 
 const renderHeader = () =>
@@ -33,9 +33,9 @@ describe('AppHeader colour mode', () => {
   it('shows the shortcut in the toggle tooltip', async () => {
     await renderHeader();
 
-    await userEvent.hover(screen.getByRole('button', { name: resources.shell.toggleColorMode }));
+    await userEvent.hover(screen.getByRole('button', { name: resources.shell.toggleThemeMode }));
 
-    const tooltip = await screen.findByText(resources.shell.toggleColorMode, {
+    const tooltip = await screen.findByText(resources.shell.toggleThemeMode, {
       selector: '[data-slot="tooltip-content"]',
     });
     expect(tooltip).toHaveTextContent('Y');
@@ -51,6 +51,6 @@ describe('AppHeader colour mode', () => {
       );
     });
 
-    expect(toggleColorMode).toHaveBeenCalledTimes(1);
+    expect(toggleThemeMode).toHaveBeenCalledTimes(1);
   });
 });

@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { MarkdownContent } from '@/shared/components/ui/markdown-content';
 import { renderWithProviders } from '@/test/render';
 
-vi.mock('@/shared/hooks/useColorMode', () => ({
-  useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
+vi.mock('@/shared/hooks/useThemeMode', () => ({
+  useThemeMode: () => ({ themeMode: 'light', toggleThemeMode: vi.fn() }),
 }));
 
 describe('MarkdownContent', () => {

@@ -25,8 +25,8 @@ import {
 import { server } from '@/test/msw';
 import { renderRoute } from '@/test/renderRoute';
 
-vi.mock('@/shared/hooks/useColorMode', () => ({
-  useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
+vi.mock('@/shared/hooks/useThemeMode', () => ({
+  useThemeMode: () => ({ themeMode: 'light', toggleThemeMode: vi.fn() }),
 }));
 
 // The desktop layout, whose side panel lists the sessions (jsdom has no breakpoints to measure).

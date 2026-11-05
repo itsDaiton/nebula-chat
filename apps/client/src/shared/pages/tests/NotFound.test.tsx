@@ -6,8 +6,8 @@ import { holdSession } from '@/test/auth';
 import { serveChatPage } from '@/test/chat';
 import { renderRoute } from '@/test/renderRoute';
 
-vi.mock('@/shared/hooks/useColorMode', () => ({
-  useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
+vi.mock('@/shared/hooks/useThemeMode', () => ({
+  useThemeMode: () => ({ themeMode: 'light', toggleThemeMode: vi.fn() }),
 }));
 
 // The menu button is mobile-only, and jsdom's stubbed matchMedia always reports

@@ -29,7 +29,6 @@ export default defineConfig({
       // Sonar gate measures the same denominator. Change one, change the other.
       exclude: [
         'src/main.tsx',
-        'src/vite-env.d.ts',
         'src/libs/api/generated/**',
         // TanStack Router's generated route tree (the router plugin's output).
         'src/routeTree.gen.ts',
@@ -37,13 +36,8 @@ export default defineConfig({
         // Tests and their local helpers live in `tests/` folders next to the
         // code under test; neither is product code.
         'src/**/tests/**',
-        'src/**/*.types.ts',
         'src/**/types/**',
-        // ADR-0008: style declarations and library wiring, with no behaviour to
-        // assert on.
-        'src/shared/components/ui/prose.tsx',
-        'src/shared/components/ui/code-block-adapter.ts',
-        'src/shared/components/scrollbar.ts',
+        // ADR-0008: UI strings, no behaviour to assert on.
         'src/resources.ts',
         'src/routing/RouterDevtools.tsx',
       ],

@@ -9,8 +9,8 @@ import { serveChatPage } from '@/test/chat';
 import { server } from '@/test/msw';
 import { renderRoute } from '@/test/renderRoute';
 
-vi.mock('@/shared/hooks/useColorMode', () => ({
-  useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
+vi.mock('@/shared/hooks/useThemeMode', () => ({
+  useThemeMode: () => ({ themeMode: 'light', toggleThemeMode: vi.fn() }),
 }));
 
 beforeEach(() => {

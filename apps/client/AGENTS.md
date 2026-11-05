@@ -35,8 +35,8 @@ committed, never hand-edited), `resources.ts` (UI strings) and:
   and `generated/` (Orval output). `libs/auth/` — the better-auth client, the one auth entry point.
 - `modules/<feature>/` — `auth`, `chat`, `commandPalette`, `inspector`, `sessions`, `settings`. Each splits into `components/`, `hooks/`,
   `stores/`, `utils/` and `types/types.ts`, plus its page component.
-- `shared/` — cross-module `components/` (with `ui/` for the shadcn/ui base components),
-  `hooks/`, `stores/`, `layout/`, `config/`, `utils/`.
+- `shared/` — cross-module `components/` (`ui/` holds the shadcn/ui base components, `layout/` the app shell),
+  `hooks/`, `stores/`, `pages/`, `types/`, `config/`, `utils/`. `test/` holds the shared test helpers.
 - `styles/` — the Tailwind entry: preflight, design tokens for light and dark, Geist fonts.
 
 ---
