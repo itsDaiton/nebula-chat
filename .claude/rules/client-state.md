@@ -2,7 +2,6 @@
 paths:
   - 'apps/client/src/**/stores/**'
   - 'apps/client/src/**/hooks/**'
-  - 'apps/client/src/**/providers/**'
   - 'apps/client/src/libs/**'
   - 'apps/client/src/App.tsx'
 ---
