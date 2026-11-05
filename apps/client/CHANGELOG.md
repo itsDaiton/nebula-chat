@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.0.0...nebula-chat-client-v3.0.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* **client:** finish Chakra cleanup in coverage config, docs and hook naming ([#749](https://github.com/itsDaiton/nebula-chat/issues/749)) ([bfd204e](https://github.com/itsDaiton/nebula-chat/commit/bfd204e69c62d2e4c1909fc30b30db9ae3ab7a2d))
+
 ## [3.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v2.15.1...nebula-chat-client-v3.0.0) (2026-11-03)
 
 
