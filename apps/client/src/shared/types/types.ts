@@ -4,12 +4,12 @@ export type MarkdownContentProps = {
   content: string;
 };
 
-export type ColorMode = 'light' | 'dark';
+export type ThemeMode = 'light' | 'dark';
 
-export type UseColorModeReturn = {
-  colorMode: ColorMode;
-  setColorMode: (colorMode: ColorMode) => void;
-  toggleColorMode: () => void;
+export type UseThemeModeReturn = {
+  themeMode: ThemeMode;
+  setThemeMode: (themeMode: ThemeMode) => void;
+  toggleThemeMode: () => void;
 };
 
 export type SearchState = {

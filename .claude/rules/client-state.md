@@ -107,8 +107,4 @@ Store types that are referenced outside the store file must live in `/types/type
 ## React Context
 
 Server state is shared through the query cache and client state through Zustand, so neither needs a
-context. The providers in `routing/RootLayout.tsx` (`QueryClientProvider`, theme, tooltips) are library wiring. When a
-context is genuinely needed, split it across two files:
-
-- **`context/<Name>Context.tsx`** — `createContext` + the typed `use<Name>Context()` hook. No JSX, no store imports.
-- **`providers/<Name>Provider.tsx`** — the provider component, memoizing its value and rendering `<Context.Provider>`.
+context. The providers in `routing/RootLayout.tsx` (`QueryClientProvider`, theme, tooltips) are library wiring.

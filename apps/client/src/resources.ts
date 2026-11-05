@@ -460,7 +460,7 @@ export const resources = {
     menu: 'Menu',
     inspector: 'Inspector',
     search: 'Search Sessions',
-    toggleColorMode: 'Toggle color mode',
+    toggleThemeMode: 'Toggle color mode',
     modifier: { mac: '⌘', windows: 'Ctrl' },
   },
   sidebar: {
