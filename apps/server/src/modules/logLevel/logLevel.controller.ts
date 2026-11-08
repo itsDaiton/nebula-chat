@@ -1,6 +1,9 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { logLevelService } from '@server/modules/logLevel/logLevel.service';
-import type { ChangeLogLevelDTO } from '@server/modules/logLevel/logLevel.types';
+import type {
+  ChangeLogLevelDTO,
+  LogLevelServiceQuery,
+} from '@server/modules/logLevel/logLevel.types';
 
 export const logLevelController = {
   async change(req: FastifyRequest<{ Body: ChangeLogLevelDTO }>, reply: FastifyReply) {
@@ -8,8 +11,8 @@ export const logLevelController = {
     return reply.status(202).send(result);
   },
 
-  async read(_req: FastifyRequest, reply: FastifyReply) {
-    const result = await logLevelService.read();
+  async read(req: FastifyRequest<{ Querystring: LogLevelServiceQuery }>, reply: FastifyReply) {
+    const result = await logLevelService.read(req.query.service);
     return reply.status(200).send(result);
   },
 };

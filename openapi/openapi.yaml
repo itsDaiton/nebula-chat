@@ -488,8 +488,8 @@ components:
           minimum: -9007199254740991
           maximum: 9007199254740991
           description: >-
-            How many server instances received the request; more than reports
-            means some did not answer in time
+            How many instances of the service received the request; more than
+            reports means some did not answer in time
         reports:
           maxItems: 100
           type: array
@@ -505,7 +505,7 @@ components:
       properties:
         instance:
           type: string
-          description: The server instance, as its hostname and process id
+          description: The instance, as its hostname and process id
         levels:
           maxItems: 7
           type: array
@@ -566,7 +566,7 @@ components:
           type: integer
           minimum: -9007199254740991
           maximum: 9007199254740991
-          description: How many server instances received the change
+          description: How many instances of the service received the change
         expiresAt:
           description: When the change reverts
           type: string
@@ -1903,19 +1903,37 @@ paths:
         - Operator
       description: >-
         Report the root log level and every component's, with the expiry and
-        operator of any runtime change, from every running server instance. Each
-        instance answers for itself; one that does not answer within 2 seconds
-        is left out, so `receivers` exceeds the number of reports. Requires the
-        operator token, not a User session.
+        operator of any runtime change, from every running instance of the
+        service (the server unless `service` says the worker). Each instance
+        answers for itself; one that does not answer within 2 seconds is left
+        out, so `receivers` exceeds the number of reports. Requires the operator
+        token, not a User session.
+      parameters:
+        - schema:
+            default: server
+            description: 'Which service to read: the server (default) or the worker'
+            type: string
+            enum:
+              - server
+              - worker
+          in: query
+          name: service
+          description: 'Which service to read: the server (default) or the worker'
       security:
         - operatorToken: []
       responses:
         '200':
-          description: The levels each server instance applies
+          description: The levels each instance applies
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/LogLevelReports'
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
         '403':
           description: Missing or wrong operator token
           content:
@@ -1940,9 +1958,10 @@ paths:
       tags:
         - Operator
       description: >-
-        Change the root log level, or one component's, on every running server
-        instance. It reverts to the boot-time level after `ttlSeconds`. Requires
-        the operator token, not a User session.
+        Change the root log level, or one component's, on every running instance
+        of the service (the server unless `service` says the worker). It reverts
+        to the boot-time level after `ttlSeconds`. Requires the operator token,
+        not a User session.
       requestBody:
         required: true
         content:
@@ -1971,6 +1990,13 @@ paths:
                     - info
                     - debug
                     - trace
+                service:
+                  default: server
+                  description: 'Which service to change: the server (default) or the worker'
+                  type: string
+                  enum:
+                    - server
+                    - worker
                 ttlSeconds:
                   default: 900
                   description: How long the change holds before the boot-time level returns
@@ -1989,7 +2015,7 @@ paths:
         - operatorToken: []
       responses:
         '202':
-          description: Change sent to every server instance
+          description: Change sent to every instance of the service
           content:
             application/json:
               schema:

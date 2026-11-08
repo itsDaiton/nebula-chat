@@ -7,7 +7,7 @@
 
 export interface LogLevelChange {
   /**
-   * How many server instances received the change
+   * How many instances of the service received the change
    * @minimum -9007199254740991
    * @maximum 9007199254740991
    */

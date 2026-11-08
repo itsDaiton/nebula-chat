@@ -40,13 +40,16 @@ let lines: LogLine[];
 let instances = 0;
 
 /** Starts one more server instance listening for level changes. */
-const startInstance = async (level: 'info' | 'debug' = 'info'): Promise<LogLine[]> => {
+const startInstance = async (
+  level: 'info' | 'debug' = 'info',
+  serviceName = 'nebula-chat-server',
+): Promise<LogLine[]> => {
   instances += 1;
   const instance = captureLogger(level);
   await listenForLogLevelChanges({
     logger: instance.logger,
     pubsub: redis.pubsub,
-    serviceName: 'nebula-chat-server',
+    serviceName,
     instanceId: `web-${instances}`,
   });
   return instance.lines;
@@ -123,6 +126,36 @@ describe('POST /api/internal/log-level', () => {
     ]);
   });
 
+  it('reaches only the worker instances when the body names the worker', async () => {
+    const worker = await startInstance('info', 'nebula-chat-worker');
+
+    const res = await app.inject({
+      method: 'POST',
+      url: ROUTE,
+      headers: OPERATOR,
+      payload: { service: 'worker', component: 'llm', level: 'debug', operator: 'ada' },
+    });
+
+    expect(res.statusCode).toBe(202);
+    expect(res.json()).toMatchObject({ receivers: 1 });
+    expect(eventLines(worker, 'log.level.changed')).toEqual([
+      expect.objectContaining({ 'nebula.log.target': 'llm', 'nebula.operator': 'ada' }),
+    ]);
+    expect(eventLines(lines, 'log.level.changed')).toEqual([]);
+  });
+
+  it('reports no receivers when no worker is awake', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: ROUTE,
+      headers: OPERATOR,
+      payload: { service: 'worker', level: 'debug', operator: 'ada' },
+    });
+
+    expect(res.json()).toMatchObject({ receivers: 0 });
+    expect(eventLines(lines, 'log.level.changed')).toEqual([]);
+  });
+
   it.each([
     ['a Guest', guestSession, {}],
     ['a Registered user', registeredSession, {}],
@@ -176,6 +209,7 @@ describe('POST /api/internal/log-level', () => {
     ['an unknown level', { level: 'loud', operator: 'ada' }],
     ['an unknown component', { component: 'billing', level: 'debug', operator: 'ada' }],
     ['an expiry past four hours', { level: 'debug', ttlSeconds: 14_401, operator: 'ada' }],
+    ['an unknown service', { service: 'redis', level: 'debug', operator: 'ada' }],
     ['no operator name', { level: 'debug' }],
     ['a blank operator name', { level: 'debug', operator: '  ' }],
   ])('rejects %s', async (_case, payload) => {
@@ -232,6 +266,32 @@ describe('GET /api/internal/log-level', () => {
         }),
       ],
     });
+  });
+
+  it('reports the worker instances when asked for the worker', async () => {
+    await startInstance('debug', 'nebula-chat-worker');
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `${ROUTE}?service=worker`,
+      headers: OPERATOR,
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({
+      receivers: 1,
+      reports: [{ instance: 'web-2', levels: expect.arrayContaining([atBoot('root', 'debug')]) }],
+    });
+  });
+
+  it('rejects an unknown service', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: `${ROUTE}?service=redis`,
+      headers: OPERATOR,
+    });
+
+    expect(res.statusCode).toBe(400);
   });
 
   it('changes nothing it reports on', async () => {
