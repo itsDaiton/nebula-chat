@@ -402,13 +402,13 @@ sequenceDiagram
 
   O->>S: POST /api/internal/log-level (Bearer OPERATOR_TOKEN)
   Note over S: requireOperator: 404 if unset, 403 if wrong
-  S->>R: PUBLISH log-level:<service>
+  S->>R: PUBLISH log-level:{service}
   R-->>S: receivers
   S-->>O: 202 {receivers, expiresAt}
   R->>I: change
   Note over I: changeLogLevel · log.level.changed<br/>timer reverts it: log.level.reverted
   O->>S: GET /api/internal/log-level
-  S->>R: SUBSCRIBE log-level-reply:<service>:id<br/>PUBLISH log-level-report:<service> {replyTo}
+  S->>R: SUBSCRIBE log-level-reply:{service}:id<br/>PUBLISH log-level-report:{service} {replyTo}
   R->>I: report request
   I->>R: PUBLISH replyTo {instance, levels}
   R-->>S: one report per instance, or 2 s pass

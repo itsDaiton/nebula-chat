@@ -469,7 +469,3 @@ flowchart LR
   `validate-deploy-triggers.yml` fails CI when a deploy workflow misses one.
 - Migrations run in the server's build, so the schema moves before the new server starts. The
   worker reads the same schema and deploys on a `db` release too.
-
-## Known gaps
-
-What the diagrams above show but the system does not yet do well:

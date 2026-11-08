@@ -11,7 +11,7 @@ import type { LogLevel } from './logLevels';
 /** The longest a runtime level change may hold: a forgotten `trace` costs log volume. */
 export const MAX_LOG_LEVEL_TTL_SECONDS = 4 * 60 * 60;
 
-/** The services that listen for level changes, by short name, with the `service.name` their channels use. */
+/** Services that listen for level changes: short name to the `service.name` their channels use. */
 export const LOG_LEVEL_SERVICES = {
   server: 'nebula-chat-server',
   worker: 'nebula-chat-worker',
