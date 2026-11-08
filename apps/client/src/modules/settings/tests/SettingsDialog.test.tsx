@@ -670,6 +670,59 @@ describe('SettingsDialog', () => {
       expect(screen.queryByLabelText(fields.currentPassword)).not.toBeInTheDocument();
     });
 
+    describe('last changed', () => {
+      const ago = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+      it('shows how long ago the password was last changed', async () => {
+        server.use(mockListAccounts(['credential'], () => ago(95)));
+        await renderPage('security');
+
+        expect(
+          await screen.findByText(changePassword.changedAgo('3 months ago')),
+        ).toBeInTheDocument();
+        expect(screen.queryByText(changePassword.description)).not.toBeInTheDocument();
+      });
+
+      it('falls back to the description while the accounts are not known', async () => {
+        server.use(mockApiError('get', API_ROUTE.authListAccounts, 500));
+        await renderPage('security');
+
+        expect(await screen.findByText(changePassword.description)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: changePassword.open })).toBeInTheDocument();
+      });
+
+      it('hides the row for a user who signs in only with Google or GitHub', async () => {
+        server.use(mockListAccounts(['google', 'github']));
+        await renderPage('security');
+
+        await screen.findByText(resources.settings.security.twoFactor.label);
+        await waitFor(() =>
+          expect(
+            screen.queryByRole('button', { name: changePassword.open }),
+          ).not.toBeInTheDocument(),
+        );
+        expect(screen.queryByText(changePassword.description)).not.toBeInTheDocument();
+      });
+
+      it('updates the line without a reload once the password is changed', async () => {
+        let changedAt = ago(95);
+        server.use(
+          mockListAccounts(['credential'], () => changedAt),
+          mockChangePassword(() => {
+            changedAt = new Date().toISOString();
+          }),
+        );
+        await renderPage('security');
+        await screen.findByText(changePassword.changedAgo('3 months ago'));
+        await openPasswordForm();
+
+        await fillForm();
+        await submit();
+
+        expect(await screen.findByText(changePassword.changedAgo('just now'))).toBeInTheDocument();
+      });
+    });
+
     it('asks for the current password and the new one twice', async () => {
       await renderPage('security');
       await openPasswordForm();

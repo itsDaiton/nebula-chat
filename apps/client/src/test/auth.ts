@@ -166,7 +166,10 @@ export const mockBackupCodes = mockAuthPost(API_ROUTE.authTwoFactorBackupCodes, 
 });
 
 /** Lists the user's linked accounts by provider (`credential` is the email/password one). */
-export const mockListAccounts = (providers: string[]): HttpHandler =>
+export const mockListAccounts = (
+  providers: string[],
+  updatedAt: () => string = () => '2026-01-01T00:00:00.000Z',
+): HttpHandler =>
   http.get(API_ROUTE.authListAccounts, () =>
     HttpResponse.json(
       providers.map((providerId, index) => ({
@@ -176,7 +179,7 @@ export const mockListAccounts = (providers: string[]): HttpHandler =>
         userId: 'user-1',
         scopes: [],
         createdAt: '2026-01-01T00:00:00.000Z',
-        updatedAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: updatedAt(),
       })),
     ),
   );
