@@ -40,12 +40,16 @@ const GUEST_SESSIONS = [
     title: 'Trip to Lisbon',
     createdAt: '2026-06-15T11:00:00.000Z',
     archived: false,
+    archivedAt: null,
+    messageCount: 0,
   },
   {
     id: '22222222-2222-4222-8222-222222222222',
     title: 'Sourdough tips',
     createdAt: '2026-06-14T11:00:00.000Z',
     archived: false,
+    archivedAt: null,
+    messageCount: 0,
   },
 ];
 

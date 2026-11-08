@@ -16,6 +16,10 @@ export const sessionResponseSchema = z
     title: z.string(),
     createdAt: isoDateTimeSchema,
     archived: z.boolean().describe('Whether the owner has archived this Session'),
+    archivedAt: isoDateTimeSchema
+      .nullable()
+      .describe('When the owner archived it; null while active'),
+    messageCount: z.number().int().describe('How many Messages the Session holds'),
   })
   .meta({ id: 'Session' });
 

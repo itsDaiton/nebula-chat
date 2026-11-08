@@ -64,6 +64,8 @@ const aSession = (overrides: Record<string, unknown> = {}) => ({
   title: 'A session',
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   archived: false,
+  archivedAt: null,
+  messageCount: 0,
   ...overrides,
 });
 
@@ -142,6 +144,8 @@ describe('POST /api/sessions', () => {
       title: 'A session',
       createdAt: '2026-01-01T00:00:00.000Z',
       archived: false,
+      archivedAt: null,
+      messageCount: 0,
     });
   });
 
@@ -407,6 +411,8 @@ describe('GET /api/sessions/search', () => {
         title: 'Hello world',
         createdAt: '2026-01-01T00:00:00.000Z',
         archived: false,
+        archivedAt: null,
+        messageCount: 0,
       },
     ]);
   });

@@ -55,6 +55,8 @@ beforeEach(() => {
       title: 'Run events in the SSE parser',
       createdAt: '2026-10-27T18:02:00.000Z',
       archived: false,
+      archivedAt: null,
+      messageCount: 0,
       activeStreamId: null,
       waitingRun: null,
     }),

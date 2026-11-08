@@ -26,6 +26,8 @@ const aListedSession = (id: string, title: string) => ({
   title,
   createdAt: new Date().toISOString(),
   archived: false,
+  archivedAt: null,
+  messageCount: 0,
 });
 
 const recent = [aListedSession(FIRST, 'Run events in the SSE parser')];
