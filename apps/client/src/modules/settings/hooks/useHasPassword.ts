@@ -5,7 +5,7 @@ import { resources } from '@/resources';
 
 export const ACCOUNTS_KEY = ['auth', 'accounts'] as const;
 
-const useCredentialAccount = <T>(select: (credential: { updatedAt: Date } | undefined) => T) =>
+const useCredentialAccount = <T>(select: (credential: { updatedAt: Date } | null) => T) =>
   useQuery({
     queryKey: ACCOUNTS_KEY,
     queryFn: async () => {
@@ -13,7 +13,7 @@ const useCredentialAccount = <T>(select: (credential: { updatedAt: Date } | unde
       if (error)
         throw new AppError(errorCodeForStatus(error.status), resources.auth.errors.unknown);
       const credential = data.find(({ providerId }) => providerId === 'credential');
-      return credential && { updatedAt: new Date(credential.updatedAt) };
+      return credential ? { updatedAt: new Date(credential.updatedAt) } : null;
     },
     select,
     // A failed lookup falls back to the password form. It also fails once the account is deleted,
@@ -22,7 +22,7 @@ const useCredentialAccount = <T>(select: (credential: { updatedAt: Date } | unde
   });
 
 /** Whether the user signs in with a password, as opposed to only Google or GitHub. */
-export const useHasPassword = () => useCredentialAccount((credential) => credential !== undefined);
+export const useHasPassword = () => useCredentialAccount((credential) => credential !== null);
 
 /** When the password was last set or changed; undefined while unknown or without a password. */
 export const usePasswordChangedAt = () =>
