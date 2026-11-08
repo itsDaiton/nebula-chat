@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nebula Chat API
-  version: 4.15.0
+  version: 4.16.0
   description: REST API for Nebula Chat
   contact:
     name: Nebula Chat
@@ -1449,8 +1449,9 @@ paths:
       summary: Rename session
       tags:
         - Sessions
-      description: Rename one of the caller’s own sessions. The title is trimmed and
-        must not be empty.
+      description: >-
+        Rename one of the caller’s own sessions. The title is trimmed and must
+        not be empty.
       requestBody:
         required: true
         content:
@@ -1468,7 +1469,8 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true

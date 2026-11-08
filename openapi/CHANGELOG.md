@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.16.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.15.0...nebula-chat-openapi-v4.16.0) (2026-11-08)
+
+
+### Features
+
+* **client:** NEB-677 rename a Session from the header title ([#761](https://github.com/itsDaiton/nebula-chat/issues/761)) ([04f915d](https://github.com/itsDaiton/nebula-chat/commit/04f915d747289da16c70b8b766adb9bb2b19f6f9))
+
 ## [4.15.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.14.0...nebula-chat-openapi-v4.15.0) (2026-11-08)
 
 
