@@ -15,6 +15,7 @@ import {
 import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
+import { useModelStore } from '@/modules/chat/stores/useModelStore';
 import { toast as sonner } from 'sonner';
 import { resources } from '@/resources';
 import { renderRoute } from '@/test/renderRoute';
@@ -66,6 +67,7 @@ const renderPage = (path = '/') => renderRoute(path);
 
 beforeEach(() => {
   vi.restoreAllMocks();
+  useModelStore.setState({ selectedModel: 'gpt-4o-mini' });
   serveSessions();
   server.use(
     mockGetSession(aSession()),
@@ -162,6 +164,14 @@ describe('ChatPage', () => {
     expect(screen.getByText('an answer')).toBeInTheDocument();
   });
 
+  it("starts a chat on the catalog's default when the remembered Model is no longer listed", async () => {
+    useModelStore.setState({ selectedModel: 'retired-model' });
+
+    await renderPage();
+
+    expect(await screen.findByRole('button', { name: /GPT-4o mini/ })).toBeInTheDocument();
+  });
+
   it('shows how each loaded reply was made, and nothing for user and older Messages', async () => {
     const reply = (id: string, meta: object) => ({ ...aMessage(id, 'assistant', id), ...meta });
     server.use(
@@ -177,6 +187,7 @@ describe('ChatPage', () => {
     await renderPage(`/s/${SESSION_ID}`);
 
     await screen.findByText('direct');
+    await screen.findAllByText('GPT-4.1');
     const rows = Object.fromEntries(
       ['m1', 'direct', 'replay', 'run', 'legacy'].map((id) => {
         const text = id === 'm1' ? 'a question' : id;

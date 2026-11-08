@@ -7,6 +7,7 @@ import { HttpResponse, http, type HttpHandler, type JsonBodyType } from 'msw';
 export const API_ROUTE = {
   sessions: '*/api/sessions',
   sessionsSearch: '*/api/sessions/search',
+  models: '*/api/models',
   session: '*/api/sessions/:sessionId',
   sendMessage: '*/api/sessions/:sessionId/messages',
   replyStream: '*/api/streams/:streamId',

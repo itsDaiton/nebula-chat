@@ -6,7 +6,7 @@ import { InspectorRow } from '@/modules/inspector/components/InspectorRow';
 import { InspectorSection } from '@/modules/inspector/components/InspectorSection';
 import { formatSessionDate } from '@/modules/inspector/utils/formatSessionDate';
 import { useModel } from '@/modules/chat/hooks/useModel';
-import { modelOptions } from '@/modules/chat/utils/modelOptions';
+import { useModelCatalog } from '@/modules/chat/hooks/useModelCatalog';
 import { resources } from '@/resources';
 import { ProviderLogo } from '@/shared/components/ProviderLogo';
 import { formatRelativeTime } from '@/shared/utils/relativeTime';
@@ -18,16 +18,16 @@ const formatTokens = (count: number) => text.tokens(count.toLocaleString('en-US'
 export const SessionTab = () => {
   const { id } = useParams({ strict: false });
   const { selectedModel } = useModel();
+  const { options } = useModelCatalog();
   const { data: session } = useGetSession(id ?? '', { query: { enabled: Boolean(id) } });
   const { data: messages } = useListMessages(
     { sessionId: id },
     { query: { enabled: Boolean(id) } },
   );
-  // Until the catalog endpoint is wired in (NEB-566), the picker's list is the source.
   const lastMessage = messages?.at(-1);
   // The Session shows the Model it actually used; the composer's pick only stands in when none is recorded.
   const usedModel = messages?.findLast((message) => message.model)?.model ?? selectedModel;
-  const model = modelOptions.find((option) => option.value === usedModel);
+  const model = options.find((option) => option.value === usedModel);
 
   return (
     <div className="flex flex-col gap-4 p-3.5">

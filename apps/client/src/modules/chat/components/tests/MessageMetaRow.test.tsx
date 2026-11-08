@@ -57,16 +57,22 @@ describe('MessageMetaRow', () => {
     expect(screen.queryByRole('button', { name: 'Regenerate' })).not.toBeInTheDocument();
   });
 
-  it('shows the Model, the token count and the estimated cost when the Message carries them', () => {
+  it('shows the Model, the token count and the estimated cost when the Message carries them', async () => {
     renderWithProviders(
       <MessageMetaRow
         message={reply({ model: 'gpt-4.1-mini', tokenCount: 1284, estimatedCostUsd: 0.0021 })}
       />,
     );
 
-    expect(screen.getByText('GPT-4.1 mini')).toBeInTheDocument();
+    expect(await screen.findByText('GPT-4.1 mini')).toBeInTheDocument();
     expect(screen.getByText('1,284 tokens')).toBeInTheDocument();
     expect(screen.getByText('~$0.0021')).toBeInTheDocument();
+  });
+
+  it('shows the id of a Model the catalog does not list', async () => {
+    renderWithProviders(<MessageMetaRow message={reply({ model: 'retired-model' })} />);
+
+    expect(await screen.findByText('retired-model')).toBeInTheDocument();
   });
 
   it('renders nothing for what the API has not provided yet', () => {

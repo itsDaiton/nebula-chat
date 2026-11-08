@@ -105,6 +105,12 @@ export type ModelOption = {
   maxOutput: number;
 };
 
+export type ModelCatalogView = {
+  options: ModelOption[];
+  /** The Model a new chat starts on; absent while the catalog is empty. */
+  defaultModel: string | undefined;
+};
+
 export type ModelPickerState = {
   isOpen: boolean;
   search: string;
@@ -115,8 +121,6 @@ export type ModelPickerState = {
 export type ModelSelectProps = {
   selectedModel: string;
   onModelChange: (model: string) => void;
-  /** The catalog to pick from; the client's own list until `GET /api/models` is read. */
-  options?: ModelOption[];
 };
 
 export type ChatMessageListProps = {
