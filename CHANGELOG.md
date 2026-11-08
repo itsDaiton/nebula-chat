@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.0.1...nebula-chat-v6.1.0) (2026-11-08)
+
+
+### Features
+
+* **client:** NEB-566 the model picker reads GET /api/models ([#753](https://github.com/itsDaiton/nebula-chat/issues/753)) ([72ed45a](https://github.com/itsDaiton/nebula-chat/commit/72ed45abfc0919bf422c062a5a17f0e5c1e833b6))
+
 ## [6.0.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.0.0...nebula-chat-v6.0.1) (2026-11-05)
 
 
