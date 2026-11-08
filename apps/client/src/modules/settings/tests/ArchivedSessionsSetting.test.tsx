@@ -75,6 +75,17 @@ describe('ArchivedSessionsSetting', () => {
     expect(screen.getByText('Archived 3d ago · 1 message')).toBeInTheDocument();
   });
 
+  it('falls back to the creation time when the timestamp is missing', async () => {
+    await holdSession({ isAnonymous: false });
+    serveLists([], [{ ...aSession('s1', 'Old pricing notes', true, 2), archivedAt: null }]);
+
+    await renderRoute('/');
+
+    expect(
+      await screen.findByText(/^Archived \d+(d|w|mo|y) ago · 2 messages$/),
+    ).toBeInTheDocument();
+  });
+
   it('says so when nothing is archived', async () => {
     await holdSession({ isAnonymous: false });
     serveLists([], []);
