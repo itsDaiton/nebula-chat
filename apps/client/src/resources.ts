@@ -415,6 +415,8 @@ export const resources = {
     changePassword: {
       title: 'Password',
       description: 'Change the password you sign in with. Other devices get signed out.',
+      changedAgo: (age: string) =>
+        age === 'now' ? 'Last changed just now' : `Last changed ${age} ago`,
       open: 'Change password',
       cancel: 'Cancel',
       submit: 'Save new password',
