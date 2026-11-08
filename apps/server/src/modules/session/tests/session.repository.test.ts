@@ -27,4 +27,12 @@ describe('sessionRepository', () => {
     );
     expect(query).toContain('"sessions"."user_id" = $2');
   });
+
+  it('lists archived Sessions with the count, scoped to the owner', async () => {
+    const query = await sqlOf(() => sessionRepository.findAll(USER_ID, 10, undefined, true));
+
+    expect(query).toContain('"archived_at" is not null');
+    expect(query).toContain('"messages"."session_id" = "sessions"."id"');
+    expect(query).toContain('"sessions"."user_id" = $1');
+  });
 });
