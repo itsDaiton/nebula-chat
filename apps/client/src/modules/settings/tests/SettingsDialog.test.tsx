@@ -699,7 +699,7 @@ describe('SettingsDialog', () => {
             screen.queryByRole('button', { name: changePassword.open }),
           ).not.toBeInTheDocument(),
         );
-        expect(screen.queryByText(/Last changed/)).not.toBeInTheDocument();
+        expect(screen.queryByText(changePassword.description)).not.toBeInTheDocument();
       });
 
       it('updates the line without a reload once the password is changed', async () => {
