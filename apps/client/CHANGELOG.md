@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.2.0...nebula-chat-client-v3.3.0) (2026-11-08)
+
+
+### Features
+
+* **client:** NEB-730 show when the password was last changed in Settings ([#759](https://github.com/itsDaiton/nebula-chat/issues/759)) ([8595086](https://github.com/itsDaiton/nebula-chat/commit/8595086645ef4a9bc245ae6424321d461f9ad98f))
+
 ## [3.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.1.0...nebula-chat-client-v3.2.0) (2026-11-08)
 
 
