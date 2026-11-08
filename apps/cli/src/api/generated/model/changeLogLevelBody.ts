@@ -6,11 +6,14 @@
  */
 import type { ChangeLogLevelBodyComponent } from './changeLogLevelBodyComponent';
 import type { ChangeLogLevelBodyLevel } from './changeLogLevelBodyLevel';
+import type { ChangeLogLevelBodyService } from './changeLogLevelBodyService';
 
 export type ChangeLogLevelBody = {
   /** The `nebula.component` to change; omit it to change the root level */
   component?: ChangeLogLevelBodyComponent;
   level: ChangeLogLevelBodyLevel;
+  /** Which service to change: the server (default) or the worker */
+  service?: ChangeLogLevelBodyService;
   /**
    * How long the change holds before the boot-time level returns
    * @minimum 1

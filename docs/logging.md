@@ -336,7 +336,8 @@ independent of both.
 
 On Render, changing an env var means a redeploy, and the restart often hides the
 problem you wanted `debug` lines for. An operator can instead change the root
-level, or one component's, on every running server instance at once, and the
+level, or one component's, on every running instance of the server or the worker
+at once, and the
 change reverts on its own ([ADR-0020](./adr/0020-runtime-log-level-switching.md)):
 
 ```bash
@@ -347,15 +348,19 @@ curl -X POST "$SERVER_URL/api/internal/log-level" \
 ```
 
 - **Body.** `level` is one of the six levels. `component` is optional: omit it to
-  change the root level. `ttlSeconds` defaults to 15 minutes, at most 4 hours.
+  change the root level. `service` is `server` (the default) or `worker`; any
+  other value is a `400`. `ttlSeconds` defaults to 15 minutes, at most 4 hours.
   `operator` names who is asking.
 - **Auth.** Only `Authorization: Bearer <OPERATOR_TOKEN>` gets through. A Guest
   or Registered user's session counts for nothing: `403 Forbidden`. With
   `OPERATOR_TOKEN` unset the route answers `404`, as if it did not exist.
 - **Reach.** The route publishes on the Redis pub/sub channel
-  `log-level:nebula-chat-server`. Every instance subscribes at boot and applies
-  what arrives. `receivers` is how many instances got it; `0` means none was
-  listening.
+  `log-level:nebula-chat-server`, or `log-level:nebula-chat-worker` for
+  `"service":"worker"`. Every instance subscribes at boot and applies what
+  arrives. `receivers` is how many instances got it; `0` means none was
+  listening. For the worker that means none is awake: on Render's free plan it
+  sleeps when idle and only the server's `/health` ping on enqueue wakes it. The
+  route does not wake it, since a change matters only to a worker doing work.
 - **Record.** Each instance writes `log.level.changed` (target, from, to,
   `expires_at`, operator) and, on expiry, `log.level.reverted`. Both are `info`
   lines that bypass the level being changed, so a switch to `error` is still
@@ -364,7 +369,8 @@ curl -X POST "$SERVER_URL/api/internal/log-level" \
   back after `ttlSeconds`. Changing the same target again restarts its expiry;
   the root and each component expire independently.
 
-To read the levels back, `GET` the same route with the same token. Every instance
+To read the levels back, `GET` the same route with the same token, and
+`?service=worker` for the worker. Every instance
 answers for itself, so one that missed a change shows as it is
 ([ADR-0034](./adr/0034-reading-log-levels-from-every-instance.md)):
 
@@ -373,10 +379,11 @@ curl "$SERVER_URL/api/internal/log-level" -H "Authorization: Bearer $OPERATOR_TO
 # 200 {"receivers":2,"reports":[{"instance":"srv-a:1","levels":[{"target":"root","level":"info","expiresAt":null,"operator":null}, …]}, …]}
 ```
 
-The route publishes `{ replyTo }` on `log-level-report:nebula-chat-server`. It
+The route publishes `{ replyTo }` on `log-level-report:<service>`. It
 waits for `receivers` reports, or 2 seconds. Fewer reports than `receivers` means
 an instance did not answer in time. `nebula log-level get` does the same from the
-terminal and warns when instances disagree.
+terminal and warns when instances disagree; both `nebula log-level set` and `get`
+take `--service server|worker`.
 
 Both routes are in the OpenAPI spec (Swagger UI at `/docs`, tag `Operator`, which
 `orval.config.ts` leaves out of the browser client).
@@ -391,26 +398,24 @@ sequenceDiagram
   participant O as Operator<br/>nebula log-level set
   participant S as Server instance<br/>that took the request
   participant R as Redis pub/sub
-  participant I as Every server instance<br/>(including that one)
+  participant I as Every instance of the<br/>service (server or worker)
 
   O->>S: POST /api/internal/log-level (Bearer OPERATOR_TOKEN)
   Note over S: requireOperator: 404 if unset, 403 if wrong
-  S->>R: PUBLISH log-level:nebula-chat-server
+  S->>R: PUBLISH log-level:<service>
   R-->>S: receivers
   S-->>O: 202 {receivers, expiresAt}
   R->>I: change
   Note over I: changeLogLevel · log.level.changed<br/>timer reverts it: log.level.reverted
   O->>S: GET /api/internal/log-level
-  S->>R: SUBSCRIBE log-level-reply:nebula-chat-server:id<br/>PUBLISH log-level-report:nebula-chat-server {replyTo}
+  S->>R: SUBSCRIBE log-level-reply:<service>:id<br/>PUBLISH log-level-report:<service> {replyTo}
   R->>I: report request
   I->>R: PUBLISH replyTo {instance, levels}
   R-->>S: one report per instance, or 2 s pass
   S-->>O: 200 {receivers, reports}
 ```
 
-The worker listens the same way, but on its own channels (`log-level:nebula-chat-worker`). The
-route publishes only to the server's, so the worker's levels cannot be changed or read through
-it yet; `LOG_LEVEL` and `LOG_LEVEL_OVERRIDES` on the worker service are the way today.
+`<service>` is `nebula-chat-server` or `nebula-chat-worker`, from `service`.
 
 ## Never logged
 

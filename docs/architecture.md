@@ -473,7 +473,3 @@ flowchart LR
 ## Known gaps
 
 What the diagrams above show but the system does not yet do well:
-
-- **Runtime log levels reach the server only.** The worker listens on
-  `log-level:nebula-chat-worker`, but `POST /api/internal/log-level` publishes to the server's
-  channel alone, so the CLI cannot change or read the worker's levels yet.

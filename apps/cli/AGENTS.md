@@ -19,7 +19,8 @@ pnpm nebula --json profile list | jq .
 
 - **CLI profiles** (server URLs, and which is the default) live in `$XDG_CONFIG_HOME/nebula-chat/config.json`, else `~/.config/nebula-chat/config.json`. `--profile <name>` overrides the default per command.
 - **The operator token** is read only from `NEBULA_OPERATOR_TOKEN` and never written to disk. `log-level set` records `--operator`, else `$NEBULA_OPERATOR`, else `$USER`, as who asked.
-- **`log-level get`** prints one row per server instance and target (the root, then every component): its level, when a runtime change expires, and who set it (`-` at the boot-time level).
+- **`--service server|worker`** on `log-level get` and `set` picks whose levels (default `server`). `receivers: 0` for the worker means none is awake: on the free plan it sleeps when idle.
+- **`log-level get`** prints one row per instance and target (the root, then every component): its level, when a runtime change expires, and who set it (`-` at the boot-time level).
   - Every instance answers for itself ([ADR-0034](../../docs/adr/0034-reading-log-levels-from-every-instance.md)).
   - A warning on stderr flags instances that disagree on a level, or that did not answer within the server's 2 seconds.
   - `--json` prints the server's `{ receivers, reports }` as is.
