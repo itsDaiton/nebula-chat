@@ -9,7 +9,8 @@ const TITLE_CLASS = 'min-w-0 truncate text-[13px] font-normal text-foreground-se
 const MAX_TITLE_LENGTH = 200;
 
 export const SessionTitle = ({ sessionId, title }: SessionTitleProps) => {
-  const { editing, startEditing, stopEditing } = useSessionTitleEditStore();
+  const { editingSessionId, startEditing, stopEditing } = useSessionTitleEditStore();
+  const editing = editingSessionId === sessionId;
   const rename = useSessionRename();
   // Enter and Escape unmount the input, which can still blur: only the first outcome counts.
   const settled = useRef(false);
@@ -38,7 +39,7 @@ export const SessionTitle = ({ sessionId, title }: SessionTitleProps) => {
                 className={`${TITLE_CLASS} block max-w-full rounded-md px-1.5 py-1 text-left hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring`}
                 onClick={() => {
                   settled.current = false;
-                  startEditing();
+                  startEditing(sessionId);
                 }}
               />
             }

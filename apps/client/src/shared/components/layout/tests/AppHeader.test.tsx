@@ -1,8 +1,13 @@
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppHeader } from '@/shared/components/layout/AppHeader';
 import { resources } from '@/resources';
+import {
+  getGetSessionResponseMock,
+  getRenameSessionResponseMock,
+} from '@/libs/api/generated/sessions/sessions.msw';
 import { aSession, mockGetSession } from '@/test/auth';
 import { server } from '@/test/msw';
 import { renderInRouter } from '@/test/renderRoute';
@@ -12,7 +17,7 @@ vi.mock('@/shared/hooks/useThemeMode', () => ({
   useThemeMode: () => ({ themeMode: 'dark', toggleThemeMode }),
 }));
 
-const renderHeader = () =>
+const renderHeader = (path = '/') =>
   renderInRouter(
     <AppHeader
       isDesktop
@@ -22,6 +27,7 @@ const renderHeader = () =>
       onToggleRight={vi.fn()}
       onOpenSearch={vi.fn()}
     />,
+    { path },
   );
 
 beforeEach(() => {
@@ -52,5 +58,27 @@ describe('AppHeader colour mode', () => {
     });
 
     expect(toggleThemeMode).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('AppHeader Session title', () => {
+  it('shows the new title after a rename, without a reload', async () => {
+    let title = 'Old title';
+    server.use(
+      http.get('*/api/sessions/:sessionId', () =>
+        HttpResponse.json(getGetSessionResponseMock({ id: 'abc', title })),
+      ),
+      http.patch('*/api/sessions/:sessionId', async ({ request }) => {
+        title = ((await request.json()) as { title: string }).title;
+        return HttpResponse.json(getRenameSessionResponseMock({ id: 'abc', title }));
+      }),
+    );
+    await renderHeader('/s/abc');
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Old title' }));
+    await userEvent.clear(screen.getByRole('textbox'));
+    await userEvent.type(screen.getByRole('textbox'), 'New title{Enter}');
+
+    expect(await screen.findByRole('button', { name: 'New title' })).toBeInTheDocument();
   });
 });

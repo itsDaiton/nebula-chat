@@ -1,13 +1,14 @@
 import { create } from 'zustand';
 
 type SessionTitleEditState = {
-  editing: boolean;
-  startEditing: () => void;
+  editingSessionId: string | null;
+  startEditing: (sessionId: string) => void;
   stopEditing: () => void;
 };
 
+// Keyed by Session so opening another one never inherits an edit left open.
 export const useSessionTitleEditStore = create<SessionTitleEditState>((set) => ({
-  editing: false,
-  startEditing: () => set({ editing: true }),
-  stopEditing: () => set({ editing: false }),
+  editingSessionId: null,
+  startEditing: (editingSessionId) => set({ editingSessionId }),
+  stopEditing: () => set({ editingSessionId: null }),
 }));

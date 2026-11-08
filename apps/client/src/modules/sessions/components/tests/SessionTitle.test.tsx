@@ -39,7 +39,7 @@ const openEditor = async () => {
 beforeEach(() => {
   renames.length = 0;
   vi.clearAllMocks();
-  useSessionTitleEditStore.setState({ editing: false });
+  useSessionTitleEditStore.setState({ editingSessionId: null });
   server.use(mockGetSession(aSession()));
 });
 
@@ -50,6 +50,22 @@ describe('SessionTitle', () => {
     await userEvent.hover(screen.getByRole('button', { name: 'Old title' }));
 
     expect(await screen.findByText(resources.sessions.rename.tooltip)).toBeInTheDocument();
+  });
+
+  it('shows the Rename tooltip when the title is focused from the keyboard', async () => {
+    await renderInRouter(<SessionTitle sessionId="abc" title="Old title" />);
+
+    await userEvent.tab();
+
+    expect(screen.getByRole('button', { name: 'Old title' })).toHaveFocus();
+    expect(await screen.findByText(resources.sessions.rename.tooltip)).toBeInTheDocument();
+  });
+
+  it('does not open in edit mode for a different Session', async () => {
+    useSessionTitleEditStore.getState().startEditing('other');
+    await renderInRouter(<SessionTitle sessionId="abc" title="Old title" />);
+
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 
   it('turns into a focused field with its text selected on click', async () => {
