@@ -155,11 +155,26 @@ components:
         archived:
           type: boolean
           description: Whether the owner has archived this Session
+        archivedAt:
+          anyOf:
+            - type: string
+              format: date-time
+              pattern: >-
+                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: 'null'
+          description: When the owner archived it; null while active
+        messageCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: How many Messages the Session holds
       required:
         - id
         - title
         - createdAt
         - archived
+        - archivedAt
+        - messageCount
       additionalProperties: false
     SessionSearchResult:
       type: object
@@ -179,6 +194,19 @@ components:
         archived:
           type: boolean
           description: Whether the owner has archived this Session
+        archivedAt:
+          anyOf:
+            - type: string
+              format: date-time
+              pattern: >-
+                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: 'null'
+          description: When the owner archived it; null while active
+        messageCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: How many Messages the Session holds
         snippet:
           description: >-
             Text around the first match in one of the Session’s Messages,
@@ -189,6 +217,8 @@ components:
         - title
         - createdAt
         - archived
+        - archivedAt
+        - messageCount
       additionalProperties: false
     SessionDetail:
       type: object
@@ -208,6 +238,19 @@ components:
         archived:
           type: boolean
           description: Whether the owner has archived this Session
+        archivedAt:
+          anyOf:
+            - type: string
+              format: date-time
+              pattern: >-
+                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: 'null'
+          description: When the owner archived it; null while active
+        messageCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: How many Messages the Session holds
         activeStreamId:
           anyOf:
             - type: string
@@ -255,6 +298,8 @@ components:
         - title
         - createdAt
         - archived
+        - archivedAt
+        - messageCount
         - activeStreamId
         - waitingRun
       additionalProperties: false

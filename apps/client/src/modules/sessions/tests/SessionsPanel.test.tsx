@@ -29,6 +29,8 @@ const aListedSession = (id: string, title: string, msAgo: number) => ({
   title,
   createdAt: new Date(NOW.getTime() - msAgo).toISOString(),
   archived: false,
+  archivedAt: null,
+  messageCount: 0,
 });
 
 const sessions = [
@@ -46,6 +48,8 @@ const serveSessions = () =>
       title: sessions[0].title,
       createdAt: sessions[0].createdAt,
       archived: false,
+      archivedAt: null,
+      messageCount: 0,
       activeStreamId: null,
       waitingRun: null,
     }),
@@ -63,6 +67,8 @@ const serveArchive = (onRequest: (id: string) => void = () => {}) =>
       return HttpResponse.json({
         ...sessions.find((session) => session.id === id),
         archived: true,
+        archivedAt: '2026-06-16T11:00:00.000Z',
+        messageCount: 0,
       });
     }),
   );

@@ -335,7 +335,8 @@ export const resources = {
       open: 'Open',
       restore: 'Restore',
       loadMore: 'Show more',
-      meta: (age: string) => `Started ${age} ago`,
+      meta: (age: string, count: number) =>
+        `Archived ${age} ago · ${count} ${count === 1 ? 'message' : 'messages'}`,
       restored: (title?: string) => (title ? `“${title}” restored` : 'Session restored'),
       bar: 'Restore this Session to keep chatting.',
       notice: "Archived Session. It's hidden from your list and search.",

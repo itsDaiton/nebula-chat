@@ -40,7 +40,10 @@ export const ArchivedSessionsSetting = () => {
             <SettingsRow
               key={session.id}
               label={session.title}
-              description={archived.meta(formatRelativeTime(session.createdAt, Date.now()))}
+              description={archived.meta(
+                formatRelativeTime(session.archivedAt ?? session.createdAt, Date.now()),
+                session.messageCount,
+              )}
             >
               <div className="flex gap-2">
                 <Button

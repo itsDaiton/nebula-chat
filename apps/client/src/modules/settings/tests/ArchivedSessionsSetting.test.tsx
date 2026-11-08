@@ -13,11 +13,13 @@ import { renderRoute } from '@/test/renderRoute';
 
 const { archived } = resources.settings;
 
-const aSession = (id: string, title: string, isArchived: boolean) => ({
+const aSession = (id: string, title: string, isArchived: boolean, messageCount = 3) => ({
   id,
   title,
   createdAt: '2026-06-15T11:00:00.000Z',
   archived: isArchived,
+  archivedAt: isArchived ? new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() : null,
+  messageCount,
 });
 
 /** Serves the active list and the archived one, the way the server filters on `archived=true`. */
@@ -58,6 +60,19 @@ describe('ArchivedSessionsSetting', () => {
     expect(
       screen.getByRole('button', { name: `${archived.restore} Old pricing notes` }),
     ).toBeInTheDocument();
+  });
+
+  it('shows when each Session was archived and how many messages it holds', async () => {
+    await holdSession({ isAnonymous: false });
+    serveLists(
+      [],
+      [aSession('s1', 'Old pricing notes', true, 12), aSession('s2', 'One-liner', true, 1)],
+    );
+
+    await renderRoute('/');
+
+    expect(await screen.findByText('Archived 3d ago · 12 messages')).toBeInTheDocument();
+    expect(screen.getByText('Archived 3d ago · 1 message')).toBeInTheDocument();
   });
 
   it('says so when nothing is archived', async () => {

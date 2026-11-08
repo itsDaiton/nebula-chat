@@ -5,12 +5,16 @@ import { db } from '@server/db';
 import { paginationConfig } from '@server/config/pagination.config';
 import type { CreateSessionDTO, GetSessionParams } from '@server/modules/session/session.types';
 
-// The DTO fields; `archived` stands in for the `archivedAt` timestamp, which stays server-side.
+// Drizzle drops table names in a single-table select, so the count's join keys are qualified by hand.
+const messageCount = sql<number>`(select count(*)::int from ${messages} where ${sql.identifier('messages')}.${sql.identifier('session_id')} = ${sql.identifier('sessions')}.${sql.identifier('id')})`;
+
 const sessionColumns = {
   id: sessions.id,
   title: sessions.title,
   createdAt: sessions.createdAt,
   archived: sql<boolean>`${sessions.archivedAt} is not null`,
+  archivedAt: sessions.archivedAt,
+  messageCount,
 };
 
 // The default list and search leave archived Sessions out; `?archived=true` shows only those.

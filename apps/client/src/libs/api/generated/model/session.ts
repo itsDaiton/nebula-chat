@@ -13,4 +13,12 @@ export interface Session {
   createdAt: string;
   /** Whether the owner has archived this Session */
   archived: boolean;
+  /** When the owner archived it; null while active */
+  archivedAt: string | null;
+  /**
+   * How many Messages the Session holds
+   * @minimum -9007199254740991
+   * @maximum 9007199254740991
+   */
+  messageCount: number;
 }

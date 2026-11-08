@@ -71,6 +71,8 @@ beforeEach(() => {
         title: (body as { title: string }).title,
         createdAt: '2026-10-20T00:00:00.000Z',
         archived: false,
+        archivedAt: null,
+        messageCount: 0,
       })),
     ),
     getSendMessageMockHandler({ messageId: MESSAGE_ID, streamId: STREAM_ID }),
@@ -892,6 +894,8 @@ describe('useChatStream — send, then subscribe', () => {
           title: 'x',
           createdAt: '2026-10-20T00:00:00.000Z',
           archived: false,
+          archivedAt: null,
+          messageCount: 0,
         };
       }),
       getSendMessageMockHandler(({ params }) => {
