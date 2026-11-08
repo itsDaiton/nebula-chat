@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.1.0...nebula-chat-v6.2.0) (2026-11-08)
+
+
+### Features
+
+* **server:** NEB-607 let operators change and read the worker's log levels ([#755](https://github.com/itsDaiton/nebula-chat/issues/755)) ([1d36f1d](https://github.com/itsDaiton/nebula-chat/commit/1d36f1da0018bef5b8b11738051edf88aa3eedc9))
+
 ## [6.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.0.1...nebula-chat-v6.1.0) (2026-11-08)
 
 
