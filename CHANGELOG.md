@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.2.0...nebula-chat-v6.3.0) (2026-11-08)
+
+
+### Features
+
+* **server,client:** NEB-729 show archive time and message count on archived Sessions ([#757](https://github.com/itsDaiton/nebula-chat/issues/757)) ([a95fbff](https://github.com/itsDaiton/nebula-chat/commit/a95fbffb350ca12acc7d40ea8a4c2e3437d78120))
+
 ## [6.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.1.0...nebula-chat-v6.2.0) (2026-11-08)
 
 
