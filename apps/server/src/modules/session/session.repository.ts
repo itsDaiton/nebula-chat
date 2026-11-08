@@ -136,4 +136,12 @@ export const sessionRepository = {
       .returning(sessionColumns);
     return row ?? null;
   },
+  async rename(id: string, userId: string, title: string) {
+    const [row] = await db
+      .update(sessions)
+      .set({ title })
+      .where(and(eq(sessions.id, id), eq(sessions.userId, userId)))
+      .returning(sessionColumns);
+    return row ?? null;
+  },
 };

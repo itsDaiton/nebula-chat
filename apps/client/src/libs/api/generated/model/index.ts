@@ -49,6 +49,7 @@ export * from './modelProvider';
 export * from './profileImage';
 export * from './profileImageSettings';
 export * from './readReplyStreamParams';
+export * from './renameSessionBody';
 export * from './searchSessionsArchived';
 export * from './searchSessionsParams';
 export * from './sendMessageBody';

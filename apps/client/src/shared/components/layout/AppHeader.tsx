@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useParams } from '@tanstack/react-router';
 import { useGetSession } from '@/libs/api/generated/sessions/sessions';
+import { SessionTitle } from '@/modules/sessions/components/SessionTitle';
 import { resources } from '@/resources';
 import { NebulaLogo } from '@/shared/components/NebulaLogo';
 import { IconAction } from '@/shared/components/layout/IconAction';
@@ -57,9 +58,7 @@ export const AppHeader = ({
             <span aria-hidden className="text-faint">
               /
             </span>
-            <h1 className="min-w-0 truncate text-[13px] font-normal text-foreground-secondary">
-              {session.title}
-            </h1>
+            <SessionTitle sessionId={session.id} title={session.title} />
           </>
         )}
       </div>

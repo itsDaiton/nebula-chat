@@ -46,3 +46,8 @@ export type ArchiveContext = {
   snapshot: [QueryKey, InfiniteData<SessionPage> | undefined][];
   title?: string;
 };
+
+export type SessionTitleProps = {
+  sessionId: string;
+  title: string;
+};
