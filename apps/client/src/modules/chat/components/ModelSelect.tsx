@@ -64,7 +64,7 @@ export const ModelSelect = ({ selectedModel, onModelChange }: ModelSelectProps) 
         {options.length === 0 && isError && (
           <div className="flex items-center justify-between gap-3 px-3.5 py-3 text-[12.5px] text-faint">
             <p>{text.error}</p>
-            <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
+            <Button type="button" variant="secondary" size="sm" onClick={() => void refetch()}>
               {text.retry}
             </Button>
           </div>

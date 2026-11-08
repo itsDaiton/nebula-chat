@@ -57,7 +57,7 @@ coverage and knip. A route file only wires a page: the component lives in `modul
   several routes, or `getRouteApi('<route id>')` from a page that belongs to one.
 - **Guards.** `routes/_app.tsx` is a pathless layout whose `beforeLoad` ensures the auth session
   (`sessionBootstrapOptions`, minting a Guest when there is none) before any child page or loader runs, so a
-  page never renders, or fetches, without one. A new guard (a Registered-only subtree) is another pathless
+  page never renders, or fetches, without one. It also starts the model catalog request, so the picker rarely waits on it. A new guard (a Registered-only subtree) is another pathless
   layout with its own `beforeLoad` that throws `redirect({ to })`. `SessionOutlet` also holds the app back
   while sign-out resets the session, so nothing fetches as nobody while a Guest is re-minted.
 - **Loaders.** A loader prefetches through the existing query client:
