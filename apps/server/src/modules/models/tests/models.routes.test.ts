@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
+  DEFAULT_MODELS,
   MODEL_CATALOG,
   MODEL_CATALOG_HASH,
   MODEL_CATALOG_VERSION,
@@ -72,6 +73,12 @@ describe('GET /api/models', () => {
     const res = await app.inject({ method: 'GET', url: '/api/models' });
 
     expect(res.json()).toMatchObject({ version: MODEL_CATALOG_VERSION, hash: MODEL_CATALOG_HASH });
+  });
+
+  it('names the default Model of each provider', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/models' });
+
+    expect(res.json<{ defaultModels: unknown }>().defaultModels).toEqual(DEFAULT_MODELS);
   });
 
   it('lets any cache keep the catalog for an hour', async () => {

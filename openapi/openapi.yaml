@@ -367,6 +367,19 @@ components:
         hash:
           type: string
           description: SHA-256 of the catalog content (Models and defaults)
+        defaultModels:
+          type: object
+          propertyNames:
+            type: string
+            enum:
+              - openai
+              - anthropic
+          additionalProperties:
+            type: string
+          required:
+            - openai
+            - anthropic
+          description: The Model each provider falls back to when none is requested
         models:
           maxItems: 100
           type: array
@@ -375,6 +388,7 @@ components:
       required:
         - version
         - hash
+        - defaultModels
         - models
       additionalProperties: false
     Model:

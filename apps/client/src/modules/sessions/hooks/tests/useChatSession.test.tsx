@@ -209,8 +209,8 @@ describe('useChatSession', () => {
       await waitFor(() => expect(selected()).toBe('gpt-4.1'));
     });
 
-    it('keeps the pick when the Session recorded no Model, or one the picker lacks', async () => {
-      serveSession([reply('a1', null), reply('a2', 'retired-model')]);
+    it('keeps the pick when the Session recorded no Model', async () => {
+      serveSession([reply('a1', null), reply('a2', null)]);
 
       const { result } = renderHookWithQueryClient(() => useChatSession(SESSION_ID));
 

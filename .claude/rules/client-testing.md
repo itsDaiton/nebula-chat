@@ -43,6 +43,11 @@ pnpm frontend test:coverage
   `mockSendVerificationEmail`) plus `refreshSession`, which refetches better-auth's module-level session
   store after a render, and `holdSession`, which serves a session and waits until that store holds it. Regenerate with `pnpm frontend generate:api` after any backend change.
 
+- **The model catalog is served by default.** The shared MSW server starts with `getGetModelCatalogMockHandler(testCatalog)`
+  (`@/test/models`), because the picker, the Inspector and the Message meta row all read `GET /api/models`.
+  A test that needs another catalog, a slow one or a failure overrides it with `server.use(...)`
+  (`mockApiError('get', API_ROUTE.models, 500)`).
+
 - **Upload a file with `aSendableFile` (`@/test/files`)**, not `new File(...)`: vitest's bridge from jsdom's
   Blob to Node's fetch fails on this jsdom (and on Node 26 even Node's own Blob goes through it), so a Blob
   body never reaches an MSW handler. It is a byte array carrying a File's `name`, `type` and `size`.

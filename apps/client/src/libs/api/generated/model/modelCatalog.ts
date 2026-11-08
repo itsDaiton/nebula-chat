@@ -11,6 +11,8 @@ export interface ModelCatalog {
   version: string;
   /** SHA-256 of the catalog content (Models and defaults) */
   hash: string;
+  /** The Model each provider falls back to when none is requested */
+  defaultModels: Partial<Record<'openai' | 'anthropic', string>>;
   /** @maxItems 100 */
   models: Model[];
 }

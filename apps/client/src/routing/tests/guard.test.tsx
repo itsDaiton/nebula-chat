@@ -6,6 +6,7 @@ import { resources } from '@/resources';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { aSession, mockAnonymousSignIn, mockGetSession } from '@/test/auth';
 import { serveChatPage } from '@/test/chat';
+import { testCatalog } from '@/test/models';
 import { server } from '@/test/msw';
 import { renderRoute } from '@/test/renderRoute';
 
@@ -87,6 +88,30 @@ describe('session guard', () => {
     expect(
       await screen.findByRole('textbox', { name: resources.chat.composer.label }),
     ).toBeInTheDocument();
+  });
+
+  it('requests the model catalog once, while the session is still resolving', async () => {
+    let sessionAnswered = false;
+    const catalogRequests: { beforeSession: boolean }[] = [];
+    server.use(
+      http.get(API_ROUTE.authSession, async () => {
+        await delay(300);
+        sessionAnswered = true;
+        return HttpResponse.json(aSession());
+      }),
+      http.get(API_ROUTE.models, () => {
+        catalogRequests.push({ beforeSession: !sessionAnswered });
+        return HttpResponse.json(testCatalog);
+      }),
+    );
+
+    await visit('/');
+
+    expect(
+      await screen.findByRole('textbox', { name: resources.chat.composer.label }),
+    ).toBeInTheDocument();
+    await screen.findByRole('button', { name: /GPT-4o mini/ });
+    expect(catalogRequests).toEqual([{ beforeSession: true }]);
   });
 
   it('shows an error instead of the app when no session can be established', async () => {

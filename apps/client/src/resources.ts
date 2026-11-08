@@ -54,6 +54,9 @@ export const resources = {
     modelPicker: {
       search: 'Search Models…',
       empty: (query: string) => `No Models match “${query}”`,
+      loading: 'Loading Models…',
+      error: 'Couldn’t load the Models.',
+      retry: 'Retry',
       move: 'move',
       select: 'select',
       contextSize: 'context size',
