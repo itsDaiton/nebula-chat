@@ -74,4 +74,11 @@ export const sessionService = {
     }
     return session;
   },
+  async renameSession(sessionId: string, userId: string, title: string) {
+    const session = await sessionRepository.rename(sessionId, userId, title);
+    if (!session) {
+      throw new NotFoundError('Session', sessionId);
+    }
+    return session;
+  },
 };

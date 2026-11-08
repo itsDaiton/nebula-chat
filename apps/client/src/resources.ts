@@ -96,6 +96,11 @@ export const resources = {
     emptyHint: 'Start a new chat to create your first session',
     archive: 'Archive',
     undo: 'Undo',
+    rename: {
+      tooltip: 'Rename',
+      label: 'Session title',
+      failed: 'Could not rename the Session',
+    },
     archived: (title?: string) => (title ? `“${title}” archived` : 'Session archived'),
     single: {
       loading: 'Loading session...',

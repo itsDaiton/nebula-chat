@@ -14,6 +14,7 @@ vi.mock('@server/modules/session/session.repository', () => ({
     search: vi.fn(),
     archive: vi.fn(),
     restore: vi.fn(),
+    rename: vi.fn(),
   },
 }));
 
@@ -582,5 +583,48 @@ describe.each([
 
     expect(res.statusCode).toBe(401);
     expect(method).not.toHaveBeenCalled();
+  });
+});
+
+describe('PATCH /api/sessions/:sessionId', () => {
+  const url = `/api/sessions/${SESSION_ID}`;
+
+  it("renames the caller's own Session with the trimmed title and returns it", async () => {
+    repo.rename.mockResolvedValue(fromPartial(aSession({ title: 'Better title' })));
+
+    const res = await app.inject({ method: 'PATCH', url, payload: { title: '  Better title  ' } });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ id: SESSION_ID, title: 'Better title' });
+    expect(repo.rename).toHaveBeenCalledWith(SESSION_ID, REGISTERED_USER_ID, 'Better title');
+  });
+
+  it.each([
+    ['empty', ''],
+    ['whitespace-only', '   '],
+    ['over the length cap', 'x'.repeat(201)],
+  ])('rejects a %s title with 400 before touching the repository', async (_name, title) => {
+    const res = await app.inject({ method: 'PATCH', url, payload: { title } });
+
+    expect(res.statusCode).toBe(400);
+    expect(repo.rename).not.toHaveBeenCalled();
+  });
+
+  it("answers a typed 404 for a Session the caller doesn't own or that doesn't exist", async () => {
+    repo.rename.mockResolvedValue(null);
+
+    const res = await app.inject({ method: 'PATCH', url, payload: { title: 'Nope' } });
+
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toMatchObject({ success: false, error: 'NotFound' });
+  });
+
+  it('rejects an unauthenticated call with 401 and never reaches the repository', async () => {
+    mockedGetSession.mockResolvedValue(null);
+
+    const res = await app.inject({ method: 'PATCH', url, payload: { title: 'Nope' } });
+
+    expect(res.statusCode).toBe(401);
+    expect(repo.rename).not.toHaveBeenCalled();
   });
 });

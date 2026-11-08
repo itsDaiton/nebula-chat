@@ -9,6 +9,7 @@ import {
   createSessionSchema,
   getSessionSchema,
   getSessionsQuerySchema,
+  renameSessionSchema,
   paginatedSessionsResponseSchema,
   searchSessionsQuerySchema,
 } from '@server/modules/session/session.validation';
@@ -94,6 +95,28 @@ const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
     // Owner-scoped: another user's session reads as 404, never 403 (no leak).
     preHandler: requireAuthentication,
     handler: sessionController.restore,
+  });
+
+  app.patch('/:sessionId', {
+    schema: {
+      description:
+        'Rename one of the caller’s own sessions. The title is trimmed and must not be empty.',
+      summary: 'Rename session',
+      tags: ['Sessions'],
+      operationId: 'renameSession',
+      params: getSessionSchema,
+      body: renameSessionSchema,
+      response: {
+        200: jsonResponse('Session renamed', sessionResponseSchema),
+        400: jsonResponse('Invalid session ID or title', errorEnvelopeSchema),
+        401: jsonResponse('No auth session', errorEnvelopeSchema),
+        404: jsonResponse('Session not found or not owned by the caller', errorEnvelopeSchema),
+        500: jsonResponse('Internal server error', errorEnvelopeSchema),
+      },
+    },
+    // Owner-scoped: another user's session reads as 404, never 403 (no leak).
+    preHandler: requireAuthentication,
+    handler: sessionController.rename,
   });
 
   app.get('/:sessionId', {
