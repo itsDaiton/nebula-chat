@@ -58,7 +58,7 @@ export const SessionTitle = ({ sessionId, title }: SessionTitleProps) => {
       aria-label={resources.sessions.rename.label}
       defaultValue={title}
       maxLength={MAX_TITLE_LENGTH}
-      className={`${TITLE_CLASS} w-64 max-w-full rounded-md border border-input bg-transparent px-1.5 py-1 outline-none focus-visible:border-ring`}
+      className={`${TITLE_CLASS} w-64 max-w-full rounded-md bg-accent px-1.5 py-1 outline-none`}
       onBlur={(event) => finish(event.currentTarget.value)}
       onKeyDown={(event) => {
         if (event.key === 'Enter') finish(event.currentTarget.value);
