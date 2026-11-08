@@ -677,7 +677,9 @@ describe('SettingsDialog', () => {
         server.use(mockListAccounts(['credential'], () => ago(95)));
         await renderPage('security');
 
-        expect(await screen.findByText(changePassword.changedAgo('3mo'))).toBeInTheDocument();
+        expect(
+          await screen.findByText(changePassword.changedAgo('3 months ago')),
+        ).toBeInTheDocument();
         expect(screen.queryByText(changePassword.description)).not.toBeInTheDocument();
       });
 
@@ -711,13 +713,13 @@ describe('SettingsDialog', () => {
           }),
         );
         await renderPage('security');
-        await screen.findByText(changePassword.changedAgo('3mo'));
+        await screen.findByText(changePassword.changedAgo('3 months ago'));
         await openPasswordForm();
 
         await fillForm();
         await submit();
 
-        expect(await screen.findByText(changePassword.changedAgo('now'))).toBeInTheDocument();
+        expect(await screen.findByText(changePassword.changedAgo('just now'))).toBeInTheDocument();
       });
     });
 

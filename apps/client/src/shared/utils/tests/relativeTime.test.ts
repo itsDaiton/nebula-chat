@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatRelativeTime } from '@/shared/utils/relativeTime';
+import { formatLongRelativeTime, formatRelativeTime } from '@/shared/utils/relativeTime';
 
 const NOW = new Date('2026-06-15T12:00:00.000Z').getTime();
 const MINUTE = 60_000;
@@ -29,5 +29,25 @@ describe('formatRelativeTime', () => {
 
   it('reads a time slightly in the future as now', () => {
     expect(ago(-5_000)).toBe('now');
+  });
+});
+
+describe('formatLongRelativeTime', () => {
+  const long = (ms: number) => formatLongRelativeTime(new Date(NOW - ms).toISOString(), NOW);
+
+  it.each([
+    [30_000, 'just now'],
+    [MINUTE, '1 minute ago'],
+    [5 * HOUR, '5 hours ago'],
+    [3 * DAY, '3 days ago'],
+    [14 * DAY, '2 weeks ago'],
+    [95 * DAY, '3 months ago'],
+    [800 * DAY, '2 years ago'],
+  ])('reads %i ms as %s', (ms, expected) => {
+    expect(long(ms)).toBe(expected);
+  });
+
+  it('reads a time slightly in the future as just now', () => {
+    expect(formatLongRelativeTime(new Date(NOW + MINUTE).toISOString(), NOW)).toBe('just now');
   });
 });

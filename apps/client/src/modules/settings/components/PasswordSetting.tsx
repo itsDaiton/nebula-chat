@@ -13,7 +13,7 @@ import { usePasswordChangeStore } from '@/modules/settings/stores/usePasswordCha
 import { resources } from '@/resources';
 import { Button } from '@/shared/components/ui/button';
 import { useOnUnmount } from '@/shared/hooks/useOnUnmount';
-import { formatRelativeTime } from '@/shared/utils/relativeTime';
+import { formatLongRelativeTime } from '@/shared/utils/relativeTime';
 
 const { changePassword } = resources.settings;
 
@@ -42,7 +42,7 @@ export const PasswordSetting = () => {
   if (hasPassword === false) return null;
 
   const description = changedAt
-    ? changePassword.changedAgo(formatRelativeTime(changedAt, Date.now()))
+    ? changePassword.changedAgo(formatLongRelativeTime(changedAt, Date.now()))
     : changePassword.description;
 
   return (
