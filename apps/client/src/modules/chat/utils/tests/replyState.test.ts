@@ -7,7 +7,7 @@ describe('isReplyInFlight', () => {
     { status: 'sending', stopRequested: false },
     { status: 'sending', stopRequested: true },
     { status: 'streaming' },
-    { status: 'navigating', then: { status: 'stopped' } },
+    { status: 'navigating', end: { status: 'stopped' } },
   ])('holds the composer while the reply is $status', (reply) => {
     expect(isReplyInFlight(reply)).toBe(true);
   });

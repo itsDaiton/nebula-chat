@@ -61,7 +61,7 @@ export type ReplyState =
   | ReplyEnd
   | { status: 'sending'; stopRequested: boolean }
   | { status: 'streaming' }
-  | { status: 'navigating'; then: ReplyEnd };
+  | { status: 'navigating'; end: ReplyEnd };
 
 /** Where a followed reply stream got to: the last event applied, and reconnects since then. */
 export type StreamCursor = {

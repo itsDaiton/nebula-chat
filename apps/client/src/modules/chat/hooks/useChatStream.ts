@@ -353,7 +353,7 @@ export const useChatStream = ({
         useChatStreamStore.setState({ reply: end });
         return;
       }
-      useChatStreamStore.setState({ reply: { status: 'navigating', then: end } });
+      useChatStreamStore.setState({ reply: { status: 'navigating', end } });
       void navigate({ to: '/s/$id', params: { id: newSessionId }, replace: true });
     },
     [navigate],
@@ -501,7 +501,7 @@ export const useChatStream = ({
   // The new Session's route has rendered, so the reply rests at the end it reached.
   const clearPostStream = useCallback(() => {
     const { reply: current } = useChatStreamStore.getState();
-    if (current.status === 'navigating') useChatStreamStore.setState({ reply: current.then });
+    if (current.status === 'navigating') useChatStreamStore.setState({ reply: current.end });
   }, []);
 
   return {

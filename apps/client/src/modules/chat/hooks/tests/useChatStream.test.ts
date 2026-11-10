@@ -56,7 +56,7 @@ const inFlight = () => isReplyInFlight(reply());
 // The failure a reply ended on, also while a new chat is still moving to its Session.
 const replyError = () => {
   const current = reply();
-  const end = current.status === 'navigating' ? current.then : current;
+  const end = current.status === 'navigating' ? current.end : current;
   return end.status === 'failed' ? end.error : null;
 };
 
@@ -345,7 +345,7 @@ describe('useChatStream — a failed first reply', () => {
   const expectHeldForNavigation = () => {
     expect(navigate).toHaveBeenCalledWith(GOES_TO_NEW_SESSION);
     expect(useChatStreamStore.getState()).toMatchObject({
-      reply: { status: 'navigating', then: { status: 'failed' } },
+      reply: { status: 'navigating', end: { status: 'failed' } },
       sessionId: NEW_SESSION_ID,
     });
   };
@@ -610,7 +610,7 @@ describe('useChatStream — stopping a reply', () => {
 
   it('sends no cancel once the reply has ended, even while a new chat is still navigating', async () => {
     useChatStreamStore.setState({
-      reply: { status: 'navigating', then: IDLE_REPLY },
+      reply: { status: 'navigating', end: IDLE_REPLY },
       streamId: STREAM_ID,
     });
     const { cancelledStream } = stoppableStream();
@@ -619,7 +619,7 @@ describe('useChatStream — stopping a reply', () => {
     await act(() => result.current.stop());
 
     expect(cancelledStream()).toBeUndefined();
-    expect(reply()).toEqual({ status: 'navigating', then: IDLE_REPLY });
+    expect(reply()).toEqual({ status: 'navigating', end: IDLE_REPLY });
   });
 
   it('drops the empty reply of a reply stopped before its first token', async () => {
@@ -952,7 +952,7 @@ describe('useChatStream — send, then subscribe', () => {
 
     await sendMessage(result);
 
-    expect(reply()).toEqual({ status: 'navigating', then: IDLE_REPLY });
+    expect(reply()).toEqual({ status: 'navigating', end: IDLE_REPLY });
   });
 
   it('continues an active Session without creating one or navigating', async () => {
@@ -1084,7 +1084,7 @@ describe('useChatStream — query cache', () => {
 
 describe('useChatStream — lifecycle', () => {
   it('clearPostStream settles the reply on the end it reached', () => {
-    useChatStreamStore.setState({ reply: { status: 'navigating', then: { status: 'stopped' } } });
+    useChatStreamStore.setState({ reply: { status: 'navigating', end: { status: 'stopped' } } });
     const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
 
     act(() => result.current.clearPostStream());
