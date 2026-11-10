@@ -47,7 +47,7 @@ export const ContextUsagePopover = () => {
       </Tooltip>
       <PopoverContent
         side="top"
-        align="end"
+        align="center"
         sideOffset={8}
         aria-label={text.title}
         className="w-85 max-w-[calc(100vw-2rem)] p-3.5"
