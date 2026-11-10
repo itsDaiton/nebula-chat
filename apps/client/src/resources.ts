@@ -528,6 +528,9 @@ export const resources = {
       tokens: (count: number) => `${count.toLocaleString('en-US')} tokens`,
       brief: 'Brief',
       briefMissing: 'Not available: this Agent failed.',
+      briefShowFull: 'Show full Brief',
+      briefDescription:
+        'What each Intake Agent made of the message before the Orchestrator started.',
       groups: {
         intake: 'Intake',
         turn: (turn: number) => `Turn ${turn}`,

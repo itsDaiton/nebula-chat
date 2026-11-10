@@ -52,6 +52,12 @@ export type RunBriefProps = {
   brief: NonNullable<Run['brief']>;
 };
 
+/** One Intake Agent's part of the Brief, as text. */
+export type BriefPart = {
+  agent: string;
+  text: string;
+};
+
 export type Timed = {
   startedAt: string | null;
   finishedAt: string | null;

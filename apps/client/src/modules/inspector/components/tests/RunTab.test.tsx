@@ -50,6 +50,21 @@ describe('RunTab', () => {
     expect(screen.queryByText('missing')).not.toBeInTheDocument();
   });
 
+  it('opens the whole Brief in a dialog', async () => {
+    const user = userEvent.setup();
+    renderRun(aRun({ steps: [] }));
+
+    await user.click(await screen.findByRole('button', { name: text.briefShowFull }));
+
+    const dialog = within(await screen.findByRole('dialog', { name: 'Brief' }));
+    expect(dialog.getByRole('heading', { name: 'language' })).toBeInTheDocument();
+    expect(
+      dialog.getByText(/englishRestatement: Compare BullMQ and Redis Streams\./),
+    ).toBeInTheDocument();
+    expect(dialog.getByRole('heading', { name: 'session' })).toBeInTheDocument();
+    expect(dialog.getByText('summary: The user owns the worker app.')).toBeInTheDocument();
+  });
+
   it('groups the Steps by Intake, turn and answer, marking the ones that ran in parallel', async () => {
     renderRun();
 
