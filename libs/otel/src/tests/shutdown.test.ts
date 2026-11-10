@@ -1,11 +1,17 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createShutdown } from '../shutdown';
 import { captureLogger, eventLines, LEVEL } from '../testing';
 
-const setup = (close: () => Promise<void>) => {
+const setup = (close: () => Promise<void>, graceMs?: number) => {
   const { logger, lines } = captureLogger();
   const exit = vi.fn<(code: number) => void>();
-  const shutdown = createShutdown({ logger, close, failedEvent: 'server.shutdown.failed', exit });
+  const shutdown = createShutdown({
+    logger,
+    close,
+    failedEvent: 'server.shutdown.failed',
+    exit,
+    graceMs,
+  });
   return { shutdown, exit, lines };
 };
 
@@ -41,5 +47,44 @@ describe('createShutdown', () => {
 
     await vi.waitFor(() => expect(exit).toHaveBeenCalled());
     expect(close).toHaveBeenCalledOnce();
+  });
+
+  describe('with a grace period', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('exits 1 and logs once the grace period passes with close still pending', async () => {
+      vi.useFakeTimers();
+      const { shutdown, exit, lines } = setup(() => new Promise<void>(() => {}), 5000);
+
+      shutdown();
+      await vi.advanceTimersByTimeAsync(4999);
+      expect(exit).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+
+      expect(exit).toHaveBeenCalledExactlyOnceWith(1);
+      expect(eventLines(lines, 'server.shutdown.failed')).toHaveLength(1);
+    });
+
+    it('does not force the exit when close settles within the grace period', async () => {
+      vi.useFakeTimers();
+      const { shutdown, exit } = setup(() => Promise.resolve(), 5000);
+
+      shutdown();
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(exit).toHaveBeenCalledExactlyOnceWith(0);
+    });
+
+    it('exits 1 at once on a second signal while close is pending', () => {
+      const { shutdown, exit } = setup(() => new Promise<void>(() => {}), 5000);
+
+      shutdown();
+      expect(exit).not.toHaveBeenCalled();
+      shutdown();
+
+      expect(exit).toHaveBeenCalledExactlyOnceWith(1);
+    });
   });
 });
