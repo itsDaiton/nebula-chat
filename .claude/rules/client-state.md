@@ -25,6 +25,9 @@ State is split by **kind** ([ADR-0012](../../docs/adr/0012-adopt-tanstack-query-
   the last event id as `lastEventId` and skipping any entry at or before it; a 404 (expired) shows the saved
   Messages instead. `resumeStream` re-attaches to a Session's `activeStreamId` (called render-time from
   `ChatContainer`), and `stop` posts `cancelReplyStream`, deferred until the send names the stream.
+  The newest reply's lifecycle is the one `reply: ReplyState` union in the store (`sending` → `streaming` →
+  `idle` | `stopped` | `failed`, with `navigating` holding that end while a new chat moves to its route).
+  Move it by writing a whole state, read "busy" with `isReplyInFlight`, and never add a parallel flag for it.
 
 ## Server state — the generated hooks
 

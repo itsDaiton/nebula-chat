@@ -14,6 +14,7 @@ import {
 } from '@/libs/api/generated/chat/chat.msw';
 import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
+import { IDLE_REPLY, isReplyInFlight } from '@/modules/chat/utils/replyState';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
 import { useModelStore } from '@/modules/chat/stores/useModelStore';
 import { toast as sonner } from 'sonner';
@@ -84,9 +85,7 @@ beforeEach(() => {
   useMessageStore.setState({ message: '' });
   useChatStreamStore.setState({
     history: [],
-    isStreaming: false,
-    isPostStreamNavigation: false,
-    error: null,
+    reply: IDLE_REPLY,
     usage: null,
     sessionId: undefined,
   });
@@ -413,7 +412,7 @@ describe('ChatPage', () => {
       );
       await screen.findByText(PROVIDER_ERROR);
 
-      await waitFor(() => expect(useChatStreamStore.getState().isStreaming).toBe(false));
+      await waitFor(() => expect(isReplyInFlight(useChatStreamStore.getState().reply)).toBe(false));
       expect(screen.getByText(PROVIDER_ERROR)).toBeInTheDocument();
       expect(screen.queryByText(resources.chat.emptySession)).not.toBeInTheDocument();
     });
@@ -426,7 +425,7 @@ describe('ChatPage', () => {
         'hello{Enter}',
       );
       await screen.findByText(PROVIDER_ERROR);
-      await waitFor(() => expect(useChatStreamStore.getState().isStreaming).toBe(false));
+      await waitFor(() => expect(isReplyInFlight(useChatStreamStore.getState().reply)).toBe(false));
 
       await userEvent.type(
         screen.getByRole('textbox', { name: resources.chat.composer.label }),

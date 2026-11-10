@@ -7,6 +7,7 @@ import { ChatInputBar } from '@/modules/chat/components/ChatInputBar';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
+import { isReplyInFlight } from '@/modules/chat/utils/replyState';
 import { resources } from '@/resources';
 import { API_ROUTE } from '@/test/api';
 import { aSession, mockGetSession, refreshSession } from '@/test/auth';
@@ -131,7 +132,7 @@ describe('ChatInputBar', () => {
     await userEvent.click(screen.getByRole('button', { name: /send message/i }));
 
     await waitFor(() => expect(sends).toBe(2));
-    await waitFor(() => expect(useChatStreamStore.getState().isStreaming).toBe(false));
+    await waitFor(() => expect(isReplyInFlight(useChatStreamStore.getState().reply)).toBe(false));
     expect(useChatStreamStore.getState().isMessageAllowanceReached).toBe(false);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
@@ -155,7 +156,7 @@ describe('ChatInputBar', () => {
     await waitFor(() =>
       expect(screen.getByRole('status')).toHaveTextContent('1 of 10 message left'),
     );
-    await waitFor(() => expect(useChatStreamStore.getState().isStreaming).toBe(false));
+    await waitFor(() => expect(isReplyInFlight(useChatStreamStore.getState().reply)).toBe(false));
 
     await userEvent.type(screen.getByRole('textbox'), 'second');
     await userEvent.click(screen.getByRole('button', { name: /send message/i }));

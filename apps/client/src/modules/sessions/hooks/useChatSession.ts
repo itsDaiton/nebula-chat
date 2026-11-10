@@ -3,6 +3,7 @@ import { useListMessages } from '@/libs/api/generated/messages/messages';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useModelStore } from '@/modules/chat/stores/useModelStore';
 import { mapSessionMessages } from '@/modules/chat/utils/mapSessionMessages';
+import { IDLE_REPLY, isReplyInFlight } from '@/modules/chat/utils/replyState';
 
 // Loads the routed session into the chat. Its messages come from the message
 // list narrowed to it, oldest first.
@@ -24,15 +25,20 @@ export const useChatSession = (sessionId: string | undefined) => {
   // Deferred: a store write during render warns about updating subscribers mid-render.
   const chat = useChatStreamStore.getState();
   if (!sessionId) {
-    if (!chat.isStreaming && chat.sessionId !== undefined) {
+    if (!isReplyInFlight(chat.reply) && chat.sessionId !== undefined) {
       queueMicrotask(() =>
-        useChatStreamStore.setState({ history: [], sessionId: undefined, isReplyStopped: false }),
+        useChatStreamStore.setState({ history: [], sessionId: undefined, reply: IDLE_REPLY }),
       );
     }
   } else if (isSettled && chat.sessionId !== sessionId) {
     const history = messages.data;
     queueMicrotask(() => {
-      useChatStreamStore.setState({ history, sessionId, isReplyStopped: false });
+      // A reply still in flight keeps its state; only a finished one's stopped or failed note goes.
+      useChatStreamStore.setState(({ reply }) => ({
+        history,
+        sessionId,
+        reply: isReplyInFlight(reply) ? reply : IDLE_REPLY,
+      }));
       // Only on opening a Session, so a later pick or refetch never resets the composer.
       const lastModel = history.findLast((message) => message.model)?.model;
       if (lastModel) {
