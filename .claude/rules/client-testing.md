@@ -52,6 +52,9 @@ pnpm frontend test:coverage
   Blob to Node's fetch fails on this jsdom (and on Node 26 even Node's own Blob goes through it), so a Blob
   body never reaches an MSW handler. It is a byte array carrying a File's `name`, `type` and `size`.
 
+- **Build a Run with `aRun` and `aStep` (`@/test/runs`)**: the partial Run of `run-finished.png` (nine Steps, the
+  critic failed in turn 2), with `RUN_ID`, for the generated `getGetRunMockHandler`.
+
 - **Build a Metered user's allowance with `aMeteredAllowance` (`@/test/allowance`)**: `remaining` of
   `limit` (10 by default) left, with `used` derived, for the generated `getGetMessageAllowanceMockHandler`.
 

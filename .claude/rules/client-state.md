@@ -45,7 +45,7 @@ generate:api` after any backend change; generated files are never hand-edited.
   `meta: { inlineError: true }` and is not toasted.
 - **After a write the cache cannot see, invalidate** with the generated key helpers:
   `queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() })`. `useChatStream` invalidates the
-  list once it creates a Session, and the list, session detail and messages on `end` (a messages
+  list once it creates a Session, and the list, session detail, messages and any Run cached before it ended on `end` (a messages
   refetch mid-stream would race the reply). It also invalidates the message allowance once the send is
   accepted, the moment the server counts the message, and after a send refused at the allowance.
   Invalidate rather than hand-seed with `setQueryData`.

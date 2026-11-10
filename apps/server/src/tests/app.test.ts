@@ -97,11 +97,13 @@ describe('OpenAPI document', () => {
       'ModelPrices',
       'ProfileImage',
       'ProfileImageSettings',
+      'Run',
       'SentMessage',
       'Session',
       'SessionDetail',
       'SessionPage',
       'SessionSearchResult',
+      'Step',
       'UnmeteredMessageAllowance',
     ]);
   });
