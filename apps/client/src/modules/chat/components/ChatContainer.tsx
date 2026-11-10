@@ -44,7 +44,8 @@ export const ChatContainer = () => {
   // Guarded render-time sync (no effect): a Session opened mid-reply re-attaches to it once its
   // history is in; `resumeStream` ignores a stream it is already following.
   if (sessionId && activeStreamId && chatSessionId === sessionId) {
-    void resumeStream({ sessionId, streamId: activeStreamId });
+    // Deferred: it writes the chat store, which this component subscribes to.
+    queueMicrotask(() => void resumeStream({ sessionId, streamId: activeStreamId }));
   }
   const scrollRef = useRef<HTMLDivElement>(null);
 

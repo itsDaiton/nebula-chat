@@ -35,8 +35,11 @@ export const AppShell = ({ children }: AppShellProps) => {
   const frame = useRef({ pathname, isDesktop });
   if (frame.current.pathname !== pathname || frame.current.isDesktop !== isDesktop) {
     frame.current = { pathname, isDesktop };
-    closeDrawer();
-    closeSheet();
+    // Deferred: a store write during render warns about updating subscribers mid-render.
+    queueMicrotask(() => {
+      closeDrawer();
+      closeSheet();
+    });
   }
 
   const onToggleLeft = isDesktop ? toggleLeft : toggleDrawer;
