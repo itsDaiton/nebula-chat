@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.5.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.5.0...nebula-chat-v6.5.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* **client:** stop render-phase store writes and theme script warning ([#763](https://github.com/itsDaiton/nebula-chat/issues/763)) ([90d4b9a](https://github.com/itsDaiton/nebula-chat/commit/90d4b9a4a8e8ec10ba00bf210d4ee9592ac90ca3))
+
 ## [6.5.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.4.0...nebula-chat-v6.5.0) (2026-11-08)
 
 
