@@ -8,6 +8,8 @@ export const ThemeProvider = ({ children }: Readonly<{ children: ReactNode }>) =
     defaultTheme="system"
     enableSystem
     disableTransitionOnChange
+    // A data-block type keeps React 19 from warning about a script it would never run in this SPA.
+    scriptProps={{ type: 'application/json' }}
   >
     {children}
   </NextThemesProvider>

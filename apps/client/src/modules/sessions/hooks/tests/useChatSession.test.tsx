@@ -171,7 +171,7 @@ describe('useChatSession', () => {
     expect(chat().history.map((m) => m.id)).toEqual(['live']);
   });
 
-  it('clears the chat when the route leaves the session', () => {
+  it('clears the chat when the route leaves the session', async () => {
     useChatStreamStore.setState({
       sessionId: SESSION_ID,
       history: [{ id: 'm1', role: 'user', content: 'stale' }],
@@ -179,7 +179,7 @@ describe('useChatSession', () => {
 
     renderHookWithQueryClient(() => useChatSession(undefined));
 
-    expect(chat().history).toEqual([]);
+    await waitFor(() => expect(chat().history).toEqual([]));
     expect(chat().sessionId).toBeUndefined();
   });
 

@@ -21,18 +21,24 @@ export const useChatSession = (sessionId: string | undefined) => {
   const isSettled = detail.isSuccess && messages.isSuccess && !messages.isFetching;
 
   // Guarded render-time sync (no effect): the chat history follows the route.
+  // Deferred: a store write during render warns about updating subscribers mid-render.
   const chat = useChatStreamStore.getState();
   if (!sessionId) {
     if (!chat.isStreaming && chat.sessionId !== undefined) {
-      useChatStreamStore.setState({ history: [], sessionId: undefined, isReplyStopped: false });
+      queueMicrotask(() =>
+        useChatStreamStore.setState({ history: [], sessionId: undefined, isReplyStopped: false }),
+      );
     }
   } else if (isSettled && chat.sessionId !== sessionId) {
-    useChatStreamStore.setState({ history: messages.data, sessionId, isReplyStopped: false });
-    // Only on opening a Session, so a later pick or refetch never resets the composer.
-    const lastModel = messages.data.findLast((message) => message.model)?.model;
-    if (lastModel) {
-      useModelStore.setState({ selectedModel: lastModel });
-    }
+    const history = messages.data;
+    queueMicrotask(() => {
+      useChatStreamStore.setState({ history, sessionId, isReplyStopped: false });
+      // Only on opening a Session, so a later pick or refetch never resets the composer.
+      const lastModel = history.findLast((message) => message.model)?.model;
+      if (lastModel) {
+        useModelStore.setState({ selectedModel: lastModel });
+      }
+    });
   }
 
   return {
