@@ -62,6 +62,18 @@ export const resources = {
       select: 'select',
       contextSize: 'context size',
     },
+    contextUsage: {
+      label: (percent: number) => `Context window, ${percent}% used`,
+      tooltip: (percent: number, used: string, budget: string) =>
+        `${percent}% of context used · ${used} / ${budget} tokens`,
+      title: 'Context window',
+      sent: 'Sent with the last reply',
+      sentValue: (used: number, budget: number) =>
+        `${used.toLocaleString('en-US')} / ${budget.toLocaleString('en-US')}`,
+      included: 'Messages included',
+      includedValue: (included: number, total: number) => `last ${included} of ${total}`,
+      reserved: 'Reserved for the reply',
+    },
     run: {
       label: 'Run',
       soon: 'Runs are coming soon. Agents will plan, analyse and review answers.',
