@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.5.2...nebula-chat-v6.6.0) (2026-11-10)
+
+
+### Features
+
+* **client:** NEB-765 random waiting phrase while a reply starts ([#769](https://github.com/itsDaiton/nebula-chat/issues/769)) ([4c69c47](https://github.com/itsDaiton/nebula-chat/commit/4c69c47a62455b4376a12f905a8301244d444d4b))
+
 ## [6.5.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.5.1...nebula-chat-v6.5.2) (2026-11-10)
 
 
