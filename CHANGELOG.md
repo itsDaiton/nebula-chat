@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.6.0...nebula-chat-v6.7.0) (2026-11-10)
+
+
+### Features
+
+* **client:** NEB-362 Run inspection view ([#768](https://github.com/itsDaiton/nebula-chat/issues/768)) ([19959ed](https://github.com/itsDaiton/nebula-chat/commit/19959ed2847210d703ab1e5b71b78a158111ca38))
+
 ## [6.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.5.2...nebula-chat-v6.6.0) (2026-11-10)
 
 
