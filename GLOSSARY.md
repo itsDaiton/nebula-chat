@@ -24,6 +24,10 @@ _Avoid_: Provider (a model belongs to a provider, but the domain concept users a
 One incremental chunk of a model's completion, sent to the client as an SSE `token` event as soon as it's generated. Distinct from an LLM tokenizer token used for budgeting (see Token budget) — this is a transport-level unit.
 _Avoid_: Chunk (reserve for describing SSE mechanics, not this domain concept).
 
+**Waiting phrase**:
+A short decorative line shown while a Direct reply has been asked for and its first Streaming token has not arrived, chosen at random from a fixed list. It says nothing about what the Model is doing. A Run never shows one; its Steps are its progress.
+_Avoid_: Thinking message (suggests model reasoning), loading message, status.
+
 **Token budget**:
 The tiktoken-counted limits enforced before and during a completion: max prompt tokens, max completion tokens, and max context window (prompt + recent history + completion combined). Exceeding it fails the request with a typed error rather than silently truncating.
 _Avoid_: Context window used alone to mean the whole budget — it's one part of it.
