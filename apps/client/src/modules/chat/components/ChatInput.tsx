@@ -1,4 +1,5 @@
 import { AttachButton } from '@/modules/chat/components/AttachButton';
+import { ContextUsagePopover } from '@/modules/chat/components/ContextUsagePopover';
 import { ModelSelect } from '@/modules/chat/components/ModelSelect';
 import { RunToggle } from '@/modules/chat/components/RunToggle';
 import { SendButton } from '@/modules/chat/components/SendButton';
@@ -44,6 +45,7 @@ export const ChatInput = ({
         <AttachButton />
         <RunToggle />
         <span className="flex-1" />
+        <ContextUsagePopover />
         <ModelSelect selectedModel={selectedModel} onModelChange={onModelChange} />
         {isLoading && onStop ? (
           <StopButton onStop={onStop} />

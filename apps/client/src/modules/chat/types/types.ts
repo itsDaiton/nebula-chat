@@ -124,6 +124,22 @@ export type ModelCatalogView = {
   defaultModel: string | undefined;
 };
 
+export type ContextLevel = 'normal' | 'warning' | 'critical';
+
+export type ContextUsage = {
+  /** The Model the numbers came from, which may differ from the composer's current pick. */
+  model: ModelOption;
+  used: number;
+  /** The Model's context window minus the output it reserves for the reply. */
+  budget: number;
+  /** Used over budget, clamped to 1. */
+  share: number;
+  percent: number;
+  level: ContextLevel;
+  messagesIncluded: number;
+  messagesTotal: number;
+};
+
 export type ModelPickerState = {
   isOpen: boolean;
   search: string;

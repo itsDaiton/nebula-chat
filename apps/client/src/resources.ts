@@ -62,6 +62,19 @@ export const resources = {
       select: 'select',
       contextSize: 'context size',
     },
+    contextUsage: {
+      label: (percent: number) => `Context window, ${percent}% used`,
+      tooltip: (percent: number, used: string, budget: string) =>
+        `${percent}% of context used · ${used} / ${budget} tokens`,
+      title: 'Context window',
+      sent: 'Sent with the last reply',
+      included: 'Messages included',
+      includedValue: (included: number, total: number) => `last ${included} of ${total}`,
+      reserved: 'Reserved for the reply',
+      window: 'Context window',
+      note: 'When it fills up, the oldest messages stop being sent to the Model. Start a new chat to begin fresh.',
+      newChat: 'New chat',
+    },
     run: {
       label: 'Run',
       soon: 'Runs are coming soon. Agents will plan, analyse and review answers.',
