@@ -1,9 +1,14 @@
 import { useListMessages } from '@/libs/api/generated/messages/messages';
 import { useModelCatalog } from '@/modules/chat/hooks/useModelCatalog';
-import type { ContextUsage } from '@/modules/chat/types/types';
+import type { ContextLevel, ContextUsage } from '@/modules/chat/types/types';
 
 const WARNING_FROM = 70;
 const CRITICAL_FROM = 90;
+
+const levelFor = (percent: number): ContextLevel => {
+  if (percent >= CRITICAL_FROM) return 'critical';
+  return percent >= WARNING_FROM ? 'warning' : 'normal';
+};
 
 export const useContextUsage = (sessionId: string | undefined): ContextUsage | null => {
   const { data: messages } = useListMessages(
@@ -32,7 +37,7 @@ export const useContextUsage = (sessionId: string | undefined): ContextUsage | n
     budget,
     share,
     percent,
-    level: percent >= CRITICAL_FROM ? 'critical' : percent >= WARNING_FROM ? 'warning' : 'normal',
+    level: levelFor(percent),
     messagesIncluded,
     messagesTotal: messages.length,
   };
