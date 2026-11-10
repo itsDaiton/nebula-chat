@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.8.0...nebula-chat-v6.8.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* **server:** NEB-743 bound the shutdown drain so a reload frees the port ([#776](https://github.com/itsDaiton/nebula-chat/issues/776)) ([b40e26f](https://github.com/itsDaiton/nebula-chat/commit/b40e26ffff23efb7451ad1eb8455d5a7c88d93e7))
+
 ## [6.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.7.1...nebula-chat-v6.8.0) (2026-11-10)
 
 
