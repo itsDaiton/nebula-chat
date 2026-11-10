@@ -1,3 +1,4 @@
+import { connect } from 'node:net';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createTestApp } from '@server/test/app';
@@ -167,5 +168,24 @@ describe('app routes', () => {
     const res = await app.inject({ method: 'GET', url: '/api/nope' });
 
     expect(res.statusCode).toBe(404);
+  });
+});
+
+describe('shutdown', () => {
+  it('settles app.close() while a client has a request still in flight', async () => {
+    const shutdownApp = await createTestApp();
+    await shutdownApp.listen({ port: 0, host: '127.0.0.1' });
+    const address = shutdownApp.server.address();
+    if (address === null || typeof address === 'string') throw new Error('no TCP address');
+
+    const socket = connect(address.port, '127.0.0.1');
+    socket.on('error', () => undefined);
+    await new Promise<void>((resolve) => socket.once('connect', resolve));
+    // A request that never finishes, like an open reply stream: idle sockets are closed by Fastify either way.
+    socket.write('POST /api/nope HTTP/1.1\r\nHost: x\r\nContent-Length: 10\r\n\r\nabc');
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    await expect(shutdownApp.close()).resolves.toBeUndefined();
+    socket.destroy();
   });
 });

@@ -61,6 +61,8 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
     loggerInstance,
     logController,
     trustProxy: resolveTrustProxy(),
+    // Without it `app.close()` waits on SSE and keep-alive sockets, so a dev reload keeps the port bound.
+    forceCloseConnections: true,
   });
 
   app.setValidatorCompiler(validatorCompiler);

@@ -519,6 +519,10 @@ process to exit. A flush that fails or is cut off is reported by the SDK through
 `otel.diag.log`. The server awaits the flush alongside `app.close()` and then
 exits.
 
+The server also passes `graceMs` (10s) to `createShutdown`: a close still pending after that logs
+`server.shutdown.failed` and exits 1, and a second signal exits 1 at once. Fastify force-closes open
+connections on `app.close()`, so a reply stream cannot hold the port. The worker sets no `graceMs` and waits as before.
+
 ### If tracing seems broken
 
 The SDK reports its own failures through OpenTelemetry's `diag` channel, which is
