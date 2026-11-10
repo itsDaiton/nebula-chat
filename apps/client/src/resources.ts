@@ -73,7 +73,6 @@ export const resources = {
       included: 'Messages included',
       includedValue: (included: number, total: number) => `last ${included} of ${total}`,
       reserved: 'Reserved for the reply',
-      note: 'When it fills up, the oldest messages stop being sent to the Model. Start a new chat to begin fresh.',
     },
     run: {
       label: 'Run',

@@ -1,4 +1,3 @@
-import { InfoIcon } from 'lucide-react';
 import { useParams } from '@tanstack/react-router';
 import { ContextRing, levelColor } from '@/modules/chat/components/ContextRing';
 import { useContextUsage } from '@/modules/chat/hooks/useContextUsage';
@@ -88,10 +87,6 @@ export const ContextUsagePopover = () => {
             </div>
           ))}
         </dl>
-        <div className="mt-3.5 flex gap-2.5 rounded-[10px] border border-border bg-raised p-3 text-[12.5px] text-foreground-secondary">
-          <InfoIcon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-          <p>{text.note}</p>
-        </div>
       </PopoverContent>
     </Popover>
   );

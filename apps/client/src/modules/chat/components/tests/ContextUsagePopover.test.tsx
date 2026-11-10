@@ -82,7 +82,6 @@ describe('Context window ring', () => {
     expect(dialog).toHaveTextContent('Messages includedlast 20 of 2');
     expect(dialog).toHaveTextContent('Reserved for the reply8,192 tokens');
     expect(screen.queryByRole('button', { name: 'New chat' })).not.toBeInTheDocument();
-    expect(dialog).toHaveTextContent('the oldest messages stop being sent');
     expect(dialog).not.toHaveTextContent('tok ');
   });
 
