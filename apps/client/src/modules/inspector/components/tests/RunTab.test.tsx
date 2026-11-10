@@ -31,10 +31,7 @@ describe('RunTab', () => {
     expect(await screen.findByText('partial')).toBeInTheDocument();
     expect(screen.getByText(/^9 Steps · 41\.2s · 27 Oct, \d\d:\d\d$/)).toBeInTheDocument();
     expect(screen.getByText('38,410 / 60,000 tokens')).toBeInTheDocument();
-    expect(screen.getByRole('progressbar', { name: 'Run budget' })).toHaveAttribute(
-      'aria-valuenow',
-      '38410',
-    );
+    expect(screen.getByRole('progressbar', { name: 'Run budget' })).toHaveValue(38410);
   });
 
   it("shows each Intake Agent's part of the Brief under its name", async () => {

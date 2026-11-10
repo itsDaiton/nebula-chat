@@ -76,8 +76,6 @@ export type RunStepGroupProps = {
   group: RunStepGroup;
 };
 
-export type RunStepProps = RunStepRow;
-
 export type StepProps = {
   step: Step;
 };

@@ -566,8 +566,10 @@ export const resources = {
       },
       end: {
         partialTitle: 'Partial answer.',
-        agentFailed: (label: string, name: string, turn = 0) =>
-          `${label} (${name}) failed${turn > 0 ? ` in turn ${turn}` : ''}, so the answer was written without it.`,
+        agentFailed: (label: string, name: string, turn = 0) => {
+          const where = turn > 0 ? ` in turn ${turn}` : '';
+          return `${label} (${name}) failed${where}, so the answer was written without it.`;
+        },
         partialFallback:
           'A limit forced an early answer, or a Clarifying question went unanswered.',
         failedTitle: 'Run failed.',

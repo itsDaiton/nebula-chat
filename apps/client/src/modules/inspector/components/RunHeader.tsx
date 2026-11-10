@@ -31,19 +31,12 @@ export const RunHeader = ({ run }: RunProps) => {
           </span>
         </div>
         {tokenBudget ? (
-          <div
-            role="progressbar"
+          <progress
             aria-label={text.budget}
-            aria-valuemin={0}
-            aria-valuemax={tokenBudget}
-            aria-valuenow={Math.min(tokensUsed, tokenBudget)}
-            className="h-1.5 overflow-hidden rounded-full bg-hover"
-          >
-            <div
-              className="h-full rounded-full bg-foreground"
-              style={{ width: `${Math.min(100, (tokensUsed / tokenBudget) * 100)}%` }}
-            />
-          </div>
+            max={tokenBudget}
+            value={Math.min(tokensUsed, tokenBudget)}
+            className="block h-1.5 w-full appearance-none overflow-hidden rounded-full border-0 bg-hover [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-foreground [&::-webkit-progress-bar]:bg-hover [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-foreground"
+          />
         ) : null}
       </div>
     </header>

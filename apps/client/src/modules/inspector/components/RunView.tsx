@@ -16,12 +16,12 @@ export const RunView = ({ runId }: RunViewProps) => {
 
   if (isPending) {
     return (
-      <div role="status" aria-label={text.loading} className="flex flex-col gap-3.5 p-3.5">
+      <output aria-label={text.loading} className="flex flex-col gap-3.5 p-3.5">
         <Skeleton className="h-5 w-3/5" />
         <Skeleton className="h-1.5 w-full" />
         <Skeleton className="h-16 w-full" />
         <Skeleton className="h-28 w-full" />
-      </div>
+      </output>
     );
   }
   if (!run) {

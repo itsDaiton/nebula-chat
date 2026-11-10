@@ -1,6 +1,6 @@
 import { RunStepDetail } from '@/modules/inspector/components/RunStepDetail';
 import { StepStatusIcon } from '@/modules/inspector/components/StepStatusIcon';
-import type { RunStepProps } from '@/modules/inspector/types/types';
+import type { RunStepRow } from '@/modules/inspector/types/types';
 import { formatDuration, runDurationMs } from '@/modules/inspector/utils/formatDuration';
 import { stepLabel } from '@/modules/inspector/utils/stepLabel';
 import {
@@ -10,7 +10,7 @@ import {
 } from '@/shared/components/ui/collapsible';
 
 /** One Step's row; selecting it opens its detail underneath. */
-export const RunStep = ({ step, depth }: RunStepProps) => {
+export const RunStep = ({ step, depth }: RunStepRow) => {
   const label = stepLabel(step.name);
   const { name, phase, status } = step;
   // Intake and the Orchestrator are named by their label alone; a delegate, tool or the Output Agent shows which one ran.
