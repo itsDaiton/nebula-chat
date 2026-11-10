@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.7.1...nebula-chat-v6.8.0) (2026-11-10)
+
+
+### Features
+
+* **client:** NEB-666 context window ring in the composer ([#774](https://github.com/itsDaiton/nebula-chat/issues/774)) ([89ea3e3](https://github.com/itsDaiton/nebula-chat/commit/89ea3e331870d7556e208b510ead5c2e734acaa2))
+
 ## [6.7.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.7.0...nebula-chat-v6.7.1) (2026-11-10)
 
 
