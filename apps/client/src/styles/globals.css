@@ -204,6 +204,7 @@ html[data-motion='reduced'] *::after {
   from {
     background-position: 100% 0;
   }
+
   to {
     background-position: -100% 0;
   }
@@ -218,7 +219,6 @@ html[data-motion='reduced'] *::after {
   );
   background-size: 200% 100%;
   background-clip: text;
-  -webkit-background-clip: text;
   color: transparent;
   animation: waiting-sweep 2.4s linear infinite;
 }
