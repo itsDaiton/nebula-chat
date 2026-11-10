@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.14.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.14.0...nebula-chat-otel-v2.14.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* **server:** NEB-743 bound the shutdown drain so a reload frees the port ([#776](https://github.com/itsDaiton/nebula-chat/issues/776)) ([b40e26f](https://github.com/itsDaiton/nebula-chat/commit/b40e26ffff23efb7451ad1eb8455d5a7c88d93e7))
+
 ## [2.14.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.13.0...nebula-chat-otel-v2.14.0) (2026-11-08)
 
 
