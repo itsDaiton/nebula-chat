@@ -1,5 +1,5 @@
-import { InfoIcon, SquarePenIcon } from 'lucide-react';
-import { useNavigate, useParams } from '@tanstack/react-router';
+import { InfoIcon } from 'lucide-react';
+import { useParams } from '@tanstack/react-router';
 import { ContextRing, levelColor } from '@/modules/chat/components/ContextRing';
 import { useContextUsage } from '@/modules/chat/hooks/useContextUsage';
 import { formatContextWindow } from '@/modules/chat/utils/formatContextWindow';
@@ -14,7 +14,6 @@ const { contextUsage: text } = resources.chat;
 
 export const ContextUsagePopover = () => {
   const { id: sessionId } = useParams({ strict: false });
-  const navigate = useNavigate();
   const usage = useContextUsage(sessionId);
   if (!usage) return null;
 
@@ -82,7 +81,6 @@ export const ContextUsagePopover = () => {
           {[
             [text.included, text.includedValue(messagesIncluded, messagesTotal)],
             [text.reserved, tokens(model.maxOutput)],
-            [text.window, tokens(model.contextWindow)],
           ].map(([label, value]) => (
             <div key={label} className="flex items-baseline justify-between gap-3">
               <dt className="text-muted-foreground">{label}</dt>
@@ -94,16 +92,6 @@ export const ContextUsagePopover = () => {
           <InfoIcon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
           <p>{text.note}</p>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="mt-2.5 w-full"
-          onClick={() => void navigate({ to: '/' })}
-        >
-          <SquarePenIcon />
-          {text.newChat}
-        </Button>
       </PopoverContent>
     </Popover>
   );

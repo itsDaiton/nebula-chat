@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
 import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
 import type { Message } from '@/libs/api/generated/model/message';
@@ -81,7 +81,7 @@ describe('Context window ring', () => {
     expect(dialog).toHaveTextContent('142,300 / 191,808');
     expect(dialog).toHaveTextContent('Messages includedlast 20 of 2');
     expect(dialog).toHaveTextContent('Reserved for the reply8,192 tokens');
-    expect(dialog).toHaveTextContent('200,000 tokens');
+    expect(screen.queryByRole('button', { name: 'New chat' })).not.toBeInTheDocument();
     expect(dialog).toHaveTextContent('the oldest messages stop being sent');
     expect(dialog).not.toHaveTextContent('tok ');
   });
@@ -97,16 +97,6 @@ describe('Context window ring', () => {
 
     expect(screen.queryByRole('dialog', { name: 'Context window' })).not.toBeInTheDocument();
     expect(ring).toHaveFocus();
-  });
-
-  it('starts a new chat from the popover', async () => {
-    serveMessages(usedMessages());
-    const { router } = await renderRoute(`/s/${SESSION_ID}`);
-
-    await userEvent.click(await screen.findByRole('button', { name: /^Context window, 74%/ }));
-    await userEvent.click(await screen.findByRole('button', { name: 'New chat' }));
-
-    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/'));
   });
 
   it('is absent for answers from before the numbers were kept', async () => {
