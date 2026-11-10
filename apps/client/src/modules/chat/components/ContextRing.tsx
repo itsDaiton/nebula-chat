@@ -1,17 +1,10 @@
-import type { ContextLevel } from '@/modules/chat/types/types';
+import type { ContextLevel, ContextRingProps } from '@/modules/chat/types/types';
 import { cn } from '@/shared/utils/cn';
 
-const levelColor: Record<ContextLevel, string> = {
+export const levelColor: Record<ContextLevel, string> = {
   normal: 'text-muted-foreground',
   warning: 'text-warning',
   critical: 'text-destructive',
-};
-
-type ContextRingProps = {
-  share: number;
-  level: ContextLevel;
-  size?: number;
-  strokeWidth?: number;
 };
 
 export const ContextRing = ({ share, level, size = 18, strokeWidth = 2.4 }: ContextRingProps) => {

@@ -126,6 +126,13 @@ export type ModelCatalogView = {
 
 export type ContextLevel = 'normal' | 'warning' | 'critical';
 
+export type ContextRingProps = {
+  share: number;
+  level: ContextLevel;
+  size?: number;
+  strokeWidth?: number;
+};
+
 export type ContextUsage = {
   /** The Model the numbers came from, which may differ from the composer's current pick. */
   model: ModelOption;

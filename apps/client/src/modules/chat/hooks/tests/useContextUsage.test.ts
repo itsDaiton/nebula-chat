@@ -57,17 +57,22 @@ describe('useContextUsage', () => {
 
   it.each([
     [0.69, 'normal'],
+    [0.696, 'warning'],
     [0.7, 'warning'],
     [0.89, 'warning'],
     [0.9, 'critical'],
   ] as const)('at %s of the budget the level is %s', async (share, level) => {
-    const result = await usageOf([aMessage('m1', { contextTokens: BUDGET * share })]);
+    const result = await usageOf([
+      aMessage('m1', { contextTokens: BUDGET * share, contextMessages: 1 }),
+    ]);
 
     await waitFor(() => expect(result.current?.level).toBe(level));
   });
 
   it('clamps the fill at 100%', async () => {
-    const result = await usageOf([aMessage('m1', { contextTokens: BUDGET * 2 })]);
+    const result = await usageOf([
+      aMessage('m1', { contextTokens: BUDGET * 2, contextMessages: 1 }),
+    ]);
 
     await waitFor(() => expect(result.current?.percent).toBe(100));
     expect(result.current?.level).toBe('critical');
@@ -86,10 +91,14 @@ describe('useContextUsage', () => {
     ['a new chat', [], undefined],
     ['a Session with no replies', [aMessage('m1', { role: 'user', model: null })], SESSION_ID],
     ['a reply from before the numbers were kept', [aMessage('m1')], SESSION_ID],
-    ['a Run answer', [aMessage('m1', { model: null, runId: 'r1' })], SESSION_ID],
+    [
+      'a Run answer',
+      [aMessage('m1', { runId: 'r1', contextTokens: 5, contextMessages: 1 })],
+      SESSION_ID,
+    ],
     [
       'a Model the catalog no longer lists',
-      [aMessage('m1', { model: 'retired', contextTokens: 5 })],
+      [aMessage('m1', { model: 'retired', contextTokens: 5, contextMessages: 1 })],
       SESSION_ID,
     ],
   ] as const)('is hidden for %s', async (_name, messages, sessionId) => {

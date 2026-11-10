@@ -2,8 +2,8 @@ import { useListMessages } from '@/libs/api/generated/messages/messages';
 import { useModelCatalog } from '@/modules/chat/hooks/useModelCatalog';
 import type { ContextUsage } from '@/modules/chat/types/types';
 
-const WARNING_FROM = 0.7;
-const CRITICAL_FROM = 0.9;
+const WARNING_FROM = 70;
+const CRITICAL_FROM = 90;
 
 export const useContextUsage = (sessionId: string | undefined): ContextUsage | null => {
   const { data: messages } = useListMessages(
@@ -13,22 +13,27 @@ export const useContextUsage = (sessionId: string | undefined): ContextUsage | n
   const { options } = useModelCatalog();
 
   // Run answers and replies from before the numbers were kept carry none, so they never count.
-  const reply = messages?.findLast((message) => message.contextTokens != null && message.model);
+  const reply = messages?.findLast(
+    (message) => !message.runId && message.model && message.contextTokens != null,
+  );
   const model = options.find((option) => option.value === reply?.model);
   if (!sessionId || !messages || !reply || !model) return null;
 
-  const used = reply.contextTokens ?? 0;
+  const { contextTokens: used, contextMessages: messagesIncluded } = reply;
+  if (used == null || messagesIncluded == null) return null;
   const budget = model.contextWindow - model.maxOutput;
   const share = Math.min(used / budget, 1);
+  // The colour follows the percent shown, so "70%" is never muted.
+  const percent = Math.round(share * 100);
 
   return {
     model,
     used,
     budget,
     share,
-    percent: Math.round(share * 100),
-    level: share >= CRITICAL_FROM ? 'critical' : share >= WARNING_FROM ? 'warning' : 'normal',
-    messagesIncluded: reply.contextMessages ?? 0,
+    percent,
+    level: percent >= CRITICAL_FROM ? 'critical' : percent >= WARNING_FROM ? 'warning' : 'normal',
+    messagesIncluded,
     messagesTotal: messages.length,
   };
 };

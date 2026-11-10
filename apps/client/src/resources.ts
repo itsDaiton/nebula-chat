@@ -68,6 +68,8 @@ export const resources = {
         `${percent}% of context used · ${used} / ${budget} tokens`,
       title: 'Context window',
       sent: 'Sent with the last reply',
+      sentValue: (used: number, budget: number) =>
+        `${used.toLocaleString('en-US')} / ${budget.toLocaleString('en-US')}`,
       included: 'Messages included',
       includedValue: (included: number, total: number) => `last ${included} of ${total}`,
       reserved: 'Reserved for the reply',
