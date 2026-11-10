@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.5.0...nebula-chat-client-v3.6.0) (2026-11-10)
+
+
+### Features
+
+* **client:** NEB-362 Run inspection view ([#768](https://github.com/itsDaiton/nebula-chat/issues/768)) ([19959ed](https://github.com/itsDaiton/nebula-chat/commit/19959ed2847210d703ab1e5b71b78a158111ca38))
+
 ## [3.5.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.4.1...nebula-chat-client-v3.5.0) (2026-11-10)
 
 
