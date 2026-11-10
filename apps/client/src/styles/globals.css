@@ -199,6 +199,30 @@ html[data-motion='reduced'] *::after {
   }
 }
 
+/* Highlight sweep over muted text; the motion rules above stop it when reduced. */
+@keyframes waiting-sweep {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+.waiting-phrase {
+  background-image: linear-gradient(
+    90deg,
+    var(--muted-foreground) 40%,
+    var(--foreground) 50%,
+    var(--muted-foreground) 60%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: waiting-sweep 2.4s linear infinite;
+}
+
 /* Preflight resets borders to currentcolor; without this a bare `border` is white in dark mode. */
 @layer base {
   * {
