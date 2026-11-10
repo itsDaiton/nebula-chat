@@ -43,40 +43,42 @@ export const getGetRunResponseMock = (
     faker.date.past().toISOString().slice(0, 19) + 'Z',
     null,
   ]),
-  steps: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
-    id: faker.string.uuid(),
-    turn: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
-    phase: faker.helpers.arrayElement([
-      'intake',
-      'orchestrator',
-      'delegate',
-      'tool',
-      'output',
-    ] as const),
-    name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    parentStepId: faker.helpers.arrayElement([faker.string.uuid(), null]),
-    attempt: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
-    input: {},
-    output: {},
-    tokens: faker.helpers.arrayElement([
-      faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
-      null,
-    ]),
-    status: faker.helpers.arrayElement(['running', 'completed', 'failed'] as const),
-    error: faker.helpers.arrayElement([
-      {
-        success: false,
-        error: faker.helpers.arrayElement(Object.values(ErrorCode)),
-        message: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      },
-      null,
-    ]),
-    startedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
-    finishedAt: faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + 'Z',
-      null,
-    ]),
-  })),
+  steps: Array.from({ length: faker.number.int({ min: 1, max: 1000 }) }, (_, i) => i + 1).map(
+    () => ({
+      id: faker.string.uuid(),
+      turn: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+      phase: faker.helpers.arrayElement([
+        'intake',
+        'orchestrator',
+        'delegate',
+        'tool',
+        'output',
+      ] as const),
+      name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      parentStepId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+      attempt: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+      input: {},
+      output: {},
+      tokens: faker.helpers.arrayElement([
+        faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+        null,
+      ]),
+      status: faker.helpers.arrayElement(['running', 'completed', 'failed'] as const),
+      error: faker.helpers.arrayElement([
+        {
+          success: false,
+          error: faker.helpers.arrayElement(Object.values(ErrorCode)),
+          message: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        },
+        null,
+      ]),
+      startedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+      finishedAt: faker.helpers.arrayElement([
+        faker.date.past().toISOString().slice(0, 19) + 'Z',
+        null,
+      ]),
+    }),
+  ),
   ...overrideResponse,
 });
 

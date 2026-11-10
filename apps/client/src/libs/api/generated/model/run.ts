@@ -27,6 +27,9 @@ export interface Run {
   createdAt: string;
   startedAt: string | null;
   finishedAt: string | null;
-  /** In execution order */
+  /**
+   * In execution order
+   * @maxItems 1000
+   */
   steps: Step[];
 }

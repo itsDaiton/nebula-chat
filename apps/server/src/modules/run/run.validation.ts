@@ -47,6 +47,6 @@ export const runResponseSchema = z
     createdAt: isoDateTimeSchema,
     startedAt: isoDateTimeSchema.nullable(),
     finishedAt: isoDateTimeSchema.nullable(),
-    steps: z.array(stepSchema).describe('In execution order'),
+    steps: z.array(stepSchema).max(1000).describe('In execution order'),
   })
   .meta({ id: 'Run' });
