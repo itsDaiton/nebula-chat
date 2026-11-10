@@ -5,7 +5,7 @@ import { WAITING_PHRASES } from '@/waitingPhrases';
 
 const ROTATE_MS = 3000;
 
-let current: string = pickWaitingPhrase(WAITING_PHRASES);
+let current: string | undefined;
 
 const prefersReducedMotion = () => {
   const { motion } = useAppearanceStore.getState();
@@ -15,18 +15,27 @@ const prefersReducedMotion = () => {
   );
 };
 
-// The first subscriber of a wait picks afresh; the module variable keeps the snapshot stable between ticks.
+// Re-picking when a wait ends makes the next wait's first frame fresh and different from this one's last.
 const subscribe = (onTick: () => void) => {
-  current = pickWaitingPhrase(WAITING_PHRASES, current);
-  if (prefersReducedMotion()) return () => {};
-  const timer = setInterval(() => {
+  const rotate = () => {
     current = pickWaitingPhrase(WAITING_PHRASES, current);
-    onTick();
-  }, ROTATE_MS);
-  return () => clearInterval(timer);
+  };
+  const timer = prefersReducedMotion()
+    ? undefined
+    : setInterval(() => {
+        rotate();
+        onTick();
+      }, ROTATE_MS);
+  return () => {
+    clearInterval(timer);
+    rotate();
+  };
 };
 
-const getSnapshot = () => current;
+const getSnapshot = () => {
+  current ??= pickWaitingPhrase(WAITING_PHRASES);
+  return current;
+};
 
 /** The Waiting phrase to show, swapped every 3 seconds unless motion is reduced. */
 export const useWaitingPhrase = () => useSyncExternalStore(subscribe, getSnapshot);

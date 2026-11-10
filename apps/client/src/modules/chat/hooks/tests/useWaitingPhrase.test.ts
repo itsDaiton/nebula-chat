@@ -28,6 +28,20 @@ describe('useWaitingPhrase', () => {
     expect(result.current).not.toBe(first);
   });
 
+  it('starts the next wait on a different phrase than the last one ended on', () => {
+    useAppearanceStore.setState({ motion: 'full' });
+    const first = renderHook(() => useWaitingPhrase());
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    const lastShown = first.result.current;
+    first.unmount();
+
+    const second = renderHook(() => useWaitingPhrase());
+
+    expect(second.result.current).not.toBe(lastShown);
+  });
+
   it('keeps the phrase put with motion reduced', () => {
     useAppearanceStore.setState({ motion: 'reduced' });
     const { result } = renderHook(() => useWaitingPhrase());
