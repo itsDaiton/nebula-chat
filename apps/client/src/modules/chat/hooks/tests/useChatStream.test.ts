@@ -1,3 +1,4 @@
+import { getGetRunQueryKey } from '@/libs/api/generated/runs/runs';
 import { act, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -1002,6 +1003,20 @@ describe('useChatStream — query cache', () => {
     expect(isInvalidated(queryClient, getListSessionsInfiniteQueryKey())).toBe(true);
     expect(isInvalidated(queryClient, getGetSessionQueryKey(EXISTING_ID))).toBe(true);
     expect(isInvalidated(queryClient, getListMessagesQueryKey())).toBe(true);
+  });
+
+  it('refetches a Run cached before it ended once the reply ends, and leaves an ended Run alone', async () => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    streamFrames(frame('token', { token: 'x' }), frame('end', {}));
+    const queryClient = createTestQueryClient();
+    queryClient.setQueryData(getGetRunQueryKey('waiting'), { finishedAt: null });
+    queryClient.setQueryData(getGetRunQueryKey('ended'), { finishedAt: '2026-10-27T21:14:41Z' });
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF), { queryClient });
+
+    await sendMessage(result);
+
+    expect(isInvalidated(queryClient, getGetRunQueryKey('waiting'))).toBe(true);
+    expect(isInvalidated(queryClient, getGetRunQueryKey('ended'))).toBe(false);
   });
 
   it('refreshes the message allowance as soon as the send is accepted', async () => {

@@ -27,6 +27,10 @@ paths:
   `CodeBlock` (language label, copy), highlighted by `utils/highlightCode.ts` with Shiki's `css-variables` theme,
   so one render serves both modes from the `--shiki-*` variables. A Message's meta row shows only what the
   Message carries (Model, tokens, estimated cost, Run) and nothing while a field is null.
+- **Run inspection (NEB-362).** An assistant Message with a `runId` shows the `RunChip` (status, Step count,
+  duration), which calls `openInspector('run', runId)`. The Inspector's Run tab renders `RunView`: the end
+  status and why, tokens against the Run budget, the Brief, and the Steps grouped by Intake, turn and answer.
+  A Step expands to its facts; its full input and output open in a dialog. Both read the Run through `useRun`.
 - **Command palette.** `Ctrl/⌘ K` opens `modules/commandPalette`. A module adds its actions with
   `useRegisterPaletteActions([...])` (`{ id, group, label, keywords, icon, shortcut?, perform, visible? }`),
   called from a component that is always mounted (see `useSessionPaletteActions`, called by `AppShell`); they

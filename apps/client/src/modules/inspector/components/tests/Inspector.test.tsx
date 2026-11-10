@@ -1,6 +1,7 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getGetRunMockHandler } from '@/libs/api/generated/runs/runs.msw';
 import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
 import {
   getGetSessionMockHandler,
@@ -14,6 +15,7 @@ import { usePanelStore } from '@/shared/stores/usePanelStore';
 import { aSession, mockGetSession } from '@/test/auth';
 import { server } from '@/test/msw';
 import { renderRoute } from '@/test/renderRoute';
+import { aRun, RUN_ID } from '@/test/runs';
 
 const layout = vi.hoisted(() => ({ isMobile: false, showSidePanels: true, showRightPanel: true }));
 vi.mock('@/shared/hooks/useResponsiveLayout', () => ({ useResponsiveLayout: () => layout }));
@@ -134,6 +136,20 @@ describe('Inspector Run tab', () => {
     act(() => useInspectorStore.getState().openInspector('run', 'run-1'));
 
     expect(await runTab()).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it("shows the selected Run's Steps, and its status beside the tab's name", async () => {
+    server.use(getGetRunMockHandler(aRun()));
+    await renderRoute('/');
+
+    act(() => useInspectorStore.getState().openInspector('run', RUN_ID));
+
+    const panel = within(await inspector());
+    expect(await panel.findByRole('tab', { name: /^Run\s*partial$/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(await panel.findByRole('region', { name: 'Turn 2' })).toBeInTheDocument();
   });
 
   it('closes from its own button', async () => {

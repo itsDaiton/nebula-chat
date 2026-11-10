@@ -11,6 +11,7 @@ export const API_ROUTE = {
   session: '*/api/sessions/:sessionId',
   sendMessage: '*/api/sessions/:sessionId/messages',
   replyStream: '*/api/streams/:streamId',
+  run: '*/api/runs/:runId',
   messageAllowance: '*/api/chat/message-allowance',
   profileImage: '*/api/profile-image',
   authSession: '*/api/auth/get-session',

@@ -15,8 +15,10 @@ import {
   getListMessagesQueryKey,
   getListMessagesQueryOptions,
 } from '@/libs/api/generated/messages/messages';
+import { getGetRunQueryKey } from '@/libs/api/generated/runs/runs';
 import { cancelReplyStream, readReplyStream } from '@/libs/api/generated/streams/streams';
 import { ErrorCode } from '@/libs/api/generated/model/errorCode';
+import type { Run } from '@/libs/api/generated/model/run';
 import type { SendMessageBodyModel } from '@/libs/api/generated/model/sendMessageBodyModel';
 import type {
   ChatHistoryStreamOptions,
@@ -175,6 +177,12 @@ export const useChatStream = ({
       void invalidateSessionList();
       void queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() });
       void queryClient.invalidateQueries({ queryKey: getGetSessionQueryKey(completedSessionId) });
+      // A Run cached before it ended (one waiting on a Clarifying question) has moved on; ended Runs never change.
+      void queryClient.invalidateQueries({
+        predicate: ({ queryKey, state }) =>
+          String(queryKey[0]).startsWith(getGetRunQueryKey('')[0]) &&
+          !(state.data as Run | undefined)?.finishedAt,
+      });
       // A failed read leaves the meta row as the stream left it; the invalidation above reports the failure.
       void showSavedReplyMeta(completedSessionId).catch(() => undefined);
     },

@@ -1,5 +1,6 @@
 import { RunEmptyState } from '@/modules/inspector/components/RunEmptyState';
+import { RunView } from '@/modules/inspector/components/RunView';
 import type { RunTabProps } from '@/modules/inspector/types/types';
 
-// NEB-362 replaces the null branch with the Run's Steps.
-export const RunTab = ({ runId }: RunTabProps) => (runId === null ? <RunEmptyState /> : null);
+export const RunTab = ({ runId }: RunTabProps) =>
+  runId === null ? <RunEmptyState /> : <RunView runId={runId} />;

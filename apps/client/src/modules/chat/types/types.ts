@@ -23,6 +23,10 @@ export type ChatMessageProps = {
   isStreaming?: boolean;
 };
 
+export type RunChipProps = {
+  runId: string;
+};
+
 export type ChatInputProps = {
   onSendMessage: (message: string) => void;
   isLoading?: boolean;

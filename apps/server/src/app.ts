@@ -24,6 +24,7 @@ import adminSessionsRoutes from '@server/modules/admin/adminSessions.routes';
 import adminUsersRoutes from '@server/modules/admin/adminUsers.routes';
 import auditRoutes from '@server/modules/audit/audit.routes';
 import chatRoutes from '@server/modules/chat/chat.routes';
+import runRoutes from '@server/modules/run/run.routes';
 import sessionRoutes from '@server/modules/session/session.routes';
 import streamRoutes from '@server/modules/stream/stream.routes';
 import logLevelRoutes from '@server/modules/logLevel/logLevel.routes';
@@ -167,6 +168,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   await app.register(sessionRoutes, { prefix: '/api/sessions' });
   await app.register(messageRoutes, { prefix: '/api/messages' });
   await app.register(modelRoutes, { prefix: '/api/models' });
+  await app.register(runRoutes, { prefix: '/api/runs' });
   await app.register(streamRoutes, { prefix: '/api/streams' });
   await app.register(profileImageRoutes, { prefix: '/api/profile-image' });
   await app.register(logLevelRoutes, { prefix: '/api/internal/log-level' });

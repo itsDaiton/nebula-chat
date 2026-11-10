@@ -1,4 +1,5 @@
 import { MessageSquareIcon, WorkflowIcon, XIcon } from 'lucide-react';
+import { RunTabBadge } from '@/modules/inspector/components/RunTabBadge';
 import { RunTab } from '@/modules/inspector/components/RunTab';
 import { SessionTab } from '@/modules/inspector/components/SessionTab';
 import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
@@ -28,6 +29,7 @@ export const Inspector = ({ onClose }: InspectorProps) => {
           <TabsTrigger value="run" className={tabClass}>
             <WorkflowIcon />
             {resources.inspector.tabs.run}
+            {selectedRunId && <RunTabBadge runId={selectedRunId} />}
           </TabsTrigger>
         </TabsList>
         <IconButton
