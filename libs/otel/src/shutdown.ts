@@ -50,7 +50,7 @@ export const createShutdown = ({
     close().then(
       () => {
         clearTimeout(timer);
-        exit(0);
+        return exit(0);
       },
       (err: unknown) => {
         clearTimeout(timer);
