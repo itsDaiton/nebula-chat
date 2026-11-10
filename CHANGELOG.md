@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.5.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.5.1...nebula-chat-v6.5.2) (2026-11-10)
+
+
+### Bug Fixes
+
+* define Waiting phrase in the glossary ([#764](https://github.com/itsDaiton/nebula-chat/issues/764)) ([8649be9](https://github.com/itsDaiton/nebula-chat/commit/8649be9b06ec72a828d0aa54954179640f34ecec))
+
 ## [6.5.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.5.0...nebula-chat-v6.5.1) (2026-11-10)
 
 
