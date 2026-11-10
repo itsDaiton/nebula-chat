@@ -18,6 +18,7 @@ import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messag
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
+import { IDLE_REPLY, isReplyInFlight } from '@/modules/chat/utils/replyState';
 import { resources } from '@/resources';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { mockReplyStream, sseFrame as frame } from '@/test/chat';
@@ -50,19 +51,24 @@ const streamFrames = (...frames: string[]) => server.use(mockReplyStream(...fram
 
 const history = () => useChatStreamStore.getState().history;
 const assistantContent = () => history().at(-1)?.content;
+const reply = () => useChatStreamStore.getState().reply;
+const inFlight = () => isReplyInFlight(reply());
+// The failure a reply ended on, also while a new chat is still moving to its Session.
+const replyError = () => {
+  const current = reply();
+  const end = current.status === 'navigating' ? current.end : current;
+  return end.status === 'failed' ? end.error : null;
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
   useChatStreamStore.setState({
     history: [],
-    isStreaming: false,
-    isPostStreamNavigation: false,
-    error: null,
+    reply: IDLE_REPLY,
     usage: null,
     sessionId: undefined,
     isMessageAllowanceReached: false,
     streamId: null,
-    isStopRequested: false,
   });
   useMessageStore.setState({ message: '' });
   server.use(
@@ -126,7 +132,7 @@ describe('useChatStream — token streaming', () => {
     await sendMessage(result);
 
     await waitFor(() => expect(assistantContent()).toBe('ok'));
-    expect(useChatStreamStore.getState().error).toBeNull();
+    expect(replyError()).toBeNull();
   });
 
   it('stops streaming once the end event arrives', async () => {
@@ -136,7 +142,7 @@ describe('useChatStream — token streaming', () => {
 
     await sendMessage(result);
 
-    await waitFor(() => expect(useChatStreamStore.getState().isStreaming).toBe(false));
+    await waitFor(() => expect(inFlight()).toBe(false));
   });
 
   it('ignores an event name outside the known set', async () => {
@@ -270,7 +276,7 @@ describe('useChatStream — usage and errors', () => {
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().error).toBe('Unsupported model: gpt-0');
+    expect(replyError()).toBe('Unsupported model: gpt-0');
     expect(assistantContent()).toBe('Unsupported model: gpt-0');
   });
 
@@ -280,7 +286,7 @@ describe('useChatStream — usage and errors', () => {
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().error).toBe(resources.chat.streamError);
+    expect(replyError()).toBe(resources.chat.streamError);
   });
 
   it('reports a stream that keeps closing before its end event, once its reconnects run out', async () => {
@@ -289,7 +295,7 @@ describe('useChatStream — usage and errors', () => {
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().error).toBe(resources.chat.streamError);
+    expect(replyError()).toBe(resources.chat.streamError);
   });
 
   it('reports a stream that cannot be opened by the message of its envelope', async () => {
@@ -304,7 +310,7 @@ describe('useChatStream — usage and errors', () => {
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().error).toBe('Stream forbidden');
+    expect(replyError()).toBe('Stream forbidden');
   });
 
   it('reports a stream that cannot be opened and has no envelope with the generic message', async () => {
@@ -313,7 +319,7 @@ describe('useChatStream — usage and errors', () => {
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().error).toBe(resources.chat.streamError);
+    expect(replyError()).toBe(resources.chat.streamError);
   });
 
   it('reports a refused send by the message of its error envelope', async () => {
@@ -328,7 +334,7 @@ describe('useChatStream — usage and errors', () => {
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().error).toBe('Rate limit exceeded, retry in 1 minute');
+    expect(replyError()).toBe('Rate limit exceeded, retry in 1 minute');
   });
 });
 
@@ -339,8 +345,7 @@ describe('useChatStream — a failed first reply', () => {
   const expectHeldForNavigation = () => {
     expect(navigate).toHaveBeenCalledWith(GOES_TO_NEW_SESSION);
     expect(useChatStreamStore.getState()).toMatchObject({
-      isPostStreamNavigation: true,
-      isStreaming: true,
+      reply: { status: 'navigating', end: { status: 'failed' } },
       sessionId: NEW_SESSION_ID,
     });
   };
@@ -395,7 +400,7 @@ describe('useChatStream — a failed first reply', () => {
 
     expect(assistantContent()).toBe('Could not create the Session');
     expect(navigate).not.toHaveBeenCalled();
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
+    expect(inFlight()).toBe(false);
   });
 
   it('does not navigate when the failed reply belongs to a Session already open', async () => {
@@ -406,7 +411,7 @@ describe('useChatStream — a failed first reply', () => {
     await sendMessage(result);
 
     expect(navigate).not.toHaveBeenCalled();
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
+    expect(inFlight()).toBe(false);
   });
 });
 
@@ -432,7 +437,7 @@ describe('useChatStream — reconnecting', () => {
 
     expect(resumedAfter).toEqual([null, '1-2']);
     expect(assistantContent()).toBe('Two plus two');
-    expect(useChatStreamStore.getState()).toMatchObject({ isStreaming: false, error: null });
+    expect(reply()).toEqual(IDLE_REPLY);
   });
 
   it('skips an event it already applied, should a reconnect replay it', async () => {
@@ -474,7 +479,7 @@ describe('useChatStream — reconnecting', () => {
     await sendMessage(result);
 
     expect(assistantContent()).toBe('ok');
-    expect(useChatStreamStore.getState().error).toBeNull();
+    expect(replyError()).toBeNull();
   });
 
   it('shows the saved assistant Message once the stream has expired', async () => {
@@ -544,7 +549,7 @@ describe('useChatStream — reconnecting', () => {
         contextMessages: null,
       },
     ]);
-    expect(useChatStreamStore.getState()).toMatchObject({ isStreaming: false, error: null });
+    expect(reply()).toEqual(IDLE_REPLY);
   });
 });
 
@@ -600,7 +605,21 @@ describe('useChatStream — stopping a reply', () => {
 
     expect(cancelledStream()).toBe(STREAM_ID);
     expect(assistantContent()).toBe('Two');
-    expect(useChatStreamStore.getState()).toMatchObject({ isStreaming: false, error: null });
+    expect(reply()).toEqual({ status: 'stopped' });
+  });
+
+  it('sends no cancel once the reply has ended, even while a new chat is still navigating', async () => {
+    useChatStreamStore.setState({
+      reply: { status: 'navigating', end: IDLE_REPLY },
+      streamId: STREAM_ID,
+    });
+    const { cancelledStream } = stoppableStream();
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await act(() => result.current.stop());
+
+    expect(cancelledStream()).toBeUndefined();
+    expect(reply()).toEqual({ status: 'navigating', end: IDLE_REPLY });
   });
 
   it('drops the empty reply of a reply stopped before its first token', async () => {
@@ -611,7 +630,7 @@ describe('useChatStream — stopping a reply', () => {
     await sendMessage(result);
 
     expect(history()).toEqual([{ id: 'u1', role: 'user', content: 'what is 2+2?' }]);
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
+    expect(inFlight()).toBe(false);
   });
 
   it('flags a stopped reply, and clears the flag on the next send', async () => {
@@ -620,12 +639,12 @@ describe('useChatStream — stopping a reply', () => {
     const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
 
     await sendMessage(result);
-    expect(useChatStreamStore.getState().isReplyStopped).toBe(true);
+    expect(reply()).toEqual({ status: 'stopped' });
 
     streamFrames(frame('token', { token: 'ok' }, '1-1'), frame('end', {}, '1-2'));
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().isReplyStopped).toBe(false);
+    expect(reply().status).not.toBe('stopped');
   });
 
   it('cancels a reply stopped while its message was still being sent', async () => {
@@ -660,7 +679,7 @@ describe('useChatStream — stopping a reply', () => {
     });
 
     expect(cancelledStream()).toBe(STREAM_ID);
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
+    expect(inFlight()).toBe(false);
   });
 
   it('does nothing when no reply is streaming', async () => {
@@ -706,7 +725,7 @@ describe('useChatStream — re-attaching', () => {
       { id: expect.any(String), role: 'assistant', content: 'Two plus two' },
     ]);
     expect(useChatStreamStore.getState()).toMatchObject({
-      isStreaming: false,
+      reply: IDLE_REPLY,
       sessionId: EXISTING_ID,
     });
     expect(navigate).not.toHaveBeenCalled();
@@ -752,7 +771,7 @@ describe('useChatStream — re-attaching, edge cases', () => {
         return new HttpResponse(frame('end', {}));
       }),
     );
-    useChatStreamStore.setState({ isStreaming: true, streamId: STREAM_ID });
+    useChatStreamStore.setState({ reply: { status: 'streaming' }, streamId: STREAM_ID });
     const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
 
     await act(async () => {
@@ -778,8 +797,7 @@ describe('useChatStream — message allowance', () => {
 
     expect(useChatStreamStore.getState()).toMatchObject({
       isMessageAllowanceReached: true,
-      isStreaming: false,
-      error: null,
+      reply: IDLE_REPLY,
     });
   });
 
@@ -826,7 +844,7 @@ describe('useChatStream — message allowance', () => {
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().error).toBe('Forbidden.');
+    expect(replyError()).toBe('Forbidden.');
     expect(useChatStreamStore.getState().isMessageAllowanceReached).toBe(false);
   });
 
@@ -927,17 +945,14 @@ describe('useChatStream — send, then subscribe', () => {
     });
   });
 
-  it('keeps isStreaming true through the post-stream navigation window', async () => {
+  it('keeps the reply in flight through the post-stream navigation window', async () => {
     // Dropping it here would render a frame with no session and no stream: an empty-state flicker.
     streamFrames(frame('end', {}));
     const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState()).toMatchObject({
-      isPostStreamNavigation: true,
-      isStreaming: true,
-    });
+    expect(reply()).toEqual({ status: 'navigating', end: IDLE_REPLY });
   });
 
   it('continues an active Session without creating one or navigating', async () => {
@@ -961,7 +976,7 @@ describe('useChatStream — send, then subscribe', () => {
 
     expect(created).toBe(false);
     expect(sentTo).toBe(EXISTING_ID);
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
+    expect(inFlight()).toBe(false);
     expect(navigate).not.toHaveBeenCalled();
   });
 });
@@ -1068,16 +1083,13 @@ describe('useChatStream — query cache', () => {
 });
 
 describe('useChatStream — lifecycle', () => {
-  it('clearPostStream drops both streaming flags together', () => {
-    useChatStreamStore.setState({ isStreaming: true, isPostStreamNavigation: true });
+  it('clearPostStream settles the reply on the end it reached', () => {
+    useChatStreamStore.setState({ reply: { status: 'navigating', end: { status: 'stopped' } } });
     const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
 
     act(() => result.current.clearPostStream());
 
-    expect(useChatStreamStore.getState()).toMatchObject({
-      isStreaming: false,
-      isPostStreamNavigation: false,
-    });
+    expect(reply()).toEqual({ status: 'stopped' });
   });
 
   it('abort stops the stream without recording an error', () => {
@@ -1085,8 +1097,8 @@ describe('useChatStream — lifecycle', () => {
 
     act(() => result.current.abort());
 
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
-    expect(useChatStreamStore.getState().error).toBeNull();
+    expect(inFlight()).toBe(false);
+    expect(replyError()).toBeNull();
   });
 
   it('aborting while the reply streams ends it without recording an error', async () => {
@@ -1101,15 +1113,15 @@ describe('useChatStream — lifecycle', () => {
         messages: [{ id: 'u1', role: 'user', content: 'hi' }],
       });
     });
-    expect(useChatStreamStore.getState().isStreaming).toBe(true);
+    expect(inFlight()).toBe(true);
 
     act(() => result.current.abort());
     await act(async () => {
       await sent;
     });
 
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
-    expect(useChatStreamStore.getState().error).toBeNull();
+    expect(inFlight()).toBe(false);
+    expect(replyError()).toBeNull();
   });
 
   it('never opens the stream when aborted while the send is in flight', async () => {

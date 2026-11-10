@@ -19,4 +19,4 @@ paths:
 | Registering a DOM event listener   | `useEffect` + `addEventListener` | `useEventListener` via `useSyncExternalStore` subscribe lifecycle                 |
 
 New code reaches for the patterns above. One `useEffect` predates this rule and remains until it is reworked:
-`ChatContainer` (clearing the post-stream flags, scrolling to the newest message). Add no others.
+`ChatContainer` (settling a reply after post-stream navigation, scrolling to the newest message). Add no others.

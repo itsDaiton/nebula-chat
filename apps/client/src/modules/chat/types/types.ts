@@ -51,8 +51,17 @@ export type ResumeStreamOptions = {
   streamId: string;
 };
 
-/** How following a reply stream finished: at its end (or saved Message), at an `error`, or aborted. */
-export type FollowOutcome = 'ended' | 'failed' | 'aborted';
+/** Where a reply rests once nothing is in flight; `idle` also covers one that finished normally. */
+export type ReplyEnd =
+  { status: 'idle' } | { status: 'stopped' } | { status: 'failed'; error: string };
+
+// The newest reply's lifecycle: idle → sending → streaming → an end. `navigating` holds that end
+// while a new chat moves to its Session's route, so the empty state never flashes.
+export type ReplyState =
+  | ReplyEnd
+  | { status: 'sending'; stopRequested: boolean }
+  | { status: 'streaming' }
+  | { status: 'navigating'; end: ReplyEnd };
 
 /** Where a followed reply stream got to: the last event applied, and reconnects since then. */
 export type StreamCursor = {
@@ -148,23 +157,15 @@ type Usage = {
 
 export type ChatStreamState = {
   history: ChatMessage[];
-  isStreaming: boolean;
-  isPostStreamNavigation: boolean;
-  error: string | null;
+  /** `stopped` is kept in the client only: the server persists no marker. */
+  reply: ReplyState;
   usage: Usage;
   sessionId?: string;
   /** The reply stream being followed (or last followed): what the stop button cancels. */
   streamId: string | null;
-  /** Stop was pressed before the send named the reply's stream. */
-  isStopRequested: boolean;
   /** A Guest's send was refused because their message allowance is spent. */
   isMessageAllowanceReached: boolean;
-  /** The newest reply was stopped by the User (kept in the client only: the server persists no marker). */
-  isReplyStopped: boolean;
   setHistory: Dispatch<SetStateAction<ChatMessage[]>>;
-  setIsStreaming: (isStreaming: boolean) => void;
-  setIsPostStreamNavigation: (v: boolean) => void;
-  setError: (error: string | null) => void;
   setUsage: (usage: Usage) => void;
   setSessionId: (id: string | undefined) => void;
   clearMessageAllowanceReached: () => void;

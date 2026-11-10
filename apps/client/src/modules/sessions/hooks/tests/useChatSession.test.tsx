@@ -7,6 +7,7 @@ import { getListMessagesQueryKey } from '@/libs/api/generated/messages/messages'
 import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useModelStore } from '@/modules/chat/stores/useModelStore';
+import { IDLE_REPLY } from '@/modules/chat/utils/replyState';
 import { useChatSession } from '@/modules/sessions/hooks/useChatSession';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { server } from '@/test/msw';
@@ -56,9 +57,7 @@ const chat = () => useChatStreamStore.getState();
 beforeEach(() => {
   useChatStreamStore.setState({
     history: [],
-    isStreaming: false,
-    isPostStreamNavigation: false,
-    error: null,
+    reply: IDLE_REPLY,
     sessionId: undefined,
   });
   useModelStore.setState({ selectedModel: 'gpt-4o-mini' });
@@ -185,7 +184,7 @@ describe('useChatSession', () => {
 
   it('keeps the chat while a reply is still streaming', () => {
     useChatStreamStore.setState({
-      isStreaming: true,
+      reply: { status: 'streaming' },
       sessionId: SESSION_ID,
       history: [{ id: 'm1', role: 'user', content: 'in flight' }],
     });
@@ -194,6 +193,26 @@ describe('useChatSession', () => {
 
     expect(chat().history).toHaveLength(1);
     expect(chat().sessionId).toBe(SESSION_ID);
+  });
+
+  it('drops the stopped note of the previous Session when another one opens', async () => {
+    useChatStreamStore.setState({ reply: { status: 'stopped' }, sessionId: 'other' });
+    serveSession([aMessage('m1', SESSION_ID, 'assistant', 'saved')]);
+
+    renderHookWithQueryClient(() => useChatSession(SESSION_ID));
+
+    await waitFor(() => expect(chat().sessionId).toBe(SESSION_ID));
+    expect(chat().reply).toEqual(IDLE_REPLY);
+  });
+
+  it('keeps a reply in flight when another Session opens', async () => {
+    useChatStreamStore.setState({ reply: { status: 'streaming' }, sessionId: 'other' });
+    serveSession([aMessage('m1', SESSION_ID, 'assistant', 'saved')]);
+
+    renderHookWithQueryClient(() => useChatSession(SESSION_ID));
+
+    await waitFor(() => expect(chat().sessionId).toBe(SESSION_ID));
+    expect(chat().reply).toEqual({ status: 'streaming' });
   });
 
   describe('the composer Model', () => {
