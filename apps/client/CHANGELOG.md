@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.6.0...nebula-chat-client-v3.6.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* **client:** model the chat reply lifecycle as one state union ([#772](https://github.com/itsDaiton/nebula-chat/issues/772)) ([4808fe4](https://github.com/itsDaiton/nebula-chat/commit/4808fe4c021124a73c4c315881682cc8a27ef3bb))
+
 ## [3.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.5.0...nebula-chat-client-v3.6.0) (2026-11-10)
 
 
