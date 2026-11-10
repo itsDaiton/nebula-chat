@@ -1,6 +1,7 @@
 export const resources = {
   chat: {
     appName: 'nebula chat',
+    waitingForReply: 'Waiting for reply',
     greeting: {
       morning: 'Good morning',
       afternoon: 'Good afternoon',

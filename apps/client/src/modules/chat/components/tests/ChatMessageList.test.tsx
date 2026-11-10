@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { ChatMessageList } from '@/modules/chat/components/ChatMessageList';
 import { renderWithProviders } from '@/test/render';
+import { WAITING_PHRASES } from '@/waitingPhrases';
 
 describe('ChatMessageList', () => {
   const history = [
@@ -34,7 +35,23 @@ describe('ChatMessageList', () => {
 
     // The empty assistant bubble is suppressed and the spinner takes its place.
     expect(screen.getByText('question')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Waiting for reply' })).toBeInTheDocument();
+    expect(WAITING_PHRASES.some((phrase) => screen.queryByText(phrase))).toBe(true);
+  });
+
+  it('shows no Waiting phrase once the newest reply has content', () => {
+    renderWithProviders(
+      <ChatMessageList
+        history={[
+          { id: 'm1', role: 'user', content: 'question' },
+          { id: 'm2', role: 'assistant', content: 'partial' },
+        ]}
+        isStreaming
+      />,
+    );
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(WAITING_PHRASES.some((phrase) => screen.queryByText(phrase))).toBe(false);
   });
 
   it('offers no copy on a reply still arriving', () => {
