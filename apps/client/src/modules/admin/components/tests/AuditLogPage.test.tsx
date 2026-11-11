@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getListAuditEntriesMockHandler } from '@/libs/api/generated/admin/admin.msw';
@@ -129,11 +129,10 @@ describe('Audit log page', () => {
       from: '2026-10-20T00:00:00Z',
       to: '2026-10-28T00:00:00Z',
     });
-    expect(screen.getByRole('combobox', { name: text.filter.actor })).toHaveValue('operator');
-    expect(screen.getByRole('combobox', { name: text.filter.action })).toHaveValue('user.banned');
-    expect(screen.getByRole('textbox', { name: text.filter.target })).toHaveValue('spam');
-    expect(screen.getByLabelText(text.filter.from)).toHaveValue('2026-10-20');
-    expect(screen.getByLabelText(text.filter.to)).toHaveValue('2026-10-27');
+    expect(screen.getByRole('button', { name: 'Actor: operator' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Action: user.banned' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Target: spam' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '20 Oct – 27 Oct' })).toBeInTheDocument();
   });
 
   it('writes each filter choice to the URL and starts again from the newest entry', async () => {
@@ -141,18 +140,42 @@ describe('Audit log page', () => {
     const { router } = await renderRoute('/admin/audit?cursor=abc');
     await screen.findByRole('table', { name: text.title });
 
-    await userEvent.selectOptions(
-      screen.getByRole('combobox', { name: text.filter.action }),
-      'user.banned',
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Action: any' }));
+    await userEvent.click(await screen.findByRole('menuitemradio', { name: 'user.banned' }));
     await waitFor(() => expect(router.state.location.search).toEqual({ action: 'user.banned' }));
 
-    await userEvent.type(screen.getByRole('textbox', { name: text.filter.target }), 'spam{Enter}');
+    await userEvent.click(screen.getByRole('button', { name: text.filter.target }));
+    await userEvent.type(
+      await screen.findByRole('textbox', { name: text.filter.target }),
+      'spam{Enter}',
+    );
     await waitFor(() =>
       expect(router.state.location.search).toEqual({ action: 'user.banned', target: 'spam' }),
     );
 
-    await userEvent.click(screen.getByRole('button', { name: text.clearFilters }));
+    await userEvent.click(screen.getByRole('button', { name: text.filter.dates }));
+    fireEvent.change(await screen.findByLabelText(text.filter.from), {
+      target: { value: '2026-10-20' },
+    });
+    await waitFor(() =>
+      expect(router.state.location.search).toEqual({
+        action: 'user.banned',
+        target: 'spam',
+        from: '2026-10-20',
+      }),
+    );
+    expect(screen.getByRole('button', { name: 'From 20 Oct' })).toBeInTheDocument();
+  });
+
+  it('clears a filter with the × on its chip', async () => {
+    serveAudit([anEntry()]);
+    const { router } = await renderRoute('/admin/audit?actor=operator&target=spam');
+    await screen.findByRole('table', { name: text.title });
+
+    await userEvent.click(screen.getByRole('button', { name: text.filter.clear('Actor') }));
+    await waitFor(() => expect(router.state.location.search).toEqual({ target: 'spam' }));
+
+    await userEvent.click(screen.getByRole('button', { name: text.filter.clear('Target') }));
     await waitFor(() => expect(router.state.location.search).toEqual({}));
   });
 
@@ -213,10 +236,8 @@ describe('Audit log page', () => {
     await userEvent.click(await screen.findByRole('row', { name: /user\.banned/ }));
     expect(useAdminDetailStore.getState().selection).not.toBeNull();
 
-    await userEvent.selectOptions(
-      screen.getByRole('combobox', { name: text.filter.actor }),
-      'operator',
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Actor: any' }));
+    await userEvent.click(await screen.findByRole('menuitemradio', { name: 'operator' }));
 
     expect(useAdminDetailStore.getState().selection).toBeNull();
   });

@@ -74,7 +74,35 @@ export type AuditActorCellProps = { entry: AuditEntry };
 
 export type AuditDetailProps = { entry: AuditEntry };
 
-export type AuditFiltersProps = {
-  search: AuditSearch;
-  onChange: (patch: Partial<AuditSearch>) => void;
+type AuditFilterChange = (patch: Partial<AuditSearch>) => void;
+
+export type AuditFiltersProps = { search: AuditSearch; onChange: AuditFilterChange };
+
+export type AuditFilterChipProps = {
+  children: ReactNode;
+  /** A filter that holds a value is filled; one that doesn't is a quiet dashed chip. */
+  active: boolean;
+  dashed?: boolean;
+  /** Names the × that clears the filter; without it the chip has none. */
+  clearLabel?: string;
+  onClear?: () => void;
+};
+
+export type AuditChoiceFilterProps = {
+  icon: LucideIcon;
+  label: string;
+  value: string | undefined;
+  options: { value: string; label: string }[];
+  onChange: (value: string | undefined) => void;
+};
+
+export type AuditTargetFilterProps = {
+  value: string | undefined;
+  onChange: (value: string | undefined) => void;
+};
+
+export type AuditDateFilterProps = {
+  from: string | undefined;
+  to: string | undefined;
+  onChange: AuditFilterChange;
 };
