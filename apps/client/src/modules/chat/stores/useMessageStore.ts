@@ -7,4 +7,7 @@ export const useMessageStore = create<MessageState>((set) => ({
     set((state) => ({
       message: typeof message === 'function' ? message(state.message) : message,
     })),
+  isRunMode: false,
+  toggleRunMode: () => set((state) => ({ isRunMode: !state.isRunMode })),
+  resetRunMode: () => set({ isRunMode: false }),
 }));

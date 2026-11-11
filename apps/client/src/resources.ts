@@ -79,8 +79,14 @@ export const resources = {
     },
     run: {
       label: 'Run',
-      soon: 'Runs are coming soon. Agents will plan, analyse and review answers.',
+      hint: 'Have Agents plan, analyse and review the answer to this message.',
       guest: 'Runs are for registered users. Sign up to let Agents plan and review answers.',
+      modelHint: 'Runs choose their own Models; the picker applies to Direct replies.',
+      progress: 'Run progress',
+      stepFailed: ' · failed',
+      stepUnfinished: 'Not finished',
+      intakeFailed:
+        'An Intake Agent failed, so the answer was written without its part of the Brief.',
     },
     meta: {
       copy: 'Copy',

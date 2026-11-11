@@ -4,6 +4,7 @@ import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useModelStore } from '@/modules/chat/stores/useModelStore';
 import { mapSessionMessages } from '@/modules/chat/utils/mapSessionMessages';
 import { IDLE_REPLY, isReplyInFlight } from '@/modules/chat/utils/replyState';
+import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
 
 // Loads the routed session into the chat. Its messages come from the message
 // list narrowed to it, oldest first.
@@ -26,9 +27,10 @@ export const useChatSession = (sessionId: string | undefined) => {
   const chat = useChatStreamStore.getState();
   if (!sessionId) {
     if (!isReplyInFlight(chat.reply) && chat.sessionId !== undefined) {
-      queueMicrotask(() =>
-        useChatStreamStore.setState({ history: [], sessionId: undefined, reply: IDLE_REPLY }),
-      );
+      queueMicrotask(() => {
+        useChatStreamStore.setState({ history: [], sessionId: undefined, reply: IDLE_REPLY });
+        useInspectorStore.getState().clearSelectedRun();
+      });
     }
   } else if (isSettled && chat.sessionId !== sessionId) {
     const history = messages.data;
@@ -39,6 +41,8 @@ export const useChatSession = (sessionId: string | undefined) => {
         sessionId,
         reply: isReplyInFlight(reply) ? reply : IDLE_REPLY,
       }));
+      // The Run tab shows a Run of the Session on screen, never the last one picked elsewhere.
+      useInspectorStore.getState().clearSelectedRun();
       // Only on opening a Session, so a later pick or refetch never resets the composer.
       const lastModel = history.findLast((message) => message.model)?.model;
       if (lastModel) {

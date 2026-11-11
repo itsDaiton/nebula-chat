@@ -90,7 +90,7 @@ describe('ChatInputBar', () => {
     await userEvent.type(screen.getByRole('textbox'), 'hello');
     await userEvent.click(screen.getByRole('button', { name: /send message/i }));
 
-    expect(onSend).toHaveBeenCalledWith('hello');
+    expect(onSend).toHaveBeenCalledWith('hello', 'direct');
   });
 
   it('asks a Guest at the message allowance to register, then sends once verified', async () => {

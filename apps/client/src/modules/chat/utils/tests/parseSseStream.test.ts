@@ -36,10 +36,24 @@ describe('parseSseStream', () => {
     await expect(
       collect(
         ': keep-alive\n\n',
-        'event: step-started\ndata: {}\n\n',
+        'event: run-waiting\ndata: {}\n\n',
         'event: usage\ndata: {"totalTokens":3}\n\n',
       ),
     ).resolves.toEqual([{ event: 'usage', data: '{"totalTokens":3}' }]);
+  });
+
+  it('yields the events of a Run', async () => {
+    await expect(
+      collect(
+        'event: step-started\ndata: {"stepId":"s1"}\n\n',
+        'event: step-finished\ndata: {"stepId":"s1"}\n\n',
+        'event: run-finished\ndata: {"status":"completed"}\n\n',
+      ),
+    ).resolves.toEqual([
+      { event: 'step-started', data: '{"stepId":"s1"}' },
+      { event: 'step-finished', data: '{"stepId":"s1"}' },
+      { event: 'run-finished', data: '{"status":"completed"}' },
+    ]);
   });
 
   it('carries each event’s id, the stream entry a reconnect resumes after', async () => {

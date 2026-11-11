@@ -20,7 +20,7 @@ describe('useMessageHandler', () => {
 
     act(() => result.current.handleMessageSend());
 
-    expect(onSendMessage).toHaveBeenCalledWith('hello');
+    expect(onSendMessage).toHaveBeenCalledWith('hello', 'direct');
     expect(useMessageStore.getState().message).toBe('');
   });
 
@@ -56,7 +56,7 @@ describe('useMessageHandler', () => {
     });
 
     expect(preventDefault).toHaveBeenCalled();
-    expect(onSendMessage).toHaveBeenCalledWith('hello');
+    expect(onSendMessage).toHaveBeenCalledWith('hello', 'direct');
   });
 
   it('does not send while a response is still loading', () => {

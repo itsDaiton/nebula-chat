@@ -13,6 +13,9 @@ export type InspectorState = {
   setActiveTab: (tab: InspectorTab) => void;
   /** Shows the Inspector on a tab, selecting a Run when the tab is the Run tab. */
   openInspector: (tab: InspectorTab, runId?: string) => void;
+  /** Selects a Run that just started on the Run tab; on mobile the sheet stays down, over the chat's own progress. */
+  showRun: (runId: string) => void;
+  clearSelectedRun: () => void;
 };
 
 export type InspectorProps = {

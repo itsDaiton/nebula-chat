@@ -28,6 +28,15 @@ State is split by **kind** ([ADR-0012](../../docs/adr/0012-adopt-tanstack-query-
   The newest reply's lifecycle is the one `reply: ReplyState` union in the store (`sending` → `streaming` →
   `idle` | `stopped` | `failed`, with `navigating` holding that end while a new chat moves to its route).
   Move it by writing a whole state, read "busy" with `isReplyInFlight`, and never add a parallel flag for it.
+- **Runs** ride the same stream. The composer's Run toggle is `isRunMode` in `useMessageStore`, read through
+  `useRunMode` (off for a Guest whatever the store holds) and reset by `useMessageHandler` on every send, which
+  passes `mode` down to `streamMessage`. A `run` send answers with a `runId`: the hook puts it and an empty
+  `run: RunProgress` on the trailing assistant Message and calls `useInspectorStore.showRun`. The stream's
+  `step-started`, `step-finished` and `run-finished` frames are validated by `utils/runProgress.ts`
+  (`parseRunEvent`), folded into that Message (`applyRunEvent`: Steps in first-seen order, a higher `attempt`
+  resets the Step and, for the Output Step, the answer) and each invalidates the Run's query, so the Inspector's
+  Run tab follows along. A `403 Forbidden` to a Run send returns the text to the composer and toasts the error.
+  `useChatSession` clears the Inspector's selected Run when the Session on screen changes.
 
 ## Server state — the generated hooks
 

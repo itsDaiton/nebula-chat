@@ -22,7 +22,8 @@ export const ChatMessageList = ({
           isStreaming &&
           index === history.length - 1 &&
           message.role === 'assistant' &&
-          !message.content
+          !message.content &&
+          !message.run
         ) {
           return null;
         }
@@ -38,7 +39,7 @@ export const ChatMessageList = ({
           />
         );
       })}
-      {isStreaming && last?.role === 'assistant' && !last.content && <ChatStreaming />}
+      {isStreaming && last?.role === 'assistant' && !last.content && !last.run && <ChatStreaming />}
       {isReplyStopped && !isStreaming && (
         <StoppedReplyNote
           onRetry={retryPrompt && onRegenerate ? () => onRegenerate(retryPrompt) : undefined}

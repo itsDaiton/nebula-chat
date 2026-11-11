@@ -8,6 +8,7 @@ import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messag
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useModelStore } from '@/modules/chat/stores/useModelStore';
 import { IDLE_REPLY } from '@/modules/chat/utils/replyState';
+import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
 import { useChatSession } from '@/modules/sessions/hooks/useChatSession';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { server } from '@/test/msw';
@@ -180,6 +181,20 @@ describe('useChatSession', () => {
 
     await waitFor(() => expect(chat().history).toEqual([]));
     expect(chat().sessionId).toBeUndefined();
+  });
+
+  it('clears the Run selected in the Inspector when another Session opens', async () => {
+    useInspectorStore.setState({ activeTab: 'run', selectedRunId: 'run-of-other' });
+    useChatStreamStore.setState({ sessionId: 'other' });
+    serveSession();
+
+    const { rerender } = renderHookWithQueryClient(() => useChatSession(SESSION_ID));
+
+    await waitFor(() => expect(useInspectorStore.getState().selectedRunId).toBeNull());
+
+    useInspectorStore.setState({ selectedRunId: 'run-of-session' });
+    rerender();
+    expect(useInspectorStore.getState().selectedRunId).toBe('run-of-session');
   });
 
   it('keeps the chat while a reply is still streaming', () => {

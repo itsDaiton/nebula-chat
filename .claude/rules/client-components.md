@@ -31,6 +31,10 @@ paths:
   duration), which calls `openInspector('run', runId)`. The Inspector's Run tab renders `RunView`: the end
   status and why, tokens against the Run budget, the Brief, and the Steps grouped by Intake, turn and answer.
   A Step expands to its facts; its full input and output open in a dialog. Both read the Run through `useRun`.
+- **Run toggle and Step progress (NEB-652).** `RunToggle` switches the next message to Run mode for a Registered
+  user and stays disabled for a Guest; while a Run is drafted or in flight, `ModelSelect` is `dimmed` and
+  `ChatComposerFooter` says why. An assistant Message carrying `run` shows `RunStepProgress` above its answer
+  (one row per Step, labelled by the stream) and `RunEndLine` under it for a `partial` or `failed` end.
 - **Command palette.** `Ctrl/⌘ K` opens `modules/commandPalette`. A module adds its actions with
   `useRegisterPaletteActions([...])` (`{ id, group, label, keywords, icon, shortcut?, perform, visible? }`),
   called from a component that is always mounted (see `useSessionPaletteActions`, called by `AppShell`); they

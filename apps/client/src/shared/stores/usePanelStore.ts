@@ -15,6 +15,7 @@ export const usePanelStore = create<PanelState>()(
       toggleRight: () => set((state) => ({ rightOpen: !state.rightOpen })),
       // The layout shows one of the two; the other stays harmless until AppShell resets it.
       openRight: () => set({ rightOpen: true, sheetOpen: true }),
+      openRightPanel: () => set({ rightOpen: true }),
       closeSheet: () => set({ sheetOpen: false }),
       toggleSheet: () => set((state) => ({ sheetOpen: !state.sheetOpen })),
     }),

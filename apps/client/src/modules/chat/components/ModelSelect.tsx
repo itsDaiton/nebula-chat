@@ -17,6 +17,7 @@ import {
 import { Kbd } from '@/shared/components/ui/kbd';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import type { ModelProvider } from '@/shared/types/types';
+import { cn } from '@/shared/utils/cn';
 
 // The mockup's key hints carry a border; Kbd's own fill matches the footer and would vanish.
 const kbdClass = 'border border-border-strong bg-raised';
@@ -37,7 +38,7 @@ const FAVORITE_VALUE_PREFIX = '★';
 
 const { modelPicker: text } = resources.chat;
 
-export const ModelSelect = ({ selectedModel, onModelChange }: ModelSelectProps) => {
+export const ModelSelect = ({ selectedModel, onModelChange, dimmed }: ModelSelectProps) => {
   const { isOpen, search, setOpen, setSearch } = useModelPickerStore();
   const { options, isPending, isError, refetch } = useModelCatalog();
   const current = options.find((option) => option.value === selectedModel);
@@ -70,7 +71,10 @@ export const ModelSelect = ({ selectedModel, onModelChange }: ModelSelectProps) 
             type="button"
             variant="ghost"
             size="sm"
-            className="group h-7 gap-1.5 rounded-full px-2.5 text-[12.5px] text-foreground-secondary aria-expanded:bg-hover aria-expanded:text-foreground"
+            className={cn(
+              'group h-7 gap-1.5 rounded-full px-2.5 text-[12.5px] text-foreground-secondary aria-expanded:bg-hover aria-expanded:text-foreground',
+              dimmed && 'text-faint',
+            )}
           />
         }
       >
