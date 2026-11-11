@@ -5,6 +5,7 @@ import { HttpResponse, http, type HttpHandler, type JsonBodyType } from 'msw';
  * and better-auth's `/api/auth/*` (absent from the spec), keeping the origin wildcard in one place.
  */
 export const API_ROUTE = {
+  adminAudit: '*/api/admin/audit',
   sessions: '*/api/sessions',
   sessionsSearch: '*/api/sessions/search',
   models: '*/api/models',

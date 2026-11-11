@@ -24,6 +24,11 @@ coverage and knip. A route file only wires a page: the component lives in `modul
   page never renders, or fetches, without one. A new guard (a Registered-only subtree) is another pathless
   layout with its own `beforeLoad` that throws `redirect({ to })`. `SessionOutlet` also holds the app back
   while sign-out resets the session, so nothing fetches as nobody while a Guest is re-minted.
+- **Admin guard.** `routes/_app/admin/route.tsx` (`/admin`) runs `requireTwoFactorAdmin`
+  (`modules/admin/utils/adminGuard.ts`) in `beforeLoad`: an Admin whose auth session passed 2FA gets `AdminLayout`; an
+  Admin without it is redirected to `/` with Settings open on Security; everyone else gets `notFound()`. A new admin
+  page is a child route here, listed in `modules/admin/utils/adminNavigation.ts`; `hasDetail` there decides whether the
+  right panel and its toggle exist.
 - **Loaders.** A loader prefetches through the existing query client:
   `context.queryClient.ensureQueryData(getGetSessionQueryOptions(id))`. Components keep using the generated
   hooks. A prefetch whose failure the page shows itself sets `meta: { inlineError: true }`

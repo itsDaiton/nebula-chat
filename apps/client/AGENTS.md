@@ -30,10 +30,10 @@ Test commands are in [client-testing](../../.claude/rules/client-testing.md); mo
 committed, never hand-edited), `resources.ts` (UI strings) and:
 
 - `routes/` — TanStack Router file-based routes (`__root`, the `_app` guard layout holding `auth/*` and `settings` (a redirect to `/` that opens the Settings dialog),
-  and the pathless `_app/_chat` layout rendering `AppShell` around `index` and `s/$id`). `routing/` — router setup, `RootLayout`, search-param helpers.
+  the pathless `_app/_chat` layout rendering `AppShell` around `index` and `s/$id`, and `_app/admin/*`, the admin dashboard behind its 2FA guard). `routing/` — router setup, `RootLayout`, search-param helpers.
 - `libs/api/` — the axios instance and SSE fetch mutator (`client.ts`, `streamClient.ts`), the query client,
   and `generated/` (Orval output). `libs/auth/` — the better-auth client, the one auth entry point.
-- `modules/<feature>/` — `auth`, `chat`, `commandPalette`, `inspector`, `sessions`, `settings`. Each splits into `components/`, `hooks/`,
+- `modules/<feature>/` — `admin`, `auth`, `chat`, `commandPalette`, `inspector`, `sessions`, `settings`. Each splits into `components/`, `hooks/`,
   `stores/`, `utils/` and `types/types.ts`, plus its page component.
 - `shared/` — cross-module `components/` (`ui/` holds the shadcn/ui base components, `layout/` the app shell),
   `hooks/`, `stores/`, `pages/`, `types/`, `config/`, `utils/`. `test/` holds the shared test helpers.
@@ -60,6 +60,11 @@ coverage and knip. A route file only wires a page: the component lives in `modul
   page never renders, or fetches, without one. It also starts the model catalog request, so the picker rarely waits on it. A new guard (a Registered-only subtree) is another pathless
   layout with its own `beforeLoad` that throws `redirect({ to })`. `SessionOutlet` also holds the app back
   while sign-out resets the session, so nothing fetches as nobody while a Guest is re-minted.
+- **Admin guard.** `routes/_app/admin/route.tsx` runs `requireTwoFactorAdmin` (`modules/admin/utils/adminGuard.ts`):
+  an Admin whose auth session passed 2FA gets `AdminLayout`; an Admin without it is redirected to `/` with Settings
+  open on Security; everyone else gets the not-found page. Admin pages render inside `AppShell` through its
+  `renderLeftPanel`, `renderRightPanel` and `hideRightPanel` slots, and a table page selects a row through
+  `useAdminSelection`. A page's table is `AdminDataTable` (TanStack Table v9, server paged, virtualized).
 - **Loaders.** A loader prefetches through the existing query client:
   `context.queryClient.ensureQueryData(getGetSessionQueryOptions(id))`. Components keep using the generated
   hooks. A prefetch whose failure the page shows itself sets `meta: { inlineError: true }`

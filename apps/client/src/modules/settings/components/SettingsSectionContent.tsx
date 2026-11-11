@@ -14,11 +14,15 @@ import { TwoFactorSetting } from '@/modules/settings/components/TwoFactorSetting
 import type { SettingsSectionId } from '@/modules/settings/types/types';
 import { resources } from '@/resources';
 
-const { adminNotice } = resources.settings.security;
+const { adminNotice, adminVerifyNotice } = resources.settings.security;
 
 /** The body of the active section. */
 export const SettingsSectionContent = ({ section }: { section: SettingsSectionId }) => {
-  const { user, isAdmin, hasTwoFactor } = useAuth();
+  const { user, isAdmin, hasTwoFactor, isTwoFactorVerified } = useAuth();
+  // An Admin gets in only with 2FA on and passed on this sign-in: say which one is missing.
+  let adminRequirement: typeof adminNotice | null = null;
+  if (isAdmin && !hasTwoFactor) adminRequirement = adminNotice;
+  else if (isAdmin && !isTwoFactorVerified) adminRequirement = adminVerifyNotice;
 
   switch (section) {
     case 'profile':
@@ -31,14 +35,15 @@ export const SettingsSectionContent = ({ section }: { section: SettingsSectionId
     case 'security':
       return (
         <div className="flex flex-col gap-4">
-          {isAdmin && !hasTwoFactor && (
+          {adminRequirement && (
             <div
               role="note"
               className="flex gap-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm"
             >
               <ShieldIcon className="mt-0.5 size-4 shrink-0 text-warning" />
               <p>
-                <strong className="font-medium">{adminNotice.title}</strong> {adminNotice.body}
+                <strong className="font-medium">{adminRequirement.title}</strong>{' '}
+                {adminRequirement.body}
               </p>
             </div>
           )}

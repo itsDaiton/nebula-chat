@@ -11,9 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppChatRouteImport } from './routes/_app/_chat'
+import { Route as AppAdminRouteRouteImport } from './routes/_app/admin/route'
 import { Route as AppAuthRouteRouteImport } from './routes/_app/auth/route'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppChatIndexRouteImport } from './routes/_app/_chat/index'
+import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
+import { Route as AppAdminAuditRouteImport } from './routes/_app/admin/audit'
 import { Route as AppAuthIndexRouteImport } from './routes/_app/auth/index'
 import { Route as AppAuthForgotPasswordRouteImport } from './routes/_app/auth/forgot-password'
 import { Route as AppAuthResetPasswordRouteImport } from './routes/_app/auth/reset-password'
@@ -26,6 +29,11 @@ const AppRoute = AppRouteImport.update({
 } as any)
 const AppChatRoute = AppChatRouteImport.update({
   id: '/_chat',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminRouteRoute = AppAdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAuthRouteRoute = AppAuthRouteRouteImport.update({
@@ -42,6 +50,16 @@ const AppChatIndexRoute = AppChatIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppChatRoute,
+} as any)
+const AppAdminIndexRoute = AppAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppAdminRouteRoute,
+} as any)
+const AppAdminAuditRoute = AppAdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AppAdminRouteRoute,
 } as any)
 const AppAuthIndexRoute = AppAuthIndexRouteImport.update({
   id: '/',
@@ -71,33 +89,41 @@ const AppChatSIdRoute = AppChatSIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof AppChatIndexRoute
+  '/admin': typeof AppAdminRouteRouteWithChildren
   '/auth': typeof AppAuthRouteRouteWithChildren
   '/settings': typeof AppSettingsRoute
+  '/admin/audit': typeof AppAdminAuditRoute
   '/auth/forgot-password': typeof AppAuthForgotPasswordRoute
   '/auth/reset-password': typeof AppAuthResetPasswordRoute
   '/auth/verify-email': typeof AppAuthVerifyEmailRoute
+  '/admin/': typeof AppAdminIndexRoute
   '/auth/': typeof AppAuthIndexRoute
   '/s/$id': typeof AppChatSIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AppChatIndexRoute
   '/settings': typeof AppSettingsRoute
+  '/admin/audit': typeof AppAdminAuditRoute
   '/auth/forgot-password': typeof AppAuthForgotPasswordRoute
   '/auth/reset-password': typeof AppAuthResetPasswordRoute
   '/auth/verify-email': typeof AppAuthVerifyEmailRoute
+  '/admin': typeof AppAdminIndexRoute
   '/auth': typeof AppAuthIndexRoute
   '/s/$id': typeof AppChatSIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/_app/admin': typeof AppAdminRouteRouteWithChildren
   '/_app/auth': typeof AppAuthRouteRouteWithChildren
   '/_app/_chat': typeof AppChatRouteWithChildren
   '/_app/settings': typeof AppSettingsRoute
+  '/_app/admin/audit': typeof AppAdminAuditRoute
   '/_app/auth/forgot-password': typeof AppAuthForgotPasswordRoute
   '/_app/auth/reset-password': typeof AppAuthResetPasswordRoute
   '/_app/auth/verify-email': typeof AppAuthVerifyEmailRoute
   '/_app/_chat/': typeof AppChatIndexRoute
+  '/_app/admin/': typeof AppAdminIndexRoute
   '/_app/auth/': typeof AppAuthIndexRoute
   '/_app/_chat/s/$id': typeof AppChatSIdRoute
 }
@@ -105,32 +131,40 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/auth'
     | '/settings'
+    | '/admin/audit'
     | '/auth/forgot-password'
     | '/auth/reset-password'
     | '/auth/verify-email'
+    | '/admin/'
     | '/auth/'
     | '/s/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/settings'
+    | '/admin/audit'
     | '/auth/forgot-password'
     | '/auth/reset-password'
     | '/auth/verify-email'
+    | '/admin'
     | '/auth'
     | '/s/$id'
   id:
     | '__root__'
     | '/_app'
+    | '/_app/admin'
     | '/_app/auth'
     | '/_app/_chat'
     | '/_app/settings'
+    | '/_app/admin/audit'
     | '/_app/auth/forgot-password'
     | '/_app/auth/reset-password'
     | '/_app/auth/verify-email'
     | '/_app/_chat/'
+    | '/_app/admin/'
     | '/_app/auth/'
     | '/_app/_chat/s/$id'
   fileRoutesById: FileRoutesById
@@ -155,6 +189,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChatRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/admin': {
+      id: '/_app/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AppAdminRouteRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/auth': {
       id: '/_app/auth'
       path: '/auth'
@@ -175,6 +216,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AppChatIndexRouteImport
       parentRoute: typeof AppChatRoute
+    }
+    '/_app/admin/': {
+      id: '/_app/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AppAdminIndexRouteImport
+      parentRoute: typeof AppAdminRouteRoute
+    }
+    '/_app/admin/audit': {
+      id: '/_app/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AppAdminAuditRouteImport
+      parentRoute: typeof AppAdminRouteRoute
     }
     '/_app/auth/': {
       id: '/_app/auth/'
@@ -214,6 +269,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppAdminRouteRouteChildren {
+  AppAdminAuditRoute: typeof AppAdminAuditRoute
+  AppAdminIndexRoute: typeof AppAdminIndexRoute
+}
+
+const AppAdminRouteRouteChildren: AppAdminRouteRouteChildren = {
+  AppAdminAuditRoute: AppAdminAuditRoute,
+  AppAdminIndexRoute: AppAdminIndexRoute,
+}
+
+const AppAdminRouteRouteWithChildren = AppAdminRouteRoute._addFileChildren(
+  AppAdminRouteRouteChildren,
+)
+
 interface AppAuthRouteRouteChildren {
   AppAuthForgotPasswordRoute: typeof AppAuthForgotPasswordRoute
   AppAuthResetPasswordRoute: typeof AppAuthResetPasswordRoute
@@ -246,12 +315,14 @@ const AppChatRouteWithChildren =
   AppChatRoute._addFileChildren(AppChatRouteChildren)
 
 interface AppRouteChildren {
+  AppAdminRouteRoute: typeof AppAdminRouteRouteWithChildren
   AppAuthRouteRoute: typeof AppAuthRouteRouteWithChildren
   AppChatRoute: typeof AppChatRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAdminRouteRoute: AppAdminRouteRouteWithChildren,
   AppAuthRouteRoute: AppAuthRouteRouteWithChildren,
   AppChatRoute: AppChatRouteWithChildren,
   AppSettingsRoute: AppSettingsRoute,

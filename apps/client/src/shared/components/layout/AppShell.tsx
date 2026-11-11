@@ -23,7 +23,15 @@ import { usePanelStore } from '@/shared/stores/usePanelStore';
 
 const panel = 'flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-panel';
 
-export const AppShell = ({ children }: AppShellProps) => {
+const sessionsPanel = (onNavigate?: () => void) => <SessionsList onNavigate={onNavigate} />;
+const inspectorPanel = (onClose: () => void) => <Inspector onClose={onClose} />;
+
+export const AppShell = ({
+  children,
+  renderLeftPanel = sessionsPanel,
+  renderRightPanel = inspectorPanel,
+  hideRightPanel = false,
+}: AppShellProps) => {
   const { showSidePanels: isDesktop } = useResponsiveLayout();
   const { leftOpen, rightOpen, sheetOpen, toggleLeft, toggleRight, closeSheet, toggleSheet } =
     usePanelStore();
@@ -68,13 +76,14 @@ export const AppShell = ({ children }: AppShellProps) => {
         onToggleLeft={onToggleLeft}
         onToggleRight={onToggleRight}
         onOpenSearch={openSearch}
+        hideRightToggle={hideRightPanel}
       />
       <CommandPalette />
       <SettingsDialog />
       <div className="flex min-h-0 flex-1 gap-2.5">
         {isDesktop && leftOpen && (
           <aside className={`${panel} w-[270px] shrink-0 2xl:w-[320px]`}>
-            <SessionsList />
+            {renderLeftPanel()}
             <AccountFooter />
           </aside>
         )}
@@ -83,12 +92,12 @@ export const AppShell = ({ children }: AppShellProps) => {
         >
           {children}
         </main>
-        {isDesktop && rightOpen && (
+        {isDesktop && rightOpen && !hideRightPanel && (
           <aside
             aria-label={resources.shell.inspector}
             className={`${panel} w-[300px] shrink-0 2xl:w-[360px]`}
           >
-            <Inspector onClose={toggleRight} />
+            {renderRightPanel(toggleRight)}
           </aside>
         )}
       </div>
@@ -97,11 +106,11 @@ export const AppShell = ({ children }: AppShellProps) => {
           <Sheet open={isDrawerOpen} onOpenChange={(open) => !open && closeDrawer()}>
             <SheetContent side="left" showCloseButton={false} className="gap-0">
               <SheetTitle className="sr-only">{resources.shell.menu}</SheetTitle>
-              <SessionsList onNavigate={closeDrawer} />
+              {renderLeftPanel(closeDrawer)}
               <AccountFooter />
             </SheetContent>
           </Sheet>
-          <Sheet open={sheetOpen} onOpenChange={(open) => !open && closeSheet()}>
+          <Sheet open={sheetOpen && !hideRightPanel} onOpenChange={(open) => !open && closeSheet()}>
             <SheetContent
               side="bottom"
               showCloseButton={false}
@@ -109,7 +118,7 @@ export const AppShell = ({ children }: AppShellProps) => {
             >
               <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-border-strong" />
               <SheetTitle className="sr-only">{resources.shell.inspector}</SheetTitle>
-              <Inspector onClose={closeSheet} />
+              {renderRightPanel(closeSheet)}
             </SheetContent>
           </Sheet>
         </>

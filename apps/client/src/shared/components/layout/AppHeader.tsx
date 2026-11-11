@@ -28,6 +28,7 @@ export const AppHeader = ({
   onToggleLeft,
   onToggleRight,
   onOpenSearch,
+  hideRightToggle = false,
 }: AppHeaderProps) => {
   const modifier = resources.shell.modifier[useOS()];
   const { themeMode, toggleThemeMode } = useThemeMode();
@@ -82,14 +83,16 @@ export const AppHeader = ({
         >
           <SearchIcon />
         </IconButton>
-        <IconAction
-          label={resources.shell.togglePanel.right}
-          shortcut={`${modifier} I`}
-          pressed={rightOpen}
-          onClick={onToggleRight}
-        >
-          <PanelRightIcon />
-        </IconAction>
+        {!hideRightToggle && (
+          <IconAction
+            label={resources.shell.togglePanel.right}
+            shortcut={`${modifier} I`}
+            pressed={rightOpen}
+            onClick={onToggleRight}
+          >
+            <PanelRightIcon />
+          </IconAction>
+        )}
         <IconAction
           label={resources.shell.toggleThemeMode}
           shortcut={`${modifier} ⇧ Y`}
