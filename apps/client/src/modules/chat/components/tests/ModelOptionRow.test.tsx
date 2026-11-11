@@ -12,6 +12,7 @@ const model = {
   label: 'GPT-5',
   provider: 'openai',
   contextWindow: 400_000,
+  maxOutput: 128_000,
 } as const;
 
 const renderRow = (props: Partial<ModelOptionRowProps> = {}) => {
