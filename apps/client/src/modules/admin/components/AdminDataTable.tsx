@@ -67,7 +67,7 @@ export const AdminDataTable = <TRow extends RowData, TSearch, TData>({
           </thead>
           <tbody>
             {paddingTop > 0 && (
-              <tr role="presentation">
+              <tr>
                 <td colSpan={columnCount} style={{ height: paddingTop }} />
               </tr>
             )}
@@ -99,7 +99,7 @@ export const AdminDataTable = <TRow extends RowData, TSearch, TData>({
               );
             })}
             {paddingBottom > 0 && (
-              <tr role="presentation">
+              <tr>
                 <td colSpan={columnCount} style={{ height: paddingBottom }} />
               </tr>
             )}
