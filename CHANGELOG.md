@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.8.1...nebula-chat-v6.9.0) (2026-11-11)
+
+
+### Features
+
+* **client:** star favorite models in the model picker ([#779](https://github.com/itsDaiton/nebula-chat/issues/779)) ([bf38dee](https://github.com/itsDaiton/nebula-chat/commit/bf38dee56dec78bf00080a8318d187032166d774))
+
 ## [6.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.8.0...nebula-chat-v6.8.1) (2026-11-10)
 
 
