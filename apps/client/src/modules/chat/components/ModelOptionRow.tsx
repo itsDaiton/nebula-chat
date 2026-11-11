@@ -44,10 +44,10 @@ export const ModelOptionRow = ({
       }}
       className={cn(
         'text-muted-foreground opacity-0 group-hover/command-item:opacity-100 group-data-[selected=true]/command-item:opacity-100 pointer-coarse:opacity-100',
-        isFavorite && 'text-foreground opacity-100',
+        isFavorite && 'text-warning opacity-100 hover:text-warning',
       )}
     >
-      <StarIcon className={cn(isFavorite && 'fill-current')} />
+      <StarIcon className={cn('size-3', isFavorite && 'fill-current')} />
     </IconButton>
     <span className="font-mono text-[11px] text-muted-foreground">
       {formatContextWindow(model.contextWindow)}
