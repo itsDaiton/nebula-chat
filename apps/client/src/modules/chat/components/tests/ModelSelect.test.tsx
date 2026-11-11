@@ -246,6 +246,27 @@ describe('ModelSelect', () => {
       expect(useFavoriteModelsStore.getState().favorites).toEqual(['retired-model']);
     });
 
+    it('does not match the search box against the way favorites are keyed', async () => {
+      useFavoriteModelsStore.setState({ favorites: ['gpt-5'] });
+      renderPicker();
+      await openPicker();
+
+      await userEvent.type(await screen.findByRole('combobox'), 'favorite');
+
+      expect(screen.getByText(/No Models match/)).toBeInTheDocument();
+    });
+
+    it('keeps the stars out of the tab order, where Enter would pick a Model instead', async () => {
+      useFavoriteModelsStore.setState({ favorites: ['gpt-5'] });
+      renderPicker('gpt-5');
+      await openPicker();
+      await screen.findByRole('combobox');
+
+      await userEvent.tab();
+
+      expect(document.activeElement?.getAttribute('aria-label') ?? '').not.toMatch(/favorites/);
+    });
+
     it('filters the Favorites group with the search box', async () => {
       useFavoriteModelsStore.setState({ favorites: ['gpt-5', 'claude-3-5-haiku-20241022'] });
       renderPicker();

@@ -11,7 +11,7 @@ const { modelPicker: text } = resources.chat;
 
 export const ModelOptionRow = ({
   model,
-  valuePrefix = '',
+  valuePrefix,
   isSelected,
   isFavorite,
   onSelect,
@@ -35,13 +35,15 @@ export const ModelOptionRow = ({
       type="button"
       variant="ghost"
       size="icon-xs"
+      // Mouse only: a focused star would hand Enter to cmdk, which picks the Model instead.
+      tabIndex={-1}
       label={isFavorite ? text.removeFavorite(model.label) : text.addFavorite(model.label)}
       onClick={(event) => {
         event.stopPropagation();
         onToggleFavorite(model.value);
       }}
       className={cn(
-        'text-muted-foreground opacity-0 group-hover/command-item:opacity-100 group-data-[selected=true]/command-item:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100',
+        'text-muted-foreground opacity-0 group-hover/command-item:opacity-100 group-data-[selected=true]/command-item:opacity-100 pointer-coarse:opacity-100',
         isFavorite && 'text-foreground opacity-100',
       )}
     >

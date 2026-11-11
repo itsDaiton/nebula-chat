@@ -161,8 +161,8 @@ export type FavoriteModelsState = {
 
 export type ModelOptionRowProps = {
   model: ModelOption;
-  /** Keeps the row's cmdk value unique when the same Model is listed in two groups. */
-  valuePrefix?: string;
+  // Keeps the row's cmdk value unique when the same Model is listed in two groups.
+  valuePrefix: string;
   isSelected: boolean;
   isFavorite: boolean;
   onSelect: (modelId: string) => void;

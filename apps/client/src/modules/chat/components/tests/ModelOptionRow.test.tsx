@@ -24,6 +24,7 @@ const renderRow = (props: Partial<ModelOptionRowProps> = {}) => {
         <CommandList>
           <ModelOptionRow
             model={model}
+            valuePrefix=""
             isSelected={false}
             isFavorite={false}
             onSelect={onSelect}

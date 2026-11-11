@@ -32,8 +32,8 @@ const groupByProvider = (options: ModelOption[]) => {
 const groupClass =
   'p-0 **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:pt-2 **:[[cmdk-group-heading]]:pb-1 **:[[cmdk-group-heading]]:text-[11px] **:[[cmdk-group-heading]]:text-faint';
 
-// cmdk values must be unique, and a favorite is listed twice.
-const FAVORITE_VALUE_PREFIX = 'favorite:';
+// cmdk values must be unique and are fuzzy-matched, so the prefix is a character nobody types.
+const FAVORITE_VALUE_PREFIX = '★';
 
 const { modelPicker: text } = resources.chat;
 
@@ -47,9 +47,9 @@ export const ModelSelect = ({ selectedModel, onModelChange }: ModelSelectProps) 
     (id) => options.find((option) => option.value === id) ?? [],
   );
 
-  const renderRow = (model: ModelOption, valuePrefix?: string) => (
+  const renderRow = (model: ModelOption, valuePrefix = '') => (
     <ModelOptionRow
-      key={`${valuePrefix ?? ''}${model.value}`}
+      key={`${valuePrefix}${model.value}`}
       model={model}
       valuePrefix={valuePrefix}
       isSelected={model.value === selectedModel}
