@@ -24,7 +24,7 @@ export type AuditSearch = {
 /** One server page of an admin table: its rows and where the next one starts. */
 export type AdminPage<TRow> = { rows: TRow[]; nextCursor: string | null };
 
-export type AdminNavPage = {
+type AdminNavPage = {
   id: string;
   label: string;
   icon: LucideIcon;
@@ -41,7 +41,7 @@ export type AdminNavProps = { onNavigate?: () => void };
 export type AdminNavItemProps = { page: AdminNavPage; onNavigate?: () => void };
 
 /** The row an admin table's right panel shows, and the route it belongs to. */
-export type AdminSelection = { path: string; id: string; title: string; detail: ReactNode };
+type AdminSelection = { path: string; id: string; title: string; detail: ReactNode };
 
 export type AdminDetailPanelProps = { path: string; onClose: () => void };
 

@@ -3,7 +3,7 @@ import type { ListAuditEntriesParams } from '@/libs/api/generated/model/listAudi
 import type { AdminPage, AuditSearch } from '@/modules/admin/types/types';
 import type { AuditEntry } from '@/libs/api/generated/model/auditEntry';
 
-export const AUDIT_PAGE_SIZE = 50;
+const AUDIT_PAGE_SIZE = 50;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -13,7 +13,7 @@ const startOfDay = (day: string) => `${day}T00:00:00Z`;
 const startOfNextDay = (day: string) =>
   `${new Date(Date.parse(startOfDay(day)) + DAY_MS).toISOString().slice(0, 10)}T00:00:00Z`;
 
-export const auditParams = ({
+const auditParams = ({
   actor,
   action,
   target,
