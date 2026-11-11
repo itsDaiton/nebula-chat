@@ -13,12 +13,15 @@ export const aSession = ({
   image = null,
   role,
   twoFactorEnabled,
+  twoFactorVerified,
 }: {
   isAnonymous?: boolean;
   emailVerified?: boolean;
   image?: string | null;
   role?: string;
   twoFactorEnabled?: boolean;
+  /** Whether this auth session passed a second factor; the admin gate reads it. */
+  twoFactorVerified?: boolean;
 } = {}) => ({
   session: {
     id: 'session-1',
@@ -27,6 +30,7 @@ export const aSession = ({
     expiresAt: '2099-01-01T00:00:00.000Z',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
+    ...(twoFactorVerified !== undefined && { twoFactorVerified }),
   },
   user: {
     id: 'user-1',

@@ -1,5 +1,11 @@
-import { Link } from '@tanstack/react-router';
-import { ChevronsUpDownIcon, LogOutIcon, SettingsIcon, UserIcon } from 'lucide-react';
+import { Link, useNavigate } from '@tanstack/react-router';
+import {
+  ChevronsUpDownIcon,
+  LayoutDashboardIcon,
+  LogOutIcon,
+  SettingsIcon,
+  UserIcon,
+} from 'lucide-react';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { useSignOut } from '@/modules/auth/hooks/useSignOut';
 import { useSettingsDialogStore } from '@/modules/settings/stores/useSettingsDialogStore';
@@ -24,6 +30,7 @@ export const AccountFooter = () => {
   const { user, isGuest, isRegistered, isAdmin, hasTwoFactor } = useAuth();
   const { mutate: signOut, isPending } = useSignOut();
   const openSettings = useSettingsDialogStore((state) => state.openSettings);
+  const navigate = useNavigate();
 
   if (isGuest) {
     return (
@@ -94,6 +101,12 @@ export const AccountFooter = () => {
             <SettingsIcon />
             {resources.userMenu.settings}
           </DropdownMenuItem>
+          {isAdmin && (
+            <DropdownMenuItem onClick={() => void navigate({ to: '/admin' })}>
+              <LayoutDashboardIcon />
+              {resources.userMenu.openAdmin}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem disabled={isPending} onClick={() => signOut()}>
             <LogOutIcon />

@@ -22,6 +22,8 @@
     "@nebula-chat/errors": "workspace:*",
     "@tanstack/react-query": "^5.104.3",
     "@tanstack/react-router": "^1.170.44",
+    "@tanstack/react-table": "^9.3.1",
+    "@tanstack/react-virtual": "^3.14.24",
     "axios": "^1.18.0",
     "better-auth": "catalog:",
     "class-variance-authority": "^0.7.1",

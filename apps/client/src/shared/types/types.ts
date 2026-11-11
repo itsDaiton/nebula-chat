@@ -33,10 +33,17 @@ export type AppHeaderProps = {
   onToggleLeft: () => void;
   onToggleRight: () => void;
   onOpenSearch: () => void;
+  /** A page with nothing to inspect has no right panel to toggle. */
+  hideRightToggle?: boolean;
 };
 
 export type AppShellProps = {
   children: ReactNode;
+  /** The left panel's body above the account footer; the Sessions list when unset. */
+  renderLeftPanel?: (onNavigate?: () => void) => ReactNode;
+  /** The right panel's body; the Inspector when unset. */
+  renderRightPanel?: (onClose: () => void) => ReactNode;
+  hideRightPanel?: boolean;
 };
 
 export type ModelProvider = 'anthropic' | 'openai';
