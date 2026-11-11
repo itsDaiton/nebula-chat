@@ -67,7 +67,7 @@ export const AdminDataTable = <TRow extends RowData, TSearch, TData>({
           </thead>
           <tbody>
             {paddingTop > 0 && (
-              <tr aria-hidden>
+              <tr role="presentation">
                 <td colSpan={columnCount} style={{ height: paddingTop }} />
               </tr>
             )}
@@ -99,18 +99,18 @@ export const AdminDataTable = <TRow extends RowData, TSearch, TData>({
               );
             })}
             {paddingBottom > 0 && (
-              <tr aria-hidden>
+              <tr role="presentation">
                 <td colSpan={columnCount} style={{ height: paddingBottom }} />
               </tr>
             )}
           </tbody>
         </table>
         {isPending && (
-          <div role="status" aria-label={resources.admin.table.loading} className="flex flex-col">
+          <output aria-label={resources.admin.table.loading} className="flex flex-col">
             {Array.from({ length: 8 }, (_, index) => (
               <Skeleton key={index} className="mx-5 my-2 h-6" />
             ))}
-          </div>
+          </output>
         )}
         {isError && (
           <div role="alert" className="flex flex-col items-center gap-3 px-6 py-12 text-center">
