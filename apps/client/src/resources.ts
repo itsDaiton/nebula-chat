@@ -293,7 +293,7 @@ export const resources = {
       showing: (count: number) => `Showing ${count} ${count === 1 ? 'entry' : 'entries'}`,
       retry: 'Try again',
     },
-    detail: { close: 'Close details' },
+    detail: { close: 'Close details', empty: 'Select an entry to see its detail.' },
     audit: {
       title: 'Audit log',
       filters: 'Audit log filters',
@@ -367,6 +367,10 @@ export const resources = {
       adminNotice: {
         title: 'Admins must use two-factor authentication.',
         body: 'Turn it on to open the admin dashboard.',
+      },
+      adminVerifyNotice: {
+        title: 'This sign-in has not passed two-factor authentication.',
+        body: 'Sign out and sign in again with a code from your authenticator app to open the admin dashboard.',
       },
       twoFactor: {
         label: 'Two-factor authentication',

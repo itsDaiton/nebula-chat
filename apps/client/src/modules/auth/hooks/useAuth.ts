@@ -1,4 +1,4 @@
-import type { UserPluginFields } from '@/modules/auth/types/types';
+import type { SessionPluginFields, UserPluginFields } from '@/modules/auth/types/types';
 import { authClient } from '@/libs/auth/client';
 
 /** The current session, read from better-auth's own session store. */
@@ -7,6 +7,7 @@ export const useAuth = () => {
   const user = data?.user ?? null;
   const isRegistered = user !== null && user.isAnonymous !== true;
   const pluginFields = user as UserPluginFields | null;
+  const sessionFields = data?.session as SessionPluginFields | undefined;
 
   return {
     session: data,
@@ -16,6 +17,8 @@ export const useAuth = () => {
     isRegistered,
     isAdmin: pluginFields?.role === 'admin',
     hasTwoFactor: pluginFields?.twoFactorEnabled === true,
+    // 2FA can be on while this auth session never passed it (a trusted-device or social sign-in).
+    isTwoFactorVerified: sessionFields?.twoFactorVerified === true,
     // Verification is not required to sign in, so a Registered user may still owe it.
     needsEmailVerification: isRegistered && !user.emailVerified,
   };

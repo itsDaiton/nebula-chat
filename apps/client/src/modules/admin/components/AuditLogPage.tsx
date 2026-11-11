@@ -40,10 +40,11 @@ export const AuditLogPage = () => {
           void navigate({ search: (previous) => ({ ...previous, cursor }) });
         }}
         canPrevious={Boolean(search.cursor)}
-        // Each page is a history entry, so going back is going to the previous page.
+        // Each page is a history entry, so going back is the previous page; a pasted link has none, so it starts over.
         onPrevious={() => {
           clear();
-          router.history.back();
+          if (router.history.canGoBack()) router.history.back();
+          else change({});
         }}
         empty={
           <>

@@ -17,6 +17,9 @@ import type {
 /** The fields the admin and two-factor plugins add to the user once the server enables them. */
 export type UserPluginFields = { role?: string | null; twoFactorEnabled?: boolean | null };
 
+/** Set on the auth session once a second factor was verified on it; the admin gate reads it. */
+export type SessionPluginFields = { twoFactorVerified?: boolean | null };
+
 /** What better-auth's client resolves with: a sign-in's data says when it needs a second factor. */
 export type AuthResult = {
   data?: unknown;

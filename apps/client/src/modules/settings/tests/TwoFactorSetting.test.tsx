@@ -190,4 +190,29 @@ describe('TwoFactorSetting', () => {
       await screen.findByText(resources.settings.security.adminNotice.title),
     ).toBeInTheDocument();
   });
+
+  it('tells an Admin with two-factor on, but not passed on this sign-in, to sign in with a code', async () => {
+    await holdSession({ isAnonymous: false, role: 'admin', twoFactorEnabled: true });
+    await renderSecurity();
+
+    expect(
+      await screen.findByText(resources.settings.security.adminVerifyNotice.title),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(resources.settings.security.adminNotice.title),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows an Admin no notice once this sign-in passed two-factor', async () => {
+    await holdSession({
+      isAnonymous: false,
+      role: 'admin',
+      twoFactorEnabled: true,
+      twoFactorVerified: true,
+    });
+    await renderSecurity();
+
+    await screen.findByText(twoFactor.label);
+    expect(screen.queryByRole('note')).not.toBeInTheDocument();
+  });
 });

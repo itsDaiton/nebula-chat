@@ -28,7 +28,11 @@ export const AdminDetailPanel = ({ path, onClose }: AdminDetailPanelProps) => {
           <XIcon />
         </IconButton>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">{current?.detail}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+        {current?.detail ?? (
+          <p className="pt-2 text-[12.5px] text-muted-foreground">{resources.admin.detail.empty}</p>
+        )}
+      </div>
     </div>
   );
 };

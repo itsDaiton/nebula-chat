@@ -207,6 +207,17 @@ describe('Audit log page', () => {
     expect(router.state.location.search).toEqual({});
   });
 
+  it('starts again from the newest entry when Previous has no page to go back to', async () => {
+    serveAudit([anEntry()], null);
+    const { router } = await renderRoute('/admin/audit?cursor=pasted');
+    const previous = await screen.findByRole('button', { name: resources.admin.table.previous });
+    expect(previous).toBeEnabled();
+
+    await userEvent.click(previous);
+
+    await waitFor(() => expect(router.state.location.search).toEqual({}));
+  });
+
   it('shows the selected entry in the right panel with its detail JSON pretty-printed', async () => {
     serveAudit([anEntry(), operatorEntry]);
     await renderRoute('/admin/audit');
@@ -235,11 +246,14 @@ describe('Audit log page', () => {
     await renderRoute('/admin/audit');
     await userEvent.click(await screen.findByRole('row', { name: /user\.banned/ }));
     expect(useAdminDetailStore.getState().selection).not.toBeNull();
+    const panel = screen.getByRole('complementary', { name: resources.shell.inspector });
+    expect(within(panel).queryByText(resources.admin.detail.empty)).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Actor: any' }));
     await userEvent.click(await screen.findByRole('menuitemradio', { name: 'operator' }));
 
     expect(useAdminDetailStore.getState().selection).toBeNull();
+    expect(within(panel).getByText(resources.admin.detail.empty)).toBeInTheDocument();
   });
 
   it('opens an entry in the bottom sheet below the large breakpoint', async () => {
