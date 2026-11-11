@@ -15,11 +15,13 @@ export const AuditLogPage = () => {
   const search = route.useSearch();
   const navigate = route.useNavigate();
   const router = useRouter();
-  const { selectedId, select } = useAdminSelection('/admin/audit');
+  const { selectedId, select, clear } = useAdminSelection('/admin/audit');
 
   // A new filter starts again from the newest entry.
-  const change = (patch: Partial<AuditSearch>) =>
+  const change = (patch: Partial<AuditSearch>) => {
+    clear();
     void navigate({ search: (previous) => ({ ...previous, ...patch, cursor: undefined }) });
+  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -33,10 +35,16 @@ export const AuditLogPage = () => {
         getRowId={(entry) => entry.id}
         selectedId={selectedId}
         onSelect={(entry) => select(entry.id, entry.action, <AuditDetail entry={entry} />)}
-        onNext={(cursor) => void navigate({ search: (previous) => ({ ...previous, cursor }) })}
+        onNext={(cursor) => {
+          clear();
+          void navigate({ search: (previous) => ({ ...previous, cursor }) });
+        }}
         canPrevious={Boolean(search.cursor)}
         // Each page is a history entry, so going back is going to the previous page.
-        onPrevious={() => router.history.back()}
+        onPrevious={() => {
+          clear();
+          router.history.back();
+        }}
         empty={
           <>
             <p className="text-sm">{text.empty}</p>

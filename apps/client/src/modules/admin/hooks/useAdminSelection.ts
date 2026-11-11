@@ -6,8 +6,10 @@ import { usePanelStore } from '@/shared/stores/usePanelStore';
 export const useAdminSelection = (path: string) => {
   const selection = useAdminDetailStore((state) => state.selection);
   const select = useAdminDetailStore((state) => state.select);
+  const clear = useAdminDetailStore((state) => state.clear);
 
   return {
+    clear,
     selectedId: selection?.path === path ? selection.id : undefined,
     select: (id: string, title: string, detail: ReactNode) => {
       select({ path, id, title, detail });

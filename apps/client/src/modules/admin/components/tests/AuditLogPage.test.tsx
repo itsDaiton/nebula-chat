@@ -207,6 +207,20 @@ describe('Audit log page', () => {
     expect(useAdminDetailStore.getState().selection).toBeNull();
   });
 
+  it('drops the open entry when a filter changes, so the panel never shows a row that left the list', async () => {
+    serveAudit([anEntry()]);
+    await renderRoute('/admin/audit');
+    await userEvent.click(await screen.findByRole('row', { name: /user\.banned/ }));
+    expect(useAdminDetailStore.getState().selection).not.toBeNull();
+
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: text.filter.actor }),
+      'operator',
+    );
+
+    expect(useAdminDetailStore.getState().selection).toBeNull();
+  });
+
   it('opens an entry in the bottom sheet below the large breakpoint', async () => {
     stubViewport(false);
     serveAudit([anEntry()]);

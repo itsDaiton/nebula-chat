@@ -2,6 +2,7 @@ import { getListAuditEntriesQueryOptions } from '@/libs/api/generated/admin/admi
 import type { ListAuditEntriesParams } from '@/libs/api/generated/model/listAuditEntriesParams';
 import type { AdminPage, AuditSearch } from '@/modules/admin/types/types';
 import type { AuditEntry } from '@/libs/api/generated/model/auditEntry';
+import type { AuditPage } from '@/libs/api/generated/model/auditPage';
 
 const AUDIT_PAGE_SIZE = 50;
 
@@ -32,13 +33,7 @@ const auditParams = ({
 
 export const auditQueryOptions = (search: AuditSearch) => ({
   ...getListAuditEntriesQueryOptions(auditParams(search)),
-  select: ({
-    entries,
-    nextCursor,
-  }: {
-    entries: AuditEntry[];
-    nextCursor: string | null;
-  }): AdminPage<AuditEntry> => ({
+  select: ({ entries, nextCursor }: AuditPage): AdminPage<AuditEntry> => ({
     rows: entries,
     nextCursor,
   }),
