@@ -26,7 +26,7 @@ export const AuditDetail = ({ entry }: AuditDetailProps) => {
       </dl>
       <section aria-label={text.detail}>
         <h3 className="mb-2 text-[12.5px] text-muted-foreground">{text.detail}</h3>
-        <pre className="overflow-x-auto rounded-lg border border-border bg-raised p-3 font-mono text-[11.5px] leading-relaxed">
+        <pre className="rounded-lg border border-border bg-raised p-3 font-mono text-[11.5px] leading-relaxed break-words whitespace-pre-wrap">
           {Object.keys(entry.detail).length > 0 ? JSON.stringify(entry.detail, null, 2) : text.none}
         </pre>
       </section>
