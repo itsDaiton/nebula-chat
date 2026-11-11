@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.8.0...nebula-chat-client-v3.9.0) (2026-11-11)
+
+
+### Features
+
+* **client:** NEB-556 admin dashboard shell, shared table and Audit log ([#780](https://github.com/itsDaiton/nebula-chat/issues/780)) ([9a87ebe](https://github.com/itsDaiton/nebula-chat/commit/9a87ebe94d42c85771ad80afc1e588b2d64105b4)), closes [#556](https://github.com/itsDaiton/nebula-chat/issues/556)
+
 ## [3.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.7.0...nebula-chat-client-v3.8.0) (2026-11-11)
 
 
