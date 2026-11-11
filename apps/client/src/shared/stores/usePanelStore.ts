@@ -1,33 +1,9 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { PanelState } from '@/shared/types/types';
+import { safeStorage } from '@/shared/utils/safeStorage';
 
 export const PANEL_STORAGE_KEY = 'nebula-panels';
-
-// localStorage throws when blocked or full; the panels then just forget their state.
-const safeStorage: StateStorage = {
-  getItem: (name) => {
-    try {
-      return localStorage.getItem(name);
-    } catch {
-      return null;
-    }
-  },
-  setItem: (name, value) => {
-    try {
-      localStorage.setItem(name, value);
-    } catch {
-      // not remembered
-    }
-  },
-  removeItem: (name) => {
-    try {
-      localStorage.removeItem(name);
-    } catch {
-      // not remembered
-    }
-  },
-};
 
 export const usePanelStore = create<PanelState>()(
   persist(

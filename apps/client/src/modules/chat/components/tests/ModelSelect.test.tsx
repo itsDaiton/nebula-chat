@@ -4,6 +4,7 @@ import { HttpResponse, delay, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getGetModelCatalogMockHandler } from '@/libs/api/generated/models/models.msw';
 import { ModelSelect } from '@/modules/chat/components/ModelSelect';
+import { useFavoriteModelsStore } from '@/modules/chat/stores/useFavoriteModelsStore';
 import { useModelPickerStore } from '@/modules/chat/stores/useModelPickerStore';
 import { resources } from '@/resources';
 import { API_ROUTE, mockApiError } from '@/test/api';
@@ -21,6 +22,8 @@ const openPicker = async (name: RegExp = /GPT-5/) =>
 describe('ModelSelect', () => {
   beforeEach(() => {
     useModelPickerStore.setState({ isOpen: false, search: '' });
+    localStorage.clear();
+    useFavoriteModelsStore.setState({ favorites: [] });
   });
 
   it('shows the logo and label of the selected Model on the trigger', async () => {
@@ -156,6 +159,103 @@ describe('ModelSelect', () => {
 
     expect(onModelChange).toHaveBeenCalledTimes(1);
     expect(onModelChange).toHaveBeenCalledWith('claude-3-5-haiku-20241022');
+  });
+
+  describe('Favorite models', () => {
+    const { favorites: favoritesHeading, addFavorite, removeFavorite } = resources.chat.modelPicker;
+
+    it('has no Favorites group until a Model is starred', async () => {
+      renderPicker();
+      await openPicker();
+
+      await screen.findByRole('group', { name: 'OpenAI' });
+      expect(screen.queryByRole('group', { name: favoritesHeading })).not.toBeInTheDocument();
+    });
+
+    it('stars a Model without selecting it or closing the picker', async () => {
+      const onModelChange = renderPicker();
+      await openPicker();
+
+      await userEvent.click(
+        await screen.findByRole('button', { name: addFavorite('GPT-4.1 mini') }),
+      );
+
+      expect(onModelChange).not.toHaveBeenCalled();
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
+      expect(useFavoriteModelsStore.getState().favorites).toEqual(['gpt-4.1-mini']);
+    });
+
+    it('lists a favorite on top and keeps it under its provider', async () => {
+      useFavoriteModelsStore.setState({ favorites: ['claude-3-5-haiku-20241022'] });
+      renderPicker();
+      await openPicker();
+
+      const groups = await screen.findAllByRole('group');
+      expect(groups[0]).toHaveAccessibleName(favoritesHeading);
+      expect(within(groups[0]).getByRole('option', { name: /Claude 3.5 Haiku/ })).toBeVisible();
+      expect(
+        within(screen.getByRole('group', { name: 'Anthropic' })).getByRole('option', {
+          name: /Claude 3.5 Haiku/,
+        }),
+      ).toBeVisible();
+    });
+
+    it('lists favorites in the order they were starred', async () => {
+      useFavoriteModelsStore.setState({ favorites: ['gpt-5', 'gpt-4o'] });
+      renderPicker();
+      await openPicker();
+
+      const group = await screen.findByRole('group', { name: favoritesHeading });
+      expect(
+        within(group)
+          .getAllByRole('option')
+          .map((option) => option.textContent),
+      ).toEqual([expect.stringContaining('GPT-5'), expect.stringContaining('GPT-4o')]);
+    });
+
+    it('unstars a favorite and drops the group once it is empty', async () => {
+      useFavoriteModelsStore.setState({ favorites: ['gpt-5'] });
+      renderPicker();
+      await openPicker();
+      const group = await screen.findByRole('group', { name: favoritesHeading });
+
+      await userEvent.click(within(group).getByRole('button', { name: removeFavorite('GPT-5') }));
+
+      expect(useFavoriteModelsStore.getState().favorites).toEqual([]);
+      expect(screen.queryByRole('group', { name: favoritesHeading })).not.toBeInTheDocument();
+    });
+
+    it('selects a Model picked from the Favorites group', async () => {
+      useFavoriteModelsStore.setState({ favorites: ['gpt-4o'] });
+      const onModelChange = renderPicker();
+      await openPicker();
+      const group = await screen.findByRole('group', { name: favoritesHeading });
+
+      await userEvent.click(within(group).getByRole('option', { name: /GPT-4o/ }));
+
+      expect(onModelChange).toHaveBeenCalledWith('gpt-4o');
+    });
+
+    it('hides a favorite the catalog no longer serves and keeps it stored', async () => {
+      useFavoriteModelsStore.setState({ favorites: ['retired-model'] });
+      renderPicker();
+      await openPicker();
+
+      await screen.findByRole('group', { name: 'OpenAI' });
+      expect(screen.queryByRole('group', { name: favoritesHeading })).not.toBeInTheDocument();
+      expect(useFavoriteModelsStore.getState().favorites).toEqual(['retired-model']);
+    });
+
+    it('filters the Favorites group with the search box', async () => {
+      useFavoriteModelsStore.setState({ favorites: ['gpt-5', 'claude-3-5-haiku-20241022'] });
+      renderPicker();
+      await openPicker();
+
+      await userEvent.type(await screen.findByRole('combobox'), 'claude');
+
+      const group = screen.getByRole('group', { name: favoritesHeading });
+      expect(within(group).getAllByRole('option')).toHaveLength(1);
+    });
   });
 
   it('says the Models are loading while the catalog is on its way', async () => {
