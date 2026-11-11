@@ -154,6 +154,21 @@ export type ModelPickerState = {
   setSearch: (search: string) => void;
 };
 
+export type FavoriteModelsState = {
+  favorites: string[];
+  toggleFavorite: (modelId: string) => void;
+};
+
+export type ModelOptionRowProps = {
+  model: ModelOption;
+  // Keeps the row's cmdk value unique when the same Model is listed in two groups.
+  valuePrefix: string;
+  isSelected: boolean;
+  isFavorite: boolean;
+  onSelect: (modelId: string) => void;
+  onToggleFavorite: (modelId: string) => void;
+};
+
 export type ModelSelectProps = {
   selectedModel: string;
   onModelChange: (model: string) => void;

@@ -61,6 +61,9 @@ export const resources = {
       move: 'move',
       select: 'select',
       contextSize: 'context size',
+      favorites: 'Favorites',
+      addFavorite: (label: string) => `Add ${label} to favorites`,
+      removeFavorite: (label: string) => `Remove ${label} from favorites`,
     },
     contextUsage: {
       label: (percent: number) => `Context window, ${percent}% used`,

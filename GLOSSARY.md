@@ -20,6 +20,10 @@ _Avoid_: Turn.
 The specific LLM (e.g. `gpt-4o-mini`) a Session is bound to, used for its Direct replies. Set per-Session, not per-message. Runs ignore it — every Agent's model is fixed by the application.
 _Avoid_: Provider (a model belongs to a provider, but the domain concept users and code select is the model).
 
+**Favorite model**:
+A Model a User has starred so the model picker lists it first. Kept per browser, never with the account, so it is not shared across devices and a Guest has them too. It does not change which Model a Session is bound to.
+_Avoid_: Pinned model, bookmarked model, default model (a Favorite model is not the Model new Sessions start with).
+
 **Streaming token**:
 One incremental chunk of a model's completion, sent to the client as an SSE `token` event as soon as it's generated. Distinct from an LLM tokenizer token used for budgeting (see Token budget) — this is a transport-level unit.
 _Avoid_: Chunk (reserve for describing SSE mechanics, not this domain concept).

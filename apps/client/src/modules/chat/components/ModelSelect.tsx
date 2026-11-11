@@ -1,7 +1,8 @@
-import { ChevronDownIcon } from 'lucide-react';
+import { ChevronDownIcon, StarIcon } from 'lucide-react';
+import { ModelOptionRow } from '@/modules/chat/components/ModelOptionRow';
+import { useFavoriteModelsStore } from '@/modules/chat/stores/useFavoriteModelsStore';
 import { useModelPickerStore } from '@/modules/chat/stores/useModelPickerStore';
 import { useModelCatalog } from '@/modules/chat/hooks/useModelCatalog';
-import { formatContextWindow } from '@/modules/chat/utils/formatContextWindow';
 import type { ModelOption, ModelSelectProps } from '@/modules/chat/types/types';
 import { resources } from '@/resources';
 import { ProviderLogo, providerNames } from '@/shared/components/ProviderLogo';
@@ -11,7 +12,6 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandInput,
-  CommandItem,
   CommandList,
 } from '@/shared/components/ui/command';
 import { Kbd } from '@/shared/components/ui/kbd';
@@ -29,12 +29,38 @@ const groupByProvider = (options: ModelOption[]) => {
   return [...groups];
 };
 
+const groupClass =
+  'p-0 **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:pt-2 **:[[cmdk-group-heading]]:pb-1 **:[[cmdk-group-heading]]:text-[11px] **:[[cmdk-group-heading]]:text-faint';
+
+// cmdk values must be unique and are fuzzy-matched, so the prefix is a character nobody types.
+const FAVORITE_VALUE_PREFIX = '★';
+
 const { modelPicker: text } = resources.chat;
 
 export const ModelSelect = ({ selectedModel, onModelChange }: ModelSelectProps) => {
   const { isOpen, search, setOpen, setSearch } = useModelPickerStore();
   const { options, isPending, isError, refetch } = useModelCatalog();
   const current = options.find((option) => option.value === selectedModel);
+  const { favorites, toggleFavorite } = useFavoriteModelsStore();
+  // A stored id the catalog no longer serves is skipped, not pruned: it returns with the Model.
+  const favoriteOptions = favorites.flatMap(
+    (id) => options.find((option) => option.value === id) ?? [],
+  );
+
+  const renderRow = (model: ModelOption, valuePrefix = '') => (
+    <ModelOptionRow
+      key={`${valuePrefix}${model.value}`}
+      model={model}
+      valuePrefix={valuePrefix}
+      isSelected={model.value === selectedModel}
+      isFavorite={favorites.includes(model.value)}
+      onSelect={(modelId) => {
+        onModelChange(modelId);
+        setOpen(false);
+      }}
+      onToggleFavorite={toggleFavorite}
+    />
+  );
 
   return (
     <Popover open={isOpen} onOpenChange={setOpen}>
@@ -81,10 +107,23 @@ export const ModelSelect = ({ selectedModel, onModelChange }: ModelSelectProps) 
               <CommandEmpty className="py-4 text-[12.5px] text-faint">
                 {text.empty(search)}
               </CommandEmpty>
+              {favoriteOptions.length > 0 && (
+                <CommandGroup
+                  className={groupClass}
+                  heading={
+                    <span className="flex items-center gap-1.5">
+                      <StarIcon aria-hidden="true" className="size-3" />
+                      {text.favorites}
+                    </span>
+                  }
+                >
+                  {favoriteOptions.map((model) => renderRow(model, FAVORITE_VALUE_PREFIX))}
+                </CommandGroup>
+              )}
               {groupByProvider(options).map(([provider, models]) => (
                 <CommandGroup
                   key={provider}
-                  className="p-0 **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:pt-2 **:[[cmdk-group-heading]]:pb-1 **:[[cmdk-group-heading]]:text-[11px] **:[[cmdk-group-heading]]:text-faint"
+                  className={groupClass}
                   heading={
                     <span className="flex items-center gap-1.5">
                       <span aria-hidden="true">
@@ -94,32 +133,7 @@ export const ModelSelect = ({ selectedModel, onModelChange }: ModelSelectProps) 
                     </span>
                   }
                 >
-                  {models.map((model) => (
-                    <CommandItem
-                      key={model.value}
-                      value={model.value}
-                      keywords={[model.label, providerNames[provider]]}
-                      data-checked={model.value === selectedModel}
-                      onSelect={() => {
-                        onModelChange(model.value);
-                        setOpen(false);
-                      }}
-                      className="h-[42px] gap-2.5 rounded-lg px-2.5"
-                    >
-                      <span aria-hidden="true">
-                        <ProviderLogo provider={provider} />
-                      </span>
-                      <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="truncate text-[13px] leading-tight">{model.label}</span>
-                        <span className="truncate font-mono text-[10.5px] text-faint">
-                          {model.value}
-                        </span>
-                      </span>
-                      <span className="font-mono text-[11px] text-muted-foreground">
-                        {formatContextWindow(model.contextWindow)}
-                      </span>
-                    </CommandItem>
-                  ))}
+                  {models.map((model) => renderRow(model))}
                 </CommandGroup>
               ))}
             </CommandList>
