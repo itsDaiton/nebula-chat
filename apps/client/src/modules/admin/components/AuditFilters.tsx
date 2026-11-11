@@ -20,10 +20,9 @@ const actionOptions = Object.values(AuditEntryAction).map((action) => ({
 
 /** The Audit log's filter chips; each choice goes to the URL through `onChange`. */
 export const AuditFilters = ({ search, onChange }: AuditFiltersProps) => (
-  <div
-    role="group"
+  <fieldset
     aria-label={resources.admin.audit.filters}
-    className="flex flex-wrap items-center gap-2 px-5 pb-3"
+    className="m-0 flex min-w-0 flex-wrap items-center gap-2 border-0 px-5 pt-0 pb-3"
   >
     <AuditChoiceFilter
       icon={UserIcon}
@@ -41,5 +40,5 @@ export const AuditFilters = ({ search, onChange }: AuditFiltersProps) => (
     />
     <AuditTargetFilter value={search.target} onChange={(target) => onChange({ target })} />
     <AuditDateFilter from={search.from} to={search.to} onChange={onChange} />
-  </div>
+  </fieldset>
 );

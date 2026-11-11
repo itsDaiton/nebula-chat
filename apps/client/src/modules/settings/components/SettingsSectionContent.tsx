@@ -20,13 +20,9 @@ const { adminNotice, adminVerifyNotice } = resources.settings.security;
 export const SettingsSectionContent = ({ section }: { section: SettingsSectionId }) => {
   const { user, isAdmin, hasTwoFactor, isTwoFactorVerified } = useAuth();
   // An Admin gets in only with 2FA on and passed on this sign-in: say which one is missing.
-  const adminRequirement = !isAdmin
-    ? null
-    : !hasTwoFactor
-      ? adminNotice
-      : !isTwoFactorVerified
-        ? adminVerifyNotice
-        : null;
+  let adminRequirement: typeof adminNotice | null = null;
+  if (isAdmin && !hasTwoFactor) adminRequirement = adminNotice;
+  else if (isAdmin && !isTwoFactorVerified) adminRequirement = adminVerifyNotice;
 
   switch (section) {
     case 'profile':

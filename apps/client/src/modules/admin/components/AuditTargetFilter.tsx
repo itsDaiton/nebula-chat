@@ -30,7 +30,8 @@ export const AuditTargetFilter = ({ value, onChange }: AuditTargetFilterProps) =
           <form
             onSubmit={(event) => {
               event.preventDefault();
-              const target = String(new FormData(event.currentTarget).get('target')).trim();
+              const entered = new FormData(event.currentTarget).get('target');
+              const target = typeof entered === 'string' ? entered.trim() : '';
               onChange(target || undefined);
               popover.current?.close();
             }}
