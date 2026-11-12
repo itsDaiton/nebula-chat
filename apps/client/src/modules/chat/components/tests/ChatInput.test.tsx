@@ -38,7 +38,7 @@ describe('ChatInput', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /send message/i }));
 
-    expect(onSendMessage).toHaveBeenCalledWith('hello');
+    expect(onSendMessage).toHaveBeenCalledWith('hello', 'direct');
     expect(useMessageStore.getState().message).toBe('');
   });
 

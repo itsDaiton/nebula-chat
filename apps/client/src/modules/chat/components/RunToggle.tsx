@@ -1,13 +1,14 @@
 import { WorkflowIcon } from 'lucide-react';
-import { useAuth } from '@/modules/auth/hooks/useAuth';
+import { useRunMode } from '@/modules/chat/hooks/useRunMode';
 import { resources } from '@/resources';
 import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
+import { cn } from '@/shared/utils/cn';
 
-// A placeholder until Runs go live (#652): disabled for everyone, with the reason a User needs.
+/** Sends the next message as a Run; a Guest sees it disabled, with what unlocks it. */
 export const RunToggle = () => {
-  const { isGuest } = useAuth();
-  const { label, soon, guest } = resources.chat.run;
+  const { canRun, isRunMode, toggleRunMode } = useRunMode();
+  const { label, hint, guest } = resources.chat.run;
 
   return (
     <Tooltip>
@@ -15,18 +16,24 @@ export const RunToggle = () => {
         render={
           <Button
             type="button"
-            variant="outline"
+            variant={isRunMode ? 'default' : 'outline'}
             size="sm"
-            disabled
+            disabled={!canRun}
             focusableWhenDisabled
-            className="h-7 rounded-full border-dashed px-2.5 text-[12.5px] text-faint"
+            aria-pressed={isRunMode}
+            onClick={toggleRunMode}
+            className={cn(
+              'h-7 rounded-full px-2.5 text-[12.5px]',
+              !canRun && 'border-dashed text-faint',
+              canRun && !isRunMode && 'text-muted-foreground',
+            )}
           />
         }
       >
         <WorkflowIcon className="size-3.5" />
         {label}
       </TooltipTrigger>
-      <TooltipContent>{isGuest ? guest : soon}</TooltipContent>
+      <TooltipContent>{canRun ? hint : guest}</TooltipContent>
     </Tooltip>
   );
 };

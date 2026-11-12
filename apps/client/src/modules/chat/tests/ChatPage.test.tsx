@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, delay, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -82,7 +82,7 @@ beforeEach(() => {
     getListMessagesMockHandler([]),
     getGetMessageAllowanceMockHandler({ metered: false }),
   );
-  useMessageStore.setState({ message: '' });
+  useMessageStore.setState({ message: '', isRunMode: false });
   useChatStreamStore.setState({
     history: [],
     reply: IDLE_REPLY,
@@ -364,6 +364,170 @@ describe('ChatPage', () => {
       'aria-disabled',
       'true',
     );
+  });
+
+  describe('Runs', () => {
+    const RUN_ID = '55555555-5555-4555-8555-555555555555';
+    const STREAM_ID = '33333333-3333-4333-8333-333333333333';
+    const { run: text } = resources.chat;
+
+    const stepStarted = (stepId: string, label: string, over: Record<string, unknown> = {}) =>
+      sseFrame('step-started', {
+        stepId,
+        attempt: 1,
+        phase: 'intake',
+        agent: 'language',
+        label,
+        turn: 0,
+        parentStepId: null,
+        ...over,
+      });
+
+    const aPartialRun = () =>
+      mockReplyStream(
+        stepStarted('s1', 'Detecting the language'),
+        stepStarted('s2', 'Summarising the Session', { agent: 'session' }),
+        sseFrame('step-finished', { stepId: 's1', status: 'failed' }),
+        sseFrame('step-finished', { stepId: 's2', status: 'completed' }),
+        stepStarted('s3', 'Writing the answer', { phase: 'output', agent: 'output' }),
+        sseFrame('token', { token: 'Keep BullMQ.' }),
+        sseFrame('step-finished', { stepId: 's3', status: 'completed' }),
+        sseFrame('run-finished', { runId: RUN_ID, status: 'partial' }),
+        sseFrame('end', {}),
+      );
+
+    // Every send the page makes, in order.
+    const serveSends = () => {
+      const sent: unknown[] = [];
+      server.use(
+        getSendMessageMockHandler(async ({ request }) => {
+          const body = (await request.json()) as { mode: string };
+          sent.push(body);
+          return {
+            messageId: '22222222-2222-4222-8222-222222222222',
+            streamId: STREAM_ID,
+            ...(body.mode === 'run' ? { runId: RUN_ID } : {}),
+          };
+        }),
+      );
+      return sent;
+    };
+
+    const composer = () => screen.getByRole('textbox', { name: resources.chat.composer.label });
+    // The Inspector's Run tab carries the same name, so the toggle is found in the composer.
+    const runToggle = () =>
+      within(composer().closest('form')!).getByRole('button', { name: text.label });
+
+    it('lets a Registered user send one message as a Run, then goes back to Direct replies', async () => {
+      await holdSession({ isAnonymous: false, emailVerified: true });
+      const sent = serveSends();
+      server.use(aPartialRun());
+      await renderPage(`/s/${SESSION_ID}`);
+      await screen.findByRole('textbox', { name: resources.chat.composer.label });
+
+      await userEvent.click(runToggle());
+      expect(runToggle()).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByText(text.modelHint)).toBeInTheDocument();
+
+      await userEvent.type(composer(), 'keep BullMQ?{Enter}');
+
+      const progress = await screen.findByRole('region', { name: text.progress });
+      expect(await screen.findByText('Keep BullMQ.')).toBeInTheDocument();
+      const rows = within(progress)
+        .getAllByRole('listitem')
+        .map((row) => [row.textContent, within(row).getByRole('img').getAttribute('aria-label')]);
+      expect(rows).toEqual([
+        [`Detecting the language${text.stepFailed}`, 'Failed'],
+        ['Summarising the Session', 'Completed'],
+        ['Writing the answeroutput', 'Completed'],
+      ]);
+      expect(within(progress).getByText('partial')).toBeInTheDocument();
+      expect(screen.getByText(text.intakeFailed)).toBeInTheDocument();
+      expect(runToggle()).toHaveAttribute('aria-pressed', 'false');
+      await waitFor(() => expect(screen.queryByText(text.modelHint)).not.toBeInTheDocument());
+
+      await userEvent.type(composer(), 'and now?{Enter}');
+
+      await waitFor(() => expect(sent).toHaveLength(2));
+      expect(sent).toMatchObject([
+        { content: 'keep BullMQ?', mode: 'run' },
+        { content: 'and now?', mode: 'direct' },
+      ]);
+    });
+
+    it('lets a Registered user who has not verified their email start a Run', async () => {
+      await holdSession({ isAnonymous: false, emailVerified: false });
+      const sent = serveSends();
+      server.use(aPartialRun(), getGetMessageAllowanceMockHandler(aMeteredAllowance(4)));
+      await renderPage(`/s/${SESSION_ID}`);
+      await screen.findByText('4 of 10 messages left');
+
+      await userEvent.click(runToggle());
+      await userEvent.type(composer(), 'keep BullMQ?{Enter}');
+
+      await waitFor(() => expect(sent).toMatchObject([{ mode: 'run' }]));
+    });
+
+    it('never sends a Run for a Guest, whose toggle explains that registering unlocks it', async () => {
+      await holdSession({ isAnonymous: true });
+      const sent = serveSends();
+      server.use(mockReplyStream(sseFrame('end', {})));
+      // Run mode left on by a Registered user who then signed out.
+      useMessageStore.setState({ isRunMode: true });
+      await renderPage(`/s/${SESSION_ID}`);
+      await screen.findByRole('textbox', { name: resources.chat.composer.label });
+
+      expect(runToggle()).toHaveAttribute('aria-disabled', 'true');
+      await userEvent.hover(runToggle());
+      expect(await screen.findByText(text.guest)).toBeInTheDocument();
+
+      await userEvent.type(composer(), 'hello{Enter}');
+
+      await waitFor(() => expect(sent).toMatchObject([{ content: 'hello', mode: 'direct' }]));
+    });
+
+    it('reports a refused Run and keeps what the user typed', async () => {
+      await holdSession({ isAnonymous: false, emailVerified: true });
+      const toast = vi.spyOn(sonner, 'error');
+      server.use(
+        mockApiError('post', API_ROUTE.sendMessage, 403, {
+          success: false,
+          error: 'Forbidden',
+          message: 'Runs are for registered users.',
+        }),
+      );
+      await renderPage(`/s/${SESSION_ID}`);
+      await screen.findByRole('textbox', { name: resources.chat.composer.label });
+
+      await userEvent.click(runToggle());
+      await userEvent.type(composer(), 'keep BullMQ?{Enter}');
+
+      await waitFor(() => expect(toast).toHaveBeenCalledWith('Runs are for registered users.'));
+      expect(composer()).toHaveValue('keep BullMQ?');
+    });
+
+    it('shows the Steps of a Run still in flight when its Session is opened', async () => {
+      server.use(
+        getGetSessionMockHandler({
+          ...aChatSession(SESSION_ID, 'Chat'),
+          activeStreamId: STREAM_ID,
+          waitingRun: null,
+        }),
+        getListMessagesMockHandler([aMessage('m1', 'user', 'keep BullMQ?')]),
+        aPartialRun(),
+      );
+
+      await renderPage(`/s/${SESSION_ID}`);
+
+      const progress = await screen.findByRole(
+        'region',
+        { name: text.progress },
+        { timeout: 3000 },
+      );
+      expect(await within(progress).findByText('Writing the answer')).toBeInTheDocument();
+      expect(within(progress).getByText('Detecting the language')).toBeInTheDocument();
+      expect(await screen.findByText('Keep BullMQ.')).toBeInTheDocument();
+    });
   });
 
   describe('when the first reply of a new chat fails', () => {

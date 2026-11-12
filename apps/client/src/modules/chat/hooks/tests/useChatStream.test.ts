@@ -18,6 +18,8 @@ import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messag
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
+import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
+import { toast } from 'sonner';
 import { IDLE_REPLY, isReplyInFlight } from '@/modules/chat/utils/replyState';
 import { resources } from '@/resources';
 import { API_ROUTE, mockApiError } from '@/test/api';
@@ -857,6 +859,289 @@ describe('useChatStream — message allowance', () => {
 
     expect(useChatStreamStore.getState().isMessageAllowanceReached).toBe(false);
     await waitFor(() => expect(assistantContent()).toBe('welcome back'));
+  });
+});
+
+describe('useChatStream — a Run', () => {
+  const RUN_ID = '55555555-5555-4555-8555-555555555555';
+  const LANGUAGE = '66666666-6666-4666-8666-666666666661';
+  const SUMMARY = '66666666-6666-4666-8666-666666666662';
+  const OUTPUT = '66666666-6666-4666-8666-666666666663';
+
+  const started = (stepId: string, label: string, over: Record<string, unknown> = {}) =>
+    frame('step-started', {
+      stepId,
+      attempt: 1,
+      phase: 'intake',
+      agent: 'language',
+      label,
+      turn: 0,
+      parentStepId: null,
+      ...over,
+    });
+  const finished = (stepId: string, status = 'completed') =>
+    frame('step-finished', { stepId, status });
+  const outputStarted = (attempt = 1) =>
+    started(OUTPUT, 'Writing the answer', { phase: 'output', agent: 'output', attempt });
+  const runFinished = (status: string) => frame('run-finished', { runId: RUN_ID, status });
+
+  const sendRun = async (result: { current: ReturnType<typeof useChatStream> }) => {
+    await act(async () => {
+      await result.current.streamMessage({
+        model: 'gpt-4o-mini',
+        mode: 'run',
+        messages: [{ id: 'u1', role: 'user', content: 'what is 2+2?' }],
+      });
+    });
+  };
+
+  const run = () => history().at(-1)?.run;
+  const steps = () => run()?.steps.map(({ label, status }) => [label, status]);
+
+  beforeEach(() => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    useInspectorStore.setState({ activeTab: 'session', selectedRunId: null });
+    server.use(
+      getSendMessageMockHandler({ messageId: MESSAGE_ID, streamId: STREAM_ID, runId: RUN_ID }),
+    );
+  });
+
+  it('sends the message in Run mode and shows its Run in the Inspector', async () => {
+    let received: unknown;
+    server.use(
+      getSendMessageMockHandler(async ({ request }) => {
+        received = await request.json();
+        return { messageId: MESSAGE_ID, streamId: STREAM_ID, runId: RUN_ID };
+      }),
+    );
+    streamFrames(frame('end', {}));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(received).toMatchObject({ content: 'what is 2+2?', mode: 'run' });
+    expect(history().at(-1)?.runId).toBe(RUN_ID);
+    expect(useInspectorStore.getState()).toMatchObject({ activeTab: 'run', selectedRunId: RUN_ID });
+  });
+
+  it('shows each Step as it starts and finishes, then the answer and the end status', async () => {
+    streamFrames(
+      started(LANGUAGE, 'Detecting the language'),
+      started(SUMMARY, 'Summarising the Session', { agent: 'session' }),
+      finished(LANGUAGE),
+      finished(SUMMARY),
+      outputStarted(),
+      frame('token', { token: '2+2' }),
+      frame('token', { token: ' is 4' }),
+      finished(OUTPUT),
+      runFinished('completed'),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(steps()).toEqual([
+      ['Detecting the language', 'completed'],
+      ['Summarising the Session', 'completed'],
+      ['Writing the answer', 'completed'],
+    ]);
+    expect(assistantContent()).toBe('2+2 is 4');
+    expect(run()?.status).toBe('completed');
+    expect(reply()).toEqual(IDLE_REPLY);
+  });
+
+  it('shows Intake Steps that start together as running together', async () => {
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    server.use(
+      http.get(API_ROUTE.replyStream, () => {
+        const encoder = new TextEncoder();
+        return new HttpResponse(
+          new ReadableStream({
+            async start(controller) {
+              controller.enqueue(
+                encoder.encode(
+                  started(LANGUAGE, 'Detecting the language') +
+                    started(SUMMARY, 'Summarising the Session'),
+                ),
+              );
+              await gate;
+              controller.enqueue(encoder.encode(frame('end', {})));
+              controller.close();
+            },
+          }),
+          { headers: { 'Content-Type': 'text/event-stream' } },
+        );
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    const sending = sendRun(result);
+
+    await waitFor(() =>
+      expect(steps()).toEqual([
+        ['Detecting the language', 'running'],
+        ['Summarising the Session', 'running'],
+      ]),
+    );
+    release();
+    await sending;
+  });
+
+  it('discards the answer of an Output Step that starts again, keeping only the new attempt', async () => {
+    streamFrames(
+      outputStarted(),
+      frame('token', { token: 'first try' }),
+      outputStarted(2),
+      frame('token', { token: 'second' }),
+      frame('token', { token: ' try' }),
+      finished(OUTPUT),
+      runFinished('completed'),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(assistantContent()).toBe('second try');
+    expect(run()?.steps).toMatchObject([{ stepId: OUTPUT, attempt: 2, status: 'completed' }]);
+  });
+
+  it('shows a re-run Step as running again, and ignores a replay of the same attempt', async () => {
+    streamFrames(
+      started(LANGUAGE, 'Detecting the language'),
+      finished(LANGUAGE, 'failed'),
+      started(LANGUAGE, 'Detecting the language', { attempt: 2 }),
+      started(SUMMARY, 'Summarising the Session'),
+      finished(SUMMARY),
+      started(SUMMARY, 'Summarising the Session'),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(steps()).toEqual([
+      ['Detecting the language', 'running'],
+      ['Summarising the Session', 'completed'],
+    ]);
+  });
+
+  it('shows a failed Intake Step and a partial end', async () => {
+    streamFrames(
+      started(LANGUAGE, 'Detecting the language'),
+      started(SUMMARY, 'Summarising the Session'),
+      finished(LANGUAGE, 'failed'),
+      finished(SUMMARY),
+      outputStarted(),
+      frame('token', { token: 'four' }),
+      finished(OUTPUT),
+      runFinished('partial'),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(steps()).toEqual([
+      ['Detecting the language', 'failed'],
+      ['Summarising the Session', 'completed'],
+      ['Writing the answer', 'completed'],
+    ]);
+    expect(run()?.status).toBe('partial');
+    expect(assistantContent()).toBe('four');
+  });
+
+  it('reads past a malformed Run frame', async () => {
+    streamFrames(
+      frame('step-started', { stepId: LANGUAGE }),
+      frame('step-finished', { stepId: LANGUAGE, status: 'exploded' }),
+      frame('run-finished', { status: 'sideways' }),
+      frame('token', { token: 'still here' }),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(run()).toEqual({ steps: [], status: null });
+    expect(assistantContent()).toBe('still here');
+    expect(replyError()).toBeNull();
+  });
+
+  it('marks the Run failed when its stream reports an error, and reads on to its end', async () => {
+    streamFrames(
+      started(LANGUAGE, 'Detecting the language'),
+      frame('error', { success: false, error: 'BadRequest', message: 'The Run failed.' }),
+      finished(LANGUAGE, 'failed'),
+      frame('run-finished', { runId: RUN_ID, status: 'failed' }),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(run()?.status).toBe('failed');
+    expect(steps()).toEqual([['Detecting the language', 'failed']]);
+    expect(replyError()).toBe('The Run failed.');
+    expect(assistantContent()).toBe('The Run failed.');
+  });
+
+  it('refreshes the Run the Inspector shows as each Step event arrives', async () => {
+    streamFrames(started(LANGUAGE, 'Detecting the language'), frame('end', {}));
+    const queryClient = createTestQueryClient();
+    queryClient.setQueryData(getGetRunQueryKey(RUN_ID), { finishedAt: '2026-10-27T21:14:41Z' });
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF), { queryClient });
+
+    await sendRun(result);
+
+    expect(queryClient.getQueryState(getGetRunQueryKey(RUN_ID))?.isInvalidated).toBe(true);
+  });
+
+  it('returns the message to the composer and reports the refusal when a Run is forbidden', async () => {
+    const reported = vi.spyOn(toast, 'error');
+    server.use(
+      mockApiError('post', API_ROUTE.sendMessage, 403, {
+        success: false,
+        error: 'Forbidden',
+        message: 'Runs are for registered users.',
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(reported).toHaveBeenCalledWith('Runs are for registered users.');
+    expect(useMessageStore.getState().message).toBe('what is 2+2?');
+    expect(history()).toEqual([]);
+    expect(reply()).toEqual(IDLE_REPLY);
+  });
+
+  it('replays the Steps of a Run it re-attaches to', async () => {
+    streamFrames(
+      started(LANGUAGE, 'Detecting the language', { stepId: LANGUAGE }),
+      finished(LANGUAGE),
+      outputStarted(),
+      frame('token', { token: 'four' }),
+      finished(OUTPUT),
+      runFinished('completed'),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await act(async () => {
+      await result.current.resumeStream({ sessionId: EXISTING_ID, streamId: STREAM_ID });
+    });
+
+    expect(steps()).toEqual([
+      ['Detecting the language', 'completed'],
+      ['Writing the answer', 'completed'],
+    ]);
+    expect(history().at(-1)).toMatchObject({ content: 'four', runId: RUN_ID });
+    expect(run()?.status).toBe('completed');
   });
 });
 

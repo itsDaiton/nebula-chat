@@ -66,7 +66,7 @@ export const ChatContainer = () => {
       <ArchivedSessionBar sessionId={sessionId} />
     ) : (
       <ChatInputBar
-        onSend={(msg) => void handleSendMessage(msg, selectedModel)}
+        onSend={(msg, mode) => void handleSendMessage(msg, selectedModel, mode)}
         isLoading={isStreaming}
         selectedModel={selectedModel}
         onModelChange={setSelectedModel}

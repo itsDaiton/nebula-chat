@@ -5,6 +5,7 @@ import { RunToggle } from '@/modules/chat/components/RunToggle';
 import { SendButton } from '@/modules/chat/components/SendButton';
 import { StopButton } from '@/modules/chat/components/StopButton';
 import { useMessageHandler } from '@/modules/chat/hooks/useMessageHandler';
+import { useRunMode } from '@/modules/chat/hooks/useRunMode';
 import type { ChatInputProps } from '@/modules/chat/types/types';
 import { resources } from '@/resources';
 import {
@@ -27,6 +28,8 @@ export const ChatInput = ({
     isLoading,
   });
 
+  const { isModelUnused } = useRunMode();
+
   const { inputRef } = useKeyboardHandler({ message, isLoading, handleMessageSend });
 
   useTextareaAutoResize(inputRef as React.RefObject<HTMLTextAreaElement>);
@@ -46,7 +49,11 @@ export const ChatInput = ({
         <RunToggle />
         <span className="flex-1" />
         <ContextUsagePopover />
-        <ModelSelect selectedModel={selectedModel} onModelChange={onModelChange} />
+        <ModelSelect
+          selectedModel={selectedModel}
+          onModelChange={onModelChange}
+          dimmed={isModelUnused}
+        />
         {isLoading && onStop ? (
           <StopButton onStop={onStop} />
         ) : (

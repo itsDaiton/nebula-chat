@@ -19,6 +19,7 @@ import { getGetRunQueryKey } from '@/libs/api/generated/runs/runs';
 import { cancelReplyStream, readReplyStream } from '@/libs/api/generated/streams/streams';
 import { ErrorCode } from '@/libs/api/generated/model/errorCode';
 import type { Run } from '@/libs/api/generated/model/run';
+import { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
 import type { SendMessageBodyModel } from '@/libs/api/generated/model/sendMessageBodyModel';
 import type {
   ChatHistoryStreamOptions,
@@ -30,11 +31,14 @@ import type {
   UseChatStreamOptions,
 } from '@/modules/chat/types/types';
 import { useNavigate } from '@tanstack/react-router';
+import { toast } from 'sonner';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
+import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
 import { mapSessionMessages } from '@/modules/chat/utils/mapSessionMessages';
 import { parseSseStream } from '@/modules/chat/utils/parseSseStream';
 import { IDLE_REPLY, isReplyInFlight } from '@/modules/chat/utils/replyState';
+import { EMPTY_RUN, applyRunEvent, parseRunEvent } from '@/modules/chat/utils/runProgress';
 import { resources } from '@/resources';
 
 // A failed send or stream renders inside the reply, so the global toaster stays out of it.
@@ -191,7 +195,9 @@ export const useChatStream = ({
         const updated = [...prev];
         const last = updated.at(-1);
         if (last?.role === 'assistant') {
-          updated[updated.length - 1] = { ...last, content: message };
+          // A failed Run reports the `error` first, and the read stops there, before its `run-finished`.
+          const run = last.run && { ...last.run, status: 'failed' as const };
+          updated[updated.length - 1] = { ...last, content: message, ...(run && { run }) };
         }
         return updated;
       });
@@ -254,6 +260,23 @@ export const useChatStream = ({
     [queryClient, setHistory],
   );
 
+  // A Run's Step or end changes its progress above the answer, and the Run the Inspector may be showing.
+  const applyRunFrame = useCallback(
+    (event: SseEvent, data: unknown) => {
+      const runEvent = parseRunEvent(event, data);
+      if (!runEvent) return;
+      setHistory((prev) => {
+        const last = prev.at(-1);
+        return last?.role === 'assistant'
+          ? [...prev.slice(0, -1), applyRunEvent(last, runEvent)]
+          : prev;
+      });
+      const runId = useChatStreamStore.getState().history.at(-1)?.runId;
+      if (runId) void queryClient.invalidateQueries({ queryKey: getGetRunQueryKey(runId) });
+    },
+    [queryClient, setHistory],
+  );
+
   // Applies one event to the reply; an end means the stream is over.
   const applyEvent = useCallback(
     (event: SseEvent, data: string): ReplyEnd | null => {
@@ -275,9 +298,17 @@ export const useChatStream = ({
         });
         return null;
       }
-      if (event === 'error') {
-        return failReply(parseErrorEnvelope(parsed)?.message ?? resources.chat.streamError);
+      if (event === 'step-started' || event === 'step-finished' || event === 'run-finished') {
+        applyRunFrame(event, parsed);
+        return null;
       }
+      if (event === 'error') {
+        const end = failReply(parseErrorEnvelope(parsed)?.message ?? resources.chat.streamError);
+        // A failed Run still reports its `run-finished`, which the Inspector's Run waits on, so it reads on to `end`.
+        return useChatStreamStore.getState().history.at(-1)?.run ? null : end;
+      }
+      const last = useChatStreamStore.getState().history.at(-1);
+      if (last?.run?.status === 'failed') return { status: 'failed', error: last.content };
       // `end`, also when the User stopped the reply: what streamed is the saved reply.
       if ((parsed as { reason?: unknown } | null)?.reason === 'cancelled') {
         dropEmptyReply();
@@ -285,7 +316,7 @@ export const useChatStream = ({
       }
       return IDLE_REPLY;
     },
-    [appendToken, dropEmptyReply, failReply, setHistory, setUsage],
+    [appendToken, applyRunFrame, dropEmptyReply, failReply, setHistory, setUsage],
   );
 
   // Reads one connection's body; null when it closed or dropped before the stream was over.
@@ -363,7 +394,7 @@ export const useChatStream = ({
   const streamMessage = useCallback(
     async ({
       model,
-      mode = 'direct',
+      mode = SendMessageBodyMode.direct,
       messages,
       sessionId: customSessionId,
     }: ChatHistoryStreamOptions) => {
@@ -398,7 +429,7 @@ export const useChatStream = ({
           void invalidateSessionList();
         }
 
-        const { streamId } = await sendMessage({
+        const { streamId, runId } = await sendMessage({
           sessionId: activeSessionId,
           data: { content, mode, model: model as SendMessageBodyModel },
         });
@@ -406,6 +437,11 @@ export const useChatStream = ({
         if (controller.signal.aborted) return;
         const sent = useChatStreamStore.getState().reply;
         useChatStreamStore.setState({ streamId, reply: { status: 'streaming' } });
+        if (runId) {
+          // The Run exists from the send on, so its progress and its Inspector tab show before the first Step.
+          setHistory((prev) => [...prev.slice(0, -1), { ...prev.at(-1)!, runId, run: EMPTY_RUN }]);
+          useInspectorStore.getState().showRun(runId);
+        }
         // Stop was pressed before the send named the stream.
         if (sent.status === 'sending' && sent.stopRequested) void requestCancel(streamId);
 
@@ -429,6 +465,17 @@ export const useChatStream = ({
         }
         // Aborted: `abort` has already settled the reply, and a newer one may be in flight.
         if (controller.signal.aborted) return;
+        if (
+          mode === SendMessageBodyMode.run &&
+          isAppError(err) &&
+          err.code === ErrorCode.Forbidden
+        ) {
+          // Nothing was persisted for a refused Run, so the message goes back to the composer.
+          useChatStreamStore.setState({ history: messages.slice(0, -1), reply: IDLE_REPLY });
+          useMessageStore.getState().setMessage(content);
+          toast.error(err.message);
+          return;
+        }
         const end = failReply(
           err instanceof Error && err.message ? err.message : resources.chat.streamError,
         );
@@ -448,6 +495,7 @@ export const useChatStream = ({
       queryClient,
       requestCancel,
       sendMessage,
+      setHistory,
       setSessionId,
       settle,
     ],

@@ -13,4 +13,9 @@ export const useInspectorStore = create<InspectorState>()((set) => ({
     }));
     usePanelStore.getState().openRight();
   },
+  showRun: (runId) => {
+    set({ activeTab: 'run', selectedRunId: runId });
+    usePanelStore.getState().openRightPanel();
+  },
+  clearSelectedRun: () => set({ selectedRunId: null }),
 }));

@@ -23,4 +23,18 @@ describe('useInspectorStore', () => {
 
     expect(state()).toMatchObject({ activeTab: 'session', selectedRunId: 'run-1' });
   });
+
+  it('shows a Run that just started on the Run tab, without raising the mobile sheet over the chat', () => {
+    state().showRun('run-2');
+
+    expect(state()).toMatchObject({ activeTab: 'run', selectedRunId: 'run-2' });
+    expect(usePanelStore.getState()).toMatchObject({ rightOpen: true, sheetOpen: false });
+  });
+
+  it('clears the selected Run, keeping the tab', () => {
+    state().openInspector('run', 'run-1');
+    state().clearSelectedRun();
+
+    expect(state()).toMatchObject({ activeTab: 'run', selectedRunId: null });
+  });
 });

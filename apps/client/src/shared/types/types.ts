@@ -74,6 +74,8 @@ export type PanelState = {
   toggleRight: () => void;
   /** Opens the Inspector in whichever form the layout shows it. */
   openRight: () => void;
+  /** Opens the Inspector's desktop panel only, leaving the mobile sheet down. */
+  openRightPanel: () => void;
   closeSheet: () => void;
   toggleSheet: () => void;
 };
