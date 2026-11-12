@@ -27,6 +27,35 @@ export type RunStepProgress = {
   agent: string;
   label: string;
   status: StepStatus;
+  /** The Orchestrator turn the Step belongs to; 0 outside the Orchestrator's loop. */
+  turn: number;
+  /** The turn Step that launched a delegate Step; null for every other Step. */
+  parentStepId: string | null;
+};
+
+/** A Step in its group, indented under the Step that launched it. */
+export type RunProgressRow = {
+  step: RunStepProgress;
+  depth: number;
+};
+
+export type RunProgressGroup = {
+  key: string;
+  kind: 'intake' | 'turn' | 'output';
+  turn: number;
+  rows: RunProgressRow[];
+};
+
+export type RunProgressGroupProps = {
+  group: RunProgressGroup;
+  isStreaming: boolean;
+};
+
+export type RunProgressStepProps = {
+  step: RunStepProgress;
+  isStreaming: boolean;
+  /** A delegate under its turn: `last` closes the rail that joins the turn's delegates. */
+  child?: 'mid' | 'last';
 };
 
 type RunEndStatus = Extract<RunStatus, 'completed' | 'partial' | 'failed' | 'cancelled'>;

@@ -20,6 +20,7 @@ import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
 import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
 import { toast } from 'sonner';
+import { groupProgressSteps } from '@/modules/chat/utils/groupProgressSteps';
 import { IDLE_REPLY, isReplyInFlight } from '@/modules/chat/utils/replyState';
 import { resources } from '@/resources';
 import { API_ROUTE, mockApiError } from '@/test/api';
@@ -1118,6 +1119,219 @@ describe('useChatStream — a Run', () => {
     expect(useMessageStore.getState().message).toBe('what is 2+2?');
     expect(history()).toEqual([]);
     expect(reply()).toEqual(IDLE_REPLY);
+  });
+
+  const PLAN_1 = '77777777-7777-4777-8777-777777777771';
+  const ANALYST_1 = '77777777-7777-4777-8777-777777777772';
+  const CRITIC_1 = '77777777-7777-4777-8777-777777777773';
+  const PLAN_2 = '77777777-7777-4777-8777-777777777774';
+  const CRITIC_2 = '77777777-7777-4777-8777-777777777775';
+
+  const turnStarted = (stepId: string, turn: number) =>
+    started(stepId, 'Planning the work', { phase: 'orchestrator', agent: 'orchestrator', turn });
+  const delegateStarted = (
+    stepId: string,
+    agent: string,
+    label: string,
+    turn: number,
+    parentStepId: string,
+  ) => started(stepId, label, { phase: 'delegate', agent, turn, parentStepId });
+
+  // Two Intake Steps, two turns of delegates (the second turn's critic fails), then the answer.
+  const orchestratedRun = [
+    started(LANGUAGE, 'Detecting the language'),
+    started(SUMMARY, 'Summarising the Session', { agent: 'session' }),
+    finished(LANGUAGE),
+    finished(SUMMARY),
+    turnStarted(PLAN_1, 1),
+    delegateStarted(ANALYST_1, 'analyst', 'Analysing', 1, PLAN_1),
+    delegateStarted(CRITIC_1, 'critic', 'Reviewing', 1, PLAN_1),
+    finished(CRITIC_1),
+    finished(ANALYST_1),
+    finished(PLAN_1),
+    turnStarted(PLAN_2, 2),
+    delegateStarted(CRITIC_2, 'critic', 'Reviewing', 2, PLAN_2),
+    finished(CRITIC_2, 'failed'),
+    finished(PLAN_2),
+    outputStarted(),
+    frame('token', { token: 'Keep' }),
+    frame('token', { token: ' BullMQ.' }),
+    finished(OUTPUT),
+    runFinished('partial'),
+    frame('end', {}),
+  ];
+
+  const grouped = () =>
+    groupProgressSteps(run()?.steps ?? []).map(({ kind, turn, rows }) => [
+      kind === 'turn' ? `turn ${turn}` : kind,
+      rows.map(({ step, depth }) => `${'> '.repeat(depth)}${step.agent} ${step.status}`),
+    ]);
+
+  const ORCHESTRATED = [
+    ['intake', ['language completed', 'session completed']],
+    ['turn 1', ['orchestrator completed', '> analyst completed', '> critic completed']],
+    ['turn 2', ['orchestrator completed', '> critic failed']],
+    ['output', ['output completed']],
+  ];
+
+  it('groups the Steps of an orchestrated Run by turn, each delegate under the turn that launched it', async () => {
+    streamFrames(...orchestratedRun);
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(grouped()).toEqual(ORCHESTRATED);
+    expect(assistantContent()).toBe('Keep BullMQ.');
+    expect(run()?.status).toBe('partial');
+    expect(reply()).toEqual(IDLE_REPLY);
+  });
+
+  it('shows the delegates of one turn running together, each finishing on its own', async () => {
+    const gates = [0, 1].map(() => {
+      let release = () => {};
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      return { gate, release };
+    });
+    server.use(
+      http.get(API_ROUTE.replyStream, () => {
+        const encoder = new TextEncoder();
+        return new HttpResponse(
+          new ReadableStream({
+            async start(controller) {
+              controller.enqueue(encoder.encode(orchestratedRun.slice(4, 7).join('')));
+              await gates[0]!.gate;
+              controller.enqueue(encoder.encode(finished(CRITIC_1)));
+              await gates[1]!.gate;
+              controller.enqueue(encoder.encode(frame('end', {})));
+              controller.close();
+            },
+          }),
+          { headers: { 'Content-Type': 'text/event-stream' } },
+        );
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    const sending = sendRun(result);
+
+    await waitFor(() =>
+      expect(grouped()).toEqual([
+        ['turn 1', ['orchestrator running', '> analyst running', '> critic running']],
+      ]),
+    );
+    gates[0]!.release();
+    await waitFor(() =>
+      expect(grouped()).toEqual([
+        ['turn 1', ['orchestrator running', '> analyst running', '> critic completed']],
+      ]),
+    );
+    gates[1]!.release();
+    await sending;
+  });
+
+  it('resets a delegate that starts again in place, under the same turn', async () => {
+    streamFrames(
+      ...orchestratedRun.slice(4, 9),
+      delegateStarted(ANALYST_1, 'analyst', 'Analysing', 1, PLAN_1).replace(
+        '"attempt":1',
+        '"attempt":2',
+      ),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(grouped()).toEqual([
+      ['turn 1', ['orchestrator running', '> analyst running', '> critic completed']],
+    ]);
+  });
+
+  describe('stopped', () => {
+    /** Streams `before`, then holds until the Run is cancelled and ends it as the worker does. */
+    const stoppableRun = (...before: string[]) => {
+      let endIt: () => void = () => undefined;
+      server.use(
+        http.get(API_ROUTE.replyStream, () => {
+          const encoder = new TextEncoder();
+          return new HttpResponse(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(encoder.encode(before.join('')));
+                endIt = () => {
+                  controller.enqueue(
+                    encoder.encode(
+                      runFinished('cancelled') + frame('end', { reason: 'cancelled' }),
+                    ),
+                  );
+                  controller.close();
+                };
+              },
+            }),
+            { headers: { 'Content-Type': 'text/event-stream' } },
+          );
+        }),
+        http.post(`${API_ROUTE.replyStream}/cancel`, () => {
+          endIt();
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+    };
+
+    const stopOnce = async (seen: () => void) => {
+      const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+      let sent: Promise<void> | undefined;
+      act(() => {
+        sent = result.current.streamMessage({
+          model: 'gpt-4o-mini',
+          mode: 'run',
+          messages: [{ id: 'u1', role: 'user', content: 'what is 2+2?' }],
+        });
+      });
+      await waitFor(seen);
+      await act(async () => {
+        await result.current.stop();
+        await sent;
+      });
+    };
+
+    it('keeps the Steps finished by then and the answer streamed so far', async () => {
+      stoppableRun(...orchestratedRun.slice(0, 16));
+
+      await stopOnce(() => expect(assistantContent()).toBe('Keep'));
+
+      expect(grouped()).toEqual([...ORCHESTRATED.slice(0, 3), ['output', ['output running']]]);
+      expect(assistantContent()).toBe('Keep');
+      expect(run()?.status).toBe('cancelled');
+      expect(reply()).toEqual({ status: 'stopped' });
+    });
+
+    it('keeps the Steps of a Run stopped before it wrote any answer', async () => {
+      stoppableRun(...orchestratedRun.slice(0, 7));
+
+      await stopOnce(() => expect(run()?.steps).toHaveLength(5));
+
+      expect(grouped()).toEqual([
+        ['intake', ['language completed', 'session completed']],
+        ['turn 1', ['orchestrator running', '> analyst running', '> critic running']],
+      ]);
+      expect(run()?.status).toBe('cancelled');
+      expect(reply()).toEqual({ status: 'stopped' });
+    });
+  });
+
+  it('rebuilds the same grouping for an orchestrated Run it re-attaches to', async () => {
+    streamFrames(...orchestratedRun);
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await act(async () => {
+      await result.current.resumeStream({ sessionId: EXISTING_ID, streamId: STREAM_ID });
+    });
+
+    expect(grouped()).toEqual(ORCHESTRATED);
+    expect(history().at(-1)).toMatchObject({ content: 'Keep BullMQ.', runId: RUN_ID });
   });
 
   it('replays the Steps of a Run it re-attaches to', async () => {

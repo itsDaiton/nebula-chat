@@ -1,6 +1,8 @@
-import { CircleDashedIcon, WorkflowIcon } from 'lucide-react';
+import { WorkflowIcon } from 'lucide-react';
+import { RunProgressGroup } from '@/modules/chat/components/RunProgressGroup';
+import { RunProgressStep } from '@/modules/chat/components/RunProgressStep';
 import type { RunProgressProps } from '@/modules/chat/types/types';
-import { StepStatusIcon } from '@/modules/inspector/components/StepStatusIcon';
+import { groupProgressSteps } from '@/modules/chat/utils/groupProgressSteps';
 import { resources } from '@/resources';
 import { cn } from '@/shared/utils/cn';
 
@@ -15,9 +17,12 @@ const tone = {
   cancelled: 'text-muted-foreground',
 };
 
-/** A Run's Steps above its answer, as its stream reports them: one row each, in the order they started. */
+/** A Run's Steps above its answer, as its stream reports them: grouped by Orchestrator turn once it has one. */
 export const RunStepProgress = ({ run, isStreaming = false }: RunProgressProps) => {
   const status = run.status ?? (isStreaming ? 'running' : null);
+  const groups = groupProgressSteps(run.steps);
+  // A Run with no Orchestrator turn keeps the flat list it had before turns existed.
+  const hasTurns = groups.some(({ kind }) => kind === 'turn');
 
   return (
     <section
@@ -32,36 +37,19 @@ export const RunStepProgress = ({ run, isStreaming = false }: RunProgressProps) 
         )}
       </h3>
       {run.steps.length > 0 && (
-        <ul className="mt-2 border-t border-border pt-1.5">
-          {run.steps.map(({ stepId, label, agent, phase, status: stepStatus }) => (
-            <li
-              key={stepId}
-              className={cn(
-                'flex h-[26px] items-center gap-2 text-[13px] text-foreground-secondary',
-                stepStatus === 'running' && 'text-foreground',
-                stepStatus === 'failed' && 'text-destructive',
-              )}
-            >
-              {/* A stream that ended leaves no Step running: one without an end was cut short. */}
-              {stepStatus === 'running' && !isStreaming ? (
-                <CircleDashedIcon
-                  role="img"
-                  aria-label={text.stepUnfinished}
-                  className="size-[15px] shrink-0 text-faint"
-                />
-              ) : (
-                <StepStatusIcon status={stepStatus} />
-              )}
-              <span className="truncate">{label}</span>
-              {phase !== 'intake' && (
-                <span className="font-mono text-[11px] text-faint">{agent}</span>
-              )}
-              {stepStatus === 'failed' && (
-                <span className="font-mono text-[11px] text-faint">{text.stepFailed}</span>
-              )}
-            </li>
-          ))}
-        </ul>
+        <div className="mt-2 border-t border-border pt-1.5">
+          {hasTurns ? (
+            groups.map((group) => (
+              <RunProgressGroup key={group.key} group={group} isStreaming={isStreaming} />
+            ))
+          ) : (
+            <ul>
+              {run.steps.map((step) => (
+                <RunProgressStep key={step.stepId} step={step} isStreaming={isStreaming} />
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </section>
   );
