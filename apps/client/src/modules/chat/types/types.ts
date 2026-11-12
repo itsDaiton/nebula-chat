@@ -272,6 +272,8 @@ export type ChatStreamState = {
   streamId: string | null;
   /** A Guest's send was refused because their message allowance is spent. */
   isMessageAllowanceReached: boolean;
+  /** The waiting Run the User just cancelled: the worker settles it after the cancel is accepted. */
+  cancelledRunId: string | null;
   setHistory: Dispatch<SetStateAction<ChatMessage[]>>;
   setUsage: (usage: Usage) => void;
   setSessionId: (id: string | undefined) => void;
@@ -289,7 +291,14 @@ export type MessageState = {
 
 /** The events a reply stream carries (`GET /api/streams/{streamId}`). */
 export type SseEvent =
-  'token' | 'usage' | 'error' | 'end' | 'step-started' | 'step-finished' | 'run-finished';
+  | 'token'
+  | 'usage'
+  | 'error'
+  | 'end'
+  | 'step-started'
+  | 'step-finished'
+  | 'run-finished'
+  | 'run-waiting';
 
 /** One SSE event off a reply stream: its name, its raw `data` line and its stream entry id. */
 export type SseFrame = {

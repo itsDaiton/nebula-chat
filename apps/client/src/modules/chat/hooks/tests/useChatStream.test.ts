@@ -1658,3 +1658,90 @@ describe('useChatStream — lifecycle', () => {
     expect(opened).toBe(false);
   });
 });
+
+describe('useChatStream — a Clarifying question', () => {
+  const RUN_ID = '55555555-5555-4555-8555-555555555555';
+  const QUESTION_ID = '77777777-7777-4777-8777-777777777777';
+
+  const askRun = async (result: { current: ReturnType<typeof useChatStream> }) => {
+    await act(async () => {
+      await result.current.streamMessage({
+        model: 'gpt-4o-mini',
+        mode: 'run',
+        messages: [{ id: 'u1', role: 'user', content: 'plan my trip' }],
+      });
+    });
+  };
+
+  beforeEach(() => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    server.use(
+      getSendMessageMockHandler({ messageId: MESSAGE_ID, streamId: STREAM_ID, runId: RUN_ID }),
+    );
+  });
+
+  it('shows the question a Run pauses on as its reply, under the saved question Message’s id', async () => {
+    streamFrames(
+      frame('run-waiting', {
+        runId: RUN_ID,
+        questionMessageId: QUESTION_ID,
+        question: 'Which month are you going?',
+      }),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await askRun(result);
+
+    expect(history().at(-1)).toMatchObject({
+      id: QUESTION_ID,
+      role: 'assistant',
+      content: 'Which month are you going?',
+      runId: RUN_ID,
+    });
+    expect(reply()).toEqual(IDLE_REPLY);
+  });
+
+  it('reads past a question frame without a question', async () => {
+    streamFrames(frame('run-waiting', { runId: RUN_ID }), frame('end', {}));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await askRun(result);
+
+    expect(assistantContent()).toBe('');
+  });
+
+  it('refreshes the Session once the send is accepted, since the send may have answered its waiting Run', async () => {
+    let releaseStream: () => void = () => undefined;
+    server.use(
+      http.get(API_ROUTE.replyStream, async () => {
+        await new Promise<void>((resolve) => (releaseStream = resolve));
+        return new HttpResponse(frame('end', {}), {
+          headers: { 'Content-Type': 'text/event-stream' },
+        });
+      }),
+    );
+    const queryClient = createTestQueryClient();
+    queryClient.setQueryData(getGetSessionQueryKey(EXISTING_ID), { id: EXISTING_ID });
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF), { queryClient });
+
+    let sending: Promise<void> = Promise.resolve();
+    act(() => {
+      sending = result.current.streamMessage({
+        model: 'gpt-4o-mini',
+        messages: [{ id: 'u1', role: 'user', content: 'mid-September' }],
+      });
+    });
+
+    await waitFor(() =>
+      expect(queryClient.getQueryState(getGetSessionQueryKey(EXISTING_ID))?.isInvalidated).toBe(
+        true,
+      ),
+    );
+    expect(inFlight()).toBe(true);
+    releaseStream();
+    await act(async () => {
+      await sending;
+    });
+  });
+});

@@ -89,6 +89,16 @@ export const resources = {
       intakeFailed:
         'An Intake Agent failed, so the answer was written without its part of the Brief.',
     },
+    clarify: {
+      label: 'Clarifying question',
+      waitingRow: (steps: number) =>
+        `waiting for you · ${steps} ${steps === 1 ? 'Step' : 'Steps'} done`,
+      waitingTitle: 'Waiting for your answer.',
+      waitingNote:
+        'If you don’t reply within 3 minutes, the Run carries on without it and the answer will be marked partial.',
+      answerHint: 'Your next message answers the Run’s question',
+      cancel: 'Cancel Run',
+    },
     meta: {
       copy: 'Copy',
       copied: 'Copied',

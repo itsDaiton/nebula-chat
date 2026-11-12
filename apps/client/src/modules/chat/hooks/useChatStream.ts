@@ -304,6 +304,26 @@ export const useChatStream = ({
         applyRunFrame(event, parsed);
         return null;
       }
+      if (event === 'run-waiting') {
+        const { runId, questionMessageId, question } = (parsed ?? {}) as Record<string, unknown>;
+        if (typeof question !== 'string' || typeof questionMessageId !== 'string') return null;
+        // The question is saved as its own Message, so the reply takes its id and text.
+        setHistory((prev) => {
+          const last = prev.at(-1);
+          return last?.role === 'assistant'
+            ? [
+                ...prev.slice(0, -1),
+                {
+                  ...last,
+                  id: questionMessageId,
+                  content: question,
+                  ...(typeof runId === 'string' && { runId }),
+                },
+              ]
+            : prev;
+        });
+        return null;
+      }
       if (event === 'error') {
         const end = failReply(parseErrorEnvelope(parsed)?.message ?? resources.chat.streamError);
         // A failed Run still reports its `run-finished`, which the Inspector's Run waits on, so it reads on to `end`.
@@ -436,6 +456,8 @@ export const useChatStream = ({
           data: { content, mode, model: model as SendMessageBodyModel },
         });
         void invalidateMessageAllowance();
+        // The send may have answered the Session's waiting Run, which then waits no more.
+        void queryClient.invalidateQueries({ queryKey: getGetSessionQueryKey(activeSessionId) });
         if (controller.signal.aborted) return;
         const sent = useChatStreamStore.getState().reply;
         useChatStreamStore.setState({ streamId, reply: { status: 'streaming' } });

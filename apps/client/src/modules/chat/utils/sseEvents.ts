@@ -8,4 +8,5 @@ export const SSE_EVENTS: ReadonlySet<string> = new Set<SseEvent>([
   'step-started',
   'step-finished',
   'run-finished',
+  'run-waiting',
 ]);

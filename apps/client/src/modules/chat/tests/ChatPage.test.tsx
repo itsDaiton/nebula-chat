@@ -89,6 +89,7 @@ beforeEach(() => {
     usage: null,
     sessionId: undefined,
     streamId: null,
+    cancelledRunId: null,
   });
 });
 
@@ -648,6 +649,118 @@ describe('ChatPage', () => {
       expect(await within(progress).findByText('Writing the answer')).toBeInTheDocument();
       expect(within(progress).getByText('Detecting the language')).toBeInTheDocument();
       expect(await screen.findByText('Keep BullMQ.')).toBeInTheDocument();
+    });
+  });
+
+  describe('a Run waiting on a Clarifying question', () => {
+    const RUN_ID = '55555555-5555-4555-8555-555555555555';
+    const QUESTION_STREAM_ID = '33333333-3333-4333-8333-333333333333';
+    const ANSWER_STREAM_ID = '88888888-8888-4888-8888-888888888888';
+    const { clarify } = resources.chat;
+
+    const serveSession = (waiting: boolean) =>
+      server.use(
+        getGetSessionMockHandler({
+          ...aChatSession(SESSION_ID, 'Trip'),
+          activeStreamId: null,
+          waitingRun: waiting
+            ? { id: RUN_ID, streamId: QUESTION_STREAM_ID, stepsCompleted: 4 }
+            : null,
+        }),
+      );
+
+    const composer = () => screen.getByRole('textbox', { name: resources.chat.composer.label });
+    const runToggle = () =>
+      within(composer().closest('form')!).getByRole('button', { name: resources.chat.run.label });
+
+    const openWaitingSession = async () => {
+      await holdSession({ isAnonymous: false, emailVerified: true });
+      serveSession(true);
+      server.use(
+        getListMessagesMockHandler([
+          aMessage('m1', 'user', 'Plan me a trip'),
+          { ...aMessage('m2', 'assistant', 'Which month are you going?'), runId: RUN_ID },
+        ]),
+      );
+      await renderPage(`/s/${SESSION_ID}`);
+      return screen.findByText(clarify.label);
+    };
+
+    it('shows the question, that the Run waits for the answer, and how many Steps it has done', async () => {
+      await openWaitingSession();
+
+      expect(screen.getByText('Which month are you going?')).toBeInTheDocument();
+      expect(screen.getByRole('region', { name: resources.chat.run.progress })).toHaveTextContent(
+        'Runwaiting for you · 4 Steps done',
+      );
+      expect(screen.getByText(clarify.waitingTitle)).toBeInTheDocument();
+      expect(screen.getByText(clarify.waitingNote)).toBeInTheDocument();
+      expect(screen.getByText(clarify.answerHint)).toBeInTheDocument();
+    });
+
+    it('takes the next message as the answer: no Run toggle, and the picker is dimmed', async () => {
+      await openWaitingSession();
+
+      expect(runToggle()).toHaveAttribute('aria-disabled', 'true');
+      expect(screen.getByText(resources.chat.run.modelHint)).toBeInTheDocument();
+    });
+
+    it('cancels the waiting Run on its question stream, and stops asking', async () => {
+      const cancelled: string[] = [];
+      server.use(
+        http.post(`${API_ROUTE.replyStream}/cancel`, ({ params }) => {
+          cancelled.push(String(params.streamId));
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+      await openWaitingSession();
+
+      await userEvent.click(screen.getByRole('button', { name: clarify.cancel }));
+
+      await waitFor(() => expect(screen.queryByText(clarify.answerHint)).not.toBeInTheDocument());
+      expect(cancelled).toEqual([QUESTION_STREAM_ID]);
+      expect(screen.queryByText(clarify.waitingTitle)).not.toBeInTheDocument();
+      expect(screen.getByText('Which month are you going?')).toBeInTheDocument();
+      expect(runToggle()).not.toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('sends the next message as the answer and shows the resumed Run, no longer waiting', async () => {
+      const sent: unknown[] = [];
+      server.use(
+        getSendMessageMockHandler(async ({ request }) => {
+          sent.push(await request.json());
+          serveSession(false);
+          return {
+            messageId: '22222222-2222-4222-8222-222222222222',
+            streamId: ANSWER_STREAM_ID,
+            runId: RUN_ID,
+          };
+        }),
+        mockReplyStream(
+          sseFrame('step-started', {
+            stepId: 'out',
+            attempt: 1,
+            phase: 'output',
+            agent: 'output',
+            label: 'Writing the answer',
+            turn: 0,
+            parentStepId: null,
+          }),
+          sseFrame('token', { token: 'Go in September.' }),
+          sseFrame('step-finished', { stepId: 'out', status: 'completed' }),
+          sseFrame('run-finished', { runId: RUN_ID, status: 'completed' }),
+          sseFrame('end', {}),
+        ),
+      );
+      await openWaitingSession();
+
+      await userEvent.type(composer(), 'Mid-September{Enter}');
+
+      expect(await screen.findByText('Go in September.')).toBeInTheDocument();
+      expect(sent).toMatchObject([{ content: 'Mid-September' }]);
+      await waitFor(() => expect(screen.queryByText(clarify.answerHint)).not.toBeInTheDocument());
+      expect(screen.queryByText(clarify.waitingTitle)).not.toBeInTheDocument();
+      expect(screen.getByText('Which month are you going?')).toBeInTheDocument();
     });
   });
 

@@ -36,7 +36,7 @@ describe('parseSseStream', () => {
     await expect(
       collect(
         ': keep-alive\n\n',
-        'event: run-waiting\ndata: {}\n\n',
+        'event: heartbeat\ndata: {}\n\n',
         'event: usage\ndata: {"totalTokens":3}\n\n',
       ),
     ).resolves.toEqual([{ event: 'usage', data: '{"totalTokens":3}' }]);
