@@ -1,3 +1,4 @@
+import { AnswerHintRow } from '@/modules/chat/components/AnswerHintRow';
 import { EmailVerificationPrompt } from '@/modules/auth/components/EmailVerificationPrompt';
 import { ChatComposerFooter } from '@/modules/chat/components/ChatComposerFooter';
 import { ChatInput } from '@/modules/chat/components/ChatInput';
@@ -17,6 +18,7 @@ export const ChatInputBar = ({
   >
     <MessageAllowancePrompt />
     <EmailVerificationPrompt />
+    <AnswerHintRow />
     <ChatInput
       onSendMessage={onSend}
       isLoading={isLoading}

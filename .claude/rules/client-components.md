@@ -38,6 +38,9 @@ paths:
 - **Orchestrator turns (NEB-662).** Once a Run has an Orchestrator turn, `RunStepProgress` lists `RunProgressGroup`s:
   Intake, one per turn with its delegate Steps railed under the turn's Step, then the answer. A Run with no turn
   keeps the flat list. `RunEndLine` names each failed delegate and its turn under a partial answer.
+- **Clarifying question.** The assistant Message of a waiting Run (`useWaitingRun`) shows `RunWaitingRow`, a
+  "Clarifying question" label and `ClarifyingQuestionNote`, with no meta row. `AnswerHintRow` sits above the
+  composer with Cancel Run; `RunToggle` is disabled and `ModelSelect` dimmed until the Run stops waiting.
 - **Command palette.** `Ctrl/⌘ K` opens `modules/commandPalette`. A module adds its actions with
   `useRegisterPaletteActions([...])` (`{ id, group, label, keywords, icon, shortcut?, perform, visible? }`),
   called from a component that is always mounted (see `useSessionPaletteActions`, called by `AppShell`); they

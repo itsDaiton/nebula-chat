@@ -5,10 +5,11 @@ import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { cn } from '@/shared/utils/cn';
 
-/** Sends the next message as a Run; a Guest sees it disabled, with what unlocks it. */
+/** Sends the next message as a Run; disabled for a Guest and while a Run waits for its answer, with why. */
 export const RunToggle = () => {
-  const { canRun, isRunMode, toggleRunMode } = useRunMode();
+  const { canRun, isAnswering, isRunMode, toggleRunMode } = useRunMode();
   const { label, hint, guest } = resources.chat.run;
+  const blocked = isAnswering ? resources.chat.clarify.answerHint : guest;
 
   return (
     <Tooltip>
@@ -33,7 +34,7 @@ export const RunToggle = () => {
         <WorkflowIcon className="size-3.5" />
         {label}
       </TooltipTrigger>
-      <TooltipContent>{canRun ? hint : guest}</TooltipContent>
+      <TooltipContent>{canRun ? hint : blocked}</TooltipContent>
     </Tooltip>
   );
 };
