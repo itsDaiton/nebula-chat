@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.12.1...nebula-chat-worker-v2.0.0) (2026-11-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* **worker:** NEB-349 release the nebula-chat 2.0 worker as a major ([#794](https://github.com/itsDaiton/nebula-chat/issues/794))
+
+### Features
+
+* **worker:** NEB-349 release the nebula-chat 2.0 worker as a major ([#794](https://github.com/itsDaiton/nebula-chat/issues/794)) ([ffd647b](https://github.com/itsDaiton/nebula-chat/commit/ffd647bb6d7fdaec8b605b00d294380d228083f7))
+
 ## [1.12.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.12.0...nebula-chat-worker-v1.12.1) (2026-11-12)
 
 
