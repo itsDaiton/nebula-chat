@@ -4,8 +4,10 @@ const kindOf = ({ phase }: RunStepProgress): RunProgressGroup['kind'] =>
   phase === 'intake' || phase === 'output' ? phase : 'turn';
 
 // Intake first, the turns in order, the answer last.
-const rankOf = ({ kind, turn }: RunProgressGroup) =>
-  kind === 'intake' ? -1 : kind === 'output' ? Infinity : turn;
+const rankOf = ({ kind, turn }: RunProgressGroup) => {
+  if (kind === 'intake') return -1;
+  return kind === 'output' ? Infinity : turn;
+};
 
 // A Step whose parent has not arrived yet is listed at the top level until it does.
 const toRows = (steps: RunStepProgress[]): RunProgressRow[] => {

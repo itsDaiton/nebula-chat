@@ -22,12 +22,13 @@ export const RunProgressGroup = ({ group, isStreaming }: RunProgressGroupProps) 
       <ul>
         {rows.map(({ step, depth }, index) => {
           const hasSibling = (rows[index + 1]?.depth ?? 0) > 0;
+          const rail = hasSibling ? 'mid' : 'last';
           return (
             <RunProgressStep
               key={step.stepId}
               step={step}
               isStreaming={isStreaming}
-              rail={depth === 0 ? undefined : hasSibling ? 'mid' : 'last'}
+              rail={depth === 0 ? undefined : rail}
             />
           );
         })}
