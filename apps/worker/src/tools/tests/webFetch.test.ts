@@ -183,5 +183,25 @@ describe('web_fetch', () => {
         code: 'timeout',
       });
     });
+
+    it('a stopped Run aborts the call, not as a provider error', async () => {
+      const slow = webFetchTool({
+        apiKey: 'k',
+        keyless: false,
+        fetch: hanging(),
+        timeoutMs: 10_000,
+        maxChars: 10_000,
+      });
+      const run = new AbortController();
+      const failure = slow
+        .invoke({ url: 'https://example.com/slow' }, { signal: run.signal })
+        .catch((err: unknown) => err);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      run.abort();
+
+      const error = await failure;
+      expect(error).not.toMatchObject({ code: 'provider-error' });
+      expect(error).not.toMatchObject({ code: 'timeout' });
+    });
   });
 });

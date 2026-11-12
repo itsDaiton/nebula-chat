@@ -47,7 +47,10 @@ const post = async (
   if (!response.ok) {
     throw new WebToolError('provider-error', `The search provider answered ${response.status}.`);
   }
-  return response.json().catch(() => null);
+  return response.json().catch((err) => {
+    if (signal.aborted) throw err;
+    return null;
+  });
 };
 
 /** Tavily's results for `query`, mapped to a compact list; any failure of the provider is a `provider-error`. */
