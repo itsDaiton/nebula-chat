@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.12.0...nebula-chat-worker-v1.12.1) (2026-11-12)
+
+
+### Bug Fixes
+
+* **worker:** NEB-710 web_fetch reads pages through Tavily Extract ([#787](https://github.com/itsDaiton/nebula-chat/issues/787)) ([2fa89b8](https://github.com/itsDaiton/nebula-chat/commit/2fa89b8112ce896b766eb19431e4bda0d5cc09bd))
+
 ## [1.12.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.11.0...nebula-chat-worker-v1.12.0) (2026-10-31)
 
 
