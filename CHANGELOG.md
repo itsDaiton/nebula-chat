@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.10.0...nebula-chat-v6.11.0) (2026-11-12)
+
+
+### Features
+
+* **client:** NEB-652 Run toggle and Step progress in the chat ([#785](https://github.com/itsDaiton/nebula-chat/issues/785)) ([1f717e8](https://github.com/itsDaiton/nebula-chat/commit/1f717e892998713c0e24302f0c1367b9af9ea103))
+
 ## [6.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.9.0...nebula-chat-v6.10.0) (2026-11-11)
 
 
