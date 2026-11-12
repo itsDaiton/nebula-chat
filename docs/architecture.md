@@ -407,8 +407,8 @@ flowchart LR
   without a checkpointer (its tools only read, so a crash re-runs it whole). Each tool call is a
   `tool` Step under the delegate's Step; a tool's failure goes back to the delegate as a typed error
   result. After `RUN_DELEGATE_TOOL_CALL_CAP` calls the delegate is offered no tools, so it answers
-  with what it has. `web_fetch` refuses any URL that is not public HTTP(S): it resolves the hostname
-  itself, checks every address, connects to the checked one and repeats that on each redirect.
+  with what it has. `web_fetch` reads a page through Tavily Extract: the worker never connects to the URL,
+  and refuses any URL that is not HTTP(S) before a request is sent.
 - **Output.** The Output Agent is always the last node. It reads the Brief as JSON and the
   findings, and streams the answer in the Brief's language. Only its tokens reach the stream. The
   answer is persisted as an assistant Message linked to the Run.

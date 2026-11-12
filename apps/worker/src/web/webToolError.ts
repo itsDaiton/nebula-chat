@@ -3,10 +3,7 @@ export type WebToolErrorCode =
   | 'provider-error'
   | 'invalid-url'
   | 'blocked-url'
-  | 'too-many-redirects'
-  | 'too-large'
   | 'timeout'
-  | 'http-error'
   | 'unsupported-content';
 
 /** A web tool's expected failure: it goes back to the calling Agent as an error result, never fails the Run. */

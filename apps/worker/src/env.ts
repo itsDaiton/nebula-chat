@@ -27,10 +27,8 @@ const envSchema = z
     TAVILY_API_KEY: z.string().min(1).optional(),
     // Tavily's keyless access is rate-limited: for local dev, never production.
     TAVILY_KEYLESS: z.stringbool().default(false),
-    WEB_FETCH_MAX_BYTES: z.coerce.number().int().positive().default(2_000_000),
-    // Bounds a whole fetch, redirects and body included, and a search.
+    // Bounds a whole fetch or search.
     WEB_FETCH_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
-    WEB_FETCH_MAX_REDIRECTS: z.coerce.number().int().nonnegative().default(5),
     WEB_FETCH_MAX_CHARS: z.coerce.number().int().positive().default(12_000),
     // The Purge's thresholds (ADR-0028): how long a Pending deletion lasts, how long a Guest may idle.
     PENDING_DELETION_DAYS: z.coerce.number().int().positive().default(30),

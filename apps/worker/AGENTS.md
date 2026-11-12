@@ -86,8 +86,7 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
 - `tools/` — tool definitions only, one file each (`webSearch.ts`, `webFetch.ts`): the LangChain tool, its
   Zod arguments and its config. `worker.ts` builds them into the Run's `Toolbox`; `runs/delegateTool.ts` gives
   a delegate the ones its definition grants, in its own capped loop.
-- `web/` — the web layer the tools call: the Tavily client, the SSRF guard (`addressGuard.ts`), the pinned
-  DNS-and-HTTP transport, the redirect-following page fetch and its text extraction, and `WebToolError`.
+- `web/` — the web layer the tools call: the Tavily client (Search and Extract) and `WebToolError`.
 
 A Run job is retried by BullMQ (`RUN_JOB_ATTEMPTS` and `RUN_JOB_BACKOFF_MS` are the server's env, since the
 server adds the job). `executeRun` starts the graph only on a thread with no checkpoint: pending work resumes
@@ -139,8 +138,8 @@ model (`streamChat`), in-memory Session and Message storage, an in-memory respon
 on the emitted events, the persisted assistant Message, the recorded Model calls and the logged lines.
 `jobs/tests/run.test.ts` does the same for a Run, with scripted models per Agent (the Orchestrator's
 script decides each reply from the messages it is sent), LangGraph's in-memory checkpointer and
-in-memory Run and Step stores, and a Toolbox whose search provider and DNS are faked. Each tool is
-also tested at its own seam (`tools/tests/`), with faked DNS, HTTP and provider responses. `jobs/tests/purge.test.ts` runs the Purge processor over in-memory Users and a fake clock. No test
+in-memory Run and Step stores, and a Toolbox whose search provider is faked. Each tool is
+also tested at its own seam (`tools/tests/`), with faked Tavily responses. `jobs/tests/purge.test.ts` runs the Purge processor over in-memory Users and a fake clock. No test
 reaches Postgres, Redis, a provider or the web.
 
 Coverage excludes construction-only files (`worker.ts`, `env.ts`, `logger.ts`, `db.ts`, `redis.ts`) and

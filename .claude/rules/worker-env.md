@@ -26,11 +26,9 @@ paths:
 | `RUN_HANDOFF_THRESHOLD`                                                                                   | Share of the Run budget that forces the handoff (default `0.85`)                           |
 | `RUN_DELEGATE_TIMEOUT_MS`                                                                                 | How long a delegate Step may take (default `60000`)                                        |
 | `RUN_DELEGATE_TOOL_CALL_CAP`                                                                              | Tool calls one delegate execution may make (default `6`)                                   |
-| `TAVILY_API_KEY`                                                                                          | Tavily key for `web_search`; worker only; always wins if set                               |
-| `TAVILY_KEYLESS`                                                                                          | Search keyless with no key; dev only, rate-limited (`false`)                               |
-| `WEB_FETCH_MAX_BYTES`                                                                                     | Largest page `web_fetch` reads (default `2000000`)                                         |
+| `TAVILY_API_KEY`                                                                                          | Tavily key for `web_search` and `web_fetch`; worker only; always wins if set               |
+| `TAVILY_KEYLESS`                                                                                          | Search and extract keyless with no key; dev only, rate-limited (`false`)                   |
 | `WEB_FETCH_TIMEOUT_MS`                                                                                    | Deadline of one fetch or search (default `10000`)                                          |
-| `WEB_FETCH_MAX_REDIRECTS`                                                                                 | Redirects `web_fetch` follows (default `5`)                                                |
 | `WEB_FETCH_MAX_CHARS`                                                                                     | Text `web_fetch` returns before cutting (default `12000`)                                  |
 | `PENDING_DELETION_DAYS`                                                                                   | Days a Pending deletion lasts before the Purge (default `30`)                              |
 | `GUEST_INACTIVE_DAYS`                                                                                     | Days a Guest may idle before the Purge (default `30`)                                      |
