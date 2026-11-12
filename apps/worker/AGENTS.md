@@ -86,8 +86,7 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
 - `tools/` — tool definitions only, one file each (`webSearch.ts`, `webFetch.ts`): the LangChain tool, its
   Zod arguments and its config. `worker.ts` builds them into the Run's `Toolbox`; `runs/delegateTool.ts` gives
   a delegate the ones its definition grants, in its own capped loop.
-- `web/` — the web layer the tools call: the Tavily client, the SSRF guard (`addressGuard.ts`), the pinned
-  DNS-and-HTTP transport, the redirect-following page fetch and its text extraction, and `WebToolError`.
+- `web/` — the web layer the tools call: the Tavily client (Search and Extract) and `WebToolError`.
 
 A Run job is retried by BullMQ (`RUN_JOB_ATTEMPTS` and `RUN_JOB_BACKOFF_MS` are the server's env, since the
 server adds the job). `executeRun` starts the graph only on a thread with no checkpoint: pending work resumes
