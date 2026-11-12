@@ -55,7 +55,7 @@ describe('RunEndLine', () => {
 
   it('says a stopped Run was cancelled, and what it kept', () => {
     expect(note({ status: 'cancelled', steps: [] })).toHaveTextContent(
-      'Run cancelled. It was stopped before it finished. The Steps it had completed and the answer so far are kept.',
+      'Run cancelled. It was stopped before it finished. The Steps it had completed are kept.',
     );
   });
 

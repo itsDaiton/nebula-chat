@@ -86,8 +86,6 @@ export const resources = {
       stepFailed: ' · failed',
       stepUnfinished: 'Not finished',
       parallel: 'parallel',
-      cancelledReason:
-        'It was stopped before it finished. The Steps it had completed and the answer so far are kept.',
       intakeFailed:
         'An Intake Agent failed, so the answer was written without its part of the Brief.',
     },

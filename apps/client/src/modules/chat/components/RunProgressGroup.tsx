@@ -27,7 +27,7 @@ export const RunProgressGroup = ({ group, isStreaming }: RunProgressGroupProps) 
               key={step.stepId}
               step={step}
               isStreaming={isStreaming}
-              child={depth === 0 ? undefined : hasSibling ? 'mid' : 'last'}
+              rail={depth === 0 ? undefined : hasSibling ? 'mid' : 'last'}
             />
           );
         })}

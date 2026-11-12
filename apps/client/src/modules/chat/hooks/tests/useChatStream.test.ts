@@ -1308,6 +1308,15 @@ describe('useChatStream — a Run', () => {
       expect(reply()).toEqual({ status: 'stopped' });
     });
 
+    it('drops the empty reply of a Run stopped before its first Step', async () => {
+      stoppableRun();
+
+      await stopOnce(() => expect(reply()).toEqual({ status: 'streaming' }));
+
+      expect(history().map(({ role }) => role)).toEqual(['user']);
+      expect(reply()).toEqual({ status: 'stopped' });
+    });
+
     it('keeps the Steps of a Run stopped before it wrote any answer', async () => {
       stoppableRun(...orchestratedRun.slice(0, 7));
 

@@ -43,7 +43,7 @@ export const RunEndLine = ({ run }: RunEndLineProps) => {
   const reason = {
     partial: partialReason(steps),
     failed: end.failedFallback,
-    cancelled: text.cancelledReason,
+    cancelled: end.cancelledReason,
   }[status];
 
   return (

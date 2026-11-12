@@ -617,7 +617,7 @@ describe('ChatPage', () => {
       await userEvent.click(screen.getByRole('button', { name: resources.chat.stopReply }));
 
       expect(await screen.findByRole('note')).toHaveTextContent(
-        `${resources.inspector.run.end.cancelledTitle} ${text.cancelledReason}`,
+        'Run cancelled. It was stopped before it finished. The Steps it had completed are kept.',
       );
       expect(screen.getByText('Keep BullMQ')).toBeInTheDocument();
       expect(within(progress).getByText('cancelled')).toBeInTheDocument();

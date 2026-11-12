@@ -238,12 +238,12 @@ export const useChatStream = ({
     [abort],
   );
 
-  // A reply stopped before its first token persists nothing, so its empty bubble goes too; a Run keeps its Steps.
+  // A reply stopped before its first token persists nothing, so its empty bubble goes too; a Run's Steps stay.
   const dropEmptyReply = useCallback(
     () =>
       setHistory((prev) => {
         const last = prev.at(-1);
-        return last?.role === 'assistant' && last.content === '' && !last.run
+        return last?.role === 'assistant' && last.content === '' && !last.run?.steps.length
           ? prev.slice(0, -1)
           : prev;
       }),

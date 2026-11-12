@@ -55,7 +55,7 @@ export type RunProgressStepProps = {
   step: RunStepProgress;
   isStreaming: boolean;
   /** A delegate under its turn: `last` closes the rail that joins the turn's delegates. */
-  child?: 'mid' | 'last';
+  rail?: 'mid' | 'last';
 };
 
 type RunEndStatus = Extract<RunStatus, 'completed' | 'partial' | 'failed' | 'cancelled'>;
