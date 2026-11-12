@@ -24,12 +24,8 @@ export const RunEndLine = ({ run }: RunEndLineProps) => {
   if (status !== 'partial' && status !== 'failed') return null;
   const { icon: Icon, tone, title } = looks[status];
   const intakeFailed = steps.some((step) => step.phase === 'intake' && step.status === 'failed');
-  const reason =
-    status === 'failed'
-      ? end.failedFallback
-      : intakeFailed
-        ? resources.chat.run.intakeFailed
-        : end.partialFallback;
+  const partialReason = intakeFailed ? resources.chat.run.intakeFailed : end.partialFallback;
+  const reason = status === 'failed' ? end.failedFallback : partialReason;
 
   return (
     <p
