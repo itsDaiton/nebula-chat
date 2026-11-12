@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.12.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.11.1...nebula-chat-v6.12.0) (2026-11-12)
+
+
+### Features
+
+* **client:** NEB-662 Orchestrator turns, delegate Steps and stop for Runs ([#790](https://github.com/itsDaiton/nebula-chat/issues/790)) ([1338958](https://github.com/itsDaiton/nebula-chat/commit/1338958c9bd609cb08a1befd1724e8db33847152))
+
 ## [6.11.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.11.0...nebula-chat-v6.11.1) (2026-11-12)
 
 
