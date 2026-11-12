@@ -85,6 +85,7 @@ export const resources = {
       progress: 'Run progress',
       stepFailed: ' · failed',
       stepUnfinished: 'Not finished',
+      parallel: 'parallel',
       intakeFailed:
         'An Intake Agent failed, so the answer was written without its part of the Brief.',
     },

@@ -88,6 +88,7 @@ beforeEach(() => {
     reply: IDLE_REPLY,
     usage: null,
     sessionId: undefined,
+    streamId: null,
   });
 });
 
@@ -504,6 +505,126 @@ describe('ChatPage', () => {
 
       await waitFor(() => expect(toast).toHaveBeenCalledWith('Runs are for registered users.'));
       expect(composer()).toHaveValue('keep BullMQ?');
+    });
+
+    const turnStep = (stepId: string, turn: number) =>
+      stepStarted(stepId, 'Planning the work', {
+        phase: 'orchestrator',
+        agent: 'orchestrator',
+        turn,
+      });
+    const delegate = (stepId: string, agent: string, label: string, turn: number, parent: string) =>
+      stepStarted(stepId, label, { phase: 'delegate', agent, turn, parentStepId: parent });
+    const stepDone = (stepId: string, status = 'completed') =>
+      sseFrame('step-finished', { stepId, status });
+
+    // Intake, a turn of two delegates, a turn whose critic fails, then the answer starts.
+    const orchestratedSteps = [
+      stepStarted('s1', 'Detecting the language'),
+      stepDone('s1'),
+      turnStep('p1', 1),
+      delegate('a1', 'analyst', 'Analysing', 1, 'p1'),
+      delegate('c1', 'critic', 'Reviewing', 1, 'p1'),
+      stepDone('c1'),
+      stepDone('a1'),
+      stepDone('p1'),
+      turnStep('p2', 2),
+      delegate('c2', 'critic', 'Reviewing', 2, 'p2'),
+      stepDone('c2', 'failed'),
+      stepDone('p2'),
+      stepStarted('out', 'Writing the answer', { phase: 'output', agent: 'output' }),
+      sseFrame('token', { token: 'Keep BullMQ' }),
+    ];
+
+    const groupRows = (progress: HTMLElement, name: string) =>
+      within(within(progress).getByRole('group', { name }))
+        .getAllByRole('listitem')
+        .map((row) => [row.textContent, within(row).getByRole('img').getAttribute('aria-label')]);
+
+    const sendRun = async () => {
+      await holdSession({ isAnonymous: false, emailVerified: true });
+      serveSends();
+      await renderPage(`/s/${SESSION_ID}`);
+      await screen.findByRole('textbox', { name: resources.chat.composer.label });
+      await userEvent.click(runToggle());
+      await userEvent.type(composer(), 'keep BullMQ?{Enter}');
+      return screen.findByRole('region', { name: text.progress });
+    };
+
+    it('groups a Run by Orchestrator turn, with each delegate under its turn, and says why it ended partial', async () => {
+      server.use(
+        mockReplyStream(
+          ...orchestratedSteps,
+          stepDone('out'),
+          sseFrame('run-finished', { runId: RUN_ID, status: 'partial' }),
+          sseFrame('end', {}),
+        ),
+      );
+
+      const progress = await sendRun();
+
+      expect(await screen.findByText('Keep BullMQ')).toBeInTheDocument();
+      expect(
+        within(progress)
+          .getAllByRole('group')
+          .map((group) => group.getAttribute('aria-label')),
+      ).toEqual(['Intake', 'Turn 1', 'Turn 2', 'Answer']);
+      expect(groupRows(progress, 'Turn 1')).toEqual([
+        ['Planning the workorchestrator', 'Completed'],
+        ['Analysinganalyst', 'Completed'],
+        ['Reviewingcritic', 'Completed'],
+      ]);
+      expect(groupRows(progress, 'Turn 2')).toEqual([
+        ['Planning the workorchestrator', 'Completed'],
+        [`Reviewingcritic${text.stepFailed}`, 'Failed'],
+      ]);
+      expect(await screen.findByRole('note')).toHaveTextContent(
+        'Partial answer. Reviewing (critic) failed in turn 2, so the answer was written without it.',
+      );
+    });
+
+    it('stops a Run from the composer, keeping its Steps and the answer so far, and says it was cancelled', async () => {
+      let endIt: () => void = () => undefined;
+      server.use(
+        http.get(API_ROUTE.replyStream, () => {
+          const encoder = new TextEncoder();
+          return new HttpResponse(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(encoder.encode(orchestratedSteps.join('')));
+                endIt = () => {
+                  controller.enqueue(
+                    encoder.encode(
+                      sseFrame('run-finished', { runId: RUN_ID, status: 'cancelled' }) +
+                        sseFrame('end', { reason: 'cancelled' }),
+                    ),
+                  );
+                  controller.close();
+                };
+              },
+            }),
+            { headers: { 'Content-Type': 'text/event-stream' } },
+          );
+        }),
+        http.post(`${API_ROUTE.replyStream}/cancel`, () => {
+          endIt();
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+      const progress = await sendRun();
+      expect(await screen.findByText('Keep BullMQ')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: resources.chat.stopReply }));
+
+      expect(await screen.findByRole('note')).toHaveTextContent(
+        'Run cancelled. It was stopped before it finished. The Steps it had completed are kept.',
+      );
+      expect(screen.getByText('Keep BullMQ')).toBeInTheDocument();
+      expect(within(progress).getByText('cancelled')).toBeInTheDocument();
+      expect(groupRows(progress, 'Turn 1')).toHaveLength(3);
+      expect(groupRows(progress, 'Answer')).toEqual([
+        ['Writing the answeroutput', text.stepUnfinished],
+      ]);
     });
 
     it('shows the Steps of a Run still in flight when its Session is opened', async () => {

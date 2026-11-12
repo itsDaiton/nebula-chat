@@ -9,14 +9,22 @@ const started = {
   phase: 'intake',
   agent: 'language',
   label: 'Detecting',
+  turn: 0,
+  parentStepId: null,
 } as const;
 
 describe('parseRunEvent', () => {
-  it('reads a Step starting, dropping fields the chat does not show', () => {
-    expect(parseRunEvent('step-started', { ...started, turn: 0, parentStepId: null })).toEqual({
+  it('reads a delegate Step starting, with its turn and the Step that launched it', () => {
+    const delegate = { ...started, phase: 'delegate', turn: 2, parentStepId: 'plan-2' };
+
+    expect(parseRunEvent('step-started', { ...delegate, extra: 'ignored' })).toEqual({
       type: 'step-started',
-      ...started,
+      ...delegate,
     });
+  });
+
+  it.each(['turn', 'parentStepId'] as const)('drops a Step starting without its %s', (field) => {
+    expect(parseRunEvent('step-started', { ...started, [field]: undefined })).toBeNull();
   });
 
   it.each([

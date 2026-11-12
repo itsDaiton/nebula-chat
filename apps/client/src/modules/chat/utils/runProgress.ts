@@ -16,6 +16,8 @@ const runEventSchema = z.discriminatedUnion('type', [
     phase: z.enum(StepPhase),
     agent: z.string(),
     label: z.string(),
+    turn: z.number(),
+    parentStepId: z.string().nullable(),
   }),
   z.object({
     type: z.literal('step-finished'),
@@ -56,11 +58,12 @@ export const applyRunEvent = (reply: ChatMessage, event: RunEvent): ChatMessage 
   }
   // The same or a lower attempt is a replay of a Step already shown.
   if (known && event.attempt <= known.attempt) return reply;
-  const { stepId, attempt, phase, agent, label } = event;
+  const { stepId, attempt, phase, agent, label, turn, parentStepId } = event;
+  const step = { stepId, attempt, phase, agent, label, turn, parentStepId };
   return {
     ...reply,
     // A re-run Output Step streams its tokens again, so what it wrote before goes.
     content: known && phase === 'output' ? '' : reply.content,
-    run: withStep(run, { stepId, attempt, phase, agent, label, status: 'running' }),
+    run: withStep(run, { ...step, status: 'running' }),
   };
 };

@@ -33,9 +33,12 @@ State is split by **kind** ([ADR-0012](../../docs/adr/0012-adopt-tanstack-query-
   passes `mode` down to `streamMessage`. A `run` send answers with a `runId`: the hook puts it and an empty
   `run: RunProgress` on the trailing assistant Message and calls `useInspectorStore.showRun`. The stream's
   `step-started`, `step-finished` and `run-finished` frames are validated by `utils/runProgress.ts`
-  (`parseRunEvent`), folded into that Message (`applyRunEvent`: Steps in first-seen order, a higher `attempt`
-  resets the Step and, for the Output Step, the answer) and each invalidates the Run's query, so the Inspector's
-  Run tab follows along. A `403 Forbidden` to a Run send returns the text to the composer and toasts the error.
+  (`parseRunEvent`), folded into that Message (`applyRunEvent`: a flat list of Steps in first-seen order, each
+  keeping its `turn` and `parentStepId`; a higher `attempt` resets the Step in place and, for the Output Step,
+  the answer) and each invalidates the Run's query, so the Inspector's
+  Run tab follows along. The turn grouping is derived from that flat list when rendering
+  (`utils/groupProgressSteps.ts`), never stored. Stop cancels a Run like a Direct reply: `run-finished` sets
+  `cancelled`, and the reply keeps its Steps even when no answer had streamed. A `403 Forbidden` to a Run send returns the text to the composer and toasts the error.
   `useChatSession` clears the Inspector's selected Run when the Session on screen changes.
 
 ## Server state — the generated hooks
