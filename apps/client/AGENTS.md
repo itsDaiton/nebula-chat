@@ -29,11 +29,11 @@ Test commands are in [client-testing](../../.claude/rules/client-testing.md); mo
 `src/` is `main.tsx` / `App.tsx` (mounts TanStack Router's `RouterProvider`), `routeTree.gen.ts` (generated,
 committed, never hand-edited), `resources.ts` (UI strings) and:
 
-- `routes/` — TanStack Router file-based routes (`__root`, the `_app` guard layout holding `auth/*` and `settings` (a redirect to `/` that opens the Settings dialog),
+- `routes/` — TanStack Router file-based routes (`__root`, the `_app` guard layout holding `auth/*`, `device` (where an Admin approves a `nebula login`) and `settings` (a redirect to `/` that opens the Settings dialog),
   the pathless `_app/_chat` layout rendering `AppShell` around `index` and `s/$id`, and `_app/admin/*`, the admin dashboard behind its 2FA guard). `routing/` — router setup, `RootLayout`, search-param helpers.
 - `libs/api/` — the axios instance and SSE fetch mutator (`client.ts`, `streamClient.ts`), the query client,
   and `generated/` (Orval output). `libs/auth/` — the better-auth client, the one auth entry point.
-- `modules/<feature>/` — `admin`, `auth`, `chat`, `commandPalette`, `inspector`, `sessions`, `settings`. Each splits into `components/`, `hooks/`,
+- `modules/<feature>/` — `admin`, `auth`, `chat`, `commandPalette`, `device`, `inspector`, `sessions`, `settings`. Each splits into `components/`, `hooks/`,
   `stores/`, `utils/` and `types/types.ts`, plus its page component.
 - `shared/` — cross-module `components/` (`ui/` holds the shadcn/ui base components, `layout/` the app shell),
   `hooks/`, `stores/`, `pages/`, `types/`, `config/`, `utils/`. `test/` holds the shared test helpers.

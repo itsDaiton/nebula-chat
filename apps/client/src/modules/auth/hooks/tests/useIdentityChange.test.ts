@@ -7,11 +7,16 @@ import { useSettingsDialogStore } from '@/modules/settings/stores/useSettingsDia
 import { createTestQueryClient, renderHookWithQueryClient } from '@/test/render';
 
 const navigate = vi.fn();
+const search = vi.hoisted(() => ({ current: {} as { device?: string } }));
 
-vi.mock('@tanstack/react-router', () => ({ useNavigate: () => navigate }));
+vi.mock('@tanstack/react-router', () => ({
+  useNavigate: () => navigate,
+  useSearch: () => search.current,
+}));
 
 beforeEach(() => {
   vi.clearAllMocks();
+  search.current = {};
   useChatStreamStore.setState({ isMessageAllowanceReached: false });
 });
 
@@ -34,6 +39,15 @@ describe('useIdentityChange', () => {
     act(() => result.current());
 
     expect(navigate).toHaveBeenCalledWith({ to: '/' });
+  });
+
+  it('returns to the CLI code a sign-in was for', () => {
+    search.current = { device: 'WDJB-MJHT' };
+    const { result } = renderHookWithQueryClient(() => useIdentityChange());
+
+    act(() => result.current());
+
+    expect(navigate).toHaveBeenCalledWith({ to: '/device', search: { user_code: 'WDJB-MJHT' } });
   });
 
   it('forgets that the previous Guest reached their message allowance', () => {

@@ -1,13 +1,14 @@
 import { hashKey, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { SESSION_BOOTSTRAP_KEY } from '@/modules/auth/utils/sessionBootstrap';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useSettingsDialogStore } from '@/modules/settings/stores/useSettingsDialogStore';
 
-/** Drops the previous user's server state and returns to the chat root. */
+/** Drops the previous user's server state and returns to the chat root, or to the CLI code a sign-in was for. */
 export const useIdentityChange = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { device } = useSearch({ strict: false });
   const bootstrapHash = hashKey(SESSION_BOOTSTRAP_KEY);
   const clearMessageAllowanceReached = useChatStreamStore(
     (state) => state.clearMessageAllowanceReached,
@@ -21,6 +22,6 @@ export const useIdentityChange = () => {
     clearMessageAllowanceReached();
     // The dialog was the previous user's.
     closeSettings();
-    void navigate({ to: '/' });
+    void navigate(device ? { to: '/device', search: { user_code: device } } : { to: '/' });
   };
 };

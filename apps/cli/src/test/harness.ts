@@ -32,6 +32,10 @@ type HarnessOptions = {
   isTTY?: boolean;
   /** What the operator types at a confirmation prompt; the prompts asked are recorded in `asked`. */
   answer?: boolean;
+  /** `false` is a machine without a keychain (CI, a container): every call to it throws. */
+  keychain?: boolean;
+  /** `false` is a machine with no browser to open. */
+  browser?: boolean;
 };
 
 /** Drives `run(argv, deps)` in-process: a temp home and XDG dir, captured streams, MSW for HTTP. */
@@ -39,6 +43,8 @@ export const createHarness = async ({
   env = {},
   isTTY = false,
   answer = false,
+  keychain = true,
+  browser = true,
 }: HarnessOptions = {}) => {
   const home = await mkdtemp(join(tmpdir(), 'nebula-cli-'));
   tempDirs.push(home);
@@ -47,6 +53,13 @@ export const createHarness = async ({
   const stdout = captureStream(isTTY);
   const stderr = captureStream(isTTY);
   const asked: string[] = [];
+  const secrets = new Map<string, string>();
+  const opened: string[] = [];
+  const slept: number[] = [];
+  // The fake clock: only `sleep` moves it.
+  let now = NOW.getTime();
+  const useKeychain = <T>(use: () => T): Promise<T> =>
+    keychain ? Promise.resolve(use()) : Promise.reject(new Error('no keychain on this machine'));
   const deps: Deps = {
     env: { XDG_CONFIG_HOME: xdgConfigHome, ...env },
     stdout: stdout.stream,
@@ -58,13 +71,30 @@ export const createHarness = async ({
     },
     // Late-bound, so the call goes through the fetch MSW patched.
     fetch: (input, init) => globalThis.fetch(input, init),
-    now: () => NOW,
+    now: () => new Date(now),
     homeDir: home,
+    keychain: {
+      get: (account) => useKeychain(() => secrets.get(account) ?? null),
+      set: (account, secret) => useKeychain(() => void secrets.set(account, secret)),
+      delete: (account) => useKeychain(() => void secrets.delete(account)),
+    },
+    openBrowser: async (url) => {
+      if (!browser) throw new Error('no browser on this machine');
+      opened.push(url);
+    },
+    sleep: async (ms) => {
+      slept.push(ms);
+      now += ms;
+    },
   };
 
   return {
     home,
     configFile,
+    credentialsFile: join(xdgConfigHome, 'nebula-chat', 'credentials.json'),
+    secrets,
+    opened,
+    slept,
     run: (...argv: string[]) => run(argv, deps),
     stdout: stdout.text,
     stderr: stderr.text,
