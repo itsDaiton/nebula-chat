@@ -8,7 +8,7 @@ export const CLI_CLIENT_ID = 'nebula-cli';
 // Where a browser reviews a device code: reading it claims it, so all three are held to the same bar.
 const REVIEW_PATHS = new Set(['/device', '/device/approve', '/device/deny']);
 
-export const CLI_LOGIN_REFUSAL_MESSAGES = {
+const CLI_LOGIN_REFUSAL_MESSAGES = {
   ADMIN_REQUIRED: 'Only an Admin can approve a CLI sign-in.',
   TWO_FACTOR_REQUIRED:
     'Sign in with two-factor authentication on this device to approve a CLI sign-in.',
