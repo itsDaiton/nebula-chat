@@ -1,5 +1,5 @@
 import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
-import type { DeviceRefusal } from '@/modules/device/types/types';
+import type { DeviceRefusal, DeviceReviewer } from '@/modules/device/types/types';
 
 const SERVER_REFUSALS: Partial<Record<string, DeviceRefusal>> = {
   ADMIN_REQUIRED: 'adminRequired',
@@ -7,12 +7,8 @@ const SERVER_REFUSALS: Partial<Record<string, DeviceRefusal>> = {
 };
 
 /** Why this auth session cannot approve, as the client reads it; the server holds the same line. */
-export const sessionRefusal = (auth: {
-  isAdmin: boolean;
-  hasTwoFactor: boolean;
-  isTwoFactorVerified: boolean;
-}): DeviceRefusal | undefined => {
-  if (!auth.isAdmin) return 'adminRequired';
+export const sessionRefusal = (auth: DeviceReviewer): DeviceRefusal | undefined => {
+  if (!auth.isAdmin || !auth.user?.emailVerified) return 'adminRequired';
   if (!auth.hasTwoFactor || !auth.isTwoFactorVerified) return 'twoFactorRequired';
   return undefined;
 };

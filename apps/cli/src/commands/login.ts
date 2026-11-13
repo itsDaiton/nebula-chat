@@ -1,5 +1,5 @@
 import type { Command } from 'commander';
-import { adminTarget } from '@cli/api/admin';
+import { adminTarget, bearerTarget } from '@cli/api/admin';
 import {
   getAuthSessionUser,
   pollDeviceToken,
@@ -75,10 +75,7 @@ export const registerLoginCommands = (program: Command, ctx: Context) => {
 
       const token = await waitForApproval(ctx, target, code);
       const storage = await ctx.credentials.save(profile.url, token);
-      const user = await getAuthSessionUser({
-        ...target,
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const user = await getAuthSessionUser(bearerTarget(ctx, profile, token));
       if (user === null) throw loggedOutError(profile);
 
       ctx.print({
@@ -131,11 +128,7 @@ export const registerLoginCommands = (program: Command, ctx: Context) => {
       }
 
       try {
-        await signOut({
-          baseUrl: profile.url,
-          fetch: ctx.deps.fetch,
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await signOut(bearerTarget(ctx, profile, token));
       } finally {
         // Deleted even when the server can't be reached, so the machine never keeps a token it was told to drop.
         await ctx.credentials.remove(profile.url);

@@ -109,6 +109,12 @@ describe('DevicePage', () => {
     expect(reads).toBe(0);
   });
 
+  it('treats an Admin with an unverified email as not an Admin', async () => {
+    await visitAs({ ...ACTING_ADMIN, emailVerified: false });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(device.adminRequired);
+  });
+
   it.each([
     ['has no two-factor authentication', ADMIN],
     ['signed in without a code', { ...ADMIN, twoFactorEnabled: true, twoFactorVerified: false }],

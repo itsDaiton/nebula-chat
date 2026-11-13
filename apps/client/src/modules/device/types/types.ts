@@ -12,6 +12,14 @@ export type DeviceDecision = 'approve' | 'deny';
 /** Why the signed-in User cannot approve: the server's `ADMIN_REQUIRED` and `TWO_FACTOR_REQUIRED`. */
 export type DeviceRefusal = 'adminRequired' | 'twoFactorRequired';
 
+/** What `useAuth` says about the signed-in User that decides whether they may approve. */
+export type DeviceReviewer = {
+  user: { emailVerified: boolean } | null;
+  isAdmin: boolean;
+  hasTwoFactor: boolean;
+  isTwoFactorVerified: boolean;
+};
+
 export type DeviceReviewProps = { userCode: string };
 
 export type DeviceRequestCardProps = {

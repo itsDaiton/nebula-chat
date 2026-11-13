@@ -14,7 +14,7 @@ const { device } = resources;
 export const DeviceReview = ({ userCode }: DeviceReviewProps) => {
   const request = useDeviceRequest(userCode);
   const decision = useDeviceDecision(userCode);
-  const secondsLeft = useSecondsLeft(request.data?.expires_at ?? '');
+  const secondsLeft = useSecondsLeft(request.data?.expires_at);
 
   if (decision.isSuccess) {
     const approved = decision.variables === 'approve';
