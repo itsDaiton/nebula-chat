@@ -74,9 +74,9 @@ export const registerLoginCommands = (program: Command, ctx: Context) => {
       ctx.deps.stderr.write('Waiting for approval…\n');
 
       const token = await waitForApproval(ctx, target, code);
-      const storage = await ctx.credentials.save(profile.url, token);
       const user = await getAuthSessionUser(bearerTarget(ctx, profile, token));
       if (user === null) throw loggedOutError(profile);
+      const storage = await ctx.credentials.save(profile.url, token);
 
       ctx.print({
         data: { profile: profile.name, url: profile.url, user, storage },

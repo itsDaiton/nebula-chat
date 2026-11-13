@@ -126,6 +126,18 @@ describe('nebula login', () => {
     expect(cli.secrets.size).toBe(0);
   });
 
+  it('stores nothing when the server does not know the token it just issued', async () => {
+    const cli = await createHarness();
+    await cli.writeConfig(PROFILE);
+    scriptDeviceFlow([{ status: 200, body: approved }]);
+    serveAuthSession(null);
+
+    const code = await cli.run('login');
+
+    expect(code).toBe(3);
+    expect(cli.secrets.size).toBe(0);
+  });
+
   it('exits 3 when the server says the code expired', async () => {
     const cli = await createHarness();
     await cli.writeConfig(PROFILE);

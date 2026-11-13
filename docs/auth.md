@@ -438,7 +438,8 @@ sequenceDiagram
 
 - **Only an acting Admin reviews a code.** `cliLoginPlugin` (`libs/auth/src/cliLogin.ts`) holds
   `GET /device`, `/device/approve` and `/device/deny` to the admin gate's own conditions, read past the cookie
-  cache: anyone else gets `403` `ADMIN_REQUIRED` or `TWO_FACTOR_REQUIRED`. Reading a code claims it for
+  cache: anyone else gets `403` `ADMIN_REQUIRED` or `TWO_FACTOR_REQUIRED`, and no auth session gets `401`
+  `AUTHENTICATION_REQUIRED` (the plugin's own read trusts the cookie cache, which outlives a revoked session). Reading a code claims it for
   that Admin, which is why the read is guarded too.
 - **The CLI's auth session is an ordinary one**, marked `twoFactorVerified` when the code is traded for
   it: it inherits the second factor of the session that approved it, so the admin gate applies unchanged

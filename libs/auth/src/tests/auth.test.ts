@@ -343,6 +343,27 @@ describe('createAuth CLI login (device authorization)', () => {
     expect(await response.json()).toMatchObject({ error: 'invalid_client' });
   });
 
+  // The database is `{}` here: reaching the plugin's own handler would fail, so a 401 proves the guard answered first.
+  it.each([
+    ['GET', '/device?user_code=WDJB-MJHT'],
+    ['POST', '/device/approve'],
+    ['POST', '/device/deny'],
+  ])(
+    'refuses %s %s without an auth session before the plugin reads the code',
+    async (method, path) => {
+      const response = await buildAuth().handler(
+        new Request(`http://localhost:3000/api/auth${path}`, {
+          method,
+          headers: { 'content-type': 'application/json', origin: 'http://localhost:5173' },
+          ...(method === 'POST' && { body: JSON.stringify({ userCode: 'WDJB-MJHT' }) }),
+        }),
+      );
+
+      expect(response.status).toBe(401);
+      expect(await response.json()).toMatchObject({ code: 'AUTHENTICATION_REQUIRED' });
+    },
+  );
+
   it('accepts the auth session token as a bearer token', () => {
     expect(findPlugin('cli-bearer')).toBeDefined();
     expect(findPlugin('bearer')).toBeUndefined();

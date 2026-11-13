@@ -45,8 +45,13 @@ type HookContext = Parameters<Parameters<typeof createAuthMiddleware>[0]>[0];
 const requireActingAdmin = async (ctx: HookContext) => {
   // Past the cookie cache, so a revoked role or a ban applies at once.
   const authSession = await getSessionFromCtx(ctx, { disableCookieCache: true });
-  // Signed out is the plugin's own answer: a bare status for a read, a 401 for a decision.
-  if (!authSession) return;
+  // Refused here, not left to the plugin: its own read trusts the cookie cache, which outlives a revoked auth session.
+  if (!authSession) {
+    throw APIError.from('UNAUTHORIZED', {
+      code: 'AUTHENTICATION_REQUIRED',
+      message: 'Sign in to review a CLI sign-in.',
+    });
+  }
   // better-auth types the session without plugin fields.
   const refusal = findCliLoginRefusal(authSession as CliLoginReviewer);
   if (refusal) {
