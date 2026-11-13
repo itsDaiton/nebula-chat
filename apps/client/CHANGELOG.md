@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.12.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.11.0...nebula-chat-client-v3.12.0) (2026-11-12)
+
+
+### Features
+
+* **client:** show a Run's Clarifying question in the chat ([#792](https://github.com/itsDaiton/nebula-chat/issues/792)) ([0019bd2](https://github.com/itsDaiton/nebula-chat/commit/0019bd2c7dc0d9f43e174c672f700be9ecb706ee))
+
 ## [3.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.10.0...nebula-chat-client-v3.11.0) (2026-11-12)
 
 

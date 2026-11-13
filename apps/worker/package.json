@@ -1,6 +1,6 @@
 {
   "name": "@nebula-chat/worker",
-  "version": "1.12.1",
+  "version": "2.0.0",
   "description": "BullMQ worker that produces every LLM reply: Direct replies and orchestrated Runs, streamed over Redis Streams",
   "private": true,
   "packageManager": "pnpm@12.4.1",
