@@ -118,6 +118,8 @@ export type AuthFormAlertProps = {
 export type AuthLayoutProps = {
   children: ReactNode;
   footer?: ReactNode;
+  /** The CLI device page's card is 420px wide, not 380px. */
+  wide?: boolean;
 };
 
 export type AuthHeadingProps = {

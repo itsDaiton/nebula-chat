@@ -5,6 +5,7 @@ import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/a
 import {
   admin,
   anonymous,
+  deviceAuthorization,
   haveIBeenPwned,
   isPasswordCompromised,
   openAPI,
@@ -16,6 +17,7 @@ import {
   account,
   verification,
   twoFactor as twoFactorTable,
+  deviceCode,
 } from '@nebula-chat/db';
 import { adminAc, defaultAc, userAc } from 'better-auth/plugins/admin/access';
 import { deleteSessionCookie } from 'better-auth/cookies';
@@ -25,6 +27,7 @@ import type { AuthStore } from '@nebula-chat/redis';
 import type { Logger } from '@nebula-chat/otel';
 import { passwordResetEmail, verificationEmail } from './authEmails';
 import { claimSessions } from './claim';
+import { CLI_CLIENT_ID, cliBearerPlugin, cliLoginPlugin } from './cliLogin';
 import { toBetterAuthLogHandler } from './logger';
 import { markEmailVerified } from './markEmailVerified';
 import {
@@ -79,6 +82,8 @@ export type CreateAuthConfig = {
   sendEmail: EmailSender;
   /** Client page an OAuth callback that cannot reach its own `errorCallbackURL` redirects to. */
   errorURL?: string;
+  /** Client page where an Admin approves a `nebula login`; the device flow's verification URL. */
+  deviceVerificationURL?: string;
   /** OAuth apps for social sign-in; a provider left out is not offered (`PROVIDER_NOT_FOUND`). */
   socialProviders?: SocialProviderCredentials;
   /** Deletes what a deleted User kept outside Postgres, once the row is gone; a rejection is only logged. */
@@ -189,6 +194,7 @@ export const createAuth = ({
   trustedOrigins,
   sendEmail,
   errorURL,
+  deviceVerificationURL,
   socialProviders = {},
   onUserDeleted,
 }: CreateAuthConfig): Auth =>
@@ -204,7 +210,7 @@ export const createAuth = ({
     },
     database: drizzleAdapter(db, {
       provider: 'pg',
-      schema: { users, session, account, verification, twoFactor: twoFactorTable },
+      schema: { users, session, account, verification, twoFactor: twoFactorTable, deviceCode },
     }),
     user: {
       modelName: 'users',
@@ -409,6 +415,17 @@ export const createAuth = ({
       adminTrustDevicePlugin(),
       // After `twoFactor`, so its hooks see the sign-in once the plugin has had its say.
       pendingDeletionSignInPlugin(db),
+      // The CLI has no cookie jar: it sends its auth session token as a bearer token.
+      cliBearerPlugin(),
+      // `nebula login` (ADR-0029): the CLI polls every 5 seconds for a code that lasts 10 minutes.
+      deviceAuthorization({
+        expiresIn: '10m',
+        interval: '5s',
+        validateClient: (clientId) => clientId === CLI_CLIENT_ID,
+        ...(deviceVerificationURL && { verificationUri: deviceVerificationURL }),
+      }),
+      // After `deviceAuthorization`, so its hooks see what the plugin answered.
+      cliLoginPlugin(),
     ],
   }) as unknown as Auth;
 

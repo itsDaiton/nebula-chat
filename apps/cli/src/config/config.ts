@@ -44,13 +44,15 @@ export const loadConfig = async (path: string): Promise<Config> => {
 };
 
 /** Written owner-only and swapped in by rename, so a crash mid-write never leaves half a file. */
-export const saveConfig = async (path: string, config: Config) => {
+export const savePrivateJson = async (path: string, value: unknown) => {
   await mkdir(dirname(path), { recursive: true, mode: 0o700 });
   const temp = `${path}.${process.pid}.tmp`;
-  await writeFile(temp, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
+  await writeFile(temp, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o600 });
   await chmod(temp, 0o600);
   await rename(temp, path);
 };
+
+export const saveConfig = (path: string, config: Config) => savePrivateJson(path, config);
 
 /** The `--profile` one if given, else the default one. */
 export const resolveProfile = (config: Config, requested: string | undefined): CliProfile => {

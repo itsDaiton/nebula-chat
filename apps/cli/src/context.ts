@@ -1,4 +1,5 @@
 import { configFilePath, loadConfig, resolveProfile } from '@cli/config/config';
+import { createCredentialStore } from '@cli/credentials/credentials';
 import { print, type Result } from '@cli/output/print';
 import type { Deps } from '@cli/run';
 
@@ -10,6 +11,7 @@ export const createContext = (deps: Deps, options: () => GlobalOptions) => {
   return {
     deps,
     configFile,
+    credentials: createCredentialStore(deps.keychain, configFile),
     profile: async () => resolveProfile(await loadConfig(configFile), options().profile),
     print: (result: Result) =>
       print(result, {

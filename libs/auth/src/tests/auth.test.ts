@@ -55,6 +55,7 @@ const buildAuth = (socialProviders?: CreateAuthConfig['socialProviders']) =>
     trustedOrigins: ['http://localhost:5173'],
     sendEmail: vi.fn(),
     errorURL: 'http://localhost:5173/auth',
+    deviceVerificationURL: 'http://localhost:5173/device',
     socialProviders,
   });
 
@@ -311,5 +312,45 @@ describe('createAuth admin and two-factor plugins', () => {
     });
 
     expect(session).toMatchObject({ twoFactorVerified: true });
+  });
+});
+
+describe('createAuth CLI login (device authorization)', () => {
+  const findPlugin = (id: string) =>
+    buildAuth().options.plugins?.find((plugin) => plugin.id === id);
+
+  const requestDeviceCode = (clientId: string) =>
+    buildAuth().handler(
+      new Request('http://localhost:3000/api/auth/device/code', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ client_id: clientId }),
+      }),
+    );
+
+  it('sends the Admin to the client device page, polling every 5 seconds for 10 minutes', () => {
+    expect(findPlugin('device-authorization')?.options).toMatchObject({
+      verificationUri: 'http://localhost:5173/device',
+      interval: '5s',
+      expiresIn: '10m',
+    });
+  });
+
+  it('gives no device code to a client other than the CLI', async () => {
+    const response = await requestDeviceCode('someone-else');
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: 'invalid_client' });
+  });
+
+  it('accepts the auth session token as a bearer token', () => {
+    expect(findPlugin('cli-bearer')).toBeDefined();
+    expect(findPlugin('bearer')).toBeUndefined();
+  });
+
+  it("runs the CLI login hooks after the device plugin's", () => {
+    const ids = buildAuth().options.plugins?.map((plugin) => plugin.id) ?? [];
+
+    expect(ids.indexOf('cli-login')).toBeGreaterThan(ids.indexOf('device-authorization'));
   });
 });
