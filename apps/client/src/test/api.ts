@@ -34,6 +34,9 @@ export const API_ROUTE = {
   authTwoFactorDisable: '*/api/auth/two-factor/disable',
   authTwoFactorBackupCodes: '*/api/auth/two-factor/generate-backup-codes',
   authListAccounts: '*/api/auth/list-accounts',
+  authDevice: '*/api/auth/device',
+  authDeviceApprove: '*/api/auth/device/approve',
+  authDeviceDeny: '*/api/auth/device/deny',
   authSendVerificationEmail: '*/api/auth/send-verification-email',
 } as const;
 

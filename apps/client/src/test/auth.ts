@@ -115,6 +115,32 @@ export const mockSocialSignIn = (onRequest: OnRequest = () => {}): HttpHandler =
     return HttpResponse.json({ url: providerConsentUrl(), redirect: true });
   });
 
+/** A device code as the Admin reviewing it reads it on `device`: pending, from the CLI, ten minutes left. */
+export const aDeviceRequest = (overrides: Record<string, unknown> = {}) => ({
+  user_code: 'WDJB-MJHT',
+  status: 'pending',
+  client_id: 'nebula-cli',
+  scope: null,
+  expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
+  ...overrides,
+});
+
+/** Answers the `device` read with `body`, calling `onRequest` first. */
+export const mockDeviceRequest = (
+  body: JsonBodyType = aDeviceRequest(),
+  onRequest: OnRequest = () => {},
+): HttpHandler =>
+  http.get(API_ROUTE.authDevice, async ({ request }) => {
+    await onRequest(request);
+    return HttpResponse.json(body);
+  });
+
+/** Approves a device code on `device/approve`, calling `onRequest` first. */
+export const mockDeviceApprove = mockAuthPost(API_ROUTE.authDeviceApprove, { success: true });
+
+/** Denies a device code on `device/deny`, calling `onRequest` first. */
+export const mockDeviceDeny = mockAuthPost(API_ROUTE.authDeviceDeny, { success: true });
+
 /** Ends the session on `sign-out`, calling `onRequest` first. */
 export const mockSignOut = mockAuthPost(API_ROUTE.authSignOut, { success: true });
 

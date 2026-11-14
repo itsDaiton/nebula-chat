@@ -13,6 +13,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppChatRouteImport } from './routes/_app/_chat'
 import { Route as AppAdminRouteRouteImport } from './routes/_app/admin/route'
 import { Route as AppAuthRouteRouteImport } from './routes/_app/auth/route'
+import { Route as AppDeviceRouteImport } from './routes/_app/device'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppChatIndexRouteImport } from './routes/_app/_chat/index'
 import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
@@ -39,6 +40,11 @@ const AppAdminRouteRoute = AppAdminRouteRouteImport.update({
 const AppAuthRouteRoute = AppAuthRouteRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDeviceRoute = AppDeviceRouteImport.update({
+  id: '/device',
+  path: '/device',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppChatIndexRoute
   '/admin': typeof AppAdminRouteRouteWithChildren
   '/auth': typeof AppAuthRouteRouteWithChildren
+  '/device': typeof AppDeviceRoute
   '/settings': typeof AppSettingsRoute
   '/admin/audit': typeof AppAdminAuditRoute
   '/auth/forgot-password': typeof AppAuthForgotPasswordRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof AppChatIndexRoute
+  '/device': typeof AppDeviceRoute
   '/settings': typeof AppSettingsRoute
   '/admin/audit': typeof AppAdminAuditRoute
   '/auth/forgot-password': typeof AppAuthForgotPasswordRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/_app/admin': typeof AppAdminRouteRouteWithChildren
   '/_app/auth': typeof AppAuthRouteRouteWithChildren
   '/_app/_chat': typeof AppChatRouteWithChildren
+  '/_app/device': typeof AppDeviceRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/admin/audit': typeof AppAdminAuditRoute
   '/_app/auth/forgot-password': typeof AppAuthForgotPasswordRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/device'
     | '/settings'
     | '/admin/audit'
     | '/auth/forgot-password'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/device'
     | '/settings'
     | '/admin/audit'
     | '/auth/forgot-password'
@@ -158,6 +169,7 @@ export interface FileRouteTypes {
     | '/_app/admin'
     | '/_app/auth'
     | '/_app/_chat'
+    | '/_app/device'
     | '/_app/settings'
     | '/_app/admin/audit'
     | '/_app/auth/forgot-password'
@@ -201,6 +213,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AppAuthRouteRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/device': {
+      id: '/_app/device'
+      path: '/device'
+      fullPath: '/device'
+      preLoaderRoute: typeof AppDeviceRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/settings': {
@@ -318,6 +337,7 @@ interface AppRouteChildren {
   AppAdminRouteRoute: typeof AppAdminRouteRouteWithChildren
   AppAuthRouteRoute: typeof AppAuthRouteRouteWithChildren
   AppChatRoute: typeof AppChatRouteWithChildren
+  AppDeviceRoute: typeof AppDeviceRoute
   AppSettingsRoute: typeof AppSettingsRoute
 }
 
@@ -325,6 +345,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminRouteRoute: AppAdminRouteRouteWithChildren,
   AppAuthRouteRoute: AppAuthRouteRouteWithChildren,
   AppChatRoute: AppChatRouteWithChildren,
+  AppDeviceRoute: AppDeviceRoute,
   AppSettingsRoute: AppSettingsRoute,
 }
 

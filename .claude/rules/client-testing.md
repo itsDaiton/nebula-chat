@@ -40,7 +40,7 @@ pnpm frontend test:coverage
   `mockEmailSignUp`, `mockTwoFactorSignIn` (a sign-in held back for a second factor), `mockBackupCodeVerify`,
   `mockRestoreAccount`, `mockSocialSignIn` (its redirect is a hash change to `providerConsentUrl()`, the one
   navigation jsdom performs), `mockSignOut`, `mockRequestPasswordReset`, `mockResetPassword`, `mockChangePassword`, `mockUpdateUser`, `mockRevokeSessions`, `mockDeleteUser`, `mockListAccounts`,
-  `mockSendVerificationEmail`) plus `refreshSession`, which refetches better-auth's module-level session
+  `mockSendVerificationEmail`, `aDeviceRequest` with `mockDeviceRequest`, `mockDeviceApprove` and `mockDeviceDeny` for the CLI device page) plus `refreshSession`, which refetches better-auth's module-level session
   store after a render, and `holdSession`, which serves a session and waits until that store holds it. Regenerate with `pnpm frontend generate:api` after any backend change.
 
 - **The model catalog is served by default.** The shared MSW server starts with `getGetModelCatalogMockHandler(testCatalog)`

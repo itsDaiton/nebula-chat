@@ -291,6 +291,20 @@ describe('auth catch-all route delegation (GET|POST /api/auth/*)', () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ ok: true });
   });
+
+  // `nebula login` (NEB-563): the device flow is better-auth's own, reached through the catch-all.
+  it.each([
+    ['POST', '/api/auth/device/code'],
+    ['POST', '/api/auth/device/token'],
+    ['GET', '/api/auth/device?user_code=WDJB-MJHT'],
+    ['POST', '/api/auth/device/approve'],
+    ['POST', '/api/auth/device/deny'],
+  ] as const)('passes the device flow %s %s through to the handler', async (method, url) => {
+    const res = await app.inject({ method, url, ...(method === 'POST' && { payload: {} }) });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ ok: true });
+  });
 });
 
 describe('auth catch-all blocks the admin plugin (ADR-0027 §6)', () => {

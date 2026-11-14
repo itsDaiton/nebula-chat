@@ -117,7 +117,7 @@ Someone running a deployment rather than using it: holds the operator token and 
 _Avoid_: Admin (an Admin is a User with elevated rights; operating is not a kind of User).
 
 **CLI profile**:
-A named deployment the `nebula` CLI talks to (for example `local` or `prod`): just a server URL, one of them the default. Holds no credentials.
+A named deployment the `nebula` CLI talks to (for example `local` or `prod`): just a server URL, one of them the default. Holds no credentials; a CLI login is kept apart, keyed by the server URL.
 _Avoid_: Profile on its own (reads as a User's profile or Profile image), environment, context.
 
 ### Orchestration

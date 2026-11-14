@@ -5,7 +5,9 @@ import { optionalSearchError, optionalSearchText } from '@/routing/searchParams'
 
 // `error` and `error_description`: what better-auth's `errorCallbackURL` adds after a failed social sign-in.
 // `pending` and `restoreToken`: a social sign-in found the User in Pending deletion (the Purge date, the restore token).
+// `device`: the CLI code a Guest came to approve; signing in returns to `/device` with it.
 const searchSchema = z.object({
+  device: optionalSearchText(),
   error: optionalSearchError(),
   error_description: optionalSearchText(),
   pending: optionalSearchText(),

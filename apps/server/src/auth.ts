@@ -21,6 +21,8 @@ export const auth: AuthInstance = createAuth({
   sendEmail: createResendEmailSender({ apiKey: env.RESEND_API_KEY, from: env.EMAIL_FROM }),
   // A failed social sign-in lands on the client's auth page, which explains its `?error=`.
   errorURL: new URL('/auth', env.CLIENT_URL).href,
+  // Where `nebula login` sends the Admin to approve its code.
+  deviceVerificationURL: new URL('/device', env.CLIENT_URL).href,
   socialProviders: socialProvidersFromEnv(env),
   // A deleted User's uploaded Profile image goes with them; a failed delete is only logged.
   onUserDeleted: deleteProfileImageOfDeletedUser(profileImageStore, logger),

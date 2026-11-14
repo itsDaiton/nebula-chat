@@ -29,6 +29,10 @@ coverage and knip. A route file only wires a page: the component lives in `modul
   Admin without it is redirected to `/` with Settings open on Security; everyone else gets `notFound()`. A new admin
   page is a child route here, listed in `modules/admin/utils/adminNavigation.ts`; `hasDetail` there decides whether the
   right panel and its toggle exist.
+- **Device guard.** `routes/_app/device.tsx` (`/device?user_code=…`) runs `requireSignedIn`
+  (`modules/device/utils/deviceGuard.ts`): a Guest is redirected to `/auth?device=<code>`, and `useIdentityChange`
+  returns a sign-in made there to `/device` with the code. The page itself explains why a non-Admin, or an Admin
+  whose auth session has not passed 2FA, cannot approve.
 - **Loaders.** A loader prefetches through the existing query client:
   `context.queryClient.ensureQueryData(getGetSessionQueryOptions(id))`. Components keep using the generated
   hooks. A prefetch whose failure the page shows itself sets `meta: { inlineError: true }`
