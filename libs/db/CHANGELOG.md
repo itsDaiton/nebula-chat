@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v1.9.0...nebula-chat-db-v1.10.0) (2026-11-14)
+
+
+### Features
+
+* **cli:** NEB-563 nebula login, whoami, logout and the /device page ([#796](https://github.com/itsDaiton/nebula-chat/issues/796)) ([891eaea](https://github.com/itsDaiton/nebula-chat/commit/891eaeaa1b6c084b76f0f4a4a486f118d273e1ca))
+
 ## [1.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v1.8.0...nebula-chat-db-v1.9.0) (2026-10-31)
 
 
