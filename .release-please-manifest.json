@@ -1,5 +1,5 @@
 {
-  ".": "7.2.0",
+  ".": "7.3.0",
   "apps/client": "3.14.0",
   "apps/server": "4.22.0",
   "libs/db": "1.10.0",
@@ -8,7 +8,7 @@
   "libs/redis": "0.2.10",
   "libs/auth": "3.5.0",
   "libs/errors": "0.2.6",
-  "apps/cli": "1.10.0",
+  "apps/cli": "1.11.0",
   "libs/contracts": "1.9.0",
   "apps/worker": "2.0.0"
 }

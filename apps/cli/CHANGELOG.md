@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.10.0...nebula-chat-cli-v1.11.0) (2026-11-15)
+
+
+### Features
+
+* **cli:** NEB-564 nebula users list and show ([#802](https://github.com/itsDaiton/nebula-chat/issues/802)) ([e0393ae](https://github.com/itsDaiton/nebula-chat/commit/e0393aee40f80613ca69a8abc626d3f5f61e2788))
+
 ## [1.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.9.0...nebula-chat-cli-v1.10.0) (2026-11-15)
 
 
