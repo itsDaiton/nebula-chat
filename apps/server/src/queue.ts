@@ -58,14 +58,42 @@ const publish = async (
   );
 };
 
+// Render's edge can answer 429 or 5xx without waking the service, so one miss is retried.
+const PING_ATTEMPTS = 3;
+const PING_RETRY_DELAY_MS = 5_000;
+const PING_DIAGNOSTIC_HEADERS = ['server', 'retry-after', 'via', 'x-render-routing', 'cf-ray'];
+
+const isTransient = (status: number): boolean => status === 429 || status >= 500;
+
+// Names who answered: the log catalogue has no keys for it, so it rides in the error message.
+const describeAnswer = async (res: Response): Promise<string> => {
+  const headers = PING_DIAGNOSTIC_HEADERS.flatMap((name) => {
+    const value = res.headers.get(name);
+    return value ? [`${name}: ${value}`] : [];
+  });
+  const body = (await res.text().catch(() => '')).slice(0, 200);
+  return [...headers, ...(body ? [`body: ${body}`] : [])].join(', ');
+};
+
+const pingOnce = async (): Promise<Response> =>
+  fetch(new URL('/health', env.WORKER_URL), {
+    signal: AbortSignal.timeout(WORKER_PING_TIMEOUT_MS),
+  });
+
 // Wakes a sleeping free-plan worker (ADR-0013). Never rejects: a failed ping is only logged,
 // since the job waits in the queue either way.
 export const pingWorker = async (logger: EventLogger<'warn'>): Promise<void> => {
   try {
-    const res = await fetch(new URL('/health', env.WORKER_URL), {
-      signal: AbortSignal.timeout(WORKER_PING_TIMEOUT_MS),
-    });
-    if (!res.ok) throw new Error(`Worker /health answered ${res.status}`);
+    for (let attempt = 1; ; attempt += 1) {
+      const res = await pingOnce();
+      if (res.ok) return;
+      if (attempt < PING_ATTEMPTS && isTransient(res.status)) {
+        await new Promise((resolve) => setTimeout(resolve, PING_RETRY_DELAY_MS));
+        continue;
+      }
+      const detail = await describeAnswer(res);
+      throw new Error(`Worker /health answered ${res.status}${detail ? ` (${detail})` : ''}`);
+    }
   } catch (err) {
     logEvent(
       logger,
