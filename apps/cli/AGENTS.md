@@ -12,6 +12,8 @@ pnpm nebula profile use prod
 pnpm nebula login                                            # approve the printed code in the browser as an Admin
 pnpm nebula whoami
 pnpm nebula logout
+pnpm nebula users list --status banned --json | jq .
+pnpm nebula users show dana@example.com
 NEBULA_OPERATOR_TOKEN=… pnpm nebula --profile local log-level set redis debug --ttl 600
 NEBULA_OPERATOR_TOKEN=… pnpm nebula --profile local log-level get
 NEBULA_OPERATOR_TOKEN=… pnpm nebula admins grant dana@example.com   # how the first Admin is made
@@ -31,6 +33,7 @@ pnpm nebula --json profile list | jq .
     even when the server can't be reached.
   - Admin routes take `adminTarget(ctx)` (`src/api/admin.ts`): the profile plus `Authorization: Bearer <token>`.
     better-auth's own routes are not in `openapi.yaml`, so `src/api/auth.ts` calls them through `apiFetch` by hand.
+- **`users list`** takes `--search`, `--status` (repeatable), `--sort`, `--limit` and `--cursor`; Guests are left out unless `--status guest`. The next cursor goes to stderr as a `--cursor` hint (`--json` carries `nextCursor`). **`users show <id|email>`** resolves an email through the list's search; unknown exits `1`. A `401` or `TwoFactorRequired` exits `3`.
 - **The operator token** is read only from `NEBULA_OPERATOR_TOKEN` and never written to disk. `log-level set` records `--operator`, else `$NEBULA_OPERATOR`, else `$USER`, as who asked.
 - **`--service server|worker`** on `log-level get` and `set` picks whose levels (default `server`). `receivers: 0` for the worker means none is awake: on the free plan it sleeps when idle.
 - **`log-level get`** prints one row per instance and target (the root, then every component): its level, when a runtime change expires, and who set it (`-` at the boot-time level).
