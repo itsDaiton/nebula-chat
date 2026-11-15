@@ -163,7 +163,7 @@ export const resources = {
     handled: 'This code was already approved or denied. Run nebula login again.',
     adminRequired: 'Only an Admin can approve a CLI sign-in. Your account is not an Admin.',
     twoFactorRequired:
-      'This sign-in has not passed two-factor authentication. Open Settings, then Security, and verify a code from your authenticator app. Then open the link again.',
+      'This sign-in has not passed two-factor authentication. Open Settings, then Security. Turn on two-factor authentication if it is off, then verify a code from your authenticator app. Then open the link again.',
     failed: "We couldn't record your decision. Try again.",
   },
   auth: {
