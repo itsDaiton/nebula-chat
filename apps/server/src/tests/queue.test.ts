@@ -165,15 +165,58 @@ describe('pingWorker', () => {
     expect(eventLines(lines, 'worker.ping.failed')).toMatchObject([{ level: LEVEL.warn }]);
   });
 
-  it('counts an unhealthy answer as a failed ping', async () => {
-    fetchMock.mockResolvedValue(new Response('', { status: 503 }));
+  it('counts an unhealthy answer as a failed ping, without retrying a permanent one', async () => {
+    fetchMock.mockResolvedValue(new Response('', { status: 404 }));
     const { logger, lines } = captureLogger();
 
     await pingWorker(logger);
 
+    expect(fetchMock).toHaveBeenCalledOnce();
     expect(eventLines(lines, 'worker.ping.failed')).toMatchObject([
-      { err: expect.objectContaining({ message: 'Worker /health answered 503' }) },
+      { err: expect.objectContaining({ message: 'Worker /health answered 404' }) },
     ]);
+  });
+
+  describe('when the edge answers 429 or 5xx instead of waking the worker', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it('tries again and stays quiet once the worker answers', async () => {
+      fetchMock
+        .mockResolvedValueOnce(new Response('slow down', { status: 429 }))
+        .mockResolvedValueOnce(new Response('{"status":"ok"}', { status: 200 }));
+      const { logger, lines } = captureLogger();
+
+      const done = pingWorker(logger);
+      await vi.runAllTimersAsync();
+      await done;
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(lines).toEqual([]);
+    });
+
+    it('gives up after three tries and logs who answered', async () => {
+      fetchMock.mockImplementation(async () =>
+        Response.json(
+          { error: 'rate limited' },
+          { status: 429, headers: { server: 'cloudflare' } },
+        ),
+      );
+      const { logger, lines } = captureLogger();
+
+      const done = pingWorker(logger);
+      await vi.runAllTimersAsync();
+      await done;
+
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      const [line] = eventLines(lines, 'worker.ping.failed');
+      expect(eventLines(lines, 'worker.ping.failed')).toHaveLength(1);
+      expect(line).toMatchObject({
+        err: expect.objectContaining({
+          message: expect.stringMatching(/answered 429.*server: cloudflare.*rate limited/s),
+        }),
+      });
+    });
   });
 
   it('logs nothing when the worker answers', async () => {
