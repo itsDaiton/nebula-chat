@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.3.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.1...nebula-chat-v7.3.2) (2026-11-15)
+
+
+### Bug Fixes
+
+* **client:** NEB-804 let a signed-in Admin verify a code from Settings ([#807](https://github.com/itsDaiton/nebula-chat/issues/807)) ([c934b5e](https://github.com/itsDaiton/nebula-chat/commit/c934b5e4e60e8b6e73c4432d67600649a90558fc))
+
 ## [7.3.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.0...nebula-chat-v7.3.1) (2026-11-15)
 
 
