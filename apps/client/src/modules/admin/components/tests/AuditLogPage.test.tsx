@@ -304,10 +304,10 @@ describe('admin navigation', () => {
       'aria-current',
       'page',
     );
+    expect(within(nav).getByRole('link', { name: resources.admin.nav.users })).toBeInTheDocument();
     for (const label of [
       resources.admin.nav.overview,
       resources.admin.nav.modelUsage,
-      resources.admin.nav.users,
       resources.admin.nav.sessions,
       resources.admin.nav.runs,
       resources.admin.nav.agents,

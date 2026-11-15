@@ -50,10 +50,15 @@ export const listUsersQuerySchema = z.object({
     .max(100)
     .optional()
     .describe('Case-insensitive text to find in the name or email'),
+  // A key given once arrives as a string, so it is wrapped before the array is checked.
   status: z
-    .enum(USER_STATUSES)
-    .optional()
-    .describe('Only Users in this status; without it every User but Guests is listed'),
+    .preprocess(
+      (value) => (value === undefined || Array.isArray(value) ? value : [value]),
+      z.array(z.enum(USER_STATUSES)).min(1).max(USER_STATUSES.length).optional(),
+    )
+    .describe(
+      'Only Users in one of these statuses, as a repeated key; without it every User but Guests is listed',
+    ),
   sortBy: z
     .enum(USER_SORTS)
     .default('createdAt')
@@ -96,6 +101,7 @@ const userSummaryShape = {
     .describe('The first that applies: guest, banned, admin, unverified, registered'),
   twoFactorEnabled: z.boolean(),
   messagesSent: z.number().int().describe('Messages the User sent, across their Sessions'),
+  sessionsCount: z.number().int().describe('Sessions the User owns, archived ones included'),
   createdAt: isoDateTimeSchema,
   updatedAt: isoDateTimeSchema,
 };
@@ -125,7 +131,6 @@ export const userDetailSchema = z
       .describe(
         'When the User asked to delete the account; it is Purged 30 days later. `null` unless pending',
       ),
-    sessionsCount: z.number().int(),
   })
   .meta({ id: 'AdminUserDetail' });
 

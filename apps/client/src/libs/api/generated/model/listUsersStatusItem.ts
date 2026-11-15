@@ -5,9 +5,9 @@
  * REST API for Nebula Chat
  */
 
-export type ListUsersStatus = (typeof ListUsersStatus)[keyof typeof ListUsersStatus];
+export type ListUsersStatusItem = (typeof ListUsersStatusItem)[keyof typeof ListUsersStatusItem];
 
-export const ListUsersStatus = {
+export const ListUsersStatusItem = {
   registered: 'registered',
   unverified: 'unverified',
   admin: 'admin',

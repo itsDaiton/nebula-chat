@@ -5,7 +5,12 @@ import type { ColumnDef, RowData } from '@tanstack/react-table';
 import type { adminTableFeatures } from '@/modules/admin/utils/adminTableFeatures';
 import type { AuditEntry } from '@/libs/api/generated/model/auditEntry';
 import type { AuditEntryActorType } from '@/libs/api/generated/model/auditEntryActorType';
+import type { AdminUserDetail } from '@/libs/api/generated/model/adminUserDetail';
+import type { AdminUserSummaryStatus } from '@/libs/api/generated/model/adminUserSummaryStatus';
 import type { ErrorEnvelope } from '@/libs/api/generated/model/errorEnvelope';
+import type { ListUsersOrder } from '@/libs/api/generated/model/listUsersOrder';
+import type { ListUsersSortBy } from '@/libs/api/generated/model/listUsersSortBy';
+import type { ListUsersStatusItem } from '@/libs/api/generated/model/listUsersStatusItem';
 import type { ErrorType } from '@/libs/api/client';
 
 export type AdminTableFeatures = typeof adminTableFeatures;
@@ -29,7 +34,7 @@ type AdminNavPage = {
   label: string;
   icon: LucideIcon;
   /** Unset while the page is not built: its row is disabled and labelled "soon". */
-  to?: '/admin/audit';
+  to?: '/admin/audit' | '/admin/users';
   /** The page has selectable rows, so the right panel and its toggle exist. */
   hasDetail?: boolean;
 };
@@ -106,3 +111,41 @@ export type AuditDateFilterProps = {
   to: string | undefined;
   onChange: AuditFilterChange;
 };
+
+/** What the Users page's URL holds: search, filters, sort, the page cursor and the open User. */
+export type UsersSearch = {
+  q?: string;
+  status?: ListUsersStatusItem[];
+  sort?: ListUsersSortBy;
+  dir?: ListUsersOrder;
+  cursor?: string;
+  selected?: string;
+};
+
+export type UserFiltersProps = {
+  search: UsersSearch;
+  /** `replace` keeps typing in the search box out of the history. */
+  onChange: (patch: Partial<UsersSearch>, replace?: boolean) => void;
+};
+
+/** One toggle in the Users toolbar; a dashed one is an opt-in rather than a status. */
+export type UserStatusChip = { status: ListUsersStatusItem; label: string; dashed?: boolean };
+
+export type UserSearchInputProps = {
+  value: string | undefined;
+  onChange: (value: string | undefined) => void;
+};
+
+export type UserSortHeaderProps = { column: ListUsersSortBy; label: string; alignRight?: boolean };
+
+export type UserStatusBadgeProps = { status: AdminUserSummaryStatus };
+
+export type UserLastActiveProps = { at: string; long?: boolean };
+
+export type UserDetailPanelProps = { onClose: () => void };
+
+export type UserDetailProps = { user: AdminUserDetail };
+
+export type UserBanNoticeProps = { ban: NonNullable<AdminUserDetail['ban']> };
+
+export type UserSessionsListProps = { userId: string };

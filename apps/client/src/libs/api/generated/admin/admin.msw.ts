@@ -35,6 +35,7 @@ export const getListUsersResponseMock = (
       ] as const),
       twoFactorEnabled: faker.datatype.boolean(),
       messagesSent: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+      sessionsCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
       createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
       updatedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
     }),
@@ -60,6 +61,7 @@ export const getGetUserResponseMock = (
   ] as const),
   twoFactorEnabled: faker.datatype.boolean(),
   messagesSent: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+  sessionsCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
   createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   updatedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   ban: faker.helpers.arrayElement([
@@ -79,7 +81,6 @@ export const getGetUserResponseMock = (
     faker.date.past().toISOString().slice(0, 19) + 'Z',
     null,
   ]),
-  sessionsCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
   ...overrideResponse,
 });
 

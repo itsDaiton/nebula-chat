@@ -874,6 +874,11 @@ components:
           minimum: -9007199254740991
           maximum: 9007199254740991
           description: Messages the User sent, across their Sessions
+        sessionsCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: Sessions the User owns, archived ones included
         createdAt:
           type: string
           format: date-time
@@ -891,6 +896,7 @@ components:
         - status
         - twoFactorEnabled
         - messagesSent
+        - sessionsCount
         - createdAt
         - updatedAt
       additionalProperties: false
@@ -923,6 +929,11 @@ components:
           minimum: -9007199254740991
           maximum: 9007199254740991
           description: Messages the User sent, across their Sessions
+        sessionsCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: Sessions the User owns, archived ones included
         createdAt:
           type: string
           format: date-time
@@ -965,10 +976,6 @@ components:
           description: >-
             When the User asked to delete the account; it is Purged 30 days
             later. `null` unless pending
-        sessionsCount:
-          type: integer
-          minimum: -9007199254740991
-          maximum: 9007199254740991
       required:
         - id
         - email
@@ -976,11 +983,11 @@ components:
         - status
         - twoFactorEnabled
         - messagesSent
+        - sessionsCount
         - createdAt
         - updatedAt
         - ban
         - pendingDeletionAt
-        - sessionsCount
       additionalProperties: false
     AdminSessionPage:
       type: object
@@ -2528,10 +2535,10 @@ paths:
       tags:
         - Admin
       description: >-
-        List Users, newest first by default, filtered by status and a name or
-        email search, a page at a time. Guests are left out unless
-        `status=guest`. Requires an Admin whose auth session passed two-factor
-        authentication.
+        List Users, newest first by default, filtered by one or more statuses
+        and a name or email search, a page at a time. Guests are left out unless
+        `status` names `guest`. Requires an Admin whose auth session passed
+        two-factor authentication.
       parameters:
         - schema:
             description: Case-insensitive text to find in the name or email
@@ -2543,21 +2550,25 @@ paths:
           description: Case-insensitive text to find in the name or email
         - schema:
             description: >-
-              Only Users in this status; without it every User but Guests is
-              listed
-            type: string
-            enum:
-              - registered
-              - unverified
-              - admin
-              - banned
-              - pendingDeletion
-              - guest
+              Only Users in one of these statuses, as a repeated key; without it
+              every User but Guests is listed
+            minItems: 1
+            maxItems: 6
+            type: array
+            items:
+              type: string
+              enum:
+                - registered
+                - unverified
+                - admin
+                - banned
+                - pendingDeletion
+                - guest
           in: query
           name: status
           description: >-
-            Only Users in this status; without it every User but Guests is
-            listed
+            Only Users in one of these statuses, as a repeated key; without it
+            every User but Guests is listed
         - schema:
             default: createdAt
             description: >-

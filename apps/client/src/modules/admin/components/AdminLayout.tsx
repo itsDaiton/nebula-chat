@@ -1,6 +1,7 @@
 import { Outlet, useRouterState } from '@tanstack/react-router';
 import { AdminDetailPanel } from '@/modules/admin/components/AdminDetailPanel';
 import { AdminNav } from '@/modules/admin/components/AdminNav';
+import { UserDetailPanel } from '@/modules/admin/components/UserDetailPanel';
 import { adminNavigation } from '@/modules/admin/utils/adminNavigation';
 import { AppShell } from '@/shared/components/layout/AppShell';
 
@@ -17,7 +18,14 @@ export const AdminLayout = () => {
   return (
     <AppShell
       renderLeftPanel={(onNavigate) => <AdminNav onNavigate={onNavigate} />}
-      renderRightPanel={(onClose) => <AdminDetailPanel path={pathname} onClose={onClose} />}
+      // The Users page keeps its open User in the URL; the other tables keep their row in the store.
+      renderRightPanel={(onClose) =>
+        pathname === '/admin/users' ? (
+          <UserDetailPanel onClose={onClose} />
+        ) : (
+          <AdminDetailPanel path={pathname} onClose={onClose} />
+        )
+      }
       hideRightPanel={!pagesWithDetail.has(pathname)}
     >
       <Outlet />

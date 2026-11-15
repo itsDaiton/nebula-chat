@@ -28,7 +28,8 @@ coverage and knip. A route file only wires a page: the component lives in `modul
   (`modules/admin/utils/adminGuard.ts`) in `beforeLoad`: an Admin whose auth session passed 2FA gets `AdminLayout`; an
   Admin without it is redirected to `/` with Settings open on Security; everyone else gets `notFound()`. A new admin
   page is a child route here, listed in `modules/admin/utils/adminNavigation.ts`; `hasDetail` there decides whether the
-  right panel and its toggle exist.
+  right panel and its toggle exist. `/admin/users` holds its search, `status` list, sort, cursor and the open
+  User (`selected`) in the URL; `UserDetailPanel` reads `selected`, so a link opens the same detail.
 - **Device guard.** `routes/_app/device.tsx` (`/device?user_code=…`) runs `requireSignedIn`
   (`modules/device/utils/deviceGuard.ts`): a Guest is redirected to `/auth?device=<code>`, and `useIdentityChange`
   returns a sign-in made there to `/device` with the code. The page itself explains why a non-Admin, or an Admin
