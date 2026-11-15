@@ -68,7 +68,8 @@ type TwoFactorStep =
   | { name: 'scan'; totpURI: string; backupCodes: string[] }
   | { name: 'backup'; backupCodes: string[] }
   | { name: 'disable' }
-  | { name: 'regenerate' };
+  | { name: 'regenerate' }
+  | { name: 'verify' };
 
 export type TwoFactorSetupState = {
   step: TwoFactorStep;

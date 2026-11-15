@@ -215,4 +215,59 @@ describe('TwoFactorSetting', () => {
     await screen.findByText(twoFactor.label);
     expect(screen.queryByRole('note')).not.toBeInTheDocument();
   });
+  describe('verifying a code on a signed-in Admin session', () => {
+    const adminSession = (twoFactorVerified: boolean) =>
+      aSession({ isAnonymous: false, role: 'admin', twoFactorEnabled: true, twoFactorVerified });
+
+    it('lets an Admin verify a code and clears the warning once the session passed', async () => {
+      await holdSession({ isAnonymous: false, role: 'admin', twoFactorEnabled: true });
+      let verified = false;
+      const bodies: unknown[] = [];
+      server.use(
+        mockTwoFactorVerify(async (request) => {
+          bodies.push(await request.clone().json());
+          verified = true;
+        }),
+        mockGetSession(() => adminSession(verified)),
+      );
+      await renderSecurity();
+
+      await userEvent.click(await screen.findByRole('button', { name: twoFactor.verifySignIn }));
+      await userEvent.type(screen.getByLabelText(twoFactor.code), '482100');
+      await userEvent.click(screen.getByRole('button', { name: twoFactor.verify }));
+
+      await waitFor(() => expect(screen.queryByRole('note')).not.toBeInTheDocument());
+      expect(bodies).toEqual([{ code: '482100' }]);
+      expect(
+        screen.queryByRole('button', { name: twoFactor.verifySignIn }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows a wrong code inline and keeps the warning', async () => {
+      await holdSession({ isAnonymous: false, role: 'admin', twoFactorEnabled: true });
+      server.use(
+        http.post(API_ROUTE.authTwoFactorVerifyTotp, () =>
+          HttpResponse.json({ code: 'INVALID_CODE', message: 'Invalid code' }, { status: 400 }),
+        ),
+      );
+      await renderSecurity();
+
+      await userEvent.click(await screen.findByRole('button', { name: twoFactor.verifySignIn }));
+      await userEvent.type(screen.getByLabelText(twoFactor.code), '000000');
+      await userEvent.click(screen.getByRole('button', { name: twoFactor.verify }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(twoFactor.invalidCode);
+      expect(screen.getByRole('note')).toBeInTheDocument();
+    });
+
+    it('offers no step-up to a non-Admin with two-factor on', async () => {
+      await holdSession({ isAnonymous: false, twoFactorEnabled: true });
+      await renderSecurity();
+
+      await screen.findByText(twoFactor.label);
+      expect(
+        screen.queryByRole('button', { name: twoFactor.verifySignIn }),
+      ).not.toBeInTheDocument();
+    });
+  });
 });

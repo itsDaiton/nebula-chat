@@ -3,6 +3,7 @@ import { SettingsRow } from '@/modules/settings/components/SettingsRow';
 import { TwoFactorBackupStep } from '@/modules/settings/components/TwoFactorBackupStep';
 import { TwoFactorConfirmStep } from '@/modules/settings/components/TwoFactorConfirmStep';
 import { TwoFactorPasswordStep } from '@/modules/settings/components/TwoFactorPasswordStep';
+import { TwoFactorVerifyStep } from '@/modules/settings/components/TwoFactorVerifyStep';
 import { TwoFactorScanStep } from '@/modules/settings/components/TwoFactorScanStep';
 import { useHasPassword } from '@/modules/settings/hooks/useHasPassword';
 import { useTwoFactorSetupStore } from '@/modules/settings/stores/useTwoFactorSetupStore';
@@ -14,7 +15,7 @@ const { twoFactor } = resources.settings.security;
 
 /** Two-factor authentication, the setup steps inline: password, scan and confirm, then the backup codes. */
 export const TwoFactorSetting = () => {
-  const { hasTwoFactor } = useAuth();
+  const { hasTwoFactor, isAdmin, isTwoFactorVerified } = useAuth();
   const { data: hasPassword } = useHasPassword();
   const { step, setStep, reset } = useTwoFactorSetupStore();
   // The setup, its URI and its backup codes are dropped when Settings leaves this section.
@@ -28,6 +29,8 @@ export const TwoFactorSetting = () => {
         return <TwoFactorScanStep totpURI={step.totpURI} backupCodes={step.backupCodes} />;
       case 'backup':
         return <TwoFactorBackupStep backupCodes={step.backupCodes} />;
+      case 'verify':
+        return <TwoFactorVerifyStep />;
       case 'disable':
       case 'regenerate':
         return <TwoFactorConfirmStep action={step.name} />;
@@ -39,6 +42,9 @@ export const TwoFactorSetting = () => {
       return (
         <SettingsRow label={twoFactor.label} description={twoFactor.on}>
           <div className="flex gap-2">
+            {isAdmin && !isTwoFactorVerified && (
+              <Button onClick={() => setStep({ name: 'verify' })}>{twoFactor.verifySignIn}</Button>
+            )}
             <Button variant="outline" onClick={() => setStep({ name: 'regenerate' })}>
               {twoFactor.regenerate}
             </Button>
