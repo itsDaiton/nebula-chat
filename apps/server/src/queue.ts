@@ -80,20 +80,23 @@ const pingOnce = async (): Promise<Response> =>
     signal: AbortSignal.timeout(WORKER_PING_TIMEOUT_MS),
   });
 
+const pingAttempt = async (attempt: number): Promise<void> => {
+  const res = await pingOnce();
+  if (res.ok) return;
+  if (attempt < PING_ATTEMPTS && isTransient(res.status)) {
+    await new Promise((resolve) => setTimeout(resolve, PING_RETRY_DELAY_MS));
+    return pingAttempt(attempt + 1);
+  }
+  const detail = await describeAnswer(res);
+  const suffix = detail ? ` (${detail})` : '';
+  throw new Error(`Worker /health answered ${res.status}${suffix}`);
+};
+
 // Wakes a sleeping free-plan worker (ADR-0013). Never rejects: a failed ping is only logged,
 // since the job waits in the queue either way.
 export const pingWorker = async (logger: EventLogger<'warn'>): Promise<void> => {
   try {
-    for (let attempt = 1; ; attempt += 1) {
-      const res = await pingOnce();
-      if (res.ok) return;
-      if (attempt < PING_ATTEMPTS && isTransient(res.status)) {
-        await new Promise((resolve) => setTimeout(resolve, PING_RETRY_DELAY_MS));
-        continue;
-      }
-      const detail = await describeAnswer(res);
-      throw new Error(`Worker /health answered ${res.status}${detail ? ` (${detail})` : ''}`);
-    }
+    await pingAttempt(1);
   } catch (err) {
     logEvent(
       logger,
