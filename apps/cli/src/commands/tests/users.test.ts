@@ -1,7 +1,7 @@
 import { writeFile } from 'node:fs/promises';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
-import { getGetUserUrl, getListUsersUrl } from '@cli/api/generated/admin/admin';
+import { getGetUserUrl } from '@cli/api/generated/admin/admin';
 import type { AdminUserDetail } from '@cli/api/generated/model/adminUserDetail';
 import type { AdminUserSummary } from '@cli/api/generated/model/adminUserSummary';
 import { createHarness, SERVER_URL } from '@cli/test/harness';
