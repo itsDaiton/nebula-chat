@@ -18,6 +18,7 @@ import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppChatIndexRouteImport } from './routes/_app/_chat/index'
 import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
 import { Route as AppAdminAuditRouteImport } from './routes/_app/admin/audit'
+import { Route as AppAdminUsersRouteImport } from './routes/_app/admin/users'
 import { Route as AppAuthIndexRouteImport } from './routes/_app/auth/index'
 import { Route as AppAuthForgotPasswordRouteImport } from './routes/_app/auth/forgot-password'
 import { Route as AppAuthResetPasswordRouteImport } from './routes/_app/auth/reset-password'
@@ -67,6 +68,11 @@ const AppAdminAuditRoute = AppAdminAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AppAdminRouteRoute,
 } as any)
+const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AppAdminRouteRoute,
+} as any)
 const AppAuthIndexRoute = AppAuthIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/device': typeof AppDeviceRoute
   '/settings': typeof AppSettingsRoute
   '/admin/audit': typeof AppAdminAuditRoute
+  '/admin/users': typeof AppAdminUsersRoute
   '/auth/forgot-password': typeof AppAuthForgotPasswordRoute
   '/auth/reset-password': typeof AppAuthResetPasswordRoute
   '/auth/verify-email': typeof AppAuthVerifyEmailRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/device': typeof AppDeviceRoute
   '/settings': typeof AppSettingsRoute
   '/admin/audit': typeof AppAdminAuditRoute
+  '/admin/users': typeof AppAdminUsersRoute
   '/auth/forgot-password': typeof AppAuthForgotPasswordRoute
   '/auth/reset-password': typeof AppAuthResetPasswordRoute
   '/auth/verify-email': typeof AppAuthVerifyEmailRoute
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/_app/device': typeof AppDeviceRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/admin/audit': typeof AppAdminAuditRoute
+  '/_app/admin/users': typeof AppAdminUsersRoute
   '/_app/auth/forgot-password': typeof AppAuthForgotPasswordRoute
   '/_app/auth/reset-password': typeof AppAuthResetPasswordRoute
   '/_app/auth/verify-email': typeof AppAuthVerifyEmailRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/device'
     | '/settings'
     | '/admin/audit'
+    | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/reset-password'
     | '/auth/verify-email'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/device'
     | '/settings'
     | '/admin/audit'
+    | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/reset-password'
     | '/auth/verify-email'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/_app/device'
     | '/_app/settings'
     | '/_app/admin/audit'
+    | '/_app/admin/users'
     | '/_app/auth/forgot-password'
     | '/_app/auth/reset-password'
     | '/_app/auth/verify-email'
@@ -250,6 +262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminAuditRouteImport
       parentRoute: typeof AppAdminRouteRoute
     }
+    '/_app/admin/users': {
+      id: '/_app/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AppAdminUsersRouteImport
+      parentRoute: typeof AppAdminRouteRoute
+    }
     '/_app/auth/': {
       id: '/_app/auth/'
       path: '/'
@@ -290,11 +309,13 @@ declare module '@tanstack/react-router' {
 
 interface AppAdminRouteRouteChildren {
   AppAdminAuditRoute: typeof AppAdminAuditRoute
+  AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppAdminIndexRoute: typeof AppAdminIndexRoute
 }
 
 const AppAdminRouteRouteChildren: AppAdminRouteRouteChildren = {
   AppAdminAuditRoute: AppAdminAuditRoute,
+  AppAdminUsersRoute: AppAdminUsersRoute,
   AppAdminIndexRoute: AppAdminIndexRoute,
 }
 

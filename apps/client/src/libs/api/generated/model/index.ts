@@ -37,7 +37,7 @@ export * from './listUserSessionsParams';
 export * from './listUsersOrder';
 export * from './listUsersParams';
 export * from './listUsersSortBy';
-export * from './listUsersStatus';
+export * from './listUsersStatusItem';
 export * from './message';
 export * from './messageAllowance';
 export * from './meteredMessageAllowance';

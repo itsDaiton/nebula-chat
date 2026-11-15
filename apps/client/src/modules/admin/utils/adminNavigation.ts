@@ -24,7 +24,7 @@ export const adminNavigation: AdminNavGroup[] = [
   {
     label: nav.manage,
     pages: [
-      { id: 'users', label: nav.users, icon: UsersIcon },
+      { id: 'users', label: nav.users, icon: UsersIcon, to: '/admin/users', hasDetail: true },
       { id: 'sessions', label: nav.sessions, icon: MessageSquareIcon },
       { id: 'runs', label: nav.runs, icon: WorkflowIcon },
       { id: 'agents', label: nav.agents, icon: BotIcon },

@@ -68,6 +68,15 @@ export const getListUsersUrl = (params?: ListUsersParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ['status'];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? 'null' : String(value));
     }
@@ -81,7 +90,7 @@ export const getListUsersUrl = (params?: ListUsersParams) => {
 };
 
 /**
- * List Users, newest first by default, filtered by status and a name or email search, a page at a time. Guests are left out unless `status=guest`. Requires an Admin whose auth session passed two-factor authentication.
+ * List Users, newest first by default, filtered by one or more statuses and a name or email search, a page at a time. Guests are left out unless `status` names `guest`. Requires an Admin whose auth session passed two-factor authentication.
  * @summary List Users
  */
 export const listUsers = async (

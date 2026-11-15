@@ -38,6 +38,8 @@ const messagesSent = sql<number>`(
   where ${sessions.userId} = ${users.id} and ${messages.role} = 'user'
 )`;
 
+const sessionsCount = sql<number>`(select count(*)::int from ${sessions} where ${sessions.userId} = ${users.id})`;
+
 const sortKeys = {
   createdAt: users.createdAt,
   lastActiveAt: users.updatedAt,
@@ -126,12 +128,14 @@ export const adminRepository = {
 
     const direction = filters.order === 'asc' ? asc : desc;
     const rows = await db
-      .select({ ...userSummaryColumns, messagesSent })
+      .select({ ...userSummaryColumns, messagesSent, sessionsCount })
       .from(users)
       .where(
         and(
           // Guests far outnumber Registered users, so they are listed only when asked for.
-          filters.status ? statusFilters[filters.status]() : sql`not ${isGuest}`,
+          filters.status
+            ? or(...filters.status.map((status) => statusFilters[status]()))
+            : sql`not ${isGuest}`,
           filters.search ? searchFilter(filters.search) : undefined,
           cursorFilter,
         ),
@@ -150,8 +154,8 @@ export const adminRepository = {
       .select({
         ...userSummaryColumns,
         messagesSent,
+        sessionsCount,
         banReason: users.banReason,
-        sessionsCount: db.$count(sessions, eq(sessions.userId, users.id)),
       })
       .from(users)
       .where(eq(users.id, id));

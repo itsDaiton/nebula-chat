@@ -99,6 +99,7 @@ const aRow = (overrides: Record<string, unknown> = {}) => ({
   createdAt: CREATED_AT,
   updatedAt: UPDATED_AT,
   messagesSent: 7,
+  sessionsCount: 2,
   ...overrides,
 });
 
@@ -150,6 +151,7 @@ describe('GET /api/admin/users', () => {
           status: 'registered',
           twoFactorEnabled: false,
           messagesSent: 7,
+          sessionsCount: 2,
           createdAt: '2026-09-01T08:00:00.000Z',
           updatedAt: '2026-09-02T09:00:00.000Z',
         },
@@ -169,14 +171,30 @@ describe('GET /api/admin/users', () => {
 
     expect(res.statusCode).toBe(200);
     expect(repo.listUsers).toHaveBeenCalledWith(
-      { search: 'ada', status: 'guest', sortBy: 'messagesSent', order: 'asc' },
+      { search: 'ada', status: ['guest'], sortBy: 'messagesSent', order: 'asc' },
       5,
       USER_ID,
     );
   });
 
+  it('takes several statuses as a repeated key', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: `${ROUTE}?status=registered&status=admin`,
+      headers: COOKIE,
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(repo.listUsers).toHaveBeenCalledWith(
+      { ...DEFAULT_FILTERS, status: ['registered', 'admin'] },
+      10,
+      undefined,
+    );
+  });
+
   it.each([
     'status=nope',
+    'status=registered&status=nope',
     'sortBy=name',
     'order=up',
     'limit=0',
@@ -348,7 +366,7 @@ describe('a User in Pending deletion', () => {
 
     expect(res.json().users[0]).toMatchObject({ status: 'pendingDeletion' });
     expect(repo.listUsers).toHaveBeenCalledWith(
-      { ...DEFAULT_FILTERS, status: 'pendingDeletion' },
+      { ...DEFAULT_FILTERS, status: ['pendingDeletion'] },
       10,
       undefined,
     );
