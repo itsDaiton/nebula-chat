@@ -103,7 +103,7 @@ The instance is configured with:
 | Have I Been Pwned plugin | Rejects sign-up with a known-breached password (`400 PASSWORD_COMPROMISED`); a reset is checked by the reset guard instead.                                                                                                                        |
 | openAPI plugin           | Serves the auth API reference — see [API reference](#interactive-reference).                                                                                                                                                                       |
 | Admin plugin             | Adds `role` and ban fields; impersonation is off (no role holds the permission). Its `/api/auth/admin/*` endpoints are answered `404 NotFound` by the `authGate` plugin ([ADR-0027](./adr/0027-admin-role-two-factor-full-read-and-audit-log.md)). |
-| Two-factor plugin        | TOTP and backup codes (issuer "Nebula Chat"); a trusted device lasts 30 days, except for a User in Pending deletion. Enabling asks for the password, so a social-only user cannot enrol until they set one.                                        |
+| Two-factor plugin        | TOTP and backup codes (issuer "Nebula Chat"); a trusted device lasts 30 days, except for an Admin and a User in Pending deletion. Enabling asks for the password, so a social-only user cannot enrol until they set one.                           |
 | `secondaryStorage`       | The `@nebula-chat/redis` `authStore` — auth sessions, verification records, and rate-limit counters.                                                                                                                                               |
 | `session.cookieCache`    | Enabled — a short-lived signed cookie lets most requests validate without a store round-trip.                                                                                                                                                      |
 | `rateLimit`              | Enabled, `storage: 'secondary-storage'` (Redis). Keyed per client by `advanced.ipAddress.ipAddressHeaders: ['cf-connecting-ip']` — see below.                                                                                                      |
@@ -409,6 +409,11 @@ client-settable), and an after hook sets it on the auth session that a successfu
 the challenge just created, or the caller's own when they verify a code while already signed in. The
 second case is how an Admin on a trusted device, or signed in through Google or GitHub, steps up
 to the admin API ([ADR-0027](./adr/0027-admin-role-two-factor-full-read-and-audit-log.md) §2).
+
+Signing out and in again does not help an Admin who uses Google or GitHub: that sign-in skips the challenge every time.
+Settings → Security offers such an Admin **Verify a code** while two-factor is on and the session is unverified. The
+client verifies the code, then re-reads the session past the cookie cache so the warning clears and the admin gate opens.
+An Admin cannot trust a device, so no sign-in or step-up offers it ([ADR-0027](./adr/0027-admin-role-two-factor-full-read-and-audit-log.md) §2).
 
 ### CLI login (device authorization)
 

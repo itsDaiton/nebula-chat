@@ -1,5 +1,5 @@
-import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { CopyIcon } from 'lucide-react';
+import { TwoFactorCodeField } from '@/modules/settings/components/TwoFactorCodeField';
 import { QrCode } from '@/modules/settings/components/QrCode';
 import { TwoFactorSetupHeader } from '@/modules/settings/components/TwoFactorSetupHeader';
 import { useVerifyTwoFactor } from '@/modules/settings/hooks/useTwoFactor';
@@ -7,7 +7,6 @@ import { useTwoFactorSetupStore } from '@/modules/settings/stores/useTwoFactorSe
 import type { TwoFactorScanStepProps } from '@/modules/settings/types/types';
 import { resources } from '@/resources';
 import { Button } from '@/shared/components/ui/button';
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/shared/components/ui/input-otp';
 import { useCopyToClipboard } from '@/shared/hooks/useCopyToClipboard';
 
 const { twoFactor } = resources.settings.security;
@@ -50,41 +49,12 @@ export const TwoFactorScanStep = ({ totpURI, backupCodes }: TwoFactorScanStepPro
               </Button>
             </div>
           </div>
-          <label htmlFor="two-factor-code" className="text-[13px] font-medium">
-            {twoFactor.code}
-          </label>
-          <div className="flex flex-wrap items-center gap-3">
-            <InputOTP
-              id="two-factor-code"
-              maxLength={6}
-              value={code}
-              onChange={setCode}
-              pattern={REGEXP_ONLY_DIGITS}
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              aria-invalid={Boolean(verify.error)}
-              // Apps show the code as "123 456", so a paste is cleaned of everything but digits.
-              pasteTransformer={(text) => text.replaceAll(/\D/g, '')}
-            >
-              <InputOTPGroup className="gap-2">
-                {[0, 1, 2, 3, 4, 5].map((index) => (
-                  <InputOTPSlot
-                    key={index}
-                    index={index}
-                    className="size-10 rounded-lg border font-mono text-base first:rounded-lg first:border last:rounded-lg"
-                  />
-                ))}
-              </InputOTPGroup>
-            </InputOTP>
-            <Button type="submit" disabled={code.length !== 6 || verify.isPending}>
-              {twoFactor.verify}
-            </Button>
-          </div>
-          {verify.error && (
-            <p role="alert" className="text-sm text-destructive">
-              {verify.error.message}
-            </p>
-          )}
+          <TwoFactorCodeField
+            code={code}
+            onChange={setCode}
+            isPending={verify.isPending}
+            error={verify.error?.message}
+          />
         </form>
       </div>
     </div>

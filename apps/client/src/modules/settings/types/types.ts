@@ -68,7 +68,8 @@ type TwoFactorStep =
   | { name: 'scan'; totpURI: string; backupCodes: string[] }
   | { name: 'backup'; backupCodes: string[] }
   | { name: 'disable' }
-  | { name: 'regenerate' };
+  | { name: 'regenerate' }
+  | { name: 'verify' };
 
 export type TwoFactorSetupState = {
   step: TwoFactorStep;
@@ -77,6 +78,13 @@ export type TwoFactorSetupState = {
   setStep: (step: TwoFactorStep) => void;
   setCode: (code: string) => void;
   reset: () => void;
+};
+
+export type TwoFactorCodeFieldProps = {
+  code: string;
+  onChange: (code: string) => void;
+  isPending: boolean;
+  error?: string;
 };
 
 export type BackupCodesProps = {

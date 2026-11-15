@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { authClient } from '@/libs/auth/client';
+import { refreshSessionPastCache } from '@/modules/auth/utils/refreshSessionPastCache';
 import { runAuthRequest } from '@/modules/auth/utils/runAuthRequest';
 
 // Errors show inline in the setting, so the global mutation handler stays quiet.
@@ -21,6 +22,16 @@ export const useEnableTwoFactor = () =>
 export const useVerifyTwoFactor = () =>
   useMutation({
     mutationFn: (code: string) => runAuthRequest(() => authClient.twoFactor.verifyTotp({ code })),
+    meta,
+  });
+
+/** Steps a signed-in Admin up: the verified code marks this auth session, which the cookie cache would hide. */
+export const useStepUpTwoFactor = () =>
+  useMutation({
+    mutationFn: async (code: string) => {
+      await runAuthRequest(() => authClient.twoFactor.verifyTotp({ code }));
+      await refreshSessionPastCache();
+    },
     meta,
   });
 
