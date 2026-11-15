@@ -80,6 +80,13 @@ export type TwoFactorSetupState = {
   reset: () => void;
 };
 
+export type TwoFactorCodeFieldProps = {
+  code: string;
+  onChange: (code: string) => void;
+  isPending: boolean;
+  error?: string;
+};
+
 export type BackupCodesProps = {
   codes: string[];
 };
