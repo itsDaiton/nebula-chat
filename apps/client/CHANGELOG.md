@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.14.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.13.0...nebula-chat-client-v3.14.0) (2026-11-15)
+
+
+### Features
+
+* **client:** NEB-557 admin Users page with search, filters and a detail panel ([#800](https://github.com/itsDaiton/nebula-chat/issues/800)) ([1dd5b11](https://github.com/itsDaiton/nebula-chat/commit/1dd5b11feb7c1f7e39e70850a0409937af7faf7c))
+
 ## [3.13.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.12.0...nebula-chat-client-v3.13.0) (2026-11-14)
 
 
