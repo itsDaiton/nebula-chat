@@ -4,6 +4,7 @@ import { registerAdminsCommands } from '@cli/commands/admins';
 import { registerLoginCommands } from '@cli/commands/login';
 import { registerLogLevelCommands } from '@cli/commands/logLevel';
 import { registerProfileCommands } from '@cli/commands/profile';
+import { registerUsersCommands } from '@cli/commands/users';
 import { createContext, type GlobalOptions } from '@cli/context';
 import type { Keychain } from '@cli/credentials/credentials';
 import { CliError, ExitCode } from '@cli/errors';
@@ -58,6 +59,7 @@ const buildProgram = (deps: Deps) => {
   registerLoginCommands(program, ctx);
   registerLogLevelCommands(program, ctx);
   registerAdminsCommands(program, ctx);
+  registerUsersCommands(program, ctx);
   return program;
 };
 
