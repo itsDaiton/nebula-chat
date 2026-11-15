@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.22.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.22.0...nebula-chat-server-v4.22.1) (2026-11-15)
+
+
+### Bug Fixes
+
+* **server:** adhoc retry the worker wake ping and log who answered ([#803](https://github.com/itsDaiton/nebula-chat/issues/803)) ([8a5cd8e](https://github.com/itsDaiton/nebula-chat/commit/8a5cd8e0e2f5f481d6afe697e49006c8afdda9d0))
+
 ## [4.22.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.21.0...nebula-chat-server-v4.22.0) (2026-11-15)
 
 
