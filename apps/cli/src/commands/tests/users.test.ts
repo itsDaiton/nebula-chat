@@ -205,6 +205,38 @@ describe('nebula users show', () => {
     expect(cli.stdout()).toContain(ID);
   });
 
+  it('follows the next cursor until it finds the email', async () => {
+    const cli = await loggedIn();
+    const cursor = '11111111-1111-4111-8111-111111111111';
+    const pages: (string | null)[] = [];
+    server.use(
+      http.get(`${SERVER_URL}/api/admin/users`, ({ request }) => {
+        const asked = new URL(request.url).searchParams.get('cursor');
+        pages.push(asked);
+        return HttpResponse.json(
+          asked === null
+            ? {
+                users: [summary({ id: 'other', email: 'x@example.com' })],
+                nextCursor: cursor,
+                hasMore: true,
+              }
+            : { users: [summary()], nextCursor: null, hasMore: false },
+        );
+      }),
+    );
+    showAnswers(200, detail());
+
+    expect(await cli.run('users', 'show', EMAIL)).toBe(0);
+    expect(pages).toEqual([null, cursor]);
+  });
+
+  it('exits 2 when the server rejects the id with a 400', async () => {
+    const cli = await loggedIn();
+    showAnswers(400, envelope('ValidationError', 'Invalid id'));
+
+    expect(await cli.run('users', 'show', ID)).toBe(2);
+  });
+
   it('exits 1 with a message for an unknown email', async () => {
     const cli = await loggedIn();
     listAnswers(200, { users: [], nextCursor: null, hasMore: false });

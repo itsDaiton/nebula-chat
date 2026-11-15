@@ -22,7 +22,7 @@ const adminError = (response: { status: number; data: unknown }): CliError => {
     return new AuthError(
       envelopeField(data, 'error') === 'TwoFactorRequired'
         ? 'This Admin has not passed two-factor authentication. Enable 2FA on the account, then run `nebula login` again.'
-        : 'This account is not an Admin, so it cannot read Users.',
+        : 'This account is not an Admin, so it cannot read Users. Run `nebula login` as an Admin.',
     );
   }
   if (status === 404) {
@@ -42,14 +42,24 @@ const parseLimit = (value: string): number => {
 
 // The detail route takes an id only, so an email is resolved through the list's search.
 const findIdByEmail = async (email: string, target: ApiTarget): Promise<string> => {
-  const response = await listUsers(
-    { search: email, status: Object.values(ListUsersStatusItem), limit: 100 },
-    { target },
-  );
-  if (response.status !== 200) throw adminError(response);
-  const match = response.data.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-  if (match === undefined) throw new CliError(`No User with the email ${email}.`);
-  return match.id;
+  let cursor: string | undefined;
+  // The search is a substring match, so the exact email can sit on a later page.
+  do {
+    const response = await listUsers(
+      {
+        search: email,
+        status: Object.values(ListUsersStatusItem),
+        limit: 100,
+        ...(cursor !== undefined && { cursor }),
+      },
+      { target },
+    );
+    if (response.status !== 200) throw adminError(response);
+    const match = response.data.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    if (match !== undefined) return match.id;
+    cursor = response.data.nextCursor ?? undefined;
+  } while (cursor !== undefined);
+  throw new CliError(`No User with the email ${email}.`);
 };
 
 export const registerUsersCommands = (program: Command, ctx: Context) => {
@@ -59,7 +69,9 @@ export const registerUsersCommands = (program: Command, ctx: Context) => {
 
   users
     .command('list')
-    .description('list Users, newest first; Guests are left out unless --status guest')
+    .description(
+      'list Users (newest first unless --sort); Guests are left out unless --status guest',
+    )
     .option('--search <text>', 'text to find in the name or email')
     .addOption(
       new Option('--status <status...>', 'only Users in one of these statuses').choices(
