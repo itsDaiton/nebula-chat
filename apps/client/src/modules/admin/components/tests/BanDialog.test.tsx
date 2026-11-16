@@ -1,0 +1,69 @@
+import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
+import { describe, expect, it } from 'vitest';
+import { resources } from '@/resources';
+import { button, detailOf, openPanel, serve, setUpAdminActionsTests } from '@/test/adminActions';
+import { server } from '@/test/msw';
+
+const text = resources.admin.users;
+const actions = text.actions;
+
+setUpAdminActionsTests();
+
+describe('Ban dialog', () => {
+  it('bans permanently with a required reason', async () => {
+    const bodies: unknown[] = [];
+    serve(detailOf());
+    server.use(
+      http.post('*/api/admin/users/:id/ban', async ({ request }) => {
+        bodies.push(await request.json());
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    const panel = await openPanel();
+
+    await userEvent.click(button(panel, actions.ban));
+    const dialog = await screen.findByRole('dialog', { name: text.ban.title('anna@example.com') });
+    await userEvent.click(within(dialog).getByRole('button', { name: text.ban.confirm }));
+    expect(await within(dialog).findByText(text.ban.reasonRequired)).toBeInTheDocument();
+    expect(bodies).toEqual([]);
+
+    await userEvent.type(within(dialog).getByRole('textbox', { name: /Reason/ }), 'Spam');
+    await userEvent.click(within(dialog).getByRole('button', { name: text.ban.confirm }));
+
+    await waitFor(() => expect(bodies).toEqual([{ reason: 'Spam' }]));
+    expect(await screen.findByText(actions.banned('anna@example.com'))).toBeInTheDocument();
+  });
+
+  it('bans until a future date and rejects a past one', async () => {
+    const bodies: unknown[] = [];
+    serve(detailOf());
+    server.use(
+      http.post('*/api/admin/users/:id/ban', async ({ request }) => {
+        bodies.push(await request.json());
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    const panel = await openPanel();
+
+    await userEvent.click(button(panel, actions.ban));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: /Reason/ }), 'Spam');
+    await userEvent.click(within(dialog).getByRole('radio', { name: text.ban.untilDate }));
+    const date = within(dialog).getByLabelText(text.ban.date);
+
+    await userEvent.type(date, '2020-01-01');
+    await userEvent.click(within(dialog).getByRole('button', { name: text.ban.confirm }));
+    expect(await within(dialog).findByText(text.ban.dateFuture)).toBeInTheDocument();
+    expect(bodies).toEqual([]);
+
+    await userEvent.clear(date);
+    await userEvent.type(date, '2999-01-31');
+    await userEvent.click(within(dialog).getByRole('button', { name: text.ban.confirm }));
+
+    await waitFor(() =>
+      expect(bodies).toEqual([{ reason: 'Spam', expiresAt: '2999-01-31T23:59:59.000Z' }]),
+    );
+  });
+});

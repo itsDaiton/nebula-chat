@@ -1,5 +1,19 @@
 # Changelog
 
+## [7.4.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.4.0...nebula-chat-v7.4.1) (2026-11-16)
+
+
+### Bug Fixes
+
+* **client:** NEB-558 wrap ban form in Field and split User action tests ([#842](https://github.com/itsDaiton/nebula-chat/issues/842)) ([8a81722](https://github.com/itsDaiton/nebula-chat/commit/8a81722ecf58d911df1708f76f043bd090bced2a))
+
+## [7.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.8...nebula-chat-v7.4.0) (2026-11-16)
+
+
+### Features
+
+* **client:** NEB-558 admin User actions — grant and revoke Admin, ban and unban, restore ([#837](https://github.com/itsDaiton/nebula-chat/issues/837)) ([7fa61b9](https://github.com/itsDaiton/nebula-chat/commit/7fa61b93146058d5ccd94dfe0a1f0f7a20db0b96))
+
 ## [7.3.8](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.7...nebula-chat-v7.3.8) (2026-11-16)
 
 
