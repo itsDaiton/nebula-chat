@@ -123,11 +123,15 @@ _Avoid_: Profile on its own (reads as a User's profile or Profile image), enviro
 ### Orchestration
 
 **Direct reply**:
-An assistant Message produced by a single model call on the Session's Model, streamed straight back — no Agents, no Steps. The only reply mode available to Guests.
+An assistant Message produced by a single model call on the Session's Model, streamed straight back — no Agents, no Steps. The only Reply mode available to Guests.
+
+**Reply mode**:
+How every assistant Message in a Session is produced: by Direct reply or by Run. Chosen with the Session's first Message and fixed for the Session's life; a Session holding any Run counts as a Run Session.
+_Avoid_: Deep mode, chat mode, per-message mode.
 _Avoid_: Plain chat, completion, simple mode.
 
 **Run**:
-One orchestrated response to one user Message, opted into per message by a Registered user: the
+One orchestrated response to one user Message in a Session whose Reply mode is Run (only a Registered user's can be): the
 durable record of every Step taken to produce the assistant's answer. Proceeds in three phases —
 Intake, the Orchestrator's loop, then the Output Agent — and may pause once, `waiting` on the answer
 to a Clarifying question. Ends `completed`, `partial` (a limit forced an early answer, a
