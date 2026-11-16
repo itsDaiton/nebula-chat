@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.3.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.5...nebula-chat-v7.3.6) (2026-11-16)
+
+
+### Bug Fixes
+
+* **client:** align Audit log and Users page title and detail panel ([#824](https://github.com/itsDaiton/nebula-chat/issues/824)) ([4e82904](https://github.com/itsDaiton/nebula-chat/commit/4e82904ce166fd259be5accce0f385fd1333f8d0))
+
 ## [7.3.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.4...nebula-chat-v7.3.5) (2026-11-16)
 
 
