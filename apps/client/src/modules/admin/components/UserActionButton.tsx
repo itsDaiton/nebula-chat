@@ -1,4 +1,5 @@
 import type { UserActionButtonProps } from '@/modules/admin/types/types';
+import { resources } from '@/resources';
 import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 
@@ -26,7 +27,7 @@ export const UserActionButton = ({
             variant="outline"
             className="w-full justify-start opacity-50"
             aria-disabled
-            aria-label={`${label}. ${disabledReason}`}
+            aria-label={resources.admin.users.actions.disabledName(label, disabledReason)}
           />
         }
       >

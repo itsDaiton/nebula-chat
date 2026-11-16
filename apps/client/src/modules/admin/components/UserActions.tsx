@@ -7,6 +7,7 @@ import { useUserActions } from '@/modules/admin/hooks/useUserActions';
 import { useUserActionStore } from '@/modules/admin/stores/useUserActionStore';
 import type { UserActionsProps } from '@/modules/admin/types/types';
 import { resources } from '@/resources';
+import { useOnUnmount } from '@/shared/hooks/useOnUnmount';
 
 const { actions: text } = resources.admin.users;
 
@@ -15,13 +16,14 @@ export const UserActions = ({ user }: UserActionsProps) => {
   const { open, show, close } = useUserActionStore();
   const rules = useUserActionRules(user);
   const { grant, revoke, unban, restore } = useUserActions(user);
+  const resetOnLeave = useOnUnmount(close);
   const isAdmin = user.status === 'admin';
   const isBanned = user.ban !== null;
   const who = user.email;
   const roleMutation = isAdmin ? revoke : grant;
 
   return (
-    <section aria-label={text.title} className="flex flex-col gap-2">
+    <section ref={resetOnLeave} aria-label={text.title} className="flex flex-col gap-2">
       <h3 className="text-[12.5px] font-medium text-muted-foreground">{text.title}</h3>
       <UserActionButton
         label={isAdmin ? text.revokeAdmin : text.grantAdmin}

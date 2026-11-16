@@ -425,6 +425,7 @@ export const resources = {
         unban: 'Unban',
         restore: 'Restore account',
         cancel: 'Cancel',
+        disabledName: (label: string, reason: string) => `${label}. ${reason}`,
         reasons: {
           guest: 'A Guest cannot be an Admin.',
           unverified: 'Only a User with a verified email can be an Admin.',
