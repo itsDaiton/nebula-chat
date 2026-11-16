@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.8...nebula-chat-v7.4.0) (2026-11-16)
+
+
+### Features
+
+* **client:** NEB-558 admin User actions — grant and revoke Admin, ban and unban, restore ([#837](https://github.com/itsDaiton/nebula-chat/issues/837)) ([7fa61b9](https://github.com/itsDaiton/nebula-chat/commit/7fa61b93146058d5ccd94dfe0a1f0f7a20db0b96))
+
 ## [7.3.8](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.7...nebula-chat-v7.3.8) (2026-11-16)
 
 
