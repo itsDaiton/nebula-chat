@@ -1,3 +1,5 @@
+import type { z } from 'zod';
+import type { banSchema } from '@/modules/admin/utils/banSchema';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { QueryKey, UseQueryOptions } from '@tanstack/react-query';
@@ -150,3 +152,48 @@ export type UserDetailProps = { user: AdminUserDetail };
 export type UserBanNoticeProps = { ban: NonNullable<AdminUserDetail['ban']> };
 
 export type UserSessionsListProps = { userId: string };
+
+type UserActionRule = { disabledReason?: string };
+
+export type UserActionRules = {
+  role: UserActionRule;
+  ban: UserActionRule;
+  restore: UserActionRule;
+};
+
+export type UserActionContext = { lastAdmin: boolean; self: boolean };
+
+export type UserActionsProps = { user: AdminUserDetail };
+
+export type UserActionButtonProps = {
+  label: string;
+  icon: ReactNode;
+  disabledReason?: string;
+  onClick: () => void;
+};
+
+export type UserConfirmDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  confirmLabel: string;
+  pending: boolean;
+  onConfirm: () => void;
+};
+
+export type BanDialogProps = {
+  user: AdminUserDetail;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+export type BanValues = z.infer<typeof banSchema>;
+
+export type UserActionDialog = 'role' | 'ban' | 'unban' | 'restore';
+
+export type UserActionState = {
+  open: UserActionDialog | null;
+  show: (dialog: UserActionDialog) => void;
+  close: () => void;
+};
