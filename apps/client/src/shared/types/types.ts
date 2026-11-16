@@ -92,3 +92,34 @@ export type ScrollPositionState = {
   isAtBottom: boolean;
   markAtBottom: (isAtBottom: boolean) => void;
 };
+
+export type ChartDatum = { date: string; seriesKey: string; value: number };
+
+export type ChartSeries = { key: string; label: string };
+
+type ChartTooltipRow = { key: string; label: string; value: number; active: boolean };
+
+type ChartTooltipContext = { index: number; date: string; rows: ChartTooltipRow[] };
+
+export type StackedAreaChartProps = {
+  data: readonly ChartDatum[];
+  series: readonly ChartSeries[];
+  activeSeries: string | null;
+  onActiveSeriesChange: (key: string | null) => void;
+  hoverIndex: number | null;
+  onHoverIndexChange: (index: number | null) => void;
+  height?: number;
+  ariaLabel: string;
+  formatValue?: (value: number) => string;
+  formatDate?: (date: string) => string;
+  renderTooltip?: (context: ChartTooltipContext) => ReactNode;
+};
+
+export type ShareBarProps = { share: number; active?: boolean };
+
+export type ChartDemoState = {
+  activeSeries: string | null;
+  hoverIndex: number | null;
+  setActiveSeries: (key: string | null) => void;
+  setHoverIndex: (index: number | null) => void;
+};

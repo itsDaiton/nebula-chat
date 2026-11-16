@@ -30,12 +30,12 @@ Test commands are in [client-testing](../../.claude/rules/client-testing.md); mo
 committed, never hand-edited), `resources.ts` (UI strings) and:
 
 - `routes/` — TanStack Router file-based routes (`__root`, the `_app` guard layout holding `auth/*`, `device` (where an Admin approves a `nebula login`) and `settings` (a redirect to `/` that opens the Settings dialog),
-  the pathless `_app/_chat` layout rendering `AppShell` around `index` and `s/$id`, and `_app/admin/*`, the admin dashboard behind its 2FA guard). `routing/` — router setup, `RootLayout`, search-param helpers.
+  the pathless `_app/_chat` layout rendering `AppShell` around `index` and `s/$id`, and `_app/admin/*`, the admin dashboard behind its 2FA guard, and `dev/*`, development-only demo pages that are not-found in production). `routing/` — router setup, `RootLayout`, search-param helpers.
 - `libs/api/` — the axios instance and SSE fetch mutator (`client.ts`, `streamClient.ts`), the query client,
   and `generated/` (Orval output). `libs/auth/` — the better-auth client, the one auth entry point.
 - `modules/<feature>/` — `admin`, `auth`, `chat`, `commandPalette`, `device`, `inspector`, `sessions`, `settings`. Each splits into `components/`, `hooks/`,
   `stores/`, `utils/` and `types/types.ts`, plus its page component.
-- `shared/` — cross-module `components/` (`ui/` holds the shadcn/ui base components, `layout/` the app shell),
+- `shared/` — cross-module `components/` (`ui/` holds the shadcn/ui base components, `layout/` the app shell, `charts/` our chart wrappers over TanStack Charts, never exposing its types),
   `hooks/`, `stores/`, `pages/`, `types/`, `config/`, `utils/`. `test/` holds the shared test helpers.
 - `styles/` — the Tailwind entry: preflight, design tokens for light and dark, Geist fonts.
 
