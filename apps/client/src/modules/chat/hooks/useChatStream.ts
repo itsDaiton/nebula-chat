@@ -11,6 +11,7 @@ import { wakeWorker } from '@/shared/utils/wakeWorker';
 import type {
   ChatHistoryStreamOptions,
   ChatMessage,
+  ChatStreamState,
   ReplyEnd,
   ResumeStreamOptions,
   SseFrame,
@@ -102,9 +103,11 @@ export const useChatStream = ({
 
   const applyFrame = useCallback(
     (frame: SseFrame): ReplyEnd | null => {
-      const result = applyStreamEvent(useChatStreamStore.getState().history, frame);
-      setHistory(result.history);
+      const current = useChatStreamStore.getState().history;
+      const result = applyStreamEvent(current, frame);
       if (result.usage) setUsage(result.usage);
+      // A frame that changes nothing writes nothing, so the store's subscribers stay quiet.
+      if (result.history !== current) setHistory(result.history);
       if (result.staleRunId) invalidateRun(queryClient, result.staleRunId);
       return result.end ?? null;
     },
@@ -163,11 +166,11 @@ export const useChatStream = ({
       let activeSessionId = customSessionId ?? sessionIdRef.current;
       const isNewSession = !activeSessionId;
       // Nothing was persisted, so the refused message goes back to the composer to resend.
-      const returnToComposer = (isMessageAllowanceReached = false) => {
+      const returnToComposer = (extra: Partial<ChatStreamState> = {}) => {
         useChatStreamStore.setState({
           history: messages.slice(0, -1),
           reply: IDLE_REPLY,
-          isMessageAllowanceReached,
+          ...extra,
         });
         useMessageStore.getState().setMessage(content);
       };
@@ -218,7 +221,7 @@ export const useChatStream = ({
         await followAndSettle(streamId, activeSessionId, controller.signal, isNewSession);
       } catch (err) {
         if (isAppError(err) && err.code === ErrorCode.MessageAllowanceReached) {
-          returnToComposer(true);
+          returnToComposer({ isMessageAllowanceReached: true });
           // The count shown may be stale (another tab), so resync it with the server's.
           invalidateMessageAllowance(queryClient);
           return;

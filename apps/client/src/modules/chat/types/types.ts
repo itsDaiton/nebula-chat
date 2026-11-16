@@ -137,7 +137,7 @@ export type StreamEventResult = {
   history: ChatMessage[];
   end?: ReplyEnd;
   usage?: NonNullable<Usage>;
-  /** The Run a Run event moved on, whose cached read is now stale. */
+  /** The Inspector may be showing this Run, so its cached read must refetch. */
   staleRunId?: string;
 };
 

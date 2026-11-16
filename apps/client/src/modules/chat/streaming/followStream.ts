@@ -81,10 +81,8 @@ const readReply = async (
   return null;
 };
 
-/**
- * Follows a reply stream to its end, reconnecting after the last event it saw (ADR-0014); an
- * expired stream falls back to the saved reply. Null once aborted; throws once retries run out.
- */
+// Reconnects after the last event it saw (ADR-0014); an expired stream falls back to the saved reply.
+// Null once aborted; throws once retries run out.
 export const followStream = async ({
   streamId,
   signal,

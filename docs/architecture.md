@@ -437,7 +437,8 @@ flowchart TD
   pages --> chat["useChatStream"]
   query --> axios["axios mutator<br/>withCredentials"]
   chat --> axios
-  chat --> fetch["fetch stream mutator<br/>parseSseStream"]
+  chat --> streaming["chat/streaming<br/>followStream, applyStreamEvent"]
+  streaming --> fetch["fetch stream mutator<br/>parseSseStream"]
   axios --> api([Server API])
   fetch --> api
   authc --> api

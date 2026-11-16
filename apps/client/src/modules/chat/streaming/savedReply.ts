@@ -1,6 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { getListMessagesQueryOptions } from '@/libs/api/generated/messages/messages';
 import type { ChatStreamState } from '@/modules/chat/types/types';
+import { withReply } from '@/modules/chat/streaming/applyStreamEvent';
 import { mapSessionMessages } from '@/modules/chat/utils/mapSessionMessages';
 
 const fetchSavedMessages = async (queryClient: QueryClient, sessionId: string) =>
@@ -27,10 +28,13 @@ export const showSavedReplyMeta = async (
   const reply = saved.findLast(({ role }) => role === 'assistant');
   if (!reply || !isCurrent()) return;
   const { model, estimatedCostUsd, runId, tokenCount } = reply;
-  setHistory((prev) => {
-    const last = prev.at(-1);
-    if (last?.role !== 'assistant') return prev;
-    const meta = { model, estimatedCostUsd, runId, tokenCount: tokenCount ?? last.tokenCount };
-    return [...prev.slice(0, -1), { ...last, ...meta }];
-  });
+  setHistory((prev) =>
+    withReply(prev, (last) => ({
+      ...last,
+      model,
+      estimatedCostUsd,
+      runId,
+      tokenCount: tokenCount ?? last.tokenCount,
+    })),
+  );
 };

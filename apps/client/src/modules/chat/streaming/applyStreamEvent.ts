@@ -17,7 +17,8 @@ const parseJson = (raw: string): unknown => {
   }
 };
 
-const withReply = (
+// The chat with its trailing assistant Message updated; unchanged without one.
+export const withReply = (
   history: ChatMessage[],
   update: (reply: ChatMessage) => ChatMessage,
 ): ChatMessage[] => {
