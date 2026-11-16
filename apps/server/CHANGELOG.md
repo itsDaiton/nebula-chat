@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.23.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.22.2...nebula-chat-server-v4.23.0) (2026-11-16)
+
+
+### Features
+
+* **client:** NEB-559 admin Sessions page with a read-only, audited transcript ([#839](https://github.com/itsDaiton/nebula-chat/issues/839)) ([fdbe406](https://github.com/itsDaiton/nebula-chat/commit/fdbe4062e7e7ec0bf5a30276d9e0792643821f07))
+
 ## [4.22.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.22.1...nebula-chat-server-v4.22.2) (2026-11-16)
 
 
