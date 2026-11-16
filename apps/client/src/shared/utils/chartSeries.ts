@@ -20,7 +20,7 @@ export const seriesPaints = (
 };
 
 export const sortedDates = (data: readonly ChartDatum[]): string[] =>
-  [...new Set(data.map((d) => d.date))].sort();
+  [...new Set(data.map((d) => d.date))].sort((a, b) => a.localeCompare(b));
 
 export const toDateKey = (date: Date): string => date.toISOString().slice(0, 10);
 

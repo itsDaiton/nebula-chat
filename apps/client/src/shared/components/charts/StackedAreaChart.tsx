@@ -8,9 +8,8 @@ import { tooltip } from '@tanstack/charts/tooltip';
 import type { StackedAreaChartProps } from '@/shared/types/types';
 import { dateIndexOf, seriesPaints, sortedDates, toDateKey } from '@/shared/utils/chartSeries';
 
-// Stable defaults: an inline default would be a new function each render and rebuild the chart definition.
+// A module-level default keeps its identity; an inline one would rebuild the chart definition each render.
 const identityDate = (date: string) => date;
-const plainValue = (value: number) => String(value);
 
 export const StackedAreaChart = ({
   data,
@@ -21,7 +20,7 @@ export const StackedAreaChart = ({
   onHoverIndexChange,
   height = 240,
   ariaLabel,
-  formatValue = plainValue,
+  formatValue = String,
   formatDate = identityDate,
   renderTooltip,
 }: StackedAreaChartProps) => {
