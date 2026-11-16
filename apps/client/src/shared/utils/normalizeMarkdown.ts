@@ -8,17 +8,25 @@ const unwrapOuterFence = (content: string): string => {
   const body = lines.slice(1);
   // An odd count ending in ``` means that last ``` closes the outer fence; otherwise it is still streaming.
   const fences = body.filter((line) => FENCE_LINE.test(line)).length;
-  const endsFenced = body[body.length - 1]?.trim() === '```';
+  const endsFenced = body.at(-1)?.trim() === '```';
   if (fences === 0 || (fences === 1 && endsFenced)) return content;
   return (fences % 2 === 1 && endsFenced ? body.slice(0, -1) : body).join('\n');
+};
+
+// Split rather than a whitespace-padded regex: padding around the tag backtracks super-linearly on long runs of spaces.
+const joinAtBreaks = (line: string, glue: string): string => {
+  const parts = line.split(/<br\s*\/?>/i);
+  const last = parts.length - 1;
+  return parts
+    .map((part, i) => (i === 0 ? part : part.trimStart()))
+    .map((part, i) => (i === last ? part : part.trimEnd()))
+    .join(glue);
 };
 
 // Raw HTML is dropped by the renderer, so <br> would show as text; a table row cannot hold a line break.
 const fixLine = (line: string): string => {
   const withBullet = line.replace(/^(\s*)[•◦▪]\s+/, '$1- ');
-  return withBullet.trimStart().startsWith('|')
-    ? withBullet.replace(/\s*<br\s*\/?>\s*/gi, ' ')
-    : withBullet.replace(/[ \t]*<br\s*\/?>[ \t]*/gi, '  \n');
+  return joinAtBreaks(withBullet, withBullet.trimStart().startsWith('|') ? ' ' : '  \n');
 };
 
 /** Repairs the Markdown slips older models make; code blocks pass through untouched. */
