@@ -1,6 +1,6 @@
 import { Box, Flex, Text, Icon } from '@chakra-ui/react';
+import { Link } from '@tanstack/react-router';
 import { ColorModeButton } from '@/theme/components/ColorModeButton';
-import { useResetChat } from '@/shared/hooks/useResetChat';
 import { TbGalaxy } from 'react-icons/tb';
 import { HiMenuAlt2 } from 'react-icons/hi';
 import { AccountStatus } from '@/modules/auth/components/AccountStatus';
@@ -9,7 +9,6 @@ import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
 import type { HeaderProps } from '@/shared/types/types';
 
 export const Header = ({ onMenuClick }: HeaderProps) => {
-  const { resetChat } = useResetChat();
   const { isMobile } = useResponsiveLayout();
 
   return (
@@ -36,19 +35,20 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
               aria-label="Menu"
             />
           )}
-          <Icon as={TbGalaxy} boxSize={{ base: 10, md: 12 }} aria-label="Nebula Chat Icon" />
-          <Text
-            pl={2}
-            fontSize={{ base: '2xl', md: '3xl' }}
-            fontWeight="bold"
-            letterSpacing="-0.03em"
-            cursor="pointer"
-            transition="opacity 0.2s"
-            onClick={resetChat}
-            display={{ base: 'none', sm: 'block' }}
-          >
-            {resources.chat.appName}
-          </Text>
+          <Box asChild display="flex" alignItems="center" gap={{ base: 4, md: 2 }} cursor="pointer">
+            <Link to="/" aria-label={resources.chat.appName}>
+              <Icon as={TbGalaxy} boxSize={{ base: 10, md: 12 }} aria-label="Nebula Chat Icon" />
+              <Text
+                pl={2}
+                fontSize={{ base: '2xl', md: '3xl' }}
+                fontWeight="bold"
+                letterSpacing="-0.03em"
+                display={{ base: 'none', sm: 'block' }}
+              >
+                {resources.chat.appName}
+              </Text>
+            </Link>
+          </Box>
         </Box>
         <Flex gap={2} alignItems="center">
           <AccountStatus />

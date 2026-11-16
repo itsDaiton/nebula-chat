@@ -64,6 +64,12 @@ describe('Header', () => {
     expect(screen.queryByRole('button', { name: 'Settings' })).not.toBeInTheDocument();
   });
 
+  it('links the app name back to the chat root', async () => {
+    await renderInRouter(<Header />);
+
+    expect(screen.getByRole('link', { name: /nebula chat/i })).toHaveAttribute('href', '/');
+  });
+
   it('renders without a menu handler', async () => {
     await expect(renderInRouter(<Header />)).resolves.toBeDefined();
   });
