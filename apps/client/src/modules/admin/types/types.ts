@@ -190,7 +190,7 @@ export type BanDialogProps = {
 
 export type BanValues = z.infer<typeof banSchema>;
 
-export type UserActionDialog = 'role' | 'ban' | 'unban' | 'restore';
+type UserActionDialog = 'role' | 'ban' | 'unban' | 'restore';
 
 export type UserActionState = {
   open: UserActionDialog | null;
