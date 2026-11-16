@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.3.8](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.7...nebula-chat-v7.3.8) (2026-11-16)
+
+
+### Bug Fixes
+
+* define Reply mode as fixed per Session ([#835](https://github.com/itsDaiton/nebula-chat/issues/835)) ([f27d635](https://github.com/itsDaiton/nebula-chat/commit/f27d635f89d74a50d0437e0928d64cbbe49fe83a))
+
 ## [7.3.7](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.6...nebula-chat-v7.3.7) (2026-11-16)
 
 
