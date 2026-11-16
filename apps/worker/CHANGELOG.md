@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v2.0.0...nebula-chat-worker-v2.0.1) (2026-11-16)
+
+
+### Bug Fixes
+
+* **client:** repair broken Markdown from older models ([#814](https://github.com/itsDaiton/nebula-chat/issues/814)) ([fb439f5](https://github.com/itsDaiton/nebula-chat/commit/fb439f52e2bb36fb68d77c3edf18aede97258bc3))
+
 ## [2.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.12.1...nebula-chat-worker-v2.0.0) (2026-11-12)
 
 

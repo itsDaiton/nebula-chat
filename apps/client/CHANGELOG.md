@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.14.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.14.2...nebula-chat-client-v3.14.3) (2026-11-16)
+
+
+### Bug Fixes
+
+* **client:** repair broken Markdown from older models ([#814](https://github.com/itsDaiton/nebula-chat/issues/814)) ([fb439f5](https://github.com/itsDaiton/nebula-chat/commit/fb439f52e2bb36fb68d77c3edf18aede97258bc3))
+
 ## [3.14.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.14.1...nebula-chat-client-v3.14.2) (2026-11-16)
 
 
