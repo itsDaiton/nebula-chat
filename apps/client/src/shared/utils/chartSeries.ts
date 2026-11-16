@@ -22,8 +22,10 @@ export const seriesPaints = (
 export const sortedDates = (data: readonly ChartDatum[]): string[] =>
   [...new Set(data.map((d) => d.date))].sort();
 
+export const toDateKey = (date: Date): string => date.toISOString().slice(0, 10);
+
 export const dateIndexOf = (dates: readonly string[], date: Date | null): number | null => {
   if (!date) return null;
-  const index = dates.indexOf(date.toISOString().slice(0, 10));
+  const index = dates.indexOf(toDateKey(date));
   return index === -1 ? null : index;
 };

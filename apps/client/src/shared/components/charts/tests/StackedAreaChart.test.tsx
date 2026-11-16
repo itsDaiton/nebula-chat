@@ -150,4 +150,37 @@ describe('StackedAreaChart', () => {
 
     expect(onActive).toHaveBeenCalledWith(expect.stringMatching(/^[ab]$/));
   });
+
+  it('paints the active series in the foreground and the others in greys', () => {
+    const { container, rerender } = render(
+      <StackedAreaChart
+        data={data}
+        series={series}
+        activeSeries="a"
+        onActiveSeriesChange={vi.fn()}
+        hoverIndex={null}
+        onHoverIndexChange={vi.fn()}
+        ariaLabel="Prompts per day"
+      />,
+    );
+    const fills = () =>
+      [...container.querySelectorAll('svg path[fill]')].map((path) => path.getAttribute('fill'));
+
+    expect(fills()).toContain('var(--foreground)');
+    expect(fills().filter((fill) => fill?.startsWith('color-mix'))).toHaveLength(1);
+
+    rerender(
+      <StackedAreaChart
+        data={data}
+        series={series}
+        activeSeries={null}
+        onActiveSeriesChange={vi.fn()}
+        hoverIndex={null}
+        onHoverIndexChange={vi.fn()}
+        ariaLabel="Prompts per day"
+      />,
+    );
+
+    expect(fills()).not.toContain('var(--foreground)');
+  });
 });

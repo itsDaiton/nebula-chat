@@ -6,7 +6,11 @@ import { scaleUtc } from '@tanstack/charts/scales/time';
 import { Chart } from '@tanstack/charts/react/tooltip';
 import { tooltip } from '@tanstack/charts/tooltip';
 import type { StackedAreaChartProps } from '@/shared/types/types';
-import { dateIndexOf, seriesPaints, sortedDates } from '@/shared/utils/chartSeries';
+import { dateIndexOf, seriesPaints, sortedDates, toDateKey } from '@/shared/utils/chartSeries';
+
+// Stable defaults: an inline default would be a new function each render and rebuild the chart definition.
+const identityDate = (date: string) => date;
+const plainValue = (value: number) => String(value);
 
 export const StackedAreaChart = ({
   data,
@@ -17,8 +21,8 @@ export const StackedAreaChart = ({
   onHoverIndexChange,
   height = 240,
   ariaLabel,
-  formatValue = String,
-  formatDate = (date) => date,
+  formatValue = plainValue,
+  formatDate = identityDate,
   renderTooltip,
 }: StackedAreaChartProps) => {
   const cursor = useMemo(() => createChartCursor<Date, number>(), []);
@@ -30,7 +34,7 @@ export const StackedAreaChart = ({
   // The list owns hoverIndex too, so a guarded render-time write keeps the crosshair on it.
   const wanted = hoverIndex === null ? undefined : dates[hoverIndex];
   const current = cursor.getState()?.value?.x;
-  if ((wanted ?? null) !== (current ? current.toISOString().slice(0, 10) : null)) {
+  if ((wanted ?? null) !== (current ? toDateKey(current) : null)) {
     cursor.setState(
       wanted
         ? { anchor: 'value', value: { x: new Date(wanted) }, source: 'programmatic', pinned: false }
@@ -56,7 +60,7 @@ export const StackedAreaChart = ({
           x: {
             scale: scaleUtc,
             axis: {
-              ticks: { format: (value) => formatDate(new Date(value).toISOString().slice(0, 10)) },
+              ticks: { format: (value) => formatDate(toDateKey(new Date(value))) },
             },
           },
           y: {
