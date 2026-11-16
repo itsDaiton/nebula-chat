@@ -431,7 +431,6 @@ export const resources = {
           banned: 'Unban this User before granting Admin',
           lastAdmin: 'The last Admin cannot be demoted or banned.',
           self: 'You cannot ban yourself.',
-          notBanned: 'This User is not banned.',
           notPending: 'This account is not pending deletion.',
         },
         grantTitle: (who: string) => `Grant Admin to ${who}?`,
