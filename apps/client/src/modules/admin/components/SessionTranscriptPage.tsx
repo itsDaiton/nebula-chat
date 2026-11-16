@@ -6,13 +6,13 @@ import { useSessionRead } from '@/modules/admin/hooks/useSessionRead';
 import { resources } from '@/resources';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 
-const route = getRouteApi('/_app/admin/sessions_/$id');
+const route = getRouteApi('/_app/admin/sessions_/$sessionId');
 const text = resources.admin.sessions.transcript;
 
 /** A Session's Messages as an Admin reads them: the chat's own rendering, read-only, under a notice of the Audit entry. */
 export const SessionTranscriptPage = () => {
-  const { id } = route.useParams();
-  const { data: session, isPending, isError } = useSessionRead(id);
+  const { sessionId } = route.useParams();
+  const { data: session, isPending, isError } = useSessionRead(sessionId);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">

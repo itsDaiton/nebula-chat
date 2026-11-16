@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getGetUserMockHandler,
@@ -274,6 +275,23 @@ describe('Session transcript', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(reads).toHaveLength(1);
+  });
+
+  it("does not fetch the Session as the Admin's own chat, which they don't own", async () => {
+    serveTranscript();
+    const chatReads: string[] = [];
+    server.use(
+      http.get(API_ROUTE.session, ({ request }) => {
+        chatReads.push(request.url);
+        return HttpResponse.json({}, { status: 404 });
+      }),
+    );
+
+    await renderRoute(`/admin/sessions/${SESSION_ID}`);
+    await screen.findByText('Here is a hut-to-hut plan');
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(chatReads).toEqual([]);
   });
 
   it('says so when the Session cannot be read', async () => {

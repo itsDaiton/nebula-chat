@@ -16,8 +16,8 @@ const text = resources.admin.sessions.panel;
 /** The open Session's right panel: its owner, and its metadata from the same read the transcript made. */
 export const SessionMetaPanel = ({ onClose }: SessionMetaPanelProps) => {
   // Not strict: the panel can outlive its route for a render while the dashboard navigates away.
-  const { id = '' } = useParams({ strict: false });
-  const { data: session } = useSessionRead(id);
+  const { sessionId = '' } = useParams({ strict: false });
+  const { data: session } = useSessionRead(sessionId);
   const { data: owner, isError } = useGetUser(session?.userId ?? '', {
     query: { enabled: Boolean(session), meta: { inlineError: true } },
   });

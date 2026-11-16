@@ -29,8 +29,8 @@ export const UserSessionsList = ({ userId }: UserSessionsListProps) => {
           {data.sessions.map((session) => (
             <li key={session.id}>
               <Link
-                to="/admin/sessions/$id"
-                params={{ id: session.id }}
+                to="/admin/sessions/$sessionId"
+                params={{ sessionId: session.id }}
                 className="flex h-[30px] items-center gap-2.5 rounded-md px-1.5 text-[13px] text-foreground-secondary hover:bg-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
               >
                 <MessageSquareIcon className="size-3.5 shrink-0 text-muted-foreground" />

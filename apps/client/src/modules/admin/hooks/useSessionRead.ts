@@ -5,6 +5,8 @@ import { useReadSession } from '@/libs/api/generated/admin/admin';
 export const useSessionRead = (id: string) =>
   useReadSession(id, {
     query: {
+      // The right panel outlives its route for a render, when the id is already gone.
+      enabled: Boolean(id),
       staleTime: Infinity,
       gcTime: 0,
       refetchOnWindowFocus: false,

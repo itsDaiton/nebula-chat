@@ -494,8 +494,8 @@ export const resources = {
         ownerIs: (name: string) => `Owner: ${name}`,
         model: 'Model',
         archived: 'Archived',
-        archivedOnly: 'Archived',
-        activeOnly: 'Active',
+        archivedOnly: 'Only archived',
+        activeOnly: 'Only active',
       },
       transcript: {
         loading: 'Loading Session',

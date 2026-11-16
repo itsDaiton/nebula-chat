@@ -35,8 +35,8 @@ export const SessionsPage = () => {
         // The transcript carries the table's search, so going back lands on the same page of the same filters.
         onSelect={(session) =>
           void navigate({
-            to: '/admin/sessions/$id',
-            params: { id: session.id },
+            to: '/admin/sessions/$sessionId',
+            params: { sessionId: session.id },
             search: (previous) => previous,
           })
         }

@@ -25,7 +25,7 @@ import { Route as AppAuthForgotPasswordRouteImport } from './routes/_app/auth/fo
 import { Route as AppAuthResetPasswordRouteImport } from './routes/_app/auth/reset-password'
 import { Route as AppAuthVerifyEmailRouteImport } from './routes/_app/auth/verify-email'
 import { Route as AppChatSIdRouteImport } from './routes/_app/_chat/s/$id'
-import { Route as AppAdminSessionsIdRouteImport } from './routes/_app/admin/sessions_.$id'
+import { Route as AppAdminSessionsSessionIdRouteImport } from './routes/_app/admin/sessions_.$sessionId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -105,11 +105,12 @@ const AppChatSIdRoute = AppChatSIdRouteImport.update({
   path: '/s/$id',
   getParentRoute: () => AppChatRoute,
 } as any)
-const AppAdminSessionsIdRoute = AppAdminSessionsIdRouteImport.update({
-  id: '/sessions_/$id',
-  path: '/sessions/$id',
-  getParentRoute: () => AppAdminRouteRoute,
-} as any)
+const AppAdminSessionsSessionIdRoute =
+  AppAdminSessionsSessionIdRouteImport.update({
+    id: '/sessions_/$sessionId',
+    path: '/sessions/$sessionId',
+    getParentRoute: () => AppAdminRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppChatIndexRoute
@@ -126,7 +127,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AppAdminIndexRoute
   '/auth/': typeof AppAuthIndexRoute
   '/s/$id': typeof AppChatSIdRoute
-  '/admin/sessions/$id': typeof AppAdminSessionsIdRoute
+  '/admin/sessions/$sessionId': typeof AppAdminSessionsSessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AppChatIndexRoute
@@ -141,7 +142,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AppAdminIndexRoute
   '/auth': typeof AppAuthIndexRoute
   '/s/$id': typeof AppChatSIdRoute
-  '/admin/sessions/$id': typeof AppAdminSessionsIdRoute
+  '/admin/sessions/$sessionId': typeof AppAdminSessionsSessionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -161,7 +162,7 @@ export interface FileRoutesById {
   '/_app/admin/': typeof AppAdminIndexRoute
   '/_app/auth/': typeof AppAuthIndexRoute
   '/_app/_chat/s/$id': typeof AppChatSIdRoute
-  '/_app/admin/sessions_/$id': typeof AppAdminSessionsIdRoute
+  '/_app/admin/sessions_/$sessionId': typeof AppAdminSessionsSessionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -180,7 +181,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/auth/'
     | '/s/$id'
-    | '/admin/sessions/$id'
+    | '/admin/sessions/$sessionId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -195,7 +196,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/s/$id'
-    | '/admin/sessions/$id'
+    | '/admin/sessions/$sessionId'
   id:
     | '__root__'
     | '/_app'
@@ -214,7 +215,7 @@ export interface FileRouteTypes {
     | '/_app/admin/'
     | '/_app/auth/'
     | '/_app/_chat/s/$id'
-    | '/_app/admin/sessions_/$id'
+    | '/_app/admin/sessions_/$sessionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -335,11 +336,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChatSIdRouteImport
       parentRoute: typeof AppChatRoute
     }
-    '/_app/admin/sessions_/$id': {
-      id: '/_app/admin/sessions_/$id'
-      path: '/sessions/$id'
-      fullPath: '/admin/sessions/$id'
-      preLoaderRoute: typeof AppAdminSessionsIdRouteImport
+    '/_app/admin/sessions_/$sessionId': {
+      id: '/_app/admin/sessions_/$sessionId'
+      path: '/sessions/$sessionId'
+      fullPath: '/admin/sessions/$sessionId'
+      preLoaderRoute: typeof AppAdminSessionsSessionIdRouteImport
       parentRoute: typeof AppAdminRouteRoute
     }
   }
@@ -350,7 +351,7 @@ interface AppAdminRouteRouteChildren {
   AppAdminSessionsRoute: typeof AppAdminSessionsRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppAdminIndexRoute: typeof AppAdminIndexRoute
-  AppAdminSessionsIdRoute: typeof AppAdminSessionsIdRoute
+  AppAdminSessionsSessionIdRoute: typeof AppAdminSessionsSessionIdRoute
 }
 
 const AppAdminRouteRouteChildren: AppAdminRouteRouteChildren = {
@@ -358,7 +359,7 @@ const AppAdminRouteRouteChildren: AppAdminRouteRouteChildren = {
   AppAdminSessionsRoute: AppAdminSessionsRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
   AppAdminIndexRoute: AppAdminIndexRoute,
-  AppAdminSessionsIdRoute: AppAdminSessionsIdRoute,
+  AppAdminSessionsSessionIdRoute: AppAdminSessionsSessionIdRoute,
 }
 
 const AppAdminRouteRouteWithChildren = AppAdminRouteRoute._addFileChildren(
