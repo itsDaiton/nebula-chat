@@ -1,10 +1,15 @@
+import { Link } from '@tanstack/react-router';
 import { resources } from '@/resources';
 import type { NebulaLogoProps } from '@/shared/types/types';
 import { cn } from '@/shared/utils/cn';
 
 /** Tabler's `galaxy` icon, inlined: Lucide has no galaxy. */
 export const NebulaLogo = ({ className }: NebulaLogoProps) => (
-  <span className={cn('flex items-center gap-2 pr-1.5', className)}>
+  <Link
+    to="/"
+    aria-label={resources.chat.appName}
+    className={cn('flex items-center gap-2 pr-1.5', className)}
+  >
     <svg
       viewBox="0 0 24 24"
       fill="none"
@@ -22,5 +27,5 @@ export const NebulaLogo = ({ className }: NebulaLogoProps) => (
     <span className="hidden text-sm font-semibold tracking-[-0.01em] sm:inline">
       {resources.chat.appName}
     </span>
-  </span>
+  </Link>
 );
