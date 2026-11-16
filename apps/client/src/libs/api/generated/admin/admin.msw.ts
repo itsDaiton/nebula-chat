@@ -11,6 +11,7 @@ import type { RequestHandlerOptions } from 'msw';
 
 import type {
   AdminSessionDetail,
+  AdminSessionListPage,
   AdminSessionPage,
   AdminUserDetail,
   AdminUserPage,
@@ -96,6 +97,30 @@ export const getListUserSessionsResponseMock = (
       messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
       createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
       updatedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+    }),
+  ),
+  nextCursor: faker.helpers.arrayElement([faker.string.uuid(), null]),
+  hasMore: faker.datatype.boolean(),
+  ...overrideResponse,
+});
+
+export const getListAllSessionsResponseMock = (
+  overrideResponse: Partial<Extract<AdminSessionListPage, object>> = {},
+): AdminSessionListPage => ({
+  sessions: Array.from({ length: faker.number.int({ min: 1, max: 100 }) }, (_, i) => i + 1).map(
+    () => ({
+      id: faker.string.uuid(),
+      title: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      model: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      archived: faker.datatype.boolean(),
+      messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+      createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+      updatedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+      owner: {
+        id: faker.string.uuid(),
+        name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      },
     }),
   ),
   nextCursor: faker.helpers.arrayElement([faker.string.uuid(), null]),
@@ -323,6 +348,30 @@ export const getUnbanUserMockHandler = (
   );
 };
 
+export const getListAllSessionsMockHandler = (
+  overrideResponse?:
+    | AdminSessionListPage
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<AdminSessionListPage> | AdminSessionListPage),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/admin/sessions',
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getListAllSessionsResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
 export const getReadSessionMockHandler = (
   overrideResponse?:
     | AdminSessionDetail
@@ -376,6 +425,7 @@ export const getAdminMock = () => [
   getSetUserRoleMockHandler(),
   getBanUserMockHandler(),
   getUnbanUserMockHandler(),
+  getListAllSessionsMockHandler(),
   getReadSessionMockHandler(),
   getListAuditEntriesMockHandler(),
 ];

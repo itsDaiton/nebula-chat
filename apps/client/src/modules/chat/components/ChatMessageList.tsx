@@ -8,6 +8,7 @@ export const ChatMessageList = ({
   isStreaming,
   isReplyStopped = false,
   onRegenerate,
+  readOnly = false,
 }: ChatMessageListProps) => {
   const last = history.at(-1);
   const prompt = history.at(-2);
@@ -32,6 +33,7 @@ export const ChatMessageList = ({
           <ChatMessage
             key={message.id}
             message={message}
+            readOnly={readOnly}
             isStreaming={isStreaming && isNewestReply}
             onRegenerate={
               canRegenerate && isNewestReply ? () => onRegenerate(prompt.content) : undefined

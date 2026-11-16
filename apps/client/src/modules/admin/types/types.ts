@@ -10,6 +10,8 @@ import type { AuditEntryActorType } from '@/libs/api/generated/model/auditEntryA
 import type { AdminUserDetail } from '@/libs/api/generated/model/adminUserDetail';
 import type { AdminUserSummaryStatus } from '@/libs/api/generated/model/adminUserSummaryStatus';
 import type { ErrorEnvelope } from '@/libs/api/generated/model/errorEnvelope';
+import type { ListAllSessionsArchived } from '@/libs/api/generated/model/listAllSessionsArchived';
+import type { ListAllSessionsOrder } from '@/libs/api/generated/model/listAllSessionsOrder';
 import type { ListUsersOrder } from '@/libs/api/generated/model/listUsersOrder';
 import type { ListUsersSortBy } from '@/libs/api/generated/model/listUsersSortBy';
 import type { ListUsersStatusItem } from '@/libs/api/generated/model/listUsersStatusItem';
@@ -36,7 +38,7 @@ type AdminNavPage = {
   label: string;
   icon: LucideIcon;
   /** Unset while the page is not built: its row is disabled and labelled "soon". */
-  to?: '/admin/audit' | '/admin/users';
+  to?: '/admin/audit' | '/admin/sessions' | '/admin/users';
   /** The page has selectable rows, so the right panel and its toggle exist. */
   hasDetail?: boolean;
 };
@@ -137,6 +139,9 @@ export type UserStatusChip = { status: ListUsersStatusItem; label: string; dashe
 export type UserSearchInputProps = {
   value: string | undefined;
   onChange: (value: string | undefined) => void;
+  /** The box's accessible name and placeholder; the Users page's by default. */
+  label?: string;
+  placeholder?: string;
 };
 
 export type UserSortHeaderProps = { column: ListUsersSortBy; label: string; alignRight?: boolean };
@@ -152,6 +157,27 @@ export type UserDetailProps = { user: AdminUserDetail };
 export type UserBanNoticeProps = { ban: NonNullable<AdminUserDetail['ban']> };
 
 export type UserSessionsListProps = { userId: string };
+
+/** What the Sessions table's URL holds, and what the open transcript carries so going back keeps it. */
+export type SessionsSearch = {
+  q?: string;
+  /** The owner's id. */
+  user?: string;
+  model?: string;
+  archived?: ListAllSessionsArchived;
+  dir?: ListAllSessionsOrder;
+  cursor?: string;
+};
+
+export type SessionFiltersProps = {
+  search: SessionsSearch;
+  /** `replace` keeps typing in the search box out of the history. */
+  onChange: (patch: Partial<SessionsSearch>, replace?: boolean) => void;
+};
+
+export type SessionOwnerFilterProps = { userId: string; onClear: () => void };
+
+export type SessionMetaPanelProps = { onClose: () => void };
 
 type UserActionRule = { disabledReason?: string };
 

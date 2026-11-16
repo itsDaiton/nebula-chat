@@ -147,6 +147,36 @@ export const listUserSessionsQuerySchema = z.object({
   cursor: z.uuid().optional().describe('The `nextCursor` of the previous page'),
 });
 
+export const listSessionsQuerySchema = z.object({
+  search: z
+    .string()
+    .trim()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe('Case-insensitive text to find in the title'),
+  userId: z.uuid().optional().describe('Only Sessions this User owns'),
+  model: z.string().trim().min(1).max(100).optional().describe('Only Sessions on this Model'),
+  archived: z
+    .enum(['true', 'false'])
+    .transform((value) => value === 'true')
+    .optional()
+    .describe(
+      '`true` for archived Sessions only, `false` for the rest; without it both are listed',
+    ),
+  order: z.enum(['asc', 'desc']).default('desc').describe('By last activity'),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(paginationConfig.maxLimit)
+    .default(paginationConfig.defaultLimit)
+    .describe(
+      `Number of Sessions to fetch (1-${String(paginationConfig.maxLimit)}, default ${String(paginationConfig.defaultLimit)})`,
+    ),
+  cursor: z.uuid().optional().describe('The `nextCursor` of the previous page'),
+});
+
 export const sessionIdParamsSchema = z.object({ id: z.uuid().describe('The Session id') });
 
 const adminSessionShape = {
@@ -176,3 +206,20 @@ export const adminSessionDetailSchema = z
     messages: messagesArraySchema.describe('Oldest first'),
   })
   .meta({ id: 'AdminSessionDetail' });
+
+export const adminSessionListPageSchema = z
+  .object({
+    sessions: z
+      .array(
+        z
+          .object({
+            ...adminSessionShape,
+            owner: z.object({ id: z.uuid(), name: z.string(), email: z.string() }),
+          })
+          .meta({ id: 'AdminSessionListItem' }),
+      )
+      .max(paginationConfig.maxLimit),
+    nextCursor: z.uuid().nullable(),
+    hasMore: z.boolean(),
+  })
+  .meta({ id: 'AdminSessionListPage' });

@@ -11,6 +11,7 @@ import { adminRepository } from '@server/modules/admin/admin.repository';
 import type {
   AdminRole,
   BanUserDTO,
+  ListSessionsQuery,
   ListUserSessionsQuery,
   ListUsersQuery,
   SetRoleDTO,
@@ -169,6 +170,9 @@ export const adminService = {
   async listUserSessions(userId: string, { limit, cursor }: ListUserSessionsQuery) {
     await findModerationTarget(userId);
     return adminRepository.listUserSessions(userId, limit, cursor);
+  },
+  listSessions({ limit, cursor, ...filters }: ListSessionsQuery) {
+    return adminRepository.listSessions(filters, limit, cursor);
   },
   // Opening a Session is a content read: audited once, after it succeeds, and a failed Audit write fails the read.
   async readSession(sessionId: string, adminId: string) {

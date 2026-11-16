@@ -1049,6 +1049,79 @@ components:
         - createdAt
         - updatedAt
       additionalProperties: false
+    AdminSessionListPage:
+      type: object
+      properties:
+        sessions:
+          maxItems: 100
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminSessionListItem'
+        nextCursor:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: 'null'
+        hasMore:
+          type: boolean
+      required:
+        - sessions
+        - nextCursor
+        - hasMore
+      additionalProperties: false
+    AdminSessionListItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        title:
+          type: string
+        model:
+          type: string
+        archived:
+          type: boolean
+          description: Whether the owner has archived the Session
+        messageCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        owner:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            name:
+              type: string
+            email:
+              type: string
+          required:
+            - id
+            - name
+            - email
+          additionalProperties: false
+      required:
+        - id
+        - title
+        - model
+        - archived
+        - messageCount
+        - createdAt
+        - updatedAt
+        - owner
+      additionalProperties: false
     AdminSessionDetail:
       type: object
       properties:
@@ -3056,6 +3129,111 @@ paths:
           content:
             application/json:
               schema: {}
+  /api/admin/sessions:
+    get:
+      operationId: listAllSessions
+      summary: List Sessions
+      tags:
+        - Admin
+      description: List Sessions across all Users, most recently active first by
+        default, filtered by a title search, owner, Model and archived state, a
+        page at a time. Listing is not a content read, so nothing is audited.
+        Requires an Admin whose auth session passed two-factor authentication.
+      parameters:
+        - schema:
+            description: Case-insensitive text to find in the title
+            type: string
+            minLength: 1
+            maxLength: 100
+          in: query
+          name: search
+          description: Case-insensitive text to find in the title
+        - schema:
+            description: Only Sessions this User owns
+            type: string
+            format: uuid
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: query
+          name: userId
+          description: Only Sessions this User owns
+        - schema:
+            description: Only Sessions on this Model
+            type: string
+            minLength: 1
+            maxLength: 100
+          in: query
+          name: model
+          description: Only Sessions on this Model
+        - schema:
+            description: '`true` for archived Sessions only, `false` for the rest; without
+              it both are listed'
+            type: string
+            enum:
+              - 'true'
+              - 'false'
+          in: query
+          name: archived
+          description: '`true` for archived Sessions only, `false` for the rest; without
+            it both are listed'
+        - schema:
+            default: desc
+            description: By last activity
+            type: string
+            enum:
+              - asc
+              - desc
+          in: query
+          name: order
+          description: By last activity
+        - schema:
+            default: 10
+            description: Number of Sessions to fetch (1-100, default 10)
+            type: integer
+            minimum: 1
+            maximum: 100
+          in: query
+          name: limit
+          description: Number of Sessions to fetch (1-100, default 10)
+        - schema:
+            description: The `nextCursor` of the previous page
+            type: string
+            format: uuid
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: query
+          name: cursor
+          description: The `nextCursor` of the previous page
+      responses:
+        '200':
+          description: A page of Sessions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSessionListPage'
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
   /api/admin/sessions/{id}:
     get:
       operationId: readSession

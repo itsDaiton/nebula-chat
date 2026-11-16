@@ -62,4 +62,18 @@ describe('ChatMessage', () => {
       renderWithProviders(<ChatMessage message={{ id: 'm1', role: 'assistant', content: '' }} />),
     ).not.toThrow();
   });
+
+  it('read-only, an answer keeps its text and copy but offers no regenerate', () => {
+    renderWithProviders(
+      <ChatMessage
+        readOnly
+        message={{ id: 'm1', role: 'assistant', content: 'an answer' }}
+        onRegenerate={() => undefined}
+      />,
+    );
+
+    expect(screen.getByText('an answer')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Regenerate' })).not.toBeInTheDocument();
+  });
 });

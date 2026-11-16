@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { MessageSquareIcon } from 'lucide-react';
 import { useListUserSessions } from '@/libs/api/generated/admin/admin';
 import type { UserSessionsListProps } from '@/modules/admin/types/types';
@@ -26,19 +27,29 @@ export const UserSessionsList = ({ userId }: UserSessionsListProps) => {
       {data && data.sessions.length > 0 && (
         <ul>
           {data.sessions.map((session) => (
-            <li
-              key={session.id}
-              className="flex h-[30px] items-center gap-2.5 px-1.5 text-[13px] text-foreground-secondary"
-            >
-              <MessageSquareIcon className="size-3.5 shrink-0 text-muted-foreground" />
-              <span className="min-w-0 flex-1 truncate">{session.title}</span>
-              {session.archived && (
-                <span className="font-mono text-[10.5px] text-faint">{text.archived}</span>
-              )}
+            <li key={session.id}>
+              <Link
+                to="/admin/sessions/$sessionId"
+                params={{ sessionId: session.id }}
+                className="flex h-[30px] items-center gap-2.5 rounded-md px-1.5 text-[13px] text-foreground-secondary hover:bg-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+              >
+                <MessageSquareIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                <span className="min-w-0 flex-1 truncate">{session.title}</span>
+                {session.archived && (
+                  <span className="font-mono text-[10.5px] text-faint">{text.archived}</span>
+                )}
+              </Link>
             </li>
           ))}
         </ul>
       )}
+      <Link
+        to="/admin/sessions"
+        search={{ user: userId }}
+        className="mt-1 inline-block px-1.5 text-[12.5px] text-muted-foreground hover:text-foreground"
+      >
+        {text.allSessions}
+      </Link>
     </section>
   );
 };

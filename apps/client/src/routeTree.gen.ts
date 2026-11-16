@@ -18,12 +18,14 @@ import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppChatIndexRouteImport } from './routes/_app/_chat/index'
 import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
 import { Route as AppAdminAuditRouteImport } from './routes/_app/admin/audit'
+import { Route as AppAdminSessionsRouteImport } from './routes/_app/admin/sessions'
 import { Route as AppAdminUsersRouteImport } from './routes/_app/admin/users'
 import { Route as AppAuthIndexRouteImport } from './routes/_app/auth/index'
 import { Route as AppAuthForgotPasswordRouteImport } from './routes/_app/auth/forgot-password'
 import { Route as AppAuthResetPasswordRouteImport } from './routes/_app/auth/reset-password'
 import { Route as AppAuthVerifyEmailRouteImport } from './routes/_app/auth/verify-email'
 import { Route as AppChatSIdRouteImport } from './routes/_app/_chat/s/$id'
+import { Route as AppAdminSessionsSessionIdRouteImport } from './routes/_app/admin/sessions_.$sessionId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -68,6 +70,11 @@ const AppAdminAuditRoute = AppAdminAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AppAdminRouteRoute,
 } as any)
+const AppAdminSessionsRoute = AppAdminSessionsRouteImport.update({
+  id: '/sessions',
+  path: '/sessions',
+  getParentRoute: () => AppAdminRouteRoute,
+} as any)
 const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -98,6 +105,12 @@ const AppChatSIdRoute = AppChatSIdRouteImport.update({
   path: '/s/$id',
   getParentRoute: () => AppChatRoute,
 } as any)
+const AppAdminSessionsSessionIdRoute =
+  AppAdminSessionsSessionIdRouteImport.update({
+    id: '/sessions_/$sessionId',
+    path: '/sessions/$sessionId',
+    getParentRoute: () => AppAdminRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppChatIndexRoute
@@ -106,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/device': typeof AppDeviceRoute
   '/settings': typeof AppSettingsRoute
   '/admin/audit': typeof AppAdminAuditRoute
+  '/admin/sessions': typeof AppAdminSessionsRoute
   '/admin/users': typeof AppAdminUsersRoute
   '/auth/forgot-password': typeof AppAuthForgotPasswordRoute
   '/auth/reset-password': typeof AppAuthResetPasswordRoute
@@ -113,12 +127,14 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AppAdminIndexRoute
   '/auth/': typeof AppAuthIndexRoute
   '/s/$id': typeof AppChatSIdRoute
+  '/admin/sessions/$sessionId': typeof AppAdminSessionsSessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AppChatIndexRoute
   '/device': typeof AppDeviceRoute
   '/settings': typeof AppSettingsRoute
   '/admin/audit': typeof AppAdminAuditRoute
+  '/admin/sessions': typeof AppAdminSessionsRoute
   '/admin/users': typeof AppAdminUsersRoute
   '/auth/forgot-password': typeof AppAuthForgotPasswordRoute
   '/auth/reset-password': typeof AppAuthResetPasswordRoute
@@ -126,6 +142,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AppAdminIndexRoute
   '/auth': typeof AppAuthIndexRoute
   '/s/$id': typeof AppChatSIdRoute
+  '/admin/sessions/$sessionId': typeof AppAdminSessionsSessionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -136,6 +153,7 @@ export interface FileRoutesById {
   '/_app/device': typeof AppDeviceRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/admin/audit': typeof AppAdminAuditRoute
+  '/_app/admin/sessions': typeof AppAdminSessionsRoute
   '/_app/admin/users': typeof AppAdminUsersRoute
   '/_app/auth/forgot-password': typeof AppAuthForgotPasswordRoute
   '/_app/auth/reset-password': typeof AppAuthResetPasswordRoute
@@ -144,6 +162,7 @@ export interface FileRoutesById {
   '/_app/admin/': typeof AppAdminIndexRoute
   '/_app/auth/': typeof AppAuthIndexRoute
   '/_app/_chat/s/$id': typeof AppChatSIdRoute
+  '/_app/admin/sessions_/$sessionId': typeof AppAdminSessionsSessionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -154,6 +173,7 @@ export interface FileRouteTypes {
     | '/device'
     | '/settings'
     | '/admin/audit'
+    | '/admin/sessions'
     | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/reset-password'
@@ -161,12 +181,14 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/auth/'
     | '/s/$id'
+    | '/admin/sessions/$sessionId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/device'
     | '/settings'
     | '/admin/audit'
+    | '/admin/sessions'
     | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/reset-password'
@@ -174,6 +196,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/s/$id'
+    | '/admin/sessions/$sessionId'
   id:
     | '__root__'
     | '/_app'
@@ -183,6 +206,7 @@ export interface FileRouteTypes {
     | '/_app/device'
     | '/_app/settings'
     | '/_app/admin/audit'
+    | '/_app/admin/sessions'
     | '/_app/admin/users'
     | '/_app/auth/forgot-password'
     | '/_app/auth/reset-password'
@@ -191,6 +215,7 @@ export interface FileRouteTypes {
     | '/_app/admin/'
     | '/_app/auth/'
     | '/_app/_chat/s/$id'
+    | '/_app/admin/sessions_/$sessionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -262,6 +287,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminAuditRouteImport
       parentRoute: typeof AppAdminRouteRoute
     }
+    '/_app/admin/sessions': {
+      id: '/_app/admin/sessions'
+      path: '/sessions'
+      fullPath: '/admin/sessions'
+      preLoaderRoute: typeof AppAdminSessionsRouteImport
+      parentRoute: typeof AppAdminRouteRoute
+    }
     '/_app/admin/users': {
       id: '/_app/admin/users'
       path: '/users'
@@ -304,19 +336,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChatSIdRouteImport
       parentRoute: typeof AppChatRoute
     }
+    '/_app/admin/sessions_/$sessionId': {
+      id: '/_app/admin/sessions_/$sessionId'
+      path: '/sessions/$sessionId'
+      fullPath: '/admin/sessions/$sessionId'
+      preLoaderRoute: typeof AppAdminSessionsSessionIdRouteImport
+      parentRoute: typeof AppAdminRouteRoute
+    }
   }
 }
 
 interface AppAdminRouteRouteChildren {
   AppAdminAuditRoute: typeof AppAdminAuditRoute
+  AppAdminSessionsRoute: typeof AppAdminSessionsRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppAdminIndexRoute: typeof AppAdminIndexRoute
+  AppAdminSessionsSessionIdRoute: typeof AppAdminSessionsSessionIdRoute
 }
 
 const AppAdminRouteRouteChildren: AppAdminRouteRouteChildren = {
   AppAdminAuditRoute: AppAdminAuditRoute,
+  AppAdminSessionsRoute: AppAdminSessionsRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
   AppAdminIndexRoute: AppAdminIndexRoute,
+  AppAdminSessionsSessionIdRoute: AppAdminSessionsSessionIdRoute,
 }
 
 const AppAdminRouteRouteWithChildren = AppAdminRouteRoute._addFileChildren(

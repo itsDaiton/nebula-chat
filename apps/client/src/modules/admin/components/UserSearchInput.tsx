@@ -12,7 +12,12 @@ const text = resources.admin.users;
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
 /** The name-or-email search: what is typed reaches `onChange` once typing pauses. */
-export const UserSearchInput = ({ value, onChange }: UserSearchInputProps) => {
+export const UserSearchInput = ({
+  value,
+  onChange,
+  label = text.search,
+  placeholder = text.searchPlaceholder,
+}: UserSearchInputProps) => {
   // A search still waiting when the page is left would navigate back to it.
   const cancelOnUnmount = useOnUnmount(() => clearTimeout(debounceTimer));
   // A value this box did not send (Back, a link) remounts the input so it shows the URL's text.
@@ -31,8 +36,8 @@ export const UserSearchInput = ({ value, onChange }: UserSearchInputProps) => {
       <InputGroupInput
         key={generation.current}
         type="search"
-        aria-label={text.search}
-        placeholder={text.searchPlaceholder}
+        aria-label={label}
+        placeholder={placeholder}
         defaultValue={value}
         className="h-full text-[13px] md:text-[13px]"
         onChange={(event) => {

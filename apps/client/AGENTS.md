@@ -66,6 +66,7 @@ coverage and knip. A route file only wires a page: the component lives in `modul
   `renderLeftPanel`, `renderRightPanel` and `hideRightPanel` slots, and a table page selects a row through
   `useAdminSelection`. A page's table is `AdminDataTable` (TanStack Table v9, server paged, virtualized).
   The Users page (`/admin/users`) keeps its open User in the URL instead (`selected`), read by `UserDetailPanel`.
+  The Sessions page (`/admin/sessions`) opens a transcript at `/admin/sessions/$sessionId` (`sessions_.$sessionId.tsx`, outside the table's route; not `$id`, which the shell header reads as a chat Session) that carries the table's search back; its right panel is `SessionMetaPanel`, and the one audited read goes through `useSessionRead`.
 - **Loaders.** A loader prefetches through the existing query client:
   `context.queryClient.ensureQueryData(getGetSessionQueryOptions(id))`. Components keep using the generated
   hooks. A prefetch whose failure the page shows itself sets `meta: { inlineError: true }`
