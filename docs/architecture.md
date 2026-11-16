@@ -43,6 +43,7 @@ flowchart LR
   server -->|verification and reset email| resend
   server <-->|code exchange| oauth
   server -.->|"GET /health wake-up"| worker
+  browser -.->|"GET /health wake-up"| worker
   worker --> pg
   worker <--> redis
   worker -->|model call| llm
@@ -54,7 +55,8 @@ flowchart LR
   input, and relaying replies over SSE. It holds no LLM keys.
 - **The worker** owns every model call ([ADR-0013](./adr/0013-worker-app-owns-all-llm-execution.md)).
   It takes jobs off Redis, not HTTP. Its `/health` route exists because Render's free plan runs
-  it as a web service that sleeps, and the server's ping on every enqueue wakes it.
+  it as a web service that sleeps. The browser's ping on page load and before a send wakes it; the
+  server's ping on every enqueue is a backup, since Render's edge can answer it with a bot challenge.
 - **Redis** carries auth state, the job queue, per-reply streams and log-level pub/sub; see
   [Redis keyspace](#redis-keyspace).
 - **Telemetry** goes straight from each process to Grafana Cloud over OTLP, with no collector
