@@ -35,6 +35,7 @@ export * from './listAllSessionsOrder';
 export * from './listAllSessionsParams';
 export * from './listAuditEntriesAction';
 export * from './listAuditEntriesActorType';
+export * from './listAuditEntriesOrder';
 export * from './listAuditEntriesParams';
 export * from './listMessagesParams';
 export * from './listSessionsArchived';

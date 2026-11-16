@@ -14,9 +14,19 @@ export interface AuditEntry {
   actorType: AuditEntryActorType;
   /** The Admin who acted; `null` for the Operator or the system */
   actorUserId: string | null;
+  /**
+   * The acting Admin's name; `null` for the Operator, the system or a purged Admin
+   * @nullable
+   */
+  actorName: string | null;
   action: AuditEntryAction;
   targetType: string;
   targetId: string;
+  /**
+   * The User's email when the target is a User that still exists; otherwise `null`
+   * @nullable
+   */
+  targetLabel: string | null;
   /** Ids and changed fields; never Message content */
   detail: AuditEntryDetail;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$ */

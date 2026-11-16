@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { getRouteApi, useRouter } from '@tanstack/react-router';
 import { AdminDataTable } from '@/modules/admin/components/AdminDataTable';
 import { AdminPageTitle } from '@/modules/admin/components/AdminPageTitle';
@@ -24,9 +25,18 @@ export const AuditLogPage = () => {
     void navigate({ search: (previous) => ({ ...previous, ...patch, cursor: undefined }) });
   };
 
+  const { data } = useQuery(auditQueryOptions(search));
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <AdminPageTitle>{text.title}</AdminPageTitle>
+      <AdminPageTitle>
+        {text.title}
+        {data?.total !== undefined && (
+          <span className="ml-3 font-mono text-xs font-normal text-muted-foreground">
+            {text.count(data.total)}
+          </span>
+        )}
+      </AdminPageTitle>
       <AuditFilters search={search} onChange={change} />
       <AdminDataTable
         label={text.title}

@@ -6,6 +6,8 @@ import type { AuditPage } from '@/libs/api/generated/model/auditPage';
 
 const AUDIT_PAGE_SIZE = 50;
 
+export const DEFAULT_AUDIT_ORDER = 'desc';
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const startOfDay = (day: string) => `${day}T00:00:00Z`;
@@ -20,6 +22,7 @@ const auditParams = ({
   target,
   from,
   to,
+  dir,
   cursor,
 }: AuditSearch): ListAuditEntriesParams => ({
   limit: AUDIT_PAGE_SIZE,
@@ -28,13 +31,15 @@ const auditParams = ({
   targetId: target,
   from: from ? startOfDay(from) : undefined,
   to: to ? startOfNextDay(to) : undefined,
+  order: dir ?? DEFAULT_AUDIT_ORDER,
   cursor,
 });
 
 export const auditQueryOptions = (search: AuditSearch) => ({
   ...getListAuditEntriesQueryOptions(auditParams(search)),
-  select: ({ entries, nextCursor }: AuditPage): AdminPage<AuditEntry> => ({
+  select: ({ entries, nextCursor, total }: AuditPage): AdminPage<AuditEntry> => ({
     rows: entries,
     nextCursor,
+    total,
   }),
 });

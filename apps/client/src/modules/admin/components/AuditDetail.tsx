@@ -10,7 +10,7 @@ export const AuditDetail = ({ entry }: AuditDetailProps) => {
   const facts: [string, React.ReactNode][] = [
     [text.when, formatAuditTimeFull(entry.createdAt)],
     [text.actor, <AuditActorCell key="actor" entry={entry} />],
-    [text.target, `${entry.targetType} ${entry.targetId}`],
+    [text.target, `${entry.targetType} ${entry.targetLabel ?? entry.targetId}`],
     [text.entry, entry.id],
   ];
 

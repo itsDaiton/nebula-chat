@@ -181,6 +181,10 @@ export const getListAuditEntriesResponseMock = (
       id: faker.string.uuid(),
       actorType: faker.helpers.arrayElement(['admin', 'operator', 'system'] as const),
       actorUserId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+      actorName: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
       action: faker.helpers.arrayElement([
         'admin.granted',
         'user.role_changed',
@@ -193,6 +197,10 @@ export const getListAuditEntriesResponseMock = (
       ] as const),
       targetType: faker.string.alpha({ length: { min: 10, max: 20 } }),
       targetId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      targetLabel: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
       detail: {
         [faker.string.alphanumeric(5)]: {},
       },
@@ -200,6 +208,7 @@ export const getListAuditEntriesResponseMock = (
     }),
   ),
   nextCursor: faker.helpers.arrayElement([faker.string.uuid(), null]),
+  total: faker.number.int({ min: 0, max: 9007199254740991 }),
   hasMore: faker.datatype.boolean(),
   ...overrideResponse,
 });

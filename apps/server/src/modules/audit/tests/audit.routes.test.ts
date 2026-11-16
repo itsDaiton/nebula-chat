@@ -39,9 +39,11 @@ const anEntry = {
   id: ENTRY_ID,
   actorType: 'operator' as const,
   actorUserId: null,
+  actorName: null,
   action: 'admin.granted' as const,
   targetType: 'user',
   targetId: TARGET_ID,
+  targetLabel: 'ada@example.com',
   detail: { role: { from: 'user', to: 'admin' } },
   createdAt: new Date('2026-10-30T12:00:00.000Z'),
 };
@@ -60,7 +62,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockedGetSession.mockResolvedValue(adminSession() as never);
   repo.list.mockResolvedValue(
-    fromPartial({ entries: [anEntry], nextCursor: ENTRY_ID, hasMore: true }),
+    fromPartial({ entries: [anEntry], nextCursor: ENTRY_ID, hasMore: true, total: 12 }),
   );
 });
 
@@ -73,8 +75,36 @@ describe('GET /api/admin/audit', () => {
       entries: [{ ...anEntry, createdAt: '2026-10-30T12:00:00.000Z' }],
       nextCursor: ENTRY_ID,
       hasMore: true,
+      total: 12,
     });
-    expect(repo.list).toHaveBeenCalledWith({}, 10, undefined);
+    expect(repo.list).toHaveBeenCalledWith({}, 10, 'desc', undefined);
+  });
+
+  it('returns the labels, and null labels for an entry whose User is gone', async () => {
+    repo.list.mockResolvedValue(
+      fromPartial({
+        entries: [
+          { ...anEntry, actorType: 'admin', actorUserId: ADMIN_USER_ID, actorName: 'Grace' },
+          { ...anEntry, id: TARGET_ID, targetLabel: null },
+        ],
+        nextCursor: null,
+        hasMore: false,
+        total: 2,
+      }),
+    );
+
+    const res = await app.inject({ method: 'GET', url: ROUTE, headers: COOKIE });
+
+    const [first, second] = res.json().entries;
+    expect(first).toMatchObject({ actorName: 'Grace', targetLabel: 'ada@example.com' });
+    expect(second).toMatchObject({ actorName: null, targetLabel: null });
+  });
+
+  it('passes the order to the repository', async () => {
+    const res = await app.inject({ method: 'GET', url: `${ROUTE}?order=asc`, headers: COOKIE });
+
+    expect(res.statusCode).toBe(200);
+    expect(repo.list).toHaveBeenCalledWith({}, 10, 'asc', undefined);
   });
 
   it('filters by actor, action, target and time range, from a cursor', async () => {
@@ -104,6 +134,7 @@ describe('GET /api/admin/audit', () => {
         to: new Date('2026-10-31T00:00:00.000Z'),
       },
       5,
+      'desc',
       ENTRY_ID,
     );
   });
@@ -114,6 +145,7 @@ describe('GET /api/admin/audit', () => {
     ['a time that is not ISO 8601', 'from=yesterday'],
     ['a cursor that is not an entry id', 'cursor=abc'],
     ['a page past 100', 'limit=101'],
+    ['an order that is not asc or desc', 'order=newest'],
   ])('rejects %s', async (_case, query) => {
     const res = await app.inject({ method: 'GET', url: `${ROUTE}?${query}`, headers: COOKIE });
 

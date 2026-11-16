@@ -6,7 +6,7 @@ import { cn } from '@/shared/utils/cn';
 const pill =
   'inline-flex items-center gap-1.5 rounded-md border px-1.5 py-0.5 font-mono text-[11px]';
 
-/** Who acted: an Admin by id, the Operator and the system as distinct outlined pills. */
+/** Who acted: an Admin by name (or short id once the account is gone), the Operator and the system as distinct outlined pills. */
 export const AuditActorCell = ({ entry }: AuditActorCellProps) => {
   const { actors } = resources.admin.audit;
 
@@ -33,9 +33,13 @@ export const AuditActorCell = ({ entry }: AuditActorCellProps) => {
       <span className="grid size-5 place-items-center rounded-full bg-raised text-muted-foreground">
         <UserIcon className="size-3" />
       </span>
-      <span className="font-mono text-[11.5px]" title={entry.actorUserId ?? undefined}>
-        {entry.actorUserId?.slice(0, 8) ?? actors.admin}
-      </span>
+      {entry.actorName ? (
+        <span title={entry.actorUserId ?? undefined}>{entry.actorName}</span>
+      ) : (
+        <span className="font-mono text-[11.5px]" title={entry.actorUserId ?? undefined}>
+          {entry.actorUserId?.slice(0, 8) ?? actors.admin}
+        </span>
+      )}
     </span>
   );
 };

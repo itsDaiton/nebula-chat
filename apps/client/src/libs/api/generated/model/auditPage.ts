@@ -8,10 +8,16 @@ import type { AuditEntry } from './auditEntry';
 
 export interface AuditPage {
   /**
-   * Newest first
+   * In the requested `order`
    * @maxItems 100
    */
   entries: AuditEntry[];
   nextCursor: string | null;
+  /**
+   * Entries matching the filters, ignoring `cursor` and `limit`
+   * @minimum 0
+   * @maximum 9007199254740991
+   */
+  total: number;
   hasMore: boolean;
 }
