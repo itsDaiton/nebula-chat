@@ -30,7 +30,7 @@ Test commands are in [client-testing](../../.claude/rules/client-testing.md); mo
 committed, never hand-edited), `resources.ts` (UI strings) and:
 
 - `routes/` — TanStack Router file-based routes (`__root`, the `_app` guard layout holding `auth/*`, `device` (where an Admin approves a `nebula login`) and `settings` (a redirect to `/` that opens the Settings dialog),
-  the pathless `_app/_chat` layout rendering `AppShell` around `index` and `s/$id`, and `_app/admin/*`, the admin dashboard behind its 2FA guard, and `dev/*`, development-only demo pages that are not-found in production). `routing/` — router setup, `RootLayout`, search-param helpers.
+  the pathless `_app/_chat` layout rendering `AppShell` around `index` and `s/$id`, and `_app/admin/*`, the admin dashboard behind its 2FA guard). `routing/` — router setup, `RootLayout`, search-param helpers.
 - `libs/api/` — the axios instance and SSE fetch mutator (`client.ts`, `streamClient.ts`), the query client,
   and `generated/` (Orval output). `libs/auth/` — the better-auth client, the one auth entry point.
 - `modules/<feature>/` — `admin`, `auth`, `chat`, `commandPalette`, `device`, `inspector`, `sessions`, `settings`. Each splits into `components/`, `hooks/`,

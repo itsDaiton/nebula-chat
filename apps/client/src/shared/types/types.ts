@@ -116,10 +116,3 @@ export type StackedAreaChartProps = {
 };
 
 export type ShareBarProps = { share: number; active?: boolean };
-
-export type ChartDemoState = {
-  activeSeries: string | null;
-  hoverIndex: number | null;
-  setActiveSeries: (key: string | null) => void;
-  setHoverIndex: (index: number | null) => void;
-};

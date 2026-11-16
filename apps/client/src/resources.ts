@@ -313,13 +313,6 @@ export const resources = {
     settings: 'Settings',
     openAdmin: 'Open admin',
   },
-  devCharts: {
-    title: 'Charts (development)',
-    chartLabel: 'Prompts per day by Model',
-    prompts: 'prompts',
-    share: 'share',
-    list: 'Models ranked on the hovered day',
-  },
   admin: {
     nav: {
       label: 'Admin navigation',
