@@ -1,3 +1,4 @@
+import { UserActions } from '@/modules/admin/components/UserActions';
 import { UserBanNotice } from '@/modules/admin/components/UserBanNotice';
 import { UserLastActive } from '@/modules/admin/components/UserLastActive';
 import { UserSessionsList } from '@/modules/admin/components/UserSessionsList';
@@ -43,6 +44,7 @@ export const UserDetail = ({ user }: UserDetailProps) => {
         ))}
       </dl>
       <UserSessionsList userId={user.id} />
+      <UserActions user={user} />
     </>
   );
 };
