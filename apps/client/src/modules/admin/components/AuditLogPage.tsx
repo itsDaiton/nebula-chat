@@ -1,5 +1,6 @@
 import { getRouteApi, useRouter } from '@tanstack/react-router';
 import { AdminDataTable } from '@/modules/admin/components/AdminDataTable';
+import { AdminPageTitle } from '@/modules/admin/components/AdminPageTitle';
 import { AuditDetail } from '@/modules/admin/components/AuditDetail';
 import { AuditFilters } from '@/modules/admin/components/AuditFilters';
 import { useAdminSelection } from '@/modules/admin/hooks/useAdminSelection';
@@ -25,7 +26,7 @@ export const AuditLogPage = () => {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <h1 className="px-5 pt-5 pb-4 text-xl font-semibold">{text.title}</h1>
+      <AdminPageTitle>{text.title}</AdminPageTitle>
       <AuditFilters search={search} onChange={change} />
       <AdminDataTable
         label={text.title}

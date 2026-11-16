@@ -1,5 +1,6 @@
 import { getRouteApi, useRouter } from '@tanstack/react-router';
 import { AdminDataTable } from '@/modules/admin/components/AdminDataTable';
+import { AdminPageTitle } from '@/modules/admin/components/AdminPageTitle';
 import { UserFilters } from '@/modules/admin/components/UserFilters';
 import type { UsersSearch } from '@/modules/admin/types/types';
 import { userColumns } from '@/modules/admin/utils/userColumns';
@@ -24,7 +25,7 @@ export const UsersPage = () => {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <h1 className="px-5 pt-4 pb-3 text-lg font-semibold tracking-tight">{text.title}</h1>
+      <AdminPageTitle>{text.title}</AdminPageTitle>
       <UserFilters search={search} onChange={change} />
       <AdminDataTable
         label={text.title}

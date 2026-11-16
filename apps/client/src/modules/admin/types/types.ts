@@ -48,6 +48,7 @@ export type AdminNavItemProps = { page: AdminNavPage; onNavigate?: () => void };
 /** The row an admin table's right panel shows, and the route it belongs to. */
 type AdminSelection = { path: string; id: string; title: string; detail: ReactNode };
 
+export type AdminPageTitleProps = { children: ReactNode };
 export type AdminDetailPanelProps = { path: string; onClose: () => void };
 
 export type AdminDetailState = {
