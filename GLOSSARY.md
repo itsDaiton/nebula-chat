@@ -116,6 +116,14 @@ _Avoid_: Activity log, history.
 Someone running a deployment rather than using it: holds the operator token and can change operational settings, such as log levels at runtime. Not a User — an Operator owns no Sessions, and no Guest or Registered user can act as one.
 _Avoid_: Admin (an Admin is a User with elevated rights; operating is not a kind of User).
 
+**Operator key**:
+The API key for an LLM provider that the deployment itself holds. Every Model call uses it unless its User has an Own key for that Model's provider, and whoever runs the deployment pays for the calls made with it.
+_Avoid_: Shared key, server key, system key.
+
+**Own key**:
+An API key for an LLM provider that a verified Registered user supplies for themselves, at most one per provider. Their Model calls on that provider use it instead of the Operator key and are paid for by them; with none stored for a provider, the Operator key is used. A stored Own key that fails fails the reply and never falls back to the Operator key.
+_Avoid_: BYOK (conversation shorthand only), personal key, user key, API token.
+
 **CLI profile**:
 A named deployment the `nebula` CLI talks to (for example `local` or `prod`): just a server URL, one of them the default. Holds no credentials; a CLI login is kept apart, keyed by the server URL.
 _Avoid_: Profile on its own (reads as a User's profile or Profile image), environment, context.
