@@ -3,6 +3,7 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CodeBlock } from '@/shared/components/ui/code-block';
 import type { MarkdownContentProps } from '@/shared/types/types';
+import { normalizeMarkdown } from '@/shared/utils/normalizeMarkdown';
 import { isSafeUrl } from '@/shared/utils/urlUtils';
 import type { Components, ExtraProps } from 'react-markdown';
 import type { AnchorHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
@@ -20,7 +21,7 @@ const toText = (node: ReactNode): string => {
 // A fenced block arrives as <pre><code class="language-x">; inline code stays a plain <code>.
 const MarkdownPre = ({ children }: PreProps) => {
   if (!isValidElement<CodeElementProps>(children)) return <pre>{children}</pre>;
-  const language = /language-(\w+)/.exec(children.props.className ?? '')?.[1] ?? 'text';
+  const language = /language-(\S+)/.exec(children.props.className ?? '')?.[1] ?? 'text';
   return (
     <CodeBlock code={toText(children.props.children).replace(/\n$/, '')} language={language} />
   );
@@ -56,7 +57,7 @@ const markdownComponents: Components = {
 export const MarkdownContent = memo(({ content }: MarkdownContentProps) => (
   <div className="chat-prose">
     <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-      {content}
+      {normalizeMarkdown(content)}
     </Markdown>
   </div>
 ));

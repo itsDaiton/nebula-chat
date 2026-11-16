@@ -40,6 +40,26 @@ describe('MarkdownContent', () => {
     expect(container.textContent).toContain('const x = 1;');
   });
 
+  it('renders a reply wrapped in a markdown fence as Markdown, not one code block', () => {
+    renderWithProviders(
+      <MarkdownContent content={'```markdown\n# Title\n\n```python\nprint(1)\n```\n```'} />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Title' })).toBeInTheDocument();
+  });
+
+  it('labels a fenced block with a language such as c# in full', () => {
+    renderWithProviders(<MarkdownContent content={'```c#\nvar x = 1;\n```'} />);
+
+    expect(screen.getByText('c#')).toBeInTheDocument();
+  });
+
+  it('renders • bullets as list items', () => {
+    renderWithProviders(<MarkdownContent content={'• one\n• two'} />);
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+  });
+
   it('renders inline code', () => {
     const { container } = renderWithProviders(<MarkdownContent content="use `npm install` here" />);
 
