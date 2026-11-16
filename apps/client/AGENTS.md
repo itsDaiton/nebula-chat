@@ -34,7 +34,8 @@ committed, never hand-edited), `resources.ts` (UI strings) and:
 - `libs/api/` — the axios instance and SSE fetch mutator (`client.ts`, `streamClient.ts`), the query client,
   and `generated/` (Orval output). `libs/auth/` — the better-auth client, the one auth entry point.
 - `modules/<feature>/` — `admin`, `auth`, `chat`, `commandPalette`, `device`, `inspector`, `sessions`, `settings`. Each splits into `components/`, `hooks/`,
-  `stores/`, `utils/` and `types/types.ts`, plus its page component.
+  `stores/`, `utils/` and `types/types.ts`, plus its page component. `chat/streaming/` holds the React-free
+  reply stream code: the SSE parser, the event reducer, the reconnect loop and its cache invalidations.
 - `shared/` — cross-module `components/` (`ui/` holds the shadcn/ui base components, `layout/` the app shell, `charts/` our chart wrappers over TanStack Charts, never exposing its types),
   `hooks/`, `stores/`, `pages/`, `types/`, `config/`, `utils/`. `test/` holds the shared test helpers.
 - `styles/` — the Tailwind entry: preflight, design tokens for light and dark, Geist fonts.

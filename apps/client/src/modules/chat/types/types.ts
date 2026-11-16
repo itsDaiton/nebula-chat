@@ -132,6 +132,29 @@ export type ReplyState =
   | { status: 'streaming' }
   | { status: 'navigating'; end: ReplyEnd };
 
+/** The chat after one stream event; `end` only when the event ends the reply. */
+export type StreamEventResult = {
+  history: ChatMessage[];
+  end?: ReplyEnd;
+  usage?: NonNullable<Usage>;
+  /** The Run a Run event moved on, whose cached read is now stale. */
+  staleRunId?: string;
+};
+
+/** Follows one reply stream: `onEvent` applies a frame, `onExpired` shows the saved reply instead. */
+export type FollowStreamOptions = {
+  streamId: string;
+  signal: AbortSignal;
+  reconnectDelaysMs: readonly number[];
+  onEvent: (frame: SseFrame) => ReplyEnd | null;
+  onExpired: () => Promise<void>;
+  open?: (
+    streamId: string,
+    lastEventId: string | undefined,
+    signal: AbortSignal,
+  ) => Promise<Response | null>;
+};
+
 /** Where a followed reply stream got to: the last event applied, and reconnects since then. */
 export type StreamCursor = {
   lastEventId: string | undefined;

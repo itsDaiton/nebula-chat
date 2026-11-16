@@ -2,6 +2,7 @@
 paths:
   - 'apps/client/src/**/stores/**'
   - 'apps/client/src/**/hooks/**'
+  - 'apps/client/src/modules/chat/streaming/**'
   - 'apps/client/src/libs/**'
   - 'apps/client/src/App.tsx'
 ---
@@ -18,11 +19,14 @@ State is split by **kind** ([ADR-0012](../../docs/adr/0012-adopt-tanstack-query-
 - **Chat streaming** is send, then subscribe (ADR-0014). `useChatStream` creates the Session for a new chat
   (`useCreateSession`), sends the Message with the generated `useSendMessage` mutation (202
   `{ messageId, streamId }`), then opens the reply stream through the generated `readReplyStream` (a fetch
-  mutator, `libs/api/streamClient.ts`, that returns the raw `Response`). It reads the SSE body with
-  `utils/parseSseStream.ts` and writes the live reply into `useChatStreamStore`. `readReplyStream` is only
-  called through `useChatStream`; its generated react-query hook (`useReadReplyStream`) must never be used,
-  because it would go through axios and buffer the body. A dropped stream reconnects with backoff, passing
-  the last event id as `lastEventId` and skipping any entry at or before it; a 404 (expired) shows the saved
+  mutator, `libs/api/streamClient.ts`, that returns the raw `Response`). The hook only orchestrates (send,
+  resume, stop, abort, settle, store writes); the work is React-free in `modules/chat/streaming/`:
+  `followStream.ts` opens and reads the stream (`parseSseStream.ts`), `applyStreamEvent.ts` folds each event
+  into the history and returns the `ReplyEnd` when one ends the reply, `invalidations.ts` names every cache
+  invalidation, and `savedReply.ts` reads the saved Messages. `readReplyStream` is only called from
+  `followStream.ts`; its generated react-query hook (`useReadReplyStream`) must never be used, because it
+  would go through axios and buffer the body. A dropped stream reconnects with backoff, passing the last
+  event id as `lastEventId` and skipping any entry at or before it; a 404 (expired) shows the saved
   Messages instead. `resumeStream` re-attaches to a Session's `activeStreamId` (called render-time from
   `ChatContainer`), and `stop` posts `cancelReplyStream`, deferred until the send names the stream.
   The newest reply's lifecycle is the one `reply: ReplyState` union in the store (`sending` → `streaming` →
@@ -32,7 +36,7 @@ State is split by **kind** ([ADR-0012](../../docs/adr/0012-adopt-tanstack-query-
   `useRunMode` (off for a Guest whatever the store holds) and reset by `useMessageHandler` on every send, which
   passes `mode` down to `streamMessage`. A `run` send answers with a `runId`: the hook puts it and an empty
   `run: RunProgress` on the trailing assistant Message and calls `useInspectorStore.showRun`. The stream's
-  `step-started`, `step-finished` and `run-finished` frames are validated by `utils/runProgress.ts`
+  `step-started`, `step-finished` and `run-finished` frames are validated by `streaming/runProgress.ts`
   (`parseRunEvent`), folded into that Message (`applyRunEvent`: a flat list of Steps in first-seen order, each
   keeping its `turn` and `parentStepId`; a higher `attempt` resets the Step in place and, for the Output Step,
   the answer) and each invalidates the Run's query, so the Inspector's

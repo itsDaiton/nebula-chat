@@ -1,5 +1,5 @@
 import type { SseEvent, SseFrame } from '@/modules/chat/types/types';
-import { SSE_EVENTS } from '@/modules/chat/utils/sseEvents';
+import { SSE_EVENTS } from '@/modules/chat/streaming/sseEvents';
 
 const frameOf = (block: string): SseFrame | null => {
   let event: string | null = null;
