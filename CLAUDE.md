@@ -34,7 +34,8 @@ These bias toward caution over speed; for trivial tasks use judgment.
 - **Open a PR when the work is complete.** Title `type(scope): NEB-<n> summary` (no ID for ad-hoc work).
   Write the body with **`/pr`** (Summary, Evidence, Merge Danger), then add `Closes #NN` and the ADR link if
   one exists.
-- **Never merge your own PR** unless asked. Never force-push shared refs or use `--no-verify`.
+- **Never merge your own PR** unless asked. Never force-push shared refs (`main`, integration branches) or use `--no-verify`; a
+  rebased feature branch goes up with `--force-with-lease`.
 
 ## Skills
 
@@ -58,6 +59,10 @@ template); after `npx skills@latest update`, re-apply them from the diff.
 - A new ticket fills `.github/ISSUE_TEMPLATE.md` and follows the Ticket anatomy in
   `docs/agents/issue-tracker.md` — this overrides any thinner template a skill embeds. Title it
   `type(scope): NEB-<n> summary`; label it `app:server` / `app:client` / `lib:<name>` plus a triage label.
+- **Client UI tickets start from the mockups.** Before any UI edit, do the required steps in
+  `docs/design/redesign/README.md`: load the "Nebula Redesign Mockups" artifact and look at every
+  screenshot the ticket names. A hook blocks client `.tsx`/`.css` edits until you have; if the artifact
+  won't load, stop and tell the user.
 - Domain: one `GLOSSARY.md` plus `docs/adr/` — see `docs/agents/domain.md`. Both are produced upstream
   during `/grill-with-docs`, not during implementation.
 

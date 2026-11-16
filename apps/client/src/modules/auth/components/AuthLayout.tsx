@@ -1,41 +1,28 @@
-import { Card, Flex, Icon, Text } from '@chakra-ui/react';
 import { Link } from '@tanstack/react-router';
-import { TbGalaxy } from 'react-icons/tb';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import type { AuthLayoutProps } from '@/modules/auth/types/types';
-import { resources } from '@/resources';
+import { NebulaLogo } from '@/shared/components/NebulaLogo';
+import { cn } from '@/shared/utils/cn';
 
-/** The shell every auth page shares: the app's mark above a single card. */
-export const AuthLayout = ({ children, footer }: AuthLayoutProps) => {
+/** The shell every auth page shares: the app's mark above a single card, and any way out below it. */
+export const AuthLayout = ({ children, footer, wide = false }: AuthLayoutProps) => {
   const { hidePassword } = usePasswordVisibilityStore();
 
   return (
-    <Flex
-      as="main"
-      minH="100dvh"
-      direction="column"
-      align="center"
-      justify="center"
-      gap={6}
-      bg="bg.default"
-      px={4}
-    >
-      <Flex asChild align="center" gap={2}>
-        <Link to="/" onClick={hidePassword}>
-          <Icon as={TbGalaxy} boxSize={10} aria-hidden />
-          <Text fontSize="2xl" fontWeight="bold" letterSpacing="-0.03em">
-            {resources.chat.appName}
-          </Text>
-        </Link>
-      </Flex>
-      <Card.Root w="full" maxW="md">
-        <Card.Body>{children}</Card.Body>
-        {footer && (
-          <Card.Footer flexDirection="column" gap={4}>
-            {footer}
-          </Card.Footer>
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-[22px] bg-canvas px-4 py-5 text-foreground">
+      <Link to="/" onClick={hidePassword} className="text-foreground">
+        {/* The header hides the wordmark on a phone; here it is the page's only branding. */}
+        <NebulaLogo className="[&>span]:inline [&>span]:text-base [&>svg]:size-[26px]" />
+      </Link>
+      <div
+        className={cn(
+          'w-full rounded-2xl border border-border bg-panel p-6 sm:p-7',
+          wide ? 'max-w-[420px]' : 'max-w-[380px]',
         )}
-      </Card.Root>
-    </Flex>
+      >
+        {children}
+      </div>
+      {footer}
+    </main>
   );
 };

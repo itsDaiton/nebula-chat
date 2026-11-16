@@ -20,9 +20,17 @@ _Avoid_: Turn.
 The specific LLM (e.g. `gpt-4o-mini`) a Session is bound to, used for its Direct replies. Set per-Session, not per-message. Runs ignore it — every Agent's model is fixed by the application.
 _Avoid_: Provider (a model belongs to a provider, but the domain concept users and code select is the model).
 
+**Favorite model**:
+A Model a User has starred so the model picker lists it first. Kept per browser, never with the account, so it is not shared across devices and a Guest has them too. It does not change which Model a Session is bound to.
+_Avoid_: Pinned model, bookmarked model, default model (a Favorite model is not the Model new Sessions start with).
+
 **Streaming token**:
 One incremental chunk of a model's completion, sent to the client as an SSE `token` event as soon as it's generated. Distinct from an LLM tokenizer token used for budgeting (see Token budget) — this is a transport-level unit.
 _Avoid_: Chunk (reserve for describing SSE mechanics, not this domain concept).
+
+**Waiting phrase**:
+A short decorative line shown while a Direct reply has been asked for and its first Streaming token has not arrived, chosen at random from a fixed list. It says nothing about what the Model is doing. A Run never shows one; its Steps are its progress.
+_Avoid_: Thinking message (suggests model reasoning), loading message, status.
 
 **Token budget**:
 The tiktoken-counted limits enforced before and during a completion: max prompt tokens, max completion tokens, and max context window (prompt + recent history + completion combined). Exceeding it fails the request with a typed error rather than silently truncating.
@@ -109,7 +117,7 @@ Someone running a deployment rather than using it: holds the operator token and 
 _Avoid_: Admin (an Admin is a User with elevated rights; operating is not a kind of User).
 
 **CLI profile**:
-A named deployment the `nebula` CLI talks to (for example `local` or `prod`): just a server URL, one of them the default. Holds no credentials.
+A named deployment the `nebula` CLI talks to (for example `local` or `prod`): just a server URL, one of them the default. Holds no credentials; a CLI login is kept apart, keyed by the server URL.
 _Avoid_: Profile on its own (reads as a User's profile or Profile image), environment, context.
 
 ### Orchestration

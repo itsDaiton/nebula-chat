@@ -1,7 +1,8 @@
-import { and, count, eq } from 'drizzle-orm';
+import { and, asc, count, eq } from 'drizzle-orm';
 import { runs, steps } from '@nebula-chat/db';
 import type { DbTransaction } from '@nebula-chat/db';
 import { db } from '@server/db';
+import type { RunWithSteps } from '@server/modules/run/run.types';
 
 export const runRepository: {
   createTx: (
@@ -19,6 +20,8 @@ export const runRepository: {
     userId?: string;
   }) => Promise<{ id: string; sessionId: string }[]>;
   countCompletedSteps: (runId: string) => Promise<number>;
+  /** The Run with its Steps in execution order, whoever owns it; null when there is none. */
+  findWithSteps: (runId: string) => Promise<RunWithSteps | null>;
 } = {
   async createTx(tx, data) {
     const [row] = await tx.insert(runs).values(data).returning({ id: runs.id });
@@ -52,5 +55,15 @@ export const runRepository: {
       .from(steps)
       .where(and(eq(steps.runId, runId), eq(steps.status, 'completed')));
     return row?.total ?? 0;
+  },
+  async findWithSteps(runId) {
+    const [run] = await db.select().from(runs).where(eq(runs.id, runId));
+    if (!run) return null;
+    const rows = await db
+      .select()
+      .from(steps)
+      .where(eq(steps.runId, runId))
+      .orderBy(asc(steps.startedAt), asc(steps.turn), asc(steps.id));
+    return { ...run, steps: rows };
   },
 };

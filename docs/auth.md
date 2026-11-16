@@ -103,7 +103,7 @@ The instance is configured with:
 | Have I Been Pwned plugin | Rejects sign-up with a known-breached password (`400 PASSWORD_COMPROMISED`); a reset is checked by the reset guard instead.                                                                                                                        |
 | openAPI plugin           | Serves the auth API reference — see [API reference](#interactive-reference).                                                                                                                                                                       |
 | Admin plugin             | Adds `role` and ban fields; impersonation is off (no role holds the permission). Its `/api/auth/admin/*` endpoints are answered `404 NotFound` by the `authGate` plugin ([ADR-0027](./adr/0027-admin-role-two-factor-full-read-and-audit-log.md)). |
-| Two-factor plugin        | TOTP and backup codes (issuer "Nebula Chat"); a trusted device lasts 30 days. Enabling asks for the password, so a social-only user cannot enrol until they set one.                                                                               |
+| Two-factor plugin        | TOTP and backup codes (issuer "Nebula Chat"); a trusted device lasts 30 days, except for an Admin and a User in Pending deletion. Enabling asks for the password, so a social-only user cannot enrol until they set one.                           |
 | `secondaryStorage`       | The `@nebula-chat/redis` `authStore` — auth sessions, verification records, and rate-limit counters.                                                                                                                                               |
 | `session.cookieCache`    | Enabled — a short-lived signed cookie lets most requests validate without a store round-trip.                                                                                                                                                      |
 | `rateLimit`              | Enabled, `storage: 'secondary-storage'` (Redis). Keyed per client by `advanced.ipAddress.ipAddressHeaders: ['cf-connecting-ip']` — see below.                                                                                                      |
@@ -301,8 +301,10 @@ server's `onUserDeleted` callback (the Profile image file) are not reached by th
   table (`restore-account:<token>`, 10 minutes). Password sign-in answers `403 ACCOUNT_PENDING_DELETION` with `purgeDate`
   and `restoreToken` in the body; a social sign-in redirects to `<errorURL>?pending=<purgeDate>&restoreToken=<token>`.
   Sign-in checks the password first, so the outcome never confirms an account to a stranger.
-  A User with two-factor enabled gets the Purge date but no token from a password sign-in, which would skip the code;
-  the token comes only after a verified code (`/two-factor/*`) or a social sign-in, which never asks for one.
+  A User with two-factor enabled gets the token only after a verified code (`/two-factor/*`) or a social sign-in, which
+  never asks for one. Their password sign-in gets the usual `twoFactorRedirect` challenge: the hook lets that session
+  through for the two-factor plugin to delete, and the `pending-deletion-sign-in` plugin drops a trusted-device cookie so
+  the code is still asked, then refuses (no token) any session that survives anyway.
   An email-verification link redirects like a social sign-in.
 - **Restore.** `POST /api/auth/restore-account` with `{ token }` (the `restore-account` plugin in `@nebula-chat/auth`)
   consumes the token, clears `pending_deletion_at` and signs the User in. Declining needs no call: the token expires and the
@@ -332,8 +334,9 @@ the hand-written list above is the authoritative set of active endpoints.
 
 ## Sessions and cookies
 
-Authentication is **cookie-based**; the application does not issue JWTs or bearer
-tokens. On a successful sign-in better-auth sets:
+Authentication is **cookie-based**; the application issues no JWTs, and the only bearer
+token is the `nebula` CLI's auth session token ([CLI login](#cli-login-device-authorization)).
+On a successful sign-in better-auth sets:
 
 | Cookie                      | Contents                                                                                                                     | Attributes                                         |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
@@ -406,6 +409,52 @@ client-settable), and an after hook sets it on the auth session that a successfu
 the challenge just created, or the caller's own when they verify a code while already signed in. The
 second case is how an Admin on a trusted device, or signed in through Google or GitHub, steps up
 to the admin API ([ADR-0027](./adr/0027-admin-role-two-factor-full-read-and-audit-log.md) §2).
+
+Signing out and in again does not help an Admin who uses Google or GitHub: that sign-in skips the challenge every time.
+Settings → Security offers such an Admin **Verify a code** while two-factor is on and the session is unverified. The
+client verifies the code, then re-reads the session past the cookie cache so the warning clears and the admin gate opens.
+An Admin cannot trust a device, so no sign-in or step-up offers it ([ADR-0027](./adr/0027-admin-role-two-factor-full-read-and-audit-log.md) §2).
+
+### CLI login (device authorization)
+
+`nebula login` signs an Admin in from a terminal with the OAuth 2.0 Device Authorization Grant (RFC 8628),
+through better-auth's device authorization plugin
+([ADR-0029](./adr/0029-operator-cli-as-an-api-client.md)). The plugin serves only the client id `nebula-cli`;
+a code lasts 10 minutes and is polled every 5 seconds.
+
+```mermaid
+sequenceDiagram
+  participant C as nebula CLI
+  participant S as Server (/api/auth)
+  participant B as Admin's browser (/device)
+  C->>S: POST /device/code (client_id nebula-cli)
+  S-->>C: device_code, user_code, verification URL
+  C->>B: opens CLIENT_URL/device?user_code=…
+  loop every interval, +5s on slow_down
+    C->>S: POST /device/token
+    S-->>C: authorization_pending
+  end
+  B->>S: GET /device?user_code=… (claims the code)
+  B->>S: POST /device/approve
+  C->>S: POST /device/token
+  S-->>C: access_token (the auth session token)
+  C->>S: GET /get-session (Authorization: Bearer)
+```
+
+- **Only an acting Admin reviews a code.** `cliLoginPlugin` (`libs/auth/src/cliLogin.ts`) holds
+  `GET /device`, `/device/approve` and `/device/deny` to the admin gate's own conditions, read past the cookie
+  cache: anyone else gets `403` `ADMIN_REQUIRED` or `TWO_FACTOR_REQUIRED`, and no auth session gets `401`
+  `AUTHENTICATION_REQUIRED` (the plugin's own read trusts the cookie cache, which outlives a revoked session). Reading a code claims it for
+  that Admin, which is why the read is guarded too.
+- **The CLI's auth session is an ordinary one**, marked `twoFactorVerified` when the code is traded for
+  it: it inherits the second factor of the session that approved it, so the admin gate applies unchanged
+  and a revoked role or a ban still stops it at once.
+- **Bearer tokens are read on two routes only.** The CLI has no cookie jar, so `cliBearerPlugin` accepts
+  `Authorization: Bearer <auth session token>` on `/get-session` (what `whoami` and every server gate call)
+  and `/sign-out` (`logout`). Everywhere else auth stays cookie-only: better-auth runs every before hook
+  against the original request, so a hook that reads the auth session would not see one named by a bearer
+  token and would let the request through.
+- The review response carries `expires_at`, added for the page's countdown.
 
 ### Admins and the Operator
 
@@ -699,7 +748,7 @@ better-auth owns the `user`, `session`, `account`, and `verification` models. In
 (`modelName: 'users'`) and carries better-auth's shape (`name`, `email`,
 `emailVerified`, `image`, `isAnonymous`), plus `profileImageKey`, a server-only extra field
 (`input: false`, `returned: false`) holding an uploaded Profile image's storage path; `session`, `account`, and `verification` are
-new. `sessions.userId` is `NOT NULL` — every session has an owner. Migration
+new, and `device_code` holds the device authorization plugin's pending `nebula login` codes. `sessions.userId` is `NOT NULL` — every session has an owner. Migration
 `0002` relocates existing password hashes into `account` and backfills `name`/`image`.
 Schema changes go through the normal `pnpm --filter @nebula-chat/db db:generate` /
 `db:migrate` flow; better-auth has no separate migrate step for the Drizzle adapter.

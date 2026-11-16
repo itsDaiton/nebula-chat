@@ -7,6 +7,8 @@ export const axiosInstance = axios.create({
   baseURL: SERVER_CONFIG.BASE_URL,
   // Sends the better-auth session cookie cross-origin.
   withCredentials: true,
+  // An array goes out as a repeated key (`status=a&status=b`), the form the API documents.
+  paramsSerializer: { indexes: null },
   headers: {
     'Content-Type': 'application/json',
   },

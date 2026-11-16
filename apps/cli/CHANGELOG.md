@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.10.0...nebula-chat-cli-v1.11.0) (2026-11-15)
+
+
+### Features
+
+* **cli:** NEB-564 nebula users list and show ([#802](https://github.com/itsDaiton/nebula-chat/issues/802)) ([e0393ae](https://github.com/itsDaiton/nebula-chat/commit/e0393aee40f80613ca69a8abc626d3f5f61e2788))
+
+## [1.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.9.0...nebula-chat-cli-v1.10.0) (2026-11-15)
+
+
+### Features
+
+* **client:** NEB-557 admin Users page with search, filters and a detail panel ([#800](https://github.com/itsDaiton/nebula-chat/issues/800)) ([1dd5b11](https://github.com/itsDaiton/nebula-chat/commit/1dd5b11feb7c1f7e39e70850a0409937af7faf7c))
+
+## [1.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.8.0...nebula-chat-cli-v1.9.0) (2026-11-14)
+
+
+### Features
+
+* **cli:** NEB-563 nebula login, whoami, logout and the /device page ([#796](https://github.com/itsDaiton/nebula-chat/issues/796)) ([891eaea](https://github.com/itsDaiton/nebula-chat/commit/891eaeaa1b6c084b76f0f4a4a486f118d273e1ca))
+
+## [1.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.7.0...nebula-chat-cli-v1.8.0) (2026-11-08)
+
+
+### Features
+
+* **server:** NEB-607 let operators change and read the worker's log levels ([#755](https://github.com/itsDaiton/nebula-chat/issues/755)) ([1d36f1d](https://github.com/itsDaiton/nebula-chat/commit/1d36f1da0018bef5b8b11738051edf88aa3eedc9))
+
+## [1.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.6.0...nebula-chat-cli-v1.7.0) (2026-11-03)
+
+
+### Features
+
+* **cli:** NEB-562 nebula admins grant, revoke and list ([#740](https://github.com/itsDaiton/nebula-chat/issues/740)) ([ab06c1c](https://github.com/itsDaiton/nebula-chat/commit/ab06c1c04458119af1068d6eb1513c9a8bf8bb3a))
+
 ## [1.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.5.0...nebula-chat-cli-v1.6.0) (2026-10-31)
 
 

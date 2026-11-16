@@ -66,6 +66,7 @@ const toUserSummary = (user: SummaryRow) => ({
   status: statusOf(user),
   twoFactorEnabled: user.twoFactorEnabled,
   messagesSent: user.messagesSent,
+  sessionsCount: user.sessionsCount,
   createdAt: user.createdAt,
   updatedAt: user.updatedAt,
 });
@@ -163,7 +164,6 @@ export const adminService = {
       ...toUserSummary(user),
       ban: isBanned(user) ? { reason: user.banReason, expiresAt: user.banExpires } : null,
       pendingDeletionAt: user.pendingDeletionAt,
-      sessionsCount: user.sessionsCount,
     };
   },
   async listUserSessions(userId: string, { limit, cursor }: ListUserSessionsQuery) {

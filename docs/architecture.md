@@ -43,6 +43,7 @@ flowchart LR
   server -->|verification and reset email| resend
   server <-->|code exchange| oauth
   server -.->|"GET /health wake-up"| worker
+  browser -.->|"GET /health wake-up"| worker
   worker --> pg
   worker <--> redis
   worker -->|model call| llm
@@ -54,7 +55,8 @@ flowchart LR
   input, and relaying replies over SSE. It holds no LLM keys.
 - **The worker** owns every model call ([ADR-0013](./adr/0013-worker-app-owns-all-llm-execution.md)).
   It takes jobs off Redis, not HTTP. Its `/health` route exists because Render's free plan runs
-  it as a web service that sleeps, and the server's ping on every enqueue wakes it.
+  it as a web service that sleeps. The browser's ping on page load and before a send wakes it; the
+  server's ping on every enqueue is a backup, since Render's edge can answer it with a bot challenge.
 - **Redis** carries auth state, the job queue, per-reply streams and log-level pub/sub; see
   [Redis keyspace](#redis-keyspace).
 - **Telemetry** goes straight from each process to Grafana Cloud over OTLP, with no collector
@@ -407,8 +409,8 @@ flowchart LR
   without a checkpointer (its tools only read, so a crash re-runs it whole). Each tool call is a
   `tool` Step under the delegate's Step; a tool's failure goes back to the delegate as a typed error
   result. After `RUN_DELEGATE_TOOL_CALL_CAP` calls the delegate is offered no tools, so it answers
-  with what it has. `web_fetch` refuses any URL that is not public HTTP(S): it resolves the hostname
-  itself, checks every address, connects to the checked one and repeats that on each redirect.
+  with what it has. `web_fetch` reads a page through Tavily Extract: the worker never connects to the URL,
+  and refuses any URL that is not HTTP(S) before a request is sent.
 - **Output.** The Output Agent is always the last node. It reads the Brief as JSON and the
   findings, and streams the answer in the Brief's language. Only its tokens reach the stream. The
   answer is persisted as an assistant Message linked to the Run.
@@ -469,11 +471,3 @@ flowchart LR
   `validate-deploy-triggers.yml` fails CI when a deploy workflow misses one.
 - Migrations run in the server's build, so the schema moves before the new server starts. The
   worker reads the same schema and deploys on a `db` release too.
-
-## Known gaps
-
-What the diagrams above show but the system does not yet do well:
-
-- **Runtime log levels reach the server only.** The worker listens on
-  `log-level:nebula-chat-worker`, but `POST /api/internal/log-level` publishes to the server's
-  channel alone, so the CLI cannot change or read the worker's levels yet.

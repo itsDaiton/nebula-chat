@@ -1,5 +1,33 @@
 # Changelog
 
+## [3.5.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.4.3...nebula-chat-auth-v3.5.0) (2026-11-14)
+
+
+### Features
+
+* **cli:** NEB-563 nebula login, whoami, logout and the /device page ([#796](https://github.com/itsDaiton/nebula-chat/issues/796)) ([891eaea](https://github.com/itsDaiton/nebula-chat/commit/891eaeaa1b6c084b76f0f4a4a486f118d273e1ca))
+
+## [3.4.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.4.2...nebula-chat-auth-v3.4.3) (2026-11-02)
+
+
+### Bug Fixes
+
+* **auth:** set the auth emails in Geist with the app's light tokens ([#737](https://github.com/itsDaiton/nebula-chat/issues/737)) ([25495c6](https://github.com/itsDaiton/nebula-chat/commit/25495c68dad271e446f815f6704d21b683dbefa6))
+
+## [3.4.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.4.1...nebula-chat-auth-v3.4.2) (2026-11-02)
+
+
+### Bug Fixes
+
+* **auth:** let a 2FA User in Pending deletion reach the code challenge ([#733](https://github.com/itsDaiton/nebula-chat/issues/733)) ([3d8ae42](https://github.com/itsDaiton/nebula-chat/commit/3d8ae42d5d1decba543d3ede970da8cf446ce3ee))
+
+## [3.4.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.4.0...nebula-chat-auth-v3.4.1) (2026-11-02)
+
+
+### Bug Fixes
+
+* **auth:** stop Admins from trusting a device on the 2FA challenge ([#732](https://github.com/itsDaiton/nebula-chat/issues/732)) ([08e8472](https://github.com/itsDaiton/nebula-chat/commit/08e84721086e0d3f2caad790b161aec863496165))
+
 ## [3.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.3.0...nebula-chat-auth-v3.4.0) (2026-10-31)
 
 

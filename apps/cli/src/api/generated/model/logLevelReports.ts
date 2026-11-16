@@ -8,7 +8,7 @@ import type { LogLevelReport } from './logLevelReport';
 
 export interface LogLevelReports {
   /**
-   * How many server instances received the request; more than reports means some did not answer in time
+   * How many instances of the service received the request; more than reports means some did not answer in time
    * @minimum -9007199254740991
    * @maximum 9007199254740991
    */

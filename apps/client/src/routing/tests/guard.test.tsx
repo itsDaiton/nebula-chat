@@ -6,11 +6,12 @@ import { resources } from '@/resources';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { aSession, mockAnonymousSignIn, mockGetSession } from '@/test/auth';
 import { serveChatPage } from '@/test/chat';
+import { testCatalog } from '@/test/models';
 import { server } from '@/test/msw';
 import { renderRoute } from '@/test/renderRoute';
 
-vi.mock('@/theme/hooks/useColorMode', () => ({
-  useColorMode: () => ({ colorMode: 'light', toggleColorMode: vi.fn() }),
+vi.mock('@/shared/hooks/useThemeMode', () => ({
+  useThemeMode: () => ({ themeMode: 'light', toggleThemeMode: vi.fn() }),
 }));
 
 beforeEach(() => {
@@ -32,7 +33,9 @@ describe('session guard', () => {
 
     await visit('/');
 
-    expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('textbox', { name: resources.chat.composer.label }),
+    ).toBeInTheDocument();
     expect(signIns).toBe(1);
     const { result } = renderHook(() => useAuth());
     await waitFor(() => expect(result.current.isGuest).toBe(true));
@@ -52,7 +55,9 @@ describe('session guard', () => {
 
     await visit('/');
 
-    expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('textbox', { name: resources.chat.composer.label }),
+    ).toBeInTheDocument();
     expect(signIns).toBe(0);
   });
 
@@ -77,8 +82,36 @@ describe('session guard', () => {
     await visit('/');
 
     expect(await screen.findByRole('status', { name: resources.auth.loading })).toBeInTheDocument();
-    expect(screen.queryByText(resources.chat.welcomeMessage)).not.toBeInTheDocument();
-    expect(await screen.findByText(resources.chat.welcomeMessage)).toBeInTheDocument();
+    expect(
+      screen.queryByRole('textbox', { name: resources.chat.composer.label }),
+    ).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole('textbox', { name: resources.chat.composer.label }),
+    ).toBeInTheDocument();
+  });
+
+  it('requests the model catalog once, while the session is still resolving', async () => {
+    let sessionAnswered = false;
+    const catalogRequests: { beforeSession: boolean }[] = [];
+    server.use(
+      http.get(API_ROUTE.authSession, async () => {
+        await delay(300);
+        sessionAnswered = true;
+        return HttpResponse.json(aSession());
+      }),
+      http.get(API_ROUTE.models, () => {
+        catalogRequests.push({ beforeSession: !sessionAnswered });
+        return HttpResponse.json(testCatalog);
+      }),
+    );
+
+    await visit('/');
+
+    expect(
+      await screen.findByRole('textbox', { name: resources.chat.composer.label }),
+    ).toBeInTheDocument();
+    await screen.findByRole('button', { name: /GPT-4o mini/ });
+    expect(catalogRequests).toEqual([{ beforeSession: true }]);
   });
 
   it('shows an error instead of the app when no session can be established', async () => {
@@ -87,7 +120,9 @@ describe('session guard', () => {
     await visit('/');
 
     expect(await screen.findByRole('alert')).toHaveTextContent(resources.auth.sessionFailed);
-    expect(screen.queryByText(resources.chat.welcomeMessage)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('textbox', { name: resources.chat.composer.label }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows an error when the session cannot be read', async () => {

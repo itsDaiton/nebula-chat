@@ -38,23 +38,27 @@ export const clearPendingDeletion = async (db: DbClient, userId: string) => {
   await db.update(users).set({ pendingDeletionAt: null }).where(eq(users.id, userId));
 };
 
-export const findPendingUser = async (db: DbClient, userId: string) => {
-  const [row] = await db
-    .select({
-      pendingDeletionAt: users.pendingDeletionAt,
-      twoFactorEnabled: users.twoFactorEnabled,
-    })
-    .from(users)
-    .where(eq(users.id, userId));
-  return row?.pendingDeletionAt
+type PendingRow = { pendingDeletionAt: Date | null; twoFactorEnabled: boolean } | undefined;
+
+const toPendingUser = (row: PendingRow) =>
+  row?.pendingDeletionAt
     ? { pendingDeletionAt: row.pendingDeletionAt, twoFactorEnabled: row.twoFactorEnabled }
     : null;
+
+const pendingColumns = {
+  pendingDeletionAt: users.pendingDeletionAt,
+  twoFactorEnabled: users.twoFactorEnabled,
 };
 
-export const findPendingDeletionAtByEmail = async (db: DbClient, email: string) => {
+export const findPendingUser = async (db: DbClient, userId: string) => {
+  const [row] = await db.select(pendingColumns).from(users).where(eq(users.id, userId));
+  return toPendingUser(row);
+};
+
+export const findPendingUserByEmail = async (db: DbClient, email: string) => {
   const [row] = await db
-    .select({ pendingDeletionAt: users.pendingDeletionAt })
+    .select(pendingColumns)
     .from(users)
     .where(eq(users.email, email.toLowerCase()));
-  return row?.pendingDeletionAt ?? null;
+  return toPendingUser(row);
 };

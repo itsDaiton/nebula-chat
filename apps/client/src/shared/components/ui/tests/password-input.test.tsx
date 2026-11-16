@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { PasswordInput } from '@/shared/components/ui/password-input';
 import { resources } from '@/resources';
-import { renderWithChakra } from '@/test/render';
+import { renderWithProviders } from '@/test/render';
 
 describe('PasswordInput', () => {
   it('masks the value and offers to show it', async () => {
     const onToggleVisibility = vi.fn();
-    renderWithChakra(
+    renderWithProviders(
       <PasswordInput
         aria-label="Password"
         visible={false}
@@ -26,7 +26,9 @@ describe('PasswordInput', () => {
   });
 
   it('reveals the value and offers to hide it', () => {
-    renderWithChakra(<PasswordInput aria-label="Password" visible onToggleVisibility={vi.fn()} />);
+    renderWithProviders(
+      <PasswordInput aria-label="Password" visible onToggleVisibility={vi.fn()} />,
+    );
 
     expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'text');
     expect(
@@ -36,7 +38,7 @@ describe('PasswordInput', () => {
 
   it('toggles without submitting the surrounding form', async () => {
     const onSubmit = vi.fn();
-    renderWithChakra(
+    renderWithProviders(
       <form
         onSubmit={(event) => {
           event.preventDefault();

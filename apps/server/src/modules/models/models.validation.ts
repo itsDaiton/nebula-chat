@@ -27,6 +27,9 @@ export const modelCatalogResponseSchema = z
   .object({
     version: z.string().describe('`YYYY-MM-DD-<uuid>`: changes whenever the catalog does'),
     hash: z.string().describe('SHA-256 of the catalog content (Models and defaults)'),
+    defaultModels: z
+      .record(modelProviderSchema, z.string())
+      .describe('The Model each provider falls back to when none is requested'),
     models: z.array(modelResponseSchema).max(100),
   })
   .meta({ id: 'ModelCatalog' });

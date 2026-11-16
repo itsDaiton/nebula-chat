@@ -48,7 +48,6 @@ import { runRepository, waitingRunRepository } from '@worker/runs/runRepository'
 import { stepRepository } from '@worker/runs/stepRepository';
 import { webFetchTool } from '@worker/tools/webFetch';
 import { webSearchTool } from '@worker/tools/webSearch';
-import { dnsResolve, nodeRequest } from '@worker/web/httpTransport';
 
 // Fixed, off-peak UTC; the Purge window is days wide, so the hour carries no meaning (ADR-0031).
 const PURGE_CRON = '0 3 * * *';
@@ -116,11 +115,10 @@ const start = async (): Promise<void> => {
         maxResults: 5,
       }),
       web_fetch: webFetchTool({
-        lookup: dnsResolve,
-        request: nodeRequest,
-        maxBytes: env.WEB_FETCH_MAX_BYTES,
+        apiKey: env.TAVILY_API_KEY,
+        keyless: env.TAVILY_KEYLESS,
+        fetch: globalThis.fetch,
         timeoutMs: env.WEB_FETCH_TIMEOUT_MS,
-        maxRedirects: env.WEB_FETCH_MAX_REDIRECTS,
         maxChars: env.WEB_FETCH_MAX_CHARS,
       }),
     },

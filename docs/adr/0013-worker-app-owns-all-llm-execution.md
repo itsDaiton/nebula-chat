@@ -22,6 +22,7 @@ Introduce **`apps/nebula-chat-worker`**, a separately built and deployed app tha
 3. **A new `@nebula-chat/contracts` lib is the only code the two apps share.** It holds Zod schemas for job payloads and stream events. The server and worker deploy independently, so this contract is the system's most important seam and is versioned strictly. The worker never imports server code, and vice versa.
 4. **The server talks to the worker only through BullMQ (jobs) and Redis (streams, cancel flags)**, plus a `/health` ping. Durable state lives in Postgres, which both apps reach through `@nebula-chat/db`.
 5. **Hosting: a second free Render web service.** Render's free plan has no background workers, so the worker runs as a web service exposing `/health`. Free web services sleep without inbound HTTP traffic, so the server pings the worker's `/health` when it enqueues a job, and the enqueue wakes the worker. Cold starts after idle periods are accepted.
+   _Update (2026-11):_ Render's edge answers the server's ping with a Cloudflare bot challenge (HTTP 429), so it never wakes the worker. The client now also pings the worker's `/health` from the browser, on page load and before a send (`VITE_WORKER_URL`); the server's ping stays as a backup.
 
 ## Consequences
 

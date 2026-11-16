@@ -28,6 +28,7 @@ import type {
   CreateSessionBody,
   ErrorEnvelope,
   ListSessionsParams,
+  RenameSessionBody,
   SearchSessionsParams,
   Session,
   SessionDetail,
@@ -688,6 +689,96 @@ export const useRestoreSession = <TError = ErrorType<ErrorEnvelope>, TContext = 
   TContext
 > => {
   return useMutation(getRestoreSessionMutationOptions(options), queryClient);
+};
+/**
+ * Rename one of the caller’s own sessions. The title is trimmed and must not be empty.
+ * @summary Rename session
+ */
+export const renameSession = (
+  sessionId: string,
+  renameSessionBody: BodyType<RenameSessionBody>,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<Session>(
+    {
+      url: `/api/sessions/${sessionId}`,
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      data: renameSessionBody,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getRenameSessionMutationKey = () => ['renameSession'] as const;
+
+export const getRenameSessionMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof renameSession>>,
+    TError,
+    RenameSessionMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof axiosClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof renameSession>>,
+  TError,
+  RenameSessionMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRenameSessionMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof renameSession>>,
+    RenameSessionMutationVariables
+  > = (props) => {
+    const { sessionId, data } = props ?? {};
+
+    return renameSession(sessionId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RenameSessionMutationResult = NonNullable<Awaited<ReturnType<typeof renameSession>>>;
+export type RenameSessionMutationBody = BodyType<RenameSessionBody>;
+export type RenameSessionMutationError = ErrorType<ErrorEnvelope>;
+export type RenameSessionMutationVariables = {
+  sessionId: string;
+  data: BodyType<RenameSessionBody>;
+};
+
+/**
+ * @summary Rename session
+ */
+export const useRenameSession = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof renameSession>>,
+      TError,
+      RenameSessionMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof renameSession>>,
+  TError,
+  RenameSessionMutationVariables,
+  TContext
+> => {
+  return useMutation(getRenameSessionMutationOptions(options), queryClient);
 };
 /**
  * Retrieve one of the caller’s own sessions by ID

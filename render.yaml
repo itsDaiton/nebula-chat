@@ -74,6 +74,10 @@ services:
         destination: /index.html
     pullRequestPreviewsEnabled: true
     autoDeployTrigger: off
+    envVars:
+      # The worker's public URL: the browser pings its /health to wake it, which the server's ping cannot (ADR-0013).
+      - key: VITE_WORKER_URL
+        sync: false
 
 # Optional environment variables can be managed in Render dashboard/secrets.
 # Keep Root Directory at repo root for pnpm workspace catalog resolution.

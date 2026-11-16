@@ -1,10 +1,10 @@
-import { Button } from '@chakra-ui/react';
 import { Link, getRouteApi } from '@tanstack/react-router';
 import { AuthLayout } from '@/modules/auth/components/AuthLayout';
 import { AuthStatus } from '@/modules/auth/components/AuthStatus';
 import { ResendVerificationButton } from '@/modules/auth/components/ResendVerificationButton';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { resources } from '@/resources';
+import { buttonVariants } from '@/shared/components/ui/button';
 
 const { verifyEmail } = resources.auth;
 const routeApi = getRouteApi('/_app/auth/verify-email');
@@ -31,9 +31,16 @@ export const VerifyEmailPage = () => {
         message={isVerified ? verifyEmail.verified : failure}
       >
         {needsEmailVerification && <ResendVerificationButton />}
-        <Button asChild variant={isVerified ? 'solid' : 'outline'}>
-          <Link to="/">{verifyEmail.startChatting}</Link>
-        </Button>
+        <Link
+          to="/"
+          className={buttonVariants({
+            variant: isVerified ? 'default' : 'outline',
+            size: 'lg',
+            className: 'w-full',
+          })}
+        >
+          {verifyEmail.startChatting}
+        </Link>
       </AuthStatus>
     </AuthLayout>
   );

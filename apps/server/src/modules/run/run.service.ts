@@ -1,5 +1,8 @@
 import type { EventLogger } from '@nebula-chat/otel';
+import { NotFoundError } from '@nebula-chat/errors';
+import { auditService } from '@server/modules/audit/audit.service';
 import { runRepository } from '@server/modules/run/run.repository';
+import type { RunReader, RunWithSteps } from '@server/modules/run/run.types';
 import { promoteClarifyingQuestionTimeout } from '@server/queue';
 import { findLastStream, requestRunCancel } from '@server/redis';
 
@@ -20,6 +23,30 @@ const cancelWaitingRuns = async (
 };
 
 export const runService = {
+  /** A Run for its owner, or for an acting Admin, whose read of someone else's Run is audited before it is served. */
+  async getRun(runId: string, reader: RunReader): Promise<RunWithSteps> {
+    const run = await runRepository.findWithSteps(runId);
+    if (!run) {
+      throw new NotFoundError('Run', runId);
+    }
+    if (run.userId === reader.userId) {
+      return run;
+    }
+    // Not-found rather than forbidden, so a Run id tells a stranger nothing.
+    if (!(await reader.isActingAdmin())) {
+      throw new NotFoundError('Run', runId);
+    }
+    await auditService.append({
+      actorType: 'admin',
+      actorUserId: reader.userId,
+      action: 'run.read',
+      targetType: 'run',
+      targetId: runId,
+      detail: { userId: run.userId, sessionId: run.sessionId },
+    });
+    return run;
+  },
+
   /** Cancels the Session's waiting Run, if any: archiving a Session must leave it unchanged. */
   async cancelWaitingRunsInSession(
     sessionId: string,

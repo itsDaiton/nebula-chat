@@ -3,7 +3,7 @@
 Monorepo-wide habits: commands, git workflow, and cross-cutting rules. Package conventions live in
 each package's own file — read the one you're about to touch:
 
-- [apps/client](./apps/client/AGENTS.md) — React, TanStack Query, Zustand, Chakra UI
+- [apps/client](./apps/client/AGENTS.md) — React, TanStack Query, Zustand, shadcn/ui on Tailwind
 - [apps/server](./apps/server/AGENTS.md) — Fastify, Drizzle, Zod
 - [apps/worker](./apps/worker/AGENTS.md) — every LLM reply and background job (BullMQ, Redis Streams)
 - [apps/cli](./apps/cli/AGENTS.md) — the `nebula` operator CLI

@@ -1,8 +1,12 @@
 import { Command, CommanderError } from 'commander';
 import packageJson from '#package.json' with { type: 'json' };
+import { registerAdminsCommands } from '@cli/commands/admins';
+import { registerLoginCommands } from '@cli/commands/login';
 import { registerLogLevelCommands } from '@cli/commands/logLevel';
 import { registerProfileCommands } from '@cli/commands/profile';
+import { registerUsersCommands } from '@cli/commands/users';
 import { createContext, type GlobalOptions } from '@cli/context';
+import type { Keychain } from '@cli/credentials/credentials';
 import { CliError, ExitCode } from '@cli/errors';
 
 type Stream = { write: (chunk: string) => unknown; isTTY?: boolean };
@@ -12,16 +16,25 @@ export type Deps = {
   env: Record<string, string | undefined>;
   stdout: Stream;
   stderr: Stream;
+  stdin: { isTTY?: boolean };
+  confirm: (question: string) => Promise<boolean>;
   fetch: typeof globalThis.fetch;
   now: () => Date;
   homeDir: string;
+  /** The OS keychain; every call rejects on a machine without one. */
+  keychain: Keychain;
+  /** Rejects when there is no browser to open. */
+  openBrowser: (url: string) => Promise<void>;
+  sleep: (ms: number) => Promise<void>;
 };
 
 const EXAMPLES = `
 Examples:
   $ nebula profile add local --url http://localhost:3000
   $ nebula profile use local
+  $ nebula login
   $ NEBULA_OPERATOR_TOKEN=… nebula log-level set redis debug --ttl 600
+  $ NEBULA_OPERATOR_TOKEN=… nebula admins grant dana@example.com
   $ nebula --profile prod --json profile list`;
 
 const buildProgram = (deps: Deps) => {
@@ -43,7 +56,10 @@ const buildProgram = (deps: Deps) => {
 
   const ctx = createContext(deps, () => program.opts<GlobalOptions>());
   registerProfileCommands(program, ctx);
+  registerLoginCommands(program, ctx);
   registerLogLevelCommands(program, ctx);
+  registerAdminsCommands(program, ctx);
+  registerUsersCommands(program, ctx);
   return program;
 };
 

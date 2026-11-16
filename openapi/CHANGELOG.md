@@ -1,5 +1,47 @@
 # Changelog
 
+## [4.18.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.17.0...nebula-chat-openapi-v4.18.0) (2026-11-15)
+
+
+### Features
+
+* **client:** NEB-557 admin Users page with search, filters and a detail panel ([#800](https://github.com/itsDaiton/nebula-chat/issues/800)) ([1dd5b11](https://github.com/itsDaiton/nebula-chat/commit/1dd5b11feb7c1f7e39e70850a0409937af7faf7c))
+
+## [4.17.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.16.0...nebula-chat-openapi-v4.17.0) (2026-11-10)
+
+
+### Features
+
+* **client:** NEB-362 Run inspection view ([#768](https://github.com/itsDaiton/nebula-chat/issues/768)) ([19959ed](https://github.com/itsDaiton/nebula-chat/commit/19959ed2847210d703ab1e5b71b78a158111ca38))
+
+## [4.16.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.15.0...nebula-chat-openapi-v4.16.0) (2026-11-08)
+
+
+### Features
+
+* **client:** NEB-677 rename a Session from the header title ([#761](https://github.com/itsDaiton/nebula-chat/issues/761)) ([04f915d](https://github.com/itsDaiton/nebula-chat/commit/04f915d747289da16c70b8b766adb9bb2b19f6f9))
+
+## [4.15.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.14.0...nebula-chat-openapi-v4.15.0) (2026-11-08)
+
+
+### Features
+
+* **server,client:** NEB-729 show archive time and message count on archived Sessions ([#757](https://github.com/itsDaiton/nebula-chat/issues/757)) ([a95fbff](https://github.com/itsDaiton/nebula-chat/commit/a95fbffb350ca12acc7d40ea8a4c2e3437d78120))
+
+## [4.14.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.13.0...nebula-chat-openapi-v4.14.0) (2026-11-08)
+
+
+### Features
+
+* **server:** NEB-607 let operators change and read the worker's log levels ([#755](https://github.com/itsDaiton/nebula-chat/issues/755)) ([1d36f1d](https://github.com/itsDaiton/nebula-chat/commit/1d36f1da0018bef5b8b11738051edf88aa3eedc9))
+
+## [4.13.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.12.0...nebula-chat-openapi-v4.13.0) (2026-11-08)
+
+
+### Features
+
+* **client:** NEB-566 the model picker reads GET /api/models ([#753](https://github.com/itsDaiton/nebula-chat/issues/753)) ([72ed45a](https://github.com/itsDaiton/nebula-chat/commit/72ed45abfc0919bf422c062a5a17f0e5c1e833b6))
+
 ## [4.12.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.11.0...nebula-chat-openapi-v4.12.0) (2026-10-31)
 
 

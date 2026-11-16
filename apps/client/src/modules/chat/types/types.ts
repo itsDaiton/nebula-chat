@@ -1,17 +1,101 @@
 import type { Dispatch, SetStateAction } from 'react';
+import type { RunStatus } from '@/libs/api/generated/model/runStatus';
+import type { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
+import type { StepPhase } from '@/libs/api/generated/model/stepPhase';
+import type { StepStatus } from '@/libs/api/generated/model/stepStatus';
+import type { ModelProvider } from '@/shared/types/types';
 
 export type ChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  tokenCount?: number | null;
+  /** How the Message was made; null means not available (a user Message, a Run answer or an older reply). */
+  model?: string | null;
+  estimatedCostUsd?: number | null;
+  runId?: string | null;
+  contextTokens?: number | null;
+  contextMessages?: number | null;
+  /** The Run producing this reply, as its stream reports it; absent for a Direct reply or a loaded Message. */
+  run?: RunProgress;
+};
+
+export type RunStepProgress = {
+  stepId: string;
+  attempt: number;
+  phase: StepPhase;
+  agent: string;
+  label: string;
+  status: StepStatus;
+  /** The Orchestrator turn the Step belongs to; 0 outside the Orchestrator's loop. */
+  turn: number;
+  /** The turn Step that launched a delegate Step; null for every other Step. */
+  parentStepId: string | null;
+};
+
+/** A Step in its group, indented under the Step that launched it. */
+export type RunProgressRow = {
+  step: RunStepProgress;
+  depth: number;
+};
+
+export type RunProgressGroup = {
+  key: string;
+  kind: 'intake' | 'turn' | 'output';
+  turn: number;
+  rows: RunProgressRow[];
+};
+
+export type RunProgressGroupProps = {
+  group: RunProgressGroup;
+  isStreaming: boolean;
+};
+
+export type RunProgressStepProps = {
+  step: RunStepProgress;
+  isStreaming: boolean;
+  /** A delegate under its turn: `last` closes the rail that joins the turn's delegates. */
+  rail?: 'mid' | 'last';
+};
+
+type RunEndStatus = Extract<RunStatus, 'completed' | 'partial' | 'failed' | 'cancelled'>;
+
+/** A Run's Steps in the order they first started, and its end status once the stream reports it. */
+export type RunProgress = {
+  steps: RunStepProgress[];
+  status: RunEndStatus | null;
+};
+
+/** A Run event off a reply stream, once its data has been validated. */
+export type RunEvent =
+  | ({ type: 'step-started' } & Omit<RunStepProgress, 'status'>)
+  | { type: 'step-finished'; stepId: string; status: Exclude<StepStatus, 'running'> }
+  | { type: 'run-finished'; runId: string; status: RunEndStatus };
+
+export type RunProgressProps = {
+  run: RunProgress;
+  /** The Run's stream is still open, so a Step without an end is still running. */
+  isStreaming?: boolean;
+};
+
+export type RunEndLineProps = {
+  run: RunProgress;
 };
 
 export type ChatMessageProps = {
   message: ChatMessage;
+  /** Re-asks the prompt this reply answered; only the newest reply offers it. */
+  onRegenerate?: () => void;
+  /** The reply is still arriving, so there is nothing to copy or regenerate yet. */
+  isStreaming?: boolean;
+};
+
+export type RunChipProps = {
+  runId: string;
 };
 
 export type ChatInputProps = {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, mode: SendMessageBodyMode) => void;
   isLoading?: boolean;
   autoFocus?: boolean;
   selectedModel: string;
@@ -22,6 +106,8 @@ export type ChatInputProps = {
 
 export type ChatHistoryStreamOptions = {
   model: string;
+  /** How the reply is produced; a Direct reply when omitted. */
+  mode?: SendMessageBodyMode;
   messages: ChatMessage[];
   sessionId?: string;
 };
@@ -32,8 +118,17 @@ export type ResumeStreamOptions = {
   streamId: string;
 };
 
-/** How following a reply stream finished: at its end (or saved Message), at an `error`, or aborted. */
-export type FollowOutcome = 'ended' | 'failed' | 'aborted';
+/** Where a reply rests once nothing is in flight; `idle` also covers one that finished normally. */
+export type ReplyEnd =
+  { status: 'idle' } | { status: 'stopped' } | { status: 'failed'; error: string };
+
+// The newest reply's lifecycle: idle → sending → streaming → an end. `navigating` holds that end
+// while a new chat moves to its Session's route, so the empty state never flashes.
+export type ReplyState =
+  | ReplyEnd
+  | { status: 'sending'; stopRequested: boolean }
+  | { status: 'streaming' }
+  | { status: 'navigating'; end: ReplyEnd };
 
 /** Where a followed reply stream got to: the last event applied, and reconnects since then. */
 export type StreamCursor = {
@@ -57,7 +152,7 @@ export type UseKeyboardHandlerProps = {
 };
 
 export type UseMessageHandlerProps = {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, mode: SendMessageBodyMode) => void;
   isLoading: boolean;
 };
 
@@ -71,7 +166,7 @@ export type ChatMessageSkeletonProps = {
 };
 
 export type ChatInputBarProps = {
-  onSend: (message: string) => void;
+  onSend: (message: string, mode: SendMessageBodyMode) => void;
   isLoading: boolean;
   selectedModel: string;
   onModelChange: (model: string) => void;
@@ -82,9 +177,78 @@ export type ChatEmptyStateProps = {
   sessionId: string | undefined;
 };
 
+export type ModelOption = {
+  label: string;
+  value: string;
+  provider: ModelProvider;
+  contextWindow: number;
+  maxOutput: number;
+};
+
+export type ModelCatalogView = {
+  options: ModelOption[];
+  /** The Model a new chat starts on; absent while the catalog is empty. */
+  defaultModel: string | undefined;
+};
+
+export type ContextLevel = 'normal' | 'warning' | 'critical';
+
+export type ContextRingProps = {
+  share: number;
+  level: ContextLevel;
+  size?: number;
+  strokeWidth?: number;
+};
+
+export type ContextUsage = {
+  /** The Model the numbers came from, which may differ from the composer's current pick. */
+  model: ModelOption;
+  used: number;
+  /** The Model's context window minus the output it reserves for the reply. */
+  budget: number;
+  /** Used over budget, clamped to 1. */
+  share: number;
+  percent: number;
+  level: ContextLevel;
+  messagesIncluded: number;
+  messagesTotal: number;
+};
+
+export type ModelPickerState = {
+  isOpen: boolean;
+  search: string;
+  setOpen: (isOpen: boolean) => void;
+  setSearch: (search: string) => void;
+};
+
+export type FavoriteModelsState = {
+  favorites: string[];
+  toggleFavorite: (modelId: string) => void;
+};
+
+export type ModelOptionRowProps = {
+  model: ModelOption;
+  // Keeps the row's cmdk value unique when the same Model is listed in two groups.
+  valuePrefix: string;
+  isSelected: boolean;
+  isFavorite: boolean;
+  onSelect: (modelId: string) => void;
+  onToggleFavorite: (modelId: string) => void;
+};
+
+export type ModelSelectProps = {
+  selectedModel: string;
+  onModelChange: (model: string) => void;
+  /** The pick does not apply to what is being sent (a Run chooses its own Models). */
+  dimmed?: boolean;
+};
+
 export type ChatMessageListProps = {
   history: ChatMessage[];
   isStreaming: boolean;
+  /** The newest reply was stopped by the User, so a note follows the thread. */
+  isReplyStopped?: boolean;
+  onRegenerate?: (prompt: string) => void;
 };
 
 export type ModelState = {
@@ -100,21 +264,17 @@ type Usage = {
 
 export type ChatStreamState = {
   history: ChatMessage[];
-  isStreaming: boolean;
-  isPostStreamNavigation: boolean;
-  error: string | null;
+  /** `stopped` is kept in the client only: the server persists no marker. */
+  reply: ReplyState;
   usage: Usage;
   sessionId?: string;
   /** The reply stream being followed (or last followed): what the stop button cancels. */
   streamId: string | null;
-  /** Stop was pressed before the send named the reply's stream. */
-  isStopRequested: boolean;
   /** A Guest's send was refused because their message allowance is spent. */
   isMessageAllowanceReached: boolean;
+  /** The waiting Run the User just cancelled: the worker settles it after the cancel is accepted. */
+  cancelledRunId: string | null;
   setHistory: Dispatch<SetStateAction<ChatMessage[]>>;
-  setIsStreaming: (isStreaming: boolean) => void;
-  setIsPostStreamNavigation: (v: boolean) => void;
-  setError: (error: string | null) => void;
   setUsage: (usage: Usage) => void;
   setSessionId: (id: string | undefined) => void;
   clearMessageAllowanceReached: () => void;
@@ -123,17 +283,22 @@ export type ChatStreamState = {
 export type MessageState = {
   message: string;
   setMessage: Dispatch<SetStateAction<string>>;
-};
-
-export type ModelSelectorState = {
-  isSelectOpen: boolean;
-  triggerWidth: number;
-  setIsSelectOpen: (isOpen: boolean) => void;
-  setTriggerWidth: (width: number) => void;
+  /** The draft is to be sent as a Run; it lasts for one send, never for the Session. */
+  isRunMode: boolean;
+  toggleRunMode: () => void;
+  resetRunMode: () => void;
 };
 
 /** The events a reply stream carries (`GET /api/streams/{streamId}`). */
-export type SseEvent = 'token' | 'usage' | 'error' | 'end';
+export type SseEvent =
+  | 'token'
+  | 'usage'
+  | 'error'
+  | 'end'
+  | 'step-started'
+  | 'step-finished'
+  | 'run-finished'
+  | 'run-waiting';
 
 /** One SSE event off a reply stream: its name, its raw `data` line and its stream entry id. */
 export type SseFrame = {

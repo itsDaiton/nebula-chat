@@ -1,7 +1,10 @@
 import { useGetSession } from '@/libs/api/generated/sessions/sessions';
 import { useListMessages } from '@/libs/api/generated/messages/messages';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
+import { useModelStore } from '@/modules/chat/stores/useModelStore';
 import { mapSessionMessages } from '@/modules/chat/utils/mapSessionMessages';
+import { IDLE_REPLY, isReplyInFlight } from '@/modules/chat/utils/replyState';
+import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
 
 // Loads the routed session into the chat. Its messages come from the message
 // list narrowed to it, oldest first.
@@ -20,18 +23,39 @@ export const useChatSession = (sessionId: string | undefined) => {
   const isSettled = detail.isSuccess && messages.isSuccess && !messages.isFetching;
 
   // Guarded render-time sync (no effect): the chat history follows the route.
+  // Deferred: a store write during render warns about updating subscribers mid-render.
   const chat = useChatStreamStore.getState();
   if (!sessionId) {
-    if (!chat.isStreaming && chat.sessionId !== undefined) {
-      useChatStreamStore.setState({ history: [], sessionId: undefined });
+    if (!isReplyInFlight(chat.reply) && chat.sessionId !== undefined) {
+      queueMicrotask(() => {
+        useChatStreamStore.setState({ history: [], sessionId: undefined, reply: IDLE_REPLY });
+        useInspectorStore.getState().clearSelectedRun();
+      });
     }
   } else if (isSettled && chat.sessionId !== sessionId) {
-    useChatStreamStore.setState({ history: messages.data, sessionId });
+    const history = messages.data;
+    queueMicrotask(() => {
+      // A reply still in flight keeps its state; only a finished one's stopped or failed note goes.
+      useChatStreamStore.setState(({ reply }) => ({
+        history,
+        sessionId,
+        reply: isReplyInFlight(reply) ? reply : IDLE_REPLY,
+      }));
+      // The Run tab shows a Run of the Session on screen, never the last one picked elsewhere.
+      useInspectorStore.getState().clearSelectedRun();
+      // Only on opening a Session, so a later pick or refetch never resets the composer.
+      const lastModel = history.findLast((message) => message.model)?.model;
+      if (lastModel) {
+        useModelStore.setState({ selectedModel: lastModel });
+      }
+    });
   }
 
   return {
     isLoading: hasSession && !isSettled && !detail.error && !messages.error,
     error: detail.error ?? messages.error,
+    // An archived Session reads but takes no sends (the server refuses them).
+    isArchived: detail.data?.archived === true,
     // Named once the history is in, so a re-attached reply lands after the saved Messages.
     activeStreamId: isSettled ? (detail.data?.activeStreamId ?? null) : null,
   };

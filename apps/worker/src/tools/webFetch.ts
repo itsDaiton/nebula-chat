@@ -1,17 +1,25 @@
 import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
-import { fetchPage } from '@worker/web/fetchPage';
-import type { FetchPageDeps } from '@worker/web/fetchPage';
-import { cutToBudget } from '@worker/web/pageText';
+import { extractTavily } from '@worker/web/tavily';
 import { WebToolError, withDeadline } from '@worker/web/webToolError';
 
-export type WebFetchDeps = FetchPageDeps & {
+export type WebFetchDeps = {
+  /** Tavily's key; without it the tool extracts keyless where allowed, else answers as not configured. */
+  apiKey: string | undefined;
+  /** Whether a missing key may fall back to Tavily's rate-limited keyless access. */
+  keyless: boolean;
+  fetch: typeof globalThis.fetch;
   timeoutMs: number;
   /** The most text returned; the rest is cut off. */
   maxChars: number;
 };
 
-export const webFetchTool = (deps: WebFetchDeps) =>
+const cutToBudget = (text: string, maxChars: number): string =>
+  text.length > maxChars
+    ? `${text.slice(0, maxChars)}\n\n[Truncated: the page is longer than ${maxChars} characters.]`
+    : text;
+
+export const webFetchTool = ({ apiKey, keyless, timeoutMs, maxChars, ...deps }: WebFetchDeps) =>
   tool(
     async ({ url }, config): Promise<string> => {
       let start: URL;
@@ -20,10 +28,16 @@ export const webFetchTool = (deps: WebFetchDeps) =>
       } catch {
         throw new WebToolError('invalid-url', `${url} is not a URL.`);
       }
-      const page = await withDeadline(deps.timeoutMs, config.signal, (signal) =>
-        fetchPage(start, deps, signal),
+      if (start.protocol !== 'http:' && start.protocol !== 'https:') {
+        throw new WebToolError('blocked-url', `${url} is not an http or https URL.`);
+      }
+      if (!apiKey && !keyless) {
+        throw new WebToolError('not-configured', 'Web fetch is not configured on this server.');
+      }
+      const text = await withDeadline(timeoutMs, config.signal, (signal) =>
+        extractTavily(start.href, { ...deps, apiKey }, signal),
       );
-      return `Source: ${page.url.href}\n\n${cutToBudget(page.text, deps.maxChars)}`;
+      return `Source: ${start.href}\n\n${cutToBudget(text, maxChars)}`;
     },
     {
       name: 'web_fetch',

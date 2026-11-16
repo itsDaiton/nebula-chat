@@ -27,7 +27,7 @@ const adminUsersRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) 
   app.get('', {
     schema: {
       description:
-        'List Users, newest first by default, filtered by status and a name or email search, a page at a time. Guests are left out unless `status=guest`. Requires an Admin whose auth session passed two-factor authentication.',
+        'List Users, newest first by default, filtered by one or more statuses and a name or email search, a page at a time. Guests are left out unless `status` names `guest`. Requires an Admin whose auth session passed two-factor authentication.',
       summary: 'List Users',
       tags: ['Admin'],
       operationId: 'listUsers',

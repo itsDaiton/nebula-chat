@@ -6,7 +6,7 @@
  */
 import type { ListUsersOrder } from './listUsersOrder';
 import type { ListUsersSortBy } from './listUsersSortBy';
-import type { ListUsersStatus } from './listUsersStatus';
+import type { ListUsersStatusItem } from './listUsersStatusItem';
 
 export type ListUsersParams = {
   /**
@@ -16,9 +16,11 @@ export type ListUsersParams = {
    */
   search?: string;
   /**
-   * Only Users in this status; without it every User but Guests is listed
+   * Only Users in one of these statuses, as a repeated key; without it every User but Guests is listed
+   * @minItems 1
+   * @maxItems 6
    */
-  status?: ListUsersStatus;
+  status?: ListUsersStatusItem[];
   /**
    * `lastActiveAt` is the last update to the account until activity is tracked
    */

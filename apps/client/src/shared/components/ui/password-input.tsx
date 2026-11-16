@@ -1,31 +1,32 @@
-import { IconButton, Input, InputGroup } from '@chakra-ui/react';
-import { LuEye, LuEyeOff } from 'react-icons/lu';
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/shared/components/ui/input-group';
 import type { PasswordInputProps } from '@/shared/types/types';
 import { resources } from '@/resources';
 
-// Chakra's password-input snippet, made controlled and with a focusable, named toggle.
+/** A password field with a focusable, named toggle that shows or hides the value. */
 export const PasswordInput = ({
   visible,
   onToggleVisibility,
   ...inputProps
 }: PasswordInputProps) => (
-  <InputGroup
-    endElement={
-      <IconButton
-        type="button"
-        variant="ghost"
-        size="sm"
-        me="-2"
+  <InputGroup>
+    <InputGroupInput {...inputProps} type={visible ? 'text' : 'password'} />
+    <InputGroupAddon align="inline-end">
+      <InputGroupButton
+        size="icon-xs"
         aria-label={
           visible ? resources.passwordInput.hidePassword : resources.passwordInput.showPassword
         }
         onClick={onToggleVisibility}
         disabled={inputProps.disabled}
       >
-        {visible ? <LuEyeOff /> : <LuEye />}
-      </IconButton>
-    }
-  >
-    <Input {...inputProps} type={visible ? 'text' : 'password'} />
+        {visible ? <EyeOffIcon /> : <EyeIcon />}
+      </InputGroupButton>
+    </InputGroupAddon>
   </InputGroup>
 );

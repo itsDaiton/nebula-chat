@@ -2,7 +2,6 @@
 paths:
   - 'apps/client/src/**/stores/**'
   - 'apps/client/src/**/hooks/**'
-  - 'apps/client/src/**/providers/**'
   - 'apps/client/src/libs/**'
   - 'apps/client/src/App.tsx'
 ---
@@ -26,6 +25,26 @@ State is split by **kind** ([ADR-0012](../../docs/adr/0012-adopt-tanstack-query-
   the last event id as `lastEventId` and skipping any entry at or before it; a 404 (expired) shows the saved
   Messages instead. `resumeStream` re-attaches to a Session's `activeStreamId` (called render-time from
   `ChatContainer`), and `stop` posts `cancelReplyStream`, deferred until the send names the stream.
+  The newest reply's lifecycle is the one `reply: ReplyState` union in the store (`sending` → `streaming` →
+  `idle` | `stopped` | `failed`, with `navigating` holding that end while a new chat moves to its route).
+  Move it by writing a whole state, read "busy" with `isReplyInFlight`, and never add a parallel flag for it.
+- **Runs** ride the same stream. The composer's Run toggle is `isRunMode` in `useMessageStore`, read through
+  `useRunMode` (off for a Guest whatever the store holds) and reset by `useMessageHandler` on every send, which
+  passes `mode` down to `streamMessage`. A `run` send answers with a `runId`: the hook puts it and an empty
+  `run: RunProgress` on the trailing assistant Message and calls `useInspectorStore.showRun`. The stream's
+  `step-started`, `step-finished` and `run-finished` frames are validated by `utils/runProgress.ts`
+  (`parseRunEvent`), folded into that Message (`applyRunEvent`: a flat list of Steps in first-seen order, each
+  keeping its `turn` and `parentStepId`; a higher `attempt` resets the Step in place and, for the Output Step,
+  the answer) and each invalidates the Run's query, so the Inspector's
+  Run tab follows along. The turn grouping is derived from that flat list when rendering
+  (`utils/groupProgressSteps.ts`), never stored. Stop cancels a Run like a Direct reply: `run-finished` sets
+  `cancelled`, and the reply keeps its Steps even when no answer had streamed. A `403 Forbidden` to a Run send returns the text to the composer and toasts the error.
+  `useChatSession` clears the Inspector's selected Run when the Session on screen changes.
+  A `run-waiting` frame puts the Clarifying question on the trailing assistant Message, under the saved
+  question Message's id. Whether a Run is waiting is server state: `useWaitingRun` reads the Session's
+  `waitingRun`, hides it while a reply is in flight, and cancels it on its question stream (`cancelledRunId`
+  hides it until the worker has settled the Run). An accepted send invalidates the Session, since it may have
+  been the answer.
 
 ## Server state — the generated hooks
 
@@ -46,7 +65,7 @@ generate:api` after any backend change; generated files are never hand-edited.
   `meta: { inlineError: true }` and is not toasted.
 - **After a write the cache cannot see, invalidate** with the generated key helpers:
   `queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() })`. `useChatStream` invalidates the
-  list once it creates a Session, and the list, session detail and messages on `end` (a messages
+  list once it creates a Session, and the list, session detail, messages and any Run cached before it ended on `end` (a messages
   refetch mid-stream would race the reply). It also invalidates the message allowance once the send is
   accepted, the moment the server counts the message, and after a send refused at the allowance.
   Invalidate rather than hand-seed with `setQueryData`.
@@ -61,7 +80,7 @@ every API route `401`s without a session. Read the session with `useAuth`, which
 
 ## Client state — Zustand
 
-**Never use `useState`.** Client state lives in Zustand stores.
+**Never use `useState`** (ESLint fails the import). Client state lives in Zustand stores. State that must not outlive its UI (a half-finished setup, a search box) resets from `useOnUnmount`'s ref callback, not an effect.
 
 | Scenario                                                       | Use                                                         |
 | -------------------------------------------------------------- | ----------------------------------------------------------- |
@@ -108,8 +127,4 @@ Store types that are referenced outside the store file must live in `/types/type
 ## React Context
 
 Server state is shared through the query cache and client state through Zustand, so neither needs a
-context. The providers in `App.tsx` (`QueryClientProvider`, theme, Chakra) are library wiring. When a
-context is genuinely needed, split it across two files:
-
-- **`context/<Name>Context.tsx`** — `createContext` + the typed `use<Name>Context()` hook. No JSX, no store imports.
-- **`providers/<Name>Provider.tsx`** — the provider component, memoizing its value and rendering `<Context.Provider>`.
+context. The providers in `routing/RootLayout.tsx` (`QueryClientProvider`, theme, tooltips) are library wiring.

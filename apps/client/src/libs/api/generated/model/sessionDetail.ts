@@ -4,6 +4,7 @@
  * Nebula Chat API
  * REST API for Nebula Chat
  */
+import type { SessionDetailWaitingRun } from './sessionDetailWaitingRun';
 
 export interface SessionDetail {
   /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
@@ -13,6 +14,16 @@ export interface SessionDetail {
   createdAt: string;
   /** Whether the owner has archived this Session */
   archived: boolean;
+  /** When the owner archived it; null while active */
+  archivedAt: string | null;
+  /**
+   * How many Messages the Session holds
+   * @minimum -9007199254740991
+   * @maximum 9007199254740991
+   */
+  messageCount: number;
   /** The reply still being produced for this Session, to re-attach to with `GET /api/streams/{streamId}`; null when none is in flight */
   activeStreamId: string | null;
+  /** The Run waiting for the answer to its Clarifying question; the next Message sent to the Session answers it */
+  waitingRun: SessionDetailWaitingRun;
 }

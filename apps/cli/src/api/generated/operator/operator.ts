@@ -10,6 +10,8 @@ import type { ChangeLogLevelBody } from '../model/changeLogLevelBody';
 
 import type { ErrorEnvelope } from '../model/errorEnvelope';
 
+import type { GetLogLevelsParams } from '../model/getLogLevelsParams';
+
 import type { GrantAdminBody } from '../model/grantAdminBody';
 
 import type { LogLevelChange } from '../model/logLevelChange';
@@ -21,6 +23,11 @@ import { apiFetch } from '../../apiFetch';
 export type getLogLevelsResponse200 = {
   data: LogLevelReports;
   status: 200;
+};
+
+export type getLogLevelsResponse400 = {
+  data: ErrorEnvelope;
+  status: 400;
 };
 
 export type getLogLevelsResponse403 = {
@@ -42,25 +49,41 @@ export type getLogLevelsResponseSuccess = getLogLevelsResponse200 & {
   headers: Headers;
 };
 export type getLogLevelsResponseError = (
-  getLogLevelsResponse403 | getLogLevelsResponse404 | getLogLevelsResponse500
+  | getLogLevelsResponse400
+  | getLogLevelsResponse403
+  | getLogLevelsResponse404
+  | getLogLevelsResponse500
 ) & {
   headers: Headers;
 };
 
 export type getLogLevelsResponse = getLogLevelsResponseSuccess | getLogLevelsResponseError;
 
-export const getGetLogLevelsUrl = () => {
-  return `/api/internal/log-level`;
+export const getGetLogLevelsUrl = (params?: GetLogLevelsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/internal/log-level?${stringifiedParams}`
+    : `/api/internal/log-level`;
 };
 
 /**
- * Report the root log level and every component's, with the expiry and operator of any runtime change, from every running server instance. Each instance answers for itself; one that does not answer within 2 seconds is left out, so `receivers` exceeds the number of reports. Requires the operator token, not a User session.
+ * Report the root log level and every component's, with the expiry and operator of any runtime change, from every running instance of the service (the server unless `service` says the worker). Each instance answers for itself; one that does not answer within 2 seconds is left out, so `receivers` exceeds the number of reports. Requires the operator token, not a User session.
  * @summary Get log levels
  */
 export const getLogLevels = async (
+  params?: GetLogLevelsParams,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<getLogLevelsResponse> => {
-  return apiFetch<getLogLevelsResponse>(getGetLogLevelsUrl(), {
+  return apiFetch<getLogLevelsResponse>(getGetLogLevelsUrl(params), {
     ...options,
     method: 'GET',
   });
@@ -110,7 +133,7 @@ export const getChangeLogLevelUrl = () => {
 };
 
 /**
- * Change the root log level, or one component's, on every running server instance. It reverts to the boot-time level after `ttlSeconds`. Requires the operator token, not a User session.
+ * Change the root log level, or one component's, on every running instance of the service (the server unless `service` says the worker). It reverts to the boot-time level after `ttlSeconds`. Requires the operator token, not a User session.
  * @summary Change log level
  */
 export const changeLogLevel = async (

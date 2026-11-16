@@ -6,6 +6,7 @@ export { changeLogLevel } from './changeLogLevel';
 export {
   collectLogLevelReports,
   listenForLogLevelChanges,
+  LOG_LEVEL_SERVICES,
   MAX_LOG_LEVEL_TTL_SECONDS,
   publishLogLevelChange,
 } from './logLevelBroadcast';

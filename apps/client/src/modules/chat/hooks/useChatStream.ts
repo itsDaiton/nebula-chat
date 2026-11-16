@@ -15,23 +15,31 @@ import {
   getListMessagesQueryKey,
   getListMessagesQueryOptions,
 } from '@/libs/api/generated/messages/messages';
+import { getGetRunQueryKey } from '@/libs/api/generated/runs/runs';
 import { cancelReplyStream, readReplyStream } from '@/libs/api/generated/streams/streams';
 import { ErrorCode } from '@/libs/api/generated/model/errorCode';
+import type { Run } from '@/libs/api/generated/model/run';
+import { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
 import type { SendMessageBodyModel } from '@/libs/api/generated/model/sendMessageBodyModel';
+import { wakeWorker } from '@/shared/utils/wakeWorker';
 import type {
   ChatHistoryStreamOptions,
   ChatMessage,
-  FollowOutcome,
+  ReplyEnd,
   ResumeStreamOptions,
   SseEvent,
   StreamCursor,
   UseChatStreamOptions,
 } from '@/modules/chat/types/types';
 import { useNavigate } from '@tanstack/react-router';
+import { toast } from 'sonner';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
+import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
 import { mapSessionMessages } from '@/modules/chat/utils/mapSessionMessages';
 import { parseSseStream } from '@/modules/chat/utils/parseSseStream';
+import { IDLE_REPLY, isReplyInFlight } from '@/modules/chat/utils/replyState';
+import { EMPTY_RUN, applyRunEvent, parseRunEvent } from '@/modules/chat/utils/runProgress';
 import { resources } from '@/resources';
 
 // A failed send or stream renders inside the reply, so the global toaster stays out of it.
@@ -112,15 +120,10 @@ export const useChatStream = ({
 }: UseChatStreamOptions = {}) => {
   const {
     history,
-    isStreaming,
-    isPostStreamNavigation,
-    error,
+    reply: replyState,
     usage,
     sessionId,
     setHistory,
-    setIsStreaming,
-    setIsPostStreamNavigation,
-    setError,
     setUsage,
     setSessionId,
   } = useChatStreamStore();
@@ -147,28 +150,61 @@ export const useChatStream = ({
     [queryClient],
   );
 
+  // The stream carries only the token count; the saved reply knows its Model and cost, so the meta row takes them now rather than after a reload.
+  const showSavedReplyMeta = useCallback(
+    async (savedSessionId: string) => {
+      const saved = await queryClient.fetchQuery({
+        ...getListMessagesQueryOptions({ sessionId: savedSessionId }),
+        staleTime: 0,
+      });
+      const reply = mapSessionMessages(saved).findLast(({ role }) => role === 'assistant');
+      if (!reply || sessionIdRef.current !== savedSessionId) return;
+      setHistory((prev) => {
+        const last = prev.at(-1);
+        if (last?.role !== 'assistant') return prev;
+        const { model, estimatedCostUsd, runId, tokenCount } = reply;
+        return [
+          ...prev.slice(0, -1),
+          { ...last, model, estimatedCostUsd, runId, tokenCount: tokenCount ?? last.tokenCount },
+        ];
+      });
+    },
+    [queryClient, setHistory],
+  );
+
   const invalidateCompletedStream = useCallback(
     (completedSessionId: string) => {
       void invalidateSessionList();
       void queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() });
       void queryClient.invalidateQueries({ queryKey: getGetSessionQueryKey(completedSessionId) });
+      // A Run cached before it ended (one waiting on a Clarifying question) has moved on; ended Runs never change.
+      void queryClient.invalidateQueries({
+        predicate: ({ queryKey, state }) =>
+          String(queryKey[0]).startsWith(getGetRunQueryKey('')[0]) &&
+          !(state.data as Run | undefined)?.finishedAt,
+      });
+      // A failed read leaves the meta row as the stream left it; the invalidation above reports the failure.
+      void showSavedReplyMeta(completedSessionId).catch(() => undefined);
     },
-    [invalidateSessionList, queryClient],
+    [invalidateSessionList, queryClient, showSavedReplyMeta],
   );
 
-  const showReplyError = useCallback(
-    (message: string) => {
-      setError(message);
+  // The error replaces the reply's text; the returned end is for the caller to settle on.
+  const failReply = useCallback(
+    (message: string): ReplyEnd => {
       setHistory((prev) => {
         const updated = [...prev];
         const last = updated.at(-1);
         if (last?.role === 'assistant') {
-          updated[updated.length - 1] = { ...last, content: message };
+          // A failed Run reports the `error` first, and the read stops there, before its `run-finished`.
+          const run = last.run && { ...last.run, status: 'failed' as const };
+          updated[updated.length - 1] = { ...last, content: message, ...(run && { run }) };
         }
         return updated;
       });
+      return { status: 'failed', error: message };
     },
-    [setError, setHistory],
+    [setHistory],
   );
 
   const appendToken = useCallback(
@@ -188,8 +224,8 @@ export const useChatStream = ({
   const abort = useCallback(() => {
     abortController.current?.abort();
     abortController.current = null;
-    setIsStreaming(false);
-  }, [setIsStreaming]);
+    useChatStreamStore.setState({ reply: IDLE_REPLY });
+  }, []);
 
   const requestCancel = useCallback(
     async (streamId: string) => {
@@ -203,12 +239,14 @@ export const useChatStream = ({
     [abort],
   );
 
-  // A reply stopped before its first token persists nothing, so its empty bubble goes too.
+  // A reply stopped before its first token persists nothing, so its empty bubble goes too; a Run's Steps stay.
   const dropEmptyReply = useCallback(
     () =>
       setHistory((prev) => {
         const last = prev.at(-1);
-        return last?.role === 'assistant' && last.content === '' ? prev.slice(0, -1) : prev;
+        return last?.role === 'assistant' && last.content === '' && !last.run?.steps.length
+          ? prev.slice(0, -1)
+          : prev;
       }),
     [setHistory],
   );
@@ -225,9 +263,26 @@ export const useChatStream = ({
     [queryClient, setHistory],
   );
 
-  // Applies one event to the reply; an outcome means the stream is over.
+  // A Run's Step or end changes its progress above the answer, and the Run the Inspector may be showing.
+  const applyRunFrame = useCallback(
+    (event: SseEvent, data: unknown) => {
+      const runEvent = parseRunEvent(event, data);
+      if (!runEvent) return;
+      setHistory((prev) => {
+        const last = prev.at(-1);
+        return last?.role === 'assistant'
+          ? [...prev.slice(0, -1), applyRunEvent(last, runEvent)]
+          : prev;
+      });
+      const runId = useChatStreamStore.getState().history.at(-1)?.runId;
+      if (runId) void queryClient.invalidateQueries({ queryKey: getGetRunQueryKey(runId) });
+    },
+    [queryClient, setHistory],
+  );
+
+  // Applies one event to the reply; an end means the stream is over.
   const applyEvent = useCallback(
-    (event: SseEvent, data: string): FollowOutcome | null => {
+    (event: SseEvent, data: string): ReplyEnd | null => {
       const parsed = parseJson(data);
       if (event === 'token') {
         const token = (parsed as { token?: unknown } | null)?.token;
@@ -237,25 +292,59 @@ export const useChatStream = ({
       if (event === 'usage') {
         const { promptTokens, completionTokens, totalTokens } = parsed as Record<string, number>;
         setUsage({ promptTokens, completionTokens, totalTokens });
+        // The saved Message carries this count, so the meta row shows it now rather than after a reload.
+        setHistory((prev) => {
+          const last = prev.at(-1);
+          return last?.role === 'assistant'
+            ? [...prev.slice(0, -1), { ...last, tokenCount: totalTokens }]
+            : prev;
+        });
+        return null;
+      }
+      if (event === 'step-started' || event === 'step-finished' || event === 'run-finished') {
+        applyRunFrame(event, parsed);
+        return null;
+      }
+      if (event === 'run-waiting') {
+        const { runId, questionMessageId, question } = (parsed ?? {}) as Record<string, unknown>;
+        if (typeof question !== 'string' || typeof questionMessageId !== 'string') return null;
+        // The question is saved as its own Message, so the reply takes its id and text.
+        setHistory((prev) => {
+          const last = prev.at(-1);
+          return last?.role === 'assistant'
+            ? [
+                ...prev.slice(0, -1),
+                {
+                  ...last,
+                  id: questionMessageId,
+                  content: question,
+                  ...(typeof runId === 'string' && { runId }),
+                },
+              ]
+            : prev;
+        });
         return null;
       }
       if (event === 'error') {
-        showReplyError(parseErrorEnvelope(parsed)?.message ?? resources.chat.streamError);
-        return 'failed';
+        const end = failReply(parseErrorEnvelope(parsed)?.message ?? resources.chat.streamError);
+        // A failed Run still reports its `run-finished`, which the Inspector's Run waits on, so it reads on to `end`.
+        return useChatStreamStore.getState().history.at(-1)?.run ? null : end;
       }
+      const last = useChatStreamStore.getState().history.at(-1);
+      if (last?.run?.status === 'failed') return { status: 'failed', error: last.content };
       // `end`, also when the User stopped the reply: what streamed is the saved reply.
-      if ((parsed as { reason?: unknown } | null)?.reason === 'cancelled') dropEmptyReply();
-      return 'ended';
+      if ((parsed as { reason?: unknown } | null)?.reason === 'cancelled') {
+        dropEmptyReply();
+        return { status: 'stopped' };
+      }
+      return IDLE_REPLY;
     },
-    [appendToken, dropEmptyReply, setUsage, showReplyError],
+    [appendToken, applyRunFrame, dropEmptyReply, failReply, setHistory, setUsage],
   );
 
   // Reads one connection's body; null when it closed or dropped before the stream was over.
   const readReply = useCallback(
-    async (
-      body: ReadableStream<Uint8Array>,
-      cursor: StreamCursor,
-    ): Promise<FollowOutcome | null> => {
+    async (body: ReadableStream<Uint8Array>, cursor: StreamCursor): Promise<ReplyEnd | null> => {
       try {
         for await (const { event, data, id } of parseSseStream(body)) {
           if (id !== undefined) {
@@ -264,8 +353,8 @@ export const useChatStream = ({
             cursor.lastEventId = id;
             cursor.retries = 0;
           }
-          const outcome = applyEvent(event, data);
-          if (outcome) return outcome;
+          const end = applyEvent(event, data);
+          if (end) return end;
         }
       } catch {
         // The connection dropped mid-body: the caller reconnects.
@@ -276,25 +365,26 @@ export const useChatStream = ({
   );
 
   // Renders a reply stream into the trailing assistant Message, reconnecting after the last event
-  // it saw (ADR-0014); an expired stream falls back to the saved Message. Throws once retries run out.
+  // it saw (ADR-0014); an expired stream falls back to the saved Message. Null once aborted; throws
+  // once retries run out.
   const followStream = useCallback(
     async (
       streamId: string,
       followedSessionId: string,
       signal: AbortSignal,
-    ): Promise<FollowOutcome> => {
+    ): Promise<ReplyEnd | null> => {
       const cursor: StreamCursor = { lastEventId: undefined, retries: 0 };
       while (!signal.aborted) {
         const response = await openReplyStream(streamId, cursor.lastEventId, signal);
         if (response?.status === 404) {
           await showSavedReply(followedSessionId);
-          return 'ended';
+          return IDLE_REPLY;
         }
         if (response && (!response.ok || !response.body)) {
           await assertRetryable(response, cursor.retries < reconnectDelaysMs.length);
         } else if (response?.body) {
-          const outcome = await readReply(response.body, cursor);
-          if (outcome) return outcome;
+          const end = await readReply(response.body, cursor);
+          if (end) return end;
         }
         if (signal.aborted) break;
 
@@ -304,14 +394,33 @@ export const useChatStream = ({
         cursor.retries += 1;
         await wait(delay, signal);
       }
-      return 'aborted';
+      return null;
     },
     [readReply, reconnectDelaysMs, showSavedReply],
   );
 
+  // A new chat's reply stays in flight until ChatContainer's `clearPostStream()` runs once the route has a
+  // sessionId, so the navigation renders first; requestAnimationFrame could fire early and flash the empty state.
+  const settle = useCallback(
+    (end: ReplyEnd, newSessionId?: string) => {
+      if (!newSessionId) {
+        useChatStreamStore.setState({ reply: end });
+        return;
+      }
+      useChatStreamStore.setState({ reply: { status: 'navigating', end } });
+      void navigate({ to: '/s/$id', params: { id: newSessionId }, replace: true });
+    },
+    [navigate],
+  );
+
   // Send, then subscribe (ADR-0014): a new chat gets its Session first, and the send names the reply's stream.
   const streamMessage = useCallback(
-    async ({ model, messages, sessionId: customSessionId }: ChatHistoryStreamOptions) => {
+    async ({
+      model,
+      mode = SendMessageBodyMode.direct,
+      messages,
+      sessionId: customSessionId,
+    }: ChatHistoryStreamOptions) => {
       const controller = new AbortController();
       abortController.current = controller;
       const content = messages.at(-1)?.content ?? '';
@@ -319,11 +428,9 @@ export const useChatStream = ({
       const isNewSession = !activeSessionId;
 
       useChatStreamStore.setState({
-        isStreaming: true,
-        error: null,
+        reply: { status: 'sending', stopRequested: false },
         usage: null,
         streamId: null,
-        isStopRequested: false,
         isMessageAllowanceReached: false,
         history: [...messages, emptyAssistantMessage()],
       });
@@ -345,36 +452,37 @@ export const useChatStream = ({
           void invalidateSessionList();
         }
 
-        const { streamId } = await sendMessage({
+        // A tab left open past the worker's idle sleep: only a browser's ping gets through the edge.
+        wakeWorker();
+        const { streamId, runId } = await sendMessage({
           sessionId: activeSessionId,
-          data: { content, mode: 'direct', model: model as SendMessageBodyModel },
+          data: { content, mode, model: model as SendMessageBodyModel },
         });
         void invalidateMessageAllowance();
+        // The send may have answered the Session's waiting Run, which then waits no more.
+        void queryClient.invalidateQueries({ queryKey: getGetSessionQueryKey(activeSessionId) });
         if (controller.signal.aborted) return;
-        useChatStreamStore.setState({ streamId });
-        // Stop was pressed before the send named the stream.
-        if (useChatStreamStore.getState().isStopRequested) void requestCancel(streamId);
-
-        const outcome = await followStream(streamId, activeSessionId, controller.signal);
-        if (outcome === 'failed') {
-          setIsStreaming(false);
-        } else if (outcome === 'ended') {
-          invalidateCompletedStream(activeSessionId);
-          if (isNewSession) {
-            // isStreaming stays true until ChatContainer's `clearPostStream()` runs once the route has a sessionId, so the navigation renders first;
-            // requestAnimationFrame could fire early and flash the empty state.
-            setIsPostStreamNavigation(true);
-            void navigate({ to: '/s/$id', params: { id: activeSessionId }, replace: true });
-          } else {
-            setIsStreaming(false);
-          }
+        const sent = useChatStreamStore.getState().reply;
+        useChatStreamStore.setState({ streamId, reply: { status: 'streaming' } });
+        if (runId) {
+          // The Run exists from the send on, so its progress and its Inspector tab show before the first Step.
+          setHistory((prev) => [...prev.slice(0, -1), { ...prev.at(-1)!, runId, run: EMPTY_RUN }]);
+          useInspectorStore.getState().showRun(runId);
         }
+        // Stop was pressed before the send named the stream.
+        if (sent.status === 'sending' && sent.stopRequested) void requestCancel(streamId);
+
+        const end = await followStream(streamId, activeSessionId, controller.signal);
+        // Aborted: `abort` has already settled the reply.
+        if (!end) return;
+        if (end.status !== 'failed') invalidateCompletedStream(activeSessionId);
+        settle(end, isNewSession ? activeSessionId : undefined);
       } catch (err) {
         if (isAppError(err) && err.code === ErrorCode.MessageAllowanceReached) {
           // Nothing was persisted, so the refused message goes back to the composer to resend.
           useChatStreamStore.setState({
             history: messages.slice(0, -1),
-            isStreaming: false,
+            reply: IDLE_REPLY,
             isMessageAllowanceReached: true,
           });
           useMessageStore.getState().setMessage(content);
@@ -382,30 +490,41 @@ export const useChatStream = ({
           void invalidateMessageAllowance();
           return;
         }
-        if (!controller.signal.aborted) {
-          showReplyError(
-            err instanceof Error && err.message ? err.message : resources.chat.streamError,
-          );
+        // Aborted: `abort` has already settled the reply, and a newer one may be in flight.
+        if (controller.signal.aborted) return;
+        if (
+          mode === SendMessageBodyMode.run &&
+          isAppError(err) &&
+          err.code === ErrorCode.Forbidden
+        ) {
+          // Nothing was persisted for a refused Run, so the message goes back to the composer.
+          useChatStreamStore.setState({ history: messages.slice(0, -1), reply: IDLE_REPLY });
+          useMessageStore.getState().setMessage(content);
+          toast.error(err.message);
+          return;
         }
-        setIsStreaming(false);
+        const end = failReply(
+          err instanceof Error && err.message ? err.message : resources.chat.streamError,
+        );
+        // A new chat that got its Session moves to it, so the failed reply stays on screen.
+        settle(end, isNewSession ? activeSessionId : undefined);
       } finally {
         if (abortController.current === controller) abortController.current = null;
       }
     },
     [
       createSession,
+      failReply,
       followStream,
       invalidateCompletedStream,
       invalidateSessionList,
       invalidateMessageAllowance,
-      navigate,
       queryClient,
       requestCancel,
       sendMessage,
+      setHistory,
       setSessionId,
-      setIsPostStreamNavigation,
-      setIsStreaming,
-      showReplyError,
+      settle,
     ],
   );
 
@@ -415,59 +534,56 @@ export const useChatStream = ({
     async ({ sessionId: resumedSessionId, streamId }: ResumeStreamOptions) => {
       const chat = useChatStreamStore.getState();
       // Already following it, or this tab just did and the Session read is not yet refreshed.
-      if (chat.isStreaming || chat.streamId === streamId) return;
+      if (isReplyInFlight(chat.reply) || chat.streamId === streamId) return;
       const controller = new AbortController();
       abortController.current = controller;
       useChatStreamStore.setState({
-        isStreaming: true,
-        error: null,
+        reply: { status: 'streaming' },
         usage: null,
         sessionId: resumedSessionId,
         streamId,
-        isStopRequested: false,
         // A reload just after the worker persisted the reply already lists it; the replay replaces it.
         history: [...chat.history.filter((m) => m.id !== streamId), emptyAssistantMessage()],
       });
       try {
-        const outcome = await followStream(streamId, resumedSessionId, controller.signal);
-        if (outcome === 'ended') invalidateCompletedStream(resumedSessionId);
+        const end = await followStream(streamId, resumedSessionId, controller.signal);
+        if (!end) return;
+        if (end.status !== 'failed') invalidateCompletedStream(resumedSessionId);
+        settle(end);
       } catch (err) {
-        if (!controller.signal.aborted) {
-          showReplyError(
-            err instanceof Error && err.message ? err.message : resources.chat.streamError,
-          );
-        }
+        if (controller.signal.aborted) return;
+        settle(
+          failReply(err instanceof Error && err.message ? err.message : resources.chat.streamError),
+        );
       } finally {
-        setIsStreaming(false);
         if (abortController.current === controller) abortController.current = null;
       }
     },
-    [followStream, invalidateCompletedStream, setIsStreaming, showReplyError],
+    [failReply, followStream, invalidateCompletedStream, settle],
   );
 
   // The stop button: the worker ends the stream as `cancelled`, which finishes the reply as usual.
   const stop = useCallback(async () => {
-    const { isStreaming: streaming, streamId } = useChatStreamStore.getState();
-    if (!streaming) return;
-    if (!streamId) {
+    const { reply: current, streamId } = useChatStreamStore.getState();
+    if (current.status === 'sending') {
       // The send has not named the stream yet; it cancels once it does.
-      useChatStreamStore.setState({ isStopRequested: true });
+      useChatStreamStore.setState({ reply: { status: 'sending', stopRequested: true } });
       return;
     }
-    await requestCancel(streamId);
+    if (current.status === 'streaming' && streamId) await requestCancel(streamId);
   }, [requestCancel]);
 
-  // Atomically clears both isStreaming and isPostStreamNavigation in one setState call
-  // so ChatContainer sees a consistent state in a single render.
+  // The new Session's route has rendered, so the reply rests at the end it reached.
   const clearPostStream = useCallback(() => {
-    useChatStreamStore.setState({ isStreaming: false, isPostStreamNavigation: false });
+    const { reply: current } = useChatStreamStore.getState();
+    if (current.status === 'navigating') useChatStreamStore.setState({ reply: current.end });
   }, []);
 
   return {
     history,
-    isStreaming,
-    isPostStreamNavigation,
-    error,
+    isStreaming: isReplyInFlight(replyState),
+    isPostStreamNavigation: replyState.status === 'navigating',
+    isReplyStopped: replyState.status === 'stopped',
     usage,
     streamMessage,
     resumeStream,

@@ -106,6 +106,20 @@ export const twoFactor = pgTable(
   (t) => [index('two_factor_secret_idx').on(t.secret), index('two_factor_user_idx').on(t.userId)],
 );
 
+// better-auth device authorization plugin table (model `deviceCode`): one row per `nebula login` awaiting approval.
+export const deviceCode = pgTable('device_code', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  deviceCode: text('device_code').notNull().unique(),
+  userCode: text('user_code').notNull().unique(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  expiresAt: timestamp('expires_at').notNull(),
+  status: text('status').notNull(),
+  lastPolledAt: timestamp('last_polled_at'),
+  pollingInterval: integer('polling_interval'),
+  clientId: text('client_id'),
+  scope: text('scope'),
+});
+
 // The domain Session (GLOSSARY.md), not better-auth's `session` table above.
 export const sessions = pgTable(
   'sessions',

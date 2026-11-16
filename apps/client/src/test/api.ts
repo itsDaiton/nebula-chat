@@ -5,11 +5,14 @@ import { HttpResponse, http, type HttpHandler, type JsonBodyType } from 'msw';
  * and better-auth's `/api/auth/*` (absent from the spec), keeping the origin wildcard in one place.
  */
 export const API_ROUTE = {
+  adminAudit: '*/api/admin/audit',
   sessions: '*/api/sessions',
   sessionsSearch: '*/api/sessions/search',
+  models: '*/api/models',
   session: '*/api/sessions/:sessionId',
   sendMessage: '*/api/sessions/:sessionId/messages',
   replyStream: '*/api/streams/:streamId',
+  run: '*/api/runs/:runId',
   messageAllowance: '*/api/chat/message-allowance',
   profileImage: '*/api/profile-image',
   authSession: '*/api/auth/get-session',
@@ -24,7 +27,16 @@ export const API_ROUTE = {
   authUpdateUser: '*/api/auth/update-user',
   authRevokeSessions: '*/api/auth/revoke-sessions',
   authDeleteUser: '*/api/auth/delete-user',
+  authTwoFactorEnable: '*/api/auth/two-factor/enable',
+  authTwoFactorVerifyTotp: '*/api/auth/two-factor/verify-totp',
+  authTwoFactorVerifyBackupCode: '*/api/auth/two-factor/verify-backup-code',
+  authRestoreAccount: '*/api/auth/restore-account',
+  authTwoFactorDisable: '*/api/auth/two-factor/disable',
+  authTwoFactorBackupCodes: '*/api/auth/two-factor/generate-backup-codes',
   authListAccounts: '*/api/auth/list-accounts',
+  authDevice: '*/api/auth/device',
+  authDeviceApprove: '*/api/auth/device/approve',
+  authDeviceDeny: '*/api/auth/device/deny',
   authSendVerificationEmail: '*/api/auth/send-verification-email',
 } as const;
 

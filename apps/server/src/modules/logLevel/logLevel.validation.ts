@@ -1,9 +1,24 @@
 import { z } from 'zod';
-import { LOG_COMPONENTS, LOG_LEVELS, MAX_LOG_LEVEL_TTL_SECONDS } from '@nebula-chat/otel';
+import {
+  LOG_COMPONENTS,
+  LOG_LEVEL_SERVICES,
+  LOG_LEVELS,
+  MAX_LOG_LEVEL_TTL_SECONDS,
+} from '@nebula-chat/otel';
 import { isoDateTimeSchema } from '@server/utils/isoDateTimeSchema';
 
 /** Long enough to catch a problem in the act, short enough that a forgotten `trace` is cheap. */
 const DEFAULT_TTL_SECONDS = 15 * 60;
+
+const logLevelServiceSchema = z
+  .enum(Object.keys(LOG_LEVEL_SERVICES) as [keyof typeof LOG_LEVEL_SERVICES])
+  .default('server');
+
+export const logLevelServiceQuerySchema = z.object({
+  service: logLevelServiceSchema.describe(
+    'Which service to read: the server (default) or the worker',
+  ),
+});
 
 export const changeLogLevelSchema = z.object({
   // exactOptional: absent, never `undefined`, as `LogLevelChange.component` expects.
@@ -12,6 +27,9 @@ export const changeLogLevelSchema = z.object({
     .exactOptional()
     .describe('The `nebula.component` to change; omit it to change the root level'),
   level: z.enum(LOG_LEVELS),
+  service: logLevelServiceSchema.describe(
+    'Which service to change: the server (default) or the worker',
+  ),
   ttlSeconds: z
     .int()
     .min(1)
@@ -28,7 +46,7 @@ export const changeLogLevelSchema = z.object({
 
 export const logLevelChangeResponseSchema = z
   .object({
-    receivers: z.int().describe('How many server instances received the change'),
+    receivers: z.int().describe('How many instances of the service received the change'),
     expiresAt: isoDateTimeSchema.describe('When the change reverts'),
   })
   .meta({ id: 'LogLevelChange' });
@@ -52,7 +70,7 @@ const logLevelStateSchema = z
 
 const logLevelReportSchema = z
   .object({
-    instance: z.string().describe('The server instance, as its hostname and process id'),
+    instance: z.string().describe('The instance, as its hostname and process id'),
     levels: z
       .array(logLevelStateSchema)
       .max(LOG_COMPONENTS.length + 1)
@@ -65,7 +83,7 @@ export const logLevelReportsResponseSchema = z
     receivers: z
       .int()
       .describe(
-        'How many server instances received the request; more than reports means some did not answer in time',
+        'How many instances of the service received the request; more than reports means some did not answer in time',
       ),
     // A bound for the spec (checkov CKV_OPENAPI_21), far above any instance count we run.
     reports: z

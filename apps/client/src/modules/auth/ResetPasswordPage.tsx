@@ -1,5 +1,5 @@
-import { Button } from '@chakra-ui/react';
 import { Link, getRouteApi } from '@tanstack/react-router';
+import { toast } from 'sonner';
 import { AuthForm } from '@/modules/auth/components/AuthForm';
 import { AuthLayout } from '@/modules/auth/components/AuthLayout';
 import { AuthStatus } from '@/modules/auth/components/AuthStatus';
@@ -7,6 +7,7 @@ import { BackToSignIn } from '@/modules/auth/components/BackToSignIn';
 import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
 import { resetPasswordForm } from '@/modules/auth/utils/authForms';
 import { resources } from '@/resources';
+import { buttonVariants } from '@/shared/components/ui/button';
 
 const { resetPassword } = resources.auth;
 const routeApi = getRouteApi('/_app/auth/reset-password');
@@ -23,15 +24,28 @@ export const ResetPasswordPage = () => {
     }
   };
 
+  // A reset ends every session and makes none, so the next step is signing in with the new password.
+  const goToSignIn = () => {
+    toast.success(resetPassword.done);
+    void navigate({ to: '/auth', search: {} });
+  };
+
   return (
     <AuthLayout footer={<BackToSignIn />}>
       {token && error === undefined ? (
-        <AuthForm config={resetPasswordForm(token)} onError={showInvalidLink} />
+        <AuthForm
+          config={resetPasswordForm(token)}
+          onSuccess={goToSignIn}
+          onError={showInvalidLink}
+        />
       ) : (
         <AuthStatus title={resetPassword.title} status="error" message={resetPassword.linkInvalid}>
-          <Button asChild>
-            <Link to="/auth/forgot-password">{resetPassword.requestNewLink}</Link>
-          </Button>
+          <Link
+            to="/auth/forgot-password"
+            className={buttonVariants({ size: 'lg', className: 'w-full' })}
+          >
+            {resetPassword.requestNewLink}
+          </Link>
         </AuthStatus>
       )}
     </AuthLayout>

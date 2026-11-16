@@ -1,18 +1,20 @@
-import { Button } from '@chakra-ui/react';
 import { Link } from '@tanstack/react-router';
-import { LuArrowLeft } from 'react-icons/lu';
+import { ArrowLeftIcon } from 'lucide-react';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import { resources } from '@/resources';
+import { buttonVariants } from '@/shared/components/ui/button';
 
 export const BackToSignIn = () => {
   const { hidePassword } = usePasswordVisibilityStore();
 
   return (
-    <Button asChild variant="ghost" w="full">
-      <Link to="/auth" onClick={hidePassword}>
-        <LuArrowLeft />
-        {resources.auth.page.backToSignIn}
-      </Link>
-    </Button>
+    <Link
+      to="/auth"
+      onClick={hidePassword}
+      className={buttonVariants({ variant: 'ghost', className: 'text-muted-foreground' })}
+    >
+      <ArrowLeftIcon />
+      {resources.auth.page.backToSignIn}
+    </Link>
   );
 };

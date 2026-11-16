@@ -16,6 +16,9 @@ export const getGetModelCatalogResponseMock = (
 ): ModelCatalog => ({
   version: faker.string.alpha({ length: { min: 10, max: 20 } }),
   hash: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  defaultModels: {
+    [faker.string.alphanumeric(5)]: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  },
   models: Array.from({ length: faker.number.int({ min: 1, max: 100 }) }, (_, i) => i + 1).map(
     () => ({
       id: faker.helpers.arrayElement([

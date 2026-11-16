@@ -1,8 +1,9 @@
-import { Alert } from '@chakra-ui/react';
+import { InfoIcon, TriangleAlertIcon } from 'lucide-react';
 import { ResendVerificationButton } from '@/modules/auth/components/ResendVerificationButton';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { useMessageAllowance } from '@/modules/chat/hooks/useMessageAllowance';
 import { resources } from '@/resources';
+import { cn } from '@/shared/utils/cn';
 
 const { emailVerification } = resources.auth;
 
@@ -13,25 +14,26 @@ export const EmailVerificationPrompt = () => {
 
   if (!needsEmailVerification) return null;
 
+  const Icon = isSpent ? TriangleAlertIcon : InfoIcon;
+
   return (
-    <Alert.Root
-      status={isSpent ? 'warning' : 'info'}
+    <div
       role={isSpent ? 'alert' : 'status'}
-      alignItems="center"
-      mx={4}
-      mt={4}
-      width="auto"
+      className={cn(
+        'mb-3 flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm',
+        isSpent ? 'border-warning/30 bg-warning/10' : 'border-border bg-raised',
+      )}
     >
-      <Alert.Indicator />
-      <Alert.Content>
-        <Alert.Title>
+      <Icon className={cn('size-4 shrink-0', isSpent ? 'text-warning' : 'text-muted-foreground')} />
+      <div className="min-w-0 flex-1">
+        <p className="font-medium text-foreground">
           {isSpent ? emailVerification.allowanceReachedTitle : emailVerification.title}
-        </Alert.Title>
-        <Alert.Description>
+        </p>
+        <p className="text-muted-foreground">
           {isSpent ? emailVerification.allowanceReachedDescription : emailVerification.description}
-        </Alert.Description>
-      </Alert.Content>
+        </p>
+      </div>
       <ResendVerificationButton />
-    </Alert.Root>
+    </div>
   );
 };

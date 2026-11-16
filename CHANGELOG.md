@@ -1,5 +1,269 @@
 # Changelog
 
+## [7.3.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.5...nebula-chat-v7.3.6) (2026-11-16)
+
+
+### Bug Fixes
+
+* **client:** align Audit log and Users page title and detail panel ([#824](https://github.com/itsDaiton/nebula-chat/issues/824)) ([4e82904](https://github.com/itsDaiton/nebula-chat/commit/4e82904ce166fd259be5accce0f385fd1333f8d0))
+
+## [7.3.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.4...nebula-chat-v7.3.5) (2026-11-16)
+
+
+### Bug Fixes
+
+* **client:** repair broken Markdown from older models ([#814](https://github.com/itsDaiton/nebula-chat/issues/814)) ([fb439f5](https://github.com/itsDaiton/nebula-chat/commit/fb439f52e2bb36fb68d77c3edf18aede97258bc3))
+
+## [7.3.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.3...nebula-chat-v7.3.4) (2026-11-16)
+
+
+### Bug Fixes
+
+* **client:** wake the sleeping worker from the browser ([#813](https://github.com/itsDaiton/nebula-chat/issues/813)) ([73cbb2f](https://github.com/itsDaiton/nebula-chat/commit/73cbb2f5a86851ab9991a7cc8ea8aa35e7bd52ad))
+
+## [7.3.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.2...nebula-chat-v7.3.3) (2026-11-16)
+
+
+### Bug Fixes
+
+* **server:** qualify columns in admin user list subqueries ([#811](https://github.com/itsDaiton/nebula-chat/issues/811)) ([74606df](https://github.com/itsDaiton/nebula-chat/commit/74606df09ab07cda7e32a5602f6d603d10391496))
+
+## [7.3.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.1...nebula-chat-v7.3.2) (2026-11-15)
+
+
+### Bug Fixes
+
+* **client:** NEB-804 let a signed-in Admin verify a code from Settings ([#807](https://github.com/itsDaiton/nebula-chat/issues/807)) ([c934b5e](https://github.com/itsDaiton/nebula-chat/commit/c934b5e4e60e8b6e73c4432d67600649a90558fc))
+
+## [7.3.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.0...nebula-chat-v7.3.1) (2026-11-15)
+
+
+### Bug Fixes
+
+* **server:** adhoc retry the worker wake ping and log who answered ([#803](https://github.com/itsDaiton/nebula-chat/issues/803)) ([8a5cd8e](https://github.com/itsDaiton/nebula-chat/commit/8a5cd8e0e2f5f481d6afe697e49006c8afdda9d0))
+
+## [7.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.2.0...nebula-chat-v7.3.0) (2026-11-15)
+
+
+### Features
+
+* **cli:** NEB-564 nebula users list and show ([#802](https://github.com/itsDaiton/nebula-chat/issues/802)) ([e0393ae](https://github.com/itsDaiton/nebula-chat/commit/e0393aee40f80613ca69a8abc626d3f5f61e2788))
+
+## [7.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.1.0...nebula-chat-v7.2.0) (2026-11-15)
+
+
+### Features
+
+* **client:** NEB-557 admin Users page with search, filters and a detail panel ([#800](https://github.com/itsDaiton/nebula-chat/issues/800)) ([1dd5b11](https://github.com/itsDaiton/nebula-chat/commit/1dd5b11feb7c1f7e39e70850a0409937af7faf7c))
+
+## [7.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.0.0...nebula-chat-v7.1.0) (2026-11-14)
+
+
+### Features
+
+* **cli:** NEB-563 nebula login, whoami, logout and the /device page ([#796](https://github.com/itsDaiton/nebula-chat/issues/796)) ([891eaea](https://github.com/itsDaiton/nebula-chat/commit/891eaeaa1b6c084b76f0f4a4a486f118d273e1ca))
+
+## [7.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.12.0...nebula-chat-v7.0.0) (2026-11-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* **worker:** NEB-349 release the nebula-chat 2.0 worker as a major ([#794](https://github.com/itsDaiton/nebula-chat/issues/794))
+
+### Features
+
+* **client:** show a Run's Clarifying question in the chat ([#792](https://github.com/itsDaiton/nebula-chat/issues/792)) ([0019bd2](https://github.com/itsDaiton/nebula-chat/commit/0019bd2c7dc0d9f43e174c672f700be9ecb706ee))
+* **worker:** NEB-349 release the nebula-chat 2.0 worker as a major ([#794](https://github.com/itsDaiton/nebula-chat/issues/794)) ([ffd647b](https://github.com/itsDaiton/nebula-chat/commit/ffd647bb6d7fdaec8b605b00d294380d228083f7))
+
+## [6.12.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.11.1...nebula-chat-v6.12.0) (2026-11-12)
+
+
+### Features
+
+* **client:** NEB-662 Orchestrator turns, delegate Steps and stop for Runs ([#790](https://github.com/itsDaiton/nebula-chat/issues/790)) ([1338958](https://github.com/itsDaiton/nebula-chat/commit/1338958c9bd609cb08a1befd1724e8db33847152))
+
+## [6.11.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.11.0...nebula-chat-v6.11.1) (2026-11-12)
+
+
+### Bug Fixes
+
+* **worker:** NEB-710 web_fetch reads pages through Tavily Extract ([#787](https://github.com/itsDaiton/nebula-chat/issues/787)) ([2fa89b8](https://github.com/itsDaiton/nebula-chat/commit/2fa89b8112ce896b766eb19431e4bda0d5cc09bd))
+
+## [6.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.10.0...nebula-chat-v6.11.0) (2026-11-12)
+
+
+### Features
+
+* **client:** NEB-652 Run toggle and Step progress in the chat ([#785](https://github.com/itsDaiton/nebula-chat/issues/785)) ([1f717e8](https://github.com/itsDaiton/nebula-chat/commit/1f717e892998713c0e24302f0c1367b9af9ea103))
+
+## [6.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.9.0...nebula-chat-v6.10.0) (2026-11-11)
+
+
+### Features
+
+* **client:** NEB-556 admin dashboard shell, shared table and Audit log ([#780](https://github.com/itsDaiton/nebula-chat/issues/780)) ([9a87ebe](https://github.com/itsDaiton/nebula-chat/commit/9a87ebe94d42c85771ad80afc1e588b2d64105b4)), closes [#556](https://github.com/itsDaiton/nebula-chat/issues/556)
+
+## [6.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.8.1...nebula-chat-v6.9.0) (2026-11-11)
+
+
+### Features
+
+* **client:** star favorite models in the model picker ([#779](https://github.com/itsDaiton/nebula-chat/issues/779)) ([bf38dee](https://github.com/itsDaiton/nebula-chat/commit/bf38dee56dec78bf00080a8318d187032166d774))
+
+## [6.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.8.0...nebula-chat-v6.8.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* **server:** NEB-743 bound the shutdown drain so a reload frees the port ([#776](https://github.com/itsDaiton/nebula-chat/issues/776)) ([b40e26f](https://github.com/itsDaiton/nebula-chat/commit/b40e26ffff23efb7451ad1eb8455d5a7c88d93e7))
+
+## [6.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.7.1...nebula-chat-v6.8.0) (2026-11-10)
+
+
+### Features
+
+* **client:** NEB-666 context window ring in the composer ([#774](https://github.com/itsDaiton/nebula-chat/issues/774)) ([89ea3e3](https://github.com/itsDaiton/nebula-chat/commit/89ea3e331870d7556e208b510ead5c2e734acaa2))
+
+## [6.7.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.7.0...nebula-chat-v6.7.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* **client:** model the chat reply lifecycle as one state union ([#772](https://github.com/itsDaiton/nebula-chat/issues/772)) ([4808fe4](https://github.com/itsDaiton/nebula-chat/commit/4808fe4c021124a73c4c315881682cc8a27ef3bb))
+
+## [6.7.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.6.0...nebula-chat-v6.7.0) (2026-11-10)
+
+
+### Features
+
+* **client:** NEB-362 Run inspection view ([#768](https://github.com/itsDaiton/nebula-chat/issues/768)) ([19959ed](https://github.com/itsDaiton/nebula-chat/commit/19959ed2847210d703ab1e5b71b78a158111ca38))
+
+## [6.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.5.2...nebula-chat-v6.6.0) (2026-11-10)
+
+
+### Features
+
+* **client:** NEB-765 random waiting phrase while a reply starts ([#769](https://github.com/itsDaiton/nebula-chat/issues/769)) ([4c69c47](https://github.com/itsDaiton/nebula-chat/commit/4c69c47a62455b4376a12f905a8301244d444d4b))
+
+## [6.5.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.5.1...nebula-chat-v6.5.2) (2026-11-10)
+
+
+### Bug Fixes
+
+* define Waiting phrase in the glossary ([#764](https://github.com/itsDaiton/nebula-chat/issues/764)) ([8649be9](https://github.com/itsDaiton/nebula-chat/commit/8649be9b06ec72a828d0aa54954179640f34ecec))
+
+## [6.5.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.5.0...nebula-chat-v6.5.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* **client:** stop render-phase store writes and theme script warning ([#763](https://github.com/itsDaiton/nebula-chat/issues/763)) ([90d4b9a](https://github.com/itsDaiton/nebula-chat/commit/90d4b9a4a8e8ec10ba00bf210d4ee9592ac90ca3))
+
+## [6.5.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.4.0...nebula-chat-v6.5.0) (2026-11-08)
+
+
+### Features
+
+* **client:** NEB-677 rename a Session from the header title ([#761](https://github.com/itsDaiton/nebula-chat/issues/761)) ([04f915d](https://github.com/itsDaiton/nebula-chat/commit/04f915d747289da16c70b8b766adb9bb2b19f6f9))
+
+## [6.4.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.3.0...nebula-chat-v6.4.0) (2026-11-08)
+
+
+### Features
+
+* **client:** NEB-730 show when the password was last changed in Settings ([#759](https://github.com/itsDaiton/nebula-chat/issues/759)) ([8595086](https://github.com/itsDaiton/nebula-chat/commit/8595086645ef4a9bc245ae6424321d461f9ad98f))
+
+## [6.3.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.2.0...nebula-chat-v6.3.0) (2026-11-08)
+
+
+### Features
+
+* **server,client:** NEB-729 show archive time and message count on archived Sessions ([#757](https://github.com/itsDaiton/nebula-chat/issues/757)) ([a95fbff](https://github.com/itsDaiton/nebula-chat/commit/a95fbffb350ca12acc7d40ea8a4c2e3437d78120))
+
+## [6.2.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.1.0...nebula-chat-v6.2.0) (2026-11-08)
+
+
+### Features
+
+* **server:** NEB-607 let operators change and read the worker's log levels ([#755](https://github.com/itsDaiton/nebula-chat/issues/755)) ([1d36f1d](https://github.com/itsDaiton/nebula-chat/commit/1d36f1da0018bef5b8b11738051edf88aa3eedc9))
+
+## [6.1.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.0.1...nebula-chat-v6.1.0) (2026-11-08)
+
+
+### Features
+
+* **client:** NEB-566 the model picker reads GET /api/models ([#753](https://github.com/itsDaiton/nebula-chat/issues/753)) ([72ed45a](https://github.com/itsDaiton/nebula-chat/commit/72ed45abfc0919bf422c062a5a17f0e5c1e833b6))
+
+## [6.0.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v6.0.0...nebula-chat-v6.0.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* **client:** finish Chakra cleanup in coverage config, docs and hook naming ([#749](https://github.com/itsDaiton/nebula-chat/issues/749)) ([bfd204e](https://github.com/itsDaiton/nebula-chat/commit/bfd204e69c62d2e4c1909fc30b30db9ae3ab7a2d))
+
+## [6.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.21.0...nebula-chat-v6.0.0) (2026-11-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* **client:** NEB-555 remove Chakra UI from the client ([#742](https://github.com/itsDaiton/nebula-chat/issues/742))
+* **client:** NEB-530 redesign the client on shadcn/ui, Base UI and Tailwind
+
+### Features
+
+* **client:** NEB-530 redesign the client on shadcn/ui, Base UI and Tailwind ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-546 redesign foundation — Tailwind v4, shadcn/ui on Base UI, tokens, Geist and test helpers ([#649](https://github.com/itsDaiton/nebula-chat/issues/649)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-547 redesigned shell — header, three panels, mobile drawer and sheet ([#670](https://github.com/itsDaiton/nebula-chat/issues/670)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-548 redesigned left panel with Sessions, relative times, keyboard hints and the archive action ([#675](https://github.com/itsDaiton/nebula-chat/issues/675)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-549 redesigned chat with greeting, composer, messages, code blocks and meta row ([#676](https://github.com/itsDaiton/nebula-chat/issues/676)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-550 model picker with provider logos, labels, search and context size ([#678](https://github.com/itsDaiton/nebula-chat/issues/678)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-551 Inspector right panel with a Session tab and a Run tab slot ([#686](https://github.com/itsDaiton/nebula-chat/issues/686)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-552 Settings as a modal with 2FA, Archived Sessions, Appearance ([#725](https://github.com/itsDaiton/nebula-chat/issues/725)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-553 redesigned auth pages with the 2FA challenge, the Pending deletion restore prompt and the banned message ([#731](https://github.com/itsDaiton/nebula-chat/issues/731)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-554 command palette ([#679](https://github.com/itsDaiton/nebula-chat/issues/679)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-555 remove Chakra UI from the client ([#742](https://github.com/itsDaiton/nebula-chat/issues/742)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+* **client:** NEB-706 plug the Message metadata from the API into the redesigned chat ([#739](https://github.com/itsDaiton/nebula-chat/issues/739)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+
+
+### Bug Fixes
+
+* **client:** NEB-672 keep a failed reply visible in a new chat ([#683](https://github.com/itsDaiton/nebula-chat/issues/683)) ([fbd48c5](https://github.com/itsDaiton/nebula-chat/commit/fbd48c50fe545657c5953d62bb85205bdf8d9c28))
+
+## [5.21.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.6...nebula-chat-v5.21.0) (2026-11-03)
+
+
+### Features
+
+* **cli:** NEB-562 nebula admins grant, revoke and list ([#740](https://github.com/itsDaiton/nebula-chat/issues/740)) ([ab06c1c](https://github.com/itsDaiton/nebula-chat/commit/ab06c1c04458119af1068d6eb1513c9a8bf8bb3a))
+
+## [5.20.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.5...nebula-chat-v5.20.6) (2026-11-02)
+
+
+### Bug Fixes
+
+* **auth:** set the auth emails in Geist with the app's light tokens ([#737](https://github.com/itsDaiton/nebula-chat/issues/737)) ([25495c6](https://github.com/itsDaiton/nebula-chat/commit/25495c68dad271e446f815f6704d21b683dbefa6))
+
+## [5.20.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.4...nebula-chat-v5.20.5) (2026-11-02)
+
+
+### Bug Fixes
+
+* **auth:** let a 2FA User in Pending deletion reach the code challenge ([#733](https://github.com/itsDaiton/nebula-chat/issues/733)) ([3d8ae42](https://github.com/itsDaiton/nebula-chat/commit/3d8ae42d5d1decba543d3ede970da8cf446ce3ee))
+
+## [5.20.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.3...nebula-chat-v5.20.4) (2026-11-02)
+
+
+### Bug Fixes
+
+* **auth:** stop Admins from trusting a device on the 2FA challenge ([#732](https://github.com/itsDaiton/nebula-chat/issues/732)) ([08e8472](https://github.com/itsDaiton/nebula-chat/commit/08e84721086e0d3f2caad790b161aec863496165))
+
+## [5.20.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.2...nebula-chat-v5.20.3) (2026-11-01)
+
+
+### Bug Fixes
+
+* **server:** qualify the Run cost column in the Message listing ([#726](https://github.com/itsDaiton/nebula-chat/issues/726)) ([0d7bba0](https://github.com/itsDaiton/nebula-chat/commit/0d7bba0938c40b6da314ac916d316d7a47dc7655))
+
 ## [5.20.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v5.20.1...nebula-chat-v5.20.2) (2026-10-31)
 
 

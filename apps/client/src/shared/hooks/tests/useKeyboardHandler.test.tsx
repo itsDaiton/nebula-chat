@@ -1,7 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useKeyboardHandler } from '@/shared/hooks/useKeyboardHandler';
-import { useMultiLineStore } from '@/shared/stores/useMultiLineStore';
 import { useSearchStore } from '@/shared/stores/useSearchStore';
 
 const pressKey = (key: string, init: Partial<KeyboardEventInit> = {}, target?: EventTarget) => {
@@ -13,7 +12,6 @@ const pressKey = (key: string, init: Partial<KeyboardEventInit> = {}, target?: E
 
 beforeEach(() => {
   vi.clearAllMocks();
-  useMultiLineStore.setState({ multiLineMap: {} });
   useSearchStore.setState({ isSearchOpen: false });
 });
 
@@ -37,6 +35,33 @@ describe('useKeyboardHandler', () => {
     pressKey('Enter');
 
     expect(handleMessageSend).toHaveBeenCalledTimes(1);
+  });
+
+  it('adds a newline on Shift+Enter instead of sending', () => {
+    const { handleMessageSend } = setup();
+
+    pressKey('Enter', { shiftKey: true });
+
+    expect(handleMessageSend).not.toHaveBeenCalled();
+  });
+
+  it('leaves Enter on a focused button to that button', () => {
+    const { handleMessageSend } = setup();
+    const button = document.createElement('button');
+    document.body.appendChild(button);
+
+    pressKey('Enter', {}, button);
+
+    expect(handleMessageSend).not.toHaveBeenCalled();
+    button.remove();
+  });
+
+  it('does not send while an IME composition is confirming', () => {
+    const { handleMessageSend } = setup();
+
+    pressKey('Enter', { isComposing: true });
+
+    expect(handleMessageSend).not.toHaveBeenCalled();
   });
 
   it('does not send an empty message', () => {

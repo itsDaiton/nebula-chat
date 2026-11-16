@@ -1,23 +1,23 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toast as sonner } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
 import { EmailVerificationPrompt } from '@/modules/auth/components/EmailVerificationPrompt';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
-import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { holdSession, mockSendVerificationEmail } from '@/test/auth';
 import { aMeteredAllowance } from '@/test/allowance';
 import { server } from '@/test/msw';
-import { renderWithChakra } from '@/test/render';
+import { renderWithProviders } from '@/test/render';
 
 const { emailVerification } = resources.auth;
 
 const renderPrompt = async (session: Parameters<typeof holdSession>[0]) => {
   await holdSession(session);
 
-  renderWithChakra(<EmailVerificationPrompt />);
+  renderWithProviders(<EmailVerificationPrompt />);
 };
 
 const resend = () =>
@@ -58,7 +58,7 @@ describe('EmailVerificationPrompt', () => {
   });
 
   it('resends the verification email, returning to the verify page', async () => {
-    const toast = vi.spyOn(toaster, 'create');
+    const toast = vi.spyOn(sonner, 'success');
     let body: unknown;
     server.use(
       mockSendVerificationEmail(async (request) => {
@@ -69,11 +69,7 @@ describe('EmailVerificationPrompt', () => {
 
     await resend();
 
-    await waitFor(() =>
-      expect(toast).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'success', title: emailVerification.sent }),
-      ),
-    );
+    await waitFor(() => expect(toast).toHaveBeenCalledWith(emailVerification.sent));
     expect(body).toEqual({
       email: 'ada@example.com',
       callbackURL: expect.stringMatching(/\/auth\/verify-email$/),
@@ -81,7 +77,7 @@ describe('EmailVerificationPrompt', () => {
   });
 
   it('reports a failed resend', async () => {
-    const toast = vi.spyOn(toaster, 'create');
+    const toast = vi.spyOn(sonner, 'error');
     server.use(mockApiError('post', API_ROUTE.authSendVerificationEmail, 500));
     await renderPrompt({ isAnonymous: false, emailVerified: false });
 
@@ -89,7 +85,8 @@ describe('EmailVerificationPrompt', () => {
 
     await waitFor(() =>
       expect(toast).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error', description: resources.auth.errors.unknown }),
+        resources.errors.title,
+        expect.objectContaining({ description: resources.auth.errors.unknown }),
       ),
     );
   });

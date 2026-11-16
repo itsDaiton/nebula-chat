@@ -1,18 +1,14 @@
+import { toast as sonner } from 'sonner';
 import { describe, expect, it, vi } from 'vitest';
 import { notifyError } from '@/libs/api/utils/notifyError';
-import { toaster } from '@/shared/components/ui/toaster';
 import { resources } from '@/resources';
 
 describe('notifyError', () => {
   it('toasts the error message', () => {
-    const toast = vi.spyOn(toaster, 'create');
+    const toast = vi.spyOn(sonner, 'error');
 
     notifyError(new Error('boom'));
 
-    expect(toast).toHaveBeenCalledWith({
-      type: 'error',
-      title: resources.errors.title,
-      description: 'boom',
-    });
+    expect(toast).toHaveBeenCalledWith(resources.errors.title, { description: 'boom' });
   });
 });

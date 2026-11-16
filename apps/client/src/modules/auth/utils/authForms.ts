@@ -23,7 +23,7 @@ import {
 } from '@/modules/auth/utils/authSchemas';
 import { resources } from '@/resources';
 
-const { fields, tabs, actions, signIn, signUp, forgotPassword, resetPassword } = resources.auth;
+const { fields, forms, actions, signIn, signUp, forgotPassword, resetPassword } = resources.auth;
 const { changePassword, account } = resources.settings;
 const { deleteAccount } = account;
 
@@ -53,7 +53,7 @@ const confirmPasswordField = (label: string) =>
   }) satisfies AuthFieldConfig<PasswordConfirmation>;
 
 export const SIGN_IN_FORM: AuthFormConfig<SignInCredentials> = {
-  label: tabs.signIn,
+  label: forms.signIn,
   title: signIn.title,
   description: signIn.description,
   submitLabel: actions.signIn,
@@ -63,7 +63,7 @@ export const SIGN_IN_FORM: AuthFormConfig<SignInCredentials> = {
 };
 
 export const SIGN_UP_FORM: AuthFormConfig<SignUpCredentials> = {
-  label: tabs.signUp,
+  label: forms.signUp,
   title: signUp.title,
   description: signUp.description,
   submitLabel: actions.signUp,
@@ -106,7 +106,6 @@ export const resetPasswordForm = (token: string): AuthFormConfig<ResetPasswordVa
     confirmPasswordField(fields.confirmNewPassword),
   ],
   request: ({ password }) => authClient.resetPassword({ newPassword: password, token }),
-  successMessage: resetPassword.done,
 });
 
 /** A Registered user's Password change; the new password keeps the name `password` the error map targets. */

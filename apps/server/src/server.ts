@@ -13,6 +13,9 @@ initTelemetry(SERVICE_NAME, { logger, diagLevel: env.OTEL_LOG_LEVEL });
 import { buildApp } from '@server/app';
 import { redis } from '@server/redis';
 
+// Bounds a stuck drain so the port is released for the next instance.
+const SHUTDOWN_GRACE_MS = 10_000;
+
 const start = async (): Promise<void> => {
   // Open Redis while the app builds, so the first request does not race the connect.
   // Not awaited: a Redis that is down must not hold up boot.
@@ -58,6 +61,7 @@ const start = async (): Promise<void> => {
   const shutdown = createShutdown({
     logger,
     failedEvent: 'server.shutdown.failed',
+    graceMs: SHUTDOWN_GRACE_MS,
     // `shutdownTelemetry` never rejects and gives up on a dead collector after a
     // fixed cap, so only `app.close()` can fail or hold the exit — as before.
     close: async () => {

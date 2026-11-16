@@ -75,29 +75,36 @@ const SEARCH_RESULTS = {
   ],
 };
 
-// Tavily answers every search; web_fetch resolves no hostname, so only a blocked URL gets an answer.
-const fakeToolbox = (searches: string[]) => ({
-  web_search: webSearchTool({
-    apiKey: 'tvly-test',
-    keyless: false,
-    fetch: (async (_url: string, init?: RequestInit) => {
-      searches.push(JSON.parse(String(init?.body)).query);
-      return Response.json(SEARCH_RESULTS);
-    }) as typeof fetch,
-    timeoutMs: 1_000,
-    maxResults: 5,
-  }),
-  web_fetch: webFetchTool({
-    lookup: async () => [],
-    request: async () => {
-      throw new Error('web_fetch reached the network');
-    },
-    maxBytes: 1_000,
-    timeoutMs: 1_000,
-    maxRedirects: 1,
-    maxChars: 1_000,
-  }),
-});
+// Tavily answers every search and extraction; web_fetch refuses a non-HTTP(S) URL before asking it.
+const fakeToolbox = (searches: string[]) => {
+  const tavily = (async (url: string, init?: RequestInit) => {
+    const body = JSON.parse(String(init?.body));
+    if (url.endsWith('/extract')) {
+      return Response.json({
+        results: [{ url: body.urls[0], raw_content: 'The page text.' }],
+        failed_results: [],
+      });
+    }
+    searches.push(body.query);
+    return Response.json(SEARCH_RESULTS);
+  }) as typeof fetch;
+  return {
+    web_search: webSearchTool({
+      apiKey: 'tvly-test',
+      keyless: false,
+      fetch: tavily,
+      timeoutMs: 1_000,
+      maxResults: 5,
+    }),
+    web_fetch: webFetchTool({
+      apiKey: 'tvly-test',
+      keyless: false,
+      fetch: tavily,
+      timeoutMs: 1_000,
+      maxChars: 1_000,
+    }),
+  };
+};
 
 const spans = captureSpans();
 afterAll(() => spans.stop());
@@ -858,9 +865,7 @@ describe('the Run job', () => {
     });
 
     it('gets a blocked fetch back as a typed error result, records the tool Step failed, and the Run still completes', async () => {
-      const models = researching(
-        callingOnce('web_fetch', { url: 'http://169.254.169.254/latest/meta-data/' }),
-      );
+      const models = researching(callingOnce('web_fetch', { url: 'file:///etc/passwd' }));
 
       await run(models.models);
 

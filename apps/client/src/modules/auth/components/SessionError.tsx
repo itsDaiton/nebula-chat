@@ -1,8 +1,7 @@
-import { Center, Text } from '@chakra-ui/react';
 import { resources } from '@/resources';
 
 export const SessionError = () => (
-  <Center h="100dvh" role="alert">
-    <Text>{resources.auth.sessionFailed}</Text>
-  </Center>
+  <div role="alert" className="grid h-dvh place-items-center text-sm text-foreground">
+    <p>{resources.auth.sessionFailed}</p>
+  </div>
 );

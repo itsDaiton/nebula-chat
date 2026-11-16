@@ -63,11 +63,18 @@ describe('nebula log-level set', () => {
     expect(captured).toEqual([
       {
         authorization: `Bearer ${TOKEN}`,
-        body: { component: 'redis', level: 'debug', ttlSeconds: 600, operator: 'dana' },
+        body: {
+          component: 'redis',
+          level: 'debug',
+          service: 'server',
+          ttlSeconds: 600,
+          operator: 'dana',
+        },
       },
     ]);
     expect(cli.stdout()).toBe(
       [
+        'Service:     server',
         'Target:      redis',
         'Level:       debug',
         `Expires at:  ${EXPIRES_AT} (in 10m)`,
@@ -84,7 +91,7 @@ describe('nebula log-level set', () => {
     const code = await cli.run('log-level', 'set', 'root', 'warn');
 
     expect(code).toBe(0);
-    expect(captured[0]?.body).toEqual({ level: 'warn', operator: 'dana' });
+    expect(captured[0]?.body).toEqual({ level: 'warn', service: 'server', operator: 'dana' });
     expect(cli.stdout()).toContain('Target:      root');
   });
 
@@ -94,6 +101,7 @@ describe('nebula log-level set', () => {
     await cli.run('log-level', 'set', 'http', 'trace', '--json');
 
     expect(JSON.parse(cli.stdout())).toEqual({
+      service: 'server',
       target: 'http',
       level: 'trace',
       receivers: 2,
@@ -143,6 +151,22 @@ describe('nebula log-level set', () => {
 
     expect(code).toBe(0);
     expect(cli.stderr()).toContain('No server instance received the change');
+  });
+
+  it('targets the worker with --service and says what a silent worker means', async () => {
+    const captured = acceptChange(SERVER_URL, 0);
+
+    const code = await cli.run('log-level', 'set', 'llm', 'debug', '--service', 'worker');
+
+    expect(code).toBe(0);
+    expect(captured[0]?.body).toMatchObject({ component: 'llm', service: 'worker' });
+    expect(cli.stdout()).toContain('Service:     worker');
+    expect(cli.stderr()).toContain('No worker instance received the change');
+    expect(cli.stderr()).toContain('asleep on the free plan');
+  });
+
+  it('exits 2 for an unknown --service', async () => {
+    expect(await cli.run('log-level', 'set', 'llm', 'debug', '--service', 'redis')).toBe(2);
   });
 
   it('never writes the operator token to disk', async () => {
@@ -377,6 +401,36 @@ describe('nebula log-level get', () => {
 
     expect(code).toBe(0);
     expect(cli.stdout()).toBe('No server instance is listening for log-level requests.\n');
+  });
+
+  it('asks for the worker with --service and explains a sleeping one', async () => {
+    const queries: (string | null)[] = [];
+    server.use(
+      http.get(`${SERVER_URL}${getGetLogLevelsUrl()}`, ({ request }) => {
+        queries.push(new URL(request.url).searchParams.get('service'));
+        return HttpResponse.json({ receivers: 0, reports: [] });
+      }),
+    );
+
+    await cli.run('log-level', 'get', '--service', 'worker');
+
+    expect(queries).toEqual(['worker']);
+    expect(cli.stdout()).toContain('No worker instance is listening');
+    expect(cli.stdout()).toContain('asleep on the free plan');
+  });
+
+  it('asks for the server unless told otherwise', async () => {
+    const queries: (string | null)[] = [];
+    server.use(
+      http.get(`${SERVER_URL}${getGetLogLevelsUrl()}`, ({ request }) => {
+        queries.push(new URL(request.url).searchParams.get('service'));
+        return HttpResponse.json({ receivers: 0, reports: [] });
+      }),
+    );
+
+    await cli.run('log-level', 'get');
+
+    expect(queries).toEqual(['server']);
   });
 
   it('says so when no instance answered in time', async () => {

@@ -1,14 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
+import { IDLE_REPLY } from '@/modules/chat/utils/replyState';
 
 const store = () => useChatStreamStore.getState();
 
 beforeEach(() => {
   useChatStreamStore.setState({
     history: [],
-    isStreaming: false,
-    isPostStreamNavigation: false,
-    error: null,
+    reply: IDLE_REPLY,
     usage: null,
     sessionId: undefined,
   });
@@ -27,22 +26,6 @@ describe('useChatStreamStore', () => {
     store().setHistory((previous) => previous.map((m) => ({ ...m, content: `${m.content}llo` })));
 
     expect(store().history[0]?.content).toBe('Hello');
-  });
-
-  it('tracks the streaming and post-stream flags independently', () => {
-    store().setIsStreaming(true);
-    store().setIsPostStreamNavigation(true);
-
-    expect(store().isStreaming).toBe(true);
-    expect(store().isPostStreamNavigation).toBe(true);
-  });
-
-  it('records and clears an error', () => {
-    store().setError('boom');
-    expect(store().error).toBe('boom');
-
-    store().setError(null);
-    expect(store().error).toBeNull();
   });
 
   it('records usage', () => {

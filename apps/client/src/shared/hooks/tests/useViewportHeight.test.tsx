@@ -1,12 +1,10 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useViewportHeight } from '@/shared/hooks/useViewportHeight';
-import { useMultiLineStore } from '@/shared/stores/useMultiLineStore';
 import { useSearchStore } from '@/shared/stores/useSearchStore';
 
 beforeEach(() => {
   vi.clearAllMocks();
-  useMultiLineStore.setState({ multiLineMap: {} });
   useSearchStore.setState({ isSearchOpen: false });
 });
 

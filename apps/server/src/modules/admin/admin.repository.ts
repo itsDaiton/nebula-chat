@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, gt, isNotNull, isNull, lt, ne, or, sql } from 'drizzle-orm';
-import { messages, sessions, users } from '@nebula-chat/db';
+import { sessions, users } from '@nebula-chat/db';
 import { auth } from '@server/auth';
 import { db } from '@server/db';
 import type { AdminRole, UserFilters } from '@server/modules/admin/admin.types';
@@ -31,12 +31,15 @@ const userSummaryColumns = {
   updatedAt: users.updatedAt,
 };
 
-// A correlated subquery, so only the rows of the page are counted unless the list sorts by it.
+// Drizzle drops qualifiers in a single-table select, so columns are qualified by hand (a bare `id` is ambiguous).
+// Correlated, so only the page's rows are counted unless the list sorts by it.
 const messagesSent = sql<number>`(
-  select count(*)::int from ${messages}
-  inner join ${sessions} on ${sessions.id} = ${messages.sessionId}
-  where ${sessions.userId} = ${users.id} and ${messages.role} = 'user'
+  select count(*)::int from "messages"
+  inner join "sessions" on "sessions"."id" = "messages"."session_id"
+  where "sessions"."user_id" = "users"."id" and "messages"."role" = 'user'
 )`;
+
+const sessionsCount = sql<number>`(select count(*)::int from "sessions" where "sessions"."user_id" = "users"."id")`;
 
 const sortKeys = {
   createdAt: users.createdAt,
@@ -50,7 +53,7 @@ const adminSessionColumns = {
   title: sessions.title,
   model: sessions.model,
   archived: sql<boolean>`${sessions.archivedAt} is not null`,
-  messageCount: sql<number>`(select count(*)::int from ${messages} where ${messages.sessionId} = ${sessions.id})`,
+  messageCount: sql<number>`(select count(*)::int from "messages" where "messages"."session_id" = "sessions"."id")`,
   createdAt: sessions.createdAt,
   updatedAt: sessions.updatedAt,
 };
@@ -126,12 +129,14 @@ export const adminRepository = {
 
     const direction = filters.order === 'asc' ? asc : desc;
     const rows = await db
-      .select({ ...userSummaryColumns, messagesSent })
+      .select({ ...userSummaryColumns, messagesSent, sessionsCount })
       .from(users)
       .where(
         and(
           // Guests far outnumber Registered users, so they are listed only when asked for.
-          filters.status ? statusFilters[filters.status]() : sql`not ${isGuest}`,
+          filters.status
+            ? or(...filters.status.map((status) => statusFilters[status]()))
+            : sql`not ${isGuest}`,
           filters.search ? searchFilter(filters.search) : undefined,
           cursorFilter,
         ),
@@ -150,8 +155,8 @@ export const adminRepository = {
       .select({
         ...userSummaryColumns,
         messagesSent,
+        sessionsCount,
         banReason: users.banReason,
-        sessionsCount: db.$count(sessions, eq(sessions.userId, users.id)),
       })
       .from(users)
       .where(eq(users.id, id));

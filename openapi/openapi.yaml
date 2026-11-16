@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nebula Chat API
-  version: 4.12.0
+  version: 4.18.0
   description: REST API for Nebula Chat
   contact:
     name: Nebula Chat
@@ -155,11 +155,26 @@ components:
         archived:
           type: boolean
           description: Whether the owner has archived this Session
+        archivedAt:
+          anyOf:
+            - type: string
+              format: date-time
+              pattern: >-
+                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: 'null'
+          description: When the owner archived it; null while active
+        messageCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: How many Messages the Session holds
       required:
         - id
         - title
         - createdAt
         - archived
+        - archivedAt
+        - messageCount
       additionalProperties: false
     SessionSearchResult:
       type: object
@@ -179,6 +194,19 @@ components:
         archived:
           type: boolean
           description: Whether the owner has archived this Session
+        archivedAt:
+          anyOf:
+            - type: string
+              format: date-time
+              pattern: >-
+                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: 'null'
+          description: When the owner archived it; null while active
+        messageCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: How many Messages the Session holds
         snippet:
           description: >-
             Text around the first match in one of the Session’s Messages,
@@ -189,6 +217,8 @@ components:
         - title
         - createdAt
         - archived
+        - archivedAt
+        - messageCount
       additionalProperties: false
     SessionDetail:
       type: object
@@ -208,6 +238,19 @@ components:
         archived:
           type: boolean
           description: Whether the owner has archived this Session
+        archivedAt:
+          anyOf:
+            - type: string
+              format: date-time
+              pattern: >-
+                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: 'null'
+          description: When the owner archived it; null while active
+        messageCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: How many Messages the Session holds
         activeStreamId:
           anyOf:
             - type: string
@@ -255,6 +298,8 @@ components:
         - title
         - createdAt
         - archived
+        - archivedAt
+        - messageCount
         - activeStreamId
         - waitingRun
       additionalProperties: false
@@ -367,6 +412,19 @@ components:
         hash:
           type: string
           description: SHA-256 of the catalog content (Models and defaults)
+        defaultModels:
+          type: object
+          propertyNames:
+            type: string
+            enum:
+              - openai
+              - anthropic
+          additionalProperties:
+            type: string
+          required:
+            - openai
+            - anthropic
+          description: The Model each provider falls back to when none is requested
         models:
           maxItems: 100
           type: array
@@ -375,6 +433,7 @@ components:
       required:
         - version
         - hash
+        - defaultModels
         - models
       additionalProperties: false
     Model:
@@ -445,6 +504,175 @@ components:
         - cachedInput
         - output
       additionalProperties: false
+    Run:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        sessionId:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        status:
+          type: string
+          enum:
+            - queued
+            - running
+            - waiting
+            - completed
+            - partial
+            - failed
+            - cancelled
+        brief:
+          anyOf:
+            - type: object
+              propertyNames:
+                type: string
+              additionalProperties: {}
+            - type: 'null'
+          description: >-
+            The Intake Agents’ outputs keyed by Agent, null for one that failed,
+            plus `missing` naming those; null until Intake ends
+        tokensUsed:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        tokenBudget:
+          anyOf:
+            - type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            - type: 'null'
+          description: The Run budget; null until the Run starts
+        createdAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        startedAt:
+          anyOf:
+            - type: string
+              format: date-time
+              pattern: >-
+                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: 'null'
+        finishedAt:
+          anyOf:
+            - type: string
+              format: date-time
+              pattern: >-
+                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: 'null'
+        steps:
+          maxItems: 1000
+          type: array
+          items:
+            $ref: '#/components/schemas/Step'
+          description: In execution order
+      required:
+        - id
+        - sessionId
+        - status
+        - brief
+        - tokensUsed
+        - tokenBudget
+        - createdAt
+        - startedAt
+        - finishedAt
+        - steps
+      additionalProperties: false
+    Step:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        turn:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: The Orchestrator turn the Step belongs to; 0 outside the loop
+        phase:
+          type: string
+          enum:
+            - intake
+            - orchestrator
+            - delegate
+            - tool
+            - output
+        name:
+          type: string
+          description: The Agent, or the tool
+        parentStepId:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: >-
+                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: 'null'
+          description: >-
+            The turn’s Orchestrator Step for a delegate; the delegate for a tool
+            call
+        attempt:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: 1 the first time; higher when the Step re-ran on resume
+        input:
+          description: Everything the Agent or tool was sent
+        output:
+          description: What it returned; null until the Step completes
+        tokens:
+          anyOf:
+            - type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            - type: 'null'
+          description: Tokens the Step used; null for a tool call
+        status:
+          type: string
+          enum:
+            - running
+            - completed
+            - failed
+        error:
+          anyOf:
+            - $ref: '#/components/schemas/ErrorEnvelope'
+            - type: 'null'
+          description: Why a failed Step failed
+        startedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        finishedAt:
+          anyOf:
+            - type: string
+              format: date-time
+              pattern: >-
+                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: 'null'
+      required:
+        - id
+        - turn
+        - phase
+        - name
+        - parentStepId
+        - attempt
+        - input
+        - output
+        - tokens
+        - status
+        - error
+        - startedAt
+        - finishedAt
+      additionalProperties: false
     ProfileImageSettings:
       type: object
       properties:
@@ -474,8 +702,8 @@ components:
           minimum: -9007199254740991
           maximum: 9007199254740991
           description: >-
-            How many server instances received the request; more than reports
-            means some did not answer in time
+            How many instances of the service received the request; more than
+            reports means some did not answer in time
         reports:
           maxItems: 100
           type: array
@@ -491,7 +719,7 @@ components:
       properties:
         instance:
           type: string
-          description: The server instance, as its hostname and process id
+          description: The instance, as its hostname and process id
         levels:
           maxItems: 7
           type: array
@@ -552,7 +780,7 @@ components:
           type: integer
           minimum: -9007199254740991
           maximum: 9007199254740991
-          description: How many server instances received the change
+          description: How many instances of the service received the change
         expiresAt:
           description: When the change reverts
           type: string
@@ -646,6 +874,11 @@ components:
           minimum: -9007199254740991
           maximum: 9007199254740991
           description: Messages the User sent, across their Sessions
+        sessionsCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: Sessions the User owns, archived ones included
         createdAt:
           type: string
           format: date-time
@@ -663,6 +896,7 @@ components:
         - status
         - twoFactorEnabled
         - messagesSent
+        - sessionsCount
         - createdAt
         - updatedAt
       additionalProperties: false
@@ -695,6 +929,11 @@ components:
           minimum: -9007199254740991
           maximum: 9007199254740991
           description: Messages the User sent, across their Sessions
+        sessionsCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: Sessions the User owns, archived ones included
         createdAt:
           type: string
           format: date-time
@@ -737,10 +976,6 @@ components:
           description: >-
             When the User asked to delete the account; it is Purged 30 days
             later. `null` unless pending
-        sessionsCount:
-          type: integer
-          minimum: -9007199254740991
-          maximum: 9007199254740991
       required:
         - id
         - email
@@ -748,11 +983,11 @@ components:
         - status
         - twoFactorEnabled
         - messagesSent
+        - sessionsCount
         - createdAt
         - updatedAt
         - ban
         - pendingDeletionAt
-        - sessionsCount
       additionalProperties: false
     AdminSessionPage:
       type: object
@@ -1385,6 +1620,67 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
   /api/sessions/{sessionId}:
+    patch:
+      operationId: renameSession
+      summary: Rename session
+      tags:
+        - Sessions
+      description: >-
+        Rename one of the caller’s own sessions. The title is trimmed and must
+        not be empty.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+              required:
+                - title
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: path
+          name: sessionId
+          required: true
+      responses:
+        '200':
+          description: Session renamed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          description: Invalid session ID or title
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: No auth session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Session not found or not owned by the caller
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
     get:
       operationId: getSession
       summary: Get session by ID
@@ -1616,6 +1912,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ModelCatalog'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/runs/{runId}:
+    get:
+      operationId: getRun
+      summary: Get Run by ID
+      tags:
+        - Runs
+      description: >-
+        Retrieve one of the caller’s own Runs with its Brief and every Step, in
+        execution order, each with its full input and output. An Admin whose
+        auth session passed two-factor authentication may read any Run; that
+        read is recorded in the Audit log, and fails if the entry cannot be
+        written.
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            pattern: >-
+              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: path
+          name: runId
+          required: true
+      responses:
+        '200':
+          description: The Run and its Steps
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        '400':
+          description: Invalid Run ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: No auth session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Run not found or not owned by the caller
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:
@@ -1889,19 +2237,37 @@ paths:
         - Operator
       description: >-
         Report the root log level and every component's, with the expiry and
-        operator of any runtime change, from every running server instance. Each
-        instance answers for itself; one that does not answer within 2 seconds
-        is left out, so `receivers` exceeds the number of reports. Requires the
-        operator token, not a User session.
+        operator of any runtime change, from every running instance of the
+        service (the server unless `service` says the worker). Each instance
+        answers for itself; one that does not answer within 2 seconds is left
+        out, so `receivers` exceeds the number of reports. Requires the operator
+        token, not a User session.
+      parameters:
+        - schema:
+            default: server
+            description: 'Which service to read: the server (default) or the worker'
+            type: string
+            enum:
+              - server
+              - worker
+          in: query
+          name: service
+          description: 'Which service to read: the server (default) or the worker'
       security:
         - operatorToken: []
       responses:
         '200':
-          description: The levels each server instance applies
+          description: The levels each instance applies
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/LogLevelReports'
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
         '403':
           description: Missing or wrong operator token
           content:
@@ -1926,9 +2292,10 @@ paths:
       tags:
         - Operator
       description: >-
-        Change the root log level, or one component's, on every running server
-        instance. It reverts to the boot-time level after `ttlSeconds`. Requires
-        the operator token, not a User session.
+        Change the root log level, or one component's, on every running instance
+        of the service (the server unless `service` says the worker). It reverts
+        to the boot-time level after `ttlSeconds`. Requires the operator token,
+        not a User session.
       requestBody:
         required: true
         content:
@@ -1957,6 +2324,13 @@ paths:
                     - info
                     - debug
                     - trace
+                service:
+                  default: server
+                  description: 'Which service to change: the server (default) or the worker'
+                  type: string
+                  enum:
+                    - server
+                    - worker
                 ttlSeconds:
                   default: 900
                   description: How long the change holds before the boot-time level returns
@@ -1975,7 +2349,7 @@ paths:
         - operatorToken: []
       responses:
         '202':
-          description: Change sent to every server instance
+          description: Change sent to every instance of the service
           content:
             application/json:
               schema:
@@ -2161,10 +2535,10 @@ paths:
       tags:
         - Admin
       description: >-
-        List Users, newest first by default, filtered by status and a name or
-        email search, a page at a time. Guests are left out unless
-        `status=guest`. Requires an Admin whose auth session passed two-factor
-        authentication.
+        List Users, newest first by default, filtered by one or more statuses
+        and a name or email search, a page at a time. Guests are left out unless
+        `status` names `guest`. Requires an Admin whose auth session passed
+        two-factor authentication.
       parameters:
         - schema:
             description: Case-insensitive text to find in the name or email
@@ -2176,21 +2550,25 @@ paths:
           description: Case-insensitive text to find in the name or email
         - schema:
             description: >-
-              Only Users in this status; without it every User but Guests is
-              listed
-            type: string
-            enum:
-              - registered
-              - unverified
-              - admin
-              - banned
-              - pendingDeletion
-              - guest
+              Only Users in one of these statuses, as a repeated key; without it
+              every User but Guests is listed
+            minItems: 1
+            maxItems: 6
+            type: array
+            items:
+              type: string
+              enum:
+                - registered
+                - unverified
+                - admin
+                - banned
+                - pendingDeletion
+                - guest
           in: query
           name: status
           description: >-
-            Only Users in this status; without it every User but Guests is
-            listed
+            Only Users in one of these statuses, as a repeated key; without it
+            every User but Guests is listed
         - schema:
             default: createdAt
             description: >-

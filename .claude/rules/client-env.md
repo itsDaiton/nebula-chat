@@ -12,4 +12,5 @@ paths:
 | Variable               | Purpose                                                                    |
 | ---------------------- | -------------------------------------------------------------------------- |
 | `VITE_API_URL`         | Base URL of the backend API (e.g. `http://localhost:3000`)                 |
+| `VITE_WORKER_URL`      | The worker's public URL, pinged to wake it; unset in dev                   |
 | `VITE_ENABLE_DEVTOOLS` | `true` shows the TanStack Router devtools under `pnpm dev`; off when unset |

@@ -1,5 +1,30 @@
 # Changelog
 
+## [2.0.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v2.0.0...nebula-chat-worker-v2.0.1) (2026-11-16)
+
+
+### Bug Fixes
+
+* **client:** repair broken Markdown from older models ([#814](https://github.com/itsDaiton/nebula-chat/issues/814)) ([fb439f5](https://github.com/itsDaiton/nebula-chat/commit/fb439f52e2bb36fb68d77c3edf18aede97258bc3))
+
+## [2.0.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.12.1...nebula-chat-worker-v2.0.0) (2026-11-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* **worker:** NEB-349 release the nebula-chat 2.0 worker as a major ([#794](https://github.com/itsDaiton/nebula-chat/issues/794))
+
+### Features
+
+* **worker:** NEB-349 release the nebula-chat 2.0 worker as a major ([#794](https://github.com/itsDaiton/nebula-chat/issues/794)) ([ffd647b](https://github.com/itsDaiton/nebula-chat/commit/ffd647bb6d7fdaec8b605b00d294380d228083f7))
+
+## [1.12.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.12.0...nebula-chat-worker-v1.12.1) (2026-11-12)
+
+
+### Bug Fixes
+
+* **worker:** NEB-710 web_fetch reads pages through Tavily Extract ([#787](https://github.com/itsDaiton/nebula-chat/issues/787)) ([2fa89b8](https://github.com/itsDaiton/nebula-chat/commit/2fa89b8112ce896b766eb19431e4bda0d5cc09bd))
+
 ## [1.12.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v1.11.0...nebula-chat-worker-v1.12.0) (2026-10-31)
 
 

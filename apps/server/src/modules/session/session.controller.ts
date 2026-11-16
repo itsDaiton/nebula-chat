@@ -1,6 +1,10 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { sessionService } from '@server/modules/session/session.service';
-import type { CreateSessionDTO, GetSessionParams } from '@server/modules/session/session.types';
+import type {
+  CreateSessionDTO,
+  GetSessionParams,
+  RenameSessionDTO,
+} from '@server/modules/session/session.types';
 import { getSessionData } from '@server/plugins/authGate.plugin';
 
 type GetSessionsQuery = {
@@ -46,6 +50,18 @@ export const sessionController = {
   async restore(req: FastifyRequest<{ Params: GetSessionParams }>, reply: FastifyReply) {
     const { user } = getSessionData(req);
     const session = await sessionService.restoreSession(req.params.sessionId, user.id);
+    return reply.status(200).send(session);
+  },
+  async rename(
+    req: FastifyRequest<{ Params: GetSessionParams; Body: RenameSessionDTO }>,
+    reply: FastifyReply,
+  ) {
+    const { user } = getSessionData(req);
+    const session = await sessionService.renameSession(
+      req.params.sessionId,
+      user.id,
+      req.body.title,
+    );
     return reply.status(200).send(session);
   },
 };

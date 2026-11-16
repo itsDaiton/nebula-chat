@@ -77,19 +77,41 @@ export const requireRegistered: preHandlerAsyncHookHandler = async (req, reply) 
   }
 };
 
+// Why the caller is not an acting Admin; null when they are one.
+const adminRefusal = ({
+  user,
+  session,
+}: SessionData): ForbiddenError | TwoFactorRequiredError | null => {
+  if (user.isAnonymous || !user.emailVerified || user.banned || user.role !== 'admin') {
+    return new ForbiddenError('This action requires an Admin.');
+  }
+  if (!user.twoFactorEnabled || !session.twoFactorVerified) {
+    return new TwoFactorRequiredError();
+  }
+  return null;
+};
+
 /**
  * preHandler for `/api/admin/*`: a verified, unbanned Admin whose auth session passed a second factor (ADR-0027 §2).
  * better-auth 1.7 marks no auth session, so `@nebula-chat/auth` sets `twoFactorVerified` on each verified code; a trusted-device or social sign-in never does.
  */
 export const requireAdmin: preHandlerAsyncHookHandler = async (req, reply) => {
   // Past the cookie cache, so a revoked role, a ban or a fresh verification applies at once.
-  const { user, session } = await resolveSession(req, reply, { fresh: true });
-  if (user.isAnonymous || !user.emailVerified || user.banned || user.role !== 'admin') {
-    throw new ForbiddenError('This action requires an Admin.');
+  const refusal = adminRefusal(await resolveSession(req, reply, { fresh: true }));
+  if (refusal) {
+    throw refusal;
   }
-  if (!user.twoFactorEnabled || !session.twoFactorVerified) {
-    throw new TwoFactorRequiredError();
-  }
+};
+
+/**
+ * Whether the caller would pass `requireAdmin`, read past the cookie cache: for a route an Admin may use more widely than a User.
+ */
+export const isActingAdmin = async (req: FastifyRequest): Promise<boolean> => {
+  const sessionData = await auth.api.getSession({
+    headers: fromNodeHeaders(req.headers),
+    query: { disableCookieCache: true },
+  });
+  return sessionData !== null && adminRefusal(sessionData as unknown as SessionData) === null;
 };
 
 /**

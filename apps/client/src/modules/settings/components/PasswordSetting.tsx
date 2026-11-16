@@ -1,11 +1,19 @@
-import { Box, Button } from '@chakra-ui/react';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { AuthForm } from '@/modules/auth/components/AuthForm';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import { CHANGE_PASSWORD_FORM } from '@/modules/auth/utils/authForms';
+import {
+  ACCOUNTS_KEY,
+  useHasPassword,
+  usePasswordChangedAt,
+} from '@/modules/settings/hooks/useHasPassword';
 import { SettingsRow } from '@/modules/settings/components/SettingsRow';
 import { usePasswordChangeStore } from '@/modules/settings/stores/usePasswordChangeStore';
 import { resources } from '@/resources';
-import { toaster } from '@/shared/components/ui/toaster';
+import { Button } from '@/shared/components/ui/button';
+import { useOnUnmount } from '@/shared/hooks/useOnUnmount';
+import { formatLongRelativeTime } from '@/shared/utils/relativeTime';
 
 const { changePassword } = resources.settings;
 
@@ -13,6 +21,11 @@ const { changePassword } = resources.settings;
 export const PasswordSetting = () => {
   const { isPasswordFormOpen, togglePasswordForm, closePasswordForm } = usePasswordChangeStore();
   const { hidePassword } = usePasswordVisibilityStore();
+  const queryClient = useQueryClient();
+  const { data: hasPassword } = useHasPassword();
+  const { data: changedAt } = usePasswordChangedAt();
+  // The form folds away again whenever Settings leaves the Security section.
+  const foldOnLeave = useOnUnmount(closePasswordForm);
 
   const toggle = () => {
     hidePassword();
@@ -21,22 +34,31 @@ export const PasswordSetting = () => {
 
   const onChanged = () => {
     closePasswordForm();
-    toaster.create({ type: 'success', title: changePassword.done });
+    void queryClient.invalidateQueries({ queryKey: ACCOUNTS_KEY });
+    toast.success(changePassword.done);
   };
 
+  // Unknown (still loading, or the lookup failed) keeps the row; only a known social-only user loses it.
+  if (hasPassword === false) return null;
+
+  const description = changedAt
+    ? changePassword.changedAgo(formatLongRelativeTime(changedAt, Date.now()))
+    : changePassword.description;
+
   return (
-    <>
-      <SettingsRow label={changePassword.title} description={changePassword.description}>
-        {/* Fixed width, so swapping its label doesn't reflow the description beside it. */}
-        <Button variant="outline" minW="36" onClick={toggle} aria-expanded={isPasswordFormOpen}>
+    <div ref={foldOnLeave} className="contents">
+      <SettingsRow label={changePassword.title} description={description}>
+        <Button variant="outline" onClick={toggle} aria-expanded={isPasswordFormOpen}>
           {isPasswordFormOpen ? changePassword.cancel : changePassword.open}
         </Button>
       </SettingsRow>
       {isPasswordFormOpen && (
-        <Box maxW="md" py={4}>
-          <AuthForm config={CHANGE_PASSWORD_FORM} header="none" onSuccess={onChanged} />
-        </Box>
+        <div className="px-4 py-4">
+          <div className="max-w-sm">
+            <AuthForm config={CHANGE_PASSWORD_FORM} header="none" compact onSuccess={onChanged} />
+          </div>
+        </div>
       )}
-    </>
+    </div>
   );
 };

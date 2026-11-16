@@ -1,20 +1,25 @@
-import { Button, Heading, Stack, Text } from '@chakra-ui/react';
+import { Loader2Icon } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, type FieldValues, type Path } from 'react-hook-form';
 import { AuthFormAlert } from '@/modules/auth/components/AuthFormAlert';
 import { AuthFormField } from '@/modules/auth/components/AuthFormField';
+import { AuthHeading } from '@/modules/auth/components/AuthHeading';
 import { AuthStatus } from '@/modules/auth/components/AuthStatus';
 import { useAuthMutation } from '@/modules/auth/hooks/useAuthMutation';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import type { AuthFormProps } from '@/modules/auth/types/types';
 import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
+import { Button } from '@/shared/components/ui/button';
+import { cn } from '@/shared/utils/cn';
 
 /** One auth form — sign-in, sign-up, forgot, reset or change password — as its config describes it. */
 export const AuthForm = <Values extends FieldValues>({
   config,
   header = 'full',
+  compact = false,
   onSuccess,
   onError,
+  labelActions,
 }: AuthFormProps<Values>) => {
   const {
     label,
@@ -69,19 +74,9 @@ export const AuthForm = <Values extends FieldValues>({
 
   return (
     <form onSubmit={(event) => void handleSubmit(onSubmit)(event)} aria-label={label} noValidate>
-      <Stack gap={4}>
-        {header !== 'none' && (
-          <Stack gap={1} mb={2}>
-            {header === 'full' && (
-              <Heading as="h1" size="xl">
-                {title}
-              </Heading>
-            )}
-            <Text color="fg.muted" fontSize="sm">
-              {description}
-            </Text>
-          </Stack>
-        )}
+      <div className="flex flex-col gap-4">
+        {header === 'full' && <AuthHeading title={title} description={description} />}
+        {header === 'description' && <p className="text-sm text-muted-foreground">{description}</p>}
         <AuthFormAlert message={errors.root?.server?.message} />
         {fields.map((field) => (
           <AuthFormField
@@ -93,17 +88,21 @@ export const AuthForm = <Values extends FieldValues>({
               onChange: () => revalidateComparedWith(field.name),
             })}
             error={errors[field.name]?.message?.toString()}
+            labelAction={labelActions?.[field.name]}
           />
         ))}
         <Button
           type="submit"
-          loading={isPending}
-          mt={2}
-          colorPalette={destructive ? 'red' : undefined}
+          size={compact ? 'default' : 'lg'}
+          variant={destructive ? 'destructive' : 'default'}
+          disabled={isPending}
+          aria-busy={isPending}
+          className={cn('mt-2', compact ? 'self-start' : 'w-full')}
         >
+          {isPending && <Loader2Icon className="animate-spin" />}
           {submitLabel}
         </Button>
-      </Stack>
+      </div>
     </form>
   );
 };

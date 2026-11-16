@@ -6,12 +6,23 @@ import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { API_ROUTE } from '@/test/api';
 import { server } from '@/test/msw';
 
-/** A better-auth `get-session` body; a Guest unless `isAnonymous` is false, unverified unless `emailVerified`. */
+/** A better-auth `get-session` body: a Guest, unverified, with no plugin fields unless overridden. */
 export const aSession = ({
   isAnonymous = true,
   emailVerified = false,
   image = null,
-}: { isAnonymous?: boolean; emailVerified?: boolean; image?: string | null } = {}) => ({
+  role,
+  twoFactorEnabled,
+  twoFactorVerified,
+}: {
+  isAnonymous?: boolean;
+  emailVerified?: boolean;
+  image?: string | null;
+  role?: string;
+  twoFactorEnabled?: boolean;
+  /** Whether this auth session passed a second factor; the admin gate reads it. */
+  twoFactorVerified?: boolean;
+} = {}) => ({
   session: {
     id: 'session-1',
     userId: 'user-1',
@@ -19,6 +30,7 @@ export const aSession = ({
     expiresAt: '2099-01-01T00:00:00.000Z',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
+    ...(twoFactorVerified !== undefined && { twoFactorVerified }),
   },
   user: {
     id: 'user-1',
@@ -27,6 +39,8 @@ export const aSession = ({
     emailVerified,
     image,
     isAnonymous,
+    ...(role !== undefined && { role }),
+    ...(twoFactorEnabled !== undefined && { twoFactorEnabled }),
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
@@ -68,6 +82,23 @@ export const mockEmailSignIn = mockAuthPost(API_ROUTE.authSignInEmail, {
   user: aSession({ isAnonymous: false }).user,
 });
 
+/** Answers `sign-in/email` the way the two-factor plugin does for a User with 2FA: no session, a code to ask for. */
+export const mockTwoFactorSignIn = ({ canTrustDevice = true } = {}): HttpHandler =>
+  mockAuthPost(API_ROUTE.authSignInEmail, {
+    twoFactorRedirect: true,
+    twoFactorMethods: ['totp'],
+    canTrustDevice,
+  })();
+
+/** Signs a challenged User in with a backup code on `two-factor/verify-backup-code`. */
+export const mockBackupCodeVerify = mockAuthPost(API_ROUTE.authTwoFactorVerifyBackupCode, {
+  token: 'token-1',
+  user: aSession({ isAnonymous: false, twoFactorEnabled: true }).user,
+});
+
+/** Trades a Pending-deletion restore token for a session on `restore-account`. */
+export const mockRestoreAccount = mockAuthPost(API_ROUTE.authRestoreAccount, { success: true });
+
 /** Registers a user on `sign-up/email`, calling `onRequest` first. */
 export const mockEmailSignUp = mockAuthPost(API_ROUTE.authSignUpEmail, {
   token: 'token-1',
@@ -83,6 +114,32 @@ export const mockSocialSignIn = (onRequest: OnRequest = () => {}): HttpHandler =
     await onRequest(request);
     return HttpResponse.json({ url: providerConsentUrl(), redirect: true });
   });
+
+/** A device code as the Admin reviewing it reads it on `device`: pending, from the CLI, ten minutes left. */
+export const aDeviceRequest = (overrides: Record<string, unknown> = {}) => ({
+  user_code: 'WDJB-MJHT',
+  status: 'pending',
+  client_id: 'nebula-cli',
+  scope: null,
+  expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
+  ...overrides,
+});
+
+/** Answers the `device` read with `body`, calling `onRequest` first. */
+export const mockDeviceRequest = (
+  body: JsonBodyType = aDeviceRequest(),
+  onRequest: OnRequest = () => {},
+): HttpHandler =>
+  http.get(API_ROUTE.authDevice, async ({ request }) => {
+    await onRequest(request);
+    return HttpResponse.json(body);
+  });
+
+/** Approves a device code on `device/approve`, calling `onRequest` first. */
+export const mockDeviceApprove = mockAuthPost(API_ROUTE.authDeviceApprove, { success: true });
+
+/** Denies a device code on `device/deny`, calling `onRequest` first. */
+export const mockDeviceDeny = mockAuthPost(API_ROUTE.authDeviceDeny, { success: true });
 
 /** Ends the session on `sign-out`, calling `onRequest` first. */
 export const mockSignOut = mockAuthPost(API_ROUTE.authSignOut, { success: true });
@@ -113,8 +170,36 @@ export const mockDeleteUser = mockAuthPost(API_ROUTE.authDeleteUser, {
   message: 'User deleted',
 });
 
+export const TOTP_SECRET = 'JBSWY3DPEHPK3PXP';
+export const BACKUP_CODES = ['aaaa-1111', 'bbbb-2222'];
+
+/** Starts two-factor setup on `two-factor/enable`: the TOTP URI to scan and the backup codes. */
+export const mockTwoFactorEnable = mockAuthPost(API_ROUTE.authTwoFactorEnable, {
+  method: 'totp',
+  totpURI: `otpauth://totp/Nebula%20Chat:ada%40example.com?secret=${TOTP_SECRET}&issuer=Nebula%20Chat`,
+  backupCodes: BACKUP_CODES,
+});
+
+/** Confirms a code on `two-factor/verify-totp`. */
+export const mockTwoFactorVerify = mockAuthPost(API_ROUTE.authTwoFactorVerifyTotp, {
+  token: 'token-1',
+  user: aSession({ isAnonymous: false, twoFactorEnabled: true }).user,
+});
+
+/** Turns two-factor off on `two-factor/disable`. */
+export const mockTwoFactorDisable = mockAuthPost(API_ROUTE.authTwoFactorDisable, { status: true });
+
+/** Replaces the backup codes on `two-factor/generate-backup-codes`. */
+export const mockBackupCodes = mockAuthPost(API_ROUTE.authTwoFactorBackupCodes, {
+  status: true,
+  backupCodes: ['cccc-3333', 'dddd-4444'],
+});
+
 /** Lists the user's linked accounts by provider (`credential` is the email/password one). */
-export const mockListAccounts = (providers: string[]): HttpHandler =>
+export const mockListAccounts = (
+  providers: string[],
+  updatedAt: () => string = () => '2026-01-01T00:00:00.000Z',
+): HttpHandler =>
   http.get(API_ROUTE.authListAccounts, () =>
     HttpResponse.json(
       providers.map((providerId, index) => ({
@@ -124,7 +209,7 @@ export const mockListAccounts = (providers: string[]): HttpHandler =>
         userId: 'user-1',
         scopes: [],
         createdAt: '2026-01-01T00:00:00.000Z',
-        updatedAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: updatedAt(),
       })),
     ),
   );

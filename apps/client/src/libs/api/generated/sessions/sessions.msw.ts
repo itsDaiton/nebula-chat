@@ -18,6 +18,11 @@ export const getCreateSessionResponseMock = (
   title: faker.string.alpha({ length: { min: 10, max: 20 } }),
   createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   archived: faker.datatype.boolean(),
+  archivedAt: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + 'Z',
+    null,
+  ]),
+  messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
   ...overrideResponse,
 });
 
@@ -30,6 +35,11 @@ export const getListSessionsResponseMock = (
       title: faker.string.alpha({ length: { min: 10, max: 20 } }),
       createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
       archived: faker.datatype.boolean(),
+      archivedAt: faker.helpers.arrayElement([
+        faker.date.past().toISOString().slice(0, 19) + 'Z',
+        null,
+      ]),
+      messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
     }),
   ),
   nextCursor: faker.helpers.arrayElement([faker.string.uuid(), null]),
@@ -43,6 +53,11 @@ export const getSearchSessionsResponseMock = (): SessionSearchResult[] =>
     title: faker.string.alpha({ length: { min: 10, max: 20 } }),
     createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
     archived: faker.datatype.boolean(),
+    archivedAt: faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 19) + 'Z',
+      null,
+    ]),
+    messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
     snippet: faker.helpers.arrayElement([
       faker.string.alpha({ length: { min: 10, max: 20 } }),
       undefined,
@@ -56,6 +71,11 @@ export const getArchiveSessionResponseMock = (
   title: faker.string.alpha({ length: { min: 10, max: 20 } }),
   createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   archived: faker.datatype.boolean(),
+  archivedAt: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + 'Z',
+    null,
+  ]),
+  messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
   ...overrideResponse,
 });
 
@@ -66,6 +86,26 @@ export const getRestoreSessionResponseMock = (
   title: faker.string.alpha({ length: { min: 10, max: 20 } }),
   createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   archived: faker.datatype.boolean(),
+  archivedAt: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + 'Z',
+    null,
+  ]),
+  messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+  ...overrideResponse,
+});
+
+export const getRenameSessionResponseMock = (
+  overrideResponse: Partial<Extract<Session, object>> = {},
+): Session => ({
+  id: faker.string.uuid(),
+  title: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  archived: faker.datatype.boolean(),
+  archivedAt: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + 'Z',
+    null,
+  ]),
+  messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
   ...overrideResponse,
 });
 
@@ -76,7 +116,20 @@ export const getGetSessionResponseMock = (
   title: faker.string.alpha({ length: { min: 10, max: 20 } }),
   createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   archived: faker.datatype.boolean(),
+  archivedAt: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + 'Z',
+    null,
+  ]),
+  messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
   activeStreamId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+  waitingRun: faker.helpers.arrayElement([
+    {
+      id: faker.string.uuid(),
+      streamId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+      stepsCompleted: faker.number.int({ min: 0, max: 9007199254740991 }),
+    },
+    null,
+  ]),
   ...overrideResponse,
 });
 
@@ -192,6 +245,28 @@ export const getRestoreSessionMockHandler = (
   );
 };
 
+export const getRenameSessionMockHandler = (
+  overrideResponse?:
+    | Session
+    | ((info: Parameters<Parameters<typeof http.patch>[1]>[0]) => Promise<Session> | Session),
+  options?: RequestHandlerOptions,
+) => {
+  return http.patch(
+    '*/api/sessions/:sessionId',
+    async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getRenameSessionResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
 export const getGetSessionMockHandler = (
   overrideResponse?:
     | SessionDetail
@@ -221,5 +296,6 @@ export const getSessionsMock = () => [
   getSearchSessionsMockHandler(),
   getArchiveSessionMockHandler(),
   getRestoreSessionMockHandler(),
+  getRenameSessionMockHandler(),
   getGetSessionMockHandler(),
 ];

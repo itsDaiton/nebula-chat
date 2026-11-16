@@ -1,38 +1,24 @@
 import { useNavigate } from '@tanstack/react-router';
-import { Box, Flex, Text, Spinner } from '@chakra-ui/react';
-import { toaster } from '@/shared/components/ui/toaster';
-import { useSessions } from '@/modules/sessions/hooks/useSessions';
-import { SessionListItem } from '@/modules/sessions/components/SessionListItem';
-import { SessionsSearch } from '@/modules/sessions/components/SessionsSearch';
-import { SidePanel } from '@/shared/components/layout/SidePanel';
-import { resources } from '@/resources';
-import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
-import { useSearchStore } from '@/shared/stores/useSearchStore';
+import { Loader2Icon } from 'lucide-react';
 import { useInfiniteScroll } from '@/modules/sessions/hooks/useInfiniteScroll';
-import { chatScrollBar } from '@/shared/components/scrollbar';
-import { BadgeActionButton } from '@/shared/components/navigation/BadgeActionButton';
-import type { NavigationAction } from '@/shared/types/types';
-import { navigationActions } from '@/modules/sessions/utils/navigationActions';
+import { useSessionArchiving } from '@/modules/sessions/hooks/useSessionArchiving';
+import { useSessions } from '@/modules/sessions/hooks/useSessions';
+import { NavigationRow } from '@/modules/sessions/components/NavigationRow';
+import { SessionListItem } from '@/modules/sessions/components/SessionListItem';
 import { SessionSkeletons } from '@/modules/sessions/components/SessionSkeletons';
-import type { SessionsListProps } from '@/modules/sessions/types/types';
+import type { NavigationAction, SessionsListProps } from '@/modules/sessions/types/types';
+import { navigationActions } from '@/modules/sessions/utils/navigationActions';
+import { resources } from '@/resources';
+import { useNow } from '@/shared/hooks/useNow';
+import { useSearchStore } from '@/shared/stores/useSearchStore';
 
-export const SessionsList = ({
-  onClose,
-  inDrawer = false,
-  toggleSearch: externalToggleSearch,
-  closeSearch: externalCloseSearch,
-}: SessionsListProps = {}) => {
+/** The left panel's body: navigation rows, then the Sessions with their ages and the archive action. */
+export const SessionsList = ({ onNavigate }: SessionsListProps = {}) => {
   const { sessions, isLoading, isLoadingMore, error, hasMore, loadMore } = useSessions();
-  const {
-    isSearchOpen: storeIsSearchOpen,
-    openSearch,
-    closeSearch: storeCloseSearch,
-    toggleSearch,
-  } = useSearchStore();
+  const openSearch = useSearchStore((state) => state.openSearch);
   const navigate = useNavigate();
-
-  const isSearchOpen = inDrawer ? false : storeIsSearchOpen;
-  const closeSearch = inDrawer ? (externalCloseSearch ?? (() => {})) : storeCloseSearch;
+  const now = useNow();
+  const archive = useSessionArchiving();
 
   const observerTarget = useInfiniteScroll({
     hasMore,
@@ -40,158 +26,72 @@ export const SessionsList = ({
     onLoadMore: loadMore,
   });
 
-  useKeyboardShortcut(
-    'k',
-    () => {
-      if (inDrawer && externalToggleSearch) {
-        externalToggleSearch();
-      } else {
-        openSearch();
-      }
-    },
-    { ctrl: true },
-  );
-
-  const handleCreateNewChat = () => {
+  const startNewChat = () => {
     void navigate({ to: '/' });
-    closeSearch();
-    onClose?.();
+    onNavigate?.();
   };
 
-  useKeyboardShortcut('e', handleCreateNewChat, { ctrl: true });
-
-  const handleActionClick = (action: NavigationAction['action']) => {
-    switch (action) {
-      case 'newChat':
-        handleCreateNewChat();
-        break;
-      case 'search':
-        if (inDrawer) {
-          onClose?.();
-          externalToggleSearch?.();
-        } else {
-          toggleSearch();
-        }
-        break;
-      case 'files':
-      case 'aiStudio':
-        closeSearch();
-        onClose?.();
-        toaster.create({
-          title: 'Coming Soon',
-          description: 'This section is currently under development.',
-          type: 'info',
-          duration: 3000,
-        });
-        break;
+  const perform = (action: NavigationAction['action']) => {
+    if (action === 'newChat') startNewChat();
+    if (action === 'search') {
+      openSearch();
+      onNavigate?.();
     }
   };
 
-  const handleSessionClick = (sessionId: string) => {
-    void navigate({ to: '/s/$id', params: { id: sessionId } });
-    closeSearch();
-    onClose?.();
-  };
-
-  if (error) {
-    const errorContent = (
-      <Flex h="100%" align="center" justify="center" p={4}>
-        <Text
-          fontSize="sm"
-          color="red.500"
-          wordBreak="break-word"
-          overflowWrap="break-word"
-          maxW="100%"
-          textAlign="center"
-        >
-          {error.message}
-        </Text>
-      </Flex>
-    );
-    return inDrawer ? errorContent : <SidePanel>{errorContent}</SidePanel>;
-  }
-
-  const content = (
-    <>
-      {isSearchOpen && (
-        <SessionsSearch
-          sessions={sessions}
-          onSessionClick={handleSessionClick}
-          onClose={closeSearch}
-        />
-      )}
-      <Flex
-        direction="column"
-        gap={2}
-        p={3}
-        borderBottom="1px"
-        borderColor="border.default"
-        position="sticky"
-        top={0}
-        bg="bg.default"
-        zIndex={1}
-      >
+  return (
+    <div className="flex min-h-0 flex-1 flex-col p-2">
+      <nav className="flex flex-col gap-px">
         {navigationActions.map((action) => (
-          <BadgeActionButton
-            key={action.id}
-            icon={action.icon}
-            label={action.label}
-            onClick={() => handleActionClick(action.action)}
-            badge={action.badge}
-            shortcut={action.shortcut}
-          />
+          <NavigationRow key={action.id} action={action} onClick={() => perform(action.action)} />
         ))}
-      </Flex>
-      <Box px={3} py={2}>
-        <Text fontSize="sm" fontWeight="medium" color="fg.muted" pl={2}>
-          {resources.sidebar.sessions}
-        </Text>
-      </Box>
-      <Box px={2} pb={2}>
-        {isLoading && <SessionSkeletons />}
-        {!isLoading && sessions.length === 0 && (
-          <Flex
-            direction="column"
-            align="center"
-            justify="center"
-            minH="200px"
-            textAlign="center"
-            color="fg.muted"
-            px={4}
+      </nav>
+      <div className="flex items-center justify-between px-2 pt-3.5 pb-1.5 text-[11.5px] font-medium text-muted-foreground">
+        <h2>{resources.sidebar.sessions}</h2>
+        {!isLoading && (
+          <span
+            aria-label={resources.sidebar.count}
+            className="font-mono text-[10.5px] font-normal text-faint"
           >
-            <Text fontSize="sm">{resources.sessions.empty}</Text>
-            <Text fontSize="xs" mt={2}>
-              {resources.sessions.emptyHint}
-            </Text>
-          </Flex>
+            {sessions.length}
+            {hasMore && '+'}
+          </span>
         )}
-        {!isLoading && sessions.length > 0 && (
-          <Flex direction="column" gap={1}>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {error && (
+          <p className="p-4 text-center text-sm break-words text-destructive">{error.message}</p>
+        )}
+        {!error && isLoading && <SessionSkeletons />}
+        {!error && !isLoading && sessions.length === 0 && (
+          <div className="flex flex-col items-center px-4 py-10 text-center text-muted-foreground">
+            <p className="text-sm">{resources.sessions.empty}</p>
+            <p className="mt-2 text-xs">{resources.sessions.emptyHint}</p>
+          </div>
+        )}
+        {!error && !isLoading && sessions.length > 0 && (
+          <ul className="flex flex-col gap-px">
             {sessions.map((session) => (
-              <SessionListItem key={session.id} session={session} onClick={handleSessionClick} />
+              <SessionListItem
+                key={session.id}
+                session={session}
+                now={now}
+                onNavigate={onNavigate}
+                onArchive={({ id }) => archive(id)}
+              />
             ))}
-            <div ref={observerTarget} style={{ height: '0px' }} />
+            <li aria-hidden className="h-0">
+              <div ref={observerTarget} />
+            </li>
             {isLoadingMore && (
-              <Flex justify="center" align="center" direction="column" py={3}>
-                <Spinner size="sm" color="fg.muted" />
-                <Text mt={2} fontSize="sm" color="fg.muted">
-                  {resources.sessions.loadingMore}
-                </Text>
-              </Flex>
+              <li className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
+                <Loader2Icon className="size-4 animate-spin" />
+                {resources.sessions.loadingMore}
+              </li>
             )}
-          </Flex>
+          </ul>
         )}
-      </Box>
-    </>
+      </div>
+    </div>
   );
-
-  if (inDrawer) {
-    return (
-      <Flex direction="column" h="100%" bg="bg.default" overflowY="auto" css={chatScrollBar}>
-        {content}
-      </Flex>
-    );
-  }
-
-  return <SidePanel>{content}</SidePanel>;
 };

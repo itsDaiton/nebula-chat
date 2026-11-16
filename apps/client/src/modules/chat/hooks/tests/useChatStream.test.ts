@@ -1,3 +1,4 @@
+import { getGetRunQueryKey } from '@/libs/api/generated/runs/runs';
 import { act, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -17,15 +18,21 @@ import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messag
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
+import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
+import { toast } from 'sonner';
+import { groupProgressSteps } from '@/modules/chat/utils/groupProgressSteps';
+import { IDLE_REPLY, isReplyInFlight } from '@/modules/chat/utils/replyState';
 import { resources } from '@/resources';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { mockReplyStream, sseFrame as frame } from '@/test/chat';
+import { wakeWorker } from '@/shared/utils/wakeWorker';
 import { server } from '@/test/msw';
 import { createTestQueryClient, renderHookWithQueryClient } from '@/test/render';
 
 const navigate = vi.fn();
 
 vi.mock('@tanstack/react-router', () => ({ useNavigate: () => navigate }));
+vi.mock('@/shared/utils/wakeWorker', () => ({ wakeWorker: vi.fn() }));
 
 const NEW_SESSION_ID = '11111111-1111-4111-8111-111111111111';
 const MESSAGE_ID = '22222222-2222-4222-8222-222222222222';
@@ -49,19 +56,24 @@ const streamFrames = (...frames: string[]) => server.use(mockReplyStream(...fram
 
 const history = () => useChatStreamStore.getState().history;
 const assistantContent = () => history().at(-1)?.content;
+const reply = () => useChatStreamStore.getState().reply;
+const inFlight = () => isReplyInFlight(reply());
+// The failure a reply ended on, also while a new chat is still moving to its Session.
+const replyError = () => {
+  const current = reply();
+  const end = current.status === 'navigating' ? current.end : current;
+  return end.status === 'failed' ? end.error : null;
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
   useChatStreamStore.setState({
     history: [],
-    isStreaming: false,
-    isPostStreamNavigation: false,
-    error: null,
+    reply: IDLE_REPLY,
     usage: null,
     sessionId: undefined,
     isMessageAllowanceReached: false,
     streamId: null,
-    isStopRequested: false,
   });
   useMessageStore.setState({ message: '' });
   server.use(
@@ -71,6 +83,8 @@ beforeEach(() => {
         title: (body as { title: string }).title,
         createdAt: '2026-10-20T00:00:00.000Z',
         archived: false,
+        archivedAt: null,
+        messageCount: 0,
       })),
     ),
     getSendMessageMockHandler({ messageId: MESSAGE_ID, streamId: STREAM_ID }),
@@ -123,7 +137,7 @@ describe('useChatStream — token streaming', () => {
     await sendMessage(result);
 
     await waitFor(() => expect(assistantContent()).toBe('ok'));
-    expect(useChatStreamStore.getState().error).toBeNull();
+    expect(replyError()).toBeNull();
   });
 
   it('stops streaming once the end event arrives', async () => {
@@ -133,7 +147,7 @@ describe('useChatStream — token streaming', () => {
 
     await sendMessage(result);
 
-    await waitFor(() => expect(useChatStreamStore.getState().isStreaming).toBe(false));
+    await waitFor(() => expect(inFlight()).toBe(false));
   });
 
   it('ignores an event name outside the known set', async () => {
@@ -187,6 +201,77 @@ describe('useChatStream — usage and errors', () => {
     );
   });
 
+  it('shows the reply token count on its meta row as soon as the stream reports it', async () => {
+    streamFrames(
+      frame('token', { token: 'hi' }),
+      frame('usage', { promptTokens: 10, completionTokens: 4, totalTokens: 14 }),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    await waitFor(() =>
+      expect(useChatStreamStore.getState().history.at(-1)).toMatchObject({
+        role: 'assistant',
+        tokenCount: 14,
+      }),
+    );
+  });
+
+  it("shows the saved reply's model and cost on its meta row once the stream ends", async () => {
+    streamFrames(
+      frame('token', { token: 'hi' }),
+      frame('usage', { promptTokens: 10, completionTokens: 4, totalTokens: 14 }),
+      frame('end', {}),
+    );
+    server.use(
+      getListMessagesMockHandler([
+        {
+          id: 'saved-u1',
+          sessionId: NEW_SESSION_ID,
+          role: 'user',
+          content: 'what is 2+2?',
+          tokenCount: null,
+          cached: false,
+          model: null,
+          estimatedCostUsd: null,
+          runId: null,
+          contextTokens: null,
+          contextMessages: null,
+          createdAt: '2026-06-15T11:00:00.000Z',
+        },
+        {
+          id: 'saved-a1',
+          sessionId: NEW_SESSION_ID,
+          role: 'assistant',
+          content: 'hi',
+          tokenCount: 14,
+          cached: false,
+          model: 'gpt-4o-mini',
+          estimatedCostUsd: 0.0021,
+          runId: null,
+          contextTokens: 10,
+          contextMessages: 1,
+          createdAt: '2026-06-15T11:00:01.000Z',
+        },
+      ]),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    await waitFor(() =>
+      expect(history().at(-1)).toMatchObject({
+        role: 'assistant',
+        content: 'hi',
+        tokenCount: 14,
+        model: 'gpt-4o-mini',
+        estimatedCostUsd: 0.0021,
+      }),
+    );
+  });
+
   it('surfaces the message of an error event in place of the reply', async () => {
     streamFrames(
       frame('error', { success: false, error: 'BadRequest', message: 'Unsupported model: gpt-0' }),
@@ -196,9 +281,8 @@ describe('useChatStream — usage and errors', () => {
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().error).toBe('Unsupported model: gpt-0');
+    expect(replyError()).toBe('Unsupported model: gpt-0');
     expect(assistantContent()).toBe('Unsupported model: gpt-0');
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
   });
 
   it('falls back to a generic message when the error event carries no envelope', async () => {
@@ -207,7 +291,7 @@ describe('useChatStream — usage and errors', () => {
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().error).toBe(resources.chat.streamError);
+    expect(replyError()).toBe(resources.chat.streamError);
   });
 
   it('reports a stream that keeps closing before its end event, once its reconnects run out', async () => {
@@ -216,8 +300,7 @@ describe('useChatStream — usage and errors', () => {
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().error).toBe(resources.chat.streamError);
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
+    expect(replyError()).toBe(resources.chat.streamError);
   });
 
   it('reports a stream that cannot be opened by the message of its envelope', async () => {
@@ -232,7 +315,7 @@ describe('useChatStream — usage and errors', () => {
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().error).toBe('Stream forbidden');
+    expect(replyError()).toBe('Stream forbidden');
   });
 
   it('reports a stream that cannot be opened and has no envelope with the generic message', async () => {
@@ -241,7 +324,7 @@ describe('useChatStream — usage and errors', () => {
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().error).toBe(resources.chat.streamError);
+    expect(replyError()).toBe(resources.chat.streamError);
   });
 
   it('reports a refused send by the message of its error envelope', async () => {
@@ -256,8 +339,84 @@ describe('useChatStream — usage and errors', () => {
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().error).toBe('Rate limit exceeded, retry in 1 minute');
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
+    expect(replyError()).toBe('Rate limit exceeded, retry in 1 minute');
+  });
+});
+
+describe('useChatStream — a failed first reply', () => {
+  const GOES_TO_NEW_SESSION = { to: '/s/$id', params: { id: NEW_SESSION_ID }, replace: true };
+
+  // The route must carry the Session before streaming stops, or the chat resets to the greeting.
+  const expectHeldForNavigation = () => {
+    expect(navigate).toHaveBeenCalledWith(GOES_TO_NEW_SESSION);
+    expect(useChatStreamStore.getState()).toMatchObject({
+      reply: { status: 'navigating', end: { status: 'failed' } },
+      sessionId: NEW_SESSION_ID,
+    });
+  };
+
+  it('keeps the message and the error in the history and moves to the Session it created', async () => {
+    streamFrames(frame('error', { success: false, error: 'Internal', message: 'Provider down' }));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    expect(history().map((m) => m.content)).toEqual(['what is 2+2?', 'Provider down']);
+    expectHeldForNavigation();
+  });
+
+  it('does the same for a send the server refuses', async () => {
+    server.use(
+      mockApiError('post', API_ROUTE.sendMessage, 429, {
+        success: false,
+        error: 'TooManyRequests',
+        message: 'Rate limit exceeded, retry in 1 minute',
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    expect(assistantContent()).toBe('Rate limit exceeded, retry in 1 minute');
+    expectHeldForNavigation();
+  });
+
+  it('does the same for a stream that runs out of reconnects', async () => {
+    streamFrames(frame('token', { token: 'half' }));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    expect(assistantContent()).toBe(resources.chat.streamError);
+    expectHeldForNavigation();
+  });
+
+  it('stays on the new chat when no Session was created to move to', async () => {
+    server.use(
+      mockApiError('post', API_ROUTE.sessions, 500, {
+        success: false,
+        error: 'Internal',
+        message: 'Could not create the Session',
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    expect(assistantContent()).toBe('Could not create the Session');
+    expect(navigate).not.toHaveBeenCalled();
+    expect(inFlight()).toBe(false);
+  });
+
+  it('does not navigate when the failed reply belongs to a Session already open', async () => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    streamFrames(frame('error', { success: false, error: 'Internal', message: 'Provider down' }));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    expect(navigate).not.toHaveBeenCalled();
+    expect(inFlight()).toBe(false);
   });
 });
 
@@ -283,7 +442,7 @@ describe('useChatStream — reconnecting', () => {
 
     expect(resumedAfter).toEqual([null, '1-2']);
     expect(assistantContent()).toBe('Two plus two');
-    expect(useChatStreamStore.getState()).toMatchObject({ isStreaming: false, error: null });
+    expect(reply()).toEqual(IDLE_REPLY);
   });
 
   it('skips an event it already applied, should a reconnect replay it', async () => {
@@ -325,7 +484,7 @@ describe('useChatStream — reconnecting', () => {
     await sendMessage(result);
 
     expect(assistantContent()).toBe('ok');
-    expect(useChatStreamStore.getState().error).toBeNull();
+    expect(replyError()).toBeNull();
   });
 
   it('shows the saved assistant Message once the stream has expired', async () => {
@@ -372,10 +531,30 @@ describe('useChatStream — reconnecting', () => {
     await sendMessage(result);
 
     expect(history()).toEqual([
-      { id: MESSAGE_ID, role: 'user', content: 'what is 2+2?' },
-      { id: STREAM_ID, role: 'assistant', content: '4' },
+      {
+        id: MESSAGE_ID,
+        role: 'user',
+        content: 'what is 2+2?',
+        tokenCount: null,
+        model: null,
+        estimatedCostUsd: null,
+        runId: null,
+        contextTokens: null,
+        contextMessages: null,
+      },
+      {
+        id: STREAM_ID,
+        role: 'assistant',
+        content: '4',
+        tokenCount: 1,
+        model: null,
+        estimatedCostUsd: null,
+        runId: null,
+        contextTokens: null,
+        contextMessages: null,
+      },
     ]);
-    expect(useChatStreamStore.getState()).toMatchObject({ isStreaming: false, error: null });
+    expect(reply()).toEqual(IDLE_REPLY);
   });
 });
 
@@ -431,7 +610,21 @@ describe('useChatStream — stopping a reply', () => {
 
     expect(cancelledStream()).toBe(STREAM_ID);
     expect(assistantContent()).toBe('Two');
-    expect(useChatStreamStore.getState()).toMatchObject({ isStreaming: false, error: null });
+    expect(reply()).toEqual({ status: 'stopped' });
+  });
+
+  it('sends no cancel once the reply has ended, even while a new chat is still navigating', async () => {
+    useChatStreamStore.setState({
+      reply: { status: 'navigating', end: IDLE_REPLY },
+      streamId: STREAM_ID,
+    });
+    const { cancelledStream } = stoppableStream();
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await act(() => result.current.stop());
+
+    expect(cancelledStream()).toBeUndefined();
+    expect(reply()).toEqual({ status: 'navigating', end: IDLE_REPLY });
   });
 
   it('drops the empty reply of a reply stopped before its first token', async () => {
@@ -442,7 +635,21 @@ describe('useChatStream — stopping a reply', () => {
     await sendMessage(result);
 
     expect(history()).toEqual([{ id: 'u1', role: 'user', content: 'what is 2+2?' }]);
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
+    expect(inFlight()).toBe(false);
+  });
+
+  it('flags a stopped reply, and clears the flag on the next send', async () => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    streamFrames(frame('end', { reason: 'cancelled' }, '1-1'));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+    expect(reply()).toEqual({ status: 'stopped' });
+
+    streamFrames(frame('token', { token: 'ok' }, '1-1'), frame('end', {}, '1-2'));
+    await sendMessage(result);
+
+    expect(reply().status).not.toBe('stopped');
   });
 
   it('cancels a reply stopped while its message was still being sent', async () => {
@@ -477,7 +684,7 @@ describe('useChatStream — stopping a reply', () => {
     });
 
     expect(cancelledStream()).toBe(STREAM_ID);
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
+    expect(inFlight()).toBe(false);
   });
 
   it('does nothing when no reply is streaming', async () => {
@@ -523,7 +730,7 @@ describe('useChatStream — re-attaching', () => {
       { id: expect.any(String), role: 'assistant', content: 'Two plus two' },
     ]);
     expect(useChatStreamStore.getState()).toMatchObject({
-      isStreaming: false,
+      reply: IDLE_REPLY,
       sessionId: EXISTING_ID,
     });
     expect(navigate).not.toHaveBeenCalled();
@@ -569,7 +776,7 @@ describe('useChatStream — re-attaching, edge cases', () => {
         return new HttpResponse(frame('end', {}));
       }),
     );
-    useChatStreamStore.setState({ isStreaming: true, streamId: STREAM_ID });
+    useChatStreamStore.setState({ reply: { status: 'streaming' }, streamId: STREAM_ID });
     const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
 
     await act(async () => {
@@ -595,8 +802,7 @@ describe('useChatStream — message allowance', () => {
 
     expect(useChatStreamStore.getState()).toMatchObject({
       isMessageAllowanceReached: true,
-      isStreaming: false,
-      error: null,
+      reply: IDLE_REPLY,
     });
   });
 
@@ -643,7 +849,7 @@ describe('useChatStream — message allowance', () => {
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState().error).toBe('Forbidden.');
+    expect(replyError()).toBe('Forbidden.');
     expect(useChatStreamStore.getState().isMessageAllowanceReached).toBe(false);
   });
 
@@ -656,6 +862,511 @@ describe('useChatStream — message allowance', () => {
 
     expect(useChatStreamStore.getState().isMessageAllowanceReached).toBe(false);
     await waitFor(() => expect(assistantContent()).toBe('welcome back'));
+  });
+});
+
+describe('useChatStream — a Run', () => {
+  const RUN_ID = '55555555-5555-4555-8555-555555555555';
+  const LANGUAGE = '66666666-6666-4666-8666-666666666661';
+  const SUMMARY = '66666666-6666-4666-8666-666666666662';
+  const OUTPUT = '66666666-6666-4666-8666-666666666663';
+
+  const started = (stepId: string, label: string, over: Record<string, unknown> = {}) =>
+    frame('step-started', {
+      stepId,
+      attempt: 1,
+      phase: 'intake',
+      agent: 'language',
+      label,
+      turn: 0,
+      parentStepId: null,
+      ...over,
+    });
+  const finished = (stepId: string, status = 'completed') =>
+    frame('step-finished', { stepId, status });
+  const outputStarted = (attempt = 1) =>
+    started(OUTPUT, 'Writing the answer', { phase: 'output', agent: 'output', attempt });
+  const runFinished = (status: string) => frame('run-finished', { runId: RUN_ID, status });
+
+  const sendRun = async (result: { current: ReturnType<typeof useChatStream> }) => {
+    await act(async () => {
+      await result.current.streamMessage({
+        model: 'gpt-4o-mini',
+        mode: 'run',
+        messages: [{ id: 'u1', role: 'user', content: 'what is 2+2?' }],
+      });
+    });
+  };
+
+  const run = () => history().at(-1)?.run;
+  const steps = () => run()?.steps.map(({ label, status }) => [label, status]);
+
+  beforeEach(() => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    useInspectorStore.setState({ activeTab: 'session', selectedRunId: null });
+    server.use(
+      getSendMessageMockHandler({ messageId: MESSAGE_ID, streamId: STREAM_ID, runId: RUN_ID }),
+    );
+  });
+
+  it('sends the message in Run mode and shows its Run in the Inspector', async () => {
+    let received: unknown;
+    server.use(
+      getSendMessageMockHandler(async ({ request }) => {
+        received = await request.json();
+        return { messageId: MESSAGE_ID, streamId: STREAM_ID, runId: RUN_ID };
+      }),
+    );
+    streamFrames(frame('end', {}));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(received).toMatchObject({ content: 'what is 2+2?', mode: 'run' });
+    expect(history().at(-1)?.runId).toBe(RUN_ID);
+    expect(useInspectorStore.getState()).toMatchObject({ activeTab: 'run', selectedRunId: RUN_ID });
+  });
+
+  it('shows each Step as it starts and finishes, then the answer and the end status', async () => {
+    streamFrames(
+      started(LANGUAGE, 'Detecting the language'),
+      started(SUMMARY, 'Summarising the Session', { agent: 'session' }),
+      finished(LANGUAGE),
+      finished(SUMMARY),
+      outputStarted(),
+      frame('token', { token: '2+2' }),
+      frame('token', { token: ' is 4' }),
+      finished(OUTPUT),
+      runFinished('completed'),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(steps()).toEqual([
+      ['Detecting the language', 'completed'],
+      ['Summarising the Session', 'completed'],
+      ['Writing the answer', 'completed'],
+    ]);
+    expect(assistantContent()).toBe('2+2 is 4');
+    expect(run()?.status).toBe('completed');
+    expect(reply()).toEqual(IDLE_REPLY);
+  });
+
+  it('shows Intake Steps that start together as running together', async () => {
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    server.use(
+      http.get(API_ROUTE.replyStream, () => {
+        const encoder = new TextEncoder();
+        return new HttpResponse(
+          new ReadableStream({
+            async start(controller) {
+              controller.enqueue(
+                encoder.encode(
+                  started(LANGUAGE, 'Detecting the language') +
+                    started(SUMMARY, 'Summarising the Session'),
+                ),
+              );
+              await gate;
+              controller.enqueue(encoder.encode(frame('end', {})));
+              controller.close();
+            },
+          }),
+          { headers: { 'Content-Type': 'text/event-stream' } },
+        );
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    const sending = sendRun(result);
+
+    await waitFor(() =>
+      expect(steps()).toEqual([
+        ['Detecting the language', 'running'],
+        ['Summarising the Session', 'running'],
+      ]),
+    );
+    release();
+    await sending;
+  });
+
+  it('discards the answer of an Output Step that starts again, keeping only the new attempt', async () => {
+    streamFrames(
+      outputStarted(),
+      frame('token', { token: 'first try' }),
+      outputStarted(2),
+      frame('token', { token: 'second' }),
+      frame('token', { token: ' try' }),
+      finished(OUTPUT),
+      runFinished('completed'),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(assistantContent()).toBe('second try');
+    expect(run()?.steps).toMatchObject([{ stepId: OUTPUT, attempt: 2, status: 'completed' }]);
+  });
+
+  it('shows a re-run Step as running again, and ignores a replay of the same attempt', async () => {
+    streamFrames(
+      started(LANGUAGE, 'Detecting the language'),
+      finished(LANGUAGE, 'failed'),
+      started(LANGUAGE, 'Detecting the language', { attempt: 2 }),
+      started(SUMMARY, 'Summarising the Session'),
+      finished(SUMMARY),
+      started(SUMMARY, 'Summarising the Session'),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(steps()).toEqual([
+      ['Detecting the language', 'running'],
+      ['Summarising the Session', 'completed'],
+    ]);
+  });
+
+  it('shows a failed Intake Step and a partial end', async () => {
+    streamFrames(
+      started(LANGUAGE, 'Detecting the language'),
+      started(SUMMARY, 'Summarising the Session'),
+      finished(LANGUAGE, 'failed'),
+      finished(SUMMARY),
+      outputStarted(),
+      frame('token', { token: 'four' }),
+      finished(OUTPUT),
+      runFinished('partial'),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(steps()).toEqual([
+      ['Detecting the language', 'failed'],
+      ['Summarising the Session', 'completed'],
+      ['Writing the answer', 'completed'],
+    ]);
+    expect(run()?.status).toBe('partial');
+    expect(assistantContent()).toBe('four');
+  });
+
+  it('reads past a malformed Run frame', async () => {
+    streamFrames(
+      frame('step-started', { stepId: LANGUAGE }),
+      frame('step-finished', { stepId: LANGUAGE, status: 'exploded' }),
+      frame('run-finished', { status: 'sideways' }),
+      frame('token', { token: 'still here' }),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(run()).toEqual({ steps: [], status: null });
+    expect(assistantContent()).toBe('still here');
+    expect(replyError()).toBeNull();
+  });
+
+  it('marks the Run failed when its stream reports an error, and reads on to its end', async () => {
+    streamFrames(
+      started(LANGUAGE, 'Detecting the language'),
+      frame('error', { success: false, error: 'BadRequest', message: 'The Run failed.' }),
+      finished(LANGUAGE, 'failed'),
+      frame('run-finished', { runId: RUN_ID, status: 'failed' }),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(run()?.status).toBe('failed');
+    expect(steps()).toEqual([['Detecting the language', 'failed']]);
+    expect(replyError()).toBe('The Run failed.');
+    expect(assistantContent()).toBe('The Run failed.');
+  });
+
+  it('refreshes the Run the Inspector shows as each Step event arrives', async () => {
+    streamFrames(started(LANGUAGE, 'Detecting the language'), frame('end', {}));
+    const queryClient = createTestQueryClient();
+    queryClient.setQueryData(getGetRunQueryKey(RUN_ID), { finishedAt: '2026-10-27T21:14:41Z' });
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF), { queryClient });
+
+    await sendRun(result);
+
+    expect(queryClient.getQueryState(getGetRunQueryKey(RUN_ID))?.isInvalidated).toBe(true);
+  });
+
+  it('returns the message to the composer and reports the refusal when a Run is forbidden', async () => {
+    const reported = vi.spyOn(toast, 'error');
+    server.use(
+      mockApiError('post', API_ROUTE.sendMessage, 403, {
+        success: false,
+        error: 'Forbidden',
+        message: 'Runs are for registered users.',
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(reported).toHaveBeenCalledWith('Runs are for registered users.');
+    expect(useMessageStore.getState().message).toBe('what is 2+2?');
+    expect(history()).toEqual([]);
+    expect(reply()).toEqual(IDLE_REPLY);
+  });
+
+  const PLAN_1 = '77777777-7777-4777-8777-777777777771';
+  const ANALYST_1 = '77777777-7777-4777-8777-777777777772';
+  const CRITIC_1 = '77777777-7777-4777-8777-777777777773';
+  const PLAN_2 = '77777777-7777-4777-8777-777777777774';
+  const CRITIC_2 = '77777777-7777-4777-8777-777777777775';
+
+  const turnStarted = (stepId: string, turn: number) =>
+    started(stepId, 'Planning the work', { phase: 'orchestrator', agent: 'orchestrator', turn });
+  const delegateStarted = (
+    stepId: string,
+    agent: string,
+    label: string,
+    turn: number,
+    parentStepId: string,
+  ) => started(stepId, label, { phase: 'delegate', agent, turn, parentStepId });
+
+  // Two Intake Steps, two turns of delegates (the second turn's critic fails), then the answer.
+  const orchestratedRun = [
+    started(LANGUAGE, 'Detecting the language'),
+    started(SUMMARY, 'Summarising the Session', { agent: 'session' }),
+    finished(LANGUAGE),
+    finished(SUMMARY),
+    turnStarted(PLAN_1, 1),
+    delegateStarted(ANALYST_1, 'analyst', 'Analysing', 1, PLAN_1),
+    delegateStarted(CRITIC_1, 'critic', 'Reviewing', 1, PLAN_1),
+    finished(CRITIC_1),
+    finished(ANALYST_1),
+    finished(PLAN_1),
+    turnStarted(PLAN_2, 2),
+    delegateStarted(CRITIC_2, 'critic', 'Reviewing', 2, PLAN_2),
+    finished(CRITIC_2, 'failed'),
+    finished(PLAN_2),
+    outputStarted(),
+    frame('token', { token: 'Keep' }),
+    frame('token', { token: ' BullMQ.' }),
+    finished(OUTPUT),
+    runFinished('partial'),
+    frame('end', {}),
+  ];
+
+  const grouped = () =>
+    groupProgressSteps(run()?.steps ?? []).map(({ kind, turn, rows }) => [
+      kind === 'turn' ? `turn ${turn}` : kind,
+      rows.map(({ step, depth }) => `${'> '.repeat(depth)}${step.agent} ${step.status}`),
+    ]);
+
+  const ORCHESTRATED = [
+    ['intake', ['language completed', 'session completed']],
+    ['turn 1', ['orchestrator completed', '> analyst completed', '> critic completed']],
+    ['turn 2', ['orchestrator completed', '> critic failed']],
+    ['output', ['output completed']],
+  ];
+
+  it('groups the Steps of an orchestrated Run by turn, each delegate under the turn that launched it', async () => {
+    streamFrames(...orchestratedRun);
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(grouped()).toEqual(ORCHESTRATED);
+    expect(assistantContent()).toBe('Keep BullMQ.');
+    expect(run()?.status).toBe('partial');
+    expect(reply()).toEqual(IDLE_REPLY);
+  });
+
+  it('shows the delegates of one turn running together, each finishing on its own', async () => {
+    const gates = [0, 1].map(() => {
+      let release = () => {};
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      return { gate, release };
+    });
+    server.use(
+      http.get(API_ROUTE.replyStream, () => {
+        const encoder = new TextEncoder();
+        return new HttpResponse(
+          new ReadableStream({
+            async start(controller) {
+              controller.enqueue(encoder.encode(orchestratedRun.slice(4, 7).join('')));
+              await gates[0]!.gate;
+              controller.enqueue(encoder.encode(finished(CRITIC_1)));
+              await gates[1]!.gate;
+              controller.enqueue(encoder.encode(frame('end', {})));
+              controller.close();
+            },
+          }),
+          { headers: { 'Content-Type': 'text/event-stream' } },
+        );
+      }),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    const sending = sendRun(result);
+
+    await waitFor(() =>
+      expect(grouped()).toEqual([
+        ['turn 1', ['orchestrator running', '> analyst running', '> critic running']],
+      ]),
+    );
+    gates[0]!.release();
+    await waitFor(() =>
+      expect(grouped()).toEqual([
+        ['turn 1', ['orchestrator running', '> analyst running', '> critic completed']],
+      ]),
+    );
+    gates[1]!.release();
+    await sending;
+  });
+
+  it('resets a delegate that starts again in place, under the same turn', async () => {
+    streamFrames(
+      ...orchestratedRun.slice(4, 9),
+      delegateStarted(ANALYST_1, 'analyst', 'Analysing', 1, PLAN_1).replace(
+        '"attempt":1',
+        '"attempt":2',
+      ),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendRun(result);
+
+    expect(grouped()).toEqual([
+      ['turn 1', ['orchestrator running', '> analyst running', '> critic completed']],
+    ]);
+  });
+
+  describe('stopped', () => {
+    /** Streams `before`, then holds until the Run is cancelled and ends it as the worker does. */
+    const stoppableRun = (...before: string[]) => {
+      let endIt: () => void = () => undefined;
+      server.use(
+        http.get(API_ROUTE.replyStream, () => {
+          const encoder = new TextEncoder();
+          return new HttpResponse(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(encoder.encode(before.join('')));
+                endIt = () => {
+                  controller.enqueue(
+                    encoder.encode(
+                      runFinished('cancelled') + frame('end', { reason: 'cancelled' }),
+                    ),
+                  );
+                  controller.close();
+                };
+              },
+            }),
+            { headers: { 'Content-Type': 'text/event-stream' } },
+          );
+        }),
+        http.post(`${API_ROUTE.replyStream}/cancel`, () => {
+          endIt();
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+    };
+
+    const stopOnce = async (seen: () => void) => {
+      const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+      let sent: Promise<void> | undefined;
+      act(() => {
+        sent = result.current.streamMessage({
+          model: 'gpt-4o-mini',
+          mode: 'run',
+          messages: [{ id: 'u1', role: 'user', content: 'what is 2+2?' }],
+        });
+      });
+      await waitFor(seen);
+      await act(async () => {
+        await result.current.stop();
+        await sent;
+      });
+    };
+
+    it('keeps the Steps finished by then and the answer streamed so far', async () => {
+      stoppableRun(...orchestratedRun.slice(0, 16));
+
+      await stopOnce(() => expect(assistantContent()).toBe('Keep'));
+
+      expect(grouped()).toEqual([...ORCHESTRATED.slice(0, 3), ['output', ['output running']]]);
+      expect(assistantContent()).toBe('Keep');
+      expect(run()?.status).toBe('cancelled');
+      expect(reply()).toEqual({ status: 'stopped' });
+    });
+
+    it('drops the empty reply of a Run stopped before its first Step', async () => {
+      stoppableRun();
+
+      await stopOnce(() => expect(reply()).toEqual({ status: 'streaming' }));
+
+      expect(history().map(({ role }) => role)).toEqual(['user']);
+      expect(reply()).toEqual({ status: 'stopped' });
+    });
+
+    it('keeps the Steps of a Run stopped before it wrote any answer', async () => {
+      stoppableRun(...orchestratedRun.slice(0, 7));
+
+      await stopOnce(() => expect(run()?.steps).toHaveLength(5));
+
+      expect(grouped()).toEqual([
+        ['intake', ['language completed', 'session completed']],
+        ['turn 1', ['orchestrator running', '> analyst running', '> critic running']],
+      ]);
+      expect(run()?.status).toBe('cancelled');
+      expect(reply()).toEqual({ status: 'stopped' });
+    });
+  });
+
+  it('rebuilds the same grouping for an orchestrated Run it re-attaches to', async () => {
+    streamFrames(...orchestratedRun);
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await act(async () => {
+      await result.current.resumeStream({ sessionId: EXISTING_ID, streamId: STREAM_ID });
+    });
+
+    expect(grouped()).toEqual(ORCHESTRATED);
+    expect(history().at(-1)).toMatchObject({ content: 'Keep BullMQ.', runId: RUN_ID });
+  });
+
+  it('replays the Steps of a Run it re-attaches to', async () => {
+    streamFrames(
+      started(LANGUAGE, 'Detecting the language', { stepId: LANGUAGE }),
+      finished(LANGUAGE),
+      outputStarted(),
+      frame('token', { token: 'four' }),
+      finished(OUTPUT),
+      runFinished('completed'),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await act(async () => {
+      await result.current.resumeStream({ sessionId: EXISTING_ID, streamId: STREAM_ID });
+    });
+
+    expect(steps()).toEqual([
+      ['Detecting the language', 'completed'],
+      ['Writing the answer', 'completed'],
+    ]);
+    expect(history().at(-1)).toMatchObject({ content: 'four', runId: RUN_ID });
+    expect(run()?.status).toBe('completed');
   });
 });
 
@@ -712,6 +1423,8 @@ describe('useChatStream — send, then subscribe', () => {
           title: 'x',
           createdAt: '2026-10-20T00:00:00.000Z',
           archived: false,
+          archivedAt: null,
+          messageCount: 0,
         };
       }),
       getSendMessageMockHandler(({ params }) => {
@@ -742,17 +1455,14 @@ describe('useChatStream — send, then subscribe', () => {
     });
   });
 
-  it('keeps isStreaming true through the post-stream navigation window', async () => {
+  it('keeps the reply in flight through the post-stream navigation window', async () => {
     // Dropping it here would render a frame with no session and no stream: an empty-state flicker.
     streamFrames(frame('end', {}));
     const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
 
     await sendMessage(result);
 
-    expect(useChatStreamStore.getState()).toMatchObject({
-      isPostStreamNavigation: true,
-      isStreaming: true,
-    });
+    expect(reply()).toEqual({ status: 'navigating', end: IDLE_REPLY });
   });
 
   it('continues an active Session without creating one or navigating', async () => {
@@ -776,7 +1486,7 @@ describe('useChatStream — send, then subscribe', () => {
 
     expect(created).toBe(false);
     expect(sentTo).toBe(EXISTING_ID);
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
+    expect(inFlight()).toBe(false);
     expect(navigate).not.toHaveBeenCalled();
   });
 });
@@ -818,6 +1528,20 @@ describe('useChatStream — query cache', () => {
     expect(isInvalidated(queryClient, getListSessionsInfiniteQueryKey())).toBe(true);
     expect(isInvalidated(queryClient, getGetSessionQueryKey(EXISTING_ID))).toBe(true);
     expect(isInvalidated(queryClient, getListMessagesQueryKey())).toBe(true);
+  });
+
+  it('refetches a Run cached before it ended once the reply ends, and leaves an ended Run alone', async () => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    streamFrames(frame('token', { token: 'x' }), frame('end', {}));
+    const queryClient = createTestQueryClient();
+    queryClient.setQueryData(getGetRunQueryKey('waiting'), { finishedAt: null });
+    queryClient.setQueryData(getGetRunQueryKey('ended'), { finishedAt: '2026-10-27T21:14:41Z' });
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF), { queryClient });
+
+    await sendMessage(result);
+
+    expect(isInvalidated(queryClient, getGetRunQueryKey('waiting'))).toBe(true);
+    expect(isInvalidated(queryClient, getGetRunQueryKey('ended'))).toBe(false);
   });
 
   it('refreshes the message allowance as soon as the send is accepted', async () => {
@@ -869,16 +1593,13 @@ describe('useChatStream — query cache', () => {
 });
 
 describe('useChatStream — lifecycle', () => {
-  it('clearPostStream drops both streaming flags together', () => {
-    useChatStreamStore.setState({ isStreaming: true, isPostStreamNavigation: true });
+  it('clearPostStream settles the reply on the end it reached', () => {
+    useChatStreamStore.setState({ reply: { status: 'navigating', end: { status: 'stopped' } } });
     const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
 
     act(() => result.current.clearPostStream());
 
-    expect(useChatStreamStore.getState()).toMatchObject({
-      isStreaming: false,
-      isPostStreamNavigation: false,
-    });
+    expect(reply()).toEqual({ status: 'stopped' });
   });
 
   it('abort stops the stream without recording an error', () => {
@@ -886,8 +1607,8 @@ describe('useChatStream — lifecycle', () => {
 
     act(() => result.current.abort());
 
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
-    expect(useChatStreamStore.getState().error).toBeNull();
+    expect(inFlight()).toBe(false);
+    expect(replyError()).toBeNull();
   });
 
   it('aborting while the reply streams ends it without recording an error', async () => {
@@ -902,15 +1623,15 @@ describe('useChatStream — lifecycle', () => {
         messages: [{ id: 'u1', role: 'user', content: 'hi' }],
       });
     });
-    expect(useChatStreamStore.getState().isStreaming).toBe(true);
+    expect(inFlight()).toBe(true);
 
     act(() => result.current.abort());
     await act(async () => {
       await sent;
     });
 
-    expect(useChatStreamStore.getState().isStreaming).toBe(false);
-    expect(useChatStreamStore.getState().error).toBeNull();
+    expect(inFlight()).toBe(false);
+    expect(replyError()).toBeNull();
   });
 
   it('never opens the stream when aborted while the send is in flight', async () => {
@@ -937,5 +1658,103 @@ describe('useChatStream — lifecycle', () => {
     });
 
     expect(opened).toBe(false);
+  });
+});
+
+describe('useChatStream — a Clarifying question', () => {
+  const RUN_ID = '55555555-5555-4555-8555-555555555555';
+  const QUESTION_ID = '77777777-7777-4777-8777-777777777777';
+
+  const askRun = async (result: { current: ReturnType<typeof useChatStream> }) => {
+    await act(async () => {
+      await result.current.streamMessage({
+        model: 'gpt-4o-mini',
+        mode: 'run',
+        messages: [{ id: 'u1', role: 'user', content: 'plan my trip' }],
+      });
+    });
+  };
+
+  beforeEach(() => {
+    useChatStreamStore.setState({ sessionId: EXISTING_ID });
+    server.use(
+      getSendMessageMockHandler({ messageId: MESSAGE_ID, streamId: STREAM_ID, runId: RUN_ID }),
+    );
+  });
+
+  it('shows the question a Run pauses on as its reply, under the saved question Message’s id', async () => {
+    streamFrames(
+      frame('run-waiting', {
+        runId: RUN_ID,
+        questionMessageId: QUESTION_ID,
+        question: 'Which month are you going?',
+      }),
+      frame('end', {}),
+    );
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await askRun(result);
+
+    expect(history().at(-1)).toMatchObject({
+      id: QUESTION_ID,
+      role: 'assistant',
+      content: 'Which month are you going?',
+      runId: RUN_ID,
+    });
+    expect(reply()).toEqual(IDLE_REPLY);
+  });
+
+  it('reads past a question frame without a question', async () => {
+    streamFrames(frame('run-waiting', { runId: RUN_ID }), frame('end', {}));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await askRun(result);
+
+    expect(assistantContent()).toBe('');
+  });
+
+  it('refreshes the Session once the send is accepted, since the send may have answered its waiting Run', async () => {
+    let releaseStream: () => void = () => undefined;
+    server.use(
+      http.get(API_ROUTE.replyStream, async () => {
+        await new Promise<void>((resolve) => (releaseStream = resolve));
+        return new HttpResponse(frame('end', {}), {
+          headers: { 'Content-Type': 'text/event-stream' },
+        });
+      }),
+    );
+    const queryClient = createTestQueryClient();
+    queryClient.setQueryData(getGetSessionQueryKey(EXISTING_ID), { id: EXISTING_ID });
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF), { queryClient });
+
+    let sending: Promise<void> = Promise.resolve();
+    act(() => {
+      sending = result.current.streamMessage({
+        model: 'gpt-4o-mini',
+        messages: [{ id: 'u1', role: 'user', content: 'mid-September' }],
+      });
+    });
+
+    await waitFor(() =>
+      expect(queryClient.getQueryState(getGetSessionQueryKey(EXISTING_ID))?.isInvalidated).toBe(
+        true,
+      ),
+    );
+    expect(inFlight()).toBe(true);
+    releaseStream();
+    await act(async () => {
+      await sending;
+    });
+  });
+});
+
+describe('useChatStream — waking the worker', () => {
+  it('wakes the worker before it sends a message, so a sleeping one starts up', async () => {
+    streamFrames(frame('end', {}));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    expect(wakeWorker).toHaveBeenCalledOnce();
   });
 });

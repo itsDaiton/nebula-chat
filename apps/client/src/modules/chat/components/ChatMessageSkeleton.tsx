@@ -1,22 +1,15 @@
-import { Box, Flex, Skeleton } from '@chakra-ui/react';
 import type { ChatMessageSkeletonProps } from '@/modules/chat/types/types';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 
-export const ChatMessageSkeleton = ({ isUser = false }: ChatMessageSkeletonProps) => (
-  <Flex direction={isUser ? 'row-reverse' : 'row'} gap={4} mb={6} align="flex-start">
-    <Skeleton width="40px" height="40px" borderRadius="full" flexShrink={0} />
-    <Box
-      maxW="70%"
-      bg={isUser ? 'bg.subtle' : 'bg.input'}
-      borderRadius="lg"
-      px={4}
-      py={3}
-      borderWidth={{ base: '1px', _dark: '1.5px' }}
-      borderColor="border.default"
-      width="60%"
-    >
-      <Skeleton height="16px" width="90%" mb={2} />
-      <Skeleton height="16px" width="70%" mb={2} />
-      <Skeleton height="16px" width="85%" />
-    </Box>
-  </Flex>
-);
+export const ChatMessageSkeleton = ({ isUser = false }: ChatMessageSkeletonProps) =>
+  isUser ? (
+    <div className="mt-1.5 mb-[22px] flex justify-end">
+      <Skeleton className="h-10 w-3/5 rounded-[18px_18px_6px_18px]" />
+    </div>
+  ) : (
+    <div className="mb-[26px] space-y-2.5">
+      <Skeleton className="h-4 w-11/12" />
+      <Skeleton className="h-4 w-4/5" />
+      <Skeleton className="h-4 w-9/12" />
+    </div>
+  );

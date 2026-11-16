@@ -1,8 +1,8 @@
-import { AbsoluteCenter, Box, Button, HStack, Spinner, Stack, Text } from '@chakra-ui/react';
+import { Loader2Icon } from 'lucide-react';
 import { useRef } from 'react';
 import type { ChangeEvent } from 'react';
+import { toast } from 'sonner';
 import { useGetProfileImageSettings } from '@/libs/api/generated/profile-image/profile-image';
-import { UserAvatar } from '@/modules/auth/components/UserAvatar';
 import { SettingsRow } from '@/modules/settings/components/SettingsRow';
 import { useProfileImageRemoval } from '@/modules/settings/hooks/useProfileImageRemoval';
 import { useProfileImageUpload } from '@/modules/settings/hooks/useProfileImageUpload';
@@ -12,7 +12,9 @@ import {
   profileImageErrorMessage,
 } from '@/modules/settings/utils/profileImage';
 import { resources } from '@/resources';
-import { toaster } from '@/shared/components/ui/toaster';
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
+import { Button } from '@/shared/components/ui/button';
+import { initialsOf } from '@/shared/utils/initialsOf';
 
 const { image: copy } = resources.settings.profile;
 
@@ -33,30 +35,30 @@ export const ProfileImageSetting = ({ name, image }: ProfileImageSettingProps) =
     event.target.value = '';
     if (!file) return;
     removal.reset();
-    upload.mutate(file, {
-      onSuccess: () => toaster.create({ type: 'success', title: copy.uploaded }),
-    });
+    upload.mutate(file, { onSuccess: () => toast.success(copy.uploaded) });
   };
 
   const onRemove = () => {
     upload.reset();
-    removal.mutate(undefined, {
-      onSuccess: () => toaster.create({ type: 'success', title: copy.removed }),
-    });
+    removal.mutate(undefined, { onSuccess: () => toast.success(copy.removed) });
   };
 
   return (
     <SettingsRow label={copy.label} description={copy.description}>
-      <Stack gap={2} align={{ base: 'flex-start', md: 'flex-end' }}>
-        <HStack gap={4}>
-          <Box position="relative" aria-busy={isPending}>
-            <UserAvatar name={name} image={image} size="2xl" />
+      <div className="flex flex-col gap-2 sm:items-end">
+        <div className="flex items-center gap-3">
+          <div className="relative" aria-busy={isPending}>
+            <Avatar className="size-12">
+              {image && <AvatarImage src={image} alt={name} />}
+              <AvatarFallback>{initialsOf(name)}</AvatarFallback>
+            </Avatar>
             {upload.isPending && (
-              <AbsoluteCenter>
-                <Spinner size="sm" aria-label={copy.uploading} />
-              </AbsoluteCenter>
+              <Loader2Icon
+                aria-label={copy.uploading}
+                className="absolute inset-0 m-auto size-4 animate-spin"
+              />
             )}
-          </Box>
+          </div>
           {settings?.uploadsEnabled && (
             <>
               <input
@@ -69,7 +71,6 @@ export const ProfileImageSetting = ({ name, image }: ProfileImageSettingProps) =
               />
               <Button
                 variant="outline"
-                loading={upload.isPending}
                 disabled={isPending}
                 onClick={() => inputRef.current?.click()}
               >
@@ -79,22 +80,17 @@ export const ProfileImageSetting = ({ name, image }: ProfileImageSettingProps) =
           )}
           {/* A provider's Profile image stays removable with uploads switched off. */}
           {image && (
-            <Button
-              variant="ghost"
-              loading={removal.isPending}
-              disabled={isPending}
-              onClick={onRemove}
-            >
+            <Button variant="ghost" disabled={isPending} onClick={onRemove}>
               {copy.remove}
             </Button>
           )}
-        </HStack>
+        </div>
         {error && (
-          <Text role="alert" fontSize="sm" color="fg.error">
+          <p role="alert" className="text-sm text-destructive">
             {profileImageErrorMessage(error)}
-          </Text>
+          </p>
         )}
-      </Stack>
+      </div>
     </SettingsRow>
   );
 };
