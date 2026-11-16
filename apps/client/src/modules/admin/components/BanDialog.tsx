@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/components/ui/dialog';
+import { Field, FieldError, FieldLabel, FieldLegend, FieldSet } from '@/shared/components/ui/field';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
 
@@ -63,25 +64,23 @@ export const BanDialog = ({ user, open, onOpenChange }: BanDialogProps) => {
             <DialogTitle>{text.title(user.email)}</DialogTitle>
             <DialogDescription>{text.description}</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-1.5">
-            <label htmlFor="ban-reason" className="text-sm font-medium">
+          <Field data-invalid={Boolean(errors.reason)}>
+            <FieldLabel htmlFor="ban-reason">
               {text.reason}{' '}
               <span className="font-normal text-muted-foreground">{text.reasonHint}</span>
-            </label>
+            </FieldLabel>
             <Textarea
               id="ban-reason"
               aria-invalid={Boolean(errors.reason)}
-              aria-errormessage="ban-reason-error"
+              aria-errormessage={errors.reason ? 'ban-reason-error' : undefined}
               {...register('reason')}
             />
             {errors.reason && (
-              <p id="ban-reason-error" className="text-sm text-destructive">
-                {errors.reason.message}
-              </p>
+              <FieldError id="ban-reason-error">{errors.reason.message}</FieldError>
             )}
-          </div>
-          <fieldset className="grid gap-2">
-            <legend className="mb-1.5 text-sm font-medium">{text.duration}</legend>
+          </Field>
+          <FieldSet>
+            <FieldLegend variant="label">{text.duration}</FieldLegend>
             <div className="flex gap-4 text-sm">
               <label className="flex items-center gap-1.5">
                 <input type="radio" value="permanent" {...register('duration')} />
@@ -93,23 +92,21 @@ export const BanDialog = ({ user, open, onOpenChange }: BanDialogProps) => {
               </label>
             </div>
             {duration === 'until' && (
-              <>
+              <Field data-invalid={Boolean(errors.until)}>
                 <Input
                   type="date"
                   aria-label={text.date}
                   aria-invalid={Boolean(errors.until)}
-                  aria-errormessage="ban-until-error"
+                  aria-errormessage={errors.until ? 'ban-until-error' : undefined}
                   className="w-44"
                   {...register('until')}
                 />
                 {errors.until && (
-                  <p id="ban-until-error" className="text-sm text-destructive">
-                    {errors.until.message}
-                  </p>
+                  <FieldError id="ban-until-error">{errors.until.message}</FieldError>
                 )}
-              </>
+              </Field>
             )}
-          </fieldset>
+          </FieldSet>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => close(false)}>
               {resources.admin.users.actions.cancel}
