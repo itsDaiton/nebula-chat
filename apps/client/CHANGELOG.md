@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.14.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.14.1...nebula-chat-client-v3.14.2) (2026-11-16)
+
+
+### Bug Fixes
+
+* **client:** wake the sleeping worker from the browser ([#813](https://github.com/itsDaiton/nebula-chat/issues/813)) ([73cbb2f](https://github.com/itsDaiton/nebula-chat/commit/73cbb2f5a86851ab9991a7cc8ea8aa35e7bd52ad))
+
 ## [3.14.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.14.0...nebula-chat-client-v3.14.1) (2026-11-15)
 
 
