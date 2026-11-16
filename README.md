@@ -83,6 +83,7 @@ flowchart LR
   server -->|verification and reset email| resend
   server <-->|code exchange| oauth
   server -.->|"GET /health wake-up"| worker
+  browser -.->|"GET /health wake-up"| worker
   worker --> pg
   worker <--> redis
   worker -->|model call| llm

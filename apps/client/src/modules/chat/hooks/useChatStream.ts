@@ -21,6 +21,7 @@ import { ErrorCode } from '@/libs/api/generated/model/errorCode';
 import type { Run } from '@/libs/api/generated/model/run';
 import { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
 import type { SendMessageBodyModel } from '@/libs/api/generated/model/sendMessageBodyModel';
+import { wakeWorker } from '@/shared/utils/wakeWorker';
 import type {
   ChatHistoryStreamOptions,
   ChatMessage,
@@ -451,6 +452,8 @@ export const useChatStream = ({
           void invalidateSessionList();
         }
 
+        // A tab left open past the worker's idle sleep: only a browser's ping gets through the edge.
+        wakeWorker();
         const { streamId, runId } = await sendMessage({
           sessionId: activeSessionId,
           data: { content, mode, model: model as SendMessageBodyModel },

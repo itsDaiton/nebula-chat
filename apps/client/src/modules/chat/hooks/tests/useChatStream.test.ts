@@ -25,12 +25,14 @@ import { IDLE_REPLY, isReplyInFlight } from '@/modules/chat/utils/replyState';
 import { resources } from '@/resources';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { mockReplyStream, sseFrame as frame } from '@/test/chat';
+import { wakeWorker } from '@/shared/utils/wakeWorker';
 import { server } from '@/test/msw';
 import { createTestQueryClient, renderHookWithQueryClient } from '@/test/render';
 
 const navigate = vi.fn();
 
 vi.mock('@tanstack/react-router', () => ({ useNavigate: () => navigate }));
+vi.mock('@/shared/utils/wakeWorker', () => ({ wakeWorker: vi.fn() }));
 
 const NEW_SESSION_ID = '11111111-1111-4111-8111-111111111111';
 const MESSAGE_ID = '22222222-2222-4222-8222-222222222222';
@@ -1743,5 +1745,16 @@ describe('useChatStream — a Clarifying question', () => {
     await act(async () => {
       await sending;
     });
+  });
+});
+
+describe('useChatStream — waking the worker', () => {
+  it('wakes the worker before it sends a message, so a sleeping one starts up', async () => {
+    streamFrames(frame('end', {}));
+    const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF));
+
+    await sendMessage(result);
+
+    expect(wakeWorker).toHaveBeenCalledOnce();
   });
 });
