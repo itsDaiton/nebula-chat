@@ -33,7 +33,7 @@ export const listAuditQuerySchema = z.object({
   order: z
     .enum(AUDIT_ORDERS)
     .default('desc')
-    .describe('Sort by time: `desc` newest first (default)'),
+    .describe('Sort by time: `desc` newest first (default) or `asc` oldest first'),
 });
 
 const auditEntrySchema = z

@@ -53,7 +53,7 @@ export type ListAuditEntriesParams = {
    */
   cursor?: string;
   /**
-   * Sort by time: `desc` newest first (default)
+   * Sort by time: `desc` newest first (default) or `asc` oldest first
    */
   order?: ListAuditEntriesOrder;
 };

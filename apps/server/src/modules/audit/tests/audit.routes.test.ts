@@ -100,11 +100,15 @@ describe('GET /api/admin/audit', () => {
     expect(second).toMatchObject({ actorName: null, targetLabel: null });
   });
 
-  it('passes the order to the repository', async () => {
-    const res = await app.inject({ method: 'GET', url: `${ROUTE}?order=asc`, headers: COOKIE });
+  it('passes the order and the cursor to the repository', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: `${ROUTE}?order=asc&cursor=${ENTRY_ID}`,
+      headers: COOKIE,
+    });
 
     expect(res.statusCode).toBe(200);
-    expect(repo.list).toHaveBeenCalledWith({}, 10, 'asc', undefined);
+    expect(repo.list).toHaveBeenCalledWith({}, 10, 'asc', ENTRY_ID);
   });
 
   it('filters by actor, action, target and time range, from a cursor', async () => {
