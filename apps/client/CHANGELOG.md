@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.16.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.15.1...nebula-chat-client-v3.16.0) (2026-11-16)
+
+
+### Features
+
+* **client:** NEB-568 add StackedAreaChart wrapper on TanStack Charts ([#838](https://github.com/itsDaiton/nebula-chat/issues/838)) ([2021a9a](https://github.com/itsDaiton/nebula-chat/commit/2021a9abb29cfb37ae22814e716007eb3b04c03a))
+
 ## [3.15.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.15.0...nebula-chat-client-v3.15.1) (2026-11-16)
 
 
