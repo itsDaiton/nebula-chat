@@ -2,7 +2,7 @@ import { and, asc, desc, eq, gt, isNotNull, isNull, lt, ne, or, sql } from 'driz
 import { sessions, users } from '@nebula-chat/db';
 import { auth } from '@server/auth';
 import { db } from '@server/db';
-import type { AdminRole, UserFilters } from '@server/modules/admin/admin.types';
+import type { AdminRole, SessionFilters, UserFilters } from '@server/modules/admin/admin.types';
 
 const userColumns = {
   id: users.id,
@@ -56,6 +56,11 @@ const adminSessionColumns = {
   messageCount: sql<number>`(select count(*)::int from "messages" where "messages"."session_id" = "sessions"."id")`,
   createdAt: sessions.createdAt,
   updatedAt: sessions.updatedAt,
+};
+
+const sessionSearchFilter = (search: string) => {
+  const escaped = search.replace(/[\\%_]/g, String.raw`\$&`);
+  return sql`${sessions.title} ilike ${`%${escaped}%`}`;
 };
 
 const isGuest = sql`coalesce(${users.isAnonymous}, false)`;
@@ -218,6 +223,46 @@ export const adminRepository = {
       .from(sessions)
       .where(and(eq(sessions.userId, userId), cursorFilter))
       .orderBy(desc(sessions.createdAt), desc(sessions.id))
+      .limit(limit + 1);
+
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, -1) : rows;
+    const nextCursor = hasMore ? (page.at(-1)?.id ?? null) : null;
+
+    return { sessions: page, nextCursor, hasMore };
+  },
+  // Listing is not a content read, so it is not audited; archived Sessions are included unless filtered out.
+  async listSessions(filters: SessionFilters, limit: number, cursor?: string) {
+    const after = filters.order === 'asc' ? sql.raw('>') : sql.raw('<');
+    // Compared in SQL against the cursor row, so no timestamp is rounded to milliseconds on the way through JS.
+    const cursorFilter = cursor
+      ? sql`(${sessions.updatedAt}, ${sessions.id}) ${after} (select ${sessions.updatedAt}, ${sessions.id} from ${sessions} where ${sessions.id} = ${cursor})`
+      : undefined;
+    let archivedFilter;
+    if (filters.archived !== undefined) {
+      archivedFilter = filters.archived
+        ? isNotNull(sessions.archivedAt)
+        : isNull(sessions.archivedAt);
+    }
+
+    const direction = filters.order === 'asc' ? asc : desc;
+    const rows = await db
+      .select({
+        ...adminSessionColumns,
+        owner: { id: users.id, name: users.name, email: users.email },
+      })
+      .from(sessions)
+      .innerJoin(users, eq(users.id, sessions.userId))
+      .where(
+        and(
+          filters.search ? sessionSearchFilter(filters.search) : undefined,
+          filters.userId ? eq(sessions.userId, filters.userId) : undefined,
+          filters.model ? eq(sessions.model, filters.model) : undefined,
+          archivedFilter,
+          cursorFilter,
+        ),
+      )
+      .orderBy(direction(sessions.updatedAt), direction(sessions.id))
       .limit(limit + 1);
 
     const hasMore = rows.length > limit;

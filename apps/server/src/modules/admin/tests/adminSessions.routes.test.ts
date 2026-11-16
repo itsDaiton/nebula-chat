@@ -15,6 +15,7 @@ vi.mock('@server/modules/admin/admin.repository', () => ({
     findModerationTarget: vi.fn(),
     listUserSessions: vi.fn(),
     findSession: vi.fn(),
+    listSessions: vi.fn(),
   },
 }));
 
@@ -50,6 +51,7 @@ const CREATED_AT = new Date('2026-09-01T08:00:00.000Z');
 const UPDATED_AT = new Date('2026-09-02T09:00:00.000Z');
 const USER_SESSIONS = `/api/admin/users/${USER_ID}/sessions`;
 const SESSION = `/api/admin/sessions/${SESSION_ID}`;
+const SESSIONS = '/api/admin/sessions';
 
 const aSession = (overrides: Record<string, unknown> = {}) => ({
   id: SESSION_ID,
@@ -101,6 +103,89 @@ beforeEach(() => {
   repo.findSession.mockResolvedValue(fromPartial(aSession()));
   messages.findAll.mockResolvedValue(fromPartial([aMessage()]));
   audit.insert.mockResolvedValue(undefined);
+});
+
+describe('GET /api/admin/sessions', () => {
+  const OWNER = { id: USER_ID, name: 'Anna', email: 'anna@example.com' };
+
+  beforeEach(() => {
+    repo.listSessions.mockResolvedValue({
+      sessions: [{ ...aSession({ archived: true }), owner: OWNER }],
+      nextCursor: SESSION_ID,
+      hasMore: true,
+    } as never);
+  });
+
+  it('lists Sessions across Users with their owner, and writes no Audit entry', async () => {
+    const res = await app.inject({ method: 'GET', url: `${SESSIONS}?limit=5`, headers: COOKIE });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      sessions: [
+        {
+          id: SESSION_ID,
+          title: 'Planning',
+          model: 'gpt-4o-mini',
+          archived: true,
+          messageCount: 2,
+          createdAt: '2026-09-01T08:00:00.000Z',
+          updatedAt: '2026-09-02T09:00:00.000Z',
+          owner: OWNER,
+        },
+      ],
+      nextCursor: SESSION_ID,
+      hasMore: true,
+    });
+    expect(repo.listSessions).toHaveBeenCalledWith({ order: 'desc' }, 5, undefined);
+    expect(audit.insert).not.toHaveBeenCalled();
+  });
+
+  it('passes the search, owner, Model, archived, order and cursor filters on', async () => {
+    const query = new URLSearchParams({
+      search: 'plan',
+      userId: USER_ID,
+      model: 'gpt-4o-mini',
+      archived: 'false',
+      order: 'asc',
+      cursor: SESSION_ID,
+    });
+
+    const res = await app.inject({ method: 'GET', url: `${SESSIONS}?${query}`, headers: COOKIE });
+
+    expect(res.statusCode).toBe(200);
+    expect(repo.listSessions).toHaveBeenCalledWith(
+      { search: 'plan', userId: USER_ID, model: 'gpt-4o-mini', archived: false, order: 'asc' },
+      expect.any(Number),
+      SESSION_ID,
+    );
+  });
+
+  it('rejects a malformed owner id and an unknown order', async () => {
+    for (const query of ['userId=nope', 'order=sideways', 'archived=maybe']) {
+      const res = await app.inject({ method: 'GET', url: `${SESSIONS}?${query}`, headers: COOKIE });
+      expect(res.statusCode).toBe(400);
+    }
+    expect(repo.listSessions).not.toHaveBeenCalled();
+  });
+
+  it('refuses a non-Admin and an Admin without two-factor', async () => {
+    mockedGetSession.mockResolvedValue(registeredSession() as never);
+    expect((await app.inject({ method: 'GET', url: SESSIONS, headers: COOKIE })).statusCode).toBe(
+      403,
+    );
+
+    mockedGetSession.mockResolvedValue(adminWithout2FASession() as never);
+    const res = await app.inject({ method: 'GET', url: SESSIONS, headers: COOKIE });
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toMatchObject({ error: 'TwoFactorRequired' });
+    expect(repo.listSessions).not.toHaveBeenCalled();
+  });
+
+  it('refuses a request without a session', async () => {
+    mockedGetSession.mockResolvedValue(null as never);
+
+    expect((await app.inject({ method: 'GET', url: SESSIONS })).statusCode).toBe(401);
+  });
 });
 
 describe('GET /api/admin/users/:id/sessions', () => {

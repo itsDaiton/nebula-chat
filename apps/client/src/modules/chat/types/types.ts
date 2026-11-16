@@ -88,6 +88,8 @@ export type ChatMessageProps = {
   onRegenerate?: () => void;
   /** The reply is still arriving, so there is nothing to copy or regenerate yet. */
   isStreaming?: boolean;
+  /** An Admin's view of someone else's Session: no Run controls, no regenerate. */
+  readOnly?: boolean;
 };
 
 export type RunChipProps = {
@@ -249,6 +251,7 @@ export type ChatMessageListProps = {
   /** The newest reply was stopped by the User, so a note follows the thread. */
   isReplyStopped?: boolean;
   onRegenerate?: (prompt: string) => void;
+  readOnly?: boolean;
 };
 
 export type ModelState = {

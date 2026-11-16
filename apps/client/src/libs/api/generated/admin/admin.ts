@@ -22,12 +22,14 @@ import type {
 
 import type {
   AdminSessionDetail,
+  AdminSessionListPage,
   AdminSessionPage,
   AdminUserDetail,
   AdminUserPage,
   AuditPage,
   BanUserBody,
   ErrorEnvelope,
+  ListAllSessionsParams,
   ListAuditEntriesParams,
   ListUserSessionsParams,
   ListUsersParams,
@@ -757,6 +759,125 @@ export const useUnbanUser = <TError = ErrorType<ErrorEnvelope | unknown>, TConte
 > => {
   return useMutation(getUnbanUserMutationOptions(options), queryClient);
 };
+/**
+ * List Sessions across all Users, most recently active first by default, filtered by a title search, owner, Model and archived state, a page at a time. Listing is not a content read, so nothing is audited. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary List Sessions
+ */
+export const listAllSessions = (
+  params?: ListAllSessionsParams,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<AdminSessionListPage>(
+    { url: `/api/admin/sessions`, method: 'GET', params, signal },
+    options,
+  );
+};
+
+export const getListAllSessionsQueryKey = (params?: ListAllSessionsParams) => {
+  return [`/api/admin/sessions`, ...(params ? [params] : [])] as const;
+};
+
+export const getListAllSessionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listAllSessions>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListAllSessionsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAllSessions>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListAllSessionsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listAllSessions>>> = ({ signal }) =>
+    listAllSessions(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listAllSessions>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListAllSessionsQueryResult = NonNullable<Awaited<ReturnType<typeof listAllSessions>>>;
+export type ListAllSessionsQueryError = ErrorType<ErrorEnvelope>;
+
+export function useListAllSessions<
+  TData = Awaited<ReturnType<typeof listAllSessions>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params: undefined | ListAllSessionsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAllSessions>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAllSessions>>,
+          TError,
+          Awaited<ReturnType<typeof listAllSessions>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListAllSessions<
+  TData = Awaited<ReturnType<typeof listAllSessions>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListAllSessionsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAllSessions>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAllSessions>>,
+          TError,
+          Awaited<ReturnType<typeof listAllSessions>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListAllSessions<
+  TData = Awaited<ReturnType<typeof listAllSessions>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListAllSessionsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAllSessions>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary List Sessions
+ */
+
+export function useListAllSessions<
+  TData = Awaited<ReturnType<typeof listAllSessions>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListAllSessionsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAllSessions>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListAllSessionsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 /**
  * Read any Session with all its Messages, oldest first, and record the read in the Audit log. If the Audit entry cannot be written the request fails. Requires an Admin whose auth session passed two-factor authentication.
  * @summary Read a Session

@@ -6,6 +6,9 @@
  */
 
 export * from './adminSessionDetail';
+export * from './adminSessionListItem';
+export * from './adminSessionListItemOwner';
+export * from './adminSessionListPage';
 export * from './adminSessionPage';
 export * from './adminSessionSummary';
 export * from './adminUserDetail';
@@ -27,6 +30,9 @@ export * from './createSessionBody';
 export * from './errorCode';
 export * from './errorEnvelope';
 export * from './health';
+export * from './listAllSessionsArchived';
+export * from './listAllSessionsOrder';
+export * from './listAllSessionsParams';
 export * from './listAuditEntriesAction';
 export * from './listAuditEntriesActorType';
 export * from './listAuditEntriesParams';

@@ -10,3 +10,13 @@ export const formatUserDay = (iso: string) => shortMonth(day.format(new Date(iso
 
 /** `21 Oct 2026`, in the viewer's time zone. */
 export const formatUserDate = (iso: string) => shortMonth(date.format(new Date(iso)));
+
+const dateTime = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
+/** `25 Oct, 09:14`, in the viewer's time zone. */
+export const formatUserDateTime = (iso: string) => shortMonth(dateTime.format(new Date(iso)));
