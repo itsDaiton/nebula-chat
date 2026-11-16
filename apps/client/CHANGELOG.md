@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.14.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.14.4...nebula-chat-client-v3.14.5) (2026-11-16)
+
+
+### Bug Fixes
+
+* **client:** make header brand link back to chat root ([#826](https://github.com/itsDaiton/nebula-chat/issues/826)) ([fa2e0c5](https://github.com/itsDaiton/nebula-chat/commit/fa2e0c5785142db2a549afe16785478db6922da1))
+
 ## [3.14.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.14.3...nebula-chat-client-v3.14.4) (2026-11-16)
 
 
