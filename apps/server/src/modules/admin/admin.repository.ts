@@ -60,7 +60,8 @@ const adminSessionColumns = {
 
 const sessionSearchFilter = (search: string) => {
   const escaped = search.replace(/[\\%_]/g, String.raw`\$&`);
-  return sql`${sessions.title} ilike ${`%${escaped}%`}`;
+  const pattern = `%${escaped}%`;
+  return sql`${sessions.title} ilike ${pattern}`;
 };
 
 const isGuest = sql`coalesce(${users.isAnonymous}, false)`;
