@@ -18,7 +18,7 @@ export const SessionOwnerFilter = ({ userId, onClear }: SessionOwnerFilterProps)
     >
       <span className="inline-flex h-full items-center gap-1.5 px-2.5 [&_svg]:size-3.5 [&_svg]:text-muted-foreground">
         <UserIcon />
-        {`${text.owner}: ${data?.name ?? userId}`}
+        {text.ownerIs(data?.name ?? userId)}
       </span>
     </AuditFilterChip>
   );

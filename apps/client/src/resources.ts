@@ -443,6 +443,7 @@ export const resources = {
       },
       filter: {
         owner: 'Owner',
+        ownerIs: (name: string) => `Owner: ${name}`,
         model: 'Model',
         archived: 'Archived',
         archivedOnly: 'Archived',

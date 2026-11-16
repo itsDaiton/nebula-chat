@@ -20,8 +20,7 @@ export const AdminLayout = () => {
   return (
     <AppShell
       renderLeftPanel={(onNavigate) => <AdminNav onNavigate={onNavigate} />}
-      // The Users page keeps its open User in the URL; the other tables keep their row in the store.
-      // An open Session's owner and metadata also sit on the right.
+      // Users and an open Session keep theirs in the URL; the other tables keep their row in the store.
       renderRightPanel={(onClose) => {
         if (isTranscript) return <SessionMetaPanel onClose={onClose} />;
         if (pathname === '/admin/users') return <UserDetailPanel onClose={onClose} />;

@@ -188,9 +188,7 @@ describe('Sessions page', () => {
       order: 'asc',
     });
     expect(screen.getByRole('searchbox', { name: text.search })).toHaveValue('trip');
-    expect(
-      await screen.findByText(new RegExp(`${text.filter.owner}: ${owner.name}`)),
-    ).toBeVisible();
+    expect(await screen.findByText(text.filter.ownerIs(owner.name))).toBeVisible();
   });
 
   it('searches once typing pauses, writing it to the URL', async () => {
