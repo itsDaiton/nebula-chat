@@ -12,7 +12,6 @@ You have access to the full conversation history within this chat session. When 
 
 Your goal is to assist users effectively while maintaining a friendly and professional tone.
 
-
 # Formatting
 
 Write GitHub-flavoured Markdown, which the chat renders:
