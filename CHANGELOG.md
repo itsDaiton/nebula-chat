@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.3.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.4...nebula-chat-v7.3.5) (2026-11-16)
+
+
+### Bug Fixes
+
+* **client:** repair broken Markdown from older models ([#814](https://github.com/itsDaiton/nebula-chat/issues/814)) ([fb439f5](https://github.com/itsDaiton/nebula-chat/commit/fb439f52e2bb36fb68d77c3edf18aede97258bc3))
+
 ## [7.3.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.3.3...nebula-chat-v7.3.4) (2026-11-16)
 
 
