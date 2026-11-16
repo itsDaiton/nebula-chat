@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.22.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.22.1...nebula-chat-server-v4.22.2) (2026-11-16)
+
+
+### Bug Fixes
+
+* **server:** qualify columns in admin user list subqueries ([#811](https://github.com/itsDaiton/nebula-chat/issues/811)) ([74606df](https://github.com/itsDaiton/nebula-chat/commit/74606df09ab07cda7e32a5602f6d603d10391496))
+
 ## [4.22.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.22.0...nebula-chat-server-v4.22.1) (2026-11-15)
 
 
