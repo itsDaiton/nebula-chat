@@ -9,6 +9,7 @@ import {
 import type { UsageDetail } from '@/libs/api/generated/model/usageDetail';
 import type { UsageSeries } from '@/libs/api/generated/model/usageSeries';
 import type { UsageTotals } from '@/libs/api/generated/model/usageTotals';
+import { useUsageTableStore } from '@/modules/admin/stores/useUsageTableStore';
 import { useUsageHoverStore } from '@/modules/admin/stores/useUsageHoverStore';
 import { resources } from '@/resources';
 import { usePanelStore } from '@/shared/stores/usePanelStore';
@@ -108,6 +109,7 @@ beforeEach(() => {
   );
   usePanelStore.setState({ leftOpen: true, rightOpen: true, sheetOpen: false });
   useUsageHoverStore.setState({ day: null });
+  useUsageTableStore.setState({ asTable: false });
   stubViewport();
 });
 

@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import { InfoIcon } from 'lucide-react';
-import { useState } from 'react';
 import { getGetModelUsageTotalsQueryOptions } from '@/libs/api/generated/admin/admin';
 import { AdminPageTitle } from '@/modules/admin/components/AdminPageTitle';
 import { UsageChartCard } from '@/modules/admin/components/UsageChartCard';
@@ -10,6 +9,7 @@ import { UsageTable } from '@/modules/admin/components/UsageTable';
 import { UsageTiles } from '@/modules/admin/components/UsageTiles';
 import { UsageToolbar } from '@/modules/admin/components/UsageToolbar';
 import { useUsageSeries } from '@/modules/admin/hooks/useUsageSeries';
+import { useUsageTableStore } from '@/modules/admin/stores/useUsageTableStore';
 import { useUsageHoverStore } from '@/modules/admin/stores/useUsageHoverStore';
 import type { UsageSearch } from '@/modules/admin/types/types';
 import { highlightedKey, rankRows, resolveUsageSearch } from '@/modules/admin/utils/usageData';
@@ -32,7 +32,8 @@ export const UsagePage = () => {
   );
   const hoveredDay = useUsageHoverStore((state) => state.day);
   const setDay = useUsageHoverStore((state) => state.setDay);
-  const [asTable, setAsTable] = useState(false);
+  const asTable = useUsageTableStore((state) => state.asTable);
+  const toggleTable = useUsageTableStore((state) => state.toggle);
 
   const change = (next: UsageSearch) =>
     void navigate({ search: (previous) => ({ ...previous, ...next }), replace: true });
@@ -92,7 +93,7 @@ export const UsagePage = () => {
                 type="button"
                 aria-pressed={asTable}
                 className="underline underline-offset-2 hover:text-foreground focus-visible:outline-none"
-                onClick={() => setAsTable((current) => !current)}
+                onClick={toggleTable}
               >
                 {asTable ? text.viewAsChart : text.viewAsTable}
               </button>

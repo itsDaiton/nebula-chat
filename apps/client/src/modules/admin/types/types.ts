@@ -281,7 +281,7 @@ export type UsageParams = {
   pinned: string | undefined;
 };
 
-export type UsageSegmentOption<T extends string> = { value: T; label: string };
+type UsageSegmentOption<T extends string> = { value: T; label: string };
 
 export type UsageSegmentedProps<T extends string> = {
   label: string;
@@ -351,6 +351,8 @@ export type UsageTableProps = {
 export type UsageDetailBodyProps = { detail: UsageDetail };
 
 export type UsageHoverState = { day: string | null; setDay: (day: string | null) => void };
+
+export type UsageTableState = { asTable: boolean; toggle: () => void };
 
 export type UsageDetailPanelProps = { onClose: () => void };
 

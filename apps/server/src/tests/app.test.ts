@@ -109,6 +109,9 @@ describe('OpenAPI document', () => {
       'SessionSearchResult',
       'Step',
       'UnmeteredMessageAllowance',
+      'UsageDetail',
+      'UsageSeries',
+      'UsageTotals',
     ]);
   });
 
