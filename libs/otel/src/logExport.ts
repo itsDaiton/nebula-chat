@@ -1,6 +1,5 @@
-import { context, ROOT_CONTEXT } from '@opentelemetry/api';
-import { logs, SeverityNumber } from '@opentelemetry/api-logs';
-import type { AnyValueMap } from '@opentelemetry/api-logs';
+import { context, logs, ROOT_CONTEXT, SeverityNumber } from '@opentelemetry/api';
+import type { AnyValue } from '@opentelemetry/api';
 import { ExportResultCode } from '@opentelemetry/core';
 import type { ExportResult } from '@opentelemetry/core';
 import type { LogRecordExporter, ReadableLogRecord } from '@opentelemetry/sdk-logs';
@@ -38,7 +37,7 @@ const NOT_ATTRIBUTES = new Set([
   'pid',
 ]);
 
-type PinoLine = AnyValueMap & { level: number; time: number; msg?: string };
+type PinoLine = Record<string, AnyValue> & { level: number; time: number; msg?: string };
 
 /**
  * Feeds each serialized (so already redacted) line to the global logger provider

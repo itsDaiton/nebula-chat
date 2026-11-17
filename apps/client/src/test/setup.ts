@@ -65,6 +65,16 @@ beforeAll(() => {
     },
   );
 
+  // shiki gunzips its inlined WASM through `Blob#stream`, which jsdom's Blob lacks.
+  Blob.prototype.stream ??= function stream(this: Blob) {
+    return new ReadableStream<Uint8Array<ArrayBuffer>>({
+      start: async (controller) => {
+        controller.enqueue(new Uint8Array(await this.arrayBuffer()));
+        controller.close();
+      },
+    });
+  };
+
   window.HTMLElement.prototype.scrollIntoView = vi.fn();
   // input-otp probes for a password manager's badge at a point on the page, which jsdom can't hit-test.
   document.elementFromPoint = vi.fn(() => null);
