@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.10.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.10.0...nebula-chat-v7.10.1) (2026-11-17)
+
+
+### Bug Fixes
+
+* accept ADR-0026 and ADR-0030 after the Model usage epic ([#879](https://github.com/itsDaiton/nebula-chat/issues/879)) ([4c40177](https://github.com/itsDaiton/nebula-chat/commit/4c4017703cf5110690106f1b7c9da6e5bff90e05))
+
 ## [7.10.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.9.1...nebula-chat-v7.10.0) (2026-11-17)
 
 
