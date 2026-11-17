@@ -255,9 +255,7 @@ describe('the account footer', () => {
       await screen.findByRole('menuitem', { name: resources.userMenu.settings }),
     ).toBeVisible();
     expect(screen.getByRole('menuitem', { name: resources.auth.actions.signOut })).toBeVisible();
-    expect(
-      screen.queryByRole('menuitem', { name: resources.userMenu.openAdmin }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /^Admin/ })).not.toBeInTheDocument();
   });
 
   it('offers an Admin the way into the dashboard', async () => {
@@ -265,8 +263,6 @@ describe('the account footer', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: resources.userMenu.label }));
 
-    expect(
-      await screen.findByRole('menuitem', { name: resources.userMenu.openAdmin }),
-    ).toBeVisible();
+    expect(await screen.findByRole('menuitem', { name: /^Admin/ })).toBeVisible();
   });
 });

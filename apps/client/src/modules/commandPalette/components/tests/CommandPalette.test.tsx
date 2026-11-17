@@ -253,17 +253,13 @@ describe('the command palette', () => {
   it('offers Open admin to Admins only', async () => {
     const { unmount } = await renderApp(aSession({ isAnonymous: false, role: 'admin' }));
     await openPalette();
-    expect(
-      screen.getByRole('option', { name: resources.commandPalette.openAdmin }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /^Admin/ })).toBeInTheDocument();
     unmount();
     useSearchStore.setState({ isSearchOpen: false });
 
     await renderApp(aSession({ isAnonymous: false }));
     await openPalette();
 
-    expect(
-      screen.queryByRole('option', { name: resources.commandPalette.openAdmin }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /^Admin/ })).not.toBeInTheDocument();
   });
 });
