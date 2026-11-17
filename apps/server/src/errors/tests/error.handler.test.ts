@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
   AppError,
+  ERROR_MESSAGE,
   errorEnvelopeSchema,
   GENERIC_ERROR_MESSAGE,
   MessageAllowanceReachedError,
@@ -98,28 +99,62 @@ describe('errorHandler', () => {
       ]);
     });
 
-    it.each([
-      ['an AppError', new NotFoundError('Session', 'abc')],
-      ['a schema-validation failure', validationError()],
-      ['a mapped Postgres constraint violation', pgError('23505')],
-      ['a framework 4xx', Object.assign(new Error('Unsupported Media Type'), { statusCode: 415 })],
-    ])('writes no line for %s, a client error', (_label, err) => {
-      const { reply, lines } = createReply();
+    it.each([['an AppError', new NotFoundError('Session', 'abc')]])(
+      'writes no line for %s, a client error whose message is its own',
+      (_label, err) => {
+        const { reply, lines } = createReply();
 
-      errorHandler(err, request, reply);
+        errorHandler(err, request, reply);
 
-      expect(lines).toEqual([]);
-    });
+        expect(lines).toEqual([]);
+      },
+    );
   });
 
-  it('maps a schema-validation failure onto 400 Validation', () => {
+  it('maps a schema-validation failure onto 400 Validation with a fixed message', () => {
     const sent = handle(validationError());
 
     expect(sent.status).toBe(400);
     expect(sent.body).toEqual({
       success: false,
       error: 'Validation',
-      message: 'body/title Invalid input',
+      message: 'The request is invalid.',
+    });
+  });
+
+  it('never leaks a schema path or enum list to the client', () => {
+    const err = Object.assign(
+      new Error('body/model Invalid option: expected one of "gpt-4o"|"gpt-5"'),
+      { validation: validationError().validation, statusCode: 400 },
+    );
+
+    expect(JSON.stringify(handle(err).body)).not.toMatch(/body\/model|gpt-4o|expected one of/);
+  });
+
+  describe('a withheld client-error message', () => {
+    it.each([
+      ['a schema-validation failure', validationError(), 'body/title Invalid input'],
+      [
+        'a framework 4xx',
+        Object.assign(new Error('Unsupported Media Type'), { statusCode: 415 }),
+        'Unsupported Media Type',
+      ],
+      ['a mapped Postgres constraint violation', pgError('23505'), 'db said no'],
+    ])('is logged once at warn for %s, with the original as err', (_label, err, original) => {
+      const { reply, lines } = createReply();
+
+      errorHandler(err, request, reply);
+
+      expect(lines).toEqual([
+        expect.objectContaining({
+          level: LEVEL.warn,
+          'event.name': 'http.request.rejected',
+          'nebula.component': 'http',
+          'http.response.status_code': expect.any(Number),
+          'url.path': '/api/sessions',
+          err: expect.objectContaining({ message: original }),
+        }),
+      ]);
     });
   });
 
@@ -183,7 +218,7 @@ describe('errorHandler', () => {
     });
   });
 
-  it('classifies a client error that carries a statusCode by that status, keeping its message', () => {
+  it('classifies a client error that carries a statusCode by that status, with the code fixed message', () => {
     const sent = handle(
       Object.assign(new Error('Rate limit exceeded, retry in 1 minute'), { statusCode: 429 }),
     );
@@ -192,7 +227,7 @@ describe('errorHandler', () => {
     expect(sent.body).toEqual({
       success: false,
       error: 'TooManyRequests',
-      message: 'Rate limit exceeded, retry in 1 minute',
+      message: ERROR_MESSAGE.TooManyRequests,
     });
   });
 
@@ -210,7 +245,7 @@ describe('errorHandler', () => {
     expect(sent.body).toEqual({
       success: false,
       error: 'BadRequest',
-      message: 'Unsupported Media Type',
+      message: ERROR_MESSAGE.BadRequest,
     });
   });
 

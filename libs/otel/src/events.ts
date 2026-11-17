@@ -7,6 +7,7 @@ export const LOG_EVENTS = [
   'http.request.received',
   'http.request.completed',
   'http.request.failed',
+  'http.request.rejected',
   // Chat
   'chat.reply.completed',
   'chat.run.completed',
