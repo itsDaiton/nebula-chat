@@ -1,5 +1,5 @@
 import type { AdminOverview } from '@/libs/api/generated/model/adminOverview';
-import type { OverviewDelta } from '@/modules/admin/types/types';
+import type { OverviewDelta, OverviewTileData } from '@/modules/admin/types/types';
 
 const count = new Intl.NumberFormat('en-US');
 
@@ -25,13 +25,6 @@ const pointDelta = (current: number | null, previous: number | null): OverviewDe
   if (current === null || previous === null) return null;
   const points = Number(((current - previous) * 100).toFixed(1));
   return { direction: direction(points), text: `${Math.abs(points).toFixed(1)} pt` };
-};
-
-export type OverviewTileData = {
-  id: keyof AdminOverview['kpis'];
-  value: string;
-  delta: OverviewDelta | null;
-  series: number[];
 };
 
 export const overviewTiles = ({ kpis }: AdminOverview): OverviewTileData[] => {

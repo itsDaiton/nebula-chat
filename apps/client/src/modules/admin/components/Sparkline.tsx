@@ -4,7 +4,7 @@ const WIDTH = 110;
 const HEIGHT = 34;
 const PAD = 2;
 
-/** Interim inline trend line; the chart wrapper replaces it. */
+// Inline until the chart wrapper exists.
 export const Sparkline = ({ values, label }: SparklineProps) => {
   const max = Math.max(...values, 0);
   const min = Math.min(...values, 0);

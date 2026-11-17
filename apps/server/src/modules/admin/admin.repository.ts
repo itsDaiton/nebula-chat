@@ -129,7 +129,7 @@ export const adminRepository = {
           group by 1`),
         countsByDay(sql`
           select to_char(d, 'YYYY-MM-DD') as day, count(distinct s.user_id)::int as count
-          from generate_series(${from}::date, ${to}::date, interval '1 day') as d
+          from generate_series(${from}::timestamp, ${to}::timestamp, interval '1 day') as d
           left join messages m on m.role = 'user'
             and m.created_at >= d - interval '6 days' and m.created_at < d + interval '1 day'
           left join sessions s on s.id = m.session_id

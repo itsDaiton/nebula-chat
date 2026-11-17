@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import type { QueryKey, UseQueryOptions } from '@tanstack/react-query';
 import type { ColumnDef, RowData } from '@tanstack/react-table';
 import type { adminTableFeatures } from '@/modules/admin/utils/adminTableFeatures';
+import type { AdminOverview } from '@/libs/api/generated/model/adminOverview';
 import type { AuditEntry } from '@/libs/api/generated/model/auditEntry';
 import type { AuditEntryActorType } from '@/libs/api/generated/model/auditEntryActorType';
 import type { AdminUserDetail } from '@/libs/api/generated/model/adminUserDetail';
@@ -228,6 +229,13 @@ export type UserActionState = {
 };
 
 export type OverviewDelta = { direction: 'up' | 'down' | 'flat'; text: string };
+
+export type OverviewTileData = {
+  id: keyof AdminOverview['kpis'];
+  value: string;
+  delta: OverviewDelta | null;
+  series: number[];
+};
 
 export type OverviewTileProps = {
   label: string;
