@@ -10,8 +10,7 @@ import {
 import { render, type RenderOptions, type RenderResult } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { SESSION_BOOTSTRAP_KEY } from '@/modules/auth/utils/sessionBootstrap';
-import { createAppRouter } from '@/routing/router';
-import type { AppRouter } from '@/routing/types/types';
+import { createAppRouter, type AppRouter } from '@/routing/router';
 import { createTestQueryClient, renderWithProviders } from '@/test/render';
 
 type Options = Omit<RenderOptions, 'wrapper'> & {

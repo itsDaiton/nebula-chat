@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import type { AppearanceState } from '@/modules/settings/types/types';
+import type { AppearanceState } from '@/shared/types/types';
 import { safeStorage } from '@/shared/utils/safeStorage';
 
 export const APPEARANCE_STORAGE_KEY = 'nebula-appearance';

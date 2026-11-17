@@ -1,41 +1,5 @@
 [
   {
-    "type": "dependency",
-    "from": "apps/client/src/shared/hooks/useKeyboardHandler.ts",
-    "to": "apps/client/src/modules/chat/types/types.ts",
-    "unresolvedTo": "@/modules/chat/types/types",
-    "dependencyTypes": [
-      "aliased",
-      "aliased-tsconfig",
-      "aliased-tsconfig-paths",
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "client-shared-not-modules"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "apps/client/src/shared/stores/useAppearanceStore.ts",
-    "to": "apps/client/src/modules/settings/types/types.ts",
-    "unresolvedTo": "@/modules/settings/types/types",
-    "dependencyTypes": [
-      "aliased",
-      "aliased-tsconfig",
-      "aliased-tsconfig-paths",
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "client-shared-not-modules"
-    }
-  },
-  {
     "type": "cycle",
     "from": "apps/cli/src/api/admin.ts",
     "to": "apps/cli/src/context.ts",
@@ -268,7 +232,13 @@
     "from": "apps/cli/src/commands/logLevel.ts",
     "to": "apps/cli/src/api/operator.ts",
     "unresolvedTo": "@cli/api/operator",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "no-circular"
@@ -427,7 +397,13 @@
     "from": "apps/cli/src/commands/users.ts",
     "to": "apps/cli/src/api/admin.ts",
     "unresolvedTo": "@cli/api/admin",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "no-circular"
@@ -572,90 +548,6 @@
   },
   {
     "type": "cycle",
-    "from": "apps/client/src/modules/auth/types/types.ts",
-    "to": "apps/client/src/modules/auth/utils/authSchemas.ts",
-    "unresolvedTo": "@/modules/auth/utils/authSchemas",
-    "dependencyTypes": [
-      "aliased",
-      "aliased-tsconfig",
-      "aliased-tsconfig-paths",
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      {
-        "name": "apps/client/src/modules/auth/utils/authSchemas.ts",
-        "dependencyTypes": [
-          "aliased",
-          "aliased-tsconfig",
-          "aliased-tsconfig-paths",
-          "local",
-          "type-only",
-          "import"
-        ]
-      },
-      {
-        "name": "apps/client/src/modules/auth/types/types.ts",
-        "dependencyTypes": [
-          "aliased",
-          "aliased-tsconfig",
-          "aliased-tsconfig-paths",
-          "local",
-          "type-only",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "apps/client/src/routing/router.ts",
-    "to": "apps/client/src/routing/types/types.ts",
-    "unresolvedTo": "@/routing/types/types",
-    "dependencyTypes": [
-      "aliased",
-      "aliased-tsconfig",
-      "aliased-tsconfig-paths",
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      {
-        "name": "apps/client/src/routing/types/types.ts",
-        "dependencyTypes": [
-          "aliased",
-          "aliased-tsconfig",
-          "aliased-tsconfig-paths",
-          "local",
-          "type-only",
-          "import"
-        ]
-      },
-      {
-        "name": "apps/client/src/routing/router.ts",
-        "dependencyTypes": [
-          "aliased",
-          "aliased-tsconfig",
-          "aliased-tsconfig-paths",
-          "local",
-          "type-only",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
     "from": "apps/worker/src/runs/delegateTool.ts",
     "to": "apps/worker/src/runs/runGraph.ts",
     "unresolvedTo": "@worker/runs/runGraph",
@@ -721,7 +613,13 @@
     "from": "apps/worker/src/runs/orchestrator.ts",
     "to": "apps/worker/src/runs/delegateTool.ts",
     "unresolvedTo": "@worker/runs/delegateTool",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "no-circular"
