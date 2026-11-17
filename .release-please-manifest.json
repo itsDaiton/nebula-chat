@@ -10,5 +10,5 @@
   "libs/errors": "0.2.6",
   "apps/cli": "1.12.1",
   "libs/contracts": "1.9.0",
-  "apps/worker": "2.0.1"
+  "apps/worker": "2.0.2"
 }

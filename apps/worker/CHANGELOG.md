@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v2.0.1...nebula-chat-worker-v2.0.2) (2026-11-17)
+
+
+### Bug Fixes
+
+* **worker:** move RunModels and LoopEnding to break the runs cycle ([#856](https://github.com/itsDaiton/nebula-chat/issues/856)) ([d05a348](https://github.com/itsDaiton/nebula-chat/commit/d05a34824be858ea26a948c4ea8cc9291f4430ac))
+
 ## [2.0.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v2.0.0...nebula-chat-worker-v2.0.1) (2026-11-16)
 
 
