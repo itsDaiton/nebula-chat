@@ -14,7 +14,7 @@ import type { StructuredCall } from '@worker/llm/structuredOutput';
 import type { CallUsage } from '@worker/modelCalls/recordModelCall';
 import type { Brief } from '@worker/runs/brief';
 import type { RunStore } from '@worker/runs/executeRun';
-import type { RunModels } from '@worker/runs/runGraph';
+import type { RunModels } from '@worker/runs/delegateTool';
 import type { StepStore } from '@worker/runs/steps';
 
 type StoredRun = {

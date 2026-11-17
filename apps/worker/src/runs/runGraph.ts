@@ -1,4 +1,3 @@
-import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { HumanMessage, mergeUsageMetadata, SystemMessage } from '@langchain/core/messages';
 import type { BaseMessage, UsageMetadata } from '@langchain/core/messages';
 import { Annotation, END, messagesStateReducer, START, StateGraph } from '@langchain/langgraph';
@@ -16,21 +15,13 @@ import type { HistoryMessage } from '@worker/directReplies/streamChat';
 import { toCallUsage } from '@worker/llm/callUsage';
 import { llmConcurrencyLimiter } from '@worker/llm/concurrencyLimiter';
 import { countTokens } from '@worker/llm/countTokens';
-import type { LLMConfig } from '@worker/llm/createLLM';
-import type { StructuredCall } from '@worker/llm/structuredOutput';
 import { buildBrief } from '@worker/runs/brief';
 import type { Brief, IntakeOutputs } from '@worker/runs/brief';
 import { createOrchestrator } from '@worker/runs/orchestrator';
-import type { LoopEnding, OrchestratorDeps } from '@worker/runs/orchestrator';
+import type { OrchestratorDeps } from '@worker/runs/orchestrator';
 import { findingsOf } from '@worker/runs/findings';
+import type { LoopEnding } from '@worker/runs/findings';
 import { runModelStep } from '@worker/runs/steps';
-
-/** The model layer a Run calls through; tests script both. */
-export type RunModels = {
-  structured: StructuredCall;
-  /** A chat model: tool-calling for the Orchestrator, plain for a delegate, streaming for the Output Agent. */
-  chat: (config: LLMConfig) => BaseChatModel;
-};
 
 export type RunGraphDeps = OrchestratorDeps & {
   saveBrief: (brief: Brief) => Promise<void>;
