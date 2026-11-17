@@ -186,13 +186,7 @@
     "from": "apps/worker/src/runs/orchestrator.ts",
     "to": "apps/worker/src/runs/delegateTool.ts",
     "unresolvedTo": "@worker/runs/delegateTool",
-    "dependencyTypes": [
-      "aliased",
-      "aliased-tsconfig",
-      "aliased-tsconfig-paths",
-      "local",
-      "import"
-    ],
+    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
     "rule": {
       "severity": "error",
       "name": "no-circular"
