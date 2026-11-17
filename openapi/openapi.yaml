@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nebula Chat API
-  version: 4.21.1
+  version: 4.22.0
   description: REST API for Nebula Chat
   contact:
     name: Nebula Chat
@@ -1036,7 +1036,9 @@ components:
                     - total
                     - values
                   additionalProperties: false
-                description: The Models grouped into `other`, largest first; empty otherwise
+                description: >-
+                  The Models grouped into `other`, largest first; empty
+                  otherwise
             required:
               - key
               - kind
@@ -1044,7 +1046,8 @@ components:
               - values
               - members
             additionalProperties: false
-          description: The Run series, the top 8 Models and the rest as `other`, largest
+          description: >-
+            The Run series, the top 8 Models and the rest as `other`, largest
             first
       required:
         - metric
@@ -3079,13 +3082,14 @@ paths:
       summary: Get Model usage per day
       tags:
         - Admin
-      description: 'One value per UTC day (today included, zeros filled in) for each
-        Model, for the last 7, 14, 30 or 90 days. `prompts` counts user
-        Messages: a reply is attributed to its Session’s Model and a Message
-        that started a Run counts once, in the `run` series. `tokens` and
-        `spend` sum Model calls per Model that served them. Only the top 8
-        Models are listed; the rest are grouped as `other`. Requires an Admin
-        whose auth session passed two-factor authentication.'
+      description: >-
+        One value per UTC day (today included, zeros filled in) for each Model,
+        for the last 7, 14, 30 or 90 days. `prompts` counts user Messages: a
+        reply is attributed to its Session’s Model and a Message that started a
+        Run counts once, in the `run` series. `tokens` and `spend` sum Model
+        calls per Model that served them. Only the top 8 Models are listed; the
+        rest are grouped as `other`. Requires an Admin whose auth session passed
+        two-factor authentication.
       parameters:
         - schema:
             default: prompts
@@ -3098,8 +3102,9 @@ paths:
           name: metric
         - schema:
             default: 30d
-            description: How many UTC days back, today included; the period before it is the
-              comparison
+            description: >-
+              How many UTC days back, today included; the period before it is
+              the comparison
             type: string
             enum:
               - 7d
@@ -3108,11 +3113,13 @@ paths:
               - 90d
           in: query
           name: range
-          description: How many UTC days back, today included; the period before it is the
+          description: >-
+            How many UTC days back, today included; the period before it is the
             comparison
         - schema:
             default: all
-            description: Only Guests, only Registered users, or both; calls of a deleted
+            description: >-
+              Only Guests, only Registered users, or both; calls of a deleted
               User count under `all` only
             type: string
             enum:
@@ -3121,10 +3128,12 @@ paths:
               - registered
           in: query
           name: audience
-          description: Only Guests, only Registered users, or both; calls of a deleted
-            User count under `all` only
+          description: >-
+            Only Guests, only Registered users, or both; calls of a deleted User
+            count under `all` only
         - schema:
-            description: Only these Model ids, as a repeated key; `run` selects the Run
+            description: >-
+              Only these Model ids, as a repeated key; `run` selects the Run
               series
             minItems: 1
             maxItems: 50
@@ -3135,7 +3144,9 @@ paths:
               maxLength: 100
           in: query
           name: models
-          description: Only these Model ids, as a repeated key; `run` selects the Run series
+          description: >-
+            Only these Model ids, as a repeated key; `run` selects the Run
+            series
       responses:
         '200':
           description: Per-day series per Model
@@ -3156,7 +3167,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
-          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: >-
+            Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
@@ -3174,9 +3186,10 @@ paths:
       summary: Get one Model’s usage on a day
       tags:
         - Admin
-      description: 'One Model on one UTC day: averages per Model call, cache replays,
+      description: >-
+        One Model on one UTC day: averages per Model call, cache replays,
         completion rate and duration, with its Prompts trend over the range.
-        Requires an Admin whose auth session passed two-factor authentication.'
+        Requires an Admin whose auth session passed two-factor authentication.
       parameters:
         - schema:
             type: string
@@ -3190,7 +3203,8 @@ paths:
         - schema:
             type: string
             format: date
-            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+            pattern: >-
+              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
             description: The UTC day, `YYYY-MM-DD`
           in: query
           name: day
@@ -3210,7 +3224,8 @@ paths:
           description: How many UTC days the trend covers, ending today
         - schema:
             default: all
-            description: Only Guests, only Registered users, or both; calls of a deleted
+            description: >-
+              Only Guests, only Registered users, or both; calls of a deleted
               User count under `all` only
             type: string
             enum:
@@ -3219,8 +3234,9 @@ paths:
               - registered
           in: query
           name: audience
-          description: Only Guests, only Registered users, or both; calls of a deleted
-            User count under `all` only
+          description: >-
+            Only Guests, only Registered users, or both; calls of a deleted User
+            count under `all` only
       responses:
         '200':
           description: The Model’s day
@@ -3239,7 +3255,8 @@ paths:
             application/json:
               schema: {}
         '403':
-          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: >-
+            Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
@@ -3255,14 +3272,16 @@ paths:
       summary: Get Model usage totals
       tags:
         - Admin
-      description: Totals over the range with those of the period just before it, for
+      description: >-
+        Totals over the range with those of the period just before it, for
         deltas. Requires an Admin whose auth session passed two-factor
         authentication.
       parameters:
         - schema:
             default: 30d
-            description: How many UTC days back, today included; the period before it is the
-              comparison
+            description: >-
+              How many UTC days back, today included; the period before it is
+              the comparison
             type: string
             enum:
               - 7d
@@ -3271,11 +3290,13 @@ paths:
               - 90d
           in: query
           name: range
-          description: How many UTC days back, today included; the period before it is the
+          description: >-
+            How many UTC days back, today included; the period before it is the
             comparison
         - schema:
             default: all
-            description: Only Guests, only Registered users, or both; calls of a deleted
+            description: >-
+              Only Guests, only Registered users, or both; calls of a deleted
               User count under `all` only
             type: string
             enum:
@@ -3284,8 +3305,9 @@ paths:
               - registered
           in: query
           name: audience
-          description: Only Guests, only Registered users, or both; calls of a deleted
-            User count under `all` only
+          description: >-
+            Only Guests, only Registered users, or both; calls of a deleted User
+            count under `all` only
       responses:
         '200':
           description: Range totals
@@ -3304,7 +3326,8 @@ paths:
             application/json:
               schema: {}
         '403':
-          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: >-
+            Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:

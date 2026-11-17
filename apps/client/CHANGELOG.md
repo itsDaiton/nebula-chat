@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.20.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.19.1...nebula-chat-client-v3.20.0) (2026-11-17)
+
+
+### Features
+
+* **client:** NEB-569 admin Model usage page ([#871](https://github.com/itsDaiton/nebula-chat/issues/871)) ([f935960](https://github.com/itsDaiton/nebula-chat/commit/f9359608e5ef335a74593ab9150f8a0c44fa3d25))
+
 ## [3.19.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.19.0...nebula-chat-client-v3.19.1) (2026-11-17)
 
 

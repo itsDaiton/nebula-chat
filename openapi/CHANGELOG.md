@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.22.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.21.1...nebula-chat-openapi-v4.22.0) (2026-11-17)
+
+
+### Features
+
+* **client:** NEB-569 admin Model usage page ([#871](https://github.com/itsDaiton/nebula-chat/issues/871)) ([f935960](https://github.com/itsDaiton/nebula-chat/commit/f9359608e5ef335a74593ab9150f8a0c44fa3d25))
+
 ## [4.21.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.21.0...nebula-chat-openapi-v4.21.1) (2026-11-17)
 
 
