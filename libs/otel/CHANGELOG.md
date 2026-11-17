@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.14.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.14.1...nebula-chat-otel-v2.14.2) (2026-11-17)
+
+
+### Bug Fixes
+
+* **server:** stop leaking schema and framework error text to the client ([#874](https://github.com/itsDaiton/nebula-chat/issues/874)) ([bca61b1](https://github.com/itsDaiton/nebula-chat/commit/bca61b11aa420a559c3906b25c955990e2b14312))
+
 ## [2.14.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.14.0...nebula-chat-otel-v2.14.1) (2026-11-10)
 
 
