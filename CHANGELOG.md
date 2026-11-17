@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.9.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.9.0...nebula-chat-v7.9.1) (2026-11-17)
+
+
+### Bug Fixes
+
+* **server:** stop leaking schema and framework error text to the client ([#874](https://github.com/itsDaiton/nebula-chat/issues/874)) ([bca61b1](https://github.com/itsDaiton/nebula-chat/commit/bca61b11aa420a559c3906b25c955990e2b14312))
+
 ## [7.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.8.2...nebula-chat-v7.9.0) (2026-11-17)
 
 
