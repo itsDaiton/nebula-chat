@@ -3,6 +3,7 @@ import { RequestValidationError } from 'fastify-zod-openapi';
 import {
   AppError,
   ConflictError,
+  ERROR_MESSAGE,
   errorCodeForStatus,
   isAppError,
   ValidationError,
@@ -42,21 +43,26 @@ const isRequestValidationFailure = (err: Error): boolean => {
   );
 };
 
+const pgMapper = (err: Error) => {
+  const { code } = err as { code?: unknown };
+  return typeof code === 'string' ? PG_ERRORS[code] : undefined;
+};
+
 const toAppError = (err: Error): AppError => {
   if (isAppError(err)) {
     return err;
   }
   if (isRequestValidationFailure(err)) {
-    return new ValidationError(err.message, { cause: err });
+    // The Zod message names schema paths and enum values; the client gets a fixed one.
+    return new ValidationError(ERROR_MESSAGE.Validation, { cause: err });
   }
-  const { code } = err as { code?: unknown };
-  const pgError = typeof code === 'string' ? PG_ERRORS[code] : undefined;
+  const pgError = pgMapper(err);
   if (pgError) {
     return pgError(err);
   }
-  // A framework error is classified by its status. A 4xx message is written
-  // for the caller; anything else lands on Internal, whose message is withheld.
-  return new AppError(errorCodeForStatus(ownStatus(err) ?? 500), err.message, { cause: err });
+  // A framework error is classified by its status and answered with that code's fixed message.
+  const frameworkCode = errorCodeForStatus(ownStatus(err) ?? 500);
+  return new AppError(frameworkCode, ERROR_MESSAGE[frameworkCode], { cause: err });
 };
 
 /**
@@ -86,8 +92,8 @@ export const logRequestFailed = (
 };
 
 /**
- * Classifies, then logs once, here: a 5xx writes one `http.request.failed` `error` line, a 4xx writes none.
- * Either way the code is recorded, so `http.request.completed` names it.
+ * Logs once, here: a 5xx as `http.request.failed`, a 4xx whose Zod or framework message was withheld as
+ * `http.request.rejected` (`warn`); the code is always recorded for `http.request.completed`.
  */
 export const errorHandler = (err: Error, req: FastifyRequest, reply: FastifyReply): void => {
   const appError = toAppError(err);
@@ -97,6 +103,20 @@ export const errorHandler = (err: Error, req: FastifyRequest, reply: FastifyRepl
 
   if (status >= 500) {
     logRequestFailed(err, req, reply, appError.code, status);
+  } else if (appError !== err && !pgMapper(err)) {
+    logEvent(
+      componentLogger(reply.log, 'http'),
+      'warn',
+      'http.request.rejected',
+      {
+        err,
+        'error.type': appError.code,
+        'http.request.method': req.method,
+        'url.path': requestPath(req),
+        'http.response.status_code': status,
+      },
+      `${req.method} ${requestPath(req)} rejected · ${appError.code}`,
+    );
   }
 
   reply.status(status).send(appError.toEnvelope());

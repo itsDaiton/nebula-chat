@@ -161,7 +161,9 @@ once, and nobody else does:
 - **HTTP.** `errors/error.handler.ts` classifies first. A 5xx writes one `error`
   line, `http.request.failed`, with the thrown error as `err` and its code as
   `error.type` (`Internal` for anything unclassified). A 4xx writes **nothing**:
-  the caller was told, and it is not a fault. Either way the code is recorded,
+  the caller was told, and it is not a fault. The exception is a 4xx whose message the handler replaced
+  (a Zod or framework message; a mapped Postgres error keeps its own safe message and writes nothing): one `warn` line,
+  `http.request.rejected`, keeps the original as `err`, so the detail the client no longer sees is not lost. Either way the code is recorded,
   so the request's `http.request.completed` line names it as `error.type`
   (`NotFound`, `Validation`, …). A Postgres constraint violation mapped to
   `Conflict` or `Validation` keeps the driver error as its `cause`.

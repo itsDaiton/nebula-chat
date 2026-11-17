@@ -18,7 +18,7 @@ The full conventions are in [docs/logging.md](../../docs/logging.md). The rules 
 - **Inside a request, log through `req.log`.** It carries `http.request.id`, and the User once a gate has
   run. Outside a request, use `@server/logger`. Never `console`.
 - **Log an error once, where it is handled**, under `err` (never `error`; ESLint rejects it). Code that
-  throws does not also log. A 4xx writes no line of its own.
+  throws does not also log. A 4xx writes no line of its own, except `http.request.rejected` (`warn`) when the handler withheld its message.
 - **One `info` line per unit of work** (`http.request.completed`, `chat.reply.completed`); progress inside
   it is `debug`.
 - **Never log** Message content, prompts, completions, Streaming tokens, emails, names, cookies,

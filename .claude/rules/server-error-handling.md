@@ -39,11 +39,12 @@ Throw from the service layer; the `errorHandler` exported from `errors/error.han
 - An `AppError` builds its own envelope with `toEnvelope()`. Never write an envelope literal by hand.
 - `error` is a closed union (`ErrorCode`), not a free string. `Internal` is the escape hatch for anything
   unclassified, and its message is always the generic `GENERIC_ERROR_MESSAGE`. A raw message reaches the
-  client only from a non-`Internal` `AppError`, or from a Fastify 4xx, whose message is written for the caller.
+  client only from a non-`Internal` `AppError` we wrote. A Zod or Fastify message never does: the handler
+  answers it with the code's fixed `ERROR_MESSAGE` and logs the original as `http.request.rejected` (`warn`).
 - The envelope is flat: `{ success: false, error, message }` for every code. A case the client must tell apart
   gets its own code rather than extra fields, like `MessageAllowanceReached` (a 403, like `Forbidden`).
-- The handler turns everything it catches into an `AppError`: Zod validation failures, Postgres constraint
-  codes, and framework errors (classified by their status). A framework error keeps its own status (415, 503).
+- The handler turns everything it catches into an `AppError`: Zod validation failures (fixed `Validation` message), Postgres constraint
+  codes, and framework errors (classified by their status, fixed message per code). A framework error keeps its own status (415, 503).
 - The reply stream relay hijacks its reply once the owner check has passed, so nothing after that reaches
   `errorHandler`. A reply's own failure arrives from the worker as an `error` event already carrying the
   envelope; a Redis failure mid-relay is written as an `error` event with the `Internal` envelope, then `end`.

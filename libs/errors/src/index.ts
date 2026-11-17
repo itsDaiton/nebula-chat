@@ -12,6 +12,9 @@ export type { ErrorEnvelope, ErrorCode } from './errorEnvelope';
 // Codes → HTTP statuses
 export { ERROR_STATUS, errorCodeForStatus } from './errorStatus';
 
+// Codes → the fixed message shown when a raw one is withheld
+export { ERROR_MESSAGE } from './errorMessages';
+
 // Classified error classes
 export {
   AppError,
