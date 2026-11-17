@@ -116,6 +116,10 @@ _Avoid_: Activity log, history.
 Someone running a deployment rather than using it: holds the operator token and can change operational settings, such as log levels at runtime. Not a User — an Operator owns no Sessions, and no Guest or Registered user can act as one.
 _Avoid_: Admin (an Admin is a User with elevated rights; operating is not a kind of User).
 
+**Access level**:
+Who may reach an API route, named by the actor: public (anyone, signed in or not), User (a Guest or a Registered user), Registered user, Admin, or Operator. Every route has exactly one; a User asking for another User's Session, Message or Run is told it does not exist.
+_Avoid_: Permission, role (a role is what makes a Registered user an Admin), auth level, guest route.
+
 **CLI profile**:
 A named deployment the `nebula` CLI talks to (for example `local` or `prod`): just a server URL, one of them the default. Holds no credentials; a CLI login is kept apart, keyed by the server URL.
 _Avoid_: Profile on its own (reads as a User's profile or Profile image), environment, context.
