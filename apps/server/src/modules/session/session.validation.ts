@@ -6,7 +6,7 @@ export const createSessionSchema = z.object({
   title: z.string().min(1),
 });
 
-export const SESSION_TITLE_MAX_LENGTH = 200;
+const SESSION_TITLE_MAX_LENGTH = 200;
 
 export const renameSessionSchema = z.object({
   title: z.string().trim().min(1).max(SESSION_TITLE_MAX_LENGTH),
@@ -29,7 +29,7 @@ export const sessionResponseSchema = z
   })
   .meta({ id: 'Session' });
 
-export const sessionSearchResultSchema = sessionResponseSchema
+const sessionSearchResultSchema = sessionResponseSchema
   .extend({
     snippet: z
       .string()
@@ -72,7 +72,7 @@ export const sessionDetailResponseSchema = sessionResponseSchema
   })
   .meta({ id: 'SessionDetail' });
 
-export const sessionsArraySchema = z.array(sessionResponseSchema).max(100);
+const sessionsArraySchema = z.array(sessionResponseSchema).max(100);
 
 export const sessionSearchResultsSchema = z.array(sessionSearchResultSchema).max(100);
 
