@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.24.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.24.0...nebula-chat-server-v4.24.1) (2026-11-17)
+
+
+### Bug Fixes
+
+* **server:** drop unused session validation exports ([#851](https://github.com/itsDaiton/nebula-chat/issues/851)) ([f8202ec](https://github.com/itsDaiton/nebula-chat/commit/f8202ec2c014dff2e7bf8b9c74c1d131fa0b0324))
+
 ## [4.24.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.23.0...nebula-chat-server-v4.24.0) (2026-11-17)
 
 
