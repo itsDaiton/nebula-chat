@@ -255,6 +255,9 @@ export const overviewSchema = z
       ),
       newRegistrations: kpiSchema,
       messagesSent: kpiSchema,
+      estimatedSpend: kpiSchema.describe(
+        'Estimated USD from the Model call ledger, summed over each day of the range',
+      ),
       guestConversion: z.object({
         conversions: z.number(),
         previousConversions: z.number(),

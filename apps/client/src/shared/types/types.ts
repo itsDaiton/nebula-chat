@@ -115,6 +115,19 @@ export type StackedAreaChartProps = {
   renderTooltip?: (context: ChartTooltipContext) => ReactNode;
 };
 
+export type TrendSeries = { key: string; label: string; values: readonly number[] };
+
+export type TrendChartProps = {
+  days: readonly string[];
+  series: readonly [TrendSeries] | readonly [TrendSeries, TrendSeries];
+  height?: number;
+  ariaLabel: string;
+  formatValue?: (value: number) => string;
+  formatDate?: (date: string) => string;
+};
+
+export type SparklineProps = { values: readonly number[]; label: string };
+
 export type ShareBarProps = { share: number; active?: boolean };
 
 type AppearanceFont = 'geist' | 'system';

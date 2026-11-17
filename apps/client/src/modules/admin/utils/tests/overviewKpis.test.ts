@@ -12,6 +12,7 @@ const overview = (guestConversion: AdminOverview['kpis']['guestConversion']): Ad
     weeklyActiveUsers: kpi(1082, 1082),
     newRegistrations: kpi(3, 0),
     messagesSent: kpi(50, 100),
+    estimatedSpend: kpi(142.8, 121.8),
     guestConversion,
   },
 });
@@ -38,6 +39,13 @@ describe('overviewTiles', () => {
     expect(byId(tiles, 'weeklyActiveUsers').delta).toEqual({ direction: 'flat', text: '0.0%' });
     expect(byId(tiles, 'messagesSent').delta).toEqual({ direction: 'down', text: '50.0%' });
     expect(byId(tiles, 'weeklyActiveUsers').value).toBe('1,082');
+  });
+
+  it('formats estimated spend in dollars and compares it with the previous period', () => {
+    expect(byId(tiles, 'estimatedSpend')).toMatchObject({
+      value: '$142.80',
+      delta: { direction: 'up', text: '17.2%' },
+    });
   });
 
   it('shows a fractional count to one decimal instead of rounding it away', () => {

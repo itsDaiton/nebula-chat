@@ -1,6 +1,6 @@
-import { Sparkline } from '@/modules/admin/components/Sparkline';
 import type { OverviewTileProps } from '@/modules/admin/types/types';
 import { resources } from '@/resources';
+import { Sparkline } from '@/shared/components/charts/Sparkline';
 import { cn } from '@/shared/utils/cn';
 
 const text = resources.admin.overview;

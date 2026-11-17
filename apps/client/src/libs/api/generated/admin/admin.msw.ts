@@ -60,6 +60,13 @@ export const getGetAdminOverviewResponseMock = (
         () => faker.number.float({ fractionDigits: 2 }),
       ),
     },
+    estimatedSpend: {
+      total: faker.number.float({ fractionDigits: 2 }),
+      previousTotal: faker.number.float({ fractionDigits: 2 }),
+      series: Array.from({ length: faker.number.int({ min: 1, max: 90 }) }, (_, i) => i + 1).map(
+        () => faker.number.float({ fractionDigits: 2 }),
+      ),
+    },
     guestConversion: {
       conversions: faker.number.float({ fractionDigits: 2 }),
       previousConversions: faker.number.float({ fractionDigits: 2 }),

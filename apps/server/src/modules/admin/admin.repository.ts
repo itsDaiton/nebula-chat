@@ -120,7 +120,7 @@ const countsByDay = async (query: ReturnType<typeof sql>): Promise<DayCount[]> =
 
 export const adminRepository = {
   async overviewCounts(from: string, to: string): Promise<OverviewCounts> {
-    const [dailyActive, weeklyActive, registrations, conversions, guests, messages] =
+    const [dailyActive, weeklyActive, registrations, conversions, guests, messages, spend] =
       await Promise.all([
         countsByDay(sql`
           select to_char(m.created_at, 'YYYY-MM-DD') as day, count(distinct s.user_id)::int as count
@@ -157,8 +157,14 @@ export const adminRepository = {
           from messages
           where role = 'user' and created_at >= ${from}::timestamp and created_at < (${to}::date + 1)::timestamp
           group by 1`),
+        // `count` carries estimated USD here, summed from the Model call ledger.
+        countsByDay(sql`
+          select to_char(created_at, 'YYYY-MM-DD') as day, sum(cost_usd)::float8 as count
+          from model_calls
+          where created_at >= ${from}::timestamp and created_at < (${to}::date + 1)::timestamp
+          group by 1`),
       ]);
-    return { dailyActive, weeklyActive, registrations, conversions, guests, messages };
+    return { dailyActive, weeklyActive, registrations, conversions, guests, messages, spend };
   },
   async findUserByEmail(email: string) {
     const [row] = await db.select(userColumns).from(users).where(eq(users.email, email));

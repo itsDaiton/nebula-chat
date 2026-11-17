@@ -30,6 +30,7 @@ const anOverview = (overrides: Partial<AdminOverview> = {}): AdminOverview => ({
     weeklyActiveUsers: kpi(1082, 1000),
     newRegistrations: kpi(96, 100),
     messagesSent: kpi(18240, 15000),
+    estimatedSpend: kpi(142.8, 121.8),
     guestConversion: {
       conversions: 8,
       previousConversions: 6,
@@ -117,6 +118,12 @@ describe('Overview page', () => {
     expect(tile(text.tiles.guestConversion)).toHaveTextContent('6.8%');
     expect(tile(text.tiles.guestConversion)).toHaveTextContent('▲ 0.9 pt');
     expect(tile(text.tiles.messagesSent)).toHaveTextContent('18,240');
+    const spend = tile(text.tiles.estimatedSpend);
+    expect(spend).toHaveTextContent('$142.80');
+    expect(spend).toHaveTextContent('▲ 17.2%');
+    expect(
+      within(spend).getByRole('img', { name: text.trend(text.tiles.estimatedSpend) }),
+    ).toBeInTheDocument();
   });
 
   it('switches the range through the URL and the request', async () => {

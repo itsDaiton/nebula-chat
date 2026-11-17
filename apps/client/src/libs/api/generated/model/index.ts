@@ -8,6 +8,7 @@
 export * from './adminOverview';
 export * from './adminOverviewKpis';
 export * from './adminOverviewKpisDailyActiveUsers';
+export * from './adminOverviewKpisEstimatedSpend';
 export * from './adminOverviewKpisGuestConversion';
 export * from './adminOverviewKpisMessagesSent';
 export * from './adminOverviewKpisNewRegistrations';

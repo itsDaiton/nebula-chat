@@ -210,6 +210,7 @@ export const adminService = {
         },
         newRegistrations: summed(counts.registrations),
         messagesSent: summed(counts.messages),
+        estimatedSpend: summed(counts.spend),
         guestConversion: {
           conversions: conversions.total,
           previousConversions: conversions.previousTotal,

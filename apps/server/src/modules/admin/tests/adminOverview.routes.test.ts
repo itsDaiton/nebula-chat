@@ -42,6 +42,7 @@ beforeEach(() => {
     conversions: [],
     guests: [],
     messages: [],
+    spend: [],
   });
 });
 
@@ -55,6 +56,7 @@ describe('GET /api/admin/overview', () => {
     expect(body.days).toHaveLength(30);
     expect(Object.keys(body.kpis).sort()).toEqual([
       'dailyActiveUsers',
+      'estimatedSpend',
       'guestConversion',
       'messagesSent',
       'newRegistrations',

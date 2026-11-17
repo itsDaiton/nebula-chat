@@ -1,4 +1,5 @@
 import type { AdminOverview } from '@/libs/api/generated/model/adminOverview';
+import { formatSpend } from '@/modules/admin/utils/usageFormat';
 import type { OverviewDelta, OverviewTileData } from '@/modules/admin/types/types';
 
 const count = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 });
@@ -49,5 +50,11 @@ export const overviewTiles = ({ kpis }: AdminOverview): OverviewTileData[] => {
       series: guestConversion.series,
     },
     counted('messagesSent'),
+    {
+      id: 'estimatedSpend',
+      value: formatSpend(kpis.estimatedSpend.total),
+      delta: percentDelta(kpis.estimatedSpend.total, kpis.estimatedSpend.previousTotal),
+      series: kpis.estimatedSpend.series,
+    },
   ];
 };

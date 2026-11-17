@@ -5,6 +5,7 @@
  * REST API for Nebula Chat
  */
 import type { AdminOverviewKpisDailyActiveUsers } from './adminOverviewKpisDailyActiveUsers';
+import type { AdminOverviewKpisEstimatedSpend } from './adminOverviewKpisEstimatedSpend';
 import type { AdminOverviewKpisGuestConversion } from './adminOverviewKpisGuestConversion';
 import type { AdminOverviewKpisMessagesSent } from './adminOverviewKpisMessagesSent';
 import type { AdminOverviewKpisNewRegistrations } from './adminOverviewKpisNewRegistrations';
@@ -17,5 +18,7 @@ export type AdminOverviewKpis = {
   weeklyActiveUsers: AdminOverviewKpisWeeklyActiveUsers;
   newRegistrations: AdminOverviewKpisNewRegistrations;
   messagesSent: AdminOverviewKpisMessagesSent;
+  /** Estimated USD from the Model call ledger, summed over each day of the range */
+  estimatedSpend: AdminOverviewKpisEstimatedSpend;
   guestConversion: AdminOverviewKpisGuestConversion;
 };
