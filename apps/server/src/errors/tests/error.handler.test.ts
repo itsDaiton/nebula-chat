@@ -99,16 +99,13 @@ describe('errorHandler', () => {
       ]);
     });
 
-    it.each([['an AppError', new NotFoundError('Session', 'abc')]])(
-      'writes no line for %s, a client error whose message is its own',
-      (_label, err) => {
-        const { reply, lines } = createReply();
+    it('writes no line for an AppError, a client error whose message is its own', () => {
+      const { reply, lines } = createReply();
 
-        errorHandler(err, request, reply);
+      errorHandler(new NotFoundError('Session', 'abc'), request, reply);
 
-        expect(lines).toEqual([]);
-      },
-    );
+      expect(lines).toEqual([]);
+    });
   });
 
   it('maps a schema-validation failure onto 400 Validation with a fixed message', () => {
@@ -131,6 +128,14 @@ describe('errorHandler', () => {
     expect(JSON.stringify(handle(err).body)).not.toMatch(/body\/model|gpt-4o|expected one of/);
   });
 
+  it('writes no line for a mapped Postgres violation, whose message is already safe', () => {
+    const { reply, lines } = createReply();
+
+    errorHandler(pgError('23505'), request, reply);
+
+    expect(lines).toEqual([]);
+  });
+
   describe('a withheld client-error message', () => {
     it.each([
       ['a schema-validation failure', validationError(), 'body/title Invalid input'],
@@ -139,7 +144,6 @@ describe('errorHandler', () => {
         Object.assign(new Error('Unsupported Media Type'), { statusCode: 415 }),
         'Unsupported Media Type',
       ],
-      ['a mapped Postgres constraint violation', pgError('23505'), 'db said no'],
     ])('is logged once at warn for %s, with the original as err', (_label, err, original) => {
       const { reply, lines } = createReply();
 
@@ -150,6 +154,8 @@ describe('errorHandler', () => {
           level: LEVEL.warn,
           'event.name': 'http.request.rejected',
           'nebula.component': 'http',
+          'error.type': expect.any(String),
+          'http.request.method': 'GET',
           'http.response.status_code': expect.any(Number),
           'url.path': '/api/sessions',
           err: expect.objectContaining({ message: original }),
