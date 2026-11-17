@@ -122,8 +122,11 @@ describe('a 4xx', () => {
     const res = await app.inject({ method: 'GET', url: '/api/sessions/not-a-uuid' });
 
     expect(res.statusCode).toBe(400);
-    expect(atInfo()).toEqual([
+    expect(eventLines(atInfo(), 'http.request.completed')).toEqual([
       expect.objectContaining({ 'http.response.status_code': 400, 'error.type': 'Validation' }),
+    ]);
+    expect(eventLines(atInfo(), 'http.request.rejected')).toEqual([
+      expect.objectContaining({ level: LEVEL.warn, 'error.type': 'Validation' }),
     ]);
   });
 
