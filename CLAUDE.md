@@ -42,9 +42,18 @@ These bias toward caution over speed; for trivial tasks use judgment.
 Feature or non-trivial change: **`/grill-with-docs`** → **`/to-spec`** → **`/to-tickets`** →
 **`/implement`** per ticket (drives `/tdd`, ends with `/code-review`) → **`/pr`**. Go straight to `/implement` for a
 single-session change. Incoming reports: **`/triage`**. Foggy multi-session effort: **`/wayfinder`**.
-Unsure: **`/ask-matt`**.
-Vendored skills carry local edits in `tdd` (seams don't block on confirmation) and `to-tickets` (our ticket
-template); after `npx skills@latest update`, re-apply them from the diff.
+Unsure: **`/ask-matt`**. Structural cleanup: **`/improve-codebase-architecture`** surveys for candidates;
+**`/untangle-codebase`** (user-invoked) runs the refactor itself.
+
+`pnpm skills:check` (CI) holds vendored skills to `skills-lock.json`. The CLI symlinks into the gitignored
+`.agents/skills`: replace the links with copies before committing. `tdd` (seams don't block on confirmation) and
+`to-tickets` (our ticket template) carry edits in their own text, pinned by hash in `scripts/check-skills.ts`: after
+`npx skills@latest update`, re-apply them from git history and update the hash. Lighter overrides live here:
+
+- **`untangle-codebase`:** keep the decision log in a GitHub issue and land one fix per `fix(<scope>)` PR. Its
+  Tests option never drops coverage below the gate or deletes a failing test.
+
+Skills absent from the lock (`resolving-merge-conflicts`, archived upstream, and the repo's own) are local.
 
 ## Subagents
 

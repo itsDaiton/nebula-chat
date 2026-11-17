@@ -21,7 +21,11 @@
     "knip": "knip",
     "catalog:stamp": "tsx scripts/stamp-model-catalog.ts",
     "test": "turbo run test",
-    "test:coverage": "turbo run test -- --coverage"
+    "test:coverage": "turbo run test -- --coverage",
+    "skills:check": "tsx scripts/check-skills.ts",
+    "deps:check": "depcruise apps/server/src apps/client/src apps/worker/src apps/cli/src --config .dependency-cruiser.cjs --ignore-known --output-type err",
+    "deps:baseline": "depcruise-baseline apps/server/src apps/client/src apps/worker/src apps/cli/src --config .dependency-cruiser.cjs",
+    "deps:graph": "depcruise --config .dependency-cruiser.cjs --output-type mermaid"
   },
   "dependencies": {
     "only-allow": "^1.2.2"
@@ -30,6 +34,7 @@
     "@types/node": "catalog:",
     "@typescript-eslint/eslint-plugin": "^8.71.2",
     "@typescript-eslint/parser": "^8.71.2",
+    "dependency-cruiser": "^18.7.2",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",

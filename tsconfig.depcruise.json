@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "paths": {
+      "@server/*": ["apps/server/src/*"],
+      "@worker/*": ["apps/worker/src/*"],
+      "@cli/*": ["apps/cli/src/*"],
+      "@/*": ["apps/client/src/*"]
+    }
+  }
+}

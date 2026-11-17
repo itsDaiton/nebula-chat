@@ -1,0 +1,38 @@
+name: Import boundaries
+
+# dependency-cruiser enforces the import rules in .dependency-cruiser.cjs. Violations already on main are
+# baselined, so a PR fails only on a new one. PR-only: whatever reaches main already passed here.
+on:
+  pull_request:
+    paths:
+      - apps/*/src/**
+      - .dependency-cruiser.cjs
+      - .dependency-cruiser-known-violations.json
+      - tsconfig.depcruise.json
+      - .github/workflows/import-boundaries.yml
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  import-boundaries:
+    name: Import boundaries
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Set up pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --ignore-scripts
+      - name: Check import boundaries
+        run: pnpm deps:check
