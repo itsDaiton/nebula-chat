@@ -42,9 +42,11 @@ These bias toward caution over speed; for trivial tasks use judgment.
 Feature or non-trivial change: **`/grill-with-docs`** → **`/to-spec`** → **`/to-tickets`** →
 **`/implement`** per ticket (drives `/tdd`, ends with `/code-review`) → **`/pr`**. Go straight to `/implement` for a
 single-session change. Incoming reports: **`/triage`**. Foggy multi-session effort: **`/wayfinder`**.
-Unsure: **`/ask-matt`**.
-Vendored skills carry local edits in `tdd` (seams don't block on confirmation) and `to-tickets` (our ticket
-template); after `npx skills@latest update`, re-apply them from the diff.
+Unsure: **`/ask-matt`**. Structural cleanup: **`/improve-codebase-architecture`** surveys for candidates;
+**`/untangle-codebase`** (user-invoked) runs the refactor itself.
+Vendored skills carry local edits in `tdd` (seams don't block on confirmation), `to-tickets` (our ticket
+template) and `untangle-codebase` (its "In this repo" section); after `npx skills@latest update`, re-apply them
+from the diff. The CLI now symlinks into the gitignored `.agents/skills`: replace the links with copies before committing. `resolving-merge-conflicts` was archived upstream and is kept here as a local skill.
 
 ## Subagents
 
