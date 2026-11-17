@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.9.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.8.2...nebula-chat-v7.9.0) (2026-11-17)
+
+
+### Features
+
+* **client:** NEB-569 admin Model usage page ([#871](https://github.com/itsDaiton/nebula-chat/issues/871)) ([f935960](https://github.com/itsDaiton/nebula-chat/commit/f9359608e5ef335a74593ab9150f8a0c44fa3d25))
+
 ## [7.8.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.8.1...nebula-chat-v7.8.2) (2026-11-17)
 
 

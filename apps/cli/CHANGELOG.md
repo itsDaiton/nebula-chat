@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.13.1...nebula-chat-cli-v1.14.0) (2026-11-17)
+
+
+### Features
+
+* **client:** NEB-569 admin Model usage page ([#871](https://github.com/itsDaiton/nebula-chat/issues/871)) ([f935960](https://github.com/itsDaiton/nebula-chat/commit/f9359608e5ef335a74593ab9150f8a0c44fa3d25))
+
 ## [1.13.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.13.0...nebula-chat-cli-v1.13.1) (2026-11-17)
 
 
