@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.7.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.7.4...nebula-chat-v7.7.5) (2026-11-17)
+
+
+### Bug Fixes
+
+* prefix Dependabot npm bumps with fix so they release ([#861](https://github.com/itsDaiton/nebula-chat/issues/861)) ([0c252b2](https://github.com/itsDaiton/nebula-chat/commit/0c252b225b9cb19eda4c1baaaf01a1de7e9e7cbf))
+
 ## [7.7.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.7.3...nebula-chat-v7.7.4) (2026-11-17)
 
 
