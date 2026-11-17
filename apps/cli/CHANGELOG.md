@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.12.1...nebula-chat-cli-v1.13.0) (2026-11-17)
+
+
+### Features
+
+* **server,client:** NEB-560 admin Overview with activity KPIs ([#862](https://github.com/itsDaiton/nebula-chat/issues/862)) ([2d73fe3](https://github.com/itsDaiton/nebula-chat/commit/2d73fe3dd5d52683041b5efc5743a3a56b7e1a7d))
+
 ## [1.12.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.12.0...nebula-chat-cli-v1.12.1) (2026-11-17)
 
 
