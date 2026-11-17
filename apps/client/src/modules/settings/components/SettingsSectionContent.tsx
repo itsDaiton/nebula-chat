@@ -1,7 +1,6 @@
 import { ShieldIcon } from 'lucide-react';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { AccountIdSetting } from '@/modules/settings/components/AccountIdSetting';
-import { AdminAccessNotice } from '@/modules/settings/components/AdminAccessNotice';
 import { AppearanceSetting } from '@/modules/settings/components/AppearanceSetting';
 import { ArchivedSessionsSetting } from '@/modules/settings/components/ArchivedSessionsSetting';
 import { DeleteAccountSetting } from '@/modules/settings/components/DeleteAccountSetting';
@@ -61,7 +60,6 @@ export const SettingsSectionContent = ({ section }: { section: SettingsSectionId
     case 'account':
       return (
         <div className="flex flex-col gap-4">
-          <AdminAccessNotice />
           <SettingsGroup>
             <AccountIdSetting id={user?.id ?? ''} />
             <DeleteAccountSetting />
