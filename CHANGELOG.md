@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.7.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.7.1...nebula-chat-v7.7.2) (2026-11-17)
+
+
+### Bug Fixes
+
+* **client:** NEB-830 move useChatStream logic into chat streaming helpers ([#847](https://github.com/itsDaiton/nebula-chat/issues/847)) ([c57f85d](https://github.com/itsDaiton/nebula-chat/commit/c57f85de7d2b65dc6d19b3a3f9450534d1b6329c))
+
 ## [7.7.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.7.0...nebula-chat-v7.7.1) (2026-11-17)
 
 
