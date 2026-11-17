@@ -44,9 +44,17 @@ Feature or non-trivial change: **`/grill-with-docs`** → **`/to-spec`** → **`
 single-session change. Incoming reports: **`/triage`**. Foggy multi-session effort: **`/wayfinder`**.
 Unsure: **`/ask-matt`**. Structural cleanup: **`/improve-codebase-architecture`** surveys for candidates;
 **`/untangle-codebase`** (user-invoked) runs the refactor itself.
-Vendored skills carry local edits in `tdd` (seams don't block on confirmation), `to-tickets` (our ticket
-template) and `untangle-codebase` (its "In this repo" section); after `npx skills@latest update`, re-apply them
-from the diff. The CLI now symlinks into the gitignored `.agents/skills`: replace the links with copies before committing. `resolving-merge-conflicts` was archived upstream and is kept here as a local skill.
+
+Vendored skills stay identical to `skills-lock.json` (`pnpm skills:check` in CI), so `npx skills@latest update`
+is a plain overwrite. The CLI symlinks into the gitignored `.agents/skills`: replace the links with copies before
+committing. Repo overrides live here and win over the skill text:
+
+- **`tdd`:** list the seams, but don't block on confirming them. A behavior change always ships tests (ADR-0008).
+- **`to-tickets`:** use the Ticket anatomy in `docs/agents/issue-tracker.md`, not the skill's `<issue-template>`.
+- **`untangle-codebase`:** keep the decision log in a GitHub issue and land one fix per `fix(<scope>)` PR. Its
+  Tests option never drops coverage below the gate or deletes a failing test.
+
+Skills absent from the lock (`resolving-merge-conflicts`, archived upstream, and the repo's own) are local.
 
 ## Subagents
 

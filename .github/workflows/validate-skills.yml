@@ -1,0 +1,35 @@
+name: Validate skills
+
+# Vendored skills must match skills-lock.json, so `npx skills@latest update` never silently drops a
+# repo edit; overrides live in CLAUDE.md. PR-only: whatever reaches main already passed here.
+on:
+  pull_request:
+    paths:
+      - .claude/skills/**
+      - skills-lock.json
+      - scripts/check-skills.ts
+      - .github/workflows/validate-skills.yml
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  validate-skills:
+    name: Validate skills
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version-file: '.nvmrc'
+
+      # Node runs the TypeScript directly and the script needs only node: builtins, so nothing is installed.
+      - name: Check vendored skills against the lock
+        run: node --no-warnings scripts/check-skills.ts

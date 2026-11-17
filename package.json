@@ -21,7 +21,8 @@
     "knip": "knip",
     "catalog:stamp": "tsx scripts/stamp-model-catalog.ts",
     "test": "turbo run test",
-    "test:coverage": "turbo run test -- --coverage"
+    "test:coverage": "turbo run test -- --coverage",
+    "skills:check": "tsx scripts/check-skills.ts"
   },
   "dependencies": {
     "only-allow": "^1.2.2"

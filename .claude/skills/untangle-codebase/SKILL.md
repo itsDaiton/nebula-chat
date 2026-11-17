@@ -106,18 +106,6 @@ You're done when:
 - **Keep a decision log:** compaction is less of a problem that way.
 - **Use Git as evidence:** for how often pieces change, and what changes together.
 
-**In this repo**
-
-Local edit; re-apply after `npx skills@latest update`. Where this skill and `AGENTS.md` disagree, `AGENTS.md` wins.
-
-- **Keep the decision log in a GitHub issue**, not just the conversation, so it survives sessions; for a whole-monorepo pass, map it with `/wayfinder`.
-- **One fix from step 3 per branch and PR**, titled `fix(<scope>): …`. Don't bundle fixes for different problems into one PR.
-- **Tests:** coverage stays at or above the 80% gate. Remove a test only for the reasons in step 4, never to turn a failing check green.
-- **Comments:** the `AGENTS.md` comment rule already holds; this option only enforces it.
-- **Contracts:** each `libs/*/src/index.ts`, the OpenAPI spec and Orval output are public surfaces. Change generator inputs, never generated files.
-- **Keep docs true:** a fix that moves modules updates `AGENTS.md`, `.claude/rules/` `paths:` globs, the Mermaid diagrams in `docs/architecture.md`, and writes an ADR for hard-to-reverse decisions. Run `pnpm knip` after deleting or moving files.
-- **Checks:** hand lint, typecheck and tests to the `verifier` subagent. Client `.tsx`/`.css` edits still need the redesign mockups first (see `CLAUDE.md`).
-
 <a id="decision-log-example"></a>**Decision log example**
 
 The list of problems:
