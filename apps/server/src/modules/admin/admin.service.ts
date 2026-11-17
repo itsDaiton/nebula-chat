@@ -28,6 +28,9 @@ const dayOf = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
 const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
 
+// One decimal, so a quiet range doesn't round to 0 and hide its activity.
+const mean = (values: number[]) => Math.round((sum(values) / values.length) * 10) / 10;
+
 const ratio = (conversions: number, guests: number) =>
   conversions + guests === 0 ? null : conversions / (conversions + guests);
 
@@ -196,8 +199,8 @@ export const adminService = {
       days,
       kpis: {
         dailyActiveUsers: {
-          total: Math.round(sum(daily.series) / length),
-          previousTotal: Math.round(sum(daily.previous) / length),
+          total: mean(daily.series),
+          previousTotal: mean(daily.previous),
           series: daily.series,
         },
         weeklyActiveUsers: {

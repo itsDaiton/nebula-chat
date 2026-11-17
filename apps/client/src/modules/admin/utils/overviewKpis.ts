@@ -1,7 +1,7 @@
 import type { AdminOverview } from '@/libs/api/generated/model/adminOverview';
 import type { OverviewDelta, OverviewTileData } from '@/modules/admin/types/types';
 
-const count = new Intl.NumberFormat('en-US');
+const count = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 });
 
 const direction = (change: number): OverviewDelta['direction'] => {
   if (change > 0) return 'up';

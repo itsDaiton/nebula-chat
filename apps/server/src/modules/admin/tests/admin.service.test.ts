@@ -89,6 +89,21 @@ describe('adminService.getOverview', () => {
     expect(kpis.weeklyActiveUsers.previousTotal).toBe(30);
   });
 
+  it('keeps a fractional mean of daily active Users instead of rounding it to 0', async () => {
+    repo.overviewCounts.mockResolvedValue({
+      ...empty,
+      dailyActive: [
+        { day: '2026-11-10', count: 3 },
+        { day: '2026-11-01', count: 1 },
+      ],
+    });
+
+    const { kpis } = await adminService.getOverview('7d', NOW);
+
+    expect(kpis.dailyActiveUsers.total).toBe(0.4);
+    expect(kpis.dailyActiveUsers.previousTotal).toBe(0.1);
+  });
+
   it('computes the conversion rate from conversions and the Guests still waiting', async () => {
     repo.overviewCounts.mockResolvedValue({
       ...empty,

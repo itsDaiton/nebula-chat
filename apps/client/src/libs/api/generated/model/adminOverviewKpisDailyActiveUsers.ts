@@ -6,7 +6,7 @@
  */
 
 /**
- * `total` is the mean of the daily counts
+ * `total` is the mean of the daily counts, to one decimal
  */
 export type AdminOverviewKpisDailyActiveUsers = {
   /** The value over the range */
