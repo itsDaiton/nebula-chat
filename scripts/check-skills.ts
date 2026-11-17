@@ -12,6 +12,13 @@ const LOCK_PATH = resolve(process.cwd(), 'skills-lock.json');
 const EXCLUDED_FILES = new Set(['metadata.json']);
 const EXCLUDED_DIRS = new Set(['.git', '__pycache__', '__pypackages__']);
 
+// Skills whose text must carry a repo edit: they're pinned to the patched hash, so an update that wipes
+// the edit fails here. After re-applying the edit from git history, update the hash.
+const PATCHED: Record<string, string> = {
+  tdd: 'ad0aee73bb59a9c1ebadfce8e699cc2abb1f10c262739d1bf841ce88c6c6aa7d',
+  'to-tickets': 'd8efd6b1824bee1868a96b37d26f7e2a1f3b2bb9ca7dbcaa4e8183e29be42f97',
+};
+
 const collect = (dir: string, prefix = ''): SkillFile[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const full = join(dir, entry.name);
@@ -50,10 +57,11 @@ const main = (): void => {
       problems.push(`${name} is in skills-lock.json but missing from .claude/skills`);
       continue;
     }
-    if (actual !== computedHash) {
-      problems.push(
-        `${name} differs from skills-lock.json: put repo overrides in CLAUDE.md instead`,
-      );
+    const patched = PATCHED[name];
+    if (patched && actual !== patched) {
+      problems.push(`${name} lost its repo edit: re-apply it from git history (see CLAUDE.md)`);
+    } else if (!patched && actual !== computedHash) {
+      problems.push(`${name} differs from skills-lock.json: patch it via PATCHED or revert it`);
     }
   }
 

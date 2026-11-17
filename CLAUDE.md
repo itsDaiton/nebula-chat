@@ -45,12 +45,11 @@ single-session change. Incoming reports: **`/triage`**. Foggy multi-session effo
 Unsure: **`/ask-matt`**. Structural cleanup: **`/improve-codebase-architecture`** surveys for candidates;
 **`/untangle-codebase`** (user-invoked) runs the refactor itself.
 
-Vendored skills stay identical to `skills-lock.json` (`pnpm skills:check` in CI), so `npx skills@latest update`
-is a plain overwrite. The CLI symlinks into the gitignored `.agents/skills`: replace the links with copies before
-committing. Repo overrides live here and win over the skill text:
+`pnpm skills:check` (CI) holds vendored skills to `skills-lock.json`. The CLI symlinks into the gitignored
+`.agents/skills`: replace the links with copies before committing. `tdd` (seams don't block on confirmation) and
+`to-tickets` (our ticket template) carry edits in their own text, pinned by hash in `scripts/check-skills.ts`: after
+`npx skills@latest update`, re-apply them from git history and update the hash. Lighter overrides live here:
 
-- **`tdd`:** list the seams, but don't block on confirming them. A behavior change always ships tests (ADR-0008).
-- **`to-tickets`:** use the Ticket anatomy in `docs/agents/issue-tracker.md`, not the skill's `<issue-template>`.
 - **`untangle-codebase`:** keep the decision log in a GitHub issue and land one fix per `fix(<scope>)` PR. Its
   Tests option never drops coverage below the gate or deletes a failing test.
 
