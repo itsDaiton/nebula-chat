@@ -1,6 +1,6 @@
 # ADR-0026: TanStack Charts behind an in-house chart wrapper, proven by a spike, with shadcn chart as the fallback
 
-- **Status:** Proposed — to be implemented by the usage epic, starting with a spike
+- **Status:** Accepted — the spike (NEB-568) went GO and the usage epic (NEB-533) shipped it
 - **Date:** 2026-10-18
 - **Deciders:** @itsDaiton
 
