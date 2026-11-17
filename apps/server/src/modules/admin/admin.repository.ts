@@ -2,7 +2,13 @@ import { and, asc, desc, eq, gt, isNotNull, isNull, lt, ne, or, sql } from 'driz
 import { sessions, users } from '@nebula-chat/db';
 import { auth } from '@server/auth';
 import { db } from '@server/db';
-import type { AdminRole, SessionFilters, UserFilters } from '@server/modules/admin/admin.types';
+import type {
+  AdminRole,
+  DayCount,
+  OverviewCounts,
+  SessionFilters,
+  UserFilters,
+} from '@server/modules/admin/admin.types';
 
 const userColumns = {
   id: users.id,
@@ -106,7 +112,54 @@ const searchFilter = (search: string) => {
   return or(sql`${users.name} ilike ${pattern}`, sql`${users.email} ilike ${pattern}`);
 };
 
+// Days are UTC `YYYY-MM-DD`, both ends inclusive; the timestamp columns hold UTC.
+const countsByDay = async (query: ReturnType<typeof sql>): Promise<DayCount[]> => {
+  const { rows } = await db.execute<DayCount>(query);
+  return rows;
+};
+
 export const adminRepository = {
+  async overviewCounts(from: string, to: string): Promise<OverviewCounts> {
+    const [dailyActive, weeklyActive, registrations, conversions, guests, messages] =
+      await Promise.all([
+        countsByDay(sql`
+          select to_char(m.created_at, 'YYYY-MM-DD') as day, count(distinct s.user_id)::int as count
+          from messages m join sessions s on s.id = m.session_id
+          where m.role = 'user' and m.created_at >= ${from}::timestamp and m.created_at < (${to}::date + 1)::timestamp
+          group by 1`),
+        countsByDay(sql`
+          select to_char(d, 'YYYY-MM-DD') as day, count(distinct s.user_id)::int as count
+          from generate_series(${from}::date, ${to}::date, interval '1 day') as d
+          left join messages m on m.role = 'user'
+            and m.created_at >= d - interval '6 days' and m.created_at < d + interval '1 day'
+          left join sessions s on s.id = m.session_id
+          group by d`),
+        countsByDay(sql`
+          select to_char(created_at, 'YYYY-MM-DD') as day, count(*)::int as count
+          from users
+          where not coalesce(is_anonymous, false) and created_at >= ${from}::timestamp and created_at < (${to}::date + 1)::timestamp
+          group by 1`),
+        // A Claim leaves no timestamp, so a conversion is a Registered account whose Sessions predate it, counted on the account's creation day.
+        countsByDay(sql`
+          select to_char(u.created_at, 'YYYY-MM-DD') as day, count(*)::int as count
+          from users u
+          where not coalesce(u.is_anonymous, false)
+            and u.created_at >= ${from}::timestamp and u.created_at < (${to}::date + 1)::timestamp
+            and exists (select 1 from sessions s where s.user_id = u.id and s.created_at < u.created_at)
+          group by 1`),
+        countsByDay(sql`
+          select to_char(created_at, 'YYYY-MM-DD') as day, count(*)::int as count
+          from users
+          where coalesce(is_anonymous, false) and created_at >= ${from}::timestamp and created_at < (${to}::date + 1)::timestamp
+          group by 1`),
+        countsByDay(sql`
+          select to_char(created_at, 'YYYY-MM-DD') as day, count(*)::int as count
+          from messages
+          where role = 'user' and created_at >= ${from}::timestamp and created_at < (${to}::date + 1)::timestamp
+          group by 1`),
+      ]);
+    return { dailyActive, weeklyActive, registrations, conversions, guests, messages };
+  },
   async findUserByEmail(email: string) {
     const [row] = await db.select(userColumns).from(users).where(eq(users.email, email));
     return row ?? null;

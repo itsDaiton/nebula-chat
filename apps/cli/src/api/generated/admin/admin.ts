@@ -4,6 +4,8 @@
  * Nebula Chat API
  * REST API for Nebula Chat
  */
+import type { AdminOverview } from '../model/adminOverview';
+
 import type { AdminSessionDetail } from '../model/adminSessionDetail';
 
 import type { AdminSessionListPage } from '../model/adminSessionListPage';
@@ -20,6 +22,8 @@ import type { BanUserBody } from '../model/banUserBody';
 
 import type { ErrorEnvelope } from '../model/errorEnvelope';
 
+import type { GetAdminOverviewParams } from '../model/getAdminOverviewParams';
+
 import type { ListAllSessionsParams } from '../model/listAllSessionsParams';
 
 import type { ListAuditEntriesParams } from '../model/listAuditEntriesParams';
@@ -31,6 +35,76 @@ import type { ListUsersParams } from '../model/listUsersParams';
 import type { SetUserRoleBody } from '../model/setUserRoleBody';
 
 import { apiFetch } from '../../apiFetch';
+
+export type getAdminOverviewResponse200 = {
+  data: AdminOverview;
+  status: 200;
+};
+
+export type getAdminOverviewResponse400 = {
+  data: ErrorEnvelope;
+  status: 400;
+};
+
+export type getAdminOverviewResponse401 = {
+  data: ErrorEnvelope;
+  status: 401;
+};
+
+export type getAdminOverviewResponse403 = {
+  data: ErrorEnvelope;
+  status: 403;
+};
+
+export type getAdminOverviewResponse500 = {
+  data: ErrorEnvelope;
+  status: 500;
+};
+
+export type getAdminOverviewResponseSuccess = getAdminOverviewResponse200 & {
+  headers: Headers;
+};
+export type getAdminOverviewResponseError = (
+  | getAdminOverviewResponse400
+  | getAdminOverviewResponse401
+  | getAdminOverviewResponse403
+  | getAdminOverviewResponse500
+) & {
+  headers: Headers;
+};
+
+export type getAdminOverviewResponse =
+  getAdminOverviewResponseSuccess | getAdminOverviewResponseError;
+
+export const getGetAdminOverviewUrl = (params?: GetAdminOverviewParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/overview?${stringifiedParams}`
+    : `/api/admin/overview`;
+};
+
+/**
+ * Activity KPIs for the last 7, 14, 30 or 90 UTC days (today included) with the totals of the period just before, for deltas. An active User is a User with a `user` Message on that UTC day; weekly active counts the 7 days ending on each day. A registration is a non-Guest account by creation day. A conversion is a Registered account whose Sessions predate it (a Claim leaves no timestamp, so the account creation day stands in), and the rate is conversions over conversions plus Guests created in the range. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary Get the admin Overview
+ */
+export const getAdminOverview = async (
+  params?: GetAdminOverviewParams,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<getAdminOverviewResponse> => {
+  return apiFetch<getAdminOverviewResponse>(getGetAdminOverviewUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
 
 export type listUsersResponse200 = {
   data: AdminUserPage;

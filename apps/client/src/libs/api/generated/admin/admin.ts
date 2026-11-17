@@ -21,6 +21,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdminOverview,
   AdminSessionDetail,
   AdminSessionListPage,
   AdminSessionPage,
@@ -29,6 +30,7 @@ import type {
   AuditPage,
   BanUserBody,
   ErrorEnvelope,
+  GetAdminOverviewParams,
   ListAllSessionsParams,
   ListAuditEntriesParams,
   ListUserSessionsParams,
@@ -55,6 +57,125 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+/**
+ * Activity KPIs for the last 7, 14, 30 or 90 UTC days (today included) with the totals of the period just before, for deltas. An active User is a User with a `user` Message on that UTC day; weekly active counts the 7 days ending on each day. A registration is a non-Guest account by creation day. A conversion is a Registered account whose Sessions predate it (a Claim leaves no timestamp, so the account creation day stands in), and the rate is conversions over conversions plus Guests created in the range. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary Get the admin Overview
+ */
+export const getAdminOverview = (
+  params?: GetAdminOverviewParams,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<AdminOverview>(
+    { url: `/api/admin/overview`, method: 'GET', params, signal },
+    options,
+  );
+};
+
+export const getGetAdminOverviewQueryKey = (params?: GetAdminOverviewParams) => {
+  return [`/api/admin/overview`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetAdminOverviewQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAdminOverview>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: GetAdminOverviewParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOverview>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetAdminOverviewQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminOverview>>> = ({ signal }) =>
+    getAdminOverview(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAdminOverview>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetAdminOverviewQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminOverview>>>;
+export type GetAdminOverviewQueryError = ErrorType<ErrorEnvelope>;
+
+export function useGetAdminOverview<
+  TData = Awaited<ReturnType<typeof getAdminOverview>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params: undefined | GetAdminOverviewParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOverview>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminOverview>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminOverview>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetAdminOverview<
+  TData = Awaited<ReturnType<typeof getAdminOverview>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: GetAdminOverviewParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOverview>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminOverview>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminOverview>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetAdminOverview<
+  TData = Awaited<ReturnType<typeof getAdminOverview>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: GetAdminOverviewParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOverview>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get the admin Overview
+ */
+
+export function useGetAdminOverview<
+  TData = Awaited<ReturnType<typeof getAdminOverview>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: GetAdminOverviewParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOverview>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetAdminOverviewQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
 
 /**
  * List Users, newest first by default, filtered by one or more statuses and a name or email search, a page at a time. Guests are left out unless `status` names `guest`. Requires an Admin whose auth session passed two-factor authentication.

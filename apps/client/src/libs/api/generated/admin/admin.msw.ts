@@ -10,6 +10,7 @@ import { HttpResponse, http } from 'msw';
 import type { RequestHandlerOptions } from 'msw';
 
 import type {
+  AdminOverview,
   AdminSessionDetail,
   AdminSessionListPage,
   AdminSessionPage,
@@ -17,6 +18,55 @@ import type {
   AdminUserPage,
   AuditPage,
 } from '../model';
+
+export const getGetAdminOverviewResponseMock = (
+  overrideResponse: Partial<Extract<AdminOverview, object>> = {},
+): AdminOverview => ({
+  range: faker.helpers.arrayElement(['7d', '14d', '30d', '90d'] as const),
+  days: Array.from({ length: faker.number.int({ min: 1, max: 90 }) }, (_, i) => i + 1).map(() =>
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ),
+  kpis: {
+    dailyActiveUsers: {
+      total: faker.number.float({ fractionDigits: 2 }),
+      previousTotal: faker.number.float({ fractionDigits: 2 }),
+      series: Array.from({ length: faker.number.int({ min: 1, max: 90 }) }, (_, i) => i + 1).map(
+        () => faker.number.float({ fractionDigits: 2 }),
+      ),
+    },
+    weeklyActiveUsers: {
+      total: faker.number.float({ fractionDigits: 2 }),
+      previousTotal: faker.number.float({ fractionDigits: 2 }),
+      series: Array.from({ length: faker.number.int({ min: 1, max: 90 }) }, (_, i) => i + 1).map(
+        () => faker.number.float({ fractionDigits: 2 }),
+      ),
+    },
+    newRegistrations: {
+      total: faker.number.float({ fractionDigits: 2 }),
+      previousTotal: faker.number.float({ fractionDigits: 2 }),
+      series: Array.from({ length: faker.number.int({ min: 1, max: 90 }) }, (_, i) => i + 1).map(
+        () => faker.number.float({ fractionDigits: 2 }),
+      ),
+    },
+    messagesSent: {
+      total: faker.number.float({ fractionDigits: 2 }),
+      previousTotal: faker.number.float({ fractionDigits: 2 }),
+      series: Array.from({ length: faker.number.int({ min: 1, max: 90 }) }, (_, i) => i + 1).map(
+        () => faker.number.float({ fractionDigits: 2 }),
+      ),
+    },
+    guestConversion: {
+      conversions: faker.number.float({ fractionDigits: 2 }),
+      previousConversions: faker.number.float({ fractionDigits: 2 }),
+      rate: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+      previousRate: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+      series: Array.from({ length: faker.number.int({ min: 1, max: 90 }) }, (_, i) => i + 1).map(
+        () => faker.number.float({ fractionDigits: 2 }),
+      ),
+    },
+  },
+  ...overrideResponse,
+});
 
 export const getListUsersResponseMock = (
   overrideResponse: Partial<Extract<AdminUserPage, object>> = {},
@@ -212,6 +262,30 @@ export const getListAuditEntriesResponseMock = (
   hasMore: faker.datatype.boolean(),
   ...overrideResponse,
 });
+
+export const getGetAdminOverviewMockHandler = (
+  overrideResponse?:
+    | AdminOverview
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<AdminOverview> | AdminOverview),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/admin/overview',
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetAdminOverviewResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
 
 export const getListUsersMockHandler = (
   overrideResponse?:
@@ -427,6 +501,7 @@ export const getListAuditEntriesMockHandler = (
   );
 };
 export const getAdminMock = () => [
+  getGetAdminOverviewMockHandler(),
   getListUsersMockHandler(),
   getGetUserMockHandler(),
   getListUserSessionsMockHandler(),

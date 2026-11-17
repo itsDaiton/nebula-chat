@@ -13,6 +13,7 @@ import type { ErrorEnvelope } from '@/libs/api/generated/model/errorEnvelope';
 import type { ListAllSessionsArchived } from '@/libs/api/generated/model/listAllSessionsArchived';
 import type { ListAuditEntriesOrder } from '@/libs/api/generated/model/listAuditEntriesOrder';
 import type { ListAllSessionsOrder } from '@/libs/api/generated/model/listAllSessionsOrder';
+import type { GetAdminOverviewRange } from '@/libs/api/generated/model/getAdminOverviewRange';
 import type { ListUsersOrder } from '@/libs/api/generated/model/listUsersOrder';
 import type { ListUsersSortBy } from '@/libs/api/generated/model/listUsersSortBy';
 import type { ListUsersStatusItem } from '@/libs/api/generated/model/listUsersStatusItem';
@@ -40,7 +41,7 @@ type AdminNavPage = {
   label: string;
   icon: LucideIcon;
   /** Unset while the page is not built: its row is disabled and labelled "soon". */
-  to?: '/admin/audit' | '/admin/sessions' | '/admin/users';
+  to?: '/admin' | '/admin/audit' | '/admin/sessions' | '/admin/users';
   /** The page has selectable rows, so the right panel and its toggle exist. */
   hasDetail?: boolean;
 };
@@ -225,3 +226,23 @@ export type UserActionState = {
   show: (dialog: UserActionDialog) => void;
   close: () => void;
 };
+
+/** What the Overview's URL holds; the range falls back to 30 days. */
+export type OverviewSearch = { range?: GetAdminOverviewRange };
+
+export type OverviewDelta = { direction: 'up' | 'down' | 'flat'; text: string };
+
+export type OverviewTileProps = {
+  label: string;
+  range: GetAdminOverviewRange;
+  value: string;
+  delta: OverviewDelta | null;
+  series: number[];
+};
+
+export type OverviewRangeSwitchProps = {
+  value: GetAdminOverviewRange;
+  onChange: (range: GetAdminOverviewRange) => void;
+};
+
+export type SparklineProps = { values: number[]; label: string };

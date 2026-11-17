@@ -1,8 +1,14 @@
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
+import { z } from 'zod';
+import { GetAdminOverviewRange } from '@/libs/api/generated/model/getAdminOverviewRange';
+import { OverviewPage } from '@/modules/admin/components/OverviewPage';
 
-// The Overview is not built yet, so the dashboard opens on the Audit log.
+const searchSchema = z.object({
+  range: z.enum(GetAdminOverviewRange).optional().catch(undefined),
+});
+
+// No row to select here, so the layout shows no right panel.
 export const Route = createFileRoute('/_app/admin/')({
-  beforeLoad: () => {
-    throw redirect({ to: '/admin/audit', replace: true });
-  },
+  validateSearch: searchSchema,
+  component: OverviewPage,
 });

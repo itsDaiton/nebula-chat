@@ -13,12 +13,30 @@ import type {
   BanUserDTO,
   ListSessionsQuery,
   ListUserSessionsQuery,
+  DayCount,
   ListUsersQuery,
+  OverviewRange,
   SetRoleDTO,
 } from '@server/modules/admin/admin.types';
 import { auditService } from '@server/modules/audit/audit.service';
 import { messageRepository } from '@server/modules/message/message.repository';
 import { runService } from '@server/modules/run/run.service';
+
+const DAY_MS = 86_400_000;
+
+const dayOf = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+
+const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
+
+const ratio = (conversions: number, guests: number) =>
+  conversions + guests === 0 ? null : conversions / (conversions + guests);
+
+// Splits a counted-days list into the previous period and the range, zero-filling days without rows.
+const splitPeriods = (rows: DayCount[], days: string[], previousDays: string[]) => {
+  const byDay = new Map(rows.map(({ day, count }) => [day, count]));
+  const pick = (list: string[]) => list.map((day) => byDay.get(day) ?? 0);
+  return { series: pick(days), previous: pick(previousDays) };
+};
 
 type UserRow = NonNullable<Awaited<ReturnType<typeof adminRepository.findUserByEmail>>>;
 
@@ -151,6 +169,53 @@ export const adminService = {
   async list() {
     const admins = await adminRepository.listAdmins();
     return admins.map(toAdmin);
+  },
+  async getOverview(range: OverviewRange, now = new Date()) {
+    const length = Number.parseInt(range, 10);
+    const today = Math.floor(now.getTime() / DAY_MS) * DAY_MS;
+    const days = Array.from({ length }, (_, i) => dayOf(today - (length - 1 - i) * DAY_MS));
+    const previousDays = Array.from({ length }, (_, i) =>
+      dayOf(today - (2 * length - 1 - i) * DAY_MS),
+    );
+    const counts = await adminRepository.overviewCounts(
+      dayOf(today - (2 * length - 1) * DAY_MS),
+      dayOf(today),
+    );
+
+    const summed = (rows: DayCount[]) => {
+      const { series, previous } = splitPeriods(rows, days, previousDays);
+      return { total: sum(series), previousTotal: sum(previous), series };
+    };
+    const daily = splitPeriods(counts.dailyActive, days, previousDays);
+    const weekly = splitPeriods(counts.weeklyActive, days, previousDays);
+    const conversions = summed(counts.conversions);
+    const guests = summed(counts.guests);
+
+    return {
+      range,
+      days,
+      kpis: {
+        dailyActiveUsers: {
+          total: Math.round(sum(daily.series) / length),
+          previousTotal: Math.round(sum(daily.previous) / length),
+          series: daily.series,
+        },
+        weeklyActiveUsers: {
+          total: weekly.series[length - 1],
+          previousTotal: weekly.previous[length - 1],
+          series: weekly.series,
+        },
+        newRegistrations: summed(counts.registrations),
+        messagesSent: summed(counts.messages),
+        guestConversion: {
+          conversions: conversions.total,
+          previousConversions: conversions.previousTotal,
+          rate: ratio(conversions.total, guests.total),
+          previousRate: ratio(conversions.previousTotal, guests.previousTotal),
+          series: conversions.series,
+        },
+      },
+    };
   },
   async listUsers({ limit, cursor, ...filters }: ListUsersQuery) {
     const page = await adminRepository.listUsers(filters, limit, cursor);
