@@ -203,12 +203,6 @@ export type UseChatStreamOptions = {
   reconnectDelaysMs?: readonly number[];
 };
 
-export type UseKeyboardHandlerProps = {
-  message: string;
-  isLoading: boolean;
-  handleMessageSend: () => void;
-};
-
 export type UseMessageHandlerProps = {
   onSendMessage: (message: string, mode: SendMessageBodyMode) => void;
   isLoading: boolean;

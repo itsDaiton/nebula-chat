@@ -6,11 +6,11 @@ import type {
   ConfirmDeleteAccountValues,
   DeleteAccountValues,
   ForgotPasswordValues,
-  PasswordConfirmation,
   ResetPasswordValues,
   SignInCredentials,
   SignUpCredentials,
 } from '@/modules/auth/types/types';
+import type { PasswordConfirmation } from '@/modules/auth/utils/authSchemas';
 import { authCallbackUrl, verifyEmailCallbackUrl } from '@/modules/auth/utils/authCallbackUrl';
 import {
   changePasswordSchema,

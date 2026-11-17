@@ -116,3 +116,27 @@ export type StackedAreaChartProps = {
 };
 
 export type ShareBarProps = { share: number; active?: boolean };
+
+type AppearanceFont = 'geist' | 'system';
+type ResponseFont = 'match' | 'geist' | 'system';
+type TranscriptSize = 'small' | 'medium' | 'large';
+type TranscriptWidth = 'narrow' | 'wide';
+type MotionPreference = 'system' | 'reduced' | 'full';
+
+type AppearanceValues = {
+  font: AppearanceFont;
+  responseFont: ResponseFont;
+  transcriptSize: TranscriptSize;
+  transcriptWidth: TranscriptWidth;
+  motion: MotionPreference;
+};
+
+export type AppearanceState = AppearanceValues & {
+  setAppearance: (values: Partial<AppearanceValues>) => void;
+};
+
+export type UseKeyboardHandlerProps = {
+  message: string;
+  isLoading: boolean;
+  handleMessageSend: () => void;
+};
