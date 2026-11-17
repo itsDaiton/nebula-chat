@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.18.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.18.1...nebula-chat-client-v3.18.2) (2026-11-17)
+
+
+### Bug Fixes
+
+* **client:** break import cycles and shared-to-module imports ([#854](https://github.com/itsDaiton/nebula-chat/issues/854)) ([45980eb](https://github.com/itsDaiton/nebula-chat/commit/45980ebe3a9f51310c07d2ea608672a1227b6c1a))
+
 ## [3.18.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.18.0...nebula-chat-client-v3.18.1) (2026-11-17)
 
 
