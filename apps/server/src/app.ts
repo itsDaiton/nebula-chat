@@ -32,6 +32,7 @@ import logLevelRoutes from '@server/modules/logLevel/logLevel.routes';
 import messageRoutes from '@server/modules/message/message.routes';
 import modelRoutes from '@server/modules/models/models.routes';
 import profileImageRoutes from '@server/modules/profileImage/profileImage.routes';
+import usageRoutes from '@server/modules/usage/usage.routes';
 import authGate from '@server/plugins/authGate.plugin';
 import dbPlugin from '@server/plugins/db.plugin';
 import redisPlugin from '@server/plugins/redis.plugin';
@@ -177,6 +178,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   await app.register(logLevelRoutes, { prefix: '/api/internal/log-level' });
   await app.register(adminRoutes, { prefix: '/api/internal/admins' });
   await app.register(adminOverviewRoutes, { prefix: '/api/admin/overview' });
+  await app.register(usageRoutes, { prefix: '/api/admin/usage' });
   await app.register(adminUsersRoutes, { prefix: '/api/admin/users' });
   await app.register(adminSessionsRoutes, { prefix: '/api/admin/sessions' });
   await app.register(auditRoutes, { prefix: '/api/admin/audit' });

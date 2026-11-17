@@ -18,7 +18,13 @@ export const adminNavigation: AdminNavGroup[] = [
     label: nav.insights,
     pages: [
       { id: 'overview', label: nav.overview, icon: LayoutGridIcon, to: '/admin' },
-      { id: 'usage', label: nav.modelUsage, icon: ChartColumnIcon },
+      {
+        id: 'usage',
+        label: nav.modelUsage,
+        icon: ChartColumnIcon,
+        to: '/admin/usage',
+        hasDetail: true,
+      },
     ],
   },
   {

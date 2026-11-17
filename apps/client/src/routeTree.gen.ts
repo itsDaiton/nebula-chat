@@ -19,6 +19,7 @@ import { Route as AppChatIndexRouteImport } from './routes/_app/_chat/index'
 import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
 import { Route as AppAdminAuditRouteImport } from './routes/_app/admin/audit'
 import { Route as AppAdminSessionsRouteImport } from './routes/_app/admin/sessions'
+import { Route as AppAdminUsageRouteImport } from './routes/_app/admin/usage'
 import { Route as AppAdminUsersRouteImport } from './routes/_app/admin/users'
 import { Route as AppAuthIndexRouteImport } from './routes/_app/auth/index'
 import { Route as AppAuthForgotPasswordRouteImport } from './routes/_app/auth/forgot-password'
@@ -75,6 +76,11 @@ const AppAdminSessionsRoute = AppAdminSessionsRouteImport.update({
   path: '/sessions',
   getParentRoute: () => AppAdminRouteRoute,
 } as any)
+const AppAdminUsageRoute = AppAdminUsageRouteImport.update({
+  id: '/usage',
+  path: '/usage',
+  getParentRoute: () => AppAdminRouteRoute,
+} as any)
 const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AppSettingsRoute
   '/admin/audit': typeof AppAdminAuditRoute
   '/admin/sessions': typeof AppAdminSessionsRoute
+  '/admin/usage': typeof AppAdminUsageRoute
   '/admin/users': typeof AppAdminUsersRoute
   '/auth/forgot-password': typeof AppAuthForgotPasswordRoute
   '/auth/reset-password': typeof AppAuthResetPasswordRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AppSettingsRoute
   '/admin/audit': typeof AppAdminAuditRoute
   '/admin/sessions': typeof AppAdminSessionsRoute
+  '/admin/usage': typeof AppAdminUsageRoute
   '/admin/users': typeof AppAdminUsersRoute
   '/auth/forgot-password': typeof AppAuthForgotPasswordRoute
   '/auth/reset-password': typeof AppAuthResetPasswordRoute
@@ -154,6 +162,7 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRoute
   '/_app/admin/audit': typeof AppAdminAuditRoute
   '/_app/admin/sessions': typeof AppAdminSessionsRoute
+  '/_app/admin/usage': typeof AppAdminUsageRoute
   '/_app/admin/users': typeof AppAdminUsersRoute
   '/_app/auth/forgot-password': typeof AppAuthForgotPasswordRoute
   '/_app/auth/reset-password': typeof AppAuthResetPasswordRoute
@@ -174,6 +183,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/admin/audit'
     | '/admin/sessions'
+    | '/admin/usage'
     | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/reset-password'
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/admin/audit'
     | '/admin/sessions'
+    | '/admin/usage'
     | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/reset-password'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/_app/admin/audit'
     | '/_app/admin/sessions'
+    | '/_app/admin/usage'
     | '/_app/admin/users'
     | '/_app/auth/forgot-password'
     | '/_app/auth/reset-password'
@@ -294,6 +306,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminSessionsRouteImport
       parentRoute: typeof AppAdminRouteRoute
     }
+    '/_app/admin/usage': {
+      id: '/_app/admin/usage'
+      path: '/usage'
+      fullPath: '/admin/usage'
+      preLoaderRoute: typeof AppAdminUsageRouteImport
+      parentRoute: typeof AppAdminRouteRoute
+    }
     '/_app/admin/users': {
       id: '/_app/admin/users'
       path: '/users'
@@ -349,6 +368,7 @@ declare module '@tanstack/react-router' {
 interface AppAdminRouteRouteChildren {
   AppAdminAuditRoute: typeof AppAdminAuditRoute
   AppAdminSessionsRoute: typeof AppAdminSessionsRoute
+  AppAdminUsageRoute: typeof AppAdminUsageRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppAdminIndexRoute: typeof AppAdminIndexRoute
   AppAdminSessionsSessionIdRoute: typeof AppAdminSessionsSessionIdRoute
@@ -357,6 +377,7 @@ interface AppAdminRouteRouteChildren {
 const AppAdminRouteRouteChildren: AppAdminRouteRouteChildren = {
   AppAdminAuditRoute: AppAdminAuditRoute,
   AppAdminSessionsRoute: AppAdminSessionsRoute,
+  AppAdminUsageRoute: AppAdminUsageRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
   AppAdminIndexRoute: AppAdminIndexRoute,
   AppAdminSessionsSessionIdRoute: AppAdminSessionsSessionIdRoute,

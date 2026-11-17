@@ -5,6 +5,14 @@ import type { ReactNode } from 'react';
 import type { QueryKey, UseQueryOptions } from '@tanstack/react-query';
 import type { ColumnDef, RowData } from '@tanstack/react-table';
 import type { adminTableFeatures } from '@/modules/admin/utils/adminTableFeatures';
+import type { ModelProvider } from '@/shared/types/types';
+import type { UsageSeries } from '@/libs/api/generated/model/usageSeries';
+import type { UsageSeriesSeriesItem } from '@/libs/api/generated/model/usageSeriesSeriesItem';
+import type { UsageTotals } from '@/libs/api/generated/model/usageTotals';
+import type { UsageDetail } from '@/libs/api/generated/model/usageDetail';
+import type { GetModelUsageSeriesAudience } from '@/libs/api/generated/model/getModelUsageSeriesAudience';
+import type { GetModelUsageSeriesMetric } from '@/libs/api/generated/model/getModelUsageSeriesMetric';
+import type { GetModelUsageSeriesRange } from '@/libs/api/generated/model/getModelUsageSeriesRange';
 import type { AdminOverview } from '@/libs/api/generated/model/adminOverview';
 import type { AuditEntry } from '@/libs/api/generated/model/auditEntry';
 import type { AuditEntryActorType } from '@/libs/api/generated/model/auditEntryActorType';
@@ -42,7 +50,7 @@ type AdminNavPage = {
   label: string;
   icon: LucideIcon;
   /** Unset while the page is not built: its row is disabled and labelled "soon". */
-  to?: '/admin' | '/admin/audit' | '/admin/sessions' | '/admin/users';
+  to?: '/admin' | '/admin/audit' | '/admin/sessions' | '/admin/usage' | '/admin/users';
   /** The page has selectable rows, so the right panel and its toggle exist. */
   hasDetail?: boolean;
 };
@@ -251,3 +259,99 @@ export type OverviewRangeSwitchProps = {
 };
 
 export type SparklineProps = { values: number[]; label: string };
+
+export type UsageView = 'share' | 'volume';
+
+/** What the Model usage page's URL holds; every field falls back to a default. */
+export type UsageSearch = {
+  metric?: GetModelUsageSeriesMetric;
+  range?: GetModelUsageSeriesRange;
+  view?: UsageView;
+  models?: string[];
+  audience?: GetModelUsageSeriesAudience;
+  pinned?: string;
+};
+
+export type UsageParams = {
+  metric: GetModelUsageSeriesMetric;
+  range: GetModelUsageSeriesRange;
+  view: UsageView;
+  models: string[] | undefined;
+  audience: GetModelUsageSeriesAudience;
+  pinned: string | undefined;
+};
+
+export type UsageSegmentOption<T extends string> = { value: T; label: string };
+
+export type UsageSegmentedProps<T extends string> = {
+  label: string;
+  value: T;
+  options: UsageSegmentOption<T>[];
+  onChange: (value: T) => void;
+};
+
+export type UsageToolbarProps = { params: UsageParams; onChange: (search: UsageSearch) => void };
+
+export type UsageModelFilterProps = {
+  selected: string[] | undefined;
+  hasRun: boolean;
+  onChange: (models: string[] | undefined) => void;
+};
+
+export type UsageTileData = {
+  id: 'prompts' | 'tokens' | 'spend' | 'activeUsers' | 'runs' | 'cacheHitRate';
+  value: string;
+  delta: OverviewDelta | null;
+};
+
+export type UsageTilesProps = { totals: UsageTotals | undefined };
+
+export type UsageRankRow = {
+  key: string;
+  label: string;
+  provider: ModelProvider | null;
+  kind: UsageSeriesSeriesItem['kind'];
+  value: number;
+  share: number;
+  members: UsageRankRow[];
+};
+
+export type UsageChartCardProps = {
+  params: UsageParams;
+  series: UsageSeries;
+  hoverIndex: number | null;
+  onHoverIndexChange: (index: number | null) => void;
+  onPin: (key: string) => void;
+  highlighted: string | null;
+};
+
+export type UsageRankedListProps = {
+  rows: UsageRankRow[];
+  dayLabel: string;
+  highlighted: string | null;
+  pinned: string | undefined;
+  formatValue: (value: number) => string;
+  onPin: (key: string) => void;
+};
+
+export type UsageRankedRowProps = {
+  row: UsageRankRow;
+  highlighted: boolean;
+  pinned: boolean;
+  formatValue: (value: number) => string;
+  onPin: (key: string) => void;
+};
+
+export type UsageTableProps = {
+  series: UsageSeries;
+  metric: GetModelUsageSeriesMetric;
+  view: UsageView;
+};
+
+export type UsageDetailBodyProps = { detail: UsageDetail };
+
+export type UsageHoverState = { day: string | null; setDay: (day: string | null) => void };
+
+export type UsageDetailPanelProps = { onClose: () => void };
+
+export type UsageDetailRowProps = { label: string; value: string };

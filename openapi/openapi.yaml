@@ -969,6 +969,239 @@ components:
         - days
         - kpis
       additionalProperties: false
+    UsageSeries:
+      type: object
+      properties:
+        metric:
+          type: string
+          enum:
+            - prompts
+            - tokens
+            - spend
+        range:
+          type: string
+          enum:
+            - 7d
+            - 14d
+            - 30d
+            - 90d
+        days:
+          maxItems: 90
+          type: array
+          items:
+            type: string
+          description: The UTC days, oldest first, as `YYYY-MM-DD`
+        series:
+          maxItems: 10
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+                description: A Model id, `run`, or `other`
+              kind:
+                type: string
+                enum:
+                  - model
+                  - run
+                  - other
+              total:
+                type: number
+                description: The sum of `values`
+              values:
+                maxItems: 90
+                type: array
+                items:
+                  type: number
+                description: One value per day of `days`, zeros included
+              members:
+                maxItems: 200
+                type: array
+                items:
+                  type: object
+                  properties:
+                    key:
+                      type: string
+                      description: A Model id
+                    total:
+                      type: number
+                    values:
+                      maxItems: 90
+                      type: array
+                      items:
+                        type: number
+                  required:
+                    - key
+                    - total
+                    - values
+                  additionalProperties: false
+                description: The Models grouped into `other`, largest first; empty otherwise
+            required:
+              - key
+              - kind
+              - total
+              - values
+              - members
+            additionalProperties: false
+          description: The Run series, the top 8 Models and the rest as `other`, largest
+            first
+      required:
+        - metric
+        - range
+        - days
+        - series
+      additionalProperties: false
+    UsageDetail:
+      type: object
+      properties:
+        model:
+          type: string
+        day:
+          type: string
+        prompts:
+          type: number
+          description: The Model’s value in the Prompts metric on that day
+        calls:
+          type: number
+          description: Model calls on that day
+        inputPerCall:
+          description: Input tokens, cached included, per call
+          type:
+            - number
+            - 'null'
+        outputPerCall:
+          type:
+            - number
+            - 'null'
+        costPerCall:
+          description: Estimated USD per call
+          type:
+            - number
+            - 'null'
+        cacheReplays:
+          type: number
+          description: Calls replayed from the response cache
+        completionRate:
+          description: Completed calls over all calls
+          type:
+            - number
+            - 'null'
+        avgDurationMs:
+          type:
+            - number
+            - 'null'
+        trend:
+          maxItems: 90
+          type: array
+          items:
+            type: number
+          description: Prompts per day over the range, oldest first
+      required:
+        - model
+        - day
+        - prompts
+        - calls
+        - inputPerCall
+        - outputPerCall
+        - costPerCall
+        - cacheReplays
+        - completionRate
+        - avgDurationMs
+        - trend
+      additionalProperties: false
+    UsageTotals:
+      type: object
+      properties:
+        range:
+          type: string
+          enum:
+            - 7d
+            - 14d
+            - 30d
+            - 90d
+        prompts:
+          type: object
+          properties:
+            total:
+              type: number
+            previousTotal:
+              type: number
+          required:
+            - total
+            - previousTotal
+          additionalProperties: false
+        tokens:
+          type: object
+          properties:
+            total:
+              type: number
+            previousTotal:
+              type: number
+          required:
+            - total
+            - previousTotal
+          additionalProperties: false
+        spend:
+          type: object
+          properties:
+            total:
+              type: number
+            previousTotal:
+              type: number
+          required:
+            - total
+            - previousTotal
+          additionalProperties: false
+          description: Estimated USD
+        activeUsers:
+          type: object
+          properties:
+            total:
+              type: number
+            previousTotal:
+              type: number
+          required:
+            - total
+            - previousTotal
+          additionalProperties: false
+          description: Users with a `user` Message in the range
+        runs:
+          type: object
+          properties:
+            total:
+              type: number
+            previousTotal:
+              type: number
+          required:
+            - total
+            - previousTotal
+          additionalProperties: false
+        cacheHitRate:
+          type: object
+          properties:
+            rate:
+              description: Cache replays over Model calls; `null` with no calls
+              type:
+                - number
+                - 'null'
+            previousRate:
+              type:
+                - number
+                - 'null'
+          required:
+            - rate
+            - previousRate
+          additionalProperties: false
+      required:
+        - range
+        - prompts
+        - tokens
+        - spend
+        - activeUsers
+        - runs
+        - cacheHitRate
+      additionalProperties: false
     AdminUserPage:
       type: object
       properties:
@@ -2840,6 +3073,247 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+  /api/admin/usage/series:
+    get:
+      operationId: getModelUsageSeries
+      summary: Get Model usage per day
+      tags:
+        - Admin
+      description: 'One value per UTC day (today included, zeros filled in) for each
+        Model, for the last 7, 14, 30 or 90 days. `prompts` counts user
+        Messages: a reply is attributed to its Session’s Model and a Message
+        that started a Run counts once, in the `run` series. `tokens` and
+        `spend` sum Model calls per Model that served them. Only the top 8
+        Models are listed; the rest are grouped as `other`. Requires an Admin
+        whose auth session passed two-factor authentication.'
+      parameters:
+        - schema:
+            default: prompts
+            type: string
+            enum:
+              - prompts
+              - tokens
+              - spend
+          in: query
+          name: metric
+        - schema:
+            default: 30d
+            description: How many UTC days back, today included; the period before it is the
+              comparison
+            type: string
+            enum:
+              - 7d
+              - 14d
+              - 30d
+              - 90d
+          in: query
+          name: range
+          description: How many UTC days back, today included; the period before it is the
+            comparison
+        - schema:
+            default: all
+            description: Only Guests, only Registered users, or both; calls of a deleted
+              User count under `all` only
+            type: string
+            enum:
+              - all
+              - guests
+              - registered
+          in: query
+          name: audience
+          description: Only Guests, only Registered users, or both; calls of a deleted
+            User count under `all` only
+        - schema:
+            description: Only these Model ids, as a repeated key; `run` selects the Run
+              series
+            minItems: 1
+            maxItems: 50
+            type: array
+            items:
+              type: string
+              minLength: 1
+              maxLength: 100
+          in: query
+          name: models
+          description: Only these Model ids, as a repeated key; `run` selects the Run series
+      responses:
+        '200':
+          description: Per-day series per Model
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageSeries'
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/admin/usage/detail:
+    get:
+      operationId: getModelUsageDetail
+      summary: Get one Model’s usage on a day
+      tags:
+        - Admin
+      description: 'One Model on one UTC day: averages per Model call, cache replays,
+        completion rate and duration, with its Prompts trend over the range.
+        Requires an Admin whose auth session passed two-factor authentication.'
+      parameters:
+        - schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: The Model id
+          in: query
+          name: model
+          required: true
+          description: The Model id
+        - schema:
+            type: string
+            format: date
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+            description: The UTC day, `YYYY-MM-DD`
+          in: query
+          name: day
+          required: true
+          description: The UTC day, `YYYY-MM-DD`
+        - schema:
+            default: 30d
+            description: How many UTC days the trend covers, ending today
+            type: string
+            enum:
+              - 7d
+              - 14d
+              - 30d
+              - 90d
+          in: query
+          name: range
+          description: How many UTC days the trend covers, ending today
+        - schema:
+            default: all
+            description: Only Guests, only Registered users, or both; calls of a deleted
+              User count under `all` only
+            type: string
+            enum:
+              - all
+              - guests
+              - registered
+          in: query
+          name: audience
+          description: Only Guests, only Registered users, or both; calls of a deleted
+            User count under `all` only
+      responses:
+        '200':
+          description: The Model’s day
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageDetail'
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema: {}
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema: {}
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema: {}
+  /api/admin/usage/totals:
+    get:
+      operationId: getModelUsageTotals
+      summary: Get Model usage totals
+      tags:
+        - Admin
+      description: Totals over the range with those of the period just before it, for
+        deltas. Requires an Admin whose auth session passed two-factor
+        authentication.
+      parameters:
+        - schema:
+            default: 30d
+            description: How many UTC days back, today included; the period before it is the
+              comparison
+            type: string
+            enum:
+              - 7d
+              - 14d
+              - 30d
+              - 90d
+          in: query
+          name: range
+          description: How many UTC days back, today included; the period before it is the
+            comparison
+        - schema:
+            default: all
+            description: Only Guests, only Registered users, or both; calls of a deleted
+              User count under `all` only
+            type: string
+            enum:
+              - all
+              - guests
+              - registered
+          in: query
+          name: audience
+          description: Only Guests, only Registered users, or both; calls of a deleted
+            User count under `all` only
+      responses:
+        '200':
+          description: Range totals
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageTotals'
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema: {}
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
+            (`TwoFactorRequired`)
+          content:
+            application/json:
+              schema: {}
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema: {}
   /api/admin/users:
     get:
       operationId: listUsers
