@@ -17,7 +17,6 @@ export default defineConfig({
       'pino-pretty',
       'zod',
       '@opentelemetry/api',
-      '@opentelemetry/api-logs',
       '@opentelemetry/core',
       '@opentelemetry/sdk-logs',
       '@opentelemetry/sdk-node',

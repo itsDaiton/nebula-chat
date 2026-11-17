@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@napi-rs/keyring": "^2.1.2",
-    "commander": "^15.0.0",
+    "commander": "^15.1.0",
     "zod": "catalog:"
   },
   "devDependencies": {
