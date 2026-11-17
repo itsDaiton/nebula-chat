@@ -862,7 +862,7 @@ components:
                 - previousTotal
                 - series
               additionalProperties: false
-              description: '`total` is the mean of the daily counts'
+              description: '`total` is the mean of the daily counts, to one decimal'
             weeklyActiveUsers:
               type: object
               properties:

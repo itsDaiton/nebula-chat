@@ -40,6 +40,33 @@ describe('overviewTiles', () => {
     expect(byId(tiles, 'weeklyActiveUsers').value).toBe('1,082');
   });
 
+  it('shows a fractional count to one decimal instead of rounding it away', () => {
+    const quiet = overviewTiles({
+      ...overview({
+        conversions: 0,
+        previousConversions: 0,
+        rate: null,
+        previousRate: null,
+        series: [],
+      }),
+      kpis: {
+        ...overview({
+          conversions: 0,
+          previousConversions: 0,
+          rate: null,
+          previousRate: null,
+          series: [],
+        }).kpis,
+        dailyActiveUsers: kpi(0.4, 0.1),
+      },
+    });
+
+    expect(byId(quiet, 'dailyActiveUsers')).toMatchObject({
+      value: '0.4',
+      delta: { direction: 'up', text: '300.0%' },
+    });
+  });
+
   it('has no delta against an empty previous period', () => {
     expect(byId(tiles, 'newRegistrations').delta).toBeNull();
   });

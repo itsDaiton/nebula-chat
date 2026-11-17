@@ -11,7 +11,7 @@ import type { AdminOverviewKpisNewRegistrations } from './adminOverviewKpisNewRe
 import type { AdminOverviewKpisWeeklyActiveUsers } from './adminOverviewKpisWeeklyActiveUsers';
 
 export type AdminOverviewKpis = {
-  /** `total` is the mean of the daily counts */
+  /** `total` is the mean of the daily counts, to one decimal */
   dailyActiveUsers: AdminOverviewKpisDailyActiveUsers;
   /** Each day counts the Users active in the 7 days ending on it; `total` is the last day */
   weeklyActiveUsers: AdminOverviewKpisWeeklyActiveUsers;

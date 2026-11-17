@@ -247,7 +247,9 @@ export const overviewSchema = z
       .max(90)
       .describe('The UTC days of the range, oldest first, as `YYYY-MM-DD`'),
     kpis: z.object({
-      dailyActiveUsers: kpiSchema.describe('`total` is the mean of the daily counts'),
+      dailyActiveUsers: kpiSchema.describe(
+        '`total` is the mean of the daily counts, to one decimal',
+      ),
       weeklyActiveUsers: kpiSchema.describe(
         'Each day counts the Users active in the 7 days ending on it; `total` is the last day',
       ),
