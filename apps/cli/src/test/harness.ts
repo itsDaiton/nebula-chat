@@ -2,7 +2,8 @@ import { mkdtemp, readFile, rm, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach } from 'vitest';
-import { run, type Deps } from '@cli/run';
+import type { Deps } from '@cli/context';
+import { run } from '@cli/run';
 
 export const SERVER_URL = 'http://nebula.test';
 const NOW = new Date('2026-10-19T12:00:00.000Z');

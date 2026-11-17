@@ -5,28 +5,8 @@ import { registerLoginCommands } from '@cli/commands/login';
 import { registerLogLevelCommands } from '@cli/commands/logLevel';
 import { registerProfileCommands } from '@cli/commands/profile';
 import { registerUsersCommands } from '@cli/commands/users';
-import { createContext, type GlobalOptions } from '@cli/context';
-import type { Keychain } from '@cli/credentials/credentials';
+import { createContext, type Deps, type GlobalOptions } from '@cli/context';
 import { CliError, ExitCode } from '@cli/errors';
-
-type Stream = { write: (chunk: string) => unknown; isTTY?: boolean };
-
-/** Everything the CLI touches outside its own process state. `bin.ts` wires the real ones. */
-export type Deps = {
-  env: Record<string, string | undefined>;
-  stdout: Stream;
-  stderr: Stream;
-  stdin: { isTTY?: boolean };
-  confirm: (question: string) => Promise<boolean>;
-  fetch: typeof globalThis.fetch;
-  now: () => Date;
-  homeDir: string;
-  /** The OS keychain; every call rejects on a machine without one. */
-  keychain: Keychain;
-  /** Rejects when there is no browser to open. */
-  openBrowser: (url: string) => Promise<void>;
-  sleep: (ms: number) => Promise<void>;
-};
 
 const EXAMPLES = `
 Examples:
