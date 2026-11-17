@@ -1,6 +1,8 @@
 import { AIMessage, ToolMessage } from '@langchain/core/messages';
 import type { BaseMessage } from '@langchain/core/messages';
-import type { LoopEnding } from '@worker/runs/orchestrator';
+
+/** How the loop ended: the Orchestrator handed off itself, or a limit made it. */
+export type LoopEnding = 'handoff' | 'turn-cap' | 'budget';
 
 const CUT_SHORT: Record<Exclude<LoopEnding, 'handoff'>, string> = {
   'turn-cap': 'it ran out of turns',

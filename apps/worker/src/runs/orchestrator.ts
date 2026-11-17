@@ -11,6 +11,7 @@ import { countTokens } from '@worker/llm/countTokens';
 import type { CallUsage } from '@worker/modelCalls/recordModelCall';
 import { llmConfigFor } from '@worker/runs/agentDefinition';
 import { DELEGATES } from '@worker/runs/agentRegistry';
+import type { LoopEnding } from '@worker/runs/findings';
 import { delegateTool } from '@worker/runs/delegateTool';
 import type { DelegateToolDeps } from '@worker/runs/delegateTool';
 import { runModelStep, stepIdFor, turnsIn } from '@worker/runs/steps';
@@ -24,9 +25,6 @@ export type RunLimits = {
   delegateTimeoutMs: number;
   delegateToolCallCap: number;
 };
-
-/** How the loop ended: the Orchestrator handed off itself, or a limit made it. */
-export type LoopEnding = 'handoff' | 'turn-cap' | 'budget';
 
 export type OrchestratorDeps = Omit<DelegateToolDeps, 'timeoutMs' | 'toolCallCap'> & {
   limits: RunLimits;

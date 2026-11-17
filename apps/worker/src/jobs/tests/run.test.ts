@@ -19,7 +19,7 @@ import {
 import type { DelegateTurn, OrchestratorScript } from '@worker/jobs/tests/runFakes';
 import type { RunDeps, RunStore } from '@worker/runs/executeRun';
 import type { RunLimits } from '@worker/runs/orchestrator';
-import type { RunModels } from '@worker/runs/runGraph';
+import type { RunModels } from '@worker/runs/delegateTool';
 import { stepIdFor } from '@worker/runs/steps';
 import type { StepStore } from '@worker/runs/steps';
 import { webFetchTool } from '@worker/tools/webFetch';
