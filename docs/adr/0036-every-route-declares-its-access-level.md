@@ -7,7 +7,8 @@
 
 ## Context
 
-Routes were gated by attaching `requireAuthentication`, `requireRegistered`, `requireAdmin` or `requireOperator` by hand, in either `onRequest` or `preHandler`. A route that forgot its gate was public, and nothing noticed. A scare in production showed how hard it is to tell what is protected: Swagger UI on the API origin sent the Admin's own cookie, and the request looked anonymous. The spec also claimed every route needed a cookie, because one global `security` entry covered them all.
+Routes were gated by attaching `requireAuthentication`, `requireRegistered`, `requireAdmin` or `requireOperator` by hand, in either `onRequest` or `preHandler`. A route that forgot its gate was public, and nothing noticed.
+A scare in production showed how hard it is to tell what is protected: Swagger UI on the API origin sent the Admin's own cookie, and the request looked anonymous. The spec also claimed every route needed a cookie, because one global `security` entry covered them all.
 
 ## Decision
 
