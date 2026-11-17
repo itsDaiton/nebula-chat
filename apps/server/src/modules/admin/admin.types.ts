@@ -49,4 +49,5 @@ export type OverviewCounts = {
   conversions: DayCount[];
   guests: DayCount[];
   messages: DayCount[];
+  spend: DayCount[];
 };

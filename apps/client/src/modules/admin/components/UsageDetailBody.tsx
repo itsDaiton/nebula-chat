@@ -1,5 +1,4 @@
 import { UsageDetailRow } from '@/modules/admin/components/UsageDetailRow';
-import { Sparkline } from '@/modules/admin/components/Sparkline';
 import type { UsageDetailBodyProps } from '@/modules/admin/types/types';
 import {
   formatCount,
@@ -8,6 +7,7 @@ import {
   formatSpend,
 } from '@/modules/admin/utils/usageFormat';
 import { resources } from '@/resources';
+import { Sparkline } from '@/shared/components/charts/Sparkline';
 
 const text = resources.admin.usage.detail;
 

@@ -18,6 +18,7 @@ const empty = {
   conversions: [],
   guests: [],
   messages: [],
+  spend: [],
 };
 
 describe('adminService.getOverview', () => {
@@ -65,6 +66,25 @@ describe('adminService.getOverview', () => {
     });
     expect(kpis.newRegistrations.total).toBe(3);
     expect(kpis.newRegistrations.previousTotal).toBe(1);
+  });
+
+  it('sums estimated spend per day without rounding it to whole dollars', async () => {
+    repo.overviewCounts.mockResolvedValue({
+      ...empty,
+      spend: [
+        { day: '2026-10-30', count: 0.25 },
+        { day: '2026-11-04', count: 1.5 },
+        { day: '2026-11-10', count: 0.125 },
+      ],
+    });
+
+    const { kpis } = await adminService.getOverview('7d', NOW);
+
+    expect(kpis.estimatedSpend).toEqual({
+      total: 1.625,
+      previousTotal: 0.25,
+      series: [1.5, 0, 0, 0, 0, 0, 0.125],
+    });
   });
 
   it('averages daily active Users and takes the last weekly window', async () => {

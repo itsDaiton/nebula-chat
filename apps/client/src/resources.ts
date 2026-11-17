@@ -350,6 +350,7 @@ export const resources = {
         newRegistrations: 'New registrations',
         guestConversion: 'Guest → Registered',
         messagesSent: 'Messages sent',
+        estimatedSpend: 'Est. spend',
       },
       trend: (label: string) => `${label}, trend over the range`,
       latest: 'Latest Audit entries',

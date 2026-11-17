@@ -258,8 +258,6 @@ export type OverviewRangeSwitchProps = {
   onChange: (range: GetAdminOverviewRange) => void;
 };
 
-export type SparklineProps = { values: number[]; label: string };
-
 export type UsageView = 'share' | 'volume';
 
 /** What the Model usage page's URL holds; every field falls back to a default. */
