@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.13.0...nebula-chat-cli-v1.13.1) (2026-11-17)
+
+
+### Bug Fixes
+
+* **server,client:** NEB-560 show daily active Users to one decimal ([#870](https://github.com/itsDaiton/nebula-chat/issues/870)) ([06c9825](https://github.com/itsDaiton/nebula-chat/commit/06c98254516746d95a5e4c482476d2d64d19bbc7))
+
 ## [1.13.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.12.1...nebula-chat-cli-v1.13.0) (2026-11-17)
 
 
