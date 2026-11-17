@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ChatMessage, RunStepProgress, SseEvent } from '@/modules/chat/types/types';
-import { applyStreamEvent, failReply } from '@/modules/chat/streaming/applyStreamEvent';
+import { applyStreamEvent } from '@/modules/chat/streaming/applyStreamEvent';
 import { resources } from '@/resources';
 
 const user: ChatMessage = { id: 'u1', role: 'user', content: 'what is 2+2?' };
@@ -191,11 +191,5 @@ describe('applyStreamEvent — end', () => {
     expect(applyStreamEvent(withSteps, frame('end', { reason: 'cancelled' })).history).toEqual(
       withSteps,
     );
-  });
-});
-
-describe('failReply', () => {
-  it('leaves a chat without a trailing reply alone', () => {
-    expect(failReply([user], 'boom')).toEqual([user]);
   });
 });

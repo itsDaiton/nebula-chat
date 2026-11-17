@@ -19,12 +19,15 @@ State is split by **kind** ([ADR-0012](../../docs/adr/0012-adopt-tanstack-query-
 - **Chat streaming** is send, then subscribe (ADR-0014). `useChatStream` creates the Session for a new chat
   (`useCreateSession`), sends the Message with the generated `useSendMessage` mutation (202
   `{ messageId, streamId }`), then opens the reply stream through the generated `readReplyStream` (a fetch
-  mutator, `libs/api/streamClient.ts`, that returns the raw `Response`). The hook only orchestrates (send,
-  resume, stop, abort, settle, store writes); the work is React-free in `modules/chat/streaming/`:
-  `followStream.ts` opens and reads the stream (`parseSseStream.ts`), `applyStreamEvent.ts` folds each event
-  into the history and returns the `ReplyEnd` when one ends the reply, `invalidations.ts` names every cache
-  invalidation, and `savedReply.ts` reads the saved Messages. `readReplyStream` is only called from
-  `followStream.ts`; its generated react-query hook (`useReadReplyStream`) must never be used, because it
+  mutator, `libs/api/streamClient.ts`, that returns the raw `Response`). The hook only orchestrates send and
+  resume; `useReplyControls` owns abort, stop, settle and the abort controller. The work is React-free in
+  `modules/chat/streaming/`, one small helper per file: `sendReply.ts` creates the Session (after the allowance
+  check) and posts the Message, `sendErrors.ts` names how a refused send ends, `followReply.ts` follows a reply
+  through a `ReplySink` and runs its completion, `followStream.ts` opens and reads the stream
+  (`parseSseStream.ts`) and reconnects by recursion rather than a loop, `applyStreamEvent.ts` folds each event
+  into the history and returns the `ReplyEnd` when one ends the reply, `replyHistory.ts` edits the trailing
+  reply, `invalidations.ts` names every cache invalidation, and `savedReply.ts` reads the saved Messages.
+  `readReplyStream` is only called from `followStream.ts`; its generated react-query hook (`useReadReplyStream`) must never be used, because it
   would go through axios and buffer the body. A dropped stream reconnects with backoff, passing the last
   event id as `lastEventId` and skipping any entry at or before it; a 404 (expired) shows the saved
   Messages instead. `resumeStream` re-attaches to a Session's `activeStreamId` (called render-time from

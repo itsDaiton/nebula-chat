@@ -1,7 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { getListMessagesQueryOptions } from '@/libs/api/generated/messages/messages';
 import type { ChatStreamState } from '@/modules/chat/types/types';
-import { withReply } from '@/modules/chat/streaming/applyStreamEvent';
+import { withReply } from '@/modules/chat/streaming/replyHistory';
 import { mapSessionMessages } from '@/modules/chat/utils/mapSessionMessages';
 
 const fetchSavedMessages = async (queryClient: QueryClient, sessionId: string) =>

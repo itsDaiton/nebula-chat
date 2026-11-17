@@ -7,6 +7,7 @@ import type {
 } from '@/modules/chat/types/types';
 import { IDLE_REPLY } from '@/modules/chat/utils/replyState';
 import { applyRunEvent, parseRunEvent } from '@/modules/chat/streaming/runProgress';
+import { failReply, withReply } from '@/modules/chat/streaming/replyHistory';
 import { resources } from '@/resources';
 
 const parseJson = (raw: string): unknown => {
@@ -16,23 +17,6 @@ const parseJson = (raw: string): unknown => {
     return null;
   }
 };
-
-// The chat with its trailing assistant Message updated; unchanged without one.
-export const withReply = (
-  history: ChatMessage[],
-  update: (reply: ChatMessage) => ChatMessage,
-): ChatMessage[] => {
-  const last = history.at(-1);
-  return last?.role === 'assistant' ? [...history.slice(0, -1), update(last)] : history;
-};
-
-/** The error replaces the reply's text; a Run's reply is marked failed with it. */
-export const failReply = (history: ChatMessage[], message: string): ChatMessage[] =>
-  withReply(history, (last) => {
-    // A failed Run reports the `error` first, and the read stops there, before its `run-finished`.
-    const run = last.run && { ...last.run, status: 'failed' as const };
-    return { ...last, content: message, ...(run && { run }) };
-  });
 
 const endReply = (history: ChatMessage[], parsed: unknown): StreamEventResult => {
   const last = history.at(-1);

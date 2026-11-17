@@ -81,36 +81,41 @@ const readReply = async (
   return null;
 };
 
+// One connection: its end, or null when it closed or dropped first. A 404 (expired) shows the saved reply.
+const readConnection = async (
+  { streamId, signal, reconnectDelaysMs, onEvent, onExpired, open }: Required<FollowStreamOptions>,
+  cursor: StreamCursor,
+): Promise<ReplyEnd | null> => {
+  const response = await open(streamId, cursor.lastEventId, signal);
+  if (response?.status === 404) {
+    await onExpired();
+    return IDLE_REPLY;
+  }
+  if (response && (!response.ok || !response.body)) {
+    await assertRetryable(response, cursor.retries < reconnectDelaysMs.length);
+    return null;
+  }
+  return response?.body ? readReply(response.body, cursor, onEvent) : null;
+};
+
+// Each reconnect is the next call, not a loop turn, so one connection is open at a time.
+const followFrom = async (
+  options: Required<FollowStreamOptions>,
+  cursor: StreamCursor,
+): Promise<ReplyEnd | null> => {
+  if (options.signal.aborted) return null;
+  const end = await readConnection(options, cursor);
+  if (end || options.signal.aborted) return end;
+
+  // The body closed without `end`, or never opened: the connection dropped mid-reply.
+  const delay = options.reconnectDelaysMs[cursor.retries];
+  if (delay === undefined) throw new Error(resources.chat.streamError);
+  cursor.retries += 1;
+  await wait(delay, options.signal);
+  return followFrom(options, cursor);
+};
+
 // Reconnects after the last event it saw (ADR-0014); an expired stream falls back to the saved reply.
 // Null once aborted; throws once retries run out.
-export const followStream = async ({
-  streamId,
-  signal,
-  reconnectDelaysMs,
-  onEvent,
-  onExpired,
-  open = openReplyStream,
-}: FollowStreamOptions): Promise<ReplyEnd | null> => {
-  const cursor: StreamCursor = { lastEventId: undefined, retries: 0 };
-  while (!signal.aborted) {
-    const response = await open(streamId, cursor.lastEventId, signal);
-    if (response?.status === 404) {
-      await onExpired();
-      return IDLE_REPLY;
-    }
-    if (response && (!response.ok || !response.body)) {
-      await assertRetryable(response, cursor.retries < reconnectDelaysMs.length);
-    } else if (response?.body) {
-      const end = await readReply(response.body, cursor, onEvent);
-      if (end) return end;
-    }
-    if (signal.aborted) break;
-
-    // The body closed without `end`, or never opened: the connection dropped mid-reply.
-    const delay = reconnectDelaysMs[cursor.retries];
-    if (delay === undefined) throw new Error(resources.chat.streamError);
-    cursor.retries += 1;
-    await wait(delay, signal);
-  }
-  return null;
-};
+export const followStream = ({ open = openReplyStream, ...options }: FollowStreamOptions) =>
+  followFrom({ ...options, open }, { lastEventId: undefined, retries: 0 });

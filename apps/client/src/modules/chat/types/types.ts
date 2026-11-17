@@ -1,6 +1,9 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { RunStatus } from '@/libs/api/generated/model/runStatus';
+import type { useSendMessage } from '@/libs/api/generated/chat/chat';
 import type { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
+import type { SendMessageBodyModel } from '@/libs/api/generated/model/sendMessageBodyModel';
+import type { useCreateSession } from '@/libs/api/generated/sessions/sessions';
 import type { StepPhase } from '@/libs/api/generated/model/stepPhase';
 import type { StepStatus } from '@/libs/api/generated/model/stepStatus';
 import type { ModelProvider } from '@/shared/types/types';
@@ -154,6 +157,36 @@ export type FollowStreamOptions = {
     signal: AbortSignal,
   ) => Promise<Response | null>;
 };
+
+/** Where a followed reply lands; `isCurrent` turns false once another Session is on screen. */
+export type ReplySink = {
+  getHistory: () => ChatMessage[];
+  setHistory: Dispatch<SetStateAction<ChatMessage[]>>;
+  setUsage: (usage: Usage) => void;
+  isCurrent: (sessionId: string) => boolean;
+};
+
+export type FollowReplyOptions = {
+  streamId: string;
+  sessionId: string;
+  signal: AbortSignal;
+  reconnectDelaysMs: readonly number[];
+  sink: ReplySink;
+};
+
+export type CreateSessionMutation = ReturnType<typeof useCreateSession>['mutateAsync'];
+
+export type SendMessageMutation = ReturnType<typeof useSendMessage>['mutateAsync'];
+
+export type PostMessageOptions = {
+  sessionId: string;
+  content: string;
+  mode: SendMessageBodyMode;
+  model: SendMessageBodyModel;
+};
+
+/** How a send that never streamed ends: back to the composer, or a failed reply. */
+export type SendFailure = 'allowance-reached' | 'run-forbidden' | 'failed';
 
 /** Where a followed reply stream got to: the last event applied, and reconnects since then. */
 export type StreamCursor = {
