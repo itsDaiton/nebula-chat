@@ -3,6 +3,8 @@ import { AUDIT_ACTIONS, AUDIT_ACTOR_TYPES } from '@nebula-chat/db';
 import { paginationConfig } from '@server/config/pagination.config';
 import { isoDateTimeSchema } from '@server/utils/isoDateTimeSchema';
 
+const AUDIT_ORDERS = ['asc', 'desc'] as const;
+
 const timeQuerySchema = z.iso.datetime().transform((iso) => new Date(iso));
 
 export const listAuditQuerySchema = z.object({
@@ -28,6 +30,10 @@ export const listAuditQuerySchema = z.object({
       `Number of entries to fetch (1-${String(paginationConfig.maxLimit)}, default ${String(paginationConfig.defaultLimit)})`,
     ),
   cursor: z.uuid().optional().describe('The `nextCursor` of the previous page'),
+  order: z
+    .enum(AUDIT_ORDERS)
+    .default('desc')
+    .describe('Sort by time: `desc` newest first (default) or `asc` oldest first'),
 });
 
 const auditEntrySchema = z
@@ -38,9 +44,17 @@ const auditEntrySchema = z
       .uuid()
       .nullable()
       .describe('The Admin who acted; `null` for the Operator or the system'),
+    actorName: z
+      .string()
+      .nullable()
+      .describe("The acting Admin's name; `null` for the Operator, the system or a purged Admin"),
     action: z.enum(AUDIT_ACTIONS),
     targetType: z.string(),
     targetId: z.string(),
+    targetLabel: z
+      .string()
+      .nullable()
+      .describe("The User's email when the target is a User that still exists; otherwise `null`"),
     detail: z
       .record(z.string(), z.unknown())
       .describe('Ids and changed fields; never Message content'),
@@ -50,8 +64,12 @@ const auditEntrySchema = z
 
 export const auditPageSchema = z
   .object({
-    entries: z.array(auditEntrySchema).max(paginationConfig.maxLimit).describe('Newest first'),
+    entries: z
+      .array(auditEntrySchema)
+      .max(paginationConfig.maxLimit)
+      .describe('In the requested `order`'),
     nextCursor: z.uuid().nullable(),
+    total: z.int().min(0).describe('Entries matching the filters, ignoring `cursor` and `limit`'),
     hasMore: z.boolean(),
   })
   .meta({ id: 'AuditPage' });

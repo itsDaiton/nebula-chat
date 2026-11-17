@@ -345,6 +345,10 @@ export const resources = {
       empty: 'No entries match these filters.',
       emptyHint: 'Widen the dates or clear a filter.',
       loadFailed: 'The Audit log could not be loaded.',
+      count: (total: number) =>
+        `${total.toLocaleString('en-US')} ${total === 1 ? 'entry' : 'entries'}`,
+      sort: (column: string, direction: 'asc' | 'desc') =>
+        `${column}, sorted ${direction === 'asc' ? 'ascending' : 'descending'}`,
       columns: { time: 'Time', actor: 'Actor', action: 'Action', target: 'Target' },
       filter: {
         actor: 'Actor',

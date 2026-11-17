@@ -11,6 +11,7 @@ import type { AdminUserDetail } from '@/libs/api/generated/model/adminUserDetail
 import type { AdminUserSummaryStatus } from '@/libs/api/generated/model/adminUserSummaryStatus';
 import type { ErrorEnvelope } from '@/libs/api/generated/model/errorEnvelope';
 import type { ListAllSessionsArchived } from '@/libs/api/generated/model/listAllSessionsArchived';
+import type { ListAuditEntriesOrder } from '@/libs/api/generated/model/listAuditEntriesOrder';
 import type { ListAllSessionsOrder } from '@/libs/api/generated/model/listAllSessionsOrder';
 import type { ListUsersOrder } from '@/libs/api/generated/model/listUsersOrder';
 import type { ListUsersSortBy } from '@/libs/api/generated/model/listUsersSortBy';
@@ -27,11 +28,12 @@ export type AuditSearch = {
   /** A day, `YYYY-MM-DD`, read as UTC. */
   from?: string;
   to?: string;
+  dir?: ListAuditEntriesOrder;
   cursor?: string;
 };
 
 /** One server page of an admin table: its rows and where the next one starts. */
-export type AdminPage<TRow> = { rows: TRow[]; nextCursor: string | null };
+export type AdminPage<TRow> = { rows: TRow[]; nextCursor: string | null; total?: number };
 
 type AdminNavPage = {
   id: string;

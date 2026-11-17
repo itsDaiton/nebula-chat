@@ -18,9 +18,11 @@ const anEntry = (overrides: Partial<AuditEntry> = {}): AuditEntry => ({
   id: '0190a1b2-0000-7000-8000-000000000001',
   actorType: 'admin',
   actorUserId: 'aaaa1111-0000-7000-8000-000000000000',
+  actorName: null,
   action: 'user.banned',
   targetType: 'user',
   targetId: 'spam-bot-42',
+  targetLabel: null,
   detail: { reason: 'Automated prompts', cancelledRuns: 1 },
   createdAt: '2026-10-27T21:02:11Z',
   ...overrides,
@@ -42,7 +44,14 @@ const systemEntry = anEntry({
 });
 
 const serveAudit = (entries: AuditEntry[], nextCursor: string | null = null) =>
-  server.use(getListAuditEntriesMockHandler({ entries, nextCursor, hasMore: nextCursor !== null }));
+  server.use(
+    getListAuditEntriesMockHandler({
+      entries,
+      nextCursor,
+      hasMore: nextCursor !== null,
+      total: entries.length,
+    }),
+  );
 
 const stubViewport = (desktop: boolean) =>
   vi.stubGlobal(
@@ -107,12 +116,55 @@ describe('Audit log page', () => {
     expect(screen.getByText(resources.admin.table.showing(3))).toBeInTheDocument();
   });
 
+  it('shows names and the total, and falls back to ids once an account is gone', async () => {
+    server.use(
+      getListAuditEntriesMockHandler({
+        entries: [
+          anEntry({ actorName: 'Grace', targetLabel: 'ada@example.com' }),
+          anEntry({ id: '0190a1b2-0000-7000-8000-000000000009' }),
+        ],
+        nextCursor: null,
+        hasMore: false,
+        total: 12408,
+      }),
+    );
+
+    await renderRoute('/admin/audit');
+
+    const table = await screen.findByRole('table', { name: text.title });
+    expect(await within(table).findByText('Grace')).toBeInTheDocument();
+    expect(within(table).getByText('ada@example.com')).toBeInTheDocument();
+    expect(within(table).getAllByText('spam-bot-42')).toHaveLength(1);
+    expect(within(table).getByText('aaaa1111')).toBeInTheDocument();
+    expect(screen.getByText(text.count(12408))).toBeInTheDocument();
+  });
+
+  it('reverses the Time order from its header and starts again from the first page', async () => {
+    const orders: (string | null)[] = [];
+    server.use(
+      getListAuditEntriesMockHandler(({ request }) => {
+        orders.push(new URL(request.url).searchParams.get('order'));
+        return { entries: [anEntry()], nextCursor: null, hasMore: false, total: 1 };
+      }),
+    );
+    const { router } = await renderRoute('/admin/audit?cursor=abc');
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: text.sort(text.columns.time, 'desc') }),
+    );
+
+    await waitFor(() => expect(orders.at(-1)).toBe('asc'));
+    expect(orders[0]).toBe('desc');
+    expect(router.state.location.search).toMatchObject({ dir: 'asc' });
+    expect(router.state.location.search).not.toHaveProperty('cursor');
+  });
+
   it('sends the URL filters to the API', async () => {
     let query = new URLSearchParams();
     server.use(
       getListAuditEntriesMockHandler(({ request }) => {
         query = new URL(request.url).searchParams;
-        return { entries: [], nextCursor: null, hasMore: false };
+        return { entries: [], nextCursor: null, hasMore: false, total: 0 };
       }),
     );
 
@@ -123,6 +175,7 @@ describe('Audit log page', () => {
     await screen.findByText(text.empty);
     expect(Object.fromEntries(query)).toEqual({
       limit: '50',
+      order: 'desc',
       actorType: 'operator',
       action: 'user.banned',
       targetId: 'spam',
@@ -186,8 +239,8 @@ describe('Audit log page', () => {
         const cursor = new URL(request.url).searchParams.get('cursor');
         cursors.push(cursor);
         return cursor
-          ? { entries: [operatorEntry], nextCursor: null, hasMore: false }
-          : { entries: [anEntry()], nextCursor: 'next-cursor', hasMore: true };
+          ? { entries: [operatorEntry], nextCursor: null, hasMore: false, total: 2 }
+          : { entries: [anEntry()], nextCursor: 'next-cursor', hasMore: true, total: 2 };
       }),
     );
     const { router } = await renderRoute('/admin/audit');
@@ -283,7 +336,7 @@ describe('Audit log page', () => {
     server.use(
       getListAuditEntriesMockHandler(() => {
         attempts += 1;
-        return { entries: [anEntry()], nextCursor: null, hasMore: false };
+        return { entries: [anEntry()], nextCursor: null, hasMore: false, total: 1 };
       }),
     );
     await userEvent.click(screen.getByRole('button', { name: resources.admin.table.retry }));

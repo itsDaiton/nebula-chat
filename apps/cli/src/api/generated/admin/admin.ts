@@ -6,6 +6,8 @@
  */
 import type { AdminSessionDetail } from '../model/adminSessionDetail';
 
+import type { AdminSessionListPage } from '../model/adminSessionListPage';
+
 import type { AdminSessionPage } from '../model/adminSessionPage';
 
 import type { AdminUserDetail } from '../model/adminUserDetail';
@@ -17,6 +19,8 @@ import type { AuditPage } from '../model/auditPage';
 import type { BanUserBody } from '../model/banUserBody';
 
 import type { ErrorEnvelope } from '../model/errorEnvelope';
+
+import type { ListAllSessionsParams } from '../model/listAllSessionsParams';
 
 import type { ListAuditEntriesParams } from '../model/listAuditEntriesParams';
 
@@ -560,6 +564,75 @@ export const unbanUser = async (
   return apiFetch<unbanUserResponse>(getUnbanUserUrl(id), {
     ...options,
     method: 'POST',
+  });
+};
+
+export type listAllSessionsResponse200 = {
+  data: AdminSessionListPage;
+  status: 200;
+};
+
+export type listAllSessionsResponse400 = {
+  data: ErrorEnvelope;
+  status: 400;
+};
+
+export type listAllSessionsResponse401 = {
+  data: ErrorEnvelope;
+  status: 401;
+};
+
+export type listAllSessionsResponse403 = {
+  data: ErrorEnvelope;
+  status: 403;
+};
+
+export type listAllSessionsResponse500 = {
+  data: ErrorEnvelope;
+  status: 500;
+};
+
+export type listAllSessionsResponseSuccess = listAllSessionsResponse200 & {
+  headers: Headers;
+};
+export type listAllSessionsResponseError = (
+  | listAllSessionsResponse400
+  | listAllSessionsResponse401
+  | listAllSessionsResponse403
+  | listAllSessionsResponse500
+) & {
+  headers: Headers;
+};
+
+export type listAllSessionsResponse = listAllSessionsResponseSuccess | listAllSessionsResponseError;
+
+export const getListAllSessionsUrl = (params?: ListAllSessionsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/sessions?${stringifiedParams}`
+    : `/api/admin/sessions`;
+};
+
+/**
+ * List Sessions across all Users, most recently active first by default, filtered by a title search, owner, Model and archived state, a page at a time. Listing is not a content read, so nothing is audited. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary List Sessions
+ */
+export const listAllSessions = async (
+  params?: ListAllSessionsParams,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<listAllSessionsResponse> => {
+  return apiFetch<listAllSessionsResponse>(getListAllSessionsUrl(params), {
+    ...options,
+    method: 'GET',
   });
 };
 

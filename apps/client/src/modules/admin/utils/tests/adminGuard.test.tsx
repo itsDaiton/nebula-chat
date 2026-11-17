@@ -12,7 +12,9 @@ const admin = { isAnonymous: false, emailVerified: true, role: 'admin' } as cons
 
 beforeEach(() => {
   serveChatPage();
-  server.use(getListAuditEntriesMockHandler({ entries: [], nextCursor: null, hasMore: false }));
+  server.use(
+    getListAuditEntriesMockHandler({ entries: [], nextCursor: null, hasMore: false, total: 0 }),
+  );
   useSettingsDialogStore.setState({ isOpen: false, section: 'profile' });
 });
 
