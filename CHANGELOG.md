@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.10.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.10.2...nebula-chat-v7.10.3) (2026-11-17)
+
+
+### Bug Fixes
+
+* define Access level in the glossary ([#883](https://github.com/itsDaiton/nebula-chat/issues/883)) ([f43c656](https://github.com/itsDaiton/nebula-chat/commit/f43c656a593741e6a5860558b17fd8ce8b8cf0be))
+
 ## [7.10.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.10.1...nebula-chat-v7.10.2) (2026-11-17)
 
 
