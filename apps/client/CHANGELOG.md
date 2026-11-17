@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.21.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.20.0...nebula-chat-client-v3.21.0) (2026-11-17)
+
+
+### Features
+
+* **client:** NEB-570 estimated spend on admin Overview ([#876](https://github.com/itsDaiton/nebula-chat/issues/876)) ([b9433ef](https://github.com/itsDaiton/nebula-chat/commit/b9433ef2cd86167224b521027e7b75544afd4e0d))
+
 ## [3.20.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.19.1...nebula-chat-client-v3.20.0) (2026-11-17)
 
 
