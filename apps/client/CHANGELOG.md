@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.21.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.21.0...nebula-chat-client-v3.21.1) (2026-11-17)
+
+
+### Bug Fixes
+
+* **client:** label menu Admin, add Ctrl+Shift+U, drop Admin-read notice ([#881](https://github.com/itsDaiton/nebula-chat/issues/881)) ([933c415](https://github.com/itsDaiton/nebula-chat/commit/933c415c788adfbba76ec0ac898b5b54c163ac82))
+
 ## [3.21.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.20.0...nebula-chat-client-v3.21.0) (2026-11-17)
 
 
