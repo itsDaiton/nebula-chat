@@ -6,6 +6,7 @@ import type {
   listSessionsQuerySchema,
   listUserSessionsQuerySchema,
   listUsersQuerySchema,
+  overviewQuerySchema,
   sessionIdParamsSchema,
   setRoleSchema,
   userIdParamsSchema,
@@ -34,3 +35,18 @@ export type SessionIdParams = z.infer<typeof sessionIdParamsSchema>;
 export type ListSessionsQuery = z.infer<typeof listSessionsQuerySchema>;
 
 export type SessionFilters = Omit<ListSessionsQuery, 'limit' | 'cursor'>;
+
+export type OverviewRange = z.infer<typeof overviewQuerySchema>['range'];
+
+export type OverviewQuery = z.infer<typeof overviewQuerySchema>;
+
+export type DayCount = { day: string; count: number };
+
+export type OverviewCounts = {
+  dailyActive: DayCount[];
+  weeklyActive: DayCount[];
+  registrations: DayCount[];
+  conversions: DayCount[];
+  guests: DayCount[];
+  messages: DayCount[];
+};

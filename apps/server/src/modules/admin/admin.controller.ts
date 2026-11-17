@@ -9,6 +9,7 @@ import type {
   ListSessionsQuery,
   ListUserSessionsQuery,
   ListUsersQuery,
+  OverviewQuery,
   SessionIdParams,
   SetRoleDTO,
   UserIdParams,
@@ -30,6 +31,10 @@ export const adminController = {
   async listUsers(req: FastifyRequest<{ Querystring: ListUsersQuery }>, reply: FastifyReply) {
     const page = await adminService.listUsers(req.query);
     return reply.status(200).send(page);
+  },
+  async getOverview(req: FastifyRequest<{ Querystring: OverviewQuery }>, reply: FastifyReply) {
+    const overview = await adminService.getOverview(req.query.range);
+    return reply.status(200).send(overview);
   },
   async getUser(req: FastifyRequest<{ Params: UserIdParams }>, reply: FastifyReply) {
     const user = await adminService.getUser(req.params.id);

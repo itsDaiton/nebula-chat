@@ -5,6 +5,14 @@
  * REST API for Nebula Chat
  */
 
+export * from './adminOverview';
+export * from './adminOverviewKpis';
+export * from './adminOverviewKpisDailyActiveUsers';
+export * from './adminOverviewKpisGuestConversion';
+export * from './adminOverviewKpisMessagesSent';
+export * from './adminOverviewKpisNewRegistrations';
+export * from './adminOverviewKpisWeeklyActiveUsers';
+export * from './adminOverviewRange';
 export * from './adminSessionDetail';
 export * from './adminSessionListItem';
 export * from './adminSessionListItemOwner';
@@ -29,6 +37,8 @@ export * from './createMessageBodyRole';
 export * from './createSessionBody';
 export * from './errorCode';
 export * from './errorEnvelope';
+export * from './getAdminOverviewParams';
+export * from './getAdminOverviewRange';
 export * from './health';
 export * from './listAllSessionsArchived';
 export * from './listAllSessionsOrder';

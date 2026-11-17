@@ -361,8 +361,10 @@ describe('admin navigation', () => {
     expect(
       within(nav).getByRole('link', { name: resources.admin.nav.sessions }),
     ).toBeInTheDocument();
+    expect(
+      within(nav).getByRole('link', { name: resources.admin.nav.overview }),
+    ).toBeInTheDocument();
     for (const label of [
-      resources.admin.nav.overview,
       resources.admin.nav.modelUsage,
       resources.admin.nav.runs,
       resources.admin.nav.agents,

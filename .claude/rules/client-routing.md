@@ -26,7 +26,7 @@ coverage and knip. A route file only wires a page: the component lives in `modul
   while sign-out resets the session, so nothing fetches as nobody while a Guest is re-minted.
 - **Admin guard.** `routes/_app/admin/route.tsx` (`/admin`) runs `requireTwoFactorAdmin`
   (`modules/admin/utils/adminGuard.ts`) in `beforeLoad`: an Admin whose auth session passed 2FA gets `AdminLayout`; an
-  Admin without it is redirected to `/` with Settings open on Security; everyone else gets `notFound()`. A new admin
+  Admin without it is redirected to `/` with Settings open on Security; everyone else gets `notFound()`. `/admin` is the Overview (`range` in the URL, no right panel). A new admin
   page is a child route here, listed in `modules/admin/utils/adminNavigation.ts`; `hasDetail` there decides whether the
   right panel and its toggle exist. `/admin/users` holds its search, `status` list, sort, cursor and the open
   User (`selected`) in the URL; `UserDetailPanel` reads `selected`, so a link opens the same detail.

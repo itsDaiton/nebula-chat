@@ -24,6 +24,8 @@ export const AdminNavItem = ({ page, onNavigate }: AdminNavItemProps) => {
     <Link
       to={page.to}
       onClick={onNavigate}
+      // `/admin` prefixes every admin path, so only an exact match marks the Overview.
+      activeOptions={{ exact: page.to === '/admin' }}
       className={cn(
         row,
         'text-foreground-secondary hover:bg-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none [&_svg]:text-muted-foreground',

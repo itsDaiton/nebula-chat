@@ -223,3 +223,48 @@ export const adminSessionListPageSchema = z
     hasMore: z.boolean(),
   })
   .meta({ id: 'AdminSessionListPage' });
+
+const OVERVIEW_RANGES = ['7d', '14d', '30d', '90d'] as const;
+
+export const overviewQuerySchema = z.object({
+  range: z
+    .enum(OVERVIEW_RANGES)
+    .default('30d')
+    .describe('How many UTC days back, today included; the period before it is the comparison'),
+});
+
+const kpiSchema = z.object({
+  total: z.number().describe('The value over the range'),
+  previousTotal: z.number().describe('The same value over the period just before the range'),
+  series: z.array(z.number()).max(90).describe('One value per day of the range, oldest first'),
+});
+
+export const overviewSchema = z
+  .object({
+    range: z.enum(OVERVIEW_RANGES),
+    days: z
+      .array(z.string())
+      .max(90)
+      .describe('The UTC days of the range, oldest first, as `YYYY-MM-DD`'),
+    kpis: z.object({
+      dailyActiveUsers: kpiSchema.describe('`total` is the mean of the daily counts'),
+      weeklyActiveUsers: kpiSchema.describe(
+        'Each day counts the Users active in the 7 days ending on it; `total` is the last day',
+      ),
+      newRegistrations: kpiSchema,
+      messagesSent: kpiSchema,
+      guestConversion: z.object({
+        conversions: z.number(),
+        previousConversions: z.number(),
+        rate: z
+          .number()
+          .nullable()
+          .describe(
+            'Conversions over conversions plus Guests created in the range; `null` with neither',
+          ),
+        previousRate: z.number().nullable(),
+        series: z.array(z.number()).max(90).describe('Conversions per day, oldest first'),
+      }),
+    }),
+  })
+  .meta({ id: 'AdminOverview' });

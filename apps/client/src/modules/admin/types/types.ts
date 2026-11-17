@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import type { QueryKey, UseQueryOptions } from '@tanstack/react-query';
 import type { ColumnDef, RowData } from '@tanstack/react-table';
 import type { adminTableFeatures } from '@/modules/admin/utils/adminTableFeatures';
+import type { AdminOverview } from '@/libs/api/generated/model/adminOverview';
 import type { AuditEntry } from '@/libs/api/generated/model/auditEntry';
 import type { AuditEntryActorType } from '@/libs/api/generated/model/auditEntryActorType';
 import type { AdminUserDetail } from '@/libs/api/generated/model/adminUserDetail';
@@ -13,6 +14,7 @@ import type { ErrorEnvelope } from '@/libs/api/generated/model/errorEnvelope';
 import type { ListAllSessionsArchived } from '@/libs/api/generated/model/listAllSessionsArchived';
 import type { ListAuditEntriesOrder } from '@/libs/api/generated/model/listAuditEntriesOrder';
 import type { ListAllSessionsOrder } from '@/libs/api/generated/model/listAllSessionsOrder';
+import type { GetAdminOverviewRange } from '@/libs/api/generated/model/getAdminOverviewRange';
 import type { ListUsersOrder } from '@/libs/api/generated/model/listUsersOrder';
 import type { ListUsersSortBy } from '@/libs/api/generated/model/listUsersSortBy';
 import type { ListUsersStatusItem } from '@/libs/api/generated/model/listUsersStatusItem';
@@ -40,7 +42,7 @@ type AdminNavPage = {
   label: string;
   icon: LucideIcon;
   /** Unset while the page is not built: its row is disabled and labelled "soon". */
-  to?: '/admin/audit' | '/admin/sessions' | '/admin/users';
+  to?: '/admin' | '/admin/audit' | '/admin/sessions' | '/admin/users';
   /** The page has selectable rows, so the right panel and its toggle exist. */
   hasDetail?: boolean;
 };
@@ -225,3 +227,27 @@ export type UserActionState = {
   show: (dialog: UserActionDialog) => void;
   close: () => void;
 };
+
+export type OverviewDelta = { direction: 'up' | 'down' | 'flat'; text: string };
+
+export type OverviewTileData = {
+  id: keyof AdminOverview['kpis'];
+  value: string;
+  delta: OverviewDelta | null;
+  series: number[];
+};
+
+export type OverviewTileProps = {
+  label: string;
+  range: GetAdminOverviewRange;
+  value: string;
+  delta: OverviewDelta | null;
+  series: number[];
+};
+
+export type OverviewRangeSwitchProps = {
+  value: GetAdminOverviewRange;
+  onChange: (range: GetAdminOverviewRange) => void;
+};
+
+export type SparklineProps = { values: number[]; label: string };

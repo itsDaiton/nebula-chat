@@ -162,6 +162,8 @@ export const messages = pgTable(
   },
   (t) => [
     index('msg_session_idx').on(t.sessionId),
+    // Serves the admin Overview's per-day activity counts.
+    index('msg_created_at_idx').on(t.createdAt),
     check('messages_role_check', sql`${t.role} in ('user', 'assistant')`),
   ],
 );
