@@ -407,7 +407,7 @@ export const resources = {
         cacheReplays: 'Cache replays',
         completion: 'Completion rate',
         duration: 'Avg. duration',
-        trend: (range: string) => `${range} trend`,
+        trend: (days: number) => `${days}-day trend`,
         trendLabel: 'Prompts per day for this Model',
         tokens: (count: string) => `${count} tokens`,
       },

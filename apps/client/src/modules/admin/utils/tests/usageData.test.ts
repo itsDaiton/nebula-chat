@@ -51,6 +51,7 @@ describe('highlightedKey', () => {
   it('is the pinned Model, else the largest Model, never the Run series', () => {
     expect(highlightedKey(series, 'gpt-4o')).toBe('gpt-4o');
     expect(highlightedKey(series, 'gone')).toBe('gpt-4o');
+    expect(highlightedKey(series, 'gpt-5')).toBe('gpt-5');
     expect(highlightedKey({ ...series, series: [series.series[0]] }, undefined)).toBeNull();
   });
 });

@@ -1,6 +1,6 @@
 import { useModelCatalog } from '@/modules/chat/hooks/useModelCatalog';
 import type { UsageTableProps } from '@/modules/admin/types/types';
-import { displayValue, usageSeriesLabel } from '@/modules/admin/utils/usageData';
+import { dayTotals, displayValue, usageSeriesLabel } from '@/modules/admin/utils/usageData';
 import { formatDay, formatSeriesValue } from '@/modules/admin/utils/usageFormat';
 import { resources } from '@/resources';
 
@@ -9,9 +9,7 @@ const text = resources.admin.usage;
 /** The chart's data as a table: a day per row, a Model per column. */
 export const UsageTable = ({ series, metric, view }: UsageTableProps) => {
   const { getModelLabel } = useModelCatalog();
-  const totals = series.days.map((_, i) =>
-    series.series.reduce((total, item) => total + item.values[i], 0),
-  );
+  const totals = dayTotals(series);
 
   return (
     <div className="max-h-96 overflow-auto rounded-xl border border-border">

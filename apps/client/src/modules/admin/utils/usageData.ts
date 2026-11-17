@@ -33,11 +33,14 @@ export const usageSeriesLabel = (
 /** The Model the chart highlights: the pinned one while it is in the data, else the largest. */
 export const highlightedKey = (series: UsageSeries, pinned: string | undefined) => {
   const models = series.series.filter((item) => item.kind === 'model');
+  // A pinned Model that fell into Other is still the one to show.
+  const inOther = series.series.some((item) => item.members.some((m) => m.key === pinned));
+  if (pinned && inOther) return pinned;
   return (models.find((item) => item.key === pinned) ?? models[0])?.key ?? null;
 };
 
 // Share rescales each day to 100; a day with nothing stays at zero.
-const dayTotals = (series: UsageSeries) =>
+export const dayTotals = (series: UsageSeries) =>
   series.days.map((_, i) => series.series.reduce((total, item) => total + item.values[i], 0));
 
 export const displayValue = (value: number, dayTotal: number, view: UsageView) =>

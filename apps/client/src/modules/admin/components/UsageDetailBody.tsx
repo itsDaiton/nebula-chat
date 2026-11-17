@@ -35,9 +35,7 @@ export const UsageDetailBody = ({ detail }: UsageDetailBodyProps) => (
       <UsageDetailRow label={text.duration} value={orDash(detail.avgDurationMs, formatSeconds)} />
     </dl>
     <div className="flex flex-col gap-2">
-      <div className="text-[13px] text-muted-foreground">
-        {text.trend(`${detail.trend.length}-day`)}
-      </div>
+      <div className="text-[13px] text-muted-foreground">{text.trend(detail.trend.length)}</div>
       <Sparkline values={detail.trend} label={text.trendLabel} />
     </div>
   </>
