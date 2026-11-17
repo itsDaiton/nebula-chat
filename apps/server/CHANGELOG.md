@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.24.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.23.0...nebula-chat-server-v4.24.0) (2026-11-17)
+
+
+### Features
+
+* **server:** NEB-782 Audit log order, total and labels, wired to the client ([#846](https://github.com/itsDaiton/nebula-chat/issues/846)) ([58dc75e](https://github.com/itsDaiton/nebula-chat/commit/58dc75e4b570501dc595731b49a2ea7318528ebd))
+
 ## [4.23.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.22.2...nebula-chat-server-v4.23.0) (2026-11-16)
 
 
