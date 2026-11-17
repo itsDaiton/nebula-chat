@@ -17,7 +17,7 @@ A scare in production showed how hard it is to tell what is protected: Swagger U
 3. **Gates run in `onRequest`**, so a caller who is not allowed is turned away before the body is read.
 4. **`public` is an allowlist**: health checks, the better-auth passthrough, and the docs where enabled. Each carries a one-line reason.
 5. **Ownership is not an Access level.** A User asking for another User's Session, Message, Run or stream gets 404, enforced in the repository query. A route that serves "the owner or an Admin" stays `user` and makes the audited Admin branch in its service.
-6. **Operator failures answer 404**, so `/api/internal/*` does not confirm it exists.
+6. **Privileged routes do not confirm they exist.** A failed Operator check answers 404. So does an `admin` route to anyone without the admin role, while an Admin who has not passed a second factor still gets "two-factor required", so the dashboard can send them to enrol.
 7. **The declaration drives the spec.** Each operation's OpenAPI `security` and its "Access:" line come from it.
 8. **Docs are off in production.** `API_DOCS_ENABLED` hides Swagger UI and `/openapi.json`, but `@fastify/swagger` stays registered, so `generate:openapi` and the Orval clients are unaffected.
 
