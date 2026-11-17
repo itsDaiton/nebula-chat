@@ -67,4 +67,4 @@ The constraints:
   - A batch lost to an outage is not retried beyond the exporter's own retries; stdout keeps it.
   - `otel.diag.log` lines are not in Loki. Read SDK trouble on stdout.
   - Volume: an exported line measured about 1.4 KB in local Loki once structured metadata is counted (mostly the resource: process and host attributes). 50 GB a month is about 35 million lines, around 13 a second sustained, against roughly one `info` line per request today. Turning a component to `debug` at runtime (ADR-0020) multiplies that while it lasts, and the change expires on its own.
-- **Neutral:** `@nebula-chat/otel` gains `@opentelemetry/api-logs`, `@opentelemetry/sdk-logs`, `@opentelemetry/exporter-logs-otlp-http` and `@opentelemetry/core`, all already in the SDK's dependency graph. No change to call sites, the line shape or the OpenAPI contract.
+- **Neutral:** `@nebula-chat/otel` gains `@opentelemetry/sdk-logs`, `@opentelemetry/exporter-logs-otlp-http` and `@opentelemetry/core`, all already in the SDK's dependency graph. No change to call sites, the line shape or the OpenAPI contract.
