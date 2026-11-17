@@ -11,7 +11,7 @@ export type PasswordConfirmation = { password: string; confirmPassword: string }
 export type PasswordReplacement = { currentPassword: string; password: string };
 
 /** Where a rule comparing two fields reports, and what it says. */
-export type FieldComparisonError<Values> = { path: keyof Values & string; message: string };
+type FieldComparisonError<Values> = { path: keyof Values & string; message: string };
 
 // better-auth's default password bounds; the server enforces them again.
 const PASSWORD_MIN_LENGTH = 8;
