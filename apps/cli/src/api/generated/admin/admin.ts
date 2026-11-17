@@ -24,6 +24,12 @@ import type { ErrorEnvelope } from '../model/errorEnvelope';
 
 import type { GetAdminOverviewParams } from '../model/getAdminOverviewParams';
 
+import type { GetModelUsageDetailParams } from '../model/getModelUsageDetailParams';
+
+import type { GetModelUsageSeriesParams } from '../model/getModelUsageSeriesParams';
+
+import type { GetModelUsageTotalsParams } from '../model/getModelUsageTotalsParams';
+
 import type { ListAllSessionsParams } from '../model/listAllSessionsParams';
 
 import type { ListAuditEntriesParams } from '../model/listAuditEntriesParams';
@@ -33,6 +39,12 @@ import type { ListUserSessionsParams } from '../model/listUserSessionsParams';
 import type { ListUsersParams } from '../model/listUsersParams';
 
 import type { SetUserRoleBody } from '../model/setUserRoleBody';
+
+import type { UsageDetail } from '../model/usageDetail';
+
+import type { UsageSeries } from '../model/usageSeries';
+
+import type { UsageTotals } from '../model/usageTotals';
 
 import { apiFetch } from '../../apiFetch';
 
@@ -101,6 +113,225 @@ export const getAdminOverview = async (
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<getAdminOverviewResponse> => {
   return apiFetch<getAdminOverviewResponse>(getGetAdminOverviewUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export type getModelUsageSeriesResponse200 = {
+  data: UsageSeries;
+  status: 200;
+};
+
+export type getModelUsageSeriesResponse400 = {
+  data: ErrorEnvelope;
+  status: 400;
+};
+
+export type getModelUsageSeriesResponse401 = {
+  data: ErrorEnvelope;
+  status: 401;
+};
+
+export type getModelUsageSeriesResponse403 = {
+  data: ErrorEnvelope;
+  status: 403;
+};
+
+export type getModelUsageSeriesResponse500 = {
+  data: ErrorEnvelope;
+  status: 500;
+};
+
+export type getModelUsageSeriesResponseSuccess = getModelUsageSeriesResponse200 & {
+  headers: Headers;
+};
+export type getModelUsageSeriesResponseError = (
+  | getModelUsageSeriesResponse400
+  | getModelUsageSeriesResponse401
+  | getModelUsageSeriesResponse403
+  | getModelUsageSeriesResponse500
+) & {
+  headers: Headers;
+};
+
+export type getModelUsageSeriesResponse =
+  getModelUsageSeriesResponseSuccess | getModelUsageSeriesResponseError;
+
+export const getGetModelUsageSeriesUrl = (params?: GetModelUsageSeriesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ['models'];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/usage/series?${stringifiedParams}`
+    : `/api/admin/usage/series`;
+};
+
+/**
+ * One value per UTC day (today included, zeros filled in) for each Model, for the last 7, 14, 30 or 90 days. `prompts` counts user Messages: a reply is attributed to its Session’s Model and a Message that started a Run counts once, in the `run` series. `tokens` and `spend` sum Model calls per Model that served them. Only the top 8 Models are listed; the rest are grouped as `other`. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary Get Model usage per day
+ */
+export const getModelUsageSeries = async (
+  params?: GetModelUsageSeriesParams,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<getModelUsageSeriesResponse> => {
+  return apiFetch<getModelUsageSeriesResponse>(getGetModelUsageSeriesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export type getModelUsageDetailResponse200 = {
+  data: UsageDetail;
+  status: 200;
+};
+
+export type getModelUsageDetailResponse400 = {
+  data: unknown;
+  status: 400;
+};
+
+export type getModelUsageDetailResponse401 = {
+  data: unknown;
+  status: 401;
+};
+
+export type getModelUsageDetailResponse403 = {
+  data: unknown;
+  status: 403;
+};
+
+export type getModelUsageDetailResponse500 = {
+  data: unknown;
+  status: 500;
+};
+
+export type getModelUsageDetailResponseSuccess = getModelUsageDetailResponse200 & {
+  headers: Headers;
+};
+export type getModelUsageDetailResponseError = (
+  | getModelUsageDetailResponse400
+  | getModelUsageDetailResponse401
+  | getModelUsageDetailResponse403
+  | getModelUsageDetailResponse500
+) & {
+  headers: Headers;
+};
+
+export type getModelUsageDetailResponse =
+  getModelUsageDetailResponseSuccess | getModelUsageDetailResponseError;
+
+export const getGetModelUsageDetailUrl = (params: GetModelUsageDetailParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/usage/detail?${stringifiedParams}`
+    : `/api/admin/usage/detail`;
+};
+
+/**
+ * One Model on one UTC day: averages per Model call, cache replays, completion rate and duration, with its Prompts trend over the range. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary Get one Model’s usage on a day
+ */
+export const getModelUsageDetail = async (
+  params: GetModelUsageDetailParams,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<getModelUsageDetailResponse> => {
+  return apiFetch<getModelUsageDetailResponse>(getGetModelUsageDetailUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export type getModelUsageTotalsResponse200 = {
+  data: UsageTotals;
+  status: 200;
+};
+
+export type getModelUsageTotalsResponse400 = {
+  data: unknown;
+  status: 400;
+};
+
+export type getModelUsageTotalsResponse401 = {
+  data: unknown;
+  status: 401;
+};
+
+export type getModelUsageTotalsResponse403 = {
+  data: unknown;
+  status: 403;
+};
+
+export type getModelUsageTotalsResponse500 = {
+  data: unknown;
+  status: 500;
+};
+
+export type getModelUsageTotalsResponseSuccess = getModelUsageTotalsResponse200 & {
+  headers: Headers;
+};
+export type getModelUsageTotalsResponseError = (
+  | getModelUsageTotalsResponse400
+  | getModelUsageTotalsResponse401
+  | getModelUsageTotalsResponse403
+  | getModelUsageTotalsResponse500
+) & {
+  headers: Headers;
+};
+
+export type getModelUsageTotalsResponse =
+  getModelUsageTotalsResponseSuccess | getModelUsageTotalsResponseError;
+
+export const getGetModelUsageTotalsUrl = (params?: GetModelUsageTotalsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/usage/totals?${stringifiedParams}`
+    : `/api/admin/usage/totals`;
+};
+
+/**
+ * Totals over the range with those of the period just before it, for deltas. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary Get Model usage totals
+ */
+export const getModelUsageTotals = async (
+  params?: GetModelUsageTotalsParams,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<getModelUsageTotalsResponse> => {
+  return apiFetch<getModelUsageTotalsResponse>(getGetModelUsageTotalsUrl(params), {
     ...options,
     method: 'GET',
   });

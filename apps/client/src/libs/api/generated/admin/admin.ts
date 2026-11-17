@@ -31,11 +31,17 @@ import type {
   BanUserBody,
   ErrorEnvelope,
   GetAdminOverviewParams,
+  GetModelUsageDetailParams,
+  GetModelUsageSeriesParams,
+  GetModelUsageTotalsParams,
   ListAllSessionsParams,
   ListAuditEntriesParams,
   ListUserSessionsParams,
   ListUsersParams,
   SetUserRoleBody,
+  UsageDetail,
+  UsageSeries,
+  UsageTotals,
 } from '../model';
 
 import { axiosClient } from '../../client';
@@ -169,6 +175,399 @@ export function useGetAdminOverview<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetAdminOverviewQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * One value per UTC day (today included, zeros filled in) for each Model, for the last 7, 14, 30 or 90 days. `prompts` counts user Messages: a reply is attributed to its Session’s Model and a Message that started a Run counts once, in the `run` series. `tokens` and `spend` sum Model calls per Model that served them. Only the top 8 Models are listed; the rest are grouped as `other`. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary Get Model usage per day
+ */
+export const getModelUsageSeries = (
+  params?: GetModelUsageSeriesParams,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<UsageSeries>(
+    { url: `/api/admin/usage/series`, method: 'GET', params, signal },
+    options,
+  );
+};
+
+export const getGetModelUsageSeriesQueryKey = (params?: GetModelUsageSeriesParams) => {
+  return [`/api/admin/usage/series`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetModelUsageSeriesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getModelUsageSeries>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: GetModelUsageSeriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getModelUsageSeries>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetModelUsageSeriesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getModelUsageSeries>>> = ({ signal }) =>
+    getModelUsageSeries(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getModelUsageSeries>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetModelUsageSeriesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getModelUsageSeries>>
+>;
+export type GetModelUsageSeriesQueryError = ErrorType<ErrorEnvelope>;
+
+export function useGetModelUsageSeries<
+  TData = Awaited<ReturnType<typeof getModelUsageSeries>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params: undefined | GetModelUsageSeriesParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getModelUsageSeries>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getModelUsageSeries>>,
+          TError,
+          Awaited<ReturnType<typeof getModelUsageSeries>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetModelUsageSeries<
+  TData = Awaited<ReturnType<typeof getModelUsageSeries>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: GetModelUsageSeriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getModelUsageSeries>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getModelUsageSeries>>,
+          TError,
+          Awaited<ReturnType<typeof getModelUsageSeries>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetModelUsageSeries<
+  TData = Awaited<ReturnType<typeof getModelUsageSeries>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: GetModelUsageSeriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getModelUsageSeries>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get Model usage per day
+ */
+
+export function useGetModelUsageSeries<
+  TData = Awaited<ReturnType<typeof getModelUsageSeries>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: GetModelUsageSeriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getModelUsageSeries>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetModelUsageSeriesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * One Model on one UTC day: averages per Model call, cache replays, completion rate and duration, with its Prompts trend over the range. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary Get one Model’s usage on a day
+ */
+export const getModelUsageDetail = (
+  params: GetModelUsageDetailParams,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<UsageDetail>(
+    { url: `/api/admin/usage/detail`, method: 'GET', params, signal },
+    options,
+  );
+};
+
+export const getGetModelUsageDetailQueryKey = (params?: GetModelUsageDetailParams) => {
+  return [`/api/admin/usage/detail`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetModelUsageDetailQueryOptions = <
+  TData = Awaited<ReturnType<typeof getModelUsageDetail>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetModelUsageDetailParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getModelUsageDetail>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetModelUsageDetailQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getModelUsageDetail>>> = ({ signal }) =>
+    getModelUsageDetail(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getModelUsageDetail>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetModelUsageDetailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getModelUsageDetail>>
+>;
+export type GetModelUsageDetailQueryError = ErrorType<unknown>;
+
+export function useGetModelUsageDetail<
+  TData = Awaited<ReturnType<typeof getModelUsageDetail>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetModelUsageDetailParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getModelUsageDetail>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getModelUsageDetail>>,
+          TError,
+          Awaited<ReturnType<typeof getModelUsageDetail>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetModelUsageDetail<
+  TData = Awaited<ReturnType<typeof getModelUsageDetail>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetModelUsageDetailParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getModelUsageDetail>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getModelUsageDetail>>,
+          TError,
+          Awaited<ReturnType<typeof getModelUsageDetail>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetModelUsageDetail<
+  TData = Awaited<ReturnType<typeof getModelUsageDetail>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetModelUsageDetailParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getModelUsageDetail>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get one Model’s usage on a day
+ */
+
+export function useGetModelUsageDetail<
+  TData = Awaited<ReturnType<typeof getModelUsageDetail>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetModelUsageDetailParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getModelUsageDetail>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetModelUsageDetailQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * Totals over the range with those of the period just before it, for deltas. Requires an Admin whose auth session passed two-factor authentication.
+ * @summary Get Model usage totals
+ */
+export const getModelUsageTotals = (
+  params?: GetModelUsageTotalsParams,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<UsageTotals>(
+    { url: `/api/admin/usage/totals`, method: 'GET', params, signal },
+    options,
+  );
+};
+
+export const getGetModelUsageTotalsQueryKey = (params?: GetModelUsageTotalsParams) => {
+  return [`/api/admin/usage/totals`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetModelUsageTotalsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getModelUsageTotals>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetModelUsageTotalsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getModelUsageTotals>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetModelUsageTotalsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getModelUsageTotals>>> = ({ signal }) =>
+    getModelUsageTotals(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getModelUsageTotals>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetModelUsageTotalsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getModelUsageTotals>>
+>;
+export type GetModelUsageTotalsQueryError = ErrorType<unknown>;
+
+export function useGetModelUsageTotals<
+  TData = Awaited<ReturnType<typeof getModelUsageTotals>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | GetModelUsageTotalsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getModelUsageTotals>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getModelUsageTotals>>,
+          TError,
+          Awaited<ReturnType<typeof getModelUsageTotals>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetModelUsageTotals<
+  TData = Awaited<ReturnType<typeof getModelUsageTotals>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetModelUsageTotalsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getModelUsageTotals>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getModelUsageTotals>>,
+          TError,
+          Awaited<ReturnType<typeof getModelUsageTotals>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetModelUsageTotals<
+  TData = Awaited<ReturnType<typeof getModelUsageTotals>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetModelUsageTotalsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getModelUsageTotals>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get Model usage totals
+ */
+
+export function useGetModelUsageTotals<
+  TData = Awaited<ReturnType<typeof getModelUsageTotals>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetModelUsageTotalsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getModelUsageTotals>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetModelUsageTotalsQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

@@ -7,7 +7,7 @@
 import { faker } from '@faker-js/faker';
 
 import { HttpResponse, http } from 'msw';
-import type { RequestHandlerOptions } from 'msw';
+import type { HttpResponseResolver, RequestHandlerOptions } from 'msw';
 
 import type {
   AdminOverview,
@@ -17,6 +17,11 @@ import type {
   AdminUserDetail,
   AdminUserPage,
   AuditPage,
+  BanUserBody,
+  SetUserRoleBody,
+  UsageDetail,
+  UsageSeries,
+  UsageTotals,
 } from '../model';
 
 export const getGetAdminOverviewResponseMock = (
@@ -64,6 +69,87 @@ export const getGetAdminOverviewResponseMock = (
         () => faker.number.float({ fractionDigits: 2 }),
       ),
     },
+  },
+  ...overrideResponse,
+});
+
+export const getGetModelUsageSeriesResponseMock = (
+  overrideResponse: Partial<Extract<UsageSeries, object>> = {},
+): UsageSeries => ({
+  metric: faker.helpers.arrayElement(['prompts', 'tokens', 'spend'] as const),
+  range: faker.helpers.arrayElement(['7d', '14d', '30d', '90d'] as const),
+  days: Array.from({ length: faker.number.int({ min: 1, max: 90 }) }, (_, i) => i + 1).map(() =>
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ),
+  series: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+    () => ({
+      key: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      kind: faker.helpers.arrayElement(['model', 'run', 'other'] as const),
+      total: faker.number.float({ fractionDigits: 2 }),
+      values: Array.from({ length: faker.number.int({ min: 1, max: 90 }) }, (_, i) => i + 1).map(
+        () => faker.number.float({ fractionDigits: 2 }),
+      ),
+      members: Array.from({ length: faker.number.int({ min: 1, max: 200 }) }, (_, i) => i + 1).map(
+        () => ({
+          key: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          total: faker.number.float({ fractionDigits: 2 }),
+          values: Array.from(
+            { length: faker.number.int({ min: 1, max: 90 }) },
+            (_, i) => i + 1,
+          ).map(() => faker.number.float({ fractionDigits: 2 })),
+        }),
+      ),
+    }),
+  ),
+  ...overrideResponse,
+});
+
+export const getGetModelUsageDetailResponseMock = (
+  overrideResponse: Partial<Extract<UsageDetail, object>> = {},
+): UsageDetail => ({
+  model: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  day: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  prompts: faker.number.float({ fractionDigits: 2 }),
+  calls: faker.number.float({ fractionDigits: 2 }),
+  inputPerCall: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+  outputPerCall: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+  costPerCall: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+  cacheReplays: faker.number.float({ fractionDigits: 2 }),
+  completionRate: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+  avgDurationMs: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+  trend: Array.from({ length: faker.number.int({ min: 1, max: 90 }) }, (_, i) => i + 1).map(() =>
+    faker.number.float({ fractionDigits: 2 }),
+  ),
+  ...overrideResponse,
+});
+
+export const getGetModelUsageTotalsResponseMock = (
+  overrideResponse: Partial<Extract<UsageTotals, object>> = {},
+): UsageTotals => ({
+  range: faker.helpers.arrayElement(['7d', '14d', '30d', '90d'] as const),
+  prompts: {
+    total: faker.number.float({ fractionDigits: 2 }),
+    previousTotal: faker.number.float({ fractionDigits: 2 }),
+  },
+  tokens: {
+    total: faker.number.float({ fractionDigits: 2 }),
+    previousTotal: faker.number.float({ fractionDigits: 2 }),
+  },
+  spend: {
+    total: faker.number.float({ fractionDigits: 2 }),
+    previousTotal: faker.number.float({ fractionDigits: 2 }),
+  },
+  activeUsers: {
+    total: faker.number.float({ fractionDigits: 2 }),
+    previousTotal: faker.number.float({ fractionDigits: 2 }),
+  },
+  runs: {
+    total: faker.number.float({ fractionDigits: 2 }),
+    previousTotal: faker.number.float({ fractionDigits: 2 }),
+  },
+  cacheHitRate: {
+    rate: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+    previousRate: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
   },
   ...overrideResponse,
 });
@@ -266,14 +352,12 @@ export const getListAuditEntriesResponseMock = (
 export const getGetAdminOverviewMockHandler = (
   overrideResponse?:
     | AdminOverview
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<AdminOverview> | AdminOverview),
+    | ((info: Parameters<HttpResponseResolver>[0]) => Promise<AdminOverview> | AdminOverview),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     '*/api/admin/overview',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -287,17 +371,81 @@ export const getGetAdminOverviewMockHandler = (
   );
 };
 
+export const getGetModelUsageSeriesMockHandler = (
+  overrideResponse?:
+    | UsageSeries
+    | ((info: Parameters<HttpResponseResolver>[0]) => Promise<UsageSeries> | UsageSeries),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/admin/usage/series',
+    async (info: Parameters<HttpResponseResolver>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetModelUsageSeriesResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getGetModelUsageDetailMockHandler = (
+  overrideResponse?:
+    | UsageDetail
+    | ((info: Parameters<HttpResponseResolver>[0]) => Promise<UsageDetail> | UsageDetail),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/admin/usage/detail',
+    async (info: Parameters<HttpResponseResolver>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetModelUsageDetailResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getGetModelUsageTotalsMockHandler = (
+  overrideResponse?:
+    | UsageTotals
+    | ((info: Parameters<HttpResponseResolver>[0]) => Promise<UsageTotals> | UsageTotals),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/admin/usage/totals',
+    async (info: Parameters<HttpResponseResolver>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetModelUsageTotalsResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
 export const getListUsersMockHandler = (
   overrideResponse?:
     | AdminUserPage
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<AdminUserPage> | AdminUserPage),
+    | ((info: Parameters<HttpResponseResolver>[0]) => Promise<AdminUserPage> | AdminUserPage),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     '*/api/admin/users',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -315,13 +463,13 @@ export const getGetUserMockHandler = (
   overrideResponse?:
     | AdminUserDetail
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<AdminUserDetail> | AdminUserDetail),
   options?: RequestHandlerOptions,
 ) => {
-  return http.get(
+  return http.get<{ id: string }>(
     '*/api/admin/users/:id',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -339,13 +487,13 @@ export const getListUserSessionsMockHandler = (
   overrideResponse?:
     | AdminSessionPage
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<AdminSessionPage> | AdminSessionPage),
   options?: RequestHandlerOptions,
 ) => {
-  return http.get(
+  return http.get<{ id: string }>(
     '*/api/admin/users/:id/sessions',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -361,12 +509,12 @@ export const getListUserSessionsMockHandler = (
 
 export const getRestoreUserMockHandler = (
   overrideResponse?:
-    void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void),
+    void | ((info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => Promise<void> | void),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ id: string }>(
     '*/api/admin/users/:id/restore',
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       if (typeof overrideResponse === 'function') {
         await overrideResponse(info);
       }
@@ -379,12 +527,15 @@ export const getRestoreUserMockHandler = (
 
 export const getSetUserRoleMockHandler = (
   overrideResponse?:
-    void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void),
+    | void
+    | ((
+        info: Parameters<HttpResponseResolver<{ id: string }, SetUserRoleBody>>[0],
+      ) => Promise<void> | void),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ id: string }, SetUserRoleBody>(
     '*/api/admin/users/:id/role',
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }, SetUserRoleBody>>[0]) => {
       if (typeof overrideResponse === 'function') {
         await overrideResponse(info);
       }
@@ -397,12 +548,15 @@ export const getSetUserRoleMockHandler = (
 
 export const getBanUserMockHandler = (
   overrideResponse?:
-    void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void),
+    | void
+    | ((
+        info: Parameters<HttpResponseResolver<{ id: string }, BanUserBody>>[0],
+      ) => Promise<void> | void),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ id: string }, BanUserBody>(
     '*/api/admin/users/:id/ban',
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }, BanUserBody>>[0]) => {
       if (typeof overrideResponse === 'function') {
         await overrideResponse(info);
       }
@@ -415,12 +569,12 @@ export const getBanUserMockHandler = (
 
 export const getUnbanUserMockHandler = (
   overrideResponse?:
-    void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void),
+    void | ((info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => Promise<void> | void),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ id: string }>(
     '*/api/admin/users/:id/unban',
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       if (typeof overrideResponse === 'function') {
         await overrideResponse(info);
       }
@@ -435,13 +589,13 @@ export const getListAllSessionsMockHandler = (
   overrideResponse?:
     | AdminSessionListPage
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver>[0],
       ) => Promise<AdminSessionListPage> | AdminSessionListPage),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     '*/api/admin/sessions',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -459,13 +613,13 @@ export const getReadSessionMockHandler = (
   overrideResponse?:
     | AdminSessionDetail
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<AdminSessionDetail> | AdminSessionDetail),
   options?: RequestHandlerOptions,
 ) => {
-  return http.get(
+  return http.get<{ id: string }>(
     '*/api/admin/sessions/:id',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -481,13 +635,12 @@ export const getReadSessionMockHandler = (
 
 export const getListAuditEntriesMockHandler = (
   overrideResponse?:
-    | AuditPage
-    | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<AuditPage> | AuditPage),
+    AuditPage | ((info: Parameters<HttpResponseResolver>[0]) => Promise<AuditPage> | AuditPage),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     '*/api/admin/audit',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -502,6 +655,9 @@ export const getListAuditEntriesMockHandler = (
 };
 export const getAdminMock = () => [
   getGetAdminOverviewMockHandler(),
+  getGetModelUsageSeriesMockHandler(),
+  getGetModelUsageDetailMockHandler(),
+  getGetModelUsageTotalsMockHandler(),
   getListUsersMockHandler(),
   getGetUserMockHandler(),
   getListUserSessionsMockHandler(),
