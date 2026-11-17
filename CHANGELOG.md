@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.8.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.8.0...nebula-chat-v7.8.1) (2026-11-17)
+
+
+### Bug Fixes
+
+* restore root devDependency versions reverted by release PR ([#868](https://github.com/itsDaiton/nebula-chat/issues/868)) ([f88f372](https://github.com/itsDaiton/nebula-chat/commit/f88f37203a6c9af5888119b856793143c9283301))
+
 ## [7.8.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.7.5...nebula-chat-v7.8.0) (2026-11-17)
 
 
