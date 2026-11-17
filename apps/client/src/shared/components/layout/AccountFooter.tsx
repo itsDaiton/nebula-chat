@@ -20,8 +20,10 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
+import { useOS } from '@/shared/hooks/useOS';
 import { cn } from '@/shared/utils/cn';
 import { initialsOf } from '@/shared/utils/initialsOf';
 
@@ -31,6 +33,7 @@ export const AccountFooter = () => {
   const { mutate: signOut, isPending } = useSignOut();
   const openSettings = useSettingsDialogStore((state) => state.openSettings);
   const navigate = useNavigate();
+  const modifier = resources.shell.modifier[useOS()];
 
   if (isGuest) {
     return (
@@ -105,6 +108,7 @@ export const AccountFooter = () => {
             <DropdownMenuItem onClick={() => void navigate({ to: '/admin' })}>
               <LayoutDashboardIcon />
               {resources.userMenu.openAdmin}
+              <DropdownMenuShortcut>{`${modifier} ⇧ U`}</DropdownMenuShortcut>
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />

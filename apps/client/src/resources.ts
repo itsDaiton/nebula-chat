@@ -311,7 +311,7 @@ export const resources = {
   userMenu: {
     label: 'Account menu',
     settings: 'Settings',
-    openAdmin: 'Open admin',
+    openAdmin: 'Admin',
   },
   admin: {
     nav: {
@@ -740,10 +740,6 @@ export const resources = {
       },
     },
     account: {
-      adminNotice: {
-        title: 'Admins can read your Sessions.',
-        body: "Nebula's Admins can open any Session to investigate abuse or bugs. Every read is recorded in an audit log.",
-      },
       deleteAccount: {
         label: 'Delete account',
         description:
@@ -812,7 +808,7 @@ export const resources = {
     switchModel: 'Switch Model…',
     toggleTheme: 'Toggle theme',
     openSettings: 'Open Settings',
-    openAdmin: 'Open admin',
+    openAdmin: 'Admin',
   },
   shell: {
     togglePanel: { left: 'Toggle sessions panel', right: 'Toggle inspector' },

@@ -48,7 +48,7 @@ These came out of the mockup review and apply to every screen.
   `#3a3a3a`, foreground text), and badges (Admin included) and tooltips use outline or popover
   surfaces. Light mode keeps the near-black primary.
 - **"tokens", never "tok".** Write the full word in every label, tooltip and table.
-- **Account in one place.** The left panel's footer is the account menu (Settings, Open admin, sign
+- **Account in one place.** The left panel's footer is the account menu (Settings, Admin, sign
   out). The header has no avatar. Guests get Sign in and Sign up in the footer.
 - **Avatars are neutral.** Initials sit on a raised neutral circle until the User uploads an image.
 - **Session title in the header**, after the panel toggle, on desktop and mobile.
@@ -76,7 +76,7 @@ These came out of the mockup review and apply to every screen.
 | `settings-security.png` | Settings modal, Security: inline 2FA setup and the Admin 2FA notice | #552 #556 |
 | `settings-appearance.png` | Settings modal, Appearance: theme and font | #552 |
 | `settings-archived.png` | Settings modal, Archived Sessions: Open and Restore | #552 |
-| `settings-account.png` | Settings modal, Account & data: Admin-read notice, Pending-deletion wording | #552 #544 |
+| `settings-account.png` | Settings modal, Account & data: Pending-deletion wording (the Admin-read notice in the shot was dropped) | #552 #544 |
 | `auth-signin.png` | Sign in | #553 |
 | `auth-states.png` | 2FA challenge, Pending deletion restore, banned, sign-up with a pending email | #553 |
 | `device.png` | CLI device approval page | #563 |

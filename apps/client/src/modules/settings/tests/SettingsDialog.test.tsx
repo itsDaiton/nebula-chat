@@ -985,7 +985,6 @@ describe('Settings dialog', () => {
     expect(
       await screen.findByRole('button', { name: resources.settings.sections.account }),
     ).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByText(resources.settings.account.adminNotice.title)).toBeInTheDocument();
     expect(
       screen.getByText(resources.settings.account.deleteAccount.description),
     ).toBeInTheDocument();

@@ -144,6 +144,19 @@ describe('the command palette', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/'));
   });
 
+  it('opens the admin dashboard on Ctrl+Shift+U for an Admin only', async () => {
+    const { router, unmount } = await renderApp(
+      aSession({ isAnonymous: false, role: 'admin', twoFactorEnabled: true }),
+    );
+    await userEvent.keyboard('{Control>}{Shift>}u{/Shift}{/Control}');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin'));
+    unmount();
+
+    const other = await renderApp();
+    await userEvent.keyboard('{Control>}{Shift>}u{/Shift}{/Control}');
+    expect(other.router.state.location.pathname).toBe('/');
+  });
+
   it('returns focus to where it was', async () => {
     await renderApp();
     const trigger = await screen.findByRole('button', { name: resources.shell.search });
@@ -240,7 +253,9 @@ describe('the command palette', () => {
   it('offers Open admin to Admins only', async () => {
     const { unmount } = await renderApp(aSession({ isAnonymous: false, role: 'admin' }));
     await openPalette();
-    expect(screen.getByRole('option', { name: /Open admin/ })).toHaveTextContent('Admin');
+    expect(
+      screen.getByRole('option', { name: resources.commandPalette.openAdmin }),
+    ).toBeInTheDocument();
     unmount();
     useSearchStore.setState({ isSearchOpen: false });
 
