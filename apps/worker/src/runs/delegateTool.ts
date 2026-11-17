@@ -1,3 +1,4 @@
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from '@langchain/core/messages';
 import type { BaseMessage } from '@langchain/core/messages';
 import { tool } from '@langchain/core/tools';
@@ -8,14 +9,22 @@ import { z } from 'zod';
 import { llmConcurrencyLimiter } from '@worker/llm/concurrencyLimiter';
 import { countTokens } from '@worker/llm/countTokens';
 import { toCallUsage } from '@worker/llm/callUsage';
+import type { LLMConfig } from '@worker/llm/createLLM';
 import type { Prompts } from '@worker/llm/prompts';
+import type { StructuredCall } from '@worker/llm/structuredOutput';
 import type { CallUsage } from '@worker/modelCalls/recordModelCall';
 import { llmConfigFor, TOOL_LABELS } from '@worker/runs/agentDefinition';
 import type { ApiKeys, DelegateDefinition, Toolbox, ToolName } from '@worker/runs/agentDefinition';
-import type { RunModels } from '@worker/runs/runGraph';
 import { runToolStep, stepIdFor, turnsIn } from '@worker/runs/steps';
 import type { StepContext } from '@worker/runs/steps';
 import { WebToolError } from '@worker/web/webToolError';
+
+/** The model layer a Run calls through; tests script both. */
+export type RunModels = {
+  structured: StructuredCall;
+  /** A chat model: tool-calling for the Orchestrator, plain for a delegate, streaming for the Output Agent. */
+  chat: (config: LLMConfig) => BaseChatModel;
+};
 
 export type DelegateToolDeps = StepContext & {
   models: RunModels;

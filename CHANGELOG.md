@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.7.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.7.2...nebula-chat-v7.7.3) (2026-11-17)
+
+
+### Bug Fixes
+
+* **cli:** move Deps into context to break the run/context cycle ([#855](https://github.com/itsDaiton/nebula-chat/issues/855)) ([0adcf63](https://github.com/itsDaiton/nebula-chat/commit/0adcf63c138d00dc2543a15f35f1b460a7585afc))
+
 ## [7.7.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.7.1...nebula-chat-v7.7.2) (2026-11-17)
 
 
