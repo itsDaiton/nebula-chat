@@ -227,9 +227,6 @@ export type UserActionState = {
   close: () => void;
 };
 
-/** What the Overview's URL holds; the range falls back to 30 days. */
-export type OverviewSearch = { range?: GetAdminOverviewRange };
-
 export type OverviewDelta = { direction: 'up' | 'down' | 'flat'; text: string };
 
 export type OverviewTileProps = {

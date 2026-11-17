@@ -1,9 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  getGetAdminOverviewMockHandler,
-  getListAuditEntriesMockHandler,
-} from '@/libs/api/generated/admin/admin.msw';
+import { getListAuditEntriesMockHandler } from '@/libs/api/generated/admin/admin.msw';
 import { useSettingsDialogStore } from '@/modules/settings/stores/useSettingsDialogStore';
 import { resources } from '@/resources';
 import { aSession, mockGetSession } from '@/test/auth';

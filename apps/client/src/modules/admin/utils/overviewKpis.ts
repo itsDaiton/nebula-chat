@@ -9,23 +9,19 @@ const direction = (change: number): OverviewDelta['direction'] => {
   return 'flat';
 };
 
-export const formatCount = (value: number) => count.format(value);
+const formatCount = (value: number) => count.format(value);
 
-export const formatRate = (rate: number | null) =>
-  rate === null ? '—' : `${(rate * 100).toFixed(1)}%`;
+const formatRate = (rate: number | null) => (rate === null ? '—' : `${(rate * 100).toFixed(1)}%`);
 
 /** The relative change against the previous period; none when that period had nothing to compare. */
-export const percentDelta = (current: number, previous: number): OverviewDelta | null => {
+const percentDelta = (current: number, previous: number): OverviewDelta | null => {
   if (previous === 0) return null;
   const change = (current - previous) / previous;
   return { direction: direction(change), text: `${Math.abs(change * 100).toFixed(1)}%` };
 };
 
 /** A rate's change in percentage points, since a percent of a percent misleads. */
-export const pointDelta = (
-  current: number | null,
-  previous: number | null,
-): OverviewDelta | null => {
+const pointDelta = (current: number | null, previous: number | null): OverviewDelta | null => {
   if (current === null || previous === null) return null;
   const points = Number(((current - previous) * 100).toFixed(1));
   return { direction: direction(points), text: `${Math.abs(points).toFixed(1)} pt` };

@@ -224,7 +224,7 @@ export const adminSessionListPageSchema = z
   })
   .meta({ id: 'AdminSessionListPage' });
 
-export const OVERVIEW_RANGES = ['7d', '14d', '30d', '90d'] as const;
+const OVERVIEW_RANGES = ['7d', '14d', '30d', '90d'] as const;
 
 export const overviewQuerySchema = z.object({
   range: z
