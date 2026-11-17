@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseSseStream } from '@/modules/chat/utils/parseSseStream';
+import { parseSseStream } from '@/modules/chat/streaming/parseSseStream';
 
 const bodyOf = (...chunks: string[]) =>
   new ReadableStream<Uint8Array>({

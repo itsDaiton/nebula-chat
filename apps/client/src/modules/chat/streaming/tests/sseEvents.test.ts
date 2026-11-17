@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SSE_EVENTS } from '@/modules/chat/utils/sseEvents';
+import { SSE_EVENTS } from '@/modules/chat/streaming/sseEvents';
 
 describe('SSE_EVENTS', () => {
   it.each(['token', 'usage', 'error', 'end', 'step-started', 'step-finished', 'run-finished'])(

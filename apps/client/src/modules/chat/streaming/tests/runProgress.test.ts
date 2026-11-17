@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ChatMessage } from '@/modules/chat/types/types';
-import { applyRunEvent, parseRunEvent } from '@/modules/chat/utils/runProgress';
+import { applyRunEvent, parseRunEvent } from '@/modules/chat/streaming/runProgress';
 
 const reply: ChatMessage = { id: 'a1', role: 'assistant', content: '' };
 const started = {
