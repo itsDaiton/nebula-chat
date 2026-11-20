@@ -7,6 +7,7 @@ const SENSITIVE_KEYS = [
   'set-cookie',
   'apiKey',
   'api_key',
+  'x-api-key',
   'password',
   'secret',
   'email',
@@ -26,6 +27,7 @@ const SENSITIVE_KEYS = [
 const SENSITIVE_FLAT_KEYS = [
   'http.request.header.cookie',
   'http.request.header.authorization',
+  'http.request.header.x-api-key',
   'http.response.header.set-cookie',
   'user.email',
   'user.name',

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { operatorKeyResolver } from '@worker/llm/keyResolver';
 import { llmConfigFor, stepInput } from '@worker/runs/agentDefinition';
 import type { AgentDefinition } from '@worker/runs/agentDefinition';
 
@@ -12,7 +13,7 @@ const anAgent = (overrides: Partial<AgentDefinition> = {}): AgentDefinition => (
   ...overrides,
 });
 
-const apiKeys = { openai: 'sk-test', anthropic: 'sk-ant-test' };
+const apiKeys = operatorKeyResolver({ openai: 'sk-test', anthropic: 'sk-ant-test' });
 
 describe('llmConfigFor', () => {
   it("passes the Agent's temperature to a Model that accepts it", () => {

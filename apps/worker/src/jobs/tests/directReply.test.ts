@@ -1,6 +1,8 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { GENERIC_ERROR_MESSAGE } from '@nebula-chat/errors';
 import { estimateCost, MODEL_IDS } from '@nebula-chat/contracts';
+import { operatorKeyResolver } from '@worker/llm/keyResolver';
+import type { OperatorKeys } from '@worker/llm/keyResolver';
 import type { StreamChat } from '@worker/directReplies/runDirectReply';
 import { createDirectReplyProcessor } from '@worker/jobs/directReply';
 import { captureLogger, captureSpans, eventLines, LEVEL } from '@nebula-chat/otel/testing';
@@ -44,7 +46,7 @@ let ledger: ReturnType<typeof memoryLedger>;
 
 const processorWith = (
   streamChat: StreamChat,
-  apiKeys: { openai?: string; anthropic?: string } = { openai: 'sk-openai', anthropic: 'sk-ant' },
+  operatorKeys: OperatorKeys = { openai: 'sk-openai', anthropic: 'sk-ant' },
   cache: ReplyCache = responses.cache,
   modelCalls: ModelCallLedger = ledger.ledger,
 ) =>
@@ -64,7 +66,7 @@ const processorWith = (
       researcher: '',
       output: '',
     },
-    apiKeys,
+    keys: operatorKeyResolver(operatorKeys),
     logger: log.logger,
     cancelPollMs: 1,
   });
@@ -270,6 +272,17 @@ describe('the Direct reply job', () => {
         error: 'Internal',
         message: GENERIC_ERROR_MESSAGE,
       });
+    });
+
+    it('logs and streams a provider error with the key it echoed replaced', async () => {
+      const echoed = new Error('Incorrect API key provided: sk-openai. Also sk-proj-AbC123xyz987.');
+      await run(failingModel(echoed));
+
+      const everything = JSON.stringify([log.lines, streamed()]);
+      expect(everything).not.toContain('sk-openai');
+      expect(everything).not.toContain('AbC123xyz987');
+      expect(everything).toContain('Incorrect API key provided');
+      expect(streamed().at(-2)).toMatchObject({ type: 'error', error: 'Internal' });
     });
 
     it('treats an empty completion as a failure and persists nothing', async () => {

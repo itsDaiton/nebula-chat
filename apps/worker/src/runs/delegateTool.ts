@@ -14,7 +14,7 @@ import type { Prompts } from '@worker/llm/prompts';
 import type { StructuredCall } from '@worker/llm/structuredOutput';
 import type { CallUsage } from '@worker/modelCalls/recordModelCall';
 import { llmConfigFor, TOOL_LABELS } from '@worker/runs/agentDefinition';
-import type { ApiKeys, DelegateDefinition, Toolbox, ToolName } from '@worker/runs/agentDefinition';
+import type { DelegateDefinition, Toolbox, ToolName } from '@worker/runs/agentDefinition';
 import { runToolStep, stepIdFor, turnsIn } from '@worker/runs/steps';
 import type { StepContext } from '@worker/runs/steps';
 import { WebToolError } from '@worker/web/webToolError';
@@ -29,7 +29,6 @@ export type RunModels = {
 export type DelegateToolDeps = StepContext & {
   models: RunModels;
   prompts: Prompts;
-  apiKeys: ApiKeys;
   timeoutMs: number;
   toolbox: Toolbox;
   /** The tool calls one delegate execution may make; past it the delegate answers with what it has. */
@@ -140,7 +139,7 @@ const runToolLoop = async (
 
   // No checkpointer: its tools only read, so a crash re-runs the delegate whole rather than resuming inside it.
   const loop = createAgent({
-    model: deps.models.chat(llmConfigFor(agent, deps.apiKeys)),
+    model: deps.models.chat(llmConfigFor(agent, deps.keys)),
     tools: agent.tools.map((name) => deps.toolbox[name]),
     systemPrompt: system,
     middleware: [
@@ -189,7 +188,7 @@ export const delegateTool = (agent: DelegateDefinition, deps: DelegateToolDeps) 
         const timeout = AbortSignal.timeout(deps.timeoutMs);
         const signal = config.signal ? AbortSignal.any([config.signal, timeout]) : timeout;
         return deps.models
-          .chat(llmConfigFor(agent, deps.apiKeys))
+          .chat(llmConfigFor(agent, deps.keys))
           .invoke([new SystemMessage(system), new HumanMessage(task)], { signal });
       });
       const usage = toCallUsage(reply.usage_metadata, {

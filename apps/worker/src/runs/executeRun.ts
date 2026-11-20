@@ -42,7 +42,7 @@ export type RunStore = {
 
 export type RunDeps = Pick<
   RunGraphDeps,
-  'steps' | 'ledger' | 'models' | 'prompts' | 'apiKeys' | 'logger' | 'limits' | 'toolbox'
+  'steps' | 'ledger' | 'models' | 'prompts' | 'keys' | 'logger' | 'limits' | 'toolbox'
 > & {
   runs: RunStore;
   stream: ReplyStreamWriter;

@@ -1,8 +1,7 @@
 import type { StructuredToolInterface } from '@langchain/core/tools';
 import { getModel } from '@nebula-chat/contracts';
-import type { ModelProvider } from '@nebula-chat/contracts';
-import { MissingConfigurationError } from '@nebula-chat/errors';
 import type { LLMConfig } from '@worker/llm/createLLM';
+import type { KeyResolver } from '@worker/llm/keyResolver';
 import type { PromptName } from '@worker/llm/prompts';
 
 /** The tools an Agent may be granted; only delegates are, so the Orchestrator never calls one itself. */
@@ -32,8 +31,6 @@ export type AgentDefinition = {
 /** An Agent the Orchestrator may delegate to: it sees the Agent as a tool described by `description`. */
 export type DelegateDefinition = AgentDefinition & { description: string };
 
-export type ApiKeys = { [P in ModelProvider]?: string | undefined };
-
 // Agents state the temperature they would like; the catalog says whether the Model takes it.
 const sentParameters = ({ model, parameters }: AgentDefinition): Partial<typeof parameters> => {
   const sent: Partial<typeof parameters> = { ...parameters };
@@ -41,15 +38,9 @@ const sentParameters = ({ model, parameters }: AgentDefinition): Partial<typeof 
   return sent;
 };
 
-export const llmConfigFor = (agent: AgentDefinition, apiKeys: ApiKeys): LLMConfig => {
+export const llmConfigFor = (agent: AgentDefinition, keys: KeyResolver): LLMConfig => {
   const { provider } = getModel(agent.model);
-  const apiKey = apiKeys[provider];
-  if (!apiKey) {
-    throw new MissingConfigurationError(
-      provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY',
-    );
-  }
-  return { provider, apiKey, model: agent.model, ...sentParameters(agent) };
+  return { provider, apiKey: keys.keyFor(provider), model: agent.model, ...sentParameters(agent) };
 };
 
 // Everything the model was sent, so a Step can be inspected on its own.
