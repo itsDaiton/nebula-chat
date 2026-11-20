@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { delay } from 'msw';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getListAuditEntriesMockHandler } from '@/libs/api/generated/admin/admin.msw';
 import type { AuditEntry } from '@/libs/api/generated/model/auditEntry';
@@ -157,6 +158,29 @@ describe('Audit log page', () => {
     expect(orders[0]).toBe('desc');
     expect(router.state.location.search).toMatchObject({ dir: 'asc' });
     expect(router.state.location.search).not.toHaveProperty('cursor');
+  });
+
+  it('keeps the previous rows on screen, dimmed and busy, while a new order loads', async () => {
+    server.use(
+      getListAuditEntriesMockHandler(async ({ request }) => {
+        if (new URL(request.url).searchParams.get('order') === 'asc') await delay('infinite');
+        return { entries: [anEntry()], nextCursor: null, hasMore: false, total: 1 };
+      }),
+    );
+    await renderRoute('/admin/audit');
+    const table = await screen.findByRole('table', { name: text.title });
+    expect(await within(table).findByText('aaaa1111')).toBeInTheDocument();
+    expect(table).toHaveAttribute('aria-busy', 'false');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: text.sort(text.columns.time, 'desc') }),
+    );
+
+    await waitFor(() => expect(table).toHaveAttribute('aria-busy', 'true'));
+    expect(within(table).getByText('aaaa1111')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('status', { name: resources.admin.table.loading }),
+    ).not.toBeInTheDocument();
   });
 
   it('sends the URL filters to the API', async () => {

@@ -19,7 +19,13 @@ export const UserSessionsList = ({ userId }: UserSessionsListProps) => {
   return (
     <section aria-label={text.sessions}>
       <h3 className="mb-2 text-[11.5px] font-medium text-muted-foreground">{text.sessions}</h3>
-      {isPending && <Skeleton className="h-[30px]" />}
+      {isPending && (
+        <output aria-label={text.sessionsLoading} className="flex flex-col gap-1">
+          {Array.from({ length: 3 }, (_, index) => (
+            <Skeleton key={index} className="h-[30px]" />
+          ))}
+        </output>
+      )}
       {isError && <p className="text-[12.5px] text-destructive">{text.sessionsFailed}</p>}
       {data?.sessions.length === 0 && (
         <p className="text-[12.5px] text-muted-foreground">{text.noSessions}</p>

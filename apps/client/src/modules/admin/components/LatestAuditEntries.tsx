@@ -4,13 +4,14 @@ import { ChevronRightIcon } from 'lucide-react';
 import { getListAuditEntriesQueryOptions } from '@/libs/api/generated/admin/admin';
 import { AuditActorCell } from '@/modules/admin/components/AuditActorCell';
 import { resources } from '@/resources';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 import { formatRelativeTime } from '@/shared/utils/relativeTime';
 
 const text = resources.admin.overview;
 const LATEST = 5;
 
 export const LatestAuditEntries = () => {
-  const { data, isError } = useQuery(
+  const { data, isPending, isError } = useQuery(
     getListAuditEntriesQueryOptions({ limit: LATEST, order: 'desc' }),
   );
   const now = Date.now();
@@ -27,6 +28,13 @@ export const LatestAuditEntries = () => {
           <ChevronRightIcon className="size-3" />
         </Link>
       </div>
+      {isPending && (
+        <output aria-label={text.latestLoading} className="flex flex-col">
+          {Array.from({ length: LATEST }, (_, index) => (
+            <Skeleton key={index} className="mx-5 my-3 h-5" />
+          ))}
+        </output>
+      )}
       {isError && <p className="px-5 text-sm text-muted-foreground">{text.latestFailed}</p>}
       {data && data.entries.length === 0 && (
         <p className="px-5 text-sm text-muted-foreground">{text.latestEmpty}</p>

@@ -1,3 +1,4 @@
+import { keepPreviousData } from '@tanstack/react-query';
 import { getListAllSessionsQueryOptions } from '@/libs/api/generated/admin/admin';
 import type { AdminSessionListItem } from '@/libs/api/generated/model/adminSessionListItem';
 import type { AdminSessionListPage } from '@/libs/api/generated/model/adminSessionListPage';
@@ -17,6 +18,8 @@ export const sessionQueryOptions = ({ q, user, model, archived, dir, cursor }: S
     order: dir ?? DEFAULT_SESSION_ORDER,
     cursor,
   }),
+  // A filter, search, sort or page change keeps the old rows on screen until the new ones arrive.
+  placeholderData: keepPreviousData,
   select: ({ sessions, nextCursor }: AdminSessionListPage): AdminPage<AdminSessionListItem> => ({
     rows: sessions,
     nextCursor,

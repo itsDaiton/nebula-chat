@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { delay } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getGetModelUsageDetailMockHandler,
@@ -302,6 +303,62 @@ describe('Model usage page', () => {
     await userEvent.click(screen.getByRole('button', { name: text.expandOther }));
     expect(await screen.findByText('GPT-4.1')).toBeVisible();
     expect(screen.getByRole('button', { name: text.pin('GPT-5') })).toBeVisible();
+  });
+
+  it('shows tile, chart and list skeletons while the first requests load, then the data', async () => {
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    server.use(
+      getGetModelUsageSeriesMockHandler(async () => {
+        await held;
+        return aSeries();
+      }),
+      getGetModelUsageTotalsMockHandler(async () => {
+        await held;
+        return aTotals();
+      }),
+      getGetModelUsageDetailMockHandler(aDetail()),
+    );
+
+    await renderRoute('/admin/usage');
+
+    expect(await screen.findByRole('status', { name: text.loading })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: text.tilesLoading })).toBeInTheDocument();
+    release();
+    expect(
+      await screen.findByRole('img', { name: text.chartLabel(text.metrics.prompts) }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: text.loading })).not.toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: text.tilesLoading })).not.toBeInTheDocument();
+  });
+
+  it('keeps the chart, list and tiles on screen, dimmed and busy, while a new metric loads', async () => {
+    server.use(
+      getGetModelUsageSeriesMockHandler(async ({ request }) => {
+        if (new URL(request.url).searchParams.get('metric') === 'tokens') await delay('infinite');
+        return aSeries();
+      }),
+      getGetModelUsageTotalsMockHandler(aTotals()),
+      getGetModelUsageDetailMockHandler(aDetail()),
+    );
+
+    await renderRoute('/admin/usage');
+    const data = await screen.findByRole('region', { name: text.dataLabel });
+    await screen.findByRole('img', { name: text.chartLabel(text.metrics.prompts) });
+    expect(data).toHaveAttribute('aria-busy', 'false');
+
+    await userEvent.click(
+      within(screen.getByRole('group', { name: text.metric })).getByRole('button', {
+        name: text.metrics.tokens,
+      }),
+    );
+
+    await waitFor(() => expect(data).toHaveAttribute('aria-busy', 'true'));
+    expect(
+      within(data).getByRole('img', { name: text.chartLabel(text.metrics.prompts) }),
+    ).toBeInTheDocument();
+    expect(within(data).getByRole('group', { name: text.tiles.tokens })).toHaveTextContent('41.2M');
+    expect(screen.queryByRole('status', { name: text.loading })).not.toBeInTheDocument();
   });
 
   it('enables Model usage in the navigation and marks it current', async () => {

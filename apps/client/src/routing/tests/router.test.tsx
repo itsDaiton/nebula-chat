@@ -2,6 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resources } from '@/resources';
+import { RoutePending } from '@/shared/components/RoutePending';
 import { holdSession } from '@/test/auth';
 import { serveChatPage } from '@/test/chat';
 import { renderRoute } from '@/test/renderRoute';
@@ -45,6 +46,14 @@ describe('router', () => {
       expect(screen.queryByText(resources.notFound.title)).not.toBeInTheDocument();
     },
   );
+
+  it('shows a default pending page only for a navigation slower than the delay, and holds it briefly', async () => {
+    const { router } = await renderRoute('/auth');
+
+    expect(router.options.defaultPendingMs).toBe(150);
+    expect(router.options.defaultPendingMinMs).toBe(300);
+    expect(router.options.defaultPendingComponent).toBe(RoutePending);
+  });
 
   it('carries the query client in the router context', async () => {
     const { router, queryClient } = await renderRoute('/auth');
