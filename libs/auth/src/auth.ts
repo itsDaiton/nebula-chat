@@ -267,6 +267,8 @@ export const createAuth = ({
       // Require the password on /delete-user, refuse an unchanged one on /change-password,
       // and a breached or unchanged one before /reset-password consumes the token.
       before: createAuthMiddleware(async (ctx) => {
+        // `ctx.path` is the endpoint's own, however the URL spelled it; a server `auth.api.*` call carries no request.
+        if (ctx.request && ctx.path.startsWith('/admin/')) throw new APIError('NOT_FOUND');
         if (ctx.path === '/delete-user') return startPendingDeletion(db, ctx);
         if (ctx.path === '/sign-up/email') {
           const email = (ctx.body as { email?: string } | undefined)?.email;
@@ -396,7 +398,7 @@ export const createAuth = ({
       // Scalar UI at `/api/auth/reference` and the OpenAPI 3.1 schema at `/api/auth/open-api/generate-schema`,
       // reached through the server's `/api/auth/*` passthrough.
       openAPI(),
-      // Impersonation stays off (ADR-0027 §5); the plugin's HTTP endpoints are blocked at the server's auth gate.
+      // Impersonation stays off (ADR-0027 §5); the before hook refuses the plugin's HTTP endpoints, so only `auth.api.*` reaches it.
       admin({
         defaultRole: 'user',
         roles: { admin: adminWithoutImpersonation, user: userAc },

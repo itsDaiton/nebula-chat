@@ -47,7 +47,7 @@ script load through `dotenvx run` — single source of truth (see [server-env](.
   writer and `GET /api/admin/audit`),
   `usage` (`/api/admin/usage/{series,detail,totals}`: per-Model prompts, tokens and estimated spend per UTC day from user Messages and the Model call ledger),
   `run` (`GET /api/runs/:runId`: a Run with its Brief and Steps for its owner, or for an Admin, whose read is audited; and the service that cancels Runs waiting on a Clarifying question: stop, Archive, Ban), and `user` (only a repository so far: the send path records `lastActiveAt`). A module may add hooks (`*.hook.ts`) and helpers beside its layers.
-- `plugins/` — Fastify plugins: request logging, `db`, `redis`, and `authGate` (mounts `/api/auth/*` and answers `/api/auth/admin/*` with NotFound,
+- `plugins/` — Fastify plugins: request logging, `db`, `redis`, and `authGate` (mounts `/api/auth/*` and answers `/api/auth/admin/*`, dot segments resolved, with NotFound; `@nebula-chat/auth` refuses them too,
   decorates `requireAuthentication` / `requireRegistered`; also exports `requireAdmin` for `/api/admin/*` and `isActingAdmin` for a route an Admin may use more widely than a User).
 - `errors/` — the global error handler. `config/` — CORS, SSE headers, pagination. `utils/` — small shared helpers,
   including `operatorGate.hook.ts` (`requireOperator`, the operator-token gate on every `/api/internal/*` route).

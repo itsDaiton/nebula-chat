@@ -594,6 +594,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: 'catalog:'
         version: 5.1.0(vitest@5.1.0)
+      light-my-request:
+        specifier: ^6.6.0
+        version: 6.6.0
       nodemon:
         specifier: 'catalog:'
         version: 3.1.14

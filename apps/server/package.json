@@ -43,6 +43,7 @@
     "@total-typescript/shoehorn": "^0.1.2",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
+    "light-my-request": "^6.6.0",
     "nodemon": "catalog:",
     "tsc-alias": "catalog:",
     "typescript": "catalog:",

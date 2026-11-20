@@ -143,12 +143,13 @@ const failAuthRequest = (err: unknown, req: FastifyRequest, reply: FastifyReply)
 
 const ADMIN_PLUGIN_PREFIX = '/api/auth/admin';
 
-// The path as better-auth's router would match it: query dropped, percent-escapes decoded, case ignored.
+// The path as better-auth's router would match it: its Node adapter parses `base + url`, which resolves `.`, `..` and `%2e`;
+// then percent-escapes decoded and case ignored.
 const isAdminPluginPath = (url: string): boolean => {
-  const [rawPath = ''] = url.split('?');
-  let path = rawPath;
+  const { pathname } = new URL(`http://localhost${url}`);
+  let path = pathname;
   try {
-    path = decodeURIComponent(rawPath);
+    path = decodeURIComponent(pathname);
   } catch {
     // An undecodable path can't name the admin plugin's routes.
   }

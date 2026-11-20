@@ -6,10 +6,12 @@ import type {
   FastifyRequest,
   preHandlerAsyncHookHandler,
 } from 'fastify';
+import inject from 'light-my-request';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ForbiddenError,
   INTERNAL_ERROR_ENVELOPE,
+  NotFoundError,
   TwoFactorRequiredError,
   UnauthorizedError,
 } from '@nebula-chat/errors';
@@ -357,6 +359,56 @@ describe('auth catch-all blocks the admin plugin (ADR-0027 §6)', () => {
     const res = await app.inject({ method: 'POST', url: '/api/auth/administrator', payload: {} });
 
     expect(res.statusCode).toBe(200);
+  });
+
+  // `app.inject` resolves dot segments before Fastify sees them; a real socket hands over the raw path, as this does.
+  const injectRaw = (method: 'GET' | 'POST', url: string) =>
+    inject(
+      (req, res) => {
+        req.url = url;
+        app.routing(req, res);
+      },
+      { method, url: '/', ...(method === 'POST' && { payload: {} }) },
+    );
+
+  // better-auth resolves dot segments as the WHATWG URL parser does, so each of these names the plugin.
+  it.each(
+    [
+      '/api/auth/x/../admin/set-role',
+      '/api/auth/x/%2e%2e/admin/ban-user',
+      '/api/auth/x/%2E%2E/admin/unban-user',
+      '/api/auth/./admin/list-users',
+      '/api/auth/%2e/admin/remove-user',
+      '/api/auth/x/%2e%2E/Admin/create-user',
+    ].flatMap((url) => [['GET', url] as const, ['POST', url] as const]),
+  )(
+    'answers raw %s %s with the same NotFound without reaching better-auth',
+    async (method, url) => {
+      const handler = vi.fn<NodeHandler>();
+      adapterOverride.current = handler;
+
+      const res = await injectRaw(method, url);
+
+      expect(res.statusCode).toBe(404);
+      expect(res.json()).toEqual(new NotFoundError('Route').toEnvelope());
+      expect(handler).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    ['GET', '/api/auth/get-session?callbackURL=../admin/list-users'],
+    ['GET', '/api/auth/admin/../get-session'],
+    ['POST', '/api/auth/x/../sign-in/email'],
+  ] as const)('still passes raw %s %s, which resolves outside the plugin', async (method, url) => {
+    const handler = vi.fn<NodeHandler>(async (_req, res) => {
+      res.writeHead(200).end();
+    });
+    adapterOverride.current = handler;
+
+    const res = await injectRaw(method, url);
+
+    expect(res.statusCode).toBe(200);
+    expect(handler).toHaveBeenCalledOnce();
   });
 });
 
