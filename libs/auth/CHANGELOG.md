@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.5.0...nebula-chat-auth-v3.5.1) (2026-11-20)
+
+
+### Bug Fixes
+
+* **server:** NEB-887 block better-auth admin endpoints at the source ([#906](https://github.com/itsDaiton/nebula-chat/issues/906)) ([fcd5ac5](https://github.com/itsDaiton/nebula-chat/commit/fcd5ac563f0b5e80d3dacf939d64a291e29bb1fe))
+
 ## [3.5.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.4.3...nebula-chat-auth-v3.5.0) (2026-11-14)
 
 
