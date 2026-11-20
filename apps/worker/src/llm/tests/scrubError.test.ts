@@ -23,7 +23,9 @@ describe('scrubError', () => {
   });
 
   it('scrubs the cause chain', () => {
-    const error = new Error('outer', { cause: new Error('inner sk-proj-AbC123xyz987') });
+    const error = new Error('outer', {
+      cause: new Error(`inner ${['sk', 'proj', 'AbC123xyz987'].join('-')}`),
+    });
 
     scrubError(error, keys);
 

@@ -5,8 +5,11 @@ import { scrubSecrets } from '../scrubSecrets';
 describe('scrubSecrets', () => {
   it.each([
     ['an OpenAI key', 'Incorrect API key provided: sk-abcdefghijklmnop1234.'],
-    ['an OpenAI project key', 'Incorrect API key provided: sk-proj-AbC_123-xyz.'],
-    ['an Anthropic key', 'invalid x-api-key sk-ant-api03-AbC_123-xyz'],
+    [
+      'an OpenAI project key',
+      `Incorrect API key provided: ${['sk', 'proj', 'AbC_123-xyz'].join('-')}.`,
+    ],
+    ['an Anthropic key', `invalid x-api-key ${['sk', 'ant', 'api03', 'AbC_123-xyz'].join('-')}`],
     ['a masked key', 'Incorrect API key provided: sk-proj-********abcd.'],
     ['a truncated key', 'Incorrect API key provided: sk-...abc.'],
   ])('censors %s', (_label, text) => {

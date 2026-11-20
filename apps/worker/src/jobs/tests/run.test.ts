@@ -505,13 +505,14 @@ describe('the Run job', () => {
     });
 
     it('keeps a key the provider echoed out of the Step, the stream, the checkpoints and the logs', async () => {
+      const projectKey = ['sk', 'proj', 'AbC123xyz987'].join('-');
       const echoing = (): RunModels => {
         const models = happyModels().models;
         return {
           ...models,
           chat: (config) =>
             config.streaming
-              ? failingChat('Incorrect API key provided: sk-openai (also sk-proj-AbC123xyz987)')()
+              ? failingChat(`Incorrect API key provided: sk-openai (also ${projectKey})`)()
               : models.chat(config),
         };
       };

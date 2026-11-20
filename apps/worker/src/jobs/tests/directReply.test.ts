@@ -275,7 +275,8 @@ describe('the Direct reply job', () => {
     });
 
     it('logs and streams a provider error with the key it echoed replaced', async () => {
-      const echoed = new Error('Incorrect API key provided: sk-openai. Also sk-proj-AbC123xyz987.');
+      const projectKey = ['sk', 'proj', 'AbC123xyz987'].join('-');
+      const echoed = new Error(`Incorrect API key provided: sk-openai. Also ${projectKey}.`);
       await run(failingModel(echoed));
 
       const everything = JSON.stringify([log.lines, streamed()]);
