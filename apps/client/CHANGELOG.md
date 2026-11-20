@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.21.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.21.2...nebula-chat-client-v3.21.3) (2026-11-20)
+
+
+### Bug Fixes
+
+* **client:** NEB-877 show pending state on data and routes ([#908](https://github.com/itsDaiton/nebula-chat/issues/908)) ([7c4e225](https://github.com/itsDaiton/nebula-chat/commit/7c4e225dc41683154b9179191f8ba687ab885018))
+
 ## [3.21.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.21.1...nebula-chat-client-v3.21.2) (2026-11-20)
 
 
