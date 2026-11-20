@@ -1,6 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { delay } from 'msw';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getGetUserMockHandler,
@@ -271,13 +270,19 @@ describe('Users page', () => {
     await waitFor(() => expect(router.state.location.search).toEqual({ q: 'bot' }));
   });
 
-  it("shows a loading row while the open User's Sessions load", async () => {
+  it("shows loading rows while the open User's Sessions load, then the Sessions", async () => {
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
     serveUsers([bot]);
     server.use(
       getGetUserMockHandler(botDetail),
       getListUserSessionsMockHandler(async () => {
-        await delay('infinite');
-        return { sessions: [], nextCursor: null, hasMore: false };
+        await held;
+        return {
+          sessions: [aUserSession('Generate 50 product names')],
+          nextCursor: null,
+          hasMore: false,
+        };
       }),
     );
 
@@ -287,6 +292,11 @@ describe('Users page', () => {
     expect(
       await within(sessions).findByRole('status', { name: text.detail.sessionsLoading }),
     ).toBeInTheDocument();
+    release();
+    expect(await within(sessions).findByText('Generate 50 product names')).toBeInTheDocument();
+    expect(
+      within(sessions).queryByRole('status', { name: text.detail.sessionsLoading }),
+    ).not.toBeInTheDocument();
   });
 
   it('opens the User a link names, with a ban that has no end and a Pending deletion date', async () => {

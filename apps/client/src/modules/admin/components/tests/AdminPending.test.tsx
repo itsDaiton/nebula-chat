@@ -27,8 +27,10 @@ describe('Admin pending shell', () => {
 
     void router.navigate({ to: '/admin' });
 
-    const loading = await screen.findByRole('status', { name: resources.admin.loading });
-    expect(loading).toHaveAttribute('aria-busy', 'true');
+    expect(
+      await screen.findByRole('status', { name: resources.admin.loading }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: resources.routing.loading })).toBeNull();
     const nav = screen.getByRole('navigation', { name: resources.admin.nav.label });
     expect(
       within(nav).getByRole('link', { name: resources.admin.nav.overview }),

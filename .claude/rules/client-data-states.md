@@ -23,5 +23,6 @@ menu item that fires a mutation) are a separate concern.
 - **Routes.** The router's defaults (`routing/router.ts`) show `RoutePending` for any loader or `beforeLoad`
   slower than 150 ms and hold it at least 300 ms. A route with chrome of its own sets `pendingComponent`:
   `/admin` renders `AdminPending`, the admin shell with a skeleton body; `_app` keeps `SessionPending`.
-- **Tests** hold the request (`await delay('infinite')` in the generated MSW handler) and assert the named
-  loading region; for a key change, assert the old content stays with `aria-busy="true"`.
+- **Tests** hold the request in the generated MSW handler (await a promise the test resolves, or
+  `delay('infinite')`), assert the named loading region, then release it and assert the region is gone. For
+  a key change, hold only the new key's request and assert the old content stays with `aria-busy="true"`.

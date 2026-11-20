@@ -332,7 +332,7 @@ describe('Model usage page', () => {
     expect(screen.queryByRole('status', { name: text.tilesLoading })).not.toBeInTheDocument();
   });
 
-  it('keeps the chart, list and tiles on screen, dimmed and busy, while a new metric loads', async () => {
+  it('keeps the chart and list on screen, dimmed and busy, while a new metric loads, leaving the totals as they are', async () => {
     server.use(
       getGetModelUsageSeriesMockHandler(async ({ request }) => {
         if (new URL(request.url).searchParams.get('metric') === 'tokens') await delay('infinite');
@@ -357,8 +357,35 @@ describe('Model usage page', () => {
     expect(
       within(data).getByRole('img', { name: text.chartLabel(text.metrics.prompts) }),
     ).toBeInTheDocument();
-    expect(within(data).getByRole('group', { name: text.tiles.tokens })).toHaveTextContent('41.2M');
+    expect(screen.getByRole('region', { name: text.tilesLabel })).toHaveAttribute(
+      'aria-busy',
+      'false',
+    );
     expect(screen.queryByRole('status', { name: text.loading })).not.toBeInTheDocument();
+  });
+
+  it('keeps the totals on screen, dimmed and busy, while a new range loads', async () => {
+    server.use(
+      getGetModelUsageSeriesMockHandler(aSeries()),
+      getGetModelUsageTotalsMockHandler(async ({ request }) => {
+        if (new URL(request.url).searchParams.get('range') === '7d') await delay('infinite');
+        return aTotals();
+      }),
+      getGetModelUsageDetailMockHandler(aDetail()),
+    );
+
+    await renderRoute('/admin/usage');
+    const tiles = await screen.findByRole('region', { name: text.tilesLabel });
+    await waitFor(() => expect(tiles).toHaveTextContent('41.2M'));
+
+    await userEvent.click(
+      within(screen.getByRole('group', { name: text.range })).getByRole('button', { name: '7d' }),
+    );
+
+    await waitFor(() => expect(tiles).toHaveAttribute('aria-busy', 'true'));
+    expect(within(tiles).getByRole('group', { name: text.tiles.tokens })).toHaveTextContent(
+      '41.2M',
+    );
   });
 
   it('enables Model usage in the navigation and marks it current', async () => {

@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import { LatestAuditEntries } from '@/modules/admin/components/LatestAuditEntries';
+import { OverviewTilesSkeleton } from '@/modules/admin/components/OverviewTilesSkeleton';
 import { OverviewRangeSwitch } from '@/modules/admin/components/OverviewRangeSwitch';
 import { OverviewTile } from '@/modules/admin/components/OverviewTile';
 import { overviewTiles } from '@/modules/admin/utils/overviewKpis';
 import { overviewQueryOptions } from '@/modules/admin/utils/overviewQueryOptions';
 import { resources } from '@/resources';
-import { Skeleton } from '@/shared/components/ui/skeleton';
 import { cn } from '@/shared/utils/cn';
 
 const route = getRouteApi('/_app/admin/');
@@ -29,13 +29,8 @@ export const OverviewPage = () => {
       </div>
       {isError && <p className="px-5 text-sm text-muted-foreground">{text.loadFailed}</p>}
       {isPending && (
-        <output
-          aria-label={text.loading}
-          className="grid grid-cols-1 gap-2.5 px-5 sm:grid-cols-2 xl:grid-cols-3"
-        >
-          {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} className="h-[7.5rem] rounded-xl" />
-          ))}
+        <output aria-label={text.loading} className="px-5">
+          <OverviewTilesSkeleton />
         </output>
       )}
       {data && (

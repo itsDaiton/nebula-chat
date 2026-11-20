@@ -38,7 +38,6 @@ export const UsagePage = () => {
     isPending: totalsPending,
     isPlaceholderData: totalsStale,
   } = useUsageTotals(params);
-  const busy = seriesStale || totalsStale;
   const hoveredDay = useUsageHoverStore((state) => state.day);
   const setDay = useUsageHoverStore((state) => state.setDay);
   const asTable = useUsageTableStore((state) => state.asTable);
@@ -48,7 +47,7 @@ export const UsagePage = () => {
     void navigate({ search: (previous) => ({ ...previous, ...next }), replace: true });
 
   // While a new metric loads, the dimmed chart keeps the labels and units of the data it shows.
-  const shown = series ? { ...params, metric: series.metric } : params;
+  const displayedParams = series ? { ...params, metric: series.metric } : params;
   const highlighted = series ? highlightedKey(series, params.pinned) : null;
   const hoverIndex = series && hoveredDay ? series.days.indexOf(hoveredDay) : -1;
   const dayIndex = series ? (hoverIndex === -1 ? series.days.length - 1 : hoverIndex) : 0;
@@ -67,9 +66,9 @@ export const UsagePage = () => {
       <UsageToolbar params={params} onChange={change} />
       {isError && <p className="px-5 text-sm text-muted-foreground">{text.loadFailed}</p>}
       <section
-        aria-label={text.dataLabel}
-        aria-busy={busy}
-        className={cn('flex flex-col transition-opacity', busy && 'opacity-60')}
+        aria-label={text.tilesLabel}
+        aria-busy={totalsStale}
+        className={cn('transition-opacity', totalsStale && 'opacity-60')}
       >
         {totalsPending ? (
           <output
@@ -83,6 +82,12 @@ export const UsagePage = () => {
         ) : (
           <UsageTiles totals={totals} />
         )}
+      </section>
+      <section
+        aria-label={text.dataLabel}
+        aria-busy={seriesStale}
+        className={cn('flex flex-col transition-opacity', seriesStale && 'opacity-60')}
+      >
         {seriesPending && (
           <output
             aria-label={text.loading}
@@ -103,12 +108,12 @@ export const UsagePage = () => {
           <>
             {asTable ? (
               <div className="px-5">
-                <UsageTable series={series} metric={shown.metric} view={params.view} />
+                <UsageTable series={series} metric={displayedParams.metric} view={params.view} />
               </div>
             ) : (
               <div className="grid gap-4 px-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
                 <UsageChartCard
-                  params={shown}
+                  params={displayedParams}
                   series={series}
                   hoverIndex={hoverIndex === -1 ? null : hoverIndex}
                   onHoverIndexChange={(index) => setDay(index === null ? null : series.days[index])}
@@ -120,7 +125,9 @@ export const UsagePage = () => {
                   dayLabel={formatDay(series.days[dayIndex])}
                   highlighted={highlighted}
                   pinned={params.pinned}
-                  formatValue={(value) => formatSeriesValue(shown.metric, params.view, value)}
+                  formatValue={(value) =>
+                    formatSeriesValue(displayedParams.metric, params.view, value)
+                  }
                   onPin={pin}
                 />
               </div>

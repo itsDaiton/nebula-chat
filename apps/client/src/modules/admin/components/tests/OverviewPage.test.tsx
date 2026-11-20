@@ -241,11 +241,13 @@ describe('Overview page', () => {
     expect(screen.queryByRole('status', { name: text.loading })).not.toBeInTheDocument();
   });
 
-  it('shows row skeletons while the latest Audit entries load', async () => {
+  it('shows row skeletons while the latest Audit entries load, then the entries', async () => {
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
     server.use(
       getGetAdminOverviewMockHandler(anOverview()),
       getListAuditEntriesMockHandler(async () => {
-        await delay('infinite');
+        await held;
         return { entries: [], nextCursor: null, hasMore: false, total: 0 };
       }),
     );
@@ -253,6 +255,9 @@ describe('Overview page', () => {
     await renderRoute('/admin');
 
     expect(await screen.findByRole('status', { name: text.latestLoading })).toBeInTheDocument();
+    release();
+    expect(await screen.findByText(text.latestEmpty)).toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: text.latestLoading })).not.toBeInTheDocument();
   });
 
   it('shows no delta when the previous period had nothing to compare', async () => {
