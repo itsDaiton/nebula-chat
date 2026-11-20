@@ -86,6 +86,7 @@ const toUserSummary = (user: SummaryRow) => ({
   email: user.email,
   name: user.name,
   status: statusOf(user),
+  role: user.role === 'admin' ? ('admin' as const) : ('user' as const),
   twoFactorEnabled: user.twoFactorEnabled,
   messagesSent: user.messagesSent,
   sessionsCount: user.sessionsCount,

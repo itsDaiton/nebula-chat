@@ -1273,6 +1273,13 @@ components:
             - pendingDeletion
             - guest
           description: 'The first that applies: guest, banned, admin, unverified, registered'
+        role:
+          type: string
+          enum:
+            - admin
+            - user
+          description: The raw role; `status` hides it for a banned or Pending-deletion
+            Admin
         twoFactorEnabled:
           type: boolean
         messagesSent:
@@ -1300,6 +1307,7 @@ components:
         - email
         - name
         - status
+        - role
         - twoFactorEnabled
         - messagesSent
         - sessionsCount
@@ -1328,6 +1336,13 @@ components:
             - pendingDeletion
             - guest
           description: 'The first that applies: guest, banned, admin, unverified, registered'
+        role:
+          type: string
+          enum:
+            - admin
+            - user
+          description: The raw role; `status` hides it for a banned or Pending-deletion
+            Admin
         twoFactorEnabled:
           type: boolean
         messagesSent:
@@ -1387,6 +1402,7 @@ components:
         - email
         - name
         - status
+        - role
         - twoFactorEnabled
         - messagesSent
         - sessionsCount

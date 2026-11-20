@@ -99,6 +99,9 @@ const userSummaryShape = {
   status: z
     .enum(USER_STATUSES)
     .describe('The first that applies: guest, banned, admin, unverified, registered'),
+  role: z
+    .enum(['admin', 'user'])
+    .describe('The raw role; `status` hides it for a banned or Pending-deletion Admin'),
   twoFactorEnabled: z.boolean(),
   messagesSent: z.number().int().describe('Messages the User sent, across their Sessions'),
   sessionsCount: z.number().int().describe('Sessions the User owns, archived ones included'),

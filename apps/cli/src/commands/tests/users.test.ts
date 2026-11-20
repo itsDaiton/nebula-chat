@@ -16,6 +16,7 @@ const summary = (overrides: Partial<AdminUserSummary> = {}): AdminUserSummary =>
   email: EMAIL,
   name: 'Dana',
   status: 'registered',
+  role: 'user',
   twoFactorEnabled: false,
   messagesSent: 12,
   sessionsCount: 3,

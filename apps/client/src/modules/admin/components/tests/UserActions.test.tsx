@@ -45,7 +45,10 @@ describe('User actions', () => {
 
   it('revokes Admin from an Admin who is not the last', async () => {
     const bodies: unknown[] = [];
-    serve(detailOf({ status: 'admin' }), [summary({ status: 'admin' }), summary({ id: 'b' })]);
+    serve(detailOf({ status: 'admin', role: 'admin' }), [
+      summary({ status: 'admin', role: 'admin' }),
+      summary({ id: 'b' }),
+    ]);
     server.use(
       http.post('*/api/admin/users/:id/role', async ({ request }) => {
         bodies.push(await request.json());
@@ -85,7 +88,9 @@ describe('User actions', () => {
   });
 
   it('disables Revoke Admin and Ban for the last Admin', async () => {
-    serve(detailOf({ status: 'admin' }), [summary({ status: 'admin' })]);
+    serve(detailOf({ status: 'admin', role: 'admin' }), [
+      summary({ status: 'admin', role: 'admin' }),
+    ]);
     const panel = await openPanel();
 
     await waitFor(() =>
@@ -97,8 +102,73 @@ describe('User actions', () => {
     );
   });
 
+  it('offers Revoke Admin to a banned Admin, disabled only when no other Admin is active', async () => {
+    const banned = detailOf({
+      status: 'banned',
+      role: 'admin',
+      ban: { reason: 'Spam', expiresAt: null },
+    });
+    serve(banned, [summary({ id: 'b', role: 'admin', status: 'admin' })]);
+    const panel = await openPanel();
+
+    expect(button(panel, actions.revokeAdmin)).not.toHaveAttribute('aria-disabled', 'true');
+    expect(
+      within(panel).queryByRole('button', { name: actions.grantAdmin }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('disables Revoke Admin for a banned Admin who is the last active one', async () => {
+    serve(
+      detailOf({ status: 'banned', role: 'admin', ban: { reason: 'Spam', expiresAt: null } }),
+      [],
+    );
+    const panel = await openPanel();
+
+    await waitFor(() =>
+      expect(button(panel, actions.revokeAdmin)).toHaveAttribute('aria-disabled', 'true'),
+    );
+    expect(button(panel, actions.revokeAdmin)).toHaveAccessibleName(
+      `${actions.revokeAdmin}. ${actions.reasons.lastAdmin}`,
+    );
+  });
+
+  it('offers Revoke Admin, not Grant, to a Pending-deletion Admin', async () => {
+    const pending = detailOf({
+      status: 'pendingDeletion',
+      role: 'admin',
+      pendingDeletionAt: '2026-10-25T12:00:00Z',
+    });
+    serve(pending, [summary({ id: 'b', role: 'admin', status: 'admin' })]);
+    const panel = await openPanel();
+
+    expect(button(panel, actions.revokeAdmin)).not.toHaveAttribute('aria-disabled', 'true');
+    expect(
+      within(panel).queryByRole('button', { name: actions.grantAdmin }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('disables Revoke Admin and Ban for a Pending-deletion Admin who is the last one', async () => {
+    serve(
+      detailOf({
+        status: 'pendingDeletion',
+        role: 'admin',
+        pendingDeletionAt: '2026-10-25T12:00:00Z',
+      }),
+      [],
+    );
+    const panel = await openPanel();
+
+    await waitFor(() =>
+      expect(button(panel, actions.revokeAdmin)).toHaveAttribute('aria-disabled', 'true'),
+    );
+    expect(button(panel, actions.ban)).toHaveAttribute('aria-disabled', 'true');
+  });
+
   it('shows the typed refusal and keeps the dialog open when the server says no', async () => {
-    serve(detailOf({ status: 'admin' }), [summary({ status: 'admin' }), summary({ id: 'b' })]);
+    serve(detailOf({ status: 'admin', role: 'admin' }), [
+      summary({ status: 'admin', role: 'admin' }),
+      summary({ id: 'b' }),
+    ]);
     server.use(
       http.post('*/api/admin/users/:id/role', () =>
         HttpResponse.json(

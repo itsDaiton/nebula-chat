@@ -10,6 +10,7 @@ const user = (overrides: Partial<AdminUserDetail> = {}): AdminUserDetail => ({
   email: 'anna@example.com',
   name: 'Anna',
   status: 'registered',
+  role: 'user',
   twoFactorEnabled: false,
   messagesSent: 0,
   sessionsCount: 0,
@@ -43,11 +44,22 @@ describe('userActionRules', () => {
   });
 
   it('refuses Revoke and Ban for the last Admin only', () => {
-    const admin = user({ status: 'admin' });
+    const admin = user({ status: 'admin', role: 'admin' });
     const rules = userActionRules(admin, { lastAdmin: true, self: false });
     expect(rules.role.disabledReason).toBe(reasons.lastAdmin);
     expect(rules.ban.disabledReason).toBe(reasons.lastAdmin);
     expect(userActionRules(admin, none).role.disabledReason).toBeUndefined();
+  });
+
+  it.each([
+    ['banned', { status: 'banned', ban: { reason: 'Spam', expiresAt: null } }],
+    ['pending deletion', { status: 'pendingDeletion', pendingDeletionAt: '2026-10-25T12:00:00Z' }],
+  ] as const)('treats a %s Admin as an Admin by role', (_label, overrides) => {
+    const admin = user({ ...overrides, role: 'admin' });
+    expect(userActionRules(admin, none).role.disabledReason).toBeUndefined();
+    expect(userActionRules(admin, { lastAdmin: true, self: false }).role.disabledReason).toBe(
+      reasons.lastAdmin,
+    );
   });
 
   it('refuses Ban on yourself', () => {
