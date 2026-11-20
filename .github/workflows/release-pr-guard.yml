@@ -1,0 +1,35 @@
+name: Release PR guard
+
+# A Release Please PR branch can lag main: auto-merging it then reverted the root devDependencies a
+# Dependabot bump had just landed (#864 after #850, fixed by hand in #868). The release PR may change only
+# each package.json's "version"; any other difference from main means the branch is stale. Require this
+# check in branch protection so auto-merge waits for Release Please to refresh the branch.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  release-pr-guard:
+    name: release-pr-guard
+    if: startsWith(github.head_ref, 'release-please--')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Only "version" may differ from main in a package.json
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          stray="$(git diff -U0 "origin/main" "$HEAD_SHA" -- '*package.json' \
+            | grep -E '^[+-]' | grep -vE '^(\+\+\+|---) ' | grep -vE '^[+-][[:space:]]*"version":' || true)"
+          if [ -n "$stray" ]; then
+            echo "::error::The release PR changes more than package.json versions, so its branch is stale:"
+            echo "$stray"
+            exit 1
+          fi
