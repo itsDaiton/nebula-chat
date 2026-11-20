@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.21.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.21.1...nebula-chat-client-v3.21.2) (2026-11-20)
+
+
+### Bug Fixes
+
+* **client:** drop unused TrendSeries export to keep Knip clean ([#910](https://github.com/itsDaiton/nebula-chat/issues/910)) ([ab2e86b](https://github.com/itsDaiton/nebula-chat/commit/ab2e86b71b71a6c67f7d8cfd90cb2c81e55a2e8f))
+
 ## [3.21.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.21.0...nebula-chat-client-v3.21.1) (2026-11-17)
 
 

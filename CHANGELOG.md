@@ -1,5 +1,13 @@
 # Changelog
 
+## [7.10.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.10.5...nebula-chat-v7.10.6) (2026-11-20)
+
+
+### Bug Fixes
+
+* **client:** drop unused TrendSeries export to keep Knip clean ([#910](https://github.com/itsDaiton/nebula-chat/issues/910)) ([ab2e86b](https://github.com/itsDaiton/nebula-chat/commit/ab2e86b71b71a6c67f7d8cfd90cb2c81e55a2e8f))
+* **worker,otel:** NEB-821 sanitise provider errors, one key resolver ([#905](https://github.com/itsDaiton/nebula-chat/issues/905)) ([1939e8e](https://github.com/itsDaiton/nebula-chat/commit/1939e8e438288fb81dc3751b4ec44e7ad2820745))
+
 ## [7.10.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.10.4...nebula-chat-v7.10.5) (2026-11-20)
 
 
