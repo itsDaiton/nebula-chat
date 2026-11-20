@@ -33,7 +33,7 @@ These bias toward caution over speed; for trivial tasks use judgment.
   type. Default to `fix(<scope>): …`. Never bundle unrelated changes.
 - **Open a PR when the work is complete.** Title `type(scope): NEB-<n> summary` (no ID for ad-hoc work).
   Write the body with **`/pr`** (Summary, Evidence, Merge Danger), then add `Closes #NN` and the ADR link if
-  one exists.
+  one exists. The PR that completes an ADR's work flips its `Status` from Proposed to Accepted.
 - **Never merge your own PR** unless asked. Never force-push shared refs (`main`, integration branches) or use `--no-verify`; a
   rebased feature branch goes up with `--force-with-lease`.
 

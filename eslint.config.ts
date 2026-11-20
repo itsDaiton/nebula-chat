@@ -309,6 +309,12 @@ export default [
           message:
             'Log an error under `err`, not `error`: Pino serializes only `err`, with its stack and cause (docs/logging.md).',
         },
+        {
+          selector:
+            "NewExpression[callee.name=/^(?!Error$).+Error$/] > MemberExpression[property.name='message'][object.name=/^(err|error|e|cause)$/]",
+          message:
+            "A caught error's message can name schema paths or framework internals: answer with ERROR_MESSAGE[code] and keep the original as `cause` (server-error-handling rule).",
+        },
       ],
     },
   },

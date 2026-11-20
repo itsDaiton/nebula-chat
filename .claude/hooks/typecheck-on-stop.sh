@@ -26,6 +26,13 @@ if [ -z "$changed" ]; then
 fi
 
 if out="$(pnpm turbo run typecheck --filter='...[HEAD]' --output-logs=errors-only 2>&1)"; then
+  # Import cycles and boundary breaks otherwise surface only in the PR-only import-boundaries job.
+  if printf '%s\n' "$changed" | grep -q '^apps/.*/src/'; then
+    if ! deps="$(pnpm run deps:check 2>&1)"; then
+      jq -n --arg reason "Import boundaries failed (pnpm deps:check). Fix these before finishing:
+$(printf '%s\n' "$deps" | head -30)" '{decision: "block", reason: $reason}'
+    fi
+  fi
   exit 0
 fi
 

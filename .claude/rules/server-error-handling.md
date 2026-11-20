@@ -55,3 +55,4 @@ Throw from the service layer; the `errorHandler` exported from `errors/error.han
   `ERROR_STATUS` (the compiler insists on both). Then regenerate the OpenAPI spec and the Orval client.
 
 Never return raw error objects to the client. Never throw from controllers — let the global handler do it.
+ESLint rejects `new …Error(err.message)` (a caught error's message into a client-facing error class).
