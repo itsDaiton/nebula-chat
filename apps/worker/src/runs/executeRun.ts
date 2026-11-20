@@ -7,6 +7,7 @@ import { componentLogger, logEvent } from '@nebula-chat/otel';
 import type { LogAttributes } from '@nebula-chat/otel';
 import { endStream, watchForCancel } from '@worker/directReplies/runDirectReply';
 import type { ReplyStreamWriter, StoredMessage } from '@worker/directReplies/runDirectReply';
+import { scrubError } from '@worker/llm/scrubError';
 import type { ClarifyingAnswer, ClarifyingQuestion } from '@worker/runs/askUserTool';
 import type { Brief } from '@worker/runs/brief';
 import type { LoopEnding } from '@worker/runs/findings';
@@ -211,6 +212,8 @@ export const executeRun = async (
   } catch (error) {
     stopWatching();
     clearTimeout(timer);
+    // Idempotent: a model error was already cleaned in its Step; this covers failures outside one.
+    scrubError(error, deps.keys);
     if (abort.signal.aborted && abort.signal.reason !== timedOut) {
       await appended.catch(() => undefined);
       await endCancelled(job, answer, tally.tokens, deps, outcomeAttributes);

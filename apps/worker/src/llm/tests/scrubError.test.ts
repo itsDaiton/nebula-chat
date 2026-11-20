@@ -8,11 +8,16 @@ const keys = operatorKeyResolver({ openai: 'plain-secret-value' });
 describe('scrubError', () => {
   it('scrubs the message and stack in place, keeping the error itself', () => {
     const error = new Error('bad key plain-secret-value');
-    const same = error;
+    const thrown = (): never => {
+      try {
+        throw error;
+      } catch (caught) {
+        scrubError(caught, keys);
+        throw caught;
+      }
+    };
 
-    scrubError(error, keys);
-
-    expect(error).toBe(same);
+    expect(thrown).toThrow(error);
     expect(error.message).toBe(`bad key ${REDACT_CENSOR}`);
     expect(error.stack).not.toContain('plain-secret-value');
   });
