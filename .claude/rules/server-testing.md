@@ -33,6 +33,10 @@ pnpm backend test:coverage
   This keeps routing, Zod validation, `error.handler.ts` and the `preHandler` hook chain under test. No
   socket is opened and no container is needed.
 
+  `inject()` resolves `.` and `..` in the URL, as the WHATWG parser does. To send a raw path, call
+  `light-my-request` with a dispatch that sets `req.url` and calls `app.routing(req, res)`, as
+  `authGate.plugin.test.ts` does.
+
 - **Mock at the nearest boundary to an external system, and nothing above it.** For a CRUD route that
   is the repository: `vi.mock` the `*.repository.ts` module and leave the service and controller real —
   mocking a service to test its own controller tests nothing. The send and stream routes also reach Redis

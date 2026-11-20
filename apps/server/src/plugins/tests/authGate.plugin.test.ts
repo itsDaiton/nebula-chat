@@ -372,17 +372,16 @@ describe('auth catch-all blocks the admin plugin (ADR-0027 §6)', () => {
     );
 
   // better-auth resolves dot segments as the WHATWG URL parser does, so each of these names the plugin.
-  it.each([
-    ['GET', '/api/auth/x/../admin/list-users'],
-    ['POST', '/api/auth/x/../admin/set-role'],
-    ['GET', '/api/auth/x/%2e%2e/admin/list-users'],
-    ['POST', '/api/auth/x/%2e%2e/admin/ban-user'],
-    ['GET', '/api/auth/x/%2E%2E/admin/list-users'],
-    ['POST', '/api/auth/x/%2E%2E/admin/unban-user'],
-    ['GET', '/api/auth/./admin/list-users'],
-    ['POST', '/api/auth/%2e/admin/remove-user'],
-    ['POST', '/api/auth/x/%2e%2E/Admin/create-user'],
-  ] as const)(
+  it.each(
+    [
+      '/api/auth/x/../admin/set-role',
+      '/api/auth/x/%2e%2e/admin/ban-user',
+      '/api/auth/x/%2E%2E/admin/unban-user',
+      '/api/auth/./admin/list-users',
+      '/api/auth/%2e/admin/remove-user',
+      '/api/auth/x/%2e%2E/Admin/create-user',
+    ].flatMap((url) => [['GET', url] as const, ['POST', url] as const]),
+  )(
     'answers raw %s %s with the same NotFound without reaching better-auth',
     async (method, url) => {
       const handler = vi.fn<NodeHandler>();
