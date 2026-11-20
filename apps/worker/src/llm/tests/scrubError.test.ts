@@ -29,3 +29,20 @@ describe('scrubError', () => {
     expect(() => scrubError('plain-secret-value', keys)).not.toThrow();
   });
 });
+
+describe('scrubError on an abort', () => {
+  it('leaves an abort DOMException, whose message is a getter, intact', () => {
+    const abort = new DOMException('aborted', 'AbortError');
+
+    expect(() => scrubError(abort, keys)).not.toThrow();
+    expect(abort.message).toBe('aborted');
+  });
+
+  it('scrubs a getter-only message', () => {
+    const abort = new DOMException('stopped plain-secret-value', 'AbortError');
+
+    scrubError(abort, keys);
+
+    expect(abort.message).toBe(`stopped ${REDACT_CENSOR}`);
+  });
+});

@@ -7,7 +7,11 @@ export const scrubError = (error: unknown, keys: KeyResolver): void => {
   const seen = new Set<unknown>();
   for (let e = error; e instanceof Error && !seen.has(e); e = e.cause) {
     seen.add(e);
-    e.message = scrubSecrets(e.message, known);
-    if (e.stack) e.stack = scrubSecrets(e.stack, known);
+    // defineProperty, not assignment: an abort DOMException's `message` is a getter.
+    for (const field of ['message', 'stack'] as const) {
+      const text = e[field];
+      const clean = text && scrubSecrets(text, known);
+      if (clean !== text) Object.defineProperty(e, field, { value: clean, configurable: true });
+    }
   }
 };
