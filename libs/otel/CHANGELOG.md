@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.14.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.14.3...nebula-chat-otel-v2.14.4) (2026-11-20)
+
+
+### Bug Fixes
+
+* bump the npm-dependencies group across 1 directory with 30 updates ([#913](https://github.com/itsDaiton/nebula-chat/issues/913)) ([c142658](https://github.com/itsDaiton/nebula-chat/commit/c142658580a58d3cfee4d3b83ba7bcf9826d6433))
+
 ## [2.14.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.14.2...nebula-chat-otel-v2.14.3) (2026-11-20)
 
 
