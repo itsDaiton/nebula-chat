@@ -1,12 +1,6 @@
 import { findModel } from '@nebula-chat/contracts';
 import type { DirectReplyJob, ModelProvider, ReplyStreamEvent } from '@nebula-chat/contracts';
-import {
-  BadRequestError,
-  MissingConfigurationError,
-  NotFoundError,
-  isAppError,
-  toErrorEnvelope,
-} from '@nebula-chat/errors';
+import { BadRequestError, NotFoundError, isAppError, toErrorEnvelope } from '@nebula-chat/errors';
 import { componentLogger, logEvent, SpanKind, withSpan } from '@nebula-chat/otel';
 import type { LogAttributes, Logger } from '@nebula-chat/otel';
 import { readCachedReply, replyCacheKey, writeCachedReply } from '@worker/directReplies/replyCache';
@@ -16,6 +10,8 @@ import type {
   ChatStreamConfig,
   HistoryMessage,
 } from '@worker/directReplies/streamChat';
+import type { KeyResolver } from '@worker/llm/keyResolver';
+import { scrubError } from '@worker/modelCalls/scrubError';
 import type { Prompts } from '@worker/llm/prompts';
 import { recordCachedModelCall, recordModelCall } from '@worker/modelCalls/recordModelCall';
 import type { ModelCallLedger, ModelCallSubject } from '@worker/modelCalls/recordModelCall';
@@ -87,7 +83,7 @@ export type DirectReplyDeps = {
   streamChat: StreamChat;
   /** The system prompts, loaded once at boot. */
   prompts: Prompts;
-  apiKeys: { [P in ModelProvider]?: string | undefined };
+  keys: KeyResolver;
   logger: Logger;
   /** How often the model call checks for a cancel request. Default 250 ms. */
   cancelPollMs?: number;
@@ -219,12 +215,7 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
     }
 
     // A replay makes no model call, so only a live reply needs the provider's key.
-    const apiKey = deps.apiKeys[provider];
-    if (!apiKey) {
-      throw new MissingConfigurationError(
-        provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY',
-      );
-    }
+    const apiKey = deps.keys.keyFor(provider);
 
     stopWatching = watchForCancel(job.streamId, deps, cancel);
     const modelProvider = provider;
@@ -300,6 +291,8 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
     );
   } catch (error) {
     stopWatching();
+    // Provider text can echo a key; clean it before it is logged.
+    scrubError(error, deps.keys);
     if (cancel.signal.aborted && !modelReturned) {
       await appended.catch(() => undefined);
       await endCancelled(job, reply, deps, summary);

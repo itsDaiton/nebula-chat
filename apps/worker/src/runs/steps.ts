@@ -8,6 +8,8 @@ import type { StepPhase } from '@nebula-chat/db';
 import { toErrorEnvelope } from '@nebula-chat/errors';
 import type { ErrorEnvelope } from '@nebula-chat/errors';
 import type { Logger } from '@nebula-chat/otel';
+import { scrubError } from '@worker/modelCalls/scrubError';
+import type { KeyResolver } from '@worker/llm/keyResolver';
 import type { AgentDefinition } from '@worker/runs/agentDefinition';
 import { recordModelCall } from '@worker/modelCalls/recordModelCall';
 import type { CallUsage, ModelCallLedger } from '@worker/modelCalls/recordModelCall';
@@ -41,6 +43,7 @@ export type StepContext = {
   steps: StepStore;
   ledger: ModelCallLedger;
   logger: Logger;
+  keys: KeyResolver;
   /** What the Run's Steps have used so far, failed ones too: the Run budget is checked against it. */
   tally: { tokens: number };
 };
@@ -122,6 +125,8 @@ const runStep = async <T>(
     ctx.tally.tokens += tokens ?? 0;
     return { output, tokens: tokens ?? 0 };
   } catch (error) {
+    // Before the Step, the checkpoint and the logs see it: provider text can echo a key.
+    scrubError(error, ctx.keys);
     // A failed or stopped call still spent what it reported.
     const tokens = step.tokens();
     ctx.tally.tokens += tokens ?? 0;

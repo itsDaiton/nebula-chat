@@ -189,7 +189,7 @@ export const createOrchestrator = (deps: OrchestratorDeps) => {
   });
 
   const loop = createAgent({
-    model: deps.models.chat(llmConfigFor(agent, deps.apiKeys)),
+    model: deps.models.chat(llmConfigFor(agent, deps.keys)),
     tools: [
       ...DELEGATES.map((delegate) =>
         delegateTool(delegate, {

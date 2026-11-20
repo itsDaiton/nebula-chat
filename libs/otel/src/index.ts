@@ -31,6 +31,7 @@ export type { LogLevel } from './logLevels';
 export { bindAttributes } from './bindAttributes';
 export { componentLogger } from './componentLogger';
 export { REDACT_CENSOR } from './redaction';
+export { scrubSecrets } from './scrubSecrets';
 
 // Process wiring: env validation and graceful exit
 export { logLevelOverridesSchema, telemetryEnvShape } from './env';

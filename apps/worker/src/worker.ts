@@ -38,6 +38,7 @@ import { createClarifyingQuestionTimeoutProcessor } from '@worker/jobs/clarifyin
 import { createPurgeProcessor } from '@worker/jobs/purge';
 import { createRunProcessor } from '@worker/jobs/run';
 import { createLLM } from '@worker/llm/createLLM';
+import { operatorKeyResolver } from '@worker/llm/keyResolver';
 import { loadPrompts } from '@worker/llm/prompts';
 import { invokeStructured } from '@worker/llm/structuredOutput';
 import { modelCallRepository } from '@worker/modelCalls/modelCallRepository';
@@ -64,7 +65,10 @@ const start = async (): Promise<void> => {
   };
   // A missing prompt fails boot here rather than the first reply that needs it.
   const prompts = loadPrompts();
-  const apiKeys = { openai: env.OPENAI_API_KEY, anthropic: env.ANTHROPIC_API_KEY };
+  const keys = operatorKeyResolver({
+    openai: env.OPENAI_API_KEY,
+    anthropic: env.ANTHROPIC_API_KEY,
+  });
 
   const processDirectReply = createDirectReplyProcessor({
     store: directReplyRepository,
@@ -73,7 +77,7 @@ const start = async (): Promise<void> => {
     ledger: modelCallRepository,
     streamChat,
     prompts,
-    apiKeys,
+    keys,
     logger,
   });
 
@@ -104,7 +108,7 @@ const start = async (): Promise<void> => {
     checkpointer,
     models: { structured: (request) => invokeStructured(request), chat: createLLM },
     prompts,
-    apiKeys,
+    keys,
     logger,
     toolbox: {
       web_search: webSearchTool({

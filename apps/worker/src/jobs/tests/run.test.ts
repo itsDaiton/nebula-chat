@@ -5,6 +5,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getModel } from '@nebula-chat/contracts';
 import type { ReplyStreamEvent } from '@nebula-chat/contracts';
 import { captureLogger, captureSpans, eventLines, LEVEL } from '@nebula-chat/otel/testing';
+import { operatorKeyResolver } from '@worker/llm/keyResolver';
 import { createRunProcessor } from '@worker/jobs/run';
 import { memoryLedger, memoryStream } from '@worker/jobs/tests/directReplyFakes';
 import {
@@ -138,7 +139,7 @@ const run = (
     checkpointer,
     models,
     prompts,
-    apiKeys: { openai: 'sk-openai' },
+    keys: operatorKeyResolver({ openai: 'sk-openai' }),
     logger: log.logger,
     toolbox: fakeToolbox(searches),
     runTimeoutMs: 60_000,
@@ -500,6 +501,29 @@ describe('the Run job', () => {
           message: expect.any(String),
         },
       });
+      expect(stepNamed('output').status).toBe('failed');
+    });
+
+    it('keeps a key the provider echoed out of the Step, the stream, the checkpoints and the logs', async () => {
+      const projectKey = ['sk', 'proj', 'AbC123xyz987'].join('-');
+      const echoing = (): RunModels => {
+        const models = happyModels().models;
+        return {
+          ...models,
+          chat: (config) =>
+            config.streaming
+              ? failingChat(`Incorrect API key provided: sk-openai (also ${projectKey})`)()
+              : models.chat(config),
+        };
+      };
+      // A retry is still to come, so the checkpoints stay to be read.
+      await run(echoing(), payload, { attempts: 2 }).catch(() => undefined);
+
+      const checkpoints = await checkpointsOf(RUN_ID);
+      expect(checkpoints.length).toBeGreaterThan(0);
+      const everything = JSON.stringify([stepNamed('output'), streamed(), log.lines, checkpoints]);
+      expect(everything).not.toContain('sk-openai');
+      expect(everything).not.toContain('AbC123xyz987');
       expect(stepNamed('output').status).toBe('failed');
     });
 

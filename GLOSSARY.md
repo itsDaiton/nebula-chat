@@ -44,6 +44,10 @@ _Avoid_: Cached response.
 One invocation of an LLM, recorded once it ends with its Model, token counts, estimated cost and outcome. A Direct reply makes one; a Run makes one per Step that calls a model (tool Steps make none). A replayed Cache entry counts as a Model call at zero cost. The unit that usage and spend are measured in.
 _Avoid_: Request, completion, generation.
 
+**Operator key**:
+The API key for an LLM provider that the deployment itself holds. Every Model call uses it unless its User has an Own key for that Model's provider, and whoever runs the deployment pays for the calls made with it.
+_Avoid_: Shared key, server key, system key.
+
 **User**:
 Anyone who owns Sessions. Every Session has exactly one owner — `userId` is non-null. A User is either a **Guest** or a **Registered user**.
 _Avoid_: Account (an Account is an auth-provider link belonging to a User, not the User themselves).

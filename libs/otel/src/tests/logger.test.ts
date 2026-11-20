@@ -147,6 +147,16 @@ describe('createLogger', () => {
         { 'http.request.header.authorization': 'SECRET' },
         ['http.request.header.authorization'],
       ],
+      [
+        'a nested x-api-key header',
+        { req: { headers: { 'x-api-key': 'SECRET' } } },
+        ['req', 'headers', 'x-api-key'],
+      ],
+      [
+        'a flat dotted x-api-key header',
+        { 'http.request.header.x-api-key': 'SECRET' },
+        ['http.request.header.x-api-key'],
+      ],
       ['a nested API key', { config: { apiKey: 'SECRET' } }, ['config', 'apiKey']],
       ['a top-level API key', { apiKey: 'SECRET' }, ['apiKey']],
       ['nested Message content', { message: { content: 'SECRET' } }, ['message', 'content']],

@@ -443,6 +443,12 @@ query string is dropped, and a token carried as a path segment is replaced with
 `[Redacted]`, e.g. `/api/auth/reset-password/[Redacted]`. A new route with a
 token in its path adds one pattern there.
 
+Free text is the same gap: a provider error can echo part of an API key in its
+message. `scrubSecrets(text, knownValues)` from `@nebula-chat/otel` replaces
+key-shaped strings (`sk-`, `sk-proj-`, `sk-ant-`) and every exact known key
+value with `[Redacted]`; the worker applies it to a model error where it is
+caught, so logs, Step records, checkpoints and stream events see the clean text.
+
 ## Development format
 
 In development, `pino-pretty` renders `event.name · msg` as the headline and

@@ -71,7 +71,7 @@ const intakeNode =
         config,
         async (reportUsage) => {
           const { output: parsed, usage } = await deps.models.structured({
-            ...llmConfigFor(agent, deps.apiKeys),
+            ...llmConfigFor(agent, deps.keys),
             name: agent.name,
             schema,
             messages: [new SystemMessage(system), new HumanMessage(human)],
@@ -106,7 +106,7 @@ const outputNode =
       config,
       (reportUsage) =>
         llmConcurrencyLimiter(async () => {
-          const model = deps.models.chat({ ...llmConfigFor(agent, deps.apiKeys), streaming: true });
+          const model = deps.models.chat({ ...llmConfigFor(agent, deps.keys), streaming: true });
           let answer = '';
           let reported: UsageMetadata | undefined;
           try {
