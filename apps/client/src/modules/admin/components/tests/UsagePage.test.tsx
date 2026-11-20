@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { delay } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getGetModelUsageDetailMockHandler,
@@ -302,6 +303,89 @@ describe('Model usage page', () => {
     await userEvent.click(screen.getByRole('button', { name: text.expandOther }));
     expect(await screen.findByText('GPT-4.1')).toBeVisible();
     expect(screen.getByRole('button', { name: text.pin('GPT-5') })).toBeVisible();
+  });
+
+  it('shows tile, chart and list skeletons while the first requests load, then the data', async () => {
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    server.use(
+      getGetModelUsageSeriesMockHandler(async () => {
+        await held;
+        return aSeries();
+      }),
+      getGetModelUsageTotalsMockHandler(async () => {
+        await held;
+        return aTotals();
+      }),
+      getGetModelUsageDetailMockHandler(aDetail()),
+    );
+
+    await renderRoute('/admin/usage');
+
+    expect(await screen.findByRole('status', { name: text.loading })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: text.tilesLoading })).toBeInTheDocument();
+    release();
+    expect(
+      await screen.findByRole('img', { name: text.chartLabel(text.metrics.prompts) }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: text.loading })).not.toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: text.tilesLoading })).not.toBeInTheDocument();
+  });
+
+  it('keeps the chart and list on screen, dimmed and busy, while a new metric loads, leaving the totals as they are', async () => {
+    server.use(
+      getGetModelUsageSeriesMockHandler(async ({ request }) => {
+        if (new URL(request.url).searchParams.get('metric') === 'tokens') await delay('infinite');
+        return aSeries();
+      }),
+      getGetModelUsageTotalsMockHandler(aTotals()),
+      getGetModelUsageDetailMockHandler(aDetail()),
+    );
+
+    await renderRoute('/admin/usage');
+    const data = await screen.findByRole('region', { name: text.dataLabel });
+    await screen.findByRole('img', { name: text.chartLabel(text.metrics.prompts) });
+    expect(data).toHaveAttribute('aria-busy', 'false');
+
+    await userEvent.click(
+      within(screen.getByRole('group', { name: text.metric })).getByRole('button', {
+        name: text.metrics.tokens,
+      }),
+    );
+
+    await waitFor(() => expect(data).toHaveAttribute('aria-busy', 'true'));
+    expect(
+      within(data).getByRole('img', { name: text.chartLabel(text.metrics.prompts) }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: text.tilesLabel })).toHaveAttribute(
+      'aria-busy',
+      'false',
+    );
+    expect(screen.queryByRole('status', { name: text.loading })).not.toBeInTheDocument();
+  });
+
+  it('keeps the totals on screen, dimmed and busy, while a new range loads', async () => {
+    server.use(
+      getGetModelUsageSeriesMockHandler(aSeries()),
+      getGetModelUsageTotalsMockHandler(async ({ request }) => {
+        if (new URL(request.url).searchParams.get('range') === '7d') await delay('infinite');
+        return aTotals();
+      }),
+      getGetModelUsageDetailMockHandler(aDetail()),
+    );
+
+    await renderRoute('/admin/usage');
+    const tiles = await screen.findByRole('region', { name: text.tilesLabel });
+    await waitFor(() => expect(tiles).toHaveTextContent('41.2M'));
+
+    await userEvent.click(
+      within(screen.getByRole('group', { name: text.range })).getByRole('button', { name: '7d' }),
+    );
+
+    await waitFor(() => expect(tiles).toHaveAttribute('aria-busy', 'true'));
+    expect(within(tiles).getByRole('group', { name: text.tiles.tokens })).toHaveTextContent(
+      '41.2M',
+    );
   });
 
   it('enables Model usage in the navigation and marks it current', async () => {

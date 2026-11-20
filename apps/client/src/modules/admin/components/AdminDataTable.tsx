@@ -27,7 +27,7 @@ export const AdminDataTable = <TRow extends RowData, TSearch, TData>({
   empty,
   errorMessage,
 }: AdminDataTableProps<TRow, TSearch, TData>) => {
-  const { data, isPending, isError, refetch } = useQuery(queryOptions(search));
+  const { data, isPending, isError, isPlaceholderData, refetch } = useQuery(queryOptions(search));
   const scrollRef = useRef<HTMLDivElement>(null);
   const rows = data?.rows ?? (NO_ROWS as TRow[]);
 
@@ -49,7 +49,14 @@ export const AdminDataTable = <TRow extends RowData, TSearch, TData>({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto">
-        <table aria-label={label} className="w-full min-w-[720px] border-collapse text-[12.5px]">
+        <table
+          aria-label={label}
+          aria-busy={isPlaceholderData}
+          className={cn(
+            'w-full min-w-[720px] border-collapse text-[12.5px] transition-opacity',
+            isPlaceholderData && 'opacity-60',
+          )}
+        >
           <thead className="sticky top-0 z-10">
             {table.getHeaderGroups().map((group) => (
               <tr key={group.id}>

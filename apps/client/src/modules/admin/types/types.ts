@@ -279,6 +279,8 @@ export type UsageParams = {
   pinned: string | undefined;
 };
 
+export type UsageTotalsParams = Pick<UsageParams, 'range' | 'audience'>;
+
 type UsageSegmentOption<T extends string> = { value: T; label: string };
 
 export type UsageSegmentedProps<T extends string> = {

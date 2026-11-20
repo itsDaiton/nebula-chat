@@ -270,6 +270,35 @@ describe('Users page', () => {
     await waitFor(() => expect(router.state.location.search).toEqual({ q: 'bot' }));
   });
 
+  it("shows loading rows while the open User's Sessions load, then the Sessions", async () => {
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    serveUsers([bot]);
+    server.use(
+      getGetUserMockHandler(botDetail),
+      getListUserSessionsMockHandler(async () => {
+        await held;
+        return {
+          sessions: [aUserSession('Generate 50 product names')],
+          nextCursor: null,
+          hasMore: false,
+        };
+      }),
+    );
+
+    await renderRoute(`/admin/users?selected=${BOT_ID}`);
+
+    const sessions = await screen.findByRole('region', { name: text.detail.sessions });
+    expect(
+      await within(sessions).findByRole('status', { name: text.detail.sessionsLoading }),
+    ).toBeInTheDocument();
+    release();
+    expect(await within(sessions).findByText('Generate 50 product names')).toBeInTheDocument();
+    expect(
+      within(sessions).queryByRole('status', { name: text.detail.sessionsLoading }),
+    ).not.toBeInTheDocument();
+  });
+
   it('opens the User a link names, with a ban that has no end and a Pending deletion date', async () => {
     serveUsers([bot]);
     serveDetail({

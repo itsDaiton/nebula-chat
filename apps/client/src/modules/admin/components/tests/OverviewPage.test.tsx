@@ -1,5 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { delay } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getGetAdminOverviewMockHandler,
@@ -194,6 +195,69 @@ describe('Overview page', () => {
     expect(within(nav).getByRole('link', { name: resources.admin.nav.audit })).not.toHaveAttribute(
       'aria-current',
     );
+  });
+
+  it('shows tile skeletons while the Overview loads, then the tiles', async () => {
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    server.use(
+      getGetAdminOverviewMockHandler(async () => {
+        await held;
+        return anOverview();
+      }),
+    );
+
+    await renderRoute('/admin');
+
+    expect(await screen.findByRole('status', { name: text.loading })).toBeInTheDocument();
+    release();
+    expect(await screen.findByRole('region', { name: text.tilesLabel })).toHaveTextContent('214');
+    expect(screen.queryByRole('status', { name: text.loading })).not.toBeInTheDocument();
+  });
+
+  it('keeps the tiles on screen, dimmed and busy, while a new range loads', async () => {
+    server.use(
+      getGetAdminOverviewMockHandler(async ({ request }) => {
+        if (new URL(request.url).searchParams.get('range') === '7d') await delay('infinite');
+        return anOverview();
+      }),
+    );
+
+    await renderRoute('/admin');
+    const tiles = await screen.findByRole('region', { name: text.tilesLabel });
+    await waitFor(() => expect(tiles).toHaveTextContent('214'));
+    expect(tiles).toHaveAttribute('aria-busy', 'false');
+
+    const group = screen.getByRole('group', { name: text.rangeLabel });
+    await userEvent.click(within(group).getByRole('button', { name: '7d' }));
+
+    await waitFor(() =>
+      expect(screen.getByRole('region', { name: text.tilesLabel })).toHaveAttribute(
+        'aria-busy',
+        'true',
+      ),
+    );
+    expect(screen.getByRole('region', { name: text.tilesLabel })).toHaveTextContent('214');
+    expect(screen.queryByRole('status', { name: text.loading })).not.toBeInTheDocument();
+  });
+
+  it('shows row skeletons while the latest Audit entries load, then the entries', async () => {
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    server.use(
+      getGetAdminOverviewMockHandler(anOverview()),
+      getListAuditEntriesMockHandler(async () => {
+        await held;
+        return { entries: [], nextCursor: null, hasMore: false, total: 0 };
+      }),
+    );
+
+    await renderRoute('/admin');
+
+    expect(await screen.findByRole('status', { name: text.latestLoading })).toBeInTheDocument();
+    release();
+    expect(await screen.findByText(text.latestEmpty)).toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: text.latestLoading })).not.toBeInTheDocument();
   });
 
   it('shows no delta when the previous period had nothing to compare', async () => {

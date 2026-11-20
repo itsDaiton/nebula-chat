@@ -1,3 +1,4 @@
+import { keepPreviousData } from '@tanstack/react-query';
 import { getListAuditEntriesQueryOptions } from '@/libs/api/generated/admin/admin';
 import type { ListAuditEntriesParams } from '@/libs/api/generated/model/listAuditEntriesParams';
 import type { AdminPage, AuditSearch } from '@/modules/admin/types/types';
@@ -37,6 +38,8 @@ const auditParams = ({
 
 export const auditQueryOptions = (search: AuditSearch) => ({
   ...getListAuditEntriesQueryOptions(auditParams(search)),
+  // A filter, search, sort or page change keeps the old rows on screen until the new ones arrive.
+  placeholderData: keepPreviousData,
   select: ({ entries, nextCursor, total }: AuditPage): AdminPage<AuditEntry> => ({
     rows: entries,
     nextCursor,

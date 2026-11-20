@@ -46,5 +46,6 @@ paths:
   called from a component that is always mounted (see `useSessionPaletteActions`, called by `AppShell`); they
   are listed while it stays mounted, and `visible: false` hides one (Open admin). Sessions come from the
   search API, not the registry.
+- **A surface that fetches shows its loading and refetch states** per [client-data-states](client-data-states.md).
 - Responsive layout decisions (`isMobile`, `showSidePanels`) come from `useResponsiveLayout`.
 - **All static text must live in `resources.ts`.** If it is a string shown in the UI — button labels, placeholders, error messages, hints, empty states, tooltips — it goes in `resources.ts`. Never hardcode UI strings inline in components or utilities. The exception is the decorative Waiting phrases, which live in `src/waitingPhrases.ts` so the list doesn't bloat `resources.ts`.

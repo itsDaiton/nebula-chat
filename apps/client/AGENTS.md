@@ -106,6 +106,7 @@ when it reads a matching file; any other agent opens the file when it works in t
 | [client-routing](../../.claude/rules/client-routing.md)                   | TanStack Router files, guards, loaders, search params     |
 | [client-state](../../.claude/rules/client-state.md)                       | react-query, Zustand, auth state, chat streaming          |
 | [client-components](../../.claude/rules/client-components.md)             | One component per file, shadcn/ui, `resources.ts` strings |
+| [client-data-states](../../.claude/rules/client-data-states.md)           | Skeletons, kept data on refetch, route pending UI         |
 | [client-forms](../../.claude/rules/client-forms.md)                       | react-hook-form with zod, `AuthForm`                      |
 | [client-hooks](../../.claude/rules/client-hooks.md)                       | Thin hooks over stores and queries                        |
 | [client-use-effect](../../.claude/rules/client-use-effect.md)             | No `useEffect`, and what to use instead                   |

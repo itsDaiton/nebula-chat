@@ -1,7 +1,15 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { delay } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resources } from '@/resources';
+import { RoutePending } from '@/shared/components/RoutePending';
+import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
+import {
+  getGetSessionMockHandler,
+  getGetSessionResponseMock,
+} from '@/libs/api/generated/sessions/sessions.msw';
+import { server } from '@/test/msw';
 import { holdSession } from '@/test/auth';
 import { serveChatPage } from '@/test/chat';
 import { renderRoute } from '@/test/renderRoute';
@@ -45,6 +53,34 @@ describe('router', () => {
       expect(screen.queryByText(resources.notFound.title)).not.toBeInTheDocument();
     },
   );
+
+  it('delays the default pending page by 150 ms and holds it for at least 300 ms', async () => {
+    const { router } = await renderRoute('/auth');
+
+    expect(router.options.defaultPendingMs).toBe(150);
+    expect(router.options.defaultPendingMinMs).toBe(300);
+    expect(router.options.defaultPendingComponent).toBe(RoutePending);
+  });
+
+  it('shows the default pending page while a route loader waits', async () => {
+    const { router } = await renderRoute('/');
+    server.use(
+      getGetSessionMockHandler(async () => {
+        await delay('infinite');
+        return getGetSessionResponseMock();
+      }),
+      getListMessagesMockHandler(async () => {
+        await delay('infinite');
+        return [];
+      }),
+    );
+
+    void router.navigate({ to: '/s/$id', params: { id: 'slow' } });
+
+    expect(
+      await screen.findByRole('status', { name: resources.routing.loading }),
+    ).toBeInTheDocument();
+  });
 
   it('carries the query client in the router context', async () => {
     const { router, queryClient } = await renderRoute('/auth');

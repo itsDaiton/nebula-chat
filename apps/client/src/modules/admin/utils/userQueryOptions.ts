@@ -1,3 +1,4 @@
+import { keepPreviousData } from '@tanstack/react-query';
 import { getListUsersQueryOptions } from '@/libs/api/generated/admin/admin';
 import type { AdminUserPage } from '@/libs/api/generated/model/adminUserPage';
 import type { AdminUserSummary } from '@/libs/api/generated/model/adminUserSummary';
@@ -19,6 +20,8 @@ export const userQueryOptions = ({ q, status, sort, dir, cursor }: UsersSearch) 
     order: dir ?? DEFAULT_USER_ORDER,
     cursor,
   }),
+  // A filter, search, sort or page change keeps the old rows on screen until the new ones arrive.
+  placeholderData: keepPreviousData,
   select: ({ users, nextCursor }: AdminUserPage): AdminPage<AdminUserSummary> => ({
     rows: users,
     nextCursor,

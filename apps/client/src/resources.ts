@@ -314,6 +314,7 @@ export const resources = {
     openAdmin: 'Admin',
   },
   admin: {
+    loading: 'Loading admin',
     nav: {
       label: 'Admin navigation',
       back: 'Back to chat',
@@ -344,6 +345,8 @@ export const resources = {
       rangeLabel: 'Range',
       vsPrevious: 'vs prev.',
       loadFailed: 'The Overview could not be loaded.',
+      loading: 'Loading the Overview',
+      tilesLabel: 'Key figures',
       tiles: {
         dailyActiveUsers: 'Daily active Users',
         weeklyActiveUsers: 'Weekly active Users',
@@ -357,10 +360,15 @@ export const resources = {
       viewAll: 'View all',
       latestEmpty: 'No Audit entries yet.',
       latestFailed: 'The latest Audit entries could not be loaded.',
+      latestLoading: 'Loading the latest Audit entries',
     },
     usage: {
       title: 'Model usage',
       loadFailed: 'Model usage could not be loaded.',
+      loading: 'Loading Model usage',
+      tilesLoading: 'Loading the totals',
+      tilesLabel: 'Totals',
+      dataLabel: 'Model usage by Model',
       toolbar: 'Model usage filters',
       metric: 'Metric',
       range: 'Range',
@@ -492,6 +500,7 @@ export const resources = {
         pendingDeletion: 'Pending deletion',
         none: '—',
         noSessions: 'No Sessions yet.',
+        sessionsLoading: 'Loading Sessions',
         sessionsFailed: 'Their Sessions could not be loaded.',
         archived: 'archived',
         allSessions: 'All their Sessions',
@@ -796,6 +805,7 @@ export const resources = {
     message: "The page you're looking for doesn't exist or has been moved.",
     action: 'Go Home',
   },
+  routing: { loading: 'Loading page' },
   commandPalette: {
     placeholder: 'Search Sessions or run a command…',
     sessions: 'Sessions',
