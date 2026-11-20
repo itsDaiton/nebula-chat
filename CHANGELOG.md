@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.10.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.10.3...nebula-chat-v7.10.4) (2026-11-20)
+
+
+### Bug Fixes
+
+* add guardrails for cycles, error leaks and stale release PRs ([#904](https://github.com/itsDaiton/nebula-chat/issues/904)) ([c8cb924](https://github.com/itsDaiton/nebula-chat/commit/c8cb9242281b326e02d62779634d6ed368c3578f))
+
 ## [7.10.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.10.2...nebula-chat-v7.10.3) (2026-11-17)
 
 
