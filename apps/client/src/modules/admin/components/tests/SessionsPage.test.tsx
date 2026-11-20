@@ -70,6 +70,7 @@ const anna: AdminUserDetail = {
   email: owner.email,
   name: owner.name,
   status: 'registered',
+  role: 'user',
   twoFactorEnabled: false,
   messagesSent: 612,
   sessionsCount: 41,

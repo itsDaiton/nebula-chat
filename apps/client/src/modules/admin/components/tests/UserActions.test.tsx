@@ -130,6 +130,7 @@ describe('User actions', () => {
     expect(button(panel, actions.revokeAdmin)).toHaveAccessibleName(
       `${actions.revokeAdmin}. ${actions.reasons.lastAdmin}`,
     );
+    expect(button(panel, actions.unban)).not.toHaveAttribute('aria-disabled', 'true');
   });
 
   it('offers Revoke Admin, not Grant, to a Pending-deletion Admin', async () => {
