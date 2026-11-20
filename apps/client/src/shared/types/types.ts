@@ -115,7 +115,7 @@ export type StackedAreaChartProps = {
   renderTooltip?: (context: ChartTooltipContext) => ReactNode;
 };
 
-export type TrendSeries = { key: string; label: string; values: readonly number[] };
+type TrendSeries = { key: string; label: string; values: readonly number[] };
 
 export type TrendChartProps = {
   days: readonly string[];
