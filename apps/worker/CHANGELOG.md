@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v2.0.2...nebula-chat-worker-v2.0.3) (2026-11-20)
+
+
+### Bug Fixes
+
+* **worker,otel:** NEB-821 sanitise provider errors, one key resolver ([#905](https://github.com/itsDaiton/nebula-chat/issues/905)) ([1939e8e](https://github.com/itsDaiton/nebula-chat/commit/1939e8e438288fb81dc3751b4ec44e7ad2820745))
+
 ## [2.0.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v2.0.1...nebula-chat-worker-v2.0.2) (2026-11-17)
 
 
