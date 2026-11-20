@@ -11,7 +11,7 @@ import type {
   HistoryMessage,
 } from '@worker/directReplies/streamChat';
 import type { KeyResolver } from '@worker/llm/keyResolver';
-import { scrubError } from '@worker/llm/scrubError';
+import { scrubError } from '@worker/modelCalls/scrubError';
 import type { Prompts } from '@worker/llm/prompts';
 import { recordCachedModelCall, recordModelCall } from '@worker/modelCalls/recordModelCall';
 import type { ModelCallLedger, ModelCallSubject } from '@worker/modelCalls/recordModelCall';

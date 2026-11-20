@@ -7,7 +7,7 @@ import { componentLogger, logEvent } from '@nebula-chat/otel';
 import type { LogAttributes } from '@nebula-chat/otel';
 import { endStream, watchForCancel } from '@worker/directReplies/runDirectReply';
 import type { ReplyStreamWriter, StoredMessage } from '@worker/directReplies/runDirectReply';
-import { scrubError } from '@worker/llm/scrubError';
+import { scrubError } from '@worker/modelCalls/scrubError';
 import type { ClarifyingAnswer, ClarifyingQuestion } from '@worker/runs/askUserTool';
 import type { Brief } from '@worker/runs/brief';
 import type { LoopEnding } from '@worker/runs/findings';

@@ -8,7 +8,7 @@ import type { StepPhase } from '@nebula-chat/db';
 import { toErrorEnvelope } from '@nebula-chat/errors';
 import type { ErrorEnvelope } from '@nebula-chat/errors';
 import type { Logger } from '@nebula-chat/otel';
-import { scrubError } from '@worker/llm/scrubError';
+import { scrubError } from '@worker/modelCalls/scrubError';
 import type { KeyResolver } from '@worker/llm/keyResolver';
 import type { AgentDefinition } from '@worker/runs/agentDefinition';
 import { recordModelCall } from '@worker/modelCalls/recordModelCall';

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { REDACT_CENSOR } from '@nebula-chat/otel';
 import { operatorKeyResolver } from '@worker/llm/keyResolver';
-import { scrubError } from '@worker/llm/scrubError';
+import { scrubError } from '@worker/modelCalls/scrubError';
 
 const keys = operatorKeyResolver({ openai: 'plain-secret-value' });
 
