@@ -281,6 +281,37 @@ describe('createAuth admin and two-factor plugins', () => {
     expect(ids.indexOf('pending-deletion-sign-in')).toBeGreaterThan(ids.indexOf('two-factor'));
   });
 
+  // Admin actions go through the server's audited `/api/admin/*` (ADR-0027 §6), even past the server's auth gate.
+  it.each([
+    ['GET', '/admin/list-users'],
+    ['POST', '/admin/set-role'],
+    ['POST', '/admin/ban-user'],
+    ['POST', '/admin/has-permission'],
+    ['POST', '/x/%2e%2e/admin/ban-user'],
+  ])('answers %s %s over HTTP with NotFound', async (method, path) => {
+    const response = await buildAuth().handler(
+      new Request(`http://localhost:3000/api/auth${path}`, {
+        method,
+        headers: { 'content-type': 'application/json', origin: 'http://localhost:5173' },
+        ...(method === 'POST' && { body: JSON.stringify({ userId: 'user-1' }) }),
+      }),
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it("still answers the admin plugin's server API, which the audited routes call", async () => {
+    // `Auth` is the base type, so the plugin's endpoints aren't on it; the server casts the same way.
+    const api = buildAuth().api as unknown as {
+      userHasPermission: (input: { body: object }) => Promise<{ success: boolean }>;
+    };
+    const result = await api.userHasPermission({
+      body: { role: 'admin', permissions: { user: ['ban'] } },
+    });
+
+    expect(result).toMatchObject({ success: true });
+  });
+
   it('names the TOTP issuer Nebula Chat', () => {
     expect(findPlugin('two-factor')?.options).toMatchObject({ issuer: 'Nebula Chat' });
   });
