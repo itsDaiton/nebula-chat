@@ -23,6 +23,9 @@ services:
     healthCheckPath: /health
     autoDeployTrigger: off
     envVars:
+      # Required: an unset NODE_ENV fails boot on a deployment. Production also turns the API docs off.
+      - key: NODE_ENV
+        value: production
       # The worker's public URL. The server pings its /health on every enqueue,
       # which is what wakes a sleeping free-plan worker (ADR-0013).
       - key: WORKER_URL

@@ -165,3 +165,112 @@ describe('envSchema log export', () => {
     },
   );
 });
+
+describe('envSchema hardening', () => {
+  it('rejects a BETTER_AUTH_SECRET under 32 characters', () => {
+    const result = parse({ BETTER_AUTH_SECRET: 'x'.repeat(31) });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toContain('BETTER_AUTH_SECRET');
+  });
+
+  it('accepts a 32 character BETTER_AUTH_SECRET', () => {
+    expect(parse({ BETTER_AUTH_SECRET: 'x'.repeat(32) }).success).toBe(true);
+  });
+
+  it('rejects a negative GUEST_MESSAGE_ALLOWANCE and accepts 0', () => {
+    expect(parse({ GUEST_MESSAGE_ALLOWANCE: '-1' }).success).toBe(false);
+    expect(parse({ GUEST_MESSAGE_ALLOWANCE: '0' }).success).toBe(true);
+  });
+
+  it('rejects an http BETTER_AUTH_URL in production', () => {
+    const result = parse({
+      NODE_ENV: 'production',
+      BETTER_AUTH_URL: 'http://api.example.com',
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toContain('BETTER_AUTH_URL');
+  });
+
+  it('accepts an https BETTER_AUTH_URL in production', () => {
+    expect(
+      parse({ NODE_ENV: 'production', BETTER_AUTH_URL: 'https://api.example.com' }).success,
+    ).toBe(true);
+  });
+
+  it('keeps an http BETTER_AUTH_URL working outside production', () => {
+    expect(parse({ NODE_ENV: 'development' }).success).toBe(true);
+  });
+
+  describe('an unset NODE_ENV', () => {
+    it('boots as development against a localhost BETTER_AUTH_URL', () => {
+      const result = parse({});
+
+      expect(result.success).toBe(true);
+      expect(result.data?.NODE_ENV).toBe('development');
+    });
+
+    it.each(['http://127.0.0.1:3000', 'http://[::1]:3000'])('boots against %s', (url) => {
+      expect(parse({ BETTER_AUTH_URL: url }).success).toBe(true);
+    });
+
+    it('fails when BETTER_AUTH_URL is not localhost', () => {
+      const result = parse({ BETTER_AUTH_URL: 'https://api.example.com' });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.issues[0]?.message).toContain('NODE_ENV');
+    });
+
+    it('fails when RENDER is set', () => {
+      const result = parse({ RENDER: 'true' });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.issues[0]?.message).toContain('NODE_ENV');
+    });
+  });
+});
+
+describe('envSchema API_DOCS_ENABLED', () => {
+  it.each([
+    ['development', true],
+    ['test', true],
+    ['production', false],
+  ] as const)('defaults for %s to %s', (nodeEnv, expected) => {
+    const result = parse({ NODE_ENV: nodeEnv, BETTER_AUTH_URL: 'https://api.example.com' });
+
+    expect(result.data?.API_DOCS_ENABLED).toBe(expected);
+  });
+
+  it('defaults to true for an unset NODE_ENV on localhost', () => {
+    expect(parse({}).data?.API_DOCS_ENABLED).toBe(true);
+  });
+
+  it.each([
+    ['production', 'true', true],
+    ['development', 'false', false],
+    ['test', 'false', false],
+  ] as const)('lets an explicit value win in %s', (nodeEnv, raw, expected) => {
+    const result = parse({
+      NODE_ENV: nodeEnv,
+      BETTER_AUTH_URL: 'https://api.example.com',
+      API_DOCS_ENABLED: raw,
+    });
+
+    expect(result.data?.API_DOCS_ENABLED).toBe(expected);
+  });
+
+  it('reads an empty value as unset', () => {
+    expect(
+      parse({
+        NODE_ENV: 'production',
+        BETTER_AUTH_URL: 'https://a.example.com',
+        API_DOCS_ENABLED: '',
+      }).data?.API_DOCS_ENABLED,
+    ).toBe(false);
+  });
+
+  it('rejects a value that is not a boolean', () => {
+    expect(parse({ API_DOCS_ENABLED: 'maybe' }).success).toBe(false);
+  });
+});

@@ -78,6 +78,8 @@ export type CreateAuthConfig = {
   baseURL: string;
   /** Origins allowed to call the auth endpoints (CSRF protection). */
   trustedOrigins?: string[];
+  /** Serves better-auth's OpenAPI reference (`/reference`, `/open-api/generate-schema`); off by default. */
+  apiDocsEnabled?: boolean;
   /** Delivers the verification and reset emails — Resend in production (ADR-0021). */
   sendEmail: EmailSender;
   /** Client page an OAuth callback that cannot reach its own `errorCallbackURL` redirects to. */
@@ -192,6 +194,7 @@ export const createAuth = ({
   secret,
   baseURL,
   trustedOrigins,
+  apiDocsEnabled = false,
   sendEmail,
   errorURL,
   deviceVerificationURL,
@@ -396,8 +399,8 @@ export const createAuth = ({
       // /reset-password is breach-checked by the before hook, ahead of token consumption.
       haveIBeenPwned({ paths: ['/sign-up/email', '/change-password'] }),
       // Scalar UI at `/api/auth/reference` and the OpenAPI 3.1 schema at `/api/auth/open-api/generate-schema`,
-      // reached through the server's `/api/auth/*` passthrough.
-      openAPI(),
+      // reached through the server's `/api/auth/*` passthrough; only when the server's docs flag is on.
+      ...(apiDocsEnabled ? [openAPI()] : []),
       // Impersonation stays off (ADR-0027 §5); the before hook refuses the plugin's HTTP endpoints, so only `auth.api.*` reaches it.
       admin({
         defaultRole: 'user',

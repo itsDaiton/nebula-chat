@@ -45,7 +45,10 @@ const logger = {
 };
 
 // Starting a social sign-in reads no table, so the database is never reached.
-const buildAuth = (socialProviders?: CreateAuthConfig['socialProviders']) =>
+const buildAuth = (
+  socialProviders?: CreateAuthConfig['socialProviders'],
+  apiDocsEnabled?: boolean,
+) =>
   createAuth({
     db: {} as DbClient,
     authStore: makeAuthStore(),
@@ -57,6 +60,7 @@ const buildAuth = (socialProviders?: CreateAuthConfig['socialProviders']) =>
     errorURL: 'http://localhost:5173/auth',
     deviceVerificationURL: 'http://localhost:5173/device',
     socialProviders,
+    apiDocsEnabled,
   });
 
 const CREDENTIALS = {
@@ -118,6 +122,19 @@ describe('createAuth social sign-in', () => {
     expect(response.headers.get('location')).toBe(
       'http://localhost:5173/auth?error=state_not_found',
     );
+  });
+});
+
+describe('createAuth API docs', () => {
+  const reference = (auth: ReturnType<typeof buildAuth>) =>
+    auth.handler(new Request('http://localhost:3000/api/auth/reference'));
+
+  it('serves the reference page when apiDocsEnabled is true', async () => {
+    expect((await reference(buildAuth(undefined, true))).status).toBe(200);
+  });
+
+  it.each([false, undefined])('answers 404 for the reference page when it is %s', async (flag) => {
+    expect((await reference(buildAuth(undefined, flag))).status).toBe(404);
   });
 });
 

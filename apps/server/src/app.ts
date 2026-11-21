@@ -16,6 +16,7 @@ import {
   validatorCompiler,
 } from 'fastify-zod-openapi';
 import { corsOptions } from '@server/config/cors.config';
+import { env } from '@server/env';
 import { errorHandler } from '@server/errors/error.handler';
 import { apiRootSchema, healthSchema } from '@server/health.validation';
 import { logger } from '@server/logger';
@@ -125,7 +126,10 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
     ...fastifyZodOpenApiTransformers,
   });
 
-  await app.register(swaggerUi, { routePrefix: '/docs' });
+  // `swagger` above stays on either way: `generate:openapi` reads `app.swagger()`.
+  if (env.API_DOCS_ENABLED) {
+    await app.register(swaggerUi, { routePrefix: '/docs' });
+  }
 
   await app.register(underPressure, {
     maxEventLoopDelay: 1000,
@@ -164,7 +168,9 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
     () => ({ status: 'ok' as const, timestamp: new Date().toISOString() }),
   );
 
-  app.get('/openapi.json', { schema: { hide: true } }, () => app.swagger());
+  if (env.API_DOCS_ENABLED) {
+    app.get('/openapi.json', { schema: { hide: true } }, () => app.swagger());
+  }
 
   app.setErrorHandler(errorHandler);
 
