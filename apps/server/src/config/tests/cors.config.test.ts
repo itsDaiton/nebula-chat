@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const mockEnv: { CLIENT_URL?: string; SERVER_URL?: string } = {};
+const mockEnv: { CLIENT_URL?: string; SERVER_URL?: string; API_DOCS_ENABLED?: boolean } = {};
 
 vi.mock('@server/env', () => ({ env: mockEnv }));
 
@@ -9,7 +9,11 @@ vi.mock('@server/env', () => ({ env: mockEnv }));
  * env and re-imports rather than mutating a live module.
  */
 const loadCorsOptions = async (env: typeof mockEnv) => {
-  Object.assign(mockEnv, { CLIENT_URL: undefined, SERVER_URL: undefined }, env);
+  Object.assign(
+    mockEnv,
+    { CLIENT_URL: undefined, SERVER_URL: undefined, API_DOCS_ENABLED: true },
+    env,
+  );
   vi.resetModules();
   const mod = await import('@server/config/cors.config.js');
   return mod.corsOptions;
@@ -43,10 +47,21 @@ describe('corsOptions.origin', () => {
     await expect(allows(options, origin)).resolves.toBe(expected);
   });
 
-  it('allows the configured server origin', async () => {
+  it('allows the configured server origin while the API docs are on', async () => {
     const options = await loadCorsOptions({ SERVER_URL: 'https://api.example.com' });
 
     await expect(allows(options, 'https://api.example.com')).resolves.toBe(true);
+  });
+
+  it('drops the server origin while the API docs are off, keeping the client', async () => {
+    const options = await loadCorsOptions({
+      CLIENT_URL: 'https://app.example.com',
+      SERVER_URL: 'https://api.example.com',
+      API_DOCS_ENABLED: false,
+    });
+
+    await expect(allows(options, 'https://api.example.com')).resolves.toBe(false);
+    await expect(allows(options, 'https://app.example.com')).resolves.toBe(true);
   });
 });
 

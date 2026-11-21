@@ -1,7 +1,10 @@
 import { env } from '@server/env';
 
 const allowedOrigins = new Set(
-  [env.CLIENT_URL, env.SERVER_URL].filter((v): v is string => Boolean(v)),
+  // SERVER_URL is there only so Swagger UI on the API origin can call the API.
+  [env.CLIENT_URL, env.API_DOCS_ENABLED ? env.SERVER_URL : undefined].filter((v): v is string =>
+    Boolean(v),
+  ),
 );
 
 export const corsOptions = {

@@ -191,6 +191,15 @@ describe('app routes', () => {
     expect(res.json()).toEqual(JSON.parse(JSON.stringify(document)));
   });
 
+  it.each(['/docs/', '/docs/json'])(
+    'serves Swagger UI on %s while the docs are on',
+    async (url) => {
+      const res = await app.inject({ method: 'GET', url });
+
+      expect(res.statusCode).toBe(200);
+    },
+  );
+
   it('responds 404 for an unknown route', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/nope' });
 

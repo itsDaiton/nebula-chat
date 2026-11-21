@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.5.2...nebula-chat-auth-v3.5.3) (2026-11-21)
+
+
+### Bug Fixes
+
+* **server:** NEB-898 env hardening and the API docs flag ([#923](https://github.com/itsDaiton/nebula-chat/issues/923)) ([848168f](https://github.com/itsDaiton/nebula-chat/commit/848168fc692616dfdc86a81748859564af24b221))
+
 ## [3.5.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.5.1...nebula-chat-auth-v3.5.2) (2026-11-20)
 
 
