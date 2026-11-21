@@ -98,6 +98,7 @@ export const resources = {
         'If you don’t reply within 3 minutes, the Run carries on without it and the answer will be marked partial.',
       answerHint: 'Your next message answers the Run’s question',
       cancel: 'Cancel Run',
+      cancelling: 'Cancelling…',
     },
     meta: {
       copy: 'Copy',
@@ -152,7 +153,9 @@ export const resources = {
     expiresIn: (time: string) => `in ${time}`,
     notice: 'Only Admins who signed in with two-factor authentication can approve a CLI.',
     approve: 'Approve',
+    approving: 'Approving…',
     deny: 'Deny',
+    denying: 'Denying…',
     approvedTitle: 'CLI signed in',
     approved: 'You can close this tab and return to your terminal.',
     deniedTitle: 'Sign-in denied',
@@ -189,6 +192,7 @@ export const resources = {
       backupCode: 'Backup code',
       trustDevice: 'Trust this device for 30 days',
       verify: 'Verify',
+      verifying: 'Verifying…',
       useBackupCode: 'Use a backup code instead',
       useAuthenticator: 'Use your authenticator app instead',
       codeRequired: 'Enter the 6-digit code.',
@@ -200,6 +204,7 @@ export const resources = {
       restoreOrSignOut:
         '. Restore it to keep your Sessions, or sign out and it will be deleted on that date.',
       restore: 'Restore my account',
+      restoring: 'Restoring…',
       signOut: 'Sign out',
     },
     banned: {
@@ -277,6 +282,7 @@ export const resources = {
       signIn: 'Sign in',
       signUp: 'Create account',
       signOut: 'Sign out',
+      working: 'Working…',
     },
     validation: {
       nameRequired: 'Tell us what to call you.',
@@ -513,6 +519,7 @@ export const resources = {
         unban: 'Unban',
         restore: 'Restore account',
         cancel: 'Cancel',
+        working: 'Working…',
         disabledName: (label: string, reason: string) => `${label}. ${reason}`,
         reasons: {
           guest: 'A Guest cannot be an Admin.',
@@ -552,6 +559,7 @@ export const resources = {
         dateRequired: 'Pick a date.',
         dateFuture: 'Pick a date after today.',
         confirm: 'Ban User',
+        confirming: 'Banning…',
       },
     },
     sessions: {
@@ -635,6 +643,7 @@ export const resources = {
       name: {
         label: 'Full name',
         save: 'Save',
+        saving: 'Saving…',
         saved: 'Name updated.',
       },
     },
@@ -660,6 +669,7 @@ export const resources = {
         turnOn: 'Turn on',
         turnOff: 'Turn off',
         cancel: 'Cancel',
+        working: 'Working…',
         continue: 'Continue',
         needsPassword:
           'Two-factor authentication needs a password, and you sign in with Google or GitHub. Use “Forgot your password?” on the sign-in page to set one, then come back here.',
@@ -698,6 +708,7 @@ export const resources = {
       error: "Your archived Sessions couldn't be loaded.",
       open: 'Open',
       restore: 'Restore',
+      restoring: 'Restoring…',
       loadMore: 'Show more',
       meta: (age: string, count: number) =>
         `Archived ${age} ago · ${count} ${count === 1 ? 'message' : 'messages'}`,

@@ -13,6 +13,7 @@ export const DeviceRequestCard = ({
   request,
   secondsLeft,
   isDeciding,
+  deciding,
   hasFailed,
   onDecide,
 }: DeviceRequestCardProps) => {
@@ -57,18 +58,20 @@ export const DeviceRequestCard = ({
           variant="outline"
           size="lg"
           className="flex-1"
-          disabled={isDeciding}
+          disabled={isDeciding && deciding !== 'deny'}
+          loading={isDeciding && deciding === 'deny'}
           onClick={() => onDecide('deny')}
         >
-          {device.deny}
+          {isDeciding && deciding === 'deny' ? device.denying : device.deny}
         </Button>
         <Button
           size="lg"
           className="flex-1"
-          disabled={isDeciding}
+          disabled={isDeciding && deciding !== 'approve'}
+          loading={isDeciding && deciding === 'approve'}
           onClick={() => onDecide('approve')}
         >
-          {device.approve}
+          {isDeciding && deciding === 'approve' ? device.approving : device.approve}
         </Button>
       </div>
     </div>

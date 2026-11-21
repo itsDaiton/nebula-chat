@@ -66,4 +66,21 @@ describe('Ban dialog', () => {
       expect(bodies).toEqual([{ reason: 'Spam', expiresAt: '2999-01-31T23:59:59.000Z' }]),
     );
   });
+
+  it('shows the confirm button busy while the ban is pending', async () => {
+    serve(detailOf());
+    server.use(
+      http.post('*/api/admin/users/:id/ban', () => new Promise<Response>(() => undefined)),
+    );
+    const panel = await openPanel();
+
+    await userEvent.click(button(panel, actions.ban));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: /Reason/ }), 'Spam');
+    await userEvent.click(within(dialog).getByRole('button', { name: text.ban.confirm }));
+
+    const pending = await within(dialog).findByRole('button', { name: text.ban.confirming });
+    expect(pending).toHaveAttribute('aria-busy', 'true');
+    expect(pending).toBeDisabled();
+  });
 });

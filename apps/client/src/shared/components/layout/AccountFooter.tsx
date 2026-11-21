@@ -112,7 +112,8 @@ export const AccountFooter = () => {
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem disabled={isPending} onClick={() => signOut()}>
+          {/* Stays open so the spinner is seen until the sign-out lands. */}
+          <DropdownMenuItem loading={isPending} closeOnClick={false} onClick={() => signOut()}>
             <LogOutIcon />
             {resources.auth.actions.signOut}
           </DropdownMenuItem>

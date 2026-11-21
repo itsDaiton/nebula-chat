@@ -42,6 +42,7 @@ export const DeviceReview = ({ userCode }: DeviceReviewProps) => {
       request={request.data}
       secondsLeft={secondsLeft}
       isDeciding={decision.isPending}
+      deciding={decision.variables}
       hasFailed={decision.isError}
       onDecide={decision.mutate}
     />

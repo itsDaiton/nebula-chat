@@ -1,5 +1,4 @@
 import { getRouteApi } from '@tanstack/react-router';
-import { Loader2Icon } from 'lucide-react';
 import { AuthFormAlert } from '@/modules/auth/components/AuthFormAlert';
 import { SocialIcon } from '@/modules/auth/components/SocialIcon';
 import { useSocialSignIn } from '@/modules/auth/hooks/useSocialSignIn';
@@ -27,14 +26,10 @@ export const SocialSignIn = () => {
           size="lg"
           className="w-full"
           disabled={isLeaving}
-          aria-busy={isLeaving && variables === provider}
+          loading={isLeaving && variables === provider}
           onClick={() => signIn(provider)}
         >
-          {isLeaving && variables === provider ? (
-            <Loader2Icon className="animate-spin" />
-          ) : (
-            <SocialIcon provider={provider} />
-          )}
+          <SocialIcon provider={provider} />
           {label}
         </Button>
       ))}

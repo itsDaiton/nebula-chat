@@ -111,8 +111,8 @@ export const BanDialog = ({ user, open, onOpenChange }: BanDialogProps) => {
             <Button type="button" variant="outline" onClick={() => close(false)}>
               {resources.admin.users.actions.cancel}
             </Button>
-            <Button type="submit" variant="destructive" disabled={ban.isPending}>
-              {text.confirm}
+            <Button type="submit" variant="destructive" loading={ban.isPending}>
+              {ban.isPending ? text.confirming : text.confirm}
             </Button>
           </DialogFooter>
         </form>

@@ -1,4 +1,5 @@
 import { Button as ButtonPrimitive } from '@base-ui/react/button';
+import { Loader2Icon } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/shared/utils/cn';
 
@@ -39,17 +40,34 @@ const buttonVariants = cva(
   },
 );
 
+type ButtonProps = ButtonPrimitive.Props &
+  VariantProps<typeof buttonVariants> & {
+    loading?: boolean;
+  };
+
+// While loading, the spinner stands in for a leading icon: hide the svg right after it.
 const Button = ({
   className,
   variant = 'default',
   size = 'default',
+  loading = false,
+  disabled,
+  children,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) => (
+}: ButtonProps) => (
   <ButtonPrimitive
     data-slot="button"
-    className={cn(buttonVariants({ variant, size, className }))}
+    className={cn(
+      buttonVariants({ variant, size, className }),
+      loading && '[&>[data-slot=spinner]+svg]:hidden',
+    )}
+    disabled={disabled || loading}
+    aria-busy={loading || undefined}
     {...props}
-  />
+  >
+    {loading && <Loader2Icon data-slot="spinner" className="animate-spin" />}
+    {children}
+  </ButtonPrimitive>
 );
 
 export { Button, buttonVariants };

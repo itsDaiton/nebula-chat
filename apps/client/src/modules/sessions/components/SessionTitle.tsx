@@ -1,3 +1,4 @@
+import { Loader2Icon } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 import { useSessionRename } from '@/modules/sessions/hooks/useSessionRename';
 import { useSessionTitleEditStore } from '@/modules/sessions/stores/useSessionTitleEditStore';
@@ -11,7 +12,7 @@ const MAX_TITLE_LENGTH = 200;
 export const SessionTitle = ({ sessionId, title }: SessionTitleProps) => {
   const { editingSessionId, startEditing, stopEditing } = useSessionTitleEditStore();
   const editing = editingSessionId === sessionId;
-  const rename = useSessionRename();
+  const { rename, isPending } = useSessionRename();
   // Enter and Escape unmount the input, which can still blur: only the first outcome counts.
   const settled = useRef(false);
 
@@ -36,6 +37,7 @@ export const SessionTitle = ({ sessionId, title }: SessionTitleProps) => {
             render={
               <button
                 type="button"
+                aria-busy={isPending || undefined}
                 className={`${TITLE_CLASS} block max-w-full rounded-md px-1.5 py-1 text-left hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring`}
                 onClick={() => {
                   settled.current = false;
@@ -45,6 +47,7 @@ export const SessionTitle = ({ sessionId, title }: SessionTitleProps) => {
             }
           >
             {title}
+            {isPending && <Loader2Icon className="ml-1.5 inline size-3 animate-spin" />}
           </TooltipTrigger>
           <TooltipContent side="bottom">{resources.sessions.rename.tooltip}</TooltipContent>
         </Tooltip>

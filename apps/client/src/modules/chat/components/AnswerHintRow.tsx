@@ -19,11 +19,11 @@ export const AnswerHintRow = () => {
           variant="ghost"
           size="xs"
           className="text-foreground-secondary"
-          disabled={isCancelling}
+          loading={isCancelling}
           onClick={cancel}
         >
           <XIcon />
-          {clarify.cancel}
+          {isCancelling ? clarify.cancelling : clarify.cancel}
         </Button>
       )}
     </div>

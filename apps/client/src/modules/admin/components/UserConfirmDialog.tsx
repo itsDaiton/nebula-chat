@@ -29,8 +29,8 @@ export const UserConfirmDialog = ({
         <Button variant="outline" onClick={() => onOpenChange(false)}>
           {resources.admin.users.actions.cancel}
         </Button>
-        <Button disabled={pending} onClick={onConfirm}>
-          {confirmLabel}
+        <Button loading={pending} onClick={onConfirm}>
+          {pending ? resources.admin.users.actions.working : confirmLabel}
         </Button>
       </DialogFooter>
     </DialogContent>

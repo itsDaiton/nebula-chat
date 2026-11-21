@@ -11,7 +11,7 @@ import { resources } from '@/resources';
 export const useSessionRename = () => {
   const queryClient = useQueryClient();
 
-  const { mutate } = useRenameSession({
+  const { mutate, isPending } = useRenameSession({
     mutation: {
       // The failure is toasted here with the rename wording, not by the global handler.
       meta: { inlineError: true },
@@ -23,5 +23,7 @@ export const useSessionRename = () => {
     },
   });
 
-  return (sessionId: string, title: string) => mutate({ sessionId, data: { title } });
+  const rename = (sessionId: string, title: string) => mutate({ sessionId, data: { title } });
+
+  return { rename, isPending };
 };

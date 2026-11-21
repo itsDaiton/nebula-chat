@@ -129,4 +129,24 @@ describe('ArchivedSessionsSetting', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/s/s1'));
     expect(useSettingsDialogStore.getState().isOpen).toBe(false);
   });
+
+  it('spins only the Restore being clicked and disables the others', async () => {
+    await holdSession({ isAnonymous: false });
+    serveLists(
+      [],
+      [aSession('s1', 'Old pricing notes', true), aSession('s2', 'Weekly plan', true)],
+    );
+    server.use(getRestoreSessionMockHandler(() => new Promise<never>(() => undefined)));
+    await renderRoute('/');
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: `${archived.restore} Old pricing notes` }),
+    );
+
+    const clicked = screen.getByRole('button', { name: `${archived.restore} Old pricing notes` });
+    const sibling = screen.getByRole('button', { name: `${archived.restore} Weekly plan` });
+    await waitFor(() => expect(clicked).toHaveAttribute('aria-busy', 'true'));
+    expect(sibling).toBeDisabled();
+    expect(sibling).not.toHaveAttribute('aria-busy');
+  });
 });
