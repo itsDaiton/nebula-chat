@@ -13,7 +13,7 @@ export const SpendAllowancePrompt = () => {
   return (
     <p role="alert" className="mb-3 px-1.5 text-center text-[12.5px] text-muted-foreground">
       <span className="font-medium text-foreground">{title}</span>{' '}
-      {resumes(allowance && formatResetDate(allowance.resetsAt))}
+      {resumes(allowance ? formatResetDate(allowance.resetsAt) : undefined)}
     </p>
   );
 };
