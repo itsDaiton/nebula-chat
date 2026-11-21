@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { CalendarIcon, Loader2Icon } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { AuthFormAlert } from '@/modules/auth/components/AuthFormAlert';
 import { AuthHeading } from '@/modules/auth/components/AuthHeading';
 import { OutcomeIcon } from '@/modules/auth/components/OutcomeIcon';
@@ -33,12 +33,10 @@ export const PendingDeletionPrompt = ({ purgeDate, restoreToken }: PendingDeleti
         <Button
           size="lg"
           className="w-full"
-          disabled={isPending}
-          aria-busy={isPending}
+          loading={isPending}
           onClick={() => restore(restoreToken)}
         >
-          {isPending && <Loader2Icon className="animate-spin" />}
-          {pendingDeletion.restore}
+          {isPending ? pendingDeletion.restoring : pendingDeletion.restore}
         </Button>
         {/* No session was made, so signing out only leaves: the browser keeps its Guest session. */}
         <Link

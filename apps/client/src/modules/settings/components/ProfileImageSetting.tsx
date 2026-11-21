@@ -71,7 +71,8 @@ export const ProfileImageSetting = ({ name, image }: ProfileImageSettingProps) =
               />
               <Button
                 variant="outline"
-                disabled={isPending}
+                disabled={removal.isPending}
+                loading={upload.isPending}
                 onClick={() => inputRef.current?.click()}
               >
                 {copy.upload}
@@ -80,7 +81,12 @@ export const ProfileImageSetting = ({ name, image }: ProfileImageSettingProps) =
           )}
           {/* A provider's Profile image stays removable with uploads switched off. */}
           {image && (
-            <Button variant="ghost" disabled={isPending} onClick={onRemove}>
+            <Button
+              variant="ghost"
+              disabled={upload.isPending}
+              loading={removal.isPending}
+              onClick={onRemove}
+            >
               {copy.remove}
             </Button>
           )}

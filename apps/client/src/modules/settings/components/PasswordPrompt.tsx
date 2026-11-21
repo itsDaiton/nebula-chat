@@ -40,8 +40,8 @@ export const PasswordPrompt = ({
         </p>
       )}
       <div className="flex gap-2">
-        <Button type="submit" disabled={isPending || !watch('password')}>
-          {submitLabel}
+        <Button type="submit" disabled={!watch('password')} loading={isPending}>
+          {isPending ? twoFactor.working : submitLabel}
         </Button>
         <Button type="button" variant="ghost" onClick={onCancel}>
           {twoFactor.cancel}

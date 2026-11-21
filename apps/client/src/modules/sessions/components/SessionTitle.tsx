@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { useSessionRename } from '@/modules/sessions/hooks/useSessionRename';
 import { useSessionTitleEditStore } from '@/modules/sessions/stores/useSessionTitleEditStore';
+import { cn } from '@/shared/utils/cn';
 import { resources } from '@/resources';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import type { SessionTitleProps } from '@/modules/sessions/types/types';
@@ -11,7 +12,7 @@ const MAX_TITLE_LENGTH = 200;
 export const SessionTitle = ({ sessionId, title }: SessionTitleProps) => {
   const { editingSessionId, startEditing, stopEditing } = useSessionTitleEditStore();
   const editing = editingSessionId === sessionId;
-  const rename = useSessionRename();
+  const { rename, isPending } = useSessionRename();
   // Enter and Escape unmount the input, which can still blur: only the first outcome counts.
   const settled = useRef(false);
 
@@ -30,7 +31,7 @@ export const SessionTitle = ({ sessionId, title }: SessionTitleProps) => {
 
   if (!editing) {
     return (
-      <h1 className="min-w-0">
+      <h1 aria-busy={isPending || undefined} className={cn('min-w-0', isPending && 'opacity-60')}>
         <Tooltip>
           <TooltipTrigger
             render={

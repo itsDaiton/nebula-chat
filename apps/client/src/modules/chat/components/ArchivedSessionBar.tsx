@@ -17,9 +17,9 @@ export const ArchivedSessionBar = ({ sessionId }: { sessionId: string }) => {
       <div className="flex items-center gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-3">
         <ArchiveIcon className="size-4 shrink-0 text-muted-foreground" />
         <p className="flex-1 text-sm">{archived.bar}</p>
-        <Button variant="outline" disabled={isPending} onClick={() => mutate({ sessionId })}>
+        <Button variant="outline" loading={isPending} onClick={() => mutate({ sessionId })}>
           <ArchiveRestoreIcon />
-          {archived.restore}
+          {isPending ? archived.restoring : archived.restore}
         </Button>
       </div>
     </div>

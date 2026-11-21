@@ -81,4 +81,22 @@ describe('DropdownMenu', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
   });
+
+  it('shows a spinner and marks a loading item busy and disabled', async () => {
+    renderWithProviders(
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button />}>Actions</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem loading>Sign out</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Actions' }));
+
+    const item = await screen.findByRole('menuitem', { name: 'Sign out' });
+    expect(item).toHaveAttribute('aria-busy', 'true');
+    expect(item).toHaveAttribute('aria-disabled', 'true');
+    expect(item.querySelector('[data-slot="spinner"]')).not.toBeNull();
+  });
 });

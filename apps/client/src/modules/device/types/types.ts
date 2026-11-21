@@ -26,6 +26,8 @@ export type DeviceRequestCardProps = {
   request: DeviceRequest;
   secondsLeft: number;
   isDeciding: boolean;
+  /** The decision in flight, so only its button spins. */
+  deciding?: DeviceDecision;
   hasFailed: boolean;
   onDecide: (decision: DeviceDecision) => void;
 };

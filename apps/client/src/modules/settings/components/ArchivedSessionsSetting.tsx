@@ -57,11 +57,14 @@ export const ArchivedSessionsSetting = () => {
                 <Button
                   variant="outline"
                   aria-label={`${archived.restore} ${session.title}`}
-                  disabled={isPending && variables?.sessionId === session.id}
+                  disabled={isPending && variables?.sessionId !== session.id}
+                  loading={isPending && variables?.sessionId === session.id}
                   onClick={() => restore({ sessionId: session.id })}
                 >
                   <ArchiveRestoreIcon />
-                  {archived.restore}
+                  {isPending && variables?.sessionId === session.id
+                    ? archived.restoring
+                    : archived.restore}
                 </Button>
               </div>
             </SettingsRow>

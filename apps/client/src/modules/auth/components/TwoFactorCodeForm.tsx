@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
-import { Loader2Icon } from 'lucide-react';
 import { useId } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { AuthFormAlert } from '@/modules/auth/components/AuthFormAlert';
@@ -138,9 +137,8 @@ export const TwoFactorCodeForm = ({
           {twoFactor.trustDevice}
         </label>
       )}
-      <Button type="submit" size="lg" className="w-full" disabled={isPending} aria-busy={isPending}>
-        {isPending && <Loader2Icon className="animate-spin" />}
-        {twoFactor.verify}
+      <Button type="submit" size="lg" className="w-full" loading={isPending}>
+        {isPending ? twoFactor.verifying : twoFactor.verify}
       </Button>
     </form>
   );

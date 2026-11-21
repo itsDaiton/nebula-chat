@@ -1,4 +1,3 @@
-import { Loader2Icon } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, type FieldValues, type Path } from 'react-hook-form';
 import { AuthFormAlert } from '@/modules/auth/components/AuthFormAlert';
@@ -9,6 +8,7 @@ import { useAuthMutation } from '@/modules/auth/hooks/useAuthMutation';
 import { usePasswordVisibilityStore } from '@/modules/auth/stores/usePasswordVisibilityStore';
 import type { AuthFormProps } from '@/modules/auth/types/types';
 import { AuthRequestError } from '@/modules/auth/utils/AuthRequestError';
+import { resources } from '@/resources';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/utils/cn';
 
@@ -95,12 +95,10 @@ export const AuthForm = <Values extends FieldValues>({
           type="submit"
           size={compact ? 'default' : 'lg'}
           variant={destructive ? 'destructive' : 'default'}
-          disabled={isPending}
-          aria-busy={isPending}
+          loading={isPending}
           className={cn('mt-2', compact ? 'self-start' : 'w-full')}
         >
-          {isPending && <Loader2Icon className="animate-spin" />}
-          {submitLabel}
+          {isPending ? resources.auth.actions.working : submitLabel}
         </Button>
       </div>
     </form>

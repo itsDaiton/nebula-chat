@@ -13,10 +13,10 @@ export const SignOutEverywhereSetting = () => {
       <Button
         variant="destructive"
         className="border-destructive/40 bg-transparent dark:bg-transparent"
-        disabled={isPending}
+        loading={isPending}
         onClick={() => mutate()}
       >
-        {signOutEverywhere.action}
+        {isPending ? signOutEverywhere.working : signOutEverywhere.action}
       </Button>
     </SettingsRow>
   );

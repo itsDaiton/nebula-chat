@@ -47,8 +47,8 @@ export const ProfileNameForm = ({ name }: ProfileNameFormProps) => {
               aria-errormessage="profile-name-error"
               {...register('name')}
             />
-            <Button type="submit" variant="outline" disabled={!isDirty || isPending}>
-              {copy.save}
+            <Button type="submit" variant="outline" disabled={!isDirty} loading={isPending}>
+              {isPending ? copy.saving : copy.save}
             </Button>
           </div>
           {errors.name && (
