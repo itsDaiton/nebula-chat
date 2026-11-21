@@ -23,7 +23,7 @@ describe('SpendAllowancePrompt', () => {
 
     const prompt = await screen.findByRole('alert');
     expect(prompt).toHaveTextContent(spendAllowance.title);
-    expect(prompt).toHaveTextContent('resets Dec 1');
+    expect(prompt).toHaveTextContent('Sending resumes Dec 1.');
   });
 
   it('shows after a refused send even while the read still says money is left', async () => {
