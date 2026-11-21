@@ -7,7 +7,7 @@
 import { faker } from '@faker-js/faker';
 
 import { HttpResponse, http } from 'msw';
-import type { RequestHandlerOptions } from 'msw';
+import type { HttpResponseResolver, RequestHandlerOptions } from 'msw';
 
 import type { ApiRoot, Health } from '../model';
 
@@ -28,12 +28,12 @@ export const getGetHealthResponseMock = (
 
 export const getGetApiRootMockHandler = (
   overrideResponse?:
-    ApiRoot | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ApiRoot> | ApiRoot),
+    ApiRoot | ((info: Parameters<HttpResponseResolver>[0]) => Promise<ApiRoot> | ApiRoot),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     '*/',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -49,12 +49,12 @@ export const getGetApiRootMockHandler = (
 
 export const getGetHealthMockHandler = (
   overrideResponse?:
-    Health | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<Health> | Health),
+    Health | ((info: Parameters<HttpResponseResolver>[0]) => Promise<Health> | Health),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     '*/health',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'

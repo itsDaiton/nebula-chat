@@ -7,18 +7,21 @@
 import { faker } from '@faker-js/faker';
 
 import { HttpResponse, http } from 'msw';
-import type { RequestHandlerOptions } from 'msw';
+import type { HttpResponseResolver, RequestHandlerOptions } from 'msw';
 
 export const getReadReplyStreamResponseMock = (): string => faker.word.sample();
 
 export const getReadReplyStreamMockHandler = (
   overrideResponse?:
-    string | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<string> | string),
+    | string
+    | ((
+        info: Parameters<HttpResponseResolver<{ streamId: string }>>[0],
+      ) => Promise<string> | string),
   options?: RequestHandlerOptions,
 ) => {
-  return http.get(
+  return http.get<{ streamId: string }>(
     '*/api/streams/:streamId',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ streamId: string }>>[0]) => {
       const resolvedBody =
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -38,12 +41,13 @@ export const getReadReplyStreamMockHandler = (
 
 export const getCancelReplyStreamMockHandler = (
   overrideResponse?:
-    void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void),
+    | void
+    | ((info: Parameters<HttpResponseResolver<{ streamId: string }>>[0]) => Promise<void> | void),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ streamId: string }>(
     '*/api/streams/:streamId/cancel',
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ streamId: string }>>[0]) => {
       if (typeof overrideResponse === 'function') {
         await overrideResponse(info);
       }

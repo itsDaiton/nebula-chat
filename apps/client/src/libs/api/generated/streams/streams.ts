@@ -45,6 +45,8 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 
 /**
  * Relay a reply stream as server-sent events, from its first event (or after `Last-Event-ID`) to its `end` (ADR-0014). Only the User who sent the Message may read it. A stream that has expired answers 404: read the persisted Message instead.
+ *
+ * Access: user
  * @summary Read reply stream
  */
 export const readReplyStream = (
@@ -94,6 +96,12 @@ export const getReadReplyStreamQueryOptions = <
 export type ReadReplyStreamQueryResult = NonNullable<Awaited<ReturnType<typeof readReplyStream>>>;
 export type ReadReplyStreamQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * Relay a reply stream as server-sent events, from its first event (or after `Last-Event-ID`) to its `end` (ADR-0014). Only the User who sent the Message may read it. A stream that has expired answers 404: read the persisted Message instead.
+ *
+ * Access: user
+ * @summary Read reply stream
+ */
 export function useReadReplyStream<
   TData = Awaited<ReturnType<typeof readReplyStream>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -114,6 +122,12 @@ export function useReadReplyStream<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Relay a reply stream as server-sent events, from its first event (or after `Last-Event-ID`) to its `end` (ADR-0014). Only the User who sent the Message may read it. A stream that has expired answers 404: read the persisted Message instead.
+ *
+ * Access: user
+ * @summary Read reply stream
+ */
 export function useReadReplyStream<
   TData = Awaited<ReturnType<typeof readReplyStream>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -134,6 +148,12 @@ export function useReadReplyStream<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Relay a reply stream as server-sent events, from its first event (or after `Last-Event-ID`) to its `end` (ADR-0014). Only the User who sent the Message may read it. A stream that has expired answers 404: read the persisted Message instead.
+ *
+ * Access: user
+ * @summary Read reply stream
+ */
 export function useReadReplyStream<
   TData = Awaited<ReturnType<typeof readReplyStream>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -147,9 +167,11 @@ export function useReadReplyStream<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Relay a reply stream as server-sent events, from its first event (or after `Last-Event-ID`) to its `end` (ADR-0014). Only the User who sent the Message may read it. A stream that has expired answers 404: read the persisted Message instead.
+ *
+ * Access: user
  * @summary Read reply stream
  */
-
 export function useReadReplyStream<
   TData = Awaited<ReturnType<typeof readReplyStream>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -173,6 +195,8 @@ export function useReadReplyStream<
 
 /**
  * Stop a Direct reply in flight: the worker aborts the model call, persists what it had produced and ends the stream with `end` { reason: "cancelled" }. Cancelling the last stream of a Run waiting on a Clarifying question cancels that Run. Cancelling a reply that already finished does nothing.
+ *
+ * Access: user
  * @summary Cancel reply stream
  */
 export const cancelReplyStream = (
@@ -232,6 +256,9 @@ export type CancelReplyStreamMutationError = ErrorType<ErrorEnvelope>;
 export type CancelReplyStreamMutationVariables = { streamId: string };
 
 /**
+ * Stop a Direct reply in flight: the worker aborts the model call, persists what it had produced and ends the stream with `end` { reason: "cancelled" }. Cancelling the last stream of a Run waiting on a Clarifying question cancels that Run. Cancelling a reply that already finished does nothing.
+ *
+ * Access: user
  * @summary Cancel reply stream
  */
 export const useCancelReplyStream = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(

@@ -25,13 +25,9 @@ export type ListAllSessionsParams = {
    * @maxLength 100
    */
   model?: string;
-  /**
-   * `true` for archived Sessions only, `false` for the rest; without it both are listed
-   */
+  /** `true` for archived Sessions only, `false` for the rest; without it both are listed */
   archived?: ListAllSessionsArchived;
-  /**
-   * By last activity
-   */
+  /** By last activity */
   order?: ListAllSessionsOrder;
   /**
    * Number of Sessions to fetch (1-100, default 10)

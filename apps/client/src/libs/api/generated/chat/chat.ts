@@ -50,6 +50,8 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 
 /**
  * Send a user Message to one of the caller’s own Sessions. The Message is persisted and its reply is queued; nothing waits on the model. Read the reply as server-sent events from `GET /api/streams/{streamId}`. When the Session has a Run waiting on a Clarifying question, the Message is its answer whatever its `mode`: it resumes the Run on a new stream and the response carries that Run’s `runId`.
+ *
+ * Access: user
  * @summary Send message
  */
 export const sendMessage = (
@@ -114,6 +116,9 @@ export type SendMessageMutationError = ErrorType<ErrorEnvelope>;
 export type SendMessageMutationVariables = { sessionId: string; data: BodyType<SendMessageBody> };
 
 /**
+ * Send a user Message to one of the caller’s own Sessions. The Message is persisted and its reply is queued; nothing waits on the model. Read the reply as server-sent events from `GET /api/streams/{streamId}`. When the Session has a Run waiting on a Clarifying question, the Message is its answer whatever its `mode`: it resumes the Run on a new stream and the response carries that Run’s `runId`.
+ *
+ * Access: user
  * @summary Send message
  */
 export const useSendMessage = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
@@ -137,6 +142,8 @@ export const useSendMessage = <TError = ErrorType<ErrorEnvelope>, TContext = unk
 };
 /**
  * How much of the caller's message allowance is left. Metered users (Guests and unverified Registered users) get their limit, live count and remaining sends; verified Registered users get `metered: false`.
+ *
+ * Access: user
  * @summary Get message allowance
  */
 export const getMessageAllowance = (
@@ -179,6 +186,12 @@ export type GetMessageAllowanceQueryResult = NonNullable<
 >;
 export type GetMessageAllowanceQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * How much of the caller's message allowance is left. Metered users (Guests and unverified Registered users) get their limit, live count and remaining sends; verified Registered users get `metered: false`.
+ *
+ * Access: user
+ * @summary Get message allowance
+ */
 export function useGetMessageAllowance<
   TData = Awaited<ReturnType<typeof getMessageAllowance>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -199,6 +212,12 @@ export function useGetMessageAllowance<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * How much of the caller's message allowance is left. Metered users (Guests and unverified Registered users) get their limit, live count and remaining sends; verified Registered users get `metered: false`.
+ *
+ * Access: user
+ * @summary Get message allowance
+ */
 export function useGetMessageAllowance<
   TData = Awaited<ReturnType<typeof getMessageAllowance>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -219,6 +238,12 @@ export function useGetMessageAllowance<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * How much of the caller's message allowance is left. Metered users (Guests and unverified Registered users) get their limit, live count and remaining sends; verified Registered users get `metered: false`.
+ *
+ * Access: user
+ * @summary Get message allowance
+ */
 export function useGetMessageAllowance<
   TData = Awaited<ReturnType<typeof getMessageAllowance>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -232,9 +257,11 @@ export function useGetMessageAllowance<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * How much of the caller's message allowance is left. Metered users (Guests and unverified Registered users) get their limit, live count and remaining sends; verified Registered users get `metered: false`.
+ *
+ * Access: user
  * @summary Get message allowance
  */
-
 export function useGetMessageAllowance<
   TData = Awaited<ReturnType<typeof getMessageAllowance>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -258,6 +285,8 @@ export function useGetMessageAllowance<
 
 /**
  * How much of the caller's monthly spend allowance is left, in USD, and when it resets (the first instant of the next UTC month). Metered users get `capped: false`.
+ *
+ * Access: user
  * @summary Get spend allowance
  */
 export const getSpendAllowance = (
@@ -302,6 +331,8 @@ export type GetSpendAllowanceQueryError = ErrorType<ErrorEnvelope>;
 
 /**
  * How much of the caller's monthly spend allowance is left, in USD, and when it resets (the first instant of the next UTC month). Metered users get `capped: false`.
+ *
+ * Access: user
  * @summary Get spend allowance
  */
 export function useGetSpendAllowance<
@@ -324,6 +355,8 @@ export function useGetSpendAllowance<
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * How much of the caller's monthly spend allowance is left, in USD, and when it resets (the first instant of the next UTC month). Metered users get `capped: false`.
+ *
+ * Access: user
  * @summary Get spend allowance
  */
 export function useGetSpendAllowance<
@@ -346,6 +379,8 @@ export function useGetSpendAllowance<
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * How much of the caller's monthly spend allowance is left, in USD, and when it resets (the first instant of the next UTC month). Metered users get `capped: false`.
+ *
+ * Access: user
  * @summary Get spend allowance
  */
 export function useGetSpendAllowance<
@@ -360,6 +395,8 @@ export function useGetSpendAllowance<
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * How much of the caller's monthly spend allowance is left, in USD, and when it resets (the first instant of the next UTC month). Metered users get `capped: false`.
+ *
+ * Access: user
  * @summary Get spend allowance
  */
 export function useGetSpendAllowance<

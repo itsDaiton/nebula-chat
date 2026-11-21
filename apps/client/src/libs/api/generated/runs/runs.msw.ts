@@ -7,7 +7,7 @@
 import { faker } from '@faker-js/faker';
 
 import { HttpResponse, http } from 'msw';
-import type { RequestHandlerOptions } from 'msw';
+import type { HttpResponseResolver, RequestHandlerOptions } from 'msw';
 
 import { ErrorCode } from '../model';
 import type { Run } from '../model';
@@ -84,12 +84,12 @@ export const getGetRunResponseMock = (
 
 export const getGetRunMockHandler = (
   overrideResponse?:
-    Run | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<Run> | Run),
+    Run | ((info: Parameters<HttpResponseResolver<{ runId: string }>>[0]) => Promise<Run> | Run),
   options?: RequestHandlerOptions,
 ) => {
-  return http.get(
+  return http.get<{ runId: string }>(
     '*/api/runs/:runId',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ runId: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'

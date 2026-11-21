@@ -58,6 +58,8 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 
 /**
  * Create a new session with a title
+ *
+ * Access: user
  * @summary Create session
  */
 export const createSession = (
@@ -121,6 +123,9 @@ export type CreateSessionMutationError = ErrorType<ErrorEnvelope>;
 export type CreateSessionMutationVariables = { data: BodyType<CreateSessionBody> };
 
 /**
+ * Create a new session with a title
+ *
+ * Access: user
  * @summary Create session
  */
 export const useCreateSession = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
@@ -144,6 +149,8 @@ export const useCreateSession = <TError = ErrorType<ErrorEnvelope>, TContext = u
 };
 /**
  * Retrieve the caller’s own sessions with cursor-based pagination. Returns up to 10 sessions by default; archived sessions are excluded unless `archived=true`.
+ *
+ * Access: user
  * @summary List sessions
  */
 export const listSessions = (
@@ -203,6 +210,12 @@ export const getListSessionsInfiniteQueryOptions = <
 export type ListSessionsInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof listSessions>>>;
 export type ListSessionsInfiniteQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * Retrieve the caller’s own sessions with cursor-based pagination. Returns up to 10 sessions by default; archived sessions are excluded unless `archived=true`.
+ *
+ * Access: user
+ * @summary List sessions
+ */
 export function useListSessionsInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>, ListSessionsParams['cursor']>,
   TError = ErrorType<ErrorEnvelope>,
@@ -231,6 +244,12 @@ export function useListSessionsInfinite<
   },
   queryClient?: QueryClient,
 ): DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieve the caller’s own sessions with cursor-based pagination. Returns up to 10 sessions by default; archived sessions are excluded unless `archived=true`.
+ *
+ * Access: user
+ * @summary List sessions
+ */
 export function useListSessionsInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>, ListSessionsParams['cursor']>,
   TError = ErrorType<ErrorEnvelope>,
@@ -259,6 +278,12 @@ export function useListSessionsInfinite<
   },
   queryClient?: QueryClient,
 ): UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieve the caller’s own sessions with cursor-based pagination. Returns up to 10 sessions by default; archived sessions are excluded unless `archived=true`.
+ *
+ * Access: user
+ * @summary List sessions
+ */
 export function useListSessionsInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>, ListSessionsParams['cursor']>,
   TError = ErrorType<ErrorEnvelope>,
@@ -279,9 +304,11 @@ export function useListSessionsInfinite<
   queryClient?: QueryClient,
 ): UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Retrieve the caller’s own sessions with cursor-based pagination. Returns up to 10 sessions by default; archived sessions are excluded unless `archived=true`.
+ *
+ * Access: user
  * @summary List sessions
  */
-
 export function useListSessionsInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>, ListSessionsParams['cursor']>,
   TError = ErrorType<ErrorEnvelope>,
@@ -338,6 +365,12 @@ export const getListSessionsQueryOptions = <
 export type ListSessionsQueryResult = NonNullable<Awaited<ReturnType<typeof listSessions>>>;
 export type ListSessionsQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * Retrieve the caller’s own sessions with cursor-based pagination. Returns up to 10 sessions by default; archived sessions are excluded unless `archived=true`.
+ *
+ * Access: user
+ * @summary List sessions
+ */
 export function useListSessions<
   TData = Awaited<ReturnType<typeof listSessions>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -357,6 +390,12 @@ export function useListSessions<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieve the caller’s own sessions with cursor-based pagination. Returns up to 10 sessions by default; archived sessions are excluded unless `archived=true`.
+ *
+ * Access: user
+ * @summary List sessions
+ */
 export function useListSessions<
   TData = Awaited<ReturnType<typeof listSessions>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -376,6 +415,12 @@ export function useListSessions<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieve the caller’s own sessions with cursor-based pagination. Returns up to 10 sessions by default; archived sessions are excluded unless `archived=true`.
+ *
+ * Access: user
+ * @summary List sessions
+ */
 export function useListSessions<
   TData = Awaited<ReturnType<typeof listSessions>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -388,9 +433,11 @@ export function useListSessions<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Retrieve the caller’s own sessions with cursor-based pagination. Returns up to 10 sessions by default; archived sessions are excluded unless `archived=true`.
+ *
+ * Access: user
  * @summary List sessions
  */
-
 export function useListSessions<
   TData = Awaited<ReturnType<typeof listSessions>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -413,6 +460,8 @@ export function useListSessions<
 
 /**
  * Search the caller’s own sessions by title or Message content, ordered by creation date. A match inside a Message adds a `snippet` around it. Archived sessions are excluded unless `archived=true`.
+ *
+ * Access: user
  * @summary Search sessions
  */
 export const searchSessions = (
@@ -457,6 +506,12 @@ export const getSearchSessionsQueryOptions = <
 export type SearchSessionsQueryResult = NonNullable<Awaited<ReturnType<typeof searchSessions>>>;
 export type SearchSessionsQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * Search the caller’s own sessions by title or Message content, ordered by creation date. A match inside a Message adds a `snippet` around it. Archived sessions are excluded unless `archived=true`.
+ *
+ * Access: user
+ * @summary Search sessions
+ */
 export function useSearchSessions<
   TData = Awaited<ReturnType<typeof searchSessions>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -476,6 +531,12 @@ export function useSearchSessions<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Search the caller’s own sessions by title or Message content, ordered by creation date. A match inside a Message adds a `snippet` around it. Archived sessions are excluded unless `archived=true`.
+ *
+ * Access: user
+ * @summary Search sessions
+ */
 export function useSearchSessions<
   TData = Awaited<ReturnType<typeof searchSessions>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -495,6 +556,12 @@ export function useSearchSessions<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Search the caller’s own sessions by title or Message content, ordered by creation date. A match inside a Message adds a `snippet` around it. Archived sessions are excluded unless `archived=true`.
+ *
+ * Access: user
+ * @summary Search sessions
+ */
 export function useSearchSessions<
   TData = Awaited<ReturnType<typeof searchSessions>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -507,9 +574,11 @@ export function useSearchSessions<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Search the caller’s own sessions by title or Message content, ordered by creation date. A match inside a Message adds a `snippet` around it. Archived sessions are excluded unless `archived=true`.
+ *
+ * Access: user
  * @summary Search sessions
  */
-
 export function useSearchSessions<
   TData = Awaited<ReturnType<typeof searchSessions>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -532,6 +601,8 @@ export function useSearchSessions<
 
 /**
  * Archive one of the caller’s own sessions: hidden from the session list, kept unchanged. Idempotent.
+ *
+ * Access: user
  * @summary Archive session
  */
 export const archiveSession = (
@@ -589,6 +660,9 @@ export type ArchiveSessionMutationError = ErrorType<ErrorEnvelope>;
 export type ArchiveSessionMutationVariables = { sessionId: string };
 
 /**
+ * Archive one of the caller’s own sessions: hidden from the session list, kept unchanged. Idempotent.
+ *
+ * Access: user
  * @summary Archive session
  */
 export const useArchiveSession = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
@@ -612,6 +686,8 @@ export const useArchiveSession = <TError = ErrorType<ErrorEnvelope>, TContext = 
 };
 /**
  * Restore one of the caller’s own archived sessions. Idempotent.
+ *
+ * Access: user
  * @summary Restore session
  */
 export const restoreSession = (
@@ -669,6 +745,9 @@ export type RestoreSessionMutationError = ErrorType<ErrorEnvelope>;
 export type RestoreSessionMutationVariables = { sessionId: string };
 
 /**
+ * Restore one of the caller’s own archived sessions. Idempotent.
+ *
+ * Access: user
  * @summary Restore session
  */
 export const useRestoreSession = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
@@ -692,6 +771,8 @@ export const useRestoreSession = <TError = ErrorType<ErrorEnvelope>, TContext = 
 };
 /**
  * Rename one of the caller’s own sessions. The title is trimmed and must not be empty.
+ *
+ * Access: user
  * @summary Rename session
  */
 export const renameSession = (
@@ -759,6 +840,9 @@ export type RenameSessionMutationVariables = {
 };
 
 /**
+ * Rename one of the caller’s own sessions. The title is trimmed and must not be empty.
+ *
+ * Access: user
  * @summary Rename session
  */
 export const useRenameSession = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
@@ -782,6 +866,8 @@ export const useRenameSession = <TError = ErrorType<ErrorEnvelope>, TContext = u
 };
 /**
  * Retrieve one of the caller’s own sessions by ID
+ *
+ * Access: user
  * @summary Get session by ID
  */
 export const getSession = (
@@ -829,6 +915,12 @@ export const getGetSessionQueryOptions = <
 export type GetSessionQueryResult = NonNullable<Awaited<ReturnType<typeof getSession>>>;
 export type GetSessionQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * Retrieve one of the caller’s own sessions by ID
+ *
+ * Access: user
+ * @summary Get session by ID
+ */
 export function useGetSession<
   TData = Awaited<ReturnType<typeof getSession>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -848,6 +940,12 @@ export function useGetSession<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieve one of the caller’s own sessions by ID
+ *
+ * Access: user
+ * @summary Get session by ID
+ */
 export function useGetSession<
   TData = Awaited<ReturnType<typeof getSession>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -867,6 +965,12 @@ export function useGetSession<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieve one of the caller’s own sessions by ID
+ *
+ * Access: user
+ * @summary Get session by ID
+ */
 export function useGetSession<
   TData = Awaited<ReturnType<typeof getSession>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -879,9 +983,11 @@ export function useGetSession<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Retrieve one of the caller’s own sessions by ID
+ *
+ * Access: user
  * @summary Get session by ID
  */
-
 export function useGetSession<
   TData = Awaited<ReturnType<typeof getSession>>,
   TError = ErrorType<ErrorEnvelope>,

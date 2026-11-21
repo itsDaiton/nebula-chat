@@ -1,7 +1,6 @@
 import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { logLevelController } from '@server/modules/logLevel/logLevel.controller';
-import { requireOperator } from '@server/utils/operatorGate.hook';
 import {
   changeLogLevelSchema,
   logLevelChangeResponseSchema,
@@ -19,7 +18,6 @@ const logLevelRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) =>
       tags: ['Operator'],
       operationId: 'getLogLevels',
       querystring: logLevelServiceQuerySchema,
-      security: [{ operatorToken: [] }],
       response: {
         200: jsonResponse('The levels each instance applies', logLevelReportsResponseSchema),
         400: jsonResponse('Invalid query', errorEnvelopeSchema),
@@ -28,7 +26,7 @@ const logLevelRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) =>
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },
-    onRequest: requireOperator,
+    config: { access: 'operator' },
     handler: logLevelController.read,
   });
 
@@ -40,7 +38,6 @@ const logLevelRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) =>
       // orval.config.ts excludes this tag: the browser client gets no hook for it.
       tags: ['Operator'],
       operationId: 'changeLogLevel',
-      security: [{ operatorToken: [] }],
       body: changeLogLevelSchema,
       response: {
         202: jsonResponse(
@@ -53,7 +50,7 @@ const logLevelRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) =>
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },
-    onRequest: requireOperator,
+    config: { access: 'operator' },
     handler: logLevelController.change,
   });
   done();

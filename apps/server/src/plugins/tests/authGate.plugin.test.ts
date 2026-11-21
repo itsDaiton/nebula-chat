@@ -4,7 +4,7 @@ import type {
   FastifyInstance,
   FastifyReply,
   FastifyRequest,
-  preHandlerAsyncHookHandler,
+  onRequestAsyncHookHandler,
 } from 'fastify';
 import inject from 'light-my-request';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -79,7 +79,7 @@ const makeReq = (): FastifyRequest => makeRequest().req;
 // The hooks carry a `this: FastifyInstance` context (Fastify binds it at
 // registration); calling them directly needs a plain-function view.
 const run = (
-  hook: preHandlerAsyncHookHandler,
+  hook: onRequestAsyncHookHandler,
   req: FastifyRequest,
   reply: FastifyReply = makeRequest().reply,
 ): Promise<unknown> =>

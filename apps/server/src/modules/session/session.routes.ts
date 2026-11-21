@@ -1,7 +1,6 @@
 import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { sessionController } from '@server/modules/session/session.controller';
-import { requireAuthentication } from '@server/plugins/authGate.plugin';
 import {
   sessionDetailResponseSchema,
   sessionResponseSchema,
@@ -32,7 +31,7 @@ const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
     },
     // A Session needs an owner (sessions.userId is NOT NULL), so an auth
     // session is required; the owner id is read from it, never the body.
-    preHandler: requireAuthentication,
+    config: { access: 'user' },
     handler: sessionController.create,
   });
 
@@ -52,7 +51,7 @@ const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
       },
     },
     // Owner-scoped: results are filtered to the auth session's user (ADR-0010 §2).
-    preHandler: requireAuthentication,
+    config: { access: 'user' },
     handler: sessionController.search,
   });
 
@@ -73,7 +72,7 @@ const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
       },
     },
     // Owner-scoped: another user's session reads as 404, never 403 (no leak).
-    preHandler: requireAuthentication,
+    config: { access: 'user' },
     handler: sessionController.archive,
   });
 
@@ -93,7 +92,7 @@ const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
       },
     },
     // Owner-scoped: another user's session reads as 404, never 403 (no leak).
-    preHandler: requireAuthentication,
+    config: { access: 'user' },
     handler: sessionController.restore,
   });
 
@@ -115,7 +114,7 @@ const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
       },
     },
     // Owner-scoped: another user's session reads as 404, never 403 (no leak).
-    preHandler: requireAuthentication,
+    config: { access: 'user' },
     handler: sessionController.rename,
   });
 
@@ -135,7 +134,7 @@ const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
       },
     },
     // Owner-scoped: another user's session reads as 404, never 403 (no leak).
-    preHandler: requireAuthentication,
+    config: { access: 'user' },
     handler: sessionController.get,
   });
 
@@ -157,7 +156,7 @@ const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
       },
     },
     // Owner-scoped: only the auth session's user's Sessions are listed (ADR-0010 §2).
-    preHandler: requireAuthentication,
+    config: { access: 'user' },
     handler: sessionController.getAll,
   });
   done();

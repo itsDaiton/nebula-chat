@@ -7,7 +7,7 @@
 import { faker } from '@faker-js/faker';
 
 import { HttpResponse, http } from 'msw';
-import type { RequestHandlerOptions } from 'msw';
+import type { HttpResponseResolver, RequestHandlerOptions } from 'msw';
 
 import type { ModelCatalog } from '../model';
 
@@ -36,8 +36,8 @@ export const getGetModelCatalogResponseMock = (
       ] as const),
       label: faker.string.alpha({ length: { min: 10, max: 20 } }),
       provider: faker.helpers.arrayElement(['openai', 'anthropic'] as const),
-      contextWindow: faker.number.int({ min: 0, max: 9007199254740991 }),
-      maxOutput: faker.number.int({ min: 0, max: 9007199254740991 }),
+      contextWindow: faker.number.int({ min: 1, max: 9007199254740991 }),
+      maxOutput: faker.number.int({ min: 1, max: 9007199254740991 }),
       supportsTemperature: faker.datatype.boolean(),
       prices: {
         input: faker.number.float({ fractionDigits: 2 }),
@@ -52,14 +52,12 @@ export const getGetModelCatalogResponseMock = (
 export const getGetModelCatalogMockHandler = (
   overrideResponse?:
     | ModelCatalog
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<ModelCatalog> | ModelCatalog),
+    | ((info: Parameters<HttpResponseResolver>[0]) => Promise<ModelCatalog> | ModelCatalog),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     '*/api/models',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'

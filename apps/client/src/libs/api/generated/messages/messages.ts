@@ -44,6 +44,8 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 
 /**
  * Create a new message in one of the caller’s own sessions
+ *
+ * Access: user
  * @summary Create message
  */
 export const createMessage = (
@@ -107,6 +109,9 @@ export type CreateMessageMutationError = ErrorType<ErrorEnvelope>;
 export type CreateMessageMutationVariables = { data: BodyType<CreateMessageBody> };
 
 /**
+ * Create a new message in one of the caller’s own sessions
+ *
+ * Access: user
  * @summary Create message
  */
 export const useCreateMessage = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
@@ -130,6 +135,8 @@ export const useCreateMessage = <TError = ErrorType<ErrorEnvelope>, TContext = u
 };
 /**
  * Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own lists as empty.
+ *
+ * Access: user
  * @summary List messages
  */
 export const listMessages = (
@@ -171,6 +178,12 @@ export const getListMessagesQueryOptions = <
 export type ListMessagesQueryResult = NonNullable<Awaited<ReturnType<typeof listMessages>>>;
 export type ListMessagesQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own lists as empty.
+ *
+ * Access: user
+ * @summary List messages
+ */
 export function useListMessages<
   TData = Awaited<ReturnType<typeof listMessages>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -190,6 +203,12 @@ export function useListMessages<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own lists as empty.
+ *
+ * Access: user
+ * @summary List messages
+ */
 export function useListMessages<
   TData = Awaited<ReturnType<typeof listMessages>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -209,6 +228,12 @@ export function useListMessages<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own lists as empty.
+ *
+ * Access: user
+ * @summary List messages
+ */
 export function useListMessages<
   TData = Awaited<ReturnType<typeof listMessages>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -221,9 +246,11 @@ export function useListMessages<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own lists as empty.
+ *
+ * Access: user
  * @summary List messages
  */
-
 export function useListMessages<
   TData = Awaited<ReturnType<typeof listMessages>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -246,6 +273,8 @@ export function useListMessages<
 
 /**
  * Retrieve one of the caller’s own messages by ID
+ *
+ * Access: user
  * @summary Get message by ID
  */
 export const getMessage = (
@@ -293,6 +322,12 @@ export const getGetMessageQueryOptions = <
 export type GetMessageQueryResult = NonNullable<Awaited<ReturnType<typeof getMessage>>>;
 export type GetMessageQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * Retrieve one of the caller’s own messages by ID
+ *
+ * Access: user
+ * @summary Get message by ID
+ */
 export function useGetMessage<
   TData = Awaited<ReturnType<typeof getMessage>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -312,6 +347,12 @@ export function useGetMessage<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieve one of the caller’s own messages by ID
+ *
+ * Access: user
+ * @summary Get message by ID
+ */
 export function useGetMessage<
   TData = Awaited<ReturnType<typeof getMessage>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -331,6 +372,12 @@ export function useGetMessage<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieve one of the caller’s own messages by ID
+ *
+ * Access: user
+ * @summary Get message by ID
+ */
 export function useGetMessage<
   TData = Awaited<ReturnType<typeof getMessage>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -343,9 +390,11 @@ export function useGetMessage<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Retrieve one of the caller’s own messages by ID
+ *
+ * Access: user
  * @summary Get message by ID
  */
-
 export function useGetMessage<
   TData = Awaited<ReturnType<typeof getMessage>>,
   TError = ErrorType<ErrorEnvelope>,

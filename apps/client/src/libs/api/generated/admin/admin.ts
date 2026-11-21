@@ -66,6 +66,8 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 
 /**
  * Activity KPIs for the last 7, 14, 30 or 90 UTC days (today included) with the totals of the period just before, for deltas. An active User is a User with a `user` Message on that UTC day; weekly active counts the 7 days ending on each day. A registration is a non-Guest account by creation day. Estimated spend sums the Model call ledger per day. A conversion is a Registered account whose Sessions predate it (a Claim leaves no timestamp, so the account creation day stands in), and the rate is conversions over conversions plus Guests created in the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Get the admin Overview
  */
 export const getAdminOverview = (
@@ -110,6 +112,12 @@ export const getGetAdminOverviewQueryOptions = <
 export type GetAdminOverviewQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminOverview>>>;
 export type GetAdminOverviewQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * Activity KPIs for the last 7, 14, 30 or 90 UTC days (today included) with the totals of the period just before, for deltas. An active User is a User with a `user` Message on that UTC day; weekly active counts the 7 days ending on each day. A registration is a non-Guest account by creation day. Estimated spend sums the Model call ledger per day. A conversion is a Registered account whose Sessions predate it (a Claim leaves no timestamp, so the account creation day stands in), and the rate is conversions over conversions plus Guests created in the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get the admin Overview
+ */
 export function useGetAdminOverview<
   TData = Awaited<ReturnType<typeof getAdminOverview>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -129,6 +137,12 @@ export function useGetAdminOverview<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Activity KPIs for the last 7, 14, 30 or 90 UTC days (today included) with the totals of the period just before, for deltas. An active User is a User with a `user` Message on that UTC day; weekly active counts the 7 days ending on each day. A registration is a non-Guest account by creation day. Estimated spend sums the Model call ledger per day. A conversion is a Registered account whose Sessions predate it (a Claim leaves no timestamp, so the account creation day stands in), and the rate is conversions over conversions plus Guests created in the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get the admin Overview
+ */
 export function useGetAdminOverview<
   TData = Awaited<ReturnType<typeof getAdminOverview>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -148,6 +162,12 @@ export function useGetAdminOverview<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Activity KPIs for the last 7, 14, 30 or 90 UTC days (today included) with the totals of the period just before, for deltas. An active User is a User with a `user` Message on that UTC day; weekly active counts the 7 days ending on each day. A registration is a non-Guest account by creation day. Estimated spend sums the Model call ledger per day. A conversion is a Registered account whose Sessions predate it (a Claim leaves no timestamp, so the account creation day stands in), and the rate is conversions over conversions plus Guests created in the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get the admin Overview
+ */
 export function useGetAdminOverview<
   TData = Awaited<ReturnType<typeof getAdminOverview>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -160,9 +180,11 @@ export function useGetAdminOverview<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Activity KPIs for the last 7, 14, 30 or 90 UTC days (today included) with the totals of the period just before, for deltas. An active User is a User with a `user` Message on that UTC day; weekly active counts the 7 days ending on each day. A registration is a non-Guest account by creation day. Estimated spend sums the Model call ledger per day. A conversion is a Registered account whose Sessions predate it (a Claim leaves no timestamp, so the account creation day stands in), and the rate is conversions over conversions plus Guests created in the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Get the admin Overview
  */
-
 export function useGetAdminOverview<
   TData = Awaited<ReturnType<typeof getAdminOverview>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -185,6 +207,8 @@ export function useGetAdminOverview<
 
 /**
  * One value per UTC day (today included, zeros filled in) for each Model, for the last 7, 14, 30 or 90 days. `prompts` counts user Messages: a reply is attributed to its Session’s Model and a Message that started a Run counts once, in the `run` series. `tokens` and `spend` sum Model calls per Model that served them. Only the top 8 Models are listed; the rest are grouped as `other`. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Get Model usage per day
  */
 export const getModelUsageSeries = (
@@ -233,6 +257,12 @@ export type GetModelUsageSeriesQueryResult = NonNullable<
 >;
 export type GetModelUsageSeriesQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * One value per UTC day (today included, zeros filled in) for each Model, for the last 7, 14, 30 or 90 days. `prompts` counts user Messages: a reply is attributed to its Session’s Model and a Message that started a Run counts once, in the `run` series. `tokens` and `spend` sum Model calls per Model that served them. Only the top 8 Models are listed; the rest are grouped as `other`. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get Model usage per day
+ */
 export function useGetModelUsageSeries<
   TData = Awaited<ReturnType<typeof getModelUsageSeries>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -254,6 +284,12 @@ export function useGetModelUsageSeries<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * One value per UTC day (today included, zeros filled in) for each Model, for the last 7, 14, 30 or 90 days. `prompts` counts user Messages: a reply is attributed to its Session’s Model and a Message that started a Run counts once, in the `run` series. `tokens` and `spend` sum Model calls per Model that served them. Only the top 8 Models are listed; the rest are grouped as `other`. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get Model usage per day
+ */
 export function useGetModelUsageSeries<
   TData = Awaited<ReturnType<typeof getModelUsageSeries>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -275,6 +311,12 @@ export function useGetModelUsageSeries<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * One value per UTC day (today included, zeros filled in) for each Model, for the last 7, 14, 30 or 90 days. `prompts` counts user Messages: a reply is attributed to its Session’s Model and a Message that started a Run counts once, in the `run` series. `tokens` and `spend` sum Model calls per Model that served them. Only the top 8 Models are listed; the rest are grouped as `other`. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get Model usage per day
+ */
 export function useGetModelUsageSeries<
   TData = Awaited<ReturnType<typeof getModelUsageSeries>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -289,9 +331,11 @@ export function useGetModelUsageSeries<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * One value per UTC day (today included, zeros filled in) for each Model, for the last 7, 14, 30 or 90 days. `prompts` counts user Messages: a reply is attributed to its Session’s Model and a Message that started a Run counts once, in the `run` series. `tokens` and `spend` sum Model calls per Model that served them. Only the top 8 Models are listed; the rest are grouped as `other`. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Get Model usage per day
  */
-
 export function useGetModelUsageSeries<
   TData = Awaited<ReturnType<typeof getModelUsageSeries>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -316,6 +360,8 @@ export function useGetModelUsageSeries<
 
 /**
  * One Model on one UTC day: averages per Model call, cache replays, completion rate and duration, with its Prompts trend over the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Get one Model’s usage on a day
  */
 export const getModelUsageDetail = (
@@ -364,6 +410,12 @@ export type GetModelUsageDetailQueryResult = NonNullable<
 >;
 export type GetModelUsageDetailQueryError = ErrorType<unknown>;
 
+/**
+ * One Model on one UTC day: averages per Model call, cache replays, completion rate and duration, with its Prompts trend over the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get one Model’s usage on a day
+ */
 export function useGetModelUsageDetail<
   TData = Awaited<ReturnType<typeof getModelUsageDetail>>,
   TError = ErrorType<unknown>,
@@ -385,6 +437,12 @@ export function useGetModelUsageDetail<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * One Model on one UTC day: averages per Model call, cache replays, completion rate and duration, with its Prompts trend over the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get one Model’s usage on a day
+ */
 export function useGetModelUsageDetail<
   TData = Awaited<ReturnType<typeof getModelUsageDetail>>,
   TError = ErrorType<unknown>,
@@ -406,6 +464,12 @@ export function useGetModelUsageDetail<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * One Model on one UTC day: averages per Model call, cache replays, completion rate and duration, with its Prompts trend over the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get one Model’s usage on a day
+ */
 export function useGetModelUsageDetail<
   TData = Awaited<ReturnType<typeof getModelUsageDetail>>,
   TError = ErrorType<unknown>,
@@ -420,9 +484,11 @@ export function useGetModelUsageDetail<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * One Model on one UTC day: averages per Model call, cache replays, completion rate and duration, with its Prompts trend over the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Get one Model’s usage on a day
  */
-
 export function useGetModelUsageDetail<
   TData = Awaited<ReturnType<typeof getModelUsageDetail>>,
   TError = ErrorType<unknown>,
@@ -447,6 +513,8 @@ export function useGetModelUsageDetail<
 
 /**
  * Totals over the range with those of the period just before it, for deltas. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Get Model usage totals
  */
 export const getModelUsageTotals = (
@@ -495,6 +563,12 @@ export type GetModelUsageTotalsQueryResult = NonNullable<
 >;
 export type GetModelUsageTotalsQueryError = ErrorType<unknown>;
 
+/**
+ * Totals over the range with those of the period just before it, for deltas. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get Model usage totals
+ */
 export function useGetModelUsageTotals<
   TData = Awaited<ReturnType<typeof getModelUsageTotals>>,
   TError = ErrorType<unknown>,
@@ -516,6 +590,12 @@ export function useGetModelUsageTotals<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Totals over the range with those of the period just before it, for deltas. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get Model usage totals
+ */
 export function useGetModelUsageTotals<
   TData = Awaited<ReturnType<typeof getModelUsageTotals>>,
   TError = ErrorType<unknown>,
@@ -537,6 +617,12 @@ export function useGetModelUsageTotals<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Totals over the range with those of the period just before it, for deltas. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get Model usage totals
+ */
 export function useGetModelUsageTotals<
   TData = Awaited<ReturnType<typeof getModelUsageTotals>>,
   TError = ErrorType<unknown>,
@@ -551,9 +637,11 @@ export function useGetModelUsageTotals<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Totals over the range with those of the period just before it, for deltas. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Get Model usage totals
  */
-
 export function useGetModelUsageTotals<
   TData = Awaited<ReturnType<typeof getModelUsageTotals>>,
   TError = ErrorType<unknown>,
@@ -578,6 +666,8 @@ export function useGetModelUsageTotals<
 
 /**
  * List Users, newest first by default, filtered by one or more statuses and a name or email search, a page at a time. Guests are left out unless `status` names `guest`. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary List Users
  */
 export const listUsers = (
@@ -622,6 +712,12 @@ export const getListUsersQueryOptions = <
 export type ListUsersQueryResult = NonNullable<Awaited<ReturnType<typeof listUsers>>>;
 export type ListUsersQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * List Users, newest first by default, filtered by one or more statuses and a name or email search, a page at a time. Guests are left out unless `status` names `guest`. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List Users
+ */
 export function useListUsers<
   TData = Awaited<ReturnType<typeof listUsers>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -641,6 +737,12 @@ export function useListUsers<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * List Users, newest first by default, filtered by one or more statuses and a name or email search, a page at a time. Guests are left out unless `status` names `guest`. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List Users
+ */
 export function useListUsers<
   TData = Awaited<ReturnType<typeof listUsers>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -660,6 +762,12 @@ export function useListUsers<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * List Users, newest first by default, filtered by one or more statuses and a name or email search, a page at a time. Guests are left out unless `status` names `guest`. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List Users
+ */
 export function useListUsers<
   TData = Awaited<ReturnType<typeof listUsers>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -672,9 +780,11 @@ export function useListUsers<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * List Users, newest first by default, filtered by one or more statuses and a name or email search, a page at a time. Guests are left out unless `status` names `guest`. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary List Users
  */
-
 export function useListUsers<
   TData = Awaited<ReturnType<typeof listUsers>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -697,6 +807,8 @@ export function useListUsers<
 
 /**
  * Read one User: status, two-factor state, ban, Sessions and messages sent, and timestamps. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Get a User
  */
 export const getUser = (
@@ -744,6 +856,12 @@ export const getGetUserQueryOptions = <
 export type GetUserQueryResult = NonNullable<Awaited<ReturnType<typeof getUser>>>;
 export type GetUserQueryError = ErrorType<ErrorEnvelope | unknown>;
 
+/**
+ * Read one User: status, two-factor state, ban, Sessions and messages sent, and timestamps. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get a User
+ */
 export function useGetUser<
   TData = Awaited<ReturnType<typeof getUser>>,
   TError = ErrorType<ErrorEnvelope | unknown>,
@@ -763,6 +881,12 @@ export function useGetUser<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Read one User: status, two-factor state, ban, Sessions and messages sent, and timestamps. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get a User
+ */
 export function useGetUser<
   TData = Awaited<ReturnType<typeof getUser>>,
   TError = ErrorType<ErrorEnvelope | unknown>,
@@ -782,6 +906,12 @@ export function useGetUser<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Read one User: status, two-factor state, ban, Sessions and messages sent, and timestamps. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get a User
+ */
 export function useGetUser<
   TData = Awaited<ReturnType<typeof getUser>>,
   TError = ErrorType<ErrorEnvelope | unknown>,
@@ -794,9 +924,11 @@ export function useGetUser<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Read one User: status, two-factor state, ban, Sessions and messages sent, and timestamps. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Get a User
  */
-
 export function useGetUser<
   TData = Awaited<ReturnType<typeof getUser>>,
   TError = ErrorType<ErrorEnvelope | unknown>,
@@ -819,6 +951,8 @@ export function useGetUser<
 
 /**
  * List a User's Sessions, archived ones included and marked, newest first, a page at a time. Listing is not a content read, so it writes no Audit entry. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary List a User's Sessions
  */
 export const listUserSessions = (
@@ -868,6 +1002,12 @@ export const getListUserSessionsQueryOptions = <
 export type ListUserSessionsQueryResult = NonNullable<Awaited<ReturnType<typeof listUserSessions>>>;
 export type ListUserSessionsQueryError = ErrorType<ErrorEnvelope | unknown>;
 
+/**
+ * List a User's Sessions, archived ones included and marked, newest first, a page at a time. Listing is not a content read, so it writes no Audit entry. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List a User's Sessions
+ */
 export function useListUserSessions<
   TData = Awaited<ReturnType<typeof listUserSessions>>,
   TError = ErrorType<ErrorEnvelope | unknown>,
@@ -888,6 +1028,12 @@ export function useListUserSessions<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * List a User's Sessions, archived ones included and marked, newest first, a page at a time. Listing is not a content read, so it writes no Audit entry. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List a User's Sessions
+ */
 export function useListUserSessions<
   TData = Awaited<ReturnType<typeof listUserSessions>>,
   TError = ErrorType<ErrorEnvelope | unknown>,
@@ -908,6 +1054,12 @@ export function useListUserSessions<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * List a User's Sessions, archived ones included and marked, newest first, a page at a time. Listing is not a content read, so it writes no Audit entry. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List a User's Sessions
+ */
 export function useListUserSessions<
   TData = Awaited<ReturnType<typeof listUserSessions>>,
   TError = ErrorType<ErrorEnvelope | unknown>,
@@ -921,9 +1073,11 @@ export function useListUserSessions<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * List a User's Sessions, archived ones included and marked, newest first, a page at a time. Listing is not a content read, so it writes no Audit entry. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary List a User's Sessions
  */
-
 export function useListUserSessions<
   TData = Awaited<ReturnType<typeof listUserSessions>>,
   TError = ErrorType<ErrorEnvelope | unknown>,
@@ -947,6 +1101,8 @@ export function useListUserSessions<
 
 /**
  * Restore a User in Pending deletion in full, and record it in the Audit log. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Restore a User
  */
 export const restoreUser = (
@@ -1004,6 +1160,9 @@ export type RestoreUserMutationError = ErrorType<ErrorEnvelope | unknown>;
 export type RestoreUserMutationVariables = { id: string };
 
 /**
+ * Restore a User in Pending deletion in full, and record it in the Audit log. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Restore a User
  */
 export const useRestoreUser = <TError = ErrorType<ErrorEnvelope | unknown>, TContext = unknown>(
@@ -1027,6 +1186,8 @@ export const useRestoreUser = <TError = ErrorType<ErrorEnvelope | unknown>, TCon
 };
 /**
  * Grant or revoke the Admin role, and record it in the Audit log. A Guest, an unverified or a banned user cannot become an Admin (`NotEligibleForAdmin`), and the last Admin cannot be revoked (`LastAdmin`). Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Grant or revoke Admin
  */
 export const setUserRole = (
@@ -1091,6 +1252,9 @@ export type SetUserRoleMutationError = ErrorType<ErrorEnvelope | unknown>;
 export type SetUserRoleMutationVariables = { id: string; data: BodyType<SetUserRoleBody> };
 
 /**
+ * Grant or revoke the Admin role, and record it in the Audit log. A Guest, an unverified or a banned user cannot become an Admin (`NotEligibleForAdmin`), and the last Admin cannot be revoked (`LastAdmin`). Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Grant or revoke Admin
  */
 export const useSetUserRole = <TError = ErrorType<ErrorEnvelope | unknown>, TContext = unknown>(
@@ -1114,6 +1278,8 @@ export const useSetUserRole = <TError = ErrorType<ErrorEnvelope | unknown>, TCon
 };
 /**
  * Ban a User with a reason and an optional end time, revoke every auth session of theirs, and record it in the Audit log. Their sign-in then fails with the reason and end time until the ban ends or is lifted. The last Admin cannot be banned (`LastAdmin`). Sessions are revoked through Redis secondary storage; a cookie-cache holder may stay signed in for up to five minutes, as with Sign out everywhere. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Ban a User
  */
 export const banUser = (
@@ -1178,6 +1344,9 @@ export type BanUserMutationError = ErrorType<ErrorEnvelope | unknown>;
 export type BanUserMutationVariables = { id: string; data: BodyType<BanUserBody> };
 
 /**
+ * Ban a User with a reason and an optional end time, revoke every auth session of theirs, and record it in the Audit log. Their sign-in then fails with the reason and end time until the ban ends or is lifted. The last Admin cannot be banned (`LastAdmin`). Sessions are revoked through Redis secondary storage; a cookie-cache holder may stay signed in for up to five minutes, as with Sign out everywhere. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Ban a User
  */
 export const useBanUser = <TError = ErrorType<ErrorEnvelope | unknown>, TContext = unknown>(
@@ -1201,6 +1370,8 @@ export const useBanUser = <TError = ErrorType<ErrorEnvelope | unknown>, TContext
 };
 /**
  * Lift a ban, and record it in the Audit log. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Unban a User
  */
 export const unbanUser = (
@@ -1258,6 +1429,9 @@ export type UnbanUserMutationError = ErrorType<ErrorEnvelope | unknown>;
 export type UnbanUserMutationVariables = { id: string };
 
 /**
+ * Lift a ban, and record it in the Audit log. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Unban a User
  */
 export const useUnbanUser = <TError = ErrorType<ErrorEnvelope | unknown>, TContext = unknown>(
@@ -1281,6 +1455,8 @@ export const useUnbanUser = <TError = ErrorType<ErrorEnvelope | unknown>, TConte
 };
 /**
  * List Sessions across all Users, most recently active first by default, filtered by a title search, owner, Model and archived state, a page at a time. Listing is not a content read, so nothing is audited. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary List Sessions
  */
 export const listAllSessions = (
@@ -1325,6 +1501,12 @@ export const getListAllSessionsQueryOptions = <
 export type ListAllSessionsQueryResult = NonNullable<Awaited<ReturnType<typeof listAllSessions>>>;
 export type ListAllSessionsQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * List Sessions across all Users, most recently active first by default, filtered by a title search, owner, Model and archived state, a page at a time. Listing is not a content read, so nothing is audited. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List Sessions
+ */
 export function useListAllSessions<
   TData = Awaited<ReturnType<typeof listAllSessions>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -1344,6 +1526,12 @@ export function useListAllSessions<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * List Sessions across all Users, most recently active first by default, filtered by a title search, owner, Model and archived state, a page at a time. Listing is not a content read, so nothing is audited. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List Sessions
+ */
 export function useListAllSessions<
   TData = Awaited<ReturnType<typeof listAllSessions>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -1363,6 +1551,12 @@ export function useListAllSessions<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * List Sessions across all Users, most recently active first by default, filtered by a title search, owner, Model and archived state, a page at a time. Listing is not a content read, so nothing is audited. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List Sessions
+ */
 export function useListAllSessions<
   TData = Awaited<ReturnType<typeof listAllSessions>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -1375,9 +1569,11 @@ export function useListAllSessions<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * List Sessions across all Users, most recently active first by default, filtered by a title search, owner, Model and archived state, a page at a time. Listing is not a content read, so nothing is audited. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary List Sessions
  */
-
 export function useListAllSessions<
   TData = Awaited<ReturnType<typeof listAllSessions>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -1400,6 +1596,8 @@ export function useListAllSessions<
 
 /**
  * Read any Session with all its Messages, oldest first, and record the read in the Audit log. If the Audit entry cannot be written the request fails. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Read a Session
  */
 export const readSession = (
@@ -1447,6 +1645,12 @@ export const getReadSessionQueryOptions = <
 export type ReadSessionQueryResult = NonNullable<Awaited<ReturnType<typeof readSession>>>;
 export type ReadSessionQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * Read any Session with all its Messages, oldest first, and record the read in the Audit log. If the Audit entry cannot be written the request fails. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Read a Session
+ */
 export function useReadSession<
   TData = Awaited<ReturnType<typeof readSession>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -1466,6 +1670,12 @@ export function useReadSession<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Read any Session with all its Messages, oldest first, and record the read in the Audit log. If the Audit entry cannot be written the request fails. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Read a Session
+ */
 export function useReadSession<
   TData = Awaited<ReturnType<typeof readSession>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -1485,6 +1695,12 @@ export function useReadSession<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Read any Session with all its Messages, oldest first, and record the read in the Audit log. If the Audit entry cannot be written the request fails. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Read a Session
+ */
 export function useReadSession<
   TData = Awaited<ReturnType<typeof readSession>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -1497,9 +1713,11 @@ export function useReadSession<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Read any Session with all its Messages, oldest first, and record the read in the Audit log. If the Audit entry cannot be written the request fails. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Read a Session
  */
-
 export function useReadSession<
   TData = Awaited<ReturnType<typeof readSession>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -1522,6 +1740,8 @@ export function useReadSession<
 
 /**
  * List Audit log entries, newest first, filtered by actor, action, target and time range, a page at a time. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary List Audit log
  */
 export const listAuditEntries = (
@@ -1566,6 +1786,12 @@ export const getListAuditEntriesQueryOptions = <
 export type ListAuditEntriesQueryResult = NonNullable<Awaited<ReturnType<typeof listAuditEntries>>>;
 export type ListAuditEntriesQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * List Audit log entries, newest first, filtered by actor, action, target and time range, a page at a time. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List Audit log
+ */
 export function useListAuditEntries<
   TData = Awaited<ReturnType<typeof listAuditEntries>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -1585,6 +1811,12 @@ export function useListAuditEntries<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * List Audit log entries, newest first, filtered by actor, action, target and time range, a page at a time. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List Audit log
+ */
 export function useListAuditEntries<
   TData = Awaited<ReturnType<typeof listAuditEntries>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -1604,6 +1836,12 @@ export function useListAuditEntries<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * List Audit log entries, newest first, filtered by actor, action, target and time range, a page at a time. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List Audit log
+ */
 export function useListAuditEntries<
   TData = Awaited<ReturnType<typeof listAuditEntries>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -1616,9 +1854,11 @@ export function useListAuditEntries<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * List Audit log entries, newest first, filtered by actor, action, target and time range, a page at a time. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary List Audit log
  */
-
 export function useListAuditEntries<
   TData = Awaited<ReturnType<typeof listAuditEntries>>,
   TError = ErrorType<ErrorEnvelope>,

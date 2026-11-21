@@ -7,7 +7,7 @@
 import { faker } from '@faker-js/faker';
 
 import { HttpResponse, http } from 'msw';
-import type { RequestHandlerOptions } from 'msw';
+import type { HttpResponseResolver, PathParams, RequestHandlerOptions } from 'msw';
 
 import type { ProfileImage, ProfileImageSettings } from '../model';
 
@@ -23,13 +23,13 @@ export const getGetProfileImageSettingsMockHandler = (
   overrideResponse?:
     | ProfileImageSettings
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver>[0],
       ) => Promise<ProfileImageSettings> | ProfileImageSettings),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     '*/api/profile-image/settings',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -47,13 +47,13 @@ export const getUploadProfileImageMockHandler = (
   overrideResponse?:
     | ProfileImage
     | ((
-        info: Parameters<Parameters<typeof http.put>[1]>[0],
+        info: Parameters<HttpResponseResolver<PathParams, Blob>>[0],
       ) => Promise<ProfileImage> | ProfileImage),
   options?: RequestHandlerOptions,
 ) => {
-  return http.put(
+  return http.put<PathParams, Blob>(
     '*/api/profile-image',
-    async (info: Parameters<Parameters<typeof http.put>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<PathParams, Blob>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -68,13 +68,12 @@ export const getUploadProfileImageMockHandler = (
 };
 
 export const getRemoveProfileImageMockHandler = (
-  overrideResponse?:
-    void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<void> | void),
+  overrideResponse?: void | ((info: Parameters<HttpResponseResolver>[0]) => Promise<void> | void),
   options?: RequestHandlerOptions,
 ) => {
   return http.delete(
     '*/api/profile-image',
-    async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       if (typeof overrideResponse === 'function') {
         await overrideResponse(info);
       }

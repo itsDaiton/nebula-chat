@@ -18,6 +18,7 @@ const modelRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
       },
     },
     // Public: the catalog is static data, the same for every caller.
+    config: { access: 'public' },
     handler: modelController.list,
   });
   done();

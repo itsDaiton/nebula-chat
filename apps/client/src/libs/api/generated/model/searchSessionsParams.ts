@@ -12,8 +12,6 @@ export type SearchSessionsParams = {
    * @minLength 1
    */
   q: string;
-  /**
-   * Return only archived Sessions (`true`) instead of only active ones (default)
-   */
+  /** Return only archived Sessions (`true`) instead of only active ones (default) */
   archived?: SearchSessionsArchived;
 };

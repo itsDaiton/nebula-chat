@@ -11,7 +11,6 @@ import {
   userIdParamsSchema,
   userPageSchema,
 } from '@server/modules/admin/admin.validation';
-import { requireAdmin } from '@server/plugins/authGate.plugin';
 import { jsonResponse } from '@server/utils/jsonResponse';
 
 const adminErrors = {
@@ -38,7 +37,7 @@ const adminUsersRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) 
         ...adminErrors,
       },
     },
-    preHandler: requireAdmin,
+    config: { access: 'admin' },
     handler: adminController.listUsers,
   });
 
@@ -57,7 +56,7 @@ const adminUsersRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) 
         ...adminErrors,
       },
     },
-    preHandler: requireAdmin,
+    config: { access: 'admin' },
     handler: adminController.getUser,
   });
 
@@ -77,7 +76,7 @@ const adminUsersRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) 
         ...adminErrors,
       },
     },
-    preHandler: requireAdmin,
+    config: { access: 'admin' },
     handler: adminController.listUserSessions,
   });
 
@@ -97,7 +96,7 @@ const adminUsersRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) 
         ...adminErrors,
       },
     },
-    preHandler: requireAdmin,
+    config: { access: 'admin' },
     handler: adminController.restoreUser,
   });
 
@@ -123,7 +122,7 @@ const adminUsersRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) 
         ...adminErrors,
       },
     },
-    preHandler: requireAdmin,
+    config: { access: 'admin' },
     handler: adminController.setRole,
   });
 
@@ -149,7 +148,7 @@ const adminUsersRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) 
         ...adminErrors,
       },
     },
-    preHandler: requireAdmin,
+    config: { access: 'admin' },
     handler: adminController.banUser,
   });
 
@@ -169,7 +168,7 @@ const adminUsersRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) 
         ...adminErrors,
       },
     },
-    preHandler: requireAdmin,
+    config: { access: 'admin' },
     handler: adminController.unbanUser,
   });
   done();

@@ -7,9 +7,9 @@
 import { faker } from '@faker-js/faker';
 
 import { HttpResponse, http } from 'msw';
-import type { RequestHandlerOptions } from 'msw';
+import type { HttpResponseResolver, PathParams, RequestHandlerOptions } from 'msw';
 
-import type { Message } from '../model';
+import type { CreateMessageBody, Message } from '../model';
 
 export const getCreateMessageResponseMock = (
   overrideResponse: Partial<Extract<Message, object>> = {},
@@ -93,12 +93,14 @@ export const getGetMessageResponseMock = (
 export const getCreateMessageMockHandler = (
   overrideResponse?:
     | Message
-    | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<Message> | Message),
+    | ((
+        info: Parameters<HttpResponseResolver<PathParams, CreateMessageBody>>[0],
+      ) => Promise<Message> | Message),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<PathParams, CreateMessageBody>(
     '*/api/messages',
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<PathParams, CreateMessageBody>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -114,13 +116,12 @@ export const getCreateMessageMockHandler = (
 
 export const getListMessagesMockHandler = (
   overrideResponse?:
-    | Message[]
-    | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<Message[]> | Message[]),
+    Message[] | ((info: Parameters<HttpResponseResolver>[0]) => Promise<Message[]> | Message[]),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     '*/api/messages',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -136,12 +137,15 @@ export const getListMessagesMockHandler = (
 
 export const getGetMessageMockHandler = (
   overrideResponse?:
-    Message | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<Message> | Message),
+    | Message
+    | ((
+        info: Parameters<HttpResponseResolver<{ messageId: string }>>[0],
+      ) => Promise<Message> | Message),
   options?: RequestHandlerOptions,
 ) => {
-  return http.get(
+  return http.get<{ messageId: string }>(
     '*/api/messages/:messageId',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ messageId: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'

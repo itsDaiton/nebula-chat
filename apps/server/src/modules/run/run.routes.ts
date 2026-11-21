@@ -2,7 +2,6 @@ import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { runController } from '@server/modules/run/run.controller';
 import { runIdParamsSchema, runResponseSchema } from '@server/modules/run/run.validation';
-import { requireAuthentication } from '@server/plugins/authGate.plugin';
 import { jsonResponse } from '@server/utils/jsonResponse';
 
 const runRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
@@ -23,7 +22,7 @@ const runRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
       },
     },
     // Owner-scoped: another user's Run reads as 404, never 403, so Run ids don't leak.
-    preHandler: requireAuthentication,
+    config: { access: 'user' },
     handler: runController.get,
   });
   done();

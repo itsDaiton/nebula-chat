@@ -77,6 +77,8 @@ export const getGetLogLevelsUrl = (params?: GetLogLevelsParams) => {
 
 /**
  * Report the root log level and every component's, with the expiry and operator of any runtime change, from every running instance of the service (the server unless `service` says the worker). Each instance answers for itself; one that does not answer within 2 seconds is left out, so `receivers` exceeds the number of reports. Requires the operator token, not a User session.
+ *
+ * Access: operator
  * @summary Get log levels
  */
 export const getLogLevels = async (
@@ -134,6 +136,8 @@ export const getChangeLogLevelUrl = () => {
 
 /**
  * Change the root log level, or one component's, on every running instance of the service (the server unless `service` says the worker). It reverts to the boot-time level after `ttlSeconds`. Requires the operator token, not a User session.
+ *
+ * Access: operator
  * @summary Change log level
  */
 export const changeLogLevel = async (
@@ -204,6 +208,8 @@ export const getListAdminsUrl = () => {
 
 /**
  * List every Admin. Requires the operator token, not a User session.
+ *
+ * Access: operator
  * @summary List Admins
  */
 export const listAdmins = async (
@@ -266,6 +272,8 @@ export const getGrantAdminUrl = () => {
 
 /**
  * Make a verified Registered user an Admin, and record it in the Audit log with the Operator as actor. This is how the first Admin is made. Requires the operator token, not a User session.
+ *
+ * Access: operator
  * @summary Grant Admin
  */
 export const grantAdmin = async (
@@ -350,6 +358,8 @@ export const getRevokeAdminUrl = (email: string) => {
 
 /**
  * Take the Admin role from a user, and record it in the Audit log with the Operator as actor. Requires the operator token, not a User session.
+ *
+ * Access: operator
  * @summary Revoke Admin
  */
 export const revokeAdmin = async (

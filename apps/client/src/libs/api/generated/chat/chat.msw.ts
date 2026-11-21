@@ -7,12 +7,13 @@
 import { faker } from '@faker-js/faker';
 
 import { HttpResponse, http } from 'msw';
-import type { RequestHandlerOptions } from 'msw';
+import type { HttpResponseResolver, RequestHandlerOptions } from 'msw';
 
 import type {
   CappedSpendAllowance,
   MessageAllowance,
   MeteredMessageAllowance,
+  SendMessageBody,
   SentMessage,
   SpendAllowance,
   UncappedSpendAllowance,
@@ -83,13 +84,13 @@ export const getSendMessageMockHandler = (
   overrideResponse?:
     | SentMessage
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ sessionId: string }, SendMessageBody>>[0],
       ) => Promise<SentMessage> | SentMessage),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ sessionId: string }, SendMessageBody>(
     '*/api/sessions/:sessionId/messages',
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ sessionId: string }, SendMessageBody>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -106,14 +107,12 @@ export const getSendMessageMockHandler = (
 export const getGetMessageAllowanceMockHandler = (
   overrideResponse?:
     | MessageAllowance
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<MessageAllowance> | MessageAllowance),
+    | ((info: Parameters<HttpResponseResolver>[0]) => Promise<MessageAllowance> | MessageAllowance),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     '*/api/chat/message-allowance',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -130,14 +129,12 @@ export const getGetMessageAllowanceMockHandler = (
 export const getGetSpendAllowanceMockHandler = (
   overrideResponse?:
     | SpendAllowance
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<SpendAllowance> | SpendAllowance),
+    | ((info: Parameters<HttpResponseResolver>[0]) => Promise<SpendAllowance> | SpendAllowance),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     '*/api/chat/spend-allowance',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'

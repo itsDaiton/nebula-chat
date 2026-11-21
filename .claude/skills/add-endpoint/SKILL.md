@@ -9,8 +9,9 @@ An API change crosses four packages: the server module, `openapi/openapi.yaml`, 
 
 1. **Module.** Build or extend the module per `apps/server/AGENTS.md` → Module Pattern, layer by layer (types, validation, repository, service, controller, routes). Mount a new module in `buildApp()` in `apps/server/src/app.ts`. Done when every layer the route needs exists and `pnpm deps:check` passes, since it enforces the layer order.
 2. **Schema.** Write the route's `schema:` block per `.claude/rules/server-openapi.md`: Zod `body`/`params`/`querystring`, a `jsonResponse` per status code, and `summary`, `tags` and `operationId`. Done when every status the controller can send has a response entry.
-3. **Tests.** Test at the route seam with `app.inject()` and the repository mocked, per `.claude/rules/server-testing.md`. Done when the happy path and each error status have a test.
-4. **Spec and clients.** Regenerate in this order, never editing the generated files:
+3. **Access level.** Declare `config: { access: '…' }` on the route per `.claude/rules/server-access.md`: `public`, `user`, `registered`, `admin` or `operator`. Done when the route names one, and every `:id` route has a test that another User's record answers 404.
+4. **Tests.** Test at the route seam with `app.inject()` and the repository mocked, per `.claude/rules/server-testing.md`. Done when the happy path and each error status have a test.
+5. **Spec and clients.** Regenerate in this order, never editing the generated files:
 
    ```bash
    pnpm --filter @nebula-chat/server run generate:openapi
@@ -20,7 +21,7 @@ An API change crosses four packages: the server module, `openapi/openapi.yaml`, 
 
    Done when `openapi/openapi.yaml` and both `generated/` folders show the change in `git status`.
 
-5. **Consumers.** Call the generated hook from a module hook in `apps/client/src/modules/<feature>/hooks/` (`.claude/rules/client-hooks.md`). Client UI edits need the redesign mockups first (`CLAUDE.md`). Skip this step when no UI uses the endpoint yet.
-6. **Verify.** Hand lint, typecheck and tests for `server`, `client` and `cli` to the `verifier` subagent. Done when it reports no failures.
+6. **Consumers.** Call the generated hook from a module hook in `apps/client/src/modules/<feature>/hooks/` (`.claude/rules/client-hooks.md`). Client UI edits need the redesign mockups first (`CLAUDE.md`). Skip this step when no UI uses the endpoint yet.
+7. **Verify.** Hand lint, typecheck and tests for `server`, `client` and `cli` to the `verifier` subagent. Done when it reports no failures.
 
 The spec and both regenerated clients ship in the same PR as the route. The commit scope names every app the change touches, e.g. `feat(server,client): …`.

@@ -1,6 +1,6 @@
 # ADR-0036: Every route declares its Access level; the server refuses to boot without one
 
-- **Status:** Proposed — to be implemented by the API security hardening epic
+- **Status:** Accepted
 - **Date:** 2026-11-17
 - **Deciders:** @itsDaiton
 - **Related:** [ADR-0010](./0010-better-auth-for-auth.md) — better-auth sessions; [ADR-0027](./0027-admin-role-two-factor-full-read-and-audit-log.md) — the Admin gate and the Audit log

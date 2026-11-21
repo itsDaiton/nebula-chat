@@ -7,8 +7,6 @@
 import type { GetAdminOverviewRange } from './getAdminOverviewRange';
 
 export type GetAdminOverviewParams = {
-  /**
-   * How many UTC days back, today included; the period before it is the comparison
-   */
+  /** How many UTC days back, today included; the period before it is the comparison */
   range?: GetAdminOverviewRange;
 };

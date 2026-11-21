@@ -9,9 +9,7 @@ import type { ListAuditEntriesActorType } from './listAuditEntriesActorType';
 import type { ListAuditEntriesOrder } from './listAuditEntriesOrder';
 
 export type ListAuditEntriesParams = {
-  /**
-   * Only entries by this kind of actor
-   */
+  /** Only entries by this kind of actor */
   actorType?: ListAuditEntriesActorType;
   /**
    * Only entries by this Admin
@@ -52,8 +50,6 @@ export type ListAuditEntriesParams = {
    * @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
    */
   cursor?: string;
-  /**
-   * Sort by time: `desc` newest first (default) or `asc` oldest first
-   */
+  /** Sort by time: `desc` newest first (default) or `asc` oldest first */
   order?: ListAuditEntriesOrder;
 };
