@@ -9,7 +9,7 @@ export const userActionRules = (
   user: AdminUserDetail,
   { lastAdmin, self }: UserActionContext,
 ): UserActionRules => {
-  const isAdmin = user.status === 'admin';
+  const isAdmin = user.role === 'admin';
   const isBanned = user.ban !== null;
 
   const role = (): string | undefined => {

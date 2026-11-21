@@ -149,6 +149,7 @@ describe('GET /api/admin/users', () => {
           email: 'ada@example.com',
           name: 'Ada',
           status: 'registered',
+          role: 'user',
           twoFactorEnabled: false,
           messagesSent: 7,
           sessionsCount: 2,
@@ -210,24 +211,25 @@ describe('GET /api/admin/users', () => {
   });
 
   it.each([
-    ['a Guest', aRow({ isAnonymous: true }), 'guest'],
-    ['an unverified user', aRow({ emailVerified: false }), 'unverified'],
-    ['an Admin', aRow({ role: 'admin' }), 'admin'],
-    ['a banned user', aRow({ banned: true }), 'banned'],
-    ['an Admin banned for good', aRow({ banned: true, role: 'admin' }), 'banned'],
+    ['a Guest', aRow({ isAnonymous: true }), 'guest', 'user'],
+    ['an unverified user', aRow({ emailVerified: false }), 'unverified', 'user'],
+    ['an Admin', aRow({ role: 'admin' }), 'admin', 'admin'],
+    ['a banned user', aRow({ banned: true }), 'banned', 'user'],
+    ['an Admin banned for good', aRow({ banned: true, role: 'admin' }), 'banned', 'admin'],
     [
       'a user whose ban ran out',
       aRow({ banned: true, banExpires: new Date('2020-01-01T00:00:00.000Z') }),
       'registered',
+      'user',
     ],
-  ])('reports %s with status %s', async (_label, row, status) => {
+  ])('reports %s with status %s and role %s', async (_label, row, status, role) => {
     repo.listUsers.mockResolvedValue(
       fromPartial({ users: [row], nextCursor: null, hasMore: false }),
     );
 
     const res = await app.inject({ method: 'GET', url: ROUTE, headers: COOKIE });
 
-    expect(res.json().users[0].status).toBe(status);
+    expect(res.json().users[0]).toMatchObject({ status, role });
   });
 
   it('writes no Audit entry', async () => {
@@ -275,6 +277,7 @@ describe('GET /api/admin/users/:id', () => {
       email: 'ada@example.com',
       name: 'Ada',
       status: 'registered',
+      role: 'user',
       twoFactorEnabled: false,
       messagesSent: 7,
       sessionsCount: 3,
@@ -345,6 +348,7 @@ describe('a User in Pending deletion', () => {
 
     expect(res.json()).toMatchObject({
       status: 'pendingDeletion',
+      role: 'admin',
       pendingDeletionAt: '2026-10-01T00:00:00.000Z',
     });
   });

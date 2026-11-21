@@ -4,6 +4,7 @@
  * Nebula Chat API
  * REST API for Nebula Chat
  */
+import type { AdminUserSummaryRole } from './adminUserSummaryRole';
 import type { AdminUserSummaryStatus } from './adminUserSummaryStatus';
 
 export interface AdminUserSummary {
@@ -13,6 +14,8 @@ export interface AdminUserSummary {
   name: string;
   /** The first that applies: guest, banned, admin, unverified, registered */
   status: AdminUserSummaryStatus;
+  /** The raw role; `status` hides it for a banned or Pending-deletion Admin */
+  role: AdminUserSummaryRole;
   twoFactorEnabled: boolean;
   /**
    * Messages the User sent, across their Sessions

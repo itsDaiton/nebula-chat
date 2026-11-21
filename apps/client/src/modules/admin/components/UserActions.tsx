@@ -17,7 +17,7 @@ export const UserActions = ({ user }: UserActionsProps) => {
   const rules = useUserActionRules(user);
   const { grant, revoke, unban, restore } = useUserActions(user);
   const resetOnLeave = useOnUnmount(close);
-  const isAdmin = user.status === 'admin';
+  const isAdmin = user.role === 'admin';
   const isBanned = user.ban !== null;
   const who = user.email;
   const roleMutation = isAdmin ? revoke : grant;

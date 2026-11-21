@@ -22,6 +22,7 @@ export const summary = (overrides: Partial<AdminUserSummary> = {}): AdminUserSum
   email: 'anna@example.com',
   name: 'Anna Nováková',
   status: 'registered',
+  role: 'user',
   twoFactorEnabled: false,
   messagesSent: 1,
   sessionsCount: 1,
