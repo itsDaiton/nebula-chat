@@ -10,9 +10,12 @@ import { HttpResponse, http } from 'msw';
 import type { RequestHandlerOptions } from 'msw';
 
 import type {
+  CappedSpendAllowance,
   MessageAllowance,
   MeteredMessageAllowance,
   SentMessage,
+  SpendAllowance,
+  UncappedSpendAllowance,
   UnmeteredMessageAllowance,
 } from '../model';
 
@@ -48,6 +51,32 @@ export const getGetMessageAllowanceResponseMock = (): MessageAllowance =>
   faker.helpers.arrayElement([
     { ...getGetMessageAllowanceResponseMeteredMessageAllowanceMock() },
     { ...getGetMessageAllowanceResponseUnmeteredMessageAllowanceMock() },
+  ]);
+
+export const getGetSpendAllowanceResponseCappedSpendAllowanceMock = (
+  overrideResponse: Partial<CappedSpendAllowance> = {},
+): CappedSpendAllowance => ({
+  ...{
+    capped: faker.helpers.arrayElement([true] as const),
+    limit: faker.number.float({ min: 0, fractionDigits: 2 }),
+    used: faker.number.float({ min: 0, fractionDigits: 2 }),
+    remaining: faker.number.float({ min: 0, fractionDigits: 2 }),
+    resetsAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  },
+  ...overrideResponse,
+});
+
+export const getGetSpendAllowanceResponseUncappedSpendAllowanceMock = (
+  overrideResponse: Partial<UncappedSpendAllowance> = {},
+): UncappedSpendAllowance => ({
+  ...{ capped: faker.helpers.arrayElement([false] as const) },
+  ...overrideResponse,
+});
+
+export const getGetSpendAllowanceResponseMock = (): SpendAllowance =>
+  faker.helpers.arrayElement([
+    { ...getGetSpendAllowanceResponseCappedSpendAllowanceMock() },
+    { ...getGetSpendAllowanceResponseUncappedSpendAllowanceMock() },
   ]);
 
 export const getSendMessageMockHandler = (
@@ -97,4 +126,32 @@ export const getGetMessageAllowanceMockHandler = (
     options,
   );
 };
-export const getChatMock = () => [getSendMessageMockHandler(), getGetMessageAllowanceMockHandler()];
+
+export const getGetSpendAllowanceMockHandler = (
+  overrideResponse?:
+    | SpendAllowance
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<SpendAllowance> | SpendAllowance),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/chat/spend-allowance',
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetSpendAllowanceResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+export const getChatMock = () => [
+  getSendMessageMockHandler(),
+  getGetMessageAllowanceMockHandler(),
+  getGetSpendAllowanceMockHandler(),
+];

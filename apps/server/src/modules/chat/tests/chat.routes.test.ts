@@ -35,7 +35,11 @@ vi.mock('@server/modules/message/message.repository', () => ({
 }));
 
 vi.mock('@server/modules/run/run.repository', () => ({
-  runRepository: { createTx: vi.fn(), claimWaitingTx: vi.fn() },
+  runRepository: { createTx: vi.fn(), claimWaitingTx: vi.fn(), findWaiting: vi.fn() },
+}));
+
+vi.mock('@server/modules/modelCall/modelCall.repository', () => ({
+  modelCallRepository: { sumCostUsd: vi.fn() },
 }));
 
 vi.mock('@server/modules/user/user.repository', () => ({
@@ -71,6 +75,7 @@ vi.mock('@server/queue', () => ({
 import { removeClarifyingQuestionTimeout } from '@server/queue';
 import { auth } from '@server/auth';
 import { messageRepository } from '@server/modules/message/message.repository';
+import { modelCallRepository } from '@server/modules/modelCall/modelCall.repository';
 import { runRepository } from '@server/modules/run/run.repository';
 import { sessionRepository } from '@server/modules/session/session.repository';
 import { userRepository } from '@server/modules/user/user.repository';
@@ -79,6 +84,7 @@ const mockedGetSession = vi.mocked(auth.api.getSession);
 const sessionRepo = vi.mocked(sessionRepository);
 const messageRepo = vi.mocked(messageRepository);
 const runRepo = vi.mocked(runRepository);
+const modelCallRepo = vi.mocked(modelCallRepository);
 const userRepo = vi.mocked(userRepository);
 
 const SESSION_ID = '11111111-1111-4111-8111-111111111111';
@@ -129,6 +135,8 @@ beforeEach(() => {
   messageRepo.createTx.mockResolvedValue(fromPartial({ id: MESSAGE_ID }));
   runRepo.createTx.mockResolvedValue({ id: RUN_ID });
   runRepo.claimWaitingTx.mockResolvedValue(null);
+  runRepo.findWaiting.mockResolvedValue([]);
+  modelCallRepo.sumCostUsd.mockResolvedValue(0);
   userRepo.findLastActiveAt.mockResolvedValue(null);
 });
 
@@ -368,6 +376,61 @@ describe('POST /api/sessions/:sessionId/messages', () => {
     });
   });
 
+  describe('Spend allowance', () => {
+    const BUDGET = env.SPEND_ALLOWANCE_USD;
+
+    it('refuses a verified user at the budget with the typed 403 and the reset date, persisting nothing', async () => {
+      modelCallRepo.sumCostUsd.mockResolvedValue(BUDGET);
+
+      const res = await send(validBody);
+
+      expect(res.statusCode).toBe(403);
+      expect(res.json()).toMatchObject({ success: false, error: 'SpendAllowanceReached' });
+      expect(res.json().message).toMatch(/resets on \d{4}-\d{2}-01T00:00:00\.000Z/);
+      expect(messageRepo.createTx).not.toHaveBeenCalled();
+      expect(enqueued).toEqual([]);
+    });
+
+    it('lets a verified user under the budget send', async () => {
+      modelCallRepo.sumCostUsd.mockResolvedValue(BUDGET - 0.01);
+
+      expect((await send(validBody)).statusCode).toBe(202);
+    });
+
+    it('refuses a Run request the same way, as a regeneration resends through this route', async () => {
+      modelCallRepo.sumCostUsd.mockResolvedValue(BUDGET);
+
+      const res = await send({ ...validBody, mode: 'run' });
+
+      expect(res.statusCode).toBe(403);
+      expect(res.json()).toMatchObject({ error: 'SpendAllowanceReached' });
+      expect(enqueuedRuns).toEqual([]);
+    });
+
+    it('never refuses a Message that answers a waiting Run', async () => {
+      modelCallRepo.sumCostUsd.mockResolvedValue(BUDGET + 5);
+      runRepo.findWaiting.mockResolvedValue([{ id: RUN_ID, sessionId: SESSION_ID }]);
+      runRepo.claimWaitingTx.mockResolvedValue({ id: RUN_ID, messageId: MESSAGE_ID });
+      messageRepo.createTx.mockResolvedValue(fromPartial({ id: MESSAGE_ID }));
+
+      const res = await send(validBody);
+
+      expect(res.statusCode).toBe(202);
+      expect(enqueuedRuns).toHaveLength(1);
+    });
+
+    it('leaves a Metered user alone, never summing their calls', async () => {
+      mockedGetSession.mockResolvedValue(unverifiedSession() as never);
+      messageRepo.countUserMessagesByOwner.mockResolvedValue(0);
+      modelCallRepo.sumCostUsd.mockResolvedValue(BUDGET + 5);
+
+      const res = await send(validBody);
+
+      expect(res.statusCode).toBe(202);
+      expect(modelCallRepo.sumCostUsd).not.toHaveBeenCalled();
+    });
+  });
+
   describe('Guest message allowance', () => {
     // GUEST_MESSAGE_ALLOWANCE defaults to 10 (env.ts); the count comes live from Postgres.
     const CAP = env.GUEST_MESSAGE_ALLOWANCE;
@@ -566,5 +629,32 @@ describe('answering a Clarifying question', () => {
 
     expect(res.statusCode).toBe(403);
     expect(runRepo.claimWaitingTx).not.toHaveBeenCalled();
+  });
+});
+
+describe('GET /api/chat/spend-allowance', () => {
+  const getAllowance = async (): Promise<LightMyRequestResponse> =>
+    app.inject({ method: 'GET', url: '/api/chat/spend-allowance', remoteAddress: uniqueIp() });
+
+  it('reports what a verified user has left and when it resets', async () => {
+    modelCallRepo.sumCostUsd.mockResolvedValue(0.25);
+
+    const res = await getAllowance();
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({
+      capped: true,
+      limit: env.SPEND_ALLOWANCE_USD,
+      used: 0.25,
+      remaining: env.SPEND_ALLOWANCE_USD - 0.25,
+    });
+  });
+
+  it('answers capped false for a Metered user', async () => {
+    mockedGetSession.mockResolvedValue(guestSession() as never);
+
+    const res = await getAllowance();
+
+    expect(res.json()).toEqual({ capped: false });
   });
 });

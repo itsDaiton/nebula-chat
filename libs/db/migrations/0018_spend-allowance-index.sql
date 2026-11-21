@@ -1,0 +1,1 @@
+CREATE INDEX "model_calls_user_created_idx" ON "model_calls" USING btree ("user_id","created_at");

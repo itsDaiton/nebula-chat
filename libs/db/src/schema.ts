@@ -300,6 +300,8 @@ export const modelCalls = pgTable(
   (t) => [
     index('model_calls_created_model_idx').on(t.createdAt, t.model),
     index('model_calls_user_idx').on(t.userId),
+    // The Spend allowance sums one User's cost over a month range.
+    index('model_calls_user_created_idx').on(t.userId, t.createdAt),
     index('model_calls_session_idx').on(t.sessionId),
     index('model_calls_message_idx').on(t.messageId),
     check('model_calls_outcome_check', sql`${t.outcome} in ('completed', 'failed', 'cancelled')`),

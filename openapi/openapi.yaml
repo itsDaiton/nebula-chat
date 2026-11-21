@@ -83,6 +83,7 @@ components:
         - Unauthorized
         - Forbidden
         - MessageAllowanceReached
+        - SpendAllowanceReached
         - TwoFactorRequired
         - NotFound
         - Conflict
@@ -136,6 +137,55 @@ components:
           const: false
       required:
         - metered
+      additionalProperties: false
+    SpendAllowance:
+      oneOf:
+        - $ref: '#/components/schemas/CappedSpendAllowance'
+        - $ref: '#/components/schemas/UncappedSpendAllowance'
+      type: object
+      discriminator:
+        propertyName: capped
+        mapping:
+          'true': '#/components/schemas/CappedSpendAllowance'
+          'false': '#/components/schemas/UncappedSpendAllowance'
+    CappedSpendAllowance:
+      type: object
+      properties:
+        capped:
+          type: boolean
+          const: true
+        limit:
+          type: number
+          minimum: 0
+          description: The monthly budget in USD
+        used:
+          type: number
+          minimum: 0
+          description: The estimated cost of the caller's calls this UTC month
+        remaining:
+          type: number
+          minimum: 0
+          description: USD left this month, clamped at 0
+        resetsAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          description: The first instant of the next UTC month
+      required:
+        - capped
+        - limit
+        - used
+        - remaining
+        - resetsAt
+      additionalProperties: false
+    UncappedSpendAllowance:
+      type: object
+      properties:
+        capped:
+          type: boolean
+          const: false
+      required:
+        - capped
       additionalProperties: false
     Session:
       type: object
@@ -1814,10 +1864,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/chat/spend-allowance:
+    get:
+      operationId: getSpendAllowance
+      summary: Get spend allowance
+      tags:
+        - Chat
+      description: "How much of the caller's monthly spend allowance is left, in USD,
+        and when it resets (the first instant of the next UTC month). Metered
+        users get `capped: false`."
+      responses:
+        '200':
+          description: The caller's spend allowance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpendAllowance'
+        '401':
+          description: No auth session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
         '403':
           description: >-
-            Guest message allowance reached, or a Guest asked for a Run —
-            registration required
+            Guest message allowance reached, monthly spend allowance reached
+            (`SpendAllowanceReached`, with its reset date), or a Guest asked for a
+            Run — registration required
           content:
             application/json:
               schema:

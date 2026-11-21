@@ -1,5 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { getMessageAllowance as readMessageAllowance } from '@server/modules/chat/chat.messageAllowance.service';
+import { getSpendAllowance as readSpendAllowance } from '@server/modules/chat/chat.spendAllowance.service';
 import type { SendMessageDTO, SendMessageParams } from '@server/modules/chat/chat.types';
 import { chatService } from '@server/modules/chat/chat.service';
 import { getSessionData } from '@server/plugins/authGate.plugin';
@@ -21,5 +22,10 @@ export const chatController = {
     const { user } = getSessionData(req);
     const allowance = await readMessageAllowance(user);
     return reply.status(200).send(allowance);
+  },
+
+  async getSpendAllowance(req: FastifyRequest, reply: FastifyReply) {
+    const { user } = getSessionData(req);
+    return reply.status(200).send(await readSpendAllowance(user));
   },
 };

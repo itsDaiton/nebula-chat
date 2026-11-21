@@ -548,6 +548,18 @@ for a verified Registered user, which never touches the database. `limit` is
 refused with `MessageAllowanceReached`. The route is a plain read: it carries no rate-limit
 override and runs none of the send-path hooks, so it never spends the allowance.
 
+### Spend allowance
+
+A verified Registered user is not Metered, so a second hook,
+[`chat.spendAllowance.hook.ts`](../apps/server/src/modules/chat/chat.spendAllowance.hook.ts),
+runs after the Message allowance one. `getSpendAllowance` sums the User's ledger
+`cost_usd` over the current UTC month and compares it with `SPEND_ALLOWANCE_USD`; at the
+budget the send is refused with 403 `SpendAllowanceReached`, whose message names the reset
+(the first instant of the next UTC month). A Message answering a waiting Run is never
+refused. `GET /api/chat/spend-allowance` reads the same function:
+`{ capped, limit, used, remaining, resetsAt }`, or `{ capped: false }` for a Metered user
+([ADR-0037](./adr/0037-spend-allowance-and-own-key.md)).
+
 ### Client contract
 
 A capped Guest receives a `403` carrying the shared error envelope (ADR-0011) with the

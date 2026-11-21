@@ -20,7 +20,13 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { ErrorEnvelope, MessageAllowance, SendMessageBody, SentMessage } from '../model';
+import type {
+  ErrorEnvelope,
+  MessageAllowance,
+  SendMessageBody,
+  SentMessage,
+  SpendAllowance,
+} from '../model';
 
 import { axiosClient } from '../../client';
 import type { ErrorType, BodyType } from '../../client';
@@ -242,6 +248,131 @@ export function useGetMessageAllowance<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetMessageAllowanceQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * How much of the caller's monthly spend allowance is left, in USD, and when it resets (the first instant of the next UTC month). Metered users get `capped: false`.
+ * @summary Get spend allowance
+ */
+export const getSpendAllowance = (
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<SpendAllowance>(
+    { url: `/api/chat/spend-allowance`, method: 'GET', signal },
+    options,
+  );
+};
+
+export const getGetSpendAllowanceQueryKey = () => {
+  return [`/api/chat/spend-allowance`] as const;
+};
+
+export const getGetSpendAllowanceQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSpendAllowance>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getSpendAllowance>>, TError, TData>>;
+  request?: SecondParameter<typeof axiosClient>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetSpendAllowanceQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getSpendAllowance>>> = ({ signal }) =>
+    getSpendAllowance(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSpendAllowance>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetSpendAllowanceQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSpendAllowance>>
+>;
+export type GetSpendAllowanceQueryError = ErrorType<ErrorEnvelope>;
+
+/**
+ * How much of the caller's monthly spend allowance is left, in USD, and when it resets (the first instant of the next UTC month). Metered users get `capped: false`.
+ * @summary Get spend allowance
+ */
+export function useGetSpendAllowance<
+  TData = Awaited<ReturnType<typeof getSpendAllowance>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getSpendAllowance>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSpendAllowance>>,
+          TError,
+          Awaited<ReturnType<typeof getSpendAllowance>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * How much of the caller's monthly spend allowance is left, in USD, and when it resets (the first instant of the next UTC month). Metered users get `capped: false`.
+ * @summary Get spend allowance
+ */
+export function useGetSpendAllowance<
+  TData = Awaited<ReturnType<typeof getSpendAllowance>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getSpendAllowance>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSpendAllowance>>,
+          TError,
+          Awaited<ReturnType<typeof getSpendAllowance>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * How much of the caller's monthly spend allowance is left, in USD, and when it resets (the first instant of the next UTC month). Metered users get `capped: false`.
+ * @summary Get spend allowance
+ */
+export function useGetSpendAllowance<
+  TData = Awaited<ReturnType<typeof getSpendAllowance>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getSpendAllowance>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * How much of the caller's monthly spend allowance is left, in USD, and when it resets (the first instant of the next UTC month). Metered users get `capped: false`.
+ * @summary Get spend allowance
+ */
+export function useGetSpendAllowance<
+  TData = Awaited<ReturnType<typeof getSpendAllowance>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getSpendAllowance>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetSpendAllowanceQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

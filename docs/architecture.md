@@ -128,7 +128,7 @@ flowchart TD
   which -->|"/api/auth/*"| ba["authGate → better-auth handler<br/>reply hijacked"]
   which -->|"/, /health, /docs"| public[Public handler]
   which -->|"/api/..."| gates["Route gates<br/>rate limit (send only) ·<br/>requireAuthentication / requireRegistered ·<br/>requireAdmin (/api/admin) ·<br/>operator token (/api/internal)"]
-  gates --> pre["Route preHandlers<br/>e.g. messageAllowanceHook"]
+  gates --> pre["Route preHandlers<br/>e.g. messageAllowanceHook,<br/>spendAllowanceHook"]
   pre --> handler["controller → service → repository"]
   handler --> pg[(Postgres)]
   gates -->|"401 / 403 / 404 / 429"| err
@@ -292,7 +292,7 @@ sequenceDiagram
   participant L as LLM provider
 
   C->>S: POST /api/sessions/:sessionId/messages
-  Note over S: rate limit · requireAuthentication ·<br/>messageAllowanceHook · 2,000-token check
+  Note over S: rate limit · requireAuthentication ·<br/>messageAllowanceHook · spendAllowanceHook · 2,000-token check
   S->>PG: transaction: owner-scoped Session,<br/>Model rebind if changed, insert user Message
   S->>R: SET stream-owner:{streamId} = userId (24 h)
   S->>R: add job to direct-replies {userId, sessionId, messageId, streamId}

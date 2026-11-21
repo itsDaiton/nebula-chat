@@ -15,12 +15,9 @@ import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
 import { isReplyInFlight } from '@/modules/chat/utils/replyState';
 import { followReply } from '@/modules/chat/streaming/followReply';
-import {
-  invalidateMessageAllowance,
-  invalidateSessionList,
-} from '@/modules/chat/streaming/invalidations';
+import { invalidateSessionList } from '@/modules/chat/streaming/invalidations';
 import { startRun, withEmptyReply } from '@/modules/chat/streaming/replyHistory';
-import { sendFailureOf } from '@/modules/chat/streaming/sendErrors';
+import { allowanceRefusalOf, sendFailureOf } from '@/modules/chat/streaming/sendErrors';
 import { createChatSession, postMessage } from '@/modules/chat/streaming/sendReply';
 
 // A failed send or stream renders inside the reply, so the global toaster stays out of it.
@@ -90,6 +87,7 @@ export const useChatStream = ({
         usage: null,
         streamId: null,
         isMessageAllowanceReached: false,
+        isSpendAllowanceReached: false,
         history: withEmptyReply(messages),
       });
 
@@ -118,10 +116,11 @@ export const useChatStream = ({
         await follow(streamId, activeSessionId, controller.signal, isNewSession);
       } catch (err) {
         const failure = sendFailureOf(err, mode);
-        if (failure === 'allowance-reached') {
-          returnToComposer(messages, { isMessageAllowanceReached: true });
-          // The count shown may be stale (another tab), so resync it with the server's.
-          invalidateMessageAllowance(queryClient);
+        const refusal = allowanceRefusalOf(failure);
+        if (refusal) {
+          returnToComposer(messages, refusal.state);
+          // The figure shown may be stale (another tab, or a Run's cost landing), so resync it.
+          refusal.invalidate(queryClient);
           return;
         }
         // Aborted: `abort` has already settled the reply, and a newer one may be in flight.

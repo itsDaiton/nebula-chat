@@ -9,6 +9,7 @@ export const useChatStreamStore = create<ChatStreamState>((set) => ({
   sessionId: undefined,
   streamId: null,
   isMessageAllowanceReached: false,
+  isSpendAllowanceReached: false,
   cancelledRunId: null,
   setHistory: (history) =>
     set((state) => ({
@@ -16,5 +17,6 @@ export const useChatStreamStore = create<ChatStreamState>((set) => ({
     })),
   setUsage: (usage) => set({ usage }),
   setSessionId: (id) => set({ sessionId: id }),
-  clearMessageAllowanceReached: () => set({ isMessageAllowanceReached: false }),
+  clearMessageAllowanceReached: () =>
+    set({ isMessageAllowanceReached: false, isSpendAllowanceReached: false }),
 }));

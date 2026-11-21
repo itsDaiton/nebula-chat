@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { AppError } from '@nebula-chat/errors';
 import { ErrorCode } from '@/libs/api/generated/model/errorCode';
 import { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
-import { replyErrorMessage, sendFailureOf } from '@/modules/chat/streaming/sendErrors';
+import {
+  allowanceRefusalOf,
+  replyErrorMessage,
+  sendFailureOf,
+} from '@/modules/chat/streaming/sendErrors';
 import { resources } from '@/resources';
 
 describe('sendFailureOf', () => {
@@ -11,6 +15,13 @@ describe('sendFailureOf', () => {
 
     expect(sendFailureOf(refused, SendMessageBodyMode.direct)).toBe('allowance-reached');
     expect(sendFailureOf(refused, SendMessageBodyMode.run)).toBe('allowance-reached');
+  });
+
+  it('names a send refused at the spend allowance, in either mode', () => {
+    const refused = new AppError(ErrorCode.SpendAllowanceReached, 'Resets on 2026-12-01');
+
+    expect(sendFailureOf(refused, SendMessageBodyMode.direct)).toBe('spend-allowance-reached');
+    expect(sendFailureOf(refused, SendMessageBodyMode.run)).toBe('spend-allowance-reached');
   });
 
   it('names a Run send that is forbidden, but not a Direct one', () => {
@@ -33,5 +44,19 @@ describe('replyErrorMessage', () => {
   it('falls back to the generic message for an empty or unknown error', () => {
     expect(replyErrorMessage(new Error(''))).toBe(resources.chat.streamError);
     expect(replyErrorMessage('boom')).toBe(resources.chat.streamError);
+  });
+});
+
+describe('allowanceRefusalOf', () => {
+  it.each([
+    ['allowance-reached', { isMessageAllowanceReached: true }],
+    ['spend-allowance-reached', { isSpendAllowanceReached: true }],
+  ] as const)('flags %s in the store so the wall shows', (failure, state) => {
+    expect(allowanceRefusalOf(failure)?.state).toEqual(state);
+  });
+
+  it('leaves other failures to the generic handling', () => {
+    expect(allowanceRefusalOf('failed')).toBeUndefined();
+    expect(allowanceRefusalOf('run-forbidden')).toBeUndefined();
   });
 });

@@ -8,6 +8,7 @@ export const ERROR_MESSAGE: Readonly<Record<ErrorCode, string>> = {
   Unauthorized: 'Authentication is required.',
   Forbidden: 'You do not have access to this resource.',
   MessageAllowanceReached: 'The message allowance has been reached.',
+  SpendAllowanceReached: 'The monthly spend allowance has been reached.',
   TwoFactorRequired: 'Two-factor authentication is required.',
   NotFound: 'The requested resource was not found.',
   Conflict: 'The request conflicts with the current state of the resource.',

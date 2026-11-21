@@ -25,6 +25,27 @@ export const sentMessageSchema = z
   })
   .meta({ id: 'SentMessage' });
 
+const cappedSpendAllowanceSchema = z
+  .object({
+    capped: z.literal(true),
+    limit: z.number().nonnegative().describe('The monthly budget in USD'),
+    used: z
+      .number()
+      .nonnegative()
+      .describe("The estimated cost of the caller's calls this UTC month"),
+    remaining: z.number().nonnegative().describe('USD left this month, clamped at 0'),
+    resetsAt: z.iso.datetime().describe('The first instant of the next UTC month'),
+  })
+  .meta({ id: 'CappedSpendAllowance' });
+
+const uncappedSpendAllowanceSchema = z
+  .object({ capped: z.literal(false) })
+  .meta({ id: 'UncappedSpendAllowance' });
+
+export const spendAllowanceSchema = z
+  .discriminatedUnion('capped', [cappedSpendAllowanceSchema, uncappedSpendAllowanceSchema])
+  .meta({ id: 'SpendAllowance' });
+
 const meteredMessageAllowanceSchema = z
   .object({
     metered: z.literal(true),

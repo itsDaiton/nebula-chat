@@ -186,7 +186,8 @@ export type PostMessageOptions = {
 };
 
 /** How a send that never streamed ends: back to the composer, or a failed reply. */
-export type SendFailure = 'allowance-reached' | 'run-forbidden' | 'failed';
+export type SendFailure =
+  'allowance-reached' | 'spend-allowance-reached' | 'run-forbidden' | 'failed';
 
 /** Where a followed reply stream got to: the last event applied, and reconnects since then. */
 export type StreamCursor = {
@@ -325,6 +326,8 @@ export type ChatStreamState = {
   streamId: string | null;
   /** A Guest's send was refused because their message allowance is spent. */
   isMessageAllowanceReached: boolean;
+  /** A verified user's send was refused because this month's spend allowance is used up. */
+  isSpendAllowanceReached: boolean;
   /** The waiting Run the User just cancelled: the worker settles it after the cancel is accepted. */
   cancelledRunId: string | null;
   setHistory: Dispatch<SetStateAction<ChatMessage[]>>;
