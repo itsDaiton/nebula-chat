@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useCreateSession } from '@/libs/api/generated/sessions/sessions';
 import { useSendMessage } from '@/libs/api/generated/chat/chat';
@@ -7,7 +8,9 @@ import { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyM
 import type { SendMessageBodyModel } from '@/libs/api/generated/model/sendMessageBodyModel';
 import type {
   ChatHistoryStreamOptions,
+  ChatStreamState,
   ResumeStreamOptions,
+  SendFailure,
   UseChatStreamOptions,
 } from '@/modules/chat/types/types';
 import { useReplyControls } from '@/modules/chat/hooks/useReplyControls';
@@ -29,6 +32,23 @@ const INLINE_ERROR = { mutation: { meta: { inlineError: true } } };
 
 // How long to wait before each reconnect of a dropped reply stream; once they run out, the reply fails.
 const RECONNECT_DELAYS_MS = [500, 1_000, 2_000, 4_000, 8_000];
+
+// A send refused at an allowance goes back to the composer and refreshes that allowance's read.
+const ALLOWANCE_REFUSALS: Partial<
+  Record<
+    SendFailure,
+    { state: Partial<ChatStreamState>; invalidate: (queryClient: QueryClient) => void }
+  >
+> = {
+  'allowance-reached': {
+    state: { isMessageAllowanceReached: true },
+    invalidate: invalidateMessageAllowance,
+  },
+  'spend-allowance-reached': {
+    state: { isSpendAllowanceReached: true },
+    invalidate: invalidateSpendAllowance,
+  },
+};
 
 export const useChatStream = ({
   reconnectDelaysMs = RECONNECT_DELAYS_MS,
@@ -120,15 +140,11 @@ export const useChatStream = ({
         await follow(streamId, activeSessionId, controller.signal, isNewSession);
       } catch (err) {
         const failure = sendFailureOf(err, mode);
-        if (failure === 'allowance-reached') {
-          returnToComposer(messages, { isMessageAllowanceReached: true });
-          // The count shown may be stale (another tab), so resync it with the server's.
-          invalidateMessageAllowance(queryClient);
-          return;
-        }
-        if (failure === 'spend-allowance-reached') {
-          returnToComposer(messages, { isSpendAllowanceReached: true });
-          invalidateSpendAllowance(queryClient);
+        const refusal = ALLOWANCE_REFUSALS[failure];
+        if (refusal) {
+          returnToComposer(messages, refusal.state);
+          // The figure shown may be stale (another tab, or a Run's cost landing), so resync it.
+          refusal.invalidate(queryClient);
           return;
         }
         // Aborted: `abort` has already settled the reply, and a newer one may be in flight.
