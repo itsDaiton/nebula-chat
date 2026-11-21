@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.11.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.11.0...nebula-chat-v7.11.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* **server:** NEB-898 env hardening and the API docs flag ([#923](https://github.com/itsDaiton/nebula-chat/issues/923)) ([848168f](https://github.com/itsDaiton/nebula-chat/commit/848168fc692616dfdc86a81748859564af24b221))
+
 ## [7.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.10.11...nebula-chat-v7.11.0) (2026-11-21)
 
 
