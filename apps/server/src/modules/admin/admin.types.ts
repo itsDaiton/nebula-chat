@@ -20,7 +20,10 @@ export type AdminRole = 'admin' | 'user';
 
 export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;
 
-export type UserFilters = Pick<ListUsersQuery, 'search' | 'status' | 'sortBy' | 'order'>;
+export type UserFilters = Pick<
+  ListUsersQuery,
+  'search' | 'status' | 'role' | 'banned' | 'sortBy' | 'order'
+>;
 
 export type UserIdParams = z.infer<typeof userIdParamsSchema>;
 

@@ -4,7 +4,9 @@
  * Nebula Chat API
  * REST API for Nebula Chat
  */
+import type { ListUsersBanned } from './listUsersBanned';
 import type { ListUsersOrder } from './listUsersOrder';
+import type { ListUsersRole } from './listUsersRole';
 import type { ListUsersSortBy } from './listUsersSortBy';
 import type { ListUsersStatusItem } from './listUsersStatusItem';
 
@@ -21,6 +23,14 @@ export type ListUsersParams = {
    * @maxItems 6
    */
   status?: ListUsersStatusItem[];
+  /**
+   * Only Users with this raw role, whatever their status
+   */
+  role?: ListUsersRole;
+  /**
+   * `true` for Users under an active ban only, `false` for the rest, Pending-deletion included
+   */
+  banned?: ListUsersBanned;
   /**
    * `lastActiveAt` is the last update to the account until activity is tracked
    */

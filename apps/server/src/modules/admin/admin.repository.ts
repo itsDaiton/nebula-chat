@@ -202,6 +202,12 @@ export const adminRepository = {
           filters.status
             ? or(...filters.status.map((status) => statusFilters[status]()))
             : sql`not ${isGuest}`,
+          filters.role ? eq(users.role, filters.role) : undefined,
+          filters.banned === undefined
+            ? undefined
+            : filters.banned
+              ? isBanned()
+              : sql`not coalesce(${isBanned()}, false)`,
           filters.search ? searchFilter(filters.search) : undefined,
           cursorFilter,
         ),

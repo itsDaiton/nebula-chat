@@ -106,6 +106,8 @@ const aRow = (overrides: Record<string, unknown> = {}) => ({
 const DEFAULT_FILTERS = {
   search: undefined,
   status: undefined,
+  role: undefined,
+  banned: undefined,
   sortBy: 'createdAt',
   order: 'desc',
 };
@@ -194,7 +196,19 @@ describe('GET /api/admin/users', () => {
   });
 
   it.each([
+    ['role=admin&banned=false', { role: 'admin', banned: false }],
+    ['role=user&banned=true', { role: 'user', banned: true }],
+  ])('passes %s through as the role and ban filters', async (query, filters) => {
+    const res = await app.inject({ method: 'GET', url: `${ROUTE}?${query}`, headers: COOKIE });
+
+    expect(res.statusCode).toBe(200);
+    expect(repo.listUsers).toHaveBeenCalledWith({ ...DEFAULT_FILTERS, ...filters }, 10, undefined);
+  });
+
+  it.each([
     'status=nope',
+    'role=owner',
+    'banned=maybe',
     'status=registered&status=nope',
     'sortBy=name',
     'order=up',

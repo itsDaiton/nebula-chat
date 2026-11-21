@@ -3419,6 +3419,26 @@ paths:
             Only Users in one of these statuses, as a repeated key; without it
             every User but Guests is listed
         - schema:
+            description: Only Users with this raw role, whatever their status
+            type: string
+            enum:
+              - admin
+              - user
+          in: query
+          name: role
+          description: Only Users with this raw role, whatever their status
+        - schema:
+            description: '`true` for Users under an active ban only, `false` for the rest,
+              Pending-deletion included'
+            type: string
+            enum:
+              - 'true'
+              - 'false'
+          in: query
+          name: banned
+          description: '`true` for Users under an active ban only, `false` for the rest,
+            Pending-deletion included'
+        - schema:
             default: createdAt
             description: >-
               `lastActiveAt` is the last update to the account until activity is
