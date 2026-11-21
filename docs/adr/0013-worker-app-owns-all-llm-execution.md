@@ -1,7 +1,7 @@
 # ADR-0013: A dedicated worker app owns all LLM execution; the server holds no LLM keys
 
 - **Status:** Accepted — implemented by the nebula-chat 2.0 epic (NEB-349); NEB-354 moved Direct replies into the worker; NEB-358 dissolved `@nebula-chat/langchain` into it.
-  Amended by [ADR-0030](./0030-model-catalog-in-contracts-and-model-call-ledger.md) (`contracts` also holds the model catalog), [ADR-0031](./0031-worker-runs-all-background-jobs.md) (the worker runs all background jobs) [ADR-0032](./0032-short-app-directory-names.md) (the worker lives at `apps/worker`) and [ADR-0037](./0037-spend-allowance-and-own-key.md) (proposed: the server stores Own key ciphertext only the worker can decrypt)
+  Amended by [ADR-0030](./0030-model-catalog-in-contracts-and-model-call-ledger.md) (`contracts` also holds the model catalog), [ADR-0031](./0031-worker-runs-all-background-jobs.md) (the worker runs all background jobs), [ADR-0032](./0032-short-app-directory-names.md) (the worker lives at `apps/worker`) and [ADR-0037](./0037-spend-allowance-and-own-key.md) (proposed: the server stores Own key ciphertext only the worker can decrypt)
 - **Date:** 2026-09-22
 - **Deciders:** @itsDaiton
 
