@@ -77,6 +77,11 @@ const isBanned = () =>
 
 const notPending = isNull(users.pendingDeletionAt);
 
+const bannedFilter = (banned: boolean | undefined) => {
+  if (banned === undefined) return undefined;
+  return banned ? isBanned() : sql`not coalesce(${isBanned()}, false)`;
+};
+
 // Mirrors the precedence of `status` in the service, so each User is in exactly one status.
 const statusFilters = {
   guest: () => isGuest,
@@ -203,11 +208,7 @@ export const adminRepository = {
             ? or(...filters.status.map((status) => statusFilters[status]()))
             : sql`not ${isGuest}`,
           filters.role ? eq(users.role, filters.role) : undefined,
-          filters.banned === undefined
-            ? undefined
-            : filters.banned
-              ? isBanned()
-              : sql`not coalesce(${isBanned()}, false)`,
+          bannedFilter(filters.banned),
           filters.search ? searchFilter(filters.search) : undefined,
           cursorFilter,
         ),
