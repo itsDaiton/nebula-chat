@@ -3,11 +3,12 @@
 The backend is a Fastify 5 API for Nebula Chat.
 
 It is responsible for:
+
 - Streaming AI chat responses from OpenAI
 - Persisting sessions/messages in PostgreSQL via Drizzle
 - Caching chat streams in Redis
 - Storing Profile images in Supabase Storage (optional)
-- Exposing OpenAPI docs (`/docs`, `/openapi.json`)
+- Exposing OpenAPI docs (`/docs`, `/openapi.json`) when `API_DOCS_ENABLED` is on (the default outside production)
 
 ## Prerequisites
 
@@ -72,11 +73,11 @@ Set all three variables, or none. With none, the server boots with uploads switc
 Settings page hides **Upload image**, and removing an image still works. Setting only some fails
 env validation at boot.
 
-| Variable               | Value                                                                                  |
-| ---------------------- | -------------------------------------------------------------------------------------- |
-| `SUPABASE_URL`         | The project URL, `https://<project-ref>.supabase.co` (Project Settings → API)          |
-| `SUPABASE_SECRET_KEY`  | A secret key (`sb_secret_…`, Project Settings → API Keys). Server-only; never logged   |
-| `PROFILE_IMAGE_BUCKET` | `profile-images-dev` for local development, `profile-images` in production             |
+| Variable               | Value                                                                                |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| `SUPABASE_URL`         | The project URL, `https://<project-ref>.supabase.co` (Project Settings → API)        |
+| `SUPABASE_SECRET_KEY`  | A secret key (`sb_secret_…`, Project Settings → API Keys). Server-only; never logged |
+| `PROFILE_IMAGE_BUCKET` | `profile-images-dev` for local development, `profile-images` in production           |
 
 Both buckets already exist in the `nebula-chat` Supabase project, with the same settings:
 **public**, allowed MIME types `image/webp` only, a file size limit of 1 MB, and **no access

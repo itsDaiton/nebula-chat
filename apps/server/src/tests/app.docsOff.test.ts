@@ -42,7 +42,7 @@ describe('API docs off', () => {
   it.each([
     ['SERVER_URL', 'https://api.example.com', false],
     ['CLIENT_URL', 'https://app.example.com', true],
-  ])('answers a credentialed preflight from %s as allowed: %s', async (_name, origin, allowed) => {
+  ])('echoes the origin of a preflight from %s: %s', async (_name, origin, allowed) => {
     const res = await app.inject({
       method: 'OPTIONS',
       url: '/api/sessions',
