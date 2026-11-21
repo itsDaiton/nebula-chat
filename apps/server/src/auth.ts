@@ -18,6 +18,7 @@ export const auth: AuthInstance = createAuth({
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
   trustedOrigins: [env.CLIENT_URL],
+  apiDocsEnabled: env.API_DOCS_ENABLED,
   sendEmail: createResendEmailSender({ apiKey: env.RESEND_API_KEY, from: env.EMAIL_FROM }),
   // A failed social sign-in lands on the client's auth page, which explains its `?error=`.
   errorURL: new URL('/auth', env.CLIENT_URL).href,

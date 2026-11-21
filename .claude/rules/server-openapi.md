@@ -18,7 +18,7 @@ route is the single source of truth:
 - `response` — a `jsonResponse(description, schema)` per status code, for response serialization and response docs
 - `description`, `summary`, `tags`, `operationId` — OpenAPI metadata, inline on the route
 
-The generated spec is served at `/openapi.json`; Swagger UI at `/docs`.
+The generated spec is served at `/openapi.json`; Swagger UI at `/docs`. Both, and better-auth's `/api/auth/reference`, answer 404 unless `API_DOCS_ENABLED` is on (default: not in production); `@fastify/swagger` stays registered, so `generate:openapi` gives the same file either way.
 
 To export the spec as static YAML for the Orval clients, run:
 
