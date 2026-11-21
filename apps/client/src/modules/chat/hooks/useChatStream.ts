@@ -1,6 +1,5 @@
 import { useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import type { QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useCreateSession } from '@/libs/api/generated/sessions/sessions';
 import { useSendMessage } from '@/libs/api/generated/chat/chat';
@@ -8,9 +7,7 @@ import { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyM
 import type { SendMessageBodyModel } from '@/libs/api/generated/model/sendMessageBodyModel';
 import type {
   ChatHistoryStreamOptions,
-  ChatStreamState,
   ResumeStreamOptions,
-  SendFailure,
   UseChatStreamOptions,
 } from '@/modules/chat/types/types';
 import { useReplyControls } from '@/modules/chat/hooks/useReplyControls';
@@ -18,13 +15,9 @@ import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
 import { isReplyInFlight } from '@/modules/chat/utils/replyState';
 import { followReply } from '@/modules/chat/streaming/followReply';
-import {
-  invalidateMessageAllowance,
-  invalidateSpendAllowance,
-  invalidateSessionList,
-} from '@/modules/chat/streaming/invalidations';
+import { invalidateSessionList } from '@/modules/chat/streaming/invalidations';
 import { startRun, withEmptyReply } from '@/modules/chat/streaming/replyHistory';
-import { sendFailureOf } from '@/modules/chat/streaming/sendErrors';
+import { allowanceRefusalOf, sendFailureOf } from '@/modules/chat/streaming/sendErrors';
 import { createChatSession, postMessage } from '@/modules/chat/streaming/sendReply';
 
 // A failed send or stream renders inside the reply, so the global toaster stays out of it.
@@ -32,23 +25,6 @@ const INLINE_ERROR = { mutation: { meta: { inlineError: true } } };
 
 // How long to wait before each reconnect of a dropped reply stream; once they run out, the reply fails.
 const RECONNECT_DELAYS_MS = [500, 1_000, 2_000, 4_000, 8_000];
-
-// A send refused at an allowance goes back to the composer and refreshes that allowance's read.
-const ALLOWANCE_REFUSALS: Partial<
-  Record<
-    SendFailure,
-    { state: Partial<ChatStreamState>; invalidate: (queryClient: QueryClient) => void }
-  >
-> = {
-  'allowance-reached': {
-    state: { isMessageAllowanceReached: true },
-    invalidate: invalidateMessageAllowance,
-  },
-  'spend-allowance-reached': {
-    state: { isSpendAllowanceReached: true },
-    invalidate: invalidateSpendAllowance,
-  },
-};
 
 export const useChatStream = ({
   reconnectDelaysMs = RECONNECT_DELAYS_MS,
@@ -140,7 +116,7 @@ export const useChatStream = ({
         await follow(streamId, activeSessionId, controller.signal, isNewSession);
       } catch (err) {
         const failure = sendFailureOf(err, mode);
-        const refusal = ALLOWANCE_REFUSALS[failure];
+        const refusal = allowanceRefusalOf(failure);
         if (refusal) {
           returnToComposer(messages, refusal.state);
           // The figure shown may be stale (another tab, or a Run's cost landing), so resync it.
