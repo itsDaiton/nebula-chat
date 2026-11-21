@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.11.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.10.11...nebula-chat-v7.11.0) (2026-11-21)
+
+
+### Features
+
+* **server,client,db:** NEB-820 Spend allowance on the Operator key ([#919](https://github.com/itsDaiton/nebula-chat/issues/919)) ([57c2a10](https://github.com/itsDaiton/nebula-chat/commit/57c2a100b405ca8d84935e76fe76668c2320029a))
+
 ## [7.10.11](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.10.10...nebula-chat-v7.10.11) (2026-11-21)
 
 
