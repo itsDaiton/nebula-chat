@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.21.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.21.4...nebula-chat-client-v3.21.5) (2026-11-21)
+
+
+### Bug Fixes
+
+* **client,server:** NEB-841 expose admin User role for Admin revoke ([#915](https://github.com/itsDaiton/nebula-chat/issues/915)) ([ad168cd](https://github.com/itsDaiton/nebula-chat/commit/ad168cd74073b1c3164b15005e6cdcacaf8a62f3))
+
 ## [3.21.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.21.3...nebula-chat-client-v3.21.4) (2026-11-20)
 
 
