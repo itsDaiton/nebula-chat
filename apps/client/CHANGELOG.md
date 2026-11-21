@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.21.7](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.21.6...nebula-chat-client-v3.21.7) (2026-11-21)
+
+
+### Bug Fixes
+
+* **client:** NEB-827 show loading state on async actions ([#918](https://github.com/itsDaiton/nebula-chat/issues/918)) ([6304bb5](https://github.com/itsDaiton/nebula-chat/commit/6304bb5642bf423bc1549ee622b820bdea17e701))
+
 ## [3.21.6](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.21.5...nebula-chat-client-v3.21.6) (2026-11-21)
 
 
