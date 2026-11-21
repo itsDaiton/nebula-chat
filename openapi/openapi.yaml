@@ -1687,7 +1687,7 @@ paths:
         Welcome endpoint — confirms the API is reachable.
 
         Access: public
-      security: &a1 []
+      security: []
       responses:
         "200":
           description: API is reachable
@@ -1705,7 +1705,7 @@ paths:
         Returns server liveness status and current UTC timestamp.
 
         Access: public
-      security: *a1
+      security: []
       responses:
         "200":
           description: Server is healthy
@@ -1773,7 +1773,7 @@ paths:
           in: path
           name: sessionId
           required: true
-      security: &a2
+      security:
         - cookieAuth: []
       responses:
         "202":
@@ -1845,7 +1845,8 @@ paths:
 
 
         Access: user
-      security: *a2
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: The caller's message allowance
@@ -1878,7 +1879,8 @@ paths:
 
 
         Access: user
-      security: *a2
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: The caller's spend allowance
@@ -1920,7 +1922,8 @@ paths:
                   minLength: 1
               required:
                 - title
-      security: *a2
+      security:
+        - cookieAuth: []
       responses:
         "201":
           description: Session created successfully
@@ -1988,7 +1991,8 @@ paths:
           name: archived
           description: Return only archived Sessions (`true`) instead of only active ones
             (default)
-      security: *a2
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: Paginated list of sessions owned by the caller
@@ -2042,7 +2046,8 @@ paths:
           name: archived
           description: Return only archived Sessions (`true`) instead of only active ones
             (default)
-      security: *a2
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: Matching sessions owned by the caller
@@ -2091,7 +2096,8 @@ paths:
           in: path
           name: sessionId
           required: true
-      security: *a2
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: Session archived
@@ -2141,7 +2147,8 @@ paths:
           in: path
           name: sessionId
           required: true
-      security: *a2
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: Session restored
@@ -2206,7 +2213,8 @@ paths:
           in: path
           name: sessionId
           required: true
-      security: *a2
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: Session renamed
@@ -2255,7 +2263,8 @@ paths:
           in: path
           name: sessionId
           required: true
-      security: *a2
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: Session retrieved successfully
@@ -2326,7 +2335,8 @@ paths:
                 - sessionId
                 - role
                 - content
-      security: *a2
+      security:
+        - cookieAuth: []
       responses:
         "201":
           description: Message created successfully
@@ -2385,7 +2395,8 @@ paths:
           in: query
           name: sessionId
           description: Only list the messages of this session, oldest first
-      security: *a2
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: List of messages owned by the caller
@@ -2432,7 +2443,8 @@ paths:
           in: path
           name: messageId
           required: true
-      security: *a2
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: Message retrieved successfully
@@ -2477,7 +2489,7 @@ paths:
 
 
         Access: public
-      security: *a1
+      security: []
       responses:
         "200":
           description: The model catalog
@@ -2514,7 +2526,8 @@ paths:
           in: path
           name: runId
           required: true
-      security: *a2
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: The Run and its Steps
@@ -2583,7 +2596,8 @@ paths:
           in: header
           name: last-event-id
           description: Resume after this event id; sent by an EventSource when it reconnects
-      security: *a2
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: The reply stream, as server-sent events
@@ -2644,7 +2658,8 @@ paths:
           in: path
           name: streamId
           required: true
-      security: *a2
+      security:
+        - cookieAuth: []
       responses:
         "204":
           description: Stop requested, or the reply had already finished
@@ -2682,7 +2697,8 @@ paths:
         Whether this server can store Profile image uploads.
 
         Access: user
-      security: *a2
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: Profile image settings
@@ -2730,7 +2746,7 @@ paths:
             schema:
               type: string
               format: binary
-      security: &a3
+      security:
         - cookieAuth: []
       responses:
         "200":
@@ -2798,7 +2814,8 @@ paths:
 
 
         Access: registered
-      security: *a3
+      security:
+        - cookieAuth: []
       responses:
         "204":
           description: Profile image removed
@@ -2847,7 +2864,7 @@ paths:
           in: query
           name: service
           description: "Which service to read: the server (default) or the worker"
-      security: &a4
+      security:
         - operatorToken: []
       responses:
         "200":
@@ -2940,7 +2957,8 @@ paths:
               required:
                 - level
                 - operator
-      security: *a4
+      security:
+        - operatorToken: []
       responses:
         "202":
           description: Change sent to every instance of the service
@@ -2982,7 +3000,8 @@ paths:
         List every Admin. Requires the operator token, not a User session.
 
         Access: operator
-      security: *a4
+      security:
+        - operatorToken: []
       responses:
         "200":
           description: Every Admin, oldest account first
@@ -3037,7 +3056,8 @@ paths:
                   pattern: ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
               required:
                 - email
-      security: *a4
+      security:
+        - operatorToken: []
       responses:
         "201":
           description: The user is now an Admin
@@ -3095,7 +3115,8 @@ paths:
           name: email
           required: true
           description: The email of the Admin
-      security: *a4
+      security:
+        - operatorToken: []
       responses:
         "204":
           description: The user is no longer an Admin
@@ -3160,7 +3181,7 @@ paths:
           name: range
           description: How many UTC days back, today included; the period before it is the
             comparison
-      security: &a5
+      security:
         - cookieAuth: []
       responses:
         "200":
@@ -3261,7 +3282,8 @@ paths:
           in: query
           name: models
           description: Only these Model ids, as a repeated key; `run` selects the Run series
-      security: *a5
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: Per-day series per Model
@@ -3351,7 +3373,8 @@ paths:
           name: audience
           description: Only Guests, only Registered users, or both; calls of a deleted
             User count under `all` only
-      security: *a5
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: The Model’s day
@@ -3421,7 +3444,8 @@ paths:
           name: audience
           description: Only Guests, only Registered users, or both; calls of a deleted
             User count under `all` only
-      security: *a5
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: Range totals
@@ -3550,7 +3574,8 @@ paths:
           in: query
           name: cursor
           description: The `nextCursor` of the previous page
-      security: *a5
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: A page of Users
@@ -3606,7 +3631,8 @@ paths:
           name: id
           required: true
           description: The User id
-      security: *a5
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: The User
@@ -3683,7 +3709,8 @@ paths:
           name: id
           required: true
           description: The User id
-      security: *a5
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: A page of Sessions
@@ -3742,7 +3769,8 @@ paths:
           name: id
           required: true
           description: The User id
-      security: *a5
+      security:
+        - cookieAuth: []
       responses:
         "204":
           description: The User is no longer pending deletion
@@ -3820,7 +3848,8 @@ paths:
           name: id
           required: true
           description: The User id
-      security: *a5
+      security:
+        - cookieAuth: []
       responses:
         "204":
           description: The role is changed
@@ -3905,7 +3934,8 @@ paths:
           name: id
           required: true
           description: The User id
-      security: *a5
+      security:
+        - cookieAuth: []
       responses:
         "204":
           description: The User is banned
@@ -3965,7 +3995,8 @@ paths:
           name: id
           required: true
           description: The User id
-      security: *a5
+      security:
+        - cookieAuth: []
       responses:
         "204":
           description: The User is no longer banned
@@ -4080,7 +4111,8 @@ paths:
           in: query
           name: cursor
           description: The `nextCursor` of the previous page
-      security: *a5
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: A page of Sessions
@@ -4137,7 +4169,8 @@ paths:
           name: id
           required: true
           description: The Session id
-      security: *a5
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: The Session and its Messages
@@ -4280,7 +4313,8 @@ paths:
           in: query
           name: order
           description: "Sort by time: `desc` newest first (default) or `asc` oldest first"
-      security: *a5
+      security:
+        - cookieAuth: []
       responses:
         "200":
           description: A page of Audit log entries

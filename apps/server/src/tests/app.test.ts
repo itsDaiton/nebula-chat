@@ -151,6 +151,10 @@ describe('OpenAPI document', () => {
     expect(operation?.description?.endsWith(`Access: ${level}`)).toBe(true);
   });
 
+  it('gives each operation its own security array, so the YAML spec has no anchors', () => {
+    expect(app.swagger({ yaml: true })).not.toMatch(/&a\d+|\*a\d+/);
+  });
+
   it('sets no global security: each operation carries its own', () => {
     expect(document).not.toHaveProperty('security');
   });

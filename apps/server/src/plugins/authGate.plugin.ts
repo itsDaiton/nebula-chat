@@ -233,7 +233,8 @@ export default fp(
         const description = schema.description ?? '';
         route.schema = {
           ...schema,
-          security: SECURITY[level],
+          // A copy per route: shared arrays serialize as YAML anchors in the generated spec.
+          security: structuredClone(SECURITY[level]),
           description: description.endsWith(line)
             ? description
             : `${description}\n\n${line}`.trim(),
