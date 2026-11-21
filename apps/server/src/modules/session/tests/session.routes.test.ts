@@ -22,7 +22,7 @@ vi.mock('@server/modules/session/session.repository', () => ({
 // process, whose end() throws on a second app close.
 vi.mock('@server/db', () => ({ db: {}, closeDb: vi.fn(async () => undefined) }));
 
-// The create route is gated by `requireAuthentication`; faking `@server/auth` lets the
+// The create route is `user` level; faking `@server/auth` lets the
 // test authenticate without a real better-auth instance (ADR-0008).
 vi.mock('@server/auth', () => ({
   auth: { api: { getSession: vi.fn() }, handler: vi.fn() },

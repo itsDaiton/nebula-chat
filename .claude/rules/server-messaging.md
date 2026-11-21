@@ -12,7 +12,7 @@ reply for the worker, and relays the reply stream (ADR-0014). The full sequence 
 [docs/architecture.md](../../docs/architecture.md#direct-reply). Specifics worth knowing:
 
 - `POST /api/sessions/:sessionId/messages` answers `202 { messageId, streamId }`. Its chain is rate limit
-  (10/60 s per IP) → body validation → `requireAuthentication` → `chat.messageAllowance.hook`
+  (10/60 s per IP) → the `user` gate (onRequest, before the body) → body validation → `chat.messageAllowance.hook`
   (403 `MessageAllowanceReached` before anything is persisted) → `chatService.sendMessage`.
 - `sendMessage` holds the Message to **2 000** prompt tokens (413), persists it in a transaction, records the
   stream owner in Redis, enqueues IDs only (checked against `@nebula-chat/contracts`), and pings the worker's
