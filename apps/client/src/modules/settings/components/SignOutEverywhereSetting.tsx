@@ -16,7 +16,7 @@ export const SignOutEverywhereSetting = () => {
         loading={isPending}
         onClick={() => mutate()}
       >
-        {signOutEverywhere.action}
+        {isPending ? signOutEverywhere.working : signOutEverywhere.action}
       </Button>
     </SettingsRow>
   );

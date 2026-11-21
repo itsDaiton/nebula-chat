@@ -1,7 +1,7 @@
-import { Loader2Icon } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 import { useSessionRename } from '@/modules/sessions/hooks/useSessionRename';
 import { useSessionTitleEditStore } from '@/modules/sessions/stores/useSessionTitleEditStore';
+import { cn } from '@/shared/utils/cn';
 import { resources } from '@/resources';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import type { SessionTitleProps } from '@/modules/sessions/types/types';
@@ -31,13 +31,12 @@ export const SessionTitle = ({ sessionId, title }: SessionTitleProps) => {
 
   if (!editing) {
     return (
-      <h1 className="min-w-0">
+      <h1 aria-busy={isPending || undefined} className={cn('min-w-0', isPending && 'opacity-60')}>
         <Tooltip>
           <TooltipTrigger
             render={
               <button
                 type="button"
-                aria-busy={isPending || undefined}
                 className={`${TITLE_CLASS} block max-w-full rounded-md px-1.5 py-1 text-left hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring`}
                 onClick={() => {
                   settled.current = false;
@@ -47,7 +46,6 @@ export const SessionTitle = ({ sessionId, title }: SessionTitleProps) => {
             }
           >
             {title}
-            {isPending && <Loader2Icon className="ml-1.5 inline size-3 animate-spin" />}
           </TooltipTrigger>
           <TooltipContent side="bottom">{resources.sessions.rename.tooltip}</TooltipContent>
         </Tooltip>

@@ -652,6 +652,7 @@ export const resources = {
         label: 'Sign out of all devices',
         description: 'Signs you out everywhere, including this device.',
         action: 'Sign out everywhere',
+        working: 'Signing out…',
       },
       adminNotice: {
         title: 'Admins must use two-factor authentication.',
