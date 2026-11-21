@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.11.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.11.1...nebula-chat-v7.11.2) (2026-11-21)
+
+
+### Bug Fixes
+
+* **server:** NEB-891 every route declares its Access level ([#924](https://github.com/itsDaiton/nebula-chat/issues/924)) ([e6cd22d](https://github.com/itsDaiton/nebula-chat/commit/e6cd22d6582084d272f5d2c9c48660ad764c8a22))
+
 ## [7.11.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.11.0...nebula-chat-v7.11.1) (2026-11-21)
 
 

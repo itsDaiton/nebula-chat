@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.16.0...nebula-chat-cli-v1.16.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* **server:** NEB-891 every route declares its Access level ([#924](https://github.com/itsDaiton/nebula-chat/issues/924)) ([e6cd22d](https://github.com/itsDaiton/nebula-chat/commit/e6cd22d6582084d272f5d2c9c48660ad764c8a22))
+
 ## [1.16.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.15.2...nebula-chat-cli-v1.16.0) (2026-11-21)
 
 
