@@ -59,6 +59,17 @@ export const listUsersQuerySchema = z.object({
     .describe(
       'Only Users in one of these statuses, as a repeated key; without it every User but Guests is listed',
     ),
+  role: z
+    .enum(['admin', 'user'])
+    .optional()
+    .describe('Only Users with this raw role, whatever their status'),
+  banned: z
+    .enum(['true', 'false'])
+    .transform((value) => value === 'true')
+    .optional()
+    .describe(
+      '`true` for Users under an active ban only, `false` for the rest, Pending-deletion included',
+    ),
   sortBy: z
     .enum(USER_SORTS)
     .default('createdAt')

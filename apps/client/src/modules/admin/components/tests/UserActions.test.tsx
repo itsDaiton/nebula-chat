@@ -165,6 +165,48 @@ describe('User actions', () => {
     expect(button(panel, actions.ban)).toHaveAttribute('aria-disabled', 'true');
   });
 
+  it('asks for other Admins who are not banned, whatever their status', async () => {
+    const queries: string[] = [];
+    serve(detailOf({ status: 'admin', role: 'admin' }));
+    server.use(
+      http.get('*/api/admin/users', ({ request }) => {
+        const { search } = new URL(request.url);
+        // The Users table reads this endpoint too; only the last-Admin lookup names a role.
+        if (new URLSearchParams(search).has('role')) queries.push(search);
+        return HttpResponse.json({ users: [], nextCursor: null, hasMore: false });
+      }),
+    );
+    await openPanel();
+
+    await waitFor(() => expect(queries).toHaveLength(1));
+    const params = new URLSearchParams(queries[0]);
+    expect(params.get('role')).toBe('admin');
+    expect(params.get('banned')).toBe('false');
+    expect(params.has('status')).toBe(false);
+  });
+
+  it('keeps Revoke Admin and Ban enabled when the only other Admin is Pending deletion', async () => {
+    const peer = summary({ id: 'b', role: 'admin', status: 'pendingDeletion' });
+    serve(detailOf({ status: 'admin', role: 'admin' }));
+    server.use(
+      http.get('*/api/admin/users', ({ request }) => {
+        const { searchParams } = new URL(request.url);
+        const asksForActiveAdmins =
+          searchParams.get('role') === 'admin' && searchParams.get('banned') === 'false';
+        return HttpResponse.json({
+          users: asksForActiveAdmins ? [peer] : [],
+          nextCursor: null,
+          hasMore: false,
+        });
+      }),
+    );
+    const panel = await openPanel();
+
+    await waitFor(() => expect(button(panel, actions.revokeAdmin)).toBeInTheDocument());
+    expect(button(panel, actions.revokeAdmin)).not.toHaveAttribute('aria-disabled', 'true');
+    expect(button(panel, actions.ban)).not.toHaveAttribute('aria-disabled', 'true');
+  });
+
   it('shows the typed refusal and keeps the dialog open when the server says no', async () => {
     serve(detailOf({ status: 'admin', role: 'admin' }), [
       summary({ status: 'admin', role: 'admin' }),
