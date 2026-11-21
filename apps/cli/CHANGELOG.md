@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.15.1...nebula-chat-cli-v1.15.2) (2026-11-21)
+
+
+### Bug Fixes
+
+* **client,server:** NEB-841 count Pending-deletion Admins as peers ([#917](https://github.com/itsDaiton/nebula-chat/issues/917)) ([17cc489](https://github.com/itsDaiton/nebula-chat/commit/17cc489b070971a59b8f112f3a2450ae543da13a))
+
 ## [1.15.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-cli-v1.15.0...nebula-chat-cli-v1.15.1) (2026-11-21)
 
 
