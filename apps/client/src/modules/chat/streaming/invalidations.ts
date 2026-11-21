@@ -1,5 +1,8 @@
 import type { QueryClient } from '@tanstack/react-query';
-import { getGetMessageAllowanceQueryKey } from '@/libs/api/generated/chat/chat';
+import {
+  getGetMessageAllowanceQueryKey,
+  getGetSpendAllowanceQueryKey,
+} from '@/libs/api/generated/chat/chat';
 import { getListMessagesQueryKey } from '@/libs/api/generated/messages/messages';
 import type { Run } from '@/libs/api/generated/model/run';
 import { getGetRunQueryKey } from '@/libs/api/generated/runs/runs';
@@ -16,6 +19,10 @@ export const invalidateSessionList = (queryClient: QueryClient) =>
 export const invalidateMessageAllowance = (queryClient: QueryClient) =>
   void queryClient.invalidateQueries({ queryKey: getGetMessageAllowanceQueryKey() });
 
+// The worker records a call's cost as it runs, so the spend shown is stale once a reply ends.
+export const invalidateSpendAllowance = (queryClient: QueryClient) =>
+  void queryClient.invalidateQueries({ queryKey: getGetSpendAllowanceQueryKey() });
+
 export const invalidateAfterSend = (queryClient: QueryClient, sessionId: string) => {
   invalidateMessageAllowance(queryClient);
   // The send may have answered the Session's waiting Run, which then waits no more.
@@ -27,6 +34,7 @@ export const invalidateRun = (queryClient: QueryClient, runId: string) =>
   void queryClient.invalidateQueries({ queryKey: getGetRunQueryKey(runId) });
 
 export const invalidateCompletedStream = (queryClient: QueryClient, sessionId: string) => {
+  invalidateSpendAllowance(queryClient);
   invalidateSessionList(queryClient);
   void queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey() });
   void queryClient.invalidateQueries({ queryKey: getGetSessionQueryKey(sessionId) });

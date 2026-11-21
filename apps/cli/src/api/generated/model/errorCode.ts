@@ -13,6 +13,7 @@ export const ErrorCode = {
   Unauthorized: 'Unauthorized',
   Forbidden: 'Forbidden',
   MessageAllowanceReached: 'MessageAllowanceReached',
+  SpendAllowanceReached: 'SpendAllowanceReached',
   TwoFactorRequired: 'TwoFactorRequired',
   NotFound: 'NotFound',
   Conflict: 'Conflict',

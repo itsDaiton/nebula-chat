@@ -46,6 +46,8 @@ export const envSchema = z
     RESEND_API_KEY: z.string().min(1),
     EMAIL_FROM: emailFromSchema,
     GUEST_MESSAGE_ALLOWANCE: z.coerce.number().int().default(10),
+    // USD of Operator-key spend a verified Registered user may incur per UTC month.
+    SPEND_ALLOWANCE_USD: z.coerce.number().nonnegative().default(1),
     // Social sign-in OAuth apps; each provider is offered only when both its values are set.
     GOOGLE_CLIENT_ID: oauthCredentialSchema,
     GOOGLE_CLIENT_SECRET: oauthCredentialSchema,

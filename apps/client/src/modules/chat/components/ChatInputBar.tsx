@@ -3,6 +3,7 @@ import { EmailVerificationPrompt } from '@/modules/auth/components/EmailVerifica
 import { ChatComposerFooter } from '@/modules/chat/components/ChatComposerFooter';
 import { ChatInput } from '@/modules/chat/components/ChatInput';
 import { MessageAllowancePrompt } from '@/modules/chat/components/MessageAllowancePrompt';
+import { SpendAllowancePrompt } from '@/modules/chat/components/SpendAllowancePrompt';
 import type { ChatInputBarProps } from '@/modules/chat/types/types';
 
 export const ChatInputBar = ({
@@ -17,6 +18,7 @@ export const ChatInputBar = ({
     className="mx-auto w-full max-w-(--transcript-width) shrink-0 px-3 pb-3 sm:px-7"
   >
     <MessageAllowancePrompt />
+    <SpendAllowancePrompt />
     <EmailVerificationPrompt />
     <AnswerHintRow />
     <ChatInput

@@ -11,6 +11,8 @@ export const errorCodeSchema = z
     'Forbidden',
     // A Guest has spent their message allowance and must register to continue.
     'MessageAllowanceReached',
+    // A verified Registered user has spent this month's Spend allowance on the Operator key.
+    'SpendAllowanceReached',
     // An Admin whose auth session has not passed two-factor authentication.
     'TwoFactorRequired',
     'NotFound',

@@ -17,6 +17,7 @@ import { isReplyInFlight } from '@/modules/chat/utils/replyState';
 import { followReply } from '@/modules/chat/streaming/followReply';
 import {
   invalidateMessageAllowance,
+  invalidateSpendAllowance,
   invalidateSessionList,
 } from '@/modules/chat/streaming/invalidations';
 import { startRun, withEmptyReply } from '@/modules/chat/streaming/replyHistory';
@@ -90,6 +91,7 @@ export const useChatStream = ({
         usage: null,
         streamId: null,
         isMessageAllowanceReached: false,
+        isSpendAllowanceReached: false,
         history: withEmptyReply(messages),
       });
 
@@ -122,6 +124,11 @@ export const useChatStream = ({
           returnToComposer(messages, { isMessageAllowanceReached: true });
           // The count shown may be stale (another tab), so resync it with the server's.
           invalidateMessageAllowance(queryClient);
+          return;
+        }
+        if (failure === 'spend-allowance-reached') {
+          returnToComposer(messages, { isSpendAllowanceReached: true });
+          invalidateSpendAllowance(queryClient);
           return;
         }
         // Aborted: `abort` has already settled the reply, and a newer one may be in flight.

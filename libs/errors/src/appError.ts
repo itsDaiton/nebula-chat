@@ -64,6 +64,16 @@ export class MessageAllowanceReachedError extends AppError {
   }
 }
 
+/** A verified Registered user has used up this month's Spend allowance; it resets at the first instant of the next UTC month. */
+export class SpendAllowanceReachedError extends AppError {
+  constructor(resetsAt: Date) {
+    super(
+      'SpendAllowanceReached',
+      `Monthly spend allowance reached. It resets on ${resetsAt.toISOString()}.`,
+    );
+  }
+}
+
 /** An Admin whose auth session has not passed two-factor authentication, or who has not enrolled. */
 export class TwoFactorRequiredError extends AppError {
   constructor() {

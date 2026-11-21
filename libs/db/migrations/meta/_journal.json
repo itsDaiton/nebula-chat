@@ -127,6 +127,13 @@
       "when": 1794932950087,
       "tag": "0017_happy_microbe",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1795250446244,
+      "tag": "0018_spend-allowance-index",
+      "breakpoints": true
     }
   ]
 }

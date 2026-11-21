@@ -2,11 +2,13 @@ import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { chatController } from '@server/modules/chat/chat.controller';
 import { messageAllowanceHook } from '@server/modules/chat/chat.messageAllowance.hook';
+import { spendAllowanceHook } from '@server/modules/chat/chat.spendAllowance.hook';
 import {
   messageAllowanceSchema,
   sendMessageParamsSchema,
   sendMessageSchema,
   sentMessageSchema,
+  spendAllowanceSchema,
 } from '@server/modules/chat/chat.validation';
 import { requireAuthentication } from '@server/plugins/authGate.plugin';
 import { jsonResponse } from '@server/utils/jsonResponse';
@@ -27,7 +29,7 @@ const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
         400: jsonResponse('Invalid request body or session ID', errorEnvelopeSchema),
         401: jsonResponse('No auth session', errorEnvelopeSchema),
         403: jsonResponse(
-          'Guest message allowance reached, or a Guest asked for a Run — registration required',
+          'Guest message allowance reached, monthly spend allowance reached (`SpendAllowanceReached`, with its reset date), or a Guest asked for a Run — registration required',
           errorEnvelopeSchema,
         ),
         404: jsonResponse('Session not found or not owned by the caller', errorEnvelopeSchema),
@@ -44,7 +46,7 @@ const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
       },
     },
     // Authenticate, then reject a capped Guest before anything is persisted (ADR-0010 §4).
-    preHandler: [requireAuthentication, messageAllowanceHook],
+    preHandler: [requireAuthentication, messageAllowanceHook, spendAllowanceHook],
     handler: chatController.sendMessage,
   });
 
@@ -65,6 +67,23 @@ const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
     },
     preHandler: [requireAuthentication],
     handler: chatController.getMessageAllowance,
+  });
+
+  app.get('/chat/spend-allowance', {
+    schema: {
+      description:
+        "How much of the caller's monthly spend allowance is left, in USD, and when it resets (the first instant of the next UTC month). Metered users get `capped: false`.",
+      summary: 'Get spend allowance',
+      tags: ['Chat'],
+      operationId: 'getSpendAllowance',
+      response: {
+        200: jsonResponse("The caller's spend allowance", spendAllowanceSchema),
+        401: jsonResponse('No auth session', errorEnvelopeSchema),
+        500: jsonResponse('Internal server error', errorEnvelopeSchema),
+      },
+    },
+    preHandler: [requireAuthentication],
+    handler: chatController.getSpendAllowance,
   });
   done();
 };

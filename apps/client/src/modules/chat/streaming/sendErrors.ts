@@ -11,6 +11,7 @@ export const replyErrorMessage = (err: unknown): string =>
 export const sendFailureOf = (err: unknown, mode: SendMessageBodyMode): SendFailure => {
   if (!isAppError(err)) return 'failed';
   if (err.code === ErrorCode.MessageAllowanceReached) return 'allowance-reached';
+  if (err.code === ErrorCode.SpendAllowanceReached) return 'spend-allowance-reached';
   return mode === SendMessageBodyMode.run && err.code === ErrorCode.Forbidden
     ? 'run-forbidden'
     : 'failed';

@@ -2,7 +2,10 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
+import {
+  getGetMessageAllowanceMockHandler,
+  getGetSpendAllowanceMockHandler,
+} from '@/libs/api/generated/chat/chat.msw';
 import type { MessageAllowance } from '@/libs/api/generated/model/messageAllowance';
 import { useIdentityChange } from '@/modules/auth/hooks/useIdentityChange';
 import { MessageAllowanceCounter } from '@/modules/chat/components/MessageAllowanceCounter';
@@ -11,11 +14,12 @@ import { toast as sonner } from 'sonner';
 import { resources } from '@/resources';
 import { API_ROUTE } from '@/test/api';
 import { aSession, holdSession, mockGetSession, refreshSession } from '@/test/auth';
-import { aMeteredAllowance } from '@/test/allowance';
+import { aCappedSpendAllowance, aMeteredAllowance } from '@/test/allowance';
 import { server } from '@/test/msw';
 import { renderInRouter } from '@/test/renderRoute';
 
 const { messageAllowance } = resources.chat;
+// A verified user's counter is the spend one; the message allowance stays unread for them.
 
 const GUEST = { isAnonymous: true };
 const UNVERIFIED = { isAnonymous: false, emailVerified: false };
@@ -63,14 +67,38 @@ describe('MessageAllowanceCounter', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('6 of 10 messages left');
   });
 
-  it('shows a verified Registered user nothing, without asking the server', async () => {
+  it('shows a verified Registered user their spend left and its reset date, not messages', async () => {
     const reads = serveAllowance({ metered: false });
+    server.use(getGetSpendAllowanceMockHandler(aCappedSpendAllowance(0.6)));
     await renderCounter(VERIFIED);
 
-    // Let a mount-time fetch, were there one, land before asserting there was none.
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    const counter = await screen.findByRole('status');
+    expect(counter).toHaveTextContent('$0.60 of $1.00 left this month');
+    expect(counter).toHaveTextContent('resets Dec 1');
     expect(reads.count).toBe(0);
+  });
+
+  it('shows a verified user nothing when the spend allowance is spent, leaving it to the prompt', async () => {
+    server.use(getGetSpendAllowanceMockHandler(aCappedSpendAllowance(0)));
+    await renderCounter(VERIFIED);
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('never reads the spend allowance for a Guest', async () => {
+    const reads = { count: 0 };
+    server.use(
+      getGetSpendAllowanceMockHandler(() => {
+        reads.count += 1;
+        return aCappedSpendAllowance(1);
+      }),
+    );
+    serveAllowance(aMeteredAllowance(5));
+    await renderCounter(GUEST);
+
+    await screen.findByRole('status');
+    expect(reads.count).toBe(0);
   });
 
   it('offers a Guest running low a way to register or sign in', async () => {

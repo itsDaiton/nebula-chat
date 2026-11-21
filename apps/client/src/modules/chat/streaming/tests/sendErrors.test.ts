@@ -13,6 +13,13 @@ describe('sendFailureOf', () => {
     expect(sendFailureOf(refused, SendMessageBodyMode.run)).toBe('allowance-reached');
   });
 
+  it('names a send refused at the spend allowance, in either mode', () => {
+    const refused = new AppError(ErrorCode.SpendAllowanceReached, 'Resets on 2026-12-01');
+
+    expect(sendFailureOf(refused, SendMessageBodyMode.direct)).toBe('spend-allowance-reached');
+    expect(sendFailureOf(refused, SendMessageBodyMode.run)).toBe('spend-allowance-reached');
+  });
+
   it('names a Run send that is forbidden, but not a Direct one', () => {
     const forbidden = new AppError(ErrorCode.Forbidden, 'Runs are for Registered users');
 

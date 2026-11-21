@@ -121,6 +121,13 @@ export const resources = {
       remaining: (remaining: number, limit: number) =>
         `${remaining} of ${limit} ${remaining === 1 ? 'message' : 'messages'} left`,
     },
+    spendAllowance: {
+      title: "You've used this month's spend allowance",
+      description: 'Sending is paused until it resets.',
+      remaining: (remaining: number, limit: number) =>
+        `$${remaining.toFixed(2)} of $${limit.toFixed(2)} left this month`,
+      resets: (date: string) => `resets ${date}`,
+    },
   },
   sessions: {
     title: 'Sessions',
