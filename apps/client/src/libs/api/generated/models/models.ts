@@ -41,6 +41,8 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 
 /**
  * The model catalog: the Models a Session can be bound to, with their labels, limits and list prices (USD per million tokens), plus the catalog version and content hash
+ *
+ * Access: public
  * @summary Get the model catalog
  */
 export const getModelCatalog = (
@@ -78,6 +80,12 @@ export const getGetModelCatalogQueryOptions = <
 export type GetModelCatalogQueryResult = NonNullable<Awaited<ReturnType<typeof getModelCatalog>>>;
 export type GetModelCatalogQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * The model catalog: the Models a Session can be bound to, with their labels, limits and list prices (USD per million tokens), plus the catalog version and content hash
+ *
+ * Access: public
+ * @summary Get the model catalog
+ */
 export function useGetModelCatalog<
   TData = Awaited<ReturnType<typeof getModelCatalog>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -96,6 +104,12 @@ export function useGetModelCatalog<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * The model catalog: the Models a Session can be bound to, with their labels, limits and list prices (USD per million tokens), plus the catalog version and content hash
+ *
+ * Access: public
+ * @summary Get the model catalog
+ */
 export function useGetModelCatalog<
   TData = Awaited<ReturnType<typeof getModelCatalog>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -114,6 +128,12 @@ export function useGetModelCatalog<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * The model catalog: the Models a Session can be bound to, with their labels, limits and list prices (USD per million tokens), plus the catalog version and content hash
+ *
+ * Access: public
+ * @summary Get the model catalog
+ */
 export function useGetModelCatalog<
   TData = Awaited<ReturnType<typeof getModelCatalog>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -125,9 +145,11 @@ export function useGetModelCatalog<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * The model catalog: the Models a Session can be bound to, with their labels, limits and list prices (USD per million tokens), plus the catalog version and content hash
+ *
+ * Access: public
  * @summary Get the model catalog
  */
-
 export function useGetModelCatalog<
   TData = Awaited<ReturnType<typeof getModelCatalog>>,
   TError = ErrorType<ErrorEnvelope>,

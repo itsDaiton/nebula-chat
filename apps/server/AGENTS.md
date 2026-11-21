@@ -46,11 +46,12 @@ script load through `dotenvx run` — single source of truth (see [server-env](.
   `models`, `profileImage`, `logLevel`, `admin` (the Operator's `/api/internal/admins` and the Admin's `/api/admin/users`: list, read, restore, grant or revoke Admin, ban and unban, a User's Sessions; the audited `/api/admin/sessions/:id`, and `/api/admin/overview`: activity KPIs from Users and Messages), `audit` (the Audit log
   writer and `GET /api/admin/audit`),
   `usage` (`/api/admin/usage/{series,detail,totals}`: per-Model prompts, tokens and estimated spend per UTC day from user Messages and the Model call ledger),
-  `run` (`GET /api/runs/:runId`: a Run with its Brief and Steps for its owner, or for an Admin, whose read is audited; and the service that cancels Runs waiting on a Clarifying question: stop, Archive, Ban), and `user` (only a repository so far: the send path records `lastActiveAt`), `modelCall` (only a repository: the Spend allowance's monthly cost sum). A module may add hooks (`*.hook.ts`) and helpers beside its layers.
+  `run` (`GET /api/runs/:runId`: a Run with its Brief and Steps for its owner, or for an Admin, whose read is audited; and the service that cancels Runs waiting on a Clarifying question: stop,
+  Archive, Ban), and `user` (only a repository so far: the send path records `lastActiveAt`), `modelCall` (only a repository: the Spend allowance's monthly cost sum). A module may add hooks (`*.hook.ts`) and helpers beside its layers.
 - `plugins/` — Fastify plugins: request logging, `db`, `redis`, and `authGate` (mounts `/api/auth/*` and answers `/api/auth/admin/*`, dot segments resolved, with NotFound; `@nebula-chat/auth` refuses them too,
-  decorates `requireAuthentication` / `requireRegistered`; also exports `requireAdmin` for `/api/admin/*` and `isActingAdmin` for a route an Admin may use more widely than a User).
+  its `onRoute` hook attaches the gate for each route's Access level and fails boot on a route without one; also exports `isActingAdmin` for a route an Admin may use more widely than a User).
 - `errors/` — the global error handler. `config/` — CORS, SSE headers, pagination. `utils/` — small shared helpers,
-  including `operatorGate.hook.ts` (`requireOperator`, the operator-token gate on every `/api/internal/*` route).
+  including `operatorGate.hook.ts` (`requireOperator`, the gate of the `operator` Access level).
 - `test/` — the shared harness (`createTestApp`, in-memory pub/sub, reply streams, profile image store).
 
 Redis lives in the `@nebula-chat/redis` lib ([ADR-0009](../../docs/adr/0009-nebula-chat-redis-lib.md)),
@@ -86,6 +87,7 @@ when it reads a matching file; any other agent opens the file when it works in t
 | --------------------------------------------------------------------- | ---------------------------------------------------------- |
 | [server-error-handling](../../.claude/rules/server-error-handling.md) | `AppError` classes, the error envelope, the global handler |
 | [server-logging](../../.claude/rules/server-logging.md)               | `logEvent`, `req.log`, what never to log                   |
+| [server-access](../../.claude/rules/server-access.md)                 | Access levels: every route declares one, deny by default   |
 | [server-validation](../../.claude/rules/server-validation.md)         | Zod schemas, `jsonResponse`, route `schema:` blocks        |
 | [server-database](../../.claude/rules/server-database.md)             | Drizzle schema, repositories, migrations                   |
 | [server-redis](../../.claude/rules/server-redis.md)                   | `@nebula-chat/redis` use, stream owners, the reply queue   |

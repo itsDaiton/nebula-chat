@@ -7,7 +7,6 @@ import {
   replyStreamSchema,
   streamParamsSchema,
 } from '@server/modules/stream/stream.validation';
-import { requireAuthentication } from '@server/plugins/authGate.plugin';
 import { jsonResponse } from '@server/utils/jsonResponse';
 
 const streamRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
@@ -35,7 +34,7 @@ const streamRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },
-    preHandler: requireAuthentication,
+    config: { access: 'user' },
     handler: streamController.relay,
   });
   app.post('/:streamId/cancel', {
@@ -54,7 +53,7 @@ const streamRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },
-    preHandler: requireAuthentication,
+    config: { access: 'user' },
     handler: streamController.cancel,
   });
   done();

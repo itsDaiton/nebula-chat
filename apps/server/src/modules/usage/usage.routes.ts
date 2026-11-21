@@ -9,7 +9,6 @@ import {
   usageTotalsQuerySchema,
   usageTotalsSchema,
 } from '@server/modules/usage/usage.validation';
-import { requireAdmin } from '@server/plugins/authGate.plugin';
 import { jsonResponse } from '@server/utils/jsonResponse';
 
 const errors = {
@@ -33,7 +32,7 @@ const usageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
       querystring: usageSeriesQuerySchema,
       response: { 200: jsonResponse('Per-day series per Model', usageSeriesSchema), ...errors },
     },
-    preHandler: requireAdmin,
+    config: { access: 'admin' },
     handler: usageController.getSeries,
   });
 
@@ -47,7 +46,7 @@ const usageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
       querystring: usageDetailQuerySchema,
       response: { 200: jsonResponse('The Model’s day', usageDetailSchema), ...errors },
     },
-    preHandler: requireAdmin,
+    config: { access: 'admin' },
     handler: usageController.getDetail,
   });
 
@@ -61,7 +60,7 @@ const usageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
       querystring: usageTotalsQuerySchema,
       response: { 200: jsonResponse('Range totals', usageTotalsSchema), ...errors },
     },
-    preHandler: requireAdmin,
+    config: { access: 'admin' },
     handler: usageController.getTotals,
   });
   done();

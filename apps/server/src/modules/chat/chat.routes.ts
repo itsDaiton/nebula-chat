@@ -10,7 +10,6 @@ import {
   sentMessageSchema,
   spendAllowanceSchema,
 } from '@server/modules/chat/chat.validation';
-import { requireAuthentication } from '@server/plugins/authGate.plugin';
 import { jsonResponse } from '@server/utils/jsonResponse';
 
 // Mounted at `/api`: sending lives under the Session it goes to (ADR-0014).
@@ -40,13 +39,14 @@ const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
       },
     },
     config: {
+      access: 'user',
       rateLimit: {
         max: 10,
         timeWindow: '1 minute',
       },
     },
-    // Authenticate, then reject a capped Guest before anything is persisted (ADR-0010 §4).
-    preHandler: [requireAuthentication, messageAllowanceHook, spendAllowanceHook],
+    // After the gate: reject a capped Guest before anything is persisted (ADR-0010 §4).
+    preHandler: [messageAllowanceHook, spendAllowanceHook],
     handler: chatController.sendMessage,
   });
 
@@ -65,7 +65,7 @@ const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },
-    preHandler: [requireAuthentication],
+    config: { access: 'user' },
     handler: chatController.getMessageAllowance,
   });
 
@@ -82,7 +82,7 @@ const chatRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },
-    preHandler: [requireAuthentication],
+    config: { access: 'user' },
     handler: chatController.getSpendAllowance,
   });
   done();

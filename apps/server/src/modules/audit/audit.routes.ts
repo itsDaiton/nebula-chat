@@ -2,7 +2,6 @@ import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { auditController } from '@server/modules/audit/audit.controller';
 import { auditPageSchema, listAuditQuerySchema } from '@server/modules/audit/audit.validation';
-import { requireAdmin } from '@server/plugins/authGate.plugin';
 import { jsonResponse } from '@server/utils/jsonResponse';
 
 const auditRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
@@ -25,7 +24,7 @@ const auditRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },
-    preHandler: requireAdmin,
+    config: { access: 'admin' },
     handler: auditController.list,
   });
   done();

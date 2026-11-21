@@ -23,17 +23,11 @@ export type ListUsersParams = {
    * @maxItems 6
    */
   status?: ListUsersStatusItem[];
-  /**
-   * Only Users with this raw role, whatever their status
-   */
+  /** Only Users with this raw role, whatever their status */
   role?: ListUsersRole;
-  /**
-   * `true` for Users under an active ban only, `false` for the rest, Pending-deletion included
-   */
+  /** `true` for Users under an active ban only, `false` for the rest, Pending-deletion included */
   banned?: ListUsersBanned;
-  /**
-   * `lastActiveAt` is the last update to the account until activity is tracked
-   */
+  /** `lastActiveAt` is the last update to the account until activity is tracked */
   sortBy?: ListUsersSortBy;
   order?: ListUsersOrder;
   /**

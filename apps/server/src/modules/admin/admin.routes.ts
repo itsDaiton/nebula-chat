@@ -8,7 +8,6 @@ import {
   grantAdminSchema,
 } from '@server/modules/admin/admin.validation';
 import { jsonResponse } from '@server/utils/jsonResponse';
-import { requireOperator } from '@server/utils/operatorGate.hook';
 
 const operatorErrors = {
   403: jsonResponse('Missing or wrong operator token', errorEnvelopeSchema),
@@ -26,7 +25,6 @@ const adminRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
       summary: 'List Admins',
       tags: ['Operator'],
       operationId: 'listAdmins',
-      security: [{ operatorToken: [] }],
       response: {
         200: jsonResponse('Every Admin, oldest account first', adminsSchema),
         403: operatorErrors[403],
@@ -34,7 +32,7 @@ const adminRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
         500: operatorErrors[500],
       },
     },
-    onRequest: requireOperator,
+    config: { access: 'operator' },
     handler: adminController.list,
   });
 
@@ -45,7 +43,6 @@ const adminRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
       summary: 'Grant Admin',
       tags: ['Operator'],
       operationId: 'grantAdmin',
-      security: [{ operatorToken: [] }],
       body: grantAdminSchema,
       response: {
         201: jsonResponse('The user is now an Admin', adminSchema),
@@ -57,7 +54,7 @@ const adminRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
         ...operatorErrors,
       },
     },
-    onRequest: requireOperator,
+    config: { access: 'operator' },
     handler: adminController.grant,
   });
 
@@ -68,7 +65,6 @@ const adminRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
       summary: 'Revoke Admin',
       tags: ['Operator'],
       operationId: 'revokeAdmin',
-      security: [{ operatorToken: [] }],
       params: adminEmailParamsSchema,
       response: {
         204: { description: 'The user is no longer an Admin' },
@@ -77,7 +73,7 @@ const adminRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
         ...operatorErrors,
       },
     },
-    onRequest: requireOperator,
+    config: { access: 'operator' },
     handler: adminController.revoke,
   });
   done();

@@ -389,15 +389,18 @@ that flag would move them there. The password hash lives on the `account` row
 
 ## Route protection
 
-The `authGate` plugin exposes three `preHandler` gates. Each resolves the session with
+Every route declares one Access level in `config.access` ([ADR-0036](./adr/0036-every-route-declares-its-access-level.md)):
+`public`, `user`, `registered`, `admin` or `operator`. The `authGate` plugin's `onRoute` hook attaches the matching gate
+as an `onRequest` hook, so a caller who is not allowed is turned away before the body is parsed, and refuses to boot
+when a route declares none. The session gates resolve the session with
 `auth.api.getSession({ headers: fromNodeHeaders(req.headers) })` and, on success,
-attaches it to the request:
+attach it to the request:
 
-| Gate                    | Behavior                                                                                                                                                                                                                                                |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `requireAuthentication` | Requires any session (Guest or Registered). `401 Unauthorized` when there is none.                                                                                                                                                                      |
-| `requireRegistered`     | `requireAuthentication` plus `403 Forbidden` when the user is a Guest (`user.isAnonymous`).                                                                                                                                                             |
-| `requireAdmin`          | Guards `/api/admin/*`. Reads past the cookie cache. `403 Forbidden` unless a verified, unbanned user with `role: admin`; then `403 TwoFactorRequired` unless they enrolled in 2FA and this auth session passed it ([below](#two-factor-auth-sessions)). |
+| Gate (level)                       | Behavior                                                                                                                                                                                                                                                |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requireAuthentication` (`user`)   | Requires any session (Guest or Registered). `401 Unauthorized` when there is none.                                                                                                                                                                      |
+| `requireRegistered` (`registered`) | `requireAuthentication` plus `403 Forbidden` when the user is a Guest (`user.isAnonymous`).                                                                                                                                                             |
+| `requireAdmin` (`admin`)           | Guards `/api/admin/*`. Reads past the cookie cache. `403 Forbidden` unless a verified, unbanned user with `role: admin`; then `403 TwoFactorRequired` unless they enrolled in 2FA and this auth session passed it ([below](#two-factor-auth-sessions)). |
 
 ### Two-factor auth sessions
 
@@ -474,13 +477,13 @@ to five minutes. A banned sign-in is refused with the plugin's `BANNED_USER` err
 carries the reason and end time; once `banExpires` passes, the next sign-in lifts the ban.
 
 Handlers read the owner through `getSessionData(req)` rather than an untyped request
-property. A gate is added to a route's `preHandler` chain:
+property. A route picks its gate by declaring its level:
 
 ```ts
-app.post('/', { preHandler: [requireAuthentication], schema: {/* ... */} }, handler);
+app.post('/', { config: { access: 'user' }, schema: {/* ... */} }, handler);
 ```
 
-Every Session and message route is gated by `requireAuthentication`: there is no
+Every Session and message route is `user`: there is no
 unauthenticated read path, so a caller with no auth session receives `401` rather than
 data. On top of the gate, reads are **owner-scoped** — `getSession`,
 `listSessions`, `searchSessions`, `getMessage`, and `listMessages` filter by

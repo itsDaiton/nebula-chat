@@ -7,9 +7,16 @@
 import { faker } from '@faker-js/faker';
 
 import { HttpResponse, http } from 'msw';
-import type { RequestHandlerOptions } from 'msw';
+import type { HttpResponseResolver, PathParams, RequestHandlerOptions } from 'msw';
 
-import type { Session, SessionDetail, SessionPage, SessionSearchResult } from '../model';
+import type {
+  CreateSessionBody,
+  RenameSessionBody,
+  Session,
+  SessionDetail,
+  SessionPage,
+  SessionSearchResult,
+} from '../model';
 
 export const getCreateSessionResponseMock = (
   overrideResponse: Partial<Extract<Session, object>> = {},
@@ -136,12 +143,14 @@ export const getGetSessionResponseMock = (
 export const getCreateSessionMockHandler = (
   overrideResponse?:
     | Session
-    | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<Session> | Session),
+    | ((
+        info: Parameters<HttpResponseResolver<PathParams, CreateSessionBody>>[0],
+      ) => Promise<Session> | Session),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<PathParams, CreateSessionBody>(
     '*/api/sessions',
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<PathParams, CreateSessionBody>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -158,12 +167,12 @@ export const getCreateSessionMockHandler = (
 export const getListSessionsMockHandler = (
   overrideResponse?:
     | SessionPage
-    | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SessionPage> | SessionPage),
+    | ((info: Parameters<HttpResponseResolver>[0]) => Promise<SessionPage> | SessionPage),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     '*/api/sessions',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -181,13 +190,13 @@ export const getSearchSessionsMockHandler = (
   overrideResponse?:
     | SessionSearchResult[]
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver>[0],
       ) => Promise<SessionSearchResult[]> | SessionSearchResult[]),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     '*/api/sessions/search',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -204,12 +213,14 @@ export const getSearchSessionsMockHandler = (
 export const getArchiveSessionMockHandler = (
   overrideResponse?:
     | Session
-    | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<Session> | Session),
+    | ((
+        info: Parameters<HttpResponseResolver<{ sessionId: string }>>[0],
+      ) => Promise<Session> | Session),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ sessionId: string }>(
     '*/api/sessions/:sessionId/archive',
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ sessionId: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -226,12 +237,14 @@ export const getArchiveSessionMockHandler = (
 export const getRestoreSessionMockHandler = (
   overrideResponse?:
     | Session
-    | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<Session> | Session),
+    | ((
+        info: Parameters<HttpResponseResolver<{ sessionId: string }>>[0],
+      ) => Promise<Session> | Session),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ sessionId: string }>(
     '*/api/sessions/:sessionId/restore',
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ sessionId: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -248,12 +261,14 @@ export const getRestoreSessionMockHandler = (
 export const getRenameSessionMockHandler = (
   overrideResponse?:
     | Session
-    | ((info: Parameters<Parameters<typeof http.patch>[1]>[0]) => Promise<Session> | Session),
+    | ((
+        info: Parameters<HttpResponseResolver<{ sessionId: string }, RenameSessionBody>>[0],
+      ) => Promise<Session> | Session),
   options?: RequestHandlerOptions,
 ) => {
-  return http.patch(
+  return http.patch<{ sessionId: string }, RenameSessionBody>(
     '*/api/sessions/:sessionId',
-    async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ sessionId: string }, RenameSessionBody>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
@@ -271,13 +286,13 @@ export const getGetSessionMockHandler = (
   overrideResponse?:
     | SessionDetail
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ sessionId: string }>>[0],
       ) => Promise<SessionDetail> | SessionDetail),
   options?: RequestHandlerOptions,
 ) => {
-  return http.get(
+  return http.get<{ sessionId: string }>(
     '*/api/sessions/:sessionId',
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ sessionId: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'

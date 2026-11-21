@@ -41,6 +41,8 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 
 /**
  * Welcome endpoint — confirms the API is reachable.
+ *
+ * Access: public
  * @summary API root
  */
 export const getApiRoot = (options?: SecondParameter<typeof axiosClient>, signal?: AbortSignal) => {
@@ -75,6 +77,12 @@ export const getGetApiRootQueryOptions = <
 export type GetApiRootQueryResult = NonNullable<Awaited<ReturnType<typeof getApiRoot>>>;
 export type GetApiRootQueryError = ErrorType<unknown>;
 
+/**
+ * Welcome endpoint — confirms the API is reachable.
+ *
+ * Access: public
+ * @summary API root
+ */
 export function useGetApiRoot<
   TData = Awaited<ReturnType<typeof getApiRoot>>,
   TError = ErrorType<unknown>,
@@ -93,6 +101,12 @@ export function useGetApiRoot<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Welcome endpoint — confirms the API is reachable.
+ *
+ * Access: public
+ * @summary API root
+ */
 export function useGetApiRoot<
   TData = Awaited<ReturnType<typeof getApiRoot>>,
   TError = ErrorType<unknown>,
@@ -111,6 +125,12 @@ export function useGetApiRoot<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Welcome endpoint — confirms the API is reachable.
+ *
+ * Access: public
+ * @summary API root
+ */
 export function useGetApiRoot<
   TData = Awaited<ReturnType<typeof getApiRoot>>,
   TError = ErrorType<unknown>,
@@ -122,9 +142,11 @@ export function useGetApiRoot<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Welcome endpoint — confirms the API is reachable.
+ *
+ * Access: public
  * @summary API root
  */
-
 export function useGetApiRoot<
   TData = Awaited<ReturnType<typeof getApiRoot>>,
   TError = ErrorType<unknown>,
@@ -146,6 +168,8 @@ export function useGetApiRoot<
 
 /**
  * Returns server liveness status and current UTC timestamp.
+ *
+ * Access: public
  * @summary Health check
  */
 export const getHealth = (options?: SecondParameter<typeof axiosClient>, signal?: AbortSignal) => {
@@ -180,6 +204,12 @@ export const getGetHealthQueryOptions = <
 export type GetHealthQueryResult = NonNullable<Awaited<ReturnType<typeof getHealth>>>;
 export type GetHealthQueryError = ErrorType<unknown>;
 
+/**
+ * Returns server liveness status and current UTC timestamp.
+ *
+ * Access: public
+ * @summary Health check
+ */
 export function useGetHealth<
   TData = Awaited<ReturnType<typeof getHealth>>,
   TError = ErrorType<unknown>,
@@ -198,6 +228,12 @@ export function useGetHealth<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Returns server liveness status and current UTC timestamp.
+ *
+ * Access: public
+ * @summary Health check
+ */
 export function useGetHealth<
   TData = Awaited<ReturnType<typeof getHealth>>,
   TError = ErrorType<unknown>,
@@ -216,6 +252,12 @@ export function useGetHealth<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Returns server liveness status and current UTC timestamp.
+ *
+ * Access: public
+ * @summary Health check
+ */
 export function useGetHealth<
   TData = Awaited<ReturnType<typeof getHealth>>,
   TError = ErrorType<unknown>,
@@ -227,9 +269,11 @@ export function useGetHealth<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Returns server liveness status and current UTC timestamp.
+ *
+ * Access: public
  * @summary Health check
  */
-
 export function useGetHealth<
   TData = Awaited<ReturnType<typeof getHealth>>,
   TError = ErrorType<unknown>,

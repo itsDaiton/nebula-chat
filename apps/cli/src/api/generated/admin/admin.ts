@@ -106,6 +106,8 @@ export const getGetAdminOverviewUrl = (params?: GetAdminOverviewParams) => {
 
 /**
  * Activity KPIs for the last 7, 14, 30 or 90 UTC days (today included) with the totals of the period just before, for deltas. An active User is a User with a `user` Message on that UTC day; weekly active counts the 7 days ending on each day. A registration is a non-Guest account by creation day. Estimated spend sums the Model call ledger per day. A conversion is a Registered account whose Sessions predate it (a Claim leaves no timestamp, so the account creation day stands in), and the rate is conversions over conversions plus Guests created in the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Get the admin Overview
  */
 export const getAdminOverview = async (
@@ -185,6 +187,8 @@ export const getGetModelUsageSeriesUrl = (params?: GetModelUsageSeriesParams) =>
 
 /**
  * One value per UTC day (today included, zeros filled in) for each Model, for the last 7, 14, 30 or 90 days. `prompts` counts user Messages: a reply is attributed to its Session’s Model and a Message that started a Run counts once, in the `run` series. `tokens` and `spend` sum Model calls per Model that served them. Only the top 8 Models are listed; the rest are grouped as `other`. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Get Model usage per day
  */
 export const getModelUsageSeries = async (
@@ -255,6 +259,8 @@ export const getGetModelUsageDetailUrl = (params: GetModelUsageDetailParams) => 
 
 /**
  * One Model on one UTC day: averages per Model call, cache replays, completion rate and duration, with its Prompts trend over the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Get one Model’s usage on a day
  */
 export const getModelUsageDetail = async (
@@ -325,6 +331,8 @@ export const getGetModelUsageTotalsUrl = (params?: GetModelUsageTotalsParams) =>
 
 /**
  * Totals over the range with those of the period just before it, for deltas. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Get Model usage totals
  */
 export const getModelUsageTotals = async (
@@ -400,6 +408,8 @@ export const getListUsersUrl = (params?: ListUsersParams) => {
 
 /**
  * List Users, newest first by default, filtered by one or more statuses and a name or email search, a page at a time. Guests are left out unless `status` names `guest`. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary List Users
  */
 export const listUsers = async (
@@ -463,6 +473,8 @@ export const getGetUserUrl = (id: string) => {
 
 /**
  * Read one User: status, two-factor state, ban, Sessions and messages sent, and timestamps. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Get a User
  */
 export const getUser = async (
@@ -539,6 +551,8 @@ export const getListUserSessionsUrl = (id: string, params?: ListUserSessionsPara
 
 /**
  * List a User's Sessions, archived ones included and marked, newest first, a page at a time. Listing is not a content read, so it writes no Audit entry. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary List a User's Sessions
  */
 export const listUserSessions = async (
@@ -609,6 +623,8 @@ export const getRestoreUserUrl = (id: string) => {
 
 /**
  * Restore a User in Pending deletion in full, and record it in the Audit log. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Restore a User
  */
 export const restoreUser = async (
@@ -678,6 +694,8 @@ export const getSetUserRoleUrl = (id: string) => {
 
 /**
  * Grant or revoke the Admin role, and record it in the Audit log. A Guest, an unverified or a banned user cannot become an Admin (`NotEligibleForAdmin`), and the last Admin cannot be revoked (`LastAdmin`). Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Grant or revoke Admin
  */
 export const setUserRole = async (
@@ -769,6 +787,8 @@ export const getBanUserUrl = (id: string) => {
 
 /**
  * Ban a User with a reason and an optional end time, revoke every auth session of theirs, and record it in the Audit log. Their sign-in then fails with the reason and end time until the ban ends or is lifted. The last Admin cannot be banned (`LastAdmin`). Sessions are revoked through Redis secondary storage; a cookie-cache holder may stay signed in for up to five minutes, as with Sign out everywhere. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Ban a User
  */
 export const banUser = async (
@@ -860,6 +880,8 @@ export const getUnbanUserUrl = (id: string) => {
 
 /**
  * Lift a ban, and record it in the Audit log. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Unban a User
  */
 export const unbanUser = async (
@@ -929,6 +951,8 @@ export const getListAllSessionsUrl = (params?: ListAllSessionsParams) => {
 
 /**
  * List Sessions across all Users, most recently active first by default, filtered by a title search, owner, Model and archived state, a page at a time. Listing is not a content read, so nothing is audited. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary List Sessions
  */
 export const listAllSessions = async (
@@ -992,6 +1016,8 @@ export const getReadSessionUrl = (id: string) => {
 
 /**
  * Read any Session with all its Messages, oldest first, and record the read in the Audit log. If the Audit entry cannot be written the request fails. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary Read a Session
  */
 export const readSession = async (
@@ -1062,6 +1088,8 @@ export const getListAuditEntriesUrl = (params?: ListAuditEntriesParams) => {
 
 /**
  * List Audit log entries, newest first, filtered by actor, action, target and time range, a page at a time. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
  * @summary List Audit log
  */
 export const listAuditEntries = async (

@@ -14,7 +14,6 @@ import {
   profileImageSchema,
   profileImageSettingsSchema,
 } from '@server/modules/profileImage/profileImage.validation';
-import { requireAuthentication, requireRegistered } from '@server/plugins/authGate.plugin';
 import { jsonResponse } from '@server/utils/jsonResponse';
 
 // onRequest, so a Guest or a server without storage is turned away before the body is read.
@@ -43,7 +42,7 @@ const profileImageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },
-    onRequest: requireAuthentication,
+    config: { access: 'user' },
     handler: profileImageController.settings,
   });
 
@@ -68,8 +67,8 @@ const profileImageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },
-    onRequest: [requireRegistered, requireUploadsEnabled],
-    preHandler: limitProfileImageUploads,
+    config: { access: 'registered' },
+    onRequest: [requireUploadsEnabled, limitProfileImageUploads],
     handler: profileImageController.upload,
   });
 
@@ -87,7 +86,7 @@ const profileImageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },
-    onRequest: requireRegistered,
+    config: { access: 'registered' },
     handler: profileImageController.remove,
   });
   done();

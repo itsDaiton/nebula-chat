@@ -7,8 +7,6 @@
 import type { GetLogLevelsService } from './getLogLevelsService';
 
 export type GetLogLevelsParams = {
-  /**
-   * Which service to read: the server (default) or the worker
-   */
+  /** Which service to read: the server (default) or the worker */
   service?: GetLogLevelsService;
 };

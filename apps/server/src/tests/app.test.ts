@@ -20,6 +20,7 @@ type ResponseObject = { content?: Record<string, { schema?: SchemaObject }> };
 
 type OperationObject = {
   tags?: string[];
+  description?: string;
   security?: Record<string, string[]>[];
   requestBody?: { content?: Record<string, { schema?: SchemaObject & { format?: string } }> };
   responses?: Record<string, ResponseObject>;
@@ -136,6 +137,27 @@ describe('OpenAPI document', () => {
       expect(operation?.security).toEqual([{ operatorToken: [] }]);
     },
   );
+
+  it.each([
+    ['/health', 'get', 'public', []],
+    ['/api/sessions', 'get', 'user', [{ cookieAuth: [] }]],
+    ['/api/profile-image', 'delete', 'registered', [{ cookieAuth: [] }]],
+    ['/api/admin/overview', 'get', 'admin', [{ cookieAuth: [] }]],
+    ['/api/internal/log-level', 'get', 'operator', [{ operatorToken: [] }]],
+  ])('documents %s (%s) at the %s Access level', (path, method, level, security) => {
+    const operation = document.paths[path]?.[method];
+
+    expect(operation?.security).toEqual(security);
+    expect(operation?.description?.endsWith(`Access: ${level}`)).toBe(true);
+  });
+
+  it('gives each operation its own security array, so the YAML spec has no anchors', () => {
+    expect(app.swagger({ yaml: true })).not.toMatch(/&a\d+|\*a\d+/);
+  });
+
+  it('sets no global security: each operation carries its own', () => {
+    expect(document).not.toHaveProperty('security');
+  });
 
   it('declares the operator token as a bearer scheme', () => {
     expect(document.components.securitySchemes['operatorToken']).toEqual({

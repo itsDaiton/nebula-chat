@@ -41,6 +41,8 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 
 /**
  * Retrieve one of the caller’s own Runs with its Brief and every Step, in execution order, each with its full input and output. An Admin whose auth session passed two-factor authentication may read any Run; that read is recorded in the Audit log, and fails if the entry cannot be written.
+ *
+ * Access: user
  * @summary Get Run by ID
  */
 export const getRun = (
@@ -85,6 +87,12 @@ export const getGetRunQueryOptions = <
 export type GetRunQueryResult = NonNullable<Awaited<ReturnType<typeof getRun>>>;
 export type GetRunQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * Retrieve one of the caller’s own Runs with its Brief and every Step, in execution order, each with its full input and output. An Admin whose auth session passed two-factor authentication may read any Run; that read is recorded in the Audit log, and fails if the entry cannot be written.
+ *
+ * Access: user
+ * @summary Get Run by ID
+ */
 export function useGetRun<
   TData = Awaited<ReturnType<typeof getRun>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -104,6 +112,12 @@ export function useGetRun<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieve one of the caller’s own Runs with its Brief and every Step, in execution order, each with its full input and output. An Admin whose auth session passed two-factor authentication may read any Run; that read is recorded in the Audit log, and fails if the entry cannot be written.
+ *
+ * Access: user
+ * @summary Get Run by ID
+ */
 export function useGetRun<
   TData = Awaited<ReturnType<typeof getRun>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -123,6 +137,12 @@ export function useGetRun<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieve one of the caller’s own Runs with its Brief and every Step, in execution order, each with its full input and output. An Admin whose auth session passed two-factor authentication may read any Run; that read is recorded in the Audit log, and fails if the entry cannot be written.
+ *
+ * Access: user
+ * @summary Get Run by ID
+ */
 export function useGetRun<
   TData = Awaited<ReturnType<typeof getRun>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -135,9 +155,11 @@ export function useGetRun<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Retrieve one of the caller’s own Runs with its Brief and every Step, in execution order, each with its full input and output. An Admin whose auth session passed two-factor authentication may read any Run; that read is recorded in the Audit log, and fails if the entry cannot be written.
+ *
+ * Access: user
  * @summary Get Run by ID
  */
-
 export function useGetRun<
   TData = Awaited<ReturnType<typeof getRun>>,
   TError = ErrorType<ErrorEnvelope>,

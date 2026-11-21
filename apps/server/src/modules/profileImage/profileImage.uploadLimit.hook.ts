@@ -1,4 +1,4 @@
-import type { preHandlerAsyncHookHandler } from 'fastify';
+import type { onRequestAsyncHookHandler } from 'fastify';
 import { TooManyRequestsError } from '@nebula-chat/errors';
 import { getSessionData } from '@server/plugins/authGate.plugin';
 import { redis } from '@server/redis';
@@ -8,11 +8,8 @@ const PROFILE_IMAGE_UPLOAD_LIMIT = 10;
 
 const WINDOW_SECONDS = 60 * 60;
 
-/**
- * preHandler, after `requireRegistered`: counts the user's uploads in a fixed one-hour window.
- * The count lives in Redis so the limit holds across server instances.
- */
-export const limitProfileImageUploads: preHandlerAsyncHookHandler = async (req) => {
+// After the `registered` gate; the count lives in Redis so the limit holds across instances.
+export const limitProfileImageUploads: onRequestAsyncHookHandler = async (req) => {
   const { user } = getSessionData(req);
   const uploads = await redis.authStore.increment(
     `profile-image-uploads:${user.id}`,

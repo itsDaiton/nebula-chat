@@ -1,5 +1,5 @@
 import { fromNodeHeaders, toNodeHandler } from 'better-auth/node';
-import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
+import type { FastifyReply, FastifyRequest, onRequestAsyncHookHandler } from 'fastify';
 import fp from 'fastify-plugin';
 import type { SessionData } from '@nebula-chat/auth';
 import { bindAttributes } from '@nebula-chat/otel';
@@ -7,6 +7,7 @@ import { auth } from '@server/auth';
 import { logRequestFailed } from '@server/errors/error.handler';
 import { recordErrorType } from '@server/errors/requestErrorType';
 import { forwardReplyHeaders } from '@server/utils/forwardReplyHeaders';
+import { requireOperator } from '@server/utils/operatorGate.hook';
 import {
   ERROR_STATUS,
   ForbiddenError,
@@ -22,7 +23,7 @@ import {
 type RequestWithSession = FastifyRequest & { sessionData: SessionData | null };
 
 /**
- * Returns the session `requireAuthentication` / `requireRegistered` attached; throws `UnauthorizedError` if no gate ran.
+ * Returns the session an Access level's gate attached; throws `UnauthorizedError` if no gate ran.
  */
 export const getSessionData = (req: FastifyRequest): SessionData => {
   const data = (req as RequestWithSession).sessionData;
@@ -34,7 +35,7 @@ export const getSessionData = (req: FastifyRequest): SessionData => {
 
 /**
  * Resolves the session from the cookies (else `UnauthorizedError`), attaches it, and binds the User onto both `req.log` and `reply.log`.
- * Shared by both gates, since a preHandler cannot call another.
+ * Shared by the gates, since a hook cannot call another.
  */
 const resolveSession = async (
   req: FastifyRequest,
@@ -60,17 +61,17 @@ const resolveSession = async (
 };
 
 /**
- * preHandler: requires any authenticated session (Guest or Registered) and attaches it for `getSessionData`.
+ * onRequest: requires any authenticated session (Guest or Registered) and attaches it for `getSessionData`.
  */
-export const requireAuthentication: preHandlerAsyncHookHandler = async (req, reply) => {
+export const requireAuthentication: onRequestAsyncHookHandler = async (req, reply) => {
   await resolveSession(req, reply);
 };
 
 /**
- * preHandler: `requireAuthentication` plus a `ForbiddenError` when the session user
+ * onRequest: `requireAuthentication` plus a `ForbiddenError` when the session user
  * is a Guest (`isAnonymous`). Use on routes that a Guest must never reach.
  */
-export const requireRegistered: preHandlerAsyncHookHandler = async (req, reply) => {
+export const requireRegistered: onRequestAsyncHookHandler = async (req, reply) => {
   const { user } = await resolveSession(req, reply);
   if (user.isAnonymous) {
     throw new ForbiddenError('This action requires a registered account.');
@@ -92,10 +93,10 @@ const adminRefusal = ({
 };
 
 /**
- * preHandler for `/api/admin/*`: a verified, unbanned Admin whose auth session passed a second factor (ADR-0027 §2).
+ * onRequest for `/api/admin/*`: a verified, unbanned Admin whose auth session passed a second factor (ADR-0027 §2).
  * better-auth 1.7 marks no auth session, so `@nebula-chat/auth` sets `twoFactorVerified` on each verified code; a trusted-device or social sign-in never does.
  */
-export const requireAdmin: preHandlerAsyncHookHandler = async (req, reply) => {
+export const requireAdmin: onRequestAsyncHookHandler = async (req, reply) => {
   // Past the cookie cache, so a revoked role, a ban or a fresh verification applies at once.
   const refusal = adminRefusal(await resolveSession(req, reply, { fresh: true }));
   if (refusal) {
@@ -157,6 +158,45 @@ const isAdminPluginPath = (url: string): boolean => {
   return normalized === ADMIN_PLUGIN_PREFIX || normalized.startsWith(`${ADMIN_PLUGIN_PREFIX}/`);
 };
 
+const ACCESS_LEVELS = ['public', 'user', 'registered', 'admin', 'operator'] as const;
+
+type AccessLevel = (typeof ACCESS_LEVELS)[number];
+
+declare module 'fastify' {
+  // Module augmentation can only merge into an interface, which the repo otherwise forbids.
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+  interface FastifyContextConfig {
+    access?: AccessLevel;
+  }
+}
+
+// `null` is `public`: no gate.
+const GATES: Record<AccessLevel, onRequestAsyncHookHandler | null> = {
+  public: null,
+  user: requireAuthentication,
+  registered: requireRegistered,
+  admin: requireAdmin,
+  operator: requireOperator,
+};
+
+// Swagger UI registers its own routes, which can't declare a level; the docs are public (ADR-0036 §4).
+export const DOCS_PREFIX = '/docs';
+
+// @fastify/cors adds `OPTIONS *`; a preflight carries no credentials, so it must stay public.
+const isPublicPlugin = (method: string | string[], url: string): boolean =>
+  url === DOCS_PREFIX || url.startsWith(`${DOCS_PREFIX}/`) || (method === 'OPTIONS' && url === '*');
+
+const isAccessLevel = (value: unknown): value is AccessLevel =>
+  typeof value === 'string' && (ACCESS_LEVELS as readonly string[]).includes(value);
+
+const SECURITY: Record<AccessLevel, Record<string, string[]>[]> = {
+  public: [],
+  user: [{ cookieAuth: [] }],
+  registered: [{ cookieAuth: [] }],
+  admin: [{ cookieAuth: [] }],
+  operator: [{ operatorToken: [] }],
+};
+
 /**
  * Mounts better-auth at `GET|POST /api/auth/*` on the raw req/res (hidden from OpenAPI) and exposes the route gates.
  * Its passthrough body parser lives in an encapsulated child scope, so the rest of the API keeps JSON parsing.
@@ -164,8 +204,43 @@ const isAdminPluginPath = (url: string): boolean => {
 export default fp(
   async (app) => {
     app.decorateRequest('sessionData', null);
-    app.decorate('requireAuthentication', requireAuthentication);
-    app.decorate('requireRegistered', requireRegistered);
+
+    // App-wide (this plugin is fastify-plugin wrapped), so every route is checked, whichever scope registers it.
+    app.addHook('onRoute', (route) => {
+      const url = route.url;
+      const declared = route.config?.access;
+      const level = declared ?? (isPublicPlugin(route.method, url) ? 'public' : undefined);
+      if (!isAccessLevel(level)) {
+        const method = Array.isArray(route.method) ? route.method.join('|') : route.method;
+        throw new Error(
+          `Route ${method} ${url} must declare an Access level in config.access (one of ${ACCESS_LEVELS.join(', ')}), got ${String(declared)}.`,
+        );
+      }
+
+      const gate = GATES[level];
+      // A HEAD route Fastify derives from a GET reuses the options this hook already changed.
+      if (gate) {
+        const existing = route.onRequest ?? [];
+        const hooks = Array.isArray(existing) ? existing : [existing];
+        if (!hooks.includes(gate)) {
+          route.onRequest = [gate, ...hooks];
+        }
+      }
+
+      const schema = route.schema;
+      if (schema && !schema.hide) {
+        const line = `Access: ${level}`;
+        const description = schema.description ?? '';
+        route.schema = {
+          ...schema,
+          // A copy per route: shared arrays serialize as YAML anchors in the generated spec.
+          security: structuredClone(SECURITY[level]),
+          description: description.endsWith(line)
+            ? description
+            : `${description}\n\n${line}`.trim(),
+        };
+      }
+    });
 
     const authHandler = toNodeHandler(auth);
 
@@ -181,6 +256,8 @@ export default fp(
         method: ['GET', 'POST'],
         url: '/api/auth/*',
         schema: { hide: true },
+        // better-auth does its own checks (sign-in has no session yet).
+        config: { access: 'public' },
         handler: async (req, reply) => {
           // Answered before the hijack; admin actions must use the audited `/api/admin/*` (ADR-0027 §6).
           if (isAdminPluginPath(req.url)) {

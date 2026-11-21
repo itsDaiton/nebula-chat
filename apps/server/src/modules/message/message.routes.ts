@@ -1,7 +1,6 @@
 import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { messageController } from '@server/modules/message/message.controller';
-import { requireAuthentication } from '@server/plugins/authGate.plugin';
 import {
   createMessageSchema,
   getMessagesSchema,
@@ -29,7 +28,7 @@ const messageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
       },
     },
     // Owner-scoped: the target session must belong to the auth session's user.
-    preHandler: requireAuthentication,
+    config: { access: 'user' },
     handler: messageController.create,
   });
 
@@ -49,7 +48,7 @@ const messageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
       },
     },
     // Owner-scoped: another user's message reads as 404, never 403 (no leak).
-    preHandler: requireAuthentication,
+    config: { access: 'user' },
     handler: messageController.get,
   });
 
@@ -70,7 +69,7 @@ const messageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
     },
     // Owner-scoped: only messages in the auth session's user's Sessions are listed,
     // and a `sessionId` filter narrows within them (ADR-0010 §2).
-    preHandler: requireAuthentication,
+    config: { access: 'user' },
     handler: messageController.getAll,
   });
   done();

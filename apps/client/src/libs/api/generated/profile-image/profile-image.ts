@@ -44,6 +44,8 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 
 /**
  * Whether this server can store Profile image uploads.
+ *
+ * Access: user
  * @summary Get Profile image settings
  */
 export const getProfileImageSettings = (
@@ -89,6 +91,12 @@ export type GetProfileImageSettingsQueryResult = NonNullable<
 >;
 export type GetProfileImageSettingsQueryError = ErrorType<ErrorEnvelope>;
 
+/**
+ * Whether this server can store Profile image uploads.
+ *
+ * Access: user
+ * @summary Get Profile image settings
+ */
 export function useGetProfileImageSettings<
   TData = Awaited<ReturnType<typeof getProfileImageSettings>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -109,6 +117,12 @@ export function useGetProfileImageSettings<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Whether this server can store Profile image uploads.
+ *
+ * Access: user
+ * @summary Get Profile image settings
+ */
 export function useGetProfileImageSettings<
   TData = Awaited<ReturnType<typeof getProfileImageSettings>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -129,6 +143,12 @@ export function useGetProfileImageSettings<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Whether this server can store Profile image uploads.
+ *
+ * Access: user
+ * @summary Get Profile image settings
+ */
 export function useGetProfileImageSettings<
   TData = Awaited<ReturnType<typeof getProfileImageSettings>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -142,9 +162,11 @@ export function useGetProfileImageSettings<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Whether this server can store Profile image uploads.
+ *
+ * Access: user
  * @summary Get Profile image settings
  */
-
 export function useGetProfileImageSettings<
   TData = Awaited<ReturnType<typeof getProfileImageSettings>>,
   TError = ErrorType<ErrorEnvelope>,
@@ -168,6 +190,8 @@ export function useGetProfileImageSettings<
 
 /**
  * Set the Registered user's Profile image from a JPEG, PNG or WebP of up to 5 MB, sent as the raw request body. It is stored as a 256×256 WebP; the previous upload is deleted.
+ *
+ * Access: registered
  * @summary Upload Profile image
  */
 export const uploadProfileImage = (
@@ -233,6 +257,9 @@ export type UploadProfileImageMutationError = ErrorType<ErrorEnvelope>;
 export type UploadProfileImageMutationVariables = { data: BodyType<Blob> };
 
 /**
+ * Set the Registered user's Profile image from a JPEG, PNG or WebP of up to 5 MB, sent as the raw request body. It is stored as a 256×256 WebP; the previous upload is deleted.
+ *
+ * Access: registered
  * @summary Upload Profile image
  */
 export const useUploadProfileImage = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
@@ -256,6 +283,8 @@ export const useUploadProfileImage = <TError = ErrorType<ErrorEnvelope>, TContex
 };
 /**
  * Remove the Registered user's Profile image, so their Avatar shows initials. Succeeds when there is none.
+ *
+ * Access: registered
  * @summary Remove Profile image
  */
 export const removeProfileImage = (
@@ -300,6 +329,9 @@ export type RemoveProfileImageMutationResult = NonNullable<
 export type RemoveProfileImageMutationError = ErrorType<ErrorEnvelope>;
 
 /**
+ * Remove the Registered user's Profile image, so their Avatar shows initials. Succeeds when there is none.
+ *
+ * Access: registered
  * @summary Remove Profile image
  */
 export const useRemoveProfileImage = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(

@@ -275,7 +275,7 @@ browsing session, and the codebase already has a separate _auth session_.
 
 - **The request.** Fastify generates the request id and binds it on `req.log` as
   `http.request.id` (its `logController` sets the label).
-- **The User.** Once `requireAuthentication`/`requireRegistered` resolves the
+- **The User.** Once an Access level's gate resolves the
   auth session, it rebinds the request's loggers with `user.id` and
   `nebula.user.kind`. It rebinds **both** `req.log` and `reply.log`: Fastify
   copies `request.log` onto `reply.log` when the reply is created, and the error

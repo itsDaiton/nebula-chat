@@ -118,7 +118,7 @@ better-auth's `/api/auth/*` routes are not in this spec; they have their own ref
 ## A request through the server
 
 Every route is registered in `apps/server/src/app.ts`. There is no global auth hook: each route
-names its gates, so a route without one is public.
+declares an Access level and the `authGate` plugin attaches its gate, so a route without one fails boot.
 
 ```mermaid
 flowchart TD
@@ -127,7 +127,7 @@ flowchart TD
   which -->|"/api/auth/admin/*"| nf["authGate → 404 NotFound<br/>never reaches better-auth"]
   which -->|"/api/auth/*"| ba["authGate → better-auth handler<br/>reply hijacked"]
   which -->|"/, /health, /docs"| public[Public handler]
-  which -->|"/api/..."| gates["Route gates<br/>rate limit (send only) ·<br/>requireAuthentication / requireRegistered ·<br/>requireAdmin (/api/admin) ·<br/>operator token (/api/internal)"]
+  which -->|"/api/..."| gates["Route gates<br/>Access level gate (onRequest):<br/>user / registered / admin / operator ·<br/>rate limit (send only)"]
   gates --> pre["Route preHandlers<br/>e.g. messageAllowanceHook,<br/>spendAllowanceHook"]
   pre --> handler["controller → service → repository"]
   handler --> pg[(Postgres)]

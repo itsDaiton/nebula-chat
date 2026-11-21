@@ -34,7 +34,7 @@ import messageRoutes from '@server/modules/message/message.routes';
 import modelRoutes from '@server/modules/models/models.routes';
 import profileImageRoutes from '@server/modules/profileImage/profileImage.routes';
 import usageRoutes from '@server/modules/usage/usage.routes';
-import authGate from '@server/plugins/authGate.plugin';
+import authGate, { DOCS_PREFIX } from '@server/plugins/authGate.plugin';
 import dbPlugin from '@server/plugins/db.plugin';
 import redisPlugin from '@server/plugins/redis.plugin';
 import requestLogging from '@server/plugins/requestLogging.plugin';
@@ -121,14 +121,13 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
           operatorToken: { type: 'http', scheme: 'bearer' },
         },
       },
-      security: [{ cookieAuth: [] }],
     },
     ...fastifyZodOpenApiTransformers,
   });
 
   // `swagger` above stays on either way: `generate:openapi` reads `app.swagger()`.
   if (env.API_DOCS_ENABLED) {
-    await app.register(swaggerUi, { routePrefix: '/docs' });
+    await app.register(swaggerUi, { routePrefix: DOCS_PREFIX });
   }
 
   await app.register(underPressure, {
@@ -136,9 +135,11 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
     healthCheckInterval: 5000,
   });
 
+  // Public: the health and root probes answer anyone, so a load balancer needs no credentials.
   app.get(
     '/',
     {
+      config: { access: 'public' },
       schema: {
         summary: 'API root',
         description: 'Welcome endpoint — confirms the API is reachable.',
@@ -155,6 +156,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   app.get(
     '/health',
     {
+      config: { access: 'public' },
       schema: {
         summary: 'Health check',
         description: 'Returns server liveness status and current UTC timestamp.',
@@ -169,7 +171,10 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   );
 
   if (env.API_DOCS_ENABLED) {
-    app.get('/openapi.json', { schema: { hide: true } }, () => app.swagger());
+    // Public: the spec is the same for every caller.
+    app.get('/openapi.json', { config: { access: 'public' }, schema: { hide: true } }, () =>
+      app.swagger(),
+    );
   }
 
   app.setErrorHandler(errorHandler);
