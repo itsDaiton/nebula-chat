@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nebula Chat API
-  version: 4.23.2
+  version: 4.24.0
   description: REST API for Nebula Chat
   contact:
     name: Nebula Chat
@@ -169,7 +169,8 @@ components:
         resetsAt:
           type: string
           format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
           description: The first instant of the next UTC month
       required:
         - capped
@@ -1876,9 +1877,10 @@ paths:
       summary: Get spend allowance
       tags:
         - Chat
-      description: "How much of the caller's monthly spend allowance is left, in USD,
-        and when it resets (the first instant of the next UTC month). Metered
-        users get `capped: false`."
+      description: >-
+        How much of the caller's monthly spend allowance is left, in USD, and
+        when it resets (the first instant of the next UTC month). Metered users
+        get `capped: false`.
       responses:
         '200':
           description: The caller's spend allowance
@@ -1895,8 +1897,8 @@ paths:
         '403':
           description: >-
             Guest message allowance reached, monthly spend allowance reached
-            (`SpendAllowanceReached`, with its reset date), or a Guest asked for a
-            Run — registration required
+            (`SpendAllowanceReached`, with its reset date), or a Guest asked for
+            a Run — registration required
           content:
             application/json:
               schema:
