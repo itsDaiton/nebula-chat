@@ -74,6 +74,17 @@ export class SpendAllowanceReachedError extends AppError {
   }
 }
 
+/** A stored Own key could not serve a Model call; there is never a fallback to the Operator key. */
+export class InvalidOwnKeyError extends AppError {
+  constructor(provider: string, options?: ErrorOptions) {
+    super(
+      'InvalidOwnKey',
+      `Your ${provider} API key cannot be used. Check or replace it in Settings.`,
+      options,
+    );
+  }
+}
+
 /** An Admin whose auth session has not passed two-factor authentication, or who has not enrolled. */
 export class TwoFactorRequiredError extends AppError {
   constructor() {
@@ -114,8 +125,8 @@ export class PayloadTooLargeError extends AppError {
 }
 
 export class TooManyRequestsError extends AppError {
-  constructor(message: string = 'Too many requests') {
-    super('TooManyRequests', message);
+  constructor(message: string = 'Too many requests', options?: ErrorOptions) {
+    super('TooManyRequests', message, options);
   }
 }
 

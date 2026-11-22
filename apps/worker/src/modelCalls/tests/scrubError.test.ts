@@ -3,7 +3,7 @@ import { REDACT_CENSOR } from '@nebula-chat/otel';
 import { operatorKeyResolver } from '@worker/llm/keyResolver';
 import { scrubError } from '@worker/modelCalls/scrubError';
 
-const keys = operatorKeyResolver({ openai: 'plain-secret-value' });
+const keys = operatorKeyResolver({ openai: 'plain-secret-value' })({ userId: 'user-1' });
 
 describe('scrubError', () => {
   it('scrubs the message and stack in place, keeping the error itself', () => {

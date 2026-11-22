@@ -6,7 +6,7 @@ import {
   logEvent,
   shutdownTelemetry,
 } from '@nebula-chat/otel';
-import { env } from '@worker/env';
+import { env, ownKeyConfig } from '@worker/env';
 import { INSTANCE_ID, logger, SERVICE_NAME } from '@worker/logger';
 
 initTelemetry(SERVICE_NAME, { logger, diagLevel: env.OTEL_LOG_LEVEL });
@@ -17,6 +17,8 @@ import {
   CLARIFYING_QUESTION_TIMEOUT_QUEUE,
   clarifyingQuestionTimeoutJobId,
   DIRECT_REPLY_QUEUE,
+  OWN_KEY_REWRAP_QUEUE,
+  OWN_KEY_VALIDATION_QUEUE,
   PURGE_QUEUE,
   PURGE_SCHEDULER_ID,
   RUN_QUEUE,
@@ -35,13 +37,18 @@ import type { ReplyStreamWriter } from '@worker/directReplies/runDirectReply';
 import { streamChat } from '@worker/directReplies/streamChat';
 import { createDirectReplyProcessor } from '@worker/jobs/directReply';
 import { createClarifyingQuestionTimeoutProcessor } from '@worker/jobs/clarifyingQuestionTimeout';
+import { createOwnKeyRewrapProcessor } from '@worker/jobs/ownKeyRewrap';
+import { createOwnKeyValidationProcessor } from '@worker/jobs/ownKeyValidation';
 import { createPurgeProcessor } from '@worker/jobs/purge';
 import { createRunProcessor } from '@worker/jobs/run';
 import { createLLM } from '@worker/llm/createLLM';
-import { operatorKeyResolver } from '@worker/llm/keyResolver';
+import { createKeyResolver } from '@worker/llm/keyResolver';
 import { loadPrompts } from '@worker/llm/prompts';
 import { invokeStructured } from '@worker/llm/structuredOutput';
 import { modelCallRepository } from '@worker/modelCalls/modelCallRepository';
+import { checkProviderKey } from '@worker/ownKeys/checkProviderKey';
+import { createOwnKeyCrypto } from '@worker/ownKeys/ownKeyCrypto';
+import { ownKeyRepository } from '@worker/ownKeys/ownKeyRepository';
 import { purgeRepository } from '@worker/purge/purgeRepository';
 import { redis } from '@worker/redis';
 import { createCheckpointer } from '@worker/runs/checkpointer';
@@ -52,6 +59,9 @@ import { webSearchTool } from '@worker/tools/webSearch';
 
 // Fixed, off-peak UTC; the Purge window is days wide, so the hour carries no meaning (ADR-0031).
 const PURGE_CRON = '0 3 * * *';
+
+// A provider's model list answers in well under this; a slower one is retried by the job.
+const OWN_KEY_CHECK_TIMEOUT_MS = 10_000;
 
 const start = async (): Promise<void> => {
   const stream: ReplyStreamWriter = {
@@ -65,10 +75,11 @@ const start = async (): Promise<void> => {
   };
   // A missing prompt fails boot here rather than the first reply that needs it.
   const prompts = loadPrompts();
-  const keys = operatorKeyResolver({
-    openai: env.OPENAI_API_KEY,
-    anthropic: env.ANTHROPIC_API_KEY,
-  });
+  const ownKeyCrypto = createOwnKeyCrypto(ownKeyConfig);
+  const keys = createKeyResolver(
+    { openai: env.OPENAI_API_KEY, anthropic: env.ANTHROPIC_API_KEY },
+    { store: ownKeyRepository, crypto: ownKeyCrypto },
+  );
 
   const processDirectReply = createDirectReplyProcessor({
     store: directReplyRepository,
@@ -94,10 +105,10 @@ const start = async (): Promise<void> => {
   const checkpointer = await createCheckpointer(pool);
 
   const processRun = createRunProcessor({
-    scheduleQuestionTimeout: async (runId) => {
+    scheduleQuestionTimeout: async (runId, keyRefs) => {
       await timeoutQueue.add(
         'clarifying-question-timeout',
-        { runId },
+        { runId, ...(keyRefs && { keyRefs }) },
         { delay: env.CLARIFYING_QUESTION_TIMEOUT_MS, jobId: clarifyingQuestionTimeoutJobId(runId) },
       );
     },
@@ -169,6 +180,21 @@ const start = async (): Promise<void> => {
     pendingDeletionDays: env.PENDING_DELETION_DAYS,
     guestInactiveDays: env.GUEST_INACTIVE_DAYS,
   });
+  const ownKeyValidations = new Worker(
+    OWN_KEY_VALIDATION_QUEUE,
+    createOwnKeyValidationProcessor({
+      store: ownKeyRepository,
+      crypto: ownKeyCrypto,
+      check: checkProviderKey(globalThis.fetch, OWN_KEY_CHECK_TIMEOUT_MS),
+      logger,
+    }),
+    { connection: redis.dedicatedConnection() },
+  );
+  const ownKeyRewraps = new Worker(
+    OWN_KEY_REWRAP_QUEUE,
+    createOwnKeyRewrapProcessor({ store: ownKeyRepository, crypto: ownKeyCrypto, logger }),
+    { connection: redis.dedicatedConnection() },
+  );
   const purges = new Worker(PURGE_QUEUE, processPurge, {
     connection: redis.dedicatedConnection(),
   });
@@ -188,6 +214,8 @@ const start = async (): Promise<void> => {
     [runs, 'Run'],
     [timeouts, 'Clarifying question timeout'],
     [purges, 'Purge'],
+    [ownKeyValidations, 'Own key validation'],
+    [ownKeyRewraps, 'Own key re-wrap'],
   ] as const) {
     queue.on('error', (err) => {
       // `warn`: the connection's own `redis.connection.failed` line is the outage's error.
@@ -240,6 +268,8 @@ const start = async (): Promise<void> => {
         timeoutQueue.close(),
         runQueue.close(),
         purges.close(),
+        ownKeyValidations.close(),
+        ownKeyRewraps.close(),
         purgeQueue.close(),
         new Promise<void>((resolve) => health.close(() => resolve())),
       ]);

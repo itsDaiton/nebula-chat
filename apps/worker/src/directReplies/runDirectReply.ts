@@ -10,7 +10,7 @@ import type {
   ChatStreamConfig,
   HistoryMessage,
 } from '@worker/directReplies/streamChat';
-import type { KeyResolver } from '@worker/llm/keyResolver';
+import type { KeyResolverFactory } from '@worker/llm/keyResolver';
 import { scrubError } from '@worker/modelCalls/scrubError';
 import type { Prompts } from '@worker/llm/prompts';
 import { recordCachedModelCall, recordModelCall } from '@worker/modelCalls/recordModelCall';
@@ -83,7 +83,7 @@ export type DirectReplyDeps = {
   streamChat: StreamChat;
   /** The system prompts, loaded once at boot. */
   prompts: Prompts;
-  keys: KeyResolver;
+  keys: KeyResolverFactory;
   logger: Logger;
   /** How often the model call checks for a cancel request. Default 250 ms. */
   cancelPollMs?: number;
@@ -121,6 +121,7 @@ export const watchForCancel = (
  */
 export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps): Promise<void> => {
   const { store, stream, logger } = deps;
+  const keys = deps.keys({ userId: job.userId, keyRefs: job.keyRefs });
   const startMs = Date.now();
   let model: string | undefined;
   let provider: ModelProvider | undefined;
@@ -170,6 +171,7 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
       sessionId: job.sessionId,
       provider,
       model,
+      ownKey: keys.isOwn(provider),
     };
     // A reply stopped while its job waited in the queue never reaches the model.
     if (await stream.isCancelled(job.streamId)) {
@@ -215,7 +217,7 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
     }
 
     // A replay makes no model call, so only a live reply needs the provider's key.
-    const apiKey = deps.keys.keyFor(provider);
+    const apiKey = await keys.keyFor(provider);
 
     stopWatching = watchForCancel(job.streamId, deps, cancel);
     const modelProvider = provider;
@@ -236,32 +238,34 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
           logger,
           subject,
           (onCallUsage) =>
-            deps.streamChat(
-              {
-                provider: modelProvider,
-                apiKey,
-                model: modelName,
-                systemPrompt: deps.prompts.directReply,
-                history,
-                userMessage: userMessage.content,
-                logger: componentLogger(logger, 'llm'),
-                signal: cancel.signal,
-              },
-              {
-                onToken: (token) => {
-                  reply += token;
-                  tokens.push(token);
-                  enqueue({ type: 'token', token });
+            keys.guard(modelProvider, () =>
+              deps.streamChat(
+                {
+                  provider: modelProvider,
+                  apiKey,
+                  model: modelName,
+                  systemPrompt: deps.prompts.directReply,
+                  history,
+                  userMessage: userMessage.content,
+                  logger: componentLogger(logger, 'llm'),
+                  signal: cancel.signal,
                 },
-                onUsage: (u) => {
-                  usage = u;
-                  enqueue({ type: 'usage', ...u });
+                {
+                  onToken: (token) => {
+                    reply += token;
+                    tokens.push(token);
+                    enqueue({ type: 'token', token });
+                  },
+                  onUsage: (u) => {
+                    usage = u;
+                    enqueue({ type: 'usage', ...u });
+                  },
+                  onCallUsage,
+                  onContext: (count) => {
+                    contextMessages = count;
+                  },
                 },
-                onCallUsage,
-                onContext: (count) => {
-                  contextMessages = count;
-                },
-              },
+              ),
             ),
           cancel.signal,
           async () => {
@@ -292,7 +296,7 @@ export const runDirectReply = async (job: DirectReplyJob, deps: DirectReplyDeps)
   } catch (error) {
     stopWatching();
     // Provider text can echo a key; clean it before it is logged.
-    scrubError(error, deps.keys);
+    scrubError(error, keys);
     if (cancel.signal.aborted && !modelReturned) {
       await appended.catch(() => undefined);
       await endCancelled(job, reply, deps, summary);

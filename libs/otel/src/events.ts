@@ -23,6 +23,10 @@ export const LOG_EVENTS = [
   // Purge (the worker, ADR-0028)
   'account.purge.completed',
   'account.purge.user.failed',
+  // Own keys (the worker, ADR-0037)
+  'own_key.validated',
+  'own_key.rewrap.completed',
+  'own_key.rewrap.failed',
   // Jobs (the worker, ADR-0013)
   'job.payload.rejected',
   'job.queue.failed',

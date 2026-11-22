@@ -13,6 +13,8 @@ export const errorCodeSchema = z
     'MessageAllowanceReached',
     // A verified Registered user has spent this month's Spend allowance on the Operator key.
     'SpendAllowanceReached',
+    // The User's stored Own key is missing, not yet validated, rejected by its provider or unreadable: they must update it in Settings.
+    'InvalidOwnKey',
     // An Admin whose auth session has not passed two-factor authentication.
     'TwoFactorRequired',
     'NotFound',

@@ -1,5 +1,5 @@
 import type { BaseCheckpointSaver } from '@langchain/langgraph';
-import type { RunJob } from '@nebula-chat/contracts';
+import type { OwnKeyRefs, RunJob } from '@nebula-chat/contracts';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
 import type { Logger } from '@nebula-chat/otel';
 import { stepIdFor } from '@worker/runs/steps';
@@ -28,6 +28,7 @@ const timeoutStreamId = (runId: string): string => stepIdFor(runId, 'orchestrato
 export const endClarifyingWait = async (
   runId: string,
   { runs, checkpointer, isCancelled, enqueueRun, logger }: EndWaitDeps,
+  keyRefs?: OwnKeyRefs,
 ): Promise<void> => {
   const cancelled = await isCancelled(runId);
   const run = await runs.settleWaiting(runId, cancelled ? 'cancelled' : 'queued');
@@ -59,6 +60,7 @@ export const endClarifyingWait = async (
     runId,
     streamId: timeoutStreamId(runId),
     resume: { answerMessageId: null },
+    ...(keyRefs && { keyRefs }),
   });
   logEvent(
     log,

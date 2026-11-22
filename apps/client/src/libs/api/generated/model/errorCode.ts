@@ -14,6 +14,7 @@ export const ErrorCode = {
   Forbidden: 'Forbidden',
   MessageAllowanceReached: 'MessageAllowanceReached',
   SpendAllowanceReached: 'SpendAllowanceReached',
+  InvalidOwnKey: 'InvalidOwnKey',
   TwoFactorRequired: 'TwoFactorRequired',
   NotFound: 'NotFound',
   Conflict: 'Conflict',

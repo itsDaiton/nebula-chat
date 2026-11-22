@@ -62,6 +62,10 @@ services:
       # Required here: TAVILY_KEYLESS stays unset (false), so production never searches keyless.
       - key: TAVILY_API_KEY
         sync: false
+      # The private half of each Own key encryption keypair, one per version, PEM (ADR-0037).
+      # Rotation runbook: docs/own-key-rotation.md. Unset, Own keys are unusable and the worker still boots.
+      - key: OWN_KEY_PRIVATE_KEY_V1
+        sync: false
 
   - type: web
     name: nebula-chat-client

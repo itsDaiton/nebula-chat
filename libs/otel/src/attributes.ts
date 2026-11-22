@@ -73,6 +73,11 @@ export type LogAttributeValues = {
   'nebula.purge.pending_users': number;
   'nebula.purge.guests': number;
   'nebula.purge.failed': number;
+  // Own keys: ids and outcomes only, never a key or ciphertext
+  'nebula.own_key.id': string;
+  'nebula.own_key.status': 'valid' | 'invalid';
+  'nebula.own_key.rewrapped': number;
+  'nebula.own_key.failed': number;
   // Outcome
   'nebula.duration_ms': number;
   'nebula.outcome': 'completed' | 'partial' | 'cancelled' | 'rate_limited' | 'failed';
@@ -133,6 +138,10 @@ export const ATTR = {
   NEBULA_LOG_LEVEL_TO: 'nebula.log.level.to',
   NEBULA_LOG_LEVEL_EXPIRES_AT: 'nebula.log.level.expires_at',
   NEBULA_OPERATOR: 'nebula.operator',
+  NEBULA_OWN_KEY_ID: 'nebula.own_key.id',
+  NEBULA_OWN_KEY_STATUS: 'nebula.own_key.status',
+  NEBULA_OWN_KEY_REWRAPPED: 'nebula.own_key.rewrapped',
+  NEBULA_OWN_KEY_FAILED: 'nebula.own_key.failed',
   NEBULA_DURATION_MS: 'nebula.duration_ms',
   NEBULA_OUTCOME: 'nebula.outcome',
   TRACE_ID: 'trace_id',

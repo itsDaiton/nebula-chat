@@ -25,6 +25,7 @@ export {
   ForbiddenError,
   MessageAllowanceReachedError,
   SpendAllowanceReachedError,
+  InvalidOwnKeyError,
   TwoFactorRequiredError,
   NotFoundError,
   ConflictError,

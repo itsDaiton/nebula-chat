@@ -145,6 +145,7 @@ export const runModelStep = async <T>(
 ): Promise<{ output: T; tokens: number }> => {
   const { phase, agent, input, turn = 0, parentStepId = null } = step;
   const id = step.id ?? stepIdFor(ctx.runId, phase, agent.name);
+  const { provider } = getModel(agent.model);
   let usage: CallUsage | undefined;
   return runStep(
     ctx,
@@ -172,14 +173,17 @@ export const runModelStep = async <T>(
           runId: ctx.runId,
           stepId: id,
           agent: agent.name,
-          provider: getModel(agent.model).provider,
+          provider,
+          ownKey: ctx.keys.isOwn(provider),
           model: agent.model,
         },
         (reportUsage) =>
-          call((reported) => {
-            usage = reported;
-            reportUsage(reported);
-          }),
+          ctx.keys.guard(provider, () =>
+            call((reported) => {
+              usage = reported;
+              reportUsage(reported);
+            }),
+          ),
         config.signal,
       ),
   );

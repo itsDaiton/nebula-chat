@@ -1,7 +1,13 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { GENERIC_ERROR_MESSAGE } from '@nebula-chat/errors';
 import { estimateCost, MODEL_IDS } from '@nebula-chat/contracts';
-import { operatorKeyResolver } from '@worker/llm/keyResolver';
+import { createKeyResolver, operatorKeyResolver } from '@worker/llm/keyResolver';
+import {
+  cryptoFor,
+  encryptOwnKey,
+  generateKeyPair,
+  memoryOwnKeys,
+} from '@worker/ownKeys/tests/ownKeyFakes';
 import type { OperatorKeys } from '@worker/llm/keyResolver';
 import type { StreamChat } from '@worker/directReplies/runDirectReply';
 import { createDirectReplyProcessor } from '@worker/jobs/directReply';
@@ -587,6 +593,7 @@ describe('the Direct reply job', () => {
           durationMs: expect.any(Number),
           outcome: 'completed',
           cached: false,
+          ownKey: false,
           messageId: STREAM_ID,
           contextMessages: 2,
         },
@@ -649,6 +656,7 @@ describe('the Direct reply job', () => {
         durationMs: expect.any(Number),
         outcome: 'completed',
         cached: true,
+        ownKey: false,
         messageId: replayId,
         contextMessages: 2,
       });
@@ -783,5 +791,127 @@ describe('trace propagation', () => {
     await run(scriptedModel(['ok']).streamChat, { ...payload, traceparent });
 
     expect(eventLines(log.lines, 'chat.reply.completed')).toMatchObject([{ trace_id: TRACE_ID }]);
+  });
+});
+
+describe('the Direct reply job on an Own key', () => {
+  const REF = '77777777-7777-4777-8777-777777777777';
+  const OWN = 'sk-own-sentinel-1111';
+  const pair = generateKeyPair();
+  let own: ReturnType<typeof memoryOwnKeys>;
+
+  const store = (overrides: Partial<Parameters<typeof own.add>[1]> = {}) =>
+    own.add(REF, {
+      userId: USER_ID,
+      provider: 'openai',
+      ciphertext: encryptOwnKey(pair.publicKey, OWN),
+      ...overrides,
+    });
+  const runOnOwnKey = (
+    streamChat: StreamChat,
+    data: unknown = { ...payload, keyRefs: { openai: REF } },
+  ) =>
+    createDirectReplyProcessor({
+      store: db.store,
+      stream: redis.stream,
+      cache: responses.cache,
+      ledger: ledger.ledger,
+      streamChat,
+      prompts: { directReply: 'You are the Direct reply prompt.' } as never,
+      keys: createKeyResolver(
+        { openai: 'sk-operator' },
+        { store: own.store, crypto: cryptoFor({ 1: pair }) },
+      ),
+      logger: log.logger,
+      cancelPollMs: 1,
+    })({ id: 'job-1', data });
+  const providerError = (status: number) =>
+    Object.assign(new Error(`rejected ${OWN} with ${status}`), { status });
+  const errorEvent = () => streamed().find((e) => e.type === 'error');
+
+  beforeEach(() => {
+    own = memoryOwnKeys();
+  });
+
+  it('runs on the stored key the payload references', async () => {
+    store();
+    const model = scriptedModel(['ok']);
+
+    await runOnOwnKey(model.streamChat);
+
+    expect(model.calls.map((c) => c.apiKey)).toEqual([OWN]);
+  });
+
+  it('runs on the Operator key when the payload carries no reference', async () => {
+    store();
+    const model = scriptedModel(['ok']);
+
+    await runOnOwnKey(model.streamChat, payload);
+
+    expect(model.calls.map((c) => c.apiKey)).toEqual(['sk-operator']);
+  });
+
+  it('flags the call in the ledger as made on an Own key', async () => {
+    store();
+
+    await runOnOwnKey(scriptedModel(['ok']).streamChat);
+
+    expect(ledger.calls).toMatchObject([{ ownKey: true, outcome: 'completed' }]);
+  });
+
+  it('marks a key the provider rejects invalid and fails the reply with the typed error, never trying the Operator key', async () => {
+    store();
+    const model = scriptedModel(['ok']);
+    const failing = failingModel(providerError(401));
+
+    await runOnOwnKey(failing);
+    await runOnOwnKey(model.streamChat);
+
+    expect(own.rows.get(REF)?.status).toBe('invalid');
+    expect(errorEvent()).toMatchObject({ error: 'InvalidOwnKey' });
+    expect(model.calls).toEqual([]);
+    expect(ledger.calls).toMatchObject([{ ownKey: true, outcome: 'failed' }]);
+  });
+
+  it('fails a quota or rate-limit failure with a reason and leaves the key valid', async () => {
+    store();
+
+    await runOnOwnKey(failingModel(providerError(429)));
+
+    expect(own.rows.get(REF)?.status).toBe('valid');
+    expect(errorEvent()).toMatchObject({ error: 'TooManyRequests' });
+  });
+
+  it('fails visibly when the referenced key is gone, without calling a provider', async () => {
+    const model = scriptedModel(['ok']);
+
+    await runOnOwnKey(model.streamChat);
+
+    expect(errorEvent()).toMatchObject({ error: 'InvalidOwnKey' });
+    expect(model.calls).toEqual([]);
+    expect(streamed().at(-1)).toEqual({ type: 'end' });
+  });
+
+  it('uses a key replaced under the same reference on the next attempt', async () => {
+    store();
+    await runOnOwnKey(failingModel(providerError(401)));
+    redis.events.clear();
+
+    store({ ciphertext: encryptOwnKey(pair.publicKey, 'sk-replacement'), status: 'valid' });
+    const model = scriptedModel(['ok']);
+    await runOnOwnKey(model.streamChat, { ...payload, keyRefs: { openai: REF } });
+
+    expect(model.calls.map((c) => c.apiKey)).toEqual(['sk-replacement']);
+  });
+
+  it('never lets the key reach the stream, the ledger or a log line', async () => {
+    store();
+    await runOnOwnKey(failingModel(providerError(401), ['partial']));
+    store();
+    await runOnOwnKey(scriptedModel(['fine']).streamChat);
+
+    for (const surface of [streamed(), ledger.calls, log.lines]) {
+      expect(JSON.stringify(surface)).not.toContain(OWN);
+    }
   });
 });

@@ -166,6 +166,7 @@ erDiagram
   messages ||--o| runs : "triggers"
   runs |o--o{ messages : "produces"
   runs ||--o{ steps : "takes"
+  users ||--o{ own_keys : "stores"
   users |o--o{ model_calls : "is billed for"
   sessions |o--o{ model_calls : "is billed for"
   runs |o--o{ model_calls : "is billed for"
@@ -244,12 +245,24 @@ erDiagram
     numeric cost_usd
     text outcome "completed, failed or cancelled"
     boolean cached
+    boolean own_key "ran on an Own key"
+  }
+  own_keys {
+    uuid id PK
+    uuid user_id FK
+    text provider "openai or anthropic, one per User"
+    text ciphertext "RSA-OAEP, only the worker can read it"
+    integer key_version
+    text last_four
+    text status "pending, valid or invalid"
   }
 ```
 
 - Every foreign key cascades on delete, so deleting a User removes their Sessions and Messages. The
   exception is `model_calls`, an append-only ledger the worker writes for every model call and cache
   replay (ADR-0030): its references are set null instead, so usage totals survive a Purge.
+- `own_keys` holds a User's Own key as ciphertext only the worker's private key opens (ADR-0037); the server
+  writes it, the worker reads it by id at every Model call and never keeps the plaintext.
 - better-auth keeps live sign-ins and verification tokens in Redis (`secondaryStorage`), so the
   `session` and `verification` tables stay empty in practice.
 - An assistant Message's `id` is its reply stream's `streamId`, so one id names both.

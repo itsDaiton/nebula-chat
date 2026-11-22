@@ -17,6 +17,7 @@ import { llmConcurrencyLimiter } from '@worker/llm/concurrencyLimiter';
 import { countTokens } from '@worker/llm/countTokens';
 import { buildBrief } from '@worker/runs/brief';
 import type { Brief, IntakeOutputs } from '@worker/runs/brief';
+import { AppError } from '@nebula-chat/errors';
 import { createOrchestrator } from '@worker/runs/orchestrator';
 import type { OrchestratorDeps } from '@worker/runs/orchestrator';
 import { findingsOf } from '@worker/runs/findings';
@@ -71,7 +72,7 @@ const intakeNode =
         config,
         async (reportUsage) => {
           const { output: parsed, usage } = await deps.models.structured({
-            ...llmConfigFor(agent, deps.keys),
+            ...(await llmConfigFor(agent, deps.keys)),
             name: agent.name,
             schema,
             messages: [new SystemMessage(system), new HumanMessage(human)],
@@ -83,6 +84,12 @@ const intakeNode =
       );
       return { intake: { [agent.name]: output } };
     } catch (err) {
+      // A User's Own key that cannot serve ends the Run: the Brief never goes on without it.
+      if (
+        err instanceof AppError &&
+        (err.code === 'InvalidOwnKey' || err.code === 'TooManyRequests')
+      )
+        throw err;
       logEvent(
         componentLogger(deps.logger, 'chat'),
         'warn',
@@ -106,7 +113,10 @@ const outputNode =
       config,
       (reportUsage) =>
         llmConcurrencyLimiter(async () => {
-          const model = deps.models.chat({ ...llmConfigFor(agent, deps.keys), streaming: true });
+          const model = deps.models.chat({
+            ...(await llmConfigFor(agent, deps.keys)),
+            streaming: true,
+          });
           let answer = '';
           let reported: UsageMetadata | undefined;
           try {
@@ -138,7 +148,7 @@ const outputNode =
 const orchestratorNode =
   (deps: RunGraphDeps) => async (state: RunStateValues, config: LangGraphRunnableConfig) => {
     const brief = state.brief ?? buildBrief(state.intake, state.missing);
-    const orchestrator = createOrchestrator(deps);
+    const orchestrator = await createOrchestrator(deps);
     // The node's own checkpoint id would make the nested loop replay its done tasks instead of resuming them.
     const configurable = Object.fromEntries(
       Object.entries(config.configurable ?? {}).filter(([key]) => key !== 'checkpoint_id'),

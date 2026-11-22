@@ -38,9 +38,17 @@ const sentParameters = ({ model, parameters }: AgentDefinition): Partial<typeof 
   return sent;
 };
 
-export const llmConfigFor = (agent: AgentDefinition, keys: KeyResolver): LLMConfig => {
+export const llmConfigFor = async (
+  agent: AgentDefinition,
+  keys: KeyResolver,
+): Promise<LLMConfig> => {
   const { provider } = getModel(agent.model);
-  return { provider, apiKey: keys.keyFor(provider), model: agent.model, ...sentParameters(agent) };
+  return {
+    provider,
+    apiKey: await keys.keyFor(provider),
+    model: agent.model,
+    ...sentParameters(agent),
+  };
 };
 
 // Everything the model was sent, so a Step can be inspected on its own.

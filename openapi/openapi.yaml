@@ -84,6 +84,7 @@ components:
         - Forbidden
         - MessageAllowanceReached
         - SpendAllowanceReached
+        - InvalidOwnKey
         - TwoFactorRequired
         - NotFound
         - Conflict

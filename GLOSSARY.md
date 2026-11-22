@@ -44,6 +44,10 @@ _Avoid_: Cached response.
 One invocation of an LLM, recorded once it ends with its Model, token counts, estimated cost and outcome. A Direct reply makes one; a Run makes one per Step that calls a model (tool Steps make none). A replayed Cache entry counts as a Model call at zero cost. The unit that usage and spend are measured in.
 _Avoid_: Request, completion, generation.
 
+**Own key**:
+An API key for an LLM provider that a verified Registered user supplies for themselves, at most one per provider. Their Model calls on that provider use it instead of the Operator key and are paid for by them, and a stored Own key that fails fails the reply and never falls back to the Operator key. It is usable only once a validation job has passed it, and only the worker can read it.
+_Avoid_: BYOK (conversation shorthand only), personal key, user key, API token.
+
 **Operator key**:
 The API key for an LLM provider that the deployment itself holds. Every Model call uses it unless its User has an Own key for that Model's provider, and whoever runs the deployment pays for the calls made with it.
 _Avoid_: Shared key, server key, system key.

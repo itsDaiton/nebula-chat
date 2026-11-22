@@ -10,6 +10,7 @@ import {
   check,
   numeric,
   jsonb,
+  unique,
 } from 'drizzle-orm/pg-core';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
@@ -300,6 +301,8 @@ export const modelCalls = pgTable(
     outcome: text('outcome', { enum: MODEL_CALL_OUTCOMES }).notNull(),
     // Replayed from the response cache: no provider call, no cost.
     cached: boolean('cached').notNull().default(false),
+    // The call ran on the User's Own key, not the Operator key.
+    ownKey: boolean('own_key').notNull().default(false),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (t) => [
@@ -310,6 +313,41 @@ export const modelCalls = pgTable(
     index('model_calls_session_idx').on(t.sessionId),
     index('model_calls_message_idx').on(t.messageId),
     check('model_calls_outcome_check', sql`${t.outcome} in ('completed', 'failed', 'cancelled')`),
+  ],
+);
+
+export const OWN_KEY_PROVIDERS = ['openai', 'anthropic'] as const;
+
+export type OwnKeyProvider = (typeof OWN_KEY_PROVIDERS)[number];
+
+// `pending` until a validation job passes it; only a `valid` key is ever used for a Model call.
+export const OWN_KEY_STATUSES = ['pending', 'valid', 'invalid'] as const;
+
+export type OwnKeyStatus = (typeof OWN_KEY_STATUSES)[number];
+
+// A User's Own key (ADR-0037): ciphertext only the worker can decrypt, one per User and provider.
+export const ownKeys = pgTable(
+  'own_keys',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    provider: text('provider', { enum: OWN_KEY_PROVIDERS }).notNull(),
+    // RSA-OAEP ciphertext, base64, under the worker public key of `keyVersion`.
+    ciphertext: text('ciphertext').notNull(),
+    keyVersion: integer('key_version').notNull(),
+    lastFour: text('last_four').notNull(),
+    status: text('status', { enum: OWN_KEY_STATUSES }).notNull().default('pending'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    unique('own_keys_user_provider_unique').on(t.userId, t.provider),
+    // Serves the re-wrap job's walk over keys not at the current version.
+    index('own_keys_key_version_idx').on(t.keyVersion),
+    check('own_keys_provider_check', sql`${t.provider} in ('openai', 'anthropic')`),
+    check('own_keys_status_check', sql`${t.status} in ('pending', 'valid', 'invalid')`),
   ],
 );
 
