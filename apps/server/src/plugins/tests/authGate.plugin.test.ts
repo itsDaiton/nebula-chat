@@ -480,7 +480,8 @@ describe('auth catch-all CORS (GET|POST /api/auth/*)', () => {
       payload: {},
     });
 
-    expect(res.statusCode).toBe(200);
+    // The mutation Origin check refuses it before better-auth runs.
+    expect(res.statusCode).toBe(403);
     expect(Object.keys(res.headers).filter((name) => name.startsWith('access-control-'))).toEqual(
       [],
     );
