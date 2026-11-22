@@ -57,6 +57,13 @@ import { pendingDeletionSignInPlugin } from './pendingDeletionSignIn';
 import { restoreAccountPlugin } from './restoreAccount';
 import type { OnUserDeleted } from './userDeletion';
 
+// Per client IP, keyed by path; `window` is in seconds. A custom rule replaces better-auth's default for that path.
+const AUTH_RATE_LIMIT_RULES = {
+  '/sign-in/anonymous': { window: 60 * 60, max: 5 },
+  '/two-factor/*': { window: 60, max: 5 },
+  '/device/code': { window: 60, max: 5 },
+};
+
 /**
  * Everything the lib needs to build an instance; it never reads `process.env`, the server resolves these from its own env.
  * The Guest message allowance is enforced in the chat send pre-handler (ADR-0010 §4), not here.
@@ -384,6 +391,7 @@ export const createAuth = ({
     rateLimit: {
       enabled: true,
       storage: 'secondary-storage',
+      customRules: AUTH_RATE_LIMIT_RULES,
     },
     plugins: [
       anonymous({
