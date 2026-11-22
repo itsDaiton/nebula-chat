@@ -12,6 +12,7 @@ updates:
     # Release Please ignores the default "chore(deps)", so npm bumps would never release.
     commit-message:
       prefix: "fix"
+      include: "scope"
     # TS 7 is blocked on typescript-eslint support (NEB-392); remove this then.
     ignore:
       - dependency-name: "typescript"
@@ -27,6 +28,9 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    commit-message:
+      prefix: "fix"
+      include: "scope"
     groups:
       github-actions-dependencies:
         patterns:
@@ -38,6 +42,9 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    commit-message:
+      prefix: "fix"
+      include: "scope"
     # Stateful images break their data volumes across majors; bump those by hand.
     ignore:
       - dependency-name: "postgres"
