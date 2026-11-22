@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.24.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.24.1...nebula-chat-openapi-v4.24.2) (2026-11-22)
+
+
+### Bug Fixes
+
+* **server:** NEB-897 rate limits keyed on the real client IP ([#931](https://github.com/itsDaiton/nebula-chat/issues/931)) ([b7e3bee](https://github.com/itsDaiton/nebula-chat/commit/b7e3bee2158974b6ba1e06c78447d1892d4be6a2))
+
 ## [4.24.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.24.0...nebula-chat-openapi-v4.24.1) (2026-11-21)
 
 

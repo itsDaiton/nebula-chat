@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.5.3...nebula-chat-auth-v3.5.4) (2026-11-22)
+
+
+### Bug Fixes
+
+* **server:** NEB-897 rate limits keyed on the real client IP ([#931](https://github.com/itsDaiton/nebula-chat/issues/931)) ([b7e3bee](https://github.com/itsDaiton/nebula-chat/commit/b7e3bee2158974b6ba1e06c78447d1892d4be6a2))
+
 ## [3.5.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.5.2...nebula-chat-auth-v3.5.3) (2026-11-21)
 
 
