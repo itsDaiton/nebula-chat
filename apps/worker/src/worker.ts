@@ -60,6 +60,9 @@ import { webSearchTool } from '@worker/tools/webSearch';
 // Fixed, off-peak UTC; the Purge window is days wide, so the hour carries no meaning (ADR-0031).
 const PURGE_CRON = '0 3 * * *';
 
+// A provider's model list answers in well under this; a slower one is retried by the job.
+const OWN_KEY_CHECK_TIMEOUT_MS = 10_000;
+
 const start = async (): Promise<void> => {
   const stream: ReplyStreamWriter = {
     append: async (streamId, event) => {
@@ -182,7 +185,7 @@ const start = async (): Promise<void> => {
     createOwnKeyValidationProcessor({
       store: ownKeyRepository,
       crypto: ownKeyCrypto,
-      check: checkProviderKey(globalThis.fetch, env.WEB_FETCH_TIMEOUT_MS),
+      check: checkProviderKey(globalThis.fetch, OWN_KEY_CHECK_TIMEOUT_MS),
       logger,
     }),
     { connection: redis.dedicatedConnection() },
