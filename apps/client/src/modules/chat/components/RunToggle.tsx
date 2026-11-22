@@ -9,7 +9,9 @@ import { cn } from '@/shared/utils/cn';
 export const RunToggle = () => {
   const { canRun, isRegistered, isAnswering, isRunMode, toggleRunMode } = useRunMode();
   const { label, hint, guest, locked } = resources.chat.run;
-  const blocked = !isRegistered ? guest : isAnswering ? resources.chat.clarify.answerHint : locked;
+  let blocked = locked;
+  if (isAnswering) blocked = resources.chat.clarify.answerHint;
+  if (!isRegistered) blocked = guest;
 
   return (
     <Tooltip>

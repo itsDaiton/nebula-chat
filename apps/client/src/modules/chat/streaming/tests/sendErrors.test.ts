@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AppError } from '@nebula-chat/errors';
 import { ErrorCode } from '@/libs/api/generated/model/errorCode';
-import { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
+import { CreateSessionBodyReplyMode } from '@/libs/api/generated/model/createSessionBodyReplyMode';
 import {
   allowanceRefusalOf,
   replyErrorMessage,
@@ -13,26 +13,28 @@ describe('sendFailureOf', () => {
   it('names a send refused at the message allowance, in either mode', () => {
     const refused = new AppError(ErrorCode.MessageAllowanceReached, 'Out of messages');
 
-    expect(sendFailureOf(refused, SendMessageBodyMode.direct)).toBe('allowance-reached');
-    expect(sendFailureOf(refused, SendMessageBodyMode.run)).toBe('allowance-reached');
+    expect(sendFailureOf(refused, CreateSessionBodyReplyMode.direct)).toBe('allowance-reached');
+    expect(sendFailureOf(refused, CreateSessionBodyReplyMode.run)).toBe('allowance-reached');
   });
 
   it('names a send refused at the spend allowance, in either mode', () => {
     const refused = new AppError(ErrorCode.SpendAllowanceReached, 'Resets on 2026-12-01');
 
-    expect(sendFailureOf(refused, SendMessageBodyMode.direct)).toBe('spend-allowance-reached');
-    expect(sendFailureOf(refused, SendMessageBodyMode.run)).toBe('spend-allowance-reached');
+    expect(sendFailureOf(refused, CreateSessionBodyReplyMode.direct)).toBe(
+      'spend-allowance-reached',
+    );
+    expect(sendFailureOf(refused, CreateSessionBodyReplyMode.run)).toBe('spend-allowance-reached');
   });
 
   it('names a Run send that is forbidden, but not a Direct one', () => {
     const forbidden = new AppError(ErrorCode.Forbidden, 'Runs are for Registered users');
 
-    expect(sendFailureOf(forbidden, SendMessageBodyMode.run)).toBe('run-forbidden');
-    expect(sendFailureOf(forbidden, SendMessageBodyMode.direct)).toBe('failed');
+    expect(sendFailureOf(forbidden, CreateSessionBodyReplyMode.run)).toBe('run-forbidden');
+    expect(sendFailureOf(forbidden, CreateSessionBodyReplyMode.direct)).toBe('failed');
   });
 
   it('calls anything else a failed reply', () => {
-    expect(sendFailureOf(new Error('Network down'), SendMessageBodyMode.run)).toBe('failed');
+    expect(sendFailureOf(new Error('Network down'), CreateSessionBodyReplyMode.run)).toBe('failed');
   });
 });
 

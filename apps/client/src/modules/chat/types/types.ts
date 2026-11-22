@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { RunStatus } from '@/libs/api/generated/model/runStatus';
 import type { useSendMessage } from '@/libs/api/generated/chat/chat';
-import type { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
+import type { CreateSessionBodyReplyMode } from '@/libs/api/generated/model/createSessionBodyReplyMode';
 import type { SendMessageBodyModel } from '@/libs/api/generated/model/sendMessageBodyModel';
 import type { useCreateSession } from '@/libs/api/generated/sessions/sessions';
 import type { StepPhase } from '@/libs/api/generated/model/stepPhase';
@@ -100,7 +100,7 @@ export type RunChipProps = {
 };
 
 export type ChatInputProps = {
-  onSendMessage: (message: string, mode: SendMessageBodyMode) => void;
+  onSendMessage: (message: string, mode: CreateSessionBodyReplyMode) => void;
   isLoading?: boolean;
   autoFocus?: boolean;
   selectedModel: string;
@@ -112,7 +112,7 @@ export type ChatInputProps = {
 export type ChatHistoryStreamOptions = {
   model: string;
   /** How the reply is produced; a Direct reply when omitted. */
-  mode?: SendMessageBodyMode;
+  mode?: CreateSessionBodyReplyMode;
   messages: ChatMessage[];
   sessionId?: string;
 };
@@ -181,7 +181,7 @@ export type SendMessageMutation = ReturnType<typeof useSendMessage>['mutateAsync
 export type PostMessageOptions = {
   sessionId: string;
   content: string;
-  mode: SendMessageBodyMode;
+  mode: CreateSessionBodyReplyMode;
   model: SendMessageBodyModel;
 };
 
@@ -205,7 +205,7 @@ export type UseChatStreamOptions = {
 };
 
 export type UseMessageHandlerProps = {
-  onSendMessage: (message: string, mode: SendMessageBodyMode) => void;
+  onSendMessage: (message: string, mode: CreateSessionBodyReplyMode) => void;
   isLoading: boolean;
 };
 
@@ -219,7 +219,7 @@ export type ChatMessageSkeletonProps = {
 };
 
 export type ChatInputBarProps = {
-  onSend: (message: string, mode: SendMessageBodyMode) => void;
+  onSend: (message: string, mode: CreateSessionBodyReplyMode) => void;
   isLoading: boolean;
   selectedModel: string;
   onModelChange: (model: string) => void;

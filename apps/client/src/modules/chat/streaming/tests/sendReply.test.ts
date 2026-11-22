@@ -9,7 +9,7 @@ import {
   getSendMessageMockHandler,
 } from '@/libs/api/generated/chat/chat.msw';
 import { ErrorCode } from '@/libs/api/generated/model/errorCode';
-import { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
+import { CreateSessionBodyReplyMode } from '@/libs/api/generated/model/createSessionBodyReplyMode';
 import type { SendMessageBodyModel } from '@/libs/api/generated/model/sendMessageBodyModel';
 import { createChatSession, postMessage } from '@/modules/chat/streaming/sendReply';
 import type { CreateSessionMutation, SendMessageMutation } from '@/modules/chat/types/types';
@@ -61,7 +61,7 @@ describe('createChatSession', () => {
       queryClient,
       create,
       'x'.repeat(60),
-      SendMessageBodyMode.direct,
+      CreateSessionBodyReplyMode.direct,
     );
 
     expect(id).toBe(SESSION_ID);
@@ -71,7 +71,7 @@ describe('createChatSession', () => {
   it("fixes the Session's Reply mode with the mode of its first message", async () => {
     server.use(getGetMessageAllowanceMockHandler({ metered: false }));
 
-    await createChatSession(queryClient, create, 'plan it', SendMessageBodyMode.run);
+    await createChatSession(queryClient, create, 'plan it', CreateSessionBodyReplyMode.run);
 
     expect(createdReplyMode).toBe('run');
   });
@@ -83,7 +83,7 @@ describe('createChatSession', () => {
       queryClient,
       create,
       'hi',
-      SendMessageBodyMode.direct,
+      CreateSessionBodyReplyMode.direct,
     ).catch((err: unknown) => err);
 
     expect(isAppError(error) && error.code).toBe(ErrorCode.MessageAllowanceReached);
@@ -94,7 +94,7 @@ describe('createChatSession', () => {
     server.use(getGetMessageAllowanceMockHandler(aMeteredAllowance(1)));
 
     await expect(
-      createChatSession(queryClient, create, 'hi', SendMessageBodyMode.direct),
+      createChatSession(queryClient, create, 'hi', CreateSessionBodyReplyMode.direct),
     ).resolves.toBe(SESSION_ID);
   });
 });
@@ -108,7 +108,7 @@ describe('postMessage', () => {
     const sent = await postMessage(queryClient, send, {
       sessionId: SESSION_ID,
       content: 'hi',
-      mode: SendMessageBodyMode.run,
+      mode: CreateSessionBodyReplyMode.run,
       model: 'gpt-4o-mini' as SendMessageBodyModel,
     });
 

@@ -1,6 +1,6 @@
 import { isAppError } from '@nebula-chat/errors';
 import { ErrorCode } from '@/libs/api/generated/model/errorCode';
-import { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
+import { CreateSessionBodyReplyMode } from '@/libs/api/generated/model/createSessionBodyReplyMode';
 import type { QueryClient } from '@tanstack/react-query';
 import {
   invalidateMessageAllowance,
@@ -13,11 +13,11 @@ export const replyErrorMessage = (err: unknown): string =>
   err instanceof Error && err.message ? err.message : resources.chat.streamError;
 
 // Nothing is persisted for a send refused at the allowance or a forbidden Run, so both hand the message back.
-export const sendFailureOf = (err: unknown, mode: SendMessageBodyMode): SendFailure => {
+export const sendFailureOf = (err: unknown, mode: CreateSessionBodyReplyMode): SendFailure => {
   if (!isAppError(err)) return 'failed';
   if (err.code === ErrorCode.MessageAllowanceReached) return 'allowance-reached';
   if (err.code === ErrorCode.SpendAllowanceReached) return 'spend-allowance-reached';
-  return mode === SendMessageBodyMode.run && err.code === ErrorCode.Forbidden
+  return mode === CreateSessionBodyReplyMode.run && err.code === ErrorCode.Forbidden
     ? 'run-forbidden'
     : 'failed';
 };

@@ -1,4 +1,4 @@
-import { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
+import { CreateSessionBodyReplyMode } from '@/libs/api/generated/model/createSessionBodyReplyMode';
 import { useGetSession } from '@/libs/api/generated/sessions/sessions';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
@@ -25,7 +25,8 @@ export const useRunMode = () => {
     isAnswering,
     isRunMode: isRegistered && isRun,
     // What a send or a regenerate asks for.
-    replyMode: isRegistered && isRun ? SendMessageBodyMode.run : SendMessageBodyMode.direct,
+    replyMode:
+      isRegistered && isRun ? CreateSessionBodyReplyMode.run : CreateSessionBodyReplyMode.direct,
     toggleRunMode,
   };
 };

@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useCreateSession } from '@/libs/api/generated/sessions/sessions';
 import { useSendMessage } from '@/libs/api/generated/chat/chat';
-import { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
+import { CreateSessionBodyReplyMode } from '@/libs/api/generated/model/createSessionBodyReplyMode';
 import type { SendMessageBodyModel } from '@/libs/api/generated/model/sendMessageBodyModel';
 import type {
   ChatHistoryStreamOptions,
@@ -74,7 +74,7 @@ export const useChatStream = ({
   const streamMessage = useCallback(
     async ({
       model,
-      mode = SendMessageBodyMode.direct,
+      mode = CreateSessionBodyReplyMode.direct,
       messages,
       sessionId: customSessionId,
     }: ChatHistoryStreamOptions) => {
