@@ -88,7 +88,7 @@ beforeEach(() => {
     getGetMessageAllowanceMockHandler({ metered: false }),
   );
   useMessageStore.setState({ message: '', isRunMode: false });
-  useInspectorStore.getState().clearSelectedRun();
+  useInspectorStore.getState().restoreRun(null);
   useChatStreamStore.setState({
     history: [],
     reply: IDLE_REPLY,
@@ -423,7 +423,7 @@ describe('ChatPage', () => {
     };
 
     const composer = () => screen.getByRole('textbox', { name: resources.chat.composer.label });
-    // The Inspector's Run tab carries the same name, so the toggle is found in the composer.
+    // The Inspector's Run view carries the same name, so the toggle is found in the composer.
     const runToggle = () =>
       within(composer().closest('form')!).getByRole('button', { name: text.label });
     const modelPicker = () =>

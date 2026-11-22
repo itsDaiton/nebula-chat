@@ -17,11 +17,11 @@ const tone: Partial<Record<RunStatus, string>> = {
   cancelled: 'text-muted-foreground',
 };
 
-/** The entry point to a Run under the answer it produced: selecting it opens the Inspector's Run tab on that Run. */
+/** The entry point to a Run under the answer it produced: selecting it opens the Inspector's Run view on that Run. */
 export const RunChip = ({ runId }: RunChipProps) => {
   const { data: run } = useRun(runId);
-  const { activeTab, selectedRunId, openInspector } = useInspectorStore();
-  const isSelected = activeTab === 'run' && selectedRunId === runId;
+  const { selectedRunId, selectRun } = useInspectorStore();
+  const isSelected = selectedRunId === runId;
   const duration = run ? runDurationMs(run) : null;
 
   return (
@@ -29,7 +29,7 @@ export const RunChip = ({ runId }: RunChipProps) => {
       type="button"
       title={meta.openRun}
       aria-pressed={isSelected}
-      onClick={() => openInspector('run', runId)}
+      onClick={() => selectRun(runId)}
       className={cn(
         'mt-2 mb-2 flex h-7 w-fit items-center gap-2 rounded-lg border border-border-strong bg-panel pr-2 pl-2.5 text-xs text-foreground-secondary outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring/50',
         isSelected && 'border-foreground',

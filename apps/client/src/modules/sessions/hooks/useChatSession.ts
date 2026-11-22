@@ -30,7 +30,7 @@ export const useChatSession = (sessionId: string | undefined) => {
     if (!isReplyInFlight(chat.reply) && chat.sessionId !== undefined) {
       queueMicrotask(() => {
         useChatStreamStore.setState({ history: [], sessionId: undefined, reply: IDLE_REPLY });
-        useInspectorStore.getState().clearSelectedRun();
+        useInspectorStore.getState().restoreRun(null);
         // The Run toggle chose the last new chat's Reply mode; a new chat starts Direct.
         useMessageStore.getState().resetRunMode();
       });
@@ -44,8 +44,11 @@ export const useChatSession = (sessionId: string | undefined) => {
         sessionId,
         reply: isReplyInFlight(reply) ? reply : IDLE_REPLY,
       }));
-      // The Run tab shows a Run of the Session on screen, never the last one picked elsewhere.
-      useInspectorStore.getState().clearSelectedRun();
+      // The Run view opens on the Session's newest Run, never one picked in another Session.
+      const newestRun = history.findLast(
+        (message) => message.role === 'assistant' && message.runId,
+      );
+      useInspectorStore.getState().restoreRun(newestRun?.runId ?? null);
       // Only on opening a Session, so a later pick or refetch never resets the composer.
       const lastModel = history.findLast((message) => message.model)?.model;
       if (lastModel) {

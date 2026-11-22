@@ -23,7 +23,7 @@ const chip = () => screen.findByRole('button', { name: /^Run/ });
 
 beforeEach(() => {
   usePanelStore.setState({ rightOpen: false, sheetOpen: false });
-  useInspectorStore.setState({ activeTab: 'session', selectedRunId: null });
+  useInspectorStore.setState({ selectedRunId: null });
   server.use(getGetRunMockHandler(aRun()));
 });
 
@@ -36,12 +36,12 @@ describe('RunChip', () => {
     ).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('opens the Inspector on the Run tab with that Run selected', async () => {
+  it('opens the Inspector with that Run selected', async () => {
     renderWithProviders(<ChatAssistantMessage message={answer()} />);
 
     await userEvent.click(await chip());
 
-    expect(useInspectorStore.getState()).toMatchObject({ activeTab: 'run', selectedRunId: RUN_ID });
+    expect(useInspectorStore.getState()).toMatchObject({ selectedRunId: RUN_ID });
     expect(usePanelStore.getState().rightOpen).toBe(true);
     expect(await chip()).toHaveAttribute('aria-pressed', 'true');
   });

@@ -184,8 +184,8 @@ describe('useChatSession', () => {
     expect(chat().sessionId).toBeUndefined();
   });
 
-  it('clears the Run selected in the Inspector when another Session opens', async () => {
-    useInspectorStore.setState({ activeTab: 'run', selectedRunId: 'run-of-other' });
+  it('drops the Run selected in another Session when a Session without Runs opens', async () => {
+    useInspectorStore.setState({ selectedRunId: 'run-of-other' });
     useChatStreamStore.setState({ sessionId: 'other' });
     serveSession();
 
@@ -196,6 +196,21 @@ describe('useChatSession', () => {
     useInspectorStore.setState({ selectedRunId: 'run-of-session' });
     rerender();
     expect(useInspectorStore.getState().selectedRunId).toBe('run-of-session');
+  });
+
+  it("selects the newest Run of the Session when it opens, replacing another Session's", async () => {
+    useInspectorStore.setState({ selectedRunId: 'run-of-other' });
+    useChatStreamStore.setState({ sessionId: 'other' });
+    serveSession([
+      aMessage('m1', SESSION_ID, 'user', 'q1'),
+      { ...aMessage('m2', SESSION_ID, 'assistant', 'a1'), runId: 'run-old' },
+      aMessage('m3', SESSION_ID, 'user', 'q2'),
+      { ...aMessage('m4', SESSION_ID, 'assistant', 'a2'), runId: 'run-new' },
+    ]);
+
+    renderHookWithQueryClient(() => useChatSession(SESSION_ID));
+
+    await waitFor(() => expect(useInspectorStore.getState().selectedRunId).toBe('run-new'));
   });
 
   it('keeps the chat while a reply is still streaming', () => {

@@ -4,18 +4,15 @@ import type { RunStatus } from '@/libs/api/generated/model/runStatus';
 import type { Step } from '@/libs/api/generated/model/step';
 import type { StepStatus } from '@/libs/api/generated/model/stepStatus';
 
-export type InspectorTab = 'session' | 'run';
-
 export type InspectorState = {
-  activeTab: InspectorTab;
-  /** The Run the Run tab shows; null while none is selected. */
+  /** The Run the Run view shows; null while none is selected. */
   selectedRunId: string | null;
-  setActiveTab: (tab: InspectorTab) => void;
-  /** Shows the Inspector on a tab, selecting a Run when the tab is the Run tab. */
-  openInspector: (tab: InspectorTab, runId?: string) => void;
-  /** Selects a Run that just started on the Run tab; on mobile the sheet stays down, over the chat's own progress. */
+  /** The User picked a Run: select it and open the Inspector. */
+  selectRun: (runId: string) => void;
+  /** Selects a Run that just started; on mobile the sheet stays down, over the chat's own progress. */
   showRun: (runId: string) => void;
-  clearSelectedRun: () => void;
+  /** Sets the selection with no panel change: the newest Run of a Session just opened, or none. */
+  restoreRun: (runId: string | null) => void;
 };
 
 export type InspectorProps = {

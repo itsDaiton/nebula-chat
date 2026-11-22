@@ -8,11 +8,14 @@ import {
   getListSessionsMockHandler,
 } from '@/libs/api/generated/sessions/sessions.msw';
 import { getGetMessageAllowanceMockHandler } from '@/libs/api/generated/chat/chat.msw';
+import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
+import { IDLE_REPLY } from '@/modules/chat/utils/replyState';
+import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
 import { useModelStore } from '@/modules/chat/stores/useModelStore';
 import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
 import { resources } from '@/resources';
 import { usePanelStore } from '@/shared/stores/usePanelStore';
-import { aSession, mockGetSession } from '@/test/auth';
+import { aSession, holdSession, mockGetSession } from '@/test/auth';
 import { server } from '@/test/msw';
 import { renderRoute } from '@/test/renderRoute';
 import { aRun, RUN_ID } from '@/test/runs';
@@ -39,14 +42,29 @@ const message = (id: string, createdAt: string) => ({
 });
 
 const inspector = () => screen.findByRole('complementary', { name: resources.shell.inspector });
-const runTab = () => screen.findByRole('tab', { name: resources.inspector.tabs.run });
+const serveSession = (replyMode: 'run' | 'direct') =>
+  server.use(
+    getGetSessionMockHandler({
+      id: SESSION_ID,
+      title: 'Run events in the SSE parser',
+      createdAt: '2026-10-27T18:02:00.000Z',
+      archived: false,
+      archivedAt: null,
+      messageCount: 0,
+      replyMode,
+      activeStreamId: null,
+      waitingRun: null,
+    }),
+  );
 
 beforeEach(() => {
   localStorage.clear();
   layout.isMobile = false;
   layout.showSidePanels = true;
   usePanelStore.setState({ leftOpen: true, rightOpen: true, sheetOpen: false });
-  useInspectorStore.setState({ activeTab: 'session', selectedRunId: null });
+  useInspectorStore.setState({ selectedRunId: null });
+  useMessageStore.setState({ isRunMode: false });
+  useChatStreamStore.setState({ history: [], sessionId: undefined, reply: IDLE_REPLY });
   useModelStore.setState({ selectedModel: MODEL_ID });
   server.use(
     mockGetSession(aSession()),
@@ -67,7 +85,7 @@ beforeEach(() => {
   );
 });
 
-describe('Inspector Session tab', () => {
+describe('Inspector Session view', () => {
   it("shows the open Session's Model, limits, Message count and dates", async () => {
     await renderRoute(`/s/${SESSION_ID}`);
     const panel = within(await inspector());
@@ -117,40 +135,83 @@ describe('Inspector Session tab', () => {
   });
 });
 
-describe('Inspector Run tab', () => {
-  it('explains the empty state and switches tabs with the keyboard', async () => {
-    await renderRoute('/');
-    const session = await screen.findByRole('tab', { name: resources.inspector.tabs.session });
-    session.focus();
+describe('Inspector view by Reply mode', () => {
+  it('has no tab strip', async () => {
+    await renderRoute(`/s/${SESSION_ID}`);
+    await inspector();
 
-    await userEvent.keyboard('{ArrowRight}{Enter}');
-
-    expect(await runTab()).toHaveAttribute('aria-selected', 'true');
-    expect(await screen.findByText(resources.inspector.run.emptyTitle)).toBeInTheDocument();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
 
-  it('opens on the Run tab when another component asks the store', async () => {
-    usePanelStore.setState({ rightOpen: false });
-    await renderRoute('/');
-    expect(screen.queryByRole('complementary', { name: resources.shell.inspector })).toBeNull();
+  it('shows the Run view in a Run Session, on the newest Run, under a Session header', async () => {
+    serveSession('run');
+    server.use(
+      getListMessagesMockHandler([
+        message('m1', minutesAgo(30)),
+        { ...message('m2', minutesAgo(2)), role: 'assistant', runId: RUN_ID },
+      ]),
+      getGetRunMockHandler(aRun()),
+    );
+    await renderRoute(`/s/${SESSION_ID}`);
+    const panel = within(await inspector());
 
-    act(() => useInspectorStore.getState().openInspector('run', 'run-1'));
-
-    expect(await runTab()).toHaveAttribute('aria-selected', 'true');
+    expect(await panel.findByRole('region', { name: 'Turn 2' })).toBeInTheDocument();
+    expect(panel.getByText(resources.inspector.session.created)).toBeInTheDocument();
+    expect(await panel.findByText('2')).toBeInTheDocument();
+    expect(panel.queryByText(resources.inspector.session.model)).not.toBeInTheDocument();
   });
 
-  it("shows the selected Run's Steps, and its status beside the tab's name", async () => {
-    server.use(getGetRunMockHandler(aRun()));
-    await renderRoute('/');
+  it('keeps a Run selected after leaving the Session and coming back', async () => {
+    serveSession('run');
+    server.use(
+      getListMessagesMockHandler([
+        { ...message('m2', minutesAgo(2)), role: 'assistant', runId: RUN_ID },
+      ]),
+      getGetRunMockHandler(aRun()),
+    );
+    const { router } = await renderRoute(`/s/${SESSION_ID}`);
+    expect(await within(await inspector()).findByRole('region', { name: 'Turn 2' })).toBeVisible();
 
-    act(() => useInspectorStore.getState().openInspector('run', RUN_ID));
+    await act(() => router.navigate({ to: '/' }));
+    await act(() => router.navigate({ to: '/s/$id', params: { id: SESSION_ID } }));
 
     const panel = within(await inspector());
-    expect(await panel.findByRole('tab', { name: /^Run\s*partial$/ })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
     expect(await panel.findByRole('region', { name: 'Turn 2' })).toBeInTheDocument();
+    expect(panel.queryByText(resources.inspector.run.emptyTitle)).not.toBeInTheDocument();
+  });
+
+  it('shows the Session view in a Direct reply Session', async () => {
+    await renderRoute(`/s/${SESSION_ID}`);
+    const panel = within(await inspector());
+
+    expect(await panel.findByText(resources.inspector.session.model)).toBeInTheDocument();
+    expect(panel.queryByText(resources.inspector.run.emptyTitle)).not.toBeInTheDocument();
+  });
+
+  it('on a new chat follows the Run toggle', async () => {
+    await holdSession({ isAnonymous: false });
+    await renderRoute('/');
+    const panel = within(await inspector());
+    expect(await panel.findByText(resources.inspector.session.model)).toBeInTheDocument();
+
+    act(() => useMessageStore.setState({ isRunMode: true }));
+
+    expect(await panel.findByText(resources.inspector.run.emptyTitle)).toBeInTheDocument();
+    expect(panel.queryByText(resources.inspector.session.model)).not.toBeInTheDocument();
+  });
+
+  it('opens when another component selects a Run', async () => {
+    serveSession('run');
+    usePanelStore.setState({ rightOpen: false });
+    server.use(getGetRunMockHandler(aRun()));
+    await renderRoute(`/s/${SESSION_ID}`);
+    expect(screen.queryByRole('complementary', { name: resources.shell.inspector })).toBeNull();
+
+    act(() => useInspectorStore.getState().selectRun(RUN_ID));
+
+    expect(
+      await within(await inspector()).findByRole('region', { name: 'Turn 2' }),
+    ).toBeInTheDocument();
   });
 
   it('closes from its own button', async () => {
@@ -168,7 +229,7 @@ describe('Inspector Run tab', () => {
 });
 
 describe('Inspector on a small screen', () => {
-  it('shows the same tabs in the bottom sheet', async () => {
+  it('shows the same view in the bottom sheet', async () => {
     layout.isMobile = true;
     layout.showSidePanels = false;
     await renderRoute(`/s/${SESSION_ID}`);
