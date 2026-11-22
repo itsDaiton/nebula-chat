@@ -423,3 +423,38 @@ describe('createAuth CLI login (device authorization)', () => {
     expect(ids.indexOf('cli-login')).toBeGreaterThan(ids.indexOf('device-authorization'));
   });
 });
+
+describe('createAuth rate limits', () => {
+  // The limiter answers before any endpoint runs, so the `{}` database is never reached.
+  const hit = (auth: ReturnType<typeof buildAuth>, path: string, ip: string) =>
+    auth.handler(
+      new Request(`http://localhost:3000/api/auth${path}`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          origin: 'http://localhost:5173',
+          'cf-connecting-ip': ip,
+        },
+        body: JSON.stringify({ client_id: 'nebula-cli', code: '123456' }),
+      }),
+    );
+
+  it.each([
+    ['/sign-in/anonymous', 5],
+    ['/two-factor/verify-totp', 5],
+    ['/two-factor/verify-backup-code', 5],
+    ['/device/code', 5],
+  ])('answers 429 on %s past %i requests from one IP', async (path, max) => {
+    const auth = buildAuth();
+
+    for (let i = 0; i < max; i++) {
+      expect((await hit(auth, path, '203.0.113.7')).status).not.toBe(429);
+    }
+    const limited = await hit(auth, path, '203.0.113.7');
+
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get('x-retry-after')).not.toBeNull();
+    // Another client keeps its own bucket.
+    expect((await hit(auth, path, '203.0.113.8')).status).not.toBe(429);
+  });
+});

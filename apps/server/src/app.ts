@@ -46,6 +46,9 @@ const { version } = JSON.parse(
   readFileSync(resolve(process.cwd(), '../../openapi/package.json'), 'utf8'),
 ) as { version: string };
 
+const INTERNAL_RATE_LIMIT = { max: 10, timeWindow: '1 minute' };
+const ADMIN_RATE_LIMIT = { max: 120, timeWindow: '1 minute' };
+
 export type BuildAppOptions = {
   /**
    * Logger the Fastify instance is built with. `src/server.ts` passes the same
@@ -79,7 +82,14 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   await app.register(authGate);
   await app.register(sensible);
   await app.register(cors, corsOptions);
-  await app.register(rateLimit, { global: false });
+  await app.register(rateLimit, {
+    global: false,
+    // Render keeps a client-sent X-Forwarded-For; Cloudflare sets CF-Connecting-IP itself, as better-auth reads it.
+    keyGenerator: (req) => {
+      const header = req.headers['cf-connecting-ip'];
+      return (typeof header === 'string' && header.trim()) || req.ip;
+    },
+  });
 
   // Before @fastify/swagger: it collects the schemas carrying `.meta({ id })`,
   // which the transformers below emit as named components.
@@ -186,13 +196,21 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   await app.register(runRoutes, { prefix: '/api/runs' });
   await app.register(streamRoutes, { prefix: '/api/streams' });
   await app.register(profileImageRoutes, { prefix: '/api/profile-image' });
-  await app.register(logLevelRoutes, { prefix: '/api/internal/log-level' });
-  await app.register(adminRoutes, { prefix: '/api/internal/admins' });
-  await app.register(adminOverviewRoutes, { prefix: '/api/admin/overview' });
-  await app.register(usageRoutes, { prefix: '/api/admin/usage' });
-  await app.register(adminUsersRoutes, { prefix: '/api/admin/users' });
-  await app.register(adminSessionsRoutes, { prefix: '/api/admin/sessions' });
-  await app.register(auditRoutes, { prefix: '/api/admin/audit' });
+
+  // One bucket per scope. An instance hook runs before the gate's route hook, so a wrong token counts too.
+  await app.register(async (internal) => {
+    internal.addHook('onRequest', internal.rateLimit(INTERNAL_RATE_LIMIT));
+    await internal.register(logLevelRoutes, { prefix: '/api/internal/log-level' });
+    await internal.register(adminRoutes, { prefix: '/api/internal/admins' });
+  });
+  await app.register(async (admin) => {
+    admin.addHook('onRequest', admin.rateLimit(ADMIN_RATE_LIMIT));
+    await admin.register(adminOverviewRoutes, { prefix: '/api/admin/overview' });
+    await admin.register(usageRoutes, { prefix: '/api/admin/usage' });
+    await admin.register(adminUsersRoutes, { prefix: '/api/admin/users' });
+    await admin.register(adminSessionsRoutes, { prefix: '/api/admin/sessions' });
+    await admin.register(auditRoutes, { prefix: '/api/admin/audit' });
+  });
 
   return app;
 };

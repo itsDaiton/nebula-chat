@@ -114,6 +114,11 @@ sent and would let anyone pick their own bucket. Without a resolvable IP better-
 one shared bucket per path (the `auth.library.log` WARN), so one burst of sign-ins would lock out
 everyone. Outside Render the header is absent, so run behind a proxy that sets it.
 
+Custom rules (`AUTH_RATE_LIMIT_RULES` in `libs/auth/src/auth.ts`) replace the defaults for the routes an
+attacker would hammer, per IP: `/sign-in/anonymous` (Guest creation) 5 an hour, `/two-factor/*` 5 a minute and
+`/device/code` 5 a minute. A limited call answers 429 with better-auth's `X-Retry-After` header. The server's
+own Fastify limits key on the same header and are listed in [architecture](./architecture.md).
+
 Redis is a hard dependency for authentication. Unlike the chat cache (fail-open,
 ADR-0009), the `authStore` lets Redis errors propagate: durable identity survives in
 Postgres, but live sessions depend on Redis, buffered only by the cookie-cache window.
