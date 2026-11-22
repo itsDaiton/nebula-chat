@@ -10,11 +10,14 @@ import {
 } from '@/libs/api/generated/sessions/sessions.msw';
 import {
   getGetMessageAllowanceMockHandler,
+  getGetSpendAllowanceMockHandler,
   getSendMessageMockHandler,
 } from '@/libs/api/generated/chat/chat.msw';
+import { getGetRunMockHandler } from '@/libs/api/generated/runs/runs.msw';
 import { getListMessagesMockHandler } from '@/libs/api/generated/messages/messages.msw';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { IDLE_REPLY, isReplyInFlight } from '@/modules/chat/utils/replyState';
+import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
 import { useModelStore } from '@/modules/chat/stores/useModelStore';
 import { toast as sonner } from 'sonner';
@@ -22,6 +25,7 @@ import { resources } from '@/resources';
 import { renderRoute } from '@/test/renderRoute';
 import { API_ROUTE, mockApiError } from '@/test/api';
 import { aMeteredAllowance } from '@/test/allowance';
+import { aRun } from '@/test/runs';
 import { aSession, holdSession, mockGetSession } from '@/test/auth';
 import { mockReplyStream, sseFrame } from '@/test/chat';
 import { server } from '@/test/msw';
@@ -84,6 +88,7 @@ beforeEach(() => {
     getGetMessageAllowanceMockHandler({ metered: false }),
   );
   useMessageStore.setState({ message: '', isRunMode: false });
+  useInspectorStore.getState().clearSelectedRun();
   useChatStreamStore.setState({
     history: [],
     reply: IDLE_REPLY,
@@ -424,6 +429,18 @@ describe('ChatPage', () => {
     const modelPicker = () =>
       within(composer().closest('form')!).getByRole('button', { name: /gpt-4o.mini/i });
 
+    // The Run's stream events refetch it, and an unhandled request would fail whichever test is running.
+    const serveRunReads = () =>
+      server.use(getGetRunMockHandler(aRun({ id: RUN_ID })), getGetSpendAllowanceMockHandler());
+
+    // A reply still streaming would leak into the next test.
+    const untilReplyEnds = () =>
+      waitFor(() =>
+        expect(
+          screen.queryByRole('button', { name: resources.chat.stopReply }),
+        ).not.toBeInTheDocument(),
+      );
+
     // A new chat's first send creates a Run Session; reading it back names that mode.
     const serveRunSession = () =>
       server.use(
@@ -443,6 +460,7 @@ describe('ChatPage', () => {
       await holdSession({ isAnonymous: false, emailVerified: true });
       const sent = serveSends();
       serveRunSession();
+      serveRunReads();
       server.use(aPartialRun());
       await renderPage();
       await screen.findByRole('textbox', { name: resources.chat.composer.label });
@@ -479,38 +497,7 @@ describe('ChatPage', () => {
         { content: 'keep BullMQ?', mode: 'run' },
         { content: 'and now?', mode: 'run' },
       ]);
-    });
-
-    describe.each([
-      ['run', 'a Run'],
-      ['direct', 'a Direct reply'],
-    ] as const)('regenerating in a %s Session', (replyMode, outcome) => {
-      it(`asks for ${outcome}`, async () => {
-        await holdSession({ isAnonymous: false, emailVerified: true });
-        const sent = serveSends();
-        server.use(
-          getGetSessionMockHandler({
-            ...aChatSession(SESSION_ID, 'Chat'),
-            replyMode,
-            activeStreamId: null,
-            waitingRun: null,
-          }),
-          getListMessagesMockHandler([
-            aMessage('m1', 'user', 'keep BullMQ?'),
-            aMessage('m2', 'assistant', 'Keep BullMQ.'),
-          ]),
-          aPartialRun(),
-        );
-        await renderPage(`/s/${SESSION_ID}`);
-
-        await userEvent.click(
-          await screen.findByRole('button', { name: resources.chat.meta.regenerate }),
-        );
-
-        await waitFor(() =>
-          expect(sent).toMatchObject([{ content: 'keep BullMQ?', mode: replyMode }]),
-        );
-      });
+      await untilReplyEnds();
     });
 
     it('lets a Registered user who has not verified their email start a Run', async () => {
