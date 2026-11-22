@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.24.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.23.0...nebula-chat-client-v3.24.0) (2026-11-22)
+
+
+### Features
+
+* **client:** NEB-833 show the Inspector's view by Reply mode ([#936](https://github.com/itsDaiton/nebula-chat/issues/936)) ([b3208a8](https://github.com/itsDaiton/nebula-chat/commit/b3208a83ae0fa6dd493b8f512b60ca7e4482859c))
+
 ## [3.23.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.22.1...nebula-chat-client-v3.23.0) (2026-11-22)
 
 
