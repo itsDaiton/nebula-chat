@@ -46,6 +46,7 @@ beforeEach(() => {
       archived: false,
       archivedAt: null,
       messageCount: 4,
+      replyMode: 'direct' as const,
       activeStreamId: null,
       waitingRun: null,
     }),

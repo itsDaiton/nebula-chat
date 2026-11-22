@@ -35,9 +35,11 @@ State is split by **kind** ([ADR-0012](../../docs/adr/0012-adopt-tanstack-query-
   The newest reply's lifecycle is the one `reply: ReplyState` union in the store (`sending` → `streaming` →
   `idle` | `stopped` | `failed`, with `navigating` holding that end while a new chat moves to its route).
   Move it by writing a whole state, read "busy" with `isReplyInFlight`, and never add a parallel flag for it.
-- **Runs** ride the same stream. The composer's Run toggle is `isRunMode` in `useMessageStore`, read through
-  `useRunMode` (off for a Guest whatever the store holds) and reset by `useMessageHandler` on every send, which
-  passes `mode` down to `streamMessage`. A `run` send answers with a `runId`: the hook puts it and an empty
+- **Runs** ride the same stream. A Session's Reply mode (`replyMode`, ADR-0035) is fixed with its first Message:
+  on a new chat the composer's Run toggle (`isRunMode` in `useMessageStore`) chooses it and `streamMessage` passes
+  it to `createSession`; once a Session exists `useRunMode` reads `replyMode` from it (off for a Guest whatever
+  the store holds), the toggle shows it read-only and `ModelSelect` is disabled in a Run Session. The toggle
+  resets when a new chat starts, not per send, and regenerate passes the Session's mode to `streamMessage`. A `run` send answers with a `runId`: the hook puts it and an empty
   `run: RunProgress` on the trailing assistant Message and calls `useInspectorStore.showRun`. The stream's
   `step-started`, `step-finished` and `run-finished` frames are validated by `streaming/runProgress.ts`
   (`parseRunEvent`), folded into that Message (`applyRunEvent`: a flat list of Steps in first-seen order, each

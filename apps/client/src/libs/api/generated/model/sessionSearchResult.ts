@@ -4,6 +4,7 @@
  * Nebula Chat API
  * REST API for Nebula Chat
  */
+import type { SessionSearchResultReplyMode } from './sessionSearchResultReplyMode';
 
 export interface SessionSearchResult {
   /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
@@ -21,6 +22,8 @@ export interface SessionSearchResult {
    * @maximum 9007199254740991
    */
   messageCount: number;
+  /** The Session's Reply mode: `direct` for Direct replies or `run` for Runs (Registered users only); fixed at creation */
+  replyMode: SessionSearchResultReplyMode;
   /** Text around the first match in one of the Session’s Messages, ellipsised where cut; absent when only the title matched */
   snippet?: string;
 }

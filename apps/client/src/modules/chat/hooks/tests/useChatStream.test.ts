@@ -85,6 +85,7 @@ beforeEach(() => {
         archived: false,
         archivedAt: null,
         messageCount: 0,
+        replyMode: 'direct' as const,
       })),
     ),
     getSendMessageMockHandler({ messageId: MESSAGE_ID, streamId: STREAM_ID }),
@@ -1425,6 +1426,7 @@ describe('useChatStream — send, then subscribe', () => {
           archived: false,
           archivedAt: null,
           messageCount: 0,
+          replyMode: 'direct' as const,
         };
       }),
       getSendMessageMockHandler(({ params }) => {

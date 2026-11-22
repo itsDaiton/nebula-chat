@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { REPLY_MODES } from '@nebula-chat/db';
 import { modelIdSchema } from '@nebula-chat/contracts';
 
 export const sendMessageParamsSchema = z.object({
@@ -8,9 +9,11 @@ export const sendMessageParamsSchema = z.object({
 export const sendMessageSchema = z.object({
   content: z.string().min(1),
   mode: z
-    .enum(['direct', 'run'])
+    .enum(REPLY_MODES)
+    .optional()
+    .meta({ deprecated: true })
     .describe(
-      'How the reply is produced: `direct`, a Direct reply, or `run`, a Run (Registered users only).',
+      "Deprecated and ignored: the Session's Reply mode decides whether the reply is a Direct reply or a Run. Removed in a later release.",
     ),
   model: modelIdSchema
     .optional()

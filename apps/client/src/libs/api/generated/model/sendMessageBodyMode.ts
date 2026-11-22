@@ -6,7 +6,8 @@
  */
 
 /**
- * How the reply is produced: `direct`, a Direct reply, or `run`, a Run (Registered users only).
+ * Deprecated and ignored: the Session's Reply mode decides whether the reply is a Direct reply or a Run. Removed in a later release.
+ * @deprecated
  */
 export type SendMessageBodyMode = (typeof SendMessageBodyMode)[keyof typeof SendMessageBodyMode];
 

@@ -1,9 +1,17 @@
 import { z } from 'zod';
+import { REPLY_MODES } from '@nebula-chat/db';
 import { paginationConfig } from '@server/config/pagination.config';
 import { isoDateTimeSchema } from '@server/utils/isoDateTimeSchema';
 
+const replyModeSchema = z
+  .enum(REPLY_MODES)
+  .describe(
+    "The Session's Reply mode: `direct` for Direct replies or `run` for Runs (Registered users only); fixed at creation",
+  );
+
 export const createSessionSchema = z.object({
   title: z.string().min(1),
+  replyMode: replyModeSchema.default('direct'),
 });
 
 const SESSION_TITLE_MAX_LENGTH = 200;
@@ -26,6 +34,7 @@ export const sessionResponseSchema = z
       .nullable()
       .describe('When the owner archived it; null while active'),
     messageCount: z.number().int().describe('How many Messages the Session holds'),
+    replyMode: replyModeSchema,
   })
   .meta({ id: 'Session' });
 

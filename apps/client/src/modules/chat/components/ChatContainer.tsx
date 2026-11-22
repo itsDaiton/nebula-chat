@@ -11,6 +11,7 @@ import { ChatStarters } from '@/modules/chat/components/ChatStarters';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useHandleSendMessage } from '@/modules/chat/hooks/useHandleSendMessage';
 import { useModel } from '@/modules/chat/hooks/useModel';
+import { useRunMode } from '@/modules/chat/hooks/useRunMode';
 import { useChatSession } from '@/modules/sessions/hooks/useChatSession';
 import { ChatScroller } from '@/shared/components/ui/chat-scroller';
 import { scrollToBottom } from '@/shared/utils/scrollUtils';
@@ -38,6 +39,7 @@ export const ChatContainer = () => {
     sessionId: chatSessionId,
   } = useChatStream();
   const { selectedModel, setSelectedModel } = useModel();
+  const { replyMode } = useRunMode();
 
   const { handleSendMessage } = useHandleSendMessage({ history, streamMessage });
 
@@ -128,7 +130,9 @@ export const ChatContainer = () => {
               isStreaming={isStreaming}
               isReplyStopped={isReplyStopped}
               onRegenerate={
-                isArchived ? undefined : (prompt) => void handleSendMessage(prompt, selectedModel)
+                isArchived
+                  ? undefined
+                  : (prompt) => void handleSendMessage(prompt, selectedModel, replyMode)
               }
             />
           </div>

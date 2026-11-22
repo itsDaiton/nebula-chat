@@ -43,6 +43,19 @@ describe('ModelSelect', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
   });
 
+  it("is disabled with a tooltip saying a Run's Agents pick their own Models", async () => {
+    renderWithProviders(<ModelSelect selectedModel="gpt-5" onModelChange={vi.fn()} disabled />);
+    const trigger = await screen.findByRole('button', { name: /GPT-5/ });
+    expect(trigger).toHaveAttribute('aria-disabled', 'true');
+
+    await userEvent.click(trigger);
+    expect(
+      screen.queryByPlaceholderText(resources.chat.modelPicker.search),
+    ).not.toBeInTheDocument();
+    await userEvent.tab();
+    expect(await screen.findByText(resources.chat.run.modelUnused)).toBeInTheDocument();
+  });
+
   it('shows an id outside the catalog as itself', async () => {
     renderPicker('gpt-9');
 

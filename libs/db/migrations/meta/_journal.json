@@ -134,6 +134,13 @@
       "when": 1795250446244,
       "tag": "0018_spend-allowance-index",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795341752313,
+      "tag": "0019_reply-mode",
+      "breakpoints": true
     }
   ]
 }

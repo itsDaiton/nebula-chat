@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
-import type { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
+import type { CreateSessionBodyReplyMode } from '@/libs/api/generated/model/createSessionBodyReplyMode';
 import type { ChatMessage, UseHandleSendMessageProps } from '@/modules/chat/types/types';
 
 export const useHandleSendMessage = ({ history, streamMessage }: UseHandleSendMessageProps) => {
   const handleSendMessage = useCallback(
-    async (message: string, selectedModel: string, mode?: SendMessageBodyMode) => {
+    async (message: string, selectedModel: string, mode?: CreateSessionBodyReplyMode) => {
       const newUserMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'user',

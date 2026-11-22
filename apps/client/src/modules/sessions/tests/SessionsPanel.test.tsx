@@ -31,6 +31,7 @@ const aListedSession = (id: string, title: string, msAgo: number) => ({
   archived: false,
   archivedAt: null,
   messageCount: 0,
+  replyMode: 'direct' as const,
 });
 
 const sessions = [
@@ -50,6 +51,7 @@ const serveSessions = () =>
       archived: false,
       archivedAt: null,
       messageCount: 0,
+      replyMode: 'direct' as const,
       activeStreamId: null,
       waitingRun: null,
     }),
@@ -69,6 +71,7 @@ const serveArchive = (onRequest: (id: string) => void = () => {}) =>
         archived: true,
         archivedAt: '2026-06-16T11:00:00.000Z',
         messageCount: 0,
+        replyMode: 'direct' as const,
       });
     }),
   );

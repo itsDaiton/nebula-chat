@@ -9,7 +9,7 @@ import {
   getSendMessageMockHandler,
 } from '@/libs/api/generated/chat/chat.msw';
 import { ErrorCode } from '@/libs/api/generated/model/errorCode';
-import { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
+import { CreateSessionBodyReplyMode } from '@/libs/api/generated/model/createSessionBodyReplyMode';
 import type { SendMessageBodyModel } from '@/libs/api/generated/model/sendMessageBodyModel';
 import { createChatSession, postMessage } from '@/modules/chat/streaming/sendReply';
 import type { CreateSessionMutation, SendMessageMutation } from '@/modules/chat/types/types';
@@ -28,14 +28,18 @@ const send: SendMessageMutation = ({ sessionId, data }) => sendMessage(sessionId
 
 let queryClient: QueryClient;
 let createdTitle: string | undefined;
+let createdReplyMode: string | undefined;
 
 beforeEach(() => {
   vi.clearAllMocks();
   queryClient = createTestQueryClient();
   createdTitle = undefined;
+  createdReplyMode = undefined;
   server.use(
     getCreateSessionMockHandler(async ({ request }) => {
-      createdTitle = ((await request.json()) as { title: string }).title;
+      const body = (await request.json()) as { title: string; replyMode: string };
+      createdTitle = body.title;
+      createdReplyMode = body.replyMode;
       return {
         id: SESSION_ID,
         title: createdTitle,
@@ -43,6 +47,7 @@ beforeEach(() => {
         archived: false,
         archivedAt: null,
         messageCount: 0,
+        replyMode: 'direct' as const,
       };
     }),
   );
@@ -52,16 +57,34 @@ describe('createChatSession', () => {
   it("creates the Session, titled by the message's first 50 characters", async () => {
     server.use(getGetMessageAllowanceMockHandler({ metered: false }));
 
-    const id = await createChatSession(queryClient, create, 'x'.repeat(60));
+    const id = await createChatSession(
+      queryClient,
+      create,
+      'x'.repeat(60),
+      CreateSessionBodyReplyMode.direct,
+    );
 
     expect(id).toBe(SESSION_ID);
     expect(createdTitle).toBe('x'.repeat(50));
   });
 
+  it("fixes the Session's Reply mode with the mode of its first message", async () => {
+    server.use(getGetMessageAllowanceMockHandler({ metered: false }));
+
+    await createChatSession(queryClient, create, 'plan it', CreateSessionBodyReplyMode.run);
+
+    expect(createdReplyMode).toBe('run');
+  });
+
   it('refuses a capped Guest before any Session is created', async () => {
     server.use(getGetMessageAllowanceMockHandler(aMeteredAllowance(0)));
 
-    const error = await createChatSession(queryClient, create, 'hi').catch((err: unknown) => err);
+    const error = await createChatSession(
+      queryClient,
+      create,
+      'hi',
+      CreateSessionBodyReplyMode.direct,
+    ).catch((err: unknown) => err);
 
     expect(isAppError(error) && error.code).toBe(ErrorCode.MessageAllowanceReached);
     expect(createdTitle).toBeUndefined();
@@ -70,7 +93,9 @@ describe('createChatSession', () => {
   it('creates the Session for a metered Guest with messages left', async () => {
     server.use(getGetMessageAllowanceMockHandler(aMeteredAllowance(1)));
 
-    await expect(createChatSession(queryClient, create, 'hi')).resolves.toBe(SESSION_ID);
+    await expect(
+      createChatSession(queryClient, create, 'hi', CreateSessionBodyReplyMode.direct),
+    ).resolves.toBe(SESSION_ID);
   });
 });
 
@@ -83,7 +108,7 @@ describe('postMessage', () => {
     const sent = await postMessage(queryClient, send, {
       sessionId: SESSION_ID,
       content: 'hi',
-      mode: SendMessageBodyMode.run,
+      mode: CreateSessionBodyReplyMode.run,
       model: 'gpt-4o-mini' as SendMessageBodyModel,
     });
 

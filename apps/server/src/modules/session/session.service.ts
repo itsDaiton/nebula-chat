@@ -1,8 +1,8 @@
 import { sessionRepository } from '@server/modules/session/session.repository';
-import { NotFoundError } from '@nebula-chat/errors';
+import { ForbiddenError, NotFoundError } from '@nebula-chat/errors';
 import type { EventLogger } from '@nebula-chat/otel';
 import { paginationConfig } from '@server/config/pagination.config';
-import type { CreateSessionDTO } from '@server/modules/session/session.types';
+import type { CreateSessionDTO, SessionOwner } from '@server/modules/session/session.types';
 import { runRepository } from '@server/modules/run/run.repository';
 import { runService } from '@server/modules/run/run.service';
 import { findActiveStream, findLastStream } from '@server/redis';
@@ -20,10 +20,14 @@ const snippetAround = (content: string, query: string) => {
 };
 
 export const sessionService = {
-  async createSession(data: CreateSessionDTO, userId: string) {
+  async createSession(data: CreateSessionDTO, user: SessionOwner) {
+    // Runs are Registered-only (GLOSSARY.md); a Guest's Session is always Direct.
+    if (data.replyMode === 'run' && user.isAnonymous) {
+      throw new ForbiddenError('A Run requires a registered account.');
+    }
     // sessions.userId is NOT NULL (ADR-0010 §2): the owner is the auth
     // session's user, resolved in the controller — never trusted from the request body.
-    return sessionRepository.create(data, userId);
+    return sessionRepository.create(data, user.id);
   },
   async getSession(sessionId: string, userId: string) {
     const session = await sessionRepository.findById({ sessionId }, userId);

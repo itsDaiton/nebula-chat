@@ -28,7 +28,7 @@ export const ChatInput = ({
     isLoading,
   });
 
-  const { isModelUnused } = useRunMode();
+  const { isRunMode } = useRunMode();
 
   const { inputRef } = useKeyboardHandler({ message, isLoading, handleMessageSend });
 
@@ -52,7 +52,7 @@ export const ChatInput = ({
         <ModelSelect
           selectedModel={selectedModel}
           onModelChange={onModelChange}
-          dimmed={isModelUnused}
+          disabled={isRunMode}
         />
         {isLoading && onStop ? (
           <StopButton onStop={onStop} />

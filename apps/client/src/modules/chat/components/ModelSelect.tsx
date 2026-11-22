@@ -16,6 +16,7 @@ import {
 } from '@/shared/components/ui/command';
 import { Kbd } from '@/shared/components/ui/kbd';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import type { ModelProvider } from '@/shared/types/types';
 import { cn } from '@/shared/utils/cn';
 
@@ -38,7 +39,7 @@ const FAVORITE_VALUE_PREFIX = '★';
 
 const { modelPicker: text } = resources.chat;
 
-export const ModelSelect = ({ selectedModel, onModelChange, dimmed }: ModelSelectProps) => {
+export const ModelSelect = ({ selectedModel, onModelChange, disabled }: ModelSelectProps) => {
   const { isOpen, search, setOpen, setSearch } = useModelPickerStore();
   const { options, isPending, isError, refetch } = useModelCatalog();
   const current = options.find((option) => option.value === selectedModel);
@@ -63,24 +64,44 @@ export const ModelSelect = ({ selectedModel, onModelChange, dimmed }: ModelSelec
     />
   );
 
+  const triggerClass =
+    'group h-7 gap-1.5 rounded-full px-2.5 text-[12.5px] text-foreground-secondary aria-expanded:bg-hover aria-expanded:text-foreground';
+  const triggerContent = (
+    <>
+      {current && <ProviderLogo provider={current.provider} className="size-3.5" />}
+      {current?.label ?? selectedModel}
+      <ChevronDownIcon className="size-3.5 transition-transform group-aria-expanded:rotate-180" />
+    </>
+  );
+
+  if (disabled) {
+    return (
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled
+              focusableWhenDisabled
+              className={cn(triggerClass, 'text-faint')}
+            />
+          }
+        >
+          {triggerContent}
+        </TooltipTrigger>
+        <TooltipContent>{resources.chat.run.modelUnused}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
   return (
     <Popover open={isOpen} onOpenChange={setOpen}>
       <PopoverTrigger
-        render={
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className={cn(
-              'group h-7 gap-1.5 rounded-full px-2.5 text-[12.5px] text-foreground-secondary aria-expanded:bg-hover aria-expanded:text-foreground',
-              dimmed && 'text-faint',
-            )}
-          />
-        }
+        render={<Button type="button" variant="ghost" size="sm" className={triggerClass} />}
       >
-        {current && <ProviderLogo provider={current.provider} className="size-3.5" />}
-        {current?.label ?? selectedModel}
-        <ChevronDownIcon className="size-3.5 transition-transform group-aria-expanded:rotate-180" />
+        {triggerContent}
       </PopoverTrigger>
       <PopoverContent
         side="top"

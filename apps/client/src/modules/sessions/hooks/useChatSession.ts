@@ -1,5 +1,6 @@
 import { useGetSession } from '@/libs/api/generated/sessions/sessions';
 import { useListMessages } from '@/libs/api/generated/messages/messages';
+import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
 import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { useModelStore } from '@/modules/chat/stores/useModelStore';
 import { mapSessionMessages } from '@/modules/chat/utils/mapSessionMessages';
@@ -30,6 +31,8 @@ export const useChatSession = (sessionId: string | undefined) => {
       queueMicrotask(() => {
         useChatStreamStore.setState({ history: [], sessionId: undefined, reply: IDLE_REPLY });
         useInspectorStore.getState().clearSelectedRun();
+        // The Run toggle chose the last new chat's Reply mode; a new chat starts Direct.
+        useMessageStore.getState().resetRunMode();
       });
     }
   } else if (isSettled && chat.sessionId !== sessionId) {
