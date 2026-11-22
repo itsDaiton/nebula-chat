@@ -26,6 +26,7 @@ const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
         201: jsonResponse('Session created successfully', sessionResponseSchema),
         400: jsonResponse('Invalid request body', errorEnvelopeSchema),
         401: jsonResponse('No auth session', errorEnvelopeSchema),
+        403: jsonResponse('A Guest asked for a Run Session', errorEnvelopeSchema),
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },

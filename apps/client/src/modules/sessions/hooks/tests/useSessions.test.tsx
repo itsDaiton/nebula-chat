@@ -17,6 +17,7 @@ const aSession = (id: string) => ({
   archived: false,
   archivedAt: null,
   messageCount: 0,
+  replyMode: 'direct' as const,
 });
 
 describe('useSessions', () => {

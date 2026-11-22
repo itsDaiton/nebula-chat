@@ -93,7 +93,7 @@ export const useChatStream = ({
 
       try {
         if (!activeSessionId) {
-          activeSessionId = await createChatSession(queryClient, createSession, content);
+          activeSessionId = await createChatSession(queryClient, createSession, content, mode);
           setSessionId(activeSessionId);
           // The sidebar can show it now, before its first reply.
           invalidateSessionList(queryClient);

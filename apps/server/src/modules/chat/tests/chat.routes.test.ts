@@ -130,7 +130,12 @@ beforeEach(() => {
   mockedGetSession.mockResolvedValue(registeredSession() as never);
   messageRepo.countUserMessagesByOwner.mockResolvedValue(0);
   sessionRepo.findByIdTx.mockResolvedValue(
-    fromPartial({ id: SESSION_ID, userId: REGISTERED_USER_ID, model: 'gpt-4o-mini' }),
+    fromPartial({
+      id: SESSION_ID,
+      userId: REGISTERED_USER_ID,
+      model: 'gpt-4o-mini',
+      replyMode: 'direct',
+    }),
   );
   messageRepo.createTx.mockResolvedValue(fromPartial({ id: MESSAGE_ID }));
   runRepo.createTx.mockResolvedValue({ id: RUN_ID });
@@ -289,7 +294,6 @@ describe('POST /api/sessions/:sessionId/messages', () => {
   describe('validation', () => {
     it.each([
       ['an unknown mode', { ...validBody, mode: 'deep' }],
-      ['no mode', { content: 'hi' }],
       ['empty content', { ...validBody, content: '' }],
       ['an unknown Model', { ...validBody, model: 'gpt-0' }],
     ])('rejects %s with a 400 before any work happens', async (_case, payload) => {
@@ -301,6 +305,12 @@ describe('POST /api/sessions/:sessionId/messages', () => {
       expect(enqueued).toEqual([]);
     });
 
+    it('accepts a body without a mode, which the Session now decides', async () => {
+      const res = await send({ content: 'hi' });
+
+      expect(res.statusCode).toBe(202);
+    });
+
     it('rejects a session id that is not a UUID', async () => {
       const res = await send(validBody, { sessionId: 'not-a-uuid' });
 
@@ -310,6 +320,24 @@ describe('POST /api/sessions/:sessionId/messages', () => {
 
   describe('Run mode', () => {
     const runBody = { ...validBody, mode: 'run' };
+
+    beforeEach(() => {
+      sessionRepo.findByIdTx.mockResolvedValue(
+        fromPartial({
+          id: SESSION_ID,
+          userId: REGISTERED_USER_ID,
+          model: 'gpt-4o-mini',
+          replyMode: 'run',
+        }),
+      );
+    });
+
+    it('starts a Run in a Run Session whatever mode the body carries', async () => {
+      const res = await send(validBody);
+
+      expect(res.json()).toMatchObject({ runId: RUN_ID });
+      expect(enqueuedRuns).toHaveLength(1);
+    });
 
     it('answers 202 with the persisted Message, its stream and the Run it started', async () => {
       const res = await send(runBody);
@@ -355,20 +383,16 @@ describe('POST /api/sessions/:sessionId/messages', () => {
       expect(replyStreams.activeStreams.get(SESSION_ID)).toBe(streamId);
     });
 
-    it('rejects a Guest with the typed 403 Forbidden, persisting and enqueuing nothing', async () => {
-      mockedGetSession.mockResolvedValue(guestSession() as never);
-
+    it('leaves a Direct reply Session without a Run, even when the body asks for one', async () => {
+      sessionRepo.findByIdTx.mockResolvedValue(
+        fromPartial({
+          id: SESSION_ID,
+          userId: REGISTERED_USER_ID,
+          model: 'gpt-4o-mini',
+          replyMode: 'direct',
+        }),
+      );
       const res = await send(runBody);
-
-      expect(res.statusCode).toBe(403);
-      expect(res.json()).toMatchObject({ success: false, error: 'Forbidden' });
-      expect(messageRepo.createTx).not.toHaveBeenCalled();
-      expect(runRepo.createTx).not.toHaveBeenCalled();
-      expect(enqueuedRuns).toEqual([]);
-    });
-
-    it('leaves a Direct reply without a Run', async () => {
-      const res = await send(validBody);
 
       expect(res.json()).not.toHaveProperty('runId');
       expect(runRepo.createTx).not.toHaveBeenCalled();

@@ -31,16 +31,16 @@ paths:
   duration), which calls `openInspector('run', runId)`. The Inspector's Run tab renders `RunView`: the end
   status and why, tokens against the Run budget, the Brief, and the Steps grouped by Intake, turn and answer.
   A Step expands to its facts; its full input and output open in a dialog. Both read the Run through `useRun`.
-- **Run toggle and Step progress (NEB-652).** `RunToggle` switches the next message to Run mode for a Registered
-  user and stays disabled for a Guest; while a Run is drafted or in flight, `ModelSelect` is `dimmed` and
-  `ChatComposerFooter` says why. An assistant Message carrying `run` shows `RunStepProgress` above its answer
+- **Run toggle and Step progress (NEB-652).** `RunToggle` picks a new chat's Reply mode for a Registered
+  user, then shows the Session's mode read-only (ADR-0035), and stays disabled for a Guest; while a Run is drafted or a
+  Run Session is open, `ModelSelect` is disabled with a tooltip. An assistant Message carrying `run` shows `RunStepProgress` above its answer
   (one row per Step, labelled by the stream) and `RunEndLine` under it for a `partial`, `failed` or `cancelled` end.
 - **Orchestrator turns (NEB-662).** Once a Run has an Orchestrator turn, `RunStepProgress` lists `RunProgressGroup`s:
   Intake, one per turn with its delegate Steps railed under the turn's Step, then the answer. A Run with no turn
   keeps the flat list. `RunEndLine` names each failed delegate and its turn under a partial answer.
 - **Clarifying question.** The assistant Message of a waiting Run (`useWaitingRun`) shows `RunWaitingRow`, a
   "Clarifying question" label and `ClarifyingQuestionNote`, with no meta row. `AnswerHintRow` sits above the
-  composer with Cancel Run; `RunToggle` is disabled and `ModelSelect` dimmed until the Run stops waiting.
+  composer with Cancel Run; `RunToggle` is disabled and `ModelSelect` disabled, as in any Run Session.
 - **Command palette.** `Ctrl/⌘ K` opens `modules/commandPalette`. A module adds its actions with
   `useRegisterPaletteActions([...])` (`{ id, group, label, keywords, icon, shortcut?, perform, visible? }`),
   called from a component that is always mounted (see `useSessionPaletteActions`, called by `AppShell`); they

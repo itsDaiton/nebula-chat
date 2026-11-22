@@ -28,6 +28,7 @@ const aListedSession = (id: string, title: string) => ({
   archived: false,
   archivedAt: null,
   messageCount: 0,
+  replyMode: 'direct' as const,
 });
 
 const recent = [aListedSession(FIRST, 'Run events in the SSE parser')];

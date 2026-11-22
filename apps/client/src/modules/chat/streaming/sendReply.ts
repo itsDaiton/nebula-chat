@@ -1,6 +1,7 @@
 import { AppError } from '@nebula-chat/errors';
 import type { QueryClient } from '@tanstack/react-query';
 import { getGetMessageAllowanceQueryOptions } from '@/libs/api/generated/chat/chat';
+import type { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
 import { ErrorCode } from '@/libs/api/generated/model/errorCode';
 import type {
   CreateSessionMutation,
@@ -16,6 +17,7 @@ export const createChatSession = async (
   queryClient: QueryClient,
   createSession: CreateSessionMutation,
   content: string,
+  mode: SendMessageBodyMode,
 ): Promise<string> => {
   const allowance = await queryClient.fetchQuery({
     ...getGetMessageAllowanceQueryOptions(),
@@ -24,7 +26,9 @@ export const createChatSession = async (
   if (allowance.metered && allowance.remaining === 0) {
     throw new AppError(ErrorCode.MessageAllowanceReached, resources.chat.streamError);
   }
-  const created = await createSession({ data: { title: content.slice(0, 50) } });
+  const created = await createSession({
+    data: { title: content.slice(0, 50), replyMode: mode },
+  });
   return created.id;
 };
 

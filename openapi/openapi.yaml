@@ -219,6 +219,13 @@ components:
           minimum: -9007199254740991
           maximum: 9007199254740991
           description: How many Messages the Session holds
+        replyMode:
+          type: string
+          enum:
+            - direct
+            - run
+          description: "The Session's Reply mode: `direct` for Direct replies or `run` for
+            Runs (Registered users only); fixed at creation"
       required:
         - id
         - title
@@ -226,6 +233,7 @@ components:
         - archived
         - archivedAt
         - messageCount
+        - replyMode
       additionalProperties: false
     SessionSearchResult:
       type: object
@@ -258,6 +266,13 @@ components:
           minimum: -9007199254740991
           maximum: 9007199254740991
           description: How many Messages the Session holds
+        replyMode:
+          type: string
+          enum:
+            - direct
+            - run
+          description: "The Session's Reply mode: `direct` for Direct replies or `run` for
+            Runs (Registered users only); fixed at creation"
         snippet:
           description: >-
             Text around the first match in one of the Session’s Messages,
@@ -270,6 +285,7 @@ components:
         - archived
         - archivedAt
         - messageCount
+        - replyMode
       additionalProperties: false
     SessionDetail:
       type: object
@@ -302,6 +318,13 @@ components:
           minimum: -9007199254740991
           maximum: 9007199254740991
           description: How many Messages the Session holds
+        replyMode:
+          type: string
+          enum:
+            - direct
+            - run
+          description: "The Session's Reply mode: `direct` for Direct replies or `run` for
+            Runs (Registered users only); fixed at creation"
         activeStreamId:
           anyOf:
             - type: string
@@ -351,6 +374,7 @@ components:
         - archived
         - archivedAt
         - messageCount
+        - replyMode
         - activeStreamId
         - waitingRun
       additionalProperties: false
@@ -1821,13 +1845,15 @@ paths:
                   type: string
                   minLength: 1
                 mode:
+                  deprecated: true
+                  description: >-
+                    Deprecated and ignored: the Session's Reply mode decides
+                    whether the reply is a Direct reply or a Run. Removed in a
+                    later release.
                   type: string
                   enum:
                     - direct
                     - run
-                  description: >-
-                    How the reply is produced: `direct`, a Direct reply, or
-                    `run`, a Run (Registered users only).
                 model:
                   description: >-
                     Binds the Session to this Model before replying; omitted
@@ -1847,7 +1873,6 @@ paths:
                     - claude-3-opus-20240229
               required:
                 - content
-                - mode
       parameters:
         - schema:
             type: string
@@ -1881,8 +1906,8 @@ paths:
         '403':
           description: >-
             Guest message allowance reached, monthly spend allowance reached
-            (`SpendAllowanceReached`, with its reset date), or a Guest asked for
-            a Run — registration required
+            (`SpendAllowanceReached`, with its reset date) — registration
+            required
           content:
             application/json:
               schema:
@@ -2005,6 +2030,14 @@ paths:
                 title:
                   type: string
                   minLength: 1
+                replyMode:
+                  default: direct
+                  type: string
+                  enum:
+                    - direct
+                    - run
+                  description: "The Session's Reply mode: `direct` for Direct replies or `run` for
+                    Runs (Registered users only); fixed at creation"
               required:
                 - title
       security:
@@ -2024,6 +2057,12 @@ paths:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '401':
           description: No auth session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: A Guest asked for a Run Session
           content:
             application/json:
               schema:

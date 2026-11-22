@@ -30,6 +30,7 @@ export const getCreateSessionResponseMock = (
     null,
   ]),
   messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+  replyMode: faker.helpers.arrayElement(['direct', 'run'] as const),
   ...overrideResponse,
 });
 
@@ -47,6 +48,7 @@ export const getListSessionsResponseMock = (
         null,
       ]),
       messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+      replyMode: faker.helpers.arrayElement(['direct', 'run'] as const),
     }),
   ),
   nextCursor: faker.helpers.arrayElement([faker.string.uuid(), null]),
@@ -65,6 +67,7 @@ export const getSearchSessionsResponseMock = (): SessionSearchResult[] =>
       null,
     ]),
     messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+    replyMode: faker.helpers.arrayElement(['direct', 'run'] as const),
     snippet: faker.helpers.arrayElement([
       faker.string.alpha({ length: { min: 10, max: 20 } }),
       undefined,
@@ -83,6 +86,7 @@ export const getArchiveSessionResponseMock = (
     null,
   ]),
   messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+  replyMode: faker.helpers.arrayElement(['direct', 'run'] as const),
   ...overrideResponse,
 });
 
@@ -98,6 +102,7 @@ export const getRestoreSessionResponseMock = (
     null,
   ]),
   messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+  replyMode: faker.helpers.arrayElement(['direct', 'run'] as const),
   ...overrideResponse,
 });
 
@@ -113,6 +118,7 @@ export const getRenameSessionResponseMock = (
     null,
   ]),
   messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+  replyMode: faker.helpers.arrayElement(['direct', 'run'] as const),
   ...overrideResponse,
 });
 
@@ -128,6 +134,7 @@ export const getGetSessionResponseMock = (
     null,
   ]),
   messageCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+  replyMode: faker.helpers.arrayElement(['direct', 'run'] as const),
   activeStreamId: faker.helpers.arrayElement([faker.string.uuid(), null]),
   waitingRun: faker.helpers.arrayElement([
     {

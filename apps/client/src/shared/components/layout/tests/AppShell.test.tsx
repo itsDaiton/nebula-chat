@@ -25,6 +25,7 @@ const session = {
   archived: false,
   archivedAt: null,
   messageCount: 0,
+  replyMode: 'direct' as const,
 };
 
 const setDesktop = (isDesktop: boolean) => {

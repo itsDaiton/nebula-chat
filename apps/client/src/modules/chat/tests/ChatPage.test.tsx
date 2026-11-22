@@ -46,6 +46,7 @@ const aChatSession = (id: string, title: string) => ({
   archived: false,
   archivedAt: null,
   messageCount: 0,
+  replyMode: 'direct' as const,
 });
 
 const aMessage = (id: string, role: string, content: string) => ({
@@ -172,7 +173,7 @@ describe('ChatPage', () => {
 
     await renderPage();
 
-    expect(await screen.findByRole('button', { name: /GPT-4o mini/ })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /gpt-4o.mini/i })).toBeInTheDocument();
   });
 
   it('shows how each loaded reply was made, and nothing for user and older Messages', async () => {
@@ -276,6 +277,7 @@ describe('ChatPage', () => {
           archived: false,
           archivedAt: null,
           messageCount: 0,
+          replyMode: 'direct' as const,
         };
       }),
       getSendMessageMockHandler({
@@ -419,17 +421,36 @@ describe('ChatPage', () => {
     // The Inspector's Run tab carries the same name, so the toggle is found in the composer.
     const runToggle = () =>
       within(composer().closest('form')!).getByRole('button', { name: text.label });
+    const modelPicker = () =>
+      within(composer().closest('form')!).getByRole('button', { name: /gpt-4o.mini/i });
 
-    it('lets a Registered user send one message as a Run, then goes back to Direct replies', async () => {
+    // A new chat's first send creates a Run Session; reading it back names that mode.
+    const serveRunSession = () =>
+      server.use(
+        getCreateSessionMockHandler({
+          ...aChatSession(SESSION_ID, 'keep BullMQ?'),
+          replyMode: 'run',
+        }),
+        getGetSessionMockHandler({
+          ...aChatSession(SESSION_ID, 'keep BullMQ?'),
+          replyMode: 'run',
+          activeStreamId: null,
+          waitingRun: null,
+        }),
+      );
+
+    it('starts a Run Session from a new chat, then shows its mode read-only for every later message', async () => {
       await holdSession({ isAnonymous: false, emailVerified: true });
       const sent = serveSends();
+      serveRunSession();
       server.use(aPartialRun());
-      await renderPage(`/s/${SESSION_ID}`);
+      await renderPage();
       await screen.findByRole('textbox', { name: resources.chat.composer.label });
 
+      expect(modelPicker()).not.toHaveAttribute('aria-disabled', 'true');
       await userEvent.click(runToggle());
       expect(runToggle()).toHaveAttribute('aria-pressed', 'true');
-      expect(screen.getByText(text.modelHint)).toBeInTheDocument();
+      expect(modelPicker()).toHaveAttribute('aria-disabled', 'true');
 
       await userEvent.type(composer(), 'keep BullMQ?{Enter}');
 
@@ -445,23 +466,59 @@ describe('ChatPage', () => {
       ]);
       expect(within(progress).getByText('partial')).toBeInTheDocument();
       expect(screen.getByText(text.intakeFailed)).toBeInTheDocument();
-      expect(runToggle()).toHaveAttribute('aria-pressed', 'false');
-      await waitFor(() => expect(screen.queryByText(text.modelHint)).not.toBeInTheDocument());
+      expect(runToggle()).toHaveAttribute('aria-pressed', 'true');
+      expect(runToggle()).toHaveAttribute('aria-disabled', 'true');
+      expect(modelPicker()).toHaveAttribute('aria-disabled', 'true');
+      await userEvent.hover(runToggle());
+      expect(await screen.findByText(text.locked)).toBeInTheDocument();
 
       await userEvent.type(composer(), 'and now?{Enter}');
 
       await waitFor(() => expect(sent).toHaveLength(2));
       expect(sent).toMatchObject([
         { content: 'keep BullMQ?', mode: 'run' },
-        { content: 'and now?', mode: 'direct' },
+        { content: 'and now?', mode: 'run' },
       ]);
+    });
+
+    describe.each([
+      ['run', 'a Run'],
+      ['direct', 'a Direct reply'],
+    ] as const)('regenerating in a %s Session', (replyMode, outcome) => {
+      it(`asks for ${outcome}`, async () => {
+        await holdSession({ isAnonymous: false, emailVerified: true });
+        const sent = serveSends();
+        server.use(
+          getGetSessionMockHandler({
+            ...aChatSession(SESSION_ID, 'Chat'),
+            replyMode,
+            activeStreamId: null,
+            waitingRun: null,
+          }),
+          getListMessagesMockHandler([
+            aMessage('m1', 'user', 'keep BullMQ?'),
+            aMessage('m2', 'assistant', 'Keep BullMQ.'),
+          ]),
+          aPartialRun(),
+        );
+        await renderPage(`/s/${SESSION_ID}`);
+
+        await userEvent.click(
+          await screen.findByRole('button', { name: resources.chat.meta.regenerate }),
+        );
+
+        await waitFor(() =>
+          expect(sent).toMatchObject([{ content: 'keep BullMQ?', mode: replyMode }]),
+        );
+      });
     });
 
     it('lets a Registered user who has not verified their email start a Run', async () => {
       await holdSession({ isAnonymous: false, emailVerified: false });
       const sent = serveSends();
+      serveRunSession();
       server.use(aPartialRun(), getGetMessageAllowanceMockHandler(aMeteredAllowance(4)));
-      await renderPage(`/s/${SESSION_ID}`);
+      await renderPage();
       await screen.findByText('4 of 10 messages left');
 
       await userEvent.click(runToggle());
@@ -492,13 +549,13 @@ describe('ChatPage', () => {
       await holdSession({ isAnonymous: false, emailVerified: true });
       const toast = vi.spyOn(sonner, 'error');
       server.use(
-        mockApiError('post', API_ROUTE.sendMessage, 403, {
+        mockApiError('post', API_ROUTE.sessions, 403, {
           success: false,
           error: 'Forbidden',
           message: 'Runs are for registered users.',
         }),
       );
-      await renderPage(`/s/${SESSION_ID}`);
+      await renderPage();
       await screen.findByRole('textbox', { name: resources.chat.composer.label });
 
       await userEvent.click(runToggle());
@@ -545,7 +602,8 @@ describe('ChatPage', () => {
     const sendRun = async () => {
       await holdSession({ isAnonymous: false, emailVerified: true });
       serveSends();
-      await renderPage(`/s/${SESSION_ID}`);
+      serveRunSession();
+      await renderPage();
       await screen.findByRole('textbox', { name: resources.chat.composer.label });
       await userEvent.click(runToggle());
       await userEvent.type(composer(), 'keep BullMQ?{Enter}');
@@ -662,6 +720,7 @@ describe('ChatPage', () => {
       server.use(
         getGetSessionMockHandler({
           ...aChatSession(SESSION_ID, 'Trip'),
+          replyMode: 'run',
           activeStreamId: null,
           waitingRun: waiting
             ? { id: RUN_ID, streamId: QUESTION_STREAM_ID, stepsCompleted: 4 }
@@ -698,11 +757,13 @@ describe('ChatPage', () => {
       expect(screen.getByText(clarify.answerHint)).toBeInTheDocument();
     });
 
-    it('takes the next message as the answer: no Run toggle, and the picker is dimmed', async () => {
+    it('takes the next message as the answer: no Run toggle, and the picker is disabled', async () => {
       await openWaitingSession();
 
       expect(runToggle()).toHaveAttribute('aria-disabled', 'true');
-      expect(screen.getByText(resources.chat.run.modelHint)).toBeInTheDocument();
+      expect(
+        within(composer().closest('form')!).getByRole('button', { name: /gpt-4o.mini/i }),
+      ).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('cancels the waiting Run on its question stream, and stops asking', async () => {
@@ -721,7 +782,8 @@ describe('ChatPage', () => {
       expect(cancelled).toEqual([QUESTION_STREAM_ID]);
       expect(screen.queryByText(clarify.waitingTitle)).not.toBeInTheDocument();
       expect(screen.getByText('Which month are you going?')).toBeInTheDocument();
-      expect(runToggle()).not.toHaveAttribute('aria-disabled', 'true');
+      // The Session keeps its Reply mode after the Run is cancelled.
+      expect(runToggle()).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('sends the next message as the answer and shows the resumed Run, no longer waiting', async () => {
@@ -858,6 +920,7 @@ describe('ChatPage', () => {
           archived: true,
           archivedAt: '2026-06-16T11:00:00.000Z',
           messageCount: 0,
+          replyMode: 'direct' as const,
           activeStreamId: null,
           waitingRun: null,
         }),

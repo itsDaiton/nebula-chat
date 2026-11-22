@@ -14,6 +14,7 @@ const aChatSession = {
   archived: false,
   archivedAt: null,
   messageCount: 0,
+  replyMode: 'direct' as const,
   activeStreamId: null,
   waitingRun: null,
 };

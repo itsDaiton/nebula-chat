@@ -1,6 +1,7 @@
 import { ArchiveIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useParams } from '@tanstack/react-router';
+import { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
 import { ArchivedSessionBar } from '@/modules/chat/components/ArchivedSessionBar';
 import { ChatContainerBox } from '@/modules/chat/components/ChatContainerBox';
 import { ChatEmptyState } from '@/modules/chat/components/ChatEmptyState';
@@ -11,6 +12,7 @@ import { ChatStarters } from '@/modules/chat/components/ChatStarters';
 import { useChatStream } from '@/modules/chat/hooks/useChatStream';
 import { useHandleSendMessage } from '@/modules/chat/hooks/useHandleSendMessage';
 import { useModel } from '@/modules/chat/hooks/useModel';
+import { useRunMode } from '@/modules/chat/hooks/useRunMode';
 import { useChatSession } from '@/modules/sessions/hooks/useChatSession';
 import { ChatScroller } from '@/shared/components/ui/chat-scroller';
 import { scrollToBottom } from '@/shared/utils/scrollUtils';
@@ -38,6 +40,8 @@ export const ChatContainer = () => {
     sessionId: chatSessionId,
   } = useChatStream();
   const { selectedModel, setSelectedModel } = useModel();
+  const { isRunMode } = useRunMode();
+  const replyMode = isRunMode ? SendMessageBodyMode.run : SendMessageBodyMode.direct;
 
   const { handleSendMessage } = useHandleSendMessage({ history, streamMessage });
 
@@ -128,7 +132,9 @@ export const ChatContainer = () => {
               isStreaming={isStreaming}
               isReplyStopped={isReplyStopped}
               onRegenerate={
-                isArchived ? undefined : (prompt) => void handleSendMessage(prompt, selectedModel)
+                isArchived
+                  ? undefined
+                  : (prompt) => void handleSendMessage(prompt, selectedModel, replyMode)
               }
             />
           </div>

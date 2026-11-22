@@ -45,6 +45,7 @@ const serveSession = (
       archived: false,
       archivedAt: null,
       messageCount: 0,
+      replyMode: 'direct' as const,
       activeStreamId,
       waitingRun: null,
     }),

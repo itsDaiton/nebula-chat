@@ -1,10 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import {
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-  PayloadTooLargeError,
-} from '@nebula-chat/errors';
+import { ConflictError, NotFoundError, PayloadTooLargeError } from '@nebula-chat/errors';
 import type { DbTransaction } from '@nebula-chat/db';
 import { db } from '@server/db';
 import type {
@@ -44,10 +39,6 @@ export const chatService = {
     logger: ChatLogger,
   ): Promise<SentMessage> {
     const userId = user.id;
-    // Runs are Registered-only (GLOSSARY.md); a Guest gets Direct replies.
-    if (input.mode === 'run' && user.isAnonymous) {
-      throw new ForbiddenError('A Run requires a registered account.');
-    }
     const tokens = countTokens(input.content);
     if (tokens > MAX_PROMPT_TOKENS) {
       throw new PayloadTooLargeError(
@@ -80,7 +71,7 @@ export const chatService = {
       if (waiting) {
         return { messageId: message.id, runId: waiting.id, answeredRun: waiting };
       }
-      if (input.mode !== 'run')
+      if (session.replyMode !== 'run')
         return { messageId: message.id, runId: undefined, answeredRun: undefined };
       const run = await runRepository.createTx(tx, { userId, sessionId, messageId: message.id });
       return { messageId: message.id, runId: run.id, answeredRun: undefined };

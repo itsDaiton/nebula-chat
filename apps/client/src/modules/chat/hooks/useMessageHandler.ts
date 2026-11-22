@@ -6,21 +6,19 @@ import type { UseMessageHandlerProps } from '@/modules/chat/types/types';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
 
 export const useMessageHandler = ({ onSendMessage, isLoading }: UseMessageHandlerProps) => {
-  const { message, setMessage, resetRunMode } = useMessageStore();
+  const { message, setMessage } = useMessageStore();
   const { isRunMode } = useRunMode();
 
   const handleMessageSend = useCallback(() => {
     if (message.trim()) {
       onSendMessage(message, isRunMode ? SendMessageBodyMode.run : SendMessageBodyMode.direct);
       setMessage('');
-      // A Run is opted into per message.
-      resetRunMode();
       const textarea = document.querySelector('textarea');
       if (textarea) {
         textarea.style.height = 'auto';
       }
     }
-  }, [isRunMode, message, onSendMessage, resetRunMode, setMessage]);
+  }, [isRunMode, message, onSendMessage, setMessage]);
 
   const handleSubmit: NonNullable<ComponentProps<'form'>['onSubmit']> = (e) => {
     e.preventDefault();

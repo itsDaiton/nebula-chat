@@ -5,11 +5,11 @@ import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { cn } from '@/shared/utils/cn';
 
-/** Sends the next message as a Run; disabled for a Guest and while a Run waits for its answer, with why. */
+/** Picks a new chat's Reply mode, then shows the Session's; disabled for a Guest, in a Session and while a Run waits, with why. */
 export const RunToggle = () => {
-  const { canRun, isAnswering, isRunMode, toggleRunMode } = useRunMode();
-  const { label, hint, guest } = resources.chat.run;
-  const blocked = isAnswering ? resources.chat.clarify.answerHint : guest;
+  const { canRun, isRegistered, isAnswering, isRunMode, toggleRunMode } = useRunMode();
+  const { label, hint, guest, locked } = resources.chat.run;
+  const blocked = !isRegistered ? guest : isAnswering ? resources.chat.clarify.answerHint : locked;
 
   return (
     <Tooltip>
@@ -25,7 +25,7 @@ export const RunToggle = () => {
             onClick={toggleRunMode}
             className={cn(
               'h-7 rounded-full px-2.5 text-[12.5px]',
-              !canRun && 'border-dashed text-faint',
+              !canRun && !isRunMode && 'border-dashed text-faint',
               canRun && !isRunMode && 'text-muted-foreground',
             )}
           />

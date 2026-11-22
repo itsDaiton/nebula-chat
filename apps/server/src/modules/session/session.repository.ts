@@ -15,6 +15,7 @@ const sessionColumns = {
   archived: sql<boolean>`${sessions.archivedAt} is not null`,
   archivedAt: sessions.archivedAt,
   messageCount,
+  replyMode: sessions.replyMode,
 };
 
 // The default list and search leave archived Sessions out; `?archived=true` shows only those.
@@ -22,8 +23,11 @@ const archivedFilter = (archived: boolean) =>
   archived ? isNotNull(sessions.archivedAt) : isNull(sessions.archivedAt);
 
 export const sessionRepository = {
-  async create({ title }: CreateSessionDTO, userId: string) {
-    const [row] = await db.insert(sessions).values({ title, userId }).returning(sessionColumns);
+  async create({ title, replyMode }: CreateSessionDTO, userId: string) {
+    const [row] = await db
+      .insert(sessions)
+      .values({ title, replyMode, userId })
+      .returning(sessionColumns);
     return row!;
   },
   // Every read is owner-scoped (ADR-0010 §2): another user's session reads as absent (a 404, never a 403 that leaks it).

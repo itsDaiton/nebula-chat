@@ -121,6 +121,8 @@ export const deviceCode = pgTable('device_code', {
 });
 
 // The domain Session (GLOSSARY.md), not better-auth's `session` table above.
+export const REPLY_MODES = ['direct', 'run'] as const;
+
 export const sessions = pgTable(
   'sessions',
   {
@@ -131,12 +133,15 @@ export const sessions = pgTable(
     title: text('title').notNull().default('New session'),
     model: text('model').notNull().default('gpt-4o-mini'),
     systemPrompt: text('system_prompt'),
+    // Fixed with the first Message (Reply mode, GLOSSARY.md, ADR-0035).
+    replyMode: text('reply_mode', { enum: REPLY_MODES }).notNull().default('direct'),
     // Set while the owner has put the Session away (an Archived Session, GLOSSARY.md).
     archivedAt: timestamp('archived_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (t) => [
+    check('sessions_reply_mode_check', sql`${t.replyMode} in ('direct', 'run')`),
     index('session_user_idx').on(t.userId),
     // Serves the owner's default list: newest first, archived Sessions left out.
     index('session_user_active_idx')

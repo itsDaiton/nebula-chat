@@ -20,6 +20,7 @@ const aSession = (id: string, title: string, isArchived: boolean, messageCount =
   archived: isArchived,
   archivedAt: isArchived ? new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() : null,
   messageCount,
+  replyMode: 'direct' as const,
 });
 
 /** Serves the active list and the archived one, the way the server filters on `archived=true`. */

@@ -21,7 +21,7 @@ type SearchSessionsQuery = {
 export const sessionController = {
   async create(req: FastifyRequest<{ Body: CreateSessionDTO }>, reply: FastifyReply) {
     const { user } = getSessionData(req);
-    const session = await sessionService.createSession(req.body, user.id);
+    const session = await sessionService.createSession(req.body, user);
     return reply.status(201).send(session);
   },
   async get(req: FastifyRequest<{ Params: GetSessionParams }>, reply: FastifyReply) {

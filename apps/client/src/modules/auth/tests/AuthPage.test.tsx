@@ -42,6 +42,7 @@ const GUEST_SESSIONS = [
     archived: false,
     archivedAt: null,
     messageCount: 0,
+    replyMode: 'direct' as const,
   },
   {
     id: '22222222-2222-4222-8222-222222222222',
@@ -50,6 +51,7 @@ const GUEST_SESSIONS = [
     archived: false,
     archivedAt: null,
     messageCount: 0,
+    replyMode: 'direct' as const,
   },
 ];
 

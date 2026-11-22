@@ -2,7 +2,7 @@ import { fromPartial } from '@total-typescript/shoehorn';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestApp } from '@server/test/app';
-import { REGISTERED_USER_ID, registeredSession } from '@server/test/session';
+import { REGISTERED_USER_ID, guestSession, registeredSession } from '@server/test/session';
 
 // ADR-0008: only the repository layer is faked. Routing, Zod validation, the
 // error handler and the hook chain are all the real thing.
@@ -67,6 +67,7 @@ const aSession = (overrides: Record<string, unknown> = {}) => ({
   archived: false,
   archivedAt: null,
   messageCount: 0,
+  replyMode: 'direct' as const,
   ...overrides,
 });
 
@@ -90,6 +91,60 @@ beforeEach(() => {
 });
 
 describe('POST /api/sessions', () => {
+  it('creates a Run Session for a Registered user and returns its replyMode', async () => {
+    repo.create.mockResolvedValue(fromPartial(aSession({ replyMode: 'run' })));
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/sessions',
+      payload: { title: 'A session', replyMode: 'run' },
+    });
+
+    expect(res.statusCode).toBe(201);
+    expect(res.json()).toMatchObject({ replyMode: 'run' });
+    expect(repo.create).toHaveBeenCalledWith(
+      { title: 'A session', replyMode: 'run' },
+      REGISTERED_USER_ID,
+    );
+  });
+
+  it('refuses a Guest asking for a Run Session with 403 and creates nothing', async () => {
+    mockedGetSession.mockResolvedValue(guestSession() as never);
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/sessions',
+      payload: { title: 'A session', replyMode: 'run' },
+    });
+
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toMatchObject({ success: false, error: 'Forbidden' });
+    expect(repo.create).not.toHaveBeenCalled();
+  });
+
+  it('lets a Guest create a Direct reply Session', async () => {
+    mockedGetSession.mockResolvedValue(guestSession() as never);
+    repo.create.mockResolvedValue(fromPartial(aSession()));
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/sessions',
+      payload: { title: 'A session' },
+    });
+
+    expect(res.statusCode).toBe(201);
+  });
+
+  it('rejects an unknown replyMode with 400', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/sessions',
+      payload: { title: 'A session', replyMode: 'deep' },
+    });
+
+    expect(res.statusCode).toBe(400);
+  });
+
   it("creates a session owned by the auth session's user and responds 201", async () => {
     repo.create.mockResolvedValue(fromPartial(aSession()));
 
@@ -102,7 +157,10 @@ describe('POST /api/sessions', () => {
     expect(res.statusCode).toBe(201);
     expect(res.json()).toMatchObject({ id: SESSION_ID, title: 'A session' });
     // The owner is taken from the session, never the request body.
-    expect(repo.create).toHaveBeenCalledWith({ title: 'A session' }, REGISTERED_USER_ID);
+    expect(repo.create).toHaveBeenCalledWith(
+      { title: 'A session', replyMode: 'direct' },
+      REGISTERED_USER_ID,
+    );
   });
 
   it('rejects an unauthenticated create with 401 and never reaches the repository', async () => {
@@ -147,6 +205,7 @@ describe('POST /api/sessions', () => {
       archived: false,
       archivedAt: null,
       messageCount: 0,
+      replyMode: 'direct',
     });
   });
 
@@ -414,6 +473,7 @@ describe('GET /api/sessions/search', () => {
         archived: false,
         archivedAt: null,
         messageCount: 0,
+        replyMode: 'direct',
       },
     ]);
   });

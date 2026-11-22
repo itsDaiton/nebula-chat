@@ -4,8 +4,11 @@
  * Nebula Chat API
  * REST API for Nebula Chat
  */
+import type { CreateSessionBodyReplyMode } from './createSessionBodyReplyMode';
 
 export type CreateSessionBody = {
   /** @minLength 1 */
   title: string;
+  /** The Session's Reply mode: `direct` for Direct replies or `run` for Runs (Registered users only); fixed at creation */
+  replyMode?: CreateSessionBodyReplyMode;
 };

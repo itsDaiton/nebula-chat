@@ -292,8 +292,8 @@ export type ModelOptionRowProps = {
 export type ModelSelectProps = {
   selectedModel: string;
   onModelChange: (model: string) => void;
-  /** The pick does not apply to what is being sent (a Run chooses its own Models). */
-  dimmed?: boolean;
+  /** The pick applies to no reply here (a Run's Agents choose their own Models). */
+  disabled?: boolean;
 };
 
 export type ChatMessageListProps = {
@@ -339,7 +339,7 @@ export type ChatStreamState = {
 export type MessageState = {
   message: string;
   setMessage: Dispatch<SetStateAction<string>>;
-  /** The draft is to be sent as a Run; it lasts for one send, never for the Session. */
+  /** A new chat's draft is to start a Run Session; a Session's own Reply mode wins once it exists. */
   isRunMode: boolean;
   toggleRunMode: () => void;
   resetRunMode: () => void;

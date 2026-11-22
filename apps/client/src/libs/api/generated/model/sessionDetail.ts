@@ -4,6 +4,7 @@
  * Nebula Chat API
  * REST API for Nebula Chat
  */
+import type { SessionDetailReplyMode } from './sessionDetailReplyMode';
 import type { SessionDetailWaitingRun } from './sessionDetailWaitingRun';
 
 export interface SessionDetail {
@@ -22,6 +23,8 @@ export interface SessionDetail {
    * @maximum 9007199254740991
    */
   messageCount: number;
+  /** The Session's Reply mode: `direct` for Direct replies or `run` for Runs (Registered users only); fixed at creation */
+  replyMode: SessionDetailReplyMode;
   /** The reply still being produced for this Session, to re-attach to with `GET /api/streams/{streamId}`; null when none is in flight */
   activeStreamId: string | null;
   /** The Run waiting for the answer to its Clarifying question; the next Message sent to the Session answers it */
