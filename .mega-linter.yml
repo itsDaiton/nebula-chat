@@ -86,6 +86,13 @@ ADDITIONAL_EXCLUDED_DIRECTORIES:
 REPOSITORY_DEVSKIM_ARGUMENTS:
   ["--ignore-rule-ids", "DS173237", "DS126858", "DS162092", "DS137138", "DS172411"]
 
+# CKV_OPENAPI_4 and CKV_OPENAPI_5 want a top-level `security` requirement in
+# openapi/openapi.yaml. The spec is generated, and each operation declares its own
+# security from its Access level (ADR-0036); public routes (`/health`, `/api/models`)
+# have none by design, so a global requirement would be wrong. The checks fire
+# whenever the spec is in a diff, so they blocked the NEB-891 and NEB-897 PRs.
+REPOSITORY_CHECKOV_ARGUMENTS: ["--skip-check", "CKV_OPENAPI_4,CKV_OPENAPI_5"]
+
 # jsonlint is strict JSON. Every tsconfig in this repo is JSONC — tsconfig.app.json
 # has carried `/* Bundler mode */` comments since it was generated — so jsonlint
 # fails to parse them by design. v8r and prettier still validate these files, and
