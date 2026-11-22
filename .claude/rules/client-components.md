@@ -28,7 +28,7 @@ paths:
   so one render serves both modes from the `--shiki-*` variables. A Message's meta row shows only what the
   Message carries (Model, tokens, estimated cost, Run) and nothing while a field is null.
 - **Run inspection (NEB-362).** An assistant Message with a `runId` shows the `RunChip` (status, Step count,
-  duration), which calls `openInspector('run', runId)`. The Inspector's Run tab renders `RunView`: the end
+  duration), which calls `selectRun(runId)`. The Inspector has no tabs: a Run Session shows `RunView` (opened on its newest Run, under a short Session header), a Direct one the Session view, and a new chat follows the Run toggle. `RunView` renders: the end
   status and why, tokens against the Run budget, the Brief, and the Steps grouped by Intake, turn and answer.
   A Step expands to its facts; its full input and output open in a dialog. Both read the Run through `useRun`.
 - **Run toggle and Step progress (NEB-652).** `RunToggle` picks a new chat's Reply mode for a Registered

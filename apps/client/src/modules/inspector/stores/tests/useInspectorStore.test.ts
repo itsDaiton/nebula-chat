@@ -3,38 +3,33 @@ import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore'
 import { usePanelStore } from '@/shared/stores/usePanelStore';
 
 beforeEach(() => {
-  useInspectorStore.setState({ activeTab: 'session', selectedRunId: null });
+  useInspectorStore.setState({ selectedRunId: null });
   usePanelStore.setState({ leftOpen: true, rightOpen: false, sheetOpen: false });
 });
 
 const state = () => useInspectorStore.getState();
 
 describe('useInspectorStore', () => {
-  it('opens the Inspector on a tab, and on a Run when it is the Run tab', () => {
-    state().openInspector('run', 'run-1');
+  it('selects a picked Run and opens the Inspector', () => {
+    state().selectRun('run-1');
 
-    expect(state()).toMatchObject({ activeTab: 'run', selectedRunId: 'run-1' });
+    expect(state().selectedRunId).toBe('run-1');
     expect(usePanelStore.getState()).toMatchObject({ rightOpen: true, sheetOpen: true });
   });
 
-  it('keeps the selected Run when it opens the Session tab', () => {
-    state().openInspector('run', 'run-1');
-    state().openInspector('session');
-
-    expect(state()).toMatchObject({ activeTab: 'session', selectedRunId: 'run-1' });
-  });
-
-  it('shows a Run that just started on the Run tab, without raising the mobile sheet over the chat', () => {
+  it('shows a Run that just started, without raising the mobile sheet over the chat', () => {
     state().showRun('run-2');
 
-    expect(state()).toMatchObject({ activeTab: 'run', selectedRunId: 'run-2' });
+    expect(state().selectedRunId).toBe('run-2');
     expect(usePanelStore.getState()).toMatchObject({ rightOpen: true, sheetOpen: false });
   });
 
-  it('clears the selected Run, keeping the tab', () => {
-    state().openInspector('run', 'run-1');
-    state().clearSelectedRun();
+  it('restores a selection without touching the panels, and can clear it', () => {
+    state().restoreRun('run-3');
+    expect(state().selectedRunId).toBe('run-3');
+    expect(usePanelStore.getState()).toMatchObject({ rightOpen: false, sheetOpen: false });
 
-    expect(state()).toMatchObject({ activeTab: 'run', selectedRunId: null });
+    state().restoreRun(null);
+    expect(state().selectedRunId).toBeNull();
   });
 });

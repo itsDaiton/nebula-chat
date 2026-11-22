@@ -114,6 +114,8 @@ export const AppShell = ({
             <SheetContent
               side="bottom"
               showCloseButton={false}
+              // Focus on the close button would open its tooltip, which eats the first Escape.
+              initialFocus={false}
               className="max-h-[70dvh] gap-0 rounded-t-2xl"
             >
               <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-border-strong" />

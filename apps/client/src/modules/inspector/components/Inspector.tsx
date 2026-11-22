@@ -1,53 +1,52 @@
-import { MessageSquareIcon, WorkflowIcon, XIcon } from 'lucide-react';
-import { RunTabBadge } from '@/modules/inspector/components/RunTabBadge';
+import { XIcon } from 'lucide-react';
+import { useParams } from '@tanstack/react-router';
+import { useGetSession } from '@/libs/api/generated/sessions/sessions';
+import { useRunMode } from '@/modules/chat/hooks/useRunMode';
+import { RunSessionHeader } from '@/modules/inspector/components/RunSessionHeader';
 import { RunTab } from '@/modules/inspector/components/RunTab';
 import { SessionTab } from '@/modules/inspector/components/SessionTab';
 import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
-import type { InspectorProps, InspectorTab } from '@/modules/inspector/types/types';
+import type { InspectorProps } from '@/modules/inspector/types/types';
 import { resources } from '@/resources';
 import { IconButton } from '@/shared/components/ui/icon-button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 
-const tabClass =
-  'flex-none gap-1.5 px-2.5 text-[12.5px] after:inset-x-0 after:bottom-[-1px] after:h-[1.5px]';
+const { views } = resources.inspector;
 
+// One view per Reply mode (ADR-0035): a Run Session shows its Run, a Direct one the Session.
 export const Inspector = ({ onClose }: InspectorProps) => {
-  const { activeTab, selectedRunId, setActiveTab } = useInspectorStore();
+  const { id } = useParams({ strict: false });
+  const selectedRunId = useInspectorStore((state) => state.selectedRunId);
+  const { isRunMode } = useRunMode();
+  const { data: session } = useGetSession(id ?? '', { query: { enabled: Boolean(id) } });
+  // A Session on screen decides by its own mode; a new chat follows the toggle.
+  const isRun = id ? session?.replyMode === 'run' : isRunMode;
 
   return (
-    <Tabs
-      value={activeTab}
-      onValueChange={(tab) => setActiveTab(tab as InspectorTab)}
-      className="min-h-0 flex-1 flex-col gap-0"
-    >
-      <div className="flex items-center border-b border-border px-2 pt-2">
-        <TabsList variant="line" className="h-8 w-auto flex-1 justify-start p-0">
-          <TabsTrigger value="session" className={tabClass}>
-            <MessageSquareIcon />
-            {resources.inspector.tabs.session}
-          </TabsTrigger>
-          <TabsTrigger value="run" className={tabClass}>
-            <WorkflowIcon />
-            {resources.inspector.tabs.run}
-            {selectedRunId && <RunTabBadge runId={selectedRunId} />}
-          </TabsTrigger>
-        </TabsList>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex h-10 items-center justify-between border-b border-border pr-2 pl-3.5">
+        <h2 className="text-[12.5px] font-medium text-foreground">
+          {isRun ? views.run : views.session}
+        </h2>
         <IconButton
           variant="ghost"
           size="icon"
-          className="mb-1 size-7 text-muted-foreground"
+          className="size-7 text-muted-foreground"
           label={resources.inspector.close}
           onClick={onClose}
         >
           <XIcon />
         </IconButton>
       </div>
-      <TabsContent value="session" className="overflow-y-auto">
-        <SessionTab />
-      </TabsContent>
-      <TabsContent value="run" className="flex flex-col overflow-y-auto">
-        <RunTab runId={selectedRunId} />
-      </TabsContent>
-    </Tabs>
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        {isRun ? (
+          <>
+            {id && <RunSessionHeader />}
+            <RunTab runId={selectedRunId} />
+          </>
+        ) : (
+          (!id || session) && <SessionTab />
+        )}
+      </div>
+    </div>
   );
 };

@@ -45,10 +45,10 @@ State is split by **kind** ([ADR-0012](../../docs/adr/0012-adopt-tanstack-query-
   (`parseRunEvent`), folded into that Message (`applyRunEvent`: a flat list of Steps in first-seen order, each
   keeping its `turn` and `parentStepId`; a higher `attempt` resets the Step in place and, for the Output Step,
   the answer) and each invalidates the Run's query, so the Inspector's
-  Run tab follows along. The turn grouping is derived from that flat list when rendering
+  Run view follows along. The turn grouping is derived from that flat list when rendering
   (`utils/groupProgressSteps.ts`), never stored. Stop cancels a Run like a Direct reply: `run-finished` sets
   `cancelled`, and the reply keeps its Steps even when no answer had streamed. A `403 Forbidden` to a Run send returns the text to the composer and toasts the error.
-  `useChatSession` clears the Inspector's selected Run when the Session on screen changes.
+  `useChatSession` selects the newest Run of the Session on screen (or none) when it changes.
   A `run-waiting` frame puts the Clarifying question on the trailing assistant Message, under the saved
   question Message's id. Whether a Run is waiting is server state: `useWaitingRun` reads the Session's
   `waitingRun`, hides it while a reply is in flight, and cancels it on its question stream (`cancelledRunId`

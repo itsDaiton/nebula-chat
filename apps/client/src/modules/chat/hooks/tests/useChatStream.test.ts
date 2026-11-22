@@ -904,7 +904,7 @@ describe('useChatStream — a Run', () => {
 
   beforeEach(() => {
     useChatStreamStore.setState({ sessionId: EXISTING_ID });
-    useInspectorStore.setState({ activeTab: 'session', selectedRunId: null });
+    useInspectorStore.setState({ selectedRunId: null });
     server.use(
       getSendMessageMockHandler({ messageId: MESSAGE_ID, streamId: STREAM_ID, runId: RUN_ID }),
     );
@@ -925,7 +925,7 @@ describe('useChatStream — a Run', () => {
 
     expect(received).toMatchObject({ content: 'what is 2+2?', mode: 'run' });
     expect(history().at(-1)?.runId).toBe(RUN_ID);
-    expect(useInspectorStore.getState()).toMatchObject({ activeTab: 'run', selectedRunId: RUN_ID });
+    expect(useInspectorStore.getState()).toMatchObject({ selectedRunId: RUN_ID });
   });
 
   it('shows each Step as it starts and finishes, then the answer and the end status', async () => {

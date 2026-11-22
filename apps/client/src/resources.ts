@@ -868,7 +868,7 @@ export const resources = {
   },
   inspector: {
     close: 'Close inspector',
-    tabs: { session: 'Session', run: 'Run' },
+    views: { session: 'Session', run: 'Run' },
     session: {
       model: 'Model',
       limits: 'Limits',
@@ -882,9 +882,9 @@ export const resources = {
       tokens: (count: string) => `${count} tokens`,
     },
     run: {
-      emptyTitle: 'No Run selected',
+      emptyTitle: 'No Run yet',
       emptyHint:
-        'Turn on Run in the composer to have Agents plan, analyse and review an answer. Select a Run chip under an answer to see its Steps here.',
+        'The Run starts when you send your message. Agents plan, analyse and review the answer, and their Steps appear here.',
       loading: 'Loading the Run',
       notFound: 'This Run is no longer available.',
       loadFailed: "Couldn't load this Run.",
