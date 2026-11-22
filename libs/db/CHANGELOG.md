@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v1.12.0...nebula-chat-db-v1.13.0) (2026-11-22)
+
+
+### Features
+
+* **server,client:** NEB-832 fix Reply mode per Session ([#932](https://github.com/itsDaiton/nebula-chat/issues/932)) ([fa29897](https://github.com/itsDaiton/nebula-chat/commit/fa29897b8d002165460ec13917206559d3094425))
+
 ## [1.12.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v1.11.0...nebula-chat-db-v1.12.0) (2026-11-21)
 
 
