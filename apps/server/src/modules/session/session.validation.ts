@@ -1,9 +1,10 @@
 import { z } from 'zod';
+import { REPLY_MODES } from '@nebula-chat/db';
 import { paginationConfig } from '@server/config/pagination.config';
 import { isoDateTimeSchema } from '@server/utils/isoDateTimeSchema';
 
 const replyModeSchema = z
-  .enum(['direct', 'run'])
+  .enum(REPLY_MODES)
   .describe(
     "The Session's Reply mode: `direct` for Direct replies or `run` for Runs (Registered users only); fixed at creation",
   );

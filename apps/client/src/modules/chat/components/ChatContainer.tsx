@@ -1,7 +1,6 @@
 import { ArchiveIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useParams } from '@tanstack/react-router';
-import { SendMessageBodyMode } from '@/libs/api/generated/model/sendMessageBodyMode';
 import { ArchivedSessionBar } from '@/modules/chat/components/ArchivedSessionBar';
 import { ChatContainerBox } from '@/modules/chat/components/ChatContainerBox';
 import { ChatEmptyState } from '@/modules/chat/components/ChatEmptyState';
@@ -40,8 +39,7 @@ export const ChatContainer = () => {
     sessionId: chatSessionId,
   } = useChatStream();
   const { selectedModel, setSelectedModel } = useModel();
-  const { isRunMode } = useRunMode();
-  const replyMode = isRunMode ? SendMessageBodyMode.run : SendMessageBodyMode.direct;
+  const { replyMode } = useRunMode();
 
   const { handleSendMessage } = useHandleSendMessage({ history, streamMessage });
 

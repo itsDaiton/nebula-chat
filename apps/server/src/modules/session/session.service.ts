@@ -2,7 +2,7 @@ import { sessionRepository } from '@server/modules/session/session.repository';
 import { ForbiddenError, NotFoundError } from '@nebula-chat/errors';
 import type { EventLogger } from '@nebula-chat/otel';
 import { paginationConfig } from '@server/config/pagination.config';
-import type { CreateSessionDTO } from '@server/modules/session/session.types';
+import type { CreateSessionDTO, SessionOwner } from '@server/modules/session/session.types';
 import { runRepository } from '@server/modules/run/run.repository';
 import { runService } from '@server/modules/run/run.service';
 import { findActiveStream, findLastStream } from '@server/redis';
@@ -20,10 +20,7 @@ const snippetAround = (content: string, query: string) => {
 };
 
 export const sessionService = {
-  async createSession(
-    data: CreateSessionDTO,
-    user: { id: string; isAnonymous?: boolean | null | undefined },
-  ) {
+  async createSession(data: CreateSessionDTO, user: SessionOwner) {
     // Runs are Registered-only (GLOSSARY.md); a Guest's Session is always Direct.
     if (data.replyMode === 'run' && user.isAnonymous) {
       throw new ForbiddenError('A Run requires a registered account.');

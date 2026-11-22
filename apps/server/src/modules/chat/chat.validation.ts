@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { REPLY_MODES } from '@nebula-chat/db';
 import { modelIdSchema } from '@nebula-chat/contracts';
 
 export const sendMessageParamsSchema = z.object({
@@ -8,7 +9,7 @@ export const sendMessageParamsSchema = z.object({
 export const sendMessageSchema = z.object({
   content: z.string().min(1),
   mode: z
-    .enum(['direct', 'run'])
+    .enum(REPLY_MODES)
     .optional()
     .meta({ deprecated: true })
     .describe(
