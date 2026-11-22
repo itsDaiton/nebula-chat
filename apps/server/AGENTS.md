@@ -50,7 +50,7 @@ script load through `dotenvx run` — single source of truth (see [server-env](.
   Archive, Ban), and `user` (only a repository so far: the send path records `lastActiveAt`), `modelCall` (only a repository: the Spend allowance's monthly cost sum). A module may add hooks (`*.hook.ts`) and helpers beside its layers.
 - `plugins/` — Fastify plugins: request logging, `db`, `redis`, `rateLimit` (the limiter, keyed on `CF-Connecting-IP`), `privilegedRoutes` (the `/api/internal/*` and `/api/admin/*` scopes with their rate limits), and `authGate` (mounts `/api/auth/*` and answers `/api/auth/admin/*`, dot segments resolved, with NotFound; `@nebula-chat/auth` refuses them too,
   its `onRoute` hook attaches the gate for each route's Access level and fails boot on a route without one; also exports `isActingAdmin` for a route an Admin may use more widely than a User).
-- `errors/` — the global error handler. `config/` — CORS, SSE headers, pagination. `utils/` — small shared helpers,
+- `errors/` — the global error handler. `config/` — CORS allowlist, SSE headers, pagination. Security headers (helmet) and the mutation Origin check are root plugins in `plugins/`. `utils/` — small shared helpers,
   including `operatorGate.hook.ts` (`requireOperator`, the gate of the `operator` Access level).
 - `test/` — the shared harness (`createTestApp`, in-memory pub/sub, reply streams, profile image store).
 

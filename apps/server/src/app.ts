@@ -29,8 +29,10 @@ import profileImageRoutes from '@server/modules/profileImage/profileImage.routes
 import authGate, { DOCS_PREFIX } from '@server/plugins/authGate.plugin';
 import dbPlugin from '@server/plugins/db.plugin';
 import privilegedRoutes from '@server/plugins/privilegedRoutes.plugin';
+import originCheck from '@server/plugins/originCheck.plugin';
 import rateLimitPlugin from '@server/plugins/rateLimit.plugin';
 import redisPlugin from '@server/plugins/redis.plugin';
+import securityHeaders from '@server/plugins/securityHeaders.plugin';
 import requestLogging from '@server/plugins/requestLogging.plugin';
 import { logController } from '@server/utils/logController';
 import { resolveTrustProxy } from '@server/utils/trustProxy';
@@ -73,6 +75,8 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   await app.register(authGate);
   await app.register(sensible);
   await app.register(cors, corsOptions);
+  await app.register(securityHeaders);
+  await app.register(originCheck);
   await app.register(rateLimitPlugin);
 
   // Before @fastify/swagger: it collects the schemas carrying `.meta({ id })`,
@@ -121,7 +125,16 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
 
   // `swagger` above stays on either way: `generate:openapi` reads `app.swagger()`.
   if (env.API_DOCS_ENABLED) {
-    await app.register(swaggerUi, { routePrefix: DOCS_PREFIX });
+    await app.register(swaggerUi, {
+      routePrefix: DOCS_PREFIX,
+      // swagger-ui's own CSP, minus what is wrong behind helmet: framing is denied everywhere, and http dev must work.
+      staticCSP: true,
+      transformStaticCSP: (header) =>
+        header
+          .replace("frame-ancestors 'self'", "frame-ancestors 'none'")
+          .replace('upgrade-insecure-requests;', '')
+          .trim(),
+    });
   }
 
   await app.register(underPressure, {
