@@ -64,8 +64,12 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
   the assistant Message), the streamed model call (`streamChat.ts`), its Drizzle queries, and the response
   cache (`replyCache.ts`).
 - `llm/` — the model layer: provider clients, structured output, token counting, `packHistory`, the
-  concurrency limiter, the prompt loader, and the key resolver (`keyResolver.ts`: every Model call gets its provider key from it, today the Operator key). A Model's provider, limits, prices and each provider's default Model come from the
+  concurrency limiter, the prompt loader, and the key resolver (`keyResolver.ts`: one per job, every Model call loads its provider key from it afresh, the stored Own key the payload references or else the Operator key, never a fallback from one to the other). A Model's provider, limits, prices and each provider's default Model come from the
   catalog in `@nebula-chat/contracts` (ADR-0030); the worker keeps no registry of its own.
+- `ownKeys/` — the Own key (ADR-0037, GLOSSARY.md): `ownKeyCrypto.ts` decrypts and re-wraps RSA-OAEP ciphertext by key version
+  (`node:crypto` only), the Drizzle `OwnKeyStore` sits beside it, `validateOwnKey.ts` checks a stored key against its provider's
+  model-list endpoint, and `rewrapOwnKeys.ts` moves every key to the current version. Both are jobs (`own-key-validation`,
+  `own-key-rewrap`) the server enqueues; the worker only consumes them.
 - `purge/` — the daily Purge (ADR-0028): `runPurge.ts` picks the Users and Guests past their thresholds, erases each in
   its own transaction and appends one system Audit entry of counts; the Drizzle `PurgeStore` sits beside it. `worker.ts`
   upserts the job scheduler (fixed id, `0 3 * * *` UTC) so every instance shares one schedule.
@@ -104,6 +108,16 @@ whose payload has `resume` continues from the checkpoint with `Command({ resume 
 ends the Run `partial`. The timeout job settles the Run with a conditional update on `status = waiting`, so it and a
 server-side answer settle once: it enqueues that resume job, or, with the Run's cancel flag raised, ends the Run `cancelled` and deletes its checkpoints.
 
+### Own keys
+
+A job's `keyRefs` names the stored Own key per provider; a provider without one uses the Operator key. The resolver loads the row by
+that id (checking it is the job's User's, for that provider, and `valid`), decrypts it and hands out the plaintext per call: it is
+never put in state, `configurable`, a Step, a stream event or a log line, and `scrubError` knows every key a job has loaded. A model
+call runs inside `keys.guard`: a 401 marks the key `invalid` and fails with `InvalidOwnKey`, a 429 fails with `TooManyRequests`
+and leaves it valid, and neither retries on the Operator key. An Intake or delegate Agent failing that way ends the Run instead of being
+worked around. The Orchestrator's and a delegate's tool loop load their key once per execution of the node, so a resume or retry
+loads it again. Rotation: [docs/own-key-rotation.md](../../docs/own-key-rotation.md).
+
 ### Adding a job type
 
 1. Add its payload schema and queue name to `@nebula-chat/contracts`, IDs only.
@@ -139,7 +153,7 @@ on the emitted events, the persisted assistant Message, the recorded Model calls
 `jobs/tests/run.test.ts` does the same for a Run, with scripted models per Agent (the Orchestrator's
 script decides each reply from the messages it is sent), LangGraph's in-memory checkpointer and
 in-memory Run and Step stores, and a Toolbox whose search provider is faked. Each tool is
-also tested at its own seam (`tools/tests/`), with faked Tavily responses. `jobs/tests/purge.test.ts` runs the Purge processor over in-memory Users and a fake clock. No test
+also tested at its own seam (`tools/tests/`), with faked Tavily responses. `jobs/tests/directReply.test.ts` and `run.test.ts` also cover the Own key at this seam, with real `node:crypto` and a generated keypair (`ownKeys/tests/ownKeyFakes.ts`). `jobs/tests/purge.test.ts` runs the Purge processor over in-memory Users and a fake clock. No test
 reaches Postgres, Redis, a provider or the web.
 
 Coverage excludes construction-only files (`worker.ts`, `env.ts`, `logger.ts`, `db.ts`, `redis.ts`) and

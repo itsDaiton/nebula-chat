@@ -9,6 +9,7 @@ export const ERROR_STATUS: Readonly<Record<ErrorCode, number>> = {
   Forbidden: 403,
   MessageAllowanceReached: 403,
   SpendAllowanceReached: 403,
+  InvalidOwnKey: 403,
   TwoFactorRequired: 403,
   NotFound: 404,
   Conflict: 409,

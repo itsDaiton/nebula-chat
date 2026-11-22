@@ -2,6 +2,17 @@ import { z } from 'zod';
 import { telemetryEnvShape } from '@nebula-chat/otel';
 import { REPLY_STREAM_RECORD_TTL_SECONDS } from '@nebula-chat/redis';
 
+const PRIVATE_KEY_VARIABLE = /^OWN_KEY_PRIVATE_KEY_V(\d+)$/;
+
+// One worker secret per key version, `OWN_KEY_PRIVATE_KEY_V<n>`; a PEM, with `\n` accepted for its line breaks.
+const ownKeyPrivateKeys = (source: NodeJS.ProcessEnv): Map<number, string> =>
+  new Map(
+    Object.entries(source).flatMap(([name, value]) => {
+      const version = PRIVATE_KEY_VARIABLE.exec(name)?.[1];
+      return version && value ? [[Number(version), value.replaceAll('\\n', '\n')] as const] : [];
+    }),
+  );
+
 const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -12,6 +23,8 @@ const envSchema = z
     REDIS_URL: z.url(),
     OPENAI_API_KEY: z.string().min(1).optional(),
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
+    // The version new Own key ciphertext is written under; defaults to the highest version with a private key.
+    OWN_KEY_CURRENT_VERSION: z.coerce.number().int().positive().optional(),
     // How many Direct replies one worker instance produces at once; the primary LLM throttle.
     WORKER_CONCURRENCY: z.coerce.number().int().positive().default(5),
     // How many Runs one instance executes at once: each fans out to several model calls.
@@ -58,4 +71,15 @@ const envSchema = z
 
 export type Env = z.infer<typeof envSchema>;
 
-export const env: Env = envSchema.parse(process.env);
+const parsed = envSchema.parse(process.env);
+const privateKeys = ownKeyPrivateKeys(process.env);
+const currentVersion = parsed.OWN_KEY_CURRENT_VERSION ?? Math.max(0, ...privateKeys.keys());
+// Fails boot rather than the first Own key that needs it; no private key at all leaves Own keys unusable.
+if (privateKeys.size > 0 && !privateKeys.has(currentVersion)) {
+  throw new Error(`OWN_KEY_PRIVATE_KEY_V${currentVersion} is not set`);
+}
+
+export const env: Env = parsed;
+
+/** The Own key private keys by version, and the version new ciphertext is written under. */
+export const ownKeyConfig = { privateKeys, currentVersion };

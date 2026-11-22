@@ -9,6 +9,7 @@ export const ERROR_MESSAGE: Readonly<Record<ErrorCode, string>> = {
   Forbidden: 'You do not have access to this resource.',
   MessageAllowanceReached: 'The message allowance has been reached.',
   SpendAllowanceReached: 'The monthly spend allowance has been reached.',
+  InvalidOwnKey: 'Your API key cannot be used. Update it in Settings.',
   TwoFactorRequired: 'Two-factor authentication is required.',
   NotFound: 'The requested resource was not found.',
   Conflict: 'The request conflicts with the current state of the resource.',

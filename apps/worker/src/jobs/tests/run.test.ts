@@ -5,7 +5,13 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getModel } from '@nebula-chat/contracts';
 import type { ReplyStreamEvent } from '@nebula-chat/contracts';
 import { captureLogger, captureSpans, eventLines, LEVEL } from '@nebula-chat/otel/testing';
-import { operatorKeyResolver } from '@worker/llm/keyResolver';
+import { createKeyResolver, operatorKeyResolver } from '@worker/llm/keyResolver';
+import {
+  cryptoFor,
+  encryptOwnKey,
+  generateKeyPair,
+  memoryOwnKeys,
+} from '@worker/ownKeys/tests/ownKeyFakes';
 import { createRunProcessor } from '@worker/jobs/run';
 import { memoryLedger, memoryStream } from '@worker/jobs/tests/directReplyFakes';
 import {
@@ -123,7 +129,7 @@ const run = (
   models: RunModels,
   data: unknown = payload,
   overrides: Partial<
-    Pick<RunDeps, 'stream' | 'runTimeoutMs' | 'cancelPollMs' | 'steps' | 'runs'>
+    Pick<RunDeps, 'stream' | 'runTimeoutMs' | 'cancelPollMs' | 'steps' | 'runs' | 'keys'>
   > & {
     limits?: Partial<RunLimits>;
     /** BullMQ's view of the job: tries made before this one, and how many it gets in all. */
@@ -1302,5 +1308,206 @@ describe('a Clarifying question', () => {
       models.agentCalls.filter((c) => c.agent !== 'orchestrator').flatMap((c) => c.tools),
     ).not.toContain('askUser');
     expect(orchestratorTurns(models)[0]?.tools).toContain('askUser');
+  });
+});
+
+describe('a Run on an Own key', () => {
+  const REF = '77777777-7777-4777-8777-777777777777';
+  const OWN = 'sk-own-sentinel-2222';
+  const pair = generateKeyPair();
+  let own: ReturnType<typeof memoryOwnKeys>;
+  let keysUsed: string[];
+
+  const store = (key = OWN, status: 'valid' | 'pending' = 'valid') =>
+    own.add(REF, {
+      userId: USER_ID,
+      provider: 'openai',
+      ciphertext: encryptOwnKey(pair.publicKey, key),
+      status,
+    });
+  const resolver = () =>
+    createKeyResolver(
+      { openai: 'sk-openai' },
+      { store: own.store, crypto: cryptoFor({ 1: pair }) },
+    );
+  const withRef = { ...payload, keyRefs: { openai: REF } };
+  const runOnOwnKey = (
+    models: RunModels,
+    options: Parameters<typeof run>[2] = {},
+    data: unknown = withRef,
+  ) => run(models, data, { keys: resolver(), ...options });
+  // Every Model call's key, whichever Agent made it.
+  const recording = (models: RunModels): RunModels => ({
+    structured: async (request) => {
+      keysUsed.push(request.apiKey);
+      return models.structured(request);
+    },
+    chat: (config) => {
+      keysUsed.push(config.apiKey);
+      return models.chat(config);
+    },
+  });
+  const rejecting = (status: number): Error =>
+    Object.assign(new Error(`rejected ${OWN} with ${status}`), { status });
+  const failingOutputWith = (error: Error, models = happyModels().models): RunModels => ({
+    ...models,
+    chat: (config) => {
+      if (!config.streaming) return models.chat(config);
+      const model = failingChat('unused')();
+      model.stream = async () => {
+        throw error;
+      };
+      return model;
+    },
+  });
+  const finished = () =>
+    streamed().find((e) => e.type === 'run-finished') as
+      Extract<ReplyStreamEvent, { type: 'run-finished' }> | undefined;
+
+  beforeEach(() => {
+    own = memoryOwnKeys();
+    keysUsed = [];
+    reset();
+  });
+
+  it('runs every Model call of every Agent on the stored key', async () => {
+    store();
+
+    await runOnOwnKey(recording(happyModels().models));
+
+    expect(db.runs.get(RUN_ID)?.status).toBe('completed');
+    // Two Intake Agents, the Orchestrator, two delegates and the Output Agent.
+    expect(keysUsed).toHaveLength(6);
+    expect(new Set(keysUsed)).toEqual(new Set([OWN]));
+  });
+
+  it('runs on the Operator key when the payload carries no reference', async () => {
+    store();
+
+    await runOnOwnKey(recording(happyModels().models), {}, payload);
+
+    expect(new Set(keysUsed)).toEqual(new Set(['sk-openai']));
+  });
+
+  it('flags every Model call in the ledger as made on an Own key', async () => {
+    store();
+
+    await runOnOwnKey(happyModels().models);
+
+    expect(ledger.calls.length).toBeGreaterThan(0);
+    expect(ledger.calls.every((call) => call.ownKey === true)).toBe(true);
+  });
+
+  it('fails the Run with the typed error, never the Operator key, when the key is gone', async () => {
+    const models = recording(happyModels().models);
+
+    await runOnOwnKey(models);
+
+    expect(db.runs.get(RUN_ID)?.status).toBe('failed');
+    expect(finished()?.error).toMatchObject({ error: 'InvalidOwnKey' });
+    expect(keysUsed).toEqual([]);
+    expect(db.created).toEqual([]);
+  });
+
+  it('marks the key invalid and ends the Run on an authentication failure of the Output Agent', async () => {
+    store();
+
+    await runOnOwnKey(failingOutputWith(rejecting(401)));
+
+    expect(own.rows.get(REF)?.status).toBe('invalid');
+    expect(finished()?.error).toMatchObject({ error: 'InvalidOwnKey' });
+    expect(stepNamed('output').error).toMatchObject({ error: 'InvalidOwnKey' });
+  });
+
+  it('leaves the key valid when the provider rate limits it, and still ends the Run', async () => {
+    store();
+
+    await runOnOwnKey(failingOutputWith(rejecting(429)));
+
+    expect(own.rows.get(REF)?.status).toBe('valid');
+    expect(finished()?.error).toMatchObject({ error: 'TooManyRequests' });
+  });
+
+  it('ends the Run when a delegate’s key is rejected, rather than the Orchestrator working around it', async () => {
+    store();
+    const { models } = scriptedModels(INTAKE, ANSWER, {
+      delegates: { analyst: { reply: rejecting(401) } },
+    });
+
+    await runOnOwnKey(models);
+
+    expect(own.rows.get(REF)?.status).toBe('invalid');
+    expect(db.runs.get(RUN_ID)?.status).toBe('failed');
+    expect(finished()?.error).toMatchObject({ error: 'InvalidOwnKey' });
+  });
+
+  it('ends the Run when an Intake Agent’s key is rejected, rather than going on without its part of the Brief', async () => {
+    store();
+    const { models } = scriptedModels({ language: rejecting(401), session: SUMMARISED }, ANSWER);
+
+    await runOnOwnKey(models);
+
+    expect(own.rows.get(REF)?.status).toBe('invalid');
+    expect(db.runs.get(RUN_ID)?.status).toBe('failed');
+  });
+
+  describe('across a retry', () => {
+    // The first try fails at the Output Agent with tries left, leaving its checkpoints.
+    const firstTry = async () => {
+      store();
+      await runOnOwnKey(failingOutputWith(new Error('provider down')), { attempts: 2 }).catch(
+        () => undefined,
+      );
+      keysUsed = [];
+    };
+
+    it('uses a key replaced under the same reference', async () => {
+      await firstTry();
+      store('sk-replacement');
+
+      await runOnOwnKey(recording(happyModels().models), { attemptsMade: 1, attempts: 2 });
+
+      expect(keysUsed).toEqual(['sk-replacement']);
+      expect(db.runs.get(RUN_ID)?.status).toBe('completed');
+    });
+
+    it('fails the Run, rather than switching to the Operator key, when the key was removed', async () => {
+      await firstTry();
+      own.rows.delete(REF);
+
+      await runOnOwnKey(recording(happyModels().models), { attemptsMade: 1, attempts: 2 });
+
+      expect(keysUsed).toEqual([]);
+      expect(db.runs.get(RUN_ID)?.status).toBe('failed');
+      expect(finished()?.error).toMatchObject({ error: 'InvalidOwnKey' });
+    });
+  });
+
+  it('never lets the key reach a Step, the stream, a checkpoint, a prompt, a message or a log line', async () => {
+    store();
+    const models = happyModels();
+    await runOnOwnKey(failingOutputWith(rejecting(401), models.models), { attempts: 2 }).catch(
+      () => undefined,
+    );
+    await checkpointsOf(RUN_ID);
+    store();
+    reset();
+    store();
+    const checkpointed = scriptedModels(INTAKE, ANSWER);
+    await runOnOwnKey(failingOutputWith(new Error(`down ${OWN}`), checkpointed.models), {
+      attempts: 2,
+    }).catch(() => undefined);
+
+    const surfaces = [
+      steps(),
+      streamed(),
+      log.lines,
+      await checkpointsOf(RUN_ID),
+      db.created,
+      checkpointed.structuredCalls,
+      checkpointed.agentCalls,
+      checkpointed.chatCalls.map((c) => c.messages),
+    ];
+    for (const surface of surfaces) expect(JSON.stringify(surface)).not.toContain(OWN);
   });
 });

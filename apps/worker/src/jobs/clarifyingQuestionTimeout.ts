@@ -21,5 +21,5 @@ export const createClarifyingQuestionTimeoutProcessor =
       );
       return;
     }
-    await endClarifyingWait(payload.data.runId, deps);
+    await endClarifyingWait(payload.data.runId, deps, payload.data.keyRefs);
   };

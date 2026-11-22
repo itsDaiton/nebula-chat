@@ -24,6 +24,8 @@ export type ModelCallSubject = {
   agent?: string;
   provider: ModelProvider;
   model: string;
+  /** The call ran on the User's Own key; absent means the Operator key. */
+  ownKey?: boolean;
 };
 
 /** What links a Direct reply's call to the assistant Message it produced. */
@@ -138,10 +140,16 @@ export const recordCachedModelCall = (
   startMs: number,
   link: ModelCallLink,
 ): Promise<void> =>
-  append(ledger, logger, subject, {
-    usage: NO_USAGE,
-    durationMs: Date.now() - startMs,
-    outcome: 'completed',
-    cached: true,
-    link,
-  });
+  // A replay made no call, so it ran on no key.
+  append(
+    ledger,
+    logger,
+    { ...subject, ownKey: false },
+    {
+      usage: NO_USAGE,
+      durationMs: Date.now() - startMs,
+      outcome: 'completed',
+      cached: true,
+      link,
+    },
+  );

@@ -53,7 +53,8 @@ const isFirstAsk = (messages: BaseMessage[], toolCallId: string): boolean =>
     .find((c) => c.name === ASK_USER)?.id === toolCallId;
 
 // A `createAgent` loop whose only tools are the delegate Agents; its middleware records Steps and enforces the limits.
-export const createOrchestrator = (deps: OrchestratorDeps) => {
+// The loop's model, and so its key, is loaded once per execution of the node: a resume or a retry loads it again.
+export const createOrchestrator = async (deps: OrchestratorDeps) => {
   const { limits, runId } = deps;
   const agent = orchestratorAgent;
   const system = deps.prompts[agent.prompt];
@@ -189,7 +190,7 @@ export const createOrchestrator = (deps: OrchestratorDeps) => {
   });
 
   const loop = createAgent({
-    model: deps.models.chat(llmConfigFor(agent, deps.keys)),
+    model: deps.models.chat(await llmConfigFor(agent, deps.keys)),
     tools: [
       ...DELEGATES.map((delegate) =>
         delegateTool(delegate, {

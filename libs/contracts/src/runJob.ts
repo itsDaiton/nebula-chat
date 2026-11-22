@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ownKeyRefsSchema } from './ownKeyRefs';
 
 /** The BullMQ queue the server enqueues Runs on and the worker consumes. */
 export const RUN_QUEUE = 'runs';
@@ -13,6 +14,8 @@ export const runJobSchema = z.object({
   /** The reply stream's key, and the id the assistant Message is persisted under. */
   streamId: z.uuid(),
   runId: z.uuid(),
+  /** The stored Own key each provider's Model calls use; absent means the Operator key. */
+  keyRefs: ownKeyRefsSchema.optional(),
   /** Present when the job resumes a Run waiting on a Clarifying question: `null` means nobody answered in time. */
   resume: z.object({ answerMessageId: z.uuid().nullable() }).optional(),
   /** The server's W3C trace context; absent on a job enqueued outside a span. */

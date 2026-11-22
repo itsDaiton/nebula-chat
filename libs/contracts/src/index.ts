@@ -11,6 +11,15 @@ export {
 export type { ClarifyingQuestionTimeoutJob } from './clarifyingQuestionTimeoutJob';
 export { PURGE_QUEUE, PURGE_SCHEDULER_ID, purgeJobSchema } from './purgeJob';
 export type { PurgeJob } from './purgeJob';
+export { ownKeyRefsSchema } from './ownKeyRefs';
+export type { OwnKeyRefs } from './ownKeyRefs';
+export {
+  OWN_KEY_REWRAP_QUEUE,
+  OWN_KEY_VALIDATION_QUEUE,
+  ownKeyRewrapJobSchema,
+  ownKeyValidationJobSchema,
+} from './ownKeyJobs';
+export type { OwnKeyRewrapJob, OwnKeyValidationJob } from './ownKeyJobs';
 
 // Reply streams: what the worker appends and the server relays (ADR-0014)
 export {

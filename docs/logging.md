@@ -192,6 +192,11 @@ once, and nobody else does:
   `nebula.purge.*` counts (never ids), and a `warn` `account.purge.user.failed` for each User it could not
   erase; the job then throws so BullMQ retries.
 
+- **Own keys** (the worker). `own_key.validated` (`nebula.own_key.id`, `nebula.own_key.status`) per validation job;
+  `own_key.rewrap.completed` with the `nebula.own_key.rewrapped` and `nebula.own_key.failed` counts per re-wrap, and a `warn`
+  `own_key.rewrap.failed` for each key it could not move. Ids and outcomes only: a key, its ciphertext and provider text that
+  echoes one never reach a line.
+
 - **Runs** (the worker). The runner in `apps/worker/src/runs/executeRun.ts`
   writes exactly one `chat.run.completed` per Run, bound like a Direct reply's
   lines plus `nebula.run.id`:

@@ -139,7 +139,7 @@ const runToolLoop = async (
 
   // No checkpointer: its tools only read, so a crash re-runs the delegate whole rather than resuming inside it.
   const loop = createAgent({
-    model: deps.models.chat(llmConfigFor(agent, deps.keys)),
+    model: deps.models.chat(await llmConfigFor(agent, deps.keys)),
     tools: agent.tools.map((name) => deps.toolbox[name]),
     systemPrompt: system,
     middleware: [
@@ -184,11 +184,11 @@ export const delegateTool = (agent: DelegateDefinition, deps: DelegateToolDeps) 
       }
       const system = deps.prompts[agent.prompt];
       // The timeout starts once the call leaves the process-wide queue, so waiting there costs it nothing.
-      const reply = await llmConcurrencyLimiter(() => {
+      const reply = await llmConcurrencyLimiter(async () => {
         const timeout = AbortSignal.timeout(deps.timeoutMs);
         const signal = config.signal ? AbortSignal.any([config.signal, timeout]) : timeout;
         return deps.models
-          .chat(llmConfigFor(agent, deps.keys))
+          .chat(await llmConfigFor(agent, deps.keys))
           .invoke([new SystemMessage(system), new HumanMessage(task)], { signal });
       });
       const usage = toCallUsage(reply.usage_metadata, {

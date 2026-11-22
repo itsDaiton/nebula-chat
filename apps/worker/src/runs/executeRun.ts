@@ -3,10 +3,12 @@ import type { BaseCheckpointSaver } from '@langchain/langgraph';
 import type { ReplyStreamEvent, RunJob } from '@nebula-chat/contracts';
 import type { RunStatus } from '@nebula-chat/db';
 import { NotFoundError, isAppError, toErrorEnvelope } from '@nebula-chat/errors';
+import type { AppError } from '@nebula-chat/errors';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
 import type { LogAttributes } from '@nebula-chat/otel';
 import { endStream, watchForCancel } from '@worker/directReplies/runDirectReply';
 import type { ReplyStreamWriter, StoredMessage } from '@worker/directReplies/runDirectReply';
+import type { KeyResolverFactory } from '@worker/llm/keyResolver';
 import { scrubError } from '@worker/modelCalls/scrubError';
 import type { ClarifyingAnswer, ClarifyingQuestion } from '@worker/runs/askUserTool';
 import type { Brief } from '@worker/runs/brief';
@@ -43,17 +45,29 @@ export type RunStore = {
 
 export type RunDeps = Pick<
   RunGraphDeps,
-  'steps' | 'ledger' | 'models' | 'prompts' | 'keys' | 'logger' | 'limits' | 'toolbox'
+  'steps' | 'ledger' | 'models' | 'prompts' | 'logger' | 'limits' | 'toolbox'
 > & {
+  keys: KeyResolverFactory;
   runs: RunStore;
   stream: ReplyStreamWriter;
   /** Postgres in production, in memory in tests; the Run's id is the thread. */
   checkpointer: BaseCheckpointSaver;
   runTimeoutMs: number;
   /** Schedules the delayed job that ends the Run's wait for an answer. */
-  scheduleQuestionTimeout: (runId: string) => Promise<void>;
+  scheduleQuestionTimeout: (runId: string, keyRefs: RunJob['keyRefs']) => Promise<void>;
   /** How often a Run checks for a cancel request. Default 250 ms. */
   cancelPollMs?: number;
+};
+
+// The graph wraps a node's error in a MiddlewareError and parallel branches' in an AggregateError;
+// an error that speaks for itself, such as an Own key's, is the one to report.
+const findAppError = (error: unknown, depth = 0): AppError | undefined => {
+  if (isAppError(error)) return error;
+  if (depth > 5) return undefined;
+  if (error instanceof AggregateError) {
+    return error.errors.map((e) => findAppError(e, depth + 1)).find(Boolean);
+  }
+  return error instanceof Error ? findAppError(error.cause, depth + 1) : undefined;
 };
 
 /** Executes one Run as its graph, streaming Step events and the answer, then ends the stream with the Run's status. */
@@ -63,6 +77,7 @@ export const executeRun = async (
   finalAttempt = true,
 ): Promise<void> => {
   const { runs, stream, logger, checkpointer } = deps;
+  const keys = deps.keys({ userId: job.userId, keyRefs: job.keyRefs });
   const startMs = Date.now();
   const thread = { configurable: { thread_id: job.runId } };
   let runFound = false;
@@ -106,6 +121,7 @@ export const executeRun = async (
     await runs.markRunning(job.runId, deps.limits.tokenBudget);
     const graph = createRunGraph({
       ...deps,
+      keys,
       runId: job.runId,
       userId: job.userId,
       sessionId: job.sessionId,
@@ -213,14 +229,15 @@ export const executeRun = async (
     stopWatching();
     clearTimeout(timer);
     // Idempotent: a model error was already cleaned in its Step; this covers failures outside one.
-    scrubError(error, deps.keys);
+    scrubError(error, keys);
     if (abort.signal.aborted && abort.signal.reason !== timedOut) {
       await appended.catch(() => undefined);
       await endCancelled(job, answer, tally.tokens, deps, outcomeAttributes);
       return;
     }
-    const envelope = toErrorEnvelope(error);
-    const callerCaused = isAppError(error) && error.status < 500;
+    const reported = findAppError(error) ?? error;
+    const envelope = toErrorEnvelope(reported);
+    const callerCaused = isAppError(reported) && reported.status < 500;
     // A failure before the final attempt leaves the Run and its checkpoints for the retry; a caller error or timeout would only repeat.
     if (!finalAttempt && !callerCaused && abort.signal.reason !== timedOut) {
       logEvent(
@@ -284,7 +301,7 @@ const pauseForAnswer = async (
     question,
   });
   await endStream(job.streamId, { type: 'end' }, stream);
-  await scheduleQuestionTimeout(job.runId);
+  await scheduleQuestionTimeout(job.runId, job.keyRefs);
   logEvent(
     componentLogger(logger, 'chat'),
     'info',
