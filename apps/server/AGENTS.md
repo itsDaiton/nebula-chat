@@ -48,7 +48,7 @@ script load through `dotenvx run` — single source of truth (see [server-env](.
   `usage` (`/api/admin/usage/{series,detail,totals}`: per-Model prompts, tokens and estimated spend per UTC day from user Messages and the Model call ledger),
   `run` (`GET /api/runs/:runId`: a Run with its Brief and Steps for its owner, or for an Admin, whose read is audited; and the service that cancels Runs waiting on a Clarifying question: stop,
   Archive, Ban), and `user` (only a repository so far: the send path records `lastActiveAt`), `modelCall` (only a repository: the Spend allowance's monthly cost sum). A module may add hooks (`*.hook.ts`) and helpers beside its layers.
-- `plugins/` — Fastify plugins: request logging, `db`, `redis`, and `authGate` (mounts `/api/auth/*` and answers `/api/auth/admin/*`, dot segments resolved, with NotFound; `@nebula-chat/auth` refuses them too,
+- `plugins/` — Fastify plugins: request logging, `db`, `redis`, `rateLimit` (the limiter, keyed on `CF-Connecting-IP`), `privilegedRoutes` (the `/api/internal/*` and `/api/admin/*` scopes with their rate limits), and `authGate` (mounts `/api/auth/*` and answers `/api/auth/admin/*`, dot segments resolved, with NotFound; `@nebula-chat/auth` refuses them too,
   its `onRoute` hook attaches the gate for each route's Access level and fails boot on a route without one; also exports `isActingAdmin` for a route an Admin may use more widely than a User).
 - `errors/` — the global error handler. `config/` — CORS, SSE headers, pagination. `utils/` — small shared helpers,
   including `operatorGate.hook.ts` (`requireOperator`, the gate of the `operator` Access level).
@@ -75,6 +75,8 @@ Every feature module follows this strict 6-layer convention. Add files in this o
 New modules must be mounted in `buildApp()` in `src/app.ts` via `app.register(plugin, { prefix: '/api/<module>' })`.
 The one exception is `chat`, mounted at `/api`: sending lives under the Session it goes to
 (`/api/sessions/:sessionId/messages`, ADR-0014). No separate OpenAPI registry step — the `schema:` block on each route is the single source of truth for both validation and documentation.
+
+**`app.ts` is wiring only.** It registers plugins and route modules in order, so nothing new grows it: option objects, key generators, limit constants and groups of scoped routes go in a plugin under `plugins/` (or a helper under `utils/`) that `app.ts` imports and registers. A new route module is the one line it gains.
 
 ---
 

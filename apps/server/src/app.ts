@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import cors from '@fastify/cors';
-import rateLimit from '@fastify/rate-limit';
 import sensible from '@fastify/sensible';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
@@ -20,22 +19,17 @@ import { env } from '@server/env';
 import { errorHandler } from '@server/errors/error.handler';
 import { apiRootSchema, healthSchema } from '@server/health.validation';
 import { logger } from '@server/logger';
-import adminRoutes from '@server/modules/admin/admin.routes';
-import adminOverviewRoutes from '@server/modules/admin/adminOverview.routes';
-import adminSessionsRoutes from '@server/modules/admin/adminSessions.routes';
-import adminUsersRoutes from '@server/modules/admin/adminUsers.routes';
-import auditRoutes from '@server/modules/audit/audit.routes';
 import chatRoutes from '@server/modules/chat/chat.routes';
 import runRoutes from '@server/modules/run/run.routes';
 import sessionRoutes from '@server/modules/session/session.routes';
 import streamRoutes from '@server/modules/stream/stream.routes';
-import logLevelRoutes from '@server/modules/logLevel/logLevel.routes';
 import messageRoutes from '@server/modules/message/message.routes';
 import modelRoutes from '@server/modules/models/models.routes';
 import profileImageRoutes from '@server/modules/profileImage/profileImage.routes';
-import usageRoutes from '@server/modules/usage/usage.routes';
 import authGate, { DOCS_PREFIX } from '@server/plugins/authGate.plugin';
 import dbPlugin from '@server/plugins/db.plugin';
+import privilegedRoutes from '@server/plugins/privilegedRoutes.plugin';
+import rateLimitPlugin from '@server/plugins/rateLimit.plugin';
 import redisPlugin from '@server/plugins/redis.plugin';
 import requestLogging from '@server/plugins/requestLogging.plugin';
 import { logController } from '@server/utils/logController';
@@ -45,9 +39,6 @@ import { jsonResponse } from '@server/utils/jsonResponse';
 const { version } = JSON.parse(
   readFileSync(resolve(process.cwd(), '../../openapi/package.json'), 'utf8'),
 ) as { version: string };
-
-const INTERNAL_RATE_LIMIT = { max: 10, timeWindow: '1 minute' };
-const ADMIN_RATE_LIMIT = { max: 120, timeWindow: '1 minute' };
 
 export type BuildAppOptions = {
   /**
@@ -82,14 +73,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   await app.register(authGate);
   await app.register(sensible);
   await app.register(cors, corsOptions);
-  await app.register(rateLimit, {
-    global: false,
-    // Render keeps a client-sent X-Forwarded-For; Cloudflare sets CF-Connecting-IP itself, as better-auth reads it.
-    keyGenerator: (req) => {
-      const header = req.headers['cf-connecting-ip'];
-      return (typeof header === 'string' && header.trim()) || req.ip;
-    },
-  });
+  await app.register(rateLimitPlugin);
 
   // Before @fastify/swagger: it collects the schemas carrying `.meta({ id })`,
   // which the transformers below emit as named components.
@@ -196,21 +180,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   await app.register(runRoutes, { prefix: '/api/runs' });
   await app.register(streamRoutes, { prefix: '/api/streams' });
   await app.register(profileImageRoutes, { prefix: '/api/profile-image' });
-
-  // One bucket per scope. An instance hook runs before the gate's route hook, so a wrong token counts too.
-  await app.register(async (internal) => {
-    internal.addHook('onRequest', internal.rateLimit(INTERNAL_RATE_LIMIT));
-    await internal.register(logLevelRoutes, { prefix: '/api/internal/log-level' });
-    await internal.register(adminRoutes, { prefix: '/api/internal/admins' });
-  });
-  await app.register(async (admin) => {
-    admin.addHook('onRequest', admin.rateLimit(ADMIN_RATE_LIMIT));
-    await admin.register(adminOverviewRoutes, { prefix: '/api/admin/overview' });
-    await admin.register(usageRoutes, { prefix: '/api/admin/usage' });
-    await admin.register(adminUsersRoutes, { prefix: '/api/admin/users' });
-    await admin.register(adminSessionsRoutes, { prefix: '/api/admin/sessions' });
-    await admin.register(auditRoutes, { prefix: '/api/admin/audit' });
-  });
+  await app.register(privilegedRoutes);
 
   return app;
 };
