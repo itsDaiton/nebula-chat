@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nebula Chat API
-  version: 4.24.2
+  version: 4.25.0
   description: REST API for Nebula Chat
   contact:
     name: Nebula Chat
@@ -224,8 +224,9 @@ components:
           enum:
             - direct
             - run
-          description: "The Session's Reply mode: `direct` for Direct replies or `run` for
-            Runs (Registered users only); fixed at creation"
+          description: >-
+            The Session's Reply mode: `direct` for Direct replies or `run` for
+            Runs (Registered users only); fixed at creation
       required:
         - id
         - title
@@ -271,8 +272,9 @@ components:
           enum:
             - direct
             - run
-          description: "The Session's Reply mode: `direct` for Direct replies or `run` for
-            Runs (Registered users only); fixed at creation"
+          description: >-
+            The Session's Reply mode: `direct` for Direct replies or `run` for
+            Runs (Registered users only); fixed at creation
         snippet:
           description: >-
             Text around the first match in one of the Session’s Messages,
@@ -323,8 +325,9 @@ components:
           enum:
             - direct
             - run
-          description: "The Session's Reply mode: `direct` for Direct replies or `run` for
-            Runs (Registered users only); fixed at creation"
+          description: >-
+            The Session's Reply mode: `direct` for Direct replies or `run` for
+            Runs (Registered users only); fixed at creation
         activeStreamId:
           anyOf:
             - type: string
@@ -2036,8 +2039,9 @@ paths:
                   enum:
                     - direct
                     - run
-                  description: "The Session's Reply mode: `direct` for Direct replies or `run` for
-                    Runs (Registered users only); fixed at creation"
+                  description: >-
+                    The Session's Reply mode: `direct` for Direct replies or
+                    `run` for Runs (Registered users only); fixed at creation
               required:
                 - title
       security:
