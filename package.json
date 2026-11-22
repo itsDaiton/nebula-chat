@@ -44,10 +44,10 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.14.0",
     "jiti": "^2.6.1",
-    "knip": "^6.45.0",
-    "prettier": "^3.9.10",
+    "knip": "^6.45.1",
+    "prettier": "^3.10.1",
     "tsx": "catalog:",
-    "turbo": "^2.11.10",
+    "turbo": "^2.11.11",
     "typescript": "catalog:"
   }
 }
