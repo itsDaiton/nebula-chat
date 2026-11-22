@@ -69,7 +69,7 @@ The maximum number of `user`-authored messages a Metered user may send before th
 _Avoid_: Quota, rate limit (rate limiting is auth-endpoint abuse throttling — a separate concern).
 
 **Spend allowance**:
-The amount of Operator-key spend a verified Registered user may incur per UTC month, measured as the estimated cost of their Model calls from the ledger. At the budget the next send is refused until the month resets; a Run in flight finishes, and a Message answering a waiting Run is never refused. One amount for every verified User, Admins included. Metered users have the Message allowance instead.
+The amount of Operator-key spend a verified Registered user may incur per UTC month, measured as the estimated cost of their Model calls from the ledger. At the budget the next send is refused until the month resets; a Run in flight finishes, and a Message answering a waiting Run is never refused. One amount for every verified User; Admins are exempt. Metered users have the Message allowance instead.
 _Avoid_: Quota, budget (as the domain term), and confusion with the **Message allowance**, which covers Metered users only.
 
 **Claim**:

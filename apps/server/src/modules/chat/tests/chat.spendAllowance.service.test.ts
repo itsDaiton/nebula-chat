@@ -11,7 +11,7 @@ import { modelCallRepository } from '@server/modules/modelCall/modelCall.reposit
 const mockedSum = vi.mocked(modelCallRepository.sumCostUsd);
 const BUDGET = env.SPEND_ALLOWANCE_USD;
 const USER_ID = '77777777-7777-4777-8777-777777777777';
-const verified = { id: USER_ID, isAnonymous: false, emailVerified: true };
+const verified = { id: USER_ID, isAnonymous: false, emailVerified: true, role: 'user' };
 const NOW = new Date('2026-11-21T10:00:00Z');
 
 beforeEach(() => {
@@ -19,6 +19,13 @@ beforeEach(() => {
 });
 
 describe('getSpendAllowance', () => {
+  it('does not cap an Admin and never reads the ledger', async () => {
+    await expect(getSpendAllowance({ ...verified, role: 'admin' }, NOW)).resolves.toEqual({
+      capped: false,
+    });
+    expect(mockedSum).not.toHaveBeenCalled();
+  });
+
   it('sums the UTC month so far and reports the reset at the next month start', async () => {
     mockedSum.mockResolvedValue(0.4);
 

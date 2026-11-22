@@ -11,7 +11,7 @@ A Metered user is bounded by the Message allowance, but a verified Registered us
 
 ## Decision
 
-1. **A cost-based monthly soft cap.** A verified Registered user may incur a configured amount (`SPEND_ALLOWANCE_USD`, one value for everyone, Admins included) of estimated cost per UTC calendar month, summed from the ledger. The server checks it before anything is persisted or enqueued, and refuses with `SpendAllowanceReached` naming the reset date. A Run in flight finishes, so the cap can overshoot by one Run. A Cache replay costs zero, and a Message that answers a waiting Run is never refused.
+1. **A cost-based monthly soft cap.** A verified Registered user may incur a configured amount (`SPEND_ALLOWANCE_USD`, one value for everyone but Admins, who are exempt) of estimated cost per UTC calendar month, summed from the ledger. The server checks it before anything is persisted or enqueued, and refuses with `SpendAllowanceReached` naming the reset date. A Run in flight finishes, so the cap can overshoot by one Run. A Cache replay costs zero, and a Message that answers a waiting Run is never refused.
 2. **An Own key lifts the cap.** A User may supply a key per provider, paid for by them, with no fallback to the Operator key. Calls made with it do not count. The sum lives in one service function so this lands without touching callers.
 3. **The server encrypts and never decrypts.** It encrypts a supplied key to a worker public key (RSA-OAEP, 4096-bit, versioned) and stores the ciphertext. Only the worker holds the private key.
 4. **The server chooses the key at enqueue; the worker loads it by reference at each call.** The key never travels through Redis.

@@ -563,7 +563,7 @@ runs after the Message allowance one. `getSpendAllowance` sums the User's ledger
 budget the send is refused with 403 `SpendAllowanceReached`, whose message names the reset
 (the first instant of the next UTC month). A Message answering a waiting Run is never
 refused. `GET /api/chat/spend-allowance` reads the same function:
-`{ capped, limit, used, remaining, resetsAt }`, or `{ capped: false }` for a Metered user
+`{ capped, limit, used, remaining, resetsAt }`, or `{ capped: false }` for a Metered user or an Admin
 ([ADR-0037](./adr/0037-spend-allowance-and-own-key.md)).
 
 ### Client contract
