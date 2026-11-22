@@ -3,7 +3,7 @@ import { env } from '@server/env';
 import type { SpendAllowance } from '@server/modules/chat/chat.types';
 import { modelCallRepository } from '@server/modules/modelCall/modelCall.repository';
 
-type AllowanceUser = Pick<User, 'id' | 'isAnonymous' | 'emailVerified'>;
+type AllowanceUser = Pick<User, 'id' | 'isAnonymous' | 'emailVerified' | 'role'>;
 
 // Cost is stored to 6 decimals; rounding keeps float sums from straddling the budget.
 const roundUsd = (value: number): number => Math.round(value * 1e6) / 1e6;
@@ -12,12 +12,12 @@ const roundUsd = (value: number): number => Math.round(value * 1e6) / 1e6;
 const spentThisMonth = (userId: string, from: Date, to: Date): Promise<number> =>
   modelCallRepository.sumCostUsd(userId, from, to);
 
-/** Applies to a verified Registered user only; Metered users keep the Message allowance (GLOSSARY.md). */
+/** Applies to a verified, non-Admin Registered user; Metered users keep the Message allowance (GLOSSARY.md). */
 export const getSpendAllowance = async (
   user: AllowanceUser,
   now: Date = new Date(),
 ): Promise<SpendAllowance> => {
-  if (user.isAnonymous || !user.emailVerified) {
+  if (user.isAnonymous || !user.emailVerified || user.role === 'admin') {
     return { capped: false };
   }
 
