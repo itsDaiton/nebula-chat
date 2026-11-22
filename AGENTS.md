@@ -92,4 +92,4 @@ In order: add `libs/<name>/.gitignore` (`dist/`, `node_modules/`); add the packa
 A change to conventions, module layout or architecture updates, in the same PR: the relevant `AGENTS.md` or
 `.claude/rules/` file (and its `paths:` globs when a folder moves), `GLOSSARY.md` for vocabulary, `docs/adr/` for hard-to-reverse decisions, the Mermaid diagrams that draw the
 area, and any skill that references it. Operator CLI usage: [apps/cli/AGENTS.md](./apps/cli/AGENTS.md).
-MCP servers: [docs/agents/mcp-servers.md](./docs/agents/mcp-servers.md).
+MCP servers: [docs/agents/mcp-servers.md](./docs/agents/mcp-servers.md). Rate limits: a new or changed limit updates [docs/rate-limits.md](./docs/rate-limits.md).

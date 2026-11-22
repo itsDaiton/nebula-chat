@@ -145,11 +145,8 @@ flowchart TD
   cache and wants an Admin whose auth session passed two-factor ([auth.md](./auth.md#route-protection)).
 - **Errors** are thrown as `AppError`s and shaped once by the error handler
   ([ADR-0011](./adr/0011-shared-errors-lib-and-typed-envelope.md)); only `5xx` is logged there.
-- **Rate limits**: Fastify's limiter keys on `CF-Connecting-IP`, falling back to the connection address, and
-  counts in memory. The send route allows 10 a minute per IP, Session creation 30, `/api/admin/*` 120 and
-  `/api/internal/*` 10, the last two as one bucket per scope that counts a wrong operator token too.
-  better-auth limits its own routes with counters in Redis (Guest creation 5 an hour, `/two-factor/*` and
-  `/device/code` 5 a minute), and Profile image uploads are capped at 10 an hour per User.
+- **Rate limits**: per client IP on `CF-Connecting-IP`, in memory for the Fastify routes and in Redis for
+  better-auth; Profile image uploads are capped per User. Every number is in [rate-limits.md](./rate-limits.md).
 
 ## Data model
 
