@@ -44,6 +44,25 @@ describe('security headers', () => {
     expect(res.headers['strict-transport-security']).toBeUndefined();
   });
 
+  it('serves the Swagger UI page itself', async () => {
+    const res = await app.inject({ method: 'GET', url: '/docs' });
+
+    expect([200, 302]).toContain(res.statusCode);
+    expect(res.headers['x-content-type-options']).toBe('nosniff');
+  });
+
+  it('reaches the hijacked better-auth route, with its mutation Origin allowed', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/sign-in/anonymous',
+      headers: { origin: 'https://app.example.com' },
+      payload: {},
+    });
+
+    expect(res.statusCode).not.toBe(403);
+    expect(res.headers['x-frame-options']).toBe('DENY');
+  });
+
   it('relaxes the CSP for Swagger UI only, still denying framing', async () => {
     const res = await app.inject({ method: 'GET', url: '/docs/static/index.html' });
 
