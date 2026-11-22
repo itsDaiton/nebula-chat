@@ -6,13 +6,16 @@ const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 // onRequest, before any body is read; no Origin (CLI, server to server) passes, `Origin: null` is present and unlisted.
 export default fp(
-  async (app) => {
-    app.addHook('onRequest', async (req) => {
+  (app, _options, done) => {
+    app.addHook('onRequest', (req, _reply, next) => {
       const { origin } = req.headers;
       if (MUTATING_METHODS.has(req.method) && origin !== undefined && !allowedOrigins.has(origin)) {
-        throw new ForbiddenError('Origin not allowed');
+        next(new ForbiddenError('Origin not allowed'));
+        return;
       }
+      next();
     });
+    done();
   },
   { name: 'originCheck' },
 );
