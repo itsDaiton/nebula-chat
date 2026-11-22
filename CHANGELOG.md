@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.13.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.13.0...nebula-chat-v7.13.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* **server:** exempt Admins from the Spend allowance ([#939](https://github.com/itsDaiton/nebula-chat/issues/939)) ([c9054d2](https://github.com/itsDaiton/nebula-chat/commit/c9054d2e6ff84fec47ca786b0a79e2fc39ba433d))
+
 ## [7.13.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.12.1...nebula-chat-v7.13.0) (2026-11-22)
 
 
