@@ -27,12 +27,13 @@ const sessionRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
         400: jsonResponse('Invalid request body', errorEnvelopeSchema),
         401: jsonResponse('No auth session', errorEnvelopeSchema),
         403: jsonResponse('A Guest asked for a Run Session', errorEnvelopeSchema),
+        429: jsonResponse('Rate limit exceeded', errorEnvelopeSchema),
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },
     // A Session needs an owner (sessions.userId is NOT NULL), so an auth
     // session is required; the owner id is read from it, never the body.
-    config: { access: 'user' },
+    config: { access: 'user', rateLimit: { max: 30, timeWindow: '1 minute' } },
     handler: sessionController.create,
   });
 

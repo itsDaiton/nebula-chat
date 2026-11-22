@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import cors from '@fastify/cors';
-import rateLimit from '@fastify/rate-limit';
 import sensible from '@fastify/sensible';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
@@ -20,22 +19,17 @@ import { env } from '@server/env';
 import { errorHandler } from '@server/errors/error.handler';
 import { apiRootSchema, healthSchema } from '@server/health.validation';
 import { logger } from '@server/logger';
-import adminRoutes from '@server/modules/admin/admin.routes';
-import adminOverviewRoutes from '@server/modules/admin/adminOverview.routes';
-import adminSessionsRoutes from '@server/modules/admin/adminSessions.routes';
-import adminUsersRoutes from '@server/modules/admin/adminUsers.routes';
-import auditRoutes from '@server/modules/audit/audit.routes';
 import chatRoutes from '@server/modules/chat/chat.routes';
 import runRoutes from '@server/modules/run/run.routes';
 import sessionRoutes from '@server/modules/session/session.routes';
 import streamRoutes from '@server/modules/stream/stream.routes';
-import logLevelRoutes from '@server/modules/logLevel/logLevel.routes';
 import messageRoutes from '@server/modules/message/message.routes';
 import modelRoutes from '@server/modules/models/models.routes';
 import profileImageRoutes from '@server/modules/profileImage/profileImage.routes';
-import usageRoutes from '@server/modules/usage/usage.routes';
 import authGate, { DOCS_PREFIX } from '@server/plugins/authGate.plugin';
 import dbPlugin from '@server/plugins/db.plugin';
+import privilegedRoutes from '@server/plugins/privilegedRoutes.plugin';
+import rateLimitPlugin from '@server/plugins/rateLimit.plugin';
 import redisPlugin from '@server/plugins/redis.plugin';
 import requestLogging from '@server/plugins/requestLogging.plugin';
 import { logController } from '@server/utils/logController';
@@ -79,7 +73,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   await app.register(authGate);
   await app.register(sensible);
   await app.register(cors, corsOptions);
-  await app.register(rateLimit, { global: false });
+  await app.register(rateLimitPlugin);
 
   // Before @fastify/swagger: it collects the schemas carrying `.meta({ id })`,
   // which the transformers below emit as named components.
@@ -186,13 +180,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   await app.register(runRoutes, { prefix: '/api/runs' });
   await app.register(streamRoutes, { prefix: '/api/streams' });
   await app.register(profileImageRoutes, { prefix: '/api/profile-image' });
-  await app.register(logLevelRoutes, { prefix: '/api/internal/log-level' });
-  await app.register(adminRoutes, { prefix: '/api/internal/admins' });
-  await app.register(adminOverviewRoutes, { prefix: '/api/admin/overview' });
-  await app.register(usageRoutes, { prefix: '/api/admin/usage' });
-  await app.register(adminUsersRoutes, { prefix: '/api/admin/users' });
-  await app.register(adminSessionsRoutes, { prefix: '/api/admin/sessions' });
-  await app.register(auditRoutes, { prefix: '/api/admin/audit' });
+  await app.register(privilegedRoutes);
 
   return app;
 };

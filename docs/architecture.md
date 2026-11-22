@@ -127,7 +127,7 @@ flowchart TD
   which -->|"/api/auth/admin/*"| nf["authGate → 404 NotFound<br/>never reaches better-auth"]
   which -->|"/api/auth/*"| ba["authGate → better-auth handler<br/>reply hijacked"]
   which -->|"/, /health, /docs"| public[Public handler]
-  which -->|"/api/..."| gates["Route gates<br/>Access level gate (onRequest):<br/>user / registered / admin / operator ·<br/>rate limit (send only)"]
+  which -->|"/api/..."| gates["Route gates<br/>Access level gate (onRequest):<br/>user / registered / admin / operator ·<br/>rate limit (internal, admin, Session create, send)"]
   gates --> pre["Route preHandlers<br/>e.g. messageAllowanceHook,<br/>spendAllowanceHook"]
   pre --> handler["controller → service → repository"]
   handler --> pg[(Postgres)]
@@ -145,8 +145,8 @@ flowchart TD
   cache and wants an Admin whose auth session passed two-factor ([auth.md](./auth.md#route-protection)).
 - **Errors** are thrown as `AppError`s and shaped once by the error handler
   ([ADR-0011](./adr/0011-shared-errors-lib-and-typed-envelope.md)); only `5xx` is logged there.
-- **Rate limits**: the send route allows 10 a minute per IP, in memory. better-auth limits its own
-  routes with counters in Redis, and Profile image uploads are capped at 10 an hour per User.
+- **Rate limits**: per client IP on `CF-Connecting-IP`, in memory for the Fastify routes and in Redis for
+  better-auth; Profile image uploads are capped per User. Every number is in [rate-limits.md](./rate-limits.md).
 
 ## Data model
 
