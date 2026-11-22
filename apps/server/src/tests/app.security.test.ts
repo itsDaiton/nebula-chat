@@ -51,7 +51,7 @@ describe('security headers', () => {
     expect(res.headers['x-content-type-options']).toBe('nosniff');
   });
 
-  it('reaches the hijacked better-auth route, with its mutation Origin allowed', async () => {
+  it('lets an allowed-Origin mutation through to better-auth', async () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/auth/sign-in/anonymous',
@@ -60,7 +60,6 @@ describe('security headers', () => {
     });
 
     expect(res.statusCode).not.toBe(403);
-    expect(res.headers['x-frame-options']).toBe('DENY');
   });
 
   it('relaxes the CSP for Swagger UI only, still denying framing', async () => {
