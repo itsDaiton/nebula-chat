@@ -57,10 +57,6 @@ import { pendingDeletionSignInPlugin } from './pendingDeletionSignIn';
 import { restoreAccountPlugin } from './restoreAccount';
 import type { OnUserDeleted } from './userDeletion';
 
-/**
- * Everything the lib needs to build an instance; it never reads `process.env`, the server resolves these from its own env.
- * The Guest message allowance is enforced in the chat send pre-handler (ADR-0010 §4), not here.
- */
 // Per client IP, keyed by path; `window` is in seconds. A custom rule replaces better-auth's default for that path.
 const AUTH_RATE_LIMIT_RULES = {
   '/sign-in/anonymous': { window: 60 * 60, max: 5 },
@@ -68,6 +64,10 @@ const AUTH_RATE_LIMIT_RULES = {
   '/device/code': { window: 60, max: 5 },
 };
 
+/**
+ * Everything the lib needs to build an instance; it never reads `process.env`, the server resolves these from its own env.
+ * The Guest message allowance is enforced in the chat send pre-handler (ADR-0010 §4), not here.
+ */
 export type CreateAuthConfig = {
   /** The Drizzle client from `@nebula-chat/db` (better-auth owns the auth tables). */
   db: DbClient;
