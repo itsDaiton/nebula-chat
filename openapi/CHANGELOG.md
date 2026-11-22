@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.26.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.25.0...nebula-chat-openapi-v4.26.0) (2026-11-22)
+
+
+### Features
+
+* **worker,db,contracts:** NEB-822 worker runs on a stored Own key ([#940](https://github.com/itsDaiton/nebula-chat/issues/940)) ([6d4b10c](https://github.com/itsDaiton/nebula-chat/commit/6d4b10ca93fcf92d11f3fd4b5869d08397fdccc6))
+
 ## [4.25.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.24.2...nebula-chat-openapi-v4.25.0) (2026-11-22)
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v1.13.0...nebula-chat-db-v1.14.0) (2026-11-22)
+
+
+### Features
+
+* **worker,db,contracts:** NEB-822 worker runs on a stored Own key ([#940](https://github.com/itsDaiton/nebula-chat/issues/940)) ([6d4b10c](https://github.com/itsDaiton/nebula-chat/commit/6d4b10ca93fcf92d11f3fd4b5869d08397fdccc6))
+
 ## [1.13.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-db-v1.12.0...nebula-chat-db-v1.13.0) (2026-11-22)
 
 
