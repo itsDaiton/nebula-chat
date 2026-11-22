@@ -31,7 +31,7 @@ be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-fi
 | `RESEND_API_KEY`                   | Resend API key for the verification and password-reset emails (required; ADR-0021)                                               |
 | `EMAIL_FROM`                       | Sender for those emails — `address` or `Name <address>` on a Resend-verified domain (required)                                   |
 | `GUEST_MESSAGE_ALLOWANCE`          | Guest `user`-message cap before registration is required (int, 0 or more, default `10`; ADR-0010)                                |
-| `SPEND_ALLOWANCE_USD`              | Monthly Spend allowance of a verified Registered user, in USD of estimated Model call cost (default `1`; ADR-0037)               |
+| `SPEND_ALLOWANCE_USD`              | Monthly Spend allowance of a verified non-Admin user, in USD of estimated Model call cost (default `1`; ADR-0037)               |
 | `GOOGLE_CLIENT_ID`                 | Google OAuth client id for social sign-in. Set with `GOOGLE_CLIENT_SECRET`, or leave both unset to turn Google off               |
 | `GOOGLE_CLIENT_SECRET`             | Google OAuth client secret (paired with `GOOGLE_CLIENT_ID`; only one of the two set fails boot)                                  |
 | `GITHUB_CLIENT_ID`                 | GitHub OAuth app client id for social sign-in. Set with `GITHUB_CLIENT_SECRET`, or leave both unset to turn GitHub off           |

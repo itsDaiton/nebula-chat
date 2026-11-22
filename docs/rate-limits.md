@@ -52,7 +52,7 @@ A limited call answers `429` with better-auth's own body and `X-Retry-After`, no
 | ----------------------- | ------------------------------------------------------------------- | --------------------------------- | ------------------------------------------------------- |
 | Profile image uploads   | 10 per hour per User, then `429`                                    | Redis (`profile-image-uploads:*`) | `modules/profileImage/profileImage.uploadLimit.hook.ts` |
 | Guest message allowance | `GUEST_MESSAGE_ALLOWANCE`, default 10 Messages in total, then `403` | database count of Messages        | [docs/auth.md](./auth.md#reading-the-allowance)         |
-| Spend allowance         | `SPEND_ALLOWANCE_USD`, default 1 USD per UTC month, then `403`      | the Model call ledger             | [docs/auth.md](./auth.md)                               |
+| Spend allowance         | `SPEND_ALLOWANCE_USD`, default 1 USD per UTC month, Admins exempt, then `403` | the Model call ledger             | [docs/auth.md](./auth.md)                               |
 
 The allowances are application quotas, not rate limits: they do not reset on a window and answer `403`.
 The Guest allowance is why `/sign-in/anonymous` is limited: a fresh Guest is a fresh allowance.
