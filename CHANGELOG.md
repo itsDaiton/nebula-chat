@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.12.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.12.0...nebula-chat-v7.12.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* **server:** NEB-896 security headers and an Origin check on mutations ([#935](https://github.com/itsDaiton/nebula-chat/issues/935)) ([b249865](https://github.com/itsDaiton/nebula-chat/commit/b2498655b850e114d38f4ba97de1163ccd8aafa7))
+
 ## [7.12.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.11.4...nebula-chat-v7.12.0) (2026-11-22)
 
 
