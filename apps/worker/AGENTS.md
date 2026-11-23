@@ -115,7 +115,9 @@ tool or prompt, a name that does not match its file, a missing or extra Agent, o
 set is fixed (four Agents, three delegates), which keeps `AGENTS.output` and the like literally typed; `kind` decides the
 registry. Each file carries a `version` and a `hash` over its definition and its prompt's Markdown text. Edit an Agent or a
 prompt, then run `pnpm catalog:stamp` from the root: it re-stamps only stale files, and `runs/tests/agentCatalog.test.ts`
-fails until you do. The hash only detects drift; nothing records it on a Run (ADR-0030 has the convention).
+fails until you do. Intake Agents run on cheap Models and the Output Agent on a mid-tier one; the Orchestrator is on a strong
+Model because it decides what the Run does, and its only tools are the delegates, none of which is given another Agent. The
+`researcher` is the one Agent with the web. The hash only detects drift; nothing records it on a Run (ADR-0030 has the convention).
 
 ### Own keys
 
