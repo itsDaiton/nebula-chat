@@ -1,13 +1,6 @@
 import { z } from 'zod';
 import { isoDateTimeSchema } from '@server/utils/isoDateTimeSchema';
 
-export const createMessageSchema = z.object({
-  sessionId: z.uuid(),
-  role: z.enum(['user', 'assistant']),
-  content: z.string().min(1),
-  tokenCount: z.number().int().nullable().optional(),
-});
-
 export const getMessagesSchema = z.object({
   messageId: z.uuid(),
 });

@@ -35,4 +35,11 @@ describe('sessionRepository', () => {
     expect(query).toContain('"messages"."session_id" = "sessions"."id"');
     expect(query).toContain('"sessions"."user_id" = $1');
   });
+
+  it("looks a cursor up inside the owner's Sessions, so a foreign cursor yields the first page", async () => {
+    const query = await sqlOf(() => sessionRepository.findAll(USER_ID, 10, SESSION_ID));
+
+    expect(query).toContain('"sessions"."id" = $1');
+    expect(query).toContain('"sessions"."user_id" = $2');
+  });
 });

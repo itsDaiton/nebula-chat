@@ -36,8 +36,6 @@ export * from './auditEntryDetail';
 export * from './auditPage';
 export * from './banUserBody';
 export * from './cappedSpendAllowance';
-export * from './createMessageBody';
-export * from './createMessageBodyRole';
 export * from './createSessionBody';
 export * from './createSessionBodyReplyMode';
 export * from './errorCode';

@@ -4,26 +4,23 @@
  * Nebula Chat API
  * REST API for Nebula Chat
  */
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
-  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { CreateMessageBody, ErrorEnvelope, ListMessagesParams, Message } from '../model';
+import type { ErrorEnvelope, ListMessagesParams, Message } from '../model';
 
 import { axiosClient } from '../../client';
-import type { ErrorType, BodyType } from '../../client';
+import type { ErrorType } from '../../client';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -41,235 +38,6 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
-
-/**
- * Create a new message in one of the caller’s own sessions
- *
- * Access: user
- * @summary Create message
- */
-export const createMessage = (
-  createMessageBody: BodyType<CreateMessageBody>,
-  options?: SecondParameter<typeof axiosClient>,
-  signal?: AbortSignal,
-) => {
-  return axiosClient<Message>(
-    {
-      url: `/api/messages`,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      data: createMessageBody,
-      signal,
-    },
-    options,
-  );
-};
-
-export const getCreateMessageMutationKey = () => ['createMessage'] as const;
-
-export const getCreateMessageMutationOptions = <
-  TError = ErrorType<ErrorEnvelope>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createMessage>>,
-    TError,
-    CreateMessageMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof axiosClient>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof createMessage>>,
-  TError,
-  CreateMessageMutationVariables,
-  TContext
-> => {
-  const mutationKey = getCreateMessageMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof createMessage>>,
-    CreateMessageMutationVariables
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return createMessage(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type CreateMessageMutationResult = NonNullable<Awaited<ReturnType<typeof createMessage>>>;
-export type CreateMessageMutationBody = BodyType<CreateMessageBody>;
-export type CreateMessageMutationError = ErrorType<ErrorEnvelope>;
-export type CreateMessageMutationVariables = { data: BodyType<CreateMessageBody> };
-
-/**
- * Create a new message in one of the caller’s own sessions
- *
- * Access: user
- * @summary Create message
- */
-export const useCreateMessage = <TError = ErrorType<ErrorEnvelope>, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof createMessage>>,
-      TError,
-      CreateMessageMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof axiosClient>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof createMessage>>,
-  TError,
-  CreateMessageMutationVariables,
-  TContext
-> => {
-  return useMutation(getCreateMessageMutationOptions(options), queryClient);
-};
-/**
- * Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own lists as empty.
- *
- * Access: user
- * @summary List messages
- */
-export const listMessages = (
-  params?: ListMessagesParams,
-  options?: SecondParameter<typeof axiosClient>,
-  signal?: AbortSignal,
-) => {
-  return axiosClient<Message[]>({ url: `/api/messages`, method: 'GET', params, signal }, options);
-};
-
-export const getListMessagesQueryKey = (params?: ListMessagesParams) => {
-  return [`/api/messages`, ...(params ? [params] : [])] as const;
-};
-
-export const getListMessagesQueryOptions = <
-  TData = Awaited<ReturnType<typeof listMessages>>,
-  TError = ErrorType<ErrorEnvelope>,
->(
-  params?: ListMessagesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
-    request?: SecondParameter<typeof axiosClient>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getListMessagesQueryKey(params);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMessages>>> = ({ signal }) =>
-    listMessages(params, requestOptions, signal);
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof listMessages>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type ListMessagesQueryResult = NonNullable<Awaited<ReturnType<typeof listMessages>>>;
-export type ListMessagesQueryError = ErrorType<ErrorEnvelope>;
-
-/**
- * Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own lists as empty.
- *
- * Access: user
- * @summary List messages
- */
-export function useListMessages<
-  TData = Awaited<ReturnType<typeof listMessages>>,
-  TError = ErrorType<ErrorEnvelope>,
->(
-  params: undefined | ListMessagesParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>> &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listMessages>>,
-          TError,
-          Awaited<ReturnType<typeof listMessages>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof axiosClient>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-/**
- * Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own lists as empty.
- *
- * Access: user
- * @summary List messages
- */
-export function useListMessages<
-  TData = Awaited<ReturnType<typeof listMessages>>,
-  TError = ErrorType<ErrorEnvelope>,
->(
-  params?: ListMessagesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>> &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listMessages>>,
-          TError,
-          Awaited<ReturnType<typeof listMessages>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof axiosClient>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-/**
- * Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own lists as empty.
- *
- * Access: user
- * @summary List messages
- */
-export function useListMessages<
-  TData = Awaited<ReturnType<typeof listMessages>>,
-  TError = ErrorType<ErrorEnvelope>,
->(
-  params?: ListMessagesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
-    request?: SecondParameter<typeof axiosClient>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-/**
- * Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own lists as empty.
- *
- * Access: user
- * @summary List messages
- */
-export function useListMessages<
-  TData = Awaited<ReturnType<typeof listMessages>>,
-  TError = ErrorType<ErrorEnvelope>,
->(
-  params?: ListMessagesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
-    request?: SecondParameter<typeof axiosClient>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getListMessagesQueryOptions(params, options);
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
 
 /**
  * Retrieve one of the caller’s own messages by ID
@@ -407,6 +175,144 @@ export function useGetMessage<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetMessageQueryOptions(messageId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own, or that does not exist, is a 404.
+ *
+ * Access: user
+ * @summary List messages
+ */
+export const listMessages = (
+  params?: ListMessagesParams,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<Message[]>({ url: `/api/messages`, method: 'GET', params, signal }, options);
+};
+
+export const getListMessagesQueryKey = (params?: ListMessagesParams) => {
+  return [`/api/messages`, ...(params ? [params] : [])] as const;
+};
+
+export const getListMessagesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMessages>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListMessagesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMessagesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMessages>>> = ({ signal }) =>
+    listMessages(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMessages>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListMessagesQueryResult = NonNullable<Awaited<ReturnType<typeof listMessages>>>;
+export type ListMessagesQueryError = ErrorType<ErrorEnvelope>;
+
+/**
+ * Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own, or that does not exist, is a 404.
+ *
+ * Access: user
+ * @summary List messages
+ */
+export function useListMessages<
+  TData = Awaited<ReturnType<typeof listMessages>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params: undefined | ListMessagesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMessages>>,
+          TError,
+          Awaited<ReturnType<typeof listMessages>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own, or that does not exist, is a 404.
+ *
+ * Access: user
+ * @summary List messages
+ */
+export function useListMessages<
+  TData = Awaited<ReturnType<typeof listMessages>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListMessagesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMessages>>,
+          TError,
+          Awaited<ReturnType<typeof listMessages>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own, or that does not exist, is a 404.
+ *
+ * Access: user
+ * @summary List messages
+ */
+export function useListMessages<
+  TData = Awaited<ReturnType<typeof listMessages>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListMessagesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own, or that does not exist, is a 404.
+ *
+ * Access: user
+ * @summary List messages
+ */
+export function useListMessages<
+  TData = Awaited<ReturnType<typeof listMessages>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListMessagesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMessages>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListMessagesQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

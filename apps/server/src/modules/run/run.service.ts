@@ -25,15 +25,16 @@ const cancelWaitingRuns = async (
 export const runService = {
   /** A Run for its owner, or for an acting Admin, whose read of someone else's Run is audited before it is served. */
   async getRun(runId: string, reader: RunReader): Promise<RunWithSteps> {
-    const run = await runRepository.findWithSteps(runId);
-    if (!run) {
-      throw new NotFoundError('Run', runId);
-    }
-    if (run.userId === reader.userId) {
-      return run;
+    const own = await runRepository.findOwnedWithSteps(runId, reader.userId);
+    if (own) {
+      return own;
     }
     // Not-found rather than forbidden, so a Run id tells a stranger nothing.
     if (!(await reader.isActingAdmin())) {
+      throw new NotFoundError('Run', runId);
+    }
+    const run = await runRepository.findAnyWithSteps(runId);
+    if (!run) {
       throw new NotFoundError('Run', runId);
     }
     await auditService.append({

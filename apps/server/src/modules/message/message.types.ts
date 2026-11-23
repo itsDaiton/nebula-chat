@@ -1,12 +1,16 @@
 import type z from 'zod';
 import type { messages } from '@nebula-chat/db';
 import type {
-  createMessageSchema,
   getMessagesSchema,
   listMessagesQuerySchema,
 } from '@server/modules/message/message.validation';
 
-export type CreateMessageDTO = z.infer<typeof createMessageSchema>;
+export type CreateMessageDTO = {
+  sessionId: string;
+  role: 'user' | 'assistant';
+  content: string;
+  tokenCount?: number | null;
+};
 
 export type GetMessageParams = z.infer<typeof getMessagesSchema>;
 
@@ -19,11 +23,9 @@ export type MessageHistoryRow = Pick<
   'id' | 'createdAt' | 'role' | 'content' | 'tokenCount'
 >;
 
-export type MessageMeta = {
+export type MessageWithMetaRow = MessageRow & {
   model: string | null;
   estimatedCostUsd: number | null;
   contextTokens: number | null;
   contextMessages: number | null;
 };
-
-export type MessageWithMetaRow = MessageRow & MessageMeta;

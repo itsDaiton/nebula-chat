@@ -7,11 +7,11 @@
 import { faker } from '@faker-js/faker';
 
 import { HttpResponse, http } from 'msw';
-import type { HttpResponseResolver, PathParams, RequestHandlerOptions } from 'msw';
+import type { HttpResponseResolver, RequestHandlerOptions } from 'msw';
 
-import type { CreateMessageBody, Message } from '../model';
+import type { Message } from '../model';
 
-export const getCreateMessageResponseMock = (
+export const getGetMessageResponseMock = (
   overrideResponse: Partial<Extract<Message, object>> = {},
 ): Message => ({
   id: faker.string.uuid(),
@@ -63,51 +63,24 @@ export const getListMessagesResponseMock = (): Message[] =>
     createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   }));
 
-export const getGetMessageResponseMock = (
-  overrideResponse: Partial<Extract<Message, object>> = {},
-): Message => ({
-  id: faker.string.uuid(),
-  sessionId: faker.string.uuid(),
-  content: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  role: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  tokenCount: faker.helpers.arrayElement([
-    faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
-    null,
-  ]),
-  cached: faker.datatype.boolean(),
-  model: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-  estimatedCostUsd: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
-  runId: faker.helpers.arrayElement([faker.string.uuid(), null]),
-  contextTokens: faker.helpers.arrayElement([
-    faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
-    null,
-  ]),
-  contextMessages: faker.helpers.arrayElement([
-    faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
-    null,
-  ]),
-  createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
-  ...overrideResponse,
-});
-
-export const getCreateMessageMockHandler = (
+export const getGetMessageMockHandler = (
   overrideResponse?:
     | Message
     | ((
-        info: Parameters<HttpResponseResolver<PathParams, CreateMessageBody>>[0],
+        info: Parameters<HttpResponseResolver<{ messageId: string }>>[0],
       ) => Promise<Message> | Message),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post<PathParams, CreateMessageBody>(
-    '*/api/messages',
-    async (info: Parameters<HttpResponseResolver<PathParams, CreateMessageBody>>[0]) => {
+  return http.get<{ messageId: string }>(
+    '*/api/messages/:messageId',
+    async (info: Parameters<HttpResponseResolver<{ messageId: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === 'function'
             ? await overrideResponse(info)
             : overrideResponse
-          : getCreateMessageResponseMock(),
-        { status: 201 },
+          : getGetMessageResponseMock(),
+        { status: 200 },
       );
     },
     options,
@@ -134,32 +107,4 @@ export const getListMessagesMockHandler = (
     options,
   );
 };
-
-export const getGetMessageMockHandler = (
-  overrideResponse?:
-    | Message
-    | ((
-        info: Parameters<HttpResponseResolver<{ messageId: string }>>[0],
-      ) => Promise<Message> | Message),
-  options?: RequestHandlerOptions,
-) => {
-  return http.get<{ messageId: string }>(
-    '*/api/messages/:messageId',
-    async (info: Parameters<HttpResponseResolver<{ messageId: string }>>[0]) => {
-      return HttpResponse.json(
-        overrideResponse !== undefined
-          ? typeof overrideResponse === 'function'
-            ? await overrideResponse(info)
-            : overrideResponse
-          : getGetMessageResponseMock(),
-        { status: 200 },
-      );
-    },
-    options,
-  );
-};
-export const getMessagesMock = () => [
-  getCreateMessageMockHandler(),
-  getListMessagesMockHandler(),
-  getGetMessageMockHandler(),
-];
+export const getMessagesMock = () => [getGetMessageMockHandler(), getListMessagesMockHandler()];

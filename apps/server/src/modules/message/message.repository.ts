@@ -42,20 +42,12 @@ const messageMeta = (userId: string) => {
 };
 
 export const messageRepository: {
-  create: (data: CreateMessageDTO) => Promise<MessageRow>;
   findById: (params: GetMessageParams, userId: string) => Promise<MessageWithMetaRow | null>;
   findAll: (userId: string, sessionId?: string) => Promise<MessageWithMetaRow[]>;
   createTx: (tx: DbTransaction, data: CreateMessageDTO & { runId?: string }) => Promise<MessageRow>;
   findBySessionId: (sessionId: string, limit?: number) => Promise<MessageHistoryRow[]>;
   countUserMessagesByOwner: (userId: string) => Promise<number>;
 } = {
-  async create({ sessionId, content, role, tokenCount }: CreateMessageDTO) {
-    const [row] = await db
-      .insert(messages)
-      .values({ sessionId, content, role, tokenCount: tokenCount ?? null })
-      .returning();
-    return row!;
-  },
   // Reads are owner-scoped through the message's session (ADR-0010 §2): another user's message reads as absent.
   async findById({ messageId }: GetMessageParams, userId: string) {
     const { runCost, columns } = messageMeta(userId);
@@ -68,7 +60,7 @@ export const messageRepository: {
       .where(and(eq(messages.id, messageId), eq(sessions.userId, userId)));
     return row ?? null;
   },
-  // Narrowing to one session stays inside the owner join, so another user's session reads as empty; one session is oldest first.
+  // Narrowing to one session stays inside the owner join; one session is oldest first.
   async findAll(userId: string, sessionId?: string) {
     const { runCost, columns } = messageMeta(userId);
     return db

@@ -2485,84 +2485,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
   /api/messages:
-    post:
-      operationId: createMessage
-      summary: Create message
-      tags:
-        - Messages
-      description: |-
-        Create a new message in one of the caller’s own sessions
-
-        Access: user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                sessionId:
-                  type: string
-                  format: uuid
-                  pattern: >-
-                    ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-                role:
-                  type: string
-                  enum:
-                    - user
-                    - assistant
-                content:
-                  type: string
-                  minLength: 1
-                tokenCount:
-                  anyOf:
-                    - type: integer
-                      minimum: -9007199254740991
-                      maximum: 9007199254740991
-                    - type: 'null'
-              required:
-                - sessionId
-                - role
-                - content
-      security:
-        - cookieAuth: []
-      responses:
-        '201':
-          description: Message created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Message'
-        '400':
-          description: Invalid request body
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
-          description: No auth session
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
-          description: Session not found or not owned by the caller
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '409':
-          description: Session is archived — restore it first
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
     get:
       operationId: listMessages
       summary: List messages
@@ -2571,7 +2493,7 @@ paths:
       description: >-
         Retrieve the messages across the caller’s own sessions, newest first.
         Pass `sessionId` to list one session’s messages, oldest first; a session
-        the caller does not own lists as empty.
+        the caller does not own, or that does not exist, is a 404.
 
 
         Access: user
@@ -2605,6 +2527,12 @@ paths:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '401':
           description: No auth session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
