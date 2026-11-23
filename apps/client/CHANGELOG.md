@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.26.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.26.0...nebula-chat-client-v3.26.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* **client:** refresh session after 2FA verify so admins verify once ([#947](https://github.com/itsDaiton/nebula-chat/issues/947)) ([e1e8843](https://github.com/itsDaiton/nebula-chat/commit/e1e884395d4a7fe9a5ee4b1447ce59d0b8efb793))
+
 ## [3.26.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.25.0...nebula-chat-client-v3.26.0) (2026-11-23)
 
 
