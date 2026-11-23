@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { OwnKey } from '@/libs/api/generated/model/ownKey';
 import type { OwnKeyProvider } from '@/libs/api/generated/model/ownKeyProvider';
 import type { z } from 'zod';
-import type { profileNameSchema } from '@/modules/settings/utils/settingsSchemas';
+import type { ownKeySchema, profileNameSchema } from '@/modules/settings/utils/settingsSchemas';
 
 /** The Settings dialog's sections, in nav order. */
 export type SettingsSectionId =
@@ -52,6 +52,14 @@ export type OwnKeySettingProps = {
   /** The stored key's readable facts, or `undefined` when none is saved. */
   stored: OwnKey | undefined;
 };
+
+export type OwnKeyEditState = {
+  editing: OwnKeyProvider | null;
+  startEditing: (provider: OwnKeyProvider) => void;
+  stopEditing: () => void;
+};
+
+export type OwnKeyValues = z.infer<typeof ownKeySchema>;
 
 export type AccountIdSettingProps = {
   /** The user's id, a UUID. */

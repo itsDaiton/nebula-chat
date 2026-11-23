@@ -101,6 +101,8 @@ describe('OpenAPI document', () => {
       'Model',
       'ModelCatalog',
       'ModelPrices',
+      'OwnKey',
+      'OwnKeyList',
       'ProfileImage',
       'ProfileImageSettings',
       'Run',

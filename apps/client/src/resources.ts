@@ -655,6 +655,7 @@ export const resources = {
       saved: 'API key saved. Checking it now.',
       removed: 'API key removed.',
       errors: {
+        tooShort: 'Enter the full API key.',
         rateLimited: "You've saved keys too often. Try again in an hour.",
         forbidden: 'Verify your email to use your own API keys.',
         failed: "Your API key couldn't be saved. Please try again.",
