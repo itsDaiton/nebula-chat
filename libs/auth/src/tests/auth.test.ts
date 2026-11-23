@@ -5,6 +5,7 @@ import {
   parseUserInput,
   parseUserOutput,
 } from 'better-auth/db';
+import { handleOAuthUserInfo } from 'better-auth/oauth2';
 import { describe, expect, it, vi } from 'vitest';
 import type { DbClient } from '@nebula-chat/db';
 import type { Logger } from '@nebula-chat/otel';
@@ -456,5 +457,74 @@ describe('createAuth rate limits', () => {
     expect(limited.headers.get('x-retry-after')).not.toBeNull();
     // Another client keeps its own bucket.
     expect((await hit(auth, path, '203.0.113.8')).status).not.toBe(429);
+  });
+});
+
+describe('createAuth CLI session lifetime', () => {
+  type SessionBefore = (session: { userId: string }, ctx: unknown) => Promise<unknown>;
+
+  it('gives only the device flow a 12-hour auth session', async () => {
+    const select = vi.fn(() => ({ from: () => ({ where: async () => [] }) }));
+    const auth = createAuth({
+      db: { select } as unknown as DbClient,
+      authStore: makeAuthStore(),
+      logger: logger as unknown as Logger,
+      secret: 'test-secret-that-is-long-enough-for-better-auth',
+      baseURL: 'http://localhost:3000',
+      sendEmail: vi.fn(),
+    });
+    const before = auth.options.databaseHooks!.session!.create!.before as SessionBefore;
+
+    const device = (await before({ userId: 'u' }, { path: '/device/token' })) as {
+      data: { expiresAt: Date };
+    };
+    const browser = await before({ userId: 'u' }, { path: '/sign-in/email' });
+
+    const hours = (device.data.expiresAt.getTime() - Date.now()) / 3_600_000;
+    expect(hours).toBeGreaterThan(11.9);
+    expect(hours).toBeLessThanOrEqual(12);
+    expect(browser).toBeUndefined();
+  });
+});
+
+describe('createAuth account linking of an unverified credential account', () => {
+  const E = 'victim@example.com';
+  const attacker = { id: 'attacker', email: E, emailVerified: false };
+  const googleProfile = { id: 'google-sub', email: E, emailVerified: true, name: 'Victim' };
+
+  // handleOAuthUserInfo is what the social callback runs; only the adapter under it is faked.
+  const signInWithGoogle = async () => {
+    const linkAccount = vi.fn();
+    const createUser = vi.fn();
+    const updateUser = vi.fn();
+    const context = {
+      options: buildAuth(CREDENTIALS).options,
+      trustedProviders: ['google', 'github'],
+      logger: { error: vi.fn(), warn: vi.fn() },
+      internalAdapter: {
+        findAccountOwnerByKey: async () => null,
+        findUserByEmail: async () => ({
+          user: attacker,
+          accounts: [{ providerId: 'credential', accountId: attacker.id, password: 'attacker-hash' }],
+        }),
+        linkAccount,
+        createUser,
+        updateUser,
+      },
+    };
+    const result = await handleOAuthUserInfo({ context } as never, {
+      userInfo: googleProfile,
+      account: { providerId: 'google', accountId: googleProfile.id },
+    } as never);
+    return { result, linkAccount, createUser, updateUser };
+  };
+
+  it('refuses the social sign-in, so the attacker password never reaches the victim', async () => {
+    const { result, linkAccount, createUser, updateUser } = await signInWithGoogle();
+
+    expect(result).toMatchObject({ error: 'account not linked', data: null });
+    expect(linkAccount).not.toHaveBeenCalled();
+    expect(createUser).not.toHaveBeenCalled();
+    expect(updateUser).not.toHaveBeenCalled();
   });
 });

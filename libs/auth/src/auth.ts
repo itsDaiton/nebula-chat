@@ -27,7 +27,7 @@ import type { AuthStore } from '@nebula-chat/redis';
 import type { Logger } from '@nebula-chat/otel';
 import { passwordResetEmail, verificationEmail } from './authEmails';
 import { claimSessions } from './claim';
-import { CLI_CLIENT_ID, cliBearerPlugin, cliLoginPlugin } from './cliLogin';
+import { CLI_CLIENT_ID, cliBearerPlugin, cliLoginPlugin, cliSessionLifetime } from './cliLogin';
 import { toBetterAuthLogHandler } from './logger';
 import { markEmailVerified } from './markEmailVerified';
 import {
@@ -329,9 +329,10 @@ export const createAuth = ({
         create: {
           // Every sign-in method ends in a session, so this one hook keeps a User in Pending deletion
           // signed out and answers with the Purge date and a one-time token to restore with.
+          // The device flow's session also gets its shorter CLI lifetime here.
           before: async ({ userId }, ctx) => {
             const pending = await findPendingUser(db, userId);
-            if (!pending) return;
+            if (!pending) return cliSessionLifetime(ctx?.path, new Date());
             if (!ctx) return false;
             const purgeDate = purgeDateOf(pending.pendingDeletionAt).toISOString();
             // Only a session made after a verified code (or a social sign-in, which never has one) may restore.

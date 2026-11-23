@@ -2,7 +2,9 @@ import { APIError } from 'better-auth/api';
 import { describe, expect, it, vi } from 'vitest';
 import {
   addDeviceCodeExpiry,
+  CLI_SESSION_TTL_MS,
   cliBearerPlugin,
+  cliSessionLifetime,
   findCliLoginRefusal,
   markDeviceSessionTwoFactorVerified,
 } from '../cliLogin';
@@ -161,5 +163,42 @@ describe('cliBearerPlugin', () => {
 
   it('never answers with the token in a response header', () => {
     expect(cliBearerPlugin().hooks?.after).toBeUndefined();
+  });
+});
+
+describe('cliSessionLifetime', () => {
+  const now = new Date('2026-11-23T08:00:00.000Z');
+
+  it('bounds the auth session a device code is traded for to 12 hours', () => {
+    expect(cliSessionLifetime('/device/token', now)).toEqual({
+      data: { expiresAt: new Date('2026-11-23T20:00:00.000Z') },
+    });
+    expect(CLI_SESSION_TTL_MS).toBe(12 * 60 * 60 * 1000);
+  });
+
+  it.each(['/sign-in/email', '/callback/google', '/two-factor/verify-totp', undefined])(
+    'leaves a session made on %s at the default lifetime',
+    (path) => {
+      expect(cliSessionLifetime(path, now)).toBeUndefined();
+    },
+  );
+});
+
+describe('cliBearerPlugin refresh', () => {
+  const refreshHook = () => cliBearerPlugin().hooks?.before?.[1];
+
+  it('stops the bearer-read auth session from being refreshed past its expiry', async () => {
+    const result = await refreshHook()?.handler({} as never);
+
+    expect(result).toEqual({ context: { query: { disableRefresh: true } } });
+  });
+
+  it('applies only where the bearer token is read', () => {
+    const { matcher } = refreshHook()!;
+    const headers = new Headers({ authorization: 'Bearer cli-token' });
+
+    expect(matcher({ path: '/get-session', headers } as never)).toBe(true);
+    expect(matcher({ path: '/get-session', headers: new Headers() } as never)).toBe(false);
+    expect(matcher({ path: '/delete-user', headers } as never)).toBe(false);
   });
 });

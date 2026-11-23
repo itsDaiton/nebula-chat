@@ -5,6 +5,9 @@ import { bearer } from 'better-auth/plugins';
 /** The only OAuth client the device flow serves: the `nebula` CLI (ADR-0029). */
 export const CLI_CLIENT_ID = 'nebula-cli';
 
+/** How long an approved CLI login lasts, however it is used: a 2FA-blessed Admin token must not outlive a work day. */
+export const CLI_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+
 // Where a browser reviews a device code: reading it claims it, so all three are held to the same bar.
 const REVIEW_PATHS = new Set(['/device', '/device/approve', '/device/deny']);
 
@@ -119,6 +122,12 @@ export const addDeviceCodeExpiry = async ({ query, json, context }: DeviceVerify
   return json({ ...returned, expires_at: new Date(record.expiresAt).toISOString() });
 };
 
+/** The `session.create.before` result for the auth session a device code is traded for; any other sign-in keeps the default lifetime. */
+export const cliSessionLifetime = (path: string | undefined, now: Date) =>
+  path === '/device/token'
+    ? { data: { expiresAt: new Date(now.getTime() + CLI_SESSION_TTL_MS) } }
+    : undefined;
+
 // Listed after `deviceAuthorization()`, so its after hooks see what the plugin answered.
 export const cliLoginPlugin = (): BetterAuthPlugin => ({
   id: 'cli-login',
@@ -149,12 +158,22 @@ const BEARER_PATHS = new Set(['/get-session', '/sign-out']);
  * better-auth's bearer plugin, held to the CLI's routes. Before hooks never see the auth session a
  * bearer token names, so anywhere else it would walk past every guard that reads one.
  */
-export const cliBearerPlugin = (): BetterAuthPlugin => ({
-  id: 'cli-bearer',
-  hooks: {
-    before: bearer().hooks.before.map(({ matcher, handler }) => ({
-      matcher: (ctx) => BEARER_PATHS.has(ctx.path ?? '') && matcher(ctx),
-      handler,
-    })),
-  },
-});
+export const cliBearerPlugin = (): BetterAuthPlugin => {
+  const [{ matcher, handler }] = bearer().hooks.before;
+  const onCliRoute: typeof matcher = (ctx) => BEARER_PATHS.has(ctx.path ?? '') && matcher(ctx);
+  return {
+    id: 'cli-bearer',
+    hooks: {
+      before: [
+        { matcher: onCliRoute, handler },
+        {
+          // The CLI session's expiry is fixed at approval; a refresh would push it out to the full default.
+          matcher: onCliRoute,
+          handler: createAuthMiddleware(async () => ({
+            context: { query: { disableRefresh: true } },
+          })),
+        },
+      ],
+    },
+  };
+};
