@@ -16,9 +16,14 @@ const isOwnKeyPublicKey = (pem: string): boolean => {
   }
 };
 
+const readPem = (raw: unknown): unknown => {
+  if (raw === '') return undefined;
+  return typeof raw === 'string' ? raw.replaceAll(String.raw`\n`, '\n') : raw;
+};
+
 /** `OWN_KEY_PUBLIC_KEY`: a 4096-bit RSA public PEM (`\n` accepted for line breaks), or unset to switch Own keys off. */
 export const ownKeyPublicKeySchema = z.preprocess(
-  (raw) => (raw === '' ? undefined : typeof raw === 'string' ? raw.replaceAll('\\n', '\n') : raw),
+  readPem,
   z
     .string()
     .refine(isOwnKeyPublicKey, { message: 'Expected a 4096-bit RSA public key in PEM format' })
