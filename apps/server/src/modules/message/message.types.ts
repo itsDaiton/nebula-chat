@@ -23,11 +23,9 @@ export type MessageHistoryRow = Pick<
   'id' | 'createdAt' | 'role' | 'content' | 'tokenCount'
 >;
 
-export type MessageMeta = {
+export type MessageWithMetaRow = MessageRow & {
   model: string | null;
   estimatedCostUsd: number | null;
   contextTokens: number | null;
   contextMessages: number | null;
 };
-
-export type MessageWithMetaRow = MessageRow & MessageMeta;
