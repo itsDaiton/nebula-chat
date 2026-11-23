@@ -50,7 +50,7 @@ Locally, run it next to the server: both read the same Postgres and Redis. Its `
 
 The worker does **not** use the server's `name.layer.ts` file naming. Folders and files are camelCase,
 and the folder says what kind of thing a file is, so a file carries no layer suffix
-(`jobs/directReply.ts`, `agents/orchestrator.ts`, `tools/webFetch.ts`). Test files keep the `.test.ts`
+(`jobs/directReply.ts`, `agentIo/orchestrator.ts`, `tools/webFetch.ts`). Test files keep the `.test.ts`
 suffix Vitest needs, in a `tests/` folder beside the code. Folders are named after
 [GLOSSARY.md](../../GLOSSARY.md) terms and appear when a ticket first needs them.
 
@@ -84,9 +84,10 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
   Agent reads, the mapping from the graph's stream to reply stream events, the Postgres checkpointer
   (its own `langgraph` schema, set up at boot), the Agent catalog loader (`agentCatalog.ts`: schema, `AGENTS` and
   `DELEGATES`; `agentHash.ts`: the hash, `node:crypto` only so the root stamp script can load it), the `AgentDefinition` types inferred from it, and the Run and Step repositories.
-- `agents/` — the Agent catalog data and the Agents' code: one `<name>.json` per Agent (Model, prompt, tool grants,
-  parameters; a delegate also its `description`), and for an Intake or Output Agent a `<name>.ts` with its output schema
-  and human-message builder. The Session's Model never applies to an Agent.
+- `agents/` — the Agent catalog data only: one `<name>.json` per Agent (Model, prompt, tool grants, parameters; a
+  delegate also its `description`). The Session's Model never applies to an Agent.
+- `agentIo/` — what an Intake, Output or Orchestrator Agent takes in and gives back: its output schema and
+  human-message builder, one file each. The delegates have none: they take a plain task.
 - `tools/` — tool definitions only, one file each (`webSearch.ts`, `webFetch.ts`): the LangChain tool, its
   Zod arguments and its config. `worker.ts` builds them into the Run's `Toolbox`; `runs/delegateTool.ts` gives
   a delegate the ones its definition grants, in its own capped loop.
