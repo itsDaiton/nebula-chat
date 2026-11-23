@@ -6,7 +6,7 @@ import { bearer } from 'better-auth/plugins';
 export const CLI_CLIENT_ID = 'nebula-cli';
 
 /** How long an approved CLI login lasts, however it is used: a 2FA-blessed Admin token must not outlive a work day. */
-export const CLI_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+const CLI_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 
 // Where a browser reviews a device code: reading it claims it, so all three are held to the same bar.
 const REVIEW_PATHS = new Set(['/device', '/device/approve', '/device/deny']);

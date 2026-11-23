@@ -2,7 +2,6 @@ import { APIError } from 'better-auth/api';
 import { describe, expect, it, vi } from 'vitest';
 import {
   addDeviceCodeExpiry,
-  CLI_SESSION_TTL_MS,
   cliBearerPlugin,
   cliSessionLifetime,
   findCliLoginRefusal,
@@ -173,7 +172,6 @@ describe('cliSessionLifetime', () => {
     expect(cliSessionLifetime('/device/token', now)).toEqual({
       data: { expiresAt: new Date('2026-11-23T20:00:00.000Z') },
     });
-    expect(CLI_SESSION_TTL_MS).toBe(12 * 60 * 60 * 1000);
   });
 
   it.each(['/sign-in/email', '/callback/google', '/two-factor/verify-totp', undefined])(

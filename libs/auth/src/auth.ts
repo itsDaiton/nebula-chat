@@ -328,8 +328,7 @@ export const createAuth = ({
       session: {
         create: {
           // Every sign-in method ends in a session, so this one hook keeps a User in Pending deletion
-          // signed out and answers with the Purge date and a one-time token to restore with.
-          // The device flow's session also gets its shorter CLI lifetime here.
+          // signed out with the Purge date and a restore token, and shortens the CLI's session.
           before: async ({ userId }, ctx) => {
             const pending = await findPendingUser(db, userId);
             if (!pending) return cliSessionLifetime(ctx?.path, new Date());

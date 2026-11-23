@@ -736,7 +736,7 @@ sign in with the password, verify the email (the verification banner's
 `ResendVerificationButton` resends the link if needed), then continue with Google or GitHub.
 The next social sign-in links automatically; there is no separate linking step.
 
-A test (`libs/auth/src/tests/auth.test.ts`) runs the social callback's linking step against an unverified
+A test runs the social callback's linking step against an unverified
 credential account and a provider-verified email: nothing is linked or created, so the attacker's password never
 reaches the victim's sign-in.
 
