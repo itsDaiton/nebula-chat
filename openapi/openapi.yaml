@@ -41,21 +41,18 @@ components:
         messageId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           description: The persisted user Message
         streamId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           description: The reply stream to read from `GET /api/streams/{streamId}`
         runId:
           description: The Run producing the reply; only in `run` mode
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
       required:
         - messageId
         - streamId
@@ -67,7 +64,7 @@ components:
           type: boolean
           const: false
         error:
-          $ref: '#/components/schemas/ErrorCode'
+          $ref: "#/components/schemas/ErrorCode"
         message:
           type: string
       required:
@@ -95,14 +92,14 @@ components:
         - Internal
     MessageAllowance:
       oneOf:
-        - $ref: '#/components/schemas/MeteredMessageAllowance'
-        - $ref: '#/components/schemas/UnmeteredMessageAllowance'
+        - $ref: "#/components/schemas/MeteredMessageAllowance"
+        - $ref: "#/components/schemas/UnmeteredMessageAllowance"
       type: object
       discriminator:
         propertyName: metered
         mapping:
-          'true': '#/components/schemas/MeteredMessageAllowance'
-          'false': '#/components/schemas/UnmeteredMessageAllowance'
+          "true": "#/components/schemas/MeteredMessageAllowance"
+          "false": "#/components/schemas/UnmeteredMessageAllowance"
     MeteredMessageAllowance:
       type: object
       properties:
@@ -141,14 +138,14 @@ components:
       additionalProperties: false
     SpendAllowance:
       oneOf:
-        - $ref: '#/components/schemas/CappedSpendAllowance'
-        - $ref: '#/components/schemas/UncappedSpendAllowance'
+        - $ref: "#/components/schemas/CappedSpendAllowance"
+        - $ref: "#/components/schemas/UncappedSpendAllowance"
       type: object
       discriminator:
         propertyName: capped
         mapping:
-          'true': '#/components/schemas/CappedSpendAllowance'
-          'false': '#/components/schemas/UncappedSpendAllowance'
+          "true": "#/components/schemas/CappedSpendAllowance"
+          "false": "#/components/schemas/UncappedSpendAllowance"
     CappedSpendAllowance:
       type: object
       properties:
@@ -170,8 +167,7 @@ components:
         resetsAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
           description: The first instant of the next UTC month
       required:
         - capped
@@ -195,15 +191,13 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         title:
           type: string
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         archived:
           type: boolean
           description: Whether the owner has archived this Session
@@ -211,9 +205,8 @@ components:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
-            - type: 'null'
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: "null"
           description: When the owner archived it; null while active
         messageCount:
           type: integer
@@ -225,9 +218,8 @@ components:
           enum:
             - direct
             - run
-          description: >-
-            The Session's Reply mode: `direct` for Direct replies or `run` for
-            Runs (Registered users only); fixed at creation
+          description: "The Session's Reply mode: `direct` for Direct replies or `run` for
+            Runs (Registered users only); fixed at creation"
       required:
         - id
         - title
@@ -243,15 +235,13 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         title:
           type: string
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         archived:
           type: boolean
           description: Whether the owner has archived this Session
@@ -259,9 +249,8 @@ components:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
-            - type: 'null'
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: "null"
           description: When the owner archived it; null while active
         messageCount:
           type: integer
@@ -273,12 +262,10 @@ components:
           enum:
             - direct
             - run
-          description: >-
-            The Session's Reply mode: `direct` for Direct replies or `run` for
-            Runs (Registered users only); fixed at creation
+          description: "The Session's Reply mode: `direct` for Direct replies or `run` for
+            Runs (Registered users only); fixed at creation"
         snippet:
-          description: >-
-            Text around the first match in one of the Session’s Messages,
+          description: Text around the first match in one of the Session’s Messages,
             ellipsised where cut; absent when only the title matched
           type: string
       required:
@@ -296,15 +283,13 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         title:
           type: string
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         archived:
           type: boolean
           description: Whether the owner has archived this Session
@@ -312,9 +297,8 @@ components:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
-            - type: 'null'
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: "null"
           description: When the owner archived it; null while active
         messageCount:
           type: integer
@@ -326,18 +310,15 @@ components:
           enum:
             - direct
             - run
-          description: >-
-            The Session's Reply mode: `direct` for Direct replies or `run` for
-            Runs (Registered users only); fixed at creation
+          description: "The Session's Reply mode: `direct` for Direct replies or `run` for
+            Runs (Registered users only); fixed at creation"
         activeStreamId:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
-          description: >-
-            The reply still being produced for this Session, to re-attach to
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: "null"
+          description: The reply still being produced for this Session, to re-attach to
             with `GET /api/streams/{streamId}`; null when none is in flight
         waitingRun:
           anyOf:
@@ -346,17 +327,14 @@ components:
                 id:
                   type: string
                   format: uuid
-                  pattern: >-
-                    ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                 streamId:
                   anyOf:
                     - type: string
                       format: uuid
-                      pattern: >-
-                        ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-                    - type: 'null'
-                  description: >-
-                    The stream the question was asked on; `POST
+                      pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    - type: "null"
+                  description: The stream the question was asked on; `POST
                     /api/streams/{streamId}/cancel` cancels the Run
                 stepsCompleted:
                   type: integer
@@ -367,9 +345,8 @@ components:
                 - streamId
                 - stepsCompleted
               additionalProperties: false
-            - type: 'null'
-          description: >-
-            The Run waiting for the answer to its Clarifying question; the next
+            - type: "null"
+          description: The Run waiting for the answer to its Clarifying question; the next
             Message sent to the Session answers it
       required:
         - id
@@ -389,14 +366,13 @@ components:
           maxItems: 100
           type: array
           items:
-            $ref: '#/components/schemas/Session'
+            $ref: "#/components/schemas/Session"
         nextCursor:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: "null"
         hasMore:
           type: boolean
       required:
@@ -410,13 +386,11 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         sessionId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         content:
           type: string
         role:
@@ -426,48 +400,45 @@ components:
             - type: integer
               minimum: -9007199254740991
               maximum: 9007199254740991
-            - type: 'null'
+            - type: "null"
         cached:
           type: boolean
         model:
           description: The Model that wrote a Direct reply; null for a Run answer
           type:
             - string
-            - 'null'
+            - "null"
         estimatedCostUsd:
-          description: >-
-            Estimated cost in USD; for a Run answer, the sum of the Run’s Model
+          description: Estimated cost in USD; for a Run answer, the sum of the Run’s Model
             calls
           type:
             - number
-            - 'null'
+            - "null"
         runId:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: "null"
           description: The Run that produced this Message
         contextTokens:
           anyOf:
             - type: integer
               minimum: -9007199254740991
               maximum: 9007199254740991
-            - type: 'null'
+            - type: "null"
           description: Input tokens of a Direct reply’s request
         contextMessages:
           anyOf:
             - type: integer
               minimum: -9007199254740991
               maximum: 9007199254740991
-            - type: 'null'
+            - type: "null"
           description: History Messages sent with a Direct reply
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - id
         - sessionId
@@ -487,7 +458,7 @@ components:
       properties:
         version:
           type: string
-          description: '`YYYY-MM-DD-<uuid>`: changes whenever the catalog does'
+          description: "`YYYY-MM-DD-<uuid>`: changes whenever the catalog does"
         hash:
           type: string
           description: SHA-256 of the catalog content (Models and defaults)
@@ -508,7 +479,7 @@ components:
           maxItems: 100
           type: array
           items:
-            $ref: '#/components/schemas/Model'
+            $ref: "#/components/schemas/Model"
       required:
         - version
         - hash
@@ -552,11 +523,10 @@ components:
           description: Tokens reserved for a reply
         supportsTemperature:
           type: boolean
-          description: >-
-            False when the Model fixes its temperature and rejects any other
+          description: False when the Model fixes its temperature and rejects any other
             value
         prices:
-          $ref: '#/components/schemas/ModelPrices'
+          $ref: "#/components/schemas/ModelPrices"
       required:
         - id
         - label
@@ -589,13 +559,11 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         sessionId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         status:
           type: string
           enum:
@@ -612,10 +580,9 @@ components:
               propertyNames:
                 type: string
               additionalProperties: {}
-            - type: 'null'
-          description: >-
-            The Intake Agents’ outputs keyed by Agent, null for one that failed,
-            plus `missing` naming those; null until Intake ends
+            - type: "null"
+          description: The Intake Agents’ outputs keyed by Agent, null for one that
+            failed, plus `missing` naming those; null until Intake ends
         tokensUsed:
           type: integer
           minimum: -9007199254740991
@@ -625,32 +592,29 @@ components:
             - type: integer
               minimum: -9007199254740991
               maximum: 9007199254740991
-            - type: 'null'
+            - type: "null"
           description: The Run budget; null until the Run starts
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         startedAt:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
-            - type: 'null'
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: "null"
         finishedAt:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
-            - type: 'null'
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: "null"
         steps:
           maxItems: 1000
           type: array
           items:
-            $ref: '#/components/schemas/Step'
+            $ref: "#/components/schemas/Step"
           description: In execution order
       required:
         - id
@@ -670,8 +634,7 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         turn:
           type: integer
           minimum: -9007199254740991
@@ -692,12 +655,10 @@ components:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
-          description: >-
-            The turn’s Orchestrator Step for a delegate; the delegate for a tool
-            call
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: "null"
+          description: The turn’s Orchestrator Step for a delegate; the delegate for a
+            tool call
         attempt:
           type: integer
           minimum: -9007199254740991
@@ -712,7 +673,7 @@ components:
             - type: integer
               minimum: -9007199254740991
               maximum: 9007199254740991
-            - type: 'null'
+            - type: "null"
           description: Tokens the Step used; null for a tool call
         status:
           type: string
@@ -722,21 +683,19 @@ components:
             - failed
         error:
           anyOf:
-            - $ref: '#/components/schemas/ErrorEnvelope'
-            - type: 'null'
+            - $ref: "#/components/schemas/ErrorEnvelope"
+            - type: "null"
           description: Why a failed Step failed
         startedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         finishedAt:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
-            - type: 'null'
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: "null"
       required:
         - id
         - turn
@@ -757,8 +716,7 @@ components:
       properties:
         uploadsEnabled:
           type: boolean
-          description: >-
-            Whether this server can store uploads; removing an image works
+          description: Whether this server can store uploads; removing an image works
             either way
       required:
         - uploadsEnabled
@@ -773,6 +731,48 @@ components:
       required:
         - image
       additionalProperties: false
+    OwnKeyList:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          description: Whether this server can store Own keys
+        keys:
+          type: array
+          items:
+            $ref: "#/components/schemas/OwnKey"
+      required:
+        - enabled
+        - keys
+      additionalProperties: false
+    OwnKey:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum:
+            - openai
+            - anthropic
+        lastFour:
+          type: string
+          description: The last four characters of the key
+        status:
+          type: string
+          enum:
+            - pending
+            - valid
+            - invalid
+          description: "`pending` until the worker validates it; only a `valid` key is used"
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+      required:
+        - provider
+        - lastFour
+        - status
+        - updatedAt
+      additionalProperties: false
     LogLevelReports:
       type: object
       properties:
@@ -780,14 +780,13 @@ components:
           type: integer
           minimum: -9007199254740991
           maximum: 9007199254740991
-          description: >-
-            How many instances of the service received the request; more than
+          description: How many instances of the service received the request; more than
             reports means some did not answer in time
         reports:
           maxItems: 100
           type: array
           items:
-            $ref: '#/components/schemas/LogLevelReport'
+            $ref: "#/components/schemas/LogLevelReport"
           description: One per instance that answered, by instance
       required:
         - receivers
@@ -803,7 +802,7 @@ components:
           maxItems: 7
           type: array
           items:
-            $ref: '#/components/schemas/LogLevelState'
+            $ref: "#/components/schemas/LogLevelState"
           description: The root level, then every component
       required:
         - instance
@@ -837,15 +836,14 @@ components:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
-            - type: 'null'
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: "null"
           description: When the runtime change reverts; `null` at the boot-time level
         operator:
           description: Who asked for the runtime change; `null` at the boot-time level
           type:
             - string
-            - 'null'
+            - "null"
       required:
         - target
         - level
@@ -864,8 +862,7 @@ components:
           description: When the change reverts
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - receivers
         - expiresAt
@@ -876,25 +873,21 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         email:
           type: string
           format: email
-          pattern: >-
-            ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
+          pattern: ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
         name:
           type: string
         twoFactorEnabled:
           type: boolean
-          description: >-
-            Whether they have enrolled in two-factor authentication, without
+          description: Whether they have enrolled in two-factor authentication, without
             which the admin API refuses them
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - id
         - email
@@ -941,7 +934,7 @@ components:
                 - previousTotal
                 - series
               additionalProperties: false
-              description: '`total` is the mean of the daily counts, to one decimal'
+              description: "`total` is the mean of the daily counts, to one decimal"
             weeklyActiveUsers:
               type: object
               properties:
@@ -962,8 +955,7 @@ components:
                 - previousTotal
                 - series
               additionalProperties: false
-              description: >-
-                Each day counts the Users active in the 7 days ending on it;
+              description: Each day counts the Users active in the 7 days ending on it;
                 `total` is the last day
             newRegistrations:
               type: object
@@ -1025,9 +1017,8 @@ components:
                 - previousTotal
                 - series
               additionalProperties: false
-              description: >-
-                Estimated USD from the Model call ledger, summed over each day
-                of the range
+              description: Estimated USD from the Model call ledger, summed over each day of
+                the range
             guestConversion:
               type: object
               properties:
@@ -1036,16 +1027,15 @@ components:
                 previousConversions:
                   type: number
                 rate:
-                  description: >-
-                    Conversions over conversions plus Guests created in the
-                    range; `null` with neither
+                  description: Conversions over conversions plus Guests created in the range;
+                    `null` with neither
                   type:
                     - number
-                    - 'null'
+                    - "null"
                 previousRate:
                   type:
                     - number
-                    - 'null'
+                    - "null"
                 series:
                   maxItems: 90
                   type: array
@@ -1139,9 +1129,7 @@ components:
                     - total
                     - values
                   additionalProperties: false
-                description: >-
-                  The Models grouped into `other`, largest first; empty
-                  otherwise
+                description: The Models grouped into `other`, largest first; empty otherwise
             required:
               - key
               - kind
@@ -1149,8 +1137,7 @@ components:
               - values
               - members
             additionalProperties: false
-          description: >-
-            The Run series, the top 8 Models and the rest as `other`, largest
+          description: The Run series, the top 8 Models and the rest as `other`, largest
             first
       required:
         - metric
@@ -1175,16 +1162,16 @@ components:
           description: Input tokens, cached included, per call
           type:
             - number
-            - 'null'
+            - "null"
         outputPerCall:
           type:
             - number
-            - 'null'
+            - "null"
         costPerCall:
           description: Estimated USD per call
           type:
             - number
-            - 'null'
+            - "null"
         cacheReplays:
           type: number
           description: Calls replayed from the response cache
@@ -1192,11 +1179,11 @@ components:
           description: Completed calls over all calls
           type:
             - number
-            - 'null'
+            - "null"
         avgDurationMs:
           type:
             - number
-            - 'null'
+            - "null"
         trend:
           maxItems: 90
           type: array
@@ -1290,11 +1277,11 @@ components:
               description: Cache replays over Model calls; `null` with no calls
               type:
                 - number
-                - 'null'
+                - "null"
             previousRate:
               type:
                 - number
-                - 'null'
+                - "null"
           required:
             - rate
             - previousRate
@@ -1315,14 +1302,13 @@ components:
           maxItems: 100
           type: array
           items:
-            $ref: '#/components/schemas/AdminUserSummary'
+            $ref: "#/components/schemas/AdminUserSummary"
         nextCursor:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: "null"
         hasMore:
           type: boolean
       required:
@@ -1336,8 +1322,7 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         email:
           type: string
         name:
@@ -1351,14 +1336,14 @@ components:
             - banned
             - pendingDeletion
             - guest
-          description: 'The first that applies: guest, banned, admin, unverified, registered'
+          description: "The first that applies: guest, banned, admin, unverified,
+            registered"
         role:
           type: string
           enum:
             - admin
             - user
-          description: >-
-            The raw role; `status` hides it for a banned or Pending-deletion
+          description: The raw role; `status` hides it for a banned or Pending-deletion
             Admin
         twoFactorEnabled:
           type: boolean
@@ -1375,13 +1360,11 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - id
         - email
@@ -1400,8 +1383,7 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         email:
           type: string
         name:
@@ -1415,14 +1397,14 @@ components:
             - banned
             - pendingDeletion
             - guest
-          description: 'The first that applies: guest, banned, admin, unverified, registered'
+          description: "The first that applies: guest, banned, admin, unverified,
+            registered"
         role:
           type: string
           enum:
             - admin
             - user
-          description: >-
-            The raw role; `status` hides it for a banned or Pending-deletion
+          description: The raw role; `status` hides it for a banned or Pending-deletion
             Admin
         twoFactorEnabled:
           type: boolean
@@ -1439,13 +1421,11 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         ban:
           anyOf:
             - type: object
@@ -1453,30 +1433,27 @@ components:
                 reason:
                   type:
                     - string
-                    - 'null'
+                    - "null"
                 expiresAt:
                   anyOf:
                     - type: string
                       format: date-time
-                      pattern: >-
-                        ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
-                    - type: 'null'
-                  description: '`null` for a ban with no end'
+                      pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+                    - type: "null"
+                  description: "`null` for a ban with no end"
               required:
                 - reason
                 - expiresAt
               additionalProperties: false
-            - type: 'null'
-          description: '`null` unless the User is banned now'
+            - type: "null"
+          description: "`null` unless the User is banned now"
         pendingDeletionAt:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
-            - type: 'null'
-          description: >-
-            When the User asked to delete the account; it is Purged 30 days
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            - type: "null"
+          description: When the User asked to delete the account; it is Purged 30 days
             later. `null` unless pending
       required:
         - id
@@ -1499,14 +1476,13 @@ components:
           maxItems: 100
           type: array
           items:
-            $ref: '#/components/schemas/AdminSessionSummary'
+            $ref: "#/components/schemas/AdminSessionSummary"
         nextCursor:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: "null"
         hasMore:
           type: boolean
       required:
@@ -1520,8 +1496,7 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         title:
           type: string
         model:
@@ -1536,13 +1511,11 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - id
         - title
@@ -1559,14 +1532,13 @@ components:
           maxItems: 100
           type: array
           items:
-            $ref: '#/components/schemas/AdminSessionListItem'
+            $ref: "#/components/schemas/AdminSessionListItem"
         nextCursor:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: "null"
         hasMore:
           type: boolean
       required:
@@ -1580,8 +1552,7 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         title:
           type: string
         model:
@@ -1596,21 +1567,18 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         owner:
           type: object
           properties:
             id:
               type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             name:
               type: string
             email:
@@ -1636,8 +1604,7 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         title:
           type: string
         model:
@@ -1652,24 +1619,21 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         userId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           description: The owner
         messages:
           maxItems: 1000
           type: array
           items:
-            $ref: '#/components/schemas/Message'
+            $ref: "#/components/schemas/Message"
           description: Oldest first
       required:
         - id
@@ -1689,15 +1653,14 @@ components:
           maxItems: 100
           type: array
           items:
-            $ref: '#/components/schemas/AuditEntry'
+            $ref: "#/components/schemas/AuditEntry"
           description: In the requested `order`
         nextCursor:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: "null"
         total:
           type: integer
           minimum: 0
@@ -1717,8 +1680,7 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         actorType:
           type: string
           enum:
@@ -1729,17 +1691,15 @@ components:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
-            - type: 'null'
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: "null"
           description: The Admin who acted; `null` for the Operator or the system
         actorName:
-          description: >-
-            The acting Admin's name; `null` for the Operator, the system or a
+          description: The acting Admin's name; `null` for the Operator, the system or a
             purged Admin
           type:
             - string
-            - 'null'
+            - "null"
         action:
           type: string
           enum:
@@ -1756,12 +1716,11 @@ components:
         targetId:
           type: string
         targetLabel:
-          description: >-
-            The User's email when the target is a User that still exists;
+          description: The User's email when the target is a User that still exists;
             otherwise `null`
           type:
             - string
-            - 'null'
+            - "null"
         detail:
           type: object
           propertyNames:
@@ -1771,8 +1730,7 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - id
         - actorType
@@ -1798,12 +1756,12 @@ paths:
         Access: public
       security: []
       responses:
-        '200':
+        "200":
           description: API is reachable
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiRoot'
+                $ref: "#/components/schemas/ApiRoot"
   /health:
     get:
       operationId: getHealth
@@ -1816,12 +1774,12 @@ paths:
         Access: public
       security: []
       responses:
-        '200':
+        "200":
           description: Server is healthy
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Health'
+                $ref: "#/components/schemas/Health"
   /api/sessions/{sessionId}/messages:
     post:
       operationId: sendMessage
@@ -1850,18 +1808,16 @@ paths:
                   minLength: 1
                 mode:
                   deprecated: true
-                  description: >-
-                    Deprecated and ignored: the Session's Reply mode decides
-                    whether the reply is a Direct reply or a Run. Removed in a
-                    later release.
+                  description: "Deprecated and ignored: the Session's Reply mode decides whether
+                    the reply is a Direct reply or a Run. Removed in a later
+                    release."
                   type: string
                   enum:
                     - direct
                     - run
                 model:
-                  description: >-
-                    Binds the Session to this Model before replying; omitted
-                    keeps the Session's Model
+                  description: Binds the Session to this Model before replying; omitted keeps the
+                    Session's Model
                   type: string
                   enum:
                     - gpt-4o
@@ -1881,71 +1837,69 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
       security:
         - cookieAuth: []
       responses:
-        '202':
+        "202":
           description: Message persisted and its reply queued
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SentMessage'
-        '400':
+                $ref: "#/components/schemas/SentMessage"
+        "400":
           description: Invalid request body or session ID
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
-          description: >-
-            Guest message allowance reached, monthly spend allowance reached
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Guest message allowance reached, monthly spend allowance reached
             (`SpendAllowanceReached`, with its reset date) — registration
             required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '409':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
           description: Session is archived — restore it first
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '413':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "413":
           description: Message exceeds the prompt token limit
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '429':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
           description: Rate limit exceeded
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/chat/message-allowance:
     get:
       operationId: getMessageAllowance
@@ -1962,24 +1916,24 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: The caller's message allowance
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageAllowance'
-        '401':
+                $ref: "#/components/schemas/MessageAllowance"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/chat/spend-allowance:
     get:
       operationId: getSpendAllowance
@@ -1996,24 +1950,24 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: The caller's spend allowance
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SpendAllowance'
-        '401':
+                $ref: "#/components/schemas/SpendAllowance"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/sessions:
     post:
       operationId: createSession
@@ -2040,50 +1994,49 @@ paths:
                   enum:
                     - direct
                     - run
-                  description: >-
-                    The Session's Reply mode: `direct` for Direct replies or
-                    `run` for Runs (Registered users only); fixed at creation
+                  description: "The Session's Reply mode: `direct` for Direct replies or `run` for
+                    Runs (Registered users only); fixed at creation"
               required:
                 - title
       security:
         - cookieAuth: []
       responses:
-        '201':
+        "201":
           description: Session created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
-        '400':
+                $ref: "#/components/schemas/Session"
+        "400":
           description: Invalid request body
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: A Guest asked for a Run Session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '429':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
           description: Rate limit exceeded
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
     get:
       operationId: listSessions
       summary: List sessions
@@ -2110,46 +2063,43 @@ paths:
             description: Pagination cursor for fetching the next page of sessions
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
           description: Pagination cursor for fetching the next page of sessions
         - schema:
-            description: >-
-              Return only archived Sessions (`true`) instead of only active ones
+            description: Return only archived Sessions (`true`) instead of only active ones
               (default)
-            default: 'false'
+            default: "false"
             type: string
             enum:
-              - 'true'
-              - 'false'
+              - "true"
+              - "false"
           in: query
           name: archived
-          description: >-
-            Return only archived Sessions (`true`) instead of only active ones
+          description: Return only archived Sessions (`true`) instead of only active ones
             (default)
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Paginated list of sessions owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SessionPage'
-        '401':
+                $ref: "#/components/schemas/SessionPage"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/sessions/search:
     get:
       operationId: searchSessions
@@ -2173,23 +2123,21 @@ paths:
           required: true
           description: Search query to filter sessions by title or Message content
         - schema:
-            description: >-
-              Return only archived Sessions (`true`) instead of only active ones
+            description: Return only archived Sessions (`true`) instead of only active ones
               (default)
-            default: 'false'
+            default: "false"
             type: string
             enum:
-              - 'true'
-              - 'false'
+              - "true"
+              - "false"
           in: query
           name: archived
-          description: >-
-            Return only archived Sessions (`true`) instead of only active ones
+          description: Return only archived Sessions (`true`) instead of only active ones
             (default)
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Matching sessions owned by the caller
           content:
             application/json:
@@ -2197,25 +2145,25 @@ paths:
                 maxItems: 100
                 type: array
                 items:
-                  $ref: '#/components/schemas/SessionSearchResult'
-        '400':
+                  $ref: "#/components/schemas/SessionSearchResult"
+        "400":
           description: Invalid search query
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/sessions/{sessionId}/archive:
     post:
       operationId: archiveSession
@@ -2232,44 +2180,43 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Session archived
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
-        '400':
+                $ref: "#/components/schemas/Session"
+        "400":
           description: Invalid session ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/sessions/{sessionId}/restore:
     post:
       operationId: restoreSession
@@ -2284,44 +2231,43 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Session restored
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
-        '400':
+                $ref: "#/components/schemas/Session"
+        "400":
           description: Invalid session ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/sessions/{sessionId}:
     patch:
       operationId: renameSession
@@ -2351,44 +2297,43 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Session renamed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
-        '400':
+                $ref: "#/components/schemas/Session"
+        "400":
           description: Invalid session ID or title
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
     get:
       operationId: getSession
       summary: Get session by ID
@@ -2402,44 +2347,43 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Session retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SessionDetail'
-        '400':
+                $ref: "#/components/schemas/SessionDetail"
+        "400":
           description: Invalid session ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/messages:
     post:
       operationId: createMessage
@@ -2460,8 +2404,7 @@ paths:
                 sessionId:
                   type: string
                   format: uuid
-                  pattern: >-
-                    ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                 role:
                   type: string
                   enum:
@@ -2475,7 +2418,7 @@ paths:
                     - type: integer
                       minimum: -9007199254740991
                       maximum: 9007199254740991
-                    - type: 'null'
+                    - type: "null"
               required:
                 - sessionId
                 - role
@@ -2483,42 +2426,42 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '201':
+        "201":
           description: Message created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '400':
+                $ref: "#/components/schemas/Message"
+        "400":
           description: Invalid request body
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Session not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '409':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
           description: Session is archived — restore it first
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
     get:
       operationId: listMessages
       summary: List messages
@@ -2536,15 +2479,14 @@ paths:
             description: Only list the messages of this session, oldest first
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: sessionId
           description: Only list the messages of this session, oldest first
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: List of messages owned by the caller
           content:
             application/json:
@@ -2552,25 +2494,25 @@ paths:
                 maxItems: 1000
                 type: array
                 items:
-                  $ref: '#/components/schemas/Message'
-        '400':
+                  $ref: "#/components/schemas/Message"
+        "400":
           description: Invalid session ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/messages/{messageId}:
     get:
       operationId: getMessage
@@ -2585,44 +2527,43 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: messageId
           required: true
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Message retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '400':
+                $ref: "#/components/schemas/Message"
+        "400":
           description: Invalid message ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Message not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/models:
     get:
       operationId: getModelCatalog
@@ -2638,18 +2579,18 @@ paths:
         Access: public
       security: []
       responses:
-        '200':
+        "200":
           description: The model catalog
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ModelCatalog'
-        '500':
+                $ref: "#/components/schemas/ModelCatalog"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/runs/{runId}:
     get:
       operationId: getRun
@@ -2669,44 +2610,43 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: runId
           required: true
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: The Run and its Steps
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Run'
-        '400':
+                $ref: "#/components/schemas/Run"
+        "400":
           description: Invalid Run ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Run not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/streams/{streamId}:
     get:
       operationId: readReplyStream
@@ -2732,62 +2672,57 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: streamId
           required: true
         - schema:
-            description: >-
-              Resume after this event id; sent by an EventSource when it
+            description: Resume after this event id; sent by an EventSource when it
               reconnects
             type: string
             pattern: ^\d+-\d+$
           in: header
           name: last-event-id
-          description: >-
-            Resume after this event id; sent by an EventSource when it
-            reconnects
+          description: Resume after this event id; sent by an EventSource when it reconnects
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: The reply stream, as server-sent events
           content:
             text/event-stream:
               schema:
                 type: string
-                description: >-
-                  Server-sent events: `token` ({ token }), `usage` ({
-                  promptTokens, completionTokens, totalTokens }), `error` (the
-                  ErrorEnvelope) and a final `end` ({}, or { reason: 'cancelled'
-                  } for a reply its User stopped). Each event `id` is its stream
-                  entry id; send the last one back as `Last-Event-ID` (or
-                  `lastEventId`) to resume after it.
-        '400':
+                description: "Server-sent events: `token` ({ token }), `usage` ({ promptTokens,
+                  completionTokens, totalTokens }), `error` (the ErrorEnvelope)
+                  and a final `end` ({}, or { reason: 'cancelled' } for a reply
+                  its User stopped). Each event `id` is its stream entry id;
+                  send the last one back as `Last-Event-ID` (or `lastEventId`)
+                  to resume after it."
+        "400":
           description: Invalid stream ID or Last-Event-ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Stream not found, expired, or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/streams/{streamId}/cancel:
     post:
       operationId: cancelReplyStream
@@ -2807,40 +2742,39 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: streamId
           required: true
       security:
         - cookieAuth: []
       responses:
-        '204':
+        "204":
           description: Stop requested, or the reply had already finished
-        '400':
+        "400":
           description: Invalid stream ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Stream not found or not owned by the caller
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/profile-image/settings:
     get:
       operationId: getProfileImageSettings
@@ -2854,24 +2788,24 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Profile image settings
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProfileImageSettings'
-        '401':
+                $ref: "#/components/schemas/ProfileImageSettings"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/profile-image:
     put:
       operationId: uploadProfileImage
@@ -2903,60 +2837,60 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Profile image stored
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProfileImage'
-        '400':
+                $ref: "#/components/schemas/ProfileImage"
+        "400":
           description: The file is not a JPEG, PNG or WebP image
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: A Guest cannot set a Profile image
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: Profile image uploads are switched off
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '413':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "413":
           description: The file is larger than 5 MB
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '415':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "415":
           description: The body is not a JPEG, PNG or WebP
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '429':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
           description: Too many uploads this hour
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
     delete:
       operationId: removeProfileImage
       summary: Remove Profile image
@@ -2971,26 +2905,196 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '204':
+        "204":
           description: Profile image removed
-        '401':
+        "401":
           description: No auth session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: A Guest cannot have a Profile image
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/own-keys:
+    get:
+      operationId: listOwnKeys
+      summary: List Own keys
+      tags:
+        - Own keys
+      description: >-
+        The caller's stored Own keys: provider, last four characters and
+        validation status. The key itself is never returned.
+
+
+        Access: registered
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: The stored Own keys
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OwnKeyList"
+        "401":
+          description: No auth session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: A Guest or an unverified user cannot hold an Own key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /api/own-keys/{provider}:
+    put:
+      operationId: saveOwnKey
+      summary: Save Own key
+      tags:
+        - Own keys
+      description: >-
+        Store or replace the verified Registered user’s Own key for a provider.
+        The key is encrypted to the worker’s public key and only its last four
+        characters are kept readable; a worker job then validates it, and it is
+        used only once `valid`.
+
+
+        Access: registered
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+                  minLength: 8
+                  maxLength: 300
+                  description: The provider API key; write-only
+              required:
+                - key
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - openai
+              - anthropic
+          in: path
+          name: provider
+          required: true
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Key stored and queued for validation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OwnKey"
+        "400":
+          description: Invalid provider or key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: No auth session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: A Guest or an unverified user cannot hold an Own key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Own keys are switched off on this server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          description: Too many saves this hour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: removeOwnKey
+      summary: Remove Own key
+      tags:
+        - Own keys
+      description: >-
+        Remove the caller’s Own key for a provider, so its Model calls use the
+        Operator key again. Succeeds when there is none.
+
+
+        Access: registered
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - openai
+              - anthropic
+          in: path
+          name: provider
+          required: true
+      security:
+        - cookieAuth: []
+      responses:
+        "204":
+          description: Own key removed
+        "400":
+          description: Invalid provider
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: No auth session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: A Guest or an unverified user cannot hold an Own key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/internal/log-level:
     get:
       operationId: getLogLevels
@@ -3010,47 +3114,47 @@ paths:
       parameters:
         - schema:
             default: server
-            description: 'Which service to read: the server (default) or the worker'
+            description: "Which service to read: the server (default) or the worker"
             type: string
             enum:
               - server
               - worker
           in: query
           name: service
-          description: 'Which service to read: the server (default) or the worker'
+          description: "Which service to read: the server (default) or the worker"
       security:
         - operatorToken: []
       responses:
-        '200':
+        "200":
           description: The levels each instance applies
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LogLevelReports'
-        '400':
+                $ref: "#/components/schemas/LogLevelReports"
+        "400":
           description: Invalid query
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: Missing or wrong operator token
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: No operator token is configured
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
     post:
       operationId: changeLogLevel
       summary: Change log level
@@ -3072,9 +3176,7 @@ paths:
               type: object
               properties:
                 component:
-                  description: >-
-                    The `nebula.component` to change; omit it to change the root
-                    level
+                  description: The `nebula.component` to change; omit it to change the root level
                   type: string
                   enum:
                     - auth
@@ -3094,7 +3196,7 @@ paths:
                     - trace
                 service:
                   default: server
-                  description: 'Which service to change: the server (default) or the worker'
+                  description: "Which service to change: the server (default) or the worker"
                   type: string
                   enum:
                     - server
@@ -3116,36 +3218,36 @@ paths:
       security:
         - operatorToken: []
       responses:
-        '202':
+        "202":
           description: Change sent to every instance of the service
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LogLevelChange'
-        '400':
+                $ref: "#/components/schemas/LogLevelChange"
+        "400":
           description: Invalid request body
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: Missing or wrong operator token
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: No operator token is configured
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/internal/admins:
     get:
       operationId: listAdmins
@@ -3159,7 +3261,7 @@ paths:
       security:
         - operatorToken: []
       responses:
-        '200':
+        "200":
           description: Every Admin, oldest account first
           content:
             application/json:
@@ -3167,25 +3269,25 @@ paths:
                 maxItems: 100
                 type: array
                 items:
-                  $ref: '#/components/schemas/Admin'
-        '403':
+                  $ref: "#/components/schemas/Admin"
+        "403":
           description: Missing or wrong operator token
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: No operator token is configured
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
     post:
       operationId: grantAdmin
       summary: Grant Admin
@@ -3209,43 +3311,42 @@ paths:
                   description: The email of the verified Registered user to make an Admin
                   type: string
                   format: email
-                  pattern: >-
-                    ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
+                  pattern: ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
               required:
                 - email
       security:
         - operatorToken: []
       responses:
-        '201':
+        "201":
           description: The user is now an Admin
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Admin'
-        '400':
+                $ref: "#/components/schemas/Admin"
+        "400":
           description: Invalid body, or the user is a Guest, unverified or banned
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: Missing or wrong operator token
           content:
             application/json:
               schema: {}
-        '404':
+        "404":
           description: No operator token is configured, or no user has that email
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '409':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
           description: The user is already an Admin
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -3267,8 +3368,7 @@ paths:
             description: The email of the Admin
             type: string
             format: email
-            pattern: >-
-              ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
+            pattern: ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
           in: path
           name: email
           required: true
@@ -3276,31 +3376,31 @@ paths:
       security:
         - operatorToken: []
       responses:
-        '204':
+        "204":
           description: The user is no longer an Admin
-        '400':
+        "400":
           description: Invalid email
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
           description: Missing or wrong operator token
           content:
             application/json:
               schema: {}
-        '404':
+        "404":
           description: No operator token is configured, or no user has that email
           content:
             application/json:
               schema: {}
-        '409':
+        "409":
           description: The user is not an Admin
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -3327,9 +3427,8 @@ paths:
       parameters:
         - schema:
             default: 30d
-            description: >-
-              How many UTC days back, today included; the period before it is
-              the comparison
+            description: How many UTC days back, today included; the period before it is the
+              comparison
             type: string
             enum:
               - 7d
@@ -3338,44 +3437,42 @@ paths:
               - 90d
           in: query
           name: range
-          description: >-
-            How many UTC days back, today included; the period before it is the
+          description: How many UTC days back, today included; the period before it is the
             comparison
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Per-day series and totals for each KPI
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminOverview'
-        '400':
+                $ref: "#/components/schemas/AdminOverview"
+        "400":
           description: Invalid query
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: Not signed in
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/admin/usage/series:
     get:
       operationId: getModelUsageSeries
@@ -3405,9 +3502,8 @@ paths:
           name: metric
         - schema:
             default: 30d
-            description: >-
-              How many UTC days back, today included; the period before it is
-              the comparison
+            description: How many UTC days back, today included; the period before it is the
+              comparison
             type: string
             enum:
               - 7d
@@ -3416,13 +3512,11 @@ paths:
               - 90d
           in: query
           name: range
-          description: >-
-            How many UTC days back, today included; the period before it is the
+          description: How many UTC days back, today included; the period before it is the
             comparison
         - schema:
             default: all
-            description: >-
-              Only Guests, only Registered users, or both; calls of a deleted
+            description: Only Guests, only Registered users, or both; calls of a deleted
               User count under `all` only
             type: string
             enum:
@@ -3431,12 +3525,10 @@ paths:
               - registered
           in: query
           name: audience
-          description: >-
-            Only Guests, only Registered users, or both; calls of a deleted User
-            count under `all` only
+          description: Only Guests, only Registered users, or both; calls of a deleted
+            User count under `all` only
         - schema:
-            description: >-
-              Only these Model ids, as a repeated key; `run` selects the Run
+            description: Only these Model ids, as a repeated key; `run` selects the Run
               series
             minItems: 1
             maxItems: 50
@@ -3447,44 +3539,41 @@ paths:
               maxLength: 100
           in: query
           name: models
-          description: >-
-            Only these Model ids, as a repeated key; `run` selects the Run
-            series
+          description: Only these Model ids, as a repeated key; `run` selects the Run series
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Per-day series per Model
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UsageSeries'
-        '400':
+                $ref: "#/components/schemas/UsageSeries"
+        "400":
           description: Invalid query
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: Not signed in
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/admin/usage/detail:
     get:
       operationId: getModelUsageDetail
@@ -3511,8 +3600,7 @@ paths:
         - schema:
             type: string
             format: date
-            pattern: >-
-              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
             description: The UTC day, `YYYY-MM-DD`
           in: query
           name: day
@@ -3532,8 +3620,7 @@ paths:
           description: How many UTC days the trend covers, ending today
         - schema:
             default: all
-            description: >-
-              Only Guests, only Registered users, or both; calls of a deleted
+            description: Only Guests, only Registered users, or both; calls of a deleted
               User count under `all` only
             type: string
             enum:
@@ -3542,36 +3629,34 @@ paths:
               - registered
           in: query
           name: audience
-          description: >-
-            Only Guests, only Registered users, or both; calls of a deleted User
-            count under `all` only
+          description: Only Guests, only Registered users, or both; calls of a deleted
+            User count under `all` only
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: The Model’s day
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UsageDetail'
-        '400':
+                $ref: "#/components/schemas/UsageDetail"
+        "400":
           description: Invalid query
           content:
             application/json:
               schema: {}
-        '401':
+        "401":
           description: Not signed in
           content:
             application/json:
               schema: {}
-        '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
               schema: {}
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -3592,9 +3677,8 @@ paths:
       parameters:
         - schema:
             default: 30d
-            description: >-
-              How many UTC days back, today included; the period before it is
-              the comparison
+            description: How many UTC days back, today included; the period before it is the
+              comparison
             type: string
             enum:
               - 7d
@@ -3603,13 +3687,11 @@ paths:
               - 90d
           in: query
           name: range
-          description: >-
-            How many UTC days back, today included; the period before it is the
+          description: How many UTC days back, today included; the period before it is the
             comparison
         - schema:
             default: all
-            description: >-
-              Only Guests, only Registered users, or both; calls of a deleted
+            description: Only Guests, only Registered users, or both; calls of a deleted
               User count under `all` only
             type: string
             enum:
@@ -3618,36 +3700,34 @@ paths:
               - registered
           in: query
           name: audience
-          description: >-
-            Only Guests, only Registered users, or both; calls of a deleted User
-            count under `all` only
+          description: Only Guests, only Registered users, or both; calls of a deleted
+            User count under `all` only
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Range totals
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UsageTotals'
-        '400':
+                $ref: "#/components/schemas/UsageTotals"
+        "400":
           description: Invalid query
           content:
             application/json:
               schema: {}
-        '401':
+        "401":
           description: Not signed in
           content:
             application/json:
               schema: {}
-        '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
               schema: {}
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -3676,8 +3756,7 @@ paths:
           name: search
           description: Case-insensitive text to find in the name or email
         - schema:
-            description: >-
-              Only Users in one of these statuses, as a repeated key; without it
+            description: Only Users in one of these statuses, as a repeated key; without it
               every User but Guests is listed
             minItems: 1
             maxItems: 6
@@ -3693,8 +3772,7 @@ paths:
                 - guest
           in: query
           name: status
-          description: >-
-            Only Users in one of these statuses, as a repeated key; without it
+          description: Only Users in one of these statuses, as a repeated key; without it
             every User but Guests is listed
         - schema:
             description: Only Users with this raw role, whatever their status
@@ -3706,23 +3784,20 @@ paths:
           name: role
           description: Only Users with this raw role, whatever their status
         - schema:
-            description: >-
-              `true` for Users under an active ban only, `false` for the rest,
-              Pending-deletion included
+            description: "`true` for Users under an active ban only, `false` for the rest,
+              Pending-deletion included"
             type: string
             enum:
-              - 'true'
-              - 'false'
+              - "true"
+              - "false"
           in: query
           name: banned
-          description: >-
-            `true` for Users under an active ban only, `false` for the rest,
-            Pending-deletion included
+          description: "`true` for Users under an active ban only, `false` for the rest,
+            Pending-deletion included"
         - schema:
             default: createdAt
-            description: >-
-              `lastActiveAt` is the last update to the account until activity is
-              tracked
+            description: "`lastActiveAt` is the last update to the account until activity is
+              tracked"
             type: string
             enum:
               - createdAt
@@ -3730,9 +3805,8 @@ paths:
               - messagesSent
           in: query
           name: sortBy
-          description: >-
-            `lastActiveAt` is the last update to the account until activity is
-            tracked
+          description: "`lastActiveAt` is the last update to the account until activity is
+            tracked"
         - schema:
             default: desc
             type: string
@@ -3754,46 +3828,44 @@ paths:
             description: The `nextCursor` of the previous page
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
           description: The `nextCursor` of the previous page
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: A page of Users
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminUserPage'
-        '400':
+                $ref: "#/components/schemas/AdminUserPage"
+        "400":
           description: Invalid query
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: Not signed in
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/admin/users/{id}:
     get:
       operationId: getUser
@@ -3811,8 +3883,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             description: The User id
           in: path
           name: id
@@ -3821,37 +3892,36 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: The User
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminUserDetail'
-        '400':
+                $ref: "#/components/schemas/AdminUserDetail"
+        "400":
           description: Invalid id
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: Not signed in
           content:
             application/json:
               schema: {}
-        '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
               schema: {}
-        '404':
+        "404":
           description: No User has that id
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -3884,16 +3954,14 @@ paths:
             description: The `nextCursor` of the previous page
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
           description: The `nextCursor` of the previous page
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             description: The User id
           in: path
           name: id
@@ -3902,37 +3970,36 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: A page of Sessions
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminSessionPage'
-        '400':
+                $ref: "#/components/schemas/AdminSessionPage"
+        "400":
           description: Invalid id or query
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: Not signed in
           content:
             application/json:
               schema: {}
-        '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
               schema: {}
-        '404':
+        "404":
           description: No User has that id
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -3954,8 +4021,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             description: The User id
           in: path
           name: id
@@ -3964,39 +4030,38 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '204':
+        "204":
           description: The User is no longer pending deletion
-        '400':
+        "400":
           description: Invalid id
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: Not signed in
           content:
             application/json:
               schema: {}
-        '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
               schema: {}
-        '404':
+        "404":
           description: No User has that id
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '409':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
           description: The User is not pending deletion
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -4028,15 +4093,14 @@ paths:
                   enum:
                     - admin
                     - user
-                  description: '`admin` grants the role, `user` revokes it'
+                  description: "`admin` grants the role, `user` revokes it"
               required:
                 - role
       parameters:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             description: The User id
           in: path
           name: id
@@ -4045,41 +4109,39 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '204':
+        "204":
           description: The role is changed
-        '400':
+        "400":
           description: Invalid id or body
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: Not signed in
           content:
             application/json:
               schema: {}
-        '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
               schema: {}
-        '404':
+        "404":
           description: No User has that id
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '409':
-          description: >-
-            Already (or not) an Admin (`Conflict`), not eligible
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Already (or not) an Admin (`Conflict`), not eligible
             (`NotEligibleForAdmin`) or the last Admin (`LastAdmin`)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -4114,21 +4176,17 @@ paths:
                   maxLength: 500
                   description: Shown to the User when they try to sign in
                 expiresAt:
-                  description: >-
-                    When the ban ends; without it the ban lasts until an Admin
-                    lifts it
+                  description: When the ban ends; without it the ban lasts until an Admin lifts it
                   type: string
                   format: date-time
-                  pattern: >-
-                    ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+                  pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
               required:
                 - reason
       parameters:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             description: The User id
           in: path
           name: id
@@ -4137,39 +4195,38 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '204':
+        "204":
           description: The User is banned
-        '400':
+        "400":
           description: Invalid id or body, or the Admin banning themselves
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: Not signed in
           content:
             application/json:
               schema: {}
-        '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
               schema: {}
-        '404':
+        "404":
           description: No User has that id
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '409':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
           description: Already banned (`Conflict`) or the last Admin (`LastAdmin`)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -4190,8 +4247,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             description: The User id
           in: path
           name: id
@@ -4200,39 +4256,38 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '204':
+        "204":
           description: The User is no longer banned
-        '400':
+        "400":
           description: Invalid id
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: Not signed in
           content:
             application/json:
               schema: {}
-        '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
               schema: {}
-        '404':
+        "404":
           description: No User has that id
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '409':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
           description: The User is not banned
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -4264,8 +4319,7 @@ paths:
             description: Only Sessions this User owns
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: userId
           description: Only Sessions this User owns
@@ -4278,18 +4332,16 @@ paths:
           name: model
           description: Only Sessions on this Model
         - schema:
-            description: >-
-              `true` for archived Sessions only, `false` for the rest; without
-              it both are listed
+            description: "`true` for archived Sessions only, `false` for the rest; without
+              it both are listed"
             type: string
             enum:
-              - 'true'
-              - 'false'
+              - "true"
+              - "false"
           in: query
           name: archived
-          description: >-
-            `true` for archived Sessions only, `false` for the rest; without it
-            both are listed
+          description: "`true` for archived Sessions only, `false` for the rest; without
+            it both are listed"
         - schema:
             default: desc
             description: By last activity
@@ -4313,46 +4365,44 @@ paths:
             description: The `nextCursor` of the previous page
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
           description: The `nextCursor` of the previous page
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: A page of Sessions
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminSessionListPage'
-        '400':
+                $ref: "#/components/schemas/AdminSessionListPage"
+        "400":
           description: Invalid query
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: Not signed in
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/admin/sessions/{id}:
     get:
       operationId: readSession
@@ -4371,8 +4421,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             description: The Session id
           in: path
           name: id
@@ -4381,44 +4430,43 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: The Session and its Messages
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminSessionDetail'
-        '400':
+                $ref: "#/components/schemas/AdminSessionDetail"
+        "400":
           description: Invalid id
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: Not signed in
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
           description: No Session has that id
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/admin/audit:
     get:
       operationId: listAuditEntries
@@ -4447,8 +4495,7 @@ paths:
             description: Only entries by this Admin
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: actorUserId
           description: Only entries by this Admin
@@ -4485,8 +4532,7 @@ paths:
             description: Only entries at or after this time
             type: string
             format: date-time
-            pattern: >-
-              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
           in: query
           name: from
           description: Only entries at or after this time
@@ -4494,8 +4540,7 @@ paths:
             description: Only entries before this time
             type: string
             format: date-time
-            pattern: >-
-              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
           in: query
           name: to
           description: Only entries before this time
@@ -4512,56 +4557,54 @@ paths:
             description: The `nextCursor` of the previous page
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
           description: The `nextCursor` of the previous page
         - schema:
             default: desc
-            description: 'Sort by time: `desc` newest first (default) or `asc` oldest first'
+            description: "Sort by time: `desc` newest first (default) or `asc` oldest first"
             type: string
             enum:
               - asc
               - desc
           in: query
           name: order
-          description: 'Sort by time: `desc` newest first (default) or `asc` oldest first'
+          description: "Sort by time: `desc` newest first (default) or `asc` oldest first"
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: A page of Audit log entries
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuditPage'
-        '400':
+                $ref: "#/components/schemas/AuditPage"
+        "400":
           description: Invalid query
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '401':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
           description: Not signed in
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '500':
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
+                $ref: "#/components/schemas/ErrorEnvelope"
 servers:
   - url: /
 tags:
@@ -4576,7 +4619,7 @@ tags:
   - name: Messages
     description: Message management
   - name: Models
-    description: 'The model catalog: Models, limits and prices'
+    description: "The model catalog: Models, limits and prices"
   - name: Profile image
     description: A Registered user's Profile image
   - name: Operator

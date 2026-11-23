@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { users } from '@nebula-chat/db';
+import { ownKeys, users } from '@nebula-chat/db';
 import type { DbClient } from '@nebula-chat/db';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -30,8 +30,12 @@ export const purgeDateOf = (pendingDeletionAt: Date): Date =>
 export const isSessionFresh = (createdAt: Date, freshAgeSeconds: number, now: Date): boolean =>
   freshAgeSeconds === 0 || now.getTime() - createdAt.getTime() < freshAgeSeconds * 1000;
 
+// Own keys go in the same transaction, so a restore never brings them back (ADR-0037).
 export const markPendingDeletion = async (db: DbClient, userId: string, now: Date) => {
-  await db.update(users).set({ pendingDeletionAt: now }).where(eq(users.id, userId));
+  await db.transaction(async (tx) => {
+    await tx.delete(ownKeys).where(eq(ownKeys.userId, userId));
+    await tx.update(users).set({ pendingDeletionAt: now }).where(eq(users.id, userId));
+  });
 };
 
 export const clearPendingDeletion = async (db: DbClient, userId: string) => {

@@ -1,4 +1,4 @@
-import { ArchiveIcon, KeyRoundIcon, LockIcon, MonitorIcon, UserIcon } from 'lucide-react';
+import { ArchiveIcon, KeyIcon, KeyRoundIcon, LockIcon, MonitorIcon, UserIcon } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { SettingsSectionId } from '@/modules/settings/types/types';
 import { resources } from '@/resources';
@@ -10,11 +10,12 @@ export const SETTINGS_SECTIONS = [
   { id: 'profile', label: sections.profile, icon: UserIcon, guest: false },
   { id: 'security', label: sections.security, icon: LockIcon, guest: false },
   { id: 'archived', label: sections.archived, icon: ArchiveIcon, guest: false },
+  { id: 'keys', label: sections.keys, icon: KeyIcon, guest: false },
   { id: 'appearance', label: sections.appearance, icon: MonitorIcon, guest: true },
   { id: 'account', label: sections.account, icon: KeyRoundIcon, guest: false },
 ] satisfies { id: SettingsSectionId; label: string; icon: LucideIcon; guest: boolean }[];
 
-const { profile, security, archived, appearance, account } = resources.settings;
+const { profile, security, archived, appearance, account, ownKeys } = resources.settings;
 
 /** What the search box looks through: each setting, the section it lives in and the words that find it. */
 export const SETTINGS_INDEX = [
@@ -32,6 +33,13 @@ export const SETTINGS_INDEX = [
     keywords: 'log out sessions devices',
   },
   { section: 'archived', label: archived.restore, keywords: 'archive restore sessions' },
+  { section: 'keys', label: sections.keys, keywords: 'openai anthropic own key byok bring' },
+  { section: 'keys', label: ownKeys.label(ownKeys.providers.openai), keywords: 'gpt provider' },
+  {
+    section: 'keys',
+    label: ownKeys.label(ownKeys.providers.anthropic),
+    keywords: 'claude provider',
+  },
   { section: 'appearance', label: appearance.theme.label, keywords: 'dark light mode color' },
   { section: 'appearance', label: appearance.font.label, keywords: 'geist typeface' },
   {

@@ -30,6 +30,9 @@ const makeDb = (selectRows: unknown[][] = []) => {
   const db = {
     select: () => ({ from: () => ({ where: async () => queue.shift() ?? [] }) }),
     update: vi.fn(() => ({ set })),
+    delete: vi.fn(() => ({ where: vi.fn().mockResolvedValue(undefined) })),
+    // The Pending deletion write and the Own key erasure share one transaction.
+    transaction: async (run: (tx: unknown) => Promise<void>) => run(db),
   };
   return { db: db as unknown as DbClient, update: db.update, set };
 };

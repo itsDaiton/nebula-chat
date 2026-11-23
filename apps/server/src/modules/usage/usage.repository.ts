@@ -30,7 +30,7 @@ const modelFilter = (column: ReturnType<typeof sql.raw>, models?: string[]) =>
 // The only place a Model call's estimated spend is summed, so a later filter lands in one spot.
 const callMetric = {
   tokens: sql`sum(mc.input_tokens + mc.cached_input_tokens + mc.output_tokens)::float8`,
-  spend: sql`sum(mc.cost_usd)::float8`,
+  spend: sql`(sum(mc.cost_usd) filter (where not mc.own_key))::float8`,
 };
 
 const rowsOf = async (query: ReturnType<typeof sql>) => {
@@ -84,7 +84,7 @@ export const usageRepository = {
       select count(*)::int as "calls",
         avg(mc.input_tokens + mc.cached_input_tokens)::float8 as "inputPerCall",
         avg(mc.output_tokens)::float8 as "outputPerCall",
-        avg(mc.cost_usd)::float8 as "costPerCall",
+        (avg(mc.cost_usd) filter (where not mc.own_key))::float8 as "costPerCall",
         (count(*) filter (where mc.cached))::int as "cacheReplays",
         (count(*) filter (where mc.outcome = 'completed'))::float8 / nullif(count(*), 0) as "completionRate",
         avg(mc.duration_ms)::float8 as "avgDurationMs"

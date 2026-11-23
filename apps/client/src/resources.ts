@@ -125,6 +125,7 @@ export const resources = {
     },
     spendAllowance: {
       title: "You've used this month's spend allowance.",
+      useOwnKey: 'Use your own API key',
       resumes: (date?: string) =>
         date ? `Sending resumes ${date}.` : 'Sending resumes next month.',
       remaining: (remaining: number, limit: number) =>
@@ -630,8 +631,34 @@ export const resources = {
       profile: 'Profile',
       security: 'Security',
       archived: 'Archived Sessions',
+      keys: 'API keys',
       appearance: 'Appearance',
       account: 'Account & data',
+    },
+    ownKeys: {
+      intro:
+        'Use your own provider key for a provider and its replies no longer count toward your monthly spend allowance. A provider without a key keeps using ours.',
+      unverified: 'Verify your email to use your own API keys.',
+      off: 'Own API keys are not available on this server.',
+      providers: { openai: 'OpenAI', anthropic: 'Anthropic' },
+      label: (provider: string) => `${provider} API key`,
+      inputLabel: (provider: string) => `${provider} API key (write-only)`,
+      none: 'No key saved. Calls use our key.',
+      stored: (lastFour: string) => `Ends in ${lastFour}`,
+      status: { pending: 'Checking', valid: 'Valid', invalid: 'Invalid' },
+      invalidHint: 'This key was rejected. Replace or remove it.',
+      save: 'Save',
+      saving: 'Saving…',
+      replace: 'Replace',
+      remove: 'Remove',
+      cancel: 'Cancel',
+      saved: 'API key saved. Checking it now.',
+      removed: 'API key removed.',
+      errors: {
+        rateLimited: "You've saved keys too often. Try again in an hour.",
+        forbidden: 'Verify your email to use your own API keys.',
+        failed: "Your API key couldn't be saved. Please try again.",
+      },
     },
     profile: {
       image: {

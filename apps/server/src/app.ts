@@ -25,6 +25,7 @@ import sessionRoutes from '@server/modules/session/session.routes';
 import streamRoutes from '@server/modules/stream/stream.routes';
 import messageRoutes from '@server/modules/message/message.routes';
 import modelRoutes from '@server/modules/models/models.routes';
+import ownKeyRoutes from '@server/modules/ownKey/ownKey.routes';
 import profileImageRoutes from '@server/modules/profileImage/profileImage.routes';
 import authGate, { DOCS_PREFIX } from '@server/plugins/authGate.plugin';
 import dbPlugin from '@server/plugins/db.plugin';
@@ -193,6 +194,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   await app.register(runRoutes, { prefix: '/api/runs' });
   await app.register(streamRoutes, { prefix: '/api/streams' });
   await app.register(profileImageRoutes, { prefix: '/api/profile-image' });
+  await app.register(ownKeyRoutes, { prefix: '/api/own-keys' });
   await app.register(privilegedRoutes);
 
   return app;

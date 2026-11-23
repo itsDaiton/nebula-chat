@@ -164,7 +164,7 @@ export const adminRepository = {
           group by 1`),
         // `count` carries estimated USD here, summed from the Model call ledger.
         countsByDay(sql`
-          select to_char(created_at, 'YYYY-MM-DD') as day, sum(cost_usd)::float8 as count
+          select to_char(created_at, 'YYYY-MM-DD') as day, (sum(cost_usd) filter (where not own_key))::float8 as count
           from model_calls
           where created_at >= ${from}::timestamp and created_at < (${to}::date + 1)::timestamp
           group by 1`),

@@ -1,9 +1,12 @@
 import type { ReactNode } from 'react';
+import type { OwnKey } from '@/libs/api/generated/model/ownKey';
+import type { OwnKeyProvider } from '@/libs/api/generated/model/ownKeyProvider';
 import type { z } from 'zod';
 import type { profileNameSchema } from '@/modules/settings/utils/settingsSchemas';
 
 /** The Settings dialog's sections, in nav order. */
-export type SettingsSectionId = 'profile' | 'security' | 'archived' | 'appearance' | 'account';
+export type SettingsSectionId =
+  'profile' | 'security' | 'archived' | 'keys' | 'appearance' | 'account';
 
 export type SettingsDialogState = {
   isOpen: boolean;
@@ -42,6 +45,12 @@ export type ProfileImageSettingProps = {
   name: string;
   /** Their Profile image URL, if they have one. */
   image: string | null;
+};
+
+export type OwnKeySettingProps = {
+  provider: OwnKeyProvider;
+  /** The stored key's readable facts, or `undefined` when none is saved. */
+  stored: OwnKey | undefined;
 };
 
 export type AccountIdSettingProps = {

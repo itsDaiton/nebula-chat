@@ -28,6 +28,16 @@ count. Every other route, the SSE stream included, has no Fastify limit.
 
 A limited call answers `429` with the standard error envelope (`TooManyRequests`) and a `Retry-After` header.
 
+## Own keys
+
+Counted in Redis (`authStore`), so the limit holds across instances.
+
+| Route                         | Limit                | Bucket                 | Defined in                                 |
+| ----------------------------- | -------------------- | ---------------------- | ------------------------------------------ |
+| `PUT /api/own-keys/:provider` | 10 per hour per User | one per User, all keys | `modules/ownKey/ownKey.writeLimit.hook.ts` |
+
+A save is also the validation request (it enqueues the worker's check), so this one limit stops the endpoint probing keys.
+
 ## better-auth routes (`/api/auth/*`)
 
 Counted in Redis (`authStore`), so the limits hold across instances. A window counts from the last allowed

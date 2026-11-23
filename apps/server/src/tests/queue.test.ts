@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DIRECT_REPLY_QUEUE, RUN_QUEUE } from '@nebula-chat/contracts';
+import { DIRECT_REPLY_QUEUE, OWN_KEY_VALIDATION_QUEUE, RUN_QUEUE } from '@nebula-chat/contracts';
 import { captureLogger, captureSpans, eventLines, LEVEL } from '@nebula-chat/otel/testing';
 
 const bull = vi.hoisted(() => ({
@@ -29,6 +29,7 @@ import { withSpan } from '@nebula-chat/otel';
 import {
   closeQueue,
   enqueueDirectReply,
+  enqueueOwnKeyValidation,
   enqueueRun,
   pingWorker,
   promoteClarifyingQuestionTimeout,
@@ -153,6 +154,27 @@ describe('enqueueRun', () => {
     await enqueueRun(runJob, captureLogger().logger);
 
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+  });
+});
+
+describe('enqueueOwnKeyValidation', () => {
+  const validation = { ownKeyId: '66666666-6666-4666-8666-666666666666' };
+
+  it('adds the id to its own queue, carrying nothing else', async () => {
+    await enqueueOwnKeyValidation(validation, captureLogger().logger);
+
+    expect(bull.constructed.map(({ name }) => name)).toContain(OWN_KEY_VALIDATION_QUEUE);
+    expect(bull.add).toHaveBeenCalledWith('own-key-validation', {
+      ...validation,
+      traceparent: expect.any(String),
+    });
+  });
+
+  it('refuses an id that is not a UUID, enqueuing nothing', async () => {
+    await expect(
+      enqueueOwnKeyValidation({ ownKeyId: 'nope' }, captureLogger().logger),
+    ).rejects.toThrow();
+    expect(bull.add).not.toHaveBeenCalled();
   });
 });
 
