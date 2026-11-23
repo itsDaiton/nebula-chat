@@ -1,6 +1,6 @@
 # ADR-0037: A monthly Spend allowance on the Operator key, lifted by an Own key the server cannot read
 
-- **Status:** Accepted — the Spend allowance (NEB-820), the worker's stored-key support (NEB-822) and key storage and selection (NEB-823) have landed
+- **Status:** Accepted — NEB-820, NEB-822 and NEB-823 have landed
 - **Date:** 2026-11-21
 - **Deciders:** @itsDaiton
 - **Related:** [ADR-0013](./0013-worker-app-owns-all-llm-execution.md) — amended: the server stores ciphertext only the worker can decrypt; [ADR-0028](./0028-purge-of-inactive-guests-and-unverified-users.md) — Purge; [ADR-0030](./0030-model-catalog-in-contracts-and-model-call-ledger.md) — the Model call ledger; [ADR-0033](./0033-runs-on-langgraph-checkpointer-owns-resume.md) — a Message answering a waiting Run resumes it

@@ -738,6 +738,7 @@ components:
           type: boolean
           description: Whether this server can store Own keys
         keys:
+          maxItems: 2
           type: array
           items:
             $ref: '#/components/schemas/OwnKey'

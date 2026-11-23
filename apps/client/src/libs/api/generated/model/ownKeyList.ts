@@ -9,5 +9,6 @@ import type { OwnKey } from './ownKey';
 export interface OwnKeyList {
   /** Whether this server can store Own keys */
   enabled: boolean;
+  /** @maxItems 2 */
   keys: OwnKey[];
 }

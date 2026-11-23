@@ -15,7 +15,7 @@ export const getListOwnKeysResponseMock = (
   overrideResponse: Partial<Extract<OwnKeyList, object>> = {},
 ): OwnKeyList => ({
   enabled: faker.datatype.boolean(),
-  keys: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
+  keys: Array.from({ length: faker.number.int({ min: 1, max: 2 }) }, (_, i) => i + 1).map(() => ({
     provider: faker.helpers.arrayElement(['openai', 'anthropic'] as const),
     lastFour: faker.string.alpha({ length: { min: 10, max: 20 } }),
     status: faker.helpers.arrayElement(['pending', 'valid', 'invalid'] as const),

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { modelProviderSchema } from '@nebula-chat/contracts';
-import { OWN_KEY_STATUSES } from '@nebula-chat/db';
+import { OWN_KEY_PROVIDERS, OWN_KEY_STATUSES } from '@nebula-chat/db';
 
 // RSA-OAEP with SHA-256 under a 4096-bit key carries at most 446 bytes, so a key must stay well below that.
 const MAX_KEY_LENGTH = 300;
@@ -25,6 +25,6 @@ export const ownKeySchema = z
 export const ownKeyListSchema = z
   .object({
     enabled: z.boolean().describe('Whether this server can store Own keys'),
-    keys: z.array(ownKeySchema),
+    keys: z.array(ownKeySchema).max(OWN_KEY_PROVIDERS.length),
   })
   .meta({ id: 'OwnKeyList' });
