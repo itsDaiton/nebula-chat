@@ -505,17 +505,22 @@ describe('createAuth account linking of an unverified credential account', () =>
         findAccountOwnerByKey: async () => null,
         findUserByEmail: async () => ({
           user: attacker,
-          accounts: [{ providerId: 'credential', accountId: attacker.id, password: 'attacker-hash' }],
+          accounts: [
+            { providerId: 'credential', accountId: attacker.id, password: 'attacker-hash' },
+          ],
         }),
         linkAccount,
         createUser,
         updateUser,
       },
     };
-    const result = await handleOAuthUserInfo({ context } as never, {
-      userInfo: googleProfile,
-      account: { providerId: 'google', accountId: googleProfile.id },
-    } as never);
+    const result = await handleOAuthUserInfo(
+      { context } as never,
+      {
+        userInfo: googleProfile,
+        account: { providerId: 'google', accountId: googleProfile.id },
+      } as never,
+    );
     return { result, linkAccount, createUser, updateUser };
   };
 
