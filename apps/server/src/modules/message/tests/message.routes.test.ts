@@ -4,7 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { createTestApp } from '@server/test/app';
 import { REGISTERED_USER_ID, registeredSession } from '@server/test/session';
 
-// ADR-0008: only the repository layer is faked. The owner-scoped create path also
+// ADR-0008: only the repository layer is faked. The list's Session ownership check
 // consults the session repository, so it is faked here too.
 vi.mock('@server/modules/message/message.repository', () => ({
   messageRepository: { findById: vi.fn(), findAll: vi.fn() },
