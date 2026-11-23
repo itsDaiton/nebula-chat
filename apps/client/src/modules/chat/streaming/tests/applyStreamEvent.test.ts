@@ -56,13 +56,22 @@ describe('applyStreamEvent — usage', () => {
 });
 
 describe('applyStreamEvent — Run events', () => {
-  it('adds a started Step and names the Run as stale', () => {
+  it('adds a started Step without naming the Run as stale', () => {
     const result = applyStreamEvent(
       [user, reply({ runId: 'r1', run: { steps: [], status: null } })],
       frame('step-started', stepStarted),
     );
 
     expect(result.history.at(-1)?.run).toEqual({ steps: [step], status: null });
+    expect(result.staleRunId).toBeUndefined();
+  });
+
+  it('names the Run as stale once a Step finishes', () => {
+    const result = applyStreamEvent(
+      [user, reply({ runId: 'r1', run: { steps: [step], status: null } })],
+      frame('step-finished', { stepId: step.stepId, status: 'completed' }),
+    );
+
     expect(result.staleRunId).toBe('r1');
   });
 

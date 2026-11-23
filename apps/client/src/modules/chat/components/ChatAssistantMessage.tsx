@@ -1,9 +1,7 @@
 import { MessageCircleQuestionIcon } from 'lucide-react';
 import { ClarifyingQuestionNote } from '@/modules/chat/components/ClarifyingQuestionNote';
 import { MessageMetaRow } from '@/modules/chat/components/MessageMetaRow';
-import { RunChip } from '@/modules/chat/components/RunChip';
-import { RunEndLine } from '@/modules/chat/components/RunEndLine';
-import { RunStepProgress } from '@/modules/chat/components/RunStepProgress';
+import { RunCard } from '@/modules/chat/components/RunCard';
 import { RunWaitingRow } from '@/modules/chat/components/RunWaitingRow';
 import { useWaitingRun } from '@/modules/chat/hooks/useWaitingRun';
 import type { ChatMessageProps } from '@/modules/chat/types/types';
@@ -30,10 +28,10 @@ export const ChatAssistantMessage = ({ message, onRegenerate, isStreaming }: Cha
 
   return (
     <div className="group/message mb-[26px]">
-      {message.run && <RunStepProgress run={message.run} isStreaming={isStreaming} />}
+      {message.runId && (
+        <RunCard runId={message.runId} live={message.run} isStreaming={isStreaming} />
+      )}
       <MarkdownContent content={message.content} />
-      {message.run && <RunEndLine run={message.run} />}
-      {!isStreaming && message.runId && <RunChip runId={message.runId} />}
       {!isStreaming && <MessageMetaRow message={message} onRegenerate={onRegenerate} />}
     </div>
   );

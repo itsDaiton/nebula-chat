@@ -3,7 +3,11 @@ import type { FollowReplyOptions, ReplyEnd, ReplySink, SseFrame } from '@/module
 import { applyStreamEvent } from '@/modules/chat/streaming/applyStreamEvent';
 import { offerSettingsForInvalidKey } from '@/modules/chat/streaming/invalidOwnKey';
 import { followStream } from '@/modules/chat/streaming/followStream';
-import { invalidateCompletedStream, invalidateRun } from '@/modules/chat/streaming/invalidations';
+import {
+  invalidateCompletedStream,
+  invalidateRun,
+  invalidateRunThrottled,
+} from '@/modules/chat/streaming/invalidations';
 import { showSavedReply, showSavedReplyMeta } from '@/modules/chat/streaming/savedReply';
 
 const applyFrame = (
@@ -17,7 +21,10 @@ const applyFrame = (
   if (result.usage) sink.setUsage(result.usage);
   // A frame that changes nothing writes nothing, so the store's subscribers stay quiet.
   if (result.history !== current) sink.setHistory(result.history);
-  if (result.staleRunId) invalidateRun(queryClient, result.staleRunId);
+  if (result.staleRunId) {
+    const refresh = frame.event === 'run-finished' ? invalidateRun : invalidateRunThrottled;
+    refresh(queryClient, result.staleRunId);
+  }
   return result.end ?? null;
 };
 

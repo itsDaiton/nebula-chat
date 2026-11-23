@@ -71,7 +71,7 @@ These came out of the mockup review and apply to every screen.
 | `context-hover.png` | Context ring tooltip | #666 |
 | `context-details.png` | Context ring popover | #666 |
 | `run-streaming.png` | Run in progress: Intake, Orchestrator turns with parallel delegates, a failed delegate | #652 #662 |
-| `run-finished.png` | Partial Run: end status, Run chip, and the Inspector's Run view with an expanded failed Step | #662 #362 #551 |
+| `run-finished.png` | Partial Run: end status, collapsed Run card, and the Inspector's Run view with an expanded failed Step | #662 #362 #551 |
 | `run-clarify.png` | Run waiting on a Clarifying question | #585 |
 | `settings-security.png` | Settings modal, Security: inline 2FA setup and the Admin 2FA notice | #552 #556 |
 | `settings-appearance.png` | Settings modal, Appearance: theme and font | #552 |

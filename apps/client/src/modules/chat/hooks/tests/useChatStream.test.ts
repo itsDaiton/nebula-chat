@@ -1094,8 +1094,8 @@ describe('useChatStream — a Run', () => {
     expect(assistantContent()).toBe('The Run failed.');
   });
 
-  it('refreshes the Run the Inspector shows as each Step event arrives', async () => {
-    streamFrames(started(LANGUAGE, 'Detecting the language'), frame('end', {}));
+  it('refreshes the Run the Inspector shows once a Step finishes', async () => {
+    streamFrames(started(LANGUAGE, 'Detecting the language'), finished(LANGUAGE), frame('end', {}));
     const queryClient = createTestQueryClient();
     queryClient.setQueryData(getGetRunQueryKey(RUN_ID), { finishedAt: '2026-10-27T21:14:41Z' });
     const { result } = renderHookWithQueryClient(() => useChatStream(NO_BACKOFF), { queryClient });

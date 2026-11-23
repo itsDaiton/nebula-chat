@@ -1,5 +1,5 @@
 import { CircleStopIcon, CircleXIcon, TriangleAlertIcon } from 'lucide-react';
-import type { RunEndLineProps, RunStepProgress } from '@/modules/chat/types/types';
+import type { RunEndNoteProps, RunStepProgress } from '@/modules/chat/types/types';
 import { resources } from '@/resources';
 import { cn } from '@/shared/utils/cn';
 
@@ -35,8 +35,8 @@ const partialReason = (steps: RunStepProgress[]) => {
   return reasons.length > 0 ? reasons.join(' ') : end.partialFallback;
 };
 
-/** Why a Run's answer fell short, under it; nothing for a Run that completed or is still going. */
-export const RunEndLine = ({ run }: RunEndLineProps) => {
+/** Why a Run's answer fell short, in its card; nothing for a Run that completed or is still going. */
+export const RunEndNote = ({ run }: RunEndNoteProps) => {
   const { status, steps } = run;
   if (status === null || status === 'completed') return null;
   const { icon: Icon, tone, title } = looks[status];
@@ -49,7 +49,7 @@ export const RunEndLine = ({ run }: RunEndLineProps) => {
   return (
     <p
       role="note"
-      className={cn('mt-0.5 mb-1.5 flex gap-2 rounded-[10px] border px-3 py-2 text-[12.5px]', tone)}
+      className={cn('mt-2 flex gap-2 rounded-[10px] border px-3 py-2 text-[12.5px]', tone)}
     >
       <Icon className="mt-0.5 size-3.5 shrink-0" />
       <span>

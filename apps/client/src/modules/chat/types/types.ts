@@ -75,14 +75,22 @@ export type RunEvent =
   | { type: 'step-finished'; stepId: string; status: Exclude<StepStatus, 'running'> }
   | { type: 'run-finished'; runId: string; status: RunEndStatus };
 
-export type RunProgressProps = {
-  run: RunProgress;
+export type RunCardProps = {
+  runId: string;
+  /** What the stream reported; it wins over the saved Run while the reply streams. */
+  live?: RunProgress;
   /** The Run's stream is still open, so a Step without an end is still running. */
   isStreaming?: boolean;
 };
 
-export type RunEndLineProps = {
+export type RunEndNoteProps = {
   run: RunProgress;
+};
+
+export type RunCardState = {
+  /** The User's choice per Run id; a Run without one is open while it streams. */
+  expanded: Record<string, boolean>;
+  setExpanded: (runId: string, isExpanded: boolean) => void;
 };
 
 export type ChatMessageProps = {
@@ -93,10 +101,6 @@ export type ChatMessageProps = {
   isStreaming?: boolean;
   /** An Admin's view of someone else's Session: no Run controls, no regenerate. */
   readOnly?: boolean;
-};
-
-export type RunChipProps = {
-  runId: string;
 };
 
 export type ChatInputProps = {
@@ -140,7 +144,7 @@ export type StreamEventResult = {
   history: ChatMessage[];
   end?: ReplyEnd;
   usage?: NonNullable<Usage>;
-  /** The Inspector may be showing this Run, so its cached read must refetch. */
+  /** A Step or the Run finished, so the cached Run read the Inspector shows must refetch. */
   staleRunId?: string;
 };
 
