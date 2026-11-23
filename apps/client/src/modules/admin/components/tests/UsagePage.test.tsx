@@ -250,6 +250,81 @@ describe('Model usage page', () => {
     expect(screen.queryByText(new RegExp(text.detail.pinned))).not.toBeInTheDocument();
   });
 
+  it('labels the right panel averages per call, not per prompt', async () => {
+    serveUsage();
+
+    await renderRoute('/admin/usage');
+
+    expect(await screen.findByText('Input / call')).toBeInTheDocument();
+    expect(screen.getByText('Output / call')).toBeInTheDocument();
+    expect(screen.getByText('Cost / call')).toBeInTheDocument();
+    expect(screen.queryByText(/\/ prompt/)).not.toBeInTheDocument();
+  });
+
+  it('shows only the footnote of the selected metric, keeping View as table', async () => {
+    serveUsage();
+    await renderRoute('/admin/usage');
+
+    expect(await screen.findByText(text.notes.prompts)).toBeInTheDocument();
+    expect(screen.queryByText(text.notes.tokens)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: text.viewAsTable })).toBeInTheDocument();
+
+    for (const metric of ['tokens', 'spend'] as const) {
+      serveUsage(aSeries({ metric }));
+      await userEvent.click(
+        within(screen.getByRole('group', { name: text.metric })).getByRole('button', {
+          name: text.metrics[metric],
+        }),
+      );
+      expect(await screen.findByText(text.notes[metric])).toBeInTheDocument();
+      expect(screen.queryByText(text.notes.prompts)).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: text.viewAsTable })).toBeInTheDocument();
+    }
+  });
+
+  it('explains on hover and keyboard focus why the Run row cannot be pinned, and clicking does nothing', async () => {
+    serveUsage();
+    const { router } = await renderRoute('/admin/usage');
+    const row = (
+      await within(await screen.findByRole('region', { name: text.dataLabel })).findByText(text.run)
+    ).closest('[tabindex]') as HTMLElement;
+
+    await userEvent.hover(row);
+    expect(await screen.findByText(text.runTooltip)).toBeInTheDocument();
+    await userEvent.unhover(row);
+    await userEvent.click(row);
+
+    expect(router.state.location.search).toEqual({});
+    await userEvent.tab();
+    row.focus();
+    expect(await screen.findByText(text.runTooltip)).toBeInTheDocument();
+  });
+
+  it('explains on focus that Other groups the smaller Models', async () => {
+    serveUsage(
+      aSeries({
+        series: [
+          { key: 'gpt-4o-mini', kind: 'model', total: 60, values: [10, 20, 30], members: [] },
+          {
+            key: 'other',
+            kind: 'other',
+            total: 9,
+            values: [1, 2, 6],
+            members: [{ key: 'gpt-5', total: 9, values: [1, 2, 6] }],
+          },
+        ],
+      }),
+    );
+    const { router } = await renderRoute('/admin/usage');
+    const row = (await screen.findByText(text.other(1))).closest('[tabindex]') as HTMLElement;
+
+    row.focus();
+    expect(await screen.findByText(text.otherTooltip)).toBeInTheDocument();
+    await userEvent.click(row);
+
+    expect(router.state.location.search).toEqual({});
+  });
+
   it('sends the chosen Models as a repeated key and keeps them in the URL', async () => {
     serveUsage();
     const { router } = await renderRoute('/admin/usage');
