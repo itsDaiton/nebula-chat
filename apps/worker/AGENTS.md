@@ -82,8 +82,8 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
   (`executeRun.ts`), Step persistence (`steps.ts`), the Brief, the Orchestrator's `createAgent` loop
   and its middleware (`orchestrator.ts`), the delegate-Agent-as-tool adapter, the findings the Output
   Agent reads, the mapping from the graph's stream to reply stream events, the Postgres checkpointer
-  (its own `langgraph` schema, set up at boot), the Agent catalog loader (`agentCatalog.ts`: schema, hash, `AGENTS` and
-  `DELEGATES`), the `AgentDefinition` types inferred from it, and the Run and Step repositories.
+  (its own `langgraph` schema, set up at boot), the Agent catalog loader (`agentCatalog.ts`: schema, `AGENTS` and
+  `DELEGATES`; `agentHash.ts`: the hash, `node:crypto` only so the root stamp script can load it), the `AgentDefinition` types inferred from it, and the Run and Step repositories.
 - `agents/` — the Agent catalog data and the Agents' code: one `<name>.json` per Agent (Model, prompt, tool grants,
   parameters; a delegate also its `description`), and for an Intake or Output Agent a `<name>.ts` with its output schema
   and human-message builder. The Session's Model never applies to an Agent.

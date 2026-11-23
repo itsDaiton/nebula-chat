@@ -1,8 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { agentHash } from '../apps/worker/src/runs/agentCatalog';
-import { loadPrompts } from '../apps/worker/src/llm/prompts';
+import { agentHash } from '../apps/worker/src/runs/agentHash';
 
 type Catalog = {
   version: string;
@@ -15,6 +14,7 @@ type StampedFile = { version: string; hash: string; prompt: string };
 
 const CATALOG_PATH = resolve(process.cwd(), 'libs/contracts/src/models/catalog.json');
 const AGENT_DIR = resolve(process.cwd(), 'apps/worker/src/agents');
+const PROMPT_DIR = resolve(process.cwd(), 'apps/worker/src/resources/prompts');
 const AGENT_FILES = [
   'language',
   'session',
@@ -54,16 +54,11 @@ const main = (): void => {
   stamp('Model catalog', CATALOG_PATH, catalog, hashOf(catalog));
 
   // The same content the worker test hashes: the definition and the prompt's text.
-  const prompts = loadPrompts();
   for (const name of AGENT_FILES) {
     const path = resolve(AGENT_DIR, `${name}.json`);
     const file = JSON.parse(readFileSync(path, 'utf8')) as StampedFile;
-    stamp(
-      `Agent ${name}`,
-      path,
-      file,
-      agentHash(file, prompts[file.prompt as keyof typeof prompts]),
-    );
+    const prompt = readFileSync(resolve(PROMPT_DIR, `${file.prompt}.md`), 'utf8');
+    stamp(`Agent ${name}`, path, file, agentHash(file, prompt));
   }
 };
 

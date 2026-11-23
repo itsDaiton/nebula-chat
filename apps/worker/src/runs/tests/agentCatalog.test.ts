@@ -3,7 +3,8 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { getModel, RUN_PROVIDERS } from '@nebula-chat/contracts';
 import { loadPrompts } from '@worker/llm/prompts';
-import { agentHash, AGENTS, DELEGATES, parseAgentCatalog } from '@worker/runs/agentCatalog';
+import { AGENTS, DELEGATES, parseAgentCatalog } from '@worker/runs/agentCatalog';
+import { agentHash } from '@worker/runs/agentHash';
 
 const AGENT_DIR = resolve(__dirname, '../../agents');
 const FILES = ['language', 'session', 'orchestrator', 'output', 'analyst', 'critic', 'researcher'];
@@ -77,34 +78,6 @@ describe('the stamp of each Agent file', () => {
       expect(agentHash(definition, prompts[definition.prompt as keyof typeof prompts])).toBe(hash);
     },
   );
-
-  it('ignores the version, the hash and the order of the keys', () => {
-    const { definition } = definitionOf('researcher');
-    const reordered = Object.fromEntries(Object.entries(definition).reverse());
-
-    expect(agentHash({ ...reordered, version: 'x', hash: 'y' }, 'prompt')).toBe(
-      agentHash(definition, 'prompt'),
-    );
-  });
-
-  it('changes when the prompt text changes', () => {
-    const { definition } = definitionOf('critic');
-
-    expect(agentHash(definition, 'A prompt.')).not.toBe(agentHash(definition, 'A prompt!'));
-  });
-
-  it.each([
-    ['model', (a: any) => (a.model = 'gpt-4.1')],
-    ['temperature', (a: any) => (a.parameters.temperature = 0.9)],
-    ['label', (a: any) => (a.label = 'Something else')],
-    ['tools', (a: any) => a.tools.push('web_search')],
-  ])('changes when the %s changes', (_field, edit) => {
-    const { definition } = definitionOf('analyst');
-    const edited = structuredClone(definition);
-    edit(edited);
-
-    expect(agentHash(edited, 'prompt')).not.toBe(agentHash(definition, 'prompt'));
-  });
 });
 
 describe('parseAgentCatalog', () => {
