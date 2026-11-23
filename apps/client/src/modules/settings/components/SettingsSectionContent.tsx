@@ -4,6 +4,7 @@ import { AccountIdSetting } from '@/modules/settings/components/AccountIdSetting
 import { AppearanceSetting } from '@/modules/settings/components/AppearanceSetting';
 import { ArchivedSessionsSetting } from '@/modules/settings/components/ArchivedSessionsSetting';
 import { DeleteAccountSetting } from '@/modules/settings/components/DeleteAccountSetting';
+import { OwnKeysSetting } from '@/modules/settings/components/OwnKeysSetting';
 import { PasswordSetting } from '@/modules/settings/components/PasswordSetting';
 import { ProfileImageSetting } from '@/modules/settings/components/ProfileImageSetting';
 import { ProfileNameForm } from '@/modules/settings/components/ProfileNameForm';
@@ -55,6 +56,8 @@ export const SettingsSectionContent = ({ section }: { section: SettingsSectionId
       );
     case 'archived':
       return <ArchivedSessionsSetting />;
+    case 'keys':
+      return <OwnKeysSetting />;
     case 'appearance':
       return <AppearanceSetting />;
     case 'account':

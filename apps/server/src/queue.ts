@@ -5,10 +5,12 @@ import {
   clarifyingQuestionTimeoutJobId,
   DIRECT_REPLY_QUEUE,
   directReplyJobSchema,
+  OWN_KEY_VALIDATION_QUEUE,
+  ownKeyValidationJobSchema,
   RUN_QUEUE,
   runJobSchema,
 } from '@nebula-chat/contracts';
-import type { DirectReplyJob, RunJob } from '@nebula-chat/contracts';
+import type { DirectReplyJob, OwnKeyValidationJob, RunJob } from '@nebula-chat/contracts';
 import { injectTraceContext, logEvent, SpanKind, withSpan } from '@nebula-chat/otel';
 import type { EventLogger } from '@nebula-chat/otel';
 import { env } from '@server/env';
@@ -123,6 +125,19 @@ export const enqueueRun = async (job: RunJob, logger: EventLogger<'warn'>): Prom
     attempts: env.RUN_JOB_ATTEMPTS,
     backoff: { type: 'exponential', delay: env.RUN_JOB_BACKOFF_MS },
   });
+  void pingWorker(logger);
+};
+
+/** Asks the worker to check a stored Own key against its provider, then pings it awake. */
+export const enqueueOwnKeyValidation = async (
+  job: OwnKeyValidationJob,
+  logger: EventLogger<'warn'>,
+): Promise<void> => {
+  await publish(
+    OWN_KEY_VALIDATION_QUEUE,
+    'own-key-validation',
+    ownKeyValidationJobSchema.parse(job),
+  );
   void pingWorker(logger);
 };
 

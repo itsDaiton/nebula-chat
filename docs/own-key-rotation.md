@@ -12,7 +12,7 @@ openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out own-key-v1.pem
 openssl pkey -in own-key-v1.pem -pubout -out own-key-v1.pub.pem
 ```
 
-Set the private PEM as `OWN_KEY_PRIVATE_KEY_V1` on the worker and keep the public PEM for the server. Without any private key the
+Set the private PEM as `OWN_KEY_PRIVATE_KEY_V1` on the worker and keep the public PEM for the server as `OWN_KEY_PUBLIC_KEY`, with its version as `OWN_KEY_VERSION`; the server holds only these two. Without any private key the
 worker still boots, and Own keys are simply unusable.
 
 ## Rotating to version `n + 1`

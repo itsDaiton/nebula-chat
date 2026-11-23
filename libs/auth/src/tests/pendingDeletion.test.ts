@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { users } from '@nebula-chat/db';
+import { ownKeys, users } from '@nebula-chat/db';
 import type { DbClient } from '@nebula-chat/db';
 import {
   clearPendingDeletion,
@@ -40,14 +40,27 @@ describe('pending deletion writes', () => {
     const where = vi.fn().mockResolvedValue(undefined);
     const set = vi.fn(() => ({ where }));
     const update = vi.fn(() => ({ set }));
-    return { db: { update } as unknown as DbClient, update, set, where };
+    const deleteWhere = vi.fn().mockResolvedValue(undefined);
+    const del = vi.fn(() => ({ where: deleteWhere }));
+    const tx = { update, delete: del };
+    const transaction = vi.fn(async (run: (tx: unknown) => Promise<void>) => run(tx));
+    return {
+      db: { update, transaction } as unknown as DbClient,
+      update,
+      set,
+      where,
+      del,
+      transaction,
+    };
   };
 
-  it('marks the User with the deletion time', async () => {
-    const { db, update, set, where } = makeDb();
+  it('marks the User with the deletion time and erases their Own keys in one transaction', async () => {
+    const { db, update, set, where, del, transaction } = makeDb();
 
     await markPendingDeletion(db, 'user-1', NOW);
 
+    expect(transaction).toHaveBeenCalledOnce();
+    expect(del).toHaveBeenCalledWith(ownKeys);
     expect(update).toHaveBeenCalledWith(users);
     expect(set).toHaveBeenCalledWith({ pendingDeletionAt: NOW });
     expect(where).toHaveBeenCalledOnce();

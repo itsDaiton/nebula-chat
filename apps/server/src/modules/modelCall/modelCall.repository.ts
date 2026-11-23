@@ -3,7 +3,7 @@ import { modelCalls } from '@nebula-chat/db';
 import { db } from '@server/db';
 
 export const modelCallRepository: {
-  /** Estimated USD a User's Model calls cost in `[from, to)`; a purged row has no User, so it never counts. */
+  /** Estimated USD of a User's Operator-key Model calls in `[from, to)`; Own-key calls and purged rows never count. */
   sumCostUsd: (userId: string, from: Date, to: Date) => Promise<number>;
 } = {
   async sumCostUsd(userId, from, to) {
@@ -13,6 +13,7 @@ export const modelCallRepository: {
       .where(
         and(
           eq(modelCalls.userId, userId),
+          eq(modelCalls.ownKey, false),
           gte(modelCalls.createdAt, from),
           lt(modelCalls.createdAt, to),
         ),

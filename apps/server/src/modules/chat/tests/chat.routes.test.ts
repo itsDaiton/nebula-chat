@@ -27,7 +27,7 @@ vi.mock('@server/auth', () => ({
 
 // The repositories are the boundary to Postgres; everything above them is real.
 vi.mock('@server/modules/session/session.repository', () => ({
-  sessionRepository: { findByIdTx: vi.fn(), updateModelTx: vi.fn() },
+  sessionRepository: { findByIdTx: vi.fn(), findByIdSimple: vi.fn(), updateModelTx: vi.fn() },
 }));
 
 vi.mock('@server/modules/message/message.repository', () => ({
@@ -40,6 +40,10 @@ vi.mock('@server/modules/run/run.repository', () => ({
 
 vi.mock('@server/modules/modelCall/modelCall.repository', () => ({
   modelCallRepository: { sumCostUsd: vi.fn() },
+}));
+
+vi.mock('@server/modules/ownKey/ownKey.repository', () => ({
+  ownKeyRepository: { findValid: vi.fn() },
 }));
 
 vi.mock('@server/modules/user/user.repository', () => ({
@@ -78,6 +82,7 @@ import { messageRepository } from '@server/modules/message/message.repository';
 import { modelCallRepository } from '@server/modules/modelCall/modelCall.repository';
 import { runRepository } from '@server/modules/run/run.repository';
 import { sessionRepository } from '@server/modules/session/session.repository';
+import { ownKeyRepository } from '@server/modules/ownKey/ownKey.repository';
 import { userRepository } from '@server/modules/user/user.repository';
 
 const mockedGetSession = vi.mocked(auth.api.getSession);
@@ -86,6 +91,10 @@ const messageRepo = vi.mocked(messageRepository);
 const runRepo = vi.mocked(runRepository);
 const modelCallRepo = vi.mocked(modelCallRepository);
 const userRepo = vi.mocked(userRepository);
+const ownKeyRepo = vi.mocked(ownKeyRepository);
+
+const OPENAI_KEY_ID = '44444444-4444-4444-8444-444444444444';
+const ANTHROPIC_KEY_ID = '55555555-5555-4555-8555-555555555555';
 
 const SESSION_ID = '11111111-1111-4111-8111-111111111111';
 const MESSAGE_ID = '22222222-2222-4222-8222-222222222222';
@@ -142,6 +151,7 @@ beforeEach(() => {
   runRepo.claimWaitingTx.mockResolvedValue(null);
   runRepo.findWaiting.mockResolvedValue([]);
   modelCallRepo.sumCostUsd.mockResolvedValue(0);
+  ownKeyRepo.findValid.mockResolvedValue([]);
   userRepo.findLastActiveAt.mockResolvedValue(null);
 });
 
@@ -452,6 +462,124 @@ describe('POST /api/sessions/:sessionId/messages', () => {
 
       expect(res.statusCode).toBe(202);
       expect(modelCallRepo.sumCostUsd).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Own keys', () => {
+    const BUDGET = env.SPEND_ALLOWANCE_USD;
+    const session = (model: string, replyMode: 'direct' | 'run') =>
+      fromPartial<Awaited<ReturnType<typeof sessionRepository.findByIdTx>>>({
+        id: SESSION_ID,
+        userId: REGISTERED_USER_ID,
+        model,
+        replyMode,
+      });
+    const useSession = (model: string, replyMode: 'direct' | 'run') => {
+      sessionRepo.findByIdTx.mockResolvedValue(session(model, replyMode));
+      sessionRepo.findByIdSimple.mockResolvedValue(session(model, replyMode));
+    };
+
+    it('sends no reference without a usable key', async () => {
+      useSession('gpt-4o-mini', 'direct');
+
+      await send(validBody);
+
+      expect(enqueued[0]).not.toHaveProperty('keyRefs');
+    });
+
+    it('sends the reference of a valid key for the Direct reply Model provider only', async () => {
+      useSession('gpt-4o-mini', 'direct');
+      ownKeyRepo.findValid.mockResolvedValue([
+        { id: OPENAI_KEY_ID, provider: 'openai' },
+        { id: ANTHROPIC_KEY_ID, provider: 'anthropic' },
+      ]);
+
+      await send(validBody);
+
+      expect(enqueued[0]?.keyRefs).toEqual({ openai: OPENAI_KEY_ID });
+    });
+
+    it('sends no reference for a key that is not valid, as only valid keys are looked up', async () => {
+      useSession('gpt-4o-mini', 'direct');
+      ownKeyRepo.findValid.mockResolvedValue([]);
+
+      await send(validBody);
+
+      expect(ownKeyRepo.findValid).toHaveBeenCalledWith(REGISTERED_USER_ID);
+      expect(enqueued[0]?.keyRefs).toBeUndefined();
+    });
+
+    it('uses the Model the caller picks to choose the provider', async () => {
+      useSession('gpt-4o-mini', 'direct');
+      const claude = MODEL_IDS.find((id) => id.startsWith('claude'));
+      ownKeyRepo.findValid.mockResolvedValue([{ id: ANTHROPIC_KEY_ID, provider: 'anthropic' }]);
+
+      await send({ ...validBody, model: claude });
+
+      expect(enqueued[0]?.keyRefs).toEqual({ anthropic: ANTHROPIC_KEY_ID });
+    });
+
+    it('sends the OpenAI reference on a Run job', async () => {
+      useSession('gpt-4o-mini', 'run');
+      ownKeyRepo.findValid.mockResolvedValue([{ id: OPENAI_KEY_ID, provider: 'openai' }]);
+
+      await send(validBody);
+
+      expect(enqueuedRuns[0]?.keyRefs).toEqual({ openai: OPENAI_KEY_ID });
+    });
+
+    it('lets a user at the budget send a Direct reply on a valid key for its provider', async () => {
+      useSession('gpt-4o-mini', 'direct');
+      modelCallRepo.sumCostUsd.mockResolvedValue(BUDGET);
+      ownKeyRepo.findValid.mockResolvedValue([{ id: OPENAI_KEY_ID, provider: 'openai' }]);
+
+      const res = await send(validBody);
+
+      expect(res.statusCode).toBe(202);
+      expect(enqueued[0]?.keyRefs).toEqual({ openai: OPENAI_KEY_ID });
+    });
+
+    it('still refuses a user at the budget whose only valid key is for another provider', async () => {
+      useSession('gpt-4o-mini', 'direct');
+      modelCallRepo.sumCostUsd.mockResolvedValue(BUDGET);
+      ownKeyRepo.findValid.mockResolvedValue([{ id: ANTHROPIC_KEY_ID, provider: 'anthropic' }]);
+
+      const res = await send(validBody);
+
+      expect(res.statusCode).toBe(403);
+      expect(res.json()).toMatchObject({ error: 'SpendAllowanceReached' });
+    });
+
+    it('still refuses a user at the budget whose key is not valid', async () => {
+      useSession('gpt-4o-mini', 'direct');
+      modelCallRepo.sumCostUsd.mockResolvedValue(BUDGET);
+
+      expect((await send(validBody)).statusCode).toBe(403);
+    });
+
+    it('exempts a Run when the user has a valid key for every provider the Run uses', async () => {
+      useSession('gpt-4o-mini', 'run');
+      modelCallRepo.sumCostUsd.mockResolvedValue(BUDGET);
+      ownKeyRepo.findValid.mockResolvedValue([{ id: OPENAI_KEY_ID, provider: 'openai' }]);
+
+      expect((await send(validBody)).statusCode).toBe(202);
+    });
+
+    it('refuses a Run at the budget when the user only has an Anthropic key', async () => {
+      useSession('gpt-4o-mini', 'run');
+      modelCallRepo.sumCostUsd.mockResolvedValue(BUDGET);
+      ownKeyRepo.findValid.mockResolvedValue([{ id: ANTHROPIC_KEY_ID, provider: 'anthropic' }]);
+
+      expect((await send(validBody)).statusCode).toBe(403);
+    });
+
+    it('never looks up keys for a Guest', async () => {
+      mockedGetSession.mockResolvedValue(guestSession() as never);
+      useSession('gpt-4o-mini', 'direct');
+
+      await send(validBody);
+
+      expect(ownKeyRepo.findValid).not.toHaveBeenCalled();
     });
   });
 

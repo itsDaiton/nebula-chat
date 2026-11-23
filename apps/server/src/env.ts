@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { telemetryEnvShape } from '@nebula-chat/otel';
 import { operatorTokenSchema } from '@server/utils/operatorToken';
+import { checkOwnKeyPair, ownKeyPublicKeySchema } from '@server/utils/ownKeyPublicKey';
 import {
   checkProfileImageStorage,
   storageSettingSchema,
@@ -61,6 +62,12 @@ export const envSchema = z
     API_DOCS_ENABLED: z.preprocess(unsetWhenEmpty, z.stringbool().optional()),
     // USD of Operator-key spend a verified Registered user may incur per UTC month.
     SPEND_ALLOWANCE_USD: z.coerce.number().nonnegative().default(1),
+    // The worker public key a User's Own key is encrypted to, and its version; both or neither, neither turns Own keys off (ADR-0037).
+    OWN_KEY_PUBLIC_KEY: ownKeyPublicKeySchema,
+    OWN_KEY_VERSION: z.preprocess(
+      (raw) => (raw === '' ? undefined : raw),
+      z.coerce.number().int().positive().optional(),
+    ),
     // Social sign-in OAuth apps; each provider is offered only when both its values are set.
     GOOGLE_CLIENT_ID: oauthCredentialSchema,
     GOOGLE_CLIENT_SECRET: oauthCredentialSchema,
@@ -75,6 +82,7 @@ export const envSchema = z
   })
   .check(checkSocialProviderPairs)
   .check(checkProfileImageStorage)
+  .check(checkOwnKeyPair)
   .check((ctx) => {
     const { NODE_ENV, RENDER, BETTER_AUTH_URL } = ctx.value;
     const authUrl = URL.canParse(BETTER_AUTH_URL) ? new URL(BETTER_AUTH_URL) : undefined;

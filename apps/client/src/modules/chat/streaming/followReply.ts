@@ -1,6 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import type { FollowReplyOptions, ReplyEnd, ReplySink, SseFrame } from '@/modules/chat/types/types';
 import { applyStreamEvent } from '@/modules/chat/streaming/applyStreamEvent';
+import { offerSettingsForInvalidKey } from '@/modules/chat/streaming/invalidOwnKey';
 import { followStream } from '@/modules/chat/streaming/followStream';
 import { invalidateCompletedStream, invalidateRun } from '@/modules/chat/streaming/invalidations';
 import { showSavedReply, showSavedReplyMeta } from '@/modules/chat/streaming/savedReply';
@@ -10,6 +11,7 @@ const applyFrame = (
   sink: ReplySink,
   frame: SseFrame,
 ): ReplyEnd | null => {
+  offerSettingsForInvalidKey(frame);
   const current = sink.getHistory();
   const result = applyStreamEvent(current, frame);
   if (result.usage) sink.setUsage(result.usage);

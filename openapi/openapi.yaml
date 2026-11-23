@@ -41,21 +41,18 @@ components:
         messageId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           description: The persisted user Message
         streamId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           description: The reply stream to read from `GET /api/streams/{streamId}`
         runId:
           description: The Run producing the reply; only in `run` mode
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
       required:
         - messageId
         - streamId
@@ -170,8 +167,7 @@ components:
         resetsAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
           description: The first instant of the next UTC month
       required:
         - capped
@@ -195,15 +191,13 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         title:
           type: string
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         archived:
           type: boolean
           description: Whether the owner has archived this Session
@@ -211,8 +205,7 @@ components:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
             - type: 'null'
           description: When the owner archived it; null while active
         messageCount:
@@ -225,9 +218,8 @@ components:
           enum:
             - direct
             - run
-          description: >-
-            The Session's Reply mode: `direct` for Direct replies or `run` for
-            Runs (Registered users only); fixed at creation
+          description: "The Session's Reply mode: `direct` for Direct replies or `run` for
+            Runs (Registered users only); fixed at creation"
       required:
         - id
         - title
@@ -243,15 +235,13 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         title:
           type: string
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         archived:
           type: boolean
           description: Whether the owner has archived this Session
@@ -259,8 +249,7 @@ components:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
             - type: 'null'
           description: When the owner archived it; null while active
         messageCount:
@@ -273,12 +262,10 @@ components:
           enum:
             - direct
             - run
-          description: >-
-            The Session's Reply mode: `direct` for Direct replies or `run` for
-            Runs (Registered users only); fixed at creation
+          description: "The Session's Reply mode: `direct` for Direct replies or `run` for
+            Runs (Registered users only); fixed at creation"
         snippet:
-          description: >-
-            Text around the first match in one of the Session’s Messages,
+          description: Text around the first match in one of the Session’s Messages,
             ellipsised where cut; absent when only the title matched
           type: string
       required:
@@ -296,15 +283,13 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         title:
           type: string
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         archived:
           type: boolean
           description: Whether the owner has archived this Session
@@ -312,8 +297,7 @@ components:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
             - type: 'null'
           description: When the owner archived it; null while active
         messageCount:
@@ -326,18 +310,15 @@ components:
           enum:
             - direct
             - run
-          description: >-
-            The Session's Reply mode: `direct` for Direct replies or `run` for
-            Runs (Registered users only); fixed at creation
+          description: "The Session's Reply mode: `direct` for Direct replies or `run` for
+            Runs (Registered users only); fixed at creation"
         activeStreamId:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             - type: 'null'
-          description: >-
-            The reply still being produced for this Session, to re-attach to
+          description: The reply still being produced for this Session, to re-attach to
             with `GET /api/streams/{streamId}`; null when none is in flight
         waitingRun:
           anyOf:
@@ -346,17 +327,14 @@ components:
                 id:
                   type: string
                   format: uuid
-                  pattern: >-
-                    ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                 streamId:
                   anyOf:
                     - type: string
                       format: uuid
-                      pattern: >-
-                        ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                      pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                     - type: 'null'
-                  description: >-
-                    The stream the question was asked on; `POST
+                  description: The stream the question was asked on; `POST
                     /api/streams/{streamId}/cancel` cancels the Run
                 stepsCompleted:
                   type: integer
@@ -368,8 +346,7 @@ components:
                 - stepsCompleted
               additionalProperties: false
             - type: 'null'
-          description: >-
-            The Run waiting for the answer to its Clarifying question; the next
+          description: The Run waiting for the answer to its Clarifying question; the next
             Message sent to the Session answers it
       required:
         - id
@@ -394,8 +371,7 @@ components:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             - type: 'null'
         hasMore:
           type: boolean
@@ -410,13 +386,11 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         sessionId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         content:
           type: string
         role:
@@ -435,8 +409,7 @@ components:
             - string
             - 'null'
         estimatedCostUsd:
-          description: >-
-            Estimated cost in USD; for a Run answer, the sum of the Run’s Model
+          description: Estimated cost in USD; for a Run answer, the sum of the Run’s Model
             calls
           type:
             - number
@@ -445,8 +418,7 @@ components:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             - type: 'null'
           description: The Run that produced this Message
         contextTokens:
@@ -466,8 +438,7 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - id
         - sessionId
@@ -552,8 +523,7 @@ components:
           description: Tokens reserved for a reply
         supportsTemperature:
           type: boolean
-          description: >-
-            False when the Model fixes its temperature and rejects any other
+          description: False when the Model fixes its temperature and rejects any other
             value
         prices:
           $ref: '#/components/schemas/ModelPrices'
@@ -589,13 +559,11 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         sessionId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         status:
           type: string
           enum:
@@ -613,9 +581,8 @@ components:
                 type: string
               additionalProperties: {}
             - type: 'null'
-          description: >-
-            The Intake Agents’ outputs keyed by Agent, null for one that failed,
-            plus `missing` naming those; null until Intake ends
+          description: The Intake Agents’ outputs keyed by Agent, null for one that
+            failed, plus `missing` naming those; null until Intake ends
         tokensUsed:
           type: integer
           minimum: -9007199254740991
@@ -630,21 +597,18 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         startedAt:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
             - type: 'null'
         finishedAt:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
             - type: 'null'
         steps:
           maxItems: 1000
@@ -670,8 +634,7 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         turn:
           type: integer
           minimum: -9007199254740991
@@ -692,12 +655,10 @@ components:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             - type: 'null'
-          description: >-
-            The turn’s Orchestrator Step for a delegate; the delegate for a tool
-            call
+          description: The turn’s Orchestrator Step for a delegate; the delegate for a
+            tool call
         attempt:
           type: integer
           minimum: -9007199254740991
@@ -728,14 +689,12 @@ components:
         startedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         finishedAt:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
             - type: 'null'
       required:
         - id
@@ -757,8 +716,7 @@ components:
       properties:
         uploadsEnabled:
           type: boolean
-          description: >-
-            Whether this server can store uploads; removing an image works
+          description: Whether this server can store uploads; removing an image works
             either way
       required:
         - uploadsEnabled
@@ -773,6 +731,49 @@ components:
       required:
         - image
       additionalProperties: false
+    OwnKeyList:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          description: Whether this server can store Own keys
+        keys:
+          maxItems: 2
+          type: array
+          items:
+            $ref: '#/components/schemas/OwnKey'
+      required:
+        - enabled
+        - keys
+      additionalProperties: false
+    OwnKey:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum:
+            - openai
+            - anthropic
+        lastFour:
+          type: string
+          description: The last four characters of the key
+        status:
+          type: string
+          enum:
+            - pending
+            - valid
+            - invalid
+          description: '`pending` until the worker validates it; only a `valid` key is used'
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+      required:
+        - provider
+        - lastFour
+        - status
+        - updatedAt
+      additionalProperties: false
     LogLevelReports:
       type: object
       properties:
@@ -780,8 +781,7 @@ components:
           type: integer
           minimum: -9007199254740991
           maximum: 9007199254740991
-          description: >-
-            How many instances of the service received the request; more than
+          description: How many instances of the service received the request; more than
             reports means some did not answer in time
         reports:
           maxItems: 100
@@ -837,8 +837,7 @@ components:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
             - type: 'null'
           description: When the runtime change reverts; `null` at the boot-time level
         operator:
@@ -864,8 +863,7 @@ components:
           description: When the change reverts
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - receivers
         - expiresAt
@@ -876,25 +874,21 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         email:
           type: string
           format: email
-          pattern: >-
-            ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
+          pattern: ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
         name:
           type: string
         twoFactorEnabled:
           type: boolean
-          description: >-
-            Whether they have enrolled in two-factor authentication, without
+          description: Whether they have enrolled in two-factor authentication, without
             which the admin API refuses them
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - id
         - email
@@ -962,8 +956,7 @@ components:
                 - previousTotal
                 - series
               additionalProperties: false
-              description: >-
-                Each day counts the Users active in the 7 days ending on it;
+              description: Each day counts the Users active in the 7 days ending on it;
                 `total` is the last day
             newRegistrations:
               type: object
@@ -1025,9 +1018,8 @@ components:
                 - previousTotal
                 - series
               additionalProperties: false
-              description: >-
-                Estimated USD from the Model call ledger, summed over each day
-                of the range
+              description: Estimated USD from the Model call ledger, summed over each day of
+                the range
             guestConversion:
               type: object
               properties:
@@ -1036,9 +1028,8 @@ components:
                 previousConversions:
                   type: number
                 rate:
-                  description: >-
-                    Conversions over conversions plus Guests created in the
-                    range; `null` with neither
+                  description: Conversions over conversions plus Guests created in the range;
+                    `null` with neither
                   type:
                     - number
                     - 'null'
@@ -1139,9 +1130,7 @@ components:
                     - total
                     - values
                   additionalProperties: false
-                description: >-
-                  The Models grouped into `other`, largest first; empty
-                  otherwise
+                description: The Models grouped into `other`, largest first; empty otherwise
             required:
               - key
               - kind
@@ -1149,8 +1138,7 @@ components:
               - values
               - members
             additionalProperties: false
-          description: >-
-            The Run series, the top 8 Models and the rest as `other`, largest
+          description: The Run series, the top 8 Models and the rest as `other`, largest
             first
       required:
         - metric
@@ -1320,8 +1308,7 @@ components:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             - type: 'null'
         hasMore:
           type: boolean
@@ -1336,8 +1323,7 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         email:
           type: string
         name:
@@ -1351,14 +1337,14 @@ components:
             - banned
             - pendingDeletion
             - guest
-          description: 'The first that applies: guest, banned, admin, unverified, registered'
+          description: 'The first that applies: guest, banned, admin, unverified,
+            registered'
         role:
           type: string
           enum:
             - admin
             - user
-          description: >-
-            The raw role; `status` hides it for a banned or Pending-deletion
+          description: The raw role; `status` hides it for a banned or Pending-deletion
             Admin
         twoFactorEnabled:
           type: boolean
@@ -1375,13 +1361,11 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - id
         - email
@@ -1400,8 +1384,7 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         email:
           type: string
         name:
@@ -1415,14 +1398,14 @@ components:
             - banned
             - pendingDeletion
             - guest
-          description: 'The first that applies: guest, banned, admin, unverified, registered'
+          description: 'The first that applies: guest, banned, admin, unverified,
+            registered'
         role:
           type: string
           enum:
             - admin
             - user
-          description: >-
-            The raw role; `status` hides it for a banned or Pending-deletion
+          description: The raw role; `status` hides it for a banned or Pending-deletion
             Admin
         twoFactorEnabled:
           type: boolean
@@ -1439,13 +1422,11 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         ban:
           anyOf:
             - type: object
@@ -1458,8 +1439,7 @@ components:
                   anyOf:
                     - type: string
                       format: date-time
-                      pattern: >-
-                        ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+                      pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
                     - type: 'null'
                   description: '`null` for a ban with no end'
               required:
@@ -1472,11 +1452,9 @@ components:
           anyOf:
             - type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
             - type: 'null'
-          description: >-
-            When the User asked to delete the account; it is Purged 30 days
+          description: When the User asked to delete the account; it is Purged 30 days
             later. `null` unless pending
       required:
         - id
@@ -1504,8 +1482,7 @@ components:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             - type: 'null'
         hasMore:
           type: boolean
@@ -1520,8 +1497,7 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         title:
           type: string
         model:
@@ -1536,13 +1512,11 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - id
         - title
@@ -1564,8 +1538,7 @@ components:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             - type: 'null'
         hasMore:
           type: boolean
@@ -1580,8 +1553,7 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         title:
           type: string
         model:
@@ -1596,21 +1568,18 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         owner:
           type: object
           properties:
             id:
               type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             name:
               type: string
             email:
@@ -1636,8 +1605,7 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         title:
           type: string
         model:
@@ -1652,18 +1620,15 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
         userId:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           description: The owner
         messages:
           maxItems: 1000
@@ -1695,8 +1660,7 @@ components:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             - type: 'null'
         total:
           type: integer
@@ -1717,8 +1681,7 @@ components:
         id:
           type: string
           format: uuid
-          pattern: >-
-            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
         actorType:
           type: string
           enum:
@@ -1729,13 +1692,11 @@ components:
           anyOf:
             - type: string
               format: uuid
-              pattern: >-
-                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             - type: 'null'
           description: The Admin who acted; `null` for the Operator or the system
         actorName:
-          description: >-
-            The acting Admin's name; `null` for the Operator, the system or a
+          description: The acting Admin's name; `null` for the Operator, the system or a
             purged Admin
           type:
             - string
@@ -1756,8 +1717,7 @@ components:
         targetId:
           type: string
         targetLabel:
-          description: >-
-            The User's email when the target is a User that still exists;
+          description: The User's email when the target is a User that still exists;
             otherwise `null`
           type:
             - string
@@ -1771,8 +1731,7 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
       required:
         - id
         - actorType
@@ -1850,18 +1809,16 @@ paths:
                   minLength: 1
                 mode:
                   deprecated: true
-                  description: >-
-                    Deprecated and ignored: the Session's Reply mode decides
-                    whether the reply is a Direct reply or a Run. Removed in a
-                    later release.
+                  description: "Deprecated and ignored: the Session's Reply mode decides whether
+                    the reply is a Direct reply or a Run. Removed in a later
+                    release."
                   type: string
                   enum:
                     - direct
                     - run
                 model:
-                  description: >-
-                    Binds the Session to this Model before replying; omitted
-                    keeps the Session's Model
+                  description: Binds the Session to this Model before replying; omitted keeps the
+                    Session's Model
                   type: string
                   enum:
                     - gpt-4o
@@ -1881,8 +1838,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
@@ -1908,8 +1864,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
-          description: >-
-            Guest message allowance reached, monthly spend allowance reached
+          description: Guest message allowance reached, monthly spend allowance reached
             (`SpendAllowanceReached`, with its reset date) — registration
             required
           content:
@@ -2040,9 +1995,8 @@ paths:
                   enum:
                     - direct
                     - run
-                  description: >-
-                    The Session's Reply mode: `direct` for Direct replies or
-                    `run` for Runs (Registered users only); fixed at creation
+                  description: "The Session's Reply mode: `direct` for Direct replies or `run` for
+                    Runs (Registered users only); fixed at creation"
               required:
                 - title
       security:
@@ -2110,14 +2064,12 @@ paths:
             description: Pagination cursor for fetching the next page of sessions
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
           description: Pagination cursor for fetching the next page of sessions
         - schema:
-            description: >-
-              Return only archived Sessions (`true`) instead of only active ones
+            description: Return only archived Sessions (`true`) instead of only active ones
               (default)
             default: 'false'
             type: string
@@ -2126,8 +2078,7 @@ paths:
               - 'false'
           in: query
           name: archived
-          description: >-
-            Return only archived Sessions (`true`) instead of only active ones
+          description: Return only archived Sessions (`true`) instead of only active ones
             (default)
       security:
         - cookieAuth: []
@@ -2173,8 +2124,7 @@ paths:
           required: true
           description: Search query to filter sessions by title or Message content
         - schema:
-            description: >-
-              Return only archived Sessions (`true`) instead of only active ones
+            description: Return only archived Sessions (`true`) instead of only active ones
               (default)
             default: 'false'
             type: string
@@ -2183,8 +2133,7 @@ paths:
               - 'false'
           in: query
           name: archived
-          description: >-
-            Return only archived Sessions (`true`) instead of only active ones
+          description: Return only archived Sessions (`true`) instead of only active ones
             (default)
       security:
         - cookieAuth: []
@@ -2232,8 +2181,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
@@ -2284,8 +2232,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
@@ -2351,8 +2298,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
@@ -2402,8 +2348,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: sessionId
           required: true
@@ -2460,8 +2405,7 @@ paths:
                 sessionId:
                   type: string
                   format: uuid
-                  pattern: >-
-                    ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
                 role:
                   type: string
                   enum:
@@ -2536,8 +2480,7 @@ paths:
             description: Only list the messages of this session, oldest first
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: sessionId
           description: Only list the messages of this session, oldest first
@@ -2585,8 +2528,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: messageId
           required: true
@@ -2669,8 +2611,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: runId
           required: true
@@ -2732,22 +2673,18 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: streamId
           required: true
         - schema:
-            description: >-
-              Resume after this event id; sent by an EventSource when it
+            description: Resume after this event id; sent by an EventSource when it
               reconnects
             type: string
             pattern: ^\d+-\d+$
           in: header
           name: last-event-id
-          description: >-
-            Resume after this event id; sent by an EventSource when it
-            reconnects
+          description: Resume after this event id; sent by an EventSource when it reconnects
       security:
         - cookieAuth: []
       responses:
@@ -2757,13 +2694,12 @@ paths:
             text/event-stream:
               schema:
                 type: string
-                description: >-
-                  Server-sent events: `token` ({ token }), `usage` ({
-                  promptTokens, completionTokens, totalTokens }), `error` (the
-                  ErrorEnvelope) and a final `end` ({}, or { reason: 'cancelled'
-                  } for a reply its User stopped). Each event `id` is its stream
-                  entry id; send the last one back as `Last-Event-ID` (or
-                  `lastEventId`) to resume after it.
+                description: "Server-sent events: `token` ({ token }), `usage` ({ promptTokens,
+                  completionTokens, totalTokens }), `error` (the ErrorEnvelope)
+                  and a final `end` ({}, or { reason: 'cancelled' } for a reply
+                  its User stopped). Each event `id` is its stream entry id;
+                  send the last one back as `Last-Event-ID` (or `lastEventId`)
+                  to resume after it."
         '400':
           description: Invalid stream ID or Last-Event-ID format
           content:
@@ -2807,8 +2743,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: path
           name: streamId
           required: true
@@ -2991,6 +2926,176 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+  /api/own-keys:
+    get:
+      operationId: listOwnKeys
+      summary: List Own keys
+      tags:
+        - Own keys
+      description: >-
+        The caller's stored Own keys: provider, last four characters and
+        validation status. The key itself is never returned.
+
+
+        Access: registered
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: The stored Own keys
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OwnKeyList'
+        '401':
+          description: No auth session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: A Guest or an unverified user cannot hold an Own key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/own-keys/{provider}:
+    put:
+      operationId: saveOwnKey
+      summary: Save Own key
+      tags:
+        - Own keys
+      description: >-
+        Store or replace the verified Registered user’s Own key for a provider.
+        The key is encrypted to the worker’s public key and only its last four
+        characters are kept readable; a worker job then validates it, and it is
+        used only once `valid`.
+
+
+        Access: registered
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+                  minLength: 8
+                  maxLength: 300
+                  description: The provider API key; write-only
+              required:
+                - key
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - openai
+              - anthropic
+          in: path
+          name: provider
+          required: true
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Key stored and queued for validation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OwnKey'
+        '400':
+          description: Invalid provider or key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: No auth session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: A Guest or an unverified user cannot hold an Own key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Own keys are switched off on this server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Too many saves this hour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    delete:
+      operationId: removeOwnKey
+      summary: Remove Own key
+      tags:
+        - Own keys
+      description: >-
+        Remove the caller’s Own key for a provider, so its Model calls use the
+        Operator key again. Succeeds when there is none.
+
+
+        Access: registered
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - openai
+              - anthropic
+          in: path
+          name: provider
+          required: true
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Own key removed
+        '400':
+          description: Invalid provider
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: No auth session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: A Guest or an unverified user cannot hold an Own key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
   /api/internal/log-level:
     get:
       operationId: getLogLevels
@@ -3072,9 +3177,7 @@ paths:
               type: object
               properties:
                 component:
-                  description: >-
-                    The `nebula.component` to change; omit it to change the root
-                    level
+                  description: The `nebula.component` to change; omit it to change the root level
                   type: string
                   enum:
                     - auth
@@ -3209,8 +3312,7 @@ paths:
                   description: The email of the verified Registered user to make an Admin
                   type: string
                   format: email
-                  pattern: >-
-                    ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
+                  pattern: ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
               required:
                 - email
       security:
@@ -3267,8 +3369,7 @@ paths:
             description: The email of the Admin
             type: string
             format: email
-            pattern: >-
-              ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
+            pattern: ^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
           in: path
           name: email
           required: true
@@ -3327,9 +3428,8 @@ paths:
       parameters:
         - schema:
             default: 30d
-            description: >-
-              How many UTC days back, today included; the period before it is
-              the comparison
+            description: How many UTC days back, today included; the period before it is the
+              comparison
             type: string
             enum:
               - 7d
@@ -3338,8 +3438,7 @@ paths:
               - 90d
           in: query
           name: range
-          description: >-
-            How many UTC days back, today included; the period before it is the
+          description: How many UTC days back, today included; the period before it is the
             comparison
       security:
         - cookieAuth: []
@@ -3363,8 +3462,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
@@ -3405,9 +3503,8 @@ paths:
           name: metric
         - schema:
             default: 30d
-            description: >-
-              How many UTC days back, today included; the period before it is
-              the comparison
+            description: How many UTC days back, today included; the period before it is the
+              comparison
             type: string
             enum:
               - 7d
@@ -3416,13 +3513,11 @@ paths:
               - 90d
           in: query
           name: range
-          description: >-
-            How many UTC days back, today included; the period before it is the
+          description: How many UTC days back, today included; the period before it is the
             comparison
         - schema:
             default: all
-            description: >-
-              Only Guests, only Registered users, or both; calls of a deleted
+            description: Only Guests, only Registered users, or both; calls of a deleted
               User count under `all` only
             type: string
             enum:
@@ -3431,12 +3526,10 @@ paths:
               - registered
           in: query
           name: audience
-          description: >-
-            Only Guests, only Registered users, or both; calls of a deleted User
-            count under `all` only
+          description: Only Guests, only Registered users, or both; calls of a deleted
+            User count under `all` only
         - schema:
-            description: >-
-              Only these Model ids, as a repeated key; `run` selects the Run
+            description: Only these Model ids, as a repeated key; `run` selects the Run
               series
             minItems: 1
             maxItems: 50
@@ -3447,9 +3540,7 @@ paths:
               maxLength: 100
           in: query
           name: models
-          description: >-
-            Only these Model ids, as a repeated key; `run` selects the Run
-            series
+          description: Only these Model ids, as a repeated key; `run` selects the Run series
       security:
         - cookieAuth: []
       responses:
@@ -3472,8 +3563,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
@@ -3511,8 +3601,7 @@ paths:
         - schema:
             type: string
             format: date
-            pattern: >-
-              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
             description: The UTC day, `YYYY-MM-DD`
           in: query
           name: day
@@ -3532,8 +3621,7 @@ paths:
           description: How many UTC days the trend covers, ending today
         - schema:
             default: all
-            description: >-
-              Only Guests, only Registered users, or both; calls of a deleted
+            description: Only Guests, only Registered users, or both; calls of a deleted
               User count under `all` only
             type: string
             enum:
@@ -3542,9 +3630,8 @@ paths:
               - registered
           in: query
           name: audience
-          description: >-
-            Only Guests, only Registered users, or both; calls of a deleted User
-            count under `all` only
+          description: Only Guests, only Registered users, or both; calls of a deleted
+            User count under `all` only
       security:
         - cookieAuth: []
       responses:
@@ -3565,8 +3652,7 @@ paths:
             application/json:
               schema: {}
         '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
@@ -3592,9 +3678,8 @@ paths:
       parameters:
         - schema:
             default: 30d
-            description: >-
-              How many UTC days back, today included; the period before it is
-              the comparison
+            description: How many UTC days back, today included; the period before it is the
+              comparison
             type: string
             enum:
               - 7d
@@ -3603,13 +3688,11 @@ paths:
               - 90d
           in: query
           name: range
-          description: >-
-            How many UTC days back, today included; the period before it is the
+          description: How many UTC days back, today included; the period before it is the
             comparison
         - schema:
             default: all
-            description: >-
-              Only Guests, only Registered users, or both; calls of a deleted
+            description: Only Guests, only Registered users, or both; calls of a deleted
               User count under `all` only
             type: string
             enum:
@@ -3618,9 +3701,8 @@ paths:
               - registered
           in: query
           name: audience
-          description: >-
-            Only Guests, only Registered users, or both; calls of a deleted User
-            count under `all` only
+          description: Only Guests, only Registered users, or both; calls of a deleted
+            User count under `all` only
       security:
         - cookieAuth: []
       responses:
@@ -3641,8 +3723,7 @@ paths:
             application/json:
               schema: {}
         '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
@@ -3676,8 +3757,7 @@ paths:
           name: search
           description: Case-insensitive text to find in the name or email
         - schema:
-            description: >-
-              Only Users in one of these statuses, as a repeated key; without it
+            description: Only Users in one of these statuses, as a repeated key; without it
               every User but Guests is listed
             minItems: 1
             maxItems: 6
@@ -3693,8 +3773,7 @@ paths:
                 - guest
           in: query
           name: status
-          description: >-
-            Only Users in one of these statuses, as a repeated key; without it
+          description: Only Users in one of these statuses, as a repeated key; without it
             every User but Guests is listed
         - schema:
             description: Only Users with this raw role, whatever their status
@@ -3706,23 +3785,20 @@ paths:
           name: role
           description: Only Users with this raw role, whatever their status
         - schema:
-            description: >-
-              `true` for Users under an active ban only, `false` for the rest,
-              Pending-deletion included
+            description: '`true` for Users under an active ban only, `false` for the rest,
+              Pending-deletion included'
             type: string
             enum:
               - 'true'
               - 'false'
           in: query
           name: banned
-          description: >-
-            `true` for Users under an active ban only, `false` for the rest,
-            Pending-deletion included
+          description: '`true` for Users under an active ban only, `false` for the rest,
+            Pending-deletion included'
         - schema:
             default: createdAt
-            description: >-
-              `lastActiveAt` is the last update to the account until activity is
-              tracked
+            description: '`lastActiveAt` is the last update to the account until activity is
+              tracked'
             type: string
             enum:
               - createdAt
@@ -3730,9 +3806,8 @@ paths:
               - messagesSent
           in: query
           name: sortBy
-          description: >-
-            `lastActiveAt` is the last update to the account until activity is
-            tracked
+          description: '`lastActiveAt` is the last update to the account until activity is
+            tracked'
         - schema:
             default: desc
             type: string
@@ -3754,8 +3829,7 @@ paths:
             description: The `nextCursor` of the previous page
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
           description: The `nextCursor` of the previous page
@@ -3781,8 +3855,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
@@ -3811,8 +3884,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             description: The User id
           in: path
           name: id
@@ -3839,8 +3911,7 @@ paths:
             application/json:
               schema: {}
         '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
@@ -3884,16 +3955,14 @@ paths:
             description: The `nextCursor` of the previous page
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
           description: The `nextCursor` of the previous page
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             description: The User id
           in: path
           name: id
@@ -3920,8 +3989,7 @@ paths:
             application/json:
               schema: {}
         '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
@@ -3954,8 +4022,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             description: The User id
           in: path
           name: id
@@ -3978,8 +4045,7 @@ paths:
             application/json:
               schema: {}
         '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
@@ -4035,8 +4101,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             description: The User id
           in: path
           name: id
@@ -4059,8 +4124,7 @@ paths:
             application/json:
               schema: {}
         '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
@@ -4072,8 +4136,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '409':
-          description: >-
-            Already (or not) an Admin (`Conflict`), not eligible
+          description: Already (or not) an Admin (`Conflict`), not eligible
             (`NotEligibleForAdmin`) or the last Admin (`LastAdmin`)
           content:
             application/json:
@@ -4114,21 +4177,17 @@ paths:
                   maxLength: 500
                   description: Shown to the User when they try to sign in
                 expiresAt:
-                  description: >-
-                    When the ban ends; without it the ban lasts until an Admin
-                    lifts it
+                  description: When the ban ends; without it the ban lasts until an Admin lifts it
                   type: string
                   format: date-time
-                  pattern: >-
-                    ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+                  pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
               required:
                 - reason
       parameters:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             description: The User id
           in: path
           name: id
@@ -4151,8 +4210,7 @@ paths:
             application/json:
               schema: {}
         '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
@@ -4190,8 +4248,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             description: The User id
           in: path
           name: id
@@ -4214,8 +4271,7 @@ paths:
             application/json:
               schema: {}
         '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
@@ -4264,8 +4320,7 @@ paths:
             description: Only Sessions this User owns
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: userId
           description: Only Sessions this User owns
@@ -4278,18 +4333,16 @@ paths:
           name: model
           description: Only Sessions on this Model
         - schema:
-            description: >-
-              `true` for archived Sessions only, `false` for the rest; without
-              it both are listed
+            description: '`true` for archived Sessions only, `false` for the rest; without
+              it both are listed'
             type: string
             enum:
               - 'true'
               - 'false'
           in: query
           name: archived
-          description: >-
-            `true` for archived Sessions only, `false` for the rest; without it
-            both are listed
+          description: '`true` for archived Sessions only, `false` for the rest; without
+            it both are listed'
         - schema:
             default: desc
             description: By last activity
@@ -4313,8 +4366,7 @@ paths:
             description: The `nextCursor` of the previous page
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
           description: The `nextCursor` of the previous page
@@ -4340,8 +4392,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
@@ -4371,8 +4422,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
             description: The Session id
           in: path
           name: id
@@ -4400,8 +4450,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:
@@ -4447,8 +4496,7 @@ paths:
             description: Only entries by this Admin
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: actorUserId
           description: Only entries by this Admin
@@ -4485,8 +4533,7 @@ paths:
             description: Only entries at or after this time
             type: string
             format: date-time
-            pattern: >-
-              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
           in: query
           name: from
           description: Only entries at or after this time
@@ -4494,8 +4541,7 @@ paths:
             description: Only entries before this time
             type: string
             format: date-time
-            pattern: >-
-              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
           in: query
           name: to
           description: Only entries before this time
@@ -4512,8 +4558,7 @@ paths:
             description: The `nextCursor` of the previous page
             type: string
             format: uuid
-            pattern: >-
-              ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
           in: query
           name: cursor
           description: The `nextCursor` of the previous page
@@ -4549,8 +4594,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
-          description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
+          description: Not an Admin (`Forbidden`), or an Admin short of two-factor
             (`TwoFactorRequired`)
           content:
             application/json:

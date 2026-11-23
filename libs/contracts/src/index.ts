@@ -13,6 +13,7 @@ export { PURGE_QUEUE, PURGE_SCHEDULER_ID, purgeJobSchema } from './purgeJob';
 export type { PurgeJob } from './purgeJob';
 export { ownKeyRefsSchema } from './ownKeyRefs';
 export type { OwnKeyRefs } from './ownKeyRefs';
+export { RUN_PROVIDERS } from './runProviders';
 export {
   OWN_KEY_REWRAP_QUEUE,
   OWN_KEY_VALIDATION_QUEUE,
