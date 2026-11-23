@@ -123,6 +123,7 @@ export const resources = {
       remaining: (remaining: number, limit: number) =>
         `${remaining} of ${limit} ${remaining === 1 ? 'message' : 'messages'} left`,
     },
+    invalidOwnKeyAction: 'Open Settings',
     spendAllowance: {
       title: "You've used this month's spend allowance.",
       useOwnKey: 'Use your own API key',

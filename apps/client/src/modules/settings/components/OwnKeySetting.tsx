@@ -20,11 +20,16 @@ export const OwnKeySetting = ({ provider, stored }: OwnKeySettingProps) => {
   const name = copy.providers[provider];
   const isEditing = useOwnKeyEditStore((state) => state.editing === provider);
   const { startEditing, stopEditing } = useOwnKeyEditStore.getState();
-  const { register, handleSubmit, reset, watch } = useForm<OwnKeyValues>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<OwnKeyValues>({
     resolver: zodResolver(ownKeySchema),
+    mode: 'onTouched',
     defaultValues: { key: '' },
   });
-  const key = watch('key');
   const save = useSaveOwnKey();
   const removal = useRemoveOwnKey();
   const showInput = !stored || isEditing;
@@ -70,9 +75,11 @@ export const OwnKeySetting = ({ provider, stored }: OwnKeySettingProps) => {
               autoComplete="off"
               spellCheck={false}
               aria-label={copy.inputLabel(name)}
+              aria-invalid={Boolean(errors.key)}
+              aria-errormessage={errors.key ? `${provider}-key-error` : undefined}
               {...register('key')}
             />
-            <Button type="submit" disabled={key.trim().length < 8} loading={save.isPending}>
+            <Button type="submit" loading={save.isPending}>
               {save.isPending ? copy.saving : copy.save}
             </Button>
             {isEditing && (
@@ -90,6 +97,11 @@ export const OwnKeySetting = ({ provider, stored }: OwnKeySettingProps) => {
               {copy.remove}
             </Button>
           </div>
+        )}
+        {errors.key && (
+          <p id={`${provider}-key-error`} className="text-sm text-destructive">
+            {errors.key.message}
+          </p>
         )}
         {error && (
           <p role="alert" className="text-sm text-destructive">

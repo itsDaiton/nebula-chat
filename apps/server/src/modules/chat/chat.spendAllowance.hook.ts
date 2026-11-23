@@ -9,8 +9,7 @@ import { getSessionData } from '@server/plugins/authGate.plugin';
 
 /**
  * Rejects a verified user who has spent the month's allowance with 403 `SpendAllowanceReached` before anything is persisted.
- * A Message answering a waiting Run continues a Run already started, so it always passes, and a reply
- * whose every provider has a usable Own key is exempt: it spends no Operator key.
+ * A Message answering a waiting Run, or a reply with a valid Own key for every provider it calls, passes.
  */
 export const spendAllowanceHook: preHandlerAsyncHookHandler = async (req: FastifyRequest) => {
   const { user } = getSessionData(req);

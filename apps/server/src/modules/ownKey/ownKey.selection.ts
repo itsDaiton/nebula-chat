@@ -8,10 +8,7 @@ type ReplyTarget = { model: string; replyMode: string };
 export const providersOf = ({ model, replyMode }: ReplyTarget): readonly ModelProvider[] =>
   replyMode === 'run' ? RUN_PROVIDERS : [getModel(model).provider];
 
-/**
- * The one answer to "which of these providers does the User have a usable Own key for": the references the job carries and
- * whether the reply is exempt from the Spend allowance. A key not yet `valid`, or `invalid`, counts as absent for both (ADR-0037).
- */
+/** The references a job carries and whether the reply is exempt from the Spend allowance; only `valid` keys count (ADR-0037). */
 export const selectOwnKeys = async (
   userId: string,
   providers: readonly ModelProvider[],

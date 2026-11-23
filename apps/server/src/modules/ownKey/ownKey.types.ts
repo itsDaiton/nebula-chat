@@ -4,7 +4,7 @@ import type {
   ownKeyListSchema,
   ownKeyParamsSchema,
   ownKeySchema,
-} from './ownKey.validation';
+} from '@server/modules/ownKey/ownKey.validation';
 
 export type OwnKeyParams = z.infer<typeof ownKeyParamsSchema>;
 
