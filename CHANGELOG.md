@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.15.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.1...nebula-chat-v7.15.2) (2026-11-23)
+
+
+### Bug Fixes
+
+* **worker:** NEB-828 agent catalog as validated JSON with update hash ([#948](https://github.com/itsDaiton/nebula-chat/issues/948)) ([5f4c938](https://github.com/itsDaiton/nebula-chat/commit/5f4c938ba82fefe89b0a14a3aa6f1d12a4f037fa))
+
 ## [7.15.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.0...nebula-chat-v7.15.1) (2026-11-23)
 
 
