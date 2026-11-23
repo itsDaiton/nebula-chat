@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.26.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.26.3...nebula-chat-client-v3.26.4) (2026-11-23)
+
+
+### Bug Fixes
+
+* **client:** NEB-558 ban dialog uses the shadcn calendar ([#959](https://github.com/itsDaiton/nebula-chat/issues/959)) ([066f319](https://github.com/itsDaiton/nebula-chat/commit/066f3190980887d5910916fa19e1339a4e53c257))
+
 ## [3.26.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.26.2...nebula-chat-client-v3.26.3) (2026-11-23)
 
 
