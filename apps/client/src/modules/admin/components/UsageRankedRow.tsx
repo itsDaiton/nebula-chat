@@ -51,14 +51,7 @@ export const UsageRankedRow = ({
   ) : (
     <Tooltip>
       <TooltipTrigger
-        render={
-          <div
-            tabIndex={0}
-            role="group"
-            aria-label={row.label}
-            className={cn(className, focusRing)}
-          />
-        }
+        render={<button type="button" aria-disabled className={cn(className, focusRing)} />}
       >
         {content}
       </TooltipTrigger>
