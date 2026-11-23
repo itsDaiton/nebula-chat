@@ -460,6 +460,10 @@ sequenceDiagram
   and `/sign-out` (`logout`). Everywhere else auth stays cookie-only: better-auth runs every before hook
   against the original request, so a hook that reads the auth session would not see one named by a bearer
   token and would let the request through.
+- **CLI sessions last 12 hours, whatever the use.** A `session.create.before` hook (`cliSessionLifetime`) sets
+  `expiresAt` on the session made by `/device/token`; browser sessions keep better-auth's 7 days. Bearer reads set
+  `disableRefresh`, so better-auth's rolling refresh never extends a CLI session. Once it expires, `nebula whoami`
+  and the admin commands tell the operator to run `nebula login` again.
 - The review response carries `expires_at`, added for the page's countdown.
 
 ### Admins and the Operator
@@ -731,6 +735,10 @@ an unverified email/password Registered user hits `account_not_linked`. Their wa
 sign in with the password, verify the email (the verification banner's
 `ResendVerificationButton` resends the link if needed), then continue with Google or GitHub.
 The next social sign-in links automatically; there is no separate linking step.
+
+A test runs the social callback's linking step against an unverified
+credential account and a provider-verified email: nothing is linked or created, so the attacker's password never
+reaches the victim's sign-in.
 
 The local check stays on deliberately. Without it, an attacker could pre-register a victim's
 address with their own password; the victim's later Google sign-in would link into that
