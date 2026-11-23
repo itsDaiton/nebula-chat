@@ -1,8 +1,30 @@
 import { useCallback } from 'react';
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
-import { DayPicker, getDefaultClassNames, type DayButton } from 'react-day-picker';
+import {
+  DayPicker,
+  getDefaultClassNames,
+  type ChevronProps,
+  type DayButton,
+  type RootProps,
+} from 'react-day-picker';
 import { Button, buttonVariants } from '@/shared/components/ui/button';
 import { cn } from '@/shared/utils/cn';
+
+const CHEVRONS = {
+  left: ChevronLeftIcon,
+  right: ChevronRightIcon,
+  up: ChevronDownIcon,
+  down: ChevronDownIcon,
+};
+
+const CalendarRoot = ({ className, rootRef, ...props }: RootProps) => (
+  <div data-slot="calendar" ref={rootRef} className={cn(className)} {...props} />
+);
+
+const CalendarChevron = ({ className, orientation = 'down', ...props }: ChevronProps) => {
+  const Icon = CHEVRONS[orientation];
+  return <Icon className={cn('size-4', className)} {...props} />;
+};
 
 const Calendar = ({
   className,
@@ -69,18 +91,8 @@ const Calendar = ({
         ...classNames,
       }}
       components={{
-        Root: ({ className: rootClassName, rootRef, ...rootProps }) => (
-          <div data-slot="calendar" ref={rootRef} className={cn(rootClassName)} {...rootProps} />
-        ),
-        Chevron: ({ className: iconClassName, orientation, ...iconProps }) => {
-          const Icon =
-            orientation === 'left'
-              ? ChevronLeftIcon
-              : orientation === 'right'
-                ? ChevronRightIcon
-                : ChevronDownIcon;
-          return <Icon className={cn('size-4', iconClassName)} {...iconProps} />;
-        },
+        Root: CalendarRoot,
+        Chevron: CalendarChevron,
         DayButton: CalendarDayButton,
         ...components,
       }}
