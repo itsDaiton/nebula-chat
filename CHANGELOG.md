@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.15.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.0...nebula-chat-v7.15.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* **client:** refresh session after 2FA verify so admins verify once ([#947](https://github.com/itsDaiton/nebula-chat/issues/947)) ([e1e8843](https://github.com/itsDaiton/nebula-chat/commit/e1e884395d4a7fe9a5ee4b1447ce59d0b8efb793))
+
 ## [7.15.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.14.0...nebula-chat-v7.15.0) (2026-11-23)
 
 
