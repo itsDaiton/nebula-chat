@@ -1,11 +1,12 @@
 import type { StructuredToolInterface } from '@langchain/core/tools';
+import type { z } from 'zod';
 import { getModel } from '@nebula-chat/contracts';
 import type { LLMConfig } from '@worker/llm/createLLM';
 import type { KeyResolver } from '@worker/llm/keyResolver';
-import type { PromptName } from '@worker/llm/prompts';
+import type { agentDefinitionSchema, toolNameSchema } from '@worker/runs/agentCatalog';
 
 /** The tools an Agent may be granted; only delegates are, so the Orchestrator never calls one itself. */
-export type ToolName = 'web_search' | 'web_fetch';
+export type ToolName = z.infer<typeof toolNameSchema>;
 
 /** Every tool, built once from config: a delegate is given the ones it is granted. */
 export type Toolbox = Record<ToolName, StructuredToolInterface>;
@@ -15,18 +16,8 @@ export const TOOL_LABELS: Record<ToolName, string> = {
   web_fetch: 'Reading a page',
 };
 
-/** A named, predefined role (GLOSSARY.md): versioned in git, never invented at run time. */
-export type AgentDefinition = {
-  name: string;
-  /** The short label a Step of this Agent shows in the UI. */
-  label: string;
-  /** A Model in the catalog in `@nebula-chat/contracts`. */
-  model: string;
-  prompt: PromptName;
-  /** The tools it may call; a delegate with any runs its own capped tool-calling loop. */
-  tools: readonly ToolName[];
-  parameters: { temperature: number; maxTokens?: number };
-};
+/** A named, predefined role (GLOSSARY.md): checked into the Agent catalog, never invented at run time. */
+export type AgentDefinition = z.infer<typeof agentDefinitionSchema>;
 
 /** An Agent the Orchestrator may delegate to: it sees the Agent as a tool described by `description`. */
 export type DelegateDefinition = AgentDefinition & { description: string };

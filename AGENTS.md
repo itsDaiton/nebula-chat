@@ -27,7 +27,7 @@ pnpm knip                                      # on demand: after deleting/movin
 pnpm deps:check                                # import boundaries (.dependency-cruiser.cjs); CI fails on new ones
 pnpm deps:baseline                             # after fixing a known violation, shrink the baseline
 pnpm deps:graph apps/server/src/modules        # an area's import graph as Mermaid
-pnpm catalog:stamp                             # after editing libs/contracts/src/models/catalog.json
+pnpm catalog:stamp                             # after editing a catalog, an Agent's JSON or its prompt (docs/catalogs.md)
 podman compose up -d                           # PostgreSQL :5332, Redis :6380
 ```
 
@@ -93,3 +93,5 @@ A change to conventions, module layout or architecture updates, in the same PR: 
 `.claude/rules/` file (and its `paths:` globs when a folder moves), `GLOSSARY.md` for vocabulary, `docs/adr/` for hard-to-reverse decisions, the Mermaid diagrams that draw the
 area, and any skill that references it. Operator CLI usage: [apps/cli/AGENTS.md](./apps/cli/AGENTS.md).
 MCP servers: [docs/agents/mcp-servers.md](./docs/agents/mcp-servers.md). Rate limits: a new or changed limit updates [docs/rate-limits.md](./docs/rate-limits.md).
+Catalogs: a Model added to, changed in or removed from the model catalog updates [docs/model-catalog.md](./docs/model-catalog.md), and an Agent
+added, changed (its JSON or its prompt) or removed updates [docs/agent-catalog.md](./docs/agent-catalog.md), in the same PR.

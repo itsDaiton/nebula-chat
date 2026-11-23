@@ -5,12 +5,11 @@ import { createAgent, createMiddleware } from 'langchain';
 import pLimit from 'p-limit';
 import { componentLogger, logEvent } from '@nebula-chat/otel';
 import { ASK_USER, askUserTool } from '@worker/runs/askUserTool';
-import { orchestratorAgent } from '@worker/agents/orchestrator';
 import { toCallUsage } from '@worker/llm/callUsage';
 import { countTokens } from '@worker/llm/countTokens';
 import type { CallUsage } from '@worker/modelCalls/recordModelCall';
 import { llmConfigFor } from '@worker/runs/agentDefinition';
-import { DELEGATES } from '@worker/runs/agentRegistry';
+import { AGENTS, DELEGATES } from '@worker/runs/agentCatalog';
 import type { LoopEnding } from '@worker/runs/findings';
 import { delegateTool } from '@worker/runs/delegateTool';
 import type { DelegateToolDeps } from '@worker/runs/delegateTool';
@@ -56,7 +55,7 @@ const isFirstAsk = (messages: BaseMessage[], toolCallId: string): boolean =>
 // The loop's model, and so its key, is loaded once per execution of the node: a resume or a retry loads it again.
 export const createOrchestrator = async (deps: OrchestratorDeps) => {
   const { limits, runId } = deps;
-  const agent = orchestratorAgent;
+  const agent = AGENTS.orchestrator;
   const system = deps.prompts[agent.prompt];
   const turnStepId = (turn: number): string => stepIdFor(runId, 'orchestrator', `turn:${turn}`);
   const nearBudget = (): boolean =>

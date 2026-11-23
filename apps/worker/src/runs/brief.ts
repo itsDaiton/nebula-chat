@@ -1,5 +1,5 @@
-import type { LanguageOutput } from '@worker/agents/language';
-import type { SessionOutput } from '@worker/agents/session';
+import type { LanguageOutput } from '@worker/agentIo/language';
+import type { SessionOutput } from '@worker/agentIo/session';
 
 /** Each Intake Agent's output, keyed by its name. */
 export type IntakeOutputs = { language: LanguageOutput; session: SessionOutput };

@@ -50,7 +50,7 @@ Locally, run it next to the server: both read the same Postgres and Redis. Its `
 
 The worker does **not** use the server's `name.layer.ts` file naming. Folders and files are camelCase,
 and the folder says what kind of thing a file is, so a file carries no layer suffix
-(`jobs/directReply.ts`, `agents/orchestrator.ts`, `tools/webFetch.ts`). Test files keep the `.test.ts`
+(`jobs/directReply.ts`, `agentIo/orchestrator.ts`, `tools/webFetch.ts`). Test files keep the `.test.ts`
 suffix Vitest needs, in a `tests/` folder beside the code. Folders are named after
 [GLOSSARY.md](../../GLOSSARY.md) terms and appear when a ticket first needs them.
 
@@ -82,11 +82,12 @@ suffix Vitest needs, in a `tests/` folder beside the code. Folders are named aft
   (`executeRun.ts`), Step persistence (`steps.ts`), the Brief, the Orchestrator's `createAgent` loop
   and its middleware (`orchestrator.ts`), the delegate-Agent-as-tool adapter, the findings the Output
   Agent reads, the mapping from the graph's stream to reply stream events, the Postgres checkpointer
-  (its own `langgraph` schema, set up at boot), the `AgentDefinition` type and the Agent registry, and
-  the Run and Step repositories.
-- `agents/` — the Agents only: one file each (Model, prompt, tool grants, parameters, and for an
-  Intake Agent its output schema and human-message builder). The Session's Model never applies to an
-  Agent.
+  (its own `langgraph` schema, set up at boot), the Agent catalog loader (`agentCatalog.ts`: schema, `AGENTS` and
+  `DELEGATES`; `agentHash.ts`: the hash, `node:crypto` only so the root stamp script can load it), the `AgentDefinition` types inferred from it, and the Run and Step repositories.
+- `agents/` — the Agent catalog data only: one `<name>.json` per Agent (Model, prompt, tool grants, parameters; a
+  delegate also its `description`). The Session's Model never applies to an Agent.
+- `agentIo/` — what an Intake, Output or Orchestrator Agent takes in and gives back: its output schema and
+  human-message builder, one file each. The delegates have none: they take a plain task.
 - `tools/` — tool definitions only, one file each (`webSearch.ts`, `webFetch.ts`): the LangChain tool, its
   Zod arguments and its config. `worker.ts` builds them into the Run's `Toolbox`; `runs/delegateTool.ts` gives
   a delegate the ones its definition grants, in its own capped loop.
@@ -107,6 +108,18 @@ Run `waiting`, appends `run-waiting`, ends the stream, schedules the delayed `cl
 whose payload has `resume` continues from the checkpoint with `Command({ resume })`; `answerMessageId: null` is the timeout and
 ends the Run `partial`. The timeout job settles the Run with a conditional update on `status = waiting`, so it and a
 server-side answer settle once: it enqueues that resume job, or, with the Run's cancel flag raised, ends the Run `cancelled` and deletes its checkpoints.
+
+### The Agent catalog
+
+Each Agent's definition is static JSON in `agents/<name>.json`, parsed when `runs/agentCatalog.ts` loads: an unknown Model,
+tool or prompt, a name that does not match its file, a missing or extra Agent, or an out-of-range parameter fails boot. The
+set is fixed (four Agents, three delegates), which keeps `AGENTS.output` and the like literally typed; `kind` decides the
+registry. Each file carries a `version` and a `hash` over its definition and its prompt's Markdown text. Edit an Agent or a
+prompt, then run `pnpm catalog:stamp` from the root: it re-stamps only stale files, and `runs/tests/agentCatalog.test.ts`
+fails until you do. Intake Agents run on cheap Models and the Output Agent on a mid-tier one; the Orchestrator is on a strong
+Model because it decides what the Run does, and its only tools are the delegates, none of which is given another Agent. The
+`researcher` is the one Agent with the web. The hash only detects drift; nothing records it on a Run (ADR-0030 has the convention; [docs/catalogs.md](../../docs/catalogs.md) covers both catalogs and adding an Agent). Adding, changing or removing an Agent
+also updates [docs/agent-catalog.md](../../docs/agent-catalog.md).
 
 ### Own keys
 

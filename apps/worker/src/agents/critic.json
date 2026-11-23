@@ -1,0 +1,14 @@
+{
+  "version": "2026-11-23-93f1f749-78e1-4d1c-9097-1999b5dc3ab8",
+  "hash": "cbab83fe0e9b9b3276d1f425ad869e83b31ca5a4fd2a4da6ac96621826a95e7d",
+  "name": "critic",
+  "kind": "delegate",
+  "label": "Reviewing",
+  "description": "Reviews a draft, plan or claim for errors, gaps and weak reasoning, and says how to fix them. Put the work to review in the task.",
+  "model": "gpt-4.1-mini",
+  "prompt": "critic",
+  "tools": [],
+  "parameters": {
+    "temperature": 0.2
+  }
+}
