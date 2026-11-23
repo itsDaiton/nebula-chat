@@ -1,3 +1,4 @@
+import { addMonths, format } from 'date-fns';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
@@ -50,20 +51,25 @@ describe('Ban dialog', () => {
     await userEvent.click(button(panel, actions.ban));
     const dialog = await screen.findByRole('dialog');
     await userEvent.type(within(dialog).getByRole('textbox', { name: /Reason/ }), 'Spam');
-    await userEvent.click(within(dialog).getByRole('radio', { name: text.ban.untilDate }));
-    const date = within(dialog).getByLabelText(text.ban.date);
+    await userEvent.click(within(dialog).getByRole('button', { name: text.ban.untilDate }));
 
-    await userEvent.type(date, '2020-01-01');
     await userEvent.click(within(dialog).getByRole('button', { name: text.ban.confirm }));
-    expect(await within(dialog).findByText(text.ban.dateFuture)).toBeInTheDocument();
+    expect(await within(dialog).findByText(text.ban.dateRequired)).toBeInTheDocument();
     expect(bodies).toEqual([]);
 
-    await userEvent.clear(date);
-    await userEvent.type(date, '2999-01-31');
+    await userEvent.click(within(dialog).getByRole('button', { name: text.ban.date }));
+    await userEvent.click(await screen.findByRole('button', { name: /next month/i }));
+    const next = addMonths(new Date(), 1);
+    const day = await screen.findByRole('button', {
+      name: new RegExp(`${format(next, 'MMMM')} 15(st|nd|rd|th), ${format(next, 'yyyy')}`),
+    });
+    await userEvent.click(day);
     await userEvent.click(within(dialog).getByRole('button', { name: text.ban.confirm }));
 
     await waitFor(() =>
-      expect(bodies).toEqual([{ reason: 'Spam', expiresAt: '2999-01-31T23:59:59.000Z' }]),
+      expect(bodies).toEqual([
+        { reason: 'Spam', expiresAt: `${format(next, 'yyyy-MM')}-15T23:59:59.000Z` },
+      ]),
     );
   });
 
