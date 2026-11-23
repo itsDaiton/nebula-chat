@@ -88,40 +88,45 @@ export const BanDialog = ({ user, open, onOpenChange }: BanDialogProps) => {
           </Field>
           <FieldSet>
             <FieldLegend variant="label">{text.duration}</FieldLegend>
-            <UsageSegmented
-              label={text.duration}
-              value={duration}
-              options={[
-                { value: 'permanent', label: text.permanent },
-                { value: 'until', label: text.untilDate },
-              ]}
-              onChange={(next) => setValue('duration', next, { shouldValidate: true })}
-            />
+            <div>
+              <UsageSegmented
+                label={text.duration}
+                value={duration}
+                options={[
+                  { value: 'permanent', label: text.permanent },
+                  { value: 'until', label: text.untilDate },
+                ]}
+                onChange={(next) => setValue('duration', next, { shouldValidate: true })}
+              />
+            </div>
             {duration === 'until' && (
               <Field data-invalid={Boolean(errors.until)}>
-                <Popover>
-                  <PopoverTrigger
-                    aria-label={text.date}
-                    aria-invalid={Boolean(errors.until)}
-                    aria-errormessage={errors.until ? 'ban-until-error' : undefined}
-                    className="flex h-9 w-48 items-center gap-2 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive"
-                  >
-                    <CalendarIcon className="size-4 text-muted-foreground" />
-                    {selected ? format(selected, 'd MMM yyyy') : text.pickDate}
-                  </PopoverTrigger>
-                  <PopoverContent align="start" className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selected}
-                      onSelect={(day) =>
-                        setValue('until', day ? format(day, 'yyyy-MM-dd') : '', {
-                          shouldValidate: true,
-                        })
-                      }
-                      disabled={{ before: addDays(startOfToday(), 1) }}
-                    />
-                  </PopoverContent>
-                </Popover>
+                {/* Field stretches its direct children; the wrapper keeps the button its own width. */}
+                <div>
+                  <Popover>
+                    <PopoverTrigger
+                      aria-label={text.date}
+                      aria-invalid={Boolean(errors.until)}
+                      aria-errormessage={errors.until ? 'ban-until-error' : undefined}
+                      className="flex h-9 w-48 items-center gap-2 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive"
+                    >
+                      <CalendarIcon className="size-4 text-muted-foreground" />
+                      {selected ? format(selected, 'd MMM yyyy') : text.pickDate}
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={selected}
+                        onSelect={(day) =>
+                          setValue('until', day ? format(day, 'yyyy-MM-dd') : '', {
+                            shouldValidate: true,
+                          })
+                        }
+                        disabled={{ before: addDays(startOfToday(), 1) }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
                 {errors.until && (
                   <FieldError id="ban-until-error">{errors.until.message}</FieldError>
                 )}
