@@ -12,6 +12,7 @@ import { resources } from '@/resources';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { cn } from '@/shared/utils/cn';
 
 const copy = resources.settings.ownKeys;
 
@@ -67,10 +68,11 @@ export const OwnKeySetting = ({ provider, stored }: OwnKeySettingProps) => {
 
   return (
     <SettingsRow label={copy.label(name)} description={description} stacked={showInput}>
-      <div className="flex flex-col gap-2 sm:items-end">
+      <div className={cn('flex flex-col gap-2', !showInput && 'sm:items-end')}>
         {showInput ? (
           <form onSubmit={(event) => void onSubmit(event)} className="flex gap-2" noValidate>
             <Input
+              className="flex-1"
               type="password"
               autoComplete="off"
               spellCheck={false}
