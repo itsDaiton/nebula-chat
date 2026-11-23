@@ -133,7 +133,7 @@ describe('Model usage page', () => {
       '▼ 1.2 pt',
     );
     expect(within(list()).getByText('3 Oct')).toBeInTheDocument();
-    const rows = within(list()).getAllByRole('button');
+    const rows = within(list()).getAllByRole('button', { name: /^Pin / });
     expect(rows.map((row) => row.getAttribute('aria-label'))).toEqual([
       text.pin('GPT-4o mini'),
       text.pin('GPT-5'),
@@ -248,6 +248,80 @@ describe('Model usage page', () => {
     expect(screen.getByText(text.detail.input)).toBeInTheDocument();
     expect(screen.queryByText(/\btok\b/)).not.toBeInTheDocument();
     expect(screen.queryByText(new RegExp(text.detail.pinned))).not.toBeInTheDocument();
+  });
+
+  it('labels the right panel averages per call, not per prompt', async () => {
+    serveUsage();
+
+    await renderRoute('/admin/usage');
+
+    expect(await screen.findByText('Input / call')).toBeInTheDocument();
+    expect(screen.getByText('Output / call')).toBeInTheDocument();
+    expect(screen.getByText('Cost / call')).toBeInTheDocument();
+    expect(screen.queryByText(/\/ prompt/)).not.toBeInTheDocument();
+  });
+
+  it('shows only the footnote of the selected metric, keeping View as table', async () => {
+    serveUsage();
+    await renderRoute('/admin/usage');
+
+    expect(await screen.findByText(text.notes.prompts)).toBeInTheDocument();
+    expect(screen.queryByText(text.notes.tokens)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: text.viewAsTable })).toBeInTheDocument();
+
+    for (const metric of ['tokens', 'spend'] as const) {
+      serveUsage(aSeries({ metric }));
+      await userEvent.click(
+        within(screen.getByRole('group', { name: text.metric })).getByRole('button', {
+          name: text.metrics[metric],
+        }),
+      );
+      expect(await screen.findByText(text.notes[metric])).toBeInTheDocument();
+      expect(screen.queryByText(text.notes.prompts)).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: text.viewAsTable })).toBeInTheDocument();
+    }
+  });
+
+  it('explains on hover and keyboard focus why the Run row cannot be pinned, and clicking does nothing', async () => {
+    serveUsage();
+    const { router } = await renderRoute('/admin/usage');
+    const row = await screen.findByRole('button', { name: new RegExp(text.run) });
+
+    await userEvent.hover(row);
+    expect(await screen.findByText(text.runTooltip)).toBeInTheDocument();
+    await userEvent.unhover(row);
+    await userEvent.click(row);
+
+    expect(router.state.location.search).toEqual({});
+    screen.getByRole('button', { name: text.pin('GPT-4o mini') }).focus();
+    await userEvent.tab();
+    expect(row).toHaveFocus();
+    expect(await screen.findByText(text.runTooltip)).toBeInTheDocument();
+  });
+
+  it('explains on focus that Other groups the smaller Models', async () => {
+    serveUsage(
+      aSeries({
+        series: [
+          { key: 'gpt-4o-mini', kind: 'model', total: 60, values: [10, 20, 30], members: [] },
+          {
+            key: 'other',
+            kind: 'other',
+            total: 9,
+            values: [1, 2, 6],
+            members: [{ key: 'gpt-5', total: 9, values: [1, 2, 6] }],
+          },
+        ],
+      }),
+    );
+    const { router } = await renderRoute('/admin/usage');
+    const row = await screen.findByRole('button', { name: new RegExp(`Other \\(1\\)`) });
+
+    row.focus();
+    expect(await screen.findByText(text.otherTooltip)).toBeInTheDocument();
+    await userEvent.click(row);
+
+    expect(router.state.location.search).toEqual({});
   });
 
   it('sends the chosen Models as a repeated key and keeps them in the URL', async () => {

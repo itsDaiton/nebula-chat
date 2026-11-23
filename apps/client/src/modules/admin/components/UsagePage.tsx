@@ -135,7 +135,7 @@ export const UsagePage = () => {
             <div className="flex items-start gap-2 px-5 py-3 text-[12.5px] text-muted-foreground">
               <InfoIcon className="mt-0.5 size-3.5 shrink-0" />
               <p className="m-0">
-                {text.note}{' '}
+                {text.notes[displayedParams.metric]}{' '}
                 <button
                   type="button"
                   aria-pressed={asTable}

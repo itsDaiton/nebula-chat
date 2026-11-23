@@ -4,9 +4,11 @@ import { formatPercent } from '@/modules/admin/utils/usageFormat';
 import { resources } from '@/resources';
 import { ProviderLogo } from '@/shared/components/ProviderLogo';
 import { ShareBar } from '@/shared/components/charts/ShareBar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { cn } from '@/shared/utils/cn';
 
 const text = resources.admin.usage;
+const focusRing = 'focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none';
 
 /** One Model in the ranked list: its value on the hovered day, its share, and a bar. Clicking pins it. */
 export const UsageRankedRow = ({
@@ -42,14 +44,20 @@ export const UsageRankedRow = ({
       aria-pressed={pinned}
       aria-label={pinned ? text.unpin(row.label) : text.pin(row.label)}
       onClick={() => onPin(row.key)}
-      className={cn(
-        className,
-        'hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none',
-      )}
+      className={cn(className, 'hover:bg-hover', focusRing)}
     >
       {content}
     </button>
   ) : (
-    <div className={className}>{content}</div>
+    <Tooltip>
+      <TooltipTrigger
+        render={<button type="button" aria-disabled className={cn(className, focusRing)} />}
+      >
+        {content}
+      </TooltipTrigger>
+      <TooltipContent side="left">
+        {row.kind === 'run' ? text.runTooltip : text.otherTooltip}
+      </TooltipContent>
+    </Tooltip>
   );
 };
