@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.15.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.4...nebula-chat-v7.15.5) (2026-11-23)
+
+
+### Bug Fixes
+
+* **client:** widen API key input and left-align its error ([#958](https://github.com/itsDaiton/nebula-chat/issues/958)) ([f99e116](https://github.com/itsDaiton/nebula-chat/commit/f99e1165e5e51272b50a65d7b7a43667722416e8))
+
 ## [7.15.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.3...nebula-chat-v7.15.4) (2026-11-23)
 
 
