@@ -50,7 +50,16 @@ export const UsageRankedRow = ({
     </button>
   ) : (
     <Tooltip>
-      <TooltipTrigger render={<div tabIndex={0} className={cn(className, focusRing)} />}>
+      <TooltipTrigger
+        render={
+          <div
+            tabIndex={0}
+            role="group"
+            aria-label={row.label}
+            className={cn(className, focusRing)}
+          />
+        }
+      >
         {content}
       </TooltipTrigger>
       <TooltipContent side="left">

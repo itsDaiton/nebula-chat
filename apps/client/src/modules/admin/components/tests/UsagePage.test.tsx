@@ -285,9 +285,7 @@ describe('Model usage page', () => {
   it('explains on hover and keyboard focus why the Run row cannot be pinned, and clicking does nothing', async () => {
     serveUsage();
     const { router } = await renderRoute('/admin/usage');
-    const row = (
-      await within(await screen.findByRole('region', { name: text.dataLabel })).findByText(text.run)
-    ).closest('[tabindex]') as HTMLElement;
+    const row = await screen.findByRole('group', { name: text.run });
 
     await userEvent.hover(row);
     expect(await screen.findByText(text.runTooltip)).toBeInTheDocument();
@@ -295,8 +293,9 @@ describe('Model usage page', () => {
     await userEvent.click(row);
 
     expect(router.state.location.search).toEqual({});
+    screen.getByRole('button', { name: text.pin('GPT-4o mini') }).focus();
     await userEvent.tab();
-    row.focus();
+    expect(row).toHaveFocus();
     expect(await screen.findByText(text.runTooltip)).toBeInTheDocument();
   });
 
@@ -316,7 +315,7 @@ describe('Model usage page', () => {
       }),
     );
     const { router } = await renderRoute('/admin/usage');
-    const row = (await screen.findByText(text.other(1))).closest('[tabindex]') as HTMLElement;
+    const row = await screen.findByRole('group', { name: text.other(1) });
 
     row.focus();
     expect(await screen.findByText(text.otherTooltip)).toBeInTheDocument();
