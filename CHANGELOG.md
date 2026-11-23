@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.15.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.14.0...nebula-chat-v7.15.0) (2026-11-23)
+
+
+### Features
+
+* **server,client:** NEB-823 let a User store and use an Own key ([#944](https://github.com/itsDaiton/nebula-chat/issues/944)) ([1bfea8a](https://github.com/itsDaiton/nebula-chat/commit/1bfea8ae6c47fcb27279c685246261c034262829))
+
 ## [7.14.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.13.1...nebula-chat-v7.14.0) (2026-11-22)
 
 
