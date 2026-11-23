@@ -1,0 +1,14 @@
+{
+  "version": "2026-11-23-7e1a5880-15fb-42df-9f89-9069aa8b062a",
+  "hash": "9a9d6f1a5fb208f2009eff241b6acd58127b0aeb10a9a85e6541181a6610898c",
+  "name": "analyst",
+  "kind": "delegate",
+  "label": "Analysing",
+  "description": "Works through a question or problem step by step and reports a reasoned conclusion. Give it everything it needs in the task.",
+  "model": "gpt-4.1-mini",
+  "prompt": "analyst",
+  "tools": [],
+  "parameters": {
+    "temperature": 0.3
+  }
+}

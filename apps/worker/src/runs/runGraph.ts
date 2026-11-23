@@ -10,7 +10,7 @@ import { languageSchema } from '@worker/agents/language';
 import { orchestratorInput } from '@worker/agents/orchestrator';
 import { outputInput } from '@worker/agents/output';
 import { sessionInput, sessionSchema } from '@worker/agents/session';
-import { AGENTS } from '@worker/runs/agentRegistry';
+import { AGENTS } from '@worker/runs/agentCatalog';
 import type { HistoryMessage } from '@worker/directReplies/streamChat';
 import { toCallUsage } from '@worker/llm/callUsage';
 import { llmConcurrencyLimiter } from '@worker/llm/concurrencyLimiter';

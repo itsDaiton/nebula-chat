@@ -159,6 +159,10 @@ _Avoid_: Workflow, task, job, execution, deep mode (that's a UI label, not the c
 A named, predefined role — a fixed pairing of model, system prompt, allowed tools and parameters (e.g. `researcher`, `critic`). Agents are defined by the application, never invented at run time.
 _Avoid_: Worker (that is the app), bot, persona.
 
+**Agent catalog**:
+The checked-in set of Agent definitions in the worker, one JSON file per Agent, validated when the worker loads and stamped with a `version` and a `hash` of the definition and its prompt. Distinct from the model catalog in `@nebula-chat/contracts`, which lists the Models an Agent may use.
+_Avoid_: Agent registry, agent config.
+
 **Intake Agent**:
 One of a fixed set of cheap Agents that run in parallel on every Run's input before the Orchestrator starts (e.g. language detection and translation, Session summary). Each returns structured output.
 _Avoid_: Preprocessor, first prompts.

@@ -1,15 +1,5 @@
 import { z } from 'zod';
 import type { HistoryMessage } from '@worker/directReplies/streamChat';
-import type { AgentDefinition } from '@worker/runs/agentDefinition';
-
-export const sessionAgent = {
-  name: 'session',
-  label: 'Summarising the Session',
-  model: 'gpt-4o-mini',
-  prompt: 'session',
-  tools: [],
-  parameters: { temperature: 0 },
-} as const satisfies AgentDefinition;
 
 export const sessionSchema = z.object({
   summary: z.string().describe('What the conversation so far established for the latest message'),

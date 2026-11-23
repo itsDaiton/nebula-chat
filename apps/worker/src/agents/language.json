@@ -1,0 +1,13 @@
+{
+  "version": "2026-11-23-bb31d914-303c-42c2-b696-e371bfc23cba",
+  "hash": "7cfa1912632256baa945103b1d760678c72aac6f4398382656ea9729b1e47a7d",
+  "name": "language",
+  "kind": "agent",
+  "label": "Detecting the language",
+  "model": "gpt-4o-mini",
+  "prompt": "language",
+  "tools": [],
+  "parameters": {
+    "temperature": 0
+  }
+}

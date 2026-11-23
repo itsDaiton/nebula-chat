@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 // One static Markdown file per name; dynamic content belongs in the human message, never here.
-const PROMPT_NAMES = [
+export const PROMPT_NAMES = [
   'directReply',
   'language',
   'session',

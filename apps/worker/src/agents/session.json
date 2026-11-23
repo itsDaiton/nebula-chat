@@ -1,0 +1,13 @@
+{
+  "version": "2026-11-23-5e306d53-4511-464d-a428-9161db1ba93d",
+  "hash": "dec321abaf340e8900bec03786698eeffcc3e928b5a535fa251b67fc2ffe3cfe",
+  "name": "session",
+  "kind": "agent",
+  "label": "Summarising the Session",
+  "model": "gpt-4o-mini",
+  "prompt": "session",
+  "tools": [],
+  "parameters": {
+    "temperature": 0
+  }
+}

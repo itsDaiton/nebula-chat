@@ -1,6 +1,8 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { agentHash } from '../apps/worker/src/runs/agentCatalog';
+import { loadPrompts } from '../apps/worker/src/llm/prompts';
 
 type Catalog = {
   version: string;
@@ -9,7 +11,19 @@ type Catalog = {
   models: unknown[];
 };
 
+type StampedFile = { version: string; hash: string; prompt: string };
+
 const CATALOG_PATH = resolve(process.cwd(), 'libs/contracts/src/models/catalog.json');
+const AGENT_DIR = resolve(process.cwd(), 'apps/worker/src/agents');
+const AGENT_FILES = [
+  'language',
+  'session',
+  'orchestrator',
+  'output',
+  'analyst',
+  'critic',
+  'researcher',
+];
 
 // The same content the contracts test hashes: formatting and the version/hash fields do not count.
 const hashOf = (catalog: Catalog): string =>
@@ -17,19 +31,40 @@ const hashOf = (catalog: Catalog): string =>
     .update(JSON.stringify({ defaultModels: catalog.defaultModels, models: catalog.models }))
     .digest('hex');
 
-const main = (): void => {
-  const catalog = JSON.parse(readFileSync(CATALOG_PATH, 'utf8')) as Catalog;
-  const hash = hashOf(catalog);
+const newVersion = (): string => `${new Date().toISOString().slice(0, 10)}-${randomUUID()}`;
 
-  if (hash === catalog.hash) {
-    process.stdout.write(`Model catalog already stamped: ${catalog.version}\n`);
+const stamp = <T extends { version: string; hash: string }>(
+  label: string,
+  path: string,
+  file: T,
+  hash: string,
+): void => {
+  if (hash === file.hash) {
+    process.stdout.write(`${label} already stamped: ${file.version}\n`);
     return;
   }
 
-  const version = `${new Date().toISOString().slice(0, 10)}-${randomUUID()}`;
-  const stamped: Catalog = { ...catalog, version, hash };
-  writeFileSync(CATALOG_PATH, `${JSON.stringify(stamped, null, 2)}\n`);
-  process.stdout.write(`Model catalog stamped: ${version}\n`);
+  const stamped: T = { ...file, version: newVersion(), hash };
+  writeFileSync(path, `${JSON.stringify(stamped, null, 2)}\n`);
+  process.stdout.write(`${label} stamped: ${stamped.version}\n`);
+};
+
+const main = (): void => {
+  const catalog = JSON.parse(readFileSync(CATALOG_PATH, 'utf8')) as Catalog;
+  stamp('Model catalog', CATALOG_PATH, catalog, hashOf(catalog));
+
+  // The same content the worker test hashes: the definition and the prompt's text.
+  const prompts = loadPrompts();
+  for (const name of AGENT_FILES) {
+    const path = resolve(AGENT_DIR, `${name}.json`);
+    const file = JSON.parse(readFileSync(path, 'utf8')) as StampedFile;
+    stamp(
+      `Agent ${name}`,
+      path,
+      file,
+      agentHash(file, prompts[file.prompt as keyof typeof prompts]),
+    );
+  }
 };
 
 main();

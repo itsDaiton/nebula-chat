@@ -1,0 +1,13 @@
+{
+  "version": "2026-11-23-70e62c83-97cf-4ac4-b89c-e83f5a122413",
+  "hash": "d27c2cb40f6216753b2bc49af1a595f0b2d33686892a8c3e490466e91a003c39",
+  "name": "orchestrator",
+  "kind": "agent",
+  "label": "Planning the work",
+  "model": "gpt-4.1",
+  "prompt": "orchestrator",
+  "tools": [],
+  "parameters": {
+    "temperature": 0.2
+  }
+}

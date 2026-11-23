@@ -1,0 +1,14 @@
+{
+  "version": "2026-11-23-fd2eb83d-18ad-4514-a6b7-3d95b3a6b7db",
+  "hash": "06563636501937d4de7faf558562a33986c89c5d3458727fe08772d30c8fa4b4",
+  "name": "researcher",
+  "kind": "delegate",
+  "label": "Researching",
+  "description": "Looks things up on the web and reports what current or external sources say, with their URLs. Use it for recent events, facts to check, or anything beyond general knowledge.",
+  "model": "gpt-4.1-mini",
+  "prompt": "researcher",
+  "tools": ["web_search", "web_fetch"],
+  "parameters": {
+    "temperature": 0.2
+  }
+}

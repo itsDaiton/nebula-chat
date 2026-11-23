@@ -27,7 +27,7 @@ pnpm knip                                      # on demand: after deleting/movin
 pnpm deps:check                                # import boundaries (.dependency-cruiser.cjs); CI fails on new ones
 pnpm deps:baseline                             # after fixing a known violation, shrink the baseline
 pnpm deps:graph apps/server/src/modules        # an area's import graph as Mermaid
-pnpm catalog:stamp                             # after editing libs/contracts/src/models/catalog.json
+pnpm catalog:stamp                             # after editing the model catalog, an Agent's JSON or its prompt
 podman compose up -d                           # PostgreSQL :5332, Redis :6380
 ```
 
