@@ -121,5 +121,6 @@ Then start the server, worker and client. [Full setup guide →](./docs/getting-
 | [Architecture](./docs/architecture.md) | Deployment, packages, data model and the flows that cross apps |
 | [Authentication](./docs/auth.md) | Sign-in, guests, the message allowance and claiming |
 | [Observability](./docs/logging.md) | Logging, tracing and runtime log levels |
+| [Catalogs](./docs/catalogs.md) | The Model and Agent catalogs, and how `pnpm catalog:stamp` keeps them honest |
 | [Domain glossary](./GLOSSARY.md) | The language the product and code share |
 | [Contributing](./AGENTS.md) | Conventions, git workflow and testing |
