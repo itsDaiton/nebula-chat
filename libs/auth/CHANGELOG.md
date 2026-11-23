@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.6.0...nebula-chat-auth-v3.6.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* **auth:** NEB-899 shorter CLI sessions and an account-merge test ([#951](https://github.com/itsDaiton/nebula-chat/issues/951)) ([f3d4414](https://github.com/itsDaiton/nebula-chat/commit/f3d44145d6fe97f3ead53c568b019938c1260806))
+
 ## [3.6.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.5.4...nebula-chat-auth-v3.6.0) (2026-11-23)
 
 
