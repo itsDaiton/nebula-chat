@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.15.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.3...nebula-chat-v7.15.4) (2026-11-23)
+
+
+### Bug Fixes
+
+* **client:** NEB-834 keep one collapsible Run card above a Run's answer ([#953](https://github.com/itsDaiton/nebula-chat/issues/953)) ([4170085](https://github.com/itsDaiton/nebula-chat/commit/4170085ebd7b890a18676827513670c60d429964))
+
 ## [7.15.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.2...nebula-chat-v7.15.3) (2026-11-23)
 
 
