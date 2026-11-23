@@ -12,6 +12,9 @@ The Agent catalog is not exposed by the server or the client, and nothing record
 call: the hash only detects drift. Its Models must exist in the Model catalog, so an Agent naming an unknown
 Model fails when the worker boots.
 
+The current Models and Agents, with prices and parameters, are listed in [docs/catalog.md](./catalog.md). That page
+is kept by hand: a PR that adds, changes or removes a Model or an Agent (its JSON or its prompt) updates it.
+
 ## What a stamp is
 
 `version` is `YYYY-MM-DD-<uuid>`: the day it was stamped and a fresh id for that change. `hash` is a SHA-256 of
@@ -40,7 +43,7 @@ flowchart LR
    `apps/worker/src/resources/prompts/`.
 2. Run `pnpm catalog:stamp` from the root. It rewrites only the stale files and is a no-op when everything is
    current, so it is safe to run after any change.
-3. Commit the stamped files with the change. Without the stamp, `libs/contracts/src/models/tests/modelCatalog.test.ts`
+3. Update [docs/catalog.md](./catalog.md) to match, and commit it with the stamped files. Without the stamp, `libs/contracts/src/models/tests/modelCatalog.test.ts`
    or `apps/worker/src/runs/tests/agentCatalog.test.ts` fails.
 
 `scripts/stamp-catalogs.ts` does the work. It imports only `apps/worker/src/runs/agentHash.ts`, which uses
