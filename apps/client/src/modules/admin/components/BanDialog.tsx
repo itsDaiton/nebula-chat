@@ -1,10 +1,14 @@
+import { addDays, format, parse, startOfToday } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { UsageSegmented } from '@/modules/admin/components/UsageSegmented';
 import { useUserActions } from '@/modules/admin/hooks/useUserActions';
 import type { BanDialogProps, BanValues } from '@/modules/admin/types/types';
 import { banSchema } from '@/modules/admin/utils/banSchema';
 import { resources } from '@/resources';
 import { Button } from '@/shared/components/ui/button';
+import { Calendar } from '@/shared/components/ui/calendar';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +18,7 @@ import {
   DialogTitle,
 } from '@/shared/components/ui/dialog';
 import { Field, FieldError, FieldLabel, FieldLegend, FieldSet } from '@/shared/components/ui/field';
-import { Input } from '@/shared/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { Textarea } from '@/shared/components/ui/textarea';
 
 const text = resources.admin.users.ban;
@@ -26,6 +30,7 @@ export const BanDialog = ({ user, open, onOpenChange }: BanDialogProps) => {
     register,
     handleSubmit,
     watch,
+    setValue,
     reset,
     formState: { errors },
   } = useForm<BanValues>({
@@ -34,6 +39,8 @@ export const BanDialog = ({ user, open, onOpenChange }: BanDialogProps) => {
     defaultValues: { reason: '', duration: 'permanent', until: '' },
   });
   const duration = watch('duration');
+  const untilDay = watch('until');
+  const selected = untilDay ? parse(untilDay, 'yyyy-MM-dd', new Date()) : undefined;
 
   const close = (next: boolean) => {
     if (!next) reset();
@@ -81,26 +88,40 @@ export const BanDialog = ({ user, open, onOpenChange }: BanDialogProps) => {
           </Field>
           <FieldSet>
             <FieldLegend variant="label">{text.duration}</FieldLegend>
-            <div className="flex gap-4 text-sm">
-              <label className="flex items-center gap-1.5">
-                <input type="radio" value="permanent" {...register('duration')} />
-                {text.permanent}
-              </label>
-              <label className="flex items-center gap-1.5">
-                <input type="radio" value="until" {...register('duration')} />
-                {text.untilDate}
-              </label>
-            </div>
+            <UsageSegmented
+              label={text.duration}
+              value={duration}
+              options={[
+                { value: 'permanent', label: text.permanent },
+                { value: 'until', label: text.untilDate },
+              ]}
+              onChange={(next) => setValue('duration', next, { shouldValidate: true })}
+            />
             {duration === 'until' && (
               <Field data-invalid={Boolean(errors.until)}>
-                <Input
-                  type="date"
-                  aria-label={text.date}
-                  aria-invalid={Boolean(errors.until)}
-                  aria-errormessage={errors.until ? 'ban-until-error' : undefined}
-                  className="w-44"
-                  {...register('until')}
-                />
+                <Popover>
+                  <PopoverTrigger
+                    aria-label={text.date}
+                    aria-invalid={Boolean(errors.until)}
+                    aria-errormessage={errors.until ? 'ban-until-error' : undefined}
+                    className="flex h-9 w-48 items-center gap-2 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive"
+                  >
+                    <CalendarIcon className="size-4 text-muted-foreground" />
+                    {selected ? format(selected, 'd MMM yyyy') : text.pickDate}
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={selected}
+                      onSelect={(day) =>
+                        setValue('until', day ? format(day, 'yyyy-MM-dd') : '', {
+                          shouldValidate: true,
+                        })
+                      }
+                      disabled={{ before: addDays(startOfToday(), 1) }}
+                    />
+                  </PopoverContent>
+                </Popover>
                 {errors.until && (
                   <FieldError id="ban-until-error">{errors.until.message}</FieldError>
                 )}

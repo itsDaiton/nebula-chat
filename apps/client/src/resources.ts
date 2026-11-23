@@ -569,6 +569,7 @@ export const resources = {
         permanent: 'Permanent',
         untilDate: 'Until a date',
         date: 'Ban ends on',
+        pickDate: 'Pick a date',
         dateRequired: 'Pick a date.',
         dateFuture: 'Pick a date after today.',
         confirm: 'Ban User',

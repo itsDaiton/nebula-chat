@@ -18,6 +18,13 @@ paths:
   utilities over the tokens in `styles/globals.css` (`bg-panel`, `text-muted-foreground`, `border-border`,
   `font-mono` for metadata and ids, `tabular-nums` for numbers), never raw colours. Tailwind's preflight is
   global, so a bare heading or list has no browser styling.
+- **Never hand-write a base component, and never reach for a native control that shadcn covers** (date input,
+  radio, select, checkbox, switch, table, tabs). Look for it first (shadcn MCP `search_items_in_registries`,
+  or <https://ui.shadcn.com/docs/components>), add it with the CLI from `apps/client`
+  (`pnpm dlx shadcn@latest add <name>`; the MCP's `get_add_command_for_items` prints the command), then
+  adapt the generated file. The CLI has written into a literal `@/` folder, added a stray `cn` dependency and a
+  duplicate `button.tsx`: check `git status` after it runs, move the file to `src/shared/components/ui/`, drop
+  what it should not have added, and run `pnpm install` to settle the lockfile.
 - **Toasts** are sonner's `toast` (`toast.success(title)`, `toast.error(title, { description })`); the one
   `Toaster` is mounted in `RootLayout`. Icons come from `lucide-react`; a brand mark it lacks is an inline SVG.
 - **Icon-only buttons use `IconButton`** (`shared/components/ui/icon-button.tsx`): it takes a `label` that is both the
