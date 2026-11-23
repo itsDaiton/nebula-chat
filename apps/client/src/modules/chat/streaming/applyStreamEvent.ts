@@ -55,7 +55,11 @@ export const applyStreamEvent = (
     if (!runEvent) return { history };
     const next = withReply(history, (last) => applyRunEvent(last, runEvent));
     const runId = next.at(-1)?.runId;
-    return { history: next, ...(runId && { staleRunId: runId }) };
+    // A started Step shows in the thread card alone; the saved Run only changes once one finishes.
+    return {
+      history: next,
+      ...(runId && runEvent.type !== 'step-started' && { staleRunId: runId }),
+    };
   }
   if (event === 'run-waiting') {
     const { runId, questionMessageId, question } = (parsed ?? {}) as Record<string, unknown>;

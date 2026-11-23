@@ -19,6 +19,7 @@ import { useChatStreamStore } from '@/modules/chat/stores/useChatStreamStore';
 import { IDLE_REPLY, isReplyInFlight } from '@/modules/chat/utils/replyState';
 import { useInspectorStore } from '@/modules/inspector/stores/useInspectorStore';
 import { useMessageStore } from '@/modules/chat/stores/useMessageStore';
+import { useRunCardStore } from '@/modules/chat/stores/useRunCardStore';
 import { useModelStore } from '@/modules/chat/stores/useModelStore';
 import { toast as sonner } from 'sonner';
 import { resources } from '@/resources';
@@ -76,6 +77,7 @@ const renderPage = (path = '/') => renderRoute(path);
 beforeEach(() => {
   vi.restoreAllMocks();
   useModelStore.setState({ selectedModel: 'gpt-4o-mini' });
+  useRunCardStore.setState({ expanded: {} });
   serveSessions();
   server.use(
     mockGetSession(aSession()),
@@ -433,6 +435,14 @@ describe('ChatPage', () => {
     const serveRunReads = () =>
       server.use(getGetRunMockHandler(aRun({ id: RUN_ID })), getGetSpendAllowanceMockHandler());
 
+    // A Run that ended collapses to one line; its Steps open from the chevron.
+    const expandCard = async () => {
+      await userEvent.click(
+        await screen.findByRole('button', { name: text.expand }, { timeout: 3000 }),
+      );
+      return screen.getByRole('region', { name: text.progress });
+    };
+
     // A reply still streaming would leak into the next test.
     const untilReplyEnds = () =>
       waitFor(() =>
@@ -472,9 +482,10 @@ describe('ChatPage', () => {
 
       await userEvent.type(composer(), 'keep BullMQ?{Enter}');
 
-      const progress = await screen.findByRole('region', { name: text.progress });
+      await screen.findByRole('region', { name: text.progress });
       expect(await screen.findByText('Keep BullMQ.')).toBeInTheDocument();
-      const rows = within(progress)
+      const expanded = await expandCard();
+      const rows = within(expanded)
         .getAllByRole('listitem')
         .map((row) => [row.textContent, within(row).getByRole('img').getAttribute('aria-label')]);
       expect(rows).toEqual([
@@ -482,7 +493,7 @@ describe('ChatPage', () => {
         ['Summarising the Session', 'Completed'],
         ['Writing the answeroutput', 'Completed'],
       ]);
-      expect(within(progress).getByText('partial')).toBeInTheDocument();
+      expect(within(expanded).getByText('partial')).toBeInTheDocument();
       expect(screen.getByText(text.intakeFailed)).toBeInTheDocument();
       expect(runToggle()).toHaveAttribute('aria-pressed', 'true');
       expect(runToggle()).toHaveAttribute('aria-disabled', 'true');
@@ -590,6 +601,7 @@ describe('ChatPage', () => {
       await holdSession({ isAnonymous: false, emailVerified: true });
       serveSends();
       serveRunSession();
+      serveRunReads();
       await renderPage();
       await screen.findByRole('textbox', { name: resources.chat.composer.label });
       await userEvent.click(runToggle());
@@ -607,9 +619,10 @@ describe('ChatPage', () => {
         ),
       );
 
-      const progress = await sendRun();
+      await sendRun();
 
       expect(await screen.findByText('Keep BullMQ')).toBeInTheDocument();
+      const progress = await expandCard();
       expect(
         within(progress)
           .getAllByRole('group')
@@ -624,7 +637,7 @@ describe('ChatPage', () => {
         ['Planning the workorchestrator', 'Completed'],
         [`Reviewingcritic${text.stepFailed}`, 'Failed'],
       ]);
-      expect(await screen.findByRole('note')).toHaveTextContent(
+      expect(within(progress).getByRole('note')).toHaveTextContent(
         'Partial answer. Reviewing (critic) failed in turn 2, so the answer was written without it.',
       );
     });
@@ -657,23 +670,48 @@ describe('ChatPage', () => {
           return new HttpResponse(null, { status: 204 });
         }),
       );
-      const progress = await sendRun();
+      await sendRun();
       expect(await screen.findByText('Keep BullMQ')).toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: resources.chat.stopReply }));
 
-      expect(await screen.findByRole('note')).toHaveTextContent(
+      const stopped = await expandCard();
+      expect(within(stopped).getByRole('note')).toHaveTextContent(
         'Run cancelled. It was stopped before it finished. The Steps it had completed are kept.',
       );
       expect(screen.getByText('Keep BullMQ')).toBeInTheDocument();
-      expect(within(progress).getByText('cancelled')).toBeInTheDocument();
-      expect(groupRows(progress, 'Turn 1')).toHaveLength(3);
-      expect(groupRows(progress, 'Answer')).toEqual([
+      expect(within(stopped).getByText('cancelled')).toBeInTheDocument();
+      expect(groupRows(stopped, 'Turn 1')).toHaveLength(3);
+      expect(groupRows(stopped, 'Answer')).toEqual([
         ['Writing the answeroutput', text.stepUnfinished],
       ]);
     });
 
-    it('shows the Steps of a Run still in flight when its Session is opened', async () => {
+    it('keeps a saved Run as its card, collapsed, after leaving the Session and coming back', async () => {
+      await holdSession({ isAnonymous: false, emailVerified: true });
+      serveRunReads();
+      server.use(
+        getListMessagesMockHandler([
+          aMessage('m1', 'user', 'keep BullMQ?'),
+          { ...aMessage('m2', 'assistant', 'Keep BullMQ.'), runId: RUN_ID },
+        ]),
+      );
+      const { router } = await renderPage(`/s/${SESSION_ID}`);
+      const card = () =>
+        screen.findByRole('button', { name: /^Run\s*partial\s*9 Steps · 41\.2s$/ });
+      await card();
+
+      await router.navigate({ to: '/' });
+      await router.navigate({ to: '/s/$id', params: { id: SESSION_ID } });
+
+      expect(await card()).toBeInTheDocument();
+      expect(
+        within(screen.getByRole('region', { name: text.progress })).queryByRole('group'),
+      ).not.toBeInTheDocument();
+    });
+
+    it('replays the Steps of a Run still in flight when its Session is opened into its card', async () => {
+      serveRunReads();
       server.use(
         getGetSessionMockHandler({
           ...aChatSession(SESSION_ID, 'Chat'),
@@ -686,14 +724,10 @@ describe('ChatPage', () => {
 
       await renderPage(`/s/${SESSION_ID}`);
 
-      const progress = await screen.findByRole(
-        'region',
-        { name: text.progress },
-        { timeout: 3000 },
-      );
-      expect(await within(progress).findByText('Writing the answer')).toBeInTheDocument();
+      expect(await screen.findByText('Keep BullMQ.', {}, { timeout: 3000 })).toBeInTheDocument();
+      const progress = await expandCard();
+      expect(within(progress).getByText('Writing the answer')).toBeInTheDocument();
       expect(within(progress).getByText('Detecting the language')).toBeInTheDocument();
-      expect(await screen.findByText('Keep BullMQ.')).toBeInTheDocument();
     });
   });
 

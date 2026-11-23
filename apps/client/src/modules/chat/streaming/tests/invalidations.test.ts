@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { getGetMessageAllowanceQueryKey } from '@/libs/api/generated/chat/chat';
 import { getListMessagesQueryKey } from '@/libs/api/generated/messages/messages';
@@ -12,6 +12,7 @@ import {
   invalidateCompletedStream,
   invalidateMessageAllowance,
   invalidateRun,
+  invalidateRunThrottled,
   invalidateSessionList,
 } from '@/modules/chat/streaming/invalidations';
 import { createTestQueryClient } from '@/test/render';
@@ -73,5 +74,60 @@ describe('chat stream invalidations', () => {
     invalidateCompletedStream(queryClient, SESSION_ID);
 
     expect(invalidatedKeys()).toEqual(['sessions', 'messages', 'session', 'openRun']);
+  });
+
+  describe('invalidateRunThrottled', () => {
+    let refetches: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      refetches = vi.spyOn(queryClient, 'invalidateQueries');
+    });
+    afterEach(() => {
+      // The throttle is module state: close any window a test left open.
+      invalidateRun(queryClient, 'r-open');
+      invalidateRun(queryClient, 'r-ended');
+      vi.useRealTimers();
+    });
+
+    it('refreshes the first finished Step at once and a burst after it once per 500 ms', () => {
+      invalidateRunThrottled(queryClient, 'r-open');
+      expect(refetches).toHaveBeenCalledTimes(1);
+
+      invalidateRunThrottled(queryClient, 'r-open');
+      invalidateRunThrottled(queryClient, 'r-open');
+      vi.advanceTimersByTime(499);
+      expect(refetches).toHaveBeenCalledTimes(1);
+
+      vi.advanceTimersByTime(1);
+      expect(refetches).toHaveBeenCalledTimes(2);
+
+      vi.advanceTimersByTime(2000);
+      expect(refetches).toHaveBeenCalledTimes(2);
+    });
+
+    it('refreshes again for a Step finishing after the window closed', () => {
+      invalidateRunThrottled(queryClient, 'r-open');
+      vi.advanceTimersByTime(500);
+      invalidateRunThrottled(queryClient, 'r-open');
+
+      expect(refetches).toHaveBeenCalledTimes(2);
+    });
+
+    it('lets the Run end refresh at once and drops the refresh still waiting', () => {
+      invalidateRunThrottled(queryClient, 'r-open');
+      invalidateRunThrottled(queryClient, 'r-open');
+      invalidateRun(queryClient, 'r-open');
+      vi.advanceTimersByTime(2000);
+
+      expect(refetches).toHaveBeenCalledTimes(2);
+    });
+
+    it('throttles each Run on its own', () => {
+      invalidateRunThrottled(queryClient, 'r-open');
+      invalidateRunThrottled(queryClient, 'r-ended');
+
+      expect(refetches).toHaveBeenCalledTimes(2);
+    });
   });
 });

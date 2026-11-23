@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { RunEndLine } from '@/modules/chat/components/RunEndLine';
+import { RunEndNote } from '@/modules/chat/components/RunEndNote';
 import type { RunProgress, RunStepProgress } from '@/modules/chat/types/types';
 import { resources } from '@/resources';
 
@@ -22,11 +22,11 @@ const aStep = (
 });
 
 const note = (run: RunProgress) => {
-  render(<RunEndLine run={run} />);
+  render(<RunEndNote run={run} />);
   return screen.queryByRole('note');
 };
 
-describe('RunEndLine', () => {
+describe('RunEndNote', () => {
   it('says an Intake Agent failed under a partial answer', () => {
     expect(note({ status: 'partial', steps: [aStep('intake', 'failed')] })).toHaveTextContent(
       `${end.partialTitle} ${resources.chat.run.intakeFailed}`,

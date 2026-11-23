@@ -84,6 +84,8 @@ export const resources = {
       locked: 'A Session keeps the Reply mode it started with. Start a new chat to switch.',
       modelUnused: "A Run's Agents pick their own Models",
       progress: 'Run progress',
+      expand: 'Show Steps',
+      collapse: 'Hide Steps',
       stepFailed: ' · failed',
       stepUnfinished: 'Not finished',
       parallel: 'parallel',

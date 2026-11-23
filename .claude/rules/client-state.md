@@ -44,8 +44,9 @@ State is split by **kind** ([ADR-0012](../../docs/adr/0012-adopt-tanstack-query-
   `step-started`, `step-finished` and `run-finished` frames are validated by `streaming/runProgress.ts`
   (`parseRunEvent`), folded into that Message (`applyRunEvent`: a flat list of Steps in first-seen order, each
   keeping its `turn` and `parentStepId`; a higher `attempt` resets the Step in place and, for the Output Step,
-  the answer) and each invalidates the Run's query, so the Inspector's
-  Run view follows along. The turn grouping is derived from that flat list when rendering
+  the answer) and a finished Step or the Run's end invalidates the Run's query, so the thread's card and the Inspector's
+  Run view follow along (`step-started` only updates the card; finished Steps refetch at most once per 500 ms
+  through `invalidateRunThrottled`, and `run-finished` refetches at once). The turn grouping is derived from that flat list when rendering
   (`utils/groupProgressSteps.ts`), never stored. Stop cancels a Run like a Direct reply: `run-finished` sets
   `cancelled`, and the reply keeps its Steps even when no answer had streamed. A `403 Forbidden` to a Run send returns the text to the composer and toasts the error.
   `useChatSession` selects the newest Run of the Session on screen (or none) when it changes.

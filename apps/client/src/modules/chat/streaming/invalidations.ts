@@ -29,9 +29,38 @@ export const invalidateAfterSend = (queryClient: QueryClient, sessionId: string)
   void queryClient.invalidateQueries({ queryKey: getGetSessionQueryKey(sessionId) });
 };
 
-// A Run's Step or end changes the Run the Inspector may be showing.
-export const invalidateRun = (queryClient: QueryClient, runId: string) =>
+const RUN_REFRESH_MS = 500;
+
+type RunThrottle = { timer: ReturnType<typeof setTimeout>; queued: boolean };
+
+// Module-level, not React state: a burst of finished Steps spans renders and components.
+const throttles = new Map<string, RunThrottle>();
+
+// A Run's end changes the Run the thread card and the Inspector show; it also drops a throttled refresh still waiting.
+export const invalidateRun = (queryClient: QueryClient, runId: string) => {
+  const open = throttles.get(runId);
+  if (open) clearTimeout(open.timer);
+  throttles.delete(runId);
   void queryClient.invalidateQueries({ queryKey: getGetRunQueryKey(runId) });
+};
+
+// A finished Step refetches the Run at once, then at most once per window, however many finish inside it.
+export const invalidateRunThrottled = (queryClient: QueryClient, runId: string) => {
+  const open = throttles.get(runId);
+  if (open) {
+    open.queued = true;
+    return;
+  }
+  void queryClient.invalidateQueries({ queryKey: getGetRunQueryKey(runId) });
+  const next: RunThrottle = {
+    queued: false,
+    timer: setTimeout(() => {
+      throttles.delete(runId);
+      if (next.queued) invalidateRunThrottled(queryClient, runId);
+    }, RUN_REFRESH_MS),
+  };
+  throttles.set(runId, next);
+};
 
 export const invalidateCompletedStream = (queryClient: QueryClient, sessionId: string) => {
   invalidateSpendAllowance(queryClient);
