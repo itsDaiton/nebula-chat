@@ -19,7 +19,7 @@ describe('offerSettingsForInvalidKey', () => {
 
     const [message, options] = vi.mocked(toast.error).mock.calls[0]!;
     expect(message).toBe('Your openai API key cannot be used.');
-    const action = options?.action as { onClick: () => void };
+    const action = options?.action as unknown as { onClick: () => void };
     action.onClick();
     expect(useSettingsDialogStore.getState()).toMatchObject({ isOpen: true, section: 'keys' });
   });
