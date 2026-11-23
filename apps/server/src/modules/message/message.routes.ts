@@ -2,7 +2,6 @@ import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { messageController } from '@server/modules/message/message.controller';
 import {
-  createMessageSchema,
   getMessagesSchema,
   listMessagesQuerySchema,
   messageResponseSchema,
@@ -11,27 +10,6 @@ import {
 import { jsonResponse } from '@server/utils/jsonResponse';
 
 const messageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
-  app.post('', {
-    schema: {
-      description: 'Create a new message in one of the caller’s own sessions',
-      summary: 'Create message',
-      tags: ['Messages'],
-      operationId: 'createMessage',
-      body: createMessageSchema,
-      response: {
-        201: jsonResponse('Message created successfully', messageResponseSchema),
-        400: jsonResponse('Invalid request body', errorEnvelopeSchema),
-        401: jsonResponse('No auth session', errorEnvelopeSchema),
-        404: jsonResponse('Session not found or not owned by the caller', errorEnvelopeSchema),
-        409: jsonResponse('Session is archived — restore it first', errorEnvelopeSchema),
-        500: jsonResponse('Internal server error', errorEnvelopeSchema),
-      },
-    },
-    // Owner-scoped: the target session must belong to the auth session's user.
-    config: { access: 'user' },
-    handler: messageController.create,
-  });
-
   app.get('/:messageId', {
     schema: {
       description: 'Retrieve one of the caller’s own messages by ID',
@@ -55,7 +33,7 @@ const messageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
   app.get('', {
     schema: {
       description:
-        'Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own lists as empty.',
+        'Retrieve the messages across the caller’s own sessions, newest first. Pass `sessionId` to list one session’s messages, oldest first; a session the caller does not own, or that does not exist, is a 404.',
       summary: 'List messages',
       tags: ['Messages'],
       operationId: 'listMessages',
@@ -64,6 +42,7 @@ const messageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => 
         200: jsonResponse('List of messages owned by the caller', messagesArraySchema),
         400: jsonResponse('Invalid session ID format', errorEnvelopeSchema),
         401: jsonResponse('No auth session', errorEnvelopeSchema),
+        404: jsonResponse('Session not found or not owned by the caller', errorEnvelopeSchema),
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },

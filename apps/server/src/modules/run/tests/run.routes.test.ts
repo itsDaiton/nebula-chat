@@ -14,7 +14,7 @@ import {
 
 // ADR-0008: only the repositories are faked; the gate, validation and error handler are real.
 vi.mock('@server/modules/run/run.repository', () => ({
-  runRepository: { findWithSteps: vi.fn() },
+  runRepository: { findOwnedWithSteps: vi.fn(), findAnyWithSteps: vi.fn() },
 }));
 
 vi.mock('@server/modules/audit/audit.repository', () => ({
@@ -94,7 +94,8 @@ afterAll(async () => {
 beforeEach(() => {
   vi.clearAllMocks();
   mockedGetSession.mockResolvedValue(registeredSession() as never);
-  repo.findWithSteps.mockResolvedValue(aRun());
+  repo.findOwnedWithSteps.mockResolvedValue(aRun());
+  repo.findAnyWithSteps.mockResolvedValue(null);
   audit.insert.mockResolvedValue(undefined);
 });
 
@@ -135,13 +136,14 @@ describe('GET /api/runs/:runId', () => {
         },
       ],
     });
-    expect(repo.findWithSteps).toHaveBeenCalledWith(RUN_ID);
+    expect(repo.findOwnedWithSteps).toHaveBeenCalledWith(RUN_ID, REGISTERED_USER_ID);
+    expect(repo.findAnyWithSteps).not.toHaveBeenCalled();
     expect(audit.insert).not.toHaveBeenCalled();
   });
 
   it('returns a Run still in flight, with a failed Step carrying its error envelope', async () => {
     const error = { success: false, error: 'Internal', message: 'Something went wrong' };
-    repo.findWithSteps.mockResolvedValue(
+    repo.findOwnedWithSteps.mockResolvedValue(
       aRun({
         status: 'running',
         brief: null,
@@ -163,8 +165,18 @@ describe('GET /api/runs/:runId', () => {
     });
   });
 
+  it('answers not-found for an Admin reading a Run that does not exist', async () => {
+    mockedGetSession.mockResolvedValue(adminSession() as never);
+    repo.findOwnedWithSteps.mockResolvedValue(null);
+
+    const res = await app.inject({ method: 'GET', url: RUN, headers: COOKIE });
+
+    expect(res.statusCode).toBe(404);
+    expect(audit.insert).not.toHaveBeenCalled();
+  });
+
   it('answers a typed not-found for an unknown Run', async () => {
-    repo.findWithSteps.mockResolvedValue(null);
+    repo.findOwnedWithSteps.mockResolvedValue(null);
 
     const res = await app.inject({ method: 'GET', url: RUN, headers: COOKIE });
 
@@ -173,7 +185,8 @@ describe('GET /api/runs/:runId', () => {
   });
 
   it("answers the same not-found for someone else's Run, to a User and to a Guest", async () => {
-    repo.findWithSteps.mockResolvedValue(aRun({ userId: OTHER_USER_ID }));
+    repo.findOwnedWithSteps.mockResolvedValue(null);
+    repo.findAnyWithSteps.mockResolvedValue(aRun({ userId: OTHER_USER_ID }));
 
     const res = await app.inject({ method: 'GET', url: RUN, headers: COOKIE });
     expect(res.statusCode).toBe(404);
@@ -183,10 +196,13 @@ describe('GET /api/runs/:runId', () => {
     mockedGetSession.mockResolvedValue(guestSession() as never);
     expect((await app.inject({ method: 'GET', url: RUN, headers: COOKIE })).statusCode).toBe(404);
     expect(audit.insert).not.toHaveBeenCalled();
+    expect(repo.findAnyWithSteps).not.toHaveBeenCalled();
   });
 
   it("lets an Admin with two-factor read anyone's Run and writes one Audit entry", async () => {
     mockedGetSession.mockResolvedValue(adminSession() as never);
+    repo.findOwnedWithSteps.mockResolvedValue(null);
+    repo.findAnyWithSteps.mockResolvedValue(aRun());
 
     const res = await app.inject({ method: 'GET', url: RUN, headers: COOKIE });
 
@@ -205,7 +221,7 @@ describe('GET /api/runs/:runId', () => {
 
   it('does not audit an Admin reading their own Run', async () => {
     mockedGetSession.mockResolvedValue(adminSession() as never);
-    repo.findWithSteps.mockResolvedValue(aRun({ userId: ADMIN_USER_ID }));
+    repo.findOwnedWithSteps.mockResolvedValue(aRun({ userId: ADMIN_USER_ID }));
 
     const res = await app.inject({ method: 'GET', url: RUN, headers: COOKIE });
 
@@ -215,6 +231,7 @@ describe('GET /api/runs/:runId', () => {
 
   it("hides someone else's Run from an Admin whose auth session skipped two-factor", async () => {
     mockedGetSession.mockResolvedValue(adminTrustedDeviceSession() as never);
+    repo.findOwnedWithSteps.mockResolvedValue(null);
 
     const res = await app.inject({ method: 'GET', url: RUN, headers: COOKIE });
 
@@ -224,6 +241,8 @@ describe('GET /api/runs/:runId', () => {
 
   it('fails the request instead of serving unaudited content when the Audit write fails', async () => {
     mockedGetSession.mockResolvedValue(adminSession() as never);
+    repo.findOwnedWithSteps.mockResolvedValue(null);
+    repo.findAnyWithSteps.mockResolvedValue(aRun());
     audit.insert.mockRejectedValue(new Error('db down'));
 
     const res = await app.inject({ method: 'GET', url: RUN, headers: COOKIE });
@@ -239,6 +258,6 @@ describe('GET /api/runs/:runId', () => {
 
     mockedGetSession.mockResolvedValue(null as never);
     expect((await app.inject({ method: 'GET', url: RUN })).statusCode).toBe(401);
-    expect(repo.findWithSteps).not.toHaveBeenCalled();
+    expect(repo.findOwnedWithSteps).not.toHaveBeenCalled();
   });
 });

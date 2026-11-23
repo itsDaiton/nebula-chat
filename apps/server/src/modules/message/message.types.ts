@@ -1,12 +1,16 @@
 import type z from 'zod';
 import type { messages } from '@nebula-chat/db';
 import type {
-  createMessageSchema,
   getMessagesSchema,
   listMessagesQuerySchema,
 } from '@server/modules/message/message.validation';
 
-export type CreateMessageDTO = z.infer<typeof createMessageSchema>;
+export type CreateMessageDTO = {
+  sessionId: string;
+  role: 'user' | 'assistant';
+  content: string;
+  tokenCount?: number | null;
+};
 
 export type GetMessageParams = z.infer<typeof getMessagesSchema>;
 
