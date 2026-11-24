@@ -11,8 +11,8 @@ import { Skeleton } from '@/shared/components/ui/skeleton';
 const { run: text } = resources.inspector;
 
 /** How a Run produced its answer: end status, tokens against the Run budget, the Brief and every Step. */
-export const RunView = ({ runId }: RunViewProps) => {
-  const { data: run, isPending, error } = useRun(runId);
+export const RunView = ({ runId, audited }: RunViewProps) => {
+  const { data: run, isPending, error } = useRun(runId, { audited });
 
   if (isPending) {
     return (

@@ -11,6 +11,7 @@ import type { HttpResponseResolver, RequestHandlerOptions } from 'msw';
 
 import type {
   AdminOverview,
+  AdminRunListPage,
   AdminSessionDetail,
   AdminSessionListPage,
   AdminSessionPage,
@@ -244,6 +245,43 @@ export const getListUserSessionsResponseMock = (
       updatedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
     }),
   ),
+  nextCursor: faker.helpers.arrayElement([faker.string.uuid(), null]),
+  hasMore: faker.datatype.boolean(),
+  ...overrideResponse,
+});
+
+export const getListAllRunsResponseMock = (
+  overrideResponse: Partial<Extract<AdminRunListPage, object>> = {},
+): AdminRunListPage => ({
+  runs: Array.from({ length: faker.number.int({ min: 1, max: 100 }) }, (_, i) => i + 1).map(() => ({
+    id: faker.string.uuid(),
+    status: faker.helpers.arrayElement([
+      'queued',
+      'running',
+      'waiting',
+      'completed',
+      'partial',
+      'failed',
+      'cancelled',
+    ] as const),
+    startedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+    durationMs: faker.helpers.arrayElement([
+      faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+      null,
+    ]),
+    stepCount: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+    tokensUsed: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+    tokenBudget: faker.helpers.arrayElement([
+      faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+      null,
+    ]),
+    costUsd: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+    owner: { id: faker.string.uuid(), name: faker.string.alpha({ length: { min: 10, max: 20 } }) },
+    session: {
+      id: faker.string.uuid(),
+      title: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    },
+  })),
   nextCursor: faker.helpers.arrayElement([faker.string.uuid(), null]),
   hasMore: faker.datatype.boolean(),
   ...overrideResponse,
@@ -738,6 +776,28 @@ export const getUnbanUserMockHandler = (
   );
 };
 
+export const getListAllRunsMockHandler = (
+  overrideResponse?:
+    | AdminRunListPage
+    | ((info: Parameters<HttpResponseResolver>[0]) => Promise<AdminRunListPage> | AdminRunListPage),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/admin/runs',
+    async (info: Parameters<HttpResponseResolver>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getListAllRunsResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
 export const getListAllSessionsMockHandler = (
   overrideResponse?:
     | AdminSessionListPage
@@ -818,6 +878,7 @@ export const getAdminMock = () => [
   getSetUserRoleMockHandler(),
   getBanUserMockHandler(),
   getUnbanUserMockHandler(),
+  getListAllRunsMockHandler(),
   getListAllSessionsMockHandler(),
   getReadSessionMockHandler(),
   getListAuditEntriesMockHandler(),

@@ -3,6 +3,7 @@ import type {
   adminEmailParamsSchema,
   grantAdminSchema,
   banUserSchema,
+  listRunsQuerySchema,
   listSessionsQuerySchema,
   listUserSessionsQuerySchema,
   listUsersQuerySchema,
@@ -38,6 +39,10 @@ export type SessionIdParams = z.infer<typeof sessionIdParamsSchema>;
 export type ListSessionsQuery = z.infer<typeof listSessionsQuerySchema>;
 
 export type SessionFilters = Omit<ListSessionsQuery, 'limit' | 'cursor'>;
+
+export type ListRunsQuery = z.infer<typeof listRunsQuerySchema>;
+
+export type RunFilters = Omit<ListRunsQuery, 'limit' | 'cursor'>;
 
 export type OverviewRange = z.infer<typeof overviewQuerySchema>['range'];
 

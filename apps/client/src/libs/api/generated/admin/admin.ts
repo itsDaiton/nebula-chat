@@ -22,6 +22,7 @@ import type {
 
 import type {
   AdminOverview,
+  AdminRunListPage,
   AdminSessionDetail,
   AdminSessionListPage,
   AdminSessionPage,
@@ -34,6 +35,7 @@ import type {
   GetModelUsageDetailParams,
   GetModelUsageSeriesParams,
   GetModelUsageTotalsParams,
+  ListAllRunsParams,
   ListAllSessionsParams,
   ListAuditEntriesParams,
   ListUserSessionsParams,
@@ -1453,6 +1455,147 @@ export const useUnbanUser = <TError = ErrorType<ErrorEnvelope | unknown>, TConte
 > => {
   return useMutation(getUnbanUserMutationOptions(options), queryClient);
 };
+/**
+ * List Runs across all Users, newest first by default, filtered by status, owner and start time, and sorted by start, duration, tokens or cost, a page at a time. Listing is not a content read, so nothing is audited; opening a Run is (`GET /api/runs/{runId}`). Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List Runs
+ */
+export const listAllRuns = (
+  params?: ListAllRunsParams,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<AdminRunListPage>(
+    { url: `/api/admin/runs`, method: 'GET', params, signal },
+    options,
+  );
+};
+
+export const getListAllRunsQueryKey = (params?: ListAllRunsParams) => {
+  return [`/api/admin/runs`, ...(params ? [params] : [])] as const;
+};
+
+export const getListAllRunsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listAllRuns>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListAllRunsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAllRuns>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListAllRunsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listAllRuns>>> = ({ signal }) =>
+    listAllRuns(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listAllRuns>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListAllRunsQueryResult = NonNullable<Awaited<ReturnType<typeof listAllRuns>>>;
+export type ListAllRunsQueryError = ErrorType<ErrorEnvelope>;
+
+/**
+ * List Runs across all Users, newest first by default, filtered by status, owner and start time, and sorted by start, duration, tokens or cost, a page at a time. Listing is not a content read, so nothing is audited; opening a Run is (`GET /api/runs/{runId}`). Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List Runs
+ */
+export function useListAllRuns<
+  TData = Awaited<ReturnType<typeof listAllRuns>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params: undefined | ListAllRunsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAllRuns>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAllRuns>>,
+          TError,
+          Awaited<ReturnType<typeof listAllRuns>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * List Runs across all Users, newest first by default, filtered by status, owner and start time, and sorted by start, duration, tokens or cost, a page at a time. Listing is not a content read, so nothing is audited; opening a Run is (`GET /api/runs/{runId}`). Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List Runs
+ */
+export function useListAllRuns<
+  TData = Awaited<ReturnType<typeof listAllRuns>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListAllRunsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAllRuns>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAllRuns>>,
+          TError,
+          Awaited<ReturnType<typeof listAllRuns>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * List Runs across all Users, newest first by default, filtered by status, owner and start time, and sorted by start, duration, tokens or cost, a page at a time. Listing is not a content read, so nothing is audited; opening a Run is (`GET /api/runs/{runId}`). Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List Runs
+ */
+export function useListAllRuns<
+  TData = Awaited<ReturnType<typeof listAllRuns>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListAllRunsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAllRuns>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * List Runs across all Users, newest first by default, filtered by status, owner and start time, and sorted by start, duration, tokens or cost, a page at a time. Listing is not a content read, so nothing is audited; opening a Run is (`GET /api/runs/{runId}`). Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List Runs
+ */
+export function useListAllRuns<
+  TData = Awaited<ReturnType<typeof listAllRuns>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListAllRunsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAllRuns>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListAllRunsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 /**
  * List Sessions across all Users, most recently active first by default, filtered by a title search, owner, Model and archived state, a page at a time. Listing is not a content read, so nothing is audited. Requires an Admin whose auth session passed two-factor authentication.
  *

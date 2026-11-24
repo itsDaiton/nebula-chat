@@ -35,6 +35,8 @@ export type InspectorRowProps = {
 
 export type RunViewProps = {
   runId: string;
+  /** An Admin's read of another User's Run, which is never served from cache. */
+  audited?: boolean;
 };
 
 export type RunProps = {

@@ -393,13 +393,10 @@ describe('admin navigation', () => {
     expect(
       within(nav).getByRole('link', { name: resources.admin.nav.modelUsage }),
     ).toBeInTheDocument();
-    for (const label of [
-      resources.admin.nav.runs,
-      resources.admin.nav.agents,
-      resources.admin.nav.operations,
-    ]) {
-      const row = within(nav).getByText(label).closest('[aria-disabled="true"]');
-      expect(row).toHaveTextContent(resources.admin.nav.soon);
-    }
+    expect(within(nav).getByRole('link', { name: resources.admin.nav.runs })).toBeInTheDocument();
+    const row = within(nav)
+      .getByText(resources.admin.nav.operations)
+      .closest('[aria-disabled="true"]');
+    expect(row).toHaveTextContent(resources.admin.nav.soon);
   });
 });

@@ -6,6 +6,7 @@ import type {
   AdminEmailParams,
   BanUserDTO,
   GrantAdminDTO,
+  ListRunsQuery,
   ListSessionsQuery,
   ListUserSessionsQuery,
   ListUsersQuery,
@@ -49,6 +50,10 @@ export const adminController = {
   },
   async listSessions(req: FastifyRequest<{ Querystring: ListSessionsQuery }>, reply: FastifyReply) {
     const page = await adminService.listSessions(req.query);
+    return reply.status(200).send(page);
+  },
+  async listRuns(req: FastifyRequest<{ Querystring: ListRunsQuery }>, reply: FastifyReply) {
+    const page = await adminService.listRuns(req.query);
     return reply.status(200).send(page);
   },
   async readSession(req: FastifyRequest<{ Params: SessionIdParams }>, reply: FastifyReply) {

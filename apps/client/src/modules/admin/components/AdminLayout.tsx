@@ -1,6 +1,7 @@
 import { Outlet, useRouterState } from '@tanstack/react-router';
 import { AdminDetailPanel } from '@/modules/admin/components/AdminDetailPanel';
 import { AdminNav } from '@/modules/admin/components/AdminNav';
+import { RunDetailPanel } from '@/modules/admin/components/RunDetailPanel';
 import { SessionMetaPanel } from '@/modules/admin/components/SessionMetaPanel';
 import { UsageDetailPanel } from '@/modules/admin/components/UsageDetailPanel';
 import { UserDetailPanel } from '@/modules/admin/components/UserDetailPanel';
@@ -21,10 +22,11 @@ export const AdminLayout = () => {
   return (
     <AppShell
       renderLeftPanel={(onNavigate) => <AdminNav onNavigate={onNavigate} />}
-      // Users and an open Session keep theirs in the URL; the other tables keep their row in the store.
+      // Users, Runs and an open Session keep theirs in the URL; the other tables keep their row in the store.
       renderRightPanel={(onClose) => {
         if (isTranscript) return <SessionMetaPanel onClose={onClose} />;
         if (pathname === '/admin/usage') return <UsageDetailPanel onClose={onClose} />;
+        if (pathname === '/admin/runs') return <RunDetailPanel onClose={onClose} />;
         if (pathname === '/admin/users') return <UserDetailPanel onClose={onClose} />;
         return <AdminDetailPanel path={pathname} onClose={onClose} />;
       }}

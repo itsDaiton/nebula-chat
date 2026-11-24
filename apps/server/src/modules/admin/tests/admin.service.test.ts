@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@server/modules/admin/admin.repository', () => ({
-  adminRepository: { overviewCounts: vi.fn() },
+  adminRepository: { overviewCounts: vi.fn(), listRuns: vi.fn() },
 }));
 vi.mock('@server/auth', () => ({ auth: {} }));
 
@@ -153,5 +153,61 @@ describe('adminService.getOverview', () => {
     expect(kpis.guestConversion.rate).toBeNull();
     expect(kpis.guestConversion.previousRate).toBeNull();
     expect(kpis.messagesSent.series).toHaveLength(30);
+  });
+});
+
+describe('adminService.listRuns', () => {
+  const aRun = (overrides: Record<string, unknown> = {}) => ({
+    id: 'run-1',
+    status: 'completed',
+    startedAt: new Date('2026-10-27T21:14:00.000Z'),
+    finishedAt: new Date('2026-10-27T21:15:12.000Z'),
+    stepCount: 6,
+    tokensUsed: 100,
+    tokenBudget: 60_000,
+    costUsd: 0.044,
+    owner: { id: 'u1', name: 'Anna', email: 'anna@example.com' },
+    session: { id: 's1', title: 'Plan' },
+    ...overrides,
+  });
+
+  it('turns the finish time into a duration and keeps the owner email out', async () => {
+    repo.listRuns.mockResolvedValue({ runs: [aRun()], nextCursor: null, hasMore: false } as never);
+
+    const { runs } = await adminService.listRuns({ sortBy: 'startedAt', order: 'desc', limit: 10 });
+
+    expect(runs[0]).toMatchObject({ durationMs: 72_000, owner: { id: 'u1', name: 'Anna' } });
+    expect(runs[0]).not.toHaveProperty('finishedAt');
+    expect(JSON.stringify(runs)).not.toContain('anna@example.com');
+  });
+
+  it('has no duration for a Run that has not finished, and keeps a null cost', async () => {
+    repo.listRuns.mockResolvedValue({
+      runs: [aRun({ status: 'running', finishedAt: null, costUsd: null })],
+      nextCursor: null,
+      hasMore: false,
+    } as never);
+
+    const { runs } = await adminService.listRuns({ sortBy: 'startedAt', order: 'desc', limit: 10 });
+
+    expect(runs[0]).toMatchObject({ durationMs: null, costUsd: null });
+  });
+
+  it('passes the filters, limit and cursor to the repository', async () => {
+    repo.listRuns.mockResolvedValue({ runs: [], nextCursor: null, hasMore: false });
+
+    await adminService.listRuns({
+      sortBy: 'cost',
+      order: 'asc',
+      status: ['failed'],
+      limit: 5,
+      cursor: 'c1',
+    });
+
+    expect(repo.listRuns).toHaveBeenCalledWith(
+      { sortBy: 'cost', order: 'asc', status: ['failed'] },
+      5,
+      'c1',
+    );
   });
 });

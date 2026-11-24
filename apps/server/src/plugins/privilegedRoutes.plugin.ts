@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import adminRoutes from '@server/modules/admin/admin.routes';
 import adminOverviewRoutes from '@server/modules/admin/adminOverview.routes';
+import adminRunsRoutes from '@server/modules/admin/adminRuns.routes';
 import adminSessionsRoutes from '@server/modules/admin/adminSessions.routes';
 import adminUsersRoutes from '@server/modules/admin/adminUsers.routes';
 import auditRoutes from '@server/modules/audit/audit.routes';
@@ -22,6 +23,7 @@ const privilegedRoutes: FastifyPluginAsync = async (app) => {
     await admin.register(adminOverviewRoutes, { prefix: '/api/admin/overview' });
     await admin.register(usageRoutes, { prefix: '/api/admin/usage' });
     await admin.register(adminUsersRoutes, { prefix: '/api/admin/users' });
+    await admin.register(adminRunsRoutes, { prefix: '/api/admin/runs' });
     await admin.register(adminSessionsRoutes, { prefix: '/api/admin/sessions' });
     await admin.register(auditRoutes, { prefix: '/api/admin/audit' });
   });

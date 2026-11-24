@@ -76,6 +76,8 @@ describe('OpenAPI document', () => {
     expect(Object.keys(document.components.schemas).sort()).toEqual([
       'Admin',
       'AdminOverview',
+      'AdminRunListItem',
+      'AdminRunListPage',
       'AdminSessionDetail',
       'AdminSessionListItem',
       'AdminSessionListPage',

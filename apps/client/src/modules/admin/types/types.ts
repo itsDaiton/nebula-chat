@@ -19,6 +19,9 @@ import type { ListAuditEntriesActorType } from '@/libs/api/generated/model/listA
 import type { AdminUserDetail } from '@/libs/api/generated/model/adminUserDetail';
 import type { AdminUserSummaryStatus } from '@/libs/api/generated/model/adminUserSummaryStatus';
 import type { ErrorEnvelope } from '@/libs/api/generated/model/errorEnvelope';
+import type { ListAllRunsOrder } from '@/libs/api/generated/model/listAllRunsOrder';
+import type { ListAllRunsSortBy } from '@/libs/api/generated/model/listAllRunsSortBy';
+import type { ListAllRunsStatusItem } from '@/libs/api/generated/model/listAllRunsStatusItem';
 import type { ListAllSessionsArchived } from '@/libs/api/generated/model/listAllSessionsArchived';
 import type { ListAuditEntriesOrder } from '@/libs/api/generated/model/listAuditEntriesOrder';
 import type { ListAllSessionsOrder } from '@/libs/api/generated/model/listAllSessionsOrder';
@@ -50,7 +53,8 @@ type AdminNavPage = {
   label: string;
   icon: LucideIcon;
   /** Unset while the page is not built: its row is disabled and labelled "soon". */
-  to?: '/admin' | '/admin/audit' | '/admin/sessions' | '/admin/usage' | '/admin/users';
+  to?:
+    '/admin' | '/admin/audit' | '/admin/runs' | '/admin/sessions' | '/admin/usage' | '/admin/users';
   /** The page has selectable rows, so the right panel and its toggle exist. */
   hasDetail?: boolean;
 };
@@ -186,6 +190,31 @@ export type SessionFiltersProps = {
   /** `replace` keeps typing in the search box out of the history. */
   onChange: (patch: Partial<SessionsSearch>, replace?: boolean) => void;
 };
+
+/** What the Runs table's URL holds: filters, sort, the page cursor and the open Run. */
+export type RunsSearch = {
+  status?: ListAllRunsStatusItem[];
+  /** The owner's id. */
+  user?: string;
+  /** Days as `YYYY-MM-DD`, both included. */
+  from?: string;
+  to?: string;
+  sort?: ListAllRunsSortBy;
+  dir?: ListAllRunsOrder;
+  cursor?: string;
+  selected?: string;
+};
+
+export type RunFiltersProps = {
+  search: RunsSearch;
+  onChange: (patch: Partial<RunsSearch>) => void;
+};
+
+export type RunSortHeaderProps = { column: ListAllRunsSortBy; label: string; alignRight?: boolean };
+
+export type RunTokensProps = { used: number; budget: number | null };
+
+export type RunDetailPanelProps = { onClose: () => void };
 
 export type SessionOwnerFilterProps = { userId: string; onClear: () => void };
 
