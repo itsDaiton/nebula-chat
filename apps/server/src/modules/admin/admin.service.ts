@@ -313,12 +313,12 @@ export const adminService = {
     const banExpiresIn = expiresAt
       ? Math.max(1, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 1000))
       : undefined;
+    // Before the ban, so a failed write leaves a note nobody sees instead of a ban without one.
+    await adminRepository.setBanNote(userId, note ?? null);
     await adminApi().banUser({
       body: { userId, ...(reason && { banReason: reason }), ...(banExpiresIn && { banExpiresIn }) },
       headers,
     });
-    // better-auth owns the ban fields but knows nothing of the note, so it is written beside the ban.
-    await adminRepository.setBanNote(userId, note ?? null);
     await auditService.append({
       actorType: 'admin',
       actorUserId: adminId,
