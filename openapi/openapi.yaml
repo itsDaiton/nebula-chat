@@ -2607,8 +2607,9 @@ paths:
         catalog version and content hash
 
 
-        Access: public
-      security: []
+        Access: user
+      security:
+        - cookieAuth: []
       responses:
         '200':
           description: The model catalog
@@ -2616,6 +2617,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ModelCatalog'
+        '401':
+          description: No auth session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
         '500':
           description: Internal server error
           content:

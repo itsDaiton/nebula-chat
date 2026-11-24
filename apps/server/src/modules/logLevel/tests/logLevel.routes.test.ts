@@ -165,7 +165,7 @@ describe('POST /api/internal/log-level', () => {
       registeredSession,
       { authorization: `Basic ${env.OPERATOR_TOKEN}` },
     ],
-  ])('answers Forbidden to %s and changes nothing', async (_who, session, headers) => {
+  ])('answers 404 to %s and changes nothing', async (_who, session, headers) => {
     mockedGetSession.mockResolvedValue(session() as never);
 
     const res = await app.inject({
@@ -175,15 +175,15 @@ describe('POST /api/internal/log-level', () => {
       payload: { level: 'debug', operator: 'ada' },
     });
 
-    expect(res.statusCode).toBe(403);
-    expect(res.json()).toMatchObject({ success: false, error: 'Forbidden' });
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toMatchObject({ statusCode: 404 });
     expect(eventLines(lines, 'log.level.changed')).toEqual([]);
   });
 
-  it('answers Forbidden before validating the body, so a non-operator learns nothing of it', async () => {
+  it('answers 404 before validating the body, so a non-operator learns nothing of it', async () => {
     const res = await app.inject({ method: 'POST', url: ROUTE, payload: { level: 'loud' } });
 
-    expect(res.statusCode).toBe(403);
+    expect(res.statusCode).toBe(404);
   });
 
   it('answers exactly as a route that does not exist while no operator token is configured', async () => {
@@ -304,7 +304,7 @@ describe('GET /api/internal/log-level', () => {
     ['a Guest', guestSession, {}],
     ['a Registered user', registeredSession, {}],
     ['a wrong operator token', registeredSession, { authorization: 'Bearer not-the-token' }],
-  ])('answers Forbidden to %s', async (_who, session, headers) => {
+  ])('answers 404 to %s', async (_who, session, headers) => {
     mockedGetSession.mockResolvedValue(session() as never);
 
     const res = await app.inject({
@@ -313,8 +313,8 @@ describe('GET /api/internal/log-level', () => {
       headers: { cookie: 'better-auth.session_token=abc', ...headers },
     });
 
-    expect(res.statusCode).toBe(403);
-    expect(res.json()).toMatchObject({ success: false, error: 'Forbidden' });
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toMatchObject({ statusCode: 404 });
   });
 
   it('answers Not Found while no operator token is configured', async () => {

@@ -210,10 +210,12 @@ describe('requireAdmin', () => {
     ['an unverified user', unverifiedSession],
     ['an Admin whose email is unverified', unverifiedAdminSession],
     ['a banned Admin', bannedSession],
-  ])('rejects %s with Forbidden', async (_who, session) => {
+  ])('answers %s with the not-found handler', async (_who, session) => {
     mockedGetSession.mockResolvedValue(session() as never);
+    const reply = Object.assign(makeRequest().reply, { callNotFound: vi.fn() });
 
-    await expect(run(requireAdmin, makeReq())).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(run(requireAdmin, makeReq(), reply)).resolves.toBe(reply);
+    expect(reply.callNotFound).toHaveBeenCalledOnce();
   });
 
   it('rejects an unauthenticated request with UnauthorizedError', async () => {
@@ -732,8 +734,12 @@ describe('Access level gates', () => {
     ['registered', null, 401],
     ['registered', guestSession(), 403],
     ['registered', registeredSession(), 200],
-    ['admin', registeredSession(), 403],
+    ['admin', registeredSession(), 404],
+    ['admin', guestSession(), 404],
+    ['admin', bannedSession(), 404],
+    ['admin', unverifiedAdminSession(), 404],
     ['admin', adminWithout2FASession(), 403],
+    ['admin', adminTrustedDeviceSession(), 403],
     ['admin', adminSession(), 200],
   ])('%s answers a session %#: %i', async (level, session, expected) => {
     expect(await status(`/${level}`, session, { payload: { x: 'valid' } })).toBe(expected);
@@ -750,7 +756,18 @@ describe('Access level gates', () => {
     expect(await status('/user', guestSession())).toBe(400);
   });
 
-  it('operator admits only the operator token, and a missing one is a 404', async () => {
+  it('answers a signed-in non-Admin on admin with the body of an unknown route', async () => {
+    await ready;
+    mockedGetSession.mockResolvedValue(registeredSession() as never);
+
+    const denied = await app.inject({ url: '/admin', method: 'POST', payload: { x: 'v' } });
+    const unknown = await app.inject({ url: '/nope', method: 'POST', payload: { x: 'v' } });
+
+    expect(denied.statusCode).toBe(404);
+    expect(denied.body).toBe(unknown.body.replace('/nope', '/admin'));
+  });
+
+  it('operator admits only the operator token; every other case is a 404', async () => {
     await ready;
     const token = env.OPERATOR_TOKEN;
     const get = async (authorization?: string) =>
@@ -758,8 +775,9 @@ describe('Access level gates', () => {
         .statusCode;
 
     expect(await get(`Bearer ${token}`)).toBe(200);
-    expect(await get('Bearer wrong-token')).toBe(403);
-    expect(await get()).toBe(403);
+    expect(await get('Bearer wrong-token')).toBe(404);
+    expect(await get(`Basic ${token}`)).toBe(404);
+    expect(await get()).toBe(404);
     env.OPERATOR_TOKEN = undefined;
     expect(await get(`Bearer ${token}`)).toBe(404);
     env.OPERATOR_TOKEN = token;
