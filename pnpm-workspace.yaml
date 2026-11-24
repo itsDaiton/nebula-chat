@@ -10,10 +10,10 @@ catalog:
   '@types/react': ^19.3.0
   '@types/react-dom': ^19.3.0
   '@vitest/coverage-v8': ^5.1.0
-  better-auth: 1.7.20
-  bullmq: ^6.7.3
+  better-auth: 1.7.23
+  bullmq: ^6.7.6
   drizzle-orm: ^0.45.4
-  msw: ^3.0.4
+  msw: ^3.0.5
   nodemon: ^3.1.14
   orval: ^8.47.0
   react: ^19.3.1
