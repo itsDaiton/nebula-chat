@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.30.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.30.3...nebula-chat-server-v4.30.4) (2026-11-24)
+
+
+### Bug Fixes
+
+* **server:** NEB-894 typed responses and redacted logs ([#968](https://github.com/itsDaiton/nebula-chat/issues/968)) ([0f25190](https://github.com/itsDaiton/nebula-chat/commit/0f25190c4d80b6120f65c572dbf3f40061afeae9))
+
 ## [4.30.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.30.2...nebula-chat-server-v4.30.3) (2026-11-24)
 
 
