@@ -653,6 +653,7 @@ components:
             - type: 'null'
           description: The Session Agent’s output; null when it failed
         missing:
+          maxItems: 10
           type: array
           items:
             type: string
@@ -854,6 +855,7 @@ components:
                   type: string
                   description: The system prompt the Agent was sent
                 messages:
+                  maxItems: 1000
                   type: array
                   items:
                     type: object
@@ -863,6 +865,7 @@ components:
                       content:
                         type: string
                       toolCalls:
+                        maxItems: 100
                         type: array
                         items:
                           type: object
@@ -900,6 +903,7 @@ components:
                     content:
                       type: string
                     toolCalls:
+                      maxItems: 100
                       type: array
                       items:
                         type: object

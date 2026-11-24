@@ -102,9 +102,11 @@ export type Step =
         };
         /** The system prompt the Agent was sent */
         system: string;
+        /** @maxItems 1000 */
         messages: {
           type: string;
           content: string;
+          /** @maxItems 100 */
           toolCalls?: {
             id?: string;
             name: string;
@@ -115,6 +117,7 @@ export type Step =
       };
       output: {
         content: string;
+        /** @maxItems 100 */
         toolCalls: {
           id?: string;
           name: string;

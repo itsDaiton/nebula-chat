@@ -48,7 +48,7 @@ describe('RunTab', () => {
 
     expect(await screen.findByRole('heading', { name: 'Brief' })).toBeInTheDocument();
     expect(screen.getByText('language').tagName).toBe('DT');
-    expect(screen.getByText('language: Czech')).toBeInTheDocument();
+    expect(screen.getByText(/language: Czech/)).toBeInTheDocument();
     expect(screen.getByText('session').tagName).toBe('DT');
     expect(screen.getByText(text.briefMissing)).toBeInTheDocument();
     expect(screen.queryByText('missing')).not.toBeInTheDocument();

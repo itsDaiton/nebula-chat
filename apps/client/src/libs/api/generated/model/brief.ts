@@ -12,6 +12,9 @@ export interface Brief {
   language: BriefLanguage;
   /** The Session Agent’s output; null when it failed */
   session: BriefSession;
-  /** The Intake Agents that failed */
+  /**
+   * The Intake Agents that failed
+   * @maxItems 10
+   */
   missing: string[];
 }

@@ -148,13 +148,13 @@ export const getGetRunResponseMock = (
           },
           system: faker.string.alpha({ length: { min: 10, max: 20 } }),
           messages: Array.from(
-            { length: faker.number.int({ min: 1, max: 10 }) },
+            { length: faker.number.int({ min: 1, max: 1000 }) },
             (_, i) => i + 1,
           ).map(() => ({
             type: faker.string.alpha({ length: { min: 10, max: 20 } }),
             content: faker.string.alpha({ length: { min: 10, max: 20 } }),
             toolCalls: faker.helpers.arrayElement([
-              Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+              Array.from({ length: faker.number.int({ min: 1, max: 100 }) }, (_, i) => i + 1).map(
                 () => ({
                   id: faker.helpers.arrayElement([
                     faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -178,7 +178,7 @@ export const getGetRunResponseMock = (
           {
             content: faker.string.alpha({ length: { min: 10, max: 20 } }),
             toolCalls: Array.from(
-              { length: faker.number.int({ min: 1, max: 10 }) },
+              { length: faker.number.int({ min: 1, max: 100 }) },
               (_, i) => i + 1,
             ).map(() => ({
               id: faker.helpers.arrayElement([

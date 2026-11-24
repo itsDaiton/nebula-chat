@@ -28,7 +28,7 @@ const toolCallSchema = z.object({
 const transcriptMessageSchema = z.object({
   type: z.string(),
   content: z.string(),
-  toolCalls: z.array(toolCallSchema).optional(),
+  toolCalls: z.array(toolCallSchema).max(100).optional(),
   toolCallId: z.string().optional(),
 });
 
@@ -42,7 +42,7 @@ const briefSchema = z
       .object({ summary: z.string() })
       .nullable()
       .describe('The Session Agent’s output; null when it failed'),
-    missing: z.array(z.string()).describe('The Intake Agents that failed'),
+    missing: z.array(z.string()).max(10).describe('The Intake Agents that failed'),
   })
   .meta({ id: 'Brief' });
 
@@ -82,9 +82,11 @@ const stepSchema = z
       ...stepBaseShape,
       phase: z.literal('orchestrator'),
       input: z
-        .object({ ...modelCallInputShape, messages: z.array(transcriptMessageSchema) })
+        .object({ ...modelCallInputShape, messages: z.array(transcriptMessageSchema).max(1000) })
         .describe('Everything the Orchestrator was sent'),
-      output: z.object({ content: z.string(), toolCalls: z.array(toolCallSchema) }).nullable(),
+      output: z
+        .object({ content: z.string(), toolCalls: z.array(toolCallSchema).max(100) })
+        .nullable(),
     }),
     z.object({
       ...stepBaseShape,
