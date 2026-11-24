@@ -78,7 +78,8 @@ export const requireRegistered: onRequestAsyncHookHandler = async (req, reply) =
   }
 };
 
-// Why the caller is not an acting Admin; null when they are one. 'not-found' hides the route from everyone but an admin-role user.
+// Why the caller is not an acting Admin; null when they are one.
+// 'not-found' hides the route from everyone but an admin-role user.
 const adminRefusal = ({
   user,
   session,

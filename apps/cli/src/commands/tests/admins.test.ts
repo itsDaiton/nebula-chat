@@ -194,13 +194,6 @@ describe('nebula admins revoke', () => {
     expect(cli.stderr()).toBe('error: The last Admin cannot be demoted or banned.\n');
   });
 
-  it('exits 3 when the operator token is wrong', async () => {
-    const cli = await cliWith();
-    revokeAnswers(403, envelope('Forbidden', 'This action requires the operator token.'));
-
-    expect(await cli.run('admins', 'revoke', EMAIL, '--yes')).toBe(3);
-  });
-
   it('exits 3 when the server rejects the operator token or has none', async () => {
     const cli = await cliWith();
     revokeAnswers(404, envelope('NotFound', 'Route not found'));

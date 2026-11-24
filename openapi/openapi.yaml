@@ -3182,14 +3182,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
-          description: Missing or wrong operator token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
         '404':
-          description: No operator token is configured
+          description: Missing, wrong or unset operator token
           content:
             application/json:
               schema:
@@ -3277,14 +3271,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
-          description: Missing or wrong operator token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
         '404':
-          description: No operator token is configured
+          description: Missing, wrong or unset operator token
           content:
             application/json:
               schema:
@@ -3317,14 +3305,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Admin'
-        '403':
-          description: Missing or wrong operator token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
         '404':
-          description: No operator token is configured
+          description: Missing, wrong or unset operator token
           content:
             application/json:
               schema:
@@ -3377,13 +3359,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
-          description: Missing or wrong operator token
-          content:
-            application/json:
-              schema: {}
         '404':
-          description: No operator token is configured, or no user has that email
+          description: Missing, wrong or unset operator token, or no user has that email
           content:
             application/json:
               schema:
@@ -3433,13 +3410,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
-          description: Missing or wrong operator token
-          content:
-            application/json:
-              schema: {}
         '404':
-          description: No operator token is configured, or no user has that email
+          description: Missing, wrong or unset operator token, or no user has that email
           content:
             application/json:
               schema: {}
@@ -3513,8 +3485,8 @@ paths:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
           description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
-            (`TwoFactorRequired`)
+            An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+            non-Admin gets the unknown-route 404
           content:
             application/json:
               schema:
@@ -3622,8 +3594,8 @@ paths:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
           description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
-            (`TwoFactorRequired`)
+            An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+            non-Admin gets the unknown-route 404
           content:
             application/json:
               schema:
@@ -3715,8 +3687,8 @@ paths:
               schema: {}
         '403':
           description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
-            (`TwoFactorRequired`)
+            An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+            non-Admin gets the unknown-route 404
           content:
             application/json:
               schema: {}
@@ -3791,8 +3763,8 @@ paths:
               schema: {}
         '403':
           description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
-            (`TwoFactorRequired`)
+            An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+            non-Admin gets the unknown-route 404
           content:
             application/json:
               schema: {}
@@ -3931,8 +3903,8 @@ paths:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
           description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
-            (`TwoFactorRequired`)
+            An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+            non-Admin gets the unknown-route 404
           content:
             application/json:
               schema:
@@ -3989,8 +3961,8 @@ paths:
               schema: {}
         '403':
           description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
-            (`TwoFactorRequired`)
+            An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+            non-Admin gets the unknown-route 404
           content:
             application/json:
               schema: {}
@@ -4070,8 +4042,8 @@ paths:
               schema: {}
         '403':
           description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
-            (`TwoFactorRequired`)
+            An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+            non-Admin gets the unknown-route 404
           content:
             application/json:
               schema: {}
@@ -4128,8 +4100,8 @@ paths:
               schema: {}
         '403':
           description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
-            (`TwoFactorRequired`)
+            An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+            non-Admin gets the unknown-route 404
           content:
             application/json:
               schema: {}
@@ -4209,8 +4181,8 @@ paths:
               schema: {}
         '403':
           description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
-            (`TwoFactorRequired`)
+            An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+            non-Admin gets the unknown-route 404
           content:
             application/json:
               schema: {}
@@ -4301,8 +4273,8 @@ paths:
               schema: {}
         '403':
           description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
-            (`TwoFactorRequired`)
+            An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+            non-Admin gets the unknown-route 404
           content:
             application/json:
               schema: {}
@@ -4364,8 +4336,8 @@ paths:
               schema: {}
         '403':
           description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
-            (`TwoFactorRequired`)
+            An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+            non-Admin gets the unknown-route 404
           content:
             application/json:
               schema: {}
@@ -4490,8 +4462,8 @@ paths:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
           description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
-            (`TwoFactorRequired`)
+            An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+            non-Admin gets the unknown-route 404
           content:
             application/json:
               schema:
@@ -4550,8 +4522,8 @@ paths:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
           description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
-            (`TwoFactorRequired`)
+            An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+            non-Admin gets the unknown-route 404
           content:
             application/json:
               schema:
@@ -4699,8 +4671,8 @@ paths:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '403':
           description: >-
-            Not an Admin (`Forbidden`), or an Admin short of two-factor
-            (`TwoFactorRequired`)
+            An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+            non-Admin gets the unknown-route 404
           content:
             application/json:
               schema:
