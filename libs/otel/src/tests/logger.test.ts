@@ -164,6 +164,21 @@ describe('createLogger', () => {
       ['a flat dotted prompt', { 'gen_ai.prompt': 'SECRET' }, ['gen_ai.prompt']],
       ['a flat dotted email', { 'user.email': 'SECRET' }, ['user.email']],
       ['a nested email', { user: { email: 'SECRET' } }, ['user', 'email']],
+      [
+        'a driver error detail',
+        { err: Object.assign(new Error('duplicate key'), { detail: 'SECRET' }) },
+        ['err', 'detail'],
+      ],
+      ['a driver error cause detail', { cause: { detail: 'SECRET' } }, ['cause', 'detail']],
+      [
+        'a nested driver error cause detail',
+        {
+          err: new Error('failed', {
+            cause: Object.assign(new Error('duplicate key'), { detail: 'SECRET' }),
+          }),
+        },
+        ['err', 'cause', 'detail'],
+      ],
       ['an email inside forwarded args', { args: [{ email: 'SECRET' }] }, ['args', '0', 'email']],
     ])('censors %s', (_label, fields, path) => {
       const { logger, lines } = capture();

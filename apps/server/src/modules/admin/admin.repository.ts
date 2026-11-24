@@ -316,7 +316,7 @@ export const adminRepository = {
     const rows = await db
       .select({
         ...adminSessionColumns,
-        owner: { id: users.id, name: users.name, email: users.email },
+        owner: { id: users.id, name: users.name },
       })
       .from(sessions)
       .innerJoin(users, eq(users.id, sessions.userId))

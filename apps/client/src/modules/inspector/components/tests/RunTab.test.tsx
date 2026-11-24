@@ -37,14 +37,18 @@ describe('RunTab', () => {
   it("shows each Intake Agent's part of the Brief under its name", async () => {
     renderRun(
       aRun({
-        brief: { language: { language: 'Czech' }, session: null, missing: ['session'] },
+        brief: {
+          language: { language: 'Czech', englishRestatement: 'Hello' },
+          session: null,
+          missing: ['session'],
+        },
         steps: [],
       }),
     );
 
     expect(await screen.findByRole('heading', { name: 'Brief' })).toBeInTheDocument();
     expect(screen.getByText('language').tagName).toBe('DT');
-    expect(screen.getByText('language: Czech')).toBeInTheDocument();
+    expect(screen.getByText(/language: Czech/)).toBeInTheDocument();
     expect(screen.getByText('session').tagName).toBe('DT');
     expect(screen.getByText(text.briefMissing)).toBeInTheDocument();
     expect(screen.queryByText('missing')).not.toBeInTheDocument();

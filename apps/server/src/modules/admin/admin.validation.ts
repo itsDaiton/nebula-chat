@@ -228,7 +228,7 @@ export const adminSessionListPageSchema = z
         z
           .object({
             ...adminSessionShape,
-            owner: z.object({ id: z.uuid(), name: z.string(), email: z.string() }),
+            owner: z.object({ id: z.uuid(), name: z.string() }),
           })
           .meta({ id: 'AdminSessionListItem' }),
       )

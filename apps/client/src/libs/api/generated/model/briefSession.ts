@@ -6,6 +6,8 @@
  */
 
 /**
- * Ids and changed fields; never Message content
+ * The Session Agent’s output; null when it failed
  */
-export type AuditEntryDetail = { [key: string]: unknown };
+export type BriefSession = {
+  summary: string;
+} | null;

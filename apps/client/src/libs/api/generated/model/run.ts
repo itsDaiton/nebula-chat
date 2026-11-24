@@ -4,7 +4,7 @@
  * Nebula Chat API
  * REST API for Nebula Chat
  */
-import type { RunBrief } from './runBrief';
+import type { Brief } from './brief';
 import type { RunStatus } from './runStatus';
 import type { Step } from './step';
 
@@ -14,8 +14,8 @@ export interface Run {
   /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
   sessionId: string;
   status: RunStatus;
-  /** The Intake Agents’ outputs keyed by Agent, null for one that failed, plus `missing` naming those; null until Intake ends */
-  brief: RunBrief;
+  /** The Intake Agents’ outputs keyed by Agent; null until Intake ends */
+  brief: Brief | null;
   /**
    * @minimum -9007199254740991
    * @maximum 9007199254740991

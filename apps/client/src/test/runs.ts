@@ -7,28 +7,35 @@ const at = (seconds: number) =>
   new Date(Date.UTC(2026, 9, 27, 21, 14, 0) + seconds * 1000).toISOString();
 
 /** A completed Step lasting `seconds`; pass `overrides` for a failed or running one. */
+// The generic input and output fit no single Step phase, hence the cast.
 export const aStep = (
   id: string,
   phase: Step['phase'],
   name: string,
   seconds: number,
   overrides: Partial<Step> = {},
-): Step => ({
-  id,
-  turn: 0,
-  phase,
-  name,
-  parentStepId: null,
-  attempt: 1,
-  input: { model: 'gpt-4.1-mini', system: `You are the ${name}.`, human: `input of ${id}` },
-  output: { result: `output of ${id}` },
-  tokens: 1200,
-  status: 'completed',
-  error: null,
-  startedAt: at(0),
-  finishedAt: at(seconds),
-  ...overrides,
-});
+): Step =>
+  ({
+    id,
+    turn: 0,
+    phase,
+    name,
+    parentStepId: null,
+    attempt: 1,
+    input: {
+      model: 'gpt-4.1-mini',
+      parameters: {},
+      system: `You are the ${name}.`,
+      human: `input of ${id}`,
+    },
+    output: { result: `output of ${id}` },
+    tokens: 1200,
+    status: 'completed',
+    error: null,
+    startedAt: at(0),
+    finishedAt: at(seconds),
+    ...overrides,
+  }) as Step;
 
 /** The Run of `run-finished.png`: partial, because the critic failed in turn 2. */
 export const aRun = (overrides: Partial<Run> = {}): Run => ({
@@ -57,7 +64,13 @@ export const aRun = (overrides: Partial<Run> = {}): Run => ({
       turn: 2,
       parentStepId: 'plan-2',
       status: 'failed',
-      input: { model: 'claude-3-5-haiku-20241022', task: 'Challenge the ops-cost claim.' },
+      input: {
+        model: 'claude-3-5-haiku-20241022',
+        parameters: {},
+        system: 'You are the critic.',
+        toolCallId: 'call-1',
+        task: 'Challenge the ops-cost claim.',
+      },
       output: null,
       tokens: 2912,
       error: { success: false, error: 'Internal', message: 'The model timed out' },

@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
-import { AuditEntryAction } from '@/libs/api/generated/model/auditEntryAction';
-import { AuditEntryActorType } from '@/libs/api/generated/model/auditEntryActorType';
+import { ListAuditEntriesAction } from '@/libs/api/generated/model/listAuditEntriesAction';
+import { ListAuditEntriesActorType } from '@/libs/api/generated/model/listAuditEntriesActorType';
 import { ListAuditEntriesOrder } from '@/libs/api/generated/model/listAuditEntriesOrder';
 import { AuditLogPage } from '@/modules/admin/components/AuditLogPage';
 import { optionalSearchText } from '@/routing/searchParams';
@@ -13,8 +13,8 @@ const day = z
   .catch(undefined);
 
 const searchSchema = z.object({
-  actor: z.enum(AuditEntryActorType).optional().catch(undefined),
-  action: z.enum(AuditEntryAction).optional().catch(undefined),
+  actor: z.enum(ListAuditEntriesActorType).optional().catch(undefined),
+  action: z.enum(ListAuditEntriesAction).optional().catch(undefined),
   target: optionalSearchText(),
   from: day,
   to: day,

@@ -4,31 +4,237 @@
  * Nebula Chat API
  * REST API for Nebula Chat
  */
-import type { AuditEntryAction } from './auditEntryAction';
-import type { AuditEntryActorType } from './auditEntryActorType';
-import type { AuditEntryDetail } from './auditEntryDetail';
 
-export interface AuditEntry {
-  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
-  id: string;
-  actorType: AuditEntryActorType;
-  /** The Admin who acted; `null` for the Operator or the system */
-  actorUserId: string | null;
-  /**
-   * The acting Admin's name; `null` for the Operator, the system or a purged Admin
-   * @nullable
-   */
-  actorName: string | null;
-  action: AuditEntryAction;
-  targetType: string;
-  targetId: string;
-  /**
-   * The User's email when the target is a User that still exists; otherwise `null`
-   * @nullable
-   */
-  targetLabel: string | null;
-  /** Ids and changed fields; never Message content */
-  detail: AuditEntryDetail;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$ */
-  createdAt: string;
-}
+export type AuditEntry =
+  | {
+      /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+      id: string;
+      actorType: 'admin' | 'operator' | 'system';
+      /** The Admin who acted; `null` for the Operator or the system */
+      actorUserId: string | null;
+      /**
+       * The acting Admin's name; `null` for the Operator, the system or a purged Admin
+       * @nullable
+       */
+      actorName: string | null;
+      targetType: string;
+      targetId: string;
+      /**
+       * The User's email when the target is a User that still exists; otherwise `null`
+       * @nullable
+       */
+      targetLabel: string | null;
+      /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$ */
+      createdAt: string;
+      action: 'admin.granted';
+      /** Ids and changed fields; never Message content */
+      detail: {
+        role: {
+          from: string;
+          to: string;
+        };
+      };
+    }
+  | {
+      /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+      id: string;
+      actorType: 'admin' | 'operator' | 'system';
+      /** The Admin who acted; `null` for the Operator or the system */
+      actorUserId: string | null;
+      /**
+       * The acting Admin's name; `null` for the Operator, the system or a purged Admin
+       * @nullable
+       */
+      actorName: string | null;
+      targetType: string;
+      targetId: string;
+      /**
+       * The User's email when the target is a User that still exists; otherwise `null`
+       * @nullable
+       */
+      targetLabel: string | null;
+      /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$ */
+      createdAt: string;
+      action: 'user.role_changed';
+      /** Ids and changed fields; never Message content */
+      detail: {
+        role: {
+          from: string;
+          to: string;
+        };
+      };
+    }
+  | {
+      /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+      id: string;
+      actorType: 'admin' | 'operator' | 'system';
+      /** The Admin who acted; `null` for the Operator or the system */
+      actorUserId: string | null;
+      /**
+       * The acting Admin's name; `null` for the Operator, the system or a purged Admin
+       * @nullable
+       */
+      actorName: string | null;
+      targetType: string;
+      targetId: string;
+      /**
+       * The User's email when the target is a User that still exists; otherwise `null`
+       * @nullable
+       */
+      targetLabel: string | null;
+      /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$ */
+      createdAt: string;
+      action: 'user.banned';
+      /** Ids and changed fields; never Message content */
+      detail: {
+        reason: string;
+        /** @nullable */
+        expiresAt: string | null;
+      };
+    }
+  | {
+      /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+      id: string;
+      actorType: 'admin' | 'operator' | 'system';
+      /** The Admin who acted; `null` for the Operator or the system */
+      actorUserId: string | null;
+      /**
+       * The acting Admin's name; `null` for the Operator, the system or a purged Admin
+       * @nullable
+       */
+      actorName: string | null;
+      targetType: string;
+      targetId: string;
+      /**
+       * The User's email when the target is a User that still exists; otherwise `null`
+       * @nullable
+       */
+      targetLabel: string | null;
+      /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$ */
+      createdAt: string;
+      action: 'user.unbanned';
+      /** Ids and changed fields; never Message content */
+      detail: {
+        /** @nullable */
+        reason: string | null;
+      };
+    }
+  | {
+      /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+      id: string;
+      actorType: 'admin' | 'operator' | 'system';
+      /** The Admin who acted; `null` for the Operator or the system */
+      actorUserId: string | null;
+      /**
+       * The acting Admin's name; `null` for the Operator, the system or a purged Admin
+       * @nullable
+       */
+      actorName: string | null;
+      targetType: string;
+      targetId: string;
+      /**
+       * The User's email when the target is a User that still exists; otherwise `null`
+       * @nullable
+       */
+      targetLabel: string | null;
+      /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$ */
+      createdAt: string;
+      action: 'user.restored';
+      /** Ids and changed fields; never Message content */
+      detail: {
+        pendingDeletionAt: string;
+      };
+    }
+  | {
+      /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+      id: string;
+      actorType: 'admin' | 'operator' | 'system';
+      /** The Admin who acted; `null` for the Operator or the system */
+      actorUserId: string | null;
+      /**
+       * The acting Admin's name; `null` for the Operator, the system or a purged Admin
+       * @nullable
+       */
+      actorName: string | null;
+      targetType: string;
+      targetId: string;
+      /**
+       * The User's email when the target is a User that still exists; otherwise `null`
+       * @nullable
+       */
+      targetLabel: string | null;
+      /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$ */
+      createdAt: string;
+      action: 'session.read';
+      /** Ids and changed fields; never Message content */
+      detail: {
+        userId: string;
+      };
+    }
+  | {
+      /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+      id: string;
+      actorType: 'admin' | 'operator' | 'system';
+      /** The Admin who acted; `null` for the Operator or the system */
+      actorUserId: string | null;
+      /**
+       * The acting Admin's name; `null` for the Operator, the system or a purged Admin
+       * @nullable
+       */
+      actorName: string | null;
+      targetType: string;
+      targetId: string;
+      /**
+       * The User's email when the target is a User that still exists; otherwise `null`
+       * @nullable
+       */
+      targetLabel: string | null;
+      /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$ */
+      createdAt: string;
+      action: 'run.read';
+      /** Ids and changed fields; never Message content */
+      detail: {
+        userId: string;
+        sessionId: string;
+      };
+    }
+  | {
+      /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+      id: string;
+      actorType: 'admin' | 'operator' | 'system';
+      /** The Admin who acted; `null` for the Operator or the system */
+      actorUserId: string | null;
+      /**
+       * The acting Admin's name; `null` for the Operator, the system or a purged Admin
+       * @nullable
+       */
+      actorName: string | null;
+      targetType: string;
+      targetId: string;
+      /**
+       * The User's email when the target is a User that still exists; otherwise `null`
+       * @nullable
+       */
+      targetLabel: string | null;
+      /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$ */
+      createdAt: string;
+      action: 'users.purged';
+      /** Ids and changed fields; never Message content */
+      detail: {
+        /**
+         * @minimum -9007199254740991
+         * @maximum 9007199254740991
+         */
+        pendingUsers: number;
+        /**
+         * @minimum -9007199254740991
+         * @maximum 9007199254740991
+         */
+        guests: number;
+        /**
+         * @minimum -9007199254740991
+         * @maximum 9007199254740991
+         */
+        failed: number;
+      };
+    };
