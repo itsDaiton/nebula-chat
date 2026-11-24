@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.26.5](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.26.4...nebula-chat-client-v3.26.5) (2026-11-23)
+
+
+### Bug Fixes
+
+* **client:** NEB-558 keep ban dialog controls at their own width ([#964](https://github.com/itsDaiton/nebula-chat/issues/964)) ([c5760f3](https://github.com/itsDaiton/nebula-chat/commit/c5760f36e08a941fdd29d2a831b693e2464c8aaa))
+* **client:** NEB-888 clearer Model usage labels, footnote and tooltips ([#960](https://github.com/itsDaiton/nebula-chat/issues/960)) ([b6ff894](https://github.com/itsDaiton/nebula-chat/commit/b6ff8940bf407b22b08f80d974e9c4e951b16d9f))
+* **server:** NEB-893 another User's record is a 404 in the query ([#961](https://github.com/itsDaiton/nebula-chat/issues/961)) ([a69652e](https://github.com/itsDaiton/nebula-chat/commit/a69652e66e603938a2e5beacb4db5d43160d2de9))
+
 ## [3.26.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.26.3...nebula-chat-client-v3.26.4) (2026-11-23)
 
 

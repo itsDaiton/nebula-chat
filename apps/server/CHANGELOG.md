@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.30.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.30.0...nebula-chat-server-v4.30.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* **server:** NEB-893 another User's record is a 404 in the query ([#961](https://github.com/itsDaiton/nebula-chat/issues/961)) ([a69652e](https://github.com/itsDaiton/nebula-chat/commit/a69652e66e603938a2e5beacb4db5d43160d2de9))
+
 ## [4.30.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.29.2...nebula-chat-server-v4.30.0) (2026-11-23)
 
 
