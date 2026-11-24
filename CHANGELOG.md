@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.15.10](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.9...nebula-chat-v7.15.10) (2026-11-24)
+
+
+### Bug Fixes
+
+* **cli:** collapse generated API files in PR diffs ([#971](https://github.com/itsDaiton/nebula-chat/issues/971)) ([c11fef0](https://github.com/itsDaiton/nebula-chat/commit/c11fef017bef06db3a94e0e48cf2e863c89410ca))
+
 ## [7.15.9](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.8...nebula-chat-v7.15.9) (2026-11-24)
 
 
