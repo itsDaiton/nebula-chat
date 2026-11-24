@@ -44,7 +44,7 @@ pnpm nebula --json profile list | jq .
 
 ## Adding a command
 
-1. If the route is new, regenerate the spec, then the CLI client: `pnpm --filter @nebula-chat/cli run generate:api`. Generated code under `src/api/generated/` is never hand-edited.
+1. If the route is new, regenerate the spec, then the CLI client: `pnpm --filter @nebula-chat/cli run generate:api`. Generated code under `src/api/generated/` is never hand-edited. Many of its models duplicate `apps/client`'s: both generate from the same spec on purpose, and `.gitattributes` collapses them in PR diffs.
 2. Add `src/commands/<group>.ts` exporting `register<Group>Commands(program, ctx)`, and call it in `buildProgram` in `src/run.ts`. Give each command a description and an example (`addHelpText('after', …)`).
 3. In the action, call the generated function with `{ target }` (`operatorTarget(profile, deps)` for operator routes), narrow the response union on `status`, and turn any other status into an error (`operatorError` / `responseError`). Throw `UsageError` / `AuthError` / `CliError` for the exit code; never call `process.exit`.
 4. Print once, through `ctx.print({ data, view })`: `data` is the `--json` document, `view` the human `table`, `fields` or `message`.

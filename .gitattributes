@@ -10,3 +10,7 @@
 *.ico binary
 *.woff binary
 *.woff2 binary
+
+# Orval output: collapsed in PR diffs.
+apps/client/src/libs/api/generated/** linguist-generated=true
+apps/cli/src/api/generated/** linguist-generated=true
