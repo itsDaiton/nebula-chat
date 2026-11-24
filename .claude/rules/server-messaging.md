@@ -20,7 +20,7 @@ reply for the worker, and relays the reply stream (ADR-0014). The full sequence 
 - At enqueue `sendMessage` adds `keyRefs` (a stored Own key's id per provider) for each provider the reply calls where the
   User has a `valid` key (`ownKey.selection`); a Direct reply's provider is its Model's, a Run's is `RUN_PROVIDERS`.
   The Spend allowance hook asks the same function, so a reply is exempt exactly when every provider it calls has a `valid` key.
-- The catalog is served as `GET /api/models` (public, cached for an hour) with its `version` and `hash`, and `modelIdSchema` derives from it,
+- The catalog is served as `GET /api/models` (any session, cached privately for an hour) with its `version` and `hash`, and `modelIdSchema` derives from it,
   so a Session can only be bound to a Model in the catalog (400 `Validation` otherwise).
 - `GET /api/streams/:streamId` checks the owner (another User's stream is a 404), hijacks the reply and
   relays the stream as SSE with `id` = the entry id, a `: keep-alive` comment per idle 15 s, ending after `end`.

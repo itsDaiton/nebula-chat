@@ -42,7 +42,7 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 /**
  * The model catalog: the Models a Session can be bound to, with their labels, limits and list prices (USD per million tokens), plus the catalog version and content hash
  *
- * Access: public
+ * Access: user
  * @summary Get the model catalog
  */
 export const getModelCatalog = (
@@ -83,7 +83,7 @@ export type GetModelCatalogQueryError = ErrorType<ErrorEnvelope>;
 /**
  * The model catalog: the Models a Session can be bound to, with their labels, limits and list prices (USD per million tokens), plus the catalog version and content hash
  *
- * Access: public
+ * Access: user
  * @summary Get the model catalog
  */
 export function useGetModelCatalog<
@@ -107,7 +107,7 @@ export function useGetModelCatalog<
 /**
  * The model catalog: the Models a Session can be bound to, with their labels, limits and list prices (USD per million tokens), plus the catalog version and content hash
  *
- * Access: public
+ * Access: user
  * @summary Get the model catalog
  */
 export function useGetModelCatalog<
@@ -131,7 +131,7 @@ export function useGetModelCatalog<
 /**
  * The model catalog: the Models a Session can be bound to, with their labels, limits and list prices (USD per million tokens), plus the catalog version and content hash
  *
- * Access: public
+ * Access: user
  * @summary Get the model catalog
  */
 export function useGetModelCatalog<
@@ -147,7 +147,7 @@ export function useGetModelCatalog<
 /**
  * The model catalog: the Models a Session can be bound to, with their labels, limits and list prices (USD per million tokens), plus the catalog version and content hash
  *
- * Access: public
+ * Access: user
  * @summary Get the model catalog
  */
 export function useGetModelCatalog<

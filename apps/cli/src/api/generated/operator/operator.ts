@@ -30,11 +30,6 @@ export type getLogLevelsResponse400 = {
   status: 400;
 };
 
-export type getLogLevelsResponse403 = {
-  data: ErrorEnvelope;
-  status: 403;
-};
-
 export type getLogLevelsResponse404 = {
   data: ErrorEnvelope;
   status: 404;
@@ -49,10 +44,7 @@ export type getLogLevelsResponseSuccess = getLogLevelsResponse200 & {
   headers: Headers;
 };
 export type getLogLevelsResponseError = (
-  | getLogLevelsResponse400
-  | getLogLevelsResponse403
-  | getLogLevelsResponse404
-  | getLogLevelsResponse500
+  getLogLevelsResponse400 | getLogLevelsResponse404 | getLogLevelsResponse500
 ) & {
   headers: Headers;
 };
@@ -101,11 +93,6 @@ export type changeLogLevelResponse400 = {
   status: 400;
 };
 
-export type changeLogLevelResponse403 = {
-  data: ErrorEnvelope;
-  status: 403;
-};
-
 export type changeLogLevelResponse404 = {
   data: ErrorEnvelope;
   status: 404;
@@ -120,10 +107,7 @@ export type changeLogLevelResponseSuccess = changeLogLevelResponse202 & {
   headers: Headers;
 };
 export type changeLogLevelResponseError = (
-  | changeLogLevelResponse400
-  | changeLogLevelResponse403
-  | changeLogLevelResponse404
-  | changeLogLevelResponse500
+  changeLogLevelResponse400 | changeLogLevelResponse404 | changeLogLevelResponse500
 ) & {
   headers: Headers;
 };
@@ -176,11 +160,6 @@ export type listAdminsResponse200 = {
   status: 200;
 };
 
-export type listAdminsResponse403 = {
-  data: ErrorEnvelope;
-  status: 403;
-};
-
 export type listAdminsResponse404 = {
   data: ErrorEnvelope;
   status: 404;
@@ -194,9 +173,7 @@ export type listAdminsResponse500 = {
 export type listAdminsResponseSuccess = listAdminsResponse200 & {
   headers: Headers;
 };
-export type listAdminsResponseError = (
-  listAdminsResponse403 | listAdminsResponse404 | listAdminsResponse500
-) & {
+export type listAdminsResponseError = (listAdminsResponse404 | listAdminsResponse500) & {
   headers: Headers;
 };
 
@@ -231,11 +208,6 @@ export type grantAdminResponse400 = {
   status: 400;
 };
 
-export type grantAdminResponse403 = {
-  data: unknown;
-  status: 403;
-};
-
 export type grantAdminResponse404 = {
   data: ErrorEnvelope;
   status: 404;
@@ -255,11 +227,7 @@ export type grantAdminResponseSuccess = grantAdminResponse201 & {
   headers: Headers;
 };
 export type grantAdminResponseError = (
-  | grantAdminResponse400
-  | grantAdminResponse403
-  | grantAdminResponse404
-  | grantAdminResponse409
-  | grantAdminResponse500
+  grantAdminResponse400 | grantAdminResponse404 | grantAdminResponse409 | grantAdminResponse500
 ) & {
   headers: Headers;
 };
@@ -317,11 +285,6 @@ export type revokeAdminResponse400 = {
   status: 400;
 };
 
-export type revokeAdminResponse403 = {
-  data: unknown;
-  status: 403;
-};
-
 export type revokeAdminResponse404 = {
   data: unknown;
   status: 404;
@@ -341,11 +304,7 @@ export type revokeAdminResponseSuccess = revokeAdminResponse204 & {
   headers: Headers;
 };
 export type revokeAdminResponseError = (
-  | revokeAdminResponse400
-  | revokeAdminResponse403
-  | revokeAdminResponse404
-  | revokeAdminResponse409
-  | revokeAdminResponse500
+  revokeAdminResponse400 | revokeAdminResponse404 | revokeAdminResponse409 | revokeAdminResponse500
 ) & {
   headers: Headers;
 };

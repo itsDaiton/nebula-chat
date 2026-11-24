@@ -1,6 +1,6 @@
 {
   "name": "@nebula-chat/otel",
-  "version": "2.15.0",
+  "version": "2.15.1",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -30,12 +30,12 @@
   },
   "dependencies": {
     "@opentelemetry/api": "catalog:",
-    "@opentelemetry/auto-instrumentations-node": "^0.83.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.83.1",
     "@opentelemetry/core": "^3.1.1",
-    "@opentelemetry/exporter-logs-otlp-http": "^0.301.1",
-    "@opentelemetry/exporter-trace-otlp-http": "^0.301.1",
+    "@opentelemetry/exporter-logs-otlp-http": "^0.301.2",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.301.2",
     "@opentelemetry/sdk-logs": "^3.1.1",
-    "@opentelemetry/sdk-node": "^0.301.1",
+    "@opentelemetry/sdk-node": "^0.301.2",
     "pino": "^10.4.0",
     "zod": "catalog:"
   },

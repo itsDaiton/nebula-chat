@@ -57,7 +57,7 @@ describe('rate limits keyed on cf-connecting-ip', () => {
     );
     const res = await app.inject({ method: 'GET', url: '/api/internal/log-level', headers });
 
-    expect(all.every((status) => status === 403)).toBe(true);
+    expect(all.every((status) => status === 404)).toBe(true);
     expect(res.statusCode).toBe(429);
     expect(res.json()).toMatchObject({ success: false, error: 'TooManyRequests' });
     expect(Number(res.headers['retry-after'])).toBeGreaterThan(0);

@@ -100,20 +100,12 @@ describe('nebula admins grant', () => {
     expect(cli.stdout()).toBe('');
   });
 
-  it('exits 3 when the operator token is wrong', async () => {
-    const cli = await cliWith();
-    grantAnswers(403, envelope('Forbidden', 'This action requires the operator token.'));
-
-    expect(await cli.run('admins', 'grant', EMAIL)).toBe(3);
-    expect(cli.stderr()).toContain('rejected NEBULA_OPERATOR_TOKEN');
-  });
-
-  it('exits 3 when the server has no operator token configured', async () => {
+  it('exits 3 when the server rejects the operator token or has none', async () => {
     const cli = await cliWith();
     grantAnswers(404, envelope('NotFound', 'Route not found'));
 
     expect(await cli.run('admins', 'grant', EMAIL)).toBe(3);
-    expect(cli.stderr()).toContain('has no operator token configured');
+    expect(cli.stderr()).toContain('rejected NEBULA_OPERATOR_TOKEN');
   });
 
   it('exits 3 without calling the server when NEBULA_OPERATOR_TOKEN is unset', async () => {
@@ -202,14 +194,7 @@ describe('nebula admins revoke', () => {
     expect(cli.stderr()).toBe('error: The last Admin cannot be demoted or banned.\n');
   });
 
-  it('exits 3 when the operator token is wrong', async () => {
-    const cli = await cliWith();
-    revokeAnswers(403, envelope('Forbidden', 'This action requires the operator token.'));
-
-    expect(await cli.run('admins', 'revoke', EMAIL, '--yes')).toBe(3);
-  });
-
-  it('exits 3 when the server has no operator token configured', async () => {
+  it('exits 3 when the server rejects the operator token or has none', async () => {
     const cli = await cliWith();
     revokeAnswers(404, envelope('NotFound', 'Route not found'));
 
@@ -261,7 +246,9 @@ describe('nebula admins list', () => {
     const cli = await cliWith();
     server.use(
       http.get(`${SERVER_URL}${getListAdminsUrl()}`, () =>
-        HttpResponse.json(envelope('Forbidden', 'nope'), { status: 403 }),
+        HttpResponse.json(envelope('NotFound', 'Route GET:/api/internal/admins not found'), {
+          status: 404,
+        }),
       ),
     );
 

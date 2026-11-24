@@ -1,5 +1,26 @@
 # Changelog
 
+## [7.15.10](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.9...nebula-chat-v7.15.10) (2026-11-24)
+
+
+### Bug Fixes
+
+* **cli:** collapse generated API files in PR diffs ([#971](https://github.com/itsDaiton/nebula-chat/issues/971)) ([c11fef0](https://github.com/itsDaiton/nebula-chat/commit/c11fef017bef06db3a94e0e48cf2e863c89410ca))
+
+## [7.15.9](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.8...nebula-chat-v7.15.9) (2026-11-24)
+
+
+### Bug Fixes
+
+* **server:** NEB-892 privileged routes answer 404 to outsiders ([#969](https://github.com/itsDaiton/nebula-chat/issues/969)) ([1c2a725](https://github.com/itsDaiton/nebula-chat/commit/1c2a7254d868e3a39c7c31a23aba560f71fa4ad6))
+
+## [7.15.8](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.7...nebula-chat-v7.15.8) (2026-11-24)
+
+
+### Bug Fixes
+
+* **deps:** bump the npm-dependencies group across 1 directory with 27 updates ([#966](https://github.com/itsDaiton/nebula-chat/issues/966)) ([8a087bf](https://github.com/itsDaiton/nebula-chat/commit/8a087bf34db3f6f985f267f11e0598a99de97961))
+
 ## [7.15.7](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.6...nebula-chat-v7.15.7) (2026-11-23)
 
 

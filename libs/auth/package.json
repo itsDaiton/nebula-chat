@@ -1,6 +1,6 @@
 {
   "name": "@nebula-chat/auth",
-  "version": "3.6.1",
+  "version": "3.6.2",
   "description": "better-auth substrate: auth sessions, anonymous Guests, the Session claim and auth email",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -31,8 +31,8 @@
     "drizzle-orm": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-email": "^6.11.11",
-    "resend": "^6.38.0"
+    "react-email": "^6.11.13",
+    "resend": "^6.38.1"
   },
   "devDependencies": {
     "@types/node": "catalog:",

@@ -87,7 +87,7 @@ describe('GET /api/admin/overview', () => {
   it('refuses a non-Admin and an Admin without two-factor', async () => {
     mockedGetSession.mockResolvedValue(registeredSession() as never);
     expect((await app.inject({ method: 'GET', url: OVERVIEW, headers: COOKIE })).statusCode).toBe(
-      403,
+      404,
     );
 
     mockedGetSession.mockResolvedValue(adminWithout2FASession() as never);

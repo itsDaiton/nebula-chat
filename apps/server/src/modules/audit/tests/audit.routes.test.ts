@@ -192,13 +192,13 @@ describe('GET /api/admin/audit', () => {
     ['a Guest', guestSession],
     ['a banned Admin', bannedSession],
     ['an Admin whose email is unverified', unverifiedAdminSession],
-  ])('answers Forbidden to %s', async (_who, session) => {
+  ])('answers 404 to %s', async (_who, session) => {
     mockedGetSession.mockResolvedValue(session() as never);
 
     const res = await app.inject({ method: 'GET', url: ROUTE, headers: COOKIE });
 
-    expect(res.statusCode).toBe(403);
-    expect(res.json()).toMatchObject({ success: false, error: 'Forbidden' });
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toMatchObject({ statusCode: 404 });
     expect(repo.list).not.toHaveBeenCalled();
   });
 
