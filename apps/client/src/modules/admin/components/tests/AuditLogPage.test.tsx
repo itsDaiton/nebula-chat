@@ -309,7 +309,7 @@ describe('Audit log page', () => {
     expect(within(panel).getByText('user spam-bot-42')).toBeInTheDocument();
     expect(within(panel).getByText(anEntry().id)).toBeInTheDocument();
     expect(within(panel).getByRole('region', { name: text.detail.detail }).textContent).toContain(
-      JSON.stringify({ reason: 'Automated prompts', cancelledRuns: 1 }, null, 2),
+      JSON.stringify({ reason: 'Automated prompts', expiresAt: null }, null, 2),
     );
     expect(screen.getByRole('row', { name: /user\.banned/ })).toHaveAttribute('aria-current');
 
