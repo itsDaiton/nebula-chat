@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.27.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.27.1...nebula-chat-openapi-v4.27.2) (2026-11-24)
+
+
+### Bug Fixes
+
+* **server:** NEB-892 privileged routes answer 404 to outsiders ([#969](https://github.com/itsDaiton/nebula-chat/issues/969)) ([1c2a725](https://github.com/itsDaiton/nebula-chat/commit/1c2a7254d868e3a39c7c31a23aba560f71fa4ad6))
+
 ## [4.27.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-openapi-v4.27.0...nebula-chat-openapi-v4.27.1) (2026-11-23)
 
 
