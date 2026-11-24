@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { AUDIT_ACTIONS, AUDIT_ACTOR_TYPES } from '@nebula-chat/db';
+import type { AuditAction } from '@nebula-chat/db';
 import { paginationConfig } from '@server/config/pagination.config';
 import { isoDateTimeSchema } from '@server/utils/isoDateTimeSchema';
 
@@ -36,30 +37,77 @@ export const listAuditQuerySchema = z.object({
     .describe('Sort by time: `desc` newest first (default) or `asc` oldest first'),
 });
 
+const roleChange = { role: z.object({ from: z.string(), to: z.string() }) };
+
+// Ids and changed fields only, never Message content: the one place a key is allowed on an entry.
+const detailShapes = {
+  adminGranted: roleChange,
+  roleChanged: roleChange,
+  banned: { reason: z.string(), expiresAt: z.string().nullable() },
+  unbanned: { reason: z.string().nullable() },
+  restored: { pendingDeletionAt: z.string() },
+  sessionRead: { userId: z.string() },
+  runRead: { userId: z.string(), sessionId: z.string() },
+  purged: { pendingUsers: z.int(), guests: z.int(), failed: z.int() },
+} satisfies Record<string, z.ZodRawShape>;
+
+// Strict, so a key the action does not allow fails the write.
+export const auditEntryDetailSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('admin.granted'),
+    detail: z.strictObject(detailShapes.adminGranted),
+  }),
+  z.object({
+    action: z.literal('user.role_changed'),
+    detail: z.strictObject(detailShapes.roleChanged),
+  }),
+  z.object({ action: z.literal('user.banned'), detail: z.strictObject(detailShapes.banned) }),
+  z.object({ action: z.literal('user.unbanned'), detail: z.strictObject(detailShapes.unbanned) }),
+  z.object({ action: z.literal('user.restored'), detail: z.strictObject(detailShapes.restored) }),
+  z.object({ action: z.literal('session.read'), detail: z.strictObject(detailShapes.sessionRead) }),
+  z.object({ action: z.literal('run.read'), detail: z.strictObject(detailShapes.runRead) }),
+  z.object({ action: z.literal('users.purged'), detail: z.strictObject(detailShapes.purged) }),
+]);
+
+const auditEntryBaseShape = {
+  id: z.uuid(),
+  actorType: z.enum(AUDIT_ACTOR_TYPES),
+  actorUserId: z
+    .uuid()
+    .nullable()
+    .describe('The Admin who acted; `null` for the Operator or the system'),
+  actorName: z
+    .string()
+    .nullable()
+    .describe("The acting Admin's name; `null` for the Operator, the system or a purged Admin"),
+  targetType: z.string(),
+  targetId: z.string(),
+  targetLabel: z
+    .string()
+    .nullable()
+    .describe("The User's email when the target is a User that still exists; otherwise `null`"),
+  createdAt: isoDateTimeSchema,
+};
+
+const readVariant = <A extends AuditAction, S extends z.ZodRawShape>(action: A, shape: S) =>
+  z.object({
+    ...auditEntryBaseShape,
+    action: z.literal(action),
+    detail: z.object(shape).describe('Ids and changed fields; never Message content'),
+  });
+
+// A row carrying a key its action does not allow is stripped of it on the way out.
 const auditEntrySchema = z
-  .object({
-    id: z.uuid(),
-    actorType: z.enum(AUDIT_ACTOR_TYPES),
-    actorUserId: z
-      .uuid()
-      .nullable()
-      .describe('The Admin who acted; `null` for the Operator or the system'),
-    actorName: z
-      .string()
-      .nullable()
-      .describe("The acting Admin's name; `null` for the Operator, the system or a purged Admin"),
-    action: z.enum(AUDIT_ACTIONS),
-    targetType: z.string(),
-    targetId: z.string(),
-    targetLabel: z
-      .string()
-      .nullable()
-      .describe("The User's email when the target is a User that still exists; otherwise `null`"),
-    detail: z
-      .record(z.string(), z.unknown())
-      .describe('Ids and changed fields; never Message content'),
-    createdAt: isoDateTimeSchema,
-  })
+  .discriminatedUnion('action', [
+    readVariant('admin.granted', detailShapes.adminGranted),
+    readVariant('user.role_changed', detailShapes.roleChanged),
+    readVariant('user.banned', detailShapes.banned),
+    readVariant('user.unbanned', detailShapes.unbanned),
+    readVariant('user.restored', detailShapes.restored),
+    readVariant('session.read', detailShapes.sessionRead),
+    readVariant('run.read', detailShapes.runRead),
+    readVariant('users.purged', detailShapes.purged),
+  ])
   .meta({ id: 'AuditEntry' });
 
 export const auditPageSchema = z

@@ -83,7 +83,7 @@ beforeEach(() => {
           targetType: 'user',
           targetId: 'tomas',
           targetLabel: 'tomas@example.com',
-          detail: {},
+          detail: { role: { from: 'user', to: 'admin' } },
           createdAt: new Date(Date.now() - 14 * 60_000).toISOString(),
         },
       ],

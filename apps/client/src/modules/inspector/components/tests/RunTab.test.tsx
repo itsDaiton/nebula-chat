@@ -37,7 +37,11 @@ describe('RunTab', () => {
   it("shows each Intake Agent's part of the Brief under its name", async () => {
     renderRun(
       aRun({
-        brief: { language: { language: 'Czech' }, session: null, missing: ['session'] },
+        brief: {
+          language: { language: 'Czech', englishRestatement: 'Hello' },
+          session: null,
+          missing: ['session'],
+        },
         steps: [],
       }),
     );

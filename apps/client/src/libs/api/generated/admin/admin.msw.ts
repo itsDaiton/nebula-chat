@@ -264,7 +264,6 @@ export const getListAllSessionsResponseMock = (
       owner: {
         id: faker.string.uuid(),
         name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        email: faker.string.alpha({ length: { min: 10, max: 20 } }),
       },
     }),
   ),
@@ -321,36 +320,181 @@ export const getReadSessionResponseMock = (
 export const getListAuditEntriesResponseMock = (
   overrideResponse: Partial<Extract<AuditPage, object>> = {},
 ): AuditPage => ({
-  entries: Array.from({ length: faker.number.int({ min: 1, max: 100 }) }, (_, i) => i + 1).map(
-    () => ({
-      id: faker.string.uuid(),
-      actorType: faker.helpers.arrayElement(['admin', 'operator', 'system'] as const),
-      actorUserId: faker.helpers.arrayElement([faker.string.uuid(), null]),
-      actorName: faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      action: faker.helpers.arrayElement([
-        'admin.granted',
-        'user.role_changed',
-        'user.banned',
-        'user.unbanned',
-        'user.restored',
-        'session.read',
-        'run.read',
-        'users.purged',
-      ] as const),
-      targetType: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      targetId: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      targetLabel: faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      detail: {
-        [faker.string.alphanumeric(5)]: {},
+  entries: Array.from({ length: faker.number.int({ min: 1, max: 100 }) }, (_, i) => i + 1).map(() =>
+    faker.helpers.arrayElement([
+      {
+        id: faker.string.uuid(),
+        actorType: faker.helpers.arrayElement(['admin', 'operator', 'system'] as const),
+        actorUserId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+        actorName: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        targetType: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetLabel: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+        action: 'admin.granted',
+        detail: {
+          role: {
+            from: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            to: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          },
+        },
       },
-      createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
-    }),
+      {
+        id: faker.string.uuid(),
+        actorType: faker.helpers.arrayElement(['admin', 'operator', 'system'] as const),
+        actorUserId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+        actorName: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        targetType: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetLabel: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+        action: 'user.role_changed',
+        detail: {
+          role: {
+            from: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            to: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          },
+        },
+      },
+      {
+        id: faker.string.uuid(),
+        actorType: faker.helpers.arrayElement(['admin', 'operator', 'system'] as const),
+        actorUserId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+        actorName: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        targetType: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetLabel: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+        action: 'user.banned',
+        detail: {
+          reason: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          expiresAt: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
+        },
+      },
+      {
+        id: faker.string.uuid(),
+        actorType: faker.helpers.arrayElement(['admin', 'operator', 'system'] as const),
+        actorUserId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+        actorName: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        targetType: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetLabel: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+        action: 'user.unbanned',
+        detail: {
+          reason: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
+        },
+      },
+      {
+        id: faker.string.uuid(),
+        actorType: faker.helpers.arrayElement(['admin', 'operator', 'system'] as const),
+        actorUserId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+        actorName: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        targetType: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetLabel: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+        action: 'user.restored',
+        detail: { pendingDeletionAt: faker.string.alpha({ length: { min: 10, max: 20 } }) },
+      },
+      {
+        id: faker.string.uuid(),
+        actorType: faker.helpers.arrayElement(['admin', 'operator', 'system'] as const),
+        actorUserId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+        actorName: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        targetType: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetLabel: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+        action: 'session.read',
+        detail: { userId: faker.string.alpha({ length: { min: 10, max: 20 } }) },
+      },
+      {
+        id: faker.string.uuid(),
+        actorType: faker.helpers.arrayElement(['admin', 'operator', 'system'] as const),
+        actorUserId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+        actorName: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        targetType: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetLabel: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+        action: 'run.read',
+        detail: {
+          userId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          sessionId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        },
+      },
+      {
+        id: faker.string.uuid(),
+        actorType: faker.helpers.arrayElement(['admin', 'operator', 'system'] as const),
+        actorUserId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+        actorName: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        targetType: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetLabel: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+        action: 'users.purged',
+        detail: {
+          pendingUsers: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+          guests: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+          failed: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+        },
+      },
+    ]),
   ),
   nextCursor: faker.helpers.arrayElement([faker.string.uuid(), null]),
   total: faker.number.int({ min: 0, max: 9007199254740991 }),

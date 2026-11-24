@@ -5,39 +5,255 @@
  * REST API for Nebula Chat
  */
 import type { ErrorEnvelope } from './errorEnvelope';
-import type { StepPhase } from './stepPhase';
 import type { StepStatus } from './stepStatus';
 
-export interface Step {
-  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
-  id: string;
-  /**
-   * The Orchestrator turn the Step belongs to; 0 outside the loop
-   * @minimum -9007199254740991
-   * @maximum 9007199254740991
-   */
-  turn: number;
-  phase: StepPhase;
-  /** The Agent, or the tool */
-  name: string;
-  /** The turn’s Orchestrator Step for a delegate; the delegate for a tool call */
-  parentStepId: string | null;
-  /**
-   * 1 the first time; higher when the Step re-ran on resume
-   * @minimum -9007199254740991
-   * @maximum 9007199254740991
-   */
-  attempt: number;
-  /** Everything the Agent or tool was sent */
-  input: unknown;
-  /** What it returned; null until the Step completes */
-  output: unknown;
-  /** Tokens the Step used; null for a tool call */
-  tokens: number | null;
-  status: StepStatus;
-  /** Why a failed Step failed */
-  error: ErrorEnvelope | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$ */
-  startedAt: string;
-  finishedAt: string | null;
-}
+export type Step =
+  | {
+      /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+      id: string;
+      /**
+       * The Orchestrator turn the Step belongs to; 0 outside the loop
+       * @minimum -9007199254740991
+       * @maximum 9007199254740991
+       */
+      turn: number;
+      /** The Agent, or the tool */
+      name: string;
+      /** The turn’s Orchestrator Step for a delegate; the delegate for a tool call */
+      parentStepId: string | null;
+      /**
+       * 1 the first time; higher when the Step re-ran on resume
+       * @minimum -9007199254740991
+       * @maximum 9007199254740991
+       */
+      attempt: number;
+      /** Tokens the Step used; null for a tool call */
+      tokens: number | null;
+      status: StepStatus;
+      /** Why a failed Step failed */
+      error: ErrorEnvelope | null;
+      /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$ */
+      startedAt: string;
+      finishedAt: string | null;
+      phase: 'intake';
+      /** Everything the Agent was sent */
+      input: {
+        model: string;
+        parameters: {
+          temperature?: number;
+          /**
+           * @minimum -9007199254740991
+           * @maximum 9007199254740991
+           */
+          maxTokens?: number;
+        };
+        /** The system prompt the Agent was sent */
+        system: string;
+        human: string;
+      };
+      output:
+        | {
+            language: string;
+            englishRestatement: string;
+          }
+        | {
+            summary: string;
+          }
+        | null;
+    }
+  | {
+      /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+      id: string;
+      /**
+       * The Orchestrator turn the Step belongs to; 0 outside the loop
+       * @minimum -9007199254740991
+       * @maximum 9007199254740991
+       */
+      turn: number;
+      /** The Agent, or the tool */
+      name: string;
+      /** The turn’s Orchestrator Step for a delegate; the delegate for a tool call */
+      parentStepId: string | null;
+      /**
+       * 1 the first time; higher when the Step re-ran on resume
+       * @minimum -9007199254740991
+       * @maximum 9007199254740991
+       */
+      attempt: number;
+      /** Tokens the Step used; null for a tool call */
+      tokens: number | null;
+      status: StepStatus;
+      /** Why a failed Step failed */
+      error: ErrorEnvelope | null;
+      /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$ */
+      startedAt: string;
+      finishedAt: string | null;
+      phase: 'orchestrator';
+      /** Everything the Orchestrator was sent */
+      input: {
+        model: string;
+        parameters: {
+          temperature?: number;
+          /**
+           * @minimum -9007199254740991
+           * @maximum 9007199254740991
+           */
+          maxTokens?: number;
+        };
+        /** The system prompt the Agent was sent */
+        system: string;
+        messages: {
+          type: string;
+          content: string;
+          toolCalls?: {
+            id?: string;
+            name: string;
+            args: { [key: string]: unknown };
+          }[];
+          toolCallId?: string;
+        }[];
+      };
+      output: {
+        content: string;
+        toolCalls: {
+          id?: string;
+          name: string;
+          args: { [key: string]: unknown };
+        }[];
+      } | null;
+    }
+  | {
+      /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+      id: string;
+      /**
+       * The Orchestrator turn the Step belongs to; 0 outside the loop
+       * @minimum -9007199254740991
+       * @maximum 9007199254740991
+       */
+      turn: number;
+      /** The Agent, or the tool */
+      name: string;
+      /** The turn’s Orchestrator Step for a delegate; the delegate for a tool call */
+      parentStepId: string | null;
+      /**
+       * 1 the first time; higher when the Step re-ran on resume
+       * @minimum -9007199254740991
+       * @maximum 9007199254740991
+       */
+      attempt: number;
+      /** Tokens the Step used; null for a tool call */
+      tokens: number | null;
+      status: StepStatus;
+      /** Why a failed Step failed */
+      error: ErrorEnvelope | null;
+      /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$ */
+      startedAt: string;
+      finishedAt: string | null;
+      phase: 'delegate';
+      /** Everything the delegate was sent */
+      input: {
+        model: string;
+        parameters: {
+          temperature?: number;
+          /**
+           * @minimum -9007199254740991
+           * @maximum 9007199254740991
+           */
+          maxTokens?: number;
+        };
+        /** The system prompt the Agent was sent */
+        system: string;
+        toolCallId: string;
+        task: string;
+      };
+      output: {
+        result: string;
+      } | null;
+    }
+  | {
+      /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+      id: string;
+      /**
+       * The Orchestrator turn the Step belongs to; 0 outside the loop
+       * @minimum -9007199254740991
+       * @maximum 9007199254740991
+       */
+      turn: number;
+      /** The Agent, or the tool */
+      name: string;
+      /** The turn’s Orchestrator Step for a delegate; the delegate for a tool call */
+      parentStepId: string | null;
+      /**
+       * 1 the first time; higher when the Step re-ran on resume
+       * @minimum -9007199254740991
+       * @maximum 9007199254740991
+       */
+      attempt: number;
+      /** Tokens the Step used; null for a tool call */
+      tokens: number | null;
+      status: StepStatus;
+      /** Why a failed Step failed */
+      error: ErrorEnvelope | null;
+      /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$ */
+      startedAt: string;
+      finishedAt: string | null;
+      phase: 'tool';
+      /** The arguments of the tool call */
+      input:
+        | {
+            query: string;
+          }
+        | {
+            url: string;
+          };
+      output: {
+        result: string;
+      } | null;
+    }
+  | {
+      /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+      id: string;
+      /**
+       * The Orchestrator turn the Step belongs to; 0 outside the loop
+       * @minimum -9007199254740991
+       * @maximum 9007199254740991
+       */
+      turn: number;
+      /** The Agent, or the tool */
+      name: string;
+      /** The turn’s Orchestrator Step for a delegate; the delegate for a tool call */
+      parentStepId: string | null;
+      /**
+       * 1 the first time; higher when the Step re-ran on resume
+       * @minimum -9007199254740991
+       * @maximum 9007199254740991
+       */
+      attempt: number;
+      /** Tokens the Step used; null for a tool call */
+      tokens: number | null;
+      status: StepStatus;
+      /** Why a failed Step failed */
+      error: ErrorEnvelope | null;
+      /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$ */
+      startedAt: string;
+      finishedAt: string | null;
+      phase: 'output';
+      /** Everything the Output Agent was sent */
+      input: {
+        model: string;
+        parameters: {
+          temperature?: number;
+          /**
+           * @minimum -9007199254740991
+           * @maximum 9007199254740991
+           */
+          maxTokens?: number;
+        };
+        /** The system prompt the Agent was sent */
+        system: string;
+        human: string;
+      };
+      output: {
+        answer: string;
+      } | null;
+    };

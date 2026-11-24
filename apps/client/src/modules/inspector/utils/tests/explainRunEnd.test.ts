@@ -33,7 +33,9 @@ describe('explainRunEnd', () => {
 
   it('names an Intake Agent missing from the Brief', () => {
     expect(
-      explainRunEnd(run({ status: 'partial', brief: { language: null, missing: ['language'] } })),
+      explainRunEnd(
+        run({ status: 'partial', brief: { language: null, session: null, missing: ['language'] } }),
+      ),
     ).toEqual({
       title: 'Partial answer.',
       reason: 'Detecting the language (language) failed, so the answer was written without it.',
@@ -41,9 +43,11 @@ describe('explainRunEnd', () => {
   });
 
   it('falls back to the limits when no Step failed', () => {
-    expect(explainRunEnd(run({ status: 'partial', brief: { missing: [] } }))?.reason).toBe(
-      'A limit forced an early answer, or a Clarifying question went unanswered.',
-    );
+    expect(
+      explainRunEnd(
+        run({ status: 'partial', brief: { language: null, session: null, missing: [] } }),
+      )?.reason,
+    ).toBe('A limit forced an early answer, or a Clarifying question went unanswered.');
   });
 
   it('shows why a failed Run failed, from its last failed Step', () => {

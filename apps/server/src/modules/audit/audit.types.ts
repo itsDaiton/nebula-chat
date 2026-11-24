@@ -1,6 +1,9 @@
 import type { z } from 'zod';
-import type { AuditAction, AuditActorType } from '@nebula-chat/db';
-import type { listAuditQuerySchema } from '@server/modules/audit/audit.validation';
+import type { AuditActorType } from '@nebula-chat/db';
+import type {
+  auditEntryDetailSchema,
+  listAuditQuerySchema,
+} from '@server/modules/audit/audit.validation';
 
 export type ListAuditQuery = z.infer<typeof listAuditQuerySchema>;
 
@@ -12,8 +15,6 @@ export type AuditOrder = ListAuditQuery['order'];
 export type AuditEntryInput = {
   actorType: AuditActorType;
   actorUserId?: string | null;
-  action: AuditAction;
   targetType: string;
   targetId: string;
-  detail?: Record<string, unknown>;
-};
+} & z.input<typeof auditEntryDetailSchema>;

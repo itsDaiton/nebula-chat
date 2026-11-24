@@ -15,7 +15,7 @@ import type { GetModelUsageSeriesMetric } from '@/libs/api/generated/model/getMo
 import type { GetModelUsageSeriesRange } from '@/libs/api/generated/model/getModelUsageSeriesRange';
 import type { AdminOverview } from '@/libs/api/generated/model/adminOverview';
 import type { AuditEntry } from '@/libs/api/generated/model/auditEntry';
-import type { AuditEntryActorType } from '@/libs/api/generated/model/auditEntryActorType';
+import type { ListAuditEntriesActorType } from '@/libs/api/generated/model/listAuditEntriesActorType';
 import type { AdminUserDetail } from '@/libs/api/generated/model/adminUserDetail';
 import type { AdminUserSummaryStatus } from '@/libs/api/generated/model/adminUserSummaryStatus';
 import type { ErrorEnvelope } from '@/libs/api/generated/model/errorEnvelope';
@@ -32,7 +32,7 @@ export type AdminTableFeatures = typeof adminTableFeatures;
 
 /** What the Audit log's URL holds: its filters and the page cursor. */
 export type AuditSearch = {
-  actor?: AuditEntryActorType;
+  actor?: ListAuditEntriesActorType;
   action?: AuditEntry['action'];
   target?: string;
   /** A day, `YYYY-MM-DD`, read as UTC. */

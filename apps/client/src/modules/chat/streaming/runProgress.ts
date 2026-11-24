@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { StepPhase } from '@/libs/api/generated/model/stepPhase';
 import type {
   ChatMessage,
   RunEvent,
@@ -13,7 +12,7 @@ const runEventSchema = z.discriminatedUnion('type', [
     type: z.literal('step-started'),
     stepId: z.string(),
     attempt: z.number(),
-    phase: z.enum(StepPhase),
+    phase: z.enum(['intake', 'orchestrator', 'delegate', 'tool', 'output']),
     agent: z.string(),
     label: z.string(),
     turn: z.number(),

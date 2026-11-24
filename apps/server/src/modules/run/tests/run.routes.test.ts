@@ -42,6 +42,13 @@ const STEP_ID = '33333333-3333-4333-8333-333333333333';
 const OTHER_USER_ID = '44444444-4444-4444-8444-444444444444';
 const RUN = `/api/runs/${RUN_ID}`;
 
+const INTAKE_INPUT = {
+  model: 'gpt-4o-mini',
+  parameters: { temperature: 0 },
+  system: 'Detect the language.',
+  human: 'Ahoj',
+};
+
 const aStep = (overrides: Record<string, unknown> = {}) => ({
   id: STEP_ID,
   runId: RUN_ID,
@@ -50,7 +57,7 @@ const aStep = (overrides: Record<string, unknown> = {}) => ({
   name: 'language',
   parentStepId: null,
   attempt: 1,
-  input: { model: 'gpt-4o-mini', human: 'Ahoj' },
+  input: { ...INTAKE_INPUT },
   output: { language: 'Czech', englishRestatement: 'Hello' },
   tokens: 120,
   status: 'completed',
@@ -126,7 +133,7 @@ describe('GET /api/runs/:runId', () => {
           name: 'language',
           parentStepId: null,
           attempt: 1,
-          input: { model: 'gpt-4o-mini', human: 'Ahoj' },
+          input: { ...INTAKE_INPUT },
           output: { language: 'Czech', englishRestatement: 'Hello' },
           tokens: 120,
           status: 'completed',
@@ -139,6 +146,40 @@ describe('GET /api/runs/:runId', () => {
     expect(repo.findOwnedWithSteps).toHaveBeenCalledWith(RUN_ID, REGISTERED_USER_ID);
     expect(repo.findAnyWithSteps).not.toHaveBeenCalled();
     expect(audit.insert).not.toHaveBeenCalled();
+  });
+
+  it('strips Brief and Step fields the schema does not declare', async () => {
+    repo.findOwnedWithSteps.mockResolvedValue(
+      aRun({
+        brief: {
+          language: { language: 'Czech', englishRestatement: 'Hello', internal: 'LEAK' },
+          session: null,
+          missing: [],
+          debug: 'LEAK',
+        },
+        steps: [
+          aStep({
+            input: { ...INTAKE_INPUT, apiKey: 'LEAK' },
+            output: { language: 'Czech', englishRestatement: 'Hello', trace: 'LEAK' },
+          }),
+          aStep({
+            phase: 'tool',
+            name: 'web_search',
+            input: { query: 'huts', secret: 'LEAK' },
+            output: { result: 'ok', raw: 'LEAK' },
+          }),
+        ],
+      }),
+    );
+
+    const res = await app.inject({ method: 'GET', url: RUN, headers: COOKIE });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).not.toContain('LEAK');
+    expect(res.json().steps[1]).toMatchObject({
+      input: { query: 'huts' },
+      output: { result: 'ok' },
+    });
   });
 
   it('returns a Run still in flight, with a failed Step carrying its error envelope', async () => {

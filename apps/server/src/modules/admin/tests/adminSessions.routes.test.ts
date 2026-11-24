@@ -130,12 +130,13 @@ describe('GET /api/admin/sessions', () => {
           messageCount: 2,
           createdAt: '2026-09-01T08:00:00.000Z',
           updatedAt: '2026-09-02T09:00:00.000Z',
-          owner: OWNER,
+          owner: { id: USER_ID, name: 'Anna' },
         },
       ],
       nextCursor: SESSION_ID,
       hasMore: true,
     });
+    expect(res.body).not.toContain('anna@example.com');
     expect(repo.listSessions).toHaveBeenCalledWith({ order: 'desc' }, 5, undefined);
     expect(audit.insert).not.toHaveBeenCalled();
   });

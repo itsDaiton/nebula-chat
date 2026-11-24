@@ -48,9 +48,13 @@ const atEveryDepth = (key: string): string[] => {
   return [top, `*${segment}`, `*.*${segment}`];
 };
 
+// A Postgres error's `detail` quotes the offending row, e.g. `Key (email)=(a@b.c) already exists.`
+const DRIVER_ERROR_DETAIL_PATHS = ['err.detail', 'err.cause.detail', 'cause.detail'] as const;
+
 /** Pino `redact.paths`: every sensitive key at every depth, plus the flat ones. */
 export const REDACT_PATHS: string[] = [
   ...SENSITIVE_KEYS.flatMap(atEveryDepth),
+  ...DRIVER_ERROR_DETAIL_PATHS,
   ...SENSITIVE_FLAT_KEYS.map(bracket),
 ];
 

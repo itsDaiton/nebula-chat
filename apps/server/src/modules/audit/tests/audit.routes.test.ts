@@ -80,6 +80,23 @@ describe('GET /api/admin/audit', () => {
     expect(repo.list).toHaveBeenCalledWith({}, 10, 'desc', undefined);
   });
 
+  it('strips a detail key the entry action does not allow', async () => {
+    repo.list.mockResolvedValue(
+      fromPartial({
+        entries: [{ ...anEntry, detail: { role: { from: 'user', to: 'admin' }, content: 'LEAK' } }],
+        nextCursor: null,
+        hasMore: false,
+        total: 1,
+      }),
+    );
+
+    const res = await app.inject({ method: 'GET', url: ROUTE, headers: COOKIE });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json().entries[0].detail).toEqual({ role: { from: 'user', to: 'admin' } });
+    expect(res.body).not.toContain('LEAK');
+  });
+
   it('returns the labels, and null labels for an entry whose User is gone', async () => {
     repo.list.mockResolvedValue(
       fromPartial({

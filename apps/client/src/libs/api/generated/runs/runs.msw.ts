@@ -9,7 +9,7 @@ import { faker } from '@faker-js/faker';
 import { HttpResponse, http } from 'msw';
 import type { HttpResponseResolver, RequestHandlerOptions } from 'msw';
 
-import { ErrorCode } from '../model';
+import { ErrorCode, StepStatus } from '../model';
 import type { Run } from '../model';
 
 export const getGetRunResponseMock = (
@@ -28,7 +28,20 @@ export const getGetRunResponseMock = (
   ] as const),
   brief: faker.helpers.arrayElement([
     {
-      [faker.string.alphanumeric(5)]: {},
+      language: faker.helpers.arrayElement([
+        {
+          language: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          englishRestatement: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        },
+        null,
+      ]),
+      session: faker.helpers.arrayElement([
+        { summary: faker.string.alpha({ length: { min: 10, max: 20 } }) },
+        null,
+      ]),
+      missing: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+        () => faker.string.alpha({ length: { min: 10, max: 20 } }),
+      ),
     },
     null,
   ]),
@@ -43,41 +56,270 @@ export const getGetRunResponseMock = (
     faker.date.past().toISOString().slice(0, 19) + 'Z',
     null,
   ]),
-  steps: Array.from({ length: faker.number.int({ min: 1, max: 1000 }) }, (_, i) => i + 1).map(
-    () => ({
-      id: faker.string.uuid(),
-      turn: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
-      phase: faker.helpers.arrayElement([
-        'intake',
-        'orchestrator',
-        'delegate',
-        'tool',
-        'output',
-      ] as const),
-      name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      parentStepId: faker.helpers.arrayElement([faker.string.uuid(), null]),
-      attempt: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
-      input: {},
-      output: {},
-      tokens: faker.helpers.arrayElement([
-        faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
-        null,
-      ]),
-      status: faker.helpers.arrayElement(['running', 'completed', 'failed'] as const),
-      error: faker.helpers.arrayElement([
-        {
-          success: false,
-          error: faker.helpers.arrayElement(Object.values(ErrorCode)),
-          message: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  steps: Array.from({ length: faker.number.int({ min: 1, max: 1000 }) }, (_, i) => i + 1).map(() =>
+    faker.helpers.arrayElement([
+      {
+        id: faker.string.uuid(),
+        turn: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+        name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        parentStepId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+        attempt: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+        tokens: faker.helpers.arrayElement([
+          faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+          null,
+        ]),
+        status: faker.helpers.arrayElement(Object.values(StepStatus)),
+        error: faker.helpers.arrayElement([
+          {
+            success: false,
+            error: faker.helpers.arrayElement(Object.values(ErrorCode)),
+            message: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          },
+          null,
+        ]),
+        startedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+        finishedAt: faker.helpers.arrayElement([
+          faker.date.past().toISOString().slice(0, 19) + 'Z',
+          null,
+        ]),
+        phase: 'intake',
+        input: {
+          model: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          parameters: {
+            temperature: faker.helpers.arrayElement([
+              faker.number.float({ fractionDigits: 2 }),
+              undefined,
+            ]),
+            maxTokens: faker.helpers.arrayElement([
+              faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+              undefined,
+            ]),
+          },
+          system: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          human: faker.string.alpha({ length: { min: 10, max: 20 } }),
         },
-        null,
-      ]),
-      startedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
-      finishedAt: faker.helpers.arrayElement([
-        faker.date.past().toISOString().slice(0, 19) + 'Z',
-        null,
-      ]),
-    }),
+        output: faker.helpers.arrayElement([
+          faker.helpers.arrayElement([
+            {
+              language: faker.string.alpha({ length: { min: 10, max: 20 } }),
+              englishRestatement: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            },
+            { summary: faker.string.alpha({ length: { min: 10, max: 20 } }) },
+          ]),
+          null,
+        ]),
+      },
+      {
+        id: faker.string.uuid(),
+        turn: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+        name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        parentStepId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+        attempt: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+        tokens: faker.helpers.arrayElement([
+          faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+          null,
+        ]),
+        status: faker.helpers.arrayElement(Object.values(StepStatus)),
+        error: faker.helpers.arrayElement([
+          {
+            success: false,
+            error: faker.helpers.arrayElement(Object.values(ErrorCode)),
+            message: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          },
+          null,
+        ]),
+        startedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+        finishedAt: faker.helpers.arrayElement([
+          faker.date.past().toISOString().slice(0, 19) + 'Z',
+          null,
+        ]),
+        phase: 'orchestrator',
+        input: {
+          model: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          parameters: {
+            temperature: faker.helpers.arrayElement([
+              faker.number.float({ fractionDigits: 2 }),
+              undefined,
+            ]),
+            maxTokens: faker.helpers.arrayElement([
+              faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+              undefined,
+            ]),
+          },
+          system: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          messages: Array.from(
+            { length: faker.number.int({ min: 1, max: 10 }) },
+            (_, i) => i + 1,
+          ).map(() => ({
+            type: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            content: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            toolCalls: faker.helpers.arrayElement([
+              Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+                () => ({
+                  id: faker.helpers.arrayElement([
+                    faker.string.alpha({ length: { min: 10, max: 20 } }),
+                    undefined,
+                  ]),
+                  name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+                  args: {
+                    [faker.string.alphanumeric(5)]: {},
+                  },
+                }),
+              ),
+              undefined,
+            ]),
+            toolCallId: faker.helpers.arrayElement([
+              faker.string.alpha({ length: { min: 10, max: 20 } }),
+              undefined,
+            ]),
+          })),
+        },
+        output: faker.helpers.arrayElement([
+          {
+            content: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            toolCalls: Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => ({
+              id: faker.helpers.arrayElement([
+                faker.string.alpha({ length: { min: 10, max: 20 } }),
+                undefined,
+              ]),
+              name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+              args: {
+                [faker.string.alphanumeric(5)]: {},
+              },
+            })),
+          },
+          null,
+        ]),
+      },
+      {
+        id: faker.string.uuid(),
+        turn: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+        name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        parentStepId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+        attempt: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+        tokens: faker.helpers.arrayElement([
+          faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+          null,
+        ]),
+        status: faker.helpers.arrayElement(Object.values(StepStatus)),
+        error: faker.helpers.arrayElement([
+          {
+            success: false,
+            error: faker.helpers.arrayElement(Object.values(ErrorCode)),
+            message: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          },
+          null,
+        ]),
+        startedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+        finishedAt: faker.helpers.arrayElement([
+          faker.date.past().toISOString().slice(0, 19) + 'Z',
+          null,
+        ]),
+        phase: 'delegate',
+        input: {
+          model: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          parameters: {
+            temperature: faker.helpers.arrayElement([
+              faker.number.float({ fractionDigits: 2 }),
+              undefined,
+            ]),
+            maxTokens: faker.helpers.arrayElement([
+              faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+              undefined,
+            ]),
+          },
+          system: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          toolCallId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          task: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        },
+        output: faker.helpers.arrayElement([
+          { result: faker.string.alpha({ length: { min: 10, max: 20 } }) },
+          null,
+        ]),
+      },
+      {
+        id: faker.string.uuid(),
+        turn: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+        name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        parentStepId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+        attempt: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+        tokens: faker.helpers.arrayElement([
+          faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+          null,
+        ]),
+        status: faker.helpers.arrayElement(Object.values(StepStatus)),
+        error: faker.helpers.arrayElement([
+          {
+            success: false,
+            error: faker.helpers.arrayElement(Object.values(ErrorCode)),
+            message: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          },
+          null,
+        ]),
+        startedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+        finishedAt: faker.helpers.arrayElement([
+          faker.date.past().toISOString().slice(0, 19) + 'Z',
+          null,
+        ]),
+        phase: 'tool',
+        input: faker.helpers.arrayElement([
+          { query: faker.string.alpha({ length: { min: 10, max: 20 } }) },
+          { url: faker.string.alpha({ length: { min: 10, max: 20 } }) },
+        ]),
+        output: faker.helpers.arrayElement([
+          { result: faker.string.alpha({ length: { min: 10, max: 20 } }) },
+          null,
+        ]),
+      },
+      {
+        id: faker.string.uuid(),
+        turn: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+        name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        parentStepId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+        attempt: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+        tokens: faker.helpers.arrayElement([
+          faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+          null,
+        ]),
+        status: faker.helpers.arrayElement(Object.values(StepStatus)),
+        error: faker.helpers.arrayElement([
+          {
+            success: false,
+            error: faker.helpers.arrayElement(Object.values(ErrorCode)),
+            message: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          },
+          null,
+        ]),
+        startedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+        finishedAt: faker.helpers.arrayElement([
+          faker.date.past().toISOString().slice(0, 19) + 'Z',
+          null,
+        ]),
+        phase: 'output',
+        input: {
+          model: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          parameters: {
+            temperature: faker.helpers.arrayElement([
+              faker.number.float({ fractionDigits: 2 }),
+              undefined,
+            ]),
+            maxTokens: faker.helpers.arrayElement([
+              faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+              undefined,
+            ]),
+          },
+          system: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          human: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        },
+        output: faker.helpers.arrayElement([
+          { answer: faker.string.alpha({ length: { min: 10, max: 20 } }) },
+          null,
+        ]),
+      },
+    ]),
   ),
   ...overrideResponse,
 });

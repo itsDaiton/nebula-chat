@@ -15,19 +15,21 @@ import { renderRoute } from '@/test/renderRoute';
 
 const text = resources.admin.audit;
 
-const anEntry = (overrides: Partial<AuditEntry> = {}): AuditEntry => ({
-  id: '0190a1b2-0000-7000-8000-000000000001',
-  actorType: 'admin',
-  actorUserId: 'aaaa1111-0000-7000-8000-000000000000',
-  actorName: null,
-  action: 'user.banned',
-  targetType: 'user',
-  targetId: 'spam-bot-42',
-  targetLabel: null,
-  detail: { reason: 'Automated prompts', cancelledRuns: 1 },
-  createdAt: '2026-10-27T21:02:11Z',
-  ...overrides,
-});
+// Overrides may switch the action, which the detail then has to follow, hence the cast.
+const anEntry = (overrides: Partial<AuditEntry> = {}): AuditEntry =>
+  ({
+    id: '0190a1b2-0000-7000-8000-000000000001',
+    actorType: 'admin',
+    actorUserId: 'aaaa1111-0000-7000-8000-000000000000',
+    actorName: null,
+    action: 'user.banned',
+    targetType: 'user',
+    targetId: 'spam-bot-42',
+    targetLabel: null,
+    detail: { reason: 'Automated prompts', expiresAt: null },
+    createdAt: '2026-10-27T21:02:11Z',
+    ...overrides,
+  }) as AuditEntry;
 
 const operatorEntry = anEntry({
   id: '0190a1b2-0000-7000-8000-000000000002',

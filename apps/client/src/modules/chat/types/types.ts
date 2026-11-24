@@ -4,7 +4,7 @@ import type { useSendMessage } from '@/libs/api/generated/chat/chat';
 import type { CreateSessionBodyReplyMode } from '@/libs/api/generated/model/createSessionBodyReplyMode';
 import type { SendMessageBodyModel } from '@/libs/api/generated/model/sendMessageBodyModel';
 import type { useCreateSession } from '@/libs/api/generated/sessions/sessions';
-import type { StepPhase } from '@/libs/api/generated/model/stepPhase';
+import type { Step } from '@/libs/api/generated/model/step';
 import type { StepStatus } from '@/libs/api/generated/model/stepStatus';
 import type { ModelProvider } from '@/shared/types/types';
 
@@ -26,7 +26,7 @@ export type ChatMessage = {
 export type RunStepProgress = {
   stepId: string;
   attempt: number;
-  phase: StepPhase;
+  phase: Step['phase'];
   agent: string;
   label: string;
   status: StepStatus;
