@@ -1,7 +1,8 @@
-import { getRouteApi, useRouter } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import { AdminDataTable } from '@/modules/admin/components/AdminDataTable';
 import { AdminPageTitle } from '@/modules/admin/components/AdminPageTitle';
 import { RunFilters } from '@/modules/admin/components/RunFilters';
+import { useCursorPaging } from '@/modules/admin/hooks/useCursorPaging';
 import type { RunsSearch } from '@/modules/admin/types/types';
 import { runColumns } from '@/modules/admin/utils/runColumns';
 import { runQueryOptions } from '@/modules/admin/utils/runQueryOptions';
@@ -14,11 +15,16 @@ const text = resources.admin.runs;
 export const RunsPage = () => {
   const search = route.useSearch();
   const navigate = route.useNavigate();
-  const router = useRouter();
 
   // A new filter starts again from the first page; the open Run stays open.
   const change = (patch: Partial<RunsSearch>) =>
     void navigate({ search: (previous) => ({ ...previous, ...patch, cursor: undefined }) });
+
+  const paging = useCursorPaging({
+    cursor: search.cursor,
+    onCursor: (cursor) => void navigate({ search: (previous) => ({ ...previous, cursor }) }),
+    onRestart: () => change({}),
+  });
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -39,13 +45,7 @@ export const RunsPage = () => {
           });
           usePanelStore.getState().openRight();
         }}
-        onNext={(cursor) => void navigate({ search: (previous) => ({ ...previous, cursor }) })}
-        canPrevious={Boolean(search.cursor)}
-        // Each page is a history entry, so going back is the previous page; a pasted link has none, so it starts over.
-        onPrevious={() => {
-          if (router.history.canGoBack()) router.history.back();
-          else change({});
-        }}
+        {...paging}
         empty={
           <>
             <p className="text-sm">{text.empty}</p>

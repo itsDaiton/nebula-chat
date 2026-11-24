@@ -212,6 +212,32 @@ export type RunFiltersProps = {
 
 export type RunSortHeaderProps = { column: ListAllRunsSortBy; label: string; alignRight?: boolean };
 
+export type AdminSortHeaderProps = {
+  label: string;
+  ariaLabel: string;
+  active: boolean;
+  direction: 'asc' | 'desc';
+  alignRight?: boolean;
+  /** Called with the direction a click asks for: newest or largest first, then reversed. */
+  onSort: (direction: 'asc' | 'desc') => void;
+};
+
+export type AdminToggleChipProps = {
+  active: boolean;
+  /** A dashed chip is an opt-in rather than a value. */
+  dashed?: boolean;
+  className?: string;
+  onClick: () => void;
+  children: ReactNode;
+};
+
+export type CursorPagingOptions = {
+  cursor: string | undefined;
+  onCursor: (cursor: string) => void;
+  /** Where Previous lands when there is no history to go back to, such as a pasted link. */
+  onRestart: () => void;
+};
+
 export type RunTokensProps = { used: number; budget: number | null };
 
 export type RunDetailPanelProps = { onClose: () => void };

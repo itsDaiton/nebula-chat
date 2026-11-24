@@ -209,6 +209,16 @@ describe('Runs page', () => {
     await waitFor(() => expect(router.state.location.search).toEqual({ cursor: NEXT_ID }));
   });
 
+  it('goes back a page with Previous, and starts over when there is no history', async () => {
+    serveRuns([aListed()], NEXT_ID);
+    const { router } = await renderRoute('/admin/runs');
+    await userEvent.click(await screen.findByRole('button', { name: resources.admin.table.next }));
+    await waitFor(() => expect(router.state.location.search).toEqual({ cursor: NEXT_ID }));
+
+    await userEvent.click(screen.getByRole('button', { name: resources.admin.table.previous }));
+    await waitFor(() => expect(router.state.location.search).toEqual({}));
+  });
+
   it('opens the Run read-only under the audit notice and records one read', async () => {
     serveRuns([aListed()]);
     const reads = serveRun();
