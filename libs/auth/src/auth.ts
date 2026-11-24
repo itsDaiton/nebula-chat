@@ -234,6 +234,8 @@ export const createAuth = ({
       additionalFields: {
         // Where our upload sits in storage; unset means `image` is a provider URL or empty.
         profileImageKey: { type: 'string', required: false, input: false, returned: false },
+        // An Admin's private note on a ban; the admin module writes it, so no User can read or set it.
+        banNote: { type: 'string', required: false, input: false, returned: false },
       },
     },
     advanced: {

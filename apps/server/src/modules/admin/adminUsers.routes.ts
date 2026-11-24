@@ -128,7 +128,7 @@ const adminUsersRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) 
 
   app.post('/:id/ban', {
     schema: {
-      description: `Ban a User with a reason and an optional end time, revoke every auth session of theirs, and record it in the Audit log. Their sign-in then fails with the reason and end time until the ban ends or is lifted. The last Admin cannot be banned (\`LastAdmin\`). ${cacheNote} Requires an Admin whose auth session passed two-factor authentication.`,
+      description: `Ban a User with an optional reason (shown to them), an optional internal note (Admins only) and an optional end time, revoke every auth session of theirs, and record it in the Audit log. Their sign-in then fails with the reason (never the note) and end time until the ban ends or is lifted. The last Admin cannot be banned (\`LastAdmin\`). ${cacheNote} Requires an Admin whose auth session passed two-factor authentication.`,
       summary: 'Ban a User',
       tags: ['Admin'],
       operationId: 'banUser',

@@ -9,8 +9,16 @@
  * `null` unless the User is banned now
  */
 export type AdminUserDetailBan = {
-  /** @nullable */
+  /**
+   * What the banned User sees when they try to sign in
+   * @nullable
+   */
   reason: string | null;
+  /**
+   * Internal; never shown to the User
+   * @nullable
+   */
+  note: string | null;
   /** `null` for a ban with no end */
   expiresAt: string | null;
 } | null;

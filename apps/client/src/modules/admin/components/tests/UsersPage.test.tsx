@@ -47,7 +47,7 @@ const bot = aUser({
 
 const botDetail: AdminUserDetail = {
   ...bot,
-  ban: { reason: 'Automated prompts', expiresAt: '2026-11-10T12:00:00Z' },
+  ban: { reason: 'Automated prompts', note: null, expiresAt: '2026-11-10T12:00:00Z' },
   pendingDeletionAt: null,
 };
 
@@ -305,7 +305,7 @@ describe('Users page', () => {
     serveDetail({
       ...botDetail,
       twoFactorEnabled: true,
-      ban: { reason: null, expiresAt: null },
+      ban: { reason: null, note: null, expiresAt: null },
       pendingDeletionAt: '2026-10-25T12:00:00Z',
     });
 

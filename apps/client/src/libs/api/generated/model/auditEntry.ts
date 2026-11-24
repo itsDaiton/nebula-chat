@@ -87,7 +87,10 @@ export type AuditEntry =
       action: 'user.banned';
       /** Ids and changed fields; never Message content */
       detail: {
-        reason: string;
+        /** @nullable */
+        reason: string | null;
+        /** @nullable */
+        note: string | null;
         /** @nullable */
         expiresAt: string | null;
       };

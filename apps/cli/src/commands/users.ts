@@ -177,6 +177,7 @@ export const registerUsersCommands = (program: Command, ctx: Context) => {
               ? []
               : ([
                   ['Ban reason', user.ban.reason ?? '-'],
+                  ['Ban note', user.ban.note ?? '-'],
                   ['Ban expires', user.ban.expiresAt ?? 'never'],
                 ] as [string, string][])),
             ...(user.pendingDeletionAt === null

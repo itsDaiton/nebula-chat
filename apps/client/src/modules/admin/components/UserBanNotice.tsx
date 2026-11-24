@@ -19,6 +19,11 @@ export const UserBanNotice = ({ ban }: UserBanNoticeProps) => (
         <p>{text.bannedPermanently}</p>
       )}
       {ban.reason && <p className="break-words text-muted-foreground">{ban.reason}</p>}
+      {ban.note && (
+        <p className="break-words text-muted-foreground">
+          <span className="font-medium text-foreground">{text.banNote}</span> {ban.note}
+        </p>
+      )}
     </div>
   </div>
 );

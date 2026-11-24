@@ -216,6 +216,10 @@ export const getGetUserResponseMock = (
         faker.string.alpha({ length: { min: 10, max: 20 } }),
         null,
       ]),
+      note: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
       expiresAt: faker.helpers.arrayElement([
         faker.date.past().toISOString().slice(0, 19) + 'Z',
         null,
@@ -385,7 +389,14 @@ export const getListAuditEntriesResponseMock = (
         createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
         action: 'user.banned',
         detail: {
-          reason: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          reason: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
+          note: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
           expiresAt: faker.helpers.arrayElement([
             faker.string.alpha({ length: { min: 10, max: 20 } }),
             null,

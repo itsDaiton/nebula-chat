@@ -16,7 +16,7 @@ const base = { actorType: 'admin', actorUserId: ID, targetType: 'user', targetId
 const allowed: [AuditEntryInput['action'], Record<string, unknown>][] = [
   ['admin.granted', { role: { from: 'user', to: 'admin' } }],
   ['user.role_changed', { role: { from: 'admin', to: 'user' } }],
-  ['user.banned', { reason: 'spam', expiresAt: null }],
+  ['user.banned', { reason: 'spam', note: 'internal', expiresAt: null }],
   ['user.unbanned', { reason: null }],
   ['user.restored', { pendingDeletionAt: '2026-10-30T12:00:00.000Z' }],
   ['session.read', { userId: ID }],

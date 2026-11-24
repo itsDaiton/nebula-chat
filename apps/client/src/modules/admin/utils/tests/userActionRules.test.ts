@@ -39,7 +39,7 @@ describe('userActionRules', () => {
   });
 
   it('refuses Admin for a banned User and the tooltip names Unban', () => {
-    const banned = user({ status: 'banned', ban: { reason: 'Spam', expiresAt: null } });
+    const banned = user({ status: 'banned', ban: { reason: 'Spam', note: null, expiresAt: null } });
     expect(userActionRules(banned, none).role.disabledReason).toBe(reasons.banned);
   });
 
@@ -52,7 +52,7 @@ describe('userActionRules', () => {
   });
 
   it.each([
-    ['banned', { status: 'banned', ban: { reason: 'Spam', expiresAt: null } }],
+    ['banned', { status: 'banned', ban: { reason: 'Spam', note: null, expiresAt: null } }],
     ['pending deletion', { status: 'pendingDeletion', pendingDeletionAt: '2026-10-25T12:00:00Z' }],
   ] as const)('treats a %s Admin as an Admin by role', (_label, overrides) => {
     const admin = user({ ...overrides, role: 'admin' });
