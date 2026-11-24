@@ -43,7 +43,8 @@ script load through `dotenvx run` — single source of truth (see [server-env](.
 (the only `process.env` reader), singletons (`db.ts`, `redis.ts`, `queue.ts`, `auth.ts`, `logger.ts`) and:
 
 - `modules/<name>/` — one 6-layer module each (below): `chat`, `stream`, `session`, `message`,
-  `models`, `profileImage`, `logLevel`, `admin` (the Operator's `/api/internal/admins` and the Admin's `/api/admin/users`: list, read, restore, grant or revoke Admin, ban and unban, a User's Sessions; the audited `/api/admin/sessions/:id`, `/api/admin/runs` (every User's Runs, owner email left out; opening one is the audited `GET /api/runs/:runId`), and `/api/admin/overview`: activity KPIs from Users and Messages), `audit` (the Audit log
+  `models`, `profileImage`, `logLevel`, `admin` (the Operator's `/api/internal/admins` and the Admin's `/api/admin/users`: list, read, restore, grant or revoke Admin, ban and unban, a User's Sessions; the audited `/api/admin/sessions/:id`,
+  `/api/admin/runs` (every User's Runs, owner email left out; opening one is the audited `GET /api/runs/:runId`), and `/api/admin/overview`: activity KPIs from Users and Messages), `audit` (the Audit log
   writer and `GET /api/admin/audit`),
   `usage` (`/api/admin/usage/{series,detail,totals}`: per-Model prompts, tokens and estimated spend per UTC day from user Messages and the Model call ledger),
   `run` (`GET /api/runs/:runId`: a Run with its Brief and Steps for its owner, or for an Admin, whose read is audited; and the service that cancels Runs waiting on a Clarifying question: stop,
