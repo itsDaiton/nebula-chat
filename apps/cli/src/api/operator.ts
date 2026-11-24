@@ -28,19 +28,14 @@ export const operatorTarget = async (
   };
 };
 
-/** An operator route answers 403 to a wrong token and 404 when the server has none configured. */
+/** An operator route answers 404 to a wrong, missing or unconfigured token alike, so the message names both causes. */
 export const operatorError = (
   response: { status: number; data: unknown },
   profile: CliProfile,
 ): CliError => {
-  if (response.status === 403) {
-    return new AuthError(
-      `${profile.url} rejected NEBULA_OPERATOR_TOKEN. Check it matches the server's OPERATOR_TOKEN.`,
-    );
-  }
   if (response.status === 404) {
     return new AuthError(
-      `${profile.url} has no operator token configured (OPERATOR_TOKEN is unset), so operator commands are off.`,
+      `${profile.url} rejected NEBULA_OPERATOR_TOKEN, or has none configured (OPERATOR_TOKEN is unset). Check it matches the server's OPERATOR_TOKEN.`,
     );
   }
   return responseError(response);

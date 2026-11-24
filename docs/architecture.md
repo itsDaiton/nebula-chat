@@ -141,7 +141,7 @@ flowchart TD
 ```
 
 - **Gates** read the auth session from the cookie cache, else Redis, and bind `user.id` to
-  `req.log`. `requireRegistered` turns a Guest away with `403`. `requireAdmin` skips the cookie
+  `req.log`. `requireRegistered` turns a Guest away with `403`. `requireAdmin` answers a non-Admin `404` and skips the cookie
   cache and wants an Admin whose auth session passed two-factor ([auth.md](./auth.md#route-protection)).
 - **Errors** are thrown as `AppError`s and shaped once by the error handler
   ([ADR-0011](./adr/0011-shared-errors-lib-and-typed-envelope.md)); only `5xx` is logged there.

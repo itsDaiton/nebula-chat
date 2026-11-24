@@ -95,7 +95,7 @@ describe('GET /api/admin/usage/series', () => {
 
   it('refuses a non-Admin and an Admin without two-factor', async () => {
     mockedGetSession.mockResolvedValue(registeredSession() as never);
-    expect((await get(`${USAGE}/series`)).statusCode).toBe(403);
+    expect((await get(`${USAGE}/series`)).statusCode).toBe(404);
 
     mockedGetSession.mockResolvedValue(adminWithout2FASession() as never);
     const res = await get(`${USAGE}/series`);
@@ -127,7 +127,7 @@ describe('GET /api/admin/usage/detail', () => {
   it('refuses a non-Admin', async () => {
     mockedGetSession.mockResolvedValue(registeredSession() as never);
 
-    expect((await get(`${USAGE}/detail?model=gpt-4o&day=2026-01-01`)).statusCode).toBe(403);
+    expect((await get(`${USAGE}/detail?model=gpt-4o&day=2026-01-01`)).statusCode).toBe(404);
   });
 });
 
@@ -147,6 +147,6 @@ describe('GET /api/admin/usage/totals', () => {
   it('rejects an unknown range and refuses a non-Admin', async () => {
     expect((await get(`${USAGE}/totals?range=1y`)).statusCode).toBe(400);
     mockedGetSession.mockResolvedValue(registeredSession() as never);
-    expect((await get(`${USAGE}/totals`)).statusCode).toBe(403);
+    expect((await get(`${USAGE}/totals`)).statusCode).toBe(404);
   });
 });

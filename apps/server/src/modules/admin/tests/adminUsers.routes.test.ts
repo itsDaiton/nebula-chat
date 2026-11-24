@@ -254,13 +254,13 @@ describe('GET /api/admin/users', () => {
 
   it.each([
     ['no session', () => mockedGetSession.mockResolvedValue(null as never), 401],
-    ['a Guest', () => mockedGetSession.mockResolvedValue(guestSession() as never), 403],
+    ['a Guest', () => mockedGetSession.mockResolvedValue(guestSession() as never), 404],
     [
       'a Registered user',
       () => mockedGetSession.mockResolvedValue(registeredSession() as never),
-      403,
+      404,
     ],
-    ['a banned Admin', () => mockedGetSession.mockResolvedValue(bannedSession() as never), 403],
+    ['a banned Admin', () => mockedGetSession.mockResolvedValue(bannedSession() as never), 404],
     [
       'an Admin without two-factor',
       () => mockedGetSession.mockResolvedValue(adminWithout2FASession() as never),
@@ -434,7 +434,7 @@ describe('POST /api/admin/users/:id/restore', () => {
 
     const res = await app.inject({ method: 'POST', url: RESTORE, headers: COOKIE });
 
-    expect(res.statusCode).toBe(403);
+    expect(res.statusCode).toBe(404);
     expect(repo.clearPendingDeletion).not.toHaveBeenCalled();
   });
 
@@ -560,14 +560,14 @@ describe('POST /api/admin/users/:id/role', () => {
   });
 
   it.each([
-    ['a Registered user', () => registeredSession(), 'Forbidden'],
-    ['an Admin short of two-factor', () => adminWithout2FASession(), 'TwoFactorRequired'],
-  ])('refuses %s', async (_label, session, error) => {
+    ['a Registered user', () => registeredSession(), 404, 'Not Found'],
+    ['an Admin short of two-factor', () => adminWithout2FASession(), 403, 'TwoFactorRequired'],
+  ])('refuses %s', async (_label, session, status, error) => {
     mockedGetSession.mockResolvedValue(session() as never);
 
     const res = await send({ role: 'admin' });
 
-    expect(res.statusCode).toBe(403);
+    expect(res.statusCode).toBe(status);
     expect(res.json()).toMatchObject({ error });
     expect(mockedSetRole).not.toHaveBeenCalled();
   });

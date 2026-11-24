@@ -159,11 +159,11 @@ describe('POST /api/internal/admins', () => {
     expect(repo.findUserByEmail).not.toHaveBeenCalled();
   });
 
-  it('answers Forbidden to a wrong operator token, before reading the body', async () => {
+  it('answers 404 to a wrong operator token, before reading the body', async () => {
     const res = await grant({ email: 'not-an-email' }, { authorization: 'Bearer not-the-token' });
 
-    expect(res.statusCode).toBe(403);
-    expect(res.json()).toMatchObject({ success: false, error: 'Forbidden' });
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toMatchObject({ statusCode: 404 });
   });
 
   it('answers Not Found while no operator token is configured', async () => {
@@ -215,10 +215,10 @@ describe('DELETE /api/internal/admins/:email', () => {
     expect(audit.insert).not.toHaveBeenCalled();
   });
 
-  it('answers Forbidden to a wrong operator token', async () => {
+  it('answers 404 to a wrong operator token', async () => {
     const res = await revoke('ada@example.com', { authorization: 'Bearer not-the-token' });
 
-    expect(res.statusCode).toBe(403);
+    expect(res.statusCode).toBe(404);
   });
 
   it('answers Not Found while no operator token is configured', async () => {
@@ -241,14 +241,14 @@ describe('GET /api/internal/admins', () => {
     expect(res.json()).toEqual([{ ...anAdminBody, twoFactorEnabled: true }]);
   });
 
-  it('answers Forbidden to a wrong operator token', async () => {
+  it('answers 404 to a wrong operator token', async () => {
     const res = await app.inject({
       method: 'GET',
       url: ROUTE,
       headers: { authorization: 'Bearer not-the-token' },
     });
 
-    expect(res.statusCode).toBe(403);
+    expect(res.statusCode).toBe(404);
   });
 
   it('answers Not Found while no operator token is configured', async () => {

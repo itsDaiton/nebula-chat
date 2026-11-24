@@ -10,9 +10,8 @@ import {
 import { jsonResponse } from '@server/utils/jsonResponse';
 
 const operatorErrors = {
-  403: jsonResponse('Missing or wrong operator token', errorEnvelopeSchema),
   404: jsonResponse(
-    'No operator token is configured, or no user has that email',
+    'Missing, wrong or unset operator token, or no user has that email',
     errorEnvelopeSchema,
   ),
   500: jsonResponse('Internal server error', errorEnvelopeSchema),
@@ -27,8 +26,7 @@ const adminRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
       operationId: 'listAdmins',
       response: {
         200: jsonResponse('Every Admin, oldest account first', adminsSchema),
-        403: operatorErrors[403],
-        404: jsonResponse('No operator token is configured', errorEnvelopeSchema),
+        404: jsonResponse('Missing, wrong or unset operator token', errorEnvelopeSchema),
         500: operatorErrors[500],
       },
     },

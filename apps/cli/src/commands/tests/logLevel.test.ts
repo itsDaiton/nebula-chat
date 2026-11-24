@@ -204,23 +204,13 @@ describe('nebula log-level set', () => {
       expect(cli.stderr()).toContain('NEBULA_OPERATOR_TOKEN is not set');
     });
 
-    it('when the server rejects the token (403)', async () => {
-      answerWith(403, envelope('Forbidden', 'This action requires the operator token.'));
-
-      const code = await cli.run('log-level', 'set', 'redis', 'debug');
-
-      expect(code).toBe(3);
-      expect(cli.stderr()).toContain(`${SERVER_URL} rejected NEBULA_OPERATOR_TOKEN`);
-      expect(cli.stdout()).toBe('');
-    });
-
-    it('when the server has no operator token configured (404)', async () => {
+    it('when the server answers 404 (token wrong, missing or unset)', async () => {
       answerWith(404, envelope('NotFound', 'Route POST:/api/internal/log-level not found'));
 
       const code = await cli.run('log-level', 'set', 'redis', 'debug');
 
       expect(code).toBe(3);
-      expect(cli.stderr()).toContain(`${SERVER_URL} has no operator token configured`);
+      expect(cli.stderr()).toContain(`${SERVER_URL} rejected NEBULA_OPERATOR_TOKEN`);
     });
   });
 
@@ -452,23 +442,13 @@ describe('nebula log-level get', () => {
       expect(cli.stdout()).toBe('');
     });
 
-    it('when the server rejects the token (403)', async () => {
-      answerGetWith(403, envelope('Forbidden', 'This action requires the operator token.'));
-
-      const code = await cli.run('log-level', 'get');
-
-      expect(code).toBe(3);
-      expect(cli.stderr()).toContain(`${SERVER_URL} rejected NEBULA_OPERATOR_TOKEN`);
-      expect(cli.stdout()).toBe('');
-    });
-
-    it('when the server has no operator token configured (404)', async () => {
+    it('when the server answers 404 (token wrong, missing or unset)', async () => {
       answerGetWith(404, envelope('NotFound', 'Route GET:/api/internal/log-level not found'));
 
       const code = await cli.run('log-level', 'get');
 
       expect(code).toBe(3);
-      expect(cli.stderr()).toContain(`${SERVER_URL} has no operator token configured`);
+      expect(cli.stderr()).toContain(`${SERVER_URL} rejected NEBULA_OPERATOR_TOKEN`);
     });
   });
 

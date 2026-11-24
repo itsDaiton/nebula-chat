@@ -2,7 +2,8 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { modelService } from '@server/modules/models/models.service';
 
 // The catalog only changes with a deploy, so an hour of staleness is harmless.
-const CATALOG_CACHE_CONTROL = 'public, max-age=3600';
+// Private: a shared cache would answer a caller with no session.
+const CATALOG_CACHE_CONTROL = 'private, max-age=3600';
 
 export const modelController = {
   list(_req: FastifyRequest, reply: FastifyReply) {

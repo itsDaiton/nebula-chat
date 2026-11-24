@@ -20,13 +20,17 @@ const adminError = (response: { status: number; data: unknown }): CliError => {
   }
   if (status === 403) {
     return new AuthError(
-      envelopeField(data, 'error') === 'TwoFactorRequired'
-        ? 'This Admin has not passed two-factor authentication. Enable 2FA on the account, then run `nebula login` again.'
-        : 'This account is not an Admin, so it cannot read Users. Run `nebula login` as an Admin.',
+      'This Admin has not passed two-factor authentication. Enable 2FA on the account, then run `nebula login` again.',
     );
   }
   if (status === 404) {
     const message = envelopeField(data, 'message');
+    // A non-Admin gets the unknown-route 404, so the route's own message tells the two apart.
+    if (typeof message === 'string' && message.startsWith('Route ')) {
+      return new AuthError(
+        'This account is not an Admin, so it cannot read Users. Run `nebula login` as an Admin.',
+      );
+    }
     return new CliError(typeof message === 'string' ? message : 'User not found');
   }
   return responseError(response);

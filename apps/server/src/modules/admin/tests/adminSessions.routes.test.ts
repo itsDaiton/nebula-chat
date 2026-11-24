@@ -171,7 +171,7 @@ describe('GET /api/admin/sessions', () => {
   it('refuses a non-Admin and an Admin without two-factor', async () => {
     mockedGetSession.mockResolvedValue(registeredSession() as never);
     expect((await app.inject({ method: 'GET', url: SESSIONS, headers: COOKIE })).statusCode).toBe(
-      403,
+      404,
     );
 
     mockedGetSession.mockResolvedValue(adminWithout2FASession() as never);
@@ -241,7 +241,7 @@ describe('GET /api/admin/users/:id/sessions', () => {
     mockedGetSession.mockResolvedValue(registeredSession() as never);
     expect(
       (await app.inject({ method: 'GET', url: USER_SESSIONS, headers: COOKIE })).statusCode,
-    ).toBe(403);
+    ).toBe(404);
 
     mockedGetSession.mockResolvedValue(adminWithout2FASession() as never);
     const res = await app.inject({ method: 'GET', url: USER_SESSIONS, headers: COOKIE });
@@ -314,7 +314,7 @@ describe('GET /api/admin/sessions/:id', () => {
   it('refuses a non-Admin and an Admin without two-factor, with no read and no Audit entry', async () => {
     mockedGetSession.mockResolvedValue(registeredSession() as never);
     expect((await app.inject({ method: 'GET', url: SESSION, headers: COOKIE })).statusCode).toBe(
-      403,
+      404,
     );
 
     mockedGetSession.mockResolvedValue(adminWithout2FASession() as never);

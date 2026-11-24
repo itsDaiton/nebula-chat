@@ -149,6 +149,14 @@ describe('nebula users list', () => {
     expect(cli.stderr()).toContain('two-factor');
   });
 
+  it('tells a non-Admin from the unknown-route 404', async () => {
+    const cli = await loggedIn();
+    listAnswers(404, envelope('NotFound', 'Route GET:/api/admin/users not found'));
+
+    expect(await cli.run('users', 'list')).toBe(3);
+    expect(cli.stderr()).toContain('not an Admin');
+  });
+
   it('exits 1 on a server error', async () => {
     const cli = await loggedIn();
     listAnswers(500, envelope('InternalServerError', 'boom'));

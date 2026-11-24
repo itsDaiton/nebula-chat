@@ -79,12 +79,13 @@ export const requireRegistered: onRequestAsyncHookHandler = async (req, reply) =
 };
 
 // Why the caller is not an acting Admin; null when they are one.
+// 'not-found' hides the route from everyone but an admin-role user.
 const adminRefusal = ({
   user,
   session,
-}: SessionData): ForbiddenError | TwoFactorRequiredError | null => {
+}: SessionData): 'not-found' | TwoFactorRequiredError | null => {
   if (user.isAnonymous || !user.emailVerified || user.banned || user.role !== 'admin') {
-    return new ForbiddenError('This action requires an Admin.');
+    return 'not-found';
   }
   if (!user.twoFactorEnabled || !session.twoFactorVerified) {
     return new TwoFactorRequiredError();
@@ -99,6 +100,11 @@ const adminRefusal = ({
 export const requireAdmin: onRequestAsyncHookHandler = async (req, reply) => {
   // Past the cookie cache, so a revoked role, a ban or a fresh verification applies at once.
   const refusal = adminRefusal(await resolveSession(req, reply, { fresh: true }));
+  if (refusal === 'not-found') {
+    // Fastify's own handler, so the body matches an unknown route's.
+    reply.callNotFound();
+    return reply;
+  }
   if (refusal) {
     throw refusal;
   }

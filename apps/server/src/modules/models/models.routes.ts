@@ -14,11 +14,11 @@ const modelRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
       operationId: 'getModelCatalog',
       response: {
         200: jsonResponse('The model catalog', modelCatalogResponseSchema),
+        401: jsonResponse('No auth session', errorEnvelopeSchema),
         500: jsonResponse('Internal server error', errorEnvelopeSchema),
       },
     },
-    // Public: the catalog is static data, the same for every caller.
-    config: { access: 'public' },
+    config: { access: 'user' },
     handler: modelController.list,
   });
   done();
