@@ -129,7 +129,9 @@ beforeEach(() => {
   repo.listUsers.mockResolvedValue(
     fromPartial({ users: [aRow()], nextCursor: USER_ID, hasMore: true }),
   );
-  repo.findUserDetail.mockResolvedValue(fromPartial(aRow({ sessionsCount: 3, banReason: null, banNote: null })));
+  repo.findUserDetail.mockResolvedValue(
+    fromPartial(aRow({ sessionsCount: 3, banReason: null, banNote: null })),
+  );
   repo.findPendingDeletion.mockResolvedValue({ id: USER_ID, pendingDeletionAt: PENDING_AT });
   repo.clearPendingDeletion.mockResolvedValue(undefined);
   repo.findModerationTarget.mockResolvedValue(fromPartial(aTarget()));

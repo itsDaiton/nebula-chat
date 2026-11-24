@@ -21,13 +21,15 @@ describe('banSchema', () => {
   });
 
   it('caps the reason at 500 characters', () => {
-    expect(messages({ reason: 'a'.repeat(501), note: '', duration: 'permanent', until: '' })).toEqual([
-      text.reasonTooLong,
-    ]);
+    expect(
+      messages({ reason: 'a'.repeat(501), note: '', duration: 'permanent', until: '' }),
+    ).toEqual([text.reasonTooLong]);
   });
 
   it('requires a date for a ban until a date', () => {
-    expect(messages({ reason: 'Spam', note: '', duration: 'until', until: '' })).toEqual([text.dateRequired]);
+    expect(messages({ reason: 'Spam', note: '', duration: 'until', until: '' })).toEqual([
+      text.dateRequired,
+    ]);
   });
 
   it('rejects today and the past, and accepts a later day', () => {
@@ -38,10 +40,14 @@ describe('banSchema', () => {
     expect(messages({ reason: 'Spam', note: '', duration: 'until', until: '2020-01-01' })).toEqual([
       text.dateFuture,
     ]);
-    expect(messages({ reason: 'Spam', note: '', duration: 'until', until: '2999-01-31' })).toEqual([]);
+    expect(messages({ reason: 'Spam', note: '', duration: 'until', until: '2999-01-31' })).toEqual(
+      [],
+    );
   });
 
   it('ignores a stale date for a permanent ban', () => {
-    expect(messages({ reason: 'Spam', note: '', duration: 'permanent', until: '2020-01-01' })).toEqual([]);
+    expect(
+      messages({ reason: 'Spam', note: '', duration: 'permanent', until: '2020-01-01' }),
+    ).toEqual([]);
   });
 });
