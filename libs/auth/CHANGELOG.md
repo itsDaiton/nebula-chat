@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.6.1...nebula-chat-auth-v3.6.2) (2026-11-24)
+
+
+### Bug Fixes
+
+* **deps:** bump the npm-dependencies group across 1 directory with 27 updates ([#966](https://github.com/itsDaiton/nebula-chat/issues/966)) ([8a087bf](https://github.com/itsDaiton/nebula-chat/commit/8a087bf34db3f6f985f267f11e0598a99de97961))
+
 ## [3.6.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.6.0...nebula-chat-auth-v3.6.1) (2026-11-23)
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.15.8](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.7...nebula-chat-v7.15.8) (2026-11-24)
+
+
+### Bug Fixes
+
+* **deps:** bump the npm-dependencies group across 1 directory with 27 updates ([#966](https://github.com/itsDaiton/nebula-chat/issues/966)) ([8a087bf](https://github.com/itsDaiton/nebula-chat/commit/8a087bf34db3f6f985f267f11e0598a99de97961))
+
 ## [7.15.7](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.6...nebula-chat-v7.15.7) (2026-11-23)
 
 
