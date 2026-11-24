@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.15.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.15.1...nebula-chat-otel-v2.15.2) (2026-11-24)
+
+
+### Bug Fixes
+
+* **server:** NEB-894 typed responses and redacted logs ([#968](https://github.com/itsDaiton/nebula-chat/issues/968)) ([0f25190](https://github.com/itsDaiton/nebula-chat/commit/0f25190c4d80b6120f65c572dbf3f40061afeae9))
+
 ## [2.15.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-otel-v2.15.0...nebula-chat-otel-v2.15.1) (2026-11-24)
 
 
