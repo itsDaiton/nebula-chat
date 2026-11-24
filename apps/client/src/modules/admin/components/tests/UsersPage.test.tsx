@@ -47,7 +47,7 @@ const bot = aUser({
 
 const botDetail: AdminUserDetail = {
   ...bot,
-  ban: { reason: 'Automated prompts', note: null, expiresAt: '2026-11-10T12:00:00Z' },
+  ban: { reason: 'Automated prompts', note: 'Reported by Anna', expiresAt: '2026-11-10T12:00:00Z' },
   pendingDeletionAt: null,
 };
 
@@ -257,6 +257,8 @@ describe('Users page', () => {
     expect(within(panel).getByText(text.detail.twoFactorOff)).toBeInTheDocument();
     expect(within(panel).getByText('10 Nov 2026')).toBeInTheDocument();
     expect(within(panel).getByText('Automated prompts')).toBeInTheDocument();
+    expect(within(panel).getByText(text.detail.banNote)).toBeInTheDocument();
+    expect(within(panel).getByText(/Reported by Anna/)).toBeInTheDocument();
     expect(within(panel).getByText('21 Oct 2026')).toBeInTheDocument();
     expect(within(panel).getByText('980')).toBeInTheDocument();
     expect(within(panel).getByText(text.detail.none)).toBeInTheDocument();
