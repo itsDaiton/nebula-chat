@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.10](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-errors-v0.2.9...nebula-chat-errors-v0.2.10) (2026-11-27)
+
+
+### Features
+
+* **client,server:** NEB-903 worker health and queues on Operations ([#993](https://github.com/itsDaiton/nebula-chat/issues/993)) ([795a41a](https://github.com/itsDaiton/nebula-chat/commit/795a41a92c82ef32793f888e2bdc4a65159a9fea))
+
 ## [0.2.9](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-errors-v0.2.8...nebula-chat-errors-v0.2.9) (2026-11-22)
 
 
