@@ -402,9 +402,10 @@ flowchart LR
   call is recorded under the Step's id. The tokens its Steps reported, failed ones included, are the Run's total.
 - **Intake.** The two Intake Agents, `language` and `session`, run in parallel on cheap Models and
   return structured output. One that fails leaves its part of the Brief missing, and the Run ends
-  `partial`.
+  `partial`. On a Session's first message `session` has no history to summarise: it is skipped, with no
+  model call or Step, and the Brief names it in `skipped`, which never makes a Run `partial`.
 - **Brief.** `buildBrief` merges their outputs into one JSON object keyed by Agent
-  (`{ language, session, missing }`), stores it on the Run and passes that JSON down.
+  (`{ language, session, missing, skipped }`), stores it on the Run and passes that JSON down.
 - **Orchestrator.** A LangChain `createAgent` tool-calling loop on a strong Model, run nested in its
   node. It opens with the Brief and the user's message; its only tools are the delegate Agents
   (`analyst`, `critic`, `researcher`), each taking `{ task }`, so a delegate never delegates. A

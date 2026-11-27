@@ -17,4 +17,9 @@ export interface Brief {
    * @maxItems 10
    */
   missing: string[];
+  /**
+   * The Intake Agents that had nothing to do; absent on Briefs saved earlier
+   * @maxItems 10
+   */
+  skipped?: string[];
 }

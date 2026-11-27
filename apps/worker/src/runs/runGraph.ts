@@ -44,6 +44,8 @@ const RunState = Annotation.Root({
   }),
   // The Intake Agents that failed, so the Brief is partial and the Run ends `partial`.
   missing: Annotation<string[]>({ reducer: (all, next) => all.concat(next), default: () => [] }),
+  // The Intake Agents with nothing to do: not a failure, so the Run can still end `completed`.
+  skipped: Annotation<string[]>({ reducer: (all, next) => all.concat(next), default: () => [] }),
   brief: Annotation<Brief | null>({ reducer: (_, next) => next, default: () => null }),
   // How the Orchestrator's loop ended: anything but its own handoff ends the Run `partial`.
   ending: Annotation<LoopEnding | null>({ reducer: (_, next) => next, default: () => null }),
@@ -104,7 +106,7 @@ const intakeNode =
 const outputNode =
   (deps: RunGraphDeps) => async (state: RunStateValues, config: LangGraphRunnableConfig) => {
     const agent = AGENTS.output;
-    const brief = state.brief ?? buildBrief(state.intake, state.missing);
+    const brief = state.brief ?? buildBrief(state.intake, state.missing, state.skipped);
     const system = deps.prompts[agent.prompt];
     const human = outputInput(brief, deps.message, findingsOf(state.messages, state.ending));
     const { output } = await runModelStep(
@@ -147,7 +149,7 @@ const outputNode =
 // The Orchestrator's agent runs nested in this node, sharing the Run's checkpointer and abort signal.
 const orchestratorNode =
   (deps: RunGraphDeps) => async (state: RunStateValues, config: LangGraphRunnableConfig) => {
-    const brief = state.brief ?? buildBrief(state.intake, state.missing);
+    const brief = state.brief ?? buildBrief(state.intake, state.missing, state.skipped);
     const orchestrator = await createOrchestrator(deps);
     // The node's own checkpoint id would make the nested loop replay its done tasks instead of resuming them.
     const configurable = Object.fromEntries(
@@ -165,18 +167,24 @@ const orchestratorNode =
   };
 
 // Intake fans out and in to the Brief, the Orchestrator delegates turn by turn, the Output Agent answers.
-export const createRunGraph = (deps: RunGraphDeps) =>
-  new StateGraph(RunState)
+export const createRunGraph = (deps: RunGraphDeps) => {
+  const sessionNode = intakeNode(
+    AGENTS.session,
+    sessionSchema,
+    (d) => sessionInput(d.history, d.message),
+    deps,
+  );
+  return new StateGraph(RunState)
     .addNode(
       'language',
       intakeNode(AGENTS.language, languageSchema, (d) => d.message, deps),
     )
-    .addNode(
-      'session',
-      intakeNode(AGENTS.session, sessionSchema, (d) => sessionInput(d.history, d.message), deps),
+    .addNode('session', async (state: RunStateValues, config: LangGraphRunnableConfig) =>
+      // A first message has no earlier conversation to summarise.
+      deps.history.length === 0 ? { skipped: [AGENTS.session.name] } : sessionNode(state, config),
     )
     .addNode('buildBrief', async (state: RunStateValues) => {
-      const brief = buildBrief(state.intake, state.missing);
+      const brief = buildBrief(state.intake, state.missing, state.skipped);
       await deps.saveBrief(brief);
       return { brief };
     })
@@ -188,3 +196,4 @@ export const createRunGraph = (deps: RunGraphDeps) =>
     .addEdge('buildBrief', 'orchestrator')
     .addEdge('orchestrator', OUTPUT_NODE)
     .addEdge(OUTPUT_NODE, END);
+};

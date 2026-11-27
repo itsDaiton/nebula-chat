@@ -3,10 +3,12 @@ import type { BriefPart } from '@/modules/inspector/types/types';
 import { formatBriefPart } from '@/modules/inspector/utils/formatBriefPart';
 import { resources } from '@/resources';
 
-/** Each Intake Agent's part of the Brief as text, by Agent; `missing` is told by the end notice instead. */
+/** Each Intake Agent's part of the Brief as text, by Agent; `missing` is told by the end notice instead and a skipped Agent shows nothing. */
 export const briefParts = (brief: NonNullable<Run['brief']>): BriefPart[] =>
   Object.entries(brief)
-    .filter(([agent]) => agent !== 'missing')
+    .filter(
+      ([agent]) => agent !== 'missing' && agent !== 'skipped' && !brief.skipped?.includes(agent),
+    )
     .map(([agent, part]) => ({
       agent,
       text: part === null ? resources.inspector.run.briefMissing : formatBriefPart(part),

@@ -694,6 +694,12 @@ components:
           items:
             type: string
           description: The Intake Agents that failed
+        skipped:
+          maxItems: 10
+          type: array
+          items:
+            type: string
+          description: The Intake Agents that had nothing to do; absent on Briefs saved earlier
       required:
         - language
         - session
