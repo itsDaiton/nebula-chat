@@ -71,7 +71,10 @@ holds the BullMQ queues (ADR-0013), and BullMQ keeps its jobs, delayed jobs, job
 without a TTL. `allkeys-lru` may evict any of them, and BullMQ requires `noeviction` (it logs `IMPORTANT! Eviction
 policy is … It should be "noeviction"` on every connection otherwise). Memory stays bounded by TTLs instead: every
 app-owned key in the [Redis keyspace](../architecture.md#redis-keyspace) carries one, except a reply stream that has
-not ended yet, and BullMQ keeps at most the last 1000 finished jobs per queue, IDs only. The trade-off: once
+not ended yet, and BullMQ trims finished jobs to a fixed count per queue (at most 1000, with small payloads of IDs
+only). A volatile policy, which evicts only keys with a TTL, would leave BullMQ's keys alone too. It was rejected
+because BullMQ keeps warning about it, and evicting live auth sessions under pressure is no better than failing a
+write. The trade-off: once
 memory is full, Redis refuses writes instead of evicting. Reads and writes through the lib fail open, so a
 full Redis would cost the cache, not chat. Enqueues and reply streams would fail, though, so usage must stay well
 under the cap. The free-plan Render Key Value (about 25 MB) has no disk persistence, so a restart empties it under
@@ -91,7 +94,8 @@ keys with a TTL.
 - **Regenerate** now bypasses + overwrites the cache — a behavioral change shipped with this ticket.
 - Losing the HTTP stats endpoints means cache observability is OTel-only until an admin dashboard exists.
 - **Ops dependency:** relying on `maxmemory-policy` assumes the managed Redis permits setting it; if not, the
-  fallback is an atomic sorted-set + Lua trim inside the primitive.
+  fallback is an atomic sorted-set + Lua trim inside the primitive. (Amended by NEB-818: under `noeviction`
+  nothing is evicted, so TTLs alone bound memory; see the amendment in §4.)
 
 ## Alternatives considered
 
