@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.16.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.16.1...nebula-chat-v7.16.2) (2026-11-27)
+
+
+### Bug Fixes
+
+* **server:** NEB-818 Redis eviction policy, cold-start 503s, Knip ([#980](https://github.com/itsDaiton/nebula-chat/issues/980)) ([d15db8b](https://github.com/itsDaiton/nebula-chat/commit/d15db8b6573411069ff639d642f809df429a8c78))
+
 ## [7.16.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.16.0...nebula-chat-v7.16.1) (2026-11-27)
 
 
