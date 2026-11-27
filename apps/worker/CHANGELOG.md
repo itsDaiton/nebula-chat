@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.4](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v2.2.3...nebula-chat-worker-v2.2.4) (2026-11-27)
+
+
+### Bug Fixes
+
+* **worker:** NEB-831 skip Session summary on a first message ([#995](https://github.com/itsDaiton/nebula-chat/issues/995)) ([d1a8354](https://github.com/itsDaiton/nebula-chat/commit/d1a83540a43200a439f69e9c7351d8c466c8b2fe))
+
 ## [2.2.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-worker-v2.2.2...nebula-chat-worker-v2.2.3) (2026-11-27)
 
 
