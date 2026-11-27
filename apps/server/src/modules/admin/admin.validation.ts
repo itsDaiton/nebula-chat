@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { RUN_STATUSES } from '@nebula-chat/db';
 import { paginationConfig } from '@server/config/pagination.config';
+import { changeLogLevelSchema } from '@server/modules/logLevel/logLevel.validation';
 import { messagesArraySchema } from '@server/modules/message/message.validation';
 import { isoDateTimeSchema } from '@server/utils/isoDateTimeSchema';
 
@@ -371,3 +372,15 @@ export const adminRunListPageSchema = z
     hasMore: z.boolean(),
   })
   .meta({ id: 'AdminRunListPage' });
+
+// No `operator`: the services log the acting Admin's name, so a body's is stripped.
+export const adminChangeLogLevelSchema = z.union([
+  changeLogLevelSchema.pick({ component: true, service: true }).extend({
+    revert: z
+      .literal(true)
+      .describe(
+        'Return `component` (or the root) to its boot-time level now, instead of setting `level`',
+      ),
+  }),
+  changeLogLevelSchema.omit({ operator: true }),
+]);

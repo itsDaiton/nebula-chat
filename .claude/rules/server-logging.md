@@ -22,4 +22,5 @@ The full conventions are in [docs/logging.md](../../docs/logging.md). The rules 
 - **One `info` line per unit of work** (`http.request.completed`, `chat.reply.completed`); progress inside
   it is `debug`.
 - **Never log** Message content, prompts, completions, Streaming tokens, emails, names, cookies,
-  `Authorization` headers or API keys. Opaque ids are fine.
+  `Authorization` headers or API keys. Opaque ids are fine. The one name logged is `nebula.operator` on a
+  runtime level change: an Operator's handle, or the acting Admin's account name (its id when blank).

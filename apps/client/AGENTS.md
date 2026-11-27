@@ -70,6 +70,7 @@ coverage and knip. A route file only wires a page: the component lives in `modul
   The Users page (`/admin/users`) keeps its open User in the URL instead (`selected`), read by `UserDetailPanel`.
   The Model usage page (`/admin/usage`) keeps every choice in the URL (`metric`, `range`, `view`, `models`, `audience`, `pinned`); its right panel is `UsageDetailPanel`, and the day it shows comes from `useUsageHoverStore`, set by the chart.
   The Runs page (`/admin/runs`) keeps its filters, sort, cursor and open Run in the URL (`status`, `user`, `from`, `to`, `sort`, `dir`, `cursor`, `selected`); its right panel is `RunDetailPanel`, which renders `RunView` with `audited`, so each opening is a fresh read and writes a `run.read` entry.
+  The Operations page (`/admin/operations`) lists the server's and the worker's log levels with Revert on temporary changes; its right panel is `LogLevelPanel`, whose choices live in `useLogLevelFormStore`.
   The Sessions page (`/admin/sessions`) opens a transcript at `/admin/sessions/$sessionId` (`sessions_.$sessionId.tsx`, outside the table's route; not `$id`, which the shell header reads as a chat Session) that carries the table's search back; its right panel is `SessionMetaPanel`, and the one audited read goes through `useSessionRead`.
 - **Loaders.** A loader prefetches through the existing query client:
   `context.queryClient.ensureQueryData(getGetSessionQueryOptions(id))`. Components keep using the generated

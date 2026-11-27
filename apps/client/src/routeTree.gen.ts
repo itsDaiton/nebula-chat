@@ -18,6 +18,7 @@ import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppChatIndexRouteImport } from './routes/_app/_chat/index'
 import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
 import { Route as AppAdminAuditRouteImport } from './routes/_app/admin/audit'
+import { Route as AppAdminOperationsRouteImport } from './routes/_app/admin/operations'
 import { Route as AppAdminRunsRouteImport } from './routes/_app/admin/runs'
 import { Route as AppAdminSessionsRouteImport } from './routes/_app/admin/sessions'
 import { Route as AppAdminUsageRouteImport } from './routes/_app/admin/usage'
@@ -70,6 +71,11 @@ const AppAdminIndexRoute = AppAdminIndexRouteImport.update({
 const AppAdminAuditRoute = AppAdminAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
+  getParentRoute: () => AppAdminRouteRoute,
+} as any)
+const AppAdminOperationsRoute = AppAdminOperationsRouteImport.update({
+  id: '/operations',
+  path: '/operations',
   getParentRoute: () => AppAdminRouteRoute,
 } as any)
 const AppAdminRunsRoute = AppAdminRunsRouteImport.update({
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/device': typeof AppDeviceRoute
   '/settings': typeof AppSettingsRoute
   '/admin/audit': typeof AppAdminAuditRoute
+  '/admin/operations': typeof AppAdminOperationsRoute
   '/admin/runs': typeof AppAdminRunsRoute
   '/admin/sessions': typeof AppAdminSessionsRoute
   '/admin/usage': typeof AppAdminUsageRoute
@@ -148,6 +155,7 @@ export interface FileRoutesByTo {
   '/device': typeof AppDeviceRoute
   '/settings': typeof AppSettingsRoute
   '/admin/audit': typeof AppAdminAuditRoute
+  '/admin/operations': typeof AppAdminOperationsRoute
   '/admin/runs': typeof AppAdminRunsRoute
   '/admin/sessions': typeof AppAdminSessionsRoute
   '/admin/usage': typeof AppAdminUsageRoute
@@ -169,6 +177,7 @@ export interface FileRoutesById {
   '/_app/device': typeof AppDeviceRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/admin/audit': typeof AppAdminAuditRoute
+  '/_app/admin/operations': typeof AppAdminOperationsRoute
   '/_app/admin/runs': typeof AppAdminRunsRoute
   '/_app/admin/sessions': typeof AppAdminSessionsRoute
   '/_app/admin/usage': typeof AppAdminUsageRoute
@@ -191,6 +200,7 @@ export interface FileRouteTypes {
     | '/device'
     | '/settings'
     | '/admin/audit'
+    | '/admin/operations'
     | '/admin/runs'
     | '/admin/sessions'
     | '/admin/usage'
@@ -208,6 +218,7 @@ export interface FileRouteTypes {
     | '/device'
     | '/settings'
     | '/admin/audit'
+    | '/admin/operations'
     | '/admin/runs'
     | '/admin/sessions'
     | '/admin/usage'
@@ -228,6 +239,7 @@ export interface FileRouteTypes {
     | '/_app/device'
     | '/_app/settings'
     | '/_app/admin/audit'
+    | '/_app/admin/operations'
     | '/_app/admin/runs'
     | '/_app/admin/sessions'
     | '/_app/admin/usage'
@@ -311,6 +323,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminAuditRouteImport
       parentRoute: typeof AppAdminRouteRoute
     }
+    '/_app/admin/operations': {
+      id: '/_app/admin/operations'
+      path: '/operations'
+      fullPath: '/admin/operations'
+      preLoaderRoute: typeof AppAdminOperationsRouteImport
+      parentRoute: typeof AppAdminRouteRoute
+    }
     '/_app/admin/runs': {
       id: '/_app/admin/runs'
       path: '/runs'
@@ -386,6 +405,7 @@ declare module '@tanstack/react-router' {
 
 interface AppAdminRouteRouteChildren {
   AppAdminAuditRoute: typeof AppAdminAuditRoute
+  AppAdminOperationsRoute: typeof AppAdminOperationsRoute
   AppAdminRunsRoute: typeof AppAdminRunsRoute
   AppAdminSessionsRoute: typeof AppAdminSessionsRoute
   AppAdminUsageRoute: typeof AppAdminUsageRoute
@@ -396,6 +416,7 @@ interface AppAdminRouteRouteChildren {
 
 const AppAdminRouteRouteChildren: AppAdminRouteRouteChildren = {
   AppAdminAuditRoute: AppAdminAuditRoute,
+  AppAdminOperationsRoute: AppAdminOperationsRoute,
   AppAdminRunsRoute: AppAdminRunsRoute,
   AppAdminSessionsRoute: AppAdminSessionsRoute,
   AppAdminUsageRoute: AppAdminUsageRoute,

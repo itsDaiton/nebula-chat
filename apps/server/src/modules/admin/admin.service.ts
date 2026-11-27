@@ -9,6 +9,7 @@ import type { EventLogger } from '@nebula-chat/otel';
 import { auth } from '@server/auth';
 import { adminRepository } from '@server/modules/admin/admin.repository';
 import type {
+  AdminChangeLogLevelDTO,
   AdminRole,
   BanUserDTO,
   ListRunsQuery,
@@ -20,10 +21,27 @@ import type {
   SetRoleDTO,
 } from '@server/modules/admin/admin.types';
 import { auditService } from '@server/modules/audit/audit.service';
+import { logLevelService } from '@server/modules/logLevel/logLevel.service';
+import type { LogLevelServiceQuery } from '@server/modules/logLevel/logLevel.types';
 import { messageRepository } from '@server/modules/message/message.repository';
 import { runService } from '@server/modules/run/run.service';
 
 const DAY_MS = 86_400_000;
+
+// A revert re-sends the held level for a second, so each instance's own timer restores its boot level.
+const REVERT_TTL_SECONDS = 1;
+
+// Reports carry no boot-time level, so a revert needs the level some instance holds temporarily.
+const heldLevel = async (service: LogLevelServiceQuery['service'], target: string) => {
+  const { reports } = await logLevelService.read(service);
+  const held = reports
+    .flatMap(({ levels }) => levels)
+    .find((state) => state.target === target && state.expiresAt !== null);
+  if (!held || held.level === 'silent') {
+    throw new ConflictError(`The ${service}'s ${target} level has no temporary change to revert.`);
+  }
+  return held.level;
+};
 
 const dayOf = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
@@ -376,6 +394,31 @@ export const adminService = {
       targetType: 'user',
       targetId: userId,
       detail: { pendingDeletionAt: user.pendingDeletionAt.toISOString() },
+    });
+  },
+  // Audited before the broadcast, so a failed Audit write changes nothing.
+  async changeLogLevel(input: AdminChangeLogLevelDTO, admin: { id: string; name: string }) {
+    const { service, component } = input;
+    const target = component ?? 'root';
+    const { level, ttlSeconds } =
+      'revert' in input
+        ? { level: await heldLevel(service, target), ttlSeconds: REVERT_TTL_SECONDS }
+        : input;
+    await auditService.append({
+      actorType: 'admin',
+      actorUserId: admin.id,
+      action: 'log_level.changed',
+      targetType: 'service',
+      targetId: service,
+      detail: { service, target, level, ttlSeconds },
+    });
+    return logLevelService.change({
+      service,
+      ...(component && { component }),
+      level,
+      ttlSeconds,
+      // otel drops a blank operator, and an id is the one identifier safe to log.
+      operator: admin.name.trim() || admin.id,
     });
   },
 };

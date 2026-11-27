@@ -1,8 +1,11 @@
 import { fromNodeHeaders } from 'better-auth/node';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { adminService } from '@server/modules/admin/admin.service';
+import { logLevelService } from '@server/modules/logLevel/logLevel.service';
+import type { LogLevelServiceQuery } from '@server/modules/logLevel/logLevel.types';
 import { getSessionData } from '@server/plugins/authGate.plugin';
 import type {
+  AdminChangeLogLevelDTO,
   AdminEmailParams,
   BanUserDTO,
   GrantAdminDTO,
@@ -84,5 +87,17 @@ export const adminController = {
   async restoreUser(req: FastifyRequest<{ Params: UserIdParams }>, reply: FastifyReply) {
     await adminService.restoreUser(req.params.id, getSessionData(req).user.id);
     return reply.status(204).send();
+  },
+  async readLogLevels(
+    req: FastifyRequest<{ Querystring: LogLevelServiceQuery }>,
+    reply: FastifyReply,
+  ) {
+    const result = await logLevelService.read(req.query.service);
+    return reply.status(200).send(result);
+  },
+  async changeLogLevel(req: FastifyRequest<{ Body: AdminChangeLogLevelDTO }>, reply: FastifyReply) {
+    const { id, name } = getSessionData(req).user;
+    const result = await adminService.changeLogLevel(req.body, { id, name });
+    return reply.status(202).send(result);
   },
 };

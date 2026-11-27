@@ -347,7 +347,6 @@ export const resources = {
       runs: 'Runs',
       operations: 'Operations',
       audit: 'Audit log',
-      soon: 'soon',
     },
     table: {
       loading: 'Loading entries',
@@ -443,6 +442,53 @@ export const resources = {
         trend: (days: number) => `${days}-day trend`,
         trendLabel: 'Prompts per day for this Model',
         tokens: (count: string) => `${count} tokens`,
+      },
+    },
+    operations: {
+      title: 'Operations',
+      updated: (time: string) => `Updated ${time}`,
+      refresh: 'Refresh',
+      services: { server: 'Server', worker: 'Worker' },
+      logLevels: {
+        title: 'Log levels',
+        note: 'Changes revert on their own and are recorded in the Audit log',
+        loading: 'Loading log levels',
+        loadFailed: 'Could not load the log levels.',
+        columns: {
+          service: 'Service',
+          target: 'Target',
+          level: 'Level',
+          reverts: 'Reverts',
+          setBy: 'Set by',
+        },
+        bootLevel: 'boot level',
+        revertsIn: (wait: string) => `in ${wait}`,
+        revert: 'Revert',
+        reverting: 'Reverting…',
+        reverted: (service: string, target: string) =>
+          `${service} ${target} is back at its boot level`,
+        noInstance: 'No instance answered',
+        instances: (service: string, answered: number, receivers: number) => {
+          if (answered !== receivers)
+            return `${service}: ${answered} of ${receivers} instances answered`;
+          return `${service}: ${answered} ${answered === 1 ? 'instance' : 'instances'}`;
+        },
+      },
+      panel: {
+        title: 'Change log level',
+        close: 'Close',
+        service: 'Service',
+        target: 'Target',
+        level: 'Level',
+        ttl: 'Reverts after',
+        ttls: { 300: '5m', 900: '15m', 3600: '1h', 14400: '4h' },
+        ttlWords: { 300: '5 minutes', 900: '15 minutes', 3600: '1 hour', 14400: '4 hours' },
+        notice: (service: string, ttl: string) =>
+          `Applies to every running ${service} instance and is logged under your name. It reverts to the boot level after ${ttl}.`,
+        apply: (service: string) => `Apply to ${service}`,
+        applying: 'Applying…',
+        sent: (receivers: number) =>
+          `Sent to ${receivers} ${receivers === 1 ? 'instance' : 'instances'}`,
       },
     },
     audit: {

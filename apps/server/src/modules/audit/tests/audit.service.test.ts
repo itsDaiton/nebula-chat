@@ -22,6 +22,7 @@ const allowed: [AuditEntryInput['action'], Record<string, unknown>][] = [
   ['session.read', { userId: ID }],
   ['run.read', { userId: ID, sessionId: ID }],
   ['users.purged', { pendingUsers: 1, guests: 2, failed: 0 }],
+  ['log_level.changed', { service: 'worker', target: 'llm', level: 'debug', ttlSeconds: 900 }],
 ];
 
 beforeEach(() => {

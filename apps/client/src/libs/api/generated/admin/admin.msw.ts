@@ -7,7 +7,7 @@
 import { faker } from '@faker-js/faker';
 
 import { HttpResponse, http } from 'msw';
-import type { HttpResponseResolver, RequestHandlerOptions } from 'msw';
+import type { HttpResponseResolver, PathParams, RequestHandlerOptions } from 'msw';
 
 import type {
   AdminOverview,
@@ -19,6 +19,9 @@ import type {
   AdminUserPage,
   AuditPage,
   BanUserBody,
+  ChangeAdminLogLevelBody,
+  LogLevelChange,
+  LogLevelReports,
   SetUserRoleBody,
   UsageDetail,
   UsageSeries,
@@ -543,11 +546,99 @@ export const getListAuditEntriesResponseMock = (
           failed: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
         },
       },
+      {
+        id: faker.string.uuid(),
+        actorType: faker.helpers.arrayElement(['admin', 'operator', 'system'] as const),
+        actorUserId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+        actorName: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        targetType: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        targetLabel: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+        action: 'log_level.changed',
+        detail: {
+          service: faker.helpers.arrayElement(['server', 'worker'] as const),
+          target: faker.helpers.arrayElement([
+            'root',
+            'auth',
+            'chat',
+            'http',
+            'llm',
+            'otel',
+            'redis',
+          ] as const),
+          level: faker.helpers.arrayElement([
+            'fatal',
+            'error',
+            'warn',
+            'info',
+            'debug',
+            'trace',
+          ] as const),
+          ttlSeconds: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+        },
+      },
     ]),
   ),
   nextCursor: faker.helpers.arrayElement([faker.string.uuid(), null]),
   total: faker.number.int({ min: 0, max: 9007199254740991 }),
   hasMore: faker.datatype.boolean(),
+  ...overrideResponse,
+});
+
+export const getGetAdminLogLevelsResponseMock = (
+  overrideResponse: Partial<Extract<LogLevelReports, object>> = {},
+): LogLevelReports => ({
+  receivers: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+  reports: Array.from({ length: faker.number.int({ min: 1, max: 100 }) }, (_, i) => i + 1).map(
+    () => ({
+      instance: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      levels: Array.from({ length: faker.number.int({ min: 1, max: 7 }) }, (_, i) => i + 1).map(
+        () => ({
+          target: faker.helpers.arrayElement([
+            'root',
+            'auth',
+            'chat',
+            'http',
+            'llm',
+            'otel',
+            'redis',
+          ] as const),
+          level: faker.helpers.arrayElement([
+            'fatal',
+            'error',
+            'warn',
+            'info',
+            'debug',
+            'trace',
+            'silent',
+          ] as const),
+          expiresAt: faker.helpers.arrayElement([
+            faker.date.past().toISOString().slice(0, 19) + 'Z',
+            null,
+          ]),
+          operator: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
+        }),
+      ),
+    }),
+  ),
+  ...overrideResponse,
+});
+
+export const getChangeAdminLogLevelResponseMock = (
+  overrideResponse: Partial<Extract<LogLevelChange, object>> = {},
+): LogLevelChange => ({
+  receivers: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+  expiresAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
   ...overrideResponse,
 });
 
@@ -877,6 +968,52 @@ export const getListAuditEntriesMockHandler = (
     options,
   );
 };
+
+export const getGetAdminLogLevelsMockHandler = (
+  overrideResponse?:
+    | LogLevelReports
+    | ((info: Parameters<HttpResponseResolver>[0]) => Promise<LogLevelReports> | LogLevelReports),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/admin/log-levels',
+    async (info: Parameters<HttpResponseResolver>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetAdminLogLevelsResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getChangeAdminLogLevelMockHandler = (
+  overrideResponse?:
+    | LogLevelChange
+    | ((
+        info: Parameters<HttpResponseResolver<PathParams, ChangeAdminLogLevelBody>>[0],
+      ) => Promise<LogLevelChange> | LogLevelChange),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post<PathParams, ChangeAdminLogLevelBody>(
+    '*/api/admin/log-levels',
+    async (info: Parameters<HttpResponseResolver<PathParams, ChangeAdminLogLevelBody>>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getChangeAdminLogLevelResponseMock(),
+        { status: 202 },
+      );
+    },
+    options,
+  );
+};
 export const getAdminMock = () => [
   getGetAdminOverviewMockHandler(),
   getGetModelUsageSeriesMockHandler(),
@@ -893,4 +1030,6 @@ export const getAdminMock = () => [
   getListAllSessionsMockHandler(),
   getReadSessionMockHandler(),
   getListAuditEntriesMockHandler(),
+  getGetAdminLogLevelsMockHandler(),
+  getChangeAdminLogLevelMockHandler(),
 ];

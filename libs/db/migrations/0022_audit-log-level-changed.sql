@@ -1,0 +1,2 @@
+ALTER TABLE "audit_entries" DROP CONSTRAINT "audit_entries_action_check";--> statement-breakpoint
+ALTER TABLE "audit_entries" ADD CONSTRAINT "audit_entries_action_check" CHECK ("audit_entries"."action" in ('admin.granted', 'user.role_changed', 'user.banned', 'user.unbanned', 'user.restored', 'session.read', 'run.read', 'users.purged', 'log_level.changed'));

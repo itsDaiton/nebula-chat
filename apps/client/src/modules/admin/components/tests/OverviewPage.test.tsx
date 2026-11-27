@@ -86,10 +86,22 @@ beforeEach(() => {
           detail: { role: { from: 'user', to: 'admin' } },
           createdAt: new Date(Date.now() - 14 * 60_000).toISOString(),
         },
+        {
+          id: '0190a1b2-0000-7000-8000-000000000002',
+          actorType: 'admin',
+          actorUserId: '0190a1b2-0000-7000-8000-0000000000aa',
+          actorName: 'Jana K.',
+          action: 'log_level.changed',
+          targetType: 'service',
+          targetId: 'worker',
+          targetLabel: null,
+          detail: { service: 'worker', target: 'llm', level: 'debug', ttlSeconds: 900 },
+          createdAt: new Date(Date.now() - 20 * 60_000).toISOString(),
+        },
       ],
       nextCursor: null,
       hasMore: false,
-      total: 1,
+      total: 2,
     }),
   );
   useAdminDetailStore.setState({ selection: null });
@@ -173,6 +185,7 @@ describe('Overview page', () => {
     expect(await screen.findByText('admin.granted')).toBeInTheDocument();
     expect(screen.getByText('tomas@example.com')).toBeInTheDocument();
     expect(screen.getByText('14m')).toBeInTheDocument();
+    expect(screen.getByText('log_level.changed')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: new RegExp(text.viewAll) })).toHaveAttribute(
       'href',
       '/admin/audit',

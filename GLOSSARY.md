@@ -125,7 +125,7 @@ The permanent, append-only record of every Admin action (changing a role, bannin
 _Avoid_: Activity log, history.
 
 **Operator**:
-Someone running a deployment rather than using it: holds the operator token and can change operational settings, such as log levels at runtime. Not a User — an Operator owns no Sessions, and no Guest or Registered user can act as one.
+Someone running a deployment rather than using it: holds the operator token and can change operational settings, such as log levels at runtime (an Admin can change log levels too, from the dashboard). Not a User — an Operator owns no Sessions, and no Guest or Registered user can act as one.
 _Avoid_: Admin (an Admin is a User with elevated rights; operating is not a kind of User).
 
 **Access level**:
