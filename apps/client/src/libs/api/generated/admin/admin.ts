@@ -30,7 +30,9 @@ import type {
   AdminUserPage,
   AuditPage,
   BanUserBody,
+  ChangeAdminLogLevelBody,
   ErrorEnvelope,
+  GetAdminLogLevelsParams,
   GetAdminOverviewParams,
   GetModelUsageDetailParams,
   GetModelUsageSeriesParams,
@@ -40,6 +42,8 @@ import type {
   ListAuditEntriesParams,
   ListUserSessionsParams,
   ListUsersParams,
+  LogLevelChange,
+  LogLevelReports,
   SetUserRoleBody,
   UsageDetail,
   UsageSeries,
@@ -2021,3 +2025,243 @@ export function useListAuditEntries<
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+/**
+ * Report the root log level and every component's, with the expiry and setter of any temporary change, from every running instance of the service (the server unless `service` says the worker). An instance that does not answer within 2 seconds is left out, so `receivers` exceeds the number of reports. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get log levels
+ */
+export const getAdminLogLevels = (
+  params?: GetAdminLogLevelsParams,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<LogLevelReports>(
+    { url: `/api/admin/log-levels`, method: 'GET', params, signal },
+    options,
+  );
+};
+
+export const getGetAdminLogLevelsQueryKey = (params?: GetAdminLogLevelsParams) => {
+  return [`/api/admin/log-levels`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetAdminLogLevelsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAdminLogLevels>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: GetAdminLogLevelsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminLogLevels>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetAdminLogLevelsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminLogLevels>>> = ({ signal }) =>
+    getAdminLogLevels(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAdminLogLevels>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetAdminLogLevelsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAdminLogLevels>>
+>;
+export type GetAdminLogLevelsQueryError = ErrorType<ErrorEnvelope>;
+
+/**
+ * Report the root log level and every component's, with the expiry and setter of any temporary change, from every running instance of the service (the server unless `service` says the worker). An instance that does not answer within 2 seconds is left out, so `receivers` exceeds the number of reports. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get log levels
+ */
+export function useGetAdminLogLevels<
+  TData = Awaited<ReturnType<typeof getAdminLogLevels>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params: undefined | GetAdminLogLevelsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminLogLevels>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminLogLevels>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminLogLevels>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Report the root log level and every component's, with the expiry and setter of any temporary change, from every running instance of the service (the server unless `service` says the worker). An instance that does not answer within 2 seconds is left out, so `receivers` exceeds the number of reports. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get log levels
+ */
+export function useGetAdminLogLevels<
+  TData = Awaited<ReturnType<typeof getAdminLogLevels>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: GetAdminLogLevelsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminLogLevels>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminLogLevels>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminLogLevels>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Report the root log level and every component's, with the expiry and setter of any temporary change, from every running instance of the service (the server unless `service` says the worker). An instance that does not answer within 2 seconds is left out, so `receivers` exceeds the number of reports. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get log levels
+ */
+export function useGetAdminLogLevels<
+  TData = Awaited<ReturnType<typeof getAdminLogLevels>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: GetAdminLogLevelsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminLogLevels>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Report the root log level and every component's, with the expiry and setter of any temporary change, from every running instance of the service (the server unless `service` says the worker). An instance that does not answer within 2 seconds is left out, so `receivers` exceeds the number of reports. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get log levels
+ */
+export function useGetAdminLogLevels<
+  TData = Awaited<ReturnType<typeof getAdminLogLevels>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: GetAdminLogLevelsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminLogLevels>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetAdminLogLevelsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * Change the root log level, or one component's, on every running instance of the service for `ttlSeconds`, or with `revert` return it to the boot-time level. The services log the change under the acting Admin's name, and it is recorded in the Audit log as `log_level.changed` before it is sent. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Change log level
+ */
+export const changeAdminLogLevel = (
+  changeAdminLogLevelBody: BodyType<ChangeAdminLogLevelBody>,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<LogLevelChange>(
+    {
+      url: `/api/admin/log-levels`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: changeAdminLogLevelBody,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getChangeAdminLogLevelMutationKey = () => ['changeAdminLogLevel'] as const;
+
+export const getChangeAdminLogLevelMutationOptions = <
+  TError = ErrorType<ErrorEnvelope | unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof changeAdminLogLevel>>,
+    TError,
+    ChangeAdminLogLevelMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof axiosClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof changeAdminLogLevel>>,
+  TError,
+  ChangeAdminLogLevelMutationVariables,
+  TContext
+> => {
+  const mutationKey = getChangeAdminLogLevelMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof changeAdminLogLevel>>,
+    ChangeAdminLogLevelMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return changeAdminLogLevel(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ChangeAdminLogLevelMutationResult = NonNullable<
+  Awaited<ReturnType<typeof changeAdminLogLevel>>
+>;
+export type ChangeAdminLogLevelMutationBody = BodyType<ChangeAdminLogLevelBody>;
+export type ChangeAdminLogLevelMutationError = ErrorType<ErrorEnvelope | unknown>;
+export type ChangeAdminLogLevelMutationVariables = { data: BodyType<ChangeAdminLogLevelBody> };
+
+/**
+ * Change the root log level, or one component's, on every running instance of the service for `ttlSeconds`, or with `revert` return it to the boot-time level. The services log the change under the acting Admin's name, and it is recorded in the Audit log as `log_level.changed` before it is sent. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Change log level
+ */
+export const useChangeAdminLogLevel = <
+  TError = ErrorType<ErrorEnvelope | unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof changeAdminLogLevel>>,
+      TError,
+      ChangeAdminLogLevelMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof changeAdminLogLevel>>,
+  TError,
+  ChangeAdminLogLevelMutationVariables,
+  TContext
+> => {
+  return useMutation(getChangeAdminLogLevelMutationOptions(options), queryClient);
+};

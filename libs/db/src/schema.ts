@@ -366,6 +366,7 @@ export const AUDIT_ACTIONS = [
   'session.read',
   'run.read',
   'users.purged',
+  'log_level.changed',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
@@ -391,7 +392,7 @@ export const auditEntries = pgTable(
     check('audit_entries_actor_type_check', sql`${t.actorType} in ('admin', 'operator', 'system')`),
     check(
       'audit_entries_action_check',
-      sql`${t.action} in ('admin.granted', 'user.role_changed', 'user.banned', 'user.unbanned', 'user.restored', 'session.read', 'run.read', 'users.purged')`,
+      sql`${t.action} in ('admin.granted', 'user.role_changed', 'user.banned', 'user.unbanned', 'user.restored', 'session.read', 'run.read', 'users.purged', 'log_level.changed')`,
     ),
   ],
 );

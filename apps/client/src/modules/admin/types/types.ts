@@ -10,6 +10,10 @@ import type { UsageSeries } from '@/libs/api/generated/model/usageSeries';
 import type { UsageSeriesSeriesItem } from '@/libs/api/generated/model/usageSeriesSeriesItem';
 import type { UsageTotals } from '@/libs/api/generated/model/usageTotals';
 import type { UsageDetail } from '@/libs/api/generated/model/usageDetail';
+import type { ChangeAdminLogLevelBody } from '@/libs/api/generated/model/changeAdminLogLevelBody';
+import type { GetAdminLogLevelsService } from '@/libs/api/generated/model/getAdminLogLevelsService';
+import type { LogLevelReports } from '@/libs/api/generated/model/logLevelReports';
+import type { LogLevelState } from '@/libs/api/generated/model/logLevelState';
 import type { GetModelUsageSeriesAudience } from '@/libs/api/generated/model/getModelUsageSeriesAudience';
 import type { GetModelUsageSeriesMetric } from '@/libs/api/generated/model/getModelUsageSeriesMetric';
 import type { GetModelUsageSeriesRange } from '@/libs/api/generated/model/getModelUsageSeriesRange';
@@ -52,9 +56,14 @@ type AdminNavPage = {
   id: string;
   label: string;
   icon: LucideIcon;
-  /** Unset while the page is not built: its row is disabled and labelled "soon". */
-  to?:
-    '/admin' | '/admin/audit' | '/admin/runs' | '/admin/sessions' | '/admin/usage' | '/admin/users';
+  to:
+    | '/admin'
+    | '/admin/audit'
+    | '/admin/operations'
+    | '/admin/runs'
+    | '/admin/sessions'
+    | '/admin/usage'
+    | '/admin/users';
   /** The page has selectable rows, so the right panel and its toggle exist. */
   hasDetail?: boolean;
 };
@@ -412,3 +421,38 @@ export type UsageTableState = { asTable: boolean; toggle: () => void };
 export type UsageDetailPanelProps = { onClose: () => void };
 
 export type UsageDetailRowProps = { label: string; value: string };
+
+export type LogLevelService = GetAdminLogLevelsService;
+
+export type LogLevelTtl = 300 | 900 | 3600 | 14400;
+
+export type LogLevelChoice = Extract<ChangeAdminLogLevelBody, { level: string }>['level'];
+
+/** One distinct level a service's instances report for a target: its root, or a temporary change. */
+export type LogLevelRow = { service: LogLevelService } & LogLevelState;
+
+export type ServiceLevels = {
+  service: LogLevelService;
+  reports: LogLevelReports | undefined;
+  isPending: boolean;
+  isError: boolean;
+};
+
+export type LogLevelFormState = {
+  service: LogLevelService;
+  target: LogLevelState['target'];
+  level: LogLevelChoice;
+  ttlSeconds: LogLevelTtl;
+  setService: (service: LogLevelService) => void;
+  setTarget: (target: LogLevelState['target']) => void;
+  setLevel: (level: LogLevelChoice) => void;
+  setTtl: (ttlSeconds: LogLevelTtl) => void;
+};
+
+export type LogLevelsTableProps = { services: ServiceLevels[] };
+
+export type LogLevelTableRowProps = { row: LogLevelRow; selected: boolean };
+
+export type LogLevelRevertButtonProps = { row: LogLevelRow };
+
+export type LogLevelPanelProps = { onClose: () => void };

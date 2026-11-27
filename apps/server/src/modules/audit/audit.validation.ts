@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { AUDIT_ACTIONS, AUDIT_ACTOR_TYPES } from '@nebula-chat/db';
 import type { AuditAction } from '@nebula-chat/db';
+import { LOG_COMPONENTS, LOG_LEVEL_SERVICES, LOG_LEVELS } from '@nebula-chat/otel';
 import { paginationConfig } from '@server/config/pagination.config';
 import { isoDateTimeSchema } from '@server/utils/isoDateTimeSchema';
 
@@ -53,6 +54,12 @@ const detailShapes = {
   sessionRead: { userId: z.string() },
   runRead: { userId: z.string(), sessionId: z.string() },
   purged: { pendingUsers: z.int(), guests: z.int(), failed: z.int() },
+  logLevelChanged: {
+    service: z.enum(Object.keys(LOG_LEVEL_SERVICES) as [keyof typeof LOG_LEVEL_SERVICES]),
+    target: z.enum(['root', ...LOG_COMPONENTS]),
+    level: z.enum(LOG_LEVELS),
+    ttlSeconds: z.int(),
+  },
 } satisfies Record<string, z.ZodRawShape>;
 
 // Strict, so a key the action does not allow fails the write.
@@ -71,6 +78,10 @@ export const auditEntryDetailSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('session.read'), detail: z.strictObject(detailShapes.sessionRead) }),
   z.object({ action: z.literal('run.read'), detail: z.strictObject(detailShapes.runRead) }),
   z.object({ action: z.literal('users.purged'), detail: z.strictObject(detailShapes.purged) }),
+  z.object({
+    action: z.literal('log_level.changed'),
+    detail: z.strictObject(detailShapes.logLevelChanged),
+  }),
 ]);
 
 const auditEntryBaseShape = {
@@ -111,6 +122,7 @@ const auditEntrySchema = z
     readVariant('session.read', detailShapes.sessionRead),
     readVariant('run.read', detailShapes.runRead),
     readVariant('users.purged', detailShapes.purged),
+    readVariant('log_level.changed', detailShapes.logLevelChanged),
   ])
   .meta({ id: 'AuditEntry' });
 

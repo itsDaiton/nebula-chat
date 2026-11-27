@@ -22,7 +22,11 @@ import type { AuditPage } from '../model/auditPage';
 
 import type { BanUserBody } from '../model/banUserBody';
 
+import type { ChangeAdminLogLevelBody } from '../model/changeAdminLogLevelBody';
+
 import type { ErrorEnvelope } from '../model/errorEnvelope';
+
+import type { GetAdminLogLevelsParams } from '../model/getAdminLogLevelsParams';
 
 import type { GetAdminOverviewParams } from '../model/getAdminOverviewParams';
 
@@ -41,6 +45,10 @@ import type { ListAuditEntriesParams } from '../model/listAuditEntriesParams';
 import type { ListUserSessionsParams } from '../model/listUserSessionsParams';
 
 import type { ListUsersParams } from '../model/listUsersParams';
+
+import type { LogLevelChange } from '../model/logLevelChange';
+
+import type { LogLevelReports } from '../model/logLevelReports';
 
 import type { SetUserRoleBody } from '../model/setUserRoleBody';
 
@@ -1178,5 +1186,164 @@ export const listAuditEntries = async (
   return apiFetch<listAuditEntriesResponse>(getListAuditEntriesUrl(params), {
     ...options,
     method: 'GET',
+  });
+};
+
+export type getAdminLogLevelsResponse200 = {
+  data: LogLevelReports;
+  status: 200;
+};
+
+export type getAdminLogLevelsResponse400 = {
+  data: ErrorEnvelope;
+  status: 400;
+};
+
+export type getAdminLogLevelsResponse401 = {
+  data: ErrorEnvelope;
+  status: 401;
+};
+
+export type getAdminLogLevelsResponse403 = {
+  data: ErrorEnvelope;
+  status: 403;
+};
+
+export type getAdminLogLevelsResponse500 = {
+  data: ErrorEnvelope;
+  status: 500;
+};
+
+export type getAdminLogLevelsResponseSuccess = getAdminLogLevelsResponse200 & {
+  headers: Headers;
+};
+export type getAdminLogLevelsResponseError = (
+  | getAdminLogLevelsResponse400
+  | getAdminLogLevelsResponse401
+  | getAdminLogLevelsResponse403
+  | getAdminLogLevelsResponse500
+) & {
+  headers: Headers;
+};
+
+export type getAdminLogLevelsResponse =
+  getAdminLogLevelsResponseSuccess | getAdminLogLevelsResponseError;
+
+export const getGetAdminLogLevelsUrl = (params?: GetAdminLogLevelsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/log-levels?${stringifiedParams}`
+    : `/api/admin/log-levels`;
+};
+
+/**
+ * Report the root log level and every component's, with the expiry and setter of any temporary change, from every running instance of the service (the server unless `service` says the worker). An instance that does not answer within 2 seconds is left out, so `receivers` exceeds the number of reports. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get log levels
+ */
+export const getAdminLogLevels = async (
+  params?: GetAdminLogLevelsParams,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<getAdminLogLevelsResponse> => {
+  return apiFetch<getAdminLogLevelsResponse>(getGetAdminLogLevelsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export type changeAdminLogLevelResponse202 = {
+  data: LogLevelChange;
+  status: 202;
+};
+
+export type changeAdminLogLevelResponse400 = {
+  data: ErrorEnvelope;
+  status: 400;
+};
+
+export type changeAdminLogLevelResponse401 = {
+  data: unknown;
+  status: 401;
+};
+
+export type changeAdminLogLevelResponse403 = {
+  data: unknown;
+  status: 403;
+};
+
+export type changeAdminLogLevelResponse409 = {
+  data: ErrorEnvelope;
+  status: 409;
+};
+
+export type changeAdminLogLevelResponse500 = {
+  data: unknown;
+  status: 500;
+};
+
+export type changeAdminLogLevelResponseSuccess = changeAdminLogLevelResponse202 & {
+  headers: Headers;
+};
+export type changeAdminLogLevelResponseError = (
+  | changeAdminLogLevelResponse400
+  | changeAdminLogLevelResponse401
+  | changeAdminLogLevelResponse403
+  | changeAdminLogLevelResponse409
+  | changeAdminLogLevelResponse500
+) & {
+  headers: Headers;
+};
+
+export type changeAdminLogLevelResponse =
+  changeAdminLogLevelResponseSuccess | changeAdminLogLevelResponseError;
+
+export const getChangeAdminLogLevelUrl = () => {
+  return `/api/admin/log-levels`;
+};
+
+/**
+ * Change the root log level, or one component's, on every running instance of the service for `ttlSeconds`, or with `revert` return it to the boot-time level. The services log the change under the acting Admin's name, and it is recorded in the Audit log as `log_level.changed` before it is sent. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Change log level
+ */
+export const changeAdminLogLevel = async (
+  changeAdminLogLevelBody: ChangeAdminLogLevelBody,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<changeAdminLogLevelResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiFetch<changeAdminLogLevelResponse>(getChangeAdminLogLevelUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(changeAdminLogLevelBody),
   });
 };

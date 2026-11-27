@@ -46,6 +46,14 @@ const systemEntry = anEntry({
   targetId: '41 Guests',
 });
 
+const logLevelEntry = anEntry({
+  id: '0190a1b2-0000-7000-8000-000000000004',
+  action: 'log_level.changed',
+  targetType: 'service',
+  targetId: 'worker',
+  detail: { service: 'worker', target: 'llm', level: 'debug', ttlSeconds: 900 },
+});
+
 const serveAudit = (entries: AuditEntry[], nextCursor: string | null = null) =>
   server.use(
     getListAuditEntriesMockHandler({
@@ -117,6 +125,19 @@ describe('Audit log page', () => {
     expect(within(table).getByText(text.actors.system)).toBeInTheDocument();
     expect(within(table).getByText('users.purged')).toBeInTheDocument();
     expect(screen.getByText(resources.admin.table.showing(3))).toBeInTheDocument();
+  });
+
+  it('lists a log level change and offers it in the Action filter', async () => {
+    serveAudit([logLevelEntry]);
+    const { router } = await renderRoute('/admin/audit');
+
+    const table = await screen.findByRole('table', { name: text.title });
+    expect(await within(table).findByText('log_level.changed')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Action: any' }));
+    await userEvent.click(await screen.findByRole('menuitemradio', { name: 'log_level.changed' }));
+    await waitFor(() =>
+      expect(router.state.location.search).toEqual({ action: 'log_level.changed' }),
+    );
   });
 
   it('shows names and the total, and falls back to ids once an account is gone', async () => {
@@ -373,7 +394,7 @@ describe('Audit log page', () => {
 });
 
 describe('admin navigation', () => {
-  it('lists every page, with the unbuilt ones disabled and labelled', async () => {
+  it('lists every page as a link', async () => {
     serveAudit([]);
     await renderRoute('/admin/audit');
 
@@ -394,9 +415,8 @@ describe('admin navigation', () => {
       within(nav).getByRole('link', { name: resources.admin.nav.modelUsage }),
     ).toBeInTheDocument();
     expect(within(nav).getByRole('link', { name: resources.admin.nav.runs })).toBeInTheDocument();
-    const row = within(nav)
-      .getByText(resources.admin.nav.operations)
-      .closest('[aria-disabled="true"]');
-    expect(row).toHaveTextContent(resources.admin.nav.soon);
+    expect(
+      within(nav).getByRole('link', { name: resources.admin.nav.operations }),
+    ).toBeInTheDocument();
   });
 });

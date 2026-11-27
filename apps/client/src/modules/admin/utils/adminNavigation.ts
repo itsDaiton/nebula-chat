@@ -43,7 +43,13 @@ export const adminNavigation: AdminNavGroup[] = [
   {
     label: nav.system,
     pages: [
-      { id: 'operations', label: nav.operations, icon: ServerIcon },
+      {
+        id: 'operations',
+        label: nav.operations,
+        icon: ServerIcon,
+        to: '/admin/operations',
+        hasDetail: true,
+      },
       { id: 'audit', label: nav.audit, icon: ScrollTextIcon, to: '/admin/audit', hasDetail: true },
     ],
   },

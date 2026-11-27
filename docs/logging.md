@@ -395,6 +395,18 @@ take `--service server|worker`.
 Both routes are in the OpenAPI spec (Swagger UI at `/docs`, tag `Operator`, which
 `orval.config.ts` leaves out of the browser client).
 
+An Admin does the same from the dashboard's Operations page (`/admin/operations`)
+through `GET` and `POST /api/admin/log-levels`, tag `Admin`, at the `admin` Access level:
+
+- **Who.** The services log the acting Admin's account name as `nebula.operator`;
+  an `operator` in the body is dropped.
+- **Audit.** Each change writes a `log_level.changed` Audit entry (service, target,
+  level, `ttlSeconds`) before it is published, so a failed write changes nothing.
+- **Revert.** Reports carry no boot-time level, so `{"revert":true}` re-sends the
+  level the target holds now with `ttlSeconds: 1`: each instance's own timer then
+  restores its boot level and logs `log.level.reverted`. It is audited as a change
+  with `ttlSeconds: 1`, and answers `409` when the target has no temporary change.
+
 In code, `changeLogLevel(logger, change)` from `@nebula-chat/otel` does the
 in-process part, and `readLogLevels(logger)` reads it back.
 `listenForLogLevelChanges`, `publishLogLevelChange` and `collectLogLevelReports`
@@ -429,8 +441,9 @@ sequenceDiagram
 Message content, prompts, completions, Streaming tokens, emails, names,
 cookies, `Authorization` headers and API keys. Opaque ids are fine.
 
-The one name that is logged is `nebula.operator`: what an Operator calls
-themselves on a runtime level change. Use a handle, not a full name.
+The one name that is logged is `nebula.operator` on a runtime level change: what an
+Operator calls themselves (use a handle, not a full name), or an Admin's account name
+when the change comes from the dashboard.
 
 The catalogue already keeps these out of `logEvent`. As a second line of
 defence, `createLogger` censors (`[Redacted]`) credential and content-bearing

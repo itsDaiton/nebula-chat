@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import type {
+  adminChangeLogLevelSchema,
   adminEmailParamsSchema,
   grantAdminSchema,
   banUserSchema,
@@ -59,3 +60,5 @@ export type OverviewCounts = {
   messages: DayCount[];
   spend: DayCount[];
 };
+
+export type AdminChangeLogLevelDTO = z.infer<typeof adminChangeLogLevelSchema>;
