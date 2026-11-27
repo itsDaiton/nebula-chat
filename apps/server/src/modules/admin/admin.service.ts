@@ -11,6 +11,7 @@ import { adminRepository } from '@server/modules/admin/admin.repository';
 import type {
   AdminRole,
   BanUserDTO,
+  ListRunsQuery,
   ListSessionsQuery,
   ListUserSessionsQuery,
   DayCount,
@@ -245,6 +246,18 @@ export const adminService = {
   },
   listSessions({ limit, cursor, ...filters }: ListSessionsQuery) {
     return adminRepository.listSessions(filters, limit, cursor);
+  },
+  // Email stays out of the payload; a Run still in flight has no duration yet.
+  async listRuns({ limit, cursor, ...filters }: ListRunsQuery) {
+    const page = await adminRepository.listRuns(filters, limit, cursor);
+    return {
+      ...page,
+      runs: page.runs.map(({ finishedAt, owner, ...run }) => ({
+        ...run,
+        durationMs: finishedAt ? finishedAt.getTime() - run.startedAt.getTime() : null,
+        owner: { id: owner.id, name: owner.name },
+      })),
+    };
   },
   // Opening a Session is a content read: audited once, after it succeeds, and a failed Audit write fails the read.
   async readSession(sessionId: string, adminId: string) {

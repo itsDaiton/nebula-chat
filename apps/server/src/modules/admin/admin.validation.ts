@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RUN_STATUSES } from '@nebula-chat/db';
 import { paginationConfig } from '@server/config/pagination.config';
 import { messagesArraySchema } from '@server/modules/message/message.validation';
 import { isoDateTimeSchema } from '@server/utils/isoDateTimeSchema';
@@ -304,3 +305,69 @@ export const overviewSchema = z
     }),
   })
   .meta({ id: 'AdminOverview' });
+
+const RUN_SORTS = ['startedAt', 'duration', 'tokens', 'cost'] as const;
+
+const runTimeSchema = z.iso.datetime().transform((iso) => new Date(iso));
+
+export const listRunsQuerySchema = z.object({
+  // A key given once arrives as a string, so it is wrapped before the array is checked.
+  status: z
+    .preprocess(
+      (value) => (value === undefined || Array.isArray(value) ? value : [value]),
+      z.array(z.enum(RUN_STATUSES)).min(1).max(RUN_STATUSES.length).optional(),
+    )
+    .describe('Only Runs in one of these statuses, as a repeated key; without it every status'),
+  userId: z.uuid().optional().describe('Only Runs this User owns'),
+  from: runTimeSchema.optional().describe('Only Runs started at or after this time'),
+  to: runTimeSchema.optional().describe('Only Runs started before this time'),
+  sortBy: z
+    .enum(RUN_SORTS)
+    .default('startedAt')
+    .describe('A Run without a duration or cost sorts as the lowest value'),
+  order: z.enum(['asc', 'desc']).default('desc'),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(paginationConfig.maxLimit)
+    .default(paginationConfig.defaultLimit)
+    .describe(
+      `Number of Runs to fetch (1-${String(paginationConfig.maxLimit)}, default ${String(paginationConfig.defaultLimit)})`,
+    ),
+  cursor: z.uuid().optional().describe('The `nextCursor` of the previous page'),
+});
+
+export const adminRunListPageSchema = z
+  .object({
+    runs: z
+      .array(
+        z
+          .object({
+            id: z.uuid(),
+            status: z.enum(RUN_STATUSES),
+            startedAt: isoDateTimeSchema.describe(
+              'When it started; when it was queued if it has not',
+            ),
+            durationMs: z
+              .number()
+              .int()
+              .nullable()
+              .describe('`null` while the Run is queued, running or waiting'),
+            stepCount: z.number().int(),
+            tokensUsed: z.number().int(),
+            tokenBudget: z.number().int().nullable().describe('The Run budget; `null` when unset'),
+            costUsd: z
+              .number()
+              .nullable()
+              .describe('Estimated USD from the Model call ledger; `null` with no billable calls'),
+            owner: z.object({ id: z.uuid(), name: z.string() }),
+            session: z.object({ id: z.uuid(), title: z.string() }),
+          })
+          .meta({ id: 'AdminRunListItem' }),
+      )
+      .max(paginationConfig.maxLimit),
+    nextCursor: z.uuid().nullable(),
+    hasMore: z.boolean(),
+  })
+  .meta({ id: 'AdminRunListPage' });

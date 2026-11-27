@@ -2170,6 +2170,115 @@ components:
         - createdAt
         - updatedAt
       additionalProperties: false
+    AdminRunListPage:
+      type: object
+      properties:
+        runs:
+          maxItems: 100
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminRunListItem'
+        nextCursor:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: 'null'
+        hasMore:
+          type: boolean
+      required:
+        - runs
+        - nextCursor
+        - hasMore
+      additionalProperties: false
+    AdminRunListItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        status:
+          type: string
+          enum:
+            - queued
+            - running
+            - waiting
+            - completed
+            - partial
+            - failed
+            - cancelled
+        startedAt:
+          description: When it started; when it was queued if it has not
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+        durationMs:
+          anyOf:
+            - type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            - type: 'null'
+          description: '`null` while the Run is queued, running or waiting'
+        stepCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        tokensUsed:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        tokenBudget:
+          anyOf:
+            - type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            - type: 'null'
+          description: The Run budget; `null` when unset
+        costUsd:
+          description: Estimated USD from the Model call ledger; `null` with no billable
+            calls
+          type:
+            - number
+            - 'null'
+        owner:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            name:
+              type: string
+          required:
+            - id
+            - name
+          additionalProperties: false
+        session:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            title:
+              type: string
+          required:
+            - id
+            - title
+          additionalProperties: false
+      required:
+        - id
+        - status
+        - startedAt
+        - durationMs
+        - stepCount
+        - tokensUsed
+        - tokenBudget
+        - costUsd
+        - owner
+        - session
+      additionalProperties: false
     AdminSessionListPage:
       type: object
       properties:
@@ -5455,6 +5564,137 @@ paths:
           content:
             application/json:
               schema: {}
+  /api/admin/runs:
+    get:
+      operationId: listAllRuns
+      summary: List Runs
+      tags:
+        - Admin
+      description: >-
+        List Runs across all Users, newest first by default, filtered by status,
+        owner and start time, and sorted by start, duration, tokens or cost, a
+        page at a time. Listing is not a content read, so nothing is audited;
+        opening a Run is (`GET /api/runs/{runId}`). Requires an Admin whose auth
+        session passed two-factor authentication.
+
+
+        Access: admin
+      parameters:
+        - schema:
+            description: Only Runs in one of these statuses, as a repeated key; without it
+              every status
+            minItems: 1
+            maxItems: 7
+            type: array
+            items:
+              type: string
+              enum:
+                - queued
+                - running
+                - waiting
+                - completed
+                - partial
+                - failed
+                - cancelled
+          in: query
+          name: status
+          description: Only Runs in one of these statuses, as a repeated key; without it
+            every status
+        - schema:
+            description: Only Runs this User owns
+            type: string
+            format: uuid
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: query
+          name: userId
+          description: Only Runs this User owns
+        - schema:
+            description: Only Runs started at or after this time
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          in: query
+          name: from
+          description: Only Runs started at or after this time
+        - schema:
+            description: Only Runs started before this time
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          in: query
+          name: to
+          description: Only Runs started before this time
+        - schema:
+            default: startedAt
+            description: A Run without a duration or cost sorts as the lowest value
+            type: string
+            enum:
+              - startedAt
+              - duration
+              - tokens
+              - cost
+          in: query
+          name: sortBy
+          description: A Run without a duration or cost sorts as the lowest value
+        - schema:
+            default: desc
+            type: string
+            enum:
+              - asc
+              - desc
+          in: query
+          name: order
+        - schema:
+            default: 10
+            description: Number of Runs to fetch (1-100, default 10)
+            type: integer
+            minimum: 1
+            maximum: 100
+          in: query
+          name: limit
+          description: Number of Runs to fetch (1-100, default 10)
+        - schema:
+            description: The `nextCursor` of the previous page
+            type: string
+            format: uuid
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          in: query
+          name: cursor
+          description: The `nextCursor` of the previous page
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: A page of Runs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminRunListPage'
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+            non-Admin gets the unknown-route 404
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
   /api/admin/sessions:
     get:
       operationId: listAllSessions

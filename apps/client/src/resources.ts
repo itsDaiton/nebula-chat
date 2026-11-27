@@ -345,7 +345,6 @@ export const resources = {
       users: 'Users',
       sessions: 'Sessions',
       runs: 'Runs',
-      agents: 'Agents',
       operations: 'Operations',
       audit: 'Audit log',
       soon: 'soon',
@@ -584,6 +583,32 @@ export const resources = {
         dateFuture: 'Pick a date after today.',
         confirm: 'Ban User',
         confirming: 'Banning…',
+      },
+    },
+    runs: {
+      title: 'Runs',
+      filters: 'Run filters',
+      empty: 'No Runs match these filters.',
+      emptyHint: 'Clear a filter or widen the dates.',
+      loadFailed: 'Runs could not be loaded.',
+      columns: {
+        status: 'Status',
+        owner: 'Owner',
+        session: 'Session',
+        started: 'Started',
+        duration: 'Duration',
+        steps: 'Steps',
+        tokens: 'Tokens',
+        cost: 'Est. cost',
+      },
+      sort: (column: string, direction?: 'asc' | 'desc') => {
+        if (!direction) return `Sort by ${column}`;
+        return `${column}, sorted ${direction === 'asc' ? 'ascending' : 'descending'}`;
+      },
+      budgetUsed: (used: number, budget: number) =>
+        `${used.toLocaleString('en-US')} of ${budget.toLocaleString('en-US')} tokens`,
+      detail: {
+        notice: 'Read-only. Opening this Run was recorded in the Audit log.',
       },
     },
     sessions: {

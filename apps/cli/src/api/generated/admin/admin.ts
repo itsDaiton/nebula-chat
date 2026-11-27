@@ -6,6 +6,8 @@
  */
 import type { AdminOverview } from '../model/adminOverview';
 
+import type { AdminRunListPage } from '../model/adminRunListPage';
+
 import type { AdminSessionDetail } from '../model/adminSessionDetail';
 
 import type { AdminSessionListPage } from '../model/adminSessionListPage';
@@ -29,6 +31,8 @@ import type { GetModelUsageDetailParams } from '../model/getModelUsageDetailPara
 import type { GetModelUsageSeriesParams } from '../model/getModelUsageSeriesParams';
 
 import type { GetModelUsageTotalsParams } from '../model/getModelUsageTotalsParams';
+
+import type { ListAllRunsParams } from '../model/listAllRunsParams';
 
 import type { ListAllSessionsParams } from '../model/listAllSessionsParams';
 
@@ -891,6 +895,81 @@ export const unbanUser = async (
   return apiFetch<unbanUserResponse>(getUnbanUserUrl(id), {
     ...options,
     method: 'POST',
+  });
+};
+
+export type listAllRunsResponse200 = {
+  data: AdminRunListPage;
+  status: 200;
+};
+
+export type listAllRunsResponse400 = {
+  data: ErrorEnvelope;
+  status: 400;
+};
+
+export type listAllRunsResponse401 = {
+  data: ErrorEnvelope;
+  status: 401;
+};
+
+export type listAllRunsResponse403 = {
+  data: ErrorEnvelope;
+  status: 403;
+};
+
+export type listAllRunsResponse500 = {
+  data: ErrorEnvelope;
+  status: 500;
+};
+
+export type listAllRunsResponseSuccess = listAllRunsResponse200 & {
+  headers: Headers;
+};
+export type listAllRunsResponseError = (
+  listAllRunsResponse400 | listAllRunsResponse401 | listAllRunsResponse403 | listAllRunsResponse500
+) & {
+  headers: Headers;
+};
+
+export type listAllRunsResponse = listAllRunsResponseSuccess | listAllRunsResponseError;
+
+export const getListAllRunsUrl = (params?: ListAllRunsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ['status'];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/runs?${stringifiedParams}` : `/api/admin/runs`;
+};
+
+/**
+ * List Runs across all Users, newest first by default, filtered by status, owner and start time, and sorted by start, duration, tokens or cost, a page at a time. Listing is not a content read, so nothing is audited; opening a Run is (`GET /api/runs/{runId}`). Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary List Runs
+ */
+export const listAllRuns = async (
+  params?: ListAllRunsParams,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<listAllRunsResponse> => {
+  return apiFetch<listAllRunsResponse>(getListAllRunsUrl(params), {
+    ...options,
+    method: 'GET',
   });
 };
 

@@ -1,11 +1,27 @@
-import { and, asc, desc, eq, gt, isNotNull, isNull, lt, ne, or, sql } from 'drizzle-orm';
-import { sessions, users } from '@nebula-chat/db';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  ne,
+  or,
+  sql,
+} from 'drizzle-orm';
+import { modelCalls, runs, sessions, steps, users } from '@nebula-chat/db';
+import type { RunStatus } from '@nebula-chat/db';
 import { auth } from '@server/auth';
 import { db } from '@server/db';
 import type {
   AdminRole,
   DayCount,
   OverviewCounts,
+  RunFilters,
   SessionFilters,
   UserFilters,
 } from '@server/modules/admin/admin.types';
@@ -68,6 +84,58 @@ const sessionSearchFilter = (search: string) => {
   const escaped = search.replace(/[\\%_]/g, String.raw`\$&`);
   const pattern = `%${escaped}%`;
   return sql`${sessions.title} ilike ${pattern}`;
+};
+
+// Steps and Model calls are summed in their own derived tables before the join, so neither multiplies the other.
+// A Run's sort value is never null (a missing duration or cost is -1), so the cursor row compare stays total.
+const runRows = (name: string, sortBy: RunFilters['sortBy']) => {
+  const stepCounts = db
+    .select({ runId: steps.runId, stepCount: sql<number>`count(*)::int`.as('steps_total') })
+    .from(steps)
+    .groupBy(steps.runId)
+    .as(`${name}_step_counts`);
+  const costs = db
+    .select({
+      runId: modelCalls.runId,
+      costUsd: sql<
+        number | null
+      >`(sum(${modelCalls.costUsd}) filter (where not ${modelCalls.ownKey}))::float8`.as(
+        'calls_cost',
+      ),
+    })
+    .from(modelCalls)
+    .where(isNotNull(modelCalls.runId))
+    .groupBy(modelCalls.runId)
+    .as(`${name}_costs`);
+  const startedAt = sql`coalesce(${runs.startedAt}, ${runs.createdAt})`;
+  const sortValues = {
+    startedAt,
+    duration: sql`coalesce(extract(epoch from (${runs.finishedAt} - ${startedAt})) * 1000, -1)`,
+    tokens: sql`${runs.tokensUsed}`,
+    cost: sql`coalesce(${costs.costUsd}, -1)`,
+  };
+  return db
+    .select({
+      id: sql<string>`${runs.id}`.as('id'),
+      status: sql<RunStatus>`${runs.status}`.as('status'),
+      userId: sql<string>`${runs.userId}`.as('user_id'),
+      startedAt: sql<Date>`${startedAt}`.mapWith(runs.createdAt).as('started_at'),
+      finishedAt: sql<Date | null>`${runs.finishedAt}`.mapWith(runs.finishedAt).as('finished_at'),
+      stepCount: sql<number>`coalesce(${stepCounts.stepCount}, 0)`.as('step_count'),
+      tokensUsed: sql<number>`${runs.tokensUsed}`.as('tokens_used'),
+      tokenBudget: sql<number | null>`${runs.tokenBudget}`.as('token_budget'),
+      costUsd: sql<number | null>`${costs.costUsd}`.as('cost_usd'),
+      ownerName: sql<string>`${users.name}`.as('owner_name'),
+      sessionId: sql<string>`${sessions.id}`.as('session_id'),
+      sessionTitle: sql<string>`${sessions.title}`.as('session_title'),
+      sortValue: sql`${sortValues[sortBy]}`.as('sort_value'),
+    })
+    .from(runs)
+    .innerJoin(users, eq(users.id, runs.userId))
+    .innerJoin(sessions, eq(sessions.id, runs.sessionId))
+    .leftJoin(stepCounts, eq(stepCounts.runId, runs.id))
+    .leftJoin(costs, eq(costs.runId, runs.id))
+    .as(name);
 };
 
 const isGuest = sql`coalesce(${users.isAnonymous}, false)`;
@@ -341,5 +409,48 @@ export const adminRepository = {
     const nextCursor = hasMore ? (page.at(-1)?.id ?? null) : null;
 
     return { sessions: page, nextCursor, hasMore };
+  },
+  // Listing is not a content read, so it is not audited; the owner's email is never selected.
+  async listRuns(filters: RunFilters, limit: number, cursor?: string) {
+    const base = runRows('runs_base', filters.sortBy);
+    const after = filters.order === 'asc' ? sql.raw('>') : sql.raw('<');
+    let cursorFilter;
+    if (cursor) {
+      const cursorBase = runRows('runs_cursor', filters.sortBy);
+      cursorFilter = sql`(${base.sortValue}, ${base.id}) ${after} (select ${cursorBase.sortValue}, ${cursorBase.id} from ${cursorBase} where ${cursorBase.id} = ${cursor})`;
+    }
+
+    const direction = filters.order === 'asc' ? asc : desc;
+    const rows = await db
+      .select()
+      .from(base)
+      .where(
+        and(
+          filters.status ? inArray(base.status, filters.status) : undefined,
+          filters.userId ? eq(base.userId, filters.userId) : undefined,
+          filters.from ? gte(base.startedAt, filters.from) : undefined,
+          filters.to ? lt(base.startedAt, filters.to) : undefined,
+          cursorFilter,
+        ),
+      )
+      .orderBy(direction(base.sortValue), direction(base.id))
+      .limit(limit + 1);
+
+    const hasMore = rows.length > limit;
+    const page = (hasMore ? rows.slice(0, -1) : rows).map((row) => ({
+      id: row.id,
+      status: row.status,
+      startedAt: row.startedAt,
+      finishedAt: row.finishedAt,
+      stepCount: row.stepCount,
+      tokensUsed: row.tokensUsed,
+      tokenBudget: row.tokenBudget,
+      costUsd: row.costUsd,
+      owner: { id: row.userId, name: row.ownerName },
+      session: { id: row.sessionId, title: row.sessionTitle },
+    }));
+    const nextCursor = hasMore ? (page.at(-1)?.id ?? null) : null;
+
+    return { runs: page, nextCursor, hasMore };
   },
 };

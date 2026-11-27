@@ -11,10 +11,10 @@ export const DEFAULT_AUDIT_ORDER = 'desc';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const startOfDay = (day: string) => `${day}T00:00:00Z`;
+export const startOfDay = (day: string) => `${day}T00:00:00Z`;
 
 // `to` is exclusive on the API, so the last chosen day is included by stopping at the next midnight.
-const startOfNextDay = (day: string) =>
+export const startOfNextDay = (day: string) =>
   `${new Date(Date.parse(startOfDay(day)) + DAY_MS).toISOString().slice(0, 10)}T00:00:00Z`;
 
 const auditParams = ({

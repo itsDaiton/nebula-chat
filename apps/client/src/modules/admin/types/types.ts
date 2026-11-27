@@ -19,6 +19,9 @@ import type { ListAuditEntriesActorType } from '@/libs/api/generated/model/listA
 import type { AdminUserDetail } from '@/libs/api/generated/model/adminUserDetail';
 import type { AdminUserSummaryStatus } from '@/libs/api/generated/model/adminUserSummaryStatus';
 import type { ErrorEnvelope } from '@/libs/api/generated/model/errorEnvelope';
+import type { ListAllRunsOrder } from '@/libs/api/generated/model/listAllRunsOrder';
+import type { ListAllRunsSortBy } from '@/libs/api/generated/model/listAllRunsSortBy';
+import type { ListAllRunsStatusItem } from '@/libs/api/generated/model/listAllRunsStatusItem';
 import type { ListAllSessionsArchived } from '@/libs/api/generated/model/listAllSessionsArchived';
 import type { ListAuditEntriesOrder } from '@/libs/api/generated/model/listAuditEntriesOrder';
 import type { ListAllSessionsOrder } from '@/libs/api/generated/model/listAllSessionsOrder';
@@ -50,7 +53,8 @@ type AdminNavPage = {
   label: string;
   icon: LucideIcon;
   /** Unset while the page is not built: its row is disabled and labelled "soon". */
-  to?: '/admin' | '/admin/audit' | '/admin/sessions' | '/admin/usage' | '/admin/users';
+  to?:
+    '/admin' | '/admin/audit' | '/admin/runs' | '/admin/sessions' | '/admin/usage' | '/admin/users';
   /** The page has selectable rows, so the right panel and its toggle exist. */
   hasDetail?: boolean;
 };
@@ -186,6 +190,57 @@ export type SessionFiltersProps = {
   /** `replace` keeps typing in the search box out of the history. */
   onChange: (patch: Partial<SessionsSearch>, replace?: boolean) => void;
 };
+
+/** What the Runs table's URL holds: filters, sort, the page cursor and the open Run. */
+export type RunsSearch = {
+  status?: ListAllRunsStatusItem[];
+  /** The owner's id. */
+  user?: string;
+  /** Days as `YYYY-MM-DD`, both included. */
+  from?: string;
+  to?: string;
+  sort?: ListAllRunsSortBy;
+  dir?: ListAllRunsOrder;
+  cursor?: string;
+  selected?: string;
+};
+
+export type RunFiltersProps = {
+  search: RunsSearch;
+  onChange: (patch: Partial<RunsSearch>) => void;
+};
+
+export type RunSortHeaderProps = { column: ListAllRunsSortBy; label: string; alignRight?: boolean };
+
+export type AdminSortHeaderProps = {
+  label: string;
+  ariaLabel: string;
+  active: boolean;
+  direction: 'asc' | 'desc';
+  alignRight?: boolean;
+  /** Called with the direction a click asks for: newest or largest first, then reversed. */
+  onSort: (direction: 'asc' | 'desc') => void;
+};
+
+export type AdminToggleChipProps = {
+  active: boolean;
+  /** A dashed chip is an opt-in rather than a value. */
+  dashed?: boolean;
+  className?: string;
+  onClick: () => void;
+  children: ReactNode;
+};
+
+export type CursorPagingOptions = {
+  cursor: string | undefined;
+  onCursor: (cursor: string) => void;
+  /** Where Previous lands when there is no history to go back to, such as a pasted link. */
+  onRestart: () => void;
+};
+
+export type RunTokensProps = { used: number; budget: number | null };
+
+export type RunDetailPanelProps = { onClose: () => void };
 
 export type SessionOwnerFilterProps = { userId: string; onClear: () => void };
 
