@@ -92,7 +92,20 @@ export const setRoleSchema = z.object({
 });
 
 export const banUserSchema = z.object({
-  reason: z.string().trim().min(1).max(500).describe('Shown to the User when they try to sign in'),
+  reason: z
+    .string()
+    .trim()
+    .min(1)
+    .max(500)
+    .optional()
+    .describe('Shown to the User when they try to sign in'),
+  note: z
+    .string()
+    .trim()
+    .min(1)
+    .max(2000)
+    .optional()
+    .describe('Internal; only Admins see it, in the User detail and the Audit log'),
   expiresAt: z.iso
     .datetime()
     .refine((value) => new Date(value) > new Date(), 'The end of a ban must be in the future.')
@@ -135,7 +148,11 @@ export const userDetailSchema = z
     ...userSummaryShape,
     ban: z
       .object({
-        reason: z.string().nullable(),
+        reason: z
+          .string()
+          .nullable()
+          .describe('What the banned User sees when they try to sign in'),
+        note: z.string().nullable().describe('Internal; never shown to the User'),
         expiresAt: isoDateTimeSchema.nullable().describe('`null` for a ban with no end'),
       })
       .nullable()

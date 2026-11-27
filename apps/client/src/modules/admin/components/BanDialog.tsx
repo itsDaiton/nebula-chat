@@ -36,7 +36,7 @@ export const BanDialog = ({ user, open, onOpenChange }: BanDialogProps) => {
   } = useForm<BanValues>({
     resolver: zodResolver(banSchema),
     mode: 'onTouched',
-    defaultValues: { reason: '', duration: 'permanent', until: '' },
+    defaultValues: { reason: '', note: '', duration: 'permanent', until: '' },
   });
   const duration = watch('duration');
   const untilDay = watch('until');
@@ -47,12 +47,13 @@ export const BanDialog = ({ user, open, onOpenChange }: BanDialogProps) => {
     onOpenChange(next);
   };
 
-  const onSubmit = ({ reason, duration: kind, until }: BanValues) =>
+  const onSubmit = ({ reason, note, duration: kind, until }: BanValues) =>
     ban.mutate(
       {
         id: user.id,
         data: {
           reason: reason.trim(),
+          ...(note.trim() && { note: note.trim() }),
           ...(kind === 'until' && { expiresAt: `${until}T23:59:59.000Z` }),
         },
       },
@@ -85,6 +86,18 @@ export const BanDialog = ({ user, open, onOpenChange }: BanDialogProps) => {
             {errors.reason && (
               <FieldError id="ban-reason-error">{errors.reason.message}</FieldError>
             )}
+          </Field>
+          <Field data-invalid={Boolean(errors.note)}>
+            <FieldLabel htmlFor="ban-note">
+              {text.note} <span className="font-normal text-muted-foreground">{text.noteHint}</span>
+            </FieldLabel>
+            <Textarea
+              id="ban-note"
+              aria-invalid={Boolean(errors.note)}
+              aria-errormessage={errors.note ? 'ban-note-error' : undefined}
+              {...register('note')}
+            />
+            {errors.note && <FieldError id="ban-note-error">{errors.note.message}</FieldError>}
           </Field>
           <FieldSet>
             <FieldLegend variant="label">{text.duration}</FieldLegend>

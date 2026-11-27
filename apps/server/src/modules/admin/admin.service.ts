@@ -100,7 +100,7 @@ type AdminPluginApi = {
     headers: Headers;
   }) => Promise<unknown>;
   banUser: (input: {
-    body: { userId: string; banReason: string; banExpiresIn?: number };
+    body: { userId: string; banReason?: string; banExpiresIn?: number };
     headers: Headers;
   }) => Promise<unknown>;
   unbanUser: (input: { body: { userId: string }; headers: Headers }) => Promise<unknown>;
@@ -233,7 +233,9 @@ export const adminService = {
     }
     return {
       ...toUserSummary(user),
-      ban: isBanned(user) ? { reason: user.banReason, expiresAt: user.banExpires } : null,
+      ban: isBanned(user)
+        ? { reason: user.banReason, note: user.banNote, expiresAt: user.banExpires }
+        : null,
       pendingDeletionAt: user.pendingDeletionAt,
     };
   },
@@ -295,7 +297,7 @@ export const adminService = {
   },
   async banUser(
     userId: string,
-    { reason, expiresAt }: BanUserDTO,
+    { reason, note, expiresAt }: BanUserDTO,
     adminId: string,
     headers: Headers,
     logger: EventLogger<'warn'>,
@@ -311,8 +313,10 @@ export const adminService = {
     const banExpiresIn = expiresAt
       ? Math.max(1, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 1000))
       : undefined;
+    // Before the ban, so a failed write leaves a note nobody sees instead of a ban without one.
+    await adminRepository.setBanNote(userId, note ?? null);
     await adminApi().banUser({
-      body: { userId, banReason: reason, ...(banExpiresIn && { banExpiresIn }) },
+      body: { userId, ...(reason && { banReason: reason }), ...(banExpiresIn && { banExpiresIn }) },
       headers,
     });
     await auditService.append({
@@ -321,7 +325,7 @@ export const adminService = {
       action: 'user.banned',
       targetType: 'user',
       targetId: userId,
-      detail: { reason, expiresAt: expiresAt ?? null },
+      detail: { reason: reason ?? null, note: note ?? null, expiresAt: expiresAt ?? null },
     });
     // A banned owner cannot answer, so their waiting Runs end instead of timing out into a banned account.
     await runService.cancelWaitingRunsOfUser(userId, logger);
@@ -332,6 +336,7 @@ export const adminService = {
       throw new ConflictError('This user is not banned.');
     }
     await adminApi().unbanUser({ body: { userId }, headers });
+    await adminRepository.setBanNote(userId, null);
     await auditService.append({
       actorType: 'admin',
       actorUserId: adminId,

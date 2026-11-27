@@ -20,6 +20,7 @@ vi.mock('@server/modules/admin/admin.repository', () => ({
     findPendingDeletion: vi.fn(),
     clearPendingDeletion: vi.fn(),
     findModerationTarget: vi.fn(),
+    setBanNote: vi.fn(),
     countOtherActiveAdmins: vi.fn(),
   },
 }));
@@ -128,11 +129,14 @@ beforeEach(() => {
   repo.listUsers.mockResolvedValue(
     fromPartial({ users: [aRow()], nextCursor: USER_ID, hasMore: true }),
   );
-  repo.findUserDetail.mockResolvedValue(fromPartial(aRow({ sessionsCount: 3, banReason: null })));
+  repo.findUserDetail.mockResolvedValue(
+    fromPartial(aRow({ sessionsCount: 3, banReason: null, banNote: null })),
+  );
   repo.findPendingDeletion.mockResolvedValue({ id: USER_ID, pendingDeletionAt: PENDING_AT });
   repo.clearPendingDeletion.mockResolvedValue(undefined);
   repo.findModerationTarget.mockResolvedValue(fromPartial(aTarget()));
   repo.countOtherActiveAdmins.mockResolvedValue(1);
+  repo.setBanNote.mockResolvedValue(undefined);
   mockedSetRole.mockResolvedValue(undefined);
   mockedBanUser.mockResolvedValue(undefined);
   mockedUnbanUser.mockResolvedValue(undefined);
@@ -306,14 +310,22 @@ describe('GET /api/admin/users/:id', () => {
   it('shows the reason and end of a ban that is in force', async () => {
     const expires = new Date(Date.now() + 86_400_000);
     repo.findUserDetail.mockResolvedValue(
-      fromPartial(aRow({ banned: true, banExpires: expires, banReason: 'spam', sessionsCount: 0 })),
+      fromPartial(
+        aRow({
+          banned: true,
+          banExpires: expires,
+          banReason: 'spam',
+          banNote: 'reported by X',
+          sessionsCount: 0,
+        }),
+      ),
     );
 
     const res = await app.inject({ method: 'GET', url: `${ROUTE}/${USER_ID}`, headers: COOKIE });
 
     expect(res.json()).toMatchObject({
       status: 'banned',
-      ban: { reason: 'spam', expiresAt: expires.toISOString() },
+      ban: { reason: 'spam', note: 'reported by X', expiresAt: expires.toISOString() },
     });
   });
 
@@ -352,6 +364,7 @@ describe('a User in Pending deletion', () => {
           role: 'admin',
           banned: true,
           banReason: null,
+          banNote: null,
           pendingDeletionAt: PENDING_AT,
           sessionsCount: 0,
         }),
@@ -581,7 +594,7 @@ describe('POST /api/admin/users/:id/ban', () => {
   it('bans through better-auth with the reason and seconds until the end, and audits once', async () => {
     const expiresAt = new Date(Date.now() + 3_600_000).toISOString();
 
-    const res = await send({ reason: 'spam', expiresAt });
+    const res = await send({ reason: 'spam', note: 'reported by X', expiresAt });
 
     expect(res.statusCode).toBe(204);
     expect(mockedBanUser).toHaveBeenCalledTimes(1);
@@ -596,8 +609,27 @@ describe('POST /api/admin/users/:id/ban', () => {
       action: 'user.banned',
       targetType: 'user',
       targetId: USER_ID,
-      detail: { reason: 'spam', expiresAt },
+      detail: { reason: 'spam', note: 'reported by X', expiresAt },
     });
+  });
+
+  it('keeps the note out of what better-auth shows the banned User, and stores it beside the ban', async () => {
+    await send({ reason: 'spam', note: 'reported by X' });
+
+    const { body } = mockedBanUser.mock.calls[0]?.[0] as { body: Record<string, unknown> };
+    expect(JSON.stringify(body)).not.toContain('reported by X');
+    expect(repo.setBanNote).toHaveBeenCalledWith(USER_ID, 'reported by X');
+  });
+
+  it('bans with only a note, leaving the reason out', async () => {
+    const res = await send({ note: 'internal' });
+
+    expect(res.statusCode).toBe(204);
+    const { body } = mockedBanUser.mock.calls[0]?.[0] as { body: Record<string, unknown> };
+    expect(body).toEqual({ userId: USER_ID });
+    expect(audit.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ detail: { reason: null, note: 'internal', expiresAt: null } }),
+    );
   });
 
   it('cancels the banned User’s waiting Runs', async () => {
@@ -620,7 +652,7 @@ describe('POST /api/admin/users/:id/ban', () => {
       expect.objectContaining({ body: { userId: USER_ID, banReason: 'abuse' } }),
     );
     expect(audit.insert).toHaveBeenCalledWith(
-      expect.objectContaining({ detail: { reason: 'abuse', expiresAt: null } }),
+      expect.objectContaining({ detail: { reason: 'abuse', note: null, expiresAt: null } }),
     );
   });
 
@@ -668,8 +700,10 @@ describe('POST /api/admin/users/:id/ban', () => {
   });
 
   it.each([
-    ['no reason', {}],
     ['an empty reason', { reason: '' }],
+    ['an empty note', { reason: 'spam', note: ' ' }],
+    ['a reason over 500 characters', { reason: 'x'.repeat(501) }],
+    ['a note over 2000 characters', { note: 'x'.repeat(2001) }],
     ['an end time in the past', { reason: 'spam', expiresAt: '2020-01-01T00:00:00.000Z' }],
     ['an end time that is not a date', { reason: 'spam', expiresAt: 'soon' }],
   ])('rejects %s', async (_label, payload) => {
@@ -712,6 +746,7 @@ describe('POST /api/admin/users/:id/unban', () => {
     expect(mockedUnbanUser).toHaveBeenCalledWith(
       expect.objectContaining({ body: { userId: USER_ID } }),
     );
+    expect(repo.setBanNote).toHaveBeenCalledWith(USER_ID, null);
     expect(audit.insert).toHaveBeenCalledTimes(1);
     expect(audit.insert).toHaveBeenCalledWith({
       actorType: 'admin',

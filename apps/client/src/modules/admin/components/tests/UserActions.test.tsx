@@ -77,7 +77,7 @@ describe('User actions', () => {
   });
 
   it('tells the Admin to unban a banned User before granting Admin', async () => {
-    serve(detailOf({ status: 'banned', ban: { reason: 'Spam', expiresAt: null } }));
+    serve(detailOf({ status: 'banned', ban: { reason: 'Spam', note: null, expiresAt: null } }));
     const panel = await openPanel();
 
     const grant = button(panel, actions.grantAdmin);
@@ -106,7 +106,7 @@ describe('User actions', () => {
     const banned = detailOf({
       status: 'banned',
       role: 'admin',
-      ban: { reason: 'Spam', expiresAt: null },
+      ban: { reason: 'Spam', note: null, expiresAt: null },
     });
     serve(banned, [summary({ id: 'b', role: 'admin', status: 'admin' })]);
     const panel = await openPanel();
@@ -119,7 +119,11 @@ describe('User actions', () => {
 
   it('disables Revoke Admin for a banned Admin who is the last active one', async () => {
     serve(
-      detailOf({ status: 'banned', role: 'admin', ban: { reason: 'Spam', expiresAt: null } }),
+      detailOf({
+        status: 'banned',
+        role: 'admin',
+        ban: { reason: 'Spam', note: null, expiresAt: null },
+      }),
       [],
     );
     const panel = await openPanel();
@@ -239,7 +243,7 @@ describe('User actions', () => {
 
   it('unbans a banned User after a confirmation', async () => {
     let unbanned = 0;
-    serve(detailOf({ status: 'banned', ban: { reason: 'Spam', expiresAt: null } }));
+    serve(detailOf({ status: 'banned', ban: { reason: 'Spam', note: null, expiresAt: null } }));
     server.use(
       http.post('*/api/admin/users/:id/unban', () => {
         unbanned += 1;

@@ -173,7 +173,7 @@ describe('nebula users show', () => {
       200,
       detail({
         status: 'banned',
-        ban: { reason: 'spam', expiresAt: null },
+        ban: { reason: 'spam', note: 'ticket 7', expiresAt: null },
         pendingDeletionAt: '2026-10-01T00:00:00.000Z',
       }),
     );
@@ -184,6 +184,7 @@ describe('nebula users show', () => {
     expect(cli.stdout()).toContain(EMAIL);
     expect(cli.stdout()).toContain('banned');
     expect(cli.stdout()).toMatch(/Ban reason:\s+spam/);
+    expect(cli.stdout()).toMatch(/Ban note:\s+ticket 7/);
     expect(cli.stdout()).toMatch(/Ban expires:\s+never/);
     expect(cli.stdout()).toContain('Deletion pending since');
   });

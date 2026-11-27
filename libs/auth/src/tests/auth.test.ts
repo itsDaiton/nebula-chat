@@ -148,6 +148,30 @@ describe('createAuth Profile image', () => {
     );
   });
 
+  it('refuses a client that sets the ban note through update-user', () => {
+    const { options } = buildAuth();
+
+    expect(() => parseUserInput(options, { banNote: 'mine' }, 'update')).toThrow(
+      'banNote is not allowed to be set',
+    );
+  });
+
+  it('keeps the ban note out of the user it sends the client', () => {
+    const { options } = buildAuth();
+
+    const user = parseUserOutput(options, {
+      id: 'user-1',
+      name: 'Ada',
+      email: 'ada@example.com',
+      emailVerified: true,
+      banNote: 'internal',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    expect(user).not.toHaveProperty('banNote');
+  });
+
   it('keeps the storage key out of the user it sends the client', () => {
     const { options } = buildAuth();
 

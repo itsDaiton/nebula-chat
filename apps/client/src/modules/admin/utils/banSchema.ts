@@ -8,6 +8,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 export const banSchema = z
   .object({
     reason: z.string().trim().min(1, text.reasonRequired).max(500, text.reasonTooLong),
+    note: z.string().trim().max(2000, text.noteTooLong),
     duration: z.enum(['permanent', 'until']),
     // `YYYY-MM-DD` from a date input; only read when the ban is not permanent.
     until: z.string(),

@@ -229,10 +229,14 @@ export const adminRepository = {
         messagesSent,
         sessionsCount,
         banReason: users.banReason,
+        banNote: users.banNote,
       })
       .from(users)
       .where(eq(users.id, id));
     return row ?? null;
+  },
+  async setBanNote(id: string, banNote: string | null) {
+    await db.update(users).set({ banNote }).where(eq(users.id, id));
   },
   async findModerationTarget(id: string) {
     const [row] = await db

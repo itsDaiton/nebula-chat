@@ -37,6 +37,53 @@ describe('Ban dialog', () => {
     expect(await screen.findByText(actions.banned('anna@example.com'))).toBeInTheDocument();
   });
 
+  it('sends the internal note beside the reason, each labelled for who sees it', async () => {
+    const bodies: unknown[] = [];
+    serve(detailOf());
+    server.use(
+      http.post('*/api/admin/users/:id/ban', async ({ request }) => {
+        bodies.push(await request.json());
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    const panel = await openPanel();
+
+    await userEvent.click(button(panel, actions.ban));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText(text.ban.reasonHint)).toBeInTheDocument();
+    expect(within(dialog).getByText(text.ban.noteHint)).toBeInTheDocument();
+    await userEvent.type(within(dialog).getByRole('textbox', { name: /Reason/ }), 'Spam');
+    await userEvent.type(
+      within(dialog).getByRole('textbox', { name: /Internal note/ }),
+      'Ticket 7',
+    );
+    await userEvent.click(within(dialog).getByRole('button', { name: text.ban.confirm }));
+
+    await waitFor(() => expect(bodies).toEqual([{ reason: 'Spam', note: 'Ticket 7' }]));
+  });
+
+  it('rejects a note over 2000 characters and sends nothing', async () => {
+    const bodies: unknown[] = [];
+    serve(detailOf());
+    server.use(
+      http.post('*/api/admin/users/:id/ban', async ({ request }) => {
+        bodies.push(await request.json());
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    const panel = await openPanel();
+
+    await userEvent.click(button(panel, actions.ban));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: /Reason/ }), 'Spam');
+    await userEvent.click(within(dialog).getByRole('textbox', { name: /Internal note/ }));
+    await userEvent.paste('x'.repeat(2001));
+    await userEvent.click(within(dialog).getByRole('button', { name: text.ban.confirm }));
+
+    expect(await within(dialog).findByText(text.ban.noteTooLong)).toBeInTheDocument();
+    expect(bodies).toEqual([]);
+  });
+
   it('bans until a future date and rejects a past one', async () => {
     const bodies: unknown[] = [];
     serve(detailOf());

@@ -786,7 +786,7 @@ export const getBanUserUrl = (id: string) => {
 };
 
 /**
- * Ban a User with a reason and an optional end time, revoke every auth session of theirs, and record it in the Audit log. Their sign-in then fails with the reason and end time until the ban ends or is lifted. The last Admin cannot be banned (`LastAdmin`). Sessions are revoked through Redis secondary storage; a cookie-cache holder may stay signed in for up to five minutes, as with Sign out everywhere. Requires an Admin whose auth session passed two-factor authentication.
+ * Ban a User with an optional reason (shown to them), an optional internal note (Admins only) and an optional end time, revoke every auth session of theirs, and record it in the Audit log. Their sign-in then fails with the reason (never the note) and end time until the ban ends or is lifted. The last Admin cannot be banned (`LastAdmin`). Sessions are revoked through Redis secondary storage; a cookie-cache holder may stay signed in for up to five minutes, as with Sign out everywhere. Requires an Admin whose auth session passed two-factor authentication.
  *
  * Access: admin
  * @summary Ban a User

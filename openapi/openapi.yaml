@@ -2062,6 +2062,12 @@ components:
             - type: object
               properties:
                 reason:
+                  description: What the banned User sees when they try to sign in
+                  type:
+                    - string
+                    - 'null'
+                note:
+                  description: Internal; never shown to the User
                   type:
                     - string
                     - 'null'
@@ -2075,6 +2081,7 @@ components:
                   description: '`null` for a ban with no end'
               required:
                 - reason
+                - note
                 - expiresAt
               additionalProperties: false
             - type: 'null'
@@ -2526,13 +2533,20 @@ components:
               type: object
               properties:
                 reason:
-                  type: string
+                  type:
+                    - string
+                    - 'null'
+                note:
+                  type:
+                    - string
+                    - 'null'
                 expiresAt:
                   type:
                     - string
                     - 'null'
               required:
                 - reason
+                - note
                 - expiresAt
               additionalProperties: false
               description: Ids and changed fields; never Message content
@@ -5289,9 +5303,10 @@ paths:
       tags:
         - Admin
       description: >-
-        Ban a User with a reason and an optional end time, revoke every auth
-        session of theirs, and record it in the Audit log. Their sign-in then
-        fails with the reason and end time until the ban ends or is lifted. The
+        Ban a User with an optional reason (shown to them), an optional internal
+        note (Admins only) and an optional end time, revoke every auth session
+        of theirs, and record it in the Audit log. Their sign-in then fails with
+        the reason (never the note) and end time until the ban ends or is lifted. The
         last Admin cannot be banned (`LastAdmin`). Sessions are revoked through
         Redis secondary storage; a cookie-cache holder may stay signed in for up
         to five minutes, as with Sign out everywhere. Requires an Admin whose
@@ -5311,6 +5326,11 @@ paths:
                   minLength: 1
                   maxLength: 500
                   description: Shown to the User when they try to sign in
+                note:
+                  description: Internal; only Admins see it, in the User detail and the Audit log
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
                 expiresAt:
                   description: >-
                     When the ban ends; without it the ban lasts until an Admin
@@ -5319,8 +5339,6 @@ paths:
                   format: date-time
                   pattern: >-
                     ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
-              required:
-                - reason
       parameters:
         - schema:
             type: string

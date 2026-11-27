@@ -43,7 +43,11 @@ const roleChange = { role: z.object({ from: z.string(), to: z.string() }) };
 const detailShapes = {
   adminGranted: roleChange,
   roleChanged: roleChange,
-  banned: { reason: z.string(), expiresAt: z.string().nullable() },
+  banned: {
+    reason: z.string().nullable(),
+    note: z.string().nullable(),
+    expiresAt: z.string().nullable(),
+  },
   unbanned: { reason: z.string().nullable() },
   restored: { pendingDeletionAt: z.string() },
   sessionRead: { userId: z.string() },

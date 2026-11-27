@@ -30,6 +30,8 @@ export const users = pgTable(
     role: text('role').notNull().default('user'),
     banned: boolean('banned').notNull().default(false),
     banReason: text('ban_reason'),
+    // Admins only: never sent to the banned User, unlike `banReason`.
+    banNote: text('ban_note'),
     banExpires: timestamp('ban_expires'),
     twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
     // Set by Account deletion (ADR-0028); the Purge erases the User 30 days later.
