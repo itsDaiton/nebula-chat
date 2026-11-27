@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.17.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.17.0...nebula-chat-v7.17.1) (2026-11-27)
+
+
+### Bug Fixes
+
+* NEB-900 document that the API's client IP header can't be forged ([#991](https://github.com/itsDaiton/nebula-chat/issues/991)) ([49f7ad5](https://github.com/itsDaiton/nebula-chat/commit/49f7ad557c9cbc663d775148a12e9070d2469ed0))
+
 ## [7.17.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.16.3...nebula-chat-v7.17.0) (2026-11-27)
 
 
