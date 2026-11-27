@@ -45,6 +45,8 @@ export const envSchema = z
     // A Run job's tries and the base of its exponential backoff; a retry resumes the Run.
     RUN_JOB_ATTEMPTS: z.coerce.number().int().positive().default(3),
     RUN_JOB_BACKOFF_MS: z.coerce.number().int().nonnegative().default(5_000),
+    // Mean event loop delay over which requests are shed with a 503; tune it from the delay the shed line logs.
+    MAX_EVENT_LOOP_DELAY_MS: z.coerce.number().int().positive().default(1_000),
     CLIENT_URL: originSchema.default('http://localhost:5173'),
     SERVER_URL: z.preprocess((raw) => (raw === '' ? undefined : raw), originSchema.optional()),
     TRUST_PROXY: z.string().optional(),

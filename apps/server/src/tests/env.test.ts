@@ -183,6 +183,12 @@ describe('envSchema hardening', () => {
     expect(parse({ GUEST_MESSAGE_ALLOWANCE: '0' }).success).toBe(true);
   });
 
+  it('defaults MAX_EVENT_LOOP_DELAY_MS to 1000 and rejects 0, which would turn load shedding off', () => {
+    expect(parse({}).data?.MAX_EVENT_LOOP_DELAY_MS).toBe(1000);
+    expect(parse({ MAX_EVENT_LOOP_DELAY_MS: '2500' }).data?.MAX_EVENT_LOOP_DELAY_MS).toBe(2500);
+    expect(parse({ MAX_EVENT_LOOP_DELAY_MS: '0' }).success).toBe(false);
+  });
+
   it('rejects an http BETTER_AUTH_URL in production', () => {
     const result = parse({
       NODE_ENV: 'production',

@@ -27,6 +27,7 @@ Today `POST /api/chat/stream` persists the user Message _and_ holds the SSE resp
 - The "Conversation" → **Session** rename (see `GLOSSARY.md`) lands with this API cut, since the routes are being redrawn anyway.
 - Error events on the stream carry the typed error envelope from ADR-0011.
 - Stream memory is bounded by TTL plus Redis `maxmemory-policy`; a stream whose worker died mid-reply expires on its TTL, and the Run's durable status tells the client what happened.
+  **Amended 2026-11-27 (NEB-818):** the policy is `noeviction`, which BullMQ requires (see the [ADR-0009 amendment](./0009-nebula-chat-redis-lib.md#4-redesign-over-lift--discard-the-old-module-rather-than-move-it-into-libs)). So streams are bounded by their TTL alone. Under memory pressure nothing is evicted, and appends fail instead.
 
 ## Alternatives considered
 

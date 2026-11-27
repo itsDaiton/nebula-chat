@@ -66,6 +66,20 @@ its **fail-open** behavior is kept (Redis errors degrade to a cache miss/no-op, 
 Eviction moves from the hand-rolled capped list to **per-key TTL + Redis `maxmemory-policy`
 (`allkeys-lru`)**. The M-9 test suite is the regression net that makes discarding safe.
 
+**Amended 2026-11-27 (NEB-818).** The policy is **`noeviction`**, not `allkeys-lru`. The same Redis now also
+holds the BullMQ queues (ADR-0013), and BullMQ keeps its jobs, delayed jobs, job schedulers and id counters as keys
+without a TTL. `allkeys-lru` may evict any of them, and BullMQ requires `noeviction` (it logs `IMPORTANT! Eviction
+policy is … It should be "noeviction"` on every connection otherwise). Memory stays bounded by TTLs instead: every
+app-owned key in the [Redis keyspace](../architecture.md#redis-keyspace) carries one, except a reply stream that has
+not ended yet, and BullMQ keeps at most the last 1000 finished jobs per queue, IDs only. The trade-off: once
+memory is full, Redis refuses writes instead of evicting. Reads and writes through the lib fail open, so a
+full Redis would cost the cache, not chat. Enqueues and reply streams would fail, though, so usage must stay well
+under the cap. The free-plan Render Key Value (about 25 MB) has no disk persistence, so a restart empties it under
+any policy. BullMQ job ids then start again at `1`, waiting and delayed jobs are lost, and the daily Purge
+scheduler is gone until the worker's next boot re-creates it with `upsertJobScheduler`. Durable state stays in
+Postgres. Before this amendment the host reported `optimistic-volatile`, its own name for a policy that evicts only
+keys with a TTL.
+
 ## Consequences
 
 - One way the app talks to Redis; future tickets extend a toolkit instead of opening new clients.
