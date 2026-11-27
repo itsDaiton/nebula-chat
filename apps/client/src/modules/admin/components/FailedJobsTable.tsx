@@ -54,7 +54,8 @@ export const FailedJobsTable = ({ jobs }: FailedJobsTableProps) => (
                 </td>
                 <td className="px-4 py-3 font-mono whitespace-nowrap">{job.queue}</td>
                 <td className="px-4 py-3 text-right font-mono tabular-nums">{job.attemptsMade}</td>
-                <td className="max-w-[28rem] truncate px-4 py-3" title={job.error}>
+                {/* max-w-0 lets the cell take the leftover width and truncate, so the Run column stays whole. */}
+                <td className="w-full max-w-0 truncate px-4 py-3" title={job.error}>
                   {job.error}
                 </td>
                 <td className="px-4 py-3 font-mono whitespace-nowrap">
