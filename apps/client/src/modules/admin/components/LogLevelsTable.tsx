@@ -2,7 +2,7 @@ import { InfoIcon } from 'lucide-react';
 import { LogLevelTableRow } from '@/modules/admin/components/LogLevelTableRow';
 import { useLogLevelFormStore } from '@/modules/admin/stores/useLogLevelFormStore';
 import type { LogLevelsTableProps } from '@/modules/admin/types/types';
-import { logLevelRows } from '@/modules/admin/utils/logLevels';
+import { logLevelRowKey, logLevelRows } from '@/modules/admin/utils/logLevels';
 import { resources } from '@/resources';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 
@@ -89,7 +89,7 @@ export const LogLevelsTable = ({ services }: LogLevelsTableProps) => {
               }
               return rows.map((row) => (
                 <LogLevelTableRow
-                  key={[service, row.target, row.level, row.expiresAt, row.operator].join('|')}
+                  key={`${service}|${logLevelRowKey(row)}`}
                   row={row}
                   selected={service === selectedService && row.target === selectedTarget}
                 />

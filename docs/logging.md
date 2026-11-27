@@ -398,8 +398,8 @@ Both routes are in the OpenAPI spec (Swagger UI at `/docs`, tag `Operator`, whic
 An Admin does the same from the dashboard's Operations page (`/admin/operations`)
 through `GET` and `POST /api/admin/log-levels`, tag `Admin`, at the `admin` Access level:
 
-- **Who.** The services log the acting Admin's account name as `nebula.operator`;
-  an `operator` in the body is dropped.
+- **Who.** The services log the acting Admin's account name as `nebula.operator`,
+  or their id when the name is blank; an `operator` in the body is dropped.
 - **Audit.** Each change writes a `log_level.changed` Audit entry (service, target,
   level, `ttlSeconds`) before it is published, so a failed write changes nothing.
 - **Revert.** Reports carry no boot-time level, so `{"revert":true}` re-sends the

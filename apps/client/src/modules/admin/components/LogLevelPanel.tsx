@@ -8,8 +8,10 @@ import {
   LOG_LEVEL_SERVICES,
   LOG_LEVEL_TARGETS,
   LOG_LEVEL_TTLS,
+  componentOf,
 } from '@/modules/admin/utils/logLevels';
 import { resources } from '@/resources';
+import { useOnUnmount } from '@/shared/hooks/useOnUnmount';
 import { Button } from '@/shared/components/ui/button';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import {
@@ -34,6 +36,8 @@ const ttlOptions = LOG_LEVEL_TTLS.map((value) => ({
 export const LogLevelPanel = ({ onClose }: LogLevelPanelProps) => {
   const form = useLogLevelFormStore();
   const apply = useLogLevelChange();
+  // The choices belong to this visit: leaving the page starts the next one from the defaults.
+  const resetOnLeave = useOnUnmount(form.reset);
   const serviceLabel = text.services[form.service];
 
   // A new choice clears the last result, so "Sent to" never describes a different change.
@@ -48,14 +52,14 @@ export const LogLevelPanel = ({ onClose }: LogLevelPanelProps) => {
     apply.mutate({
       data: {
         service: form.service,
-        ...(form.target !== 'root' && { component: form.target }),
+        ...componentOf(form.target),
         level: form.level,
         ttlSeconds: form.ttlSeconds,
       },
     });
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto p-3.5">
+    <div ref={resetOnLeave} className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto p-3.5">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold">{text.panel.title}</h2>
         <IconButton variant="ghost" size="icon" label={text.panel.close} onClick={onClose}>
@@ -69,7 +73,7 @@ export const LogLevelPanel = ({ onClose }: LogLevelPanelProps) => {
             label={text.panel.service}
             value={form.service}
             options={serviceOptions}
-            onChange={choose(form.setService)}
+            onChange={choose(form.chooseService)}
           />
         </div>
       </div>
@@ -79,7 +83,7 @@ export const LogLevelPanel = ({ onClose }: LogLevelPanelProps) => {
         </span>
         <Select
           value={form.target}
-          onValueChange={(value) => value && choose(form.setTarget)(value)}
+          onValueChange={(value) => value && choose(form.chooseTarget)(value)}
         >
           <SelectTrigger aria-labelledby="log-level-target" className="h-9 w-full font-mono">
             <SelectValue />
@@ -100,7 +104,7 @@ export const LogLevelPanel = ({ onClose }: LogLevelPanelProps) => {
             label={text.panel.level}
             value={form.level}
             options={levelOptions}
-            onChange={choose(form.setLevel)}
+            onChange={choose(form.chooseLevel)}
           />
         </div>
       </div>
@@ -112,7 +116,7 @@ export const LogLevelPanel = ({ onClose }: LogLevelPanelProps) => {
             value={String(form.ttlSeconds)}
             options={ttlOptions}
             onChange={(value) =>
-              choose(form.setTtl)(Number(value) as (typeof LOG_LEVEL_TTLS)[number])
+              choose(form.chooseTtl)(Number(value) as (typeof LOG_LEVEL_TTLS)[number])
             }
           />
         </div>

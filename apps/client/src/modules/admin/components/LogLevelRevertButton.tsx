@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { getChangeAdminLogLevelMutationKey } from '@/libs/api/generated/admin/admin';
 import { useLogLevelChange } from '@/modules/admin/hooks/useLogLevelChange';
 import type { LogLevelRevertButtonProps } from '@/modules/admin/types/types';
+import { componentOf } from '@/modules/admin/utils/logLevels';
 import { resources } from '@/resources';
 import { Button } from '@/shared/components/ui/button';
 
@@ -26,14 +27,14 @@ export const LogLevelRevertButton = ({ row }: LogLevelRevertButtonProps) => {
         revert.mutate({
           data: {
             service: row.service,
-            ...(row.target !== 'root' && { component: row.target }),
+            ...componentOf(row.target),
             revert: true,
           },
         })
       }
     >
       <Undo2Icon />
-      {text.logLevels.revert}
+      {revert.isPending ? text.logLevels.reverting : text.logLevels.revert}
     </Button>
   );
 };

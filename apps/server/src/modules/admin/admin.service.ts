@@ -417,7 +417,8 @@ export const adminService = {
       ...(component && { component }),
       level,
       ttlSeconds,
-      operator: admin.name,
+      // otel drops a blank operator, and an id is the one identifier safe to log.
+      operator: admin.name.trim() || admin.id,
     });
   },
 };

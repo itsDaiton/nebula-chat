@@ -464,6 +464,7 @@ export const resources = {
         bootLevel: 'boot level',
         revertsIn: (wait: string) => `in ${wait}`,
         revert: 'Revert',
+        reverting: 'Reverting…',
         reverted: (service: string, target: string) =>
           `${service} ${target} is back at its boot level`,
         noInstance: 'No instance answered',

@@ -1,13 +1,10 @@
+import { GetAdminLogLevelsService } from '@/libs/api/generated/model/getAdminLogLevelsService';
 import { LogLevelStateTarget } from '@/libs/api/generated/model/logLevelStateTarget';
+import type { LogLevelState } from '@/libs/api/generated/model/logLevelState';
 import type { LogLevelReports } from '@/libs/api/generated/model/logLevelReports';
-import type {
-  LogLevelChoice,
-  LogLevelRow,
-  LogLevelService,
-  LogLevelTtl,
-} from '@/modules/admin/types/types';
+import type { LogLevelChoice, LogLevelRow, LogLevelTtl } from '@/modules/admin/types/types';
 
-export const LOG_LEVEL_SERVICES: LogLevelService[] = ['server', 'worker'];
+export const LOG_LEVEL_SERVICES = Object.values(GetAdminLogLevelsService);
 
 export const LOG_LEVEL_TARGETS = Object.values(LogLevelStateTarget);
 
@@ -16,16 +13,33 @@ export const LOG_LEVEL_CHOICES: LogLevelChoice[] = ['error', 'warn', 'info', 'de
 
 export const LOG_LEVEL_TTLS: LogLevelTtl[] = [300, 900, 3600, 14400];
 
+/** Identifies one distinct level state, so instances that agree share it. */
+export const logLevelRowKey = ({ target, level, expiresAt, operator }: LogLevelState) =>
+  [target, level, expiresAt, operator].join('|');
+
+/** The request body's target: a component, or nothing for the root. */
+export const componentOf = (target: LogLevelState['target']) =>
+  target === 'root' ? {} : { component: target };
+
+// A revert lands a second after it is sent; refreshing before then shows the old level.
+const REVERT_SETTLE_MS = 250;
+
+/** Resolves once a change sent now has expired on every instance. */
+export const untilExpired = (expiresAt: string) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, Math.max(0, Date.parse(expiresAt) - Date.now()) + REVERT_SETTLE_MS);
+  });
+
 /** The root and every temporary change, once each: instances that agree share a row, ones that differ get their own. */
 export const logLevelRows = (
-  service: LogLevelService,
+  service: GetAdminLogLevelsService,
   reports: LogLevelReports | undefined,
 ): LogLevelRow[] => {
   const rows = new Map<string, LogLevelRow>();
   for (const { levels } of reports?.reports ?? []) {
     for (const state of levels) {
       if (state.target !== 'root' && state.expiresAt === null) continue;
-      const key = [state.target, state.level, state.expiresAt, state.operator].join('|');
+      const key = logLevelRowKey(state);
       if (!rows.has(key)) rows.set(key, { service, ...state });
     }
   }

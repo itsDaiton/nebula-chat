@@ -422,31 +422,30 @@ export type UsageDetailPanelProps = { onClose: () => void };
 
 export type UsageDetailRowProps = { label: string; value: string };
 
-export type LogLevelService = GetAdminLogLevelsService;
-
 export type LogLevelTtl = 300 | 900 | 3600 | 14400;
 
 export type LogLevelChoice = Extract<ChangeAdminLogLevelBody, { level: string }>['level'];
 
 /** One distinct level a service's instances report for a target: its root, or a temporary change. */
-export type LogLevelRow = { service: LogLevelService } & LogLevelState;
+export type LogLevelRow = { service: GetAdminLogLevelsService } & LogLevelState;
 
 export type ServiceLevels = {
-  service: LogLevelService;
+  service: GetAdminLogLevelsService;
   reports: LogLevelReports | undefined;
   isPending: boolean;
   isError: boolean;
 };
 
 export type LogLevelFormState = {
-  service: LogLevelService;
+  service: GetAdminLogLevelsService;
   target: LogLevelState['target'];
   level: LogLevelChoice;
   ttlSeconds: LogLevelTtl;
-  setService: (service: LogLevelService) => void;
-  setTarget: (target: LogLevelState['target']) => void;
-  setLevel: (level: LogLevelChoice) => void;
-  setTtl: (ttlSeconds: LogLevelTtl) => void;
+  chooseService: (service: GetAdminLogLevelsService) => void;
+  chooseTarget: (target: LogLevelState['target']) => void;
+  chooseLevel: (level: LogLevelChoice) => void;
+  chooseTtl: (ttlSeconds: LogLevelTtl) => void;
+  reset: () => void;
 };
 
 export type LogLevelsTableProps = { services: ServiceLevels[] };

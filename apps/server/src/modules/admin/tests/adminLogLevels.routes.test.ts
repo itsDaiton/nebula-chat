@@ -195,6 +195,20 @@ describe('POST /api/admin/log-levels', () => {
     ]);
   });
 
+  it('logs the Admin by id when their name is blank, so the instances still apply it', async () => {
+    const session = adminSession();
+    mockedGetSession.mockResolvedValue({
+      ...session,
+      user: { ...session.user, name: '  ' },
+    } as never);
+
+    await change({ level: 'debug' });
+
+    expect(eventLines(server, 'log.level.changed')).toEqual([
+      expect.objectContaining({ 'nebula.operator': ADMIN_USER_ID }),
+    ]);
+  });
+
   it('broadcasts nothing when the Audit write fails', async () => {
     audit.insert.mockRejectedValue(new Error('db down'));
 

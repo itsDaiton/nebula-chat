@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getChangeAdminLogLevelMockHandler,
   getGetAdminLogLevelsMockHandler,
+  getListAuditEntriesMockHandler,
 } from '@/libs/api/generated/admin/admin.msw';
 import type { LogLevelReports } from '@/libs/api/generated/model/logLevelReports';
 import type { LogLevelState } from '@/libs/api/generated/model/logLevelState';
@@ -146,7 +147,7 @@ describe('Operations page', () => {
     );
   });
 
-  it('reverts a temporary change, busy while it runs, then refreshes', async () => {
+  it('reverts a temporary change, busy while it runs, and refreshes once it has landed', async () => {
     const reads = serveLevels();
     const bodies: unknown[] = [];
     let release = () => undefined as void;
@@ -165,9 +166,14 @@ describe('Operations page', () => {
     await userEvent.click(revert);
 
     await waitFor(() => expect(revert).toHaveAttribute('aria-busy', 'true'));
+    expect(revert).toHaveTextContent(text.logLevels.reverting);
     expect(bodies).toEqual([{ service: 'server', component: 'auth', revert: true }]);
     release();
-    await waitFor(() => expect(reads.server).toBe(2));
+    // The revert expires a second after it is sent; a refresh before then would still show it.
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(reads.server).toBe(1);
+    await waitFor(() => expect(reads.server).toBe(2), { timeout: 3000 });
+    expect(await screen.findByText(text.logLevels.reverted('Server', 'auth'))).toBeInTheDocument();
   });
 
   it('shows why a change was refused', async () => {
@@ -193,6 +199,24 @@ describe('Operations page', () => {
     await renderRoute('/admin/operations');
 
     expect(await screen.findByText(text.logLevels.noInstance)).toBeInTheDocument();
+  });
+
+  it('starts the panel from the defaults again after leaving the page', async () => {
+    serveLevels();
+    server.use(
+      getListAuditEntriesMockHandler({ entries: [], nextCursor: null, hasMore: false, total: 0 }),
+    );
+    const { router } = await renderRoute('/admin/operations');
+    await userEvent.click(
+      within(await panel()).getByRole('button', { name: text.services.worker }),
+    );
+
+    await router.navigate({ to: '/admin/audit' });
+    await router.navigate({ to: '/admin/operations' });
+
+    expect(
+      within(await panel()).getByRole('button', { name: text.panel.apply('Server') }),
+    ).toBeInTheDocument();
   });
 
   it('is a live link in the admin nav', async () => {
