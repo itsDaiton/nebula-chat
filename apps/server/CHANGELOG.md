@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.31.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.31.0...nebula-chat-server-v4.31.1) (2026-11-27)
+
+
+### Bug Fixes
+
+* **server:** NEB-818 Redis eviction policy, cold-start 503s, Knip ([#980](https://github.com/itsDaiton/nebula-chat/issues/980)) ([d15db8b](https://github.com/itsDaiton/nebula-chat/commit/d15db8b6573411069ff639d642f809df429a8c78))
+
 ## [4.31.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.30.5...nebula-chat-server-v4.31.0) (2026-11-27)
 
 
