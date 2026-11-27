@@ -1,14 +1,14 @@
 {
-  ".": "7.18.0",
-  "apps/client": "3.29.0",
-  "apps/server": "4.33.0",
+  ".": "7.18.1",
+  "apps/client": "3.29.1",
+  "apps/server": "4.33.1",
   "libs/db": "1.15.0",
-  "openapi": "4.30.0",
+  "openapi": "4.30.1",
   "libs/otel": "2.15.2",
   "libs/redis": "0.2.10",
   "libs/auth": "3.6.3",
   "libs/errors": "0.2.10",
   "apps/cli": "1.20.0",
   "libs/contracts": "1.11.0",
-  "apps/worker": "2.2.3"
+  "apps/worker": "2.2.4"
 }
