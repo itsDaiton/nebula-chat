@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.27.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.26.9...nebula-chat-client-v3.27.0) (2026-11-27)
+
+
+### Features
+
+* **client,server:** NEB-901 admin Runs page with audited Run view ([#975](https://github.com/itsDaiton/nebula-chat/issues/975)) ([c1037bc](https://github.com/itsDaiton/nebula-chat/commit/c1037bc28de5953b794c3c5b88034f4c81d10f4b))
+
 ## [3.26.9](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-client-v3.26.8...nebula-chat-client-v3.26.9) (2026-11-27)
 
 
