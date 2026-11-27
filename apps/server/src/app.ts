@@ -29,6 +29,7 @@ import profileImageRoutes from '@server/modules/profileImage/profileImage.routes
 import authGate, { DOCS_PREFIX } from '@server/plugins/authGate.plugin';
 import dbPlugin from '@server/plugins/db.plugin';
 import privilegedRoutes from '@server/plugins/privilegedRoutes.plugin';
+import originAuth from '@server/plugins/originAuth.plugin';
 import originCheck from '@server/plugins/originCheck.plugin';
 import rateLimitPlugin from '@server/plugins/rateLimit.plugin';
 import redisPlugin from '@server/plugins/redis.plugin';
@@ -70,6 +71,8 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
 
   // First, so its root-level hooks wrap every route registered after it.
   await app.register(requestLogging);
+  // Right after logging, so a request that bypassed Cloudflare is refused before any other work, yet still logged.
+  await app.register(originAuth);
 
   await app.register(dbPlugin);
   await app.register(redisPlugin);

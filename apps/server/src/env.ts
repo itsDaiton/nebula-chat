@@ -77,6 +77,8 @@ export const envSchema = z
     GITHUB_CLIENT_SECRET: oauthCredentialSchema,
     // Shared operator secret for /api/internal/*; unset turns those routes off.
     OPERATOR_TOKEN: operatorTokenSchema,
+    // The X-Origin-Auth value Cloudflare adds to every request; unset turns the check off (docs/origin-access.md).
+    ORIGIN_AUTH_SECRET: z.preprocess(unsetWhenEmpty, z.string().min(32).optional()),
     // Supabase Storage for Profile images (ADR-0022); all three or none, none turns uploads off.
     SUPABASE_URL: supabaseUrlSchema,
     SUPABASE_SECRET_KEY: storageSettingSchema,
@@ -86,7 +88,7 @@ export const envSchema = z
   .check(checkProfileImageStorage)
   .check(checkOwnKeyPair)
   .check((ctx) => {
-    const { NODE_ENV, RENDER, BETTER_AUTH_URL } = ctx.value;
+    const { NODE_ENV, RENDER, BETTER_AUTH_URL, ORIGIN_AUTH_SECRET } = ctx.value;
     const authUrl = URL.canParse(BETTER_AUTH_URL) ? new URL(BETTER_AUTH_URL) : undefined;
     if (NODE_ENV === 'production' && authUrl && authUrl.protocol !== 'https:') {
       ctx.issues.push({
@@ -101,6 +103,14 @@ export const envSchema = z
         code: 'custom',
         message:
           'NODE_ENV must be set in a deployment (RENDER is set or BETTER_AUTH_URL is not localhost)',
+        input: ctx.value,
+      });
+    }
+    // Without it the onrender.com origin trusts any CF-Connecting-IP, which defeats every per-IP rate limit.
+    if (RENDER && !ORIGIN_AUTH_SECRET) {
+      ctx.issues.push({
+        code: 'custom',
+        message: 'ORIGIN_AUTH_SECRET must be set on Render (docs/origin-access.md)',
         input: ctx.value,
       });
     }

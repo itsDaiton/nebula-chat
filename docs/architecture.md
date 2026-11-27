@@ -123,7 +123,9 @@ declares an Access level and the `authGate` plugin attaches its gate, so a route
 ```mermaid
 flowchart TD
   req([HTTP request]) --> log1["requestLogging onRequest<br/>http.request.received · debug"]
-  log1 --> which{path}
+  log1 --> oa{"originAuth onRequest<br/>X-Origin-Auth matches?<br/>(/health exempt)"}
+  oa -->|no| err
+  oa -->|yes| which{path}
   which -->|"/api/auth/admin/*"| nf["authGate → 404 NotFound<br/>never reaches better-auth"]
   which -->|"/api/auth/*"| ba["authGate → better-auth handler<br/>reply hijacked"]
   which -->|"/, /health, /docs"| public[Public handler]
@@ -145,6 +147,8 @@ flowchart TD
   cache and wants an Admin whose auth session passed two-factor ([auth.md](./auth.md#route-protection)).
 - **Errors** are thrown as `AppError`s and shaped once by the error handler
   ([ADR-0011](./adr/0011-shared-errors-lib-and-typed-envelope.md)); only `5xx` is logged there.
+- **Origin auth**: on Render every request but `/health` must carry the `X-Origin-Auth` secret Cloudflare adds,
+  so `CF-Connecting-IP` can't be forged by calling Render directly ([origin-access.md](./origin-access.md)).
 - **Rate limits**: per client IP on `CF-Connecting-IP`, in memory for the Fastify routes and in Redis for
   better-auth; Profile image uploads are capped per User. Every number is in [rate-limits.md](./rate-limits.md).
 
