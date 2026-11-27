@@ -8,6 +8,7 @@ import type { UsageTotalsActiveUsers } from './usageTotalsActiveUsers';
 import type { UsageTotalsCacheHitRate } from './usageTotalsCacheHitRate';
 import type { UsageTotalsPrompts } from './usageTotalsPrompts';
 import type { UsageTotalsRange } from './usageTotalsRange';
+import type { UsageTotalsRunAverages } from './usageTotalsRunAverages';
 import type { UsageTotalsRuns } from './usageTotalsRuns';
 import type { UsageTotalsSpend } from './usageTotalsSpend';
 import type { UsageTotalsTokens } from './usageTotalsTokens';
@@ -21,5 +22,7 @@ export interface UsageTotals {
   /** Users with a `user` Message in the range */
   activeUsers: UsageTotalsActiveUsers;
   runs: UsageTotalsRuns;
+  /** Per Run, for Runs started in the range */
+  runAverages: UsageTotalsRunAverages;
   cacheHitRate: UsageTotalsCacheHitRate;
 }

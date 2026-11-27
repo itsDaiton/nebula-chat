@@ -36,6 +36,10 @@ import type { GetModelUsageSeriesParams } from '../model/getModelUsageSeriesPara
 
 import type { GetModelUsageTotalsParams } from '../model/getModelUsageTotalsParams';
 
+import type { GetRunUsageAgentDetailParams } from '../model/getRunUsageAgentDetailParams';
+
+import type { GetRunUsageSeriesParams } from '../model/getRunUsageSeriesParams';
+
 import type { ListAllRunsParams } from '../model/listAllRunsParams';
 
 import type { ListAllSessionsParams } from '../model/listAllSessionsParams';
@@ -54,7 +58,11 @@ import type { Operations } from '../model/operations';
 
 import type { SetUserRoleBody } from '../model/setUserRoleBody';
 
+import type { UsageAgentDetail } from '../model/usageAgentDetail';
+
 import type { UsageDetail } from '../model/usageDetail';
+
+import type { UsageRunSeries } from '../model/usageRunSeries';
 
 import type { UsageSeries } from '../model/usageSeries';
 
@@ -282,6 +290,150 @@ export const getModelUsageDetail = async (
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<getModelUsageDetailResponse> => {
   return apiFetch<getModelUsageDetailResponse>(getGetModelUsageDetailUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export type getRunUsageSeriesResponse200 = {
+  data: UsageRunSeries;
+  status: 200;
+};
+
+export type getRunUsageSeriesResponse400 = {
+  data: unknown;
+  status: 400;
+};
+
+export type getRunUsageSeriesResponse401 = {
+  data: unknown;
+  status: 401;
+};
+
+export type getRunUsageSeriesResponse403 = {
+  data: unknown;
+  status: 403;
+};
+
+export type getRunUsageSeriesResponse500 = {
+  data: unknown;
+  status: 500;
+};
+
+export type getRunUsageSeriesResponseSuccess = getRunUsageSeriesResponse200 & {
+  headers: Headers;
+};
+export type getRunUsageSeriesResponseError = (
+  | getRunUsageSeriesResponse400
+  | getRunUsageSeriesResponse401
+  | getRunUsageSeriesResponse403
+  | getRunUsageSeriesResponse500
+) & {
+  headers: Headers;
+};
+
+export type getRunUsageSeriesResponse =
+  getRunUsageSeriesResponseSuccess | getRunUsageSeriesResponseError;
+
+export const getGetRunUsageSeriesUrl = (params?: GetRunUsageSeriesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/usage/runs/series?${stringifiedParams}`
+    : `/api/admin/usage/runs/series`;
+};
+
+/**
+ * One value per UTC day (today included, zeros filled in) for the last 7, 14, 30 or 90 days: Runs started that day by outcome, and the estimated spend and tokens of the Model calls Steps made, per Agent. Runs still queued, running or waiting are not counted by outcome. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get Run usage per day
+ */
+export const getRunUsageSeries = async (
+  params?: GetRunUsageSeriesParams,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<getRunUsageSeriesResponse> => {
+  return apiFetch<getRunUsageSeriesResponse>(getGetRunUsageSeriesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export type getRunUsageAgentDetailResponse200 = {
+  data: UsageAgentDetail;
+  status: 200;
+};
+
+export type getRunUsageAgentDetailResponse400 = {
+  data: unknown;
+  status: 400;
+};
+
+export type getRunUsageAgentDetailResponse401 = {
+  data: unknown;
+  status: 401;
+};
+
+export type getRunUsageAgentDetailResponse403 = {
+  data: unknown;
+  status: 403;
+};
+
+export type getRunUsageAgentDetailResponse500 = {
+  data: unknown;
+  status: 500;
+};
+
+export type getRunUsageAgentDetailResponseSuccess = getRunUsageAgentDetailResponse200 & {
+  headers: Headers;
+};
+export type getRunUsageAgentDetailResponseError = (
+  | getRunUsageAgentDetailResponse400
+  | getRunUsageAgentDetailResponse401
+  | getRunUsageAgentDetailResponse403
+  | getRunUsageAgentDetailResponse500
+) & {
+  headers: Headers;
+};
+
+export type getRunUsageAgentDetailResponse =
+  getRunUsageAgentDetailResponseSuccess | getRunUsageAgentDetailResponseError;
+
+export const getGetRunUsageAgentDetailUrl = (params: GetRunUsageAgentDetailParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/usage/runs/detail?${stringifiedParams}`
+    : `/api/admin/usage/runs/detail`;
+};
+
+/**
+ * One Agent on one UTC day: averages per Model call, cache replays, completion rate and duration, with its Model calls per day over the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get one Agent’s usage on a day
+ */
+export const getRunUsageAgentDetail = async (
+  params: GetRunUsageAgentDetailParams,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<getRunUsageAgentDetailResponse> => {
+  return apiFetch<getRunUsageAgentDetailResponse>(getGetRunUsageAgentDetailUrl(params), {
     ...options,
     method: 'GET',
   });

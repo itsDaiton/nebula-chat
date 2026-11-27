@@ -1,12 +1,16 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { delay } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getGetModelUsageDetailMockHandler,
   getGetModelUsageSeriesMockHandler,
   getGetModelUsageTotalsMockHandler,
+  getGetRunUsageAgentDetailMockHandler,
+  getGetRunUsageSeriesMockHandler,
 } from '@/libs/api/generated/admin/admin.msw';
+import type { UsageAgentDetail } from '@/libs/api/generated/model/usageAgentDetail';
+import type { UsageRunSeries } from '@/libs/api/generated/model/usageRunSeries';
 import type { UsageDetail } from '@/libs/api/generated/model/usageDetail';
 import type { UsageSeries } from '@/libs/api/generated/model/usageSeries';
 import type { UsageTotals } from '@/libs/api/generated/model/usageTotals';
@@ -35,6 +39,11 @@ const aSeries = (overrides: Partial<UsageSeries> = {}): UsageSeries => ({
 
 const total = (value: number, previousTotal: number) => ({ total: value, previousTotal });
 
+const average = (value: number | null, previousValue: number | null) => ({
+  value,
+  previousValue,
+});
+
 const aTotals = (): UsageTotals => ({
   range: '30d',
   prompts: total(18240, 15000),
@@ -42,6 +51,13 @@ const aTotals = (): UsageTotals => ({
   spend: total(142.8, 120),
   activeUsers: total(1082, 1000),
   runs: total(1315, 800),
+  runAverages: {
+    stepsPerRun: average(6.5, 6),
+    callsPerRun: average(4.25, 4),
+    tokensPerRun: average(9_800, 10_000),
+    costPerRun: average(0.12, 0.1),
+    durationMs: average(42_000, 40_000),
+  },
   cacheHitRate: { rate: 0.114, previousRate: 0.126 },
 });
 
@@ -57,6 +73,48 @@ const aDetail = (overrides: Partial<UsageDetail> = {}): UsageDetail => ({
   completionRate: 0.986,
   avgDurationMs: 4200,
   trend: [10, 20, 30],
+  ...overrides,
+});
+
+const aRunSeries = (overrides: Partial<UsageRunSeries> = {}): UsageRunSeries => ({
+  range: '30d',
+  days: ['2026-10-01', '2026-10-02', '2026-10-03'],
+  outcomes: [
+    { outcome: 'completed', total: 9, values: [2, 3, 4] },
+    { outcome: 'partial', total: 2, values: [0, 1, 1] },
+    { outcome: 'failed', total: 1, values: [0, 0, 1] },
+    { outcome: 'cancelled', total: 0, values: [0, 0, 0] },
+  ],
+  agents: [
+    {
+      key: 'orchestrator',
+      spendTotal: 0.9,
+      tokensTotal: 900,
+      spend: [0.1, 0.3, 0.5],
+      tokens: [100, 300, 500],
+    },
+    {
+      key: 'writer',
+      spendTotal: 0.3,
+      tokensTotal: 300,
+      spend: [0.1, 0.1, 0.1],
+      tokens: [100, 100, 100],
+    },
+  ],
+  ...overrides,
+});
+
+const anAgentDetail = (overrides: Partial<UsageAgentDetail> = {}): UsageAgentDetail => ({
+  agent: 'orchestrator',
+  day: '2026-10-03',
+  calls: 12,
+  inputPerCall: 3100,
+  outputPerCall: 410,
+  costPerCall: 0.0042,
+  cacheReplays: 2,
+  completionRate: 0.9,
+  avgDurationMs: 5300,
+  trend: [3, 5, 12],
   ...overrides,
 });
 
@@ -76,10 +134,20 @@ const stubViewport = () =>
   );
 
 const seriesRequests: URLSearchParams[] = [];
+const runSeriesRequests: URLSearchParams[] = [];
+const agentRequests: URLSearchParams[] = [];
 const detailRequests: URLSearchParams[] = [];
 
-const serveUsage = (series: UsageSeries = aSeries()) =>
+const serveUsage = (series: UsageSeries = aSeries(), runSeries: UsageRunSeries = aRunSeries()) =>
   server.use(
+    getGetRunUsageSeriesMockHandler(({ request }) => {
+      runSeriesRequests.push(new URL(request.url).searchParams);
+      return runSeries;
+    }),
+    getGetRunUsageAgentDetailMockHandler(({ request }) => {
+      agentRequests.push(new URL(request.url).searchParams);
+      return anAgentDetail();
+    }),
     getGetModelUsageSeriesMockHandler(({ request }) => {
       seriesRequests.push(new URL(request.url).searchParams);
       return series;
@@ -95,6 +163,8 @@ const list = () => screen.getByText(text.shareOfDay).closest('div')!.parentEleme
 
 beforeEach(() => {
   seriesRequests.length = 0;
+  runSeriesRequests.length = 0;
+  agentRequests.length = 0;
   detailRequests.length = 0;
   serveChatPage();
   server.use(
@@ -282,21 +352,23 @@ describe('Model usage page', () => {
     }
   });
 
-  it('explains on hover and keyboard focus why the Run row cannot be pinned, and clicking does nothing', async () => {
+  it('explains on hover and keyboard focus what the Run row is, and clicking opens the Runs tab', async () => {
     serveUsage();
     const { router } = await renderRoute('/admin/usage');
-    const row = await screen.findByRole('button', { name: new RegExp(text.run) });
+    await screen.findByRole('img', { name: text.chartLabel(text.metrics.prompts) });
+    const row = within(list()).getByRole('button', { name: new RegExp(`^${text.run}`) });
 
     await userEvent.hover(row);
     expect(await screen.findByText(text.runTooltip)).toBeInTheDocument();
     await userEvent.unhover(row);
-    await userEvent.click(row);
-
-    expect(router.state.location.search).toEqual({});
     screen.getByRole('button', { name: text.pin('GPT-4o mini') }).focus();
     await userEvent.tab();
     expect(row).toHaveFocus();
     expect(await screen.findByText(text.runTooltip)).toBeInTheDocument();
+
+    await userEvent.click(row);
+
+    await waitFor(() => expect(router.state.location.search).toEqual({ metric: 'runs' }));
   });
 
   it('explains on focus that Other groups the smaller Models', async () => {
@@ -472,5 +544,147 @@ describe('Model usage page', () => {
       'aria-current',
       'page',
     );
+  });
+});
+
+describe('Runs tab', () => {
+  const runsTab = () =>
+    within(screen.getByRole('group', { name: text.metric })).getByRole('button', {
+      name: text.metrics.runs,
+    });
+
+  it('sits beside Prompts, Tokens and Est. spend and shows the per-Run tiles, chart and Agents', async () => {
+    serveUsage();
+
+    await renderRoute('/admin/usage?metric=runs&range=7d&audience=guests');
+
+    expect(await screen.findByRole('img', { name: text.runs.chartLabel })).toBeInTheDocument();
+    expect(runsTab()).toHaveAttribute('aria-pressed', 'true');
+    expect(await screen.findByRole('group', { name: text.tiles.costPerRun })).toHaveTextContent(
+      '$0.12',
+    );
+    expect(screen.getByRole('group', { name: text.tiles.runs })).toHaveTextContent('1,315');
+    expect(screen.getByRole('group', { name: text.tiles.stepsPerRun })).toHaveTextContent('6.5');
+    expect(screen.getByRole('group', { name: text.tiles.callsPerRun })).toHaveTextContent('4.3');
+    expect(screen.getByRole('group', { name: text.tiles.durationMs })).toHaveTextContent('42.0s');
+    const rows = within(list()).getAllByRole('button', { name: /^Pin / });
+    expect(rows.map((row) => row.getAttribute('aria-label'))).toEqual([
+      text.pin('orchestrator'),
+      text.pin('writer'),
+    ]);
+    expect(within(list()).getByText('$0.50')).toBeInTheDocument();
+    expect(runSeriesRequests.at(-1)?.get('range')).toBe('7d');
+    expect(runSeriesRequests.at(-1)?.get('audience')).toBe('guests');
+    expect(seriesRequests).toHaveLength(0);
+    expect(screen.queryByRole('group', { name: text.view })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: text.modelFilter })).not.toBeInTheDocument();
+    expect(screen.getByText(text.notes.runs)).toBeInTheDocument();
+  });
+
+  it('switches to the tab from the toolbar and clears a pinned Model', async () => {
+    serveUsage();
+    const { router } = await renderRoute('/admin/usage?pinned=gpt-5');
+    await screen.findByRole('group', { name: text.metric });
+
+    await userEvent.click(runsTab());
+
+    await waitFor(() => expect(router.state.location.search).toEqual({ metric: 'runs' }));
+    expect(await screen.findByRole('img', { name: text.runs.chartLabel })).toBeInTheDocument();
+  });
+
+  it('pins an Agent and shows its day in the right panel', async () => {
+    serveUsage();
+    const { router } = await renderRoute('/admin/usage?metric=runs');
+
+    await userEvent.click(await screen.findByRole('button', { name: text.pin('writer') }));
+
+    await waitFor(() =>
+      expect(router.state.location.search).toEqual({ metric: 'runs', pinned: 'writer' }),
+    );
+    await waitFor(() => expect(agentRequests.at(-1)?.get('agent')).toBe('writer'));
+    expect(agentRequests.at(-1)?.get('day')).toBe('2026-10-03');
+    expect(await screen.findByText('3,100 tokens')).toBeInTheDocument();
+    expect(screen.getByText(text.runs.detail.calls)).toBeInTheDocument();
+    expect(screen.getByText('$0.0042')).toBeInTheDocument();
+  });
+
+  it('describes the costliest Agent until one is pinned', async () => {
+    serveUsage();
+
+    await renderRoute('/admin/usage?metric=runs');
+
+    await waitFor(() => expect(agentRequests.at(-1)?.get('agent')).toBe('orchestrator'));
+  });
+
+  it('follows the day under the keyboard focus in the Agent list', async () => {
+    serveUsage();
+    await renderRoute('/admin/usage?metric=runs');
+    const chart = await screen.findByRole('img', { name: text.runs.chartLabel });
+
+    fireEvent.focus(chart);
+    fireEvent.keyDown(chart, { key: 'ArrowRight' });
+
+    await waitFor(() => expect(within(list()).getByText('2 Oct')).toBeInTheDocument());
+    expect(within(list()).getByText('$0.30')).toBeInTheDocument();
+  });
+
+  it('reads the exact numbers as a table by outcome', async () => {
+    serveUsage();
+    await renderRoute('/admin/usage?metric=runs');
+
+    await userEvent.click(await screen.findByRole('button', { name: text.viewAsTable }));
+
+    const table = await screen.findByRole('table', { name: text.runs.tableCaption });
+    expect(
+      within(table)
+        .getAllByRole('columnheader')
+        .map((header) => header.textContent),
+    ).toEqual([
+      text.day,
+      text.runs.outcomes.completed,
+      text.runs.outcomes.partial,
+      text.runs.outcomes.failed,
+      text.runs.outcomes.cancelled,
+    ]);
+    expect(within(table).getAllByRole('row')).toHaveLength(4);
+  });
+
+  it('shows an empty state when no Run happened in the range', async () => {
+    serveUsage(
+      aSeries(),
+      aRunSeries({
+        outcomes: aRunSeries().outcomes.map((item) => ({ ...item, total: 0, values: [0, 0, 0] })),
+        agents: [],
+      }),
+    );
+
+    await renderRoute('/admin/usage?metric=runs');
+
+    expect(await screen.findByText(text.runs.empty)).toBeInTheDocument();
+  });
+
+  it('shows a skeleton while the series loads', async () => {
+    serveUsage();
+    server.use(
+      getGetRunUsageSeriesMockHandler(async () => {
+        await delay(200);
+        return aRunSeries();
+      }),
+    );
+    await renderRoute('/admin/usage?metric=runs');
+    expect(await screen.findByRole('status', { name: text.runs.loading })).toBeInTheDocument();
+  });
+
+  it('shows an error line when the request fails', async () => {
+    serveUsage();
+    server.use(
+      http.get('*/api/admin/usage/runs/series', () =>
+        HttpResponse.json({ error: 'Internal', message: 'boom' }, { status: 500 }),
+      ),
+    );
+
+    await renderRoute('/admin/usage?metric=runs');
+
+    expect(await screen.findByText(text.runs.loadFailed)).toBeInTheDocument();
   });
 });

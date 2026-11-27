@@ -1,10 +1,14 @@
 import { usageRepository } from '@server/modules/usage/usage.repository';
+import { RUN_OUTCOMES } from '@server/modules/usage/usage.validation';
 import type {
+  UsageAgentDetailQuery,
   UsageAudience,
   UsageDetailQuery,
   UsageRange,
   UsageRow,
+  UsageRunSeriesQuery,
   UsageSeriesQuery,
+  UsageTotals,
   UsageTotalsQuery,
 } from '@server/modules/usage/usage.types';
 
@@ -100,6 +104,57 @@ export const usageService = {
       trend,
     };
   },
+  async getRunSeries({ range, audience }: UsageRunSeriesQuery, now = new Date()) {
+    const days = daysOf(range, now);
+    const [from, to] = [first(days), last(days)];
+    const [runRows, agentRows] = await Promise.all([
+      usageRepository.runsByDay(from, to, audience),
+      usageRepository.agentCallsByDay(from, to, audience),
+    ]);
+
+    const byOutcome = valuesOf(runRows, days);
+    const outcomes = RUN_OUTCOMES.map((outcome) => {
+      const values = byOutcome.get(outcome) ?? days.map(() => 0);
+      return { outcome, total: sum(values), values };
+    });
+
+    const spend = valuesOf(
+      agentRows.map(({ day, key, spend: value }) => ({ day, key, value })),
+      days,
+    );
+    const tokens = valuesOf(
+      agentRows.map(({ day, key, tokens: value }) => ({ day, key, value })),
+      days,
+    );
+    const agents = [...spend]
+      .map(([key, spendValues]) => {
+        const tokenValues = tokens.get(key) ?? days.map(() => 0);
+        return {
+          key,
+          spendTotal: sum(spendValues),
+          tokensTotal: sum(tokenValues),
+          spend: spendValues,
+          tokens: tokenValues,
+        };
+      })
+      .sort(
+        (a, b) =>
+          b.spendTotal - a.spendTotal ||
+          b.tokensTotal - a.tokensTotal ||
+          a.key.localeCompare(b.key),
+      );
+
+    return { range, days, outcomes, agents };
+  },
+  async getAgentDetail({ agent, day, range, audience }: UsageAgentDetailQuery, now = new Date()) {
+    const days = daysOf(range, now);
+    const [stats, rows] = await Promise.all([
+      usageRepository.agentDayStats(agent, day, audience),
+      usageRepository.agentTrendByDay(agent, first(days), last(days), audience),
+    ]);
+
+    return { agent, day, ...stats, trend: valuesOf(rows, days).get(agent) ?? days.map(() => 0) };
+  },
   async getTotals({ range, audience }: UsageTotalsQuery, now = new Date()) {
     const days = daysOf(range, now);
     const previousDays = daysOf(range, now, days.length);
@@ -112,6 +167,11 @@ export const usageService = {
       previousTotal: previous[key],
     });
 
+    const average = (of: (totals: UsageTotals) => number | null) => ({
+      value: of(current),
+      previousValue: of(previous),
+    });
+
     return {
       range,
       prompts: pair('prompts'),
@@ -119,6 +179,13 @@ export const usageService = {
       spend: pair('spend'),
       activeUsers: pair('activeUsers'),
       runs: pair('runs'),
+      runAverages: {
+        stepsPerRun: average((t) => ratio(t.runSteps, t.runs)),
+        callsPerRun: average((t) => ratio(t.runCalls, t.runs)),
+        tokensPerRun: average((t) => ratio(t.runTokens, t.runs)),
+        costPerRun: average((t) => ratio(t.runSpend, t.runs)),
+        durationMs: average((t) => t.runDurationMs),
+      },
       cacheHitRate: {
         rate: ratio(current.cacheReplays, current.calls),
         previousRate: ratio(previous.cacheReplays, previous.calls),

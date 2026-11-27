@@ -124,7 +124,9 @@ describe('OpenAPI document', () => {
       'StepStatus',
       'UncappedSpendAllowance',
       'UnmeteredMessageAllowance',
+      'UsageAgentDetail',
       'UsageDetail',
+      'UsageRunSeries',
       'UsageSeries',
       'UsageTotals',
     ]);

@@ -8,10 +8,12 @@ import { resources } from '@/resources';
 
 const text = resources.admin.usage;
 
-const metricOptions = Object.values(GetModelUsageSeriesMetric).map((value) => ({
-  value,
-  label: text.metrics[value],
-}));
+const metricOptions = [...Object.values(GetModelUsageSeriesMetric), 'runs' as const].map(
+  (value) => ({
+    value,
+    label: text.metrics[value],
+  }),
+);
 const rangeOptions = Object.values(GetModelUsageSeriesRange).map((value) => ({
   value,
   label: value,
@@ -43,18 +45,22 @@ export const UsageToolbar = ({ params, onChange }: UsageToolbarProps) => (
       options={rangeOptions}
       onChange={(range) => onChange({ range })}
     />
-    <UsageSegmented
-      label={text.view}
-      value={params.view}
-      options={viewOptions}
-      onChange={(view) => onChange({ view })}
-    />
+    {params.metric !== 'runs' && (
+      <UsageSegmented
+        label={text.view}
+        value={params.view}
+        options={viewOptions}
+        onChange={(view) => onChange({ view })}
+      />
+    )}
     <span className="grow" />
-    <UsageModelFilter
-      selected={params.models}
-      hasRun={params.metric === 'prompts'}
-      onChange={(models) => onChange({ models })}
-    />
+    {params.metric !== 'runs' && (
+      <UsageModelFilter
+        selected={params.models}
+        hasRun={params.metric === 'prompts'}
+        onChange={(models) => onChange({ models })}
+      />
+    )}
     <UsageSegmented
       label={text.audience}
       value={params.audience}

@@ -18,6 +18,7 @@ export const UsageRankedList = ({
   pinned,
   formatValue,
   onPin,
+  onOpenRuns,
 }: UsageRankedListProps) => (
   <div className="flex min-w-0 flex-col gap-0.5">
     <div className="flex justify-between px-2.5 pb-1 text-[12.5px] text-muted-foreground">
@@ -41,6 +42,7 @@ export const UsageRankedList = ({
                 pinned={false}
                 formatValue={formatValue}
                 onPin={onPin}
+                onOpenRuns={onOpenRuns}
               />
             </div>
           </div>
@@ -65,6 +67,7 @@ export const UsageRankedList = ({
           pinned={row.key === pinned}
           formatValue={formatValue}
           onPin={onPin}
+          onOpenRuns={onOpenRuns}
         />
       ),
     )}

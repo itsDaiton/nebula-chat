@@ -25,7 +25,9 @@ import type {
   LogLevelReports,
   Operations,
   SetUserRoleBody,
+  UsageAgentDetail,
   UsageDetail,
+  UsageRunSeries,
   UsageSeries,
   UsageTotals,
 } from '../model';
@@ -136,6 +138,56 @@ export const getGetModelUsageDetailResponseMock = (
   ...overrideResponse,
 });
 
+export const getGetRunUsageSeriesResponseMock = (
+  overrideResponse: Partial<Extract<UsageRunSeries, object>> = {},
+): UsageRunSeries => ({
+  range: faker.helpers.arrayElement(['7d', '14d', '30d', '90d'] as const),
+  days: Array.from({ length: faker.number.int({ min: 1, max: 90 }) }, (_, i) => i + 1).map(() =>
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ),
+  outcomes: Array.from({ length: faker.number.int({ min: 1, max: 4 }) }, (_, i) => i + 1).map(
+    () => ({
+      outcome: faker.helpers.arrayElement(['completed', 'partial', 'failed', 'cancelled'] as const),
+      total: faker.number.float({ fractionDigits: 2 }),
+      values: Array.from({ length: faker.number.int({ min: 1, max: 90 }) }, (_, i) => i + 1).map(
+        () => faker.number.float({ fractionDigits: 2 }),
+      ),
+    }),
+  ),
+  agents: Array.from({ length: faker.number.int({ min: 1, max: 50 }) }, (_, i) => i + 1).map(
+    () => ({
+      key: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      spendTotal: faker.number.float({ fractionDigits: 2 }),
+      tokensTotal: faker.number.float({ fractionDigits: 2 }),
+      spend: Array.from({ length: faker.number.int({ min: 1, max: 90 }) }, (_, i) => i + 1).map(
+        () => faker.number.float({ fractionDigits: 2 }),
+      ),
+      tokens: Array.from({ length: faker.number.int({ min: 1, max: 90 }) }, (_, i) => i + 1).map(
+        () => faker.number.float({ fractionDigits: 2 }),
+      ),
+    }),
+  ),
+  ...overrideResponse,
+});
+
+export const getGetRunUsageAgentDetailResponseMock = (
+  overrideResponse: Partial<Extract<UsageAgentDetail, object>> = {},
+): UsageAgentDetail => ({
+  agent: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  day: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  calls: faker.number.float({ fractionDigits: 2 }),
+  inputPerCall: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+  outputPerCall: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+  costPerCall: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+  cacheReplays: faker.number.float({ fractionDigits: 2 }),
+  completionRate: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+  avgDurationMs: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+  trend: Array.from({ length: faker.number.int({ min: 1, max: 90 }) }, (_, i) => i + 1).map(() =>
+    faker.number.float({ fractionDigits: 2 }),
+  ),
+  ...overrideResponse,
+});
+
 export const getGetModelUsageTotalsResponseMock = (
   overrideResponse: Partial<Extract<UsageTotals, object>> = {},
 ): UsageTotals => ({
@@ -159,6 +211,28 @@ export const getGetModelUsageTotalsResponseMock = (
   runs: {
     total: faker.number.float({ fractionDigits: 2 }),
     previousTotal: faker.number.float({ fractionDigits: 2 }),
+  },
+  runAverages: {
+    stepsPerRun: {
+      value: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+      previousValue: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+    },
+    callsPerRun: {
+      value: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+      previousValue: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+    },
+    tokensPerRun: {
+      value: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+      previousValue: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+    },
+    costPerRun: {
+      value: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+      previousValue: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+    },
+    durationMs: {
+      value: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+      previousValue: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+    },
   },
   cacheHitRate: {
     rate: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
@@ -737,6 +811,50 @@ export const getGetModelUsageDetailMockHandler = (
   );
 };
 
+export const getGetRunUsageSeriesMockHandler = (
+  overrideResponse?:
+    | UsageRunSeries
+    | ((info: Parameters<HttpResponseResolver>[0]) => Promise<UsageRunSeries> | UsageRunSeries),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/admin/usage/runs/series',
+    async (info: Parameters<HttpResponseResolver>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetRunUsageSeriesResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getGetRunUsageAgentDetailMockHandler = (
+  overrideResponse?:
+    | UsageAgentDetail
+    | ((info: Parameters<HttpResponseResolver>[0]) => Promise<UsageAgentDetail> | UsageAgentDetail),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/admin/usage/runs/detail',
+    async (info: Parameters<HttpResponseResolver>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetRunUsageAgentDetailResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
 export const getGetModelUsageTotalsMockHandler = (
   overrideResponse?:
     | UsageTotals
@@ -1068,6 +1186,8 @@ export const getAdminMock = () => [
   getGetAdminOverviewMockHandler(),
   getGetModelUsageSeriesMockHandler(),
   getGetModelUsageDetailMockHandler(),
+  getGetRunUsageSeriesMockHandler(),
+  getGetRunUsageAgentDetailMockHandler(),
   getGetModelUsageTotalsMockHandler(),
   getListUsersMockHandler(),
   getGetUserMockHandler(),

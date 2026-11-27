@@ -6,6 +6,10 @@ vi.mock('@server/modules/usage/usage.repository', () => ({
     callsByDay: vi.fn(),
     dayStats: vi.fn(),
     totals: vi.fn(),
+    runsByDay: vi.fn(),
+    agentCallsByDay: vi.fn(),
+    agentTrendByDay: vi.fn(),
+    agentDayStats: vi.fn(),
   },
 }));
 
@@ -146,6 +150,11 @@ describe('getTotals', () => {
       runs: n,
       calls: n * 4,
       cacheReplays: n,
+      runSteps: n * 6,
+      runCalls: n * 3,
+      runTokens: n * 100,
+      runSpend: n,
+      runDurationMs: n * 1000,
     });
     repo.totals.mockResolvedValueOnce(totals(8)).mockResolvedValueOnce(totals(4));
 
@@ -155,6 +164,13 @@ describe('getTotals', () => {
     expect(repo.totals).toHaveBeenNthCalledWith(2, '2025-12-28', '2026-01-03', 'all');
     expect(result.prompts).toEqual({ total: 8, previousTotal: 4 });
     expect(result.cacheHitRate).toEqual({ rate: 0.25, previousRate: 0.25 });
+    expect(result.runAverages).toEqual({
+      stepsPerRun: { value: 6, previousValue: 6 },
+      callsPerRun: { value: 3, previousValue: 3 },
+      tokensPerRun: { value: 100, previousValue: 100 },
+      costPerRun: { value: 1, previousValue: 1 },
+      durationMs: { value: 8000, previousValue: 4000 },
+    });
   });
 
   it('has no rate without calls', async () => {
@@ -166,10 +182,90 @@ describe('getTotals', () => {
       runs: 0,
       calls: 0,
       cacheReplays: 0,
+      runSteps: 0,
+      runCalls: 0,
+      runTokens: 0,
+      runSpend: 0,
+      runDurationMs: null,
     });
 
     const result = await usageService.getTotals({ range: '7d', audience: 'all' }, NOW);
 
     expect(result.cacheHitRate).toEqual({ rate: null, previousRate: null });
+    expect(result.runAverages.stepsPerRun).toEqual({ value: null, previousValue: null });
+    expect(result.runAverages.durationMs).toEqual({ value: null, previousValue: null });
+  });
+});
+
+describe('getRunSeries', () => {
+  it('zero-fills Runs by outcome and ranks Agents by spend', async () => {
+    repo.runsByDay.mockResolvedValue([
+      { day: '2026-01-10', key: 'completed', value: 3 },
+      { day: '2026-01-09', key: 'failed', value: 1 },
+      { day: '2026-01-10', key: 'running', value: 2 },
+    ]);
+    repo.agentCallsByDay.mockResolvedValue([
+      { day: '2026-01-10', key: 'writer', spend: 0.1, tokens: 50 },
+      { day: '2026-01-10', key: 'orchestrator', spend: 0.4, tokens: 200 },
+      { day: '2026-01-09', key: 'orchestrator', spend: 0.2, tokens: 100 },
+    ]);
+
+    const result = await usageService.getRunSeries({ range: '7d', audience: 'all' }, NOW);
+
+    expect(result.days).toHaveLength(7);
+    expect(result.outcomes.map(({ outcome }) => outcome)).toEqual([
+      'completed',
+      'partial',
+      'failed',
+      'cancelled',
+    ]);
+    expect(result.outcomes[0]).toEqual({
+      outcome: 'completed',
+      total: 3,
+      values: [0, 0, 0, 0, 0, 0, 3],
+    });
+    expect(result.outcomes[1]?.total).toBe(0);
+    expect(result.outcomes[2]?.values).toEqual([0, 0, 0, 0, 0, 1, 0]);
+    expect(result.agents.map(({ key }) => key)).toEqual(['orchestrator', 'writer']);
+    expect(result.agents[0]).toMatchObject({
+      spendTotal: expect.closeTo(0.6),
+      tokensTotal: 300,
+      tokens: [0, 0, 0, 0, 0, 100, 200],
+    });
+    expect(repo.runsByDay).toHaveBeenCalledWith('2026-01-04', '2026-01-10', 'all');
+  });
+
+  it('returns empty ranking and zero outcomes without Runs', async () => {
+    repo.runsByDay.mockResolvedValue([]);
+    repo.agentCallsByDay.mockResolvedValue([]);
+
+    const result = await usageService.getRunSeries({ range: '7d', audience: 'guests' }, NOW);
+
+    expect(result.agents).toEqual([]);
+    expect(result.outcomes.every(({ total }) => total === 0)).toBe(true);
+  });
+});
+
+describe('getAgentDetail', () => {
+  it('returns the Agent’s day stats with its calls trend', async () => {
+    repo.agentDayStats.mockResolvedValue({
+      calls: 5,
+      inputPerCall: 100,
+      outputPerCall: 20,
+      costPerCall: 0.01,
+      cacheReplays: 1,
+      completionRate: 0.8,
+      avgDurationMs: 700,
+    });
+    repo.agentTrendByDay.mockResolvedValue([{ day: '2026-01-10', key: 'writer', value: 5 }]);
+
+    const detail = await usageService.getAgentDetail(
+      { agent: 'writer', day: '2026-01-10', range: '7d', audience: 'all' },
+      NOW,
+    );
+
+    expect(detail).toMatchObject({ agent: 'writer', calls: 5, completionRate: 0.8 });
+    expect(detail.trend).toEqual([0, 0, 0, 0, 0, 0, 5]);
+    expect(repo.agentDayStats).toHaveBeenCalledWith('writer', '2026-01-10', 'all');
   });
 });

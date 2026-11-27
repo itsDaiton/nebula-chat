@@ -37,6 +37,8 @@ import type {
   GetModelUsageDetailParams,
   GetModelUsageSeriesParams,
   GetModelUsageTotalsParams,
+  GetRunUsageAgentDetailParams,
+  GetRunUsageSeriesParams,
   ListAllRunsParams,
   ListAllSessionsParams,
   ListAuditEntriesParams,
@@ -46,7 +48,9 @@ import type {
   LogLevelReports,
   Operations,
   SetUserRoleBody,
+  UsageAgentDetail,
   UsageDetail,
+  UsageRunSeries,
   UsageSeries,
   UsageTotals,
 } from '../model';
@@ -510,6 +514,302 @@ export function useGetModelUsageDetail<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetModelUsageDetailQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * One value per UTC day (today included, zeros filled in) for the last 7, 14, 30 or 90 days: Runs started that day by outcome, and the estimated spend and tokens of the Model calls Steps made, per Agent. Runs still queued, running or waiting are not counted by outcome. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get Run usage per day
+ */
+export const getRunUsageSeries = (
+  params?: GetRunUsageSeriesParams,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<UsageRunSeries>(
+    { url: `/api/admin/usage/runs/series`, method: 'GET', params, signal },
+    options,
+  );
+};
+
+export const getGetRunUsageSeriesQueryKey = (params?: GetRunUsageSeriesParams) => {
+  return [`/api/admin/usage/runs/series`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetRunUsageSeriesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRunUsageSeries>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetRunUsageSeriesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRunUsageSeries>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetRunUsageSeriesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRunUsageSeries>>> = ({ signal }) =>
+    getRunUsageSeries(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRunUsageSeries>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetRunUsageSeriesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getRunUsageSeries>>
+>;
+export type GetRunUsageSeriesQueryError = ErrorType<unknown>;
+
+/**
+ * One value per UTC day (today included, zeros filled in) for the last 7, 14, 30 or 90 days: Runs started that day by outcome, and the estimated spend and tokens of the Model calls Steps made, per Agent. Runs still queued, running or waiting are not counted by outcome. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get Run usage per day
+ */
+export function useGetRunUsageSeries<
+  TData = Awaited<ReturnType<typeof getRunUsageSeries>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | GetRunUsageSeriesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRunUsageSeries>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRunUsageSeries>>,
+          TError,
+          Awaited<ReturnType<typeof getRunUsageSeries>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * One value per UTC day (today included, zeros filled in) for the last 7, 14, 30 or 90 days: Runs started that day by outcome, and the estimated spend and tokens of the Model calls Steps made, per Agent. Runs still queued, running or waiting are not counted by outcome. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get Run usage per day
+ */
+export function useGetRunUsageSeries<
+  TData = Awaited<ReturnType<typeof getRunUsageSeries>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetRunUsageSeriesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRunUsageSeries>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRunUsageSeries>>,
+          TError,
+          Awaited<ReturnType<typeof getRunUsageSeries>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * One value per UTC day (today included, zeros filled in) for the last 7, 14, 30 or 90 days: Runs started that day by outcome, and the estimated spend and tokens of the Model calls Steps made, per Agent. Runs still queued, running or waiting are not counted by outcome. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get Run usage per day
+ */
+export function useGetRunUsageSeries<
+  TData = Awaited<ReturnType<typeof getRunUsageSeries>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetRunUsageSeriesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRunUsageSeries>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * One value per UTC day (today included, zeros filled in) for the last 7, 14, 30 or 90 days: Runs started that day by outcome, and the estimated spend and tokens of the Model calls Steps made, per Agent. Runs still queued, running or waiting are not counted by outcome. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get Run usage per day
+ */
+export function useGetRunUsageSeries<
+  TData = Awaited<ReturnType<typeof getRunUsageSeries>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetRunUsageSeriesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRunUsageSeries>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetRunUsageSeriesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * One Agent on one UTC day: averages per Model call, cache replays, completion rate and duration, with its Model calls per day over the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get one Agent’s usage on a day
+ */
+export const getRunUsageAgentDetail = (
+  params: GetRunUsageAgentDetailParams,
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<UsageAgentDetail>(
+    { url: `/api/admin/usage/runs/detail`, method: 'GET', params, signal },
+    options,
+  );
+};
+
+export const getGetRunUsageAgentDetailQueryKey = (params?: GetRunUsageAgentDetailParams) => {
+  return [`/api/admin/usage/runs/detail`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetRunUsageAgentDetailQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRunUsageAgentDetail>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetRunUsageAgentDetailParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getRunUsageAgentDetail>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetRunUsageAgentDetailQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRunUsageAgentDetail>>> = ({ signal }) =>
+    getRunUsageAgentDetail(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRunUsageAgentDetail>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetRunUsageAgentDetailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getRunUsageAgentDetail>>
+>;
+export type GetRunUsageAgentDetailQueryError = ErrorType<unknown>;
+
+/**
+ * One Agent on one UTC day: averages per Model call, cache replays, completion rate and duration, with its Model calls per day over the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get one Agent’s usage on a day
+ */
+export function useGetRunUsageAgentDetail<
+  TData = Awaited<ReturnType<typeof getRunUsageAgentDetail>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetRunUsageAgentDetailParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getRunUsageAgentDetail>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRunUsageAgentDetail>>,
+          TError,
+          Awaited<ReturnType<typeof getRunUsageAgentDetail>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * One Agent on one UTC day: averages per Model call, cache replays, completion rate and duration, with its Model calls per day over the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get one Agent’s usage on a day
+ */
+export function useGetRunUsageAgentDetail<
+  TData = Awaited<ReturnType<typeof getRunUsageAgentDetail>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetRunUsageAgentDetailParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getRunUsageAgentDetail>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRunUsageAgentDetail>>,
+          TError,
+          Awaited<ReturnType<typeof getRunUsageAgentDetail>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * One Agent on one UTC day: averages per Model call, cache replays, completion rate and duration, with its Model calls per day over the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get one Agent’s usage on a day
+ */
+export function useGetRunUsageAgentDetail<
+  TData = Awaited<ReturnType<typeof getRunUsageAgentDetail>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetRunUsageAgentDetailParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getRunUsageAgentDetail>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * One Agent on one UTC day: averages per Model call, cache replays, completion rate and duration, with its Model calls per day over the range. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get one Agent’s usage on a day
+ */
+export function useGetRunUsageAgentDetail<
+  TData = Awaited<ReturnType<typeof getRunUsageAgentDetail>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetRunUsageAgentDetailParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getRunUsageAgentDetail>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetRunUsageAgentDetailQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
