@@ -22,9 +22,10 @@ by Run that a second wait would collide with.
    again after reading the answer. `run-waiting` keeps its one-question shape.
 3. **A question left unanswered ends asking.** After a timeout the Run carries on, refuses later `askUser`
    calls and ends `partial`; a Run whose every question was answered may end `completed`.
-4. **The timeout job is keyed by the question**, `clarifying-question-timeout-<questionMessageId>`, so a late
-   timeout for one question cannot settle the wait on the next, and a kept or still-active job cannot swallow
-   the next one's schedule. The server finds the waiting Run's current question to remove or promote its job.
+4. **The timeout job is keyed by the question**, `clarifying-question-timeout-<questionMessageId>`, so a kept
+   or still-active job cannot swallow the next one's schedule, and its payload carries `questionMessageId`: it
+   settles the wait only while that question is still the one the Run waits on, since removal is best-effort
+   and a late job may still fire. The server finds the waiting Run's current question to remove or promote its job.
 5. **The prompt sets the bar:** ask whenever the answer would materially change what the Run does or answers,
    never for what the Brief, the conversation or a delegate can find out, and never twice for the same thing.
 
