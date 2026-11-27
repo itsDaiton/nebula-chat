@@ -131,9 +131,9 @@ export const LogLevelPanel = ({ onClose }: LogLevelPanelProps) => {
         {apply.isPending ? text.panel.applying : text.panel.apply(serviceLabel)}
       </Button>
       {apply.data && (
-        <p role="status" className="m-0 text-[12.5px] text-muted-foreground">
+        <output className="text-[12.5px] text-muted-foreground">
           {text.panel.sent(apply.data.receivers)}
-        </p>
+        </output>
       )}
     </div>
   );

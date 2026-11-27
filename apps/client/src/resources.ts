@@ -468,10 +468,11 @@ export const resources = {
         reverted: (service: string, target: string) =>
           `${service} ${target} is back at its boot level`,
         noInstance: 'No instance answered',
-        instances: (service: string, answered: number, receivers: number) =>
-          answered === receivers
-            ? `${service}: ${answered} ${answered === 1 ? 'instance' : 'instances'}`
-            : `${service}: ${answered} of ${receivers} instances answered`,
+        instances: (service: string, answered: number, receivers: number) => {
+          if (answered !== receivers)
+            return `${service}: ${answered} of ${receivers} instances answered`;
+          return `${service}: ${answered} ${answered === 1 ? 'instance' : 'instances'}`;
+        },
       },
       panel: {
         title: 'Change log level',
