@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.19.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.18.1...nebula-chat-v7.19.0) (2026-11-27)
+
+
+### Features
+
+* **server,client:** NEB-886 Runs tab on Model usage ([#997](https://github.com/itsDaiton/nebula-chat/issues/997)) ([c5fe1ad](https://github.com/itsDaiton/nebula-chat/commit/c5fe1ade89f556306aa6fa0c628178e3aa3de8d5))
+
 ## [7.18.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.18.0...nebula-chat-v7.18.1) (2026-11-27)
 
 

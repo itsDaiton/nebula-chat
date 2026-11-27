@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nebula Chat API
-  version: 4.30.1
+  version: 4.31.0
   description: REST API for Nebula Chat
   contact:
     name: Nebula Chat
@@ -1932,16 +1932,16 @@ components:
           description: Input tokens, cached included, per call
           type:
             - number
-            - "null"
+            - 'null'
         outputPerCall:
           type:
             - number
-            - "null"
+            - 'null'
         costPerCall:
           description: Estimated USD per call
           type:
             - number
-            - "null"
+            - 'null'
         cacheReplays:
           type: number
           description: Calls replayed from the response cache
@@ -1949,11 +1949,11 @@ components:
           description: Completed calls over all calls
           type:
             - number
-            - "null"
+            - 'null'
         avgDurationMs:
           type:
             - number
-            - "null"
+            - 'null'
         trend:
           maxItems: 90
           type: array
@@ -2046,14 +2046,14 @@ components:
               type: object
               properties:
                 value:
-                  description: "`null` with no Runs"
+                  description: '`null` with no Runs'
                   type:
                     - number
-                    - "null"
+                    - 'null'
                 previousValue:
                   type:
                     - number
-                    - "null"
+                    - 'null'
               required:
                 - value
                 - previousValue
@@ -2062,14 +2062,14 @@ components:
               type: object
               properties:
                 value:
-                  description: "`null` with no Runs"
+                  description: '`null` with no Runs'
                   type:
                     - number
-                    - "null"
+                    - 'null'
                 previousValue:
                   type:
                     - number
-                    - "null"
+                    - 'null'
               required:
                 - value
                 - previousValue
@@ -2078,14 +2078,14 @@ components:
               type: object
               properties:
                 value:
-                  description: "`null` with no Runs"
+                  description: '`null` with no Runs'
                   type:
                     - number
-                    - "null"
+                    - 'null'
                 previousValue:
                   type:
                     - number
-                    - "null"
+                    - 'null'
               required:
                 - value
                 - previousValue
@@ -2094,14 +2094,14 @@ components:
               type: object
               properties:
                 value:
-                  description: "`null` with no Runs"
+                  description: '`null` with no Runs'
                   type:
                     - number
-                    - "null"
+                    - 'null'
                 previousValue:
                   type:
                     - number
-                    - "null"
+                    - 'null'
               required:
                 - value
                 - previousValue
@@ -2111,14 +2111,14 @@ components:
               type: object
               properties:
                 value:
-                  description: "`null` with no Runs"
+                  description: '`null` with no Runs'
                   type:
                     - number
-                    - "null"
+                    - 'null'
                 previousValue:
                   type:
                     - number
-                    - "null"
+                    - 'null'
               required:
                 - value
                 - previousValue
@@ -5336,18 +5336,19 @@ paths:
           content:
             application/json:
               schema: {}
-        "401":
+        '401':
           description: Not signed in
           content:
             application/json:
               schema: {}
-        "403":
-          description: An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+        '403':
+          description: >-
+            An Admin short of two-factor (`TwoFactorRequired`); a signed-in
             non-Admin gets the unknown-route 404
           content:
             application/json:
               schema: {}
-        "500":
+        '500':
           description: Internal server error
           content:
             application/json:
@@ -5370,8 +5371,9 @@ paths:
       parameters:
         - schema:
             default: 30d
-            description: How many UTC days back, today included; the period before it is the
-              comparison
+            description: >-
+              How many UTC days back, today included; the period before it is
+              the comparison
             type: string
             enum:
               - 7d
@@ -5380,11 +5382,13 @@ paths:
               - 90d
           in: query
           name: range
-          description: How many UTC days back, today included; the period before it is the
+          description: >-
+            How many UTC days back, today included; the period before it is the
             comparison
         - schema:
             default: all
-            description: Only Guests, only Registered users, or both; calls of a deleted
+            description: >-
+              Only Guests, only Registered users, or both; calls of a deleted
               User count under `all` only
             type: string
             enum:
@@ -5393,34 +5397,36 @@ paths:
               - registered
           in: query
           name: audience
-          description: Only Guests, only Registered users, or both; calls of a deleted
-            User count under `all` only
+          description: >-
+            Only Guests, only Registered users, or both; calls of a deleted User
+            count under `all` only
       security:
         - cookieAuth: []
       responses:
-        "200":
+        '200':
           description: Per-day Runs and Agent spend
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UsageRunSeries"
-        "400":
+                $ref: '#/components/schemas/UsageRunSeries'
+        '400':
           description: Invalid query
           content:
             application/json:
               schema: {}
-        "401":
+        '401':
           description: Not signed in
           content:
             application/json:
               schema: {}
-        "403":
-          description: An Admin short of two-factor (`TwoFactorRequired`); a signed-in
+        '403':
+          description: >-
+            An Admin short of two-factor (`TwoFactorRequired`); a signed-in
             non-Admin gets the unknown-route 404
           content:
             application/json:
               schema: {}
-        "500":
+        '500':
           description: Internal server error
           content:
             application/json:
@@ -5452,7 +5458,8 @@ paths:
         - schema:
             type: string
             format: date
-            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+            pattern: >-
+              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
             description: The UTC day, `YYYY-MM-DD`
           in: query
           name: day
@@ -5472,7 +5479,8 @@ paths:
           description: How many UTC days the trend covers, ending today
         - schema:
             default: all
-            description: Only Guests, only Registered users, or both; calls of a deleted
+            description: >-
+              Only Guests, only Registered users, or both; calls of a deleted
               User count under `all` only
             type: string
             enum:
@@ -5481,18 +5489,19 @@ paths:
               - registered
           in: query
           name: audience
-          description: Only Guests, only Registered users, or both; calls of a deleted
-            User count under `all` only
+          description: >-
+            Only Guests, only Registered users, or both; calls of a deleted User
+            count under `all` only
       security:
         - cookieAuth: []
       responses:
-        "200":
+        '200':
           description: The Agent’s day
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UsageAgentDetail"
-        "400":
+                $ref: '#/components/schemas/UsageAgentDetail'
+        '400':
           description: Invalid query
           content:
             application/json:
