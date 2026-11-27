@@ -18,6 +18,7 @@ export const ERROR_STATUS: Readonly<Record<ErrorCode, number>> = {
   PayloadTooLarge: 413,
   TooManyRequests: 429,
   Internal: 500,
+  Unavailable: 503,
 };
 
 // Status → the first code listed for it, so 400 reads as BadRequest rather

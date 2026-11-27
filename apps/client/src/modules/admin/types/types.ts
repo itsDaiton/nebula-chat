@@ -14,6 +14,7 @@ import type { ChangeAdminLogLevelBody } from '@/libs/api/generated/model/changeA
 import type { GetAdminLogLevelsService } from '@/libs/api/generated/model/getAdminLogLevelsService';
 import type { LogLevelReports } from '@/libs/api/generated/model/logLevelReports';
 import type { LogLevelState } from '@/libs/api/generated/model/logLevelState';
+import type { Operations } from '@/libs/api/generated/model/operations';
 import type { GetModelUsageSeriesAudience } from '@/libs/api/generated/model/getModelUsageSeriesAudience';
 import type { GetModelUsageSeriesMetric } from '@/libs/api/generated/model/getModelUsageSeriesMetric';
 import type { GetModelUsageSeriesRange } from '@/libs/api/generated/model/getModelUsageSeriesRange';
@@ -458,3 +459,9 @@ export type LogLevelTableRowProps = { row: LogLevelRow; selected: boolean };
 export type LogLevelRevertButtonProps = { row: LogLevelRow };
 
 export type LogLevelPanelProps = { onClose: () => void };
+
+export type OperationsTilesProps = { operations: Operations };
+
+export type QueuesTableProps = { queues: Operations['queues'] };
+
+export type FailedJobsTableProps = { jobs: Operations['failedJobs'] };

@@ -95,7 +95,7 @@ describe('errorHandler', () => {
       errorHandler(Object.assign(new Error('pool exhausted'), { statusCode: 503 }), request, reply);
 
       expect(eventLines(lines, 'http.request.failed')).toEqual([
-        expect.objectContaining({ 'error.type': 'Internal', 'http.response.status_code': 503 }),
+        expect.objectContaining({ 'error.type': 'Unavailable', 'http.response.status_code': 503 }),
       ]);
     });
 
@@ -271,14 +271,27 @@ describe('errorHandler', () => {
 
   it('hides the message of a server-side error that carries a 5xx status', () => {
     const sent = handle(
+      Object.assign(new Error('pool exhausted at 10.0.0.5'), { statusCode: 502 }),
+    );
+
+    expect(sent.status).toBe(502);
+    expect(sent.body).toEqual({
+      success: false,
+      error: 'Internal',
+      message: GENERIC_ERROR_MESSAGE,
+    });
+  });
+
+  it('classifies a framework 503 as Unavailable, with the fixed message', () => {
+    const sent = handle(
       Object.assign(new Error('pool exhausted at 10.0.0.5'), { statusCode: 503 }),
     );
 
     expect(sent.status).toBe(503);
     expect(sent.body).toEqual({
       success: false,
-      error: 'Internal',
-      message: GENERIC_ERROR_MESSAGE,
+      error: 'Unavailable',
+      message: ERROR_MESSAGE.Unavailable,
     });
   });
 

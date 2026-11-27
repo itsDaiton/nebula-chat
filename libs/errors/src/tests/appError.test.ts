@@ -10,6 +10,7 @@ import {
   NotFoundError,
   PayloadTooLargeError,
   TooManyRequestsError,
+  ServiceUnavailableError,
   TwoFactorRequiredError,
   LastAdminError,
   NotEligibleForAdminError,
@@ -131,6 +132,7 @@ describe('the AppError subclasses', () => {
     [new PayloadTooLargeError('too many tokens'), 413, 'PayloadTooLarge', 'too many tokens'],
     [new TooManyRequestsError(), 429, 'TooManyRequests', 'Too many requests'],
     [new TooManyRequestsError('slow down'), 429, 'TooManyRequests', 'slow down'],
+    [new ServiceUnavailableError('Redis is down'), 503, 'Unavailable', 'Redis is down'],
     [
       new MissingConfigurationError('OPENAI_API_KEY'),
       500,

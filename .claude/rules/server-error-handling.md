@@ -25,6 +25,7 @@ subclass that matches the situation, imported from `@nebula-chat/errors`:
 | `NotEligibleForAdminError`     | 409         | `NotEligibleForAdmin`     | A Guest, unverified or banned user as Admin |
 | `PayloadTooLargeError`         | 413         | `PayloadTooLarge`         | Message exceeds token limit                 |
 | `TooManyRequestsError`         | 429         | `TooManyRequests`         | A rate limit was hit                        |
+| `ServiceUnavailableError`      | 503         | `Unavailable`             | Redis did not answer a read that needs it   |
 | `MissingConfigurationError`    | 500         | `Internal`                | Required env var not set                    |
 
 The code decides the status (`ERROR_STATUS` in `libs/errors/src/errorStatus.ts`), so the two cannot disagree.
@@ -44,7 +45,7 @@ Throw from the service layer; the `errorHandler` exported from `errors/error.han
 - The envelope is flat: `{ success: false, error, message }` for every code. A case the client must tell apart
   gets its own code rather than extra fields, like `MessageAllowanceReached` (a 403, like `Forbidden`).
 - The handler turns everything it catches into an `AppError`: Zod validation failures (fixed `Validation` message), Postgres constraint
-  codes, and framework errors (classified by their status, fixed message per code). A framework error keeps its own status (415, 503).
+  codes, and framework errors (classified by their status, fixed message per code). A framework error keeps its own status (415, 503); a 503, such as an under-pressure shed, reads as `Unavailable`.
 - The reply stream relay hijacks its reply once the owner check has passed, so nothing after that reaches
   `errorHandler`. A reply's own failure arrives from the worker as an `error` event already carrying the
   envelope; a Redis failure mid-relay is written as an `error` event with the `Internal` envelope, then `end`.

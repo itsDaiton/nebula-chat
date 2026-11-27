@@ -33,6 +33,7 @@ export {
   NotEligibleForAdminError,
   PayloadTooLargeError,
   TooManyRequestsError,
+  ServiceUnavailableError,
   MissingConfigurationError,
 } from './appError';
 

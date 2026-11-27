@@ -1,5 +1,5 @@
 import { Queue } from 'bullmq';
-import type { JobsOptions } from 'bullmq';
+import type { Job, JobsOptions } from 'bullmq';
 import {
   CLARIFYING_QUESTION_TIMEOUT_QUEUE,
   clarifyingQuestionTimeoutJobId,
@@ -165,6 +165,60 @@ export const promoteClarifyingQuestionTimeout = async (
     // Not delayed any more: the wait has already ended.
   }
   void pingWorker(logger);
+};
+
+// The queues the server produces to; Operations shows their counts and failed jobs.
+const INSPECTED_QUEUES = [
+  DIRECT_REPLY_QUEUE,
+  RUN_QUEUE,
+  CLARIFYING_QUESTION_TIMEOUT_QUEUE,
+] as const;
+
+type InspectedQueue = (typeof INSPECTED_QUEUES)[number];
+
+const LATEST_FAILED_JOBS = 20;
+const FAILED_REASON_MAX_LENGTH = 500;
+
+// The Run job schema's `runId` also matches a Clarifying question timeout job, which is about a Run too.
+const runIdOf = runJobSchema.pick({ runId: true });
+
+// An allowlist: nothing else from the payload ever leaves the server.
+const toFailedJob = (queueName: InspectedQueue, job: Job) => ({
+  id: String(job.id),
+  queue: queueName,
+  failedAt: new Date(job.finishedOn ?? job.timestamp),
+  attemptsMade: job.attemptsMade,
+  error: (job.failedReason ?? '').slice(0, FAILED_REASON_MAX_LENGTH),
+  runId: runIdOf.safeParse(job.data).data?.runId ?? null,
+});
+
+const inspectQueue = async (name: InspectedQueue) => {
+  const [counts, failed] = await Promise.all([
+    queue(name).getJobCounts('waiting', 'active', 'delayed', 'failed'),
+    queue(name).getFailed(0, LATEST_FAILED_JOBS - 1),
+  ]);
+  return {
+    counts: {
+      name,
+      waiting: counts.waiting ?? 0,
+      active: counts.active ?? 0,
+      delayed: counts.delayed ?? 0,
+      failed: counts.failed ?? 0,
+    },
+    failedJobs: failed.map((job) => toFailedJob(name, job)),
+  };
+};
+
+/** Reads what Redis holds for each produced-to queue; never pings the worker or adds a job. */
+export const inspectQueues = async () => {
+  const inspected = await Promise.all(INSPECTED_QUEUES.map(inspectQueue));
+  return {
+    queues: inspected.map(({ counts }) => counts),
+    failedJobs: inspected
+      .flatMap(({ failedJobs }) => failedJobs)
+      .sort((a, b) => b.failedAt.getTime() - a.failedAt.getTime())
+      .slice(0, LATEST_FAILED_JOBS),
+  };
 };
 
 export const closeQueue = async (): Promise<void> => {

@@ -44,6 +44,7 @@ import type {
   ListUsersParams,
   LogLevelChange,
   LogLevelReports,
+  Operations,
   SetUserRoleBody,
   UsageDetail,
   UsageSeries,
@@ -2265,3 +2266,136 @@ export const useChangeAdminLogLevel = <
 > => {
   return useMutation(getChangeAdminLogLevelMutationOptions(options), queryClient);
 };
+/**
+ * Report whether the worker is answering, each job queue's counts and the latest failed jobs, as Redis holds them now. Worker liveness counts the instances that answer the log-level read within 2 seconds, so reading never wakes a sleeping worker, and nothing is enqueued. A failed job carries only its id, queue, time, attempts, error and Run id, never its payload. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get operations
+ */
+export const getAdminOperations = (
+  options?: SecondParameter<typeof axiosClient>,
+  signal?: AbortSignal,
+) => {
+  return axiosClient<Operations>({ url: `/api/admin/operations`, method: 'GET', signal }, options);
+};
+
+export const getGetAdminOperationsQueryKey = () => {
+  return [`/api/admin/operations`] as const;
+};
+
+export const getGetAdminOperationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAdminOperations>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOperations>>, TError, TData>>;
+  request?: SecondParameter<typeof axiosClient>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetAdminOperationsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminOperations>>> = ({ signal }) =>
+    getAdminOperations(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAdminOperations>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetAdminOperationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAdminOperations>>
+>;
+export type GetAdminOperationsQueryError = ErrorType<ErrorEnvelope>;
+
+/**
+ * Report whether the worker is answering, each job queue's counts and the latest failed jobs, as Redis holds them now. Worker liveness counts the instances that answer the log-level read within 2 seconds, so reading never wakes a sleeping worker, and nothing is enqueued. A failed job carries only its id, queue, time, attempts, error and Run id, never its payload. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get operations
+ */
+export function useGetAdminOperations<
+  TData = Awaited<ReturnType<typeof getAdminOperations>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOperations>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminOperations>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminOperations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Report whether the worker is answering, each job queue's counts and the latest failed jobs, as Redis holds them now. Worker liveness counts the instances that answer the log-level read within 2 seconds, so reading never wakes a sleeping worker, and nothing is enqueued. A failed job carries only its id, queue, time, attempts, error and Run id, never its payload. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get operations
+ */
+export function useGetAdminOperations<
+  TData = Awaited<ReturnType<typeof getAdminOperations>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAdminOperations>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminOperations>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminOperations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Report whether the worker is answering, each job queue's counts and the latest failed jobs, as Redis holds them now. Worker liveness counts the instances that answer the log-level read within 2 seconds, so reading never wakes a sleeping worker, and nothing is enqueued. A failed job carries only its id, queue, time, attempts, error and Run id, never its payload. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get operations
+ */
+export function useGetAdminOperations<
+  TData = Awaited<ReturnType<typeof getAdminOperations>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOperations>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Report whether the worker is answering, each job queue's counts and the latest failed jobs, as Redis holds them now. Worker liveness counts the instances that answer the log-level read within 2 seconds, so reading never wakes a sleeping worker, and nothing is enqueued. A failed job carries only its id, queue, time, attempts, error and Run id, never its payload. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get operations
+ */
+export function useGetAdminOperations<
+  TData = Awaited<ReturnType<typeof getAdminOperations>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOperations>>, TError, TData>>;
+    request?: SecondParameter<typeof axiosClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetAdminOperationsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

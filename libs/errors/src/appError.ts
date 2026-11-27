@@ -130,6 +130,13 @@ export class TooManyRequestsError extends AppError {
   }
 }
 
+/** A backing service such as Redis did not answer; the client can retry later. */
+export class ServiceUnavailableError extends AppError {
+  constructor(message: string, options?: ErrorOptions) {
+    super('Unavailable', message, options);
+  }
+}
+
 export class MissingConfigurationError extends AppError {
   constructor(configName: string) {
     super('Internal', `${configName} is not configured`);

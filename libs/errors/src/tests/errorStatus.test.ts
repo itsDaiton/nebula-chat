@@ -18,6 +18,7 @@ describe('ERROR_STATUS', () => {
     ['PayloadTooLarge', 413],
     ['TooManyRequests', 429],
     ['Internal', 500],
+    ['Unavailable', 503],
   ] as const)('answers %s with %i', (code, status) => {
     expect(ERROR_STATUS[code]).toBe(status);
   });
@@ -33,6 +34,7 @@ describe('errorCodeForStatus', () => {
     [413, 'PayloadTooLarge'],
     [429, 'TooManyRequests'],
     [500, 'Internal'],
+    [503, 'Unavailable'],
   ])('maps %i to its general code %s', (status, code) => {
     expect(errorCodeForStatus(status)).toBe(code);
   });
@@ -41,7 +43,7 @@ describe('errorCodeForStatus', () => {
     expect(errorCodeForStatus(status)).toBe('BadRequest');
   });
 
-  it.each([502, 503, 200, 0])('treats anything else (%i) as Internal', (status) => {
+  it.each([502, 504, 200, 0])('treats anything else (%i) as Internal', (status) => {
     expect(errorCodeForStatus(status)).toBe('Internal');
   });
 });

@@ -7,6 +7,7 @@ import { HttpResponse, http, type HttpHandler, type JsonBodyType } from 'msw';
 export const API_ROUTE = {
   adminAudit: '*/api/admin/audit',
   adminLogLevels: '*/api/admin/log-levels',
+  adminOperations: '*/api/admin/operations',
   adminSession: '*/api/admin/sessions/:id',
   sessions: '*/api/sessions',
   sessionsSearch: '*/api/sessions/search',

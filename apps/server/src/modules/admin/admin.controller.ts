@@ -95,6 +95,10 @@ export const adminController = {
     const result = await logLevelService.read(req.query.service);
     return reply.status(200).send(result);
   },
+  async getOperations(_req: FastifyRequest, reply: FastifyReply) {
+    const operations = await adminService.getOperations();
+    return reply.status(200).send(operations);
+  },
   async changeLogLevel(req: FastifyRequest<{ Body: AdminChangeLogLevelDTO }>, reply: FastifyReply) {
     const { id, name } = getSessionData(req).user;
     const result = await adminService.changeLogLevel(req.body, { id, name });

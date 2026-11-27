@@ -9,6 +9,7 @@ import { faker } from '@faker-js/faker';
 import { HttpResponse, http } from 'msw';
 import type { HttpResponseResolver, PathParams, RequestHandlerOptions } from 'msw';
 
+import { OperationsQueueName } from '../model';
 import type {
   AdminOverview,
   AdminRunListPage,
@@ -22,6 +23,7 @@ import type {
   ChangeAdminLogLevelBody,
   LogLevelChange,
   LogLevelReports,
+  Operations,
   SetUserRoleBody,
   UsageDetail,
   UsageSeries,
@@ -642,6 +644,33 @@ export const getChangeAdminLogLevelResponseMock = (
   ...overrideResponse,
 });
 
+export const getGetAdminOperationsResponseMock = (
+  overrideResponse: Partial<Extract<Operations, object>> = {},
+): Operations => ({
+  worker: {
+    status: faker.helpers.arrayElement(['answering', 'not_answering'] as const),
+    instances: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+  },
+  queues: Array.from({ length: faker.number.int({ min: 1, max: 3 }) }, (_, i) => i + 1).map(() => ({
+    name: faker.helpers.arrayElement(Object.values(OperationsQueueName)),
+    waiting: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+    active: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+    delayed: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+    failed: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+  })),
+  failedJobs: Array.from({ length: faker.number.int({ min: 1, max: 20 }) }, (_, i) => i + 1).map(
+    () => ({
+      id: faker.string.alpha({ length: { min: 10, max: 200 } }),
+      queue: faker.helpers.arrayElement(Object.values(OperationsQueueName)),
+      failedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+      attemptsMade: faker.number.int({ min: -9007199254740991, max: 9007199254740991 }),
+      error: faker.string.alpha({ length: { min: 10, max: 500 } }),
+      runId: faker.helpers.arrayElement([faker.string.uuid(), null]),
+    }),
+  ),
+  ...overrideResponse,
+});
+
 export const getGetAdminOverviewMockHandler = (
   overrideResponse?:
     | AdminOverview
@@ -1014,6 +1043,27 @@ export const getChangeAdminLogLevelMockHandler = (
     options,
   );
 };
+
+export const getGetAdminOperationsMockHandler = (
+  overrideResponse?:
+    Operations | ((info: Parameters<HttpResponseResolver>[0]) => Promise<Operations> | Operations),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/admin/operations',
+    async (info: Parameters<HttpResponseResolver>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetAdminOperationsResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
 export const getAdminMock = () => [
   getGetAdminOverviewMockHandler(),
   getGetModelUsageSeriesMockHandler(),
@@ -1032,4 +1082,5 @@ export const getAdminMock = () => [
   getListAuditEntriesMockHandler(),
   getGetAdminLogLevelsMockHandler(),
   getChangeAdminLogLevelMockHandler(),
+  getGetAdminOperationsMockHandler(),
 ];

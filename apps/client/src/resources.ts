@@ -449,6 +449,37 @@ export const resources = {
       updated: (time: string) => `Updated ${time}`,
       refresh: 'Refresh',
       services: { server: 'Server', worker: 'Worker' },
+      unavailable: 'Worker health and queues are unavailable: Redis did not answer.',
+      loading: 'Loading worker health and queues',
+      tiles: { worker: 'Worker', waiting: 'Waiting jobs', failed: 'Failed jobs' },
+      worker: {
+        answering: 'answering',
+        notAnswering: 'not answering',
+        instances: (count: number) => `${count} ${count === 1 ? 'instance' : 'instances'}`,
+      },
+      queues: {
+        title: 'Queues',
+        note: 'Counts are what Redis holds right now; a Redis restart empties them',
+        columns: {
+          queue: 'Queue',
+          waiting: 'Waiting',
+          active: 'Active',
+          delayed: 'Delayed',
+          failed: 'Failed',
+        },
+      },
+      failedJobs: {
+        title: 'Latest failed jobs',
+        empty: 'No failed jobs.',
+        openRun: 'Open Run',
+        columns: {
+          failed: 'Failed',
+          queue: 'Queue',
+          attempts: 'Attempts',
+          error: 'Error',
+          run: 'Run',
+        },
+      },
       logLevels: {
         title: 'Log levels',
         note: 'Changes revert on their own and are recorded in the Audit log',

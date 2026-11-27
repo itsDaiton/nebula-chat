@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import {
+  CLARIFYING_QUESTION_TIMEOUT_QUEUE,
+  DIRECT_REPLY_QUEUE,
+  RUN_QUEUE,
+} from '@nebula-chat/contracts';
 import { RUN_STATUSES } from '@nebula-chat/db';
 import { paginationConfig } from '@server/config/pagination.config';
 import { changeLogLevelSchema } from '@server/modules/logLevel/logLevel.validation';
@@ -384,3 +389,51 @@ export const adminChangeLogLevelSchema = z.union([
   }),
   changeLogLevelSchema.omit({ operator: true }),
 ]);
+
+const queueNameSchema = z
+  .enum([DIRECT_REPLY_QUEUE, RUN_QUEUE, CLARIFYING_QUESTION_TIMEOUT_QUEUE])
+  .meta({ id: 'OperationsQueueName' });
+
+export const operationsResponseSchema = z
+  .object({
+    worker: z
+      .object({
+        status: z
+          .enum(['answering', 'not_answering'])
+          .describe('`not_answering` when no instance answered: asleep or down'),
+        instances: z
+          .int()
+          .describe('How many worker instances answered within 2 seconds; asking wakes none'),
+      })
+      .meta({ id: 'OperationsWorker' }),
+    queues: z
+      .array(
+        z
+          .object({
+            name: queueNameSchema,
+            waiting: z.int(),
+            active: z.int(),
+            delayed: z.int(),
+            failed: z.int().describe('Failed jobs Redis still keeps (at most 1000 per queue)'),
+          })
+          .meta({ id: 'OperationsQueue' }),
+      )
+      .max(3)
+      .describe('Counts as Redis holds them now, one per queue the server enqueues to'),
+    failedJobs: z
+      .array(
+        z
+          .object({
+            id: z.string().max(200),
+            queue: queueNameSchema,
+            failedAt: isoDateTimeSchema,
+            attemptsMade: z.int(),
+            error: z.string().max(500).describe("The job's failure reason, cut at 500 characters"),
+            runId: z.uuid().nullable().describe('The Run the job was for; `null` for other jobs'),
+          })
+          .meta({ id: 'OperationsFailedJob' }),
+      )
+      .max(20)
+      .describe('The latest failed jobs across the queues, newest first'),
+  })
+  .meta({ id: 'Operations' });
