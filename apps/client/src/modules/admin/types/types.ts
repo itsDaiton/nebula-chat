@@ -349,7 +349,7 @@ type UsageBaseParams = {
 
 export type UsageModelParams = UsageBaseParams & { metric: GetModelUsageSeriesMetric };
 
-export type UsageRunsParams = UsageBaseParams & { metric: 'runs' };
+type UsageRunsParams = UsageBaseParams & { metric: 'runs' };
 
 export type UsageParams = UsageModelParams | UsageRunsParams;
 
