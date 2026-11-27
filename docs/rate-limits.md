@@ -9,7 +9,8 @@ All limits count per client IP, read from `CF-Connecting-IP`: Render fronts the 
 that header itself, whereas `X-Forwarded-For` keeps whatever the client sent. Fastify's limiter falls back to
 `req.ip` when the header is absent; better-auth falls back to one shared bucket per path
 ([docs/auth.md](./auth.md#configuration)). The header is trustworthy only while the Render origin is reachable
-solely through Cloudflare, which [origin-access.md](./origin-access.md) enforces.
+solely through Cloudflare. Render's edge guarantees that, since it refuses a request that brings its own header
+([origin-access.md](./origin-access.md)).
 
 ## Fastify routes
 

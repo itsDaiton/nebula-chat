@@ -22,15 +22,10 @@ services:
     startCommand: cd apps/server && node dist/src/server.js
     healthCheckPath: /health
     autoDeployTrigger: off
-    # Reachable only at api.nebula-chat.cz, through Cloudflare (docs/origin-access.md).
-    renderSubdomainPolicy: disabled
     envVars:
       # Required: an unset NODE_ENV fails boot on a deployment. Production also turns the API docs off.
       - key: NODE_ENV
         value: production
-      # Required on Render: the X-Origin-Auth value Cloudflare's Transform Rule adds (docs/origin-access.md).
-      - key: ORIGIN_AUTH_SECRET
-        sync: false
       # The worker's public URL. The server pings its /health on every enqueue,
       # which is what wakes a sleeping free-plan worker (ADR-0013).
       - key: WORKER_URL

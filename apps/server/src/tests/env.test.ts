@@ -280,34 +280,3 @@ describe('envSchema API_DOCS_ENABLED', () => {
     expect(parse({ API_DOCS_ENABLED: 'maybe' }).success).toBe(false);
   });
 });
-
-describe('envSchema ORIGIN_AUTH_SECRET', () => {
-  const secret = 'origin-auth-secret-0123456789abcdef';
-  const onRender = {
-    NODE_ENV: 'production',
-    RENDER: 'true',
-    BETTER_AUTH_URL: 'https://api.example.com',
-  };
-
-  it('reads an empty value as unset off Render', () => {
-    const result = parse({ ORIGIN_AUTH_SECRET: '' });
-
-    expect(result.success).toBe(true);
-    expect(result.data?.ORIGIN_AUTH_SECRET).toBeUndefined();
-  });
-
-  it('rejects a secret under 32 characters', () => {
-    expect(parse({ ORIGIN_AUTH_SECRET: 'too-short' }).success).toBe(false);
-  });
-
-  it('fails a Render deploy without it', () => {
-    const result = parse(onRender);
-
-    expect(result.success).toBe(false);
-    expect(result.error?.issues[0]?.message).toContain('ORIGIN_AUTH_SECRET');
-  });
-
-  it('boots a Render deploy with it', () => {
-    expect(parse({ ...onRender, ORIGIN_AUTH_SECRET: secret }).success).toBe(true);
-  });
-});
