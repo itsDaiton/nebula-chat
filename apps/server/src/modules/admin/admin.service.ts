@@ -3,6 +3,7 @@ import {
   LastAdminError,
   NotEligibleForAdminError,
   NotFoundError,
+  ServiceUnavailableError,
   ValidationError,
 } from '@nebula-chat/errors';
 import type { EventLogger } from '@nebula-chat/otel';
@@ -25,6 +26,7 @@ import { logLevelService } from '@server/modules/logLevel/logLevel.service';
 import type { LogLevelServiceQuery } from '@server/modules/logLevel/logLevel.types';
 import { messageRepository } from '@server/modules/message/message.repository';
 import { runService } from '@server/modules/run/run.service';
+import { inspectQueues } from '@server/queue';
 
 const DAY_MS = 86_400_000;
 
@@ -42,6 +44,18 @@ const heldLevel = async (service: LogLevelServiceQuery['service'], target: strin
   }
   return held.level;
 };
+
+// BullMQ and the subscriber queue commands while Redis is down, so the read is cut off, not awaited.
+const OPERATIONS_DEADLINE_MS = 5_000;
+
+const withinDeadline = <T>(read: Promise<T>): Promise<T> =>
+  new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error('Redis did not answer in time')),
+      OPERATIONS_DEADLINE_MS,
+    );
+    void read.then(resolve, reject).finally(() => clearTimeout(timer));
+  });
 
 const dayOf = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
@@ -395,6 +409,23 @@ export const adminService = {
       targetId: userId,
       detail: { pendingDeletionAt: user.pendingDeletionAt.toISOString() },
     });
+  },
+  // Liveness comes from the log-level read, which only running instances answer, so a sleeping worker stays asleep.
+  async getOperations() {
+    try {
+      const [queues, { reports }] = await withinDeadline(
+        Promise.all([inspectQueues(), logLevelService.read('worker')]),
+      );
+      const instances = reports.length;
+      return {
+        worker: { status: instances > 0 ? 'answering' : 'not_answering', instances },
+        ...queues,
+      } as const;
+    } catch (cause) {
+      throw new ServiceUnavailableError('Redis did not answer, so the queues cannot be read.', {
+        cause,
+      });
+    }
   },
   // Audited before the broadcast, so a failed Audit write changes nothing.
   async changeLogLevel(input: AdminChangeLogLevelDTO, admin: { id: string; name: string }) {

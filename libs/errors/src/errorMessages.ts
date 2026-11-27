@@ -17,5 +17,6 @@ export const ERROR_MESSAGE: Readonly<Record<ErrorCode, string>> = {
   NotEligibleForAdmin: 'This user is not eligible to be an Admin.',
   PayloadTooLarge: 'The request is too large.',
   TooManyRequests: 'Too many requests. Please try again later.',
+  Unavailable: 'The service is unavailable. Please try again later.',
   Internal: GENERIC_ERROR_MESSAGE,
 };

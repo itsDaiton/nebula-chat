@@ -20,6 +20,7 @@ describe('errorEnvelopeSchema', () => {
     'NotEligibleForAdmin',
     'PayloadTooLarge',
     'TooManyRequests',
+    'Unavailable',
     'Internal',
   ])('accepts a %s envelope', (code) => {
     const envelope = { success: false, error: code, message: 'nope' };

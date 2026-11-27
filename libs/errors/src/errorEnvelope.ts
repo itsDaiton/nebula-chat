@@ -25,6 +25,8 @@ export const errorCodeSchema = z
     'NotEligibleForAdmin',
     'PayloadTooLarge',
     'TooManyRequests',
+    // A backing service (Redis) did not answer, so the read cannot be served right now.
+    'Unavailable',
     // The escape hatch: anything the server did not classify.
     'Internal',
   ])

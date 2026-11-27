@@ -24,6 +24,9 @@ Redis access is provided by the **`@nebula-chat/redis`** lib, registered by
   404s while a queued one waits; `requestStreamCancel` raises `stream-cancel:{streamId}` for the worker.
 - **The Direct reply queue** (`src/queue.ts`): a BullMQ `Queue` on `redis.dedicatedConnection()`, built on
   first use so nothing that only builds the app (the OpenAPI script, route tests) opens a connection.
+  `inspectQueues` reads those same queues for `GET /api/admin/operations` (counts and the latest failed jobs,
+  allowlisted to id, time, attempts, error and Run id). Its dedicated connection waits out an outage, so the
+  admin service cuts the read off at a deadline and answers `Unavailable`.
 
 The connection is lazy with no offline queue, so a command sent before it is ready is rejected.
 `server.ts` therefore calls `redis.connect()` at startup without awaiting it (a failure logs

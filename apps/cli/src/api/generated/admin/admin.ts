@@ -50,6 +50,8 @@ import type { LogLevelChange } from '../model/logLevelChange';
 
 import type { LogLevelReports } from '../model/logLevelReports';
 
+import type { Operations } from '../model/operations';
+
 import type { SetUserRoleBody } from '../model/setUserRoleBody';
 
 import type { UsageDetail } from '../model/usageDetail';
@@ -1345,5 +1347,64 @@ export const changeAdminLogLevel = async (
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(changeAdminLogLevelBody),
+  });
+};
+
+export type getAdminOperationsResponse200 = {
+  data: Operations;
+  status: 200;
+};
+
+export type getAdminOperationsResponse401 = {
+  data: ErrorEnvelope;
+  status: 401;
+};
+
+export type getAdminOperationsResponse403 = {
+  data: ErrorEnvelope;
+  status: 403;
+};
+
+export type getAdminOperationsResponse500 = {
+  data: ErrorEnvelope;
+  status: 500;
+};
+
+export type getAdminOperationsResponse503 = {
+  data: ErrorEnvelope;
+  status: 503;
+};
+
+export type getAdminOperationsResponseSuccess = getAdminOperationsResponse200 & {
+  headers: Headers;
+};
+export type getAdminOperationsResponseError = (
+  | getAdminOperationsResponse401
+  | getAdminOperationsResponse403
+  | getAdminOperationsResponse500
+  | getAdminOperationsResponse503
+) & {
+  headers: Headers;
+};
+
+export type getAdminOperationsResponse =
+  getAdminOperationsResponseSuccess | getAdminOperationsResponseError;
+
+export const getGetAdminOperationsUrl = () => {
+  return `/api/admin/operations`;
+};
+
+/**
+ * Report whether the worker is answering, each job queue's counts and the latest failed jobs, as Redis holds them now. Worker liveness counts the instances that answer the log-level read within 2 seconds, so reading never wakes a sleeping worker, and nothing is enqueued. A failed job carries only its id, queue, time, attempts, error and Run id, never its payload. Requires an Admin whose auth session passed two-factor authentication.
+ *
+ * Access: admin
+ * @summary Get operations
+ */
+export const getAdminOperations = async (
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<getAdminOperationsResponse> => {
+  return apiFetch<getAdminOperationsResponse>(getGetAdminOperationsUrl(), {
+    ...options,
+    method: 'GET',
   });
 };

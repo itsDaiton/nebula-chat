@@ -1,11 +1,18 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DIRECT_REPLY_QUEUE, OWN_KEY_VALIDATION_QUEUE, RUN_QUEUE } from '@nebula-chat/contracts';
+import {
+  CLARIFYING_QUESTION_TIMEOUT_QUEUE,
+  DIRECT_REPLY_QUEUE,
+  OWN_KEY_VALIDATION_QUEUE,
+  RUN_QUEUE,
+} from '@nebula-chat/contracts';
 import { captureLogger, captureSpans, eventLines, LEVEL } from '@nebula-chat/otel/testing';
 
 const bull = vi.hoisted(() => ({
   constructed: [] as { name: string; options: unknown }[],
   add: vi.fn(async () => ({ id: '1' })),
   getJob: vi.fn(),
+  getJobCounts: vi.fn<(name: string) => Promise<Record<string, number>>>(async () => ({})),
+  getFailed: vi.fn<(name: string) => Promise<unknown[]>>(async () => []),
   close: vi.fn(async () => undefined),
 }));
 
@@ -15,7 +22,12 @@ vi.mock('bullmq', () => ({
     add = bull.add;
     getJob = bull.getJob;
     close = bull.close;
-    constructor(name: string, options: unknown) {
+    getJobCounts = () => bull.getJobCounts(this.name);
+    getFailed = () => bull.getFailed(this.name);
+    constructor(
+      readonly name: string,
+      options: unknown,
+    ) {
       bull.constructed.push({ name, options });
     }
   },
@@ -31,6 +43,7 @@ import {
   enqueueDirectReply,
   enqueueOwnKeyValidation,
   enqueueRun,
+  inspectQueues,
   pingWorker,
   promoteClarifyingQuestionTimeout,
   removeClarifyingQuestionTimeout,
@@ -42,6 +55,8 @@ const job = {
   messageId: '33333333-3333-4333-8333-333333333333',
   streamId: '44444444-4444-4444-8444-444444444444',
 };
+
+const RUN_ID = '55555555-5555-4555-8555-555555555555';
 
 const spans = captureSpans();
 afterAll(() => spans.stop());
@@ -260,7 +275,6 @@ describe('closeQueue', () => {
 });
 
 describe('the Clarifying question timeout job', () => {
-  const RUN_ID = '55555555-5555-4555-8555-555555555555';
   const JOB_ID = `clarifying-question-timeout-${RUN_ID}`;
 
   it('is looked up by its deterministic id and removed once the answer settles the wait', async () => {
@@ -299,5 +313,91 @@ describe('the Clarifying question timeout job', () => {
     await expect(
       promoteClarifyingQuestionTimeout(RUN_ID, captureLogger().logger),
     ).resolves.toBeUndefined();
+  });
+});
+
+describe('inspectQueues', () => {
+  const failedJob = (id: string, finishedOn: number, data: unknown) => ({
+    id,
+    finishedOn,
+    timestamp: finishedOn - 1_000,
+    attemptsMade: 3,
+    failedReason: `boom ${id}`,
+    data,
+  });
+
+  it('counts each inspected queue without pinging the worker or adding a job', async () => {
+    bull.getJobCounts.mockImplementation(async (name) =>
+      name === RUN_QUEUE
+        ? { waiting: 1, active: 1, delayed: 0, failed: 4 }
+        : { waiting: 0, active: 0, delayed: name === DIRECT_REPLY_QUEUE ? 2 : 1, failed: 0 },
+    );
+
+    const { queues } = await inspectQueues();
+
+    expect(queues).toEqual([
+      { name: DIRECT_REPLY_QUEUE, waiting: 0, active: 0, delayed: 2, failed: 0 },
+      { name: RUN_QUEUE, waiting: 1, active: 1, delayed: 0, failed: 4 },
+      { name: CLARIFYING_QUESTION_TIMEOUT_QUEUE, waiting: 0, active: 0, delayed: 1, failed: 0 },
+    ]);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(bull.add).not.toHaveBeenCalled();
+  });
+
+  it('keeps only the Run id from a failed job payload', async () => {
+    bull.getFailed.mockImplementation(async (name) =>
+      name === RUN_QUEUE
+        ? [failedJob('7', 2_000, { ...job, runId: RUN_ID, traceparent: 'secret-trace' })]
+        : [],
+    );
+
+    const { failedJobs } = await inspectQueues();
+
+    expect(failedJobs).toEqual([
+      {
+        id: '7',
+        queue: RUN_QUEUE,
+        failedAt: new Date(2_000),
+        attemptsMade: 3,
+        error: 'boom 7',
+        runId: RUN_ID,
+      },
+    ]);
+  });
+
+  it('gives a job with an unparsable payload no Run id', async () => {
+    bull.getFailed.mockImplementation(async (name) =>
+      name === RUN_QUEUE
+        ? [failedJob('8', 2_000, { runId: 'not-a-uuid' }), failedJob('9', 1_000, null)]
+        : [],
+    );
+
+    const { failedJobs } = await inspectQueues();
+
+    expect(failedJobs.map(({ id, runId }) => ({ id, runId }))).toEqual([
+      { id: '8', runId: null },
+      { id: '9', runId: null },
+    ]);
+  });
+
+  it('merges failed jobs across queues, newest first, and keeps the latest 20', async () => {
+    bull.getFailed.mockImplementation(async (name) => {
+      const offset = name === RUN_QUEUE ? 0 : name === DIRECT_REPLY_QUEUE ? 1 : 2;
+      return Array.from({ length: 10 }, (_, index) => {
+        const at = (10 - index) * 3 + offset;
+        return failedJob(`${name}-${at}`, at, { ...job });
+      });
+    });
+
+    const { failedJobs } = await inspectQueues();
+
+    expect(failedJobs).toHaveLength(20);
+    expect(failedJobs.slice(0, 3).map(({ id }) => id)).toEqual([
+      `${CLARIFYING_QUESTION_TIMEOUT_QUEUE}-32`,
+      `${DIRECT_REPLY_QUEUE}-31`,
+      `${RUN_QUEUE}-30`,
+    ]);
+    const times = failedJobs.map(({ failedAt }) => failedAt.getTime());
+    expect(times).toEqual([...times].sort((a, b) => b - a));
   });
 });

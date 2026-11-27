@@ -5,10 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getChangeAdminLogLevelMockHandler,
   getGetAdminLogLevelsMockHandler,
+  getGetAdminOperationsMockHandler,
   getListAuditEntriesMockHandler,
 } from '@/libs/api/generated/admin/admin.msw';
 import type { LogLevelReports } from '@/libs/api/generated/model/logLevelReports';
 import type { LogLevelState } from '@/libs/api/generated/model/logLevelState';
+import type { Operations } from '@/libs/api/generated/model/operations';
 import { useLogLevelFormStore } from '@/modules/admin/stores/useLogLevelFormStore';
 import { resources } from '@/resources';
 import { setUpAdminActionsTests } from '@/test/adminActions';
@@ -55,6 +57,47 @@ const serveLevels = (reports = { server: server_, worker }) => {
 
 const table = () => screen.findByRole('table', { name: text.logLevels.title });
 const panel = () => screen.findByRole('complementary', { name: resources.shell.inspector });
+
+const RUN_ID = '55555555-5555-4555-8555-555555555555';
+
+const operations: Operations = {
+  worker: { status: 'answering', instances: 1 },
+  queues: [
+    { name: 'direct-replies', waiting: 2, active: 1, delayed: 0, failed: 3 },
+    { name: 'runs', waiting: 1, active: 1, delayed: 0, failed: 4 },
+    { name: 'clarifying-question-timeout', waiting: 0, active: 0, delayed: 1, failed: 0 },
+  ],
+  failedJobs: [
+    {
+      id: '12',
+      queue: 'runs',
+      failedAt: '2026-10-27T19:04:00Z',
+      attemptsMade: 3,
+      error: 'ModelTimeout: the Orchestrator did not answer',
+      runId: RUN_ID,
+    },
+    {
+      id: '40',
+      queue: 'direct-replies',
+      failedAt: '2026-10-27T16:22:00Z',
+      attemptsMade: 3,
+      error: 'ProviderRateLimited: 429 from openai',
+      runId: null,
+    },
+  ],
+};
+
+/** Serves the operations readout and counts the reads. */
+const serveOperations = (body: Operations = operations) => {
+  const reads = { count: 0 };
+  server.use(
+    getGetAdminOperationsMockHandler(() => {
+      reads.count += 1;
+      return body;
+    }),
+  );
+  return reads;
+};
 
 setUpAdminActionsTests();
 
@@ -150,7 +193,7 @@ describe('Operations page', () => {
   it('reverts a temporary change, busy while it runs, and refreshes once it has landed', async () => {
     const reads = serveLevels();
     const bodies: unknown[] = [];
-    let release = () => undefined as void;
+    let release: () => void = () => undefined;
     server.use(
       getChangeAdminLogLevelMockHandler(async ({ request }) => {
         bodies.push(await request.json());
@@ -282,5 +325,119 @@ describe('Operations page', () => {
       'href',
       '/admin/operations',
     );
+  });
+});
+
+describe('Operations page, worker and queues', () => {
+  const tile = (label: string) => screen.findByRole('region', { name: label });
+
+  it('shows the worker, waiting and failed tiles from the queue counts', async () => {
+    serveLevels();
+    serveOperations();
+    await renderRoute('/admin/operations');
+
+    const workerTile = await tile(text.tiles.worker);
+    expect(within(workerTile).getByText(text.worker.answering)).toBeInTheDocument();
+    expect(within(workerTile).getByText(text.worker.instances(1))).toBeInTheDocument();
+    expect(within(await tile(text.tiles.waiting)).getByText('3')).toBeInTheDocument();
+    expect(within(await tile(text.tiles.failed)).getByText('7')).toBeInTheDocument();
+  });
+
+  it('lists each queue’s counts, with the note that they are what Redis holds now', async () => {
+    serveLevels();
+    serveOperations();
+    await renderRoute('/admin/operations');
+
+    const queues = await screen.findByRole('table', { name: text.queues.title });
+    expect(
+      within(queues)
+        .getAllByRole('row')
+        .slice(1)
+        .map((row) => row.textContent),
+    ).toEqual(['direct-replies2103', 'runs1104', 'clarifying-question-timeout0010']);
+    expect(screen.getByText(text.queues.note)).toBeInTheDocument();
+  });
+
+  it('shows a worker that is not answering as a state', async () => {
+    serveLevels();
+    serveOperations({ ...operations, worker: { status: 'not_answering', instances: 0 } });
+    await renderRoute('/admin/operations');
+
+    const workerTile = await tile(text.tiles.worker);
+    expect(within(workerTile).getByText(text.worker.notAnswering)).toBeInTheDocument();
+    expect(within(workerTile).getByText(text.worker.instances(0))).toBeInTheDocument();
+  });
+
+  it('links a failed job to its Run, and gives a job without one a dash', async () => {
+    serveLevels();
+    serveOperations();
+    await renderRoute('/admin/operations');
+
+    const failed = await screen.findByRole('table', { name: text.failedJobs.title });
+    const [runJob, replyJob] = within(failed).getAllByRole('row').slice(1);
+    expect(runJob).toHaveTextContent(/runs.*3.*ModelTimeout: the Orchestrator did not answer/);
+    expect(within(runJob!).getByRole('link', { name: text.failedJobs.openRun })).toHaveAttribute(
+      'href',
+      `/admin/runs?selected=${RUN_ID}`,
+    );
+    expect(replyJob).toHaveTextContent(/direct-replies.*3.*ProviderRateLimited.*—/);
+    expect(within(replyJob!).queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('shows tile skeletons while the readout loads', async () => {
+    serveLevels();
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    server.use(
+      getGetAdminOperationsMockHandler(async () => {
+        await held;
+        return operations;
+      }),
+    );
+    await renderRoute('/admin/operations');
+
+    expect(await screen.findByRole('status', { name: text.loading })).toBeInTheDocument();
+    release();
+    await tile(text.tiles.worker);
+    expect(screen.queryByRole('status', { name: text.loading })).not.toBeInTheDocument();
+  });
+
+  it('says when there are no failed jobs', async () => {
+    serveLevels();
+    serveOperations({ ...operations, failedJobs: [] });
+    await renderRoute('/admin/operations');
+
+    expect(await screen.findByText(text.failedJobs.empty)).toBeInTheDocument();
+  });
+
+  it('reads the readout again on Refresh, and never on its own', async () => {
+    serveLevels();
+    const reads = serveOperations();
+    await renderRoute('/admin/operations');
+    await tile(text.tiles.worker);
+    expect(reads.count).toBe(1);
+
+    await userEvent.click(screen.getByRole('button', { name: text.refresh }));
+
+    await waitFor(() => expect(reads.count).toBe(2));
+    expect(screen.getByText(text.updated('21:42:05'))).toBeInTheDocument();
+  });
+
+  it('shows the readout as unavailable when Redis does not answer', async () => {
+    serveLevels();
+    server.use(
+      mockApiError('get', API_ROUTE.adminOperations, 503, {
+        success: false,
+        error: 'Unavailable',
+        message: 'Redis did not answer, so the queues cannot be read.',
+      }),
+    );
+    await renderRoute('/admin/operations');
+
+    expect(await screen.findByText(text.unavailable)).toBeInTheDocument();
+    expect(screen.queryByRole('table', { name: text.queues.title })).not.toBeInTheDocument();
+    expect(await table()).toBeInTheDocument();
   });
 });

@@ -22,5 +22,6 @@ export const ErrorCode = {
   NotEligibleForAdmin: 'NotEligibleForAdmin',
   PayloadTooLarge: 'PayloadTooLarge',
   TooManyRequests: 'TooManyRequests',
+  Unavailable: 'Unavailable',
   Internal: 'Internal',
 } as const;
