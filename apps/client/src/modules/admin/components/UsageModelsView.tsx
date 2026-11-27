@@ -28,7 +28,7 @@ export const UsageModelsView = ({ params, onPin, onOpenRuns }: UsageModelsViewPr
   const displayedParams = series ? { ...params, metric: series.metric } : params;
   const highlighted = series ? highlightedKey(series, params.pinned) : null;
   const hoverIndex = series && hoveredDay ? series.days.indexOf(hoveredDay) : -1;
-  const dayIndex = series ? (hoverIndex === -1 ? series.days.length - 1 : hoverIndex) : 0;
+  const dayIndex = hoverIndex === -1 ? (series?.days.length ?? 1) - 1 : hoverIndex;
 
   // Only a Model pins; Run and Other are not a Model with a detail of its own.
   const pin = (key: string) => {
@@ -55,7 +55,7 @@ export const UsageModelsView = ({ params, onPin, onOpenRuns }: UsageModelsViewPr
           </div>
         </output>
       )}
-      {series && series.series.length === 0 && (
+      {series?.series.length === 0 && (
         <p className="px-5 text-sm text-muted-foreground">{text.empty}</p>
       )}
       {series && series.series.length > 0 && (

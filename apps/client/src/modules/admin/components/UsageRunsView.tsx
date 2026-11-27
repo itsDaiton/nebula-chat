@@ -24,7 +24,7 @@ export const UsageRunsView = ({ params, onPin }: UsageRunsViewProps) => {
   const toggleTable = useUsageTableStore((state) => state.toggle);
 
   const hoverIndex = series && hoveredDay ? series.days.indexOf(hoveredDay) : -1;
-  const dayIndex = series ? (hoverIndex === -1 ? series.days.length - 1 : hoverIndex) : 0;
+  const dayIndex = hoverIndex === -1 ? (series?.days.length ?? 1) - 1 : hoverIndex;
 
   return (
     <section
