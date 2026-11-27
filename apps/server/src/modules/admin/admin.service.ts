@@ -410,7 +410,6 @@ export const adminService = {
       detail: { pendingDeletionAt: user.pendingDeletionAt.toISOString() },
     });
   },
-  // Audited before the broadcast, so a failed Audit write changes nothing.
   // Liveness comes from the log-level read, which only running instances answer, so a sleeping worker stays asleep.
   async getOperations() {
     try {
@@ -428,6 +427,7 @@ export const adminService = {
       });
     }
   },
+  // Audited before the broadcast, so a failed Audit write changes nothing.
   async changeLogLevel(input: AdminChangeLogLevelDTO, admin: { id: string; name: string }) {
     const { service, component } = input;
     const target = component ?? 'root';

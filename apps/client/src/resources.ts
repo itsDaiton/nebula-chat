@@ -472,6 +472,8 @@ export const resources = {
         title: 'Latest failed jobs',
         empty: 'No failed jobs.',
         openRun: 'Open Run',
+        noRun: '—',
+        runLabel: (runId: string) => `${runId.slice(0, 8)}…`,
         columns: {
           failed: 'Failed',
           queue: 'Queue',

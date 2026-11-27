@@ -460,6 +460,8 @@ export type LogLevelRevertButtonProps = { row: LogLevelRow };
 
 export type LogLevelPanelProps = { onClose: () => void };
 
+export type OperationsTileProps = { label: string; children: ReactNode };
+
 export type OperationsTilesProps = { operations: Operations };
 
 export type QueuesTableProps = { queues: Operations['queues'] };

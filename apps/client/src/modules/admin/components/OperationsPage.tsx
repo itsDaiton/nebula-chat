@@ -17,6 +17,8 @@ export const OperationsPage = () => {
   const levels = useLogLevels();
   const operations = useOperations();
   const updatedAt = Math.max(levels.updatedAt, operations.dataUpdatedAt);
+  // A failed Refresh hides the last readout rather than showing stale counts under the error.
+  const data = operations.isError ? undefined : operations.data;
   const refresh = () => Promise.all([levels.refresh(), operations.refetch()]);
 
   return (
@@ -50,12 +52,12 @@ export const OperationsPage = () => {
       {operations.isError && (
         <p className="px-5 pt-2 text-sm text-muted-foreground">{text.unavailable}</p>
       )}
-      {operations.data && <OperationsTiles operations={operations.data} />}
+      {data && <OperationsTiles operations={data} />}
       <LogLevelsTable services={levels.services} />
-      {operations.data && (
+      {data && (
         <>
-          <QueuesTable queues={operations.data.queues} />
-          <FailedJobsTable jobs={operations.data.failedJobs} />
+          <QueuesTable queues={data.queues} />
+          <FailedJobsTable jobs={data.failedJobs} />
         </>
       )}
     </div>

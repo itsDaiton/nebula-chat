@@ -59,7 +59,7 @@ export const FailedJobsTable = ({ jobs }: FailedJobsTableProps) => (
                 </td>
                 <td className="px-4 py-3 font-mono whitespace-nowrap">
                   {job.runId === null ? (
-                    <span className="text-faint">—</span>
+                    <span className="text-faint">{text.noRun}</span>
                   ) : (
                     <Link
                       to="/admin/runs"
@@ -69,7 +69,7 @@ export const FailedJobsTable = ({ jobs }: FailedJobsTableProps) => (
                       className="inline-flex items-center gap-1 text-foreground-secondary hover:text-foreground"
                     >
                       <WorkflowIcon className="size-3.5" />
-                      {`${job.runId.slice(0, 8)}…`}
+                      {text.runLabel(job.runId)}
                       <ChevronRightIcon className="size-3 text-faint" />
                     </Link>
                   )}

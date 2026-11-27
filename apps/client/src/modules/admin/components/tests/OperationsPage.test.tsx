@@ -193,7 +193,7 @@ describe('Operations page', () => {
   it('reverts a temporary change, busy while it runs, and refreshes once it has landed', async () => {
     const reads = serveLevels();
     const bodies: unknown[] = [];
-    let release = () => undefined as void;
+    let release: () => void = () => undefined;
     server.use(
       getChangeAdminLogLevelMockHandler(async ({ request }) => {
         bodies.push(await request.json());
@@ -382,6 +382,26 @@ describe('Operations page, worker and queues', () => {
     );
     expect(replyJob).toHaveTextContent(/direct-replies.*3.*ProviderRateLimited.*—/);
     expect(within(replyJob!).queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('shows tile skeletons while the readout loads', async () => {
+    serveLevels();
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    server.use(
+      getGetAdminOperationsMockHandler(async () => {
+        await held;
+        return operations;
+      }),
+    );
+    await renderRoute('/admin/operations');
+
+    expect(await screen.findByRole('status', { name: text.loading })).toBeInTheDocument();
+    release();
+    await tile(text.tiles.worker);
+    expect(screen.queryByRole('status', { name: text.loading })).not.toBeInTheDocument();
   });
 
   it('says when there are no failed jobs', async () => {
