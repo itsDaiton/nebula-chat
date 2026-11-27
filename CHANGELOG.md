@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.16.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.16.0...nebula-chat-v7.16.1) (2026-11-27)
+
+
+### Bug Fixes
+
+* record any number of Clarifying questions per Run (ADR-0038) ([#978](https://github.com/itsDaiton/nebula-chat/issues/978)) ([f9607bf](https://github.com/itsDaiton/nebula-chat/commit/f9607bf2462e382ff7cd955c92fbb093b235d70f))
+
 ## [7.16.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.12...nebula-chat-v7.16.0) (2026-11-27)
 
 
