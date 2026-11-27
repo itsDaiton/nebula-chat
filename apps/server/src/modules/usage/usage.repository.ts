@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import { db } from '@server/db';
 import type {
   UsageAudience,
+  UsageAgentRow,
   UsageDayStats,
   UsageMetric,
   UsageRow,
@@ -38,6 +39,8 @@ const rowsOf = async (query: ReturnType<typeof sql>) => {
   return rows;
 };
 
+const stepFilter = sql`mc.run_id is not null`;
+
 const emptyDayStats: UsageDayStats = {
   calls: 0,
   inputPerCall: null,
@@ -46,6 +49,26 @@ const emptyDayStats: UsageDayStats = {
   cacheReplays: 0,
   completionRate: null,
   avgDurationMs: null,
+};
+
+const dayStatsWhere = async (
+  condition: ReturnType<typeof sql>,
+  day: string,
+  audience: UsageAudience,
+): Promise<UsageDayStats> => {
+  const { rows } = await db.execute<UsageDayStats>(sql`
+    select count(*)::int as "calls",
+      avg(mc.input_tokens + mc.cached_input_tokens)::float8 as "inputPerCall",
+      avg(mc.output_tokens)::float8 as "outputPerCall",
+      (avg(mc.cost_usd) filter (where not mc.own_key))::float8 as "costPerCall",
+      (count(*) filter (where mc.cached))::int as "cacheReplays",
+      (count(*) filter (where mc.outcome = 'completed'))::float8 / nullif(count(*), 0) as "completionRate",
+      avg(mc.duration_ms)::float8 as "avgDurationMs"
+    from model_calls mc
+    left join users u on u.id = mc.user_id
+    where ${condition} and ${between(sql.raw('mc.created_at'), day, day)}
+      and ${audienceFilter(audience)}`);
+  return rows[0] ?? emptyDayStats;
 };
 
 export const usageRepository = {
@@ -79,23 +102,48 @@ export const usageRepository = {
         and ${audienceFilter(audience)} and ${modelFilter(sql.raw('mc.model'), models)}
       group by 1, 2`);
   },
-  async dayStats(model: string, day: string, audience: UsageAudience): Promise<UsageDayStats> {
-    const { rows } = await db.execute<UsageDayStats>(sql`
-      select count(*)::int as "calls",
-        avg(mc.input_tokens + mc.cached_input_tokens)::float8 as "inputPerCall",
-        avg(mc.output_tokens)::float8 as "outputPerCall",
-        (avg(mc.cost_usd) filter (where not mc.own_key))::float8 as "costPerCall",
-        (count(*) filter (where mc.cached))::int as "cacheReplays",
-        (count(*) filter (where mc.outcome = 'completed'))::float8 / nullif(count(*), 0) as "completionRate",
-        avg(mc.duration_ms)::float8 as "avgDurationMs"
+  // Runs by the day they were created and how they ended; unfinished ones are left to the caller.
+  runsByDay(from: string, to: string, audience: UsageAudience) {
+    return rowsOf(sql`
+      select to_char(r.created_at, 'YYYY-MM-DD') as day, r.status as key, count(*)::float8 as value
+      from runs r
+      join users u on u.id = r.user_id
+      where ${between(sql.raw('r.created_at'), from, to)} and ${audienceFilter(audience)}
+      group by 1, 2`);
+  },
+  async agentCallsByDay(from: string, to: string, audience: UsageAudience) {
+    const { rows } = await db.execute<UsageAgentRow>(sql`
+      select to_char(mc.created_at, 'YYYY-MM-DD') as day, coalesce(mc.agent, 'unknown') as key,
+        coalesce(${callMetric.spend}, 0) as spend, ${callMetric.tokens} as tokens
       from model_calls mc
       left join users u on u.id = mc.user_id
-      where mc.model = ${model} and ${between(sql.raw('mc.created_at'), day, day)}
-        and ${audienceFilter(audience)}`);
-    return rows[0] ?? emptyDayStats;
+      where ${stepFilter} and ${between(sql.raw('mc.created_at'), from, to)}
+        and ${audienceFilter(audience)}
+      group by 1, 2`);
+    return rows;
+  },
+  agentTrendByDay(agent: string, from: string, to: string, audience: UsageAudience) {
+    return rowsOf(sql`
+      select to_char(mc.created_at, 'YYYY-MM-DD') as day, coalesce(mc.agent, 'unknown') as key,
+        count(*)::float8 as value
+      from model_calls mc
+      left join users u on u.id = mc.user_id
+      where ${stepFilter} and coalesce(mc.agent, 'unknown') = ${agent}
+        and ${between(sql.raw('mc.created_at'), from, to)} and ${audienceFilter(audience)}
+      group by 1, 2`);
+  },
+  agentDayStats(agent: string, day: string, audience: UsageAudience) {
+    return dayStatsWhere(
+      sql`${stepFilter} and coalesce(mc.agent, 'unknown') = ${agent}`,
+      day,
+      audience,
+    );
+  },
+  dayStats(model: string, day: string, audience: UsageAudience) {
+    return dayStatsWhere(sql`mc.model = ${model}`, day, audience);
   },
   async totals(from: string, to: string, audience: UsageAudience): Promise<UsageTotals> {
-    const [messageTotals, callTotals, runTotals] = await Promise.all([
+    const [messageTotals, callTotals, runTotals, stepTotals, runCallTotals] = await Promise.all([
       db.execute<Pick<UsageTotals, 'prompts' | 'activeUsers'>>(sql`
         select count(*)::float8 as prompts, count(distinct s.user_id)::float8 as "activeUsers"
         from messages m
@@ -109,9 +157,24 @@ export const usageRepository = {
         from model_calls mc
         left join users u on u.id = mc.user_id
         where ${between(sql.raw('mc.created_at'), from, to)} and ${audienceFilter(audience)}`),
-      db.execute<Pick<UsageTotals, 'runs'>>(sql`
-        select count(*)::float8 as runs
+      db.execute<Pick<UsageTotals, 'runs' | 'runDurationMs'>>(sql`
+        select count(*)::float8 as runs,
+          (avg(extract(epoch from (r.finished_at - r.started_at)) * 1000)
+            filter (where r.finished_at is not null and r.started_at is not null))::float8 as "runDurationMs"
         from runs r
+        join users u on u.id = r.user_id
+        where ${between(sql.raw('r.created_at'), from, to)} and ${audienceFilter(audience)}`),
+      db.execute<Pick<UsageTotals, 'runSteps'>>(sql`
+        select count(*)::float8 as "runSteps"
+        from steps st
+        join runs r on r.id = st.run_id
+        join users u on u.id = r.user_id
+        where ${between(sql.raw('r.created_at'), from, to)} and ${audienceFilter(audience)}`),
+      db.execute<Pick<UsageTotals, 'runCalls' | 'runTokens' | 'runSpend'>>(sql`
+        select count(*)::float8 as "runCalls", coalesce(${callMetric.tokens}, 0) as "runTokens",
+          coalesce(${callMetric.spend}, 0) as "runSpend"
+        from model_calls mc
+        join runs r on r.id = mc.run_id
         join users u on u.id = r.user_id
         where ${between(sql.raw('r.created_at'), from, to)} and ${audienceFilter(audience)}`),
     ]);
@@ -123,6 +186,11 @@ export const usageRepository = {
       calls: callTotals.rows[0]?.calls ?? 0,
       cacheReplays: callTotals.rows[0]?.cacheReplays ?? 0,
       runs: runTotals.rows[0]?.runs ?? 0,
+      runDurationMs: runTotals.rows[0]?.runDurationMs ?? null,
+      runSteps: stepTotals.rows[0]?.runSteps ?? 0,
+      runCalls: runCallTotals.rows[0]?.runCalls ?? 0,
+      runTokens: runCallTotals.rows[0]?.runTokens ?? 0,
+      runSpend: runCallTotals.rows[0]?.runSpend ?? 0,
     };
   },
 };

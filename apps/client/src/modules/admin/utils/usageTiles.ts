@@ -1,8 +1,9 @@
 import type { UsageTotals } from '@/libs/api/generated/model/usageTotals';
-import type { OverviewDelta, UsageTileData } from '@/modules/admin/types/types';
+import type { OverviewDelta, UsageTab, UsageTileData } from '@/modules/admin/types/types';
 import {
   formatCount,
   formatPercent,
+  formatSeconds,
   formatSpend,
   formatTokens,
 } from '@/modules/admin/utils/usageFormat';
@@ -26,7 +27,34 @@ const pointDelta = (current: number | null, previous: number | null): OverviewDe
   return { direction: direction(points), text: `${Math.abs(points).toFixed(1)} pt` };
 };
 
-export const usageTiles = (totals: UsageTotals): UsageTileData[] => {
+const runTiles = ({ runs, runAverages }: UsageTotals): UsageTileData[] => {
+  const average = (
+    id: UsageTileData['id'],
+    { value, previousValue }: { value: number | null; previousValue: number | null },
+    format: (value: number) => string,
+  ): UsageTileData => ({
+    id,
+    value: value === null ? '—' : format(value),
+    delta: value === null || previousValue === null ? null : percentDelta(value, previousValue),
+  });
+
+  return [
+    {
+      id: 'runs',
+      value: formatCount(runs.total),
+      delta: percentDelta(runs.total, runs.previousTotal),
+    },
+    average('costPerRun', runAverages.costPerRun, formatSpend),
+    average('tokensPerRun', runAverages.tokensPerRun, formatTokens),
+    average('stepsPerRun', runAverages.stepsPerRun, (value) => value.toFixed(1)),
+    average('callsPerRun', runAverages.callsPerRun, (value) => value.toFixed(1)),
+    average('durationMs', runAverages.durationMs, formatSeconds),
+  ];
+};
+
+export const usageTiles = (totals: UsageTotals, tab: UsageTab = 'prompts'): UsageTileData[] => {
+  if (tab === 'runs') return runTiles(totals);
+
   const counted = (
     id: 'prompts' | 'tokens' | 'spend' | 'activeUsers' | 'runs',
     format: (value: number) => string,

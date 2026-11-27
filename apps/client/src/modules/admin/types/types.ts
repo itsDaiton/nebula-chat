@@ -9,7 +9,9 @@ import type { ModelProvider } from '@/shared/types/types';
 import type { UsageSeries } from '@/libs/api/generated/model/usageSeries';
 import type { UsageSeriesSeriesItem } from '@/libs/api/generated/model/usageSeriesSeriesItem';
 import type { UsageTotals } from '@/libs/api/generated/model/usageTotals';
+import type { UsageAgentDetail } from '@/libs/api/generated/model/usageAgentDetail';
 import type { UsageDetail } from '@/libs/api/generated/model/usageDetail';
+import type { UsageRunSeries } from '@/libs/api/generated/model/usageRunSeries';
 import type { ChangeAdminLogLevelBody } from '@/libs/api/generated/model/changeAdminLogLevelBody';
 import type { GetAdminLogLevelsService } from '@/libs/api/generated/model/getAdminLogLevelsService';
 import type { LogLevelReports } from '@/libs/api/generated/model/logLevelReports';
@@ -326,8 +328,10 @@ export type OverviewRangeSwitchProps = {
 export type UsageView = 'share' | 'volume';
 
 /** What the Model usage page's URL holds; every field falls back to a default. */
+export type UsageTab = GetModelUsageSeriesMetric | 'runs';
+
 export type UsageSearch = {
-  metric?: GetModelUsageSeriesMetric;
+  metric?: UsageTab;
   range?: GetModelUsageSeriesRange;
   view?: UsageView;
   models?: string[];
@@ -335,14 +339,19 @@ export type UsageSearch = {
   pinned?: string;
 };
 
-export type UsageParams = {
-  metric: GetModelUsageSeriesMetric;
+type UsageBaseParams = {
   range: GetModelUsageSeriesRange;
   view: UsageView;
   models: string[] | undefined;
   audience: GetModelUsageSeriesAudience;
   pinned: string | undefined;
 };
+
+export type UsageModelParams = UsageBaseParams & { metric: GetModelUsageSeriesMetric };
+
+export type UsageRunsParams = UsageBaseParams & { metric: 'runs' };
+
+export type UsageParams = UsageModelParams | UsageRunsParams;
 
 export type UsageTotalsParams = Pick<UsageParams, 'range' | 'audience'>;
 
@@ -364,12 +373,23 @@ export type UsageModelFilterProps = {
 };
 
 export type UsageTileData = {
-  id: 'prompts' | 'tokens' | 'spend' | 'activeUsers' | 'runs' | 'cacheHitRate';
+  id:
+    | 'prompts'
+    | 'tokens'
+    | 'spend'
+    | 'activeUsers'
+    | 'runs'
+    | 'cacheHitRate'
+    | 'costPerRun'
+    | 'tokensPerRun'
+    | 'stepsPerRun'
+    | 'callsPerRun'
+    | 'durationMs';
   value: string;
   delta: OverviewDelta | null;
 };
 
-export type UsageTilesProps = { totals: UsageTotals | undefined };
+export type UsageTilesProps = { totals: UsageTotals | undefined; tab: UsageTab };
 
 export type UsageRankRow = {
   key: string;
@@ -382,7 +402,7 @@ export type UsageRankRow = {
 };
 
 export type UsageChartCardProps = {
-  params: UsageParams;
+  params: UsageModelParams;
   series: UsageSeries;
   hoverIndex: number | null;
   onHoverIndexChange: (index: number | null) => void;
@@ -392,6 +412,7 @@ export type UsageChartCardProps = {
 
 export type UsageRankedListProps = {
   rows: UsageRankRow[];
+  onOpenRuns?: () => void;
   dayLabel: string;
   highlighted: string | null;
   pinned: string | undefined;
@@ -401,6 +422,7 @@ export type UsageRankedListProps = {
 
 export type UsageRankedRowProps = {
   row: UsageRankRow;
+  onOpenRuns?: () => void;
   highlighted: boolean;
   pinned: boolean;
   formatValue: (value: number) => string;
@@ -415,11 +437,38 @@ export type UsageTableProps = {
 
 export type UsageDetailBodyProps = { detail: UsageDetail };
 
+export type UsageAgentDetailBodyProps = { detail: UsageAgentDetail };
+
+export type UsageRunsViewProps = {
+  params: UsageRunsParams;
+  onPin: (key: string) => void;
+};
+
+export type UsageModelsViewProps = {
+  params: UsageModelParams;
+  onPin: (key: string) => void;
+  onOpenRuns: () => void;
+};
+
+export type UsageRunsChartCardProps = {
+  series: UsageRunSeries;
+  hoverIndex: number | null;
+  onHoverIndexChange: (index: number | null) => void;
+};
+
+export type UsageDataFootnoteProps = { note: string; asTable: boolean; onToggle: () => void };
+
+export type UsageRunsTableProps = { series: UsageRunSeries };
+
 export type UsageHoverState = { day: string | null; setDay: (day: string | null) => void };
 
 export type UsageTableState = { asTable: boolean; toggle: () => void };
 
 export type UsageDetailPanelProps = { onClose: () => void };
+
+export type UsageModelDetailPanelProps = { params: UsageModelParams; onClose: () => void };
+
+export type UsageAgentDetailPanelProps = { params: UsageRunsParams; onClose: () => void };
 
 export type UsageDetailRowProps = { label: string; value: string };
 

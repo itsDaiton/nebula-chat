@@ -17,6 +17,7 @@ export const UsageRankedRow = ({
   pinned,
   formatValue,
   onPin,
+  onOpenRuns,
 }: UsageRankedRowProps) => {
   const pinnable = row.kind === 'model';
   const content = (
@@ -51,7 +52,17 @@ export const UsageRankedRow = ({
   ) : (
     <Tooltip>
       <TooltipTrigger
-        render={<button type="button" aria-disabled className={cn(className, focusRing)} />}
+        render={
+          row.kind === 'run' && onOpenRuns ? (
+            <button
+              type="button"
+              onClick={onOpenRuns}
+              className={cn(className, 'hover:bg-hover', focusRing)}
+            />
+          ) : (
+            <button type="button" aria-disabled className={cn(className, focusRing)} />
+          )
+        }
       >
         {content}
       </TooltipTrigger>

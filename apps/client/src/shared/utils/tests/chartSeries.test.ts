@@ -27,6 +27,12 @@ describe('seriesPaints', () => {
     expect(seriesPaints(series, null)).not.toContain(ACTIVE_PAINT);
   });
 
+  it('keeps a series’ own paint and gives the others the next greys', () => {
+    const paints = seriesPaints([{ ...series[0], paint: 'red' }, series[1], series[2]], 'c');
+
+    expect(paints).toEqual(['red', mutedPaint(0), ACTIVE_PAINT]);
+  });
+
   it('reuses the lightest grey past the last step', () => {
     expect(mutedPaint(50)).toBe(mutedPaint(100));
   });

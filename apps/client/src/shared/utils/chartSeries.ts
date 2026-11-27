@@ -10,13 +10,16 @@ export const mutedPaint = (step: number): string => {
   return `color-mix(in oklab, var(--foreground) ${share}%, var(--panel))`;
 };
 
-// One paint per series in stack order; the active one takes the foreground, the rest distinct greys.
+// One paint per series in stack order; the active one takes the foreground, the rest distinct greys; a series with its own paint keeps it.
 export const seriesPaints = (
   series: readonly ChartSeries[],
   activeSeries: string | null,
 ): string[] => {
   let step = 0;
-  return series.map((s) => (s.key === activeSeries ? ACTIVE_PAINT : mutedPaint(step++)));
+  return series.map((s) => {
+    if (s.paint) return s.paint;
+    return s.key === activeSeries ? ACTIVE_PAINT : mutedPaint(step++);
+  });
 };
 
 export const sortedDates = (data: readonly ChartDatum[]): string[] =>

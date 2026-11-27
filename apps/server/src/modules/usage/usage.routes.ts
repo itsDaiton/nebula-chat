@@ -2,8 +2,12 @@ import type { FastifyPluginCallbackZodOpenApi } from 'fastify-zod-openapi';
 import { errorEnvelopeSchema } from '@nebula-chat/errors';
 import { usageController } from '@server/modules/usage/usage.controller';
 import {
+  usageAgentDetailQuerySchema,
+  usageAgentDetailSchema,
   usageDetailQuerySchema,
   usageDetailSchema,
+  usageRunSeriesQuerySchema,
+  usageRunSeriesSchema,
   usageSeriesQuerySchema,
   usageSeriesSchema,
   usageTotalsQuerySchema,
@@ -48,6 +52,37 @@ const usageRoutes: FastifyPluginCallbackZodOpenApi = (app, _options, done) => {
     },
     config: { access: 'admin' },
     handler: usageController.getDetail,
+  });
+
+  app.get('/runs/series', {
+    schema: {
+      description:
+        'One value per UTC day (today included, zeros filled in) for the last 7, 14, 30 or 90 days: Runs started that day by outcome, and the estimated spend and tokens of the Model calls Steps made, per Agent. Runs still queued, running or waiting are not counted by outcome. Requires an Admin whose auth session passed two-factor authentication.',
+      summary: 'Get Run usage per day',
+      tags: ['Admin'],
+      operationId: 'getRunUsageSeries',
+      querystring: usageRunSeriesQuerySchema,
+      response: {
+        200: jsonResponse('Per-day Runs and Agent spend', usageRunSeriesSchema),
+        ...errors,
+      },
+    },
+    config: { access: 'admin' },
+    handler: usageController.getRunSeries,
+  });
+
+  app.get('/runs/detail', {
+    schema: {
+      description:
+        'One Agent on one UTC day: averages per Model call, cache replays, completion rate and duration, with its Model calls per day over the range. Requires an Admin whose auth session passed two-factor authentication.',
+      summary: 'Get one Agent’s usage on a day',
+      tags: ['Admin'],
+      operationId: 'getRunUsageAgentDetail',
+      querystring: usageAgentDetailQuerySchema,
+      response: { 200: jsonResponse('The Agent’s day', usageAgentDetailSchema), ...errors },
+    },
+    config: { access: 'admin' },
+    handler: usageController.getAgentDetail,
   });
 
   app.get('/totals', {

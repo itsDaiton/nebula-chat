@@ -95,7 +95,7 @@ export type ScrollPositionState = {
 
 export type ChartDatum = { date: string; seriesKey: string; value: number };
 
-export type ChartSeries = { key: string; label: string };
+export type ChartSeries = { key: string; label: string; paint?: string };
 
 type ChartTooltipRow = { key: string; label: string; value: number; active: boolean };
 

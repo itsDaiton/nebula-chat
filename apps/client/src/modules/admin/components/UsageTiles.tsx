@@ -6,9 +6,9 @@ import { cn } from '@/shared/utils/cn';
 const text = resources.admin.usage;
 const arrows = { up: '▲', down: '▼', flat: '–' } as const;
 
-export const UsageTiles = ({ totals }: UsageTilesProps) => (
+export const UsageTiles = ({ totals, tab }: UsageTilesProps) => (
   <div className="grid grid-cols-2 gap-2.5 px-5 pb-4 sm:grid-cols-3 xl:grid-cols-6">
-    {(totals ? usageTiles(totals) : []).map((tile) => (
+    {(totals ? usageTiles(totals, tab) : []).map((tile) => (
       <div
         key={tile.id}
         role="group"
