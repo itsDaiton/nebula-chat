@@ -50,7 +50,9 @@ script load through `dotenvx run` — single source of truth (see [server-env](.
   `run` (`GET /api/runs/:runId`: a Run with its Brief and Steps for its owner, or for an Admin, whose read is audited; and the service that cancels Runs waiting on a Clarifying question: stop,
   Archive, Ban), and `user` (only a repository so far: the send path records `lastActiveAt`), `modelCall` (only a repository: the Spend allowance's monthly cost sum, Own-key calls excluded), and `ownKey` (`/api/own-keys`: Own keys encrypted to the worker public key, and the selection that picks the key reference sent at enqueue).
   A module may add hooks (`*.hook.ts`) and helpers beside its layers.
-- `plugins/` — Fastify plugins: request logging, `originAuth` (403 for a request without Cloudflare's `X-Origin-Auth`, [docs/origin-access.md](../../docs/origin-access.md)), `db`, `redis`, `rateLimit` (the limiter, keyed on `CF-Connecting-IP`), `privilegedRoutes` (the `/api/internal/*` and `/api/admin/*` scopes with their rate limits), and `authGate` (mounts `/api/auth/*` and answers `/api/auth/admin/*`, dot segments resolved, with NotFound; `@nebula-chat/auth` refuses them too,
+- `plugins/` — Fastify plugins: request logging,
+  `originAuth` (403 for a request without Cloudflare's `X-Origin-Auth`, [docs/origin-access.md](../../docs/origin-access.md)),
+  `db`, `redis`, `rateLimit` (the limiter, keyed on `CF-Connecting-IP`), `privilegedRoutes` (the `/api/internal/*` and `/api/admin/*` scopes with their rate limits), and `authGate` (mounts `/api/auth/*` and answers `/api/auth/admin/*`, dot segments resolved, with NotFound; `@nebula-chat/auth` refuses them too,
   its `onRoute` hook attaches the gate for each route's Access level and fails boot on a route without one; also exports `isActingAdmin` for a route an Admin may use more widely than a User).
 - `errors/` — the global error handler. `config/` — CORS allowlist, SSE headers, pagination. Security headers (helmet) and the mutation Origin check are root plugins in `plugins/`. `utils/` — small shared helpers,
   including `operatorGate.hook.ts` (`requireOperator`, the gate of the `operator` Access level).
