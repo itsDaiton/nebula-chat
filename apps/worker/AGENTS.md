@@ -136,7 +136,8 @@ loads it again. Rotation: [docs/own-key-rotation.md](../../docs/own-key-rotation
 1. Add its payload schema and queue name to `@nebula-chat/contracts`, IDs only.
 2. Add `jobs/<jobName>.ts`, exporting a `create<JobName>Processor(deps)` that validates the payload and
    calls the feature. Keep the feature in its own folder, behind injected dependencies.
-3. Start a BullMQ `Worker` for it in `worker.ts` on `redis.dedicatedConnection()`, and close it in the
+3. Start a BullMQ `Worker` for it in `worker.ts` on `redis.dedicatedConnection()` with the shared
+   `idlePolling` options (production Redis bills an idle worker's polling per command), and close it in the
    shutdown handler.
 
 ---

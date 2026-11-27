@@ -148,12 +148,18 @@ const start = async (): Promise<void> => {
     runTimeoutMs: env.RUN_TIMEOUT_MS,
   });
 
+  // Production Redis bills per command: a new job still wakes the blocked fetch at once, and a crashed job is
+  // retried within 5 minutes instead of 30 seconds (NEB-987).
+  const idlePolling = { drainDelay: 60, stalledInterval: 5 * 60_000 };
+
   // BullMQ blocks on its connection, so it gets a dedicated one (maxRetriesPerRequest: null).
   const directReplies = new Worker(DIRECT_REPLY_QUEUE, processDirectReply, {
+    ...idlePolling,
     connection: redis.dedicatedConnection(),
     concurrency: env.WORKER_CONCURRENCY,
   });
   const runs = new Worker(RUN_QUEUE, processRun, {
+    ...idlePolling,
     connection: redis.dedicatedConnection(),
     concurrency: env.RUN_CONCURRENCY,
   });
@@ -171,7 +177,7 @@ const start = async (): Promise<void> => {
       },
       logger,
     }),
-    { connection: redis.dedicatedConnection() },
+    { ...idlePolling, connection: redis.dedicatedConnection() },
   );
   const processPurge = createPurgeProcessor({
     store: purgeRepository,
@@ -188,14 +194,15 @@ const start = async (): Promise<void> => {
       check: checkProviderKey(globalThis.fetch, OWN_KEY_CHECK_TIMEOUT_MS),
       logger,
     }),
-    { connection: redis.dedicatedConnection() },
+    { ...idlePolling, connection: redis.dedicatedConnection() },
   );
   const ownKeyRewraps = new Worker(
     OWN_KEY_REWRAP_QUEUE,
     createOwnKeyRewrapProcessor({ store: ownKeyRepository, crypto: ownKeyCrypto, logger }),
-    { connection: redis.dedicatedConnection() },
+    { ...idlePolling, connection: redis.dedicatedConnection() },
   );
   const purges = new Worker(PURGE_QUEUE, processPurge, {
+    ...idlePolling,
     connection: redis.dedicatedConnection(),
   });
   const purgeQueue = new Queue(PURGE_QUEUE, {
