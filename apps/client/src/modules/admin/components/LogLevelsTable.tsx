@@ -51,52 +51,58 @@ export const LogLevelsTable = ({ services }: LogLevelsTableProps) => {
           ))}
         </output>
       ) : (
-        <table aria-label={text.logLevels.title} className="w-full border-collapse text-[13px]">
-          <thead className="text-[12.5px] text-muted-foreground">
-            <tr>
-              <th scope="col" className={head}>
-                {text.logLevels.columns.service}
-              </th>
-              <th scope="col" className={head}>
-                {text.logLevels.columns.target}
-              </th>
-              <th scope="col" className={head}>
-                {text.logLevels.columns.level}
-              </th>
-              <th scope="col" className={head}>
-                {text.logLevels.columns.reverts}
-              </th>
-              <th scope="col" className={head}>
-                {text.logLevels.columns.setBy}
-              </th>
-              <th scope="col" className={head}>
-                <span className="sr-only">{text.logLevels.revert}</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {services.map(({ service, reports }) => {
-              const rows = logLevelRows(service, reports);
-              if (rows.length === 0) {
-                return (
-                  <tr key={service} className="border-b border-border">
-                    <td className="px-4 py-3">{text.services[service]}</td>
-                    <td colSpan={5} className="px-4 py-3 text-muted-foreground">
-                      {text.logLevels.noInstance}
-                    </td>
-                  </tr>
-                );
-              }
-              return rows.map((row) => (
-                <LogLevelTableRow
-                  key={`${service}|${logLevelRowKey(row)}`}
-                  row={row}
-                  selected={service === selectedService && row.target === selectedTarget}
-                />
-              ));
-            })}
-          </tbody>
-        </table>
+        // Scrolls on its own at phone width, so Revert stays reachable instead of clipping.
+        <div className="relative overflow-x-auto">
+          <table
+            aria-label={text.logLevels.title}
+            className="w-full border-collapse text-[13px] whitespace-nowrap"
+          >
+            <thead className="text-[12.5px] text-muted-foreground">
+              <tr>
+                <th scope="col" className={head}>
+                  {text.logLevels.columns.service}
+                </th>
+                <th scope="col" className={head}>
+                  {text.logLevels.columns.target}
+                </th>
+                <th scope="col" className={head}>
+                  {text.logLevels.columns.level}
+                </th>
+                <th scope="col" className={head}>
+                  {text.logLevels.columns.reverts}
+                </th>
+                <th scope="col" className={head}>
+                  {text.logLevels.columns.setBy}
+                </th>
+                <th scope="col" className={head}>
+                  <span className="sr-only">{text.logLevels.revert}</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {services.map(({ service, reports }) => {
+                const rows = logLevelRows(service, reports);
+                if (rows.length === 0) {
+                  return (
+                    <tr key={service} className="border-b border-border">
+                      <td className="px-4 py-3">{text.services[service]}</td>
+                      <td colSpan={5} className="px-4 py-3 text-muted-foreground">
+                        {text.logLevels.noInstance}
+                      </td>
+                    </tr>
+                  );
+                }
+                return rows.map((row) => (
+                  <LogLevelTableRow
+                    key={`${service}|${logLevelRowKey(row)}`}
+                    row={row}
+                    selected={service === selectedService && row.target === selectedTarget}
+                  />
+                ));
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

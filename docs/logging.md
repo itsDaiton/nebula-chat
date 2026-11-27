@@ -396,7 +396,8 @@ Both routes are in the OpenAPI spec (Swagger UI at `/docs`, tag `Operator`, whic
 `orval.config.ts` leaves out of the browser client).
 
 An Admin does the same from the dashboard's Operations page (`/admin/operations`)
-through `GET` and `POST /api/admin/log-levels`, tag `Admin`, at the `admin` Access level:
+through `GET` and `POST /api/admin/log-levels`, tag `Admin`, at the `admin` Access level
+([ADR-0039](./adr/0039-admins-change-log-levels-and-revert-by-expiry.md)):
 
 - **Who.** The services log the acting Admin's account name as `nebula.operator`,
   or their id when the name is blank; an `operator` in the body is dropped.

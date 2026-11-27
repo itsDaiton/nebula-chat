@@ -194,6 +194,60 @@ describe('Operations page', () => {
     expect(await screen.findByText('Nothing to revert.')).toBeInTheDocument();
   });
 
+  it('reads the levels again once a temporary change expires, so the row goes away', async () => {
+    const expiring = reportsOf({
+      target: 'redis',
+      level: 'trace',
+      expiresAt: '2026-10-27T21:42:06Z',
+      operator: 'Jana K.',
+    });
+    const reads = serveLevels({ server: expiring, worker });
+    await renderRoute('/admin/operations');
+    expect(await within(await table()).findByText('redis')).toBeInTheDocument();
+
+    serveLevels({ server: reportsOf(), worker });
+
+    await waitFor(() => expect(screen.queryByText('redis')).not.toBeInTheDocument(), {
+      timeout: 3000,
+    });
+    expect(reads.worker).toBe(1);
+  });
+
+  it('reverts a temporary root level without naming a component', async () => {
+    serveLevels({
+      server: server_,
+      worker: {
+        receivers: 1,
+        reports: [
+          {
+            instance: 'wrk-1',
+            levels: [
+              {
+                target: 'root',
+                level: 'trace',
+                expiresAt: '2026-10-27T21:46:05Z',
+                operator: 'Ada L.',
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const bodies: unknown[] = [];
+    server.use(
+      getChangeAdminLogLevelMockHandler(async ({ request }) => {
+        bodies.push(await request.json());
+        return { receivers: 1, expiresAt: '2026-10-27T21:42:06Z' };
+      }),
+    );
+    await renderRoute('/admin/operations');
+
+    const workerRoot = within(await table()).getByRole('row', { name: /^Worker\s*root\s*trace/ });
+    await userEvent.click(within(workerRoot).getByRole('button', { name: text.logLevels.revert }));
+
+    await waitFor(() => expect(bodies).toEqual([{ service: 'worker', revert: true }]));
+  });
+
   it('says so when a service has no instance answering', async () => {
     serveLevels({ server: server_, worker: { receivers: 0, reports: [] } });
     await renderRoute('/admin/operations');

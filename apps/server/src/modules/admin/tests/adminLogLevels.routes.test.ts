@@ -240,6 +240,28 @@ describe('POST /api/admin/log-levels', () => {
     );
   });
 
+  it('reverts the root level of the worker when the body names no component', async () => {
+    const worker = await startInstance('info', 'nebula-chat-worker');
+    await change({ service: 'worker', level: 'debug', ttlSeconds: 600 });
+    audit.insert.mockClear();
+
+    const res = await change({ service: 'worker', revert: true });
+
+    expect(res.statusCode).toBe(202);
+    expect(eventLines(worker, 'log.level.changed').at(-1)).toMatchObject({
+      'nebula.log.target': 'root',
+      'nebula.log.level.to': 'debug',
+      'nebula.log.level.expires_at': '2026-10-02T09:00:01.000Z',
+    });
+    expect(audit.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetId: 'worker',
+        detail: { service: 'worker', target: 'root', level: 'debug', ttlSeconds: 1 },
+      }),
+    );
+    expect(eventLines(server, 'log.level.changed')).toEqual([]);
+  });
+
   it('answers 409 to a revert with no temporary change, and audits nothing', async () => {
     const res = await change({ component: 'redis', revert: true });
 

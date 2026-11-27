@@ -448,6 +448,9 @@ export type LogLevelFormState = {
   reset: () => void;
 };
 
+/** The part of a log-level read its refetch interval looks at. */
+export type LogLevelsQuery = { state: { data?: LogLevelReports } };
+
 export type LogLevelsTableProps = { services: ServiceLevels[] };
 
 export type LogLevelTableRowProps = { row: LogLevelRow; selected: boolean };

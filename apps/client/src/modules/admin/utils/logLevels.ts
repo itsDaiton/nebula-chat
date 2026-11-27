@@ -21,8 +21,21 @@ export const logLevelRowKey = ({ target, level, expiresAt, operator }: LogLevelS
 export const componentOf = (target: LogLevelState['target']) =>
   target === 'root' ? {} : { component: target };
 
-// A revert lands a second after it is sent; refreshing before then shows the old level.
+// A change lands on every instance shortly after its expiry; refreshing at the instant still shows it.
 const REVERT_SETTLE_MS = 250;
+
+// The "in Xm" countdown is in minutes, so a minute is the coarsest refresh that keeps it right.
+const COUNTDOWN_REFRESH_MS = 60_000;
+
+/** When to read a service's levels again: just after its earliest temporary change expires, at most a minute away; never while all are at boot. */
+export const nextRefreshMs = (reports: LogLevelReports | undefined, now = Date.now()) => {
+  const expiries = (reports?.reports ?? []).flatMap(({ levels }) =>
+    levels.flatMap(({ expiresAt }) => (expiresAt === null ? [] : [Date.parse(expiresAt)])),
+  );
+  if (expiries.length === 0) return false;
+  const untilEarliest = Math.max(0, Math.min(...expiries) - now) + REVERT_SETTLE_MS;
+  return Math.min(untilEarliest, COUNTDOWN_REFRESH_MS);
+};
 
 /** Resolves once a change sent now has expired on every instance. */
 export const untilExpired = (expiresAt: string) =>

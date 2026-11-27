@@ -1,12 +1,19 @@
 import { useGetAdminLogLevels } from '@/libs/api/generated/admin/admin';
-import type { ServiceLevels } from '@/modules/admin/types/types';
+import type { LogLevelsQuery, ServiceLevels } from '@/modules/admin/types/types';
+import { nextRefreshMs } from '@/modules/admin/utils/logLevels';
 
-const inline = { query: { meta: { inlineError: true } } };
+// A temporary change expires on its own, so the table reads again when one does.
+const options = {
+  query: {
+    meta: { inlineError: true },
+    refetchInterval: ({ state }: LogLevelsQuery) => nextRefreshMs(state.data),
+  },
+};
 
 /** Both services' levels, each from its own read, so a quiet worker never holds up the server's rows. */
 export const useLogLevels = () => {
-  const server = useGetAdminLogLevels({ service: 'server' }, inline);
-  const worker = useGetAdminLogLevels({ service: 'worker' }, inline);
+  const server = useGetAdminLogLevels({ service: 'server' }, options);
+  const worker = useGetAdminLogLevels({ service: 'worker' }, options);
   const queries = [server, worker];
 
   const services: ServiceLevels[] = [
