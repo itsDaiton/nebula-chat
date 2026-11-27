@@ -329,7 +329,7 @@ describe('Operations page', () => {
 });
 
 describe('Operations page, worker and queues', () => {
-  const tile = (label: string) => screen.findByRole('group', { name: label });
+  const tile = (label: string) => screen.findByRole('region', { name: label });
 
   it('shows the worker, waiting and failed tiles from the queue counts', async () => {
     serveLevels();
