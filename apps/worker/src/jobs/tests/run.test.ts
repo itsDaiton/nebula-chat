@@ -347,6 +347,7 @@ describe('the Run job', () => {
       language: { language: 'Czech', englishRestatement: 'How much is two plus two?' },
       session: { summary: 'The user greeted the assistant.' },
       missing: [],
+      skipped: [],
     });
   });
 
@@ -363,6 +364,7 @@ describe('the Run job', () => {
       language: { language: 'Czech', englishRestatement: 'How much is two plus two?' },
       session: { summary: 'The user greeted the assistant.' },
       missing: [],
+      skipped: [],
     });
     expect(human?.text).toContain('Kolik je dva plus dva?');
     expect(human?.text).toContain('# Findings\n\nFindings: analyst result | critic result');
@@ -381,6 +383,42 @@ describe('the Run job', () => {
       'Language detection prompt',
       'Kolik je dva plus dva?',
     ]);
+  });
+
+  describe('on a Session’s first message', () => {
+    const firstMessage = () => {
+      db.messages.length = 0;
+      db.messages.push({
+        id: MESSAGE_ID,
+        sessionId: SESSION_ID,
+        role: 'user',
+        content: 'Kolik je dva plus dva?',
+      });
+    };
+
+    it('skips the session Agent: no model call, no Step, and the Brief names it skipped', async () => {
+      firstMessage();
+      const models = happyModels();
+
+      await run(models.models);
+
+      expect(models.structuredCalls.map((c) => c.name)).toEqual(['language']);
+      expect(steps().some((step) => step.name === 'session')).toBe(false);
+      expect(db.runs.get(RUN_ID)?.brief).toEqual({
+        language: { language: 'Czech', englishRestatement: 'How much is two plus two?' },
+        session: null,
+        missing: [],
+        skipped: ['session'],
+      });
+    });
+
+    it('still ends completed', async () => {
+      firstMessage();
+
+      await run(happyModels().models);
+
+      expect(db.runs.get(RUN_ID)?.status).toBe('completed');
+    });
   });
 
   it('runs Intake on cheaper Models than the Output Agent', async () => {
@@ -459,6 +497,7 @@ describe('the Run job', () => {
         language: { language: 'Czech', englishRestatement: 'How much is two plus two?' },
         session: null,
         missing: ['session'],
+        skipped: [],
       });
     });
 

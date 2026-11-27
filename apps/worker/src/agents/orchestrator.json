@@ -1,6 +1,6 @@
 {
-  "version": "2026-11-23-70e62c83-97cf-4ac4-b89c-e83f5a122413",
-  "hash": "d27c2cb40f6216753b2bc49af1a595f0b2d33686892a8c3e490466e91a003c39",
+  "version": "2026-11-27-97e63e81-8a88-4d7d-90f6-3f4768ff47b1",
+  "hash": "f0cf5f2d1bcfab36f342bb94de038ebb6333e19c5088afc94edeed923b8167ee",
   "name": "orchestrator",
   "kind": "agent",
   "label": "Planning the work",

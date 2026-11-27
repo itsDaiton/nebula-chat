@@ -42,6 +42,17 @@ describe('explainRunEnd', () => {
     });
   });
 
+  it('does not count a skipped Agent as a failure', () => {
+    expect(
+      explainRunEnd(
+        run({
+          status: 'partial',
+          brief: { language: null, session: null, missing: [], skipped: ['session'] },
+        }),
+      )?.reason,
+    ).toBe('A limit forced an early answer, or a Clarifying question went unanswered.');
+  });
+
   it('falls back to the limits when no Step failed', () => {
     expect(
       explainRunEnd(

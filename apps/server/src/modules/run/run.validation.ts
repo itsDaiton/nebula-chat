@@ -43,6 +43,11 @@ const briefSchema = z
       .nullable()
       .describe('The Session Agent’s output; null when it failed'),
     missing: z.array(z.string()).max(10).describe('The Intake Agents that failed'),
+    skipped: z
+      .array(z.string())
+      .max(10)
+      .optional()
+      .describe('The Intake Agents that had nothing to do; absent on Briefs saved earlier'),
   })
   .meta({ id: 'Brief' });
 
