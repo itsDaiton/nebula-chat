@@ -10,7 +10,7 @@ export const mutedPaint = (step: number): string => {
   return `color-mix(in oklab, var(--foreground) ${share}%, var(--panel))`;
 };
 
-// One paint per series in stack order; the active one takes the foreground, the rest distinct greys; a series with its own paint keeps it.
+// One paint per series in stack order; the active one takes the foreground, the rest distinct greys.
 export const seriesPaints = (
   series: readonly ChartSeries[],
   activeSeries: string | null,

@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import type { UsageSeries } from '@/libs/api/generated/model/usageSeries';
+import type { UsageRunSeries } from '@/libs/api/generated/model/usageRunSeries';
 import {
+  hasRuns,
+  highlightedAgent,
   highlightedKey,
+  rankAgentRows,
   rankRows,
   resolveUsageSearch,
   toChartData,
+  toRunChartData,
+  toRunChartSeries,
 } from '@/modules/admin/utils/usageData';
 import type { ModelOption } from '@/modules/chat/types/types';
 
@@ -103,5 +109,68 @@ describe('rankRows', () => {
     const rows = rankRows(series, 5, 'share', options, label);
 
     expect(rows.every((row) => row.share === 0 && row.value === 0)).toBe(true);
+  });
+});
+
+const runSeries = (overrides: Partial<UsageRunSeries> = {}): UsageRunSeries => ({
+  range: '7d',
+  days: ['2026-10-01', '2026-10-02'],
+  outcomes: [
+    { outcome: 'completed', total: 3, values: [1, 2] },
+    { outcome: 'partial', total: 0, values: [0, 0] },
+    { outcome: 'failed', total: 1, values: [0, 1] },
+    { outcome: 'cancelled', total: 0, values: [0, 0] },
+  ],
+  agents: [
+    { key: 'orchestrator', spendTotal: 0.6, tokensTotal: 60, spend: [0.2, 0.4], tokens: [20, 40] },
+    { key: 'writer', spendTotal: 0.2, tokensTotal: 20, spend: [0.2, 0], tokens: [20, 0] },
+  ],
+  ...overrides,
+});
+
+describe('Runs tab data', () => {
+  it('reads the Runs metric from the URL', () => {
+    expect(resolveUsageSearch({ metric: 'runs' }).metric).toBe('runs');
+  });
+
+  it('charts one series per outcome, in status colours for the ones that went wrong', () => {
+    const chart = toRunChartSeries(runSeries());
+
+    expect(chart.map(({ key }) => key)).toEqual(['completed', 'partial', 'failed', 'cancelled']);
+    expect(chart[1].paint).toBe('var(--warning)');
+    expect(chart[2].paint).toBe('var(--destructive)');
+    expect(toRunChartData(runSeries())).toHaveLength(8);
+    expect(
+      toRunChartData(runSeries()).find((d) => d.seriesKey === 'failed' && d.date === '2026-10-02'),
+    ).toMatchObject({ value: 1 });
+  });
+
+  it('has no Runs only when nothing ended and no Agent spent', () => {
+    expect(hasRuns(runSeries())).toBe(true);
+    expect(
+      hasRuns(
+        runSeries({
+          agents: [],
+          outcomes: runSeries().outcomes.map((o) => ({ ...o, total: 0, values: [0, 0] })),
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it('highlights the pinned Agent, else the costliest', () => {
+    expect(highlightedAgent(runSeries(), 'writer')).toBe('writer');
+    expect(highlightedAgent(runSeries(), 'gone')).toBe('orchestrator');
+    expect(highlightedAgent(runSeries({ agents: [] }), undefined)).toBeNull();
+  });
+
+  it('ranks Agents by their share of the day’s spend', () => {
+    const rows = rankAgentRows(runSeries(), 0);
+
+    expect(rows.map((row) => [row.key, row.share])).toEqual([
+      ['orchestrator', 0.5],
+      ['writer', 0.5],
+    ]);
+    expect(rankAgentRows(runSeries(), 1).map((row) => row.key)).toEqual(['orchestrator', 'writer']);
+    expect(rankAgentRows(runSeries({ agents: [] }), 0)).toEqual([]);
   });
 });

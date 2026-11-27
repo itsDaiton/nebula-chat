@@ -98,7 +98,7 @@ export const usageDetailSchema = z
   })
   .meta({ id: 'UsageDetail' });
 
-const RUN_OUTCOMES = ['completed', 'partial', 'failed', 'cancelled'] as const;
+export const RUN_OUTCOMES = ['completed', 'partial', 'failed', 'cancelled'] as const;
 
 const valuesSchema = z
   .array(z.number())

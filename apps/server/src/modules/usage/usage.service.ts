@@ -1,4 +1,5 @@
 import { usageRepository } from '@server/modules/usage/usage.repository';
+import { RUN_OUTCOMES } from '@server/modules/usage/usage.validation';
 import type {
   UsageAgentDetailQuery,
   UsageAudience,
@@ -10,8 +11,6 @@ import type {
   UsageTotals,
   UsageTotalsQuery,
 } from '@server/modules/usage/usage.types';
-
-const RUN_OUTCOMES = ['completed', 'partial', 'failed', 'cancelled'] as const;
 
 const DAY_MS = 86_400_000;
 const TOP_MODELS = 8;
