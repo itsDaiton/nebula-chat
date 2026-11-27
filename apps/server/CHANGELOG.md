@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.32.0](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.31.1...nebula-chat-server-v4.32.0) (2026-11-27)
+
+
+### Features
+
+* **client,server:** NEB-902 admin log levels on an Operations page ([#986](https://github.com/itsDaiton/nebula-chat/issues/986)) ([7275bef](https://github.com/itsDaiton/nebula-chat/commit/7275bef573661a9da8903394bf242a10434fda23))
+
 ## [4.31.1](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-server-v4.31.0...nebula-chat-server-v4.31.1) (2026-11-27)
 
 
