@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.16.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.16.2...nebula-chat-v7.16.3) (2026-11-27)
+
+
+### Bug Fixes
+
+* **worker:** NEB-987 cut BullMQ idle Redis command use ([#988](https://github.com/itsDaiton/nebula-chat/issues/988)) ([0c1648d](https://github.com/itsDaiton/nebula-chat/commit/0c1648dc2497517d5891fdafa36d324117356517))
+
 ## [7.16.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.16.1...nebula-chat-v7.16.2) (2026-11-27)
 
 
