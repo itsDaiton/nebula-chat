@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nebula Chat API
-  version: 4.27.3
+  version: 4.27.4
   description: REST API for Nebula Chat
   contact:
     name: Nebula Chat
@@ -5306,11 +5306,11 @@ paths:
         Ban a User with an optional reason (shown to them), an optional internal
         note (Admins only) and an optional end time, revoke every auth session
         of theirs, and record it in the Audit log. Their sign-in then fails with
-        the reason (never the note) and end time until the ban ends or is lifted. The
-        last Admin cannot be banned (`LastAdmin`). Sessions are revoked through
-        Redis secondary storage; a cookie-cache holder may stay signed in for up
-        to five minutes, as with Sign out everywhere. Requires an Admin whose
-        auth session passed two-factor authentication.
+        the reason (never the note) and end time until the ban ends or is
+        lifted. The last Admin cannot be banned (`LastAdmin`). Sessions are
+        revoked through Redis secondary storage; a cookie-cache holder may stay
+        signed in for up to five minutes, as with Sign out everywhere. Requires
+        an Admin whose auth session passed two-factor authentication.
 
 
         Access: admin
@@ -5327,7 +5327,9 @@ paths:
                   maxLength: 500
                   description: Shown to the User when they try to sign in
                 note:
-                  description: Internal; only Admins see it, in the User detail and the Audit log
+                  description: >-
+                    Internal; only Admins see it, in the User detail and the
+                    Audit log
                   type: string
                   minLength: 1
                   maxLength: 2000

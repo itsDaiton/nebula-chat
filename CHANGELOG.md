@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.15.12](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.11...nebula-chat-v7.15.12) (2026-11-27)
+
+
+### Bug Fixes
+
+* **server,client:** NEB-895 split the ban reason from an internal note ([#974](https://github.com/itsDaiton/nebula-chat/issues/974)) ([3d74b28](https://github.com/itsDaiton/nebula-chat/commit/3d74b2858f452b6aa95854f86b48b678814d9846))
+
 ## [7.15.11](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-v7.15.10...nebula-chat-v7.15.11) (2026-11-24)
 
 

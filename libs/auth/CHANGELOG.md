@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.3](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.6.2...nebula-chat-auth-v3.6.3) (2026-11-27)
+
+
+### Bug Fixes
+
+* **server,client:** NEB-895 split the ban reason from an internal note ([#974](https://github.com/itsDaiton/nebula-chat/issues/974)) ([3d74b28](https://github.com/itsDaiton/nebula-chat/commit/3d74b2858f452b6aa95854f86b48b678814d9846))
+
 ## [3.6.2](https://github.com/itsDaiton/nebula-chat/compare/nebula-chat-auth-v3.6.1...nebula-chat-auth-v3.6.2) (2026-11-24)
 
 
