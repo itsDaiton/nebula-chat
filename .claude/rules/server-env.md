@@ -20,6 +20,7 @@ be wrapped the same way. See [ADR-0019](../../docs/adr/0019-dotenvx-loads-env-fi
 | `STREAM_CANCEL_TTL_SECONDS`        | How long a stop request waits for the worker to see it (default `900`)                                                                                                 |
 | `RUN_JOB_ATTEMPTS`                 | Tries BullMQ gives a Run job; a retry resumes the Run from its checkpoint (default `3`)                                                                                |
 | `RUN_JOB_BACKOFF_MS`               | Base of the exponential backoff between a Run job's tries (default `5000`)                                                                                             |
+| `MAX_EVENT_LOOP_DELAY_MS`          | Mean event loop delay over which requests get `503 FST_UNDER_PRESSURE`; `/health` is never shed, and the shed line logs the measured delay (default `1000`)            |
 | `DATABASE_URL`                     | PostgreSQL connection string                                                                                                                                           |
 | `REDIS_URL`                        | Redis connection (e.g. `redis://localhost:6380`)                                                                                                                       |
 | `CLIENT_URL`                       | Frontend origin for CORS (e.g. `http://localhost:5173`); must be the same site as the API ([auth.md](../../docs/auth.md))                                              |

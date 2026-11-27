@@ -4,7 +4,6 @@ import cors from '@fastify/cors';
 import sensible from '@fastify/sensible';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
-import underPressure from '@fastify/under-pressure';
 import Fastify from 'fastify';
 import type { FastifyBaseLogger, FastifyInstance } from 'fastify';
 import type { Logger } from '@nebula-chat/otel';
@@ -34,6 +33,7 @@ import originCheck from '@server/plugins/originCheck.plugin';
 import rateLimitPlugin from '@server/plugins/rateLimit.plugin';
 import redisPlugin from '@server/plugins/redis.plugin';
 import securityHeaders from '@server/plugins/securityHeaders.plugin';
+import underPressurePlugin, { neverShed } from '@server/plugins/underPressure.plugin';
 import requestLogging from '@server/plugins/requestLogging.plugin';
 import { logController } from '@server/utils/logController';
 import { resolveTrustProxy } from '@server/utils/trustProxy';
@@ -138,10 +138,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
     });
   }
 
-  await app.register(underPressure, {
-    maxEventLoopDelay: 1000,
-    healthCheckInterval: 5000,
-  });
+  await app.register(underPressurePlugin);
 
   // Public: the health and root probes answer anyone, so a load balancer needs no credentials.
   app.get(
@@ -164,7 +161,7 @@ export const buildApp = async (options?: BuildAppOptions): Promise<FastifyInstan
   app.get(
     '/health',
     {
-      config: { access: 'public' },
+      config: { access: 'public', ...neverShed },
       schema: {
         summary: 'Health check',
         description: 'Returns server liveness status and current UTC timestamp.',
