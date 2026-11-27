@@ -288,6 +288,10 @@ erDiagram
 
 `<service>` is `nebula-chat-server` or `nebula-chat-worker`.
 
+Production Redis bills per command, and an idle BullMQ worker keeps polling. Every worker therefore
+waits 60 s per idle fetch and checks for stalled jobs every 5 minutes ([ADR-0009](./adr/0009-nebula-chat-redis-lib.md)).
+The Purge worker still wakes every 10 s, since its queue always holds the next run as a delayed job.
+
 ## Direct reply
 
 One Direct reply, from send to the last token. Sending and reading are separate requests

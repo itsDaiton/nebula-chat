@@ -72,16 +72,17 @@ without a TTL. `allkeys-lru` may evict any of them, and BullMQ requires `noevict
 policy is … It should be "noeviction"` on every connection otherwise). Memory stays bounded by TTLs instead: every
 app-owned key in the [Redis keyspace](../architecture.md#redis-keyspace) carries one, except a reply stream that has
 not ended yet, and BullMQ trims finished jobs to a fixed count per queue (at most 1000, with small payloads of IDs
-only). A volatile policy, which evicts only keys with a TTL, would leave BullMQ's keys alone too. It was rejected
-because BullMQ keeps warning about it, and evicting live auth sessions under pressure is no better than failing a
-write. The trade-off: once
-memory is full, Redis refuses writes instead of evicting. Reads and writes through the lib fail open, so a
-full Redis would cost the cache, not chat. Enqueues and reply streams would fail, though, so usage must stay well
-under the cap. The free-plan Render Key Value (about 25 MB) has no disk persistence, so a restart empties it under
-any policy. BullMQ job ids then start again at `1`, waiting and delayed jobs are lost, and the daily Purge
-scheduler is gone until the worker's next boot re-creates it with `upsertJobScheduler`. Durable state stays in
-Postgres. Before this amendment the host reported `optimistic-volatile`, its own name for a policy that evicts only
-keys with a TTL.
+only). The trade-off: once memory is full, Redis refuses writes instead of evicting. Reads and writes through the
+lib fail open, so a full Redis would cost the cache, not chat. Enqueues and reply streams would fail, though, so
+usage must stay well under the cap. Durable state stays in Postgres.
+
+**Corrected 2026-11-27 (NEB-987).** Production Redis is a managed database with a monthly command allowance, not
+the Render Key Value assumed above. It reported `optimistic-volatile`, the host's own eviction mode, which mixes
+`volatile-random` and `allkeys-random` and so can evict any key, BullMQ's included. The host's `noeviction`
+equivalent is eviction turned off: writes are rejected at the size limit. Whether the database keeps its data
+across a restart is not confirmed. In practice the binding limit is the **command budget**,
+not memory: an idle BullMQ worker polls Redis, and at BullMQ's default settings that exhausted the month's commands
+while storage held 67 KB. Every worker therefore polls less often (`drainDelay` 60 s, `stalledInterval` 5 minutes).
 
 ## Consequences
 
